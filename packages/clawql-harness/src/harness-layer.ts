@@ -16,7 +16,7 @@ import { createClawQLHarness, type ClawQLHarness } from "./harness.js";
 import { listHarnessTools, invokeHarnessTool } from "./tool-bridge.js";
 import type { HarnessPlugin, ModelConfig } from "./types.js";
 import { HarnessPluginError } from "./types.js";
-import type { WormStorageError } from "clawql-audit";
+import type { AuditError } from "clawql-audit";
 
 const EmptyToolSchema = z.object({});
 
@@ -25,7 +25,7 @@ export type HarnessLayerError =
   | ClawQLError
   | McpToolAlreadyRegisteredError
   | HarnessPluginError
-  | WormStorageError
+  | AuditError
   | Error;
 
 export type MakeHarnessLayerOptions = {

@@ -1,4 +1,4 @@
-import type { WORMAuditTrail } from "clawql-audit";
+import type { WORMAuditTrailService } from "clawql-audit";
 import { Effect } from "effect";
 import type { HarnessRegistryState } from "./registry.js";
 import type { HarnessPluginError, HarnessTool } from "./types.js";
@@ -12,7 +12,7 @@ export const invokeHarnessTool = (
   state: HarnessRegistryState,
   toolName: string,
   args: Record<string, unknown> = {}
-): Effect.Effect<unknown, HarnessPluginError, WORMAuditTrail> =>
+): Effect.Effect<unknown, HarnessPluginError, WORMAuditTrailService> =>
   Effect.gen(function* () {
     const tool = state.tools.get(toolName);
     if (!tool) {

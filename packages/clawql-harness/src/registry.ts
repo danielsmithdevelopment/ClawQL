@@ -1,5 +1,9 @@
 import type { WORMAppendInput } from "clawql-audit";
-import { WORMAuditTrail, createMemoryBackend, makeWORMAuditTrailLayer } from "clawql-audit";
+import {
+  MemoryBackend,
+  WORMAuditTrailService,
+  makeWORMAuditTrailLayer,
+} from "clawql-audit";
 import { Effect } from "effect";
 import type {
   ClawQLHarnessConfig,
@@ -65,7 +69,7 @@ export const buildHarnessContext = (state: HarnessRegistryState): HarnessContext
   worm: {
     append: (entry) =>
       Effect.gen(function* () {
-        const worm = yield* WORMAuditTrail;
+        const worm = yield* WORMAuditTrailService;
         yield* worm
           .append({
             ...entry,
@@ -77,7 +81,7 @@ export const buildHarnessContext = (state: HarnessRegistryState): HarnessContext
               (err) =>
                 new HarnessPluginErrorClass({
                   pluginId: "clawql-harness",
-                  reason: err instanceof Error ? err.message : String(err),
+                  reason: err.reason,
                   cause: err,
                 })
             )
@@ -94,19 +98,21 @@ export const buildHarnessContext = (state: HarnessRegistryState): HarnessContext
 });
 
 export const makeHarnessWormLayer = (wormDbPath?: string) => {
-  const local = createMemoryBackend();
-  const remote = createMemoryBackend();
   void wormDbPath;
-  return makeWORMAuditTrailLayer({ local, remote });
+  return makeWORMAuditTrailLayer({
+    local: new MemoryBackend(),
+    remote: new MemoryBackend(),
+    retryMaxAttempts: 3,
+    retryBackoffMs: 50,
+    retryBackoffMultiplier: 2,
+    reconcileIntervalMs: 0,
+    merkleBatchSize: 0,
+  });
 };
 
 export const registerHarnessPlugins = (
   config: ClawQLHarnessConfig
-): Effect.Effect<
-  HarnessRegistryState,
-  HarnessPluginError,
-  WORMAuditTrail
-> =>
+): Effect.Effect<HarnessRegistryState, HarnessPluginError, WORMAuditTrailService> =>
   Effect.gen(function* () {
     const state: HarnessRegistryState = {
       plugins: config.plugins,
@@ -128,7 +134,7 @@ export const registerHarnessPlugins = (
 
 export const teardownHarnessPlugins = (
   state: HarnessRegistryState
-): Effect.Effect<void, HarnessPluginError, WORMAuditTrail> =>
+): Effect.Effect<void, HarnessPluginError, WORMAuditTrailService> =>
   Effect.gen(function* () {
     const ctx = buildHarnessContext(state);
     for (const plugin of [...state.plugins].reverse()) {
@@ -142,7 +148,7 @@ export const runLoopHandlers = (
   phase: keyof HarnessRegistryState["loopHandlers"],
   state: HarnessRegistryState,
   loopState: LoopState
-): Effect.Effect<LoopState, HarnessPluginError, WORMAuditTrail> =>
+): Effect.Effect<LoopState, HarnessPluginError, WORMAuditTrailService> =>
   Effect.gen(function* () {
     let current = loopState;
     for (const handler of state.loopHandlers[phase]) {
