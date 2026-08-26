@@ -172,7 +172,7 @@ Three roles — see spec §4.1.1:
 
 **Smoke test:** `npm run build -w clawql-auth && node scripts/dev/xaa-smoke.mjs`
 
-**Dual audit:** `CLAWQL_AUTH_AUDIT_STORE` (per-auth SQLite WORM) + optional `CLAWQL_WORM_ENABLED=1` (process trail via `clawql-audit`).
+**Dual audit:** `CLAWQL_AUTH_AUDIT_STORE` (per-auth SQLite WORM) + optional `CLAWQL_WORM_ENABLED=1` process trail — host composes via `resolveHostAuthEventSink()` in `src/auth-process-worm-sink.ts` (`createAuthEventWormSink` from `clawql-audit`).
 
 Set `CLAWQL_AUTH_MODE=mcpOAuth` to accept only ClawQL-issued MCP JWTs, or keep `apiKey`/`oidc` — when MCP OAuth is enabled, issued bearer tokens are accepted in **hybrid** mode automatically on `server-http`.
 

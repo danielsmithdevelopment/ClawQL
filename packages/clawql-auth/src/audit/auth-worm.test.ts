@@ -5,6 +5,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import type { AuthEvent } from "./auth-events.js";
+import { composeAuthEventSinks } from "./auth-events.js";
 import { createAuthEventSinkFromEnv, resetAuthEventSinkCacheForTests } from "./auth-worm-sink.js";
 import {
   AuthWormService,
@@ -98,5 +99,30 @@ describe("auth-worm", () => {
       }).pipe(Effect.provide(layer))
     );
     expect(records.map((r) => r.seq)).toEqual([1, 2]);
+  });
+
+  it("composeAuthEventSinks invokes all sinks", async () => {
+    const seen: string[] = [];
+    const sink = composeAuthEventSinks(
+      () =>
+        Effect.sync(() => {
+          seen.push("a");
+        }),
+      () =>
+        Effect.sync(() => {
+          seen.push("b");
+        })
+    );
+    await Effect.runPromise(
+      sink({
+        type: "MCP_TOKEN_ISSUED",
+        clientId: "c1",
+        grantType: "id_jag",
+        scope: ["execute"],
+        expiresAt: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+      })
+    );
+    expect(seen).toEqual(["a", "b"]);
   });
 });
