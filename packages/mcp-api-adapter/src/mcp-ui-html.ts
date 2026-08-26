@@ -1,6 +1,7 @@
 import type { ListedMcpTool } from "mcp-grpc-transport";
 import {
   escapeMcpUiHtml,
+  MCP_UI_ARRAY_SCRIPT,
   renderToolFormFields,
   type FormFieldError,
 } from "./mcp-ui-form.js";
@@ -197,6 +198,55 @@ const MCP_UI_STYLES = `
   }
   .advanced summary::-webkit-details-marker { display: none; }
   .advanced__body { margin-top: 0.35rem; }
+  .fieldset {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem 0.35rem;
+    margin: 0 0 0.85rem;
+    background: rgba(248, 250, 252, 0.65);
+  }
+  .fieldset legend {
+    font-size: 0.88rem;
+    font-weight: 650;
+    padding: 0 0.35rem;
+  }
+  .fieldset--row {
+    margin: 0;
+    flex: 1;
+  }
+  .array-field { margin-bottom: 0.85rem; }
+  .array-field__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+  .array-rows { display: grid; gap: 0.55rem; }
+  .array-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 0.45rem;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .array-row .field { flex: 1; min-width: 10rem; margin-bottom: 0; }
+  .array-add,
+  .array-remove {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 0.3rem 0.55rem;
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .array-remove { color: var(--err); }
   .submit {
     appearance: none;
     border: 0;
@@ -378,6 +428,7 @@ export function renderMcpUiCatalogPage(options: {
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>
+  <script>${MCP_UI_ARRAY_SCRIPT}</script>
 </body>
 </html>`;
 }
@@ -570,6 +621,7 @@ export function renderMcpUiCustomFormPage(options: {
     <ol class="steps">${stepMeta}</ol>
     <main>${body}</main>
   </div>
+  <script>${MCP_UI_ARRAY_SCRIPT}</script>
 </body>
 </html>`;
 }

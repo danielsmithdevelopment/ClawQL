@@ -74,21 +74,69 @@ describe("mcp-ui-form", () => {
     expect(html).toContain("value=\"10\"");
     expect(html).toContain("<details class=\"advanced\"");
     expect(html).toContain('name="maxDepth"');
-    expect(html).toContain("Complex fields omitted: sources");
+    expect(html).toContain('data-array="sources"');
+    expect(html).toContain('name="sources[0]"');
+    expect(html).not.toContain("Complex fields omitted: sources");
   });
 
-  it("falls back to JSON textarea when no flat fields exist", () => {
+  it("renders nested object fieldsets instead of JSON bag when possible", () => {
     const tool: ListedMcpTool = {
       name: "run",
       inputSchema: {
         type: "object",
         properties: {
-          payload: { type: "object", properties: { nested: { type: "string" } } },
+          payload: {
+            type: "object",
+            properties: {
+              nested: { type: "string" },
+              count: { type: "integer" },
+            },
+            required: ["nested"],
+          },
         },
       },
     };
 
     const { mode, html } = renderToolFormFields(tool);
+    expect(mode).toBe("flat");
+    expect(html).toContain('data-object="payload"');
+    expect(html).toContain('name="payload.nested"');
+    expect(html).toContain('name="payload.count"');
+    expect(html).not.toContain('name="__json_args"');
+  });
+
+  it("falls back to JSON textarea when nothing structured is renderable", () => {
+    const tool: ListedMcpTool = {
+      name: "run",
+      inputSchema: {
+        type: "object",
+        properties: {
+          // deeply nested beyond MAX_NEST_DEPTH / no flat leaves at depth 0–2
+          tree: {
+            type: "object",
+            properties: {
+              branch: {
+                type: "object",
+                properties: {
+                  leaf: {
+                    type: "object",
+                    properties: {
+                      value: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const { mode, html } = renderToolFormFields(tool);
+    // depth 0 tree → depth 1 branch → depth 2 leaf (object) → depth 3 value is beyond
+    // leaf object at depth 2 may still be "renderable" if it has flat children at depth 3?
+    // isRenderableSchema(leaf, 2): leaf is object, checks children at depth 3 > MAX 2 → false for value
+    // so leaf not renderable → branch has no renderable children → tree not → jsonBag
     expect(mode).toBe("jsonBag");
     expect(html).toContain('name="__json_args"');
   });
@@ -127,6 +175,54 @@ describe("mcp-ui-form", () => {
     expect(
       parseFormArgs({ __json_args: '{"a":1,"b":"two"}' }, { type: "object", properties: {} })
     ).toEqual({ a: 1, b: "two" });
+  });
+
+  it("parses nested object and array form keys", () => {
+    const schema = {
+      type: "object",
+      required: ["payload"],
+      properties: {
+        payload: {
+          type: "object",
+          required: ["nested"],
+          properties: {
+            nested: { type: "string" },
+            count: { type: "integer" },
+          },
+        },
+        sources: { type: "array", items: { type: "string" } },
+        steps: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              tool: { type: "string" },
+              label: { type: "string" },
+            },
+          },
+        },
+      },
+    };
+
+    expect(
+      parseFormArgs(
+        {
+          "payload.nested": "hello",
+          "payload.count": "3",
+          "sources[0]": "vault",
+          "sources[1]": "vector",
+          "sources[2]": "",
+          "steps[0].tool": "search",
+          "steps[0].label": "Find",
+          "steps[1].tool": "",
+        },
+        schema
+      )
+    ).toEqual({
+      payload: { nested: "hello", count: 3 },
+      sources: ["vault", "vector"],
+      steps: [{ tool: "search", label: "Find" }],
+    });
   });
 
   it("extracts field names from MCP validation messages", () => {
