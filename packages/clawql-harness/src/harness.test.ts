@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { ClawQLHarness, invokeHarnessTool } from "../src/index.js";
 import { OuroborosPlugin } from "../plugins/ouroboros/index.js";
@@ -91,21 +91,68 @@ describe("compareHarnesses", () => {
 });
 
 describe("OpenCode2Plugin", () => {
-  it("registers opencode2_session and returns SDK-missing error without peer", async () => {
+  it("registers opencode2_session and returns disabled error when embed forced off", async () => {
+    const prev = process.env.CLAWQL_OPENCODE_DISABLE_EMBED;
+    process.env.CLAWQL_OPENCODE_DISABLE_EMBED = "1";
+    try {
+      const harness = await Effect.runPromise(
+        ClawQLHarness.create({
+          plugins: [OpenCode2Plugin],
+          model: { provider: "stub", name: "test-model" },
+        })
+      );
+      expect(harness.state.tools.has("opencode2_session")).toBe(true);
+      const out = (await Effect.runPromise(
+        invokeHarnessTool(harness.state, "opencode2_session", { task: "smoke" }).pipe(
+          Effect.provide(harness.layer)
+        )
+      )) as { ok?: boolean; error?: string };
+      expect(out.ok).toBe(false);
+      expect(out.error).toMatch(/OpenCode2 embed disabled|SDK not available|createOpencode failed/);
+      await Effect.runPromise(harness.teardown());
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_OPENCODE_DISABLE_EMBED;
+      else process.env.CLAWQL_OPENCODE_DISABLE_EMBED = prev;
+    }
+  });
+
+  it("runs live session.create + prompt when OpenCode peers are installed", async () => {
+    const { access } = await import("node:fs/promises");
+    const { createRequire } = await import("node:module");
+    let hasPeers = false;
+    try {
+      const require = createRequire(import.meta.url);
+      require.resolve("@opencode-ai/sdk/v2");
+      const pkg = require.resolve("opencode-ai/package.json");
+      await access(join(dirname(pkg), "bin/opencode.exe"));
+      hasPeers = true;
+    } catch {
+      hasPeers = false;
+    }
+    if (!hasPeers) return;
+
     const harness = await Effect.runPromise(
       ClawQLHarness.create({
         plugins: [OpenCode2Plugin],
         model: { provider: "stub", name: "test-model" },
       })
     );
-    expect(harness.state.tools.has("opencode2_session")).toBe(true);
     const out = (await Effect.runPromise(
-      invokeHarnessTool(harness.state, "opencode2_session", { task: "smoke" }).pipe(
-        Effect.provide(harness.layer)
-      )
-    )) as { ok?: boolean; error?: string };
-    expect(out.ok).toBe(false);
-    expect(out.error).toMatch(/OpenCode2 SDK not available/);
+      invokeHarnessTool(harness.state, "opencode2_session", {
+        task: "Reply with exactly: OPENCODE_CLAWQL_OK and nothing else.",
+        title: "clawql-harness-vitest",
+      }).pipe(Effect.provide(harness.layer))
+    )) as {
+      ok?: boolean;
+      text?: string | null;
+      error?: string;
+      sessionId?: string;
+      model?: { providerID: string; modelID: string };
+    };
     await Effect.runPromise(harness.teardown());
-  });
+    expect(out.ok).toBe(true);
+    expect(out.sessionId).toMatch(/^ses_/);
+    expect(out.model).toEqual({ providerID: "opencode", modelID: "big-pickle" });
+    expect(out.text ?? "").toContain("OPENCODE_CLAWQL_OK");
+  }, 120_000);
 });

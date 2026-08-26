@@ -50,8 +50,16 @@
     "effect": "^3.21.4",
     "zod": "^4.3.6"
   },
+  "peerDependencies": {
+    "@opencode-ai/sdk": "*",
+    "opencode-ai": "*",
+    "@opencode-ai/plugin": "*"
+  },
   "peerDependenciesMeta": {
     "@opencode-ai/sdk": {
+      "optional": true
+    },
+    "opencode-ai": {
       "optional": true
     },
     "@opencode-ai/plugin": {
