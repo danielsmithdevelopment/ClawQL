@@ -17,7 +17,7 @@ This complements the **container** golden-image flow in [`.github/workflows/dock
 6. **Provenance:** enable **[npm provenance](https://docs.npmjs.com/generating-provenance-statements)** (`--provenance` when using **trusted publishing** / OIDC).
 7. **Immutability:** never **overwrite** a semver; use **dist-tags** (`latest`, `next`, `canary`) only after the same gates pass on the version you intend to promote.
 
-**Monorepo dev:** workspace packages use matching **`7.0.0`** semver in `dependencies`; npm workspaces link them locally. **`clawql-mcp`** no longer uses **`bundledDependencies`**.
+**Monorepo dev:** each `clawql-*` workspace package has **independent semver**; npm workspaces link them locally. **`clawql-mcp`** no longer uses **`bundledDependencies`**. Never stamp a new package with the gateway’s major.
 
 ## What not to do
 
