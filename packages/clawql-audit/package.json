@@ -20,7 +20,8 @@
     "build": "npm run clean && tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:standalone": "node ./scripts/check-standalone-deps.mjs"
   },
   "dependencies": {
     "clawql-merkle": "7.2.0",

@@ -9,3 +9,9 @@ export class WormStorageError extends Data.TaggedError("WormStorageError")<{
   readonly message: string;
   readonly cause?: unknown;
 }> {}
+
+/** Generic audit/TEE failures (signing, key material, boot). */
+export class AuditError extends Data.TaggedError("AuditError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
