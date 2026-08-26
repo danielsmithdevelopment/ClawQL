@@ -42,15 +42,15 @@ describe("createTelegramReauthNotifier", () => {
   });
 
   it("prefers payload.notifyTarget over default chat id", async () => {
-    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 })) as unknown as typeof fetch;
+    const fetchImpl = vi.fn(
+      async () => new Response("{}", { status: 200 })
+    ) as unknown as typeof fetch;
     const notifier = createTelegramReauthNotifier({
       botToken: "tok",
       defaultChatId: "1",
       fetchImpl,
     });
-    await Effect.runPromise(
-      notifier.notify({ ...basePayload, notifyTarget: "99" })
-    );
+    await Effect.runPromise(notifier.notify({ ...basePayload, notifyTarget: "99" }));
     const init = fetchImpl.mock.calls[0]![1] as RequestInit;
     expect(JSON.parse(String(init.body)).chat_id).toBe("99");
   });

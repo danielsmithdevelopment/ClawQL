@@ -3,11 +3,7 @@
  * Never puts refresh tokens or client secrets in the message — URL + state only.
  */
 
-import {
-  ReauthNotifyError,
-  type ReauthNotifier,
-  type ReauthNotifyPayload,
-} from "clawql-auth";
+import { ReauthNotifyError, type ReauthNotifier, type ReauthNotifyPayload } from "clawql-auth";
 import { Effect } from "effect";
 
 export type TelegramReauthNotifierOptions = {

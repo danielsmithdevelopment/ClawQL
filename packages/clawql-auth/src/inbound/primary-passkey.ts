@@ -93,7 +93,9 @@ export function createMemoryPasskeyCredentialStore(
           enrolledAt: input.enrolledAt ?? new Date().toISOString(),
         };
         byCred.set(credentialId, record);
-        const list = (bySubject.get(subjectId) ?? []).filter((r) => r.credentialId !== credentialId);
+        const list = (bySubject.get(subjectId) ?? []).filter(
+          (r) => r.credentialId !== credentialId
+        );
         list.push(record);
         bySubject.set(subjectId, list);
         return record;

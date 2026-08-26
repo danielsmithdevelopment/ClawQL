@@ -277,16 +277,16 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 ## Phase 4–7 surfaces (library)
 
-| Area            | Entry points                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                       |
-| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                             |
-| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                        |
-| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                              |
+| Area            | Entry points                                                                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                                       |
+| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                                             |
+| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                                        |
+| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                                              |
 | Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` + `PasskeyCredentialStore.enroll`/`delete` (inject `WebAuthnStepUpVerifier`) |
-| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                    |
-| Re-auth UX      | `buildReauthUrl` + `notifyReauthRequiredEffect`; Hermes: `createTelegramReauthNotifierFromEnv` (`clawql-agents`)               |
-| ID-JAG TEE      | `CLAWQL_ID_JAG_TEE_SIGNER=1` or inject `assertionSigner` / `clawql-tee` `createDevTeeIdJagSigner`                              |
+| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                                    |
+| Re-auth UX      | `buildReauthUrl` + `notifyReauthRequiredEffect`; Hermes: `createTelegramReauthNotifierFromEnv` (`clawql-agents`)                              |
+| ID-JAG TEE      | `CLAWQL_ID_JAG_TEE_SIGNER=1` or inject `assertionSigner` / `clawql-tee` `createDevTeeIdJagSigner`                                             |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

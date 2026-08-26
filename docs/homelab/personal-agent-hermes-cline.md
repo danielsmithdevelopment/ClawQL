@@ -1074,9 +1074,7 @@ ORDER BY e.ts ASC;
 When outbound OAuth refresh fails (`invalid_grant` / missing token), Hermes should DM you a **re-auth URL only** (never refresh tokens or client secrets).
 
 ```ts
-import {
-  createTelegramReauthNotifierFromEnv,
-} from "clawql-agents";
+import { createTelegramReauthNotifierFromEnv } from "clawql-agents";
 import { notifyReauthRequiredEffect } from "clawql-auth";
 import { Effect } from "effect";
 

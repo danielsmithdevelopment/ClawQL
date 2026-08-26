@@ -1,7 +1,4 @@
-import {
-  createLocalIdJagAssertionSigner,
-  loadMcpOAuthSigningMaterialEffect,
-} from "clawql-auth";
+import { createLocalIdJagAssertionSigner, loadMcpOAuthSigningMaterialEffect } from "clawql-auth";
 import { Effect } from "effect";
 import { exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
