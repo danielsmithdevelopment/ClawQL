@@ -23,6 +23,16 @@ Horizontal MCP plugins (memory, documents, sandbox, data, automation, …) are e
 
 **Ouroboros** is always loaded as a **clawql-harness** plugin (`makeHarnessLayer` + `createOuroborosHarnessPlugin`). No enable flag. Optional: `ouroboros.langfuseEval` in the instance spec; Postgres via `CLAWQL_OUROBOROS_DATABASE_URL` (persistence, not enablement).
 
+## Bundled providers (catalog — not auto-loaded)
+
+OpenAPI/GraphQL vendors under `providers/` stay **available** in the image/package. They are **not** loaded until opted in:
+
+- Instance: `providers.pack` (`none` | `default` | `all-providers` | …) and/or `providers.enabled: […]`
+- Legacy: `CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS` / `CLAWQL_SPEC_PATHS`
+- No-config default: **empty** stack (native GraphQL/gRPC only when configured)
+
+`CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE` no longer select the stack.
+
 ## Implementation status
 
 | Phase | Scope                                                                                  | Status                  |

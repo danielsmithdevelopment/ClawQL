@@ -1,3 +1,4 @@
+import { clawqlProvidersCompositionSchema } from "clawql-api";
 import { z } from "zod";
 import type { ClawQLHorizontalTierSpec } from "./horizontal-tier-spec.js";
 import { applyTierPreset } from "./tier-presets.js";
@@ -12,6 +13,11 @@ const tierToggleSchema = z
 export const clawqlInstanceSpecV1Alpha1Schema = z
   .object({
     tier: z.enum(["local", "standard", "enterprise"]).optional(),
+    /**
+     * Bundled OpenAPI/GraphQL catalog selection — available in the image, loaded only when opted in.
+     * Prefer this over `CLAWQL_PROVIDER` / `CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`.
+     */
+    providers: clawqlProvidersCompositionSchema.optional(),
     memory: tierToggleSchema,
     documents: z
       .object({

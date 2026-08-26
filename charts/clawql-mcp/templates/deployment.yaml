@@ -99,8 +99,11 @@ spec:
               containerPort: {{ .Values.service.grpc.targetPort | int }}
               protocol: TCP
           env:
+            {{- $provider := .Values.provider | default "" | toString | trim }}
+            {{- if and $provider (ne $provider "none") }}
             - name: CLAWQL_PROVIDER
-              value: {{ .Values.provider | quote }}
+              value: {{ $provider | quote }}
+            {{- end }}
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: {{ .Values.obsidianVaultPath | quote }}
             - name: PORT
@@ -111,7 +114,7 @@ spec:
               value: {{ .Values.bundledOffline | quote }}
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
-            # Authoritative plugin list (ClawQLInstance). Horizontal plugins are NOT gated by CLAWQL_ENABLE_*.
+            # Authoritative plugin + provider composition (ClawQLInstance).
             - name: CLAWQL_INSTANCE_SPEC
               value: {{ include "clawql-mcp.instanceSpecJson" . | quote }}
             {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
@@ -156,12 +159,6 @@ spec:
             - name: CLAWQL_ENABLE_IDP_PIPELINE
               value: "1"
             {{- end }}
-            - name: CLAWQL_ENABLE_GOOGLE
-              value: {{ ternary "1" "0" (.Values.enableGoogle | default false) | quote }}
-            - name: CLAWQL_ENABLE_CLOUDFLARE
-              value: {{ ternary "1" "0" (.Values.enableCloudflare | default true) | quote }}
-            - name: CLAWQL_ENABLE_AWS
-              value: {{ ternary "1" "0" (.Values.enableAws | default false) | quote }}
             {{- if .Values.enableSandbox }}
             - name: CLAWQL_ENABLE_SANDBOX
               value: "1"

@@ -410,13 +410,15 @@ annotations:
 {{- end }}
 
 {{/*
-ClawQLInstance-shaped plugin config (authoritative for MCP plugin composition).
-Helm enable* values map here — not CLAWQL_ENABLE_* for horizontal plugins.
+ClawQLInstance-shaped config (authoritative for MCP plugin + provider composition).
+Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal plugins.
 */}}
 {{- define "clawql-mcp.instanceSpecJson" -}}
 {{- $tier := .Values.pluginTier.tier | default "standard" -}}
+{{- $providers := .Values.providers | default (dict "pack" "none") -}}
 {{- $spec := dict
   "tier" $tier
+  "providers" $providers
   "memory" (dict "enabled" (.Values.enableMemory | default true))
   "documents" (dict
     "enabled" (.Values.enableDocuments | default true)

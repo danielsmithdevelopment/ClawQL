@@ -115,8 +115,8 @@ describe("server (stdio)", () => {
     expect(stderr).toContain("Server running on stdio");
   }, 20_000);
 
-  it("announces Ready before default-stack loadSpec finishes (Cursor discovery)", async () => {
-    // Default six-vendor merge is multi-second; discovery must not wait on it.
+  it("announces Ready before empty-stack loadSpec finishes (Cursor discovery)", async () => {
+    // No provider selection → stub merge (fast); discovery must not wait on a fat catalog.
     const childEnv = isolatedStdioChildEnv(minimalSpec, {
       CLAWQL_SPEC_PATH: undefined,
       OPENAPI_SPEC_PATH: undefined,

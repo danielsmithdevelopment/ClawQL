@@ -24,18 +24,18 @@ Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrin
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ClawQL Memory**     | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                                                | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                              |
 | **ClawQL Documents**  | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`inspect_pdf`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from **`all-providers`**; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
-| **Cloudflare bundle** | _(spec merge only — no extra MCP tools)_                                                                                                                                                                                | **`CLAWQL_ENABLE_CLOUDFLARE=0`** (omits Cloudflare from the **no-config default stack** only). Default **on** when unset. **`all-providers`** always includes Cloudflare. Explicit **`CLAWQL_PROVIDER=cloudflare`** still loads it.                                       |
 
-### Default off — opt in (cloud add-ons for default stack)
+### Bundled OpenAPI catalog (available — opt in)
 
-Unset means **off**. Set **`1`** / **`true`** / **`yes`** to **add** Google/AWS to the no-config default stack (in addition to Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
+Specs under **`providers/`** ship in the package/image but are **not** loaded until selected:
 
-| Bundle                               | Env                          | Notes                                                                                    |
-| ------------------------------------ | ---------------------------- | ---------------------------------------------------------------------------------------- |
-| **Google Cloud** (50 Discovery APIs) | **`CLAWQL_ENABLE_GOOGLE=1`** | Explicit **`CLAWQL_PROVIDER=google`** or **`all-providers`** still loads GCP regardless. |
-| **AWS** (50 OpenAPI specs)           | **`CLAWQL_ENABLE_AWS=1`**    | Explicit **`CLAWQL_PROVIDER=aws`** or **`all-providers`** still loads AWS regardless.    |
+| Mechanism | Example |
+| --- | --- |
+| Instance | **`CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`** or **`enabled: ["github"]`** |
+| Env | **`CLAWQL_PROVIDER=default`**, **`all-providers`**, **`google`**, **`aws`**, or a single vendor id |
+| Helm | **`providers.pack`** (chart default **`none`**) |
 
-**Fresh install** with no spec env: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**. Use **`CLAWQL_PROVIDER=all-providers`** for literally every bundled vendor plus GCP and AWS manifests.
+**Fresh install** with no provider selection: **empty** catalog (native GraphQL/gRPC only when configured). Curated pack **`default`** = Cloudflare, GitHub, Slack, Linear, Notion, Onyx. **`CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`** are deprecated for stack selection.
 
 ### Default off — opt in
 
@@ -71,8 +71,9 @@ ClawQL resolves specs in two stages:
 
 1. `CLAWQL_SPEC_PATHS`
 2. `CLAWQL_BUNDLED_PROVIDERS`
-3. `CLAWQL_PROVIDER` (merged preset such as `default`, `google`, `all-providers`, `atlassian`)
-4. **Default bundled stack** when no single-spec env is set — Cloudflare, GitHub, Slack, Linear, Notion, Onyx (+ optional **`CLAWQL_ENABLE_GOOGLE`** / **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**)
+3. Instance `providers` (`CLAWQL_INSTANCE_SPEC.providers.pack` / `.enabled`)
+4. `CLAWQL_PROVIDER` (merged pack such as `default`, `google`, `all-providers`, `atlassian`)
+5. **Empty** catalog when nothing else is set (native protocols only when configured)
 
 When Stage 1 is active:
 
@@ -96,7 +97,8 @@ When Stage 1 is active:
 - `CLAWQL_DISCOVERY_URL`
 - `CLAWQL_PROVIDER`
 - `CLAWQL_BUNDLED_PROVIDERS`
-- **`CLAWQL_GRAPHQL_URL`** — connect a **custom** GraphQL HTTP provider (advanced). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. For **bundled** providers (e.g. **Linear**), use **`CLAWQL_PROVIDER=linear`** instead — ClawQL routes internally. When set **without** **`CLAWQL_PROVIDER`** / spec env, only that custom provider loads (not the default stack).
+- `CLAWQL_INSTANCE_SPEC` / `CLAWQL_INSTANCE_SPEC_FILE` — includes **`providers`** (preferred) and plugin toggles
+- **`CLAWQL_GRAPHQL_URL`** — connect a **custom** GraphQL HTTP provider (advanced). Optional **`CLAWQL_GRAPHQL_NAME`**, **`CLAWQL_GRAPHQL_HEADERS`**, **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** when upstream introspection is blocked. For **bundled** providers (e.g. **Linear**), use **`CLAWQL_PROVIDER=linear`** or instance `providers.enabled` instead — ClawQL routes internally. When set **without** a provider pack/env, only that custom provider loads.
 - **`CLAWQL_GRAPHQL_SOURCES`** — JSON array of custom GraphQL providers `{ name, endpoint, headers?, schemaPath?, introspectionPath? }`. Combined with **`CLAWQL_GRAPHQL_URL`** when both are set. Missing disk paths are logged and ignored. Known endpoints (e.g. Linear) auto-route to bundled providers. See `.env.example` and **`docs/mcp/mcp-tools.md`**.
 - **`CLAWQL_GRPC_SOURCES`** — JSON array of custom gRPC providers `{ name, endpoint, protoPath, insecure? }`. Entries with missing **`protoPath`** are skipped. See `.env.example` and **`docs/adr/0002-multi-protocol-supergraph.md`**.
 

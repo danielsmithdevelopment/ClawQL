@@ -22,7 +22,9 @@ function tierFromEnv(env: NodeJS.ProcessEnv): NonNullable<ClawQLInstanceSpecV1Al
  * 2. Else `{ tier: CLAWQL_TIER ?? "standard" }` expanded via tier presets
  *
  * Ouroboros / harness tools are always composed separately (see `composeHorizontalPluginLayers`).
- * Transport knobs (`ENABLE_GRPC`) and provider-stack flags remain outside this resolver.
+ * Transport knobs (`ENABLE_GRPC`) remain outside this resolver.
+ * Provider stack uses instance `providers` / `CLAWQL_PROVIDER` (clawql-api spec-loader), not
+ * `CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`.
  */
 export function resolvePluginCompositionFlags(
   env: NodeJS.ProcessEnv = process.env
@@ -32,23 +34,15 @@ export function resolvePluginCompositionFlags(
   const tierSpec = clawqlInstanceSpecToHorizontalTierSpec(instance);
   const flags = optionalFlagsFromHorizontalTierSpec(tierSpec, basePluginCompositionFlags());
 
-  // Transport / provider-stack (not horizontal plugins) — still read from process env.
+  // Transport only — legacy provider-stack fields kept on the flag object but unused for loading.
   const transport = {
     enableGrpc: env.ENABLE_GRPC?.trim() === "1" || env.ENABLE_GRPC?.trim().toLowerCase() === "true",
     enableGrpcReflection:
       env.ENABLE_GRPC_REFLECTION?.trim() === "1" ||
       env.ENABLE_GRPC_REFLECTION?.trim().toLowerCase() === "true",
-    enableGoogle:
-      env.CLAWQL_ENABLE_GOOGLE?.trim() === "1" ||
-      env.CLAWQL_ENABLE_GOOGLE?.trim().toLowerCase() === "true",
-    enableAws:
-      env.CLAWQL_ENABLE_AWS?.trim() === "1" ||
-      env.CLAWQL_ENABLE_AWS?.trim().toLowerCase() === "true",
-    enableCloudflare: (() => {
-      const v = env.CLAWQL_ENABLE_CLOUDFLARE?.trim().toLowerCase();
-      if (v === undefined || v === "") return true;
-      return !(v === "0" || v === "false" || v === "no");
-    })(),
+    enableGoogle: false,
+    enableAws: false,
+    enableCloudflare: true,
   };
 
   return { ...flags, ...transport };

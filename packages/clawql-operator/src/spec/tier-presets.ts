@@ -115,6 +115,7 @@ export function applyTierPreset(spec: ClawQLInstanceSpecV1Alpha1): ClawQLInstanc
   const preset = TIER_PRESET_SPECS[tier];
   return {
     tier,
+    providers: spec.providers,
     memory: mergeToggleSection(preset.memory, spec.memory),
     documents: mergeDocuments(preset.documents, spec.documents),
     automation: mergeAutomation(preset.automation, spec.automation),
