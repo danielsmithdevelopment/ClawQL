@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import { exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
-import { createDevTeeIdJagSigner, createTeeIdJagSignerBridge } from "./index.js";
+import { createDevTeeIdJagSigner, createTeeIdJagSignerBridge } from "./bridge.js";
 
 describe("clawql-tee ID-JAG bridge", () => {
   it("createDevTeeIdJagSigner wraps host sign as kind tee", async () => {
