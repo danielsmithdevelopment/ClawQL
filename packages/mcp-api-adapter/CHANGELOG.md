@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **`/mcp-ui` context flamegraph:** `GET /mcp-ui/trace/:sessionId` renders turn×source token stacks (harness / vault seed / tool schema / tool result / reasoning / model output) from inference-shaped records. Built-in demos `demo-compressed` vs `demo-fat`; optional `listTraceCalls` host hook; `?format=json` for harness-bench. Catalog nav links the compressed demo.
+- **`/mcp-ui` context flamegraph:** `GET /mcp-ui/trace/:sessionId` renders turn×source token stacks (harness / vault seed / tool schema / tool result / reasoning / model output) from inference-shaped records. Built-in demos `demo-compressed` vs `demo-fat` use **cl100k_base tiktoken** counts (generated fixture, not chars÷4). Optional `listTraceCalls` host hook; `?format=json` for harness-bench. Side-by-side **`/mcp-ui/trace/compare`**.
 
 - **`/mcp-ui` overflow fix:** schema descriptions render as wrapping `.field-help` (not truncating input placeholders); result snippets and card text use `overflow-wrap` so long vault snippets no longer spill out of columns.
 

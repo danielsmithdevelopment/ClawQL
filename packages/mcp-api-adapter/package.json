@@ -60,6 +60,7 @@
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
     "@types/ws": "^8.18.1",
+    "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"
@@ -67,6 +68,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
+    "generate:trace-demos": "node scripts/generate-trace-demo-fixtures.mjs",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "start": "node bin/mcp-api-adapter.mjs"

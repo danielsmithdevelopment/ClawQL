@@ -5,6 +5,12 @@
  * `InferenceRecord` (correlationId ≈ sessionId when aligned by the host).
  */
 
+import {
+  TRACE_DEMO_COMPRESSED,
+  TRACE_DEMO_FAT,
+  TRACE_DEMO_TOKENIZATION,
+} from "./fixtures/trace-demo-fixtures.generated.js";
+
 export type TraceSource =
   | "harness_prompt"
   | "vault_seed"
@@ -44,6 +50,8 @@ export type TraceFrame = {
 export type TraceCallMessage = {
   role: string;
   content: string;
+  /** When set (inference store / tiktoken fixtures), used instead of chars÷4. */
+  tokens?: number;
 };
 
 export type TraceCallRecord = {
@@ -63,6 +71,12 @@ export type ContextFlamegraph = {
   calls: number;
   totalInputTokens: number;
   totalOutputTokens: number;
+  /** How input token breakdown was derived (live meter vs tiktoken fixture vs estimate). */
+  tokenization?: {
+    encoding?: string;
+    method?: string;
+    label: string;
+  };
   frames: TraceFrame[];
   /** Per-turn totals for the cumulative chart. */
   turns: Array<{
@@ -166,6 +180,7 @@ export function allocateInputFrameTokens(
   if (toolIndices.length === 0) {
     const rawSum = base.reduce((s, t) => s + t, 0);
     if (rawSum <= 0) return base;
+    if (rawSum === meteredIn) return base;
     const scale = meteredIn / rawSum;
     return base.map((t, i) =>
       rawParts[i]!.chars > 0 ? Math.max(1, Math.round(t * scale)) : 0
@@ -173,9 +188,29 @@ export function allocateInputFrameTokens(
   }
 
   const allocated = [...base];
-  let toolBudget = Math.max(toolIndices.length, meteredIn - nonToolTotal);
-  const toolRawSum = toolIndices.reduce((s, i) => s + rawParts[i]!.tokens, 0);
+  let toolBudget = meteredIn - nonToolTotal;
+  if (toolBudget < toolIndices.reduce((s, i) => s + (base[i] ?? 0), 0)) {
+    toolBudget = toolIndices.reduce((s, i) => s + (base[i] ?? 0), 0);
+  }
 
+  // Prefer explicit per-message counts; put OpenAI chat priming (+3) on tool_result.
+  const explicitSum = base.reduce((s, t) => s + t, 0);
+  if (explicitSum + 3 === meteredIn || Math.abs(explicitSum - meteredIn) <= 3) {
+    for (const i of toolIndices) {
+      allocated[i] = base[i]!;
+    }
+    const drift = meteredIn - explicitSum;
+    if (drift !== 0) {
+      allocated[toolIndices[toolIndices.length - 1]!]! += drift;
+    }
+    return allocated;
+  }
+
+  if (toolBudget < toolIndices.length) {
+    toolBudget = toolIndices.length;
+  }
+
+  const toolRawSum = toolIndices.reduce((s, i) => s + rawParts[i]!.tokens, 0);
   if (toolRawSum <= 0) {
     const each = Math.floor(toolBudget / toolIndices.length);
     for (const i of toolIndices) allocated[i] = each;
@@ -211,7 +246,11 @@ export function meteredInputFromMessages(messages: TraceCallMessage[]): number {
     messages.map((msg) => {
       const { source, label } = classifyMessage(msg);
       const chars = msg.content?.length ?? 0;
-      return { source, label, chars, tokens: estimateTokensFromChars(chars) };
+      const tokens =
+        msg.tokens != null && msg.tokens >= 0
+          ? msg.tokens
+          : estimateTokensFromChars(chars);
+      return { source, label, chars, tokens };
     }),
     undefined
   ).reduce((s, t) => s + t, 0);
@@ -223,7 +262,8 @@ export function meteredInputFromMessages(messages: TraceCallMessage[]): number {
  */
 export function buildContextFlamegraph(
   sessionId: string,
-  records: TraceCallRecord[]
+  records: TraceCallRecord[],
+  opts?: { tokenization?: ContextFlamegraph["tokenization"] }
 ): ContextFlamegraph {
   const sorted = [...records].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const bySource = emptyBySource();
@@ -238,7 +278,11 @@ export function buildContextFlamegraph(
     const rawParts: RawMessagePart[] = rec.messages.map((msg) => {
       const { source, label } = classifyMessage(msg);
       const chars = msg.content?.length ?? 0;
-      return { source, label, chars, tokens: estimateTokensFromChars(chars) };
+      const tokens =
+        msg.tokens != null && msg.tokens >= 0
+          ? msg.tokens
+          : estimateTokensFromChars(chars);
+      return { source, label, chars, tokens };
     });
     const meteredIn = rec.usage?.inputTokens;
     const tokenAlloc = allocateInputFrameTokens(rawParts, meteredIn);
@@ -299,10 +343,26 @@ export function buildContextFlamegraph(
     calls: sorted.length,
     totalInputTokens: totalIn,
     totalOutputTokens: totalOut,
+    tokenization: opts?.tokenization,
     frames,
     turns,
     bySource,
   };
+}
+
+export function demoTraceTokenizationMeta(): ContextFlamegraph["tokenization"] {
+  return {
+    encoding: TRACE_DEMO_TOKENIZATION.encoding,
+    method: TRACE_DEMO_TOKENIZATION.method,
+    label: `Token counts: ${TRACE_DEMO_TOKENIZATION.encoding} (OpenAI tiktoken)`,
+  };
+}
+
+function cloneDemoRecords(
+  records: TraceCallRecord[],
+  sessionId: string
+): TraceCallRecord[] {
+  return records.map((r) => ({ ...r, correlationId: sessionId }));
 }
 
 /** Demo session: compressed vs fat tool-result shapes for the Both-Sides argument. */
@@ -310,84 +370,10 @@ export function demoCompressedVsFatRecords(sessionId: string): {
   compressed: TraceCallRecord[];
   fat: TraceCallRecord[];
 } {
-  const base = new Date("2026-08-26T12:00:00.000Z").getTime();
-  const systemHarness = {
-    role: "system",
-    content:
-      "You are ClawQL harness. Prefer search() then execute(). Keep tool results compact.",
+  return {
+    compressed: cloneDemoRecords(TRACE_DEMO_COMPRESSED, sessionId),
+    fat: cloneDemoRecords(TRACE_DEMO_FAT, sessionId),
   };
-  const systemVault = {
-    role: "system",
-    content:
-      "Obsidian vault system-seed memory: [[MCP UI ClawQL Demo]] agent.md notes for this session.",
-  };
-  const user = {
-    role: "user",
-    content: "List GitHub repos then summarize the first one.",
-  };
-  const schema = {
-    role: "user",
-    content: JSON.stringify({
-      name: "search",
-      inputSchema: { type: "object", properties: { query: { type: "string" } } },
-    }),
-  };
-
-  const compressedResult = {
-    role: "tool",
-    content: JSON.stringify({
-      results: [{ id: "repos.list", method: "GET", path: "/user/repos", score: 12 }],
-    }),
-  };
-  const fatResult = {
-    role: "tool",
-    content: JSON.stringify({
-      results: Array.from({ length: 40 }, (_, i) => ({
-        id: `repos.list.${i}`,
-        method: "GET",
-        path: "/user/repos",
-        full: "x".repeat(800),
-        description: "Untrimmed OpenAPI dump ".repeat(20),
-      })),
-    }),
-  };
-
-  const mk = (
-    id: string,
-    offsetMs: number,
-    toolMsg: TraceCallMessage,
-    outputTokens: number,
-    /** Turn 2+ simulates prior fat tool context still in window. */
-    priorFatToolTurns = 0
-  ): TraceCallRecord => {
-    const messages = [systemHarness, systemVault, user, schema, toolMsg];
-    let inputTokens = meteredInputFromMessages(messages);
-    if (priorFatToolTurns > 0 && toolMsg === fatResult) {
-      const oneTurnTool = meteredInputFromMessages([toolMsg]);
-      inputTokens += oneTurnTool * priorFatToolTurns;
-    }
-    return {
-      id,
-      correlationId: sessionId,
-      timestamp: new Date(base + offsetMs).toISOString(),
-      modelId: "demo/gpt",
-      provider: "demo",
-      messages,
-      response: "First repo looks active; next hop is execute(repos.get).",
-      usage: { inputTokens, outputTokens },
-      latencyMs: 120 + offsetMs / 10,
-    };
-  };
-
-  const compressed = [
-    mk("c1", 0, compressedResult, 48),
-    mk("c2", 30_000, compressedResult, 52, 0),
-  ];
-  const fat = [
-    mk("f1", 0, fatResult, 48),
-    mk("f2", 30_000, fatResult, 52, 1),
-  ];
-  return { compressed, fat };
 }
 
 /**

@@ -167,7 +167,7 @@ export function renderContextFlamegraphPage(
   <div class="fg-wrap">
     <p class="fg-nav"><a href="${escapeMcpUiHtml(base)}/">← MCP UI catalog</a></p>
     <h1>Context accumulation flamegraph</h1>
-    <p class="fg-meta">Session <code>${escapeMcpUiHtml(graph.sessionId)}</code> · ${graph.calls} model call(s) · stacked by source (input + output tokens)</p>
+    <p class="fg-meta">Session <code>${escapeMcpUiHtml(graph.sessionId)}</code> · ${graph.calls} model call(s) · stacked by source (input + output tokens)${graph.tokenization?.label ? ` · <em>${escapeMcpUiHtml(graph.tokenization.label)}</em>` : ""}</p>
     <div class="fg-summary">
       <div class="fg-stat"><div class="v">${totalTokens.toLocaleString()}</div><div class="l">Total tokens</div></div>
       <div class="fg-stat"><div class="v">${graph.totalInputTokens.toLocaleString()}</div><div class="l">Input</div></div>

@@ -72,6 +72,7 @@ export {
   buildContextFlamegraph,
   coalesceFramesBySource,
   demoCompressedVsFatRecords,
+  demoTraceTokenizationMeta,
   estimateTokensFromChars,
   meteredInputFromMessages,
   resolveTraceRecords,

@@ -3,6 +3,7 @@ import {
   buildContextFlamegraph,
   coalesceFramesBySource,
   demoCompressedVsFatRecords,
+  demoTraceTokenizationMeta,
   estimateTokensFromChars,
   resolveTraceRecords,
   DEMO_TRACE_SESSION_COMPRESSED,
@@ -64,12 +65,12 @@ describe("buildContextFlamegraph", () => {
 
   it("fat demo keeps same harness/vault as compressed — only tool_result grows", () => {
     const { compressed, fat } = demoCompressedVsFatRecords("x");
-    const c = buildContextFlamegraph("c", compressed);
-    const f = buildContextFlamegraph("f", fat);
+    const c = buildContextFlamegraph("c", compressed, { tokenization: demoTraceTokenizationMeta() });
+    const f = buildContextFlamegraph("f", fat, { tokenization: demoTraceTokenizationMeta() });
     expect(f.bySource.harness_prompt).toBe(c.bySource.harness_prompt);
     expect(f.bySource.vault_seed).toBe(c.bySource.vault_seed);
-    expect(f.bySource.tool_schema).toBe(c.bySource.tool_schema);
-    expect(f.bySource.user).toBe(c.bySource.user);
+    expect(f.bySource.harness_prompt).toBe(40); // 20 tok × 2 turns (cl100k_base)
+    expect(f.bySource.vault_seed).toBe(52);
     expect(f.bySource.tool_result).toBeGreaterThan(c.bySource.tool_result * 10);
   });
 

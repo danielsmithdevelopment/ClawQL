@@ -39,6 +39,7 @@ import {
   DEMO_TRACE_SESSION_COMPRESSED,
   DEMO_TRACE_SESSION_FAT,
   demoCompressedVsFatRecords,
+  demoTraceTokenizationMeta,
   resolveTraceRecords,
   type TraceCallRecord,
 } from "./mcp-ui-trace.js";
@@ -274,8 +275,11 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
 
   router.get("/trace/compare", (req, res) => {
     const { compressed, fat } = demoCompressedVsFatRecords("compare");
-    const cGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_COMPRESSED, compressed);
-    const fGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_FAT, fat);
+    const tok = demoTraceTokenizationMeta();
+    const cGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_COMPRESSED, compressed, {
+      tokenization: tok,
+    });
+    const fGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_FAT, fat, { tokenization: tok });
     const wantJson = String(req.query.format ?? "").toLowerCase() === "json";
     if (wantJson) {
       res.status(200).json({ compressed: cGraph, fat: fGraph });
@@ -328,7 +332,14 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
       return;
     }
 
-    const graph = buildContextFlamegraph(sessionId, records);
+    const graph = buildContextFlamegraph(sessionId, records, {
+      tokenization:
+        sessionId === DEMO_TRACE_SESSION_COMPRESSED || sessionId === DEMO_TRACE_SESSION_FAT
+          ? demoTraceTokenizationMeta()
+          : records.some((r) => r.messages.some((m) => m.tokens != null))
+            ? { label: "Per-message tokens from inference record" }
+            : { label: "Estimated (chars ÷ 4); totals from provider usage when present" },
+    });
     const wantJson =
       String(req.query.format ?? "").toLowerCase() === "json" ||
       (req.accepts(["html", "json"]) === "json" &&
