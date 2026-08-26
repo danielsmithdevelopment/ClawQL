@@ -163,11 +163,15 @@ const MCP_UI_STYLES = `
   }
   .field textarea { resize: vertical; min-height: 5rem; }
   .field--checkbox {
+    display: block;
+  }
+  .field--checkbox__row {
     display: flex;
     align-items: flex-start;
     gap: 0.45rem;
   }
-  .field--checkbox input { width: auto; margin-top: 0.2rem; }
+  .field--checkbox__row input { width: auto; margin-top: 0.2rem; flex-shrink: 0; }
+  .field--checkbox .field-help { margin-left: 1.4rem; }
   .field--error input,
   .field--error select,
   .field--error textarea {

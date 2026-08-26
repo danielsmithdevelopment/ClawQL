@@ -256,11 +256,13 @@ export function renderFieldControl(options: RenderFieldOptions): string {
   const type = propSchema.type;
   if (type === "boolean") {
     const checked = defaultValue === true ? " checked" : "";
-    return `<label class="field field--checkbox${errClass}">
-  <input type="checkbox" name="${escHtml(name)}" value="true"${checked} />
-  <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
+    return `<div class="field field--checkbox${errClass}">
+  <label class="field--checkbox__row">
+    <input type="checkbox" name="${escHtml(name)}" value="true"${checked} />
+    <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
+  </label>
   ${hintHtml}${errHtml}
-</label>`;
+</div>`;
   }
 
   if (asTextarea || (typeof description === "string" && description.length > 160)) {
