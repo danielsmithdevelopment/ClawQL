@@ -26,7 +26,7 @@ function wormEnabled(env: NodeJS.ProcessEnv): boolean {
 export function bootProcessWormFromEnvEffect(
   env: NodeJS.ProcessEnv = process.env
 ): Effect.Effect<boolean> {
-  return Effect.gen(function* () {
+  return Effect.sync(() => {
     if (booted) return appendEffect !== null;
     if (disabled || !wormEnabled(env)) {
       disabled = true;

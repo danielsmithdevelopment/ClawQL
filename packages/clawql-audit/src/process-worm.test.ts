@@ -1,7 +1,6 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import type { WORMAppendInput } from "./entry.js";
 import {
   appendProcessWormEffect,
   bootProcessWormFromEnvEffect,
