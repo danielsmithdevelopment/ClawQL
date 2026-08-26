@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`/mcp-ui` overflow fix:** schema descriptions render as wrapping `.field-help` (not truncating input placeholders); result snippets and card text use `overflow-wrap` so long vault snippets no longer spill out of columns.
+
 - **`/mcp-ui` nested forms:** `object` properties render as expandable `<fieldset>`s (`parent.child` names); `array` of scalars/objects get add/remove row controls (`items[0]`, `steps[0].tool`). Depth capped at 2; deeper schemas still fall back to the JSON bag.
 
 - **`/mcp-ui` ATR scoping:** catalog + execute filter by JWT `atr.scope` / `atr.tools` (default on). Internal `ouroboros_*` / `pageindex_*` require explicit or family grants. `--no-mcp-ui-atr-scoped` disables. API keys remain admin-equivalent.
