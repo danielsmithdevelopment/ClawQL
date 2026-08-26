@@ -15,6 +15,9 @@
     },
     "./package.json": "./package.json"
   },
+  "bin": {
+    "clawql-tee-id-jag-sign": "./bin/id-jag-sign-cmd.mjs"
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsup",
@@ -23,7 +26,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "effect": "^3.21.4"
+    "effect": "^3.21.4",
+    "jose": "^6.2.8"
   },
   "peerDependencies": {
     "clawql-auth": "0.1.0"
@@ -42,6 +46,7 @@
   },
   "files": [
     "dist",
+    "bin",
     "README.md"
   ],
   "engines": {

@@ -53,6 +53,7 @@ export {
   type CreateEcdsaTeeSignerOptions,
   type VerifyTeeSignatureResult,
 } from "./tee/signer.js";
+export { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
 export {
   handleAuditHttpRequest,
   authorizeApiKey,
