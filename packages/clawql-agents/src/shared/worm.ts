@@ -6,7 +6,7 @@ import {
   type WORMAppendInput,
   type WORMEntryType,
 } from "clawql-audit";
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import type { AgentName, AgentSession } from "./types.js";
 
 /** Shared local SQLite WORM layer (MemoryBackend remote stub). */
