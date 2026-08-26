@@ -9,10 +9,10 @@ status: current
 
 ## Packages
 
-| Package | Role | Semver |
-| --- | --- | --- |
-| `clawql-merkle` | Zero-dep Merkle snapshots + inclusion proofs | `7.2.0` |
-| `clawql-audit` | Hash-chained WORM trail, dual-ack (sql.js/memory), TEE ECDSA | `7.2.0` |
+| Package         | Role                                                         | Semver  |
+| --------------- | ------------------------------------------------------------ | ------- |
+| `clawql-merkle` | Zero-dep Merkle snapshots + inclusion proofs                 | `7.2.0` |
+| `clawql-audit`  | Hash-chained WORM trail, dual-ack (sql.js/memory), TEE ECDSA | `7.2.0` |
 
 `clawql-audit` is CI-gated to depend on **only** `clawql-merkle` among `clawql-*` names.
 
