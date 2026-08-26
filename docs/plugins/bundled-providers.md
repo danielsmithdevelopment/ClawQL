@@ -21,32 +21,32 @@ Fresh install with no provider selection loads **nothing** from the catalog (nat
 
 ## Opt-in (preferred)
 
-| Mechanism | Example |
-| --- | --- |
-| Instance `providers.pack` | `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}` |
-| Instance `providers.enabled` | `{"providers":{"enabled":["github","linear"]}}` |
-| Helm | `providers.pack: default` (chart default is **`none`**) |
+| Mechanism                    | Example                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| Instance `providers.pack`    | `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}` |
+| Instance `providers.enabled` | `{"providers":{"enabled":["github","linear"]}}`         |
+| Helm                         | `providers.pack: default` (chart default is **`none`**) |
 
 ### Curated pack `default`
 
-| Provider | Notes |
-| --- | --- |
-| **Cloudflare** | Edge/DNS/Workers APIs |
-| **GitHub** | REST automation |
-| **Slack** | Web API (powers optional **`notify`** when enabled) |
-| **Linear** | Bundled GraphQL-only vendor |
-| **Notion** | Official REST OpenAPI |
-| **Onyx** | Enterprise search spec (pair with Onyx MCP tool when enabled) |
+| Provider       | Notes                                                         |
+| -------------- | ------------------------------------------------------------- |
+| **Cloudflare** | Edge/DNS/Workers APIs                                         |
+| **GitHub**     | REST automation                                               |
+| **Slack**      | Web API (powers optional **`notify`** when enabled)           |
+| **Linear**     | Bundled GraphQL-only vendor                                   |
+| **Notion**     | Official REST OpenAPI                                         |
+| **Onyx**       | Enterprise search spec (pair with Onyx MCP tool when enabled) |
 
 ### Other packs
 
-| `pack` / `CLAWQL_PROVIDER` | Behavior |
-| --- | --- |
-| **`none`** | Explicit empty (same as no-config) |
-| **`default`** / **`default-providers`** | Curated six-vendor pack above |
-| **`all-providers`** | Every bundled vendor + Google top-50 + AWS top-50 |
-| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets |
-| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`** | Custom explicit subset |
+| `pack` / `CLAWQL_PROVIDER`               | Behavior                                          |
+| ---------------------------------------- | ------------------------------------------------- |
+| **`none`**                               | Explicit empty (same as no-config)                |
+| **`default`** / **`default-providers`**  | Curated six-vendor pack above                     |
+| **`all-providers`**                      | Every bundled vendor + Google top-50 + AWS top-50 |
+| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets                            |
+| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`**     | Custom explicit subset                            |
 
 Only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP vendor set from **`all-providers`**.
 

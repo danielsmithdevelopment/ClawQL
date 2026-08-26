@@ -20,20 +20,20 @@ ClawQL groups capabilities into three bands. This matches the **layer diagram** 
 
 Unset means **on**. Set **`0`**, **`false`**, or **`no`** to hide tools or shrink merges:
 
-| Band                  | MCP tools                                                                                                                                                                                                               | Env to opt out                                                                                                                                                                                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ClawQL Memory**     | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                                                | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                              |
-| **ClawQL Documents**  | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`inspect_pdf`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from **`all-providers`**; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
+| Band                 | MCP tools                                                                                                                                                                                                               | Env to opt out                                                                                                                                                                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ClawQL Memory**    | **`memory_ingest`**, **`memory_recall`**                                                                                                                                                                                | **`CLAWQL_ENABLE_MEMORY=0`**                                                                                                                                                                                                                                              |
+| **ClawQL Documents** | **`ingest_external_knowledge`**; **`knowledge_search_onyx`** when also **`CLAWQL_ENABLE_ONYX=1`**; optional **`run_idp_pipeline`**, **`inspect_pdf`**, **`classify_document`**, **`extract_document`** (separate flags) | **`CLAWQL_ENABLE_DOCUMENTS=0`** (drops **docling**, **tika**, **gotenberg**, **paperless**, **stirling**, **onyx**, **nextcloud**, **coneshare** from **`all-providers`**; hides document MCP tools). Explicit **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list those ids. |
 
 ### Bundled OpenAPI catalog (available — opt in)
 
 Specs under **`providers/`** ship in the package/image but are **not** loaded until selected:
 
-| Mechanism | Example |
-| --- | --- |
-| Instance | **`CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`** or **`enabled: ["github"]`** |
-| Env | **`CLAWQL_PROVIDER=default`**, **`all-providers`**, **`google`**, **`aws`**, or a single vendor id |
-| Helm | **`providers.pack`** (chart default **`none`**) |
+| Mechanism | Example                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------- |
+| Instance  | **`CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`** or **`enabled: ["github"]`**           |
+| Env       | **`CLAWQL_PROVIDER=default`**, **`all-providers`**, **`google`**, **`aws`**, or a single vendor id |
+| Helm      | **`providers.pack`** (chart default **`none`**)                                                    |
 
 **Fresh install** with no provider selection: **empty** catalog (native GraphQL/gRPC only when configured). Curated pack **`default`** = Cloudflare, GitHub, Slack, Linear, Notion, Onyx. **`CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`** are deprecated for stack selection.
 

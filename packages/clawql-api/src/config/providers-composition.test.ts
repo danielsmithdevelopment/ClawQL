@@ -52,10 +52,7 @@ describe("providers composition", () => {
 
   it("loadSpec honors instance providers.enabled for a single vendor", async () => {
     vi.stubEnv("CLAWQL_BUNDLED_OFFLINE", "1");
-    vi.stubEnv(
-      "CLAWQL_INSTANCE_SPEC",
-      JSON.stringify({ providers: { enabled: ["linear"] } })
-    );
+    vi.stubEnv("CLAWQL_INSTANCE_SPEC", JSON.stringify({ providers: { enabled: ["linear"] } }));
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     resetSpecCache();

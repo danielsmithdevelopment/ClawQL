@@ -443,7 +443,7 @@ async function loadRawDocument(source: SpecSource): Promise<unknown> {
     }
     case "default": {
       throw new Error(
-        "[spec-loader] Internal error: empty provider stack should resolve via multi-spec \"empty\" path, not single-spec default."
+        '[spec-loader] Internal error: empty provider stack should resolve via multi-spec "empty" path, not single-spec default.'
       );
     }
     case "discovery": {
@@ -682,7 +682,7 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | "empty" | 
   ) {
     console.error(
       "[spec-loader] CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE no longer select the provider stack. " +
-        'Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…'
+        "Use providers.pack / providers.enabled in CLAWQL_INSTANCE_SPEC, or CLAWQL_PROVIDER=default|google|aws|…"
     );
   }
 
