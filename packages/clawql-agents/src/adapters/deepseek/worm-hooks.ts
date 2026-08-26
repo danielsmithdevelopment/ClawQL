@@ -1,10 +1,9 @@
 import type {
   WORMAppendInput,
   WORMEntryType,
-  WormChainGapError,
-  WormStorageError,
+  AuditError,
 } from "clawql-audit";
-import { WORMAuditTrail } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 import type { DeepSeekAtrScope } from "./atr-templates.js";
 
@@ -15,7 +14,7 @@ export class DeepSeekPluginDenyError extends Data.TaggedError("DeepSeekPluginDen
 }> {}
 
 export type DeepSeekPluginEnforceError =
-  DeepSeekPluginDenyError | WormStorageError | WormChainGapError;
+  DeepSeekPluginDenyError | AuditError;
 
 export type DeepSeekHookKind =
   "plugin_load" | "tool_call" | "tool_result" | "session_start" | "session_end" | "panguard_deny";
@@ -62,9 +61,9 @@ export const gateDeepSeekPluginLoad = (input: {
   readonly pluginName: string;
   readonly atrScope: DeepSeekAtrScope;
   readonly sessionId: string;
-}): Effect.Effect<void, DeepSeekPluginEnforceError, WORMAuditTrail> =>
+}): Effect.Effect<void, DeepSeekPluginEnforceError, WORMAuditTrailService> =>
   Effect.gen(function* () {
-    const worm = yield* WORMAuditTrail;
+    const worm = yield* WORMAuditTrailService;
     const allowed = input.atrScope.allowedPlugins.includes(input.pluginName);
     yield* worm.append(
       deepSeekHookToWormAppend({

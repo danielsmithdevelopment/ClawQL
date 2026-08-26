@@ -1,10 +1,9 @@
 import type {
   WORMAppendInput,
   WORMEntryType,
-  WormChainGapError,
-  WormStorageError,
+  AuditError,
 } from "clawql-audit";
-import { WORMAuditTrail } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 import type { GooseAtrScope } from "./atr-templates.js";
 
@@ -14,7 +13,7 @@ export class GoosePathDenyError extends Data.TaggedError("GoosePathDenyError")<{
   readonly sessionId?: string;
 }> {}
 
-export type GoosePathEnforceError = GoosePathDenyError | WormStorageError | WormChainGapError;
+export type GoosePathEnforceError = GoosePathDenyError | AuditError;
 
 export type GooseHookKind =
   | "file_write_attempt"
@@ -74,9 +73,9 @@ export const gateGooseFileWrite = (input: {
   readonly atrScope: GooseAtrScope;
   readonly sessionId: string;
   readonly virtualKeyId?: string;
-}): Effect.Effect<void, GoosePathEnforceError, WORMAuditTrail> =>
+}): Effect.Effect<void, GoosePathEnforceError, WORMAuditTrailService> =>
   Effect.gen(function* () {
-    const worm = yield* WORMAuditTrail;
+    const worm = yield* WORMAuditTrailService;
     const inScope = isPathInScope(input.path, input.atrScope);
     yield* worm.append(
       gooseHookToWormAppend({
