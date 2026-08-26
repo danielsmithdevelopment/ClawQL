@@ -13,6 +13,8 @@
 
 ### Added
 
+- **`clawql-merkle` + `clawql-audit` npm wedge (0.1.x)** — standalone Merkle + WORM trail packages first in [`scripts/release/npm-publish-order.json`](scripts/release/npm-publish-order.json); wedge publish helper [`scripts/release/npm-publish-audit-wedge.mjs`](scripts/release/npm-publish-audit-wedge.mjs); pack smoke [`scripts/dev/test-npm-pack-audit-wedge.sh`](scripts/dev/test-npm-pack-audit-wedge.sh); docs [`docs/security/clawql-audit-standalone.md`](docs/security/clawql-audit-standalone.md).
+
 - **`clawql-data` (Node DuckDB)** — workspace package `packages/clawql-data` registers MCP **`data_query`**, **`data_ingest`**, and **`data_status`** when **`CLAWQL_ENABLE_DATA=1`**. Engine is **Node DuckDB** (`@duckdb/node-api`). Python `duckdb` and chDB are not supported. Harvey LAB `clawql_sql` calls **`data_query`**. Docs: [`docs/plugins/data.md`](docs/plugins/data.md).
 
 - **Helm `managedGateway` hardening** — non-root nginx (uid 101), read-only root + emptyDir, stderr/stdout logs, tunable probes, default NetworkPolicy (DNS + MCP + inference egress). JWT ATR remains on MCP/proxy upstream.

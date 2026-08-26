@@ -1,6 +1,8 @@
 {
   "description": "Topological publish order for clawql-* workspace packages. Publish each row before the next; clawql-mcp is last.",
   "packages": [
+    "clawql-merkle",
+    "clawql-audit",
     "clawql-core",
     "clawql-auth",
     "clawql-pageindex",
@@ -25,14 +27,15 @@
     "mcp-api-adapter"
   ],
   "notes": [
+    "clawql-merkle + clawql-audit form the standalone WORM wedge (0.1.x); publish before clawql-core (core depends on merkle).",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras are packed/installed in CI npm-pack smoke so clawql-mcp can resolve unpublished peer versions (e.g. mcp-grpc-transport@1.0.0 before registry publish).",
     "mcp-api-adapter depends on mcp-grpc-transport — pack/publish transport first.",
     "clawql-telemetry is not yet a package (see #313).",
-    "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
+    "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order (after merkle/audit).",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
-    "Monorepo dev uses matching 7.2.0 semver; npm workspaces link packages locally."
+    "Monorepo clawql-* horizontals use matching 7.2.0 semver; merkle/audit use independent 0.1.x; npm workspaces link packages locally."
   ]
 }

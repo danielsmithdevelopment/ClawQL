@@ -42,6 +42,10 @@
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/clawql-merkle"
   },
+  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-merkle",
+  "bugs": {
+    "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
+  },
   "keywords": [
     "merkle",
     "merkle-tree",
