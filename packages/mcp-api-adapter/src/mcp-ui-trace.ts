@@ -224,10 +224,15 @@ export function demoCompressedVsFatRecords(sessionId: string): {
   fat: TraceCallRecord[];
 } {
   const base = new Date("2026-08-26T12:00:00.000Z").getTime();
-  const system = {
+  const systemHarness = {
     role: "system",
     content:
-      "You are ClawQL harness. Prefer search() then execute(). Agent.md vault seed: [[MCP UI ClawQL Demo]].",
+      "You are ClawQL harness. Prefer search() then execute(). Keep tool results compact.",
+  };
+  const systemVault = {
+    role: "system",
+    content:
+      "Obsidian vault system-seed memory: [[MCP UI ClawQL Demo]] agent.md notes for this session.",
   };
   const user = {
     role: "user",
@@ -271,7 +276,7 @@ export function demoCompressedVsFatRecords(sessionId: string): {
     timestamp: new Date(base + offsetMs).toISOString(),
     modelId: "demo/gpt",
     provider: "demo",
-    messages: [system, user, schema, toolMsg],
+    messages: [systemHarness, systemVault, user, schema, toolMsg],
     response: "First repo looks active; next hop is execute(repos.get).",
     usage,
     latencyMs: 120 + offsetMs / 10,
