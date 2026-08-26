@@ -62,9 +62,7 @@ describe("clawql-tee platform adapter", () => {
       env: { CLAWQL_TEE_STRICT: "1" } as NodeJS.ProcessEnv,
     });
     await expect(
-      Effect.runPromise(
-        signer.sign({ claims: { sub: "x" }, header: { alg: "RS256" } })
-      )
+      Effect.runPromise(signer.sign({ claims: { sub: "x" }, header: { alg: "RS256" } }))
     ).rejects.toThrow(/CLAWQL_TEE_STRICT/);
     expect(teeStrictFromEnv({ CLAWQL_TEE_STRICT: "1" } as NodeJS.ProcessEnv)).toBe(true);
   });

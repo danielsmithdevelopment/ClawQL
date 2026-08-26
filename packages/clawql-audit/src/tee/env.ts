@@ -23,7 +23,11 @@ function envFlag(env: NodeJS.ProcessEnv, key: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-function readPemFromEnv(env: NodeJS.ProcessEnv, pemKey: string, pathKey: string): string | undefined {
+function readPemFromEnv(
+  env: NodeJS.ProcessEnv,
+  pemKey: string,
+  pathKey: string
+): string | undefined {
   const inline = envTrim(env, pemKey);
   if (inline) return inline;
   const path = envTrim(env, pathKey);

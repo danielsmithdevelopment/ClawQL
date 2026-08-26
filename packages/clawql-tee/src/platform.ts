@@ -52,7 +52,9 @@ export const createSimulatedPlatformAdapter = (
   };
 };
 
-const unsupportedHardware = (platform: Exclude<TeePlatformId, "simulated">): TeePlatformAdapter => ({
+const unsupportedHardware = (
+  platform: Exclude<TeePlatformId, "simulated">
+): TeePlatformAdapter => ({
   platform,
   getAttestation: () =>
     Effect.fail(

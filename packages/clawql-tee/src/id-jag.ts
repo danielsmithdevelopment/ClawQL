@@ -37,16 +37,16 @@ export const createIdJagSignerFromPlatform = (
     attestationId: options.adapter.platform,
     sign: (request: IdJagSignRequest) =>
       Effect.gen(function* () {
-        const attestation = yield* options.adapter.getAttestation().pipe(
-          Effect.mapError(
-            (err: TeePlatformError) =>
-              new Error(err.message, err.cause ? { cause: err.cause } : undefined)
-          )
-        );
-        if (teeStrictFromEnv(env) && attestation.platform === "simulated") {
-          return yield* Effect.fail(
-            new Error("CLAWQL_TEE_STRICT=1 rejects simulated attestation")
+        const attestation = yield* options.adapter
+          .getAttestation()
+          .pipe(
+            Effect.mapError(
+              (err: TeePlatformError) =>
+                new Error(err.message, err.cause ? { cause: err.cause } : undefined)
+            )
           );
+        if (teeStrictFromEnv(env) && attestation.platform === "simulated") {
+          return yield* Effect.fail(new Error("CLAWQL_TEE_STRICT=1 rejects simulated attestation"));
         }
         if (process.env.CLAWQL_TEE_DEBUG?.trim() === "1") {
           process.stderr.write(
