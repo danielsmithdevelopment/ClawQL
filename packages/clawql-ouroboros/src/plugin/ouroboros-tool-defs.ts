@@ -110,9 +110,7 @@ export function buildOuroborosMcpToolDefinitions(
         const { runOuroborosEffect, ouroborosProposeRevisionProgram } =
           await import("../effect/ouroboros-effect-runtime.js");
         const r = await runOuroborosEffect(
-          ouroborosProposeRevisionProgram(
-            args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>
-          )
+          ouroborosProposeRevisionProgram(args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>)
         );
         return textResult(r);
       },

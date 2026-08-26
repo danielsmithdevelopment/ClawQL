@@ -89,9 +89,7 @@ export function composeHorizontalPluginLayers(
     // Ouroboros is a clawql-harness plugin; MCP bridges harness tools (no separate makeOuroborosLayer path).
     layers.push(
       makeHarnessLayer({
-        plugins: [
-          createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
-        ],
+        plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
       })
     );
   }
