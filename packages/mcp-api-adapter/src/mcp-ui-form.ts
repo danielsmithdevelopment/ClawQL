@@ -77,6 +77,21 @@ function shortPlaceholder(description: string | undefined, max = 90): string {
   return `${oneLine.slice(0, max - 1)}…`;
 }
 
+/** True when a flat string field should render as `<input type="file">`. */
+export function looksLikeFileField(
+  name: string,
+  propSchema: Record<string, unknown>,
+  asFile?: boolean
+): boolean {
+  if (asFile) return true;
+  if (propSchema.format === "binary" || propSchema.format === "byte") return true;
+  if (propSchema.contentMediaType != null) return true;
+  // Exact arg names used by IDP / document tools (not *File path strings).
+  if (/^(file|upload|pdf_base64|base64)$/i.test(name)) return true;
+  if (/_base64$/i.test(name)) return true;
+  return false;
+}
+
 function labelBadge(required: boolean): string {
   return required
     ? `<span class="badge badge--required">Required</span>`
@@ -118,16 +133,7 @@ export function renderFieldControl(options: RenderFieldOptions): string {
     ? `<p class="field-error" role="alert">${escHtml(errorMessage)}</p>`
     : "";
 
-  if (
-    asFile ||
-    propSchema.format === "binary" ||
-    propSchema.format === "byte" ||
-    propSchema.contentMediaType != null ||
-    /^(file|upload|pdf_base64|base64)$/i.test(name) ||
-    (typeof description === "string" &&
-      /\b(upload|file|document|pdf|image)\b/i.test(description) &&
-      /base64|binary|path/i.test(name + (description || "")))
-  ) {
+  if (looksLikeFileField(name, propSchema, asFile)) {
     return `<label class="field${errClass}">
   <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
   <input type="file" name="${escHtml(name)}" accept="*/*"${reqAttr} />
@@ -302,16 +308,9 @@ export function renderToolFormFields(
 
   const hasFileFields =
     (hints.fileFields?.length ?? 0) > 0 ||
-    Object.entries(flatProps).some(([key, schema]) => {
-      if (hints.fileFields?.includes(key)) return true;
-      if (schema.format === "binary" || schema.format === "byte") return true;
-      if (/^(file|upload|pdf_base64|base64)$/i.test(key)) return true;
-      const desc = typeof schema.description === "string" ? schema.description : "";
-      return (
-        /\b(upload|file|document|pdf|image)\b/i.test(desc) &&
-        /base64|binary|pdf_base64|file/i.test(key + desc)
-      );
-    });
+    Object.entries(flatProps).some(([key, schema]) =>
+      looksLikeFileField(key, schema, hints.fileFields?.includes(key))
+    );
 
   return { mode, hasFileFields, html: `${primaryHtml}\n${advancedHtml}\n${omitNote}` };
 }
