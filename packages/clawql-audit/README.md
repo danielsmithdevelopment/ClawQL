@@ -73,6 +73,35 @@ Prefer `makeWORMAuditTrailLayer` / `WORMAuditTrailService` inside ClawQL. The `W
 
 The MCP `audit` tool ring buffer is ephemeral operator breadcrumbs — a different product surface.
 
-## Phase 3 (not yet)
+## Phase 3 — TEE ECDSA (shipped; hardware later)
 
-Real TEE ECDSA signer/verifier (`clawql-tee` integration).
+Per-entry `teeSignature` via **ECDSA P-256** (`node:crypto`):
+
+```typescript
+import {
+  WORMAuditTrail,
+  MemoryBackend,
+  createSimulatedTeeSigner,
+  verifyTEESignature,
+} from "clawql-audit";
+import { Effect } from "effect";
+
+const tee = await Effect.runPromise(createSimulatedTeeSigner());
+const worm = await WORMAuditTrail.create({
+  local: new MemoryBackend(),
+  remote: new MemoryBackend(),
+  tee,
+});
+const entry = await worm.append({ /* … */ });
+console.log(await Effect.runPromise(verifyTEESignature(entry, tee.publicKeyPem, tee.attestation)));
+```
+
+Env (process trail): `CLAWQL_WORM_TEE=1` plus PEM keys, or omit PEMs for ephemeral simulated keys.
+
+| Variable | Role |
+| --- | --- |
+| `CLAWQL_WORM_TEE` | `1` enables signing on append |
+| `CLAWQL_WORM_TEE_PRIVATE_KEY_PEM` | PKCS8 PEM (use `\n` in env) |
+| `CLAWQL_WORM_TEE_PUBLIC_KEY_PEM` | SPKI PEM |
+
+`platform: "simulated"` until **clawql-tee** (SEV-SNP / TDX remote attestation) lands — ECDSA crypto is real; hardware attestation report verification is not.

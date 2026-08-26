@@ -49,8 +49,17 @@ export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
 export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";
 export {
   verifyTEESignature,
+  createEcdsaTeeSigner,
+  createSimulatedTeeSigner,
+  generateTeeKeyPairPem,
+  signEntryHashEcdsa,
+  verifyEntryHashEcdsa,
+  TEE_ECDSA_CURVE,
   type TEEAttestationReport,
   type TEESigner,
+  type TEEKeyPairPem,
+  type CreateEcdsaTeeSignerOptions,
+  type VerifyTeeSignatureResult,
 } from "./tee/signer.js";
 export { handleAuditHttpRequest, authorizeApiKey, type HttpRequest, type HttpResponse } from "./http/routes.js";
 export { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
