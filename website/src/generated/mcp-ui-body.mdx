@@ -62,12 +62,12 @@ What nobody ships today:
 
 ### 3.1 Routes
 
-| Method / path                     | Role                                                             |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `GET /mcp-ui`                     | Full tool catalog playground (HTML)                              |
+| Method / path                       | Role                                                             |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `GET /mcp-ui`                       | Full tool catalog playground (HTML)                              |
 | `GET /mcp-ui/tools/\{toolName\}`    | Optional deep-link to one tool card                              |
 | `POST /mcp-ui/execute/\{toolName\}` | HTMX form post → tool invoke → HTML fragment result              |
-| `GET /mcp-ui/partials/catalog`    | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/partials/catalog`      | Optional HTMX refresh of the card list after `ListTools` refresh |
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
@@ -120,7 +120,9 @@ Example result fragment (illustrative):
       </button>
     </li>
   </ul>
-  <a hx-get="/mcp-ui/tools/memory_recall" hx-target="#card-memory_recall"> Search again </a>
+  <a hx-get="/mcp-ui/tools/memory_recall" hx-target="#card-memory_recall">
+    Search again
+  </a>
 </div>
 ```
 
