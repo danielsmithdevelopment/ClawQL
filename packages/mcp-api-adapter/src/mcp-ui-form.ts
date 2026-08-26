@@ -14,29 +14,37 @@ function isSafeFieldName(name: string): boolean {
 
 export type McpUiFormMode = "flat" | "jsonBag";
 
-export function formModeFromInputSchema(inputSchema: Record<string, unknown>): McpUiFormMode {
-  const props = inputSchema.properties as Record<string, Record<string, unknown>> | undefined;
-  if (!props || typeof props !== "object" || Object.keys(props).length === 0) {
-    return "jsonBag";
-  }
-
-  for (const [key, propSchema] of Object.entries(props)) {
-    if (!isSafeFieldName(key)) return "jsonBag";
-    if (!isFlatFormField(propSchema ?? {})) return "jsonBag";
-  }
-
-  return "flat";
-}
-
 function isFlatFormField(propSchema: Record<string, unknown>): boolean {
-  const t = propSchema.type;
-  if (t === "string" || t === "number" || t === "integer" || t === "boolean") {
-    return true;
-  }
   if (Array.isArray(propSchema.enum) && propSchema.enum.length > 0) {
     return propSchema.enum.every((v) => typeof v === "string" || typeof v === "number");
   }
-  return false;
+  const t = propSchema.type;
+  return t === "string" || t === "number" || t === "integer" || t === "boolean";
+}
+
+/** Flat-safe properties only (string/number/boolean/enum with safe names). */
+export function flatPropertiesFromInputSchema(
+  inputSchema: Record<string, unknown>
+): Record<string, Record<string, unknown>> {
+  const props = inputSchema.properties as Record<string, Record<string, unknown>> | undefined;
+  if (!props || typeof props !== "object") return {};
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const [key, propSchema] of Object.entries(props)) {
+    if (!isSafeFieldName(key)) continue;
+    if (!isFlatFormField(propSchema ?? {})) continue;
+    out[key] = propSchema ?? {};
+  }
+  return out;
+}
+
+/**
+ * Prefer flat forms when at least one property is renderable as a control.
+ * Complex properties (object/array) are omitted from the form in flat mode.
+ * Fall back to a JSON bag when nothing flat is available.
+ */
+export function formModeFromInputSchema(inputSchema: Record<string, unknown>): McpUiFormMode {
+  const flat = flatPropertiesFromInputSchema(inputSchema);
+  return Object.keys(flat).length > 0 ? "flat" : "jsonBag";
 }
 
 function inputTypeForString(propSchema: Record<string, unknown>): string {
@@ -126,18 +134,25 @@ export function renderToolFormFields(tool: ListedMcpTool): { mode: McpUiFormMode
     };
   }
 
-  const props = inputSchema.properties as Record<string, Record<string, unknown>>;
+  const flatProps = flatPropertiesFromInputSchema(inputSchema);
+  const allProps = (inputSchema.properties as Record<string, unknown>) ?? {};
+  const omitted = Object.keys(allProps).filter((k) => !(k in flatProps));
   const requiredList = Array.isArray(inputSchema.required)
     ? (inputSchema.required as string[])
     : [];
 
-  const fields = Object.entries(props)
+  const fields = Object.entries(flatProps)
     .map(([key, propSchema]) =>
       renderFieldControl(key, propSchema ?? {}, requiredList.includes(key))
     )
     .join("\n");
 
-  return { mode, html: fields };
+  const omitNote =
+    omitted.length > 0
+      ? `<p class="field-help">Optional complex fields omitted from this form: ${escHtml(omitted.join(", "))}. Use REST <code>POST /${escHtml(tool.name)}</code> for full args.</p>`
+      : "";
+
+  return { mode, html: `${fields}\n${omitNote}` };
 }
 
 function parseFieldValue(
@@ -181,13 +196,13 @@ export function parseFormArgs(
     return parsed as Record<string, unknown>;
   }
 
-  const props = inputSchema.properties as Record<string, Record<string, unknown>>;
+  const flatProps = flatPropertiesFromInputSchema(inputSchema);
   const requiredList = Array.isArray(inputSchema.required)
     ? (inputSchema.required as string[])
     : [];
   const args: Record<string, unknown> = {};
 
-  for (const [key, propSchema] of Object.entries(props)) {
+  for (const [key, propSchema] of Object.entries(flatProps)) {
     const hasValue = Object.prototype.hasOwnProperty.call(body, key);
     if (propSchema.type === "boolean") {
       args[key] = hasValue ? parseFieldValue(propSchema, body[key]) : false;

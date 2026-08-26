@@ -24,7 +24,7 @@ describe("mcp-ui-form", () => {
     expect(html).toContain("Text to echo");
   });
 
-  it("falls back to JSON textarea for complex schemas", () => {
+  it("falls back to JSON textarea when no flat fields exist", () => {
     const tool: ListedMcpTool = {
       name: "run",
       inputSchema: {
@@ -38,6 +38,29 @@ describe("mcp-ui-form", () => {
     const { mode, html } = renderToolFormFields(tool);
     expect(mode).toBe("jsonBag");
     expect(html).toContain('name="__json_args"');
+  });
+
+  it("renders flat fields and omits complex properties (hybrid)", () => {
+    const tool: ListedMcpTool = {
+      name: "memory_recall",
+      inputSchema: {
+        type: "object",
+        required: ["query"],
+        properties: {
+          query: { type: "string" },
+          limit: { type: "integer" },
+          sources: { type: "array", items: { type: "string" } },
+          filters: { type: "object" },
+        },
+      },
+    };
+
+    const { mode, html } = renderToolFormFields(tool);
+    expect(mode).toBe("flat");
+    expect(html).toContain('name="query"');
+    expect(html).toContain('name="limit"');
+    expect(html).not.toContain('name="sources"');
+    expect(html).toContain("sources, filters");
   });
 
   it("parses flat form submissions into tool args", () => {
