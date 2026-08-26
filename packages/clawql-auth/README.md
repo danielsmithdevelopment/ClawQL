@@ -237,6 +237,8 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_ID_JAG_ISSUER_URI`                      | Assertion `iss` (default `$ORIGIN/oauth/id-jag/{orgId}`)                                 |
 | `CLAWQL_ID_JAG_ISSUER_JWKS_URI`                 | Override published issuer JWKS URI                                                       |
 | `CLAWQL_ID_JAG_ISSUER_ORIGIN`                   | Override public origin for issuer URIs                                                   |
+| `CLAWQL_ID_JAG_TEE_SIGNER`                      | `1` = wrap issuer signing as Layer C TEE-shaped signer (`kind: "tee"`)                   |
+| `CLAWQL_TEE_DEBUG`                              | `1` = log attestation ids when using `clawql-tee` bridge                                 |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
@@ -281,10 +283,10 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 | Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                             |
 | SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                        |
 | Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                              |
-| Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` (inject `WebAuthnStepUpVerifier` + `PasskeyCredentialStore`) |
+| Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` + `PasskeyCredentialStore.enroll`/`delete` (inject `WebAuthnStepUpVerifier`) |
 | Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                    |
-| Re-auth UX      | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram)                                  |
-| ID-JAG TEE      | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                                                            |
+| Re-auth UX      | `buildReauthUrl` + `notifyReauthRequiredEffect`; Hermes: `createTelegramReauthNotifierFromEnv` (`clawql-agents`)               |
+| ID-JAG TEE      | `CLAWQL_ID_JAG_TEE_SIGNER=1` or inject `assertionSigner` / `clawql-tee` `createDevTeeIdJagSigner`                              |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

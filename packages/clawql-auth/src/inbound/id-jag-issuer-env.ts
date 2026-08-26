@@ -20,6 +20,11 @@ import {
   type IdJagIssuerService,
 } from "./id-jag-issuer.js";
 import {
+  createLocalIdJagAssertionSigner,
+  createTeeIdJagAssertionSigner,
+  type IdJagAssertionSigner,
+} from "./id-jag-tee-signer.js";
+import {
   loadMcpOAuthSigningMaterialEffect,
   type McpOAuthSigningError,
   type McpOAuthSigningMaterial,
@@ -29,6 +34,8 @@ export type IdJagIssuerRuntime = {
   service: IdJagIssuerService["Type"];
   connectors: EmaConnectorRegistry;
   material: IdJagIssuerOrgMaterial;
+  /** Layer C signer when `CLAWQL_ID_JAG_TEE_SIGNER=1` or host injects `assertionSigner`. */
+  assertionSigner?: IdJagAssertionSigner;
 };
 
 function envFlag(name: string, env: NodeJS.ProcessEnv): boolean {
@@ -58,6 +65,11 @@ export function createIdJagIssuerFromEnv(options: {
   eventSink?: AuthEventSink;
   /** Public origin used to derive jwksUri when unset. */
   publicOrigin?: string;
+  /**
+   * Host-injected Layer C signer (e.g. `createDevTeeIdJagSigner` from `clawql-tee`).
+   * When unset and `CLAWQL_ID_JAG_TEE_SIGNER=1`, wraps local jose as a TEE-shaped signer.
+   */
+  assertionSigner?: IdJagAssertionSigner;
 }): Effect.Effect<IdJagIssuerRuntime | null, McpOAuthSigningError> {
   return Effect.gen(function* () {
     const env = options.env ?? process.env;
@@ -113,13 +125,25 @@ export function createIdJagIssuerFromEnv(options: {
       signing,
     };
 
+    const assertionSigner =
+      options.assertionSigner ??
+      (envFlag("CLAWQL_ID_JAG_TEE_SIGNER", env)
+        ? (() => {
+            const local = createLocalIdJagAssertionSigner(signing);
+            return createTeeIdJagAssertionSigner({
+              teeSign: (request) => local.sign(request),
+            });
+          })()
+        : undefined);
+
     const connectors = createSecretStoreEmaConnectorRegistry(options.secretStore);
     const service = createIdJagIssuerService({
       connectors,
       resolveOrgMaterial: fixedOrgMaterialResolver(material),
       eventSink: options.eventSink ?? createAuthEventSinkFromEnv(env),
+      assertionSigner,
     });
 
-    return { service, connectors, material };
+    return { service, connectors, material, assertionSigner };
   });
 }

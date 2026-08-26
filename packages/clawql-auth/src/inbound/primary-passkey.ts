@@ -31,6 +31,10 @@ export type PasskeyCredentialStore = {
   listBySubject: (
     subjectId: string
   ) => Effect.Effect<PasskeyCredentialRecord[], PrimaryPasskeyError>;
+  enroll: (
+    record: Omit<PasskeyCredentialRecord, "enrolledAt"> & { enrolledAt?: string }
+  ) => Effect.Effect<PasskeyCredentialRecord, PrimaryPasskeyError>;
+  delete: (credentialId: string) => Effect.Effect<boolean, PrimaryPasskeyError>;
 };
 
 export type PasskeyLoginChallenge = {
@@ -69,6 +73,43 @@ export function createMemoryPasskeyCredentialStore(
   return {
     getByCredentialId: (credentialId) => Effect.sync(() => byCred.get(credentialId) ?? null),
     listBySubject: (subjectId) => Effect.sync(() => bySubject.get(subjectId) ?? []),
+    enroll: (input) =>
+      Effect.gen(function* () {
+        const credentialId = input.credentialId.trim();
+        const subjectId = input.subjectId.trim();
+        if (!credentialId || !subjectId) {
+          return yield* Effect.fail(new PrimaryPasskeyError({ reason: "invalid_enroll_record" }));
+        }
+        const existing = byCred.get(credentialId);
+        if (existing && existing.subjectId !== subjectId) {
+          return yield* Effect.fail(
+            new PrimaryPasskeyError({ reason: "credential_subject_conflict" })
+          );
+        }
+        const record: PasskeyCredentialRecord = {
+          subjectId,
+          credentialId,
+          label: input.label,
+          enrolledAt: input.enrolledAt ?? new Date().toISOString(),
+        };
+        byCred.set(credentialId, record);
+        const list = (bySubject.get(subjectId) ?? []).filter((r) => r.credentialId !== credentialId);
+        list.push(record);
+        bySubject.set(subjectId, list);
+        return record;
+      }),
+    delete: (credentialId) =>
+      Effect.sync(() => {
+        const existing = byCred.get(credentialId);
+        if (!existing) return false;
+        byCred.delete(credentialId);
+        const list = (bySubject.get(existing.subjectId) ?? []).filter(
+          (r) => r.credentialId !== credentialId
+        );
+        if (list.length === 0) bySubject.delete(existing.subjectId);
+        else bySubject.set(existing.subjectId, list);
+        return true;
+      }),
   };
 }
 
