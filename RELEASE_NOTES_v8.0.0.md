@@ -21,11 +21,11 @@
 
 ### 1. Bundled providers: default empty
 
-| | **7.2.0** | **8.0.0** |
-| --- | --- | --- |
-| No provider env / instance `providers` | Auto-load pack **`default`** | **Empty** catalog (native GraphQL/gRPC only when configured) |
-| Helm | `provider: default` | `providers.pack: none` (set **`default`** to restore) |
-| `CLAWQL_ENABLE_GOOGLE\|AWS\|CLOUDFLARE` | Cloud add-ons on default stack | **Deprecated** for stack selection |
+|                                         | **7.2.0**                      | **8.0.0**                                                    |
+| --------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| No provider env / instance `providers`  | Auto-load pack **`default`**   | **Empty** catalog (native GraphQL/gRPC only when configured) |
+| Helm                                    | `provider: default`            | `providers.pack: none` (set **`default`** to restore)        |
+| `CLAWQL_ENABLE_GOOGLE\|AWS\|CLOUDFLARE` | Cloud add-ons on default stack | **Deprecated** for stack selection                           |
 
 **Migration (one-liner):**
 
@@ -84,11 +84,11 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ### Standalone npm (this tag)
 
-| Package | Version | Notes |
-| --- | --- | --- |
-| `clawql-mcp` | **8.0.0** | Lockstep workspace |
+| Package              | Version   | Notes                                            |
+| -------------------- | --------- | ------------------------------------------------ |
+| `clawql-mcp`         | **8.0.0** | Lockstep workspace                               |
 | `mcp-grpc-transport` | **1.0.0** | Major vs npm **0.2.0** for standalone grpc users |
-| `mcp-api-adapter` | **0.6.0** | First registry publish (from-source docs #855) |
+| `mcp-api-adapter`    | **0.6.0** | First registry publish (from-source docs #855)   |
 
 ---
 
@@ -118,11 +118,11 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 ## Helm
 
-| Chart | Chart version | appVersion |
-| --- | --- | --- |
-| `charts/clawql-mcp` | `0.8.0` | `8.0.0` |
-| `charts/clawql-operator` | `0.3.0` | `8.0.0` |
-| `charts/clawql-idp` | `0.2.0` | `8.0.0` |
+| Chart                    | Chart version | appVersion |
+| ------------------------ | ------------- | ---------- |
+| `charts/clawql-mcp`      | `0.8.0`       | `8.0.0`    |
+| `charts/clawql-operator` | `0.3.0`       | `8.0.0`    |
+| `charts/clawql-idp`      | `0.2.0`       | `8.0.0`    |
 
 ---
 
