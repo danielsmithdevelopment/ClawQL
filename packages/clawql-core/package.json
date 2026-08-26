@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-merkle": "7.2.0",
+    "clawql-merkle": "0.1.0",
     "effect": "^3.21.4"
   },
   "devDependencies": {

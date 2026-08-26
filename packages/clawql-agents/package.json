@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-audit": "7.2.0",
+    "clawql-audit": "0.1.0",
     "effect": "^3.21.4"
   },
   "peerDependencies": {

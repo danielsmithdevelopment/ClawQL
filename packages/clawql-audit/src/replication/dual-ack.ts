@@ -1,81 +1,71 @@
-import { Duration, Effect, Schedule } from "effect";
-import type { BackendAck, WORMEntry, WORMFilter } from "../entry.js";
-import { WormStorageError } from "../errors.js";
-import type { StorageBackend } from "../storage/types.js";
+/**
+ * Dual-ack replicator: local write + outbox in one transaction, then remote drain.
+ * Not LTX (celld SQLite→bucket). Sealed bytes are never resealed.
+ */
 
-export type RetryConfig = {
-  readonly maxAttempts: number;
-  readonly backoffMs: number;
-  readonly backoffMultiplier: number;
-};
-
-function asStored(entry: Omit<WORMEntry, "backendAcks">, acks: BackendAck[]): WORMEntry {
-  return { ...entry, backendAcks: acks };
-}
-
-function isAlreadyExists(err: WormStorageError): boolean {
-  return /UNIQUE seq/.test(err.message);
-}
+import { Effect } from "effect";
+import type { WORMEntry, WORMFilter } from "../entry.js";
+import type { AuditError } from "../errors.js";
+import type { LocalStorageBackend, StorageBackend } from "../storage/types.js";
+import { defaultRetryConfig, withRetry, type RetryConfig } from "./retry.js";
 
 export class DualAckReplicator {
+  private readonly local: LocalStorageBackend;
+  private readonly remote: StorageBackend;
+  private readonly retry: RetryConfig;
+
   constructor(
-    private readonly local: StorageBackend,
-    private readonly remote: StorageBackend,
-    private readonly retry: RetryConfig
-  ) {}
+    local: LocalStorageBackend,
+    remote: StorageBackend,
+    retry: RetryConfig = defaultRetryConfig
+  ) {
+    this.local = local;
+    this.remote = remote;
+    this.retry = retry;
+  }
 
-  private retryRemote(entry: WORMEntry): Effect.Effect<void, WormStorageError> {
-    const times = Math.max(0, this.retry.maxAttempts - 1);
-    return this.remote
-      .writeCommitted(entry)
-      .pipe(
-        Effect.retry(
-          Schedule.recurs(times).pipe(
-            Schedule.addDelay(() => Duration.millis(this.retry.backoffMs))
-          )
-        )
+  /**
+   * Atomically write entry + outbox locally, attempt remote, clear outbox on success.
+   * Never fails the caller solely because remote is down — outbox guarantees eventual delivery.
+   */
+  write(entry: Omit<WORMEntry, "backendAcks">): Effect.Effect<string[], AuditError> {
+    const local = this.local;
+    const remote = this.remote;
+    const retry = this.retry;
+    const sealed = entry as WORMEntry;
+    return Effect.gen(function* () {
+      yield* withRetry(() => local.writeWithOutbox(sealed), retry);
+
+      const remoteOk = yield* withRetry(() => remote.write(sealed), retry).pipe(
+        Effect.map(() => true as const),
+        Effect.catchAll(() => Effect.succeed(false as const))
       );
+
+      if (remoteOk) {
+        yield* local.outboxDelete(sealed.id);
+      }
+      return ["local", "remote"];
+    });
   }
 
-  write(entry: Omit<WORMEntry, "backendAcks">): Effect.Effect<BackendAck[], WormStorageError> {
-    const dual = asStored(entry, ["local", "remote"]);
-    const queued = asStored(entry, ["local", "remote_queued"]);
-    return this.retryRemote(dual).pipe(
-      Effect.flatMap(() => this.local.writeCommitted(dual)),
-      Effect.as(["local", "remote"] satisfies BackendAck[]),
-      Effect.catchAll(() =>
-        this.local
-          .writeWithOutbox(queued)
-          .pipe(Effect.as(["local", "remote_queued"] satisfies BackendAck[]))
-      )
-    );
-  }
-
-  drainOutbox(): Effect.Effect<void, WormStorageError> {
-    return Effect.gen(this, function* () {
-      const pending = yield* this.local.outboxList();
+  drainOutbox(): Effect.Effect<void, AuditError> {
+    const local = this.local;
+    const remote = this.remote;
+    const retry = this.retry;
+    return Effect.gen(function* () {
+      const pending = yield* local.outboxList();
       for (const entry of pending) {
-        const drained = yield* this.retryRemote(entry).pipe(
-          Effect.as(true),
-          Effect.catchIf(isAlreadyExists, () => Effect.succeed(true)),
-          Effect.catchAll(() => Effect.succeed(false))
-        );
-        if (drained) {
-          yield* this.local.outboxDelete(entry.id);
-        }
+        yield* withRetry(() => remote.write(entry), retry);
+        yield* local.outboxDelete(entry.id);
       }
     });
   }
 
-  query(filter: WORMFilter) {
-    return this.drainOutbox().pipe(Effect.flatMap(() => this.local.query(filter)));
+  query(filter: WORMFilter): Effect.Effect<WORMEntry[], AuditError> {
+    return this.local.query(filter);
   }
 
-  all() {
+  all(): Effect.Effect<WORMEntry[], AuditError> {
     return this.local.all();
-  }
-
-  latestEntry() {
-    return this.local.latestEntry();
   }
 }

@@ -1,60 +1,48 @@
 import { Effect } from "effect";
 import type { WORMEntry, WORMFilter } from "../entry.js";
-import { WormStorageError } from "../errors.js";
-import type { StorageBackend } from "./types.js";
+import type { MerkleRoot } from "../merkle.js";
+import { applyWORMFilter } from "../query/filter.js";
+import type { LocalStorageBackend } from "./types.js";
 
-function matches(entry: WORMEntry, filter: WORMFilter): boolean {
-  if (filter.sessionId && entry.sessionId !== filter.sessionId) return false;
-  if (filter.type && entry.type !== filter.type) return false;
-  if (filter.since && entry.timestamp < filter.since) return false;
-  if (filter.until && entry.timestamp > filter.until) return false;
-  return true;
-}
+/** In-memory local backend (tests). */
+export class MemoryBackend implements LocalStorageBackend {
+  private entries: WORMEntry[] = [];
+  private outbox: WORMEntry[] = [];
+  private roots: MerkleRoot[] = [];
 
-function uniqueFail(seq: number) {
-  return new WormStorageError({ message: `UNIQUE seq ${seq} already exists` });
-}
-
-/** In-memory local or remote backend. Outbox is a sidecar map keyed by entry id. */
-export function createMemoryBackend(): StorageBackend {
-  const bySeq = new Map<number, WORMEntry>();
-  const outbox = new Map<string, WORMEntry>();
-
-  const insert = (entry: WORMEntry, withOutbox: boolean) =>
-    Effect.suspend(() => {
-      if (bySeq.has(entry.seq)) {
-        return Effect.fail(uniqueFail(entry.seq));
-      }
-      bySeq.set(entry.seq, entry);
-      if (withOutbox) outbox.set(entry.id, entry);
-      return Effect.void;
+  write = (entry: WORMEntry): Effect.Effect<void, never> =>
+    Effect.sync(() => {
+      this.entries.push(entry);
+      this.entries.sort((a, b) => a.chainIndex - b.chainIndex);
     });
 
-  return {
-    writeCommitted: (entry) => insert(entry, false),
-    writeWithOutbox: (entry) => insert(entry, true),
-    query: (filter) =>
-      Effect.sync(() =>
-        [...bySeq.values()].sort((a, b) => a.seq - b.seq).filter((e) => matches(e, filter))
-      ),
-    all: () => Effect.sync(() => [...bySeq.values()].sort((a, b) => a.seq - b.seq)),
-    latestEntry: () =>
-      Effect.sync(() => {
-        if (bySeq.size === 0) return null;
-        return [...bySeq.values()].sort((a, b) => a.seq - b.seq).at(-1) ?? null;
-      }),
-    outboxList: () => Effect.sync(() => [...outbox.values()].sort((a, b) => a.seq - b.seq)),
-    outboxDelete: (id) =>
-      Effect.sync(() => {
-        outbox.delete(id);
-      }),
-  };
-}
+  writeWithOutbox = (entry: WORMEntry): Effect.Effect<void, never> =>
+    Effect.sync(() => {
+      this.entries.push(entry);
+      this.entries.sort((a, b) => a.chainIndex - b.chainIndex);
+      this.outbox.push(entry);
+    });
 
-export function createFailingRemoteBackend(message = "remote unavailable"): StorageBackend {
-  const inner = createMemoryBackend();
-  return {
-    ...inner,
-    writeCommitted: () => Effect.fail(new WormStorageError({ message })),
-  };
+  outboxList = (): Effect.Effect<WORMEntry[], never> => Effect.sync(() => [...this.outbox]);
+
+  outboxDelete = (id: string): Effect.Effect<void, never> =>
+    Effect.sync(() => {
+      this.outbox = this.outbox.filter((e) => e.id !== id);
+    });
+
+  storeMerkleRoot = (root: MerkleRoot): Effect.Effect<void, never> =>
+    Effect.sync(() => {
+      this.roots.push(root);
+    });
+
+  listMerkleRoots = (): Effect.Effect<MerkleRoot[], never> =>
+    Effect.sync(() => [...this.roots]);
+
+  query = (filter: WORMFilter): Effect.Effect<WORMEntry[], never> =>
+    applyWORMFilter(this.entries, filter);
+
+  all = (): Effect.Effect<WORMEntry[], never> => Effect.sync(() => [...this.entries]);
+
+  latestEntry = (): Effect.Effect<WORMEntry | null, never> =>
+    Effect.sync(() => (this.entries.length ? this.entries[this.entries.length - 1]! : null));
 }

@@ -1,11 +1,6 @@
 import { Data } from "effect";
 
-export class WormChainGapError extends Data.TaggedError("WormChainGapError")<{
-  readonly expected: number;
-  readonly got: number;
-}> {}
-
-export class WormStorageError extends Data.TaggedError("WormStorageError")<{
-  readonly message: string;
+export class AuditError extends Data.TaggedError("AuditError")<{
+  readonly reason: string;
   readonly cause?: unknown;
 }> {}

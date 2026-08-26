@@ -700,6 +700,8 @@ async function main() {
   registerPostgresPoolShutdownHooks();
   const { registerClawqlApiShutdownHooks } = await import("./clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
+  const { ensureProcessWormHostBooted } = await import("./process-worm-host.js");
+  await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();
   const { logStartupSummary } = await import("./startup-summary.js");
   await logStartupSummary();
