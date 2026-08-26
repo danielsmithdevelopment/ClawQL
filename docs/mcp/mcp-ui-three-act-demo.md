@@ -8,11 +8,11 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 ## Fallback policy (record after off-camera rehearsal)
 
-| Act | Primary | Guaranteed fallback |
-| --- | ------- | ------------------- |
-| 1 WebMCP | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
-| 2 Custom view | Live `/mcp-ui` industry fit form (when built) | `POST /mcp-ui/generate` preset or catalog `search` + `memory_recall` |
-| 3 Flamegraph | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store |
+| Act           | Primary                                                                 | Guaranteed fallback                                                                                                                   |
+| ------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
+| 2 Custom view | Live `/mcp-ui` industry fit form (when built)                           | `POST /mcp-ui/generate` preset or catalog `search` + `memory_recall`                                                                  |
+| 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                                           |
 
 **Rule:** rehearse full sequence off-camera twice. Record with live Act 3 only after two clean runs. Otherwise close on **`/mcp-ui/trace/compare`**.
 
