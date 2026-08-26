@@ -3,6 +3,9 @@
 ## Unreleased
 
 - **`/mcp-ui` ATR scoping:** catalog + execute filter by JWT `atr.scope` / `atr.tools` (default on). Internal `ouroboros_*` / `pageindex_*` require explicit or family grants. `--no-mcp-ui-atr-scoped` disables. API keys remain admin-equivalent.
+- **`/mcp-ui` file upload + IDP:** multipart forms for `pdf_base64` / `base64` (and format binary); uploads are base64-encoded into CallTool args. Document-processing ATR (`documents` / `idp` / explicit IDP tools) is separate from tool visibility. Template for `run_idp_pipeline`.
+- **`/mcp-ui` SSE progress:** long-running tools (`run_idp_pipeline`, `ouroboros_*`, …) return an EventSource shell; `GET /mcp-ui/progress/:jobId` streams progress/complete/error.
+- **`/mcp-ui` generate:** `POST /mcp-ui/generate` creates in-memory multi-step workflows; `GET /mcp-ui/custom/:slug` + step execute for agent-authored UIs.
 
 ## 0.6.x (mcp-ui v0)
 

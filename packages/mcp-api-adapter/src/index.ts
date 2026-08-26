@@ -49,11 +49,24 @@ export type {
   VerifiedMcpAdapterAtr,
 } from "./edge-auth.js";
 export {
+  canProcessDocuments,
   filterToolsForAtr,
   isInternalToolName,
   isToolAuthorizedForAtr,
   INTERNAL_TOOL_PREFIXES,
 } from "./mcp-ui-atr.js";
+export {
+  createGeneratedUi,
+  getGeneratedUiBySlug,
+  listGeneratedUis,
+} from "./mcp-ui-generate.js";
+export {
+  createProgressJob,
+  getProgressJob,
+  isLongRunningTool,
+  DEFAULT_LONG_RUNNING_TOOLS,
+} from "./mcp-ui-progress.js";
+export { mergeFilesIntoArgs, isMultipartRequest } from "./mcp-ui-multipart.js";
 export type {
   McpApiAdapterOptions,
   McpApiAdapterHttpOptions,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ListedMcpTool } from "mcp-grpc-transport";
 import {
+  canProcessDocuments,
   filterToolsForAtr,
   isInternalToolName,
   isToolAuthorizedForAtr,
@@ -72,5 +73,28 @@ describe("mcp-ui-atr", () => {
     expect(
       filterToolsForAtr(tools, { sub: "x", scope: ["search"] }, false).map((t) => t.name)
     ).toEqual(tools.map((t) => t.name));
+  });
+
+  it("documents/idp capability scopes grant IDP tools", () => {
+    expect(
+      isToolAuthorizedForAtr("run_idp_pipeline", { sub: "ops", scope: ["documents"] })
+    ).toBe(true);
+    expect(
+      isToolAuthorizedForAtr("run_idp_pipeline", { sub: "ops", scope: ["idp"] })
+    ).toBe(true);
+    expect(
+      isToolAuthorizedForAtr("run_idp_pipeline", { sub: "ops", scope: ["memory"] })
+    ).toBe(false);
+  });
+
+  it("canProcessDocuments is separate from generic capability scopes", () => {
+    expect(canProcessDocuments({ sub: "a", role: "admin" })).toBe(true);
+    expect(canProcessDocuments({ sub: "a", scope: ["*"] })).toBe(true);
+    expect(canProcessDocuments({ sub: "a", scope: ["documents"] })).toBe(true);
+    expect(canProcessDocuments({ sub: "a", scope: ["idp"] })).toBe(true);
+    expect(canProcessDocuments({ sub: "a", scope: ["memory", "search"] })).toBe(false);
+    expect(
+      canProcessDocuments({ sub: "a", scope: ["search"], tools: ["run_idp_pipeline"] })
+    ).toBe(true);
   });
 });

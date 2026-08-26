@@ -91,6 +91,8 @@ export type RenderFieldOptions = {
   prefills?: Record<string, unknown>;
   /** Force textarea for long text. */
   asTextarea?: boolean;
+  /** Render as file upload. */
+  asFile?: boolean;
   /** Extra hint under the field (template op guidance). */
   hint?: string;
   /** Highlight this field after a validation error. */
@@ -98,7 +100,7 @@ export type RenderFieldOptions = {
 };
 
 export function renderFieldControl(options: RenderFieldOptions): string {
-  const { name, propSchema, required, prefills, asTextarea, hint, errorMessage } = options;
+  const { name, propSchema, required, prefills, asTextarea, asFile, hint, errorMessage } = options;
   const label = typeof propSchema.title === "string" ? propSchema.title : name;
   const description =
     typeof propSchema.description === "string" ? propSchema.description : undefined;
@@ -115,6 +117,23 @@ export function renderFieldControl(options: RenderFieldOptions): string {
   const errHtml = errorMessage
     ? `<p class="field-error" role="alert">${escHtml(errorMessage)}</p>`
     : "";
+
+  if (
+    asFile ||
+    propSchema.format === "binary" ||
+    propSchema.format === "byte" ||
+    propSchema.contentMediaType != null ||
+    /^(file|upload|pdf_base64|base64)$/i.test(name) ||
+    (typeof description === "string" &&
+      /\b(upload|file|document|pdf|image)\b/i.test(description) &&
+      /base64|binary|path/i.test(name + (description || "")))
+  ) {
+    return `<label class="field${errClass}">
+  <span class="field-label">${escHtml(label)} ${labelBadge(required)}</span>
+  <input type="file" name="${escHtml(name)}" accept="*/*"${reqAttr} />
+  ${hintHtml || `<p class="field-help">Uploaded files are base64-encoded into the tool arguments before CallTool.</p>`}${errHtml}
+</label>`;
+  }
 
   const enumValues = Array.isArray(propSchema.enum) ? propSchema.enum : undefined;
   if (enumValues && enumValues.length > 0) {
@@ -188,6 +207,8 @@ export type FormRenderHints = {
   defaults?: Record<string, unknown>;
   /** Force textarea for these field names. */
   textareas?: string[];
+  /** Force file input for these field names. */
+  fileFields?: string[];
   /** Per-field helper copy. */
   hints?: Record<string, string>;
   /** Field-level errors to highlight. */
@@ -220,7 +241,7 @@ function partitionFields(
 export function renderToolFormFields(
   tool: ListedMcpTool,
   hints: FormRenderHints = {}
-): { mode: McpUiFormMode; html: string } {
+): { mode: McpUiFormMode; html: string; hasFileFields: boolean } {
   const inputSchema = tool.inputSchema ?? { type: "object", properties: {} };
   const mode = formModeFromInputSchema(inputSchema);
 
@@ -228,6 +249,7 @@ export function renderToolFormFields(
     const err = hints.fieldErrors?.__json_args;
     return {
       mode,
+      hasFileFields: false,
       html: `<label class="field${err ? " field--error" : ""}">
   <span class="field-label">Arguments (JSON object) ${labelBadge(true)}</span>
   <textarea name="__json_args" rows="6" placeholder="{}">{}</textarea>
@@ -255,6 +277,7 @@ export function renderToolFormFields(
           required: requiredList.includes(key),
           prefills,
           asTextarea: hints.textareas?.includes(key),
+          asFile: hints.fileFields?.includes(key),
           hint: hints.hints?.[key],
           errorMessage: hints.fieldErrors?.[key],
         })
@@ -277,7 +300,20 @@ export function renderToolFormFields(
       ? `<p class="field-help">Complex fields omitted: ${escHtml(omitted.join(", "))}. Use REST <code>POST /${escHtml(tool.name)}</code> for full args.</p>`
       : "";
 
-  return { mode, html: `${primaryHtml}\n${advancedHtml}\n${omitNote}` };
+  const hasFileFields =
+    (hints.fileFields?.length ?? 0) > 0 ||
+    Object.entries(flatProps).some(([key, schema]) => {
+      if (hints.fileFields?.includes(key)) return true;
+      if (schema.format === "binary" || schema.format === "byte") return true;
+      if (/^(file|upload|pdf_base64|base64)$/i.test(key)) return true;
+      const desc = typeof schema.description === "string" ? schema.description : "";
+      return (
+        /\b(upload|file|document|pdf|image)\b/i.test(desc) &&
+        /base64|binary|pdf_base64|file/i.test(key + desc)
+      );
+    });
+
+  return { mode, hasFileFields, html: `${primaryHtml}\n${advancedHtml}\n${omitNote}` };
 }
 
 function parseFieldValue(

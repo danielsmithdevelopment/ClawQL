@@ -93,8 +93,14 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
   if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
     app.use(createEdgeAuthRateLimiter());
+    const mcpUiProgressPrefix =
+      typeof options.mcpUiPath === "string" && options.mcpUiPath.trim()
+        ? `${options.mcpUiPath.replace(/\/$/, "")}/progress/`
+        : "/mcp-ui/progress/";
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
+      // EventSource cannot set Authorization; opaque job UUIDs + TTL are the capability.
+      if (req.method === "GET" && req.path.startsWith(mcpUiProgressPrefix)) return next();
       void resolveEdgeCredential(
         readApiKey(req),
         { apiKey: options.apiKey, jwt: options.jwtAuth },

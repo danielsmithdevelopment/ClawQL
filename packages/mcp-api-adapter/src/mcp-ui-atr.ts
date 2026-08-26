@@ -12,7 +12,46 @@ const CAPABILITY_TOOLS: Record<string, readonly string[]> = {
   audit: ["audit"],
   cache: ["cache"],
   ingest: ["ingest_external_knowledge"],
+  /** Document tools visibility (separate from file-processing gate). */
+  documents: [
+    "run_idp_pipeline",
+    "classify_document",
+    "extract_document",
+    "convert_document",
+    "inspect_pdf",
+  ],
+  idp: [
+    "run_idp_pipeline",
+    "classify_document",
+    "extract_document",
+    "convert_document",
+    "inspect_pdf",
+  ],
 };
+
+/** Scopes that may trigger document/file processing (Batch 2 IDP gate). */
+const DOCUMENT_PROCESSING_SCOPES = new Set(["documents", "idp", "*"]);
+
+export function canProcessDocuments(atr: VerifiedMcpAdapterAtr): boolean {
+  const role = atr.role?.trim().toLowerCase();
+  if (role === "admin") return true;
+  const scopes = scopesOf(atr);
+  const tools = toolsOf(atr);
+  if (scopes.includes("*") || tools.includes("*")) return true;
+  if (scopes.some((s) => DOCUMENT_PROCESSING_SCOPES.has(s))) return true;
+  // Explicit grant of an IDP tool implies processing for that operator
+  if (
+    tools.some((t) =>
+      ["run_idp_pipeline", "convert_document", "inspect_pdf"].includes(t)
+    ) ||
+    scopes.some((t) =>
+      ["run_idp_pipeline", "convert_document", "inspect_pdf"].includes(t)
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export function isInternalToolName(toolName: string): boolean {
   return INTERNAL_TOOL_PREFIXES.some((prefix) => toolName.startsWith(prefix));

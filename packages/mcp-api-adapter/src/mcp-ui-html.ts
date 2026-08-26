@@ -4,6 +4,7 @@ import {
   renderToolFormFields,
   type FormFieldError,
 } from "./mcp-ui-form.js";
+import type { GeneratedUiForm } from "./mcp-ui-generate.js";
 import { renderResultContent } from "./mcp-ui-results.js";
 import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 
@@ -273,6 +274,7 @@ const MCP_UI_STYLES = `
   .result-empty { margin: 0 0 0.5rem; color: var(--muted); }
   .result-raw { margin-top: 0.65rem; font-size: 0.82rem; color: var(--muted); }
   .result-raw summary { cursor: pointer; }
+  .result--progress progress { width: 100%; margin: 0.35rem 0 0.75rem; }
   .pill {
     display: inline-block;
     padding: 0.05rem 0.4rem;
@@ -297,7 +299,7 @@ function renderToolCard(
   fieldErrors?: Record<string, string>
 ): string {
   const hints = formHintsForTool(tool, fieldErrors);
-  const { html: fieldsHtml } = renderToolFormFields(tool, hints);
+  const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const template = resolveMcpUiTemplate(tool);
   const title = tool.title?.trim() || tool.description?.trim() || tool.name;
   const description =
@@ -306,6 +308,9 @@ function renderToolCard(
       : "";
   const templatePill = template
     ? `<span class="template-pill">Template · ${escapeMcpUiHtml(template.id)}</span>`
+    : "";
+  const multipartAttrs = hasFileFields
+    ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
     : "";
 
   return `<article class="tool-card" id="tool-${escapeMcpUiHtml(tool.name)}">
@@ -317,7 +322,7 @@ function renderToolCard(
     hx-post="${escapeMcpUiHtml(basePath)}/execute/${escapeMcpUiHtml(tool.name)}"
     hx-target="#result-${escapeMcpUiHtml(tool.name)}"
     hx-swap="innerHTML"
-    hx-indicator="#spinner-${escapeMcpUiHtml(tool.name)}"
+    hx-indicator="#spinner-${escapeMcpUiHtml(tool.name)}"${multipartAttrs}
   >
     ${fieldsHtml}
     <button type="submit" class="submit">
@@ -416,4 +421,135 @@ export function renderMcpUiErrorResult(options: {
   ${fieldList}
   ${details}
 </div>`;
+}
+
+export function renderMcpUiProgressShell(options: {
+  jobId: string;
+  toolName: string;
+  basePath: string;
+}): string {
+  const base = options.basePath.replace(/\/$/, "") || "/mcp-ui";
+  const sseUrl = `${base}/progress/${encodeURIComponent(options.jobId)}`;
+  return `<div class="result result--progress" data-job="${escapeMcpUiHtml(options.jobId)}">
+  <header class="result__header">
+    <span class="result__tool">${escapeMcpUiHtml(options.toolName)}</span>
+    <span class="result__time">SSE</span>
+  </header>
+  <p class="progress-status" data-role="status">Starting…</p>
+  <progress max="100" value="0" data-role="bar"></progress>
+  <ul class="result-list result-list--compact" data-role="log"></ul>
+  <div data-role="final"></div>
+  <script>
+(function () {
+  var root = document.currentScript && document.currentScript.parentElement;
+  if (!root) return;
+  var statusEl = root.querySelector('[data-role="status"]');
+  var barEl = root.querySelector('[data-role="bar"]');
+  var logEl = root.querySelector('[data-role="log"]');
+  var finalEl = root.querySelector('[data-role="final"]');
+  var es = new EventSource(${JSON.stringify(sseUrl)});
+  function onEvent(ev) {
+    var data;
+    try { data = JSON.parse(ev.data); } catch (e) { return; }
+    if (statusEl) statusEl.textContent = data.message || ev.type;
+    if (barEl && typeof data.percent === "number") barEl.value = data.percent;
+    if (logEl && data.message) {
+      var li = document.createElement("li");
+      li.textContent = (data.at ? data.at + " — " : "") + data.message;
+      logEl.appendChild(li);
+    }
+    if ((ev.type === "complete" || ev.type === "error") && data.resultHtml && finalEl) {
+      finalEl.innerHTML = data.resultHtml;
+      es.close();
+    }
+  }
+  es.addEventListener("progress", onEvent);
+  es.addEventListener("complete", onEvent);
+  es.addEventListener("error", function (ev) {
+    if (ev.data) onEvent(ev);
+  });
+})();
+  </script>
+</div>`;
+}
+
+export function renderMcpUiCustomFormPage(options: {
+  form: GeneratedUiForm;
+  tool: ListedMcpTool | undefined;
+  fieldsHtml: string;
+  hasFileFields: boolean;
+  basePath: string;
+  title: string;
+  done: boolean;
+}): string {
+  const basePath = options.basePath.replace(/\/$/, "") || "/mcp-ui";
+  const form = options.form;
+  const stepIndex = form.currentStepIndex;
+  const total = form.steps.length;
+  const stepMeta = form.steps
+    .map((s, i) => {
+      const state = i < stepIndex ? "done" : i === stepIndex ? "current" : "todo";
+      return `<li class="step step--${state}">${i + 1}. ${escapeMcpUiHtml(s.label ?? s.tool)}</li>`;
+    })
+    .join("");
+
+  let body: string;
+  if (options.done || !options.tool) {
+    body = `<div class="result result--success"><p>Workflow complete.</p>
+<pre>${escapeMcpUiHtml(JSON.stringify(form.stepOutputs, null, 2))}</pre></div>`;
+  } else {
+    const multipartAttrs = options.hasFileFields
+      ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
+      : "";
+    body = `<article class="tool-card">
+  <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
+  <p class="tool-name">Step ${stepIndex + 1} of ${total}: ${escapeMcpUiHtml(options.tool.name)}</p>
+  <form
+    hx-post="${escapeMcpUiHtml(basePath)}/custom/${escapeMcpUiHtml(form.slug)}/step"
+    hx-target="#custom-result"
+    hx-swap="innerHTML"
+    hx-indicator="#custom-spinner"${multipartAttrs}
+  >
+    ${options.fieldsHtml}
+    <button type="submit" class="submit">
+      Run step
+      <span id="custom-spinner" class="htmx-indicator">…</span>
+    </button>
+  </form>
+  <div id="custom-result" class="result-pane"></div>
+</article>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeMcpUiHtml(form.title)} — MCP UI</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  <meta name="htmx-config" content='{"responseHandling":[{"code":".*", "swap": true}]}' />
+  <style>${MCP_UI_STYLES}
+  .steps { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1rem; }
+  .step { font-size: 0.82rem; color: var(--muted); }
+  .step--current { color: var(--ink); font-weight: 650; }
+  .step--done { text-decoration: line-through; }
+  progress { width: 100%; margin: 0.35rem 0 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <h1>${escapeMcpUiHtml(form.title)}</h1>
+        <p>${escapeMcpUiHtml(form.description || "Generated multi-step MCP UI workflow.")}</p>
+      </div>
+      <div class="meta">
+        <div><a href="${escapeMcpUiHtml(basePath)}">← Catalog</a></div>
+      </div>
+    </header>
+    <ol class="steps">${stepMeta}</ol>
+    <main>${body}</main>
+  </div>
+</body>
+</html>`;
 }

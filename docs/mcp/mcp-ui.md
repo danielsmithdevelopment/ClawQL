@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit`, ATR-scoped catalog when JWT edge auth is configured. Deferred: nested object/array UIs, file upload/IDP, SSE progress, agent-generated UIs.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, and `POST /mcp-ui/generate` multi-step custom UIs. Deferred: nested object/array UIs.
 
 ---
 
@@ -156,7 +156,9 @@ A new teammate can open one URL and call Salesforce, GitHub, internal gRPC, and 
 - **HTMX:** load from a pinned CDN or vendored static asset under `/mcp-ui/assets/htmx.min.js`.
 - **Reuse:** form field generation should share schema-walk helpers with OpenAPI/GraphQL builders where practical (one walk, multiple emitters).
 - **Safety:** HTML-escape all tool names, descriptions, and result text. Never eval result content as HTML unless explicitly marked safe structured content later.
-- **Streaming:** v1 is request/response fragments. SSE progress for long tools can reuse Streamable HTTP infrastructure in a later revision.
+- **Streaming:** Long-running tools return an HTMX/EventSource progress shell; `GET /mcp-ui/progress/:jobId` streams `progress` / `complete` / `error` SSE events with the final result HTML embedded.
+- **File upload / IDP:** Tools with `pdf_base64` / `base64` (or format binary) render `<input type="file">` with `multipart/form-data`. Uploads are base64-encoded into CallTool args. Document **processing** requires ATR scopes `documents` / `idp` (or admin / explicit IDP tool grant) — separate from catalog visibility.
+- **Generated UIs:** `POST /mcp-ui/generate` with `{ title, steps: [{ tool, label? }], slug? }` returns a `/mcp-ui/custom/:slug` multi-step form (in-memory, TTL).
 - **Proof:** clawql-payments `/credits/*` already demonstrates HTMX fragment UX inside ClawQL — generalize that pattern to arbitrary MCP catalogs.
 
 ### 5.1 Effect-TS
