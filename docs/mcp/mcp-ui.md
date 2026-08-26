@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, and `POST /mcp-ui/generate` multi-step custom UIs.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, `POST /mcp-ui/generate` multi-step custom UIs, and `GET /mcp-ui/trace/:sessionId` context-accumulation flamegraphs.
 
 ---
 
@@ -68,6 +68,8 @@ What nobody ships today:
 | `GET /mcp-ui/tools/{toolName}`    | Optional deep-link to one tool card                              |
 | `POST /mcp-ui/execute/{toolName}` | HTMX form post → tool invoke → HTML fragment result              |
 | `GET /mcp-ui/partials/catalog`    | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/trace/{sessionId}`   | Context-accumulation flamegraph (HTML; `?format=json` for data)  |
+| `GET /mcp-ui/trace/demo-compressed` / `demo-fat` | Built-in demos for search/execute vs fat tool dumps |
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
@@ -164,6 +166,21 @@ A new teammate can open one URL and call Salesforce, GitHub, internal gRPC, and 
 ### 5.1 Effect-TS
 
 Render and execute paths stay Effect-based inside the adapter package; Express (or Node `http`) handlers remain thin façades that `run*Effect` at the host boundary — same rule as the rest of ClawQL.
+
+---
+
+## 5b. Context-accumulation flamegraph
+
+`GET /mcp-ui/trace/{sessionId}` visualizes **where tokens came from** turn by turn — harness prompt, vault/system-seed memory, tool schemas, tool results, agent reasoning, and model output — stacked like a CPU flamegraph.
+
+| Piece | Role |
+| ----- | ---- |
+| `buildContextFlamegraph` | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; scales message estimates to `usage.inputTokens` when present |
+| `listTraceCalls(sessionId)` | Optional host hook (e.g. clawql-inference store keyed by correlation/session id). Adapter stays standalone — no hard dependency |
+| `demo-compressed` / `demo-fat` | Built-in same-task fixtures: compressed `search`/`execute`-style tool results vs fat untrimmed dumps — for the dual-side compression argument |
+| `?format=json` | Machine-readable graph for `harness-bench` / CI artifacts |
+
+Catalog nav links the compressed demo. Wire live sessions by passing `listTraceCalls` into `startMcpApiAdapter` / `AttachMcpUiOptions`.
 
 ---
 

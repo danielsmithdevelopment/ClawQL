@@ -34,6 +34,15 @@ import {
   subscribeProgress,
 } from "./mcp-ui-progress.js";
 import { formHintsForTool } from "./mcp-ui-templates.js";
+import {
+  buildContextFlamegraph,
+  resolveTraceRecords,
+  type TraceCallRecord,
+} from "./mcp-ui-trace.js";
+import {
+  renderContextFlamegraphPage,
+  renderTraceNotFoundPage,
+} from "./mcp-ui-trace-html.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type { CallToolFn, ListedMcpTool, ToolCatalog } from "./types.js";
 
@@ -48,6 +57,14 @@ export type AttachMcpUiOptions = {
   atrScoped?: boolean;
   /** Max uploaded file size in bytes (default 25 MiB). */
   maxUploadBytes?: number;
+  /**
+   * Optional host hook: return inference-shaped call records for a session /
+   * correlation id (e.g. from clawql-inference). Built-in demos
+   * `demo-compressed` / `demo-fat` work without this.
+   */
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>;
 };
 
 type RequestWithAtr = Request & { mcpAtr?: VerifiedMcpAdapterAtr };
@@ -249,6 +266,63 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         basePath,
       })
     );
+  });
+
+  router.get("/trace/:sessionId", async (req, res) => {
+    const sessionId = String(req.params.sessionId ?? "").trim();
+    if (!sessionId || sessionId.length > 200 || /[^\w.:@+-]/.test(sessionId)) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(sessionId || "(empty)", {
+            basePath,
+            hint: "Session id must be a short alphanumeric token (or a built-in demo id).",
+          })
+        );
+      return;
+    }
+
+    let records: TraceCallRecord[] | null;
+    try {
+      records = await resolveTraceRecords(sessionId, options.listTraceCalls);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res
+        .status(502)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(sessionId, {
+            basePath,
+            hint: `Failed to load trace: ${message}`,
+          })
+        );
+      return;
+    }
+
+    if (!records) {
+      res.status(404).type("html").send(
+        renderTraceNotFoundPage(sessionId, {
+          basePath,
+          hint: options.listTraceCalls
+            ? "No inference calls for this session id."
+            : "Provide listTraceCalls on AttachMcpUiOptions, or open demo-compressed / demo-fat.",
+        })
+      );
+      return;
+    }
+
+    const graph = buildContextFlamegraph(sessionId, records);
+    const wantJson =
+      String(req.query.format ?? "").toLowerCase() === "json" ||
+      (req.accepts(["html", "json"]) === "json" &&
+        String(req.query.format ?? "").toLowerCase() !== "html");
+
+    if (wantJson) {
+      res.status(200).json(graph);
+      return;
+    }
+    res.status(200).type("html").send(renderContextFlamegraphPage(graph, { basePath }));
   });
 
   router.get("/progress/:jobId/result", (req, res) => {

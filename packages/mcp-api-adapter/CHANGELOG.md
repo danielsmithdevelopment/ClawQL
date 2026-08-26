@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`/mcp-ui` context flamegraph:** `GET /mcp-ui/trace/:sessionId` renders turn×source token stacks (harness / vault seed / tool schema / tool result / reasoning / model output) from inference-shaped records. Built-in demos `demo-compressed` vs `demo-fat`; optional `listTraceCalls` host hook; `?format=json` for harness-bench. Catalog nav links the compressed demo.
+
 - **`/mcp-ui` overflow fix:** schema descriptions render as wrapping `.field-help` (not truncating input placeholders); result snippets and card text use `overflow-wrap` so long vault snippets no longer spill out of columns.
 
 - **`/mcp-ui` nested forms:** `object` properties render as expandable `<fieldset>`s (`parent.child` names); `array` of scalars/objects get add/remove row controls (`items[0]`, `steps[0].tool`). Depth capped at 2; deeper schemas still fall back to the JSON bag.

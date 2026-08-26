@@ -14,6 +14,7 @@ import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
 import { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
+import type { TraceCallRecord } from "./mcp-ui-trace.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
@@ -83,6 +84,13 @@ export type CreateMcpApiAdapterAppOptions = {
    * Default true. Disable with `--no-mcp-ui-atr-scoped` for open demos.
    */
   mcpUiAtrScoped?: boolean;
+  /**
+   * Optional host hook for GET /mcp-ui/trace/:sessionId — inference-shaped
+   * call records (e.g. clawql-inference store keyed by correlation/session id).
+   */
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>;
   createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
@@ -176,6 +184,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       title: options.title,
       path: options.mcpUiPath,
       atrScoped: options.mcpUiAtrScoped !== false,
+      listTraceCalls: options.listTraceCalls,
     });
   }
 
@@ -316,6 +325,7 @@ export async function startMcpApiAdapter(
     wsPath,
     mcpUiPath,
     mcpUiAtrScoped: options.mcpUiAtrScoped,
+    listTraceCalls: options.listTraceCalls,
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
