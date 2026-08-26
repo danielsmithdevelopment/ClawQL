@@ -35,8 +35,7 @@ export class MemoryBackend implements LocalStorageBackend {
       this.roots.push(root);
     });
 
-  listMerkleRoots = (): Effect.Effect<MerkleRoot[], never> =>
-    Effect.sync(() => [...this.roots]);
+  listMerkleRoots = (): Effect.Effect<MerkleRoot[], never> => Effect.sync(() => [...this.roots]);
 
   query = (filter: WORMFilter): Effect.Effect<WORMEntry[], never> =>
     applyWORMFilter(this.entries, filter);

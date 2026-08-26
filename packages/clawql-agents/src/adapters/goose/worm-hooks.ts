@@ -1,8 +1,4 @@
-import type {
-  WORMAppendInput,
-  WORMEntryType,
-  AuditError,
-} from "clawql-audit";
+import type { WORMAppendInput, WORMEntryType, AuditError } from "clawql-audit";
 import { WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 import type { GooseAtrScope } from "./atr-templates.js";

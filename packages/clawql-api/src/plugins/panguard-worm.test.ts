@@ -1,7 +1,4 @@
-import {
-  bootProcessWormFromEnvEffect,
-  resetProcessWormForTests,
-} from "clawql-audit";
+import { bootProcessWormFromEnvEffect, resetProcessWormForTests } from "clawql-audit";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPanguardProxyPlugin } from "./panguard-proxy-plugin.js";

@@ -95,8 +95,7 @@ export class SQLiteBackend implements LocalStorageBackend {
             JSON.stringify(entry)
           );
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite write failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite write failed", cause }),
     });
 
   writeWithOutbox = (entry: WORMEntry): Effect.Effect<void, AuditError> =>
@@ -119,9 +118,7 @@ export class SQLiteBackend implements LocalStorageBackend {
               JSON.stringify(entry)
             );
           this.db
-            .prepare(
-              `INSERT INTO worm_outbox (id, entry_json, enqueued_at) VALUES (?, ?, ?)`
-            )
+            .prepare(`INSERT INTO worm_outbox (id, entry_json, enqueued_at) VALUES (?, ?, ?)`)
             .run(entry.id, JSON.stringify(entry), new Date().toISOString());
           this.db.exec("COMMIT");
         } catch (err) {
@@ -129,8 +126,7 @@ export class SQLiteBackend implements LocalStorageBackend {
           throw err;
         }
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite writeWithOutbox failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite writeWithOutbox failed", cause }),
     });
 
   outboxList = (): Effect.Effect<WORMEntry[], AuditError> =>
@@ -141,8 +137,7 @@ export class SQLiteBackend implements LocalStorageBackend {
           .all() as { entry_json: string }[];
         return rows.map((r) => JSON.parse(r.entry_json) as WORMEntry);
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite outboxList failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite outboxList failed", cause }),
     });
 
   outboxDelete = (id: string): Effect.Effect<void, AuditError> =>
@@ -150,8 +145,7 @@ export class SQLiteBackend implements LocalStorageBackend {
       try: () => {
         this.db.prepare(`DELETE FROM worm_outbox WHERE id = ?`).run(id);
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite outboxDelete failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite outboxDelete failed", cause }),
     });
 
   storeMerkleRoot = (root: MerkleRoot): Effect.Effect<void, AuditError> =>
@@ -171,8 +165,7 @@ export class SQLiteBackend implements LocalStorageBackend {
             root.computedAt
           );
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite storeMerkleRoot failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite storeMerkleRoot failed", cause }),
     });
 
   listMerkleRoots = (): Effect.Effect<MerkleRoot[], AuditError> =>
@@ -198,8 +191,7 @@ export class SQLiteBackend implements LocalStorageBackend {
           computedAt: r.computed_at,
         }));
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite listMerkleRoots failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite listMerkleRoots failed", cause }),
     });
 
   query = (filter: WORMFilter): Effect.Effect<WORMEntry[], AuditError> =>
@@ -240,25 +232,20 @@ export class SQLiteBackend implements LocalStorageBackend {
         const rows = this.db.prepare(sql).all(...params) as { entry_json: string }[];
         return rows.map((r) => JSON.parse(r.entry_json) as WORMEntry);
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite query failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite query failed", cause }),
     });
 
-  all = (): Effect.Effect<WORMEntry[], AuditError> =>
-    this.query({});
+  all = (): Effect.Effect<WORMEntry[], AuditError> => this.query({});
 
   latestEntry = (): Effect.Effect<WORMEntry | null, AuditError> =>
     Effect.try({
       try: () => {
         const row = this.db
-          .prepare(
-            `SELECT entry_json FROM worm_entries ORDER BY chain_index DESC LIMIT 1`
-          )
+          .prepare(`SELECT entry_json FROM worm_entries ORDER BY chain_index DESC LIMIT 1`)
           .get() as { entry_json: string } | undefined;
         return row ? (JSON.parse(row.entry_json) as WORMEntry) : null;
       },
-      catch: (cause) =>
-        new AuditError({ reason: "SQLite latestEntry failed", cause }),
+      catch: (cause) => new AuditError({ reason: "SQLite latestEntry failed", cause }),
     });
 
   close(): void {

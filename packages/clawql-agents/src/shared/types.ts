@@ -45,7 +45,9 @@ export class AgentAdapter extends Context.Tag("clawql/AgentAdapter")<
     readonly start: (
       atrScope: ATRScope
     ) => Effect.Effect<AgentSession, AgentWormError, WORMAuditTrailService>;
-    readonly stop: (session: AgentSession) => Effect.Effect<void, AgentWormError, WORMAuditTrailService>;
+    readonly stop: (
+      session: AgentSession
+    ) => Effect.Effect<void, AgentWormError, WORMAuditTrailService>;
     readonly health: () => Effect.Effect<AgentHealth, AuditError, WORMAuditTrailService>;
   }
 >() {}

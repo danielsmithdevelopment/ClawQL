@@ -141,8 +141,7 @@ export const handleAuditHttpRequest = (
       }
       if (!process.env.CLAWQL_AUDIT_QR_ENCRYPTION_KEY || !process.env.CLAWQL_AUDIT_QR_HMAC_KEY) {
         return json(503, {
-          error:
-            "CLAWQL_AUDIT_QR_ENCRYPTION_KEY and CLAWQL_AUDIT_QR_HMAC_KEY must be set",
+          error: "CLAWQL_AUDIT_QR_ENCRYPTION_KEY and CLAWQL_AUDIT_QR_HMAC_KEY must be set",
         });
       }
       const filter = (body.filter as WORMFilter | undefined) ?? {};

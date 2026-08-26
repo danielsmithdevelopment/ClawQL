@@ -1,9 +1,4 @@
-import {
-  buildMerkleSnapshot,
-  leafHash,
-  merkleProof,
-  verifyMerkleProof,
-} from "clawql-merkle";
+import { buildMerkleSnapshot, leafHash, merkleProof, verifyMerkleProof } from "clawql-merkle";
 import { Effect } from "effect";
 import type { WORMEntry } from "./entry.js";
 import { AuditError } from "./errors.js";
@@ -84,18 +79,9 @@ export class MerkleBatchLayer {
 
   verify(proof: MerkleInclusionProof): Effect.Effect<boolean> {
     return Effect.sync(() => {
-      const leaf = leafHash(
-        String(proof.chainIndex).padStart(12, "0"),
-        proof.entryHash
-      );
+      const leaf = leafHash(String(proof.chainIndex).padStart(12, "0"), proof.entryHash);
       const siblings = proof.siblings.map((h) => Buffer.from(h, "hex"));
-      return verifyMerkleProof(
-        leaf,
-        proof.leafIndex,
-        proof.leafCount,
-        siblings,
-        proof.rootHex
-      );
+      return verifyMerkleProof(leaf, proof.leafIndex, proof.leafCount, siblings, proof.rootHex);
     });
   }
 }

@@ -28,29 +28,20 @@ function parseIntEnv(env: NodeJS.ProcessEnv, key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export const wormEnabledFromEnv = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> =>
+export const wormEnabledFromEnv = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
   Effect.sync(() => envTrim(env, "CLAWQL_WORM_ENABLED") === "1");
 
-export const defaultWormSessionId = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string> =>
+export const defaultWormSessionId = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<string> =>
   Effect.sync(
     () =>
-      envTrim(env, "CLAWQL_WORM_SESSION_ID") ??
-      envTrim(env, "CLAWQL_SESSION_ID") ??
-      "clawql-host"
+      envTrim(env, "CLAWQL_WORM_SESSION_ID") ?? envTrim(env, "CLAWQL_SESSION_ID") ?? "clawql-host"
   );
 
 export const defaultWormAgentName = (
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string | undefined> =>
-  Effect.sync(() => envTrim(env, "CLAWQL_WORM_AGENT_NAME"));
+): Effect.Effect<string | undefined> => Effect.sync(() => envTrim(env, "CLAWQL_WORM_AGENT_NAME"));
 
-function makeLocal(
-  env: NodeJS.ProcessEnv
-): Effect.Effect<LocalStorageBackend, AuditError> {
+function makeLocal(env: NodeJS.ProcessEnv): Effect.Effect<LocalStorageBackend, AuditError> {
   return Effect.try({
     try: () => {
       const mode =
@@ -62,8 +53,7 @@ function makeLocal(
             : "memory");
       if (mode === "memory") return new MemoryBackend();
       if (mode === "sqlite") {
-        const path =
-          envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
+        const path = envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
         return new SQLiteBackend({ path });
       }
       if (mode === "postgres") {
@@ -83,9 +73,7 @@ function makeLocal(
   });
 }
 
-function makeRemote(
-  env: NodeJS.ProcessEnv
-): Effect.Effect<StorageBackend, AuditError> {
+function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, AuditError> {
   return Effect.try({
     try: () => {
       const mode = envTrim(env, "CLAWQL_WORM_REMOTE") ?? "memory";
@@ -103,9 +91,7 @@ function makeRemote(
           region: envTrim(env, "CLAWQL_WORM_S3_REGION") ?? "auto",
           prefix: envTrim(env, "CLAWQL_WORM_S3_PREFIX") ?? "worm/",
           credentials:
-            accessKeyId && secretAccessKey
-              ? { accessKeyId, secretAccessKey }
-              : undefined,
+            accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined,
         });
       }
       throw new Error(`Unknown CLAWQL_WORM_REMOTE=${mode}`);

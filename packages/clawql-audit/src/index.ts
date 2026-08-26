@@ -15,17 +15,9 @@ export {
   sha256Hex,
 } from "./seal.js";
 export { HashChain, HashChainLive } from "./chain.js";
-export {
-  MerkleBatchLayer,
-  type MerkleInclusionProof,
-  type MerkleRoot,
-} from "./merkle.js";
+export { MerkleBatchLayer, type MerkleInclusionProof, type MerkleRoot } from "./merkle.js";
 export { DualAckReplicator } from "./replication/dual-ack.js";
-export {
-  defaultRetryConfig,
-  withRetry,
-  type RetryConfig,
-} from "./replication/retry.js";
+export { defaultRetryConfig, withRetry, type RetryConfig } from "./replication/retry.js";
 export { startOutboxReconciler, type ReconcilerHandle } from "./replication/reconciler.js";
 export {
   createWORMAuditTrailEffect,
@@ -47,12 +39,13 @@ export { MemoryBackend } from "./storage/memory.js";
 export { SQLiteBackend, type SQLiteBackendOptions } from "./storage/sqlite.js";
 export { S3Backend, type S3BackendConfig } from "./storage/s3.js";
 export { PostgresBackend, type PostgresBackendOptions } from "./storage/postgres.js";
+export { verifyTEESignature, type TEEAttestationReport, type TEESigner } from "./tee/signer.js";
 export {
-  verifyTEESignature,
-  type TEEAttestationReport,
-  type TEESigner,
-} from "./tee/signer.js";
-export { handleAuditHttpRequest, authorizeApiKey, type HttpRequest, type HttpResponse } from "./http/routes.js";
+  handleAuditHttpRequest,
+  authorizeApiKey,
+  type HttpRequest,
+  type HttpResponse,
+} from "./http/routes.js";
 export { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
 export {
   createWormTrailConfigFromEnvEffect,

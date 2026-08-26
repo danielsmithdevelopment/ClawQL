@@ -16,9 +16,7 @@ export const startOutboxReconciler = (
 ): Effect.Effect<ReconcilerHandle> =>
   Effect.sync(() => {
     const timer = setInterval(() => {
-      void Effect.runPromise(
-        replicator.drainOutbox().pipe(Effect.catchAll(() => Effect.void))
-      );
+      void Effect.runPromise(replicator.drainOutbox().pipe(Effect.catchAll(() => Effect.void)));
     }, intervalMs);
     // Do not keep the process alive solely for the reconciler.
     timer.unref?.();

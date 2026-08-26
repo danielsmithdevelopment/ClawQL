@@ -72,7 +72,9 @@ export const makeClineAdapterLayer = () =>
             const verified = yield* worm.verify();
             return {
               status: verified.valid ? "healthy" : "degraded",
-              details: verified.valid ? "worm chain ok" : (verified.reason ?? `invalidAt=${verified.invalidAt}`),
+              details: verified.valid
+                ? "worm chain ok"
+                : (verified.reason ?? `invalidAt=${verified.invalidAt}`),
             } satisfies AgentHealth;
           }),
       });

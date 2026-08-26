@@ -32,7 +32,5 @@ export const withRetry = <A>(
         delay = Math.floor(delay * retry.backoffMultiplier);
       }
     }
-    return yield* Effect.fail(
-      last ?? new AuditError({ reason: "retry exhausted with no error" })
-    );
+    return yield* Effect.fail(last ?? new AuditError({ reason: "retry exhausted with no error" }));
   });

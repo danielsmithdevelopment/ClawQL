@@ -57,8 +57,7 @@ export class S3Backend implements StorageBackend {
           })
         );
       },
-      catch: (cause) =>
-        new AuditError({ reason: "S3 write failed", cause }),
+      catch: (cause) => new AuditError({ reason: "S3 write failed", cause }),
     });
 
   query = (_filter: WORMFilter): Effect.Effect<WORMEntry[], AuditError> =>

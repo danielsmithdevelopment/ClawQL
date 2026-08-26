@@ -44,9 +44,7 @@ export type PaymentWormEventLike = {
   payload?: Record<string, unknown>;
 };
 
-export const wormInputFromAuthEvent = (
-  event: AuthWormEvent
-): Effect.Effect<WORMAppendInput> =>
+export const wormInputFromAuthEvent = (event: AuthWormEvent): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => {
     const { type, timestamp, ...rest } = event;
     return {
@@ -73,9 +71,7 @@ export const wormInputFromMemoryEvent = (
     },
   }));
 
-export const wormInputFromWebEvent = (
-  event: WebWormEventLike
-): Effect.Effect<WORMAppendInput> =>
+export const wormInputFromWebEvent = (event: WebWormEventLike): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: event.type as WORMEntryType,
     timestamp: event.ts,
@@ -195,23 +191,15 @@ export const appendPaymentEventToWormEffect = (
   });
 
 /** Host AuthEventSink — inject into createAuth({ authEventSink }). */
-export function createAuthEventWormSink(): (
-  event: AuthWormEvent
-) => Promise<void> {
+export function createAuthEventWormSink(): (event: AuthWormEvent) => Promise<void> {
   return async (event) => {
-    await appendProcessWorm(
-      await Effect.runPromise(wormInputFromAuthEvent(event))
-    );
+    await appendProcessWorm(await Effect.runPromise(wormInputFromAuthEvent(event)));
   };
 }
 
 /** Host MemoryWormSink — pass to registerMemoryWormSink. */
-export function createMemoryWormSink(): (
-  event: MemoryWormEventLike
-) => Promise<void> {
+export function createMemoryWormSink(): (event: MemoryWormEventLike) => Promise<void> {
   return async (event) => {
-    await appendProcessWorm(
-      await Effect.runPromise(wormInputFromMemoryEvent(event))
-    );
+    await appendProcessWorm(await Effect.runPromise(wormInputFromMemoryEvent(event)));
   };
 }

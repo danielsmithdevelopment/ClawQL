@@ -69,8 +69,7 @@ function chacha20Encrypt(plaintext: Uint8Array, key: Buffer): Effect.Effect<Buff
       const tag = cipher.getAuthTag();
       return Buffer.concat([iv, tag, enc]);
     },
-    catch: (cause) =>
-      new AuditError({ reason: "ChaCha20 encrypt failed", cause }),
+    catch: (cause) => new AuditError({ reason: "ChaCha20 encrypt failed", cause }),
   });
 }
 
@@ -81,7 +80,10 @@ function hmacSha256Hex(data: Buffer, key: Buffer): Effect.Effect<string> {
 type RaptorqModule = {
   initSync: (module: Buffer) => unknown;
   Encoder: {
-    with_defaults: (data: Uint8Array, mtu: number) => {
+    with_defaults: (
+      data: Uint8Array,
+      mtu: number
+    ) => {
       encode: (repairPacketsPerBlock: number) => Uint8Array[];
       free: () => void;
     };
@@ -117,7 +119,9 @@ export const exportToQR = (
 ): Effect.Effect<QRExportResult, AuditError> =>
   Effect.gen(function* () {
     if (entries.length === 0) {
-      return yield* Effect.fail(new AuditError({ reason: "QR export requires at least one entry" }));
+      return yield* Effect.fail(
+        new AuditError({ reason: "QR export requires at least one entry" })
+      );
     }
 
     const encryptionKeyHex = yield* requireEnv(
@@ -134,8 +138,7 @@ export const exportToQR = (
 
     const raptorq = yield* Effect.tryPromise({
       try: () => loadRaptorq(),
-      catch: (cause) =>
-        new AuditError({ reason: "Failed to load raptorq WASM", cause }),
+      catch: (cause) => new AuditError({ reason: "Failed to load raptorq WASM", cause }),
     });
 
     const packets = yield* Effect.try({
@@ -149,8 +152,7 @@ export const exportToQR = (
           encoder.free();
         }
       },
-      catch: (cause) =>
-        new AuditError({ reason: "RaptorQ encode failed", cause }),
+      catch: (cause) => new AuditError({ reason: "RaptorQ encode failed", cause }),
     });
 
     const chainRoot = entries[entries.length - 1]!.hash;
@@ -180,8 +182,7 @@ export const exportToQR = (
             })
           )
         ),
-      catch: (cause) =>
-        new AuditError({ reason: "QR code generation failed", cause }),
+      catch: (cause) => new AuditError({ reason: "QR code generation failed", cause }),
     });
 
     return {

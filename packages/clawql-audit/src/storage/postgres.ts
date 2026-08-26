@@ -92,8 +92,7 @@ export class PostgresBackend implements LocalStorageBackend {
         await pool.query(DDL);
         markReady();
       },
-      catch: (cause) =>
-        new AuditError({ reason: "Postgres schema init failed", cause }),
+      catch: (cause) => new AuditError({ reason: "Postgres schema init failed", cause }),
     });
   }
 
@@ -117,8 +116,7 @@ export class PostgresBackend implements LocalStorageBackend {
               JSON.stringify(entry),
             ]
           ),
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres write failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres write failed", cause }),
       });
     });
   }
@@ -158,8 +156,7 @@ export class PostgresBackend implements LocalStorageBackend {
             client.release();
           }
         },
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres writeWithOutbox failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres writeWithOutbox failed", cause }),
       });
     });
   }
@@ -176,8 +173,7 @@ export class PostgresBackend implements LocalStorageBackend {
           );
           return res.rows.map((r) => (r as { entry_json: WORMEntry }).entry_json);
         },
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres outboxList failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres outboxList failed", cause }),
       });
     });
   }
@@ -189,8 +185,7 @@ export class PostgresBackend implements LocalStorageBackend {
       yield* ensure;
       yield* Effect.tryPromise({
         try: () => pool.query(`DELETE FROM worm_outbox WHERE id = $1`, [id]),
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres outboxDelete failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres outboxDelete failed", cause }),
       });
     });
   }
@@ -210,16 +205,9 @@ export class PostgresBackend implements LocalStorageBackend {
                root_hex = EXCLUDED.root_hex,
                entry_count = EXCLUDED.entry_count,
                computed_at = EXCLUDED.computed_at`,
-            [
-              root.rootHex,
-              root.fromChainIndex,
-              root.toChainIndex,
-              root.entryCount,
-              root.computedAt,
-            ]
+            [root.rootHex, root.fromChainIndex, root.toChainIndex, root.entryCount, root.computedAt]
           ),
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres storeMerkleRoot failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres storeMerkleRoot failed", cause }),
       });
     });
   }
@@ -255,8 +243,7 @@ export class PostgresBackend implements LocalStorageBackend {
             };
           });
         },
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres listMerkleRoots failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres listMerkleRoots failed", cause }),
       });
     });
   }
@@ -290,8 +277,7 @@ export class PostgresBackend implements LocalStorageBackend {
           const res = await pool.query(sql, params);
           return res.rows.map((r) => (r as { entry_json: WORMEntry }).entry_json);
         },
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres query failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres query failed", cause }),
       });
     });
   }
@@ -313,8 +299,7 @@ export class PostgresBackend implements LocalStorageBackend {
           if (!res.rows[0]) return null;
           return (res.rows[0] as { entry_json: WORMEntry }).entry_json;
         },
-        catch: (cause) =>
-          new AuditError({ reason: "Postgres latestEntry failed", cause }),
+        catch: (cause) => new AuditError({ reason: "Postgres latestEntry failed", cause }),
       });
     });
   }
@@ -323,8 +308,7 @@ export class PostgresBackend implements LocalStorageBackend {
     const pool = this.pool;
     return Effect.tryPromise({
       try: () => pool.end(),
-      catch: (cause) =>
-        new AuditError({ reason: "Postgres pool end failed", cause }),
+      catch: (cause) => new AuditError({ reason: "Postgres pool end failed", cause }),
     });
   }
 }

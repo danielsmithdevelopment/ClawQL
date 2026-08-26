@@ -1,8 +1,4 @@
-import type {
-  WORMAppendInput,
-  WORMEntryType,
-  AuditError,
-} from "clawql-audit";
+import type { WORMAppendInput, WORMEntryType, AuditError } from "clawql-audit";
 import { WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 import type { DeepSeekAtrScope } from "./atr-templates.js";
@@ -13,8 +9,7 @@ export class DeepSeekPluginDenyError extends Data.TaggedError("DeepSeekPluginDen
   readonly sessionId?: string;
 }> {}
 
-export type DeepSeekPluginEnforceError =
-  DeepSeekPluginDenyError | AuditError;
+export type DeepSeekPluginEnforceError = DeepSeekPluginDenyError | AuditError;
 
 export type DeepSeekHookKind =
   "plugin_load" | "tool_call" | "tool_result" | "session_start" | "session_end" | "panguard_deny";

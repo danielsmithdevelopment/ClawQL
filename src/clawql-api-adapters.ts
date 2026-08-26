@@ -17,10 +17,7 @@ import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
 import { Effect, Layer } from "effect";
 import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
-import {
-  disposeProcessWormHost,
-  ensureProcessWormHostBooted,
-} from "./process-worm-host.js";
+import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
