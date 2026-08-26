@@ -235,6 +235,7 @@ export function renderMcpUiCatalogPage(options: {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${safeTitle} — MCP UI</title>
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js"></script>
+  <meta name="htmx-config" content='{"responseHandling":[{"code":".*", "swap": true}]}' />
   <style>${MCP_UI_STYLES}</style>
 </head>
 <body>

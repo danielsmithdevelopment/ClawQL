@@ -166,11 +166,15 @@ function parseFieldValue(
     return false;
   }
   if (type === "number") {
-    const n = Number.parseFloat(String(raw ?? ""));
+    const text = String(raw ?? "").trim();
+    if (text === "") return undefined;
+    const n = Number.parseFloat(text);
     return Number.isFinite(n) ? n : raw;
   }
   if (type === "integer") {
-    const n = Number.parseInt(String(raw ?? ""), 10);
+    const text = String(raw ?? "").trim();
+    if (text === "") return undefined;
+    const n = Number.parseInt(text, 10);
     return Number.isFinite(n) ? n : raw;
   }
   if (Array.isArray(propSchema.enum)) {

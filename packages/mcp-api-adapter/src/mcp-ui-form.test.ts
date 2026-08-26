@@ -85,6 +85,10 @@ describe("mcp-ui-form", () => {
       message: "hello",
       loud: false,
     });
+
+    expect(
+      parseFormArgs({ message: "hello", count: "" }, schema)
+    ).toEqual({ message: "hello", loud: false });
   });
 
   it("parses JSON bag submissions", () => {
