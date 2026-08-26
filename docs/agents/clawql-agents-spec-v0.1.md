@@ -15,17 +15,17 @@ package: "packages/clawql-agents/"
 
 ### Repo mapping
 
-| Name in this document                                 | In this repository today                                                                                                                                                                    |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/clawql-agents/`                             | **Phases 1–4** — all seven adapters + ATR templates + shared Panguard; Phase 5 (bench/Helm) still gated                                                                                     |
+| Name in this document                                 | In this repository today                                                                                                                                                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/clawql-agents/`                             | **Phases 1–4** — all seven adapters + ATR templates + shared Panguard; Phase 5 (bench/Helm) still gated                                                                                                      |
 | npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM ships in **`clawql-audit@0.1.0`**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md). |
-| Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                            |
-| OpenClaw MCP wiring                                   | Docs + operator guides in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md); no adapter package                                                                                 |
-| Hermes                                                | Inference **coordination stub** only (`packages/clawql-inference/src/coordination/hermes-adapter.ts`)                                                                                       |
-| Cline WORM SDK hooks                                  | `packages/clawql-agents` maps a Cline hook subset; full ACP wiring still operator-side                                                                                                      |
-| `bench/` in this package                              | OpenBench plan puts the harness at **`integrations/agents-bench/`**, gated — do not duplicate a second harness here until that plan is revised                                              |
-| clawql-tee attestation                                | **Draft** spec ([`docs/streams/clawql-tee.md`](../streams/clawql-tee.md)); not a runtime flag you can flip                                                                                  |
-| RockYourLobster tiers / prices                        | GTM target in this spec; not encoded in Helm or payments packages                                                                                                                           |
+| Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                                             |
+| OpenClaw MCP wiring                                   | Docs + operator guides in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md); no adapter package                                                                                                  |
+| Hermes                                                | Inference **coordination stub** only (`packages/clawql-inference/src/coordination/hermes-adapter.ts`)                                                                                                        |
+| Cline WORM SDK hooks                                  | `packages/clawql-agents` maps a Cline hook subset; full ACP wiring still operator-side                                                                                                                       |
+| `bench/` in this package                              | OpenBench plan puts the harness at **`integrations/agents-bench/`**, gated — do not duplicate a second harness here until that plan is revised                                                               |
+| clawql-tee attestation                                | **Draft** spec ([`docs/streams/clawql-tee.md`](../streams/clawql-tee.md)); not a runtime flag you can flip                                                                                                   |
+| RockYourLobster tiers / prices                        | GTM target in this spec; not encoded in Helm or payments packages                                                                                                                                            |
 
 ### Catalog vs OpenBench
 

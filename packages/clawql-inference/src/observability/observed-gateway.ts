@@ -1,8 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  appendInferenceCallToWormEffect,
-  appendInferenceResultToWormEffect,
-} from "clawql-audit";
+import { appendInferenceCallToWormEffect, appendInferenceResultToWormEffect } from "clawql-audit";
 import { Effect } from "effect";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { estimateCostUsd } from "../keys/budget.js";
@@ -32,7 +29,10 @@ function appendInferenceCallWorm(
     virtualKeyId: request.virtualKeyId,
     messageCount: request.messages.length,
     cacheIntent: request.cacheIntent,
-  }).pipe(Effect.catchAll(() => Effect.void), Effect.asVoid);
+  }).pipe(
+    Effect.catchAll(() => Effect.void),
+    Effect.asVoid
+  );
 }
 
 function appendInferenceResultWorm(input: {
@@ -56,7 +56,10 @@ function appendInferenceResultWorm(input: {
     inputTokens: input.response?.usage?.inputTokens,
     outputTokens: input.response?.usage?.outputTokens,
     detail: input.detail,
-  }).pipe(Effect.catchAll(() => Effect.void), Effect.asVoid);
+  }).pipe(
+    Effect.catchAll(() => Effect.void),
+    Effect.asVoid
+  );
 }
 
 /** Gateway decorator that persists every completion to an {@link InferenceStore}. */

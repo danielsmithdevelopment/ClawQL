@@ -70,10 +70,7 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
-import {
-  buildGatewayAuthConfig,
-  createInferenceVirtualKeyClaimsResolver,
-} from "./gateway-auth.js";
+import { buildGatewayAuthConfig, createInferenceVirtualKeyClaimsResolver } from "./gateway-auth.js";
 
 /** @deprecated Import from `./gateway-auth.js` instead. */
 export { createInferenceVirtualKeyClaimsResolver };

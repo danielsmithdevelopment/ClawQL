@@ -83,9 +83,7 @@ export type InferenceAuditEntryLike = {
   payload?: Record<string, unknown>;
 };
 
-export const wormInputFromAuthEvent = (
-  event: AuthWormEvent
-): Effect.Effect<WORMAppendInput> =>
+export const wormInputFromAuthEvent = (event: AuthWormEvent): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => {
     const { type, timestamp, ...rest } = event;
     return {
@@ -112,9 +110,7 @@ export const wormInputFromMemoryEvent = (
     },
   }));
 
-export const wormInputFromWebEvent = (
-  event: WebWormEventLike
-): Effect.Effect<WORMAppendInput> =>
+export const wormInputFromWebEvent = (event: WebWormEventLike): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: event.type as WORMEntryType,
     timestamp: event.ts,

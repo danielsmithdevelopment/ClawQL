@@ -47,8 +47,7 @@ export function createInferenceVirtualKeyClaimsResolver(
 }
 
 function resolveIssuedApiKeyStorePath(env: NodeJS.ProcessEnv): string | undefined {
-  const explicit =
-    env.CLAWQL_AUTH_API_KEY_STORE_PATH?.trim() ?? env.CLAWQL_API_KEYS_PATH?.trim();
+  const explicit = env.CLAWQL_AUTH_API_KEY_STORE_PATH?.trim() ?? env.CLAWQL_API_KEYS_PATH?.trim();
   if (explicit) return explicit;
   if (env.CLAWQL_AUTH_ISSUED_API_KEYS?.trim() === "1") {
     const home = env.CLAWQL_HOME?.trim();
