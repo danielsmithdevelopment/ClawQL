@@ -6,8 +6,9 @@ import { swaggerDocsHtml } from "./docs-html.js";
 import {
   createJwtVerifier,
   edgeAuthConfigured,
-  verifyEdgeCredential,
+  resolveEdgeCredential,
   type McpApiAdapterJwtAuthOptions,
+  type VerifiedMcpAdapterAtr,
 } from "./edge-auth.js";
 import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
@@ -24,6 +25,10 @@ import type {
 } from "./types.js";
 import { buildCatalogFromUpstream, connectUpstream, type UpstreamConnection } from "./upstream.js";
 import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
+
+export type McpApiAdapterRequest = Request & {
+  mcpAtr?: VerifiedMcpAdapterAtr;
+};
 
 function readApiKey(req: Request): string | undefined {
   const headerKey = req.header("x-api-key")?.trim();
@@ -73,6 +78,11 @@ export type CreateMcpApiAdapterAppOptions = {
   wsPath?: string;
   /** HTMX MCP UI path when enabled (advertised on /healthz). */
   mcpUiPath?: string;
+  /**
+   * When true, `/mcp-ui` filters the catalog (and execute) by the caller's ATR.
+   * Default true. Disable with `--no-mcp-ui-atr-scoped` for open demos.
+   */
+  mcpUiAtrScoped?: boolean;
   createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
@@ -83,18 +93,25 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
   if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
     app.use(createEdgeAuthRateLimiter());
+    const mcpUiProgressPrefix =
+      typeof options.mcpUiPath === "string" && options.mcpUiPath.trim()
+        ? `${options.mcpUiPath.replace(/\/$/, "")}/progress/`
+        : "/mcp-ui/progress/";
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      void verifyEdgeCredential(
+      // EventSource/fetch cannot set Authorization; opaque job UUIDs + TTL are the capability.
+      if (req.method === "GET" && req.path.startsWith(mcpUiProgressPrefix)) return next();
+      void resolveEdgeCredential(
         readApiKey(req),
         { apiKey: options.apiKey, jwt: options.jwtAuth },
         verifyJwt
       )
-        .then((ok) => {
-          if (!ok) {
+        .then((atr) => {
+          if (!atr) {
             res.status(401).json({ error: "unauthorized" });
             return;
           }
+          (req as McpApiAdapterRequest).mcpAtr = atr;
           next();
         })
         .catch(() => {
@@ -158,6 +175,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       callTool: options.callTool,
       title: options.title,
       path: options.mcpUiPath,
+      atrScoped: options.mcpUiAtrScoped !== false,
     });
   }
 
@@ -297,6 +315,7 @@ export async function startMcpApiAdapter(
     mcpPath,
     wsPath,
     mcpUiPath,
+    mcpUiAtrScoped: options.mcpUiAtrScoped,
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 

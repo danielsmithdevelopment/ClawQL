@@ -68,11 +68,14 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 | `POST/GET/DELETE /mcp` | Streamable HTTP MCP (same tools) |
 | `WS /ws`               | WebSocket JSON tool calls        |
 | `GET /mcp-ui`          | HTMX tool playground (auto-generated forms) |
-| `POST /mcp-ui/execute/{toolName}` | Run a tool from the UI |
+| `POST /mcp-ui/execute/{toolName}` | Run a tool from the UI (urlencoded or multipart) |
+| `GET /mcp-ui/progress/{jobId}` | SSE progress for long-running executes |
+| `POST /mcp-ui/generate` | Create a multi-step custom form (JSON) |
+| `GET /mcp-ui/custom/{slug}` | Render a generated multi-step form |
 | `GET /tools`           | Catalog                          |
 | `GET /healthz`         | Liveness                         |
 
-Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Disable `/mcp-ui` with `--no-mcp-ui`. Change paths with `--mcp-path` / `--ws-path` / `--mcp-ui-path`.
+Disable MCP with `--no-mcp`. Disable WebSocket with `--no-ws`. Disable `/mcp-ui` with `--no-mcp-ui`. Disable ATR catalog filtering with `--no-mcp-ui-atr-scoped`. Change paths with `--mcp-path` / `--ws-path` / `--mcp-ui-path`.
 
 ## Programmatic API
 

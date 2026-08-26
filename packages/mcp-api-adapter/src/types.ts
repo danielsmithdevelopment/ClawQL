@@ -105,6 +105,12 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Set `false` to disable the browser UI surface.
    */
   mcpUiPath?: string | false;
+  /**
+   * When true (default), `/mcp-ui` filters catalog + execute by the caller's ATR.
+   * JWT scopes/tools control visibility; API keys are treated as admin.
+   * Set `false` to show the full catalog regardless of ATR (open demos).
+   */
+  mcpUiAtrScoped?: boolean;
 };
 
 export type StartedMcpApiAdapter = {

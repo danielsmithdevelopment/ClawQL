@@ -37,6 +37,7 @@ HTTP APIs:
   --no-ws                Disable WebSocket surface
   --mcp-ui-path <path>   HTMX MCP UI playground path (default /mcp-ui)
   --no-mcp-ui            Disable /mcp-ui browser surface
+  --no-mcp-ui-atr-scoped  Show full catalog in /mcp-ui (ignore ATR tool filter)
   --api-key <key>        Optional edge API key
   --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
   --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
@@ -141,6 +142,7 @@ const sharedOpts = {
   "no-ws": { type: "boolean", default: false },
   "mcp-ui-path": { type: "string" },
   "no-mcp-ui": { type: "boolean", default: false },
+  "no-mcp-ui-atr-scoped": { type: "boolean", default: false },
   listen: { type: "string" },
   "api-key": { type: "string" },
   "jwks-url": { type: "string" },
@@ -260,6 +262,8 @@ async function runServe(argv: string[]): Promise<void> {
       envFirst("MCP_API_ADAPTER_MCP_UI_PATH") ||
       "/mcp-ui";
 
+  const mcpUiAtrScoped = !values["no-mcp-ui-atr-scoped"];
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
@@ -272,6 +276,7 @@ async function runServe(argv: string[]): Promise<void> {
     mcpPath,
     wsPath,
     mcpUiPath,
+    mcpUiAtrScoped,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 

@@ -1,17 +1,41 @@
-import express, { type Express, type Request } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { httpBodyFromCollapsed } from "./call.js";
+import type { VerifiedMcpAdapterAtr } from "./edge-auth.js";
 import {
   FormValidationError,
+  escapeMcpUiHtml,
   fieldErrorFromMessage,
   parseFormArgs,
+  renderToolFormFields,
 } from "./mcp-ui-form.js";
+import { canProcessDocuments, filterToolsForAtr } from "./mcp-ui-atr.js";
+import {
+  createGeneratedUi,
+  getGeneratedUiBySlug,
+  type GeneratedUiDefinition,
+} from "./mcp-ui-generate.js";
 import {
   renderMcpUiCatalogPage,
+  renderMcpUiCustomFormPage,
   renderMcpUiErrorResult,
+  renderMcpUiProgressShell,
   renderMcpUiSuccessResult,
 } from "./mcp-ui-html.js";
+import {
+  isMultipartRequest,
+  mergeFilesIntoArgs,
+  parseMultipartRequest,
+} from "./mcp-ui-multipart.js";
+import {
+  createProgressJob,
+  getProgressJob,
+  isLongRunningTool,
+  pushProgressEvent,
+  subscribeProgress,
+} from "./mcp-ui-progress.js";
+import { formHintsForTool } from "./mcp-ui-templates.js";
 import { isSafeToolPathName } from "./schema-convert.js";
-import type { CallToolFn, ToolCatalog } from "./types.js";
+import type { CallToolFn, ListedMcpTool, ToolCatalog } from "./types.js";
 
 export const DEFAULT_MCP_UI_PATH = "/mcp-ui";
 
@@ -20,7 +44,13 @@ export type AttachMcpUiOptions = {
   callTool: CallToolFn;
   title?: string;
   path?: string;
+  /** Filter catalog/execute by `req.mcpAtr` (default true). */
+  atrScoped?: boolean;
+  /** Max uploaded file size in bytes (default 25 MiB). */
+  maxUploadBytes?: number;
 };
+
+type RequestWithAtr = Request & { mcpAtr?: VerifiedMcpAdapterAtr };
 
 function asFormBody(req: Request): Record<string, unknown> {
   const body = req.body;
@@ -30,24 +60,374 @@ function asFormBody(req: Request): Record<string, unknown> {
   return {};
 }
 
+function atrFromRequest(req: Request): VerifiedMcpAdapterAtr | undefined {
+  return (req as RequestWithAtr).mcpAtr;
+}
+
+function documentsProcessingAllowed(
+  atr: VerifiedMcpAdapterAtr | undefined,
+  atrScoped: boolean
+): boolean {
+  if (!atrScoped || !atr) return true;
+  return canProcessDocuments(atr);
+}
+
+function preferredBase64Field(inputSchema: Record<string, unknown>): string | undefined {
+  const props = inputSchema.properties as Record<string, unknown> | undefined;
+  if (!props || typeof props !== "object") return undefined;
+  if ("pdf_base64" in props) return "pdf_base64";
+  if ("base64" in props) return "base64";
+  if ("file" in props) return "file";
+  return undefined;
+}
+
+function stripUploadMeta(args: Record<string, unknown>): Record<string, unknown> {
+  const out = { ...args };
+  delete out.__upload_filename;
+  delete out.__upload_mime;
+  delete out.__sse;
+  return out;
+}
+
+async function resolveExecuteArgs(
+  req: Request,
+  tool: ListedMcpTool,
+  options: {
+    atr: VerifiedMcpAdapterAtr | undefined;
+    atrScoped: boolean;
+    maxUploadBytes: number;
+  }
+): Promise<Record<string, unknown>> {
+  const inputSchema = (tool.inputSchema ?? {
+    type: "object",
+    properties: {},
+  }) as Record<string, unknown>;
+
+  let rawBody: Record<string, unknown>;
+  let hadFiles = false;
+
+  if (isMultipartRequest(req)) {
+    const parsed = await parseMultipartRequest(req, { maxFileBytes: options.maxUploadBytes });
+    hadFiles = Object.keys(parsed.files).length > 0;
+    if (hadFiles && !documentsProcessingAllowed(options.atr, options.atrScoped)) {
+      throw new FormValidationError(
+        "Forbidden — document/file processing is outside your ATR scope",
+        [{ message: "Forbidden — document/file processing is outside your ATR scope" }]
+      );
+    }
+    const merged = mergeFilesIntoArgs(
+      parsed.fields,
+      parsed.files,
+      preferredBase64Field(inputSchema)
+    );
+    rawBody = merged;
+  } else {
+    rawBody = asFormBody(req);
+  }
+
+  const args = parseFormArgs(rawBody, inputSchema);
+  return stripUploadMeta(args);
+}
+
+function renderExecuteError(
+  res: Response,
+  toolName: string,
+  err: unknown,
+  status: number
+): void {
+  if (err instanceof FormValidationError) {
+    res.status(status).type("html").send(
+      renderMcpUiErrorResult({
+        toolName,
+        message: err.message,
+        fieldErrors: err.fields,
+      })
+    );
+    return;
+  }
+  const message = err instanceof Error ? err.message : String(err);
+  res.status(status).type("html").send(renderMcpUiErrorResult({ toolName, message }));
+}
+
+async function runToolAndRender(
+  options: AttachMcpUiOptions,
+  tool: ListedMcpTool,
+  args: Record<string, unknown>
+): Promise<{ html: string; ok: boolean }> {
+  const started = Date.now();
+  try {
+    const result = await options.callTool(tool, args);
+    const body = httpBodyFromCollapsed(result);
+    return {
+      ok: true,
+      html: renderMcpUiSuccessResult({
+        toolName: tool.name,
+        executionMs: Date.now() - started,
+        body,
+      }),
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const withResult = err as Error & { result?: unknown };
+    const details =
+      withResult.result !== undefined
+        ? JSON.stringify(withResult.result, null, 2)
+        : undefined;
+    const fieldErr = fieldErrorFromMessage(message);
+    return {
+      ok: false,
+      html: renderMcpUiErrorResult({
+        toolName: tool.name,
+        message,
+        details,
+        fieldErrors: fieldErr.field ? [fieldErr] : undefined,
+      }),
+    };
+  }
+}
+
+function startBackgroundJob(
+  options: AttachMcpUiOptions,
+  tool: ListedMcpTool,
+  args: Record<string, unknown>,
+  basePath: string
+): string {
+  const job = createProgressJob(tool.name);
+  pushProgressEvent(job, { type: "progress", message: "Queued…", percent: 0 });
+
+  void (async () => {
+    pushProgressEvent(job, {
+      type: "progress",
+      message: `Calling ${tool.name}…`,
+      percent: 15,
+    });
+    const { html, ok } = await runToolAndRender(options, tool, args);
+    if (ok) {
+      pushProgressEvent(job, {
+        type: "complete",
+        message: "Done",
+        percent: 100,
+        resultHtml: html,
+      });
+    } else {
+      pushProgressEvent(job, {
+        type: "error",
+        message: "Tool failed",
+        percent: 100,
+        resultHtml: html,
+      });
+    }
+  })();
+
+  return renderMcpUiProgressShell({
+    jobId: job.id,
+    toolName: tool.name,
+    basePath,
+  });
+}
+
 export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): string {
   const basePath =
     (options.path?.trim() || DEFAULT_MCP_UI_PATH).replace(/\/$/, "") || DEFAULT_MCP_UI_PATH;
+  const atrScoped = options.atrScoped !== false;
+  const maxUploadBytes = options.maxUploadBytes ?? 25 * 1024 * 1024;
   const router = express.Router();
 
   router.use(express.urlencoded({ extended: false, limit: "2mb" }));
+  router.use(express.json({ limit: "1mb" }));
 
-  router.get("/", (_req, res) => {
+  router.get("/", (req, res) => {
     const catalog = options.getCatalog();
+    const atr = atrFromRequest(req);
+    const tools = filterToolsForAtr(catalog.tools, atr, atrScoped);
     res.type("html").send(
       renderMcpUiCatalogPage({
         title: options.title ?? "MCP API Adapter",
-        tools: catalog.tools,
+        tools,
         fetchedAt: catalog.fetchedAt,
         upstream: catalog.upstream,
         basePath,
       })
     );
+  });
+
+  router.get("/progress/:jobId/result", (req, res) => {
+    const jobId = String(req.params.jobId ?? "");
+    const job = getProgressJob(jobId);
+    if (!job?.resultHtml) {
+      res.status(404).type("text").send("Result not ready");
+      return;
+    }
+    res.status(200).type("html").send(job.resultHtml);
+  });
+
+  router.get("/progress/:jobId", (req, res) => {
+    const jobId = String(req.params.jobId ?? "");
+    const job = getProgressJob(jobId);
+    if (!job) {
+      res.status(404).type("text").send("Unknown progress job");
+      return;
+    }
+
+    res.status(200);
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+
+    const send = (event: {
+      type: string;
+      message: string;
+      percent?: number;
+      at: string;
+    }) => {
+      res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+      if (event.type === "complete" || event.type === "error") {
+        res.end();
+      }
+    };
+
+    const unsub = subscribeProgress(job, send);
+    req.on("close", () => {
+      unsub();
+    });
+  });
+
+  router.post("/generate", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    const body = (req.body ?? {}) as GeneratedUiDefinition;
+    try {
+      const form = createGeneratedUi(body, authorized);
+      res.status(201).json({
+        id: form.id,
+        slug: form.slug,
+        title: form.title,
+        description: form.description,
+        steps: form.steps,
+        url: `${basePath}/custom/${form.slug}`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.get("/custom/:slug", (req, res) => {
+    const slug = String(req.params.slug ?? "");
+    const form = getGeneratedUiBySlug(slug);
+    if (!form) {
+      res.status(404).type("html").send("<p>Unknown custom form</p>");
+      return;
+    }
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    const step = form.steps[form.currentStepIndex];
+    if (!step) {
+      res.type("html").send(
+        renderMcpUiCustomFormPage({
+          form,
+          tool: undefined,
+          fieldsHtml: "",
+          hasFileFields: false,
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          done: true,
+        })
+      );
+      return;
+    }
+    const tool = authorized.find((t) => t.name === step.tool);
+    if (!tool) {
+      res
+        .status(403)
+        .type("html")
+        .send(
+          renderMcpUiErrorResult({
+            toolName: step.tool,
+            message: "Forbidden — this step tool is outside your ATR scope",
+          })
+        );
+      return;
+    }
+    const hints = formHintsForTool(tool);
+    const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
+    res.type("html").send(
+      renderMcpUiCustomFormPage({
+        form,
+        tool,
+        fieldsHtml,
+        hasFileFields,
+        basePath,
+        title: options.title ?? "MCP API Adapter",
+        done: false,
+      })
+    );
+  });
+
+  router.post("/custom/:slug/step", async (req, res) => {
+    const slug = String(req.params.slug ?? "");
+    const form = getGeneratedUiBySlug(slug);
+    if (!form) {
+      res.status(404).type("html").send(renderMcpUiErrorResult({ toolName: slug, message: "Unknown custom form" }));
+      return;
+    }
+    const step = form.steps[form.currentStepIndex];
+    if (!step) {
+      res.status(400).type("html").send(renderMcpUiErrorResult({ toolName: slug, message: "Workflow already complete" }));
+      return;
+    }
+
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    const tool = authorized.find((t) => t.name === step.tool);
+    if (!tool) {
+      res
+        .status(403)
+        .type("html")
+        .send(
+          renderMcpUiErrorResult({
+            toolName: step.tool,
+            message: "Forbidden — this step tool is outside your ATR scope",
+          })
+        );
+      return;
+    }
+
+    let args: Record<string, unknown>;
+    try {
+      args = await resolveExecuteArgs(req, tool, { atr, atrScoped, maxUploadBytes });
+    } catch (err) {
+      const status =
+        err instanceof FormValidationError && /Forbidden/.test(err.message) ? 403 : 400;
+      renderExecuteError(res, tool.name, err, status);
+      return;
+    }
+
+    const started = Date.now();
+    try {
+      const result = await options.callTool(tool, args);
+      const body = httpBodyFromCollapsed(result);
+      form.stepOutputs[tool.name] = body;
+      form.currentStepIndex += 1;
+      const next = form.steps[form.currentStepIndex];
+      const nextHint = next
+        ? `<p class="field-help">Next: <a href="${escapeMcpUiHtml(`${basePath}/custom/${encodeURIComponent(form.slug)}`)}">${escapeMcpUiHtml(next.label ?? next.tool)}</a></p>`
+        : `<p class="field-help">Workflow complete.</p>`;
+      res.status(200).type("html").send(
+        `${renderMcpUiSuccessResult({
+          toolName: tool.name,
+          executionMs: Date.now() - started,
+          body,
+        })}${nextHint}`
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(502).type("html").send(renderMcpUiErrorResult({ toolName: tool.name, message }));
+    }
   });
 
   router.post("/execute/:toolName", async (req, res) => {
@@ -61,65 +441,42 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     }
 
     const catalog = options.getCatalog();
-    const tool = catalog.tools.find((t) => t.name === toolName);
+    const atr = atrFromRequest(req);
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    const tool = authorized.find((t) => t.name === toolName);
     if (!tool) {
+      const exists = catalog.tools.some((t) => t.name === toolName);
       res
-        .status(404)
+        .status(exists ? 403 : 404)
         .type("html")
-        .send(renderMcpUiErrorResult({ toolName, message: "Unknown tool" }));
+        .send(
+          renderMcpUiErrorResult({
+            toolName,
+            message: exists
+              ? "Forbidden — this tool is outside your ATR scope"
+              : "Unknown tool",
+          })
+        );
       return;
     }
 
     let args: Record<string, unknown>;
     try {
-      args = parseFormArgs(asFormBody(req), tool.inputSchema ?? { type: "object", properties: {} });
+      args = await resolveExecuteArgs(req, tool, { atr, atrScoped, maxUploadBytes });
     } catch (err) {
-      if (err instanceof FormValidationError) {
-        res.status(400).type("html").send(
-          renderMcpUiErrorResult({
-            toolName,
-            message: err.message,
-            fieldErrors: err.fields,
-          })
-        );
-        return;
-      }
-      const message = err instanceof Error ? err.message : String(err);
-      res
-        .status(400)
-        .type("html")
-        .send(renderMcpUiErrorResult({ toolName, message }));
+      const status =
+        err instanceof FormValidationError && /Forbidden/.test(err.message) ? 403 : 400;
+      renderExecuteError(res, toolName, err, status);
       return;
     }
 
-    const started = Date.now();
-    try {
-      const result = await options.callTool(tool, args);
-      const body = httpBodyFromCollapsed(result);
-      res.status(200).type("html").send(
-        renderMcpUiSuccessResult({
-          toolName,
-          executionMs: Date.now() - started,
-          body,
-        })
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const withResult = err as Error & { result?: unknown };
-      const details =
-        withResult.result !== undefined
-          ? JSON.stringify(withResult.result, null, 2)
-          : undefined;
-      const fieldErr = fieldErrorFromMessage(message);
-      res.status(502).type("html").send(
-        renderMcpUiErrorResult({
-          toolName,
-          message,
-          details,
-          fieldErrors: fieldErr.field ? [fieldErr] : undefined,
-        })
-      );
+    if (isLongRunningTool(toolName)) {
+      res.status(200).type("html").send(startBackgroundJob(options, tool, args, basePath));
+      return;
     }
+
+    const { html, ok } = await runToolAndRender(options, tool, args);
+    res.status(ok ? 200 : 502).type("html").send(html);
   });
 
   app.use(basePath, router);
