@@ -5,7 +5,7 @@
 
 import { assertSafeSourceId } from "./custom-sources-security.js";
 
-export type CustomSourceKind = "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli";
+export type CustomSourceKind = "openapi" | "discovery" | "graphql" | "grpc" | "mcp" | "cli" | "webmcp";
 
 export type CustomSourceEntry = {
   /** Stable slug (directory name under ~/.ClawQL/sources/). */
@@ -36,6 +36,12 @@ export type CustomSourceEntry = {
   cliArgs?: string[];
   cliEnv?: Record<string, string>;
   cliDescription?: string;
+  /** WebMCP page URL (HTTPS) where tools are registered via navigator.modelContext. */
+  webmcpPageUrl?: string;
+  /** Chromium CDP endpoint (default CLAWQL_WEBMCP_CDP_URL or http://127.0.0.1:9222). */
+  webmcpCdpUrl?: string;
+  /** Milliseconds to wait after page load for client-side tool registration. */
+  webmcpReadyMs?: number;
 };
 
 export type CustomSourcesFile = {
