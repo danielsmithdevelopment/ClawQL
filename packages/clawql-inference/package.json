@@ -23,6 +23,11 @@
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
     },
+    "./audit/process-worm": {
+      "types": "./dist/audit/process-worm.d.ts",
+      "import": "./dist/audit/process-worm.js",
+      "require": "./dist/audit/process-worm.cjs"
+    },
     "./api/server": {
       "types": "./dist/api/server.d.ts",
       "import": "./dist/api/server.js",
@@ -47,6 +52,7 @@
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "@opentelemetry/sdk-trace-node": "^2.9.0",
     "clawql-api": "0.1.0",
+    "clawql-audit": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-payments": "0.1.0",
     "effect": "^3.21.4",
