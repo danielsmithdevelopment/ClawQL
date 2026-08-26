@@ -2,7 +2,7 @@
 /**
  * Publish the standalone WORM wedge only: clawql-merkle then clawql-audit.
  *
- * Use for first registry publish of merkle/audit@7.2.0 without re-tagging clawql-mcp.
+ * Use for first registry publish of merkle/audit@0.1.0 without re-tagging clawql-mcp.
  * Requires NPM_TOKEN and/or npm OIDC trusted publishing (packages must be linked
  * on npmjs.com for provenance / trusted publishers).
  *

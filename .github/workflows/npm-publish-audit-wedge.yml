@@ -1,5 +1,5 @@
 # Publish clawql-merkle then clawql-audit only (standalone WORM wedge).
-# Use when clawql-mcp@7.2.0 is already on npm and you need first-time package names.
+# First-time registry publish of clawql-merkle + clawql-audit at independent 0.1.x (clawql-mcp already on npm).
 # Requires npm trusted publishing (OIDC) and/or NPM_TOKEN.
 name: npm publish audit wedge
 

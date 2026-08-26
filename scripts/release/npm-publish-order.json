@@ -29,17 +29,18 @@
     "mcp-api-adapter"
   ],
   "notes": [
-    "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
+    "clawql-merkle + clawql-audit form the standalone WORM wedge at independent 0.1.x; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras are packed/installed in CI npm-pack smoke so clawql-mcp can resolve unpublished peer versions (e.g. mcp-grpc-transport@1.0.0 before registry publish).",
-    "mcp-api-adapter depends on mcp-grpc-transport — pack/publish transport first.",
+    "mcp-api-adapter depends on mcp-grpc-transport \u2014 pack/publish transport first.",
     "clawql-telemetry is not yet a package (see #313).",
-    "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
+    "clawql-ontology has no clawql-* deps (ajv/yaml only) \u2014 safe early in the order.",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
-    "Monorepo clawql-* packages use matching 7.2.0 semver; npm workspaces link packages locally.",
+    "clawql-merkle and clawql-audit use independent semver (0.1.x); do not lockstep new clawql-* packages to clawql-mcp major.",
+    "Other unpublished clawql-* horizontals still stamp 7.2.0 in-tree until migrated; clawql-mcp remains 7.2.0 (already on npm).",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch)."
   ]
 }

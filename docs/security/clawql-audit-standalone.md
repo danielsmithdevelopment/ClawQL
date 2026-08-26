@@ -5,14 +5,14 @@ status: current
 
 # Standalone WORM packages
 
-[`clawql-merkle`](https://www.npmjs.com/package/clawql-merkle) and [`clawql-audit`](https://www.npmjs.com/package/clawql-audit) are published as an independent **7.2.0** wedge. You can use them from any Node ≥ 22 agent host without installing ClawQL MCP.
+[`clawql-merkle`](https://www.npmjs.com/package/clawql-merkle) and [`clawql-audit`](https://www.npmjs.com/package/clawql-audit) are published as an independent **0.1.0** wedge. You can use them from any Node ≥ 22 agent host without installing ClawQL MCP.
 
 ## Packages
 
 | Package         | Role                                                         | Semver  |
 | --------------- | ------------------------------------------------------------ | ------- |
-| `clawql-merkle` | Zero-dep Merkle snapshots + inclusion proofs                 | `7.2.0` |
-| `clawql-audit`  | Hash-chained WORM trail, dual-ack (sql.js/memory), TEE ECDSA | `7.2.0` |
+| `clawql-merkle` | Zero-dep Merkle snapshots + inclusion proofs                 | `0.1.0` |
+| `clawql-audit`  | Hash-chained WORM trail, dual-ack (sql.js/memory), TEE ECDSA | `0.1.0` |
 
 `clawql-audit` is CI-gated to depend on **only** `clawql-merkle` among `clawql-*` names.
 
@@ -28,7 +28,7 @@ Full monorepo order (merkle and audit first):
 
 [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json)
 
-Wedge-only (first registry publish of `7.2.0` without a monorepo tag):
+Wedge-only (first registry publish of `0.1.0` without a monorepo tag):
 
 ```bash
 # dry-run

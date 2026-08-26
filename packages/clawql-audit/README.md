@@ -2,7 +2,7 @@
 
 Tamper-evident WORM audit trail. Hash-chain + Merkle batch roots via [`clawql-merkle`](../clawql-merkle). Dual-ack local/remote with an outbox (`remote_queued` is not RPO=0).
 
-## Features (7.2.0)
+## Features (0.1.0)
 
 - Effect `WORMAuditTrail` Tag + Layer (`createWORMAuditTrail` host façade)
 - In-memory or **sql.js** SQLite dual-ack backends
