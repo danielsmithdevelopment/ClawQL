@@ -87,9 +87,7 @@ export function createExternalCmdIdJagAssertionSigner(cmdLine: string): IdJagAss
               clearTimeout(timer);
               if (code !== 0) {
                 reject(
-                  new Error(
-                    `tee_sign_cmd_exit_${code}${stderr ? `: ${stderr.slice(0, 200)}` : ""}`
-                  )
+                  new Error(`tee_sign_cmd_exit_${code}${stderr ? `: ${stderr.slice(0, 200)}` : ""}`)
                 );
                 return;
               }

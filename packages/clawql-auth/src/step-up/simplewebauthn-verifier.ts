@@ -52,9 +52,7 @@ export function createSimpleWebAuthnVerifier(
       }
       return {
         ok: true as const,
-        userHandle: result.authenticationInfo?.userVerified
-          ? input.credential.id
-          : undefined,
+        userHandle: result.authenticationInfo?.userVerified ? input.credential.id : undefined,
         newCounter: result.authenticationInfo?.newCounter,
       };
     },
