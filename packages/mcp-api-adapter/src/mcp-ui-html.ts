@@ -1,5 +1,11 @@
 import type { ListedMcpTool } from "mcp-grpc-transport";
-import { escapeMcpUiHtml, renderToolFormFields } from "./mcp-ui-form.js";
+import {
+  escapeMcpUiHtml,
+  renderToolFormFields,
+  type FormFieldError,
+} from "./mcp-ui-form.js";
+import { renderResultContent } from "./mcp-ui-results.js";
+import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 
 const MCP_UI_STYLES = `
   :root {
@@ -9,11 +15,11 @@ const MCP_UI_STYLES = `
     --line: rgba(15, 23, 42, 0.12);
     --surface: #ffffff;
     --accent: #0d6e62;
-    --accent-soft: #dff3ec;
     --ok: #166534;
     --ok-bg: #ecfdf5;
     --err: #991b1b;
     --err-bg: #fef2f2;
+    --warn: #92400e;
   }
   * { box-sizing: border-box; }
   body {
@@ -84,7 +90,7 @@ const MCP_UI_STYLES = `
     font-weight: 650;
   }
   .tool-card .tool-name {
-    margin: 0.25rem 0 0.75rem;
+    margin: 0.25rem 0 0.35rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.82rem;
     color: var(--muted);
@@ -94,15 +100,47 @@ const MCP_UI_STYLES = `
     color: var(--muted);
     font-size: 0.92rem;
   }
+  .template-pill {
+    display: inline-block;
+    margin: 0 0 0.75rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(13, 110, 98, 0.1);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
   .field {
     display: block;
     margin-bottom: 0.75rem;
   }
   .field-label {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.88rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 999px;
+  }
+  .badge--required {
+    background: rgba(153, 27, 27, 0.1);
+    color: var(--err);
+  }
+  .badge--optional {
+    background: rgba(71, 85, 105, 0.12);
+    color: var(--muted);
   }
   .field input,
   .field select,
@@ -121,11 +159,43 @@ const MCP_UI_STYLES = `
     gap: 0.45rem;
   }
   .field--checkbox input { width: auto; margin-top: 0.2rem; }
+  .field--error input,
+  .field--error select,
+  .field--error textarea {
+    border-color: rgba(153, 27, 27, 0.55);
+    background: #fff7f7;
+  }
   .field-help {
     margin: 0.25rem 0 0;
     font-size: 0.8rem;
     color: var(--muted);
   }
+  .field-error {
+    margin: 0.3rem 0 0;
+    font-size: 0.82rem;
+    color: var(--err);
+    font-weight: 600;
+  }
+  .advanced {
+    margin: 0.5rem 0 0.85rem;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 0.35rem 0.65rem 0.65rem;
+    background: rgba(248, 250, 252, 0.8);
+  }
+  .advanced summary {
+    cursor: pointer;
+    font-weight: 650;
+    font-size: 0.88rem;
+    color: var(--muted);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0;
+  }
+  .advanced summary::-webkit-details-marker { display: none; }
+  .advanced__body { margin-top: 0.35rem; }
   .submit {
     appearance: none;
     border: 0;
@@ -176,6 +246,41 @@ const MCP_UI_STYLES = `
     border-radius: 8px;
     font-size: 0.82rem;
   }
+  .result-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .result-list--compact { padding-left: 1rem; }
+  .result-item__title {
+    font-weight: 650;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .result-item__meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .result-item__desc {
+    margin: 0.2rem 0 0;
+    font-size: 0.84rem;
+    color: var(--ink);
+  }
+  .result-summary { margin: 0 0 0.5rem; }
+  .result-empty { margin: 0 0 0.5rem; color: var(--muted); }
+  .result-raw { margin-top: 0.65rem; font-size: 0.82rem; color: var(--muted); }
+  .result-raw summary { cursor: pointer; }
+  .pill {
+    display: inline-block;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
   .empty {
     padding: 2rem;
     text-align: center;
@@ -186,17 +291,27 @@ const MCP_UI_STYLES = `
   }
 `;
 
-function renderToolCard(tool: ListedMcpTool, basePath: string): string {
-  const { html: fieldsHtml } = renderToolFormFields(tool);
+function renderToolCard(
+  tool: ListedMcpTool,
+  basePath: string,
+  fieldErrors?: Record<string, string>
+): string {
+  const hints = formHintsForTool(tool, fieldErrors);
+  const { html: fieldsHtml } = renderToolFormFields(tool, hints);
+  const template = resolveMcpUiTemplate(tool);
   const title = tool.title?.trim() || tool.description?.trim() || tool.name;
   const description =
     tool.description && tool.description !== title
       ? `<p class="tool-desc">${escapeMcpUiHtml(tool.description)}</p>`
       : "";
+  const templatePill = template
+    ? `<span class="template-pill">Template · ${escapeMcpUiHtml(template.id)}</span>`
+    : "";
 
   return `<article class="tool-card" id="tool-${escapeMcpUiHtml(tool.name)}">
   <h2>${escapeMcpUiHtml(title)}</h2>
   <p class="tool-name">${escapeMcpUiHtml(tool.name)}</p>
+  ${templatePill}
   ${description}
   <form
     hx-post="${escapeMcpUiHtml(basePath)}/execute/${escapeMcpUiHtml(tool.name)}"
@@ -243,7 +358,7 @@ export function renderMcpUiCatalogPage(options: {
     <header class="hero">
       <div>
         <h1>${safeTitle}</h1>
-        <p>Swagger UI for MCP — auto-generated forms from the live tool catalog. Submit to run tools inline.</p>
+        <p>Swagger UI for MCP — auto-generated forms from the live tool catalog. Required fields are marked; advanced options stay collapsed.</p>
       </div>
       <div class="meta">
         <div>${options.tools.length} tool${options.tools.length === 1 ? "" : "s"}</div>
@@ -267,16 +382,14 @@ export function renderMcpUiSuccessResult(options: {
   executionMs: number;
   body: unknown;
 }): string {
-  const formatted = JSON.stringify(options.body, null, 2);
+  const content = renderResultContent(resultKindForTool(options.toolName), options.body);
   return `<div class="result result--success">
   <header class="result__header">
     <span class="result__tool">${escapeMcpUiHtml(options.toolName)}</span>
     <span class="result__time">${options.executionMs}ms</span>
     <span class="result__timestamp">${escapeMcpUiHtml(new Date().toISOString())}</span>
   </header>
-  <div class="result__content">
-    <pre><code>${escapeMcpUiHtml(formatted)}</code></pre>
-  </div>
+  <div class="result__content">${content}</div>
 </div>`;
 }
 
@@ -284,12 +397,23 @@ export function renderMcpUiErrorResult(options: {
   toolName: string;
   message: string;
   details?: string;
+  fieldErrors?: FormFieldError[];
 }): string {
+  const fieldList =
+    options.fieldErrors && options.fieldErrors.length > 0
+      ? `<ul class="result-list result-list--compact">${options.fieldErrors
+          .map(
+            (e) =>
+              `<li>${e.field ? `<code>${escapeMcpUiHtml(e.field)}</code> — ` : ""}${escapeMcpUiHtml(e.message)}</li>`
+          )
+          .join("")}</ul>`
+      : "";
   const details = options.details
     ? `<pre>${escapeMcpUiHtml(options.details)}</pre>`
     : "";
   return `<div class="result result--error">
   <p><strong>${escapeMcpUiHtml(options.toolName)}</strong> — ${escapeMcpUiHtml(options.message)}</p>
+  ${fieldList}
   ${details}
 </div>`;
 }

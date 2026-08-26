@@ -3,6 +3,8 @@
 ## Unreleased
 
 - **`/mcp-ui` surface (v0):** HTMX playground auto-generated from the tool catalog — `GET /mcp-ui`, `POST /mcp-ui/execute/{toolName}`. Flat forms for string/number/boolean/enum; JSON textarea fallback for complex schemas. `--mcp-ui-path`, `--no-mcp-ui`.
+- **Form UX:** Required/optional badges, schema default prefills, blank optional enums, Advanced disclosure for non-primary fields, empty optional omit, HTMX swaps non-2xx error fragments, field-level validation errors.
+- **Templates:** `search`, `memory_recall`, `memory_ingest`, `cache`, `audit` — primary fields + readable result lists (raw JSON still available).
 
 ## 0.6.0
 

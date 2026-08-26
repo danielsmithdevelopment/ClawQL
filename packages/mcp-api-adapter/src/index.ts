@@ -15,6 +15,7 @@ export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphq
 export { attachGraphqlRoutes } from "./graphql-http.js";
 export { attachMcpHttpRoutes } from "./mcp-http.js";
 export { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
+export { formHintsForTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 export {
   attachWebSocketSurface,
   parseWsToolCall,

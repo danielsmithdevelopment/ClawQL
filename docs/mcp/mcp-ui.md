@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment (flat string/number/boolean/enum + JSON bag fallback). Deferred: nested objects/arrays UI, file upload/IDP, SSE progress, templates, agent-generated UIs, ATR scoping.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit`. Deferred: nested object/array UIs, file upload/IDP, SSE progress, agent-generated UIs, ATR scoping.
 
 ---
 

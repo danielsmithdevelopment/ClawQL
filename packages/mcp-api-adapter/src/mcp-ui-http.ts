@@ -1,6 +1,10 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express, type Request } from "express";
 import { httpBodyFromCollapsed } from "./call.js";
-import { parseFormArgs } from "./mcp-ui-form.js";
+import {
+  FormValidationError,
+  fieldErrorFromMessage,
+  parseFormArgs,
+} from "./mcp-ui-form.js";
 import {
   renderMcpUiCatalogPage,
   renderMcpUiErrorResult,
@@ -27,7 +31,8 @@ function asFormBody(req: Request): Record<string, unknown> {
 }
 
 export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): string {
-  const basePath = (options.path?.trim() || DEFAULT_MCP_UI_PATH).replace(/\/$/, "") || DEFAULT_MCP_UI_PATH;
+  const basePath =
+    (options.path?.trim() || DEFAULT_MCP_UI_PATH).replace(/\/$/, "") || DEFAULT_MCP_UI_PATH;
   const router = express.Router();
 
   router.use(express.urlencoded({ extended: false, limit: "2mb" }));
@@ -69,6 +74,16 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     try {
       args = parseFormArgs(asFormBody(req), tool.inputSchema ?? { type: "object", properties: {} });
     } catch (err) {
+      if (err instanceof FormValidationError) {
+        res.status(400).type("html").send(
+          renderMcpUiErrorResult({
+            toolName,
+            message: err.message,
+            fieldErrors: err.fields,
+          })
+        );
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       res
         .status(400)
@@ -81,16 +96,13 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     try {
       const result = await options.callTool(tool, args);
       const body = httpBodyFromCollapsed(result);
-      res
-        .status(200)
-        .type("html")
-        .send(
-          renderMcpUiSuccessResult({
-            toolName,
-            executionMs: Date.now() - started,
-            body,
-          })
-        );
+      res.status(200).type("html").send(
+        renderMcpUiSuccessResult({
+          toolName,
+          executionMs: Date.now() - started,
+          body,
+        })
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const withResult = err as Error & { result?: unknown };
@@ -98,10 +110,15 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         withResult.result !== undefined
           ? JSON.stringify(withResult.result, null, 2)
           : undefined;
-      res
-        .status(502)
-        .type("html")
-        .send(renderMcpUiErrorResult({ toolName, message, details }));
+      const fieldErr = fieldErrorFromMessage(message);
+      res.status(502).type("html").send(
+        renderMcpUiErrorResult({
+          toolName,
+          message,
+          details,
+          fieldErrors: fieldErr.field ? [fieldErr] : undefined,
+        })
+      );
     }
   });
 
