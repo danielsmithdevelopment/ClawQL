@@ -5,6 +5,7 @@ import { recordKeySpend } from "../keys/store.js";
 import { parseModelId } from "../providers/parse-model-id.js";
 import { buildInferenceRecord } from "../store/types.js";
 import type { InferenceStore } from "../store/types.js";
+import { tokenizeChatMessagesAsync } from "../tokenize/messages.js";
 
 /** Gateway decorator that persists every successful completion to an {@link InferenceStore}. */
 export class ObservedInferenceGateway implements InferenceGateway {
@@ -19,10 +20,11 @@ export class ObservedInferenceGateway implements InferenceGateway {
     const response = await this.inner.complete(request);
     const modelId = request.model ?? request.routing?.modelId ?? response.model;
     const { provider, model } = parseModelId(modelId);
+    const messages = await tokenizeChatMessagesAsync(request.messages, this.env);
     await this.store.append(
       buildInferenceRecord({
         id: randomUUID(),
-        request,
+        request: { ...request, messages },
         response,
         provider,
         model,

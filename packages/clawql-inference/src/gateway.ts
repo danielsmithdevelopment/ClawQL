@@ -24,6 +24,8 @@ export type ChatRole = "system" | "user" | "assistant";
 export interface ChatMessage {
   role: ChatRole;
   content: string;
+  /** cl100k_base per-message count when recorded with tokenization enabled. */
+  tokens?: number;
 }
 
 export interface InferenceRequest {
