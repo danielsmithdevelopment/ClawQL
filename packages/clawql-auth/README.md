@@ -238,7 +238,10 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_ID_JAG_ISSUER_JWKS_URI`                 | Override published issuer JWKS URI                                                       |
 | `CLAWQL_ID_JAG_ISSUER_ORIGIN`                   | Override public origin for issuer URIs                                                   |
 | `CLAWQL_ID_JAG_TEE_SIGNER`                      | `1` = wrap issuer signing as Layer C TEE-shaped signer (`kind: "tee"`)                   |
+| `CLAWQL_ID_JAG_TEE_SIGN_CMD`                    | External signer binary (stdin JSON claims/header → stdout compact JWS)                   |
 | `CLAWQL_TEE_DEBUG`                              | `1` = log attestation ids when using `clawql-tee` bridge                                 |
+| `CLAWQL_PASSKEY_ENABLED`                        | `1` = attach `/oauth/passkey/challenge|enroll|login` (SimpleWebAuthn)                    |
+| `CLAWQL_PASSKEY_RP_ID` / `CLAWQL_PASSKEY_ORIGIN`| Relying party id + origin for passkey HTTP                                               |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
