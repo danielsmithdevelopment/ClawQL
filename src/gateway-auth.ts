@@ -14,7 +14,7 @@ import {
 } from "clawql-auth";
 import { Effect } from "effect";
 import { validateVirtualKey } from "clawql-inference";
-import { getProcessWormAuthEventSink } from "./process-worm-host.js";
+import { resolveHostAuthEventSink } from "./auth-process-worm-sink.js";
 
 let gatewayAuth: ClawQLAuth | undefined;
 
@@ -64,13 +64,13 @@ function resolveIssuedApiKeyStorePath(env: NodeJS.ProcessEnv): string | undefine
 /** Process-wide gateway auth (issued keys + WORM sink when configured). */
 export function getClawqlGatewayAuth(env: NodeJS.ProcessEnv = process.env): ClawQLAuth {
   if (!gatewayAuth) {
-    const base = loadGatewayAuthConfig(env);
+    const base = Effect.runSync(loadGatewayAuthConfig(env));
     gatewayAuth = createClawQLAuth({
       mode: base.mode,
       apiKey: base.apiKey,
       oidc: base.oidc,
       apiKeyStorePath: resolveIssuedApiKeyStorePath(env),
-      authEventSink: getProcessWormAuthEventSink(),
+      authEventSink: resolveHostAuthEventSink(env),
       apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
     });
   }
