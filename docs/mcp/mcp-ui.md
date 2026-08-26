@@ -62,14 +62,14 @@ What nobody ships today:
 
 ### 3.1 Routes
 
-| Method / path                     | Role                                                             |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `GET /mcp-ui`                     | Full tool catalog playground (HTML)                              |
-| `GET /mcp-ui/tools/{toolName}`    | Optional deep-link to one tool card                              |
-| `POST /mcp-ui/execute/{toolName}` | HTMX form post → tool invoke → HTML fragment result              |
-| `GET /mcp-ui/partials/catalog`    | Optional HTMX refresh of the card list after `ListTools` refresh |
-| `GET /mcp-ui/trace/{sessionId}`   | Context-accumulation flamegraph (HTML; `?format=json` for data)  |
-| `GET /mcp-ui/trace/demo-compressed` / `demo-fat` | Built-in demos for search/execute vs fat tool dumps |
+| Method / path                                    | Role                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `GET /mcp-ui`                                    | Full tool catalog playground (HTML)                              |
+| `GET /mcp-ui/tools/{toolName}`                   | Optional deep-link to one tool card                              |
+| `POST /mcp-ui/execute/{toolName}`                | HTMX form post → tool invoke → HTML fragment result              |
+| `GET /mcp-ui/partials/catalog`                   | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/trace/{sessionId}`                  | Context-accumulation flamegraph (HTML; `?format=json` for data)  |
+| `GET /mcp-ui/trace/demo-compressed` / `demo-fat` | Built-in demos for search/execute vs fat tool dumps              |
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
@@ -173,12 +173,12 @@ Render and execute paths stay Effect-based inside the adapter package; Express (
 
 `GET /mcp-ui/trace/{sessionId}` visualizes **where tokens came from** turn by turn — harness prompt, vault/system-seed memory, tool schemas, tool results, agent reasoning, and model output — stacked like a CPU flamegraph.
 
-| Piece | Role |
-| ----- | ---- |
-| `buildContextFlamegraph` | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; scales message estimates to `usage.inputTokens` when present |
-| `listTraceCalls(sessionId)` | Optional host hook (e.g. clawql-inference store keyed by correlation/session id). Adapter stays standalone — no hard dependency |
-| `demo-compressed` / `demo-fat` | Built-in same-task fixtures: compressed `search`/`execute`-style tool results vs fat untrimmed dumps — for the dual-side compression argument |
-| `?format=json` | Machine-readable graph for `harness-bench` / CI artifacts |
+| Piece                          | Role                                                                                                                                               |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buildContextFlamegraph`       | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; scales message estimates to `usage.inputTokens` when present |
+| `listTraceCalls(sessionId)`    | Optional host hook (e.g. clawql-inference store keyed by correlation/session id). Adapter stays standalone — no hard dependency                    |
+| `demo-compressed` / `demo-fat` | Built-in same-task fixtures: compressed `search`/`execute`-style tool results vs fat untrimmed dumps — for the dual-side compression argument      |
+| `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                          |
 
 Catalog nav links the compressed demo. Wire live sessions by passing `listTraceCalls` into `startMcpApiAdapter` / `AttachMcpUiOptions`.
 
