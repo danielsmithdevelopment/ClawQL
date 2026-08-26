@@ -80,6 +80,11 @@ export {
   type OktaEmaOrgParams,
 } from "./okta-id-jag.js";
 export {
+  buildAuth0EmaOrgConfig,
+  extractAuth0GroupsFromPayload,
+  type Auth0EmaOrgParams,
+} from "./auth0-id-jag.js";
+export {
   CLAWQL_ID_JAG_ISSUER_TAG,
   IdJagIssuerError,
   IdJagIssuerService,
@@ -170,6 +175,16 @@ export {
   primaryTotpLoginEffect,
   type PrimaryTotpLoginInput,
 } from "./primary-totp.js";
+export {
+  PrimaryPasskeyError,
+  createMemoryPasskeyCredentialStore,
+  issuePasskeyLoginChallengeEffect,
+  primaryPasskeyLoginEffect,
+  type PasskeyCredentialRecord,
+  type PasskeyCredentialStore,
+  type PasskeyLoginChallenge,
+  type PrimaryPasskeyLoginInput,
+} from "./primary-passkey.js";
 export {
   createLocalIdJagAssertionSigner,
   createTeeIdJagAssertionSigner,

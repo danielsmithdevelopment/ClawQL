@@ -8,3 +8,15 @@ export type { SqliteBackendHandle } from "./storage/sql-js.js";
 export type { StorageBackend } from "./storage/types.js";
 export { WORMAuditTrail, createWORMAuditTrail, makeWORMAuditTrailLayer } from "./trail.js";
 export type { WORMAuditTrailConfig } from "./trail.js";
+export {
+  appendProcessWorm,
+  appendProcessWormEffect,
+  bootProcessWormFromEnvEffect,
+  resetProcessWormForTests,
+} from "./process-worm.js";
+export {
+  appendAuthEventToWormEffect,
+  createAuthEventWormSink,
+  wormInputFromAuthEvent,
+  type AuthWormEvent,
+} from "./sinks.js";
