@@ -7,6 +7,22 @@
 
 ---
 
+## Screenshots
+
+Live ClawQL Operations Console (`mcp-api-adapter` pointed at ClawQL Core):
+
+![ClawQL /mcp-ui demo — search and memory_recall](/images/mcp-ui/clawql-mcp-ui-demo.gif)
+
+![search form with Required/Optional badges and prefilled limit](/images/mcp-ui/search-form-badges.webp)
+
+![search results as a readable operation list](/images/mcp-ui/search-results.webp)
+
+![memory_recall with Advanced options collapsed](/images/mcp-ui/memory-recall-advanced.webp)
+
+![memory_recall vault hits as a readable list](/images/mcp-ui/memory-recall-results.webp)
+
+---
+
 ## 1. What this is
 
 `/mcp-ui` is the **Swagger UI for MCP**: an auto-scaffolded, browser-navigable playground that ships **inside** `mcp-api-adapter`. Point the adapter at any MCP server; open `/mcp-ui`; every tool appears as a card with a form generated from its `inputSchema`. Submit runs the tool; the result renders inline. No separate playground product, no React SPA, no build step — server-rendered HTML with HTMX for interactivity.

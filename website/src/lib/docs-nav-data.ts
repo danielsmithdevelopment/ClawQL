@@ -159,7 +159,7 @@ export const docsNavigation: Array<NavGroup> = [
       {
         title: '/mcp-ui',
         href: '/mcp/mcp-ui',
-        tag: 'Draft',
+        tag: 'Shipped',
       },
       { title: 'Protocol Fabric', href: '/mcp/protocol-fabric' },
       { title: 'Configuration', href: '/spec-configuration' },

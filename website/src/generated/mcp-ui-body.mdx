@@ -1,9 +1,25 @@
 # `/mcp-ui` — Swagger UI for MCP (HTMX / HATEOAS)
 
-**Status:** Draft · August 2026 · planned **8th surface** of [`mcp-api-adapter`](/mcp/mcp-api-adapter)  
+**Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](/mcp/mcp-api-adapter)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Proof pattern in-repo:** clawql-payments credits mini UI (`/credits/*` HTMX fragments)
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), templates for `search` / `memory_*` / `cache` / `audit`. Deferred: nested object/array UIs, file upload/IDP, SSE progress, agent-generated UIs, ATR scoping.
+
+---
+
+## Screenshots
+
+Live ClawQL Operations Console (`mcp-api-adapter` pointed at ClawQL Core):
+
+![ClawQL /mcp-ui demo — search and memory_recall](/images/mcp-ui/clawql-mcp-ui-demo.gif)
+
+![search form with Required/Optional badges and prefilled limit](/images/mcp-ui/search-form-badges.webp)
+
+![search results as a readable operation list](/images/mcp-ui/search-results.webp)
+
+![memory_recall with Advanced options collapsed](/images/mcp-ui/memory-recall-advanced.webp)
+
+![memory_recall vault hits as a readable list](/images/mcp-ui/memory-recall-results.webp)
 
 ---
 
@@ -46,12 +62,12 @@ What nobody ships today:
 
 ### 3.1 Routes
 
-| Method / path                       | Role                                                             |
-| ----------------------------------- | ---------------------------------------------------------------- |
-| `GET /mcp-ui`                       | Full tool catalog playground (HTML)                              |
+| Method / path                     | Role                                                             |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `GET /mcp-ui`                     | Full tool catalog playground (HTML)                              |
 | `GET /mcp-ui/tools/\{toolName\}`    | Optional deep-link to one tool card                              |
 | `POST /mcp-ui/execute/\{toolName\}` | HTMX form post → tool invoke → HTML fragment result              |
-| `GET /mcp-ui/partials/catalog`      | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/partials/catalog`    | Optional HTMX refresh of the card list after `ListTools` refresh |
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
@@ -104,9 +120,7 @@ Example result fragment (illustrative):
       </button>
     </li>
   </ul>
-  <a hx-get="/mcp-ui/tools/memory_recall" hx-target="#card-memory_recall">
-    Search again
-  </a>
+  <a hx-get="/mcp-ui/tools/memory_recall" hx-target="#card-memory_recall"> Search again </a>
 </div>
 ```
 
