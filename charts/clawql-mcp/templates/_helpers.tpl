@@ -416,6 +416,7 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
 {{- define "clawql-mcp.instanceSpecJson" -}}
 {{- $tier := .Values.pluginTier.tier | default "standard" -}}
 {{- $providers := .Values.providers | default (dict "pack" "none") -}}
+{{- $coneshareOn := and .Values.idpCollaboration.enabled (or .Values.idpCollaboration.coneshare.enabled .Values.idpCollaboration.coneshare.externalUrl) -}}
 {{- $spec := dict
   "tier" $tier
   "providers" $providers
@@ -426,6 +427,9 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
     "idpPipeline" (dict "enabled" (.Values.enableIdpPipeline | default false))
     "idpClassifier" (dict "enabled" (.Values.enableIdpClassifier | default false))
     "langextract" (dict "enabled" (.Values.enableLangextract | default false))
+    "pdfInspector" (dict "enabled" (.Values.enablePdfInspector | default false))
+    "anydoc" (dict "enabled" (.Values.enableAnydoc | default false))
+    "coneshare" (dict "enabled" $coneshareOn)
   )
   "automation" (dict
     "schedule" (dict "enabled" (.Values.enableSchedule | default false))
@@ -436,6 +440,7 @@ Helm enable* / providers values map here — not CLAWQL_ENABLE_* for horizontal 
   )
   "sandbox" (dict "enabled" (.Values.enableSandbox | default false))
   "data" (dict "enabled" (.Values.enableData | default false))
+  "web" (dict "enabled" (.Values.enableWeb | default false))
   "ouroboros" (dict
     "langfuseEval" (dict "enabled" (.Values.enableLangfuseEval | default false))
   )

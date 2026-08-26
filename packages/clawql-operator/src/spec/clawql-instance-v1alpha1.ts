@@ -26,6 +26,9 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
         idpPipeline: tierToggleSchema,
         idpClassifier: tierToggleSchema,
         langextract: tierToggleSchema,
+        pdfInspector: tierToggleSchema,
+        anydoc: tierToggleSchema,
+        coneshare: tierToggleSchema,
       })
       .strict()
       .optional(),
@@ -41,6 +44,14 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       .optional(),
     sandbox: tierToggleSchema,
     data: tierToggleSchema,
+    web: tierToggleSchema,
+    ontology: z
+      .object({
+        enabled: z.boolean().optional(),
+        writes: tierToggleSchema,
+      })
+      .strict()
+      .optional(),
     ouroboros: z
       .object({
         enabled: z.boolean().optional(),
@@ -87,6 +98,8 @@ export function clawqlInstanceSpecToHorizontalTierSpec(
     automation: spec.automation,
     sandbox: spec.sandbox,
     data: spec.data,
+    web: spec.web,
+    ontology: spec.ontology,
     ouroboros: spec.ouroboros,
   };
 }

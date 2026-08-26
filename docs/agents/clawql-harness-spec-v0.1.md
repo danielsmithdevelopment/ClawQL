@@ -19,7 +19,7 @@ Horizontal MCP plugins (memory, documents, sandbox, data, automation, …) are e
 - Helm: always injects `CLAWQL_INSTANCE_SPEC` from chart `enable*` values via `clawql-mcp.instanceSpecJson`
 - Operator CRD: ConfigMap `horizontalTierSpec.json`
 
-**`CLAWQL_ENABLE_*` is not the plugin loading system.** Resolver: `resolvePluginCompositionFlags()`.
+**`CLAWQL_ENABLE_*` is not the plugin loading system.** Resolver: `resolvePluginCompositionFlags()` / `getClawqlOptionalToolFlags()` (instance / tier). Helm injects `CLAWQL_INSTANCE_SPEC` only — it does **not** dual-write horizontal `CLAWQL_ENABLE_*`.
 
 **Ouroboros** is always loaded as a **clawql-harness** plugin (`makeHarnessLayer` + `createOuroborosHarnessPlugin`). No enable flag. Optional: `ouroboros.langfuseEval` in the instance spec; Postgres via `CLAWQL_OUROBOROS_DATABASE_URL` (persistence, not enablement).
 
@@ -39,7 +39,7 @@ OpenAPI/GraphQL vendors under `providers/` stay **available** in the image/packa
 | ----- | -------------------------------------------------------------------------------------- | ----------------------- |
 | 1     | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped**             |
 | 2     | `OuroborosPlugin` (`clawql_think` + full `ouroboros_*`)                                | **Shipped**             |
-| 3     | `OpenCode2Plugin` stub                                                                 | **Shipped stub**        |
+| 3     | `OpenCode2Plugin` (`createOpencode` + session.create/prompt)                           | **Shipped**             |
 | 4     | `compareHarnesses` + `integrations/harness-bench/`                                     | **Shipped dry compare** |
 | MCP   | `makeHarnessLayer` bridges harness tools; composition from instance/tier config        | **Shipped**             |
 

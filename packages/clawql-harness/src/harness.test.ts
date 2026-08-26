@@ -89,3 +89,23 @@ describe("compareHarnesses", () => {
     }
   });
 });
+
+describe("OpenCode2Plugin", () => {
+  it("registers opencode2_session and returns SDK-missing error without peer", async () => {
+    const harness = await Effect.runPromise(
+      ClawQLHarness.create({
+        plugins: [OpenCode2Plugin],
+        model: { provider: "stub", name: "test-model" },
+      })
+    );
+    expect(harness.state.tools.has("opencode2_session")).toBe(true);
+    const out = (await Effect.runPromise(
+      invokeHarnessTool(harness.state, "opencode2_session", { task: "smoke" }).pipe(
+        Effect.provide(harness.layer)
+      )
+    )) as { ok?: boolean; error?: string };
+    expect(out.ok).toBe(false);
+    expect(out.error).toMatch(/OpenCode2 SDK not available/);
+    await Effect.runPromise(harness.teardown());
+  });
+});

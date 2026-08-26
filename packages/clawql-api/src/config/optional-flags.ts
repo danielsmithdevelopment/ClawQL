@@ -1,9 +1,15 @@
-/**
- * Single place to interpret optional feature flags (env → typed booleans).
- * See docs/mcp/mcp-tools.md and GitHub #79.
- */
-
 import { z } from "zod";
+import {
+  resolveCompositionFlagsFromEnv,
+  type ClawQLHorizontalTierSpec,
+} from "./horizontal-composition.js";
+
+export type { ClawQLHorizontalTierSpec } from "./horizontal-composition.js";
+export {
+  optionalFlagsFromHorizontalTierSpec,
+  readInstanceBodyForFlagsFromEnv,
+  resolveCompositionFlagsFromEnv,
+} from "./horizontal-composition.js";
 
 /** `1`, `true`, `yes` (case-insensitive) → true; unset or other → false. */
 function envTruthy(v: string | undefined): boolean {
@@ -275,16 +281,21 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
 /**
  * Parsed optional tool flags from the given env (default `process.env`).
  *
- * @deprecated For **plugin composition**, use `resolvePluginCompositionFlags` /
- * `ClawQLInstance` / `HorizontalTierSpec` — plugins are not enabled via `CLAWQL_ENABLE_*`.
- * This helper remains for transport/provider knobs (`ENABLE_GRPC`, Google/AWS stack) and
- * transitional call sites.
+ * When `CLAWQL_INSTANCE_SPEC` / `CLAWQL_TIER` is set, horizontal plugins come from
+ * instance/tier composition — **not** `CLAWQL_ENABLE_*`. Legacy env flags apply only
+ * when neither instance nor tier is configured (local onboarding / bare npm).
  */
 export function getClawqlOptionalToolFlags(
   env: NodeJS.ProcessEnv = process.env
 ): ClawqlOptionalToolFlags {
+  const hasInstance =
+    Boolean(env.CLAWQL_INSTANCE_SPEC?.trim()) || Boolean(env.CLAWQL_INSTANCE_SPEC_FILE?.trim());
+  const hasTier = Boolean(env.CLAWQL_TIER?.trim());
+  if (hasInstance || hasTier) {
+    return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags());
+  }
   const raw = rawOptionalFlagsSchema.parse(env);
-  return rawToFlags(raw);
+  return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags(), rawToFlags(raw));
 }
 
 /**
