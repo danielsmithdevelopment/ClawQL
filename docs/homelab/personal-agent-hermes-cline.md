@@ -1069,6 +1069,35 @@ ORDER BY e.ts ASC;
 4. Start a chat with your bot and send `/start`.
 5. Hermes reads `${TELEGRAM_BOT_TOKEN}` and `${YOUR_TELEGRAM_USER_ID}` from env (see §5.2 `hermes.yaml`).
 
+### 8.1.1 OAuth re-auth DMs (Phase 7)
+
+When outbound OAuth refresh fails (`invalid_grant` / missing token), Hermes should DM you a **re-auth URL only** (never refresh tokens or client secrets).
+
+```ts
+import {
+  createTelegramReauthNotifierFromEnv,
+} from "clawql-agents";
+import { notifyReauthRequiredEffect } from "clawql-auth";
+import { Effect } from "effect";
+
+const notifier = createTelegramReauthNotifierFromEnv();
+if (notifier) {
+  await Effect.runPromise(
+    notifyReauthRequiredEffect(notifier, reauthError, { channel: "telegram" })
+  );
+}
+```
+
+Message shape:
+
+```
+ClawQL re-auth required: google
+Reason: invalid_grant
+Open: https://…/oauth/authorize?provider=google&state=…
+```
+
+Requires the same `TELEGRAM_BOT_TOKEN` + `YOUR_TELEGRAM_USER_ID` as §8.1. Wire `buildReauthUrl` on `OAuthTokenStore` so `ReauthRequiredError.reauthUrl` is populated.
+
 ### 8.2 Notification Formats
 
 Hermes sends terse messages per SOUL.md. Canonical formats:
