@@ -138,6 +138,42 @@ Okta shorthand:
 }
 ```
 
+Auth0 Resource App AS preset (`buildAuth0EmaOrgConfig`):
+
+```typescript
+import { buildAuth0EmaOrgConfig } from "clawql-auth";
+
+buildAuth0EmaOrgConfig({
+  orgId: "acme",
+  auth0Domain: "acme.us.auth0.com",
+  audience: "https://mcp.example.com/",
+  groupMappings: [{ idpGroup: "engineering", scope: ["execute", "search", "memory"] }],
+});
+```
+
+### Enterprise XAA runbook (Cross App Access)
+
+Three roles — see spec §4.1.1:
+
+| Role            | Who                        | ClawQL                                                         |
+| --------------- | -------------------------- | -------------------------------------------------------------- |
+| Requesting App  | Claude, Cursor, agent host | Not clawql-auth                                                |
+| Enterprise IdP  | Okta / Auth0 XAA policy    | Optional self-hosted issuer (`CLAWQL_ID_JAG_ISSUER_ENABLED=1`) |
+| Resource App AS | MCP gateway token endpoint | **Default** — `POST /oauth/token` jwt-bearer grant             |
+
+**Resource-App-only (typical):**
+
+1. Configure Okta/Auth0 XAA policy: Requesting App → ClawQL MCP audience
+2. Bootstrap EMA org: IdP JWKS + issuer + group→scope mappings (`CLAWQL_EMA_ORGS_JSON` or admin API)
+3. Requesting App obtains ID-JAG from IdP, exchanges at `POST /oauth/token` with `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`
+4. MCP calls use returned access JWT; Panguard enforces ATR from `atr` claim
+
+**SAML enterprises:** SAML→refresh→ID-JAG happens at IdP + Requesting App only. ClawQL verifies finished ID-JAG JWTs (OIDC JWKS presets).
+
+**Smoke test:** `npm run build -w clawql-auth && node scripts/dev/xaa-smoke.mjs`
+
+**Dual audit:** `CLAWQL_AUTH_AUDIT_STORE` (per-auth SQLite WORM) + optional `CLAWQL_WORM_ENABLED=1` process trail — host composes via `resolveHostAuthEventSink()` in `src/auth-process-worm-sink.ts` (`createAuthEventWormSink` from `clawql-audit`).
+
 Set `CLAWQL_AUTH_MODE=mcpOAuth` to accept only ClawQL-issued MCP JWTs, or keep `apiKey`/`oidc` — when MCP OAuth is enabled, issued bearer tokens are accepted in **hybrid** mode automatically on `server-http`.
 
 ### Self-hosted ID-JAG issuer (ClawQL as EMA IdP)
@@ -239,15 +275,16 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 ## Phase 4–7 surfaces (library)
 
-| Area         | Entry points                                                                                 |
-| ------------ | -------------------------------------------------------------------------------------------- |
-| Domain TXT   | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                      |
-| Offboarding  | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                            |
-| SIWE login   | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                       |
-| Primary TOTP | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                             |
-| Vault leases | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                   |
-| Re-auth UX   | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram) |
-| ID-JAG TEE   | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                           |
+| Area            | Entry points                                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                       |
+| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                             |
+| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                        |
+| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                              |
+| Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` (inject `WebAuthnStepUpVerifier` + `PasskeyCredentialStore`) |
+| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                    |
+| Re-auth UX      | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram)                                  |
+| ID-JAG TEE      | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                                                            |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

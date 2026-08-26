@@ -15,6 +15,9 @@ let cachedSinkKey: string | null = null;
  * Append-only sink backed by the configured auth audit store (SQLite default).
  * Returns {@link noopAuthEventSink} when `CLAWQL_AUTH_AUDIT_STORE=off`.
  *
+ * For process-trail dual-write (`CLAWQL_WORM_ENABLED=1`), compose at the host with
+ * `createAuthEventWormSink()` from `clawql-audit` via {@link composeAuthEventSinks}.
+ *
  * Effect-primary: the returned sink yields an Effect (no Promise domain API).
  */
 export function createAuthEventSinkFromEnv(env: NodeJS.ProcessEnv = process.env): AuthEventSink {

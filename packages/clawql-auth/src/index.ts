@@ -85,6 +85,8 @@ export {
 export {
   emitAuthEventEffect,
   noopAuthEventSink,
+  authEventSinkFromPromise,
+  composeAuthEventSinks,
   type AuthEvent,
   type AuthEventSink,
 } from "./audit/auth-events.js";

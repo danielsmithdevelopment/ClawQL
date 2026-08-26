@@ -291,14 +291,19 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
   if (!options.skipMcpOAuth && !mcpOAuthRuntime && Effect.runSync(isMcpOAuthEnabled(process.env))) {
-    mcpOAuthRuntime = await Effect.runPromise(createMcpOAuthFromEnv());
+    const { resolveHostAuthEventSink } = await import("./auth-process-worm-sink.js");
+    mcpOAuthRuntime = await Effect.runPromise(
+      createMcpOAuthFromEnv({ eventSink: resolveHostAuthEventSink(process.env) })
+    );
   }
 
   let idJagIssuer: IdJagIssuerRuntime | null = mcpOAuthRuntime?.idJagIssuer ?? null;
   if (!idJagIssuer && Effect.runSync(isIdJagIssuerEnabled(process.env))) {
+    const { resolveHostAuthEventSink } = await import("./auth-process-worm-sink.js");
     idJagIssuer = await Effect.runPromise(
       createIdJagIssuerFromEnv({
         secretStore: resolveSecretStore(),
+        eventSink: resolveHostAuthEventSink(process.env),
       })
     );
   }

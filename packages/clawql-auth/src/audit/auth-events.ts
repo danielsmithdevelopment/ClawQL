@@ -150,6 +150,25 @@ export type AuthEventSink = (event: AuthEvent) => Effect.Effect<void, unknown>;
 /** No-op sink (tests / hosts that log elsewhere). */
 export const noopAuthEventSink: AuthEventSink = () => Effect.void;
 
+/** Adapt a Promise-based host sink (e.g. clawql-audit `createAuthEventWormSink`). */
+export function authEventSinkFromPromise(fn: (event: AuthEvent) => Promise<void>): AuthEventSink {
+  return (event) =>
+    Effect.tryPromise({
+      try: () => fn(event),
+      catch: () => undefined,
+    }).pipe(Effect.ignore);
+}
+
+/** Run multiple sinks in order; later sinks still run if an earlier one fails. */
+export function composeAuthEventSinks(...sinks: AuthEventSink[]): AuthEventSink {
+  return (event) =>
+    Effect.gen(function* () {
+      for (const sink of sinks) {
+        yield* sink(event).pipe(Effect.catchAll(() => Effect.void));
+      }
+    });
+}
+
 /** Append an auth event through the injected sink (no-op when unset). */
 export function emitAuthEventEffect(
   sink: AuthEventSink | undefined,
