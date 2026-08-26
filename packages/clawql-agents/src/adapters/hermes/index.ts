@@ -84,3 +84,9 @@ export const appendHermesHook = (event: HermesHookEvent) =>
     const worm = yield* WORMAuditTrail;
     return yield* worm.append(hermesHookToWormAppend(event));
   });
+
+export {
+  createTelegramReauthNotifier,
+  createTelegramReauthNotifierFromEnv,
+  type TelegramReauthNotifierOptions,
+} from "./reauth-telegram.js";
