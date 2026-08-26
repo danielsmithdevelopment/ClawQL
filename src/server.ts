@@ -24,6 +24,7 @@ import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { registerClawqlApiShutdownHooks } from "./clawql-api-adapters.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
+import { ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 
 /** Warm specs after Ready; failures are logged and do not kill the process. */
@@ -45,6 +46,7 @@ async function main() {
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerClawqlApiShutdownHooks();
+  await ensureProcessWormHostBooted();
   await validateOrDegradeObsidianVaultAtStartup();
 
   const server = createRegisteredMcpServer({

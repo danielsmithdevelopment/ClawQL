@@ -9,7 +9,7 @@ import {
   makeClineAdapterLayer,
   makeClineWormLayer,
 } from "./adapters/cline/index.js";
-import { WORMAuditTrail } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 
 describe("Cline adapter", () => {
   let dir = "";
@@ -50,12 +50,11 @@ describe("Cline adapter", () => {
 
     const verified = await Effect.runPromise(
       Effect.gen(function* () {
-        const worm = yield* WORMAuditTrail;
+        const worm = yield* WORMAuditTrailService;
         return yield* worm.verify();
       }).pipe(Effect.provide(layer))
     );
     expect(session.agent).toBe("cline");
-    expect(verified.ok).toBe(true);
-    expect(verified.records).toBeGreaterThanOrEqual(2);
+    expect(verified.valid).toBe(true);
   });
 });

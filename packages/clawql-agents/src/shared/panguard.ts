@@ -1,5 +1,5 @@
-import type { WORMAppendInput, WormChainGapError, WormStorageError } from "clawql-audit";
-import { WORMAuditTrail } from "clawql-audit";
+import type { WORMAppendInput, AuditError } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 import type { ATRScope, AgentName } from "./types.js";
 
@@ -9,7 +9,7 @@ export class PanguardDenyError extends Data.TaggedError("PanguardDenyError")<{
   readonly sessionId?: string;
 }> {}
 
-export type PanguardEnforceError = PanguardDenyError | WormStorageError | WormChainGapError;
+export type PanguardEnforceError = PanguardDenyError | AuditError;
 
 /** True when the tool is allowed by ATR (in scope and not explicitly denied). */
 export const isToolInScope = (toolName: string, atrScope: ATRScope): boolean => {
@@ -45,9 +45,9 @@ export type EnforceToolCallInput = {
  */
 export const enforceToolCall = (
   input: EnforceToolCallInput
-): Effect.Effect<void, PanguardEnforceError, WORMAuditTrail> =>
+): Effect.Effect<void, PanguardEnforceError, WORMAuditTrailService> =>
   Effect.gen(function* () {
-    const worm = yield* WORMAuditTrail;
+    const worm = yield* WORMAuditTrailService;
     const allowed = isToolInScope(input.toolName, input.atrScope);
     const base: WORMAppendInput = {
       type: allowed ? "PANGUARD_ALLOW" : "PANGUARD_DENY",

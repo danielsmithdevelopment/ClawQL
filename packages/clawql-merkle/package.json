@@ -1,7 +1,7 @@
 {
   "name": "clawql-merkle",
-  "version": "7.2.0",
-  "description": "Zero-dependency Merkle trees and hash-chain seal/verify for ClawQL (and clawql-audit)",
+  "version": "0.1.0",
+  "description": "Zero-dependency Merkle tree snapshots and inclusion proofs (path + body SHA-256 leaves)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
@@ -30,7 +31,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=22"
@@ -41,11 +43,11 @@
     "directory": "packages/clawql-merkle"
   },
   "keywords": [
-    "clawql",
     "merkle",
-    "hash-chain",
-    "worm",
-    "integrity"
+    "merkle-tree",
+    "inclusion-proof",
+    "tamper-evident",
+    "clawql"
   ],
   "publishConfig": {
     "access": "public"

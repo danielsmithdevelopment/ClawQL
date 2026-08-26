@@ -2,9 +2,12 @@
  * In-memory + optional callback audit for web search/fetch provenance.
  * Regulated operators need fallback decisions recorded before the fallback runs.
  * Durable WORM is installed via {@link installWebAuditWormSink}.
+ * Dual-writes domain jsonl/memory chain + process `clawql-audit` when enabled.
  */
 
+import { appendWebEventToWormEffect } from "clawql-audit";
 import { getDefaultAuditRingBuffer } from "clawql-core";
+import { Effect } from "effect";
 import type { WebAuditEvent, WebAuditSink } from "./audit-types.js";
 import { appendWebWormEvent } from "./audit/worm.js";
 
@@ -51,6 +54,7 @@ export function installWebAuditWormSink(env: NodeJS.ProcessEnv = process.env): v
   wormInstalled = true;
   setWebAuditSink(async (event) => {
     await appendWebWormEvent(event, env);
+    await Effect.runPromise(appendWebEventToWormEffect(event)).catch(() => undefined);
     try {
       getDefaultAuditRingBuffer().append({
         ts: event.ts,

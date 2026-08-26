@@ -1,8 +1,8 @@
-import type { WormChainGapError, WormStorageError } from "clawql-audit";
-import { WORMAuditTrail } from "clawql-audit";
+import type { AuditError } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { Context, Effect, Layer } from "effect";
 
-export type AgentWormError = WormStorageError | WormChainGapError;
+export type AgentWormError = AuditError;
 
 export type AgentName = "openclaw" | "hermes" | "pi" | "goose" | "deepseek" | "openhands" | "cline";
 
@@ -44,9 +44,11 @@ export class AgentAdapter extends Context.Tag("clawql/AgentAdapter")<
     readonly initialize: (config: ClawQLAgentConfig) => Effect.Effect<void>;
     readonly start: (
       atrScope: ATRScope
-    ) => Effect.Effect<AgentSession, AgentWormError, WORMAuditTrail>;
-    readonly stop: (session: AgentSession) => Effect.Effect<void, AgentWormError, WORMAuditTrail>;
-    readonly health: () => Effect.Effect<AgentHealth, WormStorageError, WORMAuditTrail>;
+    ) => Effect.Effect<AgentSession, AgentWormError, WORMAuditTrailService>;
+    readonly stop: (
+      session: AgentSession
+    ) => Effect.Effect<void, AgentWormError, WORMAuditTrailService>;
+    readonly health: () => Effect.Effect<AgentHealth, AuditError, WORMAuditTrailService>;
   }
 >() {}
 

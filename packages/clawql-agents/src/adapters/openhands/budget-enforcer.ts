@@ -1,5 +1,5 @@
-import { WORMAuditTrail } from "clawql-audit";
-import type { WormChainGapError, WormStorageError } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
+import type { AuditError } from "clawql-audit";
 import { Data, Effect, Ref } from "effect";
 import type { ATRScope, AgentSession } from "../../shared/types.js";
 import type { OpenHandsHookEvent } from "./worm-hooks.js";
@@ -12,7 +12,7 @@ export class BudgetExhaustedError extends Data.TaggedError("BudgetExhaustedError
   readonly sessionId: string;
 }> {}
 
-export type BudgetCheckError = BudgetExhaustedError | WormStorageError | WormChainGapError;
+export type BudgetCheckError = BudgetExhaustedError | AuditError;
 export type OpenHandsInferenceEvent = {
   readonly type: "agent:inference";
   readonly inputTokens: number;
@@ -44,7 +44,7 @@ export const makeOpenHandsBudgetEnforcer = (input: {
 
     const checkBudget = (
       event: OpenHandsInferenceEvent
-    ): Effect.Effect<BudgetEnforcerState, BudgetCheckError, WORMAuditTrail> =>
+    ): Effect.Effect<BudgetEnforcerState, BudgetCheckError, WORMAuditTrailService> =>
       Effect.gen(function* () {
         const next = yield* Ref.updateAndGet(stateRef, (s) => {
           if (s.exhausted) return s;
@@ -62,7 +62,7 @@ export const makeOpenHandsBudgetEnforcer = (input: {
 
         if (overTokens || overUsd || overTurns) {
           yield* Ref.update(stateRef, (s) => ({ ...s, exhausted: true }));
-          const worm = yield* WORMAuditTrail;
+          const worm = yield* WORMAuditTrailService;
           const hook: OpenHandsHookEvent = {
             kind: "budget_exhausted",
             sessionId: input.session.sessionId,
