@@ -100,13 +100,14 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=4096' tsup",
+    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=8192' tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "clawql-api": "0.1.0",
+    "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
     "clawql-core": "0.1.0",
     "effect": "^3.21.4",

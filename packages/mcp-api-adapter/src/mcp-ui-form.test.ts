@@ -29,7 +29,8 @@ describe("mcp-ui-form", () => {
     expect(html).toContain('name="message"');
     expect(html).toContain("badge--required");
     expect(html).toContain("badge--optional");
-    expect(html).toContain('placeholder="Text to echo"');
+    expect(html).toContain('class="field-help">Text to echo</p>');
+    expect(html).not.toMatch(/placeholder="Text to echo"/);
   });
 
   it("prefills schema defaults and blank optional enums", () => {

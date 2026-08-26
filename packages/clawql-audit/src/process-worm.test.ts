@@ -1,41 +1,96 @@
 import { Effect } from "effect";
-import { describe, expect, it } from "vitest";
-
+import { afterEach, describe, expect, it } from "vitest";
 import {
-  appendProcessWormEffect,
+  bootProcessWormFromEnv,
   bootProcessWormFromEnvEffect,
+  appendProcessWormEffect,
+  processWormBootState,
   resetProcessWormForTests,
 } from "./process-worm.js";
-import { appendAuthEventToWormEffect } from "./sinks.js";
+import {
+  appendPaymentEventToWormEffect,
+  appendWebEventToWormEffect,
+  wormInputFromPanguardDeny,
+} from "./sinks.js";
 
-describe("process WORM", () => {
+describe("process WORM boot + append", () => {
+  afterEach(async () => {
+    await Effect.runPromise(resetProcessWormForTests());
+    delete process.env.CLAWQL_WORM_ENABLED;
+    delete process.env.CLAWQL_WORM_LOCAL;
+    delete process.env.CLAWQL_WORM_REMOTE;
+    delete process.env.CLAWQL_WORM_SESSION_ID;
+  });
+
   it("no-ops when CLAWQL_WORM_ENABLED is unset", async () => {
-    resetProcessWormForTests();
+    delete process.env.CLAWQL_WORM_ENABLED;
+    const svc = await bootProcessWormFromEnv();
+    expect(svc).toBeNull();
+    expect(await Effect.runPromise(processWormBootState())).toBe("disabled");
     const entry = await Effect.runPromise(
       appendProcessWormEffect({
-        type: "AGENT_ACTION",
+        type: "SESSION_START",
         timestamp: new Date().toISOString(),
-        sessionId: "s1",
+        sessionId: "s",
       })
     );
     expect(entry).toBeNull();
   });
 
-  it("appends auth events when enabled", async () => {
-    resetProcessWormForTests();
-    const env = { ...process.env, CLAWQL_WORM_ENABLED: "1" };
-    const ready = await Effect.runPromise(bootProcessWormFromEnvEffect(env));
-    expect(ready).toBe(true);
+  it("boots memory dual-ack and appends hash-chained entries", async () => {
+    process.env.CLAWQL_WORM_ENABLED = "1";
+    process.env.CLAWQL_WORM_LOCAL = "memory";
+    process.env.CLAWQL_WORM_REMOTE = "memory";
+    process.env.CLAWQL_WORM_SESSION_ID = "sess-wire";
+    process.env.CLAWQL_WORM_RECONCILE_MS = "0";
 
-    const entry = await Effect.runPromise(
-      appendAuthEventToWormEffect({
-        type: "MCP_TOKEN_ISSUED",
+    const svc = await Effect.runPromise(bootProcessWormFromEnvEffect());
+    expect(svc).not.toBeNull();
+
+    const a = await Effect.runPromise(
+      appendProcessWormEffect({
+        type: "SESSION_START",
         timestamp: new Date().toISOString(),
-        clientId: "c1",
-        grantType: "id_jag",
+        sessionId: "",
       })
     );
-    expect(entry?.type).toBe("MCP_TOKEN_ISSUED");
-    expect(entry?.metadata).toMatchObject({ source: "auth", clientId: "c1" });
+    expect(a?.chainIndex).toBe(0);
+    expect(a?.sessionId).toBe("sess-wire");
+
+    const deny = await Effect.runPromise(
+      Effect.gen(function* () {
+        const input = yield* wormInputFromPanguardDeny({ toolName: "execute" });
+        return yield* appendProcessWormEffect(input);
+      })
+    );
+    expect(deny?.type).toBe("PANGUARD_DENY");
+    expect(deny?.chainIndex).toBe(1);
+    expect(deny?.prevHash).toBe(a!.hash);
+
+    const web = await Effect.runPromise(
+      appendWebEventToWormEffect({
+        type: "WEB_SEARCH",
+        ts: new Date().toISOString(),
+        provider: "tavily",
+        query: "clawql",
+        ok: true,
+      })
+    );
+    expect(web?.type).toBe("WEB_SEARCH");
+    expect(web?.metadata?.source).toBe("web");
+
+    const pay = await Effect.runPromise(
+      appendPaymentEventToWormEffect({
+        ts: new Date().toISOString(),
+        category: "payment",
+        action: "X402_PAYMENT_RECEIVED",
+        summary: "test",
+        payload: { tenant_id: "t1" },
+      })
+    );
+    expect(pay?.type).toBe("X402_PAYMENT_RECEIVED");
+
+    const verify = await Effect.runPromise(svc!.verify());
+    expect(verify.valid).toBe(true);
   });
 });

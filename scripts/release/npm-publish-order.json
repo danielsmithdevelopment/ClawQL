@@ -5,6 +5,7 @@
     "clawql-audit",
     "clawql-core",
     "clawql-auth",
+    "clawql-tee",
     "clawql-agents",
     "clawql-pageindex",
     "clawql-codegraph",
@@ -40,6 +41,7 @@
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
+    "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch)."
   ]

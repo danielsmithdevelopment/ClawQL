@@ -85,22 +85,29 @@ const MCP_UI_STYLES = `
     border-radius: 12px;
     padding: 1rem;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .tool-card h2 {
     margin: 0;
     font-size: 1rem;
     font-weight: 650;
+    overflow-wrap: anywhere;
   }
   .tool-card .tool-name {
     margin: 0.25rem 0 0.35rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.82rem;
     color: var(--muted);
+    overflow-wrap: anywhere;
   }
   .tool-card .tool-desc {
     margin: 0 0 0.85rem;
     color: var(--muted);
     font-size: 0.92rem;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .template-pill {
     display: inline-block;
@@ -156,11 +163,15 @@ const MCP_UI_STYLES = `
   }
   .field textarea { resize: vertical; min-height: 5rem; }
   .field--checkbox {
+    display: block;
+  }
+  .field--checkbox__row {
     display: flex;
     align-items: flex-start;
     gap: 0.45rem;
   }
-  .field--checkbox input { width: auto; margin-top: 0.2rem; }
+  .field--checkbox__row input { width: auto; margin-top: 0.2rem; flex-shrink: 0; }
+  .field--checkbox .field-help { margin-left: 1.4rem; }
   .field--error input,
   .field--error select,
   .field--error textarea {
@@ -171,12 +182,17 @@ const MCP_UI_STYLES = `
     margin: 0.25rem 0 0;
     font-size: 0.8rem;
     color: var(--muted);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
   }
   .field-error {
     margin: 0.3rem 0 0;
     font-size: 0.82rem;
     color: var(--err);
     font-weight: 600;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .advanced {
     margin: 0.5rem 0 0.85rem;
@@ -266,6 +282,9 @@ const MCP_UI_STYLES = `
     border-radius: 10px;
     padding: 0.75rem;
     font-size: 0.9rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .result--success {
     background: var(--ok-bg);
@@ -288,6 +307,11 @@ const MCP_UI_STYLES = `
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     color: var(--ink);
   }
+  .result__content {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .result pre {
     margin: 0;
     overflow: auto;
@@ -296,29 +320,43 @@ const MCP_UI_STYLES = `
     background: rgba(15, 23, 42, 0.04);
     border-radius: 8px;
     font-size: 0.82rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .result-list {
     margin: 0;
     padding-left: 1.15rem;
     display: grid;
     gap: 0.55rem;
+    min-width: 0;
   }
   .result-list--compact { padding-left: 1rem; }
+  .result-item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .result-item__title {
     font-weight: 650;
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
     align-items: center;
+    overflow-wrap: anywhere;
   }
   .result-item__meta {
     font-size: 0.78rem;
     color: var(--muted);
+    overflow-wrap: anywhere;
   }
   .result-item__desc {
     margin: 0.2rem 0 0;
     font-size: 0.84rem;
     color: var(--ink);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .result-summary { margin: 0 0 0.5rem; }
   .result-empty { margin: 0 0 0.5rem; color: var(--muted); }

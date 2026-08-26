@@ -38,6 +38,11 @@ export {
   buildHermesMcpBridgeConfig,
   hermesRuntimeClassHint,
 } from "./adapters/hermes/mcp-bridge.js";
+export {
+  createTelegramReauthNotifier,
+  createTelegramReauthNotifierFromEnv,
+  type TelegramReauthNotifierOptions,
+} from "./adapters/hermes/reauth-telegram.js";
 
 export {
   appendGooseHook,

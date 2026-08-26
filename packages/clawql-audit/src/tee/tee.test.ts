@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
-  createMemoryBackend,
+  MemoryBackend,
+  WORMAuditTrail,
   createSimulatedTeeSigner,
-  createWORMAuditTrail,
   generateTeeKeyPairPem,
   verifyTEESignature,
 } from "../index.js";
@@ -18,10 +18,10 @@ describe("Phase 3 TEE ECDSA", () => {
     const entry = {
       id: "00000000-0000-7000-8000-000000000099",
       hash,
-      prev_hash: "0".repeat(64),
-      seq: 0,
+      prevHash: "0".repeat(64),
+      chainIndex: 0,
       writtenAt: new Date().toISOString(),
-      backendAcks: [] as const,
+      backendAcks: [] as string[],
       type: "SESSION_START" as const,
       timestamp: new Date().toISOString(),
       sessionId: "tee-test",
@@ -45,8 +45,8 @@ describe("Phase 3 TEE ECDSA", () => {
         {
           id: "x",
           hash,
-          prev_hash: "0".repeat(64),
-          seq: 0,
+          prevHash: "0".repeat(64),
+          chainIndex: 0,
           writtenAt: new Date().toISOString(),
           backendAcks: [],
           type: "SESSION_START",
@@ -60,24 +60,25 @@ describe("Phase 3 TEE ECDSA", () => {
     expect(result.valid).toBe(false);
   });
 
-  it("createWORMAuditTrail appends teeSignature when tee configured", async () => {
+  it("WORMAuditTrail appends teeSignature when tee configured", async () => {
     const signer = await Effect.runPromise(createSimulatedTeeSigner());
-    const worm = await createWORMAuditTrail({
-      local: createMemoryBackend(),
-      remote: createMemoryBackend(),
+    const worm = await WORMAuditTrail.create({
+      local: new MemoryBackend(),
+      remote: new MemoryBackend(),
       tee: signer,
+      reconcileIntervalMs: 0,
+      merkleBatchSize: 0,
     });
-    const entry = await Effect.runPromise(
-      worm.append({
-        type: "SESSION_START",
-        timestamp: new Date().toISOString(),
-        sessionId: "tee-trail",
-      })
-    );
+    const entry = await worm.append({
+      type: "SESSION_START",
+      timestamp: new Date().toISOString(),
+      sessionId: "tee-trail",
+    });
     expect(entry.teeSignature).toBeTruthy();
     const verified = await Effect.runPromise(
       verifyTEESignature(entry, signer.publicKeyPem, signer.attestation)
     );
     expect(verified.valid).toBe(true);
+    await worm.stop();
   });
 });

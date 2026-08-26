@@ -1,4 +1,4 @@
-import type { WormStorageError } from "clawql-audit";
+import type { AuditError } from "clawql-audit";
 import { Effect } from "effect";
 import { ClawQLHarness, type BenchmarkTask, type HarnessComparisonResult, type HarnessNotStartedError, type HarnessPlugin, type HarnessPluginError, type ModelConfig } from "../src/index.js";
 
@@ -14,7 +14,7 @@ export type CompareHarnessesInput = {
  */
 export const compareHarnesses = (
   input: CompareHarnessesInput
-): Effect.Effect<HarnessComparisonResult, HarnessPluginError | HarnessNotStartedError | WormStorageError> =>
+): Effect.Effect<HarnessComparisonResult, HarnessPluginError | HarnessNotStartedError | AuditError> =>
   Effect.gen(function* () {
     const baselineHarness = yield* ClawQLHarness.create({
       plugins: [],

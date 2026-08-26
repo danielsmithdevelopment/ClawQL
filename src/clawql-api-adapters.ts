@@ -17,6 +17,7 @@ import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
 import { Effect, Layer } from "effect";
 import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
+import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 
 let loadSpecOverride: LoadSpecFn | undefined;
@@ -45,6 +46,8 @@ let apiHandle: ClawQLApiHandle | undefined;
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
+    // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
+    void ensureProcessWormHostBooted().catch(() => undefined);
     apiHandle = createClawQLApi({
       searchLayer: buildSearchLive(),
       executeLayer: buildExecuteLive(),
@@ -70,6 +73,7 @@ export async function disposeClawqlApi(): Promise<void> {
   await Promise.all([
     closePostgresVectorPool().catch(() => undefined),
     closeOuroborosPgPool().catch(() => undefined),
+    disposeProcessWormHost().catch(() => undefined),
   ]);
 }
 

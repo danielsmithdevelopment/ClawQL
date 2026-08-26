@@ -1,18 +1,22 @@
 # clawql-tee
 
-Optional Layer C bridge for attestation-gated ID-JAG signing.
+TEE-shaped signing bridge for ClawQL ID-JAG issuer (Layer C).
+
+## API
 
 - **`createTeeIdJagSignerBridge`** — wraps host `sign` Effect as `IdJagAssertionSigner` for `clawql-auth` issuer deps
-- **`createDevTeeIdJagSigner`** — local stub with `attestationId: dev-stub`
+- **`createDevTeeIdJagSigner`** — local/dev stub (`attestationId: "dev-stub"`)
 
-Inject on the issuer:
-
-```typescript
+```ts
 import { createDevTeeIdJagSigner } from "clawql-tee";
-import { createLocalIdJagAssertionSigner, issueIdJagAssertionEffect } from "clawql-auth";
+import { createLocalIdJagAssertionSigner } from "clawql-auth";
 
 const local = createLocalIdJagAssertionSigner(signing);
-const signer = createDevTeeIdJagSigner((req) => local.sign(req));
+const tee = createDevTeeIdJagSigner((req) => local.sign(req));
+// pass tee as assertionSigner to createIdJagIssuerService / createIdJagIssuerFromEnv
 ```
 
-Set `CLAWQL_TEE_DEBUG=1` to log attestation ids on sign.
+Env:
+
+- `CLAWQL_ID_JAG_TEE_SIGNER=1` — issuer env bootstrap wraps local jose as TEE-shaped (`kind: "tee"`) without importing this package
+- `CLAWQL_TEE_DEBUG=1` — log attestation ids on sign when using this bridge

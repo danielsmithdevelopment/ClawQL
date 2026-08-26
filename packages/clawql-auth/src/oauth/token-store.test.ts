@@ -172,4 +172,20 @@ describe("OAuthTokenStore", () => {
     }
     expect(marked).toEqual(["google"]);
   });
+
+  it("calls onReauthRequired before failing with no_token", async () => {
+    const notified: string[] = [];
+    const store = createOAuthTokenStore({
+      persistence: createMemoryOAuthPersistence(),
+      refresh: () => Effect.die("should not refresh"),
+      buildReauthUrl: ({ providerId }) => Effect.succeed(`https://auth.test/?p=${providerId}`),
+      onReauthRequired: (error) =>
+        Effect.sync(() => {
+          notified.push(error.providerId);
+        }),
+    });
+    const exit = await Effect.runPromiseExit(store.getValidToken("tenant:slack:u"));
+    expect(exit._tag).toBe("Failure");
+    expect(notified).toEqual(["slack"]);
+  });
 });

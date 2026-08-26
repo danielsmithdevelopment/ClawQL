@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { WORMAuditTrail } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { AgentAdapter } from "./shared/types.js";
 import { enforceToolCall, isToolInScope, PanguardDenyError } from "./shared/panguard.js";
 import { makeAgentWormLayer } from "./shared/worm.js";
@@ -47,12 +47,11 @@ describe("shared panguard", () => {
       }
       const verified = await Effect.runPromise(
         Effect.gen(function* () {
-          const worm = yield* WORMAuditTrail;
+          const worm = yield* WORMAuditTrailService;
           return yield* worm.verify();
         }).pipe(Effect.provide(layer))
       );
-      expect(verified.ok).toBe(true);
-      expect(verified.records).toBeGreaterThanOrEqual(1);
+      expect(verified.valid).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -150,13 +149,12 @@ describe("Hermes adapter", () => {
           delegationId: "del-1",
         });
         yield* adapter.stop(s);
-        const worm = yield* WORMAuditTrail;
+        const worm = yield* WORMAuditTrailService;
         return yield* worm.verify();
       }).pipe(Effect.provide(layer))
     );
 
-    expect(verified.ok).toBe(true);
-    expect(verified.records).toBeGreaterThanOrEqual(3);
+    expect(verified.valid).toBe(true);
   });
 });
 

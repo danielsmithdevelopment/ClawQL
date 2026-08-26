@@ -1,8 +1,10 @@
 /**
  * Panguard MCP proxy plugin (effect-ts plan Phase 3 / #308).
  * Registers as first-class `mcp-proxy` plugin; sidecar bridge remains until in-process cutover.
+ * Denies dual-write to process `clawql-audit` WORM when enabled.
  */
 
+import { appendProcessWormEffect, wormInputFromPanguardDeny } from "clawql-audit";
 import { ClawQLError, type Plugin } from "clawql-core";
 import { Effect } from "effect";
 
@@ -50,9 +52,12 @@ export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = 
           .map((s) => s.trim())
           .filter(Boolean);
         if (deny.includes(toolName) || deny.includes("*")) {
-          return yield* Effect.fail(
-            new ClawQLError({ reason: `Panguard policy blocked tool: ${toolName}` })
-          );
+          const reason = `Panguard policy blocked tool: ${toolName}`;
+          yield* Effect.gen(function* () {
+            const input = yield* wormInputFromPanguardDeny({ toolName, reason });
+            yield* appendProcessWormEffect(input);
+          }).pipe(Effect.catchAll(() => Effect.void));
+          return yield* Effect.fail(new ClawQLError({ reason }));
         }
       });
   }
