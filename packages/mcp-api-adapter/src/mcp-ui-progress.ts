@@ -15,6 +15,8 @@ export type ProgressJob = {
   events: ProgressEvent[];
   done: boolean;
   listeners: Set<(event: ProgressEvent) => void>;
+  /** Escaped HTML fragment for the final tool result (set on complete/error). */
+  resultHtml?: string;
 };
 
 const jobs = new Map<string, ProgressJob>();
@@ -54,7 +56,10 @@ export function getProgressJob(id: string): ProgressJob | undefined {
 export function pushProgressEvent(job: ProgressJob, event: Omit<ProgressEvent, "at">): void {
   const full: ProgressEvent = { ...event, at: new Date().toISOString() };
   job.events.push(full);
-  if (event.type === "complete" || event.type === "error") job.done = true;
+  if (event.type === "complete" || event.type === "error") {
+    job.done = true;
+    if (event.resultHtml) job.resultHtml = event.resultHtml;
+  }
   for (const listener of job.listeners) listener(full);
 }
 

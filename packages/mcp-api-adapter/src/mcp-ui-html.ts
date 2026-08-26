@@ -430,6 +430,7 @@ export function renderMcpUiProgressShell(options: {
 }): string {
   const base = options.basePath.replace(/\/$/, "") || "/mcp-ui";
   const sseUrl = `${base}/progress/${encodeURIComponent(options.jobId)}`;
+  const resultUrl = `${sseUrl}/result`;
   return `<div class="result result--progress" data-job="${escapeMcpUiHtml(options.jobId)}">
   <header class="result__header">
     <span class="result__tool">${escapeMcpUiHtml(options.toolName)}</span>
@@ -447,7 +448,26 @@ export function renderMcpUiProgressShell(options: {
   var barEl = root.querySelector('[data-role="bar"]');
   var logEl = root.querySelector('[data-role="log"]');
   var finalEl = root.querySelector('[data-role="final"]');
+  var resultUrl = ${JSON.stringify(resultUrl)};
   var es = new EventSource(${JSON.stringify(sseUrl)});
+  function loadResult() {
+    if (!finalEl) return;
+    fetch(resultUrl, { credentials: 'same-origin' })
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        if (window.htmx && typeof htmx.swap === 'function') {
+          htmx.swap(finalEl, html, { swapStyle: 'innerHTML' });
+        } else {
+          finalEl.replaceChildren();
+          var tpl = document.createElement('template');
+          tpl.innerHTML = html;
+          finalEl.appendChild(tpl.content);
+        }
+      })
+      .catch(function () {
+        if (finalEl) finalEl.textContent = 'Failed to load result fragment.';
+      });
+  }
   function onEvent(ev) {
     var data;
     try { data = JSON.parse(ev.data); } catch (e) { return; }
@@ -458,8 +478,8 @@ export function renderMcpUiProgressShell(options: {
       li.textContent = (data.at ? data.at + " — " : "") + data.message;
       logEl.appendChild(li);
     }
-    if ((ev.type === "complete" || ev.type === "error") && data.resultHtml && finalEl) {
-      finalEl.innerHTML = data.resultHtml;
+    if (ev.type === "complete" || ev.type === "error") {
+      loadResult();
       es.close();
     }
   }

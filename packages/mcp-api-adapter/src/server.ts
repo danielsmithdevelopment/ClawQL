@@ -99,7 +99,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
         : "/mcp-ui/progress/";
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      // EventSource cannot set Authorization; opaque job UUIDs + TTL are the capability.
+      // EventSource/fetch cannot set Authorization; opaque job UUIDs + TTL are the capability.
       if (req.method === "GET" && req.path.startsWith(mcpUiProgressPrefix)) return next();
       void resolveEdgeCredential(
         readApiKey(req),

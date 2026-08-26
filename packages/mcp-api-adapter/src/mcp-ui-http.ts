@@ -3,6 +3,7 @@ import { httpBodyFromCollapsed } from "./call.js";
 import type { VerifiedMcpAdapterAtr } from "./edge-auth.js";
 import {
   FormValidationError,
+  escapeMcpUiHtml,
   fieldErrorFromMessage,
   parseFormArgs,
   renderToolFormFields,
@@ -250,6 +251,16 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     );
   });
 
+  router.get("/progress/:jobId/result", (req, res) => {
+    const jobId = String(req.params.jobId ?? "");
+    const job = getProgressJob(jobId);
+    if (!job?.resultHtml) {
+      res.status(404).type("text").send("Result not ready");
+      return;
+    }
+    res.status(200).type("html").send(job.resultHtml);
+  });
+
   router.get("/progress/:jobId", (req, res) => {
     const jobId = String(req.params.jobId ?? "");
     const job = getProgressJob(jobId);
@@ -268,7 +279,6 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
       type: string;
       message: string;
       percent?: number;
-      resultHtml?: string;
       at: string;
     }) => {
       res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
@@ -405,7 +415,7 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
       form.currentStepIndex += 1;
       const next = form.steps[form.currentStepIndex];
       const nextHint = next
-        ? `<p class="field-help">Next: <a href="${basePath}/custom/${form.slug}">${next.label ?? next.tool}</a></p>`
+        ? `<p class="field-help">Next: <a href="${escapeMcpUiHtml(`${basePath}/custom/${encodeURIComponent(form.slug)}`)}">${escapeMcpUiHtml(next.label ?? next.tool)}</a></p>`
         : `<p class="field-help">Workflow complete.</p>`;
       res.status(200).type("html").send(
         `${renderMcpUiSuccessResult({
