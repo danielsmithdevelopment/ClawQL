@@ -127,10 +127,99 @@ function emptyBySource(): Record<TraceSource, number> {
   };
 }
 
+type RawMessagePart = {
+  source: TraceSource;
+  label: string;
+  chars: number;
+  tokens: number;
+};
+
+/**
+ * Allocate input tokens per message. Non-tool sources keep char/4 estimates so
+ * harness/vault/schema do not shrink when a fat tool_result dominates raw size.
+ * Remaining metered input (if any) goes to tool_result frames only.
+ */
+export function allocateInputFrameTokens(
+  rawParts: RawMessagePart[],
+  meteredIn: number | undefined
+): number[] {
+  if (rawParts.length === 0) return [];
+
+  const base = rawParts.map((p) =>
+    p.chars > 0 ? Math.max(1, p.tokens) : 0
+  );
+
+  if (meteredIn == null || meteredIn <= 0) {
+    return base;
+  }
+
+  const toolIndices: number[] = [];
+  let nonToolTotal = 0;
+  rawParts.forEach((p, i) => {
+    if (p.source === "tool_result") {
+      toolIndices.push(i);
+    } else {
+      nonToolTotal += base[i]!;
+    }
+  });
+
+  if (toolIndices.length === 0) {
+    const rawSum = base.reduce((s, t) => s + t, 0);
+    if (rawSum <= 0) return base;
+    const scale = meteredIn / rawSum;
+    return base.map((t, i) =>
+      rawParts[i]!.chars > 0 ? Math.max(1, Math.round(t * scale)) : 0
+    );
+  }
+
+  const allocated = [...base];
+  let toolBudget = Math.max(toolIndices.length, meteredIn - nonToolTotal);
+  const toolRawSum = toolIndices.reduce((s, i) => s + rawParts[i]!.tokens, 0);
+
+  if (toolRawSum <= 0) {
+    const each = Math.floor(toolBudget / toolIndices.length);
+    for (const i of toolIndices) allocated[i] = each;
+  } else {
+    let assigned = 0;
+    for (let t = 0; t < toolIndices.length; t++) {
+      const i = toolIndices[t]!;
+      if (t === toolIndices.length - 1) {
+        allocated[i] = toolBudget - assigned;
+      } else {
+        const share = Math.round((rawParts[i]!.tokens / toolRawSum) * toolBudget);
+        const tok = Math.max(1, share);
+        allocated[i] = tok;
+        assigned += tok;
+      }
+    }
+  }
+
+  const sum = allocated.reduce((s, t) => s + t, 0);
+  const drift = meteredIn - sum;
+  if (drift !== 0) {
+    allocated[toolIndices[toolIndices.length - 1]!]! += drift;
+  }
+
+  return allocated;
+}
+
+/**
+ * Derive metered input from message bodies (non-tool fixed + tool at char/4).
+ */
+export function meteredInputFromMessages(messages: TraceCallMessage[]): number {
+  return allocateInputFrameTokens(
+    messages.map((msg) => {
+      const { source, label } = classifyMessage(msg);
+      const chars = msg.content?.length ?? 0;
+      return { source, label, chars, tokens: estimateTokensFromChars(chars) };
+    }),
+    undefined
+  ).reduce((s, t) => s + t, 0);
+}
+
 /**
  * Build a turn×source stack from inference-shaped call records.
- * Scales message-frame tokens to match reported `usage.inputTokens` when present
- * so the bar total matches the model meter while still showing source breakdown.
+ * Non-tool messages keep char/4 estimates; tool_result absorbs metered remainder.
  */
 export function buildContextFlamegraph(
   sessionId: string,
@@ -146,18 +235,16 @@ export function buildContextFlamegraph(
   sorted.forEach((rec, idx) => {
     const turn = idx + 1;
     const turnFrames: TraceFrame[] = [];
-    const rawParts = rec.messages.map((msg) => {
+    const rawParts: RawMessagePart[] = rec.messages.map((msg) => {
       const { source, label } = classifyMessage(msg);
       const chars = msg.content?.length ?? 0;
       return { source, label, chars, tokens: estimateTokensFromChars(chars) };
     });
-    const rawSum = rawParts.reduce((s, p) => s + p.tokens, 0);
     const meteredIn = rec.usage?.inputTokens;
-    const scale =
-      meteredIn != null && meteredIn > 0 && rawSum > 0 ? meteredIn / rawSum : 1;
+    const tokenAlloc = allocateInputFrameTokens(rawParts, meteredIn);
 
-    for (const part of rawParts) {
-      const tokens = Math.max(part.chars > 0 ? 1 : 0, Math.round(part.tokens * scale));
+    rawParts.forEach((part, partIdx) => {
+      const tokens = tokenAlloc[partIdx] ?? 0;
       const frame: TraceFrame = {
         turn,
         source: part.source,
@@ -170,7 +257,7 @@ export function buildContextFlamegraph(
       turnFrames.push(frame);
       frames.push(frame);
       bySource[part.source] += tokens;
-    }
+    });
 
     const outChars = rec.response?.length ?? 0;
     const outTokens =
@@ -269,26 +356,36 @@ export function demoCompressedVsFatRecords(sessionId: string): {
     id: string,
     offsetMs: number,
     toolMsg: TraceCallMessage,
-    usage: { inputTokens: number; outputTokens: number }
-  ): TraceCallRecord => ({
-    id,
-    correlationId: sessionId,
-    timestamp: new Date(base + offsetMs).toISOString(),
-    modelId: "demo/gpt",
-    provider: "demo",
-    messages: [systemHarness, systemVault, user, schema, toolMsg],
-    response: "First repo looks active; next hop is execute(repos.get).",
-    usage,
-    latencyMs: 120 + offsetMs / 10,
-  });
+    outputTokens: number,
+    /** Turn 2+ simulates prior fat tool context still in window. */
+    priorFatToolTurns = 0
+  ): TraceCallRecord => {
+    const messages = [systemHarness, systemVault, user, schema, toolMsg];
+    let inputTokens = meteredInputFromMessages(messages);
+    if (priorFatToolTurns > 0 && toolMsg === fatResult) {
+      const oneTurnTool = meteredInputFromMessages([toolMsg]);
+      inputTokens += oneTurnTool * priorFatToolTurns;
+    }
+    return {
+      id,
+      correlationId: sessionId,
+      timestamp: new Date(base + offsetMs).toISOString(),
+      modelId: "demo/gpt",
+      provider: "demo",
+      messages,
+      response: "First repo looks active; next hop is execute(repos.get).",
+      usage: { inputTokens, outputTokens },
+      latencyMs: 120 + offsetMs / 10,
+    };
+  };
 
   const compressed = [
-    mk("c1", 0, compressedResult, { inputTokens: 420, outputTokens: 48 }),
-    mk("c2", 30_000, compressedResult, { inputTokens: 510, outputTokens: 52 }),
+    mk("c1", 0, compressedResult, 48),
+    mk("c2", 30_000, compressedResult, 52, 0),
   ];
   const fat = [
-    mk("f1", 0, fatResult, { inputTokens: 4200, outputTokens: 48 }),
-    mk("f2", 30_000, fatResult, { inputTokens: 8100, outputTokens: 52 }),
+    mk("f1", 0, fatResult, 48),
+    mk("f2", 30_000, fatResult, 52, 1),
   ];
   return { compressed, fat };
 }

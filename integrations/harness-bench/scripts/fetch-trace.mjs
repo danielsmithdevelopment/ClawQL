@@ -55,8 +55,8 @@ if (arg === "--compare") {
     console.error("expected fat demo tool_result ≥80% of tokens");
     process.exit(1);
   }
-  if (Number(out.ratio) < 5) {
-    console.error("expected fat/compressed ratio ≥5×");
+  if (Number(out.ratio) < 3) {
+    console.error("expected fat/compressed ratio ≥3×");
     process.exit(1);
   }
 } else {

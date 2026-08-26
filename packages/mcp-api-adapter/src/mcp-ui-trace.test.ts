@@ -28,7 +28,7 @@ describe("estimateTokensFromChars", () => {
 });
 
 describe("buildContextFlamegraph", () => {
-  it("classifies system vault seed vs harness and scales to usage.inputTokens", () => {
+  it("classifies system vault seed vs harness; non-tool tokens stable when tool grows", () => {
     const records: TraceCallRecord[] = [
       {
         id: "call-1",
@@ -60,6 +60,17 @@ describe("buildContextFlamegraph", () => {
     expect(graph.bySource.model_output).toBe(10);
     expect(graph.turns[0]!.frames.some((f) => f.source === "harness_prompt")).toBe(true);
     expect(graph.turns[0]!.frames.some((f) => f.source === "vault_seed")).toBe(true);
+  });
+
+  it("fat demo keeps same harness/vault as compressed — only tool_result grows", () => {
+    const { compressed, fat } = demoCompressedVsFatRecords("x");
+    const c = buildContextFlamegraph("c", compressed);
+    const f = buildContextFlamegraph("f", fat);
+    expect(f.bySource.harness_prompt).toBe(c.bySource.harness_prompt);
+    expect(f.bySource.vault_seed).toBe(c.bySource.vault_seed);
+    expect(f.bySource.tool_schema).toBe(c.bySource.tool_schema);
+    expect(f.bySource.user).toBe(c.bySource.user);
+    expect(f.bySource.tool_result).toBeGreaterThan(c.bySource.tool_result * 10);
   });
 
   it("shows compressed demo much smaller than fat demo", async () => {

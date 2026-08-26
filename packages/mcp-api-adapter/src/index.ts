@@ -68,10 +68,12 @@ export {
 } from "./mcp-ui-progress.js";
 export { mergeFilesIntoArgs, isMultipartRequest } from "./mcp-ui-multipart.js";
 export {
+  allocateInputFrameTokens,
   buildContextFlamegraph,
   coalesceFramesBySource,
   demoCompressedVsFatRecords,
   estimateTokensFromChars,
+  meteredInputFromMessages,
   resolveTraceRecords,
   DEMO_TRACE_SESSION_COMPRESSED,
   DEMO_TRACE_SESSION_FAT,
