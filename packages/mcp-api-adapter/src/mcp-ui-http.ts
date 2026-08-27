@@ -54,6 +54,34 @@ import type { CallToolFn, ListedMcpTool, ToolCatalog } from "./types.js";
 
 export const DEFAULT_MCP_UI_PATH = "/mcp-ui";
 
+function pickCompareQueryParam(
+  query: Request["query"],
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const raw = query[key];
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    const trimmed = String(value ?? "").trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
+function isValidTraceSessionId(id: string): boolean {
+  return id.length > 0 && id.length <= 200 && !/[^\w.:@+-]/.test(id);
+}
+
+async function buildLiveCompareGraph(
+  sessionId: string,
+  listTraceCalls: NonNullable<AttachMcpUiOptions["listTraceCalls"]>
+): Promise<ReturnType<typeof buildContextFlamegraph> | null> {
+  const records = await resolveTraceRecords(sessionId, listTraceCalls);
+  if (!records) return null;
+  return buildContextFlamegraph(sessionId, records, {
+    tokenization: traceTokenizationMeta(sessionId, records),
+  });
+}
+
 function traceTokenizationMeta(
   sessionId: string,
   records: TraceCallRecord[]
@@ -294,14 +322,77 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     );
   });
 
-  router.get("/trace/compare", (req, res) => {
+  router.get("/trace/compare", async (req, res) => {
+    const leftId = pickCompareQueryParam(req.query, "left", "compressed");
+    const rightId = pickCompareQueryParam(req.query, "right", "fat");
+    const wantJson = String(req.query.format ?? "").toLowerCase() === "json";
+
+    if (leftId && rightId && options.listTraceCalls) {
+      if (!isValidTraceSessionId(leftId) || !isValidTraceSessionId(rightId)) {
+        res.status(400).type("html").send(
+          renderTraceNotFoundPage(leftId || rightId, {
+            basePath,
+            hint: "Compare session ids must be short alphanumeric tokens.",
+          })
+        );
+        return;
+      }
+      try {
+        const [cGraph, fGraph] = await Promise.all([
+          buildLiveCompareGraph(leftId, options.listTraceCalls),
+          buildLiveCompareGraph(rightId, options.listTraceCalls),
+        ]);
+        if (!cGraph || !fGraph) {
+          res.status(404).type("html").send(
+            renderTraceNotFoundPage(leftId, {
+              basePath,
+              hint: `Missing live trace for ${!cGraph ? leftId : rightId}. Run both sessions first.`,
+            })
+          );
+          return;
+        }
+        if (wantJson) {
+          res.status(200).json({ compressed: cGraph, fat: fGraph, live: true, left: leftId, right: rightId });
+          return;
+        }
+        res.status(200).type("html").send(
+          renderTraceComparePage(cGraph, fGraph, {
+            basePath,
+            heading: "Both-sides compression — live inference sessions",
+            subheading: "Shared scale · real model calls · cl100k_base tokenization",
+            leftPanel: {
+              title: `${leftId} (compressed)`,
+              subtitle: "Projected search/execute tool results",
+            },
+            rightPanel: {
+              title: `${rightId} (fat)`,
+              subtitle: "Untrimmed tool dumps — same task",
+              emphasis: true,
+            },
+            footerNote: `JSON: <a href="${escapeMcpUiHtml(basePath)}/trace/compare?left=${encodeURIComponent(leftId)}&amp;right=${encodeURIComponent(rightId)}&amp;format=json">compare</a>
+              · <a href="${escapeMcpUiHtml(basePath)}/trace/${encodeURIComponent(leftId)}?format=json">${escapeMcpUiHtml(leftId)}</a>
+              · <a href="${escapeMcpUiHtml(basePath)}/trace/${encodeURIComponent(rightId)}?format=json">${escapeMcpUiHtml(rightId)}</a>`,
+          })
+        );
+        return;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(502).type("html").send(
+          renderTraceNotFoundPage(leftId, {
+            basePath,
+            hint: `Failed to load live compare: ${message}`,
+          })
+        );
+        return;
+      }
+    }
+
     const { compressed, fat } = demoCompressedVsFatRecords("compare");
     const tok = demoTraceTokenizationMeta();
     const cGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_COMPRESSED, compressed, {
       tokenization: tok,
     });
     const fGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_FAT, fat, { tokenization: tok });
-    const wantJson = String(req.query.format ?? "").toLowerCase() === "json";
     if (wantJson) {
       res.status(200).json({ compressed: cGraph, fat: fGraph });
       return;

@@ -63,6 +63,25 @@ describe("buildContextFlamegraph", () => {
     expect(graph.turns[0]!.frames.some((f) => f.source === "vault_seed")).toBe(true);
   });
 
+  it("prefers tokenized sum when provider usage under-reports (truncated local models)", () => {
+    const records: TraceCallRecord[] = [
+      {
+        id: "u1",
+        timestamp: "2026-08-26T12:00:00.000Z",
+        modelId: "ollama/tinyllama",
+        messages: [
+          { role: "system", content: "Harness", tokens: 40 },
+          { role: "tool", content: "x".repeat(8000), tokens: 2000 },
+        ],
+        response: "ok",
+        usage: { inputTokens: 120, outputTokens: 5 },
+      },
+    ];
+    const graph = buildContextFlamegraph("s", records);
+    expect(graph.bySource.tool_result).toBeGreaterThan(1500);
+    expect(graph.bySource.harness_prompt).toBe(40);
+  });
+
   it("fat demo keeps same harness/vault as compressed — only tool_result grows", () => {
     const { compressed, fat } = demoCompressedVsFatRecords("x");
     const c = buildContextFlamegraph("c", compressed, { tokenization: demoTraceTokenizationMeta() });
@@ -193,7 +212,13 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
   });
 
   it("GET /mcp-ui/trace/compare side-by-side JSON", async () => {
-    const { base, close } = await listen();
+    const { compressed } = demoCompressedVsFatRecords("left-live");
+    const { fat } = demoCompressedVsFatRecords("right-live");
+    const { base, close } = await listen((id) => {
+      if (id === "left-live") return compressed;
+      if (id === "right-live") return fat;
+      return [];
+    });
     try {
       const res = await fetch(`${base}/mcp-ui/trace/compare?format=json`);
       expect(res.status).toBe(200);
@@ -203,6 +228,15 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       };
       expect(data.fat.totalInputTokens).toBeGreaterThan(data.compressed.totalInputTokens * 5);
       expect(data.fat.bySource.tool_result).toBeGreaterThan(10_000);
+
+      const live = await fetch(
+        `${base}/mcp-ui/trace/compare?left=left-live&right=right-live&format=json`
+      );
+      expect(live.status).toBe(200);
+      const liveData = (await live.json()) as { live: boolean; left: string; right: string };
+      expect(liveData.live).toBe(true);
+      expect(liveData.left).toBe("left-live");
+
       const html = await fetch(`${base}/mcp-ui/trace/compare`);
       expect(html.status).toBe(200);
       const body = await html.text();

@@ -153,6 +153,21 @@ type RawMessagePart = {
  * harness/vault/schema do not shrink when a fat tool_result dominates raw size.
  * Remaining metered input (if any) goes to tool_result frames only.
  */
+/**
+ * Prefer tokenized transcript totals when provider usage under-reports input
+ * (common with truncated local models) so flamegraphs reflect context sent.
+ */
+export function resolveMeteredInputTokens(
+  rawParts: RawMessagePart[],
+  usageInput: number | undefined
+): number | undefined {
+  if (usageInput == null) return undefined;
+  const tokenizedSum = rawParts.reduce((s, p) => s + p.tokens, 0);
+  if (tokenizedSum <= 0) return usageInput;
+  if (usageInput < tokenizedSum * 0.75) return tokenizedSum;
+  return usageInput;
+}
+
 export function allocateInputFrameTokens(
   rawParts: RawMessagePart[],
   meteredIn: number | undefined
@@ -284,7 +299,7 @@ export function buildContextFlamegraph(
           : estimateTokensFromChars(chars);
       return { source, label, chars, tokens };
     });
-    const meteredIn = rec.usage?.inputTokens;
+    const meteredIn = resolveMeteredInputTokens(rawParts, rec.usage?.inputTokens);
     const tokenAlloc = allocateInputFrameTokens(rawParts, meteredIn);
 
     rawParts.forEach((part, partIdx) => {

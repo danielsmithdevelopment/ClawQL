@@ -19,7 +19,7 @@ import { withTokenEfficiency } from "./efficiency/efficiency-gateway.js";
 import type { CacheIntent } from "./efficiency/types.js";
 import { resolveInferenceEffectiveEnv } from "./policy/manifest.js";
 
-export type ChatRole = "system" | "user" | "assistant";
+export type ChatRole = "system" | "user" | "assistant" | "tool" | "function";
 
 export interface ChatMessage {
   role: ChatRole;

@@ -246,13 +246,22 @@ function renderComparePanel(
 </div>`;
 }
 
+export type TraceComparePageOpts = {
+  basePath?: string;
+  heading?: string;
+  subheading?: string;
+  leftPanel?: { title: string; subtitle: string };
+  rightPanel?: { title: string; subtitle: string; emphasis?: boolean };
+  footerNote?: string;
+};
+
 /**
  * Side-by-side compressed vs fat — Act 3 closer with shared scale.
  */
 export function renderTraceComparePage(
   compressed: ContextFlamegraph,
   fat: ContextFlamegraph,
-  opts?: { basePath?: string }
+  opts?: TraceComparePageOpts
 ): string {
   const base = (opts?.basePath ?? "/mcp-ui").replace(/\/$/, "") || "/mcp-ui";
   const cTotal = compressed.totalInputTokens + compressed.totalOutputTokens;
@@ -271,6 +280,22 @@ export function renderTraceComparePage(
     (src) =>
       `<span><span class="fg-swatch" style="background:${SOURCE_COLORS[src]}"></span>${escapeMcpUiHtml(SOURCE_LABELS[src])}</span>`
   ).join("\n");
+  const heading = opts?.heading ?? "Both-sides compression — same task, two contexts";
+  const subheading =
+    opts?.subheading ?? "Shared scale · left = search/execute projection · right = naive full tool dumps";
+  const leftPanel = opts?.leftPanel ?? {
+    title: "demo-compressed (search → execute)",
+    subtitle: "Projected tool results",
+  };
+  const rightPanel = opts?.rightPanel ?? {
+    title: "demo-fat (naive dumps)",
+    subtitle: "Untrimmed OpenAPI / page context",
+    emphasis: true,
+  };
+  const footerNote =
+    opts?.footerNote ??
+    `JSON: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed?format=json">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat?format=json">fat</a>
+      · Live session: <code>/mcp-ui/trace/:sessionId</code> when <code>listTraceCalls</code> is wired · Live compare: <code>?left=&amp;right=</code>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -283,23 +308,22 @@ export function renderTraceComparePage(
 <body>
   <div class="fg-wrap" style="max-width:1100px">
     <p class="fg-nav"><a href="${escapeMcpUiHtml(base)}/">← MCP UI catalog</a></p>
-    <h1>Both-sides compression — same task, two contexts</h1>
-    <p class="fg-meta">Shared scale · left = search/execute projection · right = naive full tool dumps</p>
+    <h1>${escapeMcpUiHtml(heading)}</h1>
+    <p class="fg-meta">${escapeMcpUiHtml(subheading)}</p>
     <div class="fg-callout"><strong>At a glance:</strong> fat uses <strong>${ratio}×</strong> tokens (${fTotal.toLocaleString()} vs ${cTotal.toLocaleString()}). Tool result is <strong>${Math.round((fTool / fTotal) * 100)}%</strong> of fat (${fTool.toLocaleString()} tok) vs <strong>${Math.round((cTool / cTotal) * 100)}%</strong> compressed — the orange bar should dominate the right column only.</div>
     <div class="fg-legend">${legend}</div>
     <div class="fg-compare">
       ${renderComparePanel(compressed, maxTokens, {
-        title: "demo-compressed (search → execute)",
-        subtitle: "Projected tool results",
+        title: leftPanel.title,
+        subtitle: leftPanel.subtitle,
       })}
       ${renderComparePanel(fat, maxTokens, {
-        title: "demo-fat (naive dumps)",
-        subtitle: "Untrimmed OpenAPI / page context",
-        emphasis: true,
+        title: rightPanel.title,
+        subtitle: rightPanel.subtitle,
+        emphasis: rightPanel.emphasis !== false,
       })}
     </div>
-    <p class="fg-meta">JSON: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed?format=json">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat?format=json">fat</a>
-      · Live session: <code>/mcp-ui/trace/:sessionId</code> when <code>listTraceCalls</code> is wired</p>
+    <p class="fg-meta">${footerNote}</p>
   </div>
 </body>
 </html>`;
