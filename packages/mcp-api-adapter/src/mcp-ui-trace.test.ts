@@ -255,15 +255,27 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       const res = await fetch(`${base}/mcp-ui/trace/compare/executor?format=json`);
       expect(res.status).toBe(200);
       const data = (await res.json()) as {
+        focus: string;
         clawql: { totalInputTokens: number; bySource: { tool_result: number } };
         executor: { totalInputTokens: number; bySource: { tool_result: number } };
         preset: string;
+        combined: { ratioLiveL1: number; ratioPublishedL1: number };
+        layer2: { shareOfInputPct: { clawql: number; executor: number } };
+        layer1: { executorLiveExecuteTokens: number; executorPublishedHomepageTokens: number };
       };
       expect(data.preset).toBe("executor-cmp-001");
+      expect(data.focus).toBe("input");
       expect(data.clawql.totalInputTokens).toBe(1301);
       expect(data.executor.totalInputTokens).toBe(143581);
       expect(data.executor.bySource.tool_result).toBe(143466);
-      expect(data.executor.totalInputTokens).toBeGreaterThan(data.clawql.totalInputTokens * 100);
+      expect(data.layer1.executorLiveExecuteTokens).toBe(115);
+      expect(data.layer1.executorPublishedHomepageTokens).toBe(1044);
+      expect(data.combined.ratioLiveL1).toBeGreaterThan(110);
+      expect(data.combined.ratioLiveL1).toBeLessThan(111);
+      expect(data.combined.ratioPublishedL1).toBeGreaterThan(111);
+      expect(data.combined.ratioPublishedL1).toBeLessThan(112);
+      expect(data.layer2.shareOfInputPct.executor).toBe(100);
+      expect(data.layer2.shareOfInputPct.clawql).toBe(70);
 
       const html = await fetch(`${base}/mcp-ui/trace/compare/executor`);
       expect(html.status).toBe(200);
@@ -271,6 +283,17 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       expect(body).toContain("Executor.sh vs ClawQL");
       expect(body).toContain("fg-compare");
       expect(body).toContain("143,581");
+      expect(body).toContain("live execute-only 115");
+      expect(body).toContain("~1,044");
+      expect(body).toContain("100%");
+      expect(body).toContain("70%");
+      expect(body).toContain('rel="canonical"');
+      expect(body).toContain("focus=input by default");
+
+      const allFocus = await fetch(`${base}/mcp-ui/trace/compare/executor?focus=all`);
+      const allBody = await allFocus.text();
+      expect(allBody).toContain("fg-warn");
+      expect(allBody).toContain("focus=all");
     } finally {
       await close();
     }

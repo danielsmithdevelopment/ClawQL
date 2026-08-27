@@ -44,6 +44,8 @@ import {
   demoExecutorCmpRecords,
   demoTraceTokenizationMeta,
   executorCmpTraceTokenizationMeta,
+  buildExecutorCmpComparePageOpts,
+  executorCmpJsonEnvelope,
   resolveTraceRecords,
   type TraceCallRecord,
 } from "./mcp-ui-trace.js";
@@ -422,38 +424,14 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     const eGraph = buildContextFlamegraph(DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR, executor, {
       tokenization: tok,
     });
-    const focus = String(req.query.focus ?? "input").toLowerCase() === "all" ? "all" : "input";
+    const focus =
+      String(req.query.focus ?? "input").toLowerCase() === "all" ? "all" : "input";
     if (wantJson) {
-      res.status(200).json({
-        clawql: cGraph,
-        executor: eGraph,
-        preset: "executor-cmp-001",
-        measurements: "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
-      });
+      res.status(200).json(executorCmpJsonEnvelope(focus, cGraph, eGraph));
       return;
     }
     res.status(200).type("html").send(
-      renderTraceComparePage(cGraph, eGraph, {
-        basePath,
-        focus,
-        heading: "Executor.sh vs ClawQL — executor-cmp-001 (live)",
-        subheading:
-          "Same task · vercel/next.js pulls.list · cl100k_base · Layer 1 tool defs + Layer 2 tool result · model output omitted",
-        leftPanel: {
-          title: "ClawQL (search + execute + fields projection)",
-          subtitle: "L1 394 + L2 907 = 1,301 tok input",
-        },
-        rightPanel: {
-          title: "Executor (live MCP + full REST list)",
-          subtitle: "L1 115 + L2 143,466 = 143,581 tok · ~99% Layer 2",
-          emphasis: true,
-        },
-        footerNote: `Source: <code>executor-cmp-001.live.json</code> · JSON: <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor?format=json">compare</a>
-          · Sessions: <a href="${escapeMcpUiHtml(basePath)}/trace/${DEMO_TRACE_SESSION_EXECUTOR_CMP_CLAWQL}">${DEMO_TRACE_SESSION_EXECUTOR_CMP_CLAWQL}</a>
-          · <a href="${escapeMcpUiHtml(basePath)}/trace/${DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR}">${DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR}</a>
-          · Generic compare: <a href="${escapeMcpUiHtml(basePath)}/trace/compare">compressed vs fat</a>
-          · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor?focus=all">include outputs</a>`,
-      })
+      renderTraceComparePage(cGraph, eGraph, buildExecutorCmpComparePageOpts(basePath, focus))
     );
   });
 

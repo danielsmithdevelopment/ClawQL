@@ -46,7 +46,11 @@ export {
   DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR,
   demoExecutorCmpRecords,
   executorCmpTraceTokenizationMeta,
+  executorCmpDerivedStats,
+  buildExecutorCmpComparePageOpts,
+  executorCmpJsonEnvelope,
   EXECUTOR_CMP_MEASUREMENTS,
+  EXECUTOR_CMP_MATCHED_CONDITIONS,
 } from "./executor-cmp-trace-demo.js";
 
 export type TraceFrame = {

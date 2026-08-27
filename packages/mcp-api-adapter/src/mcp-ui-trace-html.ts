@@ -107,6 +107,10 @@ function flamegraphStyles(): string {
   .fg-panel--fat { border-color: #fdba74; background: #fff7ed; }
   .fg-callout { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.95rem; }
   .fg-callout strong { color: #047857; }
+  .fg-methodology { background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.45; }
+  .fg-methodology p { margin: 0 0 0.65rem; }
+  .fg-methodology p:last-child { margin-bottom: 0; }
+  .fg-warn { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.92rem; }
   .fg-bar { height: 1.75rem; }
   .fg-bar--emphasis .fg-seg[data-source="tool_result"] { box-shadow: inset 0 0 0 2px #7c2d12; }
 </style>`;
@@ -273,6 +277,14 @@ export type TraceComparePageOpts = {
   leftPanel?: { title: string; subtitle: string };
   rightPanel?: { title: string; subtitle: string; emphasis?: boolean };
   footerNote?: string;
+  /** Optional methodology block (Layer 1/L2 caveats) rendered above the callout. */
+  methodologyHtml?: string;
+  /** When set, replaces the default compressed-vs-fat callout. */
+  calloutHtml?: string;
+  /** HTML title; defaults to generic compressed vs fat. */
+  pageTitle?: string;
+  /** When set with focus=input, emits link rel=canonical for stable blog links. */
+  canonicalPath?: string;
   /**
    * Default `input`: compare callout + bars exclude model_output so divergent
    * generations cannot inflate the compression ratio. Pass `all` to include outputs.
@@ -339,16 +351,29 @@ export function renderTraceComparePage(
       · Focus: <code>?focus=input</code> (default) · <code>?focus=all</code>`;
   const fToolPct = Math.round((fTool / Math.max(1, fHeadline)) * 100);
   const cToolPct = Math.round((cTool / Math.max(1, cHeadline)) * 100);
-  const callout = inputOnly
+  const defaultCallout = inputOnly
     ? `<div class="fg-callout"><strong>At a glance:</strong> fat <strong>input</strong> is <strong>${ratio}×</strong> compressed (${fHeadline.toLocaleString()} vs ${cHeadline.toLocaleString()} tok). Tool result is <strong>${fToolPct}%</strong> of fat input (${fTool.toLocaleString()} tok) vs <strong>${cToolPct}%</strong> compressed — orange should dominate the right column. Model output is omitted so reply length cannot inflate the ratio.</div>`
     : `<div class="fg-callout"><strong>At a glance:</strong> fat uses <strong>${ratio}×</strong> tokens (${fHeadline.toLocaleString()} vs ${cHeadline.toLocaleString()}). Tool result is <strong>${fToolPct}%</strong> of fat (${fTool.toLocaleString()} tok) vs <strong>${cToolPct}%</strong> compressed — the orange bar should dominate the right column only.</div>`;
+  const callout = opts?.calloutHtml ?? defaultCallout;
+  const focusWarning =
+    !inputOnly && opts?.canonicalPath
+      ? `<div class="fg-warn"><strong>focus=all</strong> — model output included. Blog headline ratios use <strong>focus=input</strong> only. <a href="${escapeMcpUiHtml(opts.canonicalPath)}">Switch to input-only view</a></div>`
+      : !inputOnly
+        ? `<div class="fg-warn"><strong>focus=all</strong> — model output included in bars and ratio. Prefer the bare compare URL (defaults to <code>focus=input</code>) for compression claims.</div>`
+        : "";
+  const pageTitle = opts?.pageTitle ?? "Context flamegraph — compressed vs fat";
+  const canonicalTag =
+    inputOnly && opts?.canonicalPath
+      ? `<link rel="canonical" href="${escapeMcpUiHtml(opts.canonicalPath)}"/>`
+      : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Context flamegraph — compressed vs fat</title>
+  <title>${escapeMcpUiHtml(pageTitle)}</title>
+  ${canonicalTag}
   ${flamegraphStyles()}
 </head>
 <body>
@@ -356,6 +381,8 @@ export function renderTraceComparePage(
     <p class="fg-nav"><a href="${escapeMcpUiHtml(base)}/">← MCP UI catalog</a></p>
     <h1>${escapeMcpUiHtml(heading)}</h1>
     <p class="fg-meta">${escapeMcpUiHtml(subheading)}</p>
+    ${focusWarning}
+    ${opts?.methodologyHtml ?? ""}
     ${callout}
     <div class="fg-legend">${legend}</div>
     <div class="fg-compare">
