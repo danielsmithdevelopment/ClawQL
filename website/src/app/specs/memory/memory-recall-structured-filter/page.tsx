@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import StructuredFilterBody from '@/generated/memory-recall-structured-filter-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'memory_recall structured filters — ontology extension',
@@ -77,9 +76,7 @@ export default function MemoryRecallStructuredFilterPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <StructuredFilterBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/specs/memory/memory-recall-structured-filter" className="flex-auto" />
     </article>
   )
 }

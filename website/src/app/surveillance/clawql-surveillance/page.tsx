@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import SurveillanceBody from '@/generated/clawql-surveillance-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'clawql-surveillance — evidence integrity specification',
@@ -70,9 +69,7 @@ export default function ClawqlSurveillancePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <SurveillanceBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/surveillance/clawql-surveillance" className="flex-auto" />
     </article>
   )
 }

@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import StreamsBody from '@/generated/clawql-streams-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL Streams — event-driven autonomous agents',
@@ -84,9 +83,7 @@ export default function ClawqlStreamsPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <StreamsBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/streams/clawql-streams" className="flex-auto" />
     </article>
   )
 }

@@ -1,8 +1,8 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import AgenticFabricBody from '@/generated/zero-trust-agentic-fabric-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Zero-Trust Agentic Fabric',
@@ -50,7 +50,7 @@ export default function AgenticFabricPage() {
       </div>
 
       <Prose>
-        <AgenticFabricBody />
+        <AgentMarkdownDocBody path="/architecture/agentic-fabric" />
       </Prose>
     </article>
   )

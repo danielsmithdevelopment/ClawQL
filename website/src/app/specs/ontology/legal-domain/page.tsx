@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import LegalDomainBody from '@/generated/ontology-legal-domain-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL Ontology — Legal Domain Spec',
@@ -59,9 +58,7 @@ export default function OntologyLegalDomainPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <LegalDomainBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/specs/ontology/legal-domain" className="flex-auto" />
     </article>
   )
 }

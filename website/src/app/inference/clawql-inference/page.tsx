@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import InferenceBody from '@/generated/clawql-inference-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'clawql-inference — Agentic Gateway entry',
@@ -70,9 +69,7 @@ export default function ClawqlInferencePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <InferenceBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/inference/clawql-inference" className="flex-auto" />
     </article>
   )
 }

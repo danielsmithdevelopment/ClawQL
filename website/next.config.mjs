@@ -43,10 +43,10 @@ const nextConfig = {
   // Monorepo: lockfile at repo root caused Next to trace from parent; OpenNext/Workers needs app-root tracing.
   outputFileTracingRoot: __dirname,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'mdx'],
+  // Prefer ASSETS (`public/agent-markdown.json`) over tracing raw MDX into the
+  // OpenNext Worker — compiled/traced MDX tipped free-plan gzip over 3 MiB.
   outputFileTracingIncludes: {
     '/**/*': [
-      './src/app/**/*.mdx',
-      './src/generated/security-training/**/*.mdx',
       './src/generated/security-training/sitemap-paths.json',
       './public/llms.txt',
       './public/AGENTS.md',

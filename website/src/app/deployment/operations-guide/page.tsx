@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DeploymentOperationsGuideBody from '@/generated/clawql-deployment-operations-guide-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Deployment & Operations Guide',
@@ -54,9 +53,7 @@ export default function DeploymentOperationsGuidePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <DeploymentOperationsGuideBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/deployment/operations-guide" className="flex-auto" />
     </article>
   )
 }

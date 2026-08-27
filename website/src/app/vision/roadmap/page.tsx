@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import VisionRoadmapBody from '@/generated/clawql-vision-roadmap-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Vision & Roadmap',
@@ -68,9 +67,7 @@ export default function VisionRoadmapPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <VisionRoadmapBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/vision/roadmap" className="flex-auto" />
     </article>
   )
 }
