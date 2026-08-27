@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Executor vs ClawQL — executor-cmp-001 (input focus)</title>
+  <link rel="canonical" href="https://clawql.com/mcp-ui/trace/compare/executor"/>
+  <style>
+  .fg-wrap { max-width: 960px; margin: 0 auto; padding: 1.25rem 1rem 3rem; font-family: ui-sans-serif, system-ui, sans-serif; color: #0f172a; }
+  .fg-wrap h1 { font-size: 1.35rem; margin: 0 0 0.35rem; }
+  .fg-meta { color: #64748b; font-size: 0.9rem; margin-bottom: 1.25rem; }
+  .fg-meta code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+  .fg-summary { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+  .fg-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem; min-width: 7rem; }
+  .fg-stat .v { font-size: 1.25rem; font-weight: 700; }
+  .fg-stat .l { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+  .fg-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin: 0 0 1rem; font-size: 0.85rem; }
+  .fg-swatch { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 2px; margin-right: 0.35rem; vertical-align: middle; }
+  .fg-rows { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.75rem; }
+  .fg-row { display: grid; grid-template-columns: 4.5rem 1fr 5.5rem; gap: 0.5rem; align-items: center; }
+  .fg-turn { font-size: 0.8rem; color: #475569; font-variant-numeric: tabular-nums; }
+  .fg-bar { display: flex; height: 1.35rem; border-radius: 4px; overflow: hidden; min-width: 2rem; background: #e2e8f0; }
+  .fg-bar.empty { opacity: 0.5; }
+  .fg-seg { display: block; height: 100%; min-width: 2px; }
+  .fg-bar-empty { font-size: 0.7rem; padding: 0 0.35rem; color: #64748b; line-height: 1.35rem; }
+  .fg-tok { font-size: 0.8rem; text-align: right; font-variant-numeric: tabular-nums; color: #334155; }
+  .fg-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .fg-table th, .fg-table td { text-align: left; padding: 0.4rem 0.5rem; border-bottom: 1px solid #e2e8f0; }
+  .fg-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .fg-call { margin-bottom: 0.75rem; padding: 0.65rem 0.75rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; }
+  .fg-call-h { font-weight: 600; margin-bottom: 0.35rem; }
+  .fg-nav a { color: #0f766e; }
+  .fg-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 8px; }
+  .fg-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+  @media (max-width: 720px) { .fg-compare { grid-template-columns: 1fr; } }
+  .fg-panel { border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem; background: #fff; }
+  .fg-panel h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+  .fg-panel--fat { border-color: #fdba74; background: #fff7ed; }
+  .fg-callout { background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.95rem; }
+  .fg-callout strong { color: #047857; }
+  .fg-methodology { background: #f8fafc; border: 1px solid #e2e8f0; color: #334155; padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.45; }
+  .fg-methodology p { margin: 0 0 0.65rem; }
+  .fg-methodology p:last-child { margin-bottom: 0; }
+  .fg-warn { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.92rem; }
+  .fg-bar { height: 1.75rem; }
+  .fg-bar--emphasis .fg-seg[data-source="tool_result"] { box-shadow: inset 0 0 0 2px #7c2d12; }
+</style>
+</head>
+<body>
+  <div class="fg-wrap" style="max-width:1100px">
+    <p class="fg-nav"><a href="https://docs.clawql.com/mcp/mcp-ui">← MCP UI docs</a> · <a href="https://docs.clawql.com/benchmarks/executor-comparison">Methodology</a> · <a href="https://clawql.com/mcp-ui/trace/compare/executor">canonical URL</a></p>
+    <h1>Executor.sh vs ClawQL — executor-cmp-001 (live)</h1>
+    <p class="fg-meta">Same task · vercel/next.js pulls.list · cl100k_base · Layer 1 tool defs + Layer 2 tool result · focus=input by default</p>
+    
+    <div class="fg-methodology">
+    <p><strong>Layer 1 (tool definitions):</strong> Right column uses <strong>115 tok</strong> from our <em>live</em> Executor MCP install (<code>execute</code> only). <a href="https://executor.sh/">executor.sh</a> publishes <strong>~1,044 tok</strong> for their codemode chart — a different measurement. ClawQL measured <strong>394 tok</strong> (search+execute codemode). <strong>394 is smaller than the published Executor figure, not smaller than live execute-only 115.</strong></p>
+    <p><strong>Layer 2 (tool result):</strong> Layer 2 is <strong>100%</strong> of Executor's input and <strong>70%</strong> of ClawQL's — almost the entire Executor bill is uncacheable tool payload after <code>pulls.list</code>.</p>
+    <p class="fg-meta" style="margin:0.5rem 0 0">Matched conditions: cl100k_base · focus=input (default) · executor-cmp-001 live · vercel/next.js</p>
+  </div>
+    <div class="fg-callout"><strong>Combined (L1+L2, input only):</strong> Executor <strong>143,581</strong> vs ClawQL <strong>1,301</strong> = <strong>110×</strong> (live Executor L1 115). With Executor's published homepage L1 (~1,044), combined would be <strong>111×</strong> (144,510 vs 1,301). Layer 2 alone: <strong>158×</strong> (143,466 vs 907). Model output omitted — same discipline as the built-in compressed vs fat demos.</div>
+    <div class="fg-legend"><span><span class="fg-swatch" style="background:#0f766e"></span>Harness prompt</span>
+<span><span class="fg-swatch" style="background:#0369a1"></span>Vault / system-seed</span>
+<span><span class="fg-swatch" style="background:#7c3aed"></span>Tool schema</span>
+<span><span class="fg-swatch" style="background:#ca8a04"></span>User</span>
+<span><span class="fg-swatch" style="background:#c2410c"></span>Tool result</span>
+<span><span class="fg-swatch" style="background:#64748b"></span>Agent reasoning</span>
+<span><span class="fg-swatch" style="background:#94a3b8"></span>Other</span></div>
+    <div class="fg-compare">
+      <div class="fg-panel">
+  <h2>ClawQL (search + execute + fields projection)</h2>
+  <p class="fg-meta">L1 394 + L2 907 = 1,301 tok input · <strong>1,301</strong> input · tool result <strong>70%</strong> of input</p>
+  <div class="fg-rows"><div class="fg-row">
+  <div class="fg-turn">Turn 1</div>
+  <div class="fg-bar" style="width:4.0%" role="img" aria-label="1301 tokens"><span class="fg-seg" style="width:30.28%;background:#7c3aed" data-source="tool_schema" title="Tool schema · tool schema · 394 tok"></span><span class="fg-seg" style="width:69.72%;background:#c2410c" data-source="tool_result" title="Tool result · tool result · 907 tok"></span></div>
+  <div class="fg-tok">1,301 tok</div>
+</div></div>
+  <table class="fg-table">
+  <thead><tr><th>Source</th><th>Tokens</th></tr></thead>
+  <tbody><tr>
+      <td><span class="fg-swatch" style="background:#7c3aed"></span>Tool schema</td>
+      <td class="num"><strong>394</strong></td>
+    </tr>
+<tr>
+      <td><span class="fg-swatch" style="background:#c2410c"></span>Tool result</td>
+      <td class="num"><strong>907</strong></td>
+    </tr></tbody>
+</table>
+</div>
+      <div class="fg-panel fg-panel--fat">
+  <h2>Executor (live MCP install + full REST list)</h2>
+  <p class="fg-meta">L1 115 live (homepage ~1,044) + L2 143,466 = 143,581 tok · <strong>143,581</strong> input · tool result <strong>100%</strong> of input</p>
+  <div class="fg-rows"><div class="fg-row">
+  <div class="fg-turn">Turn 1</div>
+  <div class="fg-bar fg-bar--emphasis" style="width:100.0%" role="img" aria-label="143581 tokens"><span class="fg-seg" style="width:0.08%;background:#7c3aed" data-source="tool_schema" title="Tool schema · tool schema · 115 tok"></span><span class="fg-seg" style="width:99.92%;background:#c2410c" data-source="tool_result" title="Tool result · tool result · 143466 tok"></span></div>
+  <div class="fg-tok">143,581 tok</div>
+</div></div>
+  <table class="fg-table">
+  <thead><tr><th>Source</th><th>Tokens</th></tr></thead>
+  <tbody><tr>
+      <td><span class="fg-swatch" style="background:#7c3aed"></span>Tool schema</td>
+      <td class="num"><strong>115</strong></td>
+    </tr>
+<tr>
+      <td><span class="fg-swatch" style="background:#c2410c"></span>Tool result</td>
+      <td class="num"><strong>143,466</strong></td>
+    </tr></tbody>
+</table>
+</div>
+    </div>
+    <p class="fg-meta">Source: <code>executor-cmp-001.live.json</code> · Canonical (blog links): <a href="/mcp-ui/trace/compare/executor"><code>/mcp-ui/trace/compare/executor</code></a> · JSON: <a href="/mcp-ui/trace/compare/executor?format=json">compare</a>
+      · Sessions: <a href="/mcp-ui/trace/demo-executor-cmp-clawql">demo-executor-cmp-clawql</a>
+      · <a href="/mcp-ui/trace/demo-executor-cmp-executor">demo-executor-cmp-executor</a>
+      · Generic compare: <a href="/mcp-ui/trace/compare">compressed vs fat</a> · <a href="/mcp-ui/trace/compare/executor?focus=all">include outputs (not used in blog headline)</a></p>
+  </div>
+</body>
+</html>

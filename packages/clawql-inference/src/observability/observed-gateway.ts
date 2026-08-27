@@ -7,6 +7,7 @@ import { recordKeySpend } from "../keys/store.js";
 import { parseModelId } from "../providers/parse-model-id.js";
 import { buildInferenceRecord } from "../store/types.js";
 import type { InferenceStore } from "../store/types.js";
+import { tokenizeChatMessagesAsync } from "../tokenize/messages.js";
 
 function resolveRequestModelId(request: InferenceRequest): string {
   return request.model ?? request.routing?.modelId ?? "unknown";
@@ -81,11 +82,12 @@ export class ObservedInferenceGateway implements InferenceGateway {
       const response = await this.inner.complete(request);
       const resolvedModelId = request.model ?? request.routing?.modelId ?? response.model;
       const parsed = parseModelId(resolvedModelId);
+      const messages = await tokenizeChatMessagesAsync(request.messages, this.env);
 
       await this.store.append(
         buildInferenceRecord({
           id: randomUUID(),
-          request,
+          request: { ...request, messages },
           response,
           provider: parsed.provider,
           model: parsed.model,

@@ -56,6 +56,7 @@ node examples/mcp-api-adapter/demo-rest.mjs
 node examples/mcp-api-adapter/demo-graphql.mjs
 node examples/mcp-api-adapter/demo-grpc.mjs
 node examples/mcp-api-adapter/demo-all.mjs   # parity check
+node examples/mcp-api-adapter/clawql-with-trace.mjs   # live /mcp-ui/trace + shared inference JSONL
 ```
 
 ```bash

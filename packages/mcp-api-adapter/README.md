@@ -72,6 +72,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 | `GET /mcp-ui/progress/{jobId}` | SSE progress for long-running executes |
 | `POST /mcp-ui/generate` | Create a multi-step custom form (JSON) |
 | `GET /mcp-ui/custom/{slug}` | Render a generated multi-step form |
+| `GET /mcp-ui/trace/{sessionId}` | Context-accumulation flamegraph (HTML or `?format=json`) |
 | `GET /tools`           | Catalog                          |
 | `GET /healthz`         | Liveness                         |
 

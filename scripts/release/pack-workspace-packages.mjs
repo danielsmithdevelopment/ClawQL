@@ -15,12 +15,13 @@ const orderPath = join(root, "scripts/release/npm-publish-order.json");
 const order = JSON.parse(readFileSync(orderPath, "utf8"));
 const packages = order.packages ?? [];
 const extras = order.localPackExtras ?? [];
+const extrasAfter = order.localPackExtrasAfter ?? [];
 const outDir = process.argv[2] ?? join(root, ".pack-workspace");
 
 mkdirSync(outDir, { recursive: true });
 
 const tarballs = [];
-for (const name of [...extras, ...packages]) {
+for (const name of [...extras, ...packages, ...extrasAfter]) {
   if (name === "clawql-mcp") continue;
   execSync(`npm pack -w ${name} --pack-destination "${outDir}"`, {
     cwd: root,

@@ -310,6 +310,11 @@ const ENTRIES: Array<Entry> = [
   { path: '/bundled-specs', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/benchmarks', changeFrequency: 'monthly', priority: 0.75 },
   {
+    path: '/benchmarks/executor-comparison',
+    changeFrequency: 'monthly',
+    priority: 0.76,
+  },
+  {
     path: '/case-studies/cloudflare-docs-mcp',
     changeFrequency: 'monthly',
     priority: 0.78,

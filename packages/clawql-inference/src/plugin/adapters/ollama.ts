@@ -14,24 +14,35 @@ export function createOllamaAdapter(config: ProviderAdapterConfig): InferencePro
   return {
     provider: "ollama",
     async complete(model, messages, options) {
+      const requestBody = JSON.stringify({
+        model,
+        messages,
+        stream: false,
+        options:
+          options?.maxTokens != null
+            ? { num_predict: options.maxTokens, temperature: options.temperature }
+            : options?.temperature != null
+              ? { temperature: options.temperature }
+              : undefined,
+      });
       const res = await fetch(`${baseUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages, stream: false }),
+        body: requestBody,
         signal: options?.signal,
       });
       if (!res.ok) {
         throw new Error(`ollama HTTP ${res.status}: ${await readHttpError(res)}`);
       }
-      const body = (await res.json()) as OllamaChatResponse;
+      const response = (await res.json()) as OllamaChatResponse;
       return {
-        content: body.message?.content ?? "",
-        model: body.model ?? model,
+        content: response.message?.content ?? "",
+        model: response.model ?? model,
         usage:
-          body.prompt_eval_count !== undefined || body.eval_count !== undefined
+          response.prompt_eval_count !== undefined || response.eval_count !== undefined
             ? {
-                inputTokens: body.prompt_eval_count ?? 0,
-                outputTokens: body.eval_count ?? 0,
+                inputTokens: response.prompt_eval_count ?? 0,
+                outputTokens: response.eval_count ?? 0,
               }
             : undefined,
       };
