@@ -6,11 +6,11 @@ Tokenizer: `cl100k_base`. `focus=input` (model output omitted from headline rati
 
 ## Headline numbers (live, `vercel/next.js`)
 
-| Layer | Executor | ClawQL | Notes |
-| --- | ---: | ---: | --- |
-| **Layer 1** | 1,044 (homepage) / **115** (live `execute`) | **394** (codemode) | **394 does not beat live 115** |
-| **Layer 2** | **143,466** (`pulls.list`, full REST) | **907** (`execute` + `fields`) | **158×** on tool result alone |
-| **Combined** | **144,510** (pub L1) / **143,581** (live L1) | **1,301** | **111×** / **110×** |
+| Layer        |                                     Executor |                         ClawQL | Notes                          |
+| ------------ | -------------------------------------------: | -----------------------------: | ------------------------------ |
+| **Layer 1**  |  1,044 (homepage) / **115** (live `execute`) |             **394** (codemode) | **394 does not beat live 115** |
+| **Layer 2**  |        **143,466** (`pulls.list`, full REST) | **907** (`execute` + `fields`) | **158×** on tool result alone  |
+| **Combined** | **144,510** (pub L1) / **143,581** (live L1) |                      **1,301** | **111×** / **110×**            |
 
 Layer 2 is **100%** of Executor's input and **70%** of ClawQL's on this task.
 
