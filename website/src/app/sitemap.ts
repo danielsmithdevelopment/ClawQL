@@ -292,6 +292,8 @@ const ENTRIES: Array<Entry> = [
   { path: '/ouroboros/build-plan', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/auth', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/audit', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
   {
     path: '/security/defense-in-depth',

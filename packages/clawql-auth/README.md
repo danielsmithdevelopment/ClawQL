@@ -2,7 +2,9 @@
 
 Gateway authentication, **issued API keys** (org/team), outbound OAuth token refresh, and shared step-up primitives for the Agentic Gateway.
 
-**ClawQL is not an IdP.** Human SSO, account recovery, and phishing-resistant MFA stay with the customer’s identity provider. This package **consumes** IdP tokens, **issues and validates** ClawQL API keys, maps them to ATR claims, and provides reusable step-up helpers for high-impact tools (e.g. payments).
+**Public docs:** [docs.clawql.com/auth](https://docs.clawql.com/auth) — inbound vs outbound authentication (the page to link when answering “has MCP daily re-auth been solved?”).
+
+**ClawQL is not a human login IdP.** Human SSO, account recovery, and phishing-resistant MFA stay with the customer’s identity provider. This package **consumes** IdP tokens, **issues and validates** ClawQL API keys and MCP access JWTs, can **mint ID-JAG assertions** when the self-hosted EMA issuer is enabled, maps them to ATR claims, and provides reusable step-up helpers for high-impact tools (e.g. payments).
 
 ## Modes
 

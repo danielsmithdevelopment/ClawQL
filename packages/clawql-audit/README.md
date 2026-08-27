@@ -2,6 +2,8 @@
 
 Tamper-evident **WORM** audit trail for AI agent deployments. Standalone — no dependency on `clawql-core`, `clawql-memory`, or other ClawQL packages (only `clawql-merkle` + Effect + AWS SDK / CBOR / QR / RaptorQ; optional `pg`).
 
+**Public docs:** [docs.clawql.com/audit](https://docs.clawql.com/audit) — hash chain, Merkle batch roots, dual-ack replication, and external verification.
+
 ## Capabilities
 
 - Hash-chained append (`sealHashChainRecord`)
