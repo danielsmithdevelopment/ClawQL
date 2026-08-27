@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import GettingStartedForTeamsBody from '@/generated/getting-started-for-teams-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Getting started for teams',
@@ -40,9 +39,7 @@ export default function GettingStartedForTeamsPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <GettingStartedForTeamsBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/getting-started/for-teams" className="flex-auto" />
     </article>
   )
 }

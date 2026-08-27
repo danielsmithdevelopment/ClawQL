@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import HybridDecentralizedBody from '@/generated/clawql-hybrid-decentralized-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Immutable Releases — Hybrid Decentralized GitHub Alternative',
@@ -61,9 +60,7 @@ export default function ImmutableReleasesPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <HybridDecentralizedBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/vision/immutable-releases" className="flex-auto" />
     </article>
   )
 }

@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import ProtocolFabricBody from '@/generated/protocol-fabric-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Protocol Fabric — any protocol ↔ any protocol via MCP',
@@ -63,9 +62,7 @@ export default function ProtocolFabricPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <ProtocolFabricBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/mcp/protocol-fabric" className="flex-auto" />
     </article>
   )
 }

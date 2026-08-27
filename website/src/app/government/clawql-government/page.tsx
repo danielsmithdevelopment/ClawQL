@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import GovernmentBody from '@/generated/clawql-government-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'clawql-government — outcome accountability specification',
@@ -56,9 +55,7 @@ export default function ClawqlGovernmentPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <GovernmentBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/government/clawql-government" className="flex-auto" />
     </article>
   )
 }

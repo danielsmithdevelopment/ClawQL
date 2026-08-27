@@ -1,8 +1,8 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import Body from '@/generated/cq-extensions-cqk-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: '.cqk — Provenanced knowledge',
@@ -34,7 +34,7 @@ export default function Page() {
         </Note>
       </div>
       <Prose className="flex-auto">
-        <Body />
+        <AgentMarkdownDocBody path="/specs/cq-extensions/cqk" />
       </Prose>
     </article>
   )

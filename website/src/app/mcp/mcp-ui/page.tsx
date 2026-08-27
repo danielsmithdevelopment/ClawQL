@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import McpUiBody from '@/generated/mcp-ui-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: '/mcp-ui — Swagger UI for MCP',
@@ -83,9 +82,7 @@ export default function McpUiPage() {
         />
       </div>
 
-      <DocProse className="flex-auto">
-        <McpUiBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/mcp/mcp-ui" className="flex-auto" />
     </article>
   )
 }

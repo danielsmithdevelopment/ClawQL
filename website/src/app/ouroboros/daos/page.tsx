@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DaosUnifiedBody from '@/generated/daos-unified-architecture-spec-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'DAOS Unified Architecture v2.7',
@@ -72,9 +71,7 @@ export default function DaosUnifiedArchitecturePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <DaosUnifiedBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/ouroboros/daos" className="flex-auto" />
     </article>
   )
 }

@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import McpApiAdapterBody from '@/generated/mcp-api-adapter-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'mcp-api-adapter — seven surfaces today, eight with QR planned',
@@ -99,9 +98,7 @@ export default function McpApiAdapterPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <McpApiAdapterBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/mcp/mcp-api-adapter" className="flex-auto" />
     </article>
   )
 }

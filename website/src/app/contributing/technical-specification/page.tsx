@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import ContributorTechnicalSpecBody from '@/generated/clawql-contributor-technical-spec-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Contributor Technical Specification',
@@ -54,9 +53,7 @@ export default function ContributorTechnicalSpecPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <ContributorTechnicalSpecBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/contributing/technical-specification" className="flex-auto" />
     </article>
   )
 }

@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import AgentSetupBody from '@/generated/agent-setup-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Agent setup',
@@ -60,9 +59,7 @@ export default function AgentSetupPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <AgentSetupBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/agent-setup" className="flex-auto" />
     </article>
   )
 }

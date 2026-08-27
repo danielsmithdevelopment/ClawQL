@@ -1,8 +1,7 @@
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import SlidesBody from '@/generated/clawql-slides-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL consolidated slide deck',
@@ -12,7 +11,7 @@ export const metadata = docsPageMetadata({
   ogType: 'article',
 })
 
-/** Full MDX is bundled into this route at build time so HTML includes deck text for crawlers and link previews. */
+/** Deck body loads from ASSETS (agent-markdown.json) so crawlers still get full HTML without bloating Worker JS. */
 export const dynamic = 'force-static'
 
 export default function VisionSlideDeckPage() {
@@ -59,9 +58,7 @@ export default function VisionSlideDeckPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <SlidesBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/vision/slide-deck" className="flex-auto" />
     </article>
   )
 }

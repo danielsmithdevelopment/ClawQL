@@ -1,8 +1,8 @@
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import PaymentsBody from '@/generated/clawql-payments-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'clawql-payments — Stripe, x402, MPP, Adyen, and WORM audit',
@@ -57,7 +57,7 @@ export default function ClawqlPaymentsPage() {
       </div>
 
       <Prose className="flex-auto">
-        <PaymentsBody />
+        <AgentMarkdownDocBody path="/payments/clawql-payments" />
       </Prose>
     </article>
   )

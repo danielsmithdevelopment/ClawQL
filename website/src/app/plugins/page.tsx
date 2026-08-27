@@ -1,12 +1,11 @@
 import { Suspense } from 'react'
 
 import { Button } from '@/components/Button'
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { PluginRegistryExplorer } from '@/components/PluginRegistryExplorer'
 import { Tag } from '@/components/Tag'
-import ClawQLPluginModelBody from '@/generated/clawql-plugin-model-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Plugins',
@@ -253,9 +252,7 @@ export default function PluginsHubPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <ClawQLPluginModelBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/plugins#plugin-model" className="flex-auto" />
     </article>
   )
 }
