@@ -274,6 +274,20 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — proactive OAuth refresh, API keys, EMA / ID-JAG.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 12,
+      squares: [
+        [0, 1],
+        [1, 0],
+      ],
+    },
+  },
+  {
     href: '/security',
     name: 'Security',
     description:
@@ -429,6 +443,20 @@ export const referenceSiteCards: Array<ReferenceCard> = [
     pattern: {
       y: 22,
       squares: [[0, 1]],
+    },
+  },
+  {
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — proactive OAuth refresh, API keys, EMA / ID-JAG.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 6,
+      squares: [
+        [1, 0],
+        [0, 2],
+      ],
     },
   },
   {

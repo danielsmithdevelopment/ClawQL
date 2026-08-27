@@ -423,6 +423,13 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     icon: TagIcon,
   }),
   card({
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — token refresh, EMA / ID-JAG, signing.',
+    icon: ShapesIcon,
+  }),
+  card({
     href: '/troubleshooting',
     name: 'Troubleshooting',
     description: 'Common MCP, spec, auth, and deploy failure modes.',
