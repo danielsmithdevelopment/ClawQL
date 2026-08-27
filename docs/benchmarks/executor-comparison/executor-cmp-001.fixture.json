@@ -1,20 +1,21 @@
 {
   "task": {
     "id": "executor-cmp-001",
-    "description": "List open pull requests in {repo}. Return title and number for each (optional author filter: {user}). Measures tool-result tokens after the list call.",
+    "description": "Find all open PRs authored by {user} in {repo} with more than {threshold} review comments. Return title and comment count for each.",
     "params": {
-      "user": "marcoshernanz",
-      "repo": "vercel/next.js",
-      "threshold": 0,
+      "user": "alice-dev",
+      "repo": "acme/platform",
+      "threshold": 3,
       "perPage": 30
     },
     "requiredOutputFields": [
       "title",
-      "number"
+      "reviewCommentCount"
     ],
     "projectionFields": [
       "title",
-      "number"
+      "number",
+      "review_comments"
     ]
   },
   "matchedConditions": {
@@ -23,7 +24,7 @@
     "temperature": 0,
     "systemPromptFixed": true,
     "focus": "input",
-    "benchmarkLive": true
+    "benchmarkLive": false
   },
   "executorPublishedReference": {
     "source": "https://executor.sh/",
@@ -60,51 +61,8 @@
       "source": "https://executor.sh/"
     },
     "executorLiveMcp": {
-      "wired": true,
-      "endpoint": "stdio:/tmp/executor-try/node_modules/.bin/executor mcp",
-      "toolCount": 7,
-      "toolNames": [
-        "execute",
-        "skills",
-        "resume",
-        "create-artifact",
-        "edit-artifact",
-        "list-artifacts",
-        "show-artifact"
-      ],
-      "executeOnlyTokens": 115,
-      "allToolsTokens": 2209,
-      "perTool": [
-        {
-          "name": "execute",
-          "tokens": 115
-        },
-        {
-          "name": "skills",
-          "tokens": 223
-        },
-        {
-          "name": "resume",
-          "tokens": 129
-        },
-        {
-          "name": "create-artifact",
-          "tokens": 920
-        },
-        {
-          "name": "edit-artifact",
-          "tokens": 504
-        },
-        {
-          "name": "list-artifacts",
-          "tokens": 72
-        },
-        {
-          "name": "show-artifact",
-          "tokens": 109
-        }
-      ],
-      "note": "Live Executor MCP tools/list. Homepage ~1,044 is a marketed execute-description size; this install may differ (thinner execute + extra tools). Report both."
+      "wired": false,
+      "note": "EXECUTOR_BIN / EXECUTOR_MCP_URL unset — Layer 1 uses published executor.sh reference only (~1,044 tok)."
     },
     "clawqlMeasured": {
       "gatewayCodemodeOnly": {
@@ -215,36 +173,25 @@
   "layer2": {
     "focus": "input",
     "split": "tool_result",
-    "source": "live_executor_cli+clawql",
-    "publishableAsLive": true,
-    "executorSdkWired": true,
-    "live": {
-      "repo": "vercel/next.js",
-      "perPage": 30,
-      "clawqlOperationId": "pulls/list",
-      "clawqlFields": [
-        "title",
-        "number"
-      ]
-    },
+    "source": "fixture",
+    "publishableAsLive": false,
+    "executorSdkWired": false,
     "executor": {
-      "toolResultTokens": 143466,
+      "toolResultTokens": 953,
       "rawResultFieldCount": 36,
-      "itemCount": 30,
+      "itemCount": 3,
       "requiredFieldCount": 2,
-      "note": "LIVE Executor CLI `github.user.githubMain.pulls.list` — full tool result JSON (no output projection).",
-      "toolPath": "github.user.githubMain.pulls.list",
-      "envelopeTokens": 173822
+      "note": "FIXTURE — simulates Executor: full REST JSON enters context (no projection)."
     },
     "clawql": {
-      "toolResultTokens": 907,
-      "rawResultFieldCount": 2,
-      "itemCount": 30,
+      "toolResultTokens": 23,
+      "rawResultFieldCount": 3,
+      "itemCount": 1,
       "requiredFieldCount": 2,
-      "note": "LIVE ClawQL MCP execute pulls/list with fields projection."
+      "note": "FIXTURE — projected title/reviewCommentCount after task filter."
     },
-    "ratioExecutorRawVsClawqlProjected": 158.18,
-    "interpretation": "LIVE Layer 2: real Executor CLI tool result vs live ClawQL projected execute."
+    "ratioExecutorRawVsClawqlProjected": 41.43,
+    "interpretation": "FIXTURE Layer 2 — not for public headlines. Re-run with BENCHMARK_LIVE=1."
   },
   "benchmark862x": {
     "label": "862x multi-provider workflow (NOT apples-to-apples with Executor chart)",
@@ -269,5 +216,5 @@
     },
     "comparableLayer1Question": "Compare clawql layer1 gatewayCodemodeOnly.codemodeOnlyTokens (measured) vs executorPublished.withExecutor.approxTokens — both hide the catalog from tool definitions."
   },
-  "generatedAt": "2026-08-27T03:05:55.371Z"
+  "generatedAt": "2026-08-27T03:06:36.216Z"
 }

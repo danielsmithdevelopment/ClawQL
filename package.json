@@ -98,6 +98,7 @@
     "clawql:github-repo-description": "npm run build && node scripts/dev/clawql-github-patch-repo-description.mjs",
     "benchmark:tokens": "npm run build && node scripts/workflows/benchmark-provider-tokens.mjs",
     "benchmark:executor-comparison": "npm run build && node scripts/benchmarks/executor-comparison.mjs",
+    "benchmark:executor-comparison:live": "npm run build && BENCHMARK_LIVE=1 node scripts/benchmarks/executor-comparison.mjs",
     "openbench:validate": "python3 openbench/validate_tasks.py",
     "openbench:ab": "python3 openbench/scripts/run-ab-compare.py",
     "workflow:multi-provider": "npm run build && node scripts/workflows/workflow-gke-cloudflare-jira.mjs",
