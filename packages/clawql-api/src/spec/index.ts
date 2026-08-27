@@ -19,3 +19,4 @@ export * from "./detect-source-from-url.js";
 export * from "./custom-sources-merge.js";
 export * from "./mcp-source-loader.js";
 export * from "./cli-source-loader.js";
+export * from "./webmcp-source-loader.js";

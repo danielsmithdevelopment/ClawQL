@@ -10,7 +10,7 @@ npm: "clawql-audit"
 
 **August 2026 · v0.1 · canonical**
 
-> **Repo (2026-08-19):** `packages/clawql-merkle/` extracted. `packages/clawql-audit/` Phase 1 (Effect trail + in-memory dual-ack). SQLite/S3/HTTP/QR/TEE not built. Do not bind `:8080`/`:8091` while ExtractBench/Harvey listeners are up.
+> **Repo (2026-08-26):** `packages/clawql-merkle/` and `packages/clawql-audit/` ship at independent **0.1.0** semver. Phase 1–2 trail (Effect + dual-ack), SQLite/Postgres/S3 backends, HTTP export, QR, and ECDSA P-256 TEE are in-tree. Host wiring dual-writes execute, MCP tools, inference, auth, memory, payments, and Panguard when `CLAWQL_WORM_ENABLED=1`. npm publish wedge: [`docs/security/clawql-audit-standalone.md`](../security/clawql-audit-standalone.md).
 >
 > **Related:** [Audit index](README.md) · [MCP `audit`](../mcp/mcp-tools.md) · [clawql-agents](../agents/clawql-agents-spec-v0.1.md) · [Personal agent](../homelab/personal-agent-hermes-cline.md) · [TEE air-gap QR](../streams/clawql-tee-airgap-audit.md) · [celld LTX](../streams/clawql-celld.md) · [Modularization](../design/modularization-implementation-status.md)
 

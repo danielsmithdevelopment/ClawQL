@@ -1,6 +1,6 @@
 {
   "name": "clawql-inference",
-  "version": "7.2.0",
+  "version": "0.1.0",
   "description": "ClawQL inference gateway: model tier escalation, provider adapters, semantic cache, and WORM-auditable observability (foundation \u2014 epic #556 / #560)",
   "license": "Apache-2.0",
   "type": "module",
@@ -22,6 +22,11 @@
       "types": "./dist/plugin/index.d.ts",
       "import": "./dist/plugin/index.js",
       "require": "./dist/plugin/index.cjs"
+    },
+    "./audit/process-worm": {
+      "types": "./dist/audit/process-worm.d.ts",
+      "import": "./dist/audit/process-worm.js",
+      "require": "./dist/audit/process-worm.cjs"
     },
     "./api/server": {
       "types": "./dist/api/server.d.ts",
@@ -46,9 +51,10 @@
     "@opentelemetry/resources": "^2.9.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "@opentelemetry/sdk-trace-node": "^2.9.0",
-    "clawql-api": "7.2.0",
-    "clawql-core": "7.2.0",
-    "clawql-payments": "7.2.0",
+    "clawql-api": "0.1.0",
+    "clawql-audit": "0.1.0",
+    "clawql-core": "0.1.0",
+    "clawql-payments": "0.1.0",
     "effect": "^3.21.4",
     "express": "^5.2.1",
     "pg": "^8.21.0",

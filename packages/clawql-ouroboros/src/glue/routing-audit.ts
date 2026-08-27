@@ -1,3 +1,4 @@
+import { appendInferenceAuditToProcessWorm } from "clawql-inference/audit/process-worm";
 import type { InferenceAuditEntry } from "clawql-inference";
 import type { EventStore } from "../interfaces.js";
 
@@ -18,4 +19,5 @@ export async function appendInferenceAuditEvent(
     },
     timestamp: new Date(entry.ts),
   });
+  await appendInferenceAuditToProcessWorm(entry);
 }

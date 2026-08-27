@@ -227,7 +227,7 @@ export const openBenchMiniFirm = {
 
 /** Protocol Fabric surface lists — shipped + planned, kept honest for homepage. */
 export const protocolFabricSurfaces = {
-  inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · QR stream',
+  inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · QR stream · WebMCP (preview)',
   outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · QR · /mcp-ui',
   /** Dedicated marketing landing on clawql.com. */
   pageHref: '/protocol-fabric',

@@ -9,6 +9,8 @@ import {
 } from "./process-worm.js";
 import {
   appendPaymentEventToWormEffect,
+  appendInferenceCallToWormEffect,
+  appendInferenceResultToWormEffect,
   appendWebEventToWormEffect,
   wormInputFromPanguardDeny,
 } from "./sinks.js";
@@ -20,6 +22,8 @@ describe("process WORM boot + append", () => {
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;
+    delete process.env.CLAWQL_WORM_TEE;
+    delete process.env.CLAWQL_WORM_TEE_PLATFORM;
   });
 
   it("no-ops when CLAWQL_WORM_ENABLED is unset", async () => {
@@ -90,7 +94,48 @@ describe("process WORM boot + append", () => {
     );
     expect(pay?.type).toBe("X402_PAYMENT_RECEIVED");
 
+    const infCall = await Effect.runPromise(
+      appendInferenceCallToWormEffect({
+        correlationId: "inf-1",
+        modelId: "openai/gpt-4o",
+        virtualKeyId: "vk1",
+        messageCount: 2,
+      })
+    );
+    expect(infCall?.type).toBe("INFERENCE_CALL");
+
+    const infResult = await Effect.runPromise(
+      appendInferenceResultToWormEffect({
+        correlationId: "inf-1",
+        modelId: "openai/gpt-4o",
+        ok: true,
+        inputTokens: 10,
+        outputTokens: 5,
+      })
+    );
+    expect(infResult?.type).toBe("INFERENCE_RESULT");
+
     const verify = await Effect.runPromise(svc!.verify());
     expect(verify.valid).toBe(true);
+  });
+
+  it("appends teeSignature when CLAWQL_WORM_TEE=1", async () => {
+    process.env.CLAWQL_WORM_ENABLED = "1";
+    process.env.CLAWQL_WORM_LOCAL = "memory";
+    process.env.CLAWQL_WORM_REMOTE = "memory";
+    process.env.CLAWQL_WORM_RECONCILE_MS = "0";
+    process.env.CLAWQL_WORM_TEE = "1";
+
+    const svc = await Effect.runPromise(bootProcessWormFromEnvEffect());
+    expect(svc).not.toBeNull();
+
+    const entry = await Effect.runPromise(
+      appendProcessWormEffect({
+        type: "SESSION_START",
+        timestamp: new Date().toISOString(),
+        sessionId: "tee-env",
+      })
+    );
+    expect(entry?.teeSignature).toBeTruthy();
   });
 });

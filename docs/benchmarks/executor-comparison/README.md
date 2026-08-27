@@ -32,9 +32,9 @@ Tokenizer: `cl100k_base`. `focus=input`.
 
 ## Flamegraph (side-by-side)
 
-Open **`/mcp-ui/trace/compare/executor`** on any **mcp-api-adapter** host (built-in demo, no inference store required). **Link this bare URL in blog posts** — it defaults to `focus=input` (model output omitted from ratio).
+Open **`/mcp-ui/trace/compare/executor`** — served as a **static snapshot** on [clawql.com](https://clawql.com/mcp-ui/trace/compare/executor) and [docs.clawql.com](https://docs.clawql.com/mcp-ui/trace/compare/executor) (no live adapter required). **Link the clawql.com bare URL in blog posts** — it defaults to `focus=input` (model output omitted from ratio).
 
-**Note:** `clawql.com` / `docs.clawql.com` are static docs sites — they do not run mcp-api-adapter. Until a public adapter host is deployed, readers reproduce via local adapter (see website docs at `/benchmarks/executor-comparison`) or GitHub raw JSON.
+Regenerate: `npm run generate:executor-cmp-static` from repo root after measurement changes.
 
 - **Left:** ClawQL — L1 394 + L2 907 = **1,301** tok (`vercel/next.js` `pulls/list` with `fields`)
 - **Right:** Executor live — L1 **115** (live MCP `execute` only; homepage publishes ~**1,044**) + L2 143,466 = **143,581** tok

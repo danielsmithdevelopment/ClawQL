@@ -14,6 +14,7 @@ import { PostgresBackend } from "./storage/postgres.js";
 import { S3Backend } from "./storage/s3.js";
 import { SQLiteBackend } from "./storage/sqlite.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
+import { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
 import type { WORMAuditTrailConfig } from "./trail.js";
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {
@@ -114,10 +115,12 @@ export const createWormTrailConfigFromEnvEffect = (
     if (!(yield* wormEnabledFromEnv(env))) return null;
     const local = yield* makeLocal(env);
     const remote = yield* makeRemote(env);
+    const tee = yield* createWormTeeSignerFromEnvEffect(env);
     const httpPort = parseIntEnv(env, "CLAWQL_WORM_HTTP_PORT");
     return {
       local,
       remote,
+      ...(tee ? { tee } : {}),
       retryMaxAttempts: parseIntEnv(env, "CLAWQL_WORM_RETRY_MAX"),
       retryBackoffMs: parseIntEnv(env, "CLAWQL_WORM_RETRY_BACKOFF_MS"),
       reconcileIntervalMs: parseIntEnv(env, "CLAWQL_WORM_RECONCILE_MS") ?? 2000,

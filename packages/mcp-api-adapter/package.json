@@ -78,6 +78,7 @@
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
     "generate:trace-demos": "node scripts/generate-trace-demo-fixtures.mjs",
+    "generate:executor-cmp-static": "npm run build && node scripts/generate-executor-cmp-compare-static.mjs",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "start": "node bin/mcp-api-adapter.mjs"

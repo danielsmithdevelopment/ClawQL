@@ -53,15 +53,19 @@ Set `CLAWQL_AUDIT_QR_ENCRYPTION_KEY` and `CLAWQL_AUDIT_QR_HMAC_KEY` (32-byte hex
 
 Set `CLAWQL_WORM_ENABLED=1` to boot a process-scoped trail. Callers dual-write via `appendProcessWormEffect` / sink helpers:
 
-| Variable                                     | Role                                          |
-| -------------------------------------------- | --------------------------------------------- |
-| `CLAWQL_WORM_LOCAL`                          | `memory` \| `sqlite` \| `postgres`            |
-| `CLAWQL_WORM_SQLITE_PATH`                    | SQLite file (implies local=sqlite when unset) |
-| `CLAWQL_WORM_POSTGRES_URL`                   | Postgres DSN                                  |
-| `CLAWQL_WORM_REMOTE`                         | `memory` \| `s3`                              |
-| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote                                  |
-| `CLAWQL_WORM_SESSION_ID`                     | Default `sessionId` on append                 |
-| `CLAWQL_WORM_RECONCILE_MS`                   | Outbox drain interval (`0` disables)          |
+| Variable                                     | Role                                                                    |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| `CLAWQL_WORM_LOCAL`                          | `memory` \| `sqlite` \| `postgres`                                      |
+| `CLAWQL_WORM_SQLITE_PATH`                    | SQLite file (implies local=sqlite when unset)                           |
+| `CLAWQL_WORM_POSTGRES_URL`                   | Postgres DSN                                                            |
+| `CLAWQL_WORM_REMOTE`                         | `memory` \| `s3`                                                        |
+| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote                                                            |
+| `CLAWQL_WORM_SESSION_ID`                     | Default `sessionId` on append                                           |
+| `CLAWQL_WORM_RECONCILE_MS`                   | Outbox drain interval (`0` disables)                                    |
+| `CLAWQL_WORM_TEE`                            | `1` = ECDSA P-256 `teeSignature` on append                              |
+| `CLAWQL_WORM_TEE_PLATFORM`                   | `simulated` (default); `sev-snp`/`tdx` need clawql-tee hardware adapter |
+| `CLAWQL_WORM_TEE_PRIVATE_KEY_PEM` / `_PATH`  | Optional PEM pair; ephemeral if omitted (simulated only)                |
+| `CLAWQL_WORM_TEE_PUBLIC_KEY_PEM` / `_PATH`   | Public half of TEE signing key                                          |
 
 Host boots via `bootProcessWormFromEnv` / `ensureProcessWormHostBooted` (MCP). Auth injects `createAuthEventWormSink()`; memory uses `createMemoryWormSink()` + `registerMemoryWormSink`.
 
@@ -69,10 +73,22 @@ Host boots via `bootProcessWormFromEnv` / `ensureProcessWormHostBooted` (MCP). A
 
 Prefer `makeWORMAuditTrailLayer` / `WORMAuditTrailService` inside ClawQL. The `WORMAuditTrail` class is a thin host façade.
 
+## Phase 3 TEE (simulated)
+
+ECDSA P-256 signatures over entry content hashes (`teeSignature`, excluded from hash body). Software simulated keys ship in-package; verify with `verifyTEESignature`. Hardware attestation (SEV-SNP / TDX) is a `clawql-tee` follow-up.
+
+```typescript
+import { WORMAuditTrail, MemoryBackend, createSimulatedTeeSigner } from "clawql-audit";
+import { Effect } from "effect";
+
+const tee = await Effect.runPromise(createSimulatedTeeSigner());
+const worm = await WORMAuditTrail.create({
+  local: new MemoryBackend(),
+  remote: new MemoryBackend(),
+  tee,
+});
+```
+
 ## Not this package
 
 The MCP `audit` tool ring buffer is ephemeral operator breadcrumbs — a different product surface.
-
-## Phase 3 (not yet)
-
-Real TEE ECDSA signer/verifier (`clawql-tee` integration).

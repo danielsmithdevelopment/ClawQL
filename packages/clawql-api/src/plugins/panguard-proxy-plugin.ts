@@ -4,7 +4,11 @@
  * Denies dual-write to process `clawql-audit` WORM when enabled.
  */
 
-import { appendProcessWormEffect, wormInputFromPanguardDeny } from "clawql-audit";
+import {
+  appendProcessWormEffect,
+  wormInputFromPanguardAllow,
+  wormInputFromPanguardDeny,
+} from "clawql-audit";
 import { ClawQLError, type Plugin } from "clawql-core";
 import { Effect } from "effect";
 
@@ -58,6 +62,12 @@ export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = 
             yield* appendProcessWormEffect(input);
           }).pipe(Effect.catchAll(() => Effect.void));
           return yield* Effect.fail(new ClawQLError({ reason }));
+        }
+        if (process.env.CLAWQL_WORM_PANGUARD_ALLOW?.trim() === "1") {
+          yield* Effect.gen(function* () {
+            const input = yield* wormInputFromPanguardAllow({ toolName });
+            yield* appendProcessWormEffect(input);
+          }).pipe(Effect.catchAll(() => Effect.void));
         }
       });
   }

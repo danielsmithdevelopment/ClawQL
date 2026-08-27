@@ -44,6 +44,45 @@ export type PaymentWormEventLike = {
   payload?: Record<string, unknown>;
 };
 
+export type InferenceCallLike = {
+  timestamp?: string;
+  correlationId?: string;
+  modelId: string;
+  provider?: string;
+  model?: string;
+  tier?: string;
+  team?: string;
+  tenantId?: string;
+  virtualKeyId?: string;
+  messageCount?: number;
+  cacheIntent?: string;
+};
+
+export type InferenceResultLike = {
+  timestamp?: string;
+  correlationId?: string;
+  modelId: string;
+  provider?: string;
+  tier?: string;
+  virtualKeyId?: string;
+  ok: boolean;
+  latencyMs?: number;
+  cacheHit?: boolean;
+  inputTokens?: number;
+  outputTokens?: number;
+  detail?: string;
+};
+
+/** Routing audit rows from clawql-inference (`model_escalation`, `agent_coordination`). */
+export type InferenceAuditEntryLike = {
+  ts: string;
+  category: string;
+  action: string;
+  summary: string;
+  correlationId?: string;
+  payload?: Record<string, unknown>;
+};
+
 export const wormInputFromAuthEvent = (event: AuthWormEvent): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => {
     const { type, timestamp, ...rest } = event;
@@ -105,18 +144,81 @@ export const wormInputFromPaymentEvent = (
     },
   }));
 
+export const wormInputFromInferenceCall = (
+  input: InferenceCallLike
+): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: "INFERENCE_CALL",
+    timestamp: input.timestamp ?? new Date().toISOString(),
+    sessionId: input.correlationId ?? "",
+    virtualKeyId: input.virtualKeyId,
+    metadata: {
+      source: "inference",
+      modelId: input.modelId,
+      provider: input.provider,
+      model: input.model,
+      tier: input.tier,
+      team: input.team,
+      tenantId: input.tenantId,
+      messageCount: input.messageCount,
+      cacheIntent: input.cacheIntent,
+      correlationId: input.correlationId,
+    },
+  }));
+
+export const wormInputFromInferenceResult = (
+  input: InferenceResultLike
+): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: "INFERENCE_RESULT",
+    timestamp: input.timestamp ?? new Date().toISOString(),
+    sessionId: input.correlationId ?? "",
+    virtualKeyId: input.virtualKeyId,
+    metadata: {
+      source: "inference",
+      modelId: input.modelId,
+      provider: input.provider,
+      tier: input.tier,
+      ok: input.ok,
+      latencyMs: input.latencyMs,
+      cacheHit: input.cacheHit,
+      inputTokens: input.inputTokens,
+      outputTokens: input.outputTokens,
+      detail: input.detail,
+      correlationId: input.correlationId,
+    },
+  }));
+
+export const wormInputFromInferenceAuditEntry = (
+  entry: InferenceAuditEntryLike
+): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: entry.action as WORMEntryType,
+    timestamp: entry.ts,
+    sessionId: entry.correlationId ?? "",
+    metadata: {
+      source: "inference",
+      category: entry.category,
+      summary: entry.summary,
+      correlationId: entry.correlationId,
+      payload: entry.payload,
+    },
+  }));
+
 export const wormInputFromToolAttempt = (input: {
   toolName?: string;
   operationId?: string;
   sessionId?: string;
   argKeys?: string[];
+  /** Defaults to `execute` when operationId set, else `mcp`. */
+  source?: string;
 }): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: "TOOL_CALL_ATTEMPT",
     timestamp: new Date().toISOString(),
     sessionId: input.sessionId ?? "",
     metadata: {
-      source: "execute",
+      source: input.source ?? (input.operationId ? "execute" : "mcp"),
       toolName: input.toolName,
       operationId: input.operationId,
       argKeys: input.argKeys,
@@ -129,13 +231,14 @@ export const wormInputFromToolResult = (input: {
   sessionId?: string;
   ok: boolean;
   detail?: string;
+  source?: string;
 }): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: "TOOL_CALL_RESULT",
     timestamp: new Date().toISOString(),
     sessionId: input.sessionId ?? "",
     metadata: {
-      source: "execute",
+      source: input.source ?? (input.operationId ? "execute" : "mcp"),
       toolName: input.toolName,
       operationId: input.operationId,
       ok: input.ok,
@@ -155,6 +258,19 @@ export const wormInputFromPanguardDeny = (input: {
       source: "panguard",
       toolName: input.toolName,
       reason: input.reason ?? `Panguard policy blocked tool: ${input.toolName}`,
+    },
+  }));
+
+export const wormInputFromPanguardAllow = (input: {
+  toolName: string;
+}): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: "PANGUARD_ALLOW",
+    timestamp: new Date().toISOString(),
+    sessionId: "",
+    metadata: {
+      source: "panguard",
+      toolName: input.toolName,
     },
   }));
 
@@ -188,6 +304,30 @@ export const appendPaymentEventToWormEffect = (
   Effect.gen(function* () {
     const input = yield* wormInputFromPaymentEvent(entry);
     return yield* appendProcessWormEffect(input);
+  });
+
+export const appendInferenceCallToWormEffect = (
+  input: InferenceCallLike
+): Effect.Effect<WORMEntry | null> =>
+  Effect.gen(function* () {
+    const body = yield* wormInputFromInferenceCall(input);
+    return yield* appendProcessWormEffect(body);
+  });
+
+export const appendInferenceResultToWormEffect = (
+  input: InferenceResultLike
+): Effect.Effect<WORMEntry | null> =>
+  Effect.gen(function* () {
+    const body = yield* wormInputFromInferenceResult(input);
+    return yield* appendProcessWormEffect(body);
+  });
+
+export const appendInferenceAuditEntryToWormEffect = (
+  entry: InferenceAuditEntryLike
+): Effect.Effect<WORMEntry | null> =>
+  Effect.gen(function* () {
+    const body = yield* wormInputFromInferenceAuditEntry(entry);
+    return yield* appendProcessWormEffect(body);
   });
 
 /** Host AuthEventSink — inject into createAuth({ authEventSink }). */

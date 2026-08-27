@@ -10,6 +10,7 @@ import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "
 import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
 import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
 import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
+import { resetClawqlGatewayAuthForTests } from "./gateway-auth.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
 import { resetSchemaFieldCache } from "./tools.js";
@@ -98,6 +99,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetClawqlGatewayAuthForTests();
     resetMemoryDbArtifactCachesForTests();
   });
 
@@ -110,6 +112,7 @@ describe("server-http", { timeout: STREAMABLE_HTTP_TEST_TIMEOUT_MS }, () => {
     resetSpecCache();
     resetSchemaFieldCache();
     resetClawqlApiForTests();
+    resetClawqlGatewayAuthForTests();
     resetMemoryDbArtifactCachesForTests();
   });
 

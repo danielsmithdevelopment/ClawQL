@@ -29,13 +29,23 @@ export type SourcesAddOptions = {
   grpcEndpoint?: string;
   protoPath?: string;
   mcpUrl?: string;
+  webmcpCdpUrl?: string;
+  webmcpReadyMs?: number;
   home?: string;
 };
 
 function parseKind(raw: string | undefined): CustomSourceKind | undefined {
   if (!raw?.trim()) return undefined;
   const k = raw.trim().toLowerCase();
-  const allowed: CustomSourceKind[] = ["openapi", "discovery", "graphql", "grpc", "mcp", "cli"];
+  const allowed: CustomSourceKind[] = [
+    "openapi",
+    "discovery",
+    "graphql",
+    "grpc",
+    "mcp",
+    "cli",
+    "webmcp",
+  ];
   if (allowed.includes(k as CustomSourceKind)) return k as CustomSourceKind;
   throw new Error(`Unknown kind: ${raw}. Use ${allowed.join("|")}`);
 }
@@ -112,6 +122,13 @@ export async function runSourcesAdd(options: SourcesAddOptions): Promise<number>
 
   if (detected.kind === "mcp") {
     entry = { ...entry, mcpUrl: url };
+  } else if (detected.kind === "webmcp") {
+    entry = {
+      ...entry,
+      webmcpPageUrl: url,
+      ...(options.webmcpCdpUrl?.trim() ? { webmcpCdpUrl: options.webmcpCdpUrl.trim() } : {}),
+      ...(options.webmcpReadyMs != null ? { webmcpReadyMs: options.webmcpReadyMs } : {}),
+    };
   } else if (detected.kind === "graphql") {
     entry = {
       ...entry,

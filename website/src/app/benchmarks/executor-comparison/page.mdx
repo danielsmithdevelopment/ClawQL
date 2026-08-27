@@ -14,15 +14,15 @@ Tokenizer: `cl100k_base`. `focus=input` (model output omitted from headline rati
 
 Layer 2 is **100%** of Executor's input and **70%** of ClawQL's on this task.
 
-## Live flamegraph
+## Live flamegraph (public)
 
-Built into **mcp-api-adapter** (merged via [PR #988](https://github.com/danielsmithdevelopment/ClawQL/pull/988)):
+Static snapshot — same HTML as mcp-api-adapter's built-in demo:
 
-- **Path:** `/mcp-ui/trace/compare/executor` (defaults to `focus=input`; do not link `?focus=all` in posts)
-- **Run locally:** `node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --listen 127.0.0.1:8090 --stdio -- …` then open `http://127.0.0.1:8090/mcp-ui/trace/compare/executor`
-- **JSON:** append `?format=json`
+- **[clawql.com/mcp-ui/trace/compare/executor](https://clawql.com/mcp-ui/trace/compare/executor)** (canonical blog link)
+- **[docs.clawql.com mirror](https://docs.clawql.com/mcp-ui/trace/compare/executor)** (same page)
+- **JSON:** [compare.json](https://clawql.com/mcp-ui/trace/compare/executor/compare.json)
 
-The page states live L1 **115** vs homepage **~1,044** vs ClawQL **394**, both combined ratios (**110×** live / **111×** published L1), and the Layer 2 percentage split in text.
+Regenerate after measurement changes: `npm run generate:executor-cmp-static` (from repo root).
 
 ## Reproduce
 

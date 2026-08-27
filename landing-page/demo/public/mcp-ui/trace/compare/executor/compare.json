@@ -1,0 +1,179 @@
+{
+  "focus": "input",
+  "matchedConditions": {
+    "task": "executor-cmp-001",
+    "repo": "vercel/next.js",
+    "tokenizer": "cl100k_base",
+    "focus": "input",
+    "benchmarkLive": true,
+    "sourceJson": "docs/benchmarks/executor-comparison/executor-cmp-001.live.json"
+  },
+  "preset": "executor-cmp-001",
+  "measurements": "docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+  "layer1": {
+    "clawqlCodemodeTokens": 394,
+    "executorLiveExecuteTokens": 115,
+    "executorPublishedHomepageTokens": 1044,
+    "note": "394 vs published ~1044; live execute-only 115"
+  },
+  "layer2": {
+    "clawqlProjectedTokens": 907,
+    "executorFullRestTokens": 143466,
+    "ratio": 158.18,
+    "shareOfInputPct": {
+      "clawql": 70,
+      "executor": 100
+    }
+  },
+  "combined": {
+    "clawqlInputTokens": 1301,
+    "executorLiveInputTokens": 143581,
+    "executorPublishedL1InputTokens": 144510,
+    "ratioLiveL1": 110.36202920830131,
+    "ratioPublishedL1": 111.076095311299
+  },
+  "clawql": {
+    "sessionId": "demo-executor-cmp-clawql",
+    "calls": 1,
+    "totalInputTokens": 1301,
+    "totalOutputTokens": 0,
+    "tokenization": {
+      "encoding": "cl100k_base",
+      "method": "executor-cmp-001-live-measurements",
+      "label": "Token counts: cl100k_base · live executor-cmp-001 (vercel/next.js)"
+    },
+    "frames": [
+      {
+        "turn": 1,
+        "source": "tool_schema",
+        "label": "tool schema",
+        "chars": 147,
+        "tokens": 394,
+        "callId": "ec-c1",
+        "modelId": "benchmark/executor-cmp-001"
+      },
+      {
+        "turn": 1,
+        "source": "tool_result",
+        "label": "tool result",
+        "chars": 85,
+        "tokens": 907,
+        "callId": "ec-c1",
+        "modelId": "benchmark/executor-cmp-001"
+      }
+    ],
+    "turns": [
+      {
+        "turn": 1,
+        "callId": "ec-c1",
+        "timestamp": "2026-08-27T12:00:00.000Z",
+        "modelId": "benchmark/executor-cmp-001",
+        "latencyMs": 0,
+        "inputTokens": 1301,
+        "outputTokens": 0,
+        "frames": [
+          {
+            "turn": 1,
+            "source": "tool_schema",
+            "label": "tool schema",
+            "chars": 147,
+            "tokens": 394,
+            "callId": "ec-c1",
+            "modelId": "benchmark/executor-cmp-001"
+          },
+          {
+            "turn": 1,
+            "source": "tool_result",
+            "label": "tool result",
+            "chars": 85,
+            "tokens": 907,
+            "callId": "ec-c1",
+            "modelId": "benchmark/executor-cmp-001"
+          }
+        ]
+      }
+    ],
+    "bySource": {
+      "harness_prompt": 0,
+      "vault_seed": 0,
+      "tool_schema": 394,
+      "tool_result": 907,
+      "user": 0,
+      "agent_reasoning": 0,
+      "model_output": 0,
+      "other": 0
+    }
+  },
+  "executor": {
+    "sessionId": "demo-executor-cmp-executor",
+    "calls": 1,
+    "totalInputTokens": 143581,
+    "totalOutputTokens": 0,
+    "tokenization": {
+      "encoding": "cl100k_base",
+      "method": "executor-cmp-001-live-measurements",
+      "label": "Token counts: cl100k_base · live executor-cmp-001 (vercel/next.js)"
+    },
+    "frames": [
+      {
+        "turn": 1,
+        "source": "tool_schema",
+        "label": "tool schema",
+        "chars": 126,
+        "tokens": 115,
+        "callId": "ec-e1",
+        "modelId": "benchmark/executor-cmp-001"
+      },
+      {
+        "turn": 1,
+        "source": "tool_result",
+        "label": "tool result",
+        "chars": 100,
+        "tokens": 143466,
+        "callId": "ec-e1",
+        "modelId": "benchmark/executor-cmp-001"
+      }
+    ],
+    "turns": [
+      {
+        "turn": 1,
+        "callId": "ec-e1",
+        "timestamp": "2026-08-27T12:00:00.000Z",
+        "modelId": "benchmark/executor-cmp-001",
+        "latencyMs": 0,
+        "inputTokens": 143581,
+        "outputTokens": 0,
+        "frames": [
+          {
+            "turn": 1,
+            "source": "tool_schema",
+            "label": "tool schema",
+            "chars": 126,
+            "tokens": 115,
+            "callId": "ec-e1",
+            "modelId": "benchmark/executor-cmp-001"
+          },
+          {
+            "turn": 1,
+            "source": "tool_result",
+            "label": "tool result",
+            "chars": 100,
+            "tokens": 143466,
+            "callId": "ec-e1",
+            "modelId": "benchmark/executor-cmp-001"
+          }
+        ]
+      }
+    ],
+    "bySource": {
+      "harness_prompt": 0,
+      "vault_seed": 0,
+      "tool_schema": 115,
+      "tool_result": 143466,
+      "user": 0,
+      "agent_reasoning": 0,
+      "model_output": 0,
+      "other": 0
+    }
+  }
+}
