@@ -22,8 +22,7 @@ function splitSystem(
       systemParts.push(message.content);
       continue;
     }
-    const role: "user" | "assistant" =
-      message.role === "assistant" ? "assistant" : "user";
+    const role: "user" | "assistant" = message.role === "assistant" ? "assistant" : "user";
     rest.push({ role, content: message.content });
   }
   const systemText = systemParts.length ? systemParts.join("\n\n") : undefined;
