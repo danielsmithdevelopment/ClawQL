@@ -430,6 +430,13 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     icon: ShapesIcon,
   }),
   card({
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle roots, dual-ack replication.',
+    icon: ListIcon,
+  }),
+  card({
     href: '/troubleshooting',
     name: 'Troubleshooting',
     description: 'Common MCP, spec, auth, and deploy failure modes.',

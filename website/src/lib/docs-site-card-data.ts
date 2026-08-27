@@ -288,6 +288,20 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle batch roots, dual-ack replication.',
+    icon: ListIcon,
+    pattern: {
+      y: 16,
+      squares: [
+        [0, 0],
+        [1, 2],
+      ],
+    },
+  },
+  {
     href: '/security',
     name: 'Security',
     description:
@@ -456,6 +470,20 @@ export const referenceSiteCards: Array<ReferenceCard> = [
       squares: [
         [1, 0],
         [0, 2],
+      ],
+    },
+  },
+  {
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle batch roots, dual-ack replication.',
+    icon: ListIcon,
+    pattern: {
+      y: 14,
+      squares: [
+        [0, 1],
+        [2, 0],
       ],
     },
   },
