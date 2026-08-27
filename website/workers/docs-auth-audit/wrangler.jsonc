@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../node_modules/wrangler/config-schema.json",
+  "name": "clawql-docs-auth-audit",
+  "main": "src/index.js",
+  "compatibility_date": "2025-04-18",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash"
+  },
+  "routes": [
+    { "pattern": "docs.clawql.com/auth", "zone_name": "clawql.com" },
+    { "pattern": "docs.clawql.com/auth/", "zone_name": "clawql.com" },
+    { "pattern": "docs.clawql.com/audit", "zone_name": "clawql.com" },
+    { "pattern": "docs.clawql.com/audit/", "zone_name": "clawql.com" }
+  ]
+}

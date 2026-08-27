@@ -21,6 +21,8 @@ const ROUTES: Array<{
   { path: '/streams', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/enterprise/gtm', changeFrequency: 'monthly', priority: 0.75 },
   { path: '/privacy-policy', changeFrequency: 'yearly', priority: 0.3 },
+  { path: '/auth', changeFrequency: 'monthly', priority: 0.85 },
+  { path: '/audit', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/industries', changeFrequency: 'monthly', priority: 0.75 },
   { path: '/industries/lending', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/industries/real-estate', changeFrequency: 'monthly', priority: 0.65 },

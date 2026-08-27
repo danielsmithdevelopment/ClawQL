@@ -1,5 +1,8 @@
 # Deploy the Next.js + OpenNext docs app (Worker `clawql-docs` → https://docs.clawql.com).
 # Manual procedure and history: https://github.com/danielsmithdevelopment/ClawQL/issues/87
+#
+# Also deploys path-scoped Worker `clawql-docs-auth-audit` for /auth and /audit while
+# OpenNext exceeds the free-plan 3 MiB Worker limit (that job must stay green independently).
 name: Deploy docs (Cloudflare)
 
 on:
@@ -21,8 +24,32 @@ permissions:
   contents: read
 
 jobs:
+  deploy-auth-audit-static:
+    name: Deploy /auth + /audit static Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+
+      - name: Generate pages + wrangler deploy
+        working-directory: website/workers/docs-auth-audit
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node scripts/generate-pages.mjs
+          # Prefer repo secret; fall back to account_id already in website/wrangler.jsonc
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            export CLOUDFLARE_ACCOUNT_ID="$(node -e "const fs=require('fs'); const t=fs.readFileSync('../../wrangler.jsonc','utf8'); const m=t.match(/\"account_id\"\\s*:\\s*\"([^\"]+)\"/); if(!m) process.exit(1); process.stdout.write(m[1])")"
+          fi
+          npx --yes wrangler@4.83.0 deploy
+
   deploy:
-    name: Build and deploy
+    name: Build and deploy OpenNext docs
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
