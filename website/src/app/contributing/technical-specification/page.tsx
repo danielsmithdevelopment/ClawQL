@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Contributor Technical Specification',
@@ -53,7 +53,10 @@ export default function ContributorTechnicalSpecPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/contributing/technical-specification" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/contributing/technical-specification"
+        className="flex-auto"
+      />
     </article>
   )
 }

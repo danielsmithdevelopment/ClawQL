@@ -1,8 +1,8 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: '.cqk — Provenanced knowledge',

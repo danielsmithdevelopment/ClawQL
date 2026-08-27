@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL QR Stream Transport — 7th MCP surface',
@@ -51,7 +51,10 @@ export default function ClawqlQrStreamTransportPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/streams/clawql-qr-stream-transport" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/streams/clawql-qr-stream-transport"
+        className="flex-auto"
+      />
     </article>
   )
 }

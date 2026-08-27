@@ -1,11 +1,11 @@
 import { Suspense } from 'react'
 
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Button } from '@/components/Button'
 import { Note } from '@/components/mdx'
 import { PluginRegistryExplorer } from '@/components/PluginRegistryExplorer'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Plugins',
@@ -252,7 +252,10 @@ export default function PluginsHubPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/plugins#plugin-model" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/plugins#plugin-model"
+        className="flex-auto"
+      />
     </article>
   )
 }

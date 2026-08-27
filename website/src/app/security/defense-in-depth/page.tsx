@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Defense in depth — MCP & k3s security',
@@ -54,7 +54,10 @@ export default function SecurityDefenseInDepthPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/security/defense-in-depth" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/security/defense-in-depth"
+        className="flex-auto"
+      />
     </article>
   )
 }
