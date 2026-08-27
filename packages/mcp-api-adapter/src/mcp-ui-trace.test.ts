@@ -248,4 +248,31 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       await close();
     }
   });
+
+  it("GET /mcp-ui/trace/compare/executor side-by-side JSON", async () => {
+    const { base, close } = await listen();
+    try {
+      const res = await fetch(`${base}/mcp-ui/trace/compare/executor?format=json`);
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as {
+        clawql: { totalInputTokens: number; bySource: { tool_result: number } };
+        executor: { totalInputTokens: number; bySource: { tool_result: number } };
+        preset: string;
+      };
+      expect(data.preset).toBe("executor-cmp-001");
+      expect(data.clawql.totalInputTokens).toBe(1301);
+      expect(data.executor.totalInputTokens).toBe(143581);
+      expect(data.executor.bySource.tool_result).toBe(143466);
+      expect(data.executor.totalInputTokens).toBeGreaterThan(data.clawql.totalInputTokens * 100);
+
+      const html = await fetch(`${base}/mcp-ui/trace/compare/executor`);
+      expect(html.status).toBe(200);
+      const body = await html.text();
+      expect(body).toContain("Executor.sh vs ClawQL");
+      expect(body).toContain("fg-compare");
+      expect(body).toContain("143,581");
+    } finally {
+      await close();
+    }
+  });
 });

@@ -30,6 +30,16 @@ Side-by-side token comparison against [executor.sh](https://executor.sh/) using 
 
 Tokenizer: `cl100k_base`. `focus=input`.
 
+## Flamegraph (side-by-side)
+
+Open **`/mcp-ui/trace/compare/executor`** on any mcp-api-adapter host (built-in demo, no inference store required):
+
+- **Left:** ClawQL — L1 394 + L2 907 = **1,301** tok (`vercel/next.js` `pulls/list` with `fields`)
+- **Right:** Executor live — L1 115 + L2 143,466 = **143,581** tok (full REST, no projection)
+- Default `focus=input` (model output omitted from ratio)
+
+JSON: `/mcp-ui/trace/compare/executor?format=json` · Generic ClawQL compressed-vs-fat: `/mcp-ui/trace/compare`
+
 ## Run
 
 ```bash

@@ -208,7 +208,7 @@ export function renderTraceNotFoundPage(
       <p><strong>No trace for session</strong> <code>${escapeMcpUiHtml(sessionId)}</code></p>
       <p>${escapeMcpUiHtml(opts?.hint ?? "Provide listTraceCalls on AttachMcpUiOptions, or open a demo session.")}</p>
     </div>
-    <p class="fg-meta">Try: <a href="${escapeMcpUiHtml(base)}/trace/compare">compare demos</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">demo-compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">demo-fat</a></p>
+    <p class="fg-meta">Try: <a href="${escapeMcpUiHtml(base)}/trace/compare">compare demos</a> · <a href="${escapeMcpUiHtml(base)}/trace/compare/executor">Executor vs ClawQL</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed">demo-compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat">demo-fat</a></p>
   </div>
 </body>
 </html>`;

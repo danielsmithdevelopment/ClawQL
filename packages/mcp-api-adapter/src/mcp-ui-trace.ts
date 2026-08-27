@@ -10,6 +10,11 @@ import {
   TRACE_DEMO_FAT,
   TRACE_DEMO_TOKENIZATION,
 } from "./fixtures/trace-demo-fixtures.generated.js";
+import {
+  DEMO_TRACE_SESSION_EXECUTOR_CMP_CLAWQL,
+  DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR,
+  demoExecutorCmpRecords,
+} from "./executor-cmp-trace-demo.js";
 
 export type TraceSource =
   | "harness_prompt"
@@ -35,6 +40,14 @@ export const TRACE_SOURCE_ORDER: readonly TraceSource[] = [
 
 export const DEMO_TRACE_SESSION_COMPRESSED = "demo-compressed";
 export const DEMO_TRACE_SESSION_FAT = "demo-fat";
+
+export {
+  DEMO_TRACE_SESSION_EXECUTOR_CMP_CLAWQL,
+  DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR,
+  demoExecutorCmpRecords,
+  executorCmpTraceTokenizationMeta,
+  EXECUTOR_CMP_MEASUREMENTS,
+} from "./executor-cmp-trace-demo.js";
 
 export type TraceFrame = {
   turn: number;
@@ -409,6 +422,12 @@ export async function resolveTraceRecords(
   }
   if (id === DEMO_TRACE_SESSION_FAT) {
     return demoCompressedVsFatRecords(id).fat;
+  }
+  if (id === DEMO_TRACE_SESSION_EXECUTOR_CMP_CLAWQL) {
+    return demoExecutorCmpRecords(id).clawql;
+  }
+  if (id === DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR) {
+    return demoExecutorCmpRecords(id).executor;
   }
   if (!listTraceCalls) return null;
   const records = await listTraceCalls(id);
