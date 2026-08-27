@@ -48,7 +48,44 @@ BENCHMARK_LIVE=1 CMP_GITHUB_REPO=vercel/next.js CMP_PER_PAGE=30 \
   npm run benchmark:executor-comparison
 ```
 
-## Latest private live run (2026-08-27)
+## Multi-turn compounding (measured, not napkin)
+
+Two live series on `vercel/next.js`. Layer 1 once (Executor live execute-only **115**, ClawQL **394**) + cumulative Layer 2.
+
+### A) Uniform-fat (napkin assumption) — `pulls.list` pages 1..5
+
+File: `executor-cmp-002b.uniform-pulls.live.json`
+
+| N | Executor combined | ClawQL combined | Ratio | Exec L2 % of bill |
+| -: | ----------------: | --------------: | ----: | ----------------: |
+| 1 | 143,581 | 1,301 | **110×** | 99.9% |
+| 3 | 431,739 | 3,115 | **139×** | ~100% |
+| 5 | 729,915 | 4,929 | **148×** | ~100% |
+
+Layer-2 mean asymptote: **~161×**. Matches the napkin climb toward ~158×.
+
+### B) Mixed list surfaces (5 different endpoints)
+
+File: `executor-cmp-002.multiturn.live.json`
+
+| N | Executor combined | ClawQL combined | Ratio |
+| -: | ----------------: | --------------: | ----: |
+| 1 | 143,581 | 1,301 | 110× |
+| 5 | 327,030 | 4,928 | **66×** |
+
+Ratio **falls** vs the napkin because later actions (issues/commits/events/releases) are leaner than `pulls.list` — mean Layer-2 ratio ~72×, not 158×. Thesis still holds: Executor’s bill is ~100% uncacheable Layer 2.
+
+**Post guidance:** lead with series A when illustrating compounding; cite series B when showing mixed real workflows. Never publish the napkin alone.
+
+```bash
+BENCHMARK_LIVE=1 EXECUTOR_BIN=… EXECUTOR_CWD=… \
+  node scripts/benchmarks/executor-comparison-multiturn.mjs
+
+EXECUTOR_BIN=… EXECUTOR_CWD=… \
+  node scripts/benchmarks/executor-comparison-uniform-pulls.mjs
+```
+
+## Latest private live run (2026-08-27) — single action
 
 Repo: `vercel/next.js`, `per_page=30`.
 
@@ -58,10 +95,11 @@ Repo: `vercel/next.js`, `per_page=30`.
 | 1 live MCP execute-only | **115** | 394 | Executor thinner on this install |
 | 1 live MCP all tools | **2,209** (7 tools) | 394 / 883 / 3,548 | see notes above |
 | 2 live tool result | **143,466** (`pulls.list`) | **907** (`title`+`number`) | **158×** |
+| **Combined (L1+L2)** | **144,510** (pub) / **143,581** (live) | **1,301** | **~111×** |
+| Executor vs naive dump | 422,266 → 144,510 | | **~2.9×** (internal calibration) |
+| ClawQL vs naive dump | 422,266 → 1,301 | | **~325×** (internal calibration) |
 
 Report flags: `publishableAsLive: true`, `executorSdkWired: true`, `source: live_executor_cli+clawql`.
-
-Artifacts: `executor-cmp-001.live.json`, console log under `/opt/cursor/artifacts/`.
 
 ## OpenBench
 
