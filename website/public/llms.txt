@@ -28,6 +28,8 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 
 ## Deployment & security
 - [Deployment](https://docs.clawql.com/deployment): Docker, Kubernetes, and operations
+- [Authentication](https://docs.clawql.com/auth): Inbound vs outbound auth — OAuth refresh, EMA / ID-JAG, signing
+- [Audit Trail](https://docs.clawql.com/audit): Append-only WORM trail — hash chain, Merkle roots, dual-ack replication
 - [Defense in depth](https://docs.clawql.com/security/defense-in-depth): Layered MCP security model
 - [Security best practices](https://docs.clawql.com/security/best-practices): 32-module agentic AI security series
 
