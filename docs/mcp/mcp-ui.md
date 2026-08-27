@@ -182,7 +182,7 @@ Render and execute paths stay Effect-based inside the adapter package; Express (
 | `GET /mcp-ui/trace/compare`    | Side-by-side compressed vs fat on shared scale                                                                                                                     |
 | `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                                          |
 
-Catalog nav links the compressed demo and compare view.
+Catalog nav links **`/mcp-ui/trace/compare`** (bare URL → `focus=input`). Do not embed `?focus=all` in docs, posts, or recording bookmarks unless you intentionally want outputs in the slide.
 
 ### Live inference store (Act 3 primary)
 

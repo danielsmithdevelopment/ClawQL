@@ -63,15 +63,26 @@ node examples/mcp-api-adapter/server.mjs
 
 **Goal:** Picture beats claim — “this looks like compressed, not fat.”
 
-### Primary (live session)
+**Reference visual grammar (lock this):** always close on the **side-by-side compare** page with **`focus=input`** (the default — do not add `?focus=all` in recording links). Model output is omitted from the ratio so reply length cannot inflate the compression claim. Prefer the same URL shape for built-in demos and live WebMCP sessions:
 
-After Act 2, open:
+```text
+/mcp-ui/trace/compare                              # demos (default focus=input)
+/mcp-ui/trace/compare?left=<corrA>&right=<corrB>   # live sessions (same layout)
+```
+
+Catalog nav, CLI log lines, and bare `/trace/compare` links all resolve to `focus=input` unless `?focus=all` is explicit.
+
+### Primary (live WebMCP / Act 2 sessions)
+
+Run the same task twice (or two correlation ids): compressed tool projection vs fat dumps. Then:
 
 ```
-/mcp-ui/trace/<correlationId>
+/mcp-ui/trace/compare?left=<compressedCorrId>&right=<fatCorrId>
 ```
 
-Requires `listTraceCalls` wired to `clawql-inference` store (`getByCorrelationId`). **Wired in CLI** when `MCP_API_ADAPTER_INFERENCE_TRACE=1` and a **shared** store path is set (`CLAWQL_INFERENCE_STORE=jsonl` + `CLAWQL_INFERENCE_STORE_PATH`, or Postgres). See [`mcp-ui.md`](./mcp-ui.md) §5b and `examples/mcp-api-adapter/clawql-with-trace.mjs`.
+Requires `listTraceCalls` wired to `clawql-inference` (`MCP_API_ADAPTER_INFERENCE_TRACE=1` + shared store). See [`mcp-ui.md`](./mcp-ui.md) §5b, `examples/mcp-api-adapter/clawql-with-trace.mjs`, and `scripts/live-trace-compare-demo.mjs`.
+
+Single-session deep link (optional, not the closer): `/mcp-ui/trace/<correlationId>`.
 
 ### Fallback (guaranteed — use for recording until live is proven)
 
@@ -79,15 +90,15 @@ Requires `listTraceCalls` wired to `clawql-inference` store (`getByCorrelationId
 /mcp-ui/trace/compare
 ```
 
-Side-by-side **demo-compressed** vs **demo-fat** on **shared scale**:
+Side-by-side **demo-compressed** vs **demo-fat** on **shared input scale** (same page, same `focus=input` default):
 
-- Left: balanced stack (~1k tokens)
-- Right: **tool result ~99% orange** (~12k tokens)
-- Callout: **12×** token ratio
+- Left: balanced input stack
+- Right: **tool result dominates** (orange)
+- Callout: fat **input** is N× compressed; tool result % of **input**
 
 Single-session links: `/mcp-ui/trace/demo-compressed`, `/mcp-ui/trace/demo-fat`.
 
-**Pass (2-second test):** fresh viewer identifies orange tool-result dominance on the right without reading tables.
+**Pass (2-second test):** fresh viewer identifies orange tool-result dominance on the right without reading tables — and cannot object that the model simply “rambled more.”
 
 ---
 
