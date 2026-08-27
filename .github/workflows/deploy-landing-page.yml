@@ -78,6 +78,7 @@ jobs:
           test -f out/enterprise/gtm/index.html
           test -f out/mcp-ui/trace/compare/executor/index.html
           test -f out/mcp-ui/trace/compare/executor/compare.json
+          test -f out/benchmarks/executor-comparison/index.html
           grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
           grep -q 'inference/gtm' out/llms.txt
           grep -q 'inference/gtm' out/sitemap.xml
