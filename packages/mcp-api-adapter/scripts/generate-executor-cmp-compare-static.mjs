@@ -24,7 +24,7 @@ const ROOT = join(__dirname, "..", "..", "..");
 
 const CANONICAL = "https://clawql.com/mcp-ui/trace/compare/executor";
 const DOCS_CATALOG = "https://docs.clawql.com/mcp/mcp-ui";
-const METHODOLOGY = "https://docs.clawql.com/benchmarks/executor-comparison";
+const METHODOLOGY = "https://clawql.com/benchmarks/executor-comparison";
 
 const OUT_DIRS = [
   join(ROOT, "website", "public", "mcp-ui", "trace", "compare", "executor"),
