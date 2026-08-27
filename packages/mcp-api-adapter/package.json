@@ -67,7 +67,7 @@
     "zod": "^3.24.0"
   },
   "peerDependencies": {
-    "clawql-inference": ">=7.0.0"
+    "clawql-inference": ">=0.1.0"
   },
   "peerDependenciesMeta": {
     "clawql-inference": {

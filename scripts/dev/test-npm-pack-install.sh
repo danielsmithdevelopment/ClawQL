@@ -26,7 +26,8 @@ mapfile -t PUBLISH_ORDER < <(node -e "
 const order=require('./scripts/release/npm-publish-order.json');
 const extras=order.localPackExtras||[];
 const packages=order.packages||[];
-for (const name of [...extras, ...packages]) {
+const extrasAfter=order.localPackExtrasAfter||[];
+for (const name of [...extras, ...packages, ...extrasAfter]) {
   if (name === 'clawql-mcp') continue;
   console.log(name);
 }
