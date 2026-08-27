@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * Live compressed vs fat compare — two real inference sessions, side-by-side slide.
+ * Live compressed vs fat compare — same task, only tool_result size differs.
  *
- * Prerequisites: Ollama + tinyllama, clawql-inference :8787, mcp-api-adapter :18200
- * with MCP_API_ADAPTER_INFERENCE_TRACE=1 and shared JSONL store.
+ * Design for the Act 3 slide:
+ * - Identical fixed assistant strings in history (not prior model replies)
+ * - Tight max_tokens so generation length cannot dominate the story
+ * - Compare page defaults to focus=input (model_output omitted from ratio)
  */
 const inferenceUrl = process.env.CLAWQL_INFERENCE_URL?.trim() || "http://127.0.0.1:8787";
 const adapterUrl = process.env.MCP_ADAPTER_URL?.trim() || "http://127.0.0.1:18200";
@@ -19,6 +21,8 @@ const vault =
 const userTask = "List GitHub repos then summarize the first one.";
 const toolSchema =
   '{"name":"search","inputSchema":{"type":"object","properties":{"query":{"type":"string"}}}}';
+/** Fixed — never feed prior model text into turn 2 (keeps agent_reasoning identical). */
+const fixedAssistant = "First repo looks active; next hop is execute(repos.get).";
 
 function compressedSearchResult() {
   return JSON.stringify({
@@ -53,7 +57,7 @@ async function chat(correlationId, messages, turn) {
       "Content-Type": "application/json",
       "X-Correlation-Id": correlationId,
     },
-    body: JSON.stringify({ model, messages, max_tokens: 48 }),
+    body: JSON.stringify({ model, messages, max_tokens: 24 }),
   });
   const body = await res.json();
   if (!res.ok) {
@@ -62,24 +66,19 @@ async function chat(correlationId, messages, turn) {
   const choice = body.choices?.[0]?.message?.content ?? "";
   const usage = body.usage ?? {};
   console.log(
-    `[${correlationId} turn ${turn}] in ${usage.prompt_tokens ?? "?"} out ${usage.completion_tokens ?? "?"}`
+    `[${correlationId} turn ${turn}] in ${usage.prompt_tokens ?? "?"} out ${usage.completion_tokens ?? "?"} chars ${choice.length}`
   );
   return choice;
 }
 
 async function runScenario(correlationId, toolTurn1, toolTurn2) {
-  await chat(
-    correlationId,
-    [...turn1Base, { role: "tool", content: toolTurn1 }],
-    1
-  );
-  const assistant = "First repo looks active; next hop is execute(repos.get).";
+  await chat(correlationId, [...turn1Base, { role: "tool", content: toolTurn1 }], 1);
   await chat(
     correlationId,
     [
       ...turn1Base,
       { role: "tool", content: toolTurn1 },
-      { role: "assistant", content: assistant },
+      { role: "assistant", content: fixedAssistant },
       { role: "tool", content: toolTurn2 },
       { role: "user", content: "Summarize the first repo in one sentence." },
     ],
@@ -117,12 +116,13 @@ if (!compareRes.ok) {
   throw new Error(`compare HTTP ${compareRes.status}: ${await compareRes.text()}`);
 }
 const data = await compareRes.json();
-const cTotal = data.compressed.totalInputTokens + data.compressed.totalOutputTokens;
-const fTotal = data.fat.totalInputTokens + data.fat.totalOutputTokens;
-const ratio = cTotal > 0 ? (fTotal / cTotal).toFixed(1) : "?";
-const fToolPct = Math.round(
-  ((data.fat.bySource.tool_result ?? 0) / Math.max(1, fTotal)) * 100
-);
+const cIn = data.compressed.totalInputTokens;
+const fIn = data.fat.totalInputTokens;
+const ratio = cIn > 0 ? (fIn / cIn).toFixed(1) : "?";
+const fTool = data.fat.bySource.tool_result ?? 0;
+const cTool = data.compressed.bySource.tool_result ?? 0;
+const fToolPct = Math.round((fTool / Math.max(1, fIn)) * 100);
+const cToolPct = Math.round((cTool / Math.max(1, cIn)) * 100);
 
 console.log(
   JSON.stringify(
@@ -130,10 +130,14 @@ console.log(
       compressedId,
       fatId,
       compareHtml: compareUrl,
-      ratio,
-      compressedTotal: cTotal,
-      fatTotal: fTotal,
-      fatToolResultPct: fToolPct,
+      inputRatio: ratio,
+      compressedInput: cIn,
+      fatInput: fIn,
+      compressedToolResult: cTool,
+      fatToolResult: fTool,
+      fatToolResultPctOfInput: fToolPct,
+      compressedToolResultPctOfInput: cToolPct,
+      note: "Slide uses focus=input — model_output omitted from compression ratio",
       compressedBySource: data.compressed.bySource,
       fatBySource: data.fat.bySource,
     },

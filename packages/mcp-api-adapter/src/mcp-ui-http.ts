@@ -358,8 +358,10 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         res.status(200).type("html").send(
           renderTraceComparePage(cGraph, fGraph, {
             basePath,
+            focus: String(req.query.focus ?? "input").toLowerCase() === "all" ? "all" : "input",
             heading: "Both-sides compression — live inference sessions",
-            subheading: "Shared scale · real model calls · cl100k_base tokenization",
+            subheading:
+              "Shared scale on input context · real model calls · cl100k_base tokenization · model output omitted from ratio",
             leftPanel: {
               title: `${leftId} (compressed)`,
               subtitle: "Projected search/execute tool results",
@@ -371,7 +373,8 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
             },
             footerNote: `JSON: <a href="${escapeMcpUiHtml(basePath)}/trace/compare?left=${encodeURIComponent(leftId)}&amp;right=${encodeURIComponent(rightId)}&amp;format=json">compare</a>
               · <a href="${escapeMcpUiHtml(basePath)}/trace/${encodeURIComponent(leftId)}?format=json">${escapeMcpUiHtml(leftId)}</a>
-              · <a href="${escapeMcpUiHtml(basePath)}/trace/${encodeURIComponent(rightId)}?format=json">${escapeMcpUiHtml(rightId)}</a>`,
+              · <a href="${escapeMcpUiHtml(basePath)}/trace/${encodeURIComponent(rightId)}?format=json">${escapeMcpUiHtml(rightId)}</a>
+              · <a href="${escapeMcpUiHtml(basePath)}/trace/compare?left=${encodeURIComponent(leftId)}&amp;right=${encodeURIComponent(rightId)}&amp;focus=all">include outputs</a>`,
           })
         );
         return;
@@ -397,7 +400,12 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
       res.status(200).json({ compressed: cGraph, fat: fGraph });
       return;
     }
-    res.status(200).type("html").send(renderTraceComparePage(cGraph, fGraph, { basePath }));
+    res.status(200).type("html").send(
+      renderTraceComparePage(cGraph, fGraph, {
+        basePath,
+        focus: String(req.query.focus ?? "input").toLowerCase() === "all" ? "all" : "input",
+      })
+    );
   });
 
   router.get("/trace/:sessionId", async (req, res) => {

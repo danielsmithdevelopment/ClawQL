@@ -217,32 +217,52 @@ export function renderTraceNotFoundPage(
 function renderComparePanel(
   graph: ContextFlamegraph,
   maxTokens: number,
-  opts: { title: string; subtitle: string; emphasis?: boolean }
+  opts: {
+    title: string;
+    subtitle: string;
+    emphasis?: boolean;
+    /** When true, bars/totals ignore model_output so the slide is about context size. */
+    inputOnly?: boolean;
+  }
 ): string {
-  const totalTokens = graph.totalInputTokens + graph.totalOutputTokens;
+  const framesForBar = (frames: TraceFrame[]) =>
+    opts.inputOnly ? frames.filter((f) => f.source !== "model_output") : frames;
+  const turnTok = (t: ContextFlamegraph["turns"][number]) =>
+    opts.inputOnly ? t.inputTokens : t.inputTokens + t.outputTokens;
+  const headlineTok = opts.inputOnly
+    ? graph.totalInputTokens
+    : graph.totalInputTokens + graph.totalOutputTokens;
   const toolResult = graph.bySource.tool_result ?? 0;
-  const toolPct = totalTokens > 0 ? Math.round((toolResult / totalTokens) * 100) : 0;
+  const toolDenom = opts.inputOnly
+    ? Math.max(1, graph.totalInputTokens)
+    : Math.max(1, graph.totalInputTokens + graph.totalOutputTokens);
+  const toolPct = Math.round((toolResult / toolDenom) * 100);
+  const bySourceEntries = opts.inputOnly
+    ? Object.entries(graph.bySource).filter(([k]) => k !== "model_output")
+    : Object.entries(graph.bySource);
+  const bySource = Object.fromEntries(bySourceEntries) as ContextFlamegraph["bySource"];
   const rows = graph.turns
     .map((t) => {
-      const turnTok = t.inputTokens + t.outputTokens;
+      const tokens = turnTok(t);
       const barClass = opts.emphasis ? "fg-bar fg-bar--emphasis" : "fg-bar";
-      const barInner = renderStackBar(t.frames, turnTok, maxTokens).replace(
+      const barInner = renderStackBar(framesForBar(t.frames), tokens, maxTokens).replace(
         'class="fg-bar"',
         `class="${barClass}"`
       );
       return `<div class="fg-row">
   <div class="fg-turn">Turn ${t.turn}</div>
   ${barInner}
-  <div class="fg-tok">${turnTok.toLocaleString()} tok</div>
+  <div class="fg-tok">${tokens.toLocaleString()} tok</div>
 </div>`;
     })
     .join("\n");
+  const unit = opts.inputOnly ? "input" : "total";
 
   return `<div class="fg-panel${opts.emphasis ? " fg-panel--fat" : ""}">
   <h2>${escapeMcpUiHtml(opts.title)}</h2>
-  <p class="fg-meta">${escapeMcpUiHtml(opts.subtitle)} · <strong>${totalTokens.toLocaleString()}</strong> total · tool result <strong>${toolPct}%</strong></p>
+  <p class="fg-meta">${escapeMcpUiHtml(opts.subtitle)} · <strong>${headlineTok.toLocaleString()}</strong> ${unit} · tool result <strong>${toolPct}%</strong> of ${unit}</p>
   <div class="fg-rows">${rows}</div>
-  ${renderBySourceTable(graph.bySource)}
+  ${renderBySourceTable(bySource)}
 </div>`;
 }
 
@@ -253,6 +273,11 @@ export type TraceComparePageOpts = {
   leftPanel?: { title: string; subtitle: string };
   rightPanel?: { title: string; subtitle: string; emphasis?: boolean };
   footerNote?: string;
+  /**
+   * Default `input`: compare callout + bars exclude model_output so divergent
+   * generations cannot inflate the compression ratio. Pass `all` to include outputs.
+   */
+  focus?: "input" | "all";
 };
 
 /**
@@ -264,25 +289,40 @@ export function renderTraceComparePage(
   opts?: TraceComparePageOpts
 ): string {
   const base = (opts?.basePath ?? "/mcp-ui").replace(/\/$/, "") || "/mcp-ui";
-  const cTotal = compressed.totalInputTokens + compressed.totalOutputTokens;
-  const fTotal = fat.totalInputTokens + fat.totalOutputTokens;
+  const inputOnly = (opts?.focus ?? "input") === "input";
+  const cHeadline = inputOnly
+    ? compressed.totalInputTokens
+    : compressed.totalInputTokens + compressed.totalOutputTokens;
+  const fHeadline = inputOnly
+    ? fat.totalInputTokens
+    : fat.totalInputTokens + fat.totalOutputTokens;
   const cTool = compressed.bySource.tool_result ?? 0;
   const fTool = fat.bySource.tool_result ?? 0;
-  const ratio = cTotal > 0 ? (fTotal / cTotal).toFixed(1) : "—";
+  const ratio = cHeadline > 0 ? (fHeadline / cHeadline).toFixed(1) : "—";
+  const turnMetric = (t: ContextFlamegraph["turns"][number]) =>
+    inputOnly ? t.inputTokens : t.inputTokens + t.outputTokens;
   const maxTokens = Math.max(
     1,
-    ...compressed.turns.map((t) => t.inputTokens + t.outputTokens),
-    ...fat.turns.map((t) => t.inputTokens + t.outputTokens),
-    cTotal,
-    fTotal
+    ...compressed.turns.map(turnMetric),
+    ...fat.turns.map(turnMetric),
+    cHeadline,
+    fHeadline
   );
-  const legend = TRACE_SOURCE_ORDER.map(
-    (src) =>
-      `<span><span class="fg-swatch" style="background:${SOURCE_COLORS[src]}"></span>${escapeMcpUiHtml(SOURCE_LABELS[src])}</span>`
-  ).join("\n");
+  const legendSources = inputOnly
+    ? TRACE_SOURCE_ORDER.filter((s) => s !== "model_output")
+    : TRACE_SOURCE_ORDER;
+  const legend = legendSources
+    .map(
+      (src) =>
+        `<span><span class="fg-swatch" style="background:${SOURCE_COLORS[src]}"></span>${escapeMcpUiHtml(SOURCE_LABELS[src])}</span>`
+    )
+    .join("\n");
   const heading = opts?.heading ?? "Both-sides compression — same task, two contexts";
   const subheading =
-    opts?.subheading ?? "Shared scale · left = search/execute projection · right = naive full tool dumps";
+    opts?.subheading ??
+    (inputOnly
+      ? "Shared scale on input context · model output omitted from ratio (compression is about what you send, not how long the model replies)"
+      : "Shared scale · left = search/execute projection · right = naive full tool dumps");
   const leftPanel = opts?.leftPanel ?? {
     title: "demo-compressed (search → execute)",
     subtitle: "Projected tool results",
@@ -295,7 +335,13 @@ export function renderTraceComparePage(
   const footerNote =
     opts?.footerNote ??
     `JSON: <a href="${escapeMcpUiHtml(base)}/trace/demo-compressed?format=json">compressed</a> · <a href="${escapeMcpUiHtml(base)}/trace/demo-fat?format=json">fat</a>
-      · Live session: <code>/mcp-ui/trace/:sessionId</code> when <code>listTraceCalls</code> is wired · Live compare: <code>?left=&amp;right=</code>`;
+      · Live session: <code>/mcp-ui/trace/:sessionId</code> when <code>listTraceCalls</code> is wired · Live compare: <code>?left=&amp;right=</code>
+      · Focus: <code>?focus=input</code> (default) · <code>?focus=all</code>`;
+  const fToolPct = Math.round((fTool / Math.max(1, fHeadline)) * 100);
+  const cToolPct = Math.round((cTool / Math.max(1, cHeadline)) * 100);
+  const callout = inputOnly
+    ? `<div class="fg-callout"><strong>At a glance:</strong> fat <strong>input</strong> is <strong>${ratio}×</strong> compressed (${fHeadline.toLocaleString()} vs ${cHeadline.toLocaleString()} tok). Tool result is <strong>${fToolPct}%</strong> of fat input (${fTool.toLocaleString()} tok) vs <strong>${cToolPct}%</strong> compressed — orange should dominate the right column. Model output is omitted so reply length cannot inflate the ratio.</div>`
+    : `<div class="fg-callout"><strong>At a glance:</strong> fat uses <strong>${ratio}×</strong> tokens (${fHeadline.toLocaleString()} vs ${cHeadline.toLocaleString()}). Tool result is <strong>${fToolPct}%</strong> of fat (${fTool.toLocaleString()} tok) vs <strong>${cToolPct}%</strong> compressed — the orange bar should dominate the right column only.</div>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -310,17 +356,19 @@ export function renderTraceComparePage(
     <p class="fg-nav"><a href="${escapeMcpUiHtml(base)}/">← MCP UI catalog</a></p>
     <h1>${escapeMcpUiHtml(heading)}</h1>
     <p class="fg-meta">${escapeMcpUiHtml(subheading)}</p>
-    <div class="fg-callout"><strong>At a glance:</strong> fat uses <strong>${ratio}×</strong> tokens (${fTotal.toLocaleString()} vs ${cTotal.toLocaleString()}). Tool result is <strong>${Math.round((fTool / fTotal) * 100)}%</strong> of fat (${fTool.toLocaleString()} tok) vs <strong>${Math.round((cTool / cTotal) * 100)}%</strong> compressed — the orange bar should dominate the right column only.</div>
+    ${callout}
     <div class="fg-legend">${legend}</div>
     <div class="fg-compare">
       ${renderComparePanel(compressed, maxTokens, {
         title: leftPanel.title,
         subtitle: leftPanel.subtitle,
+        inputOnly,
       })}
       ${renderComparePanel(fat, maxTokens, {
         title: rightPanel.title,
         subtitle: rightPanel.subtitle,
         emphasis: rightPanel.emphasis !== false,
+        inputOnly,
       })}
     </div>
     <p class="fg-meta">${footerNote}</p>

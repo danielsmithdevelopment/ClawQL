@@ -242,6 +242,8 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
       const body = await html.text();
       expect(body).toContain("Both-sides compression");
       expect(body).toContain("fg-compare");
+      expect(body).toContain("fat <strong>input</strong>");
+      expect(body).toContain("Model output is omitted");
     } finally {
       await close();
     }

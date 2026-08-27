@@ -108,6 +108,8 @@ node integrations/harness-bench/scripts/fetch-trace.mjs demo-compressed
 
 Wire into CI after adapter smoke job. Next: pass `correlationId` from harness runs when inference store records real model calls (stub bench today produces no traces).
 
+**Slide tip:** `/mcp-ui/trace/compare` defaults to `focus=input` — model output is omitted from the ratio so divergent reply lengths cannot inflate compression claims. Use `?focus=all` only when you deliberately want outputs in the bars.
+
 ---
 
 ## Smoke gate checklist (like Harvey LAB task 001)
