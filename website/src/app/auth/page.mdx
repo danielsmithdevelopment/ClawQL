@@ -77,11 +77,11 @@ Every authentication event — a token issued, a token refused, a refresh that s
 
 ## Summary
 
-| Problem | Mechanism |
-| --- | --- |
-| Outbound token expired overnight | Proactive refresh, 60 seconds before expiry |
-| Concurrent sessions invalidating each other's refresh token | Mutex — one refresh per provider, others queue |
-| Per-user OAuth consent screens at enterprise scale | EMA / ID-JAG, consumer role |
-| Third-party identity provider holding session-token custody | EMA / ID-JAG, issuer role — ClawQL as the IdP |
-| Legacy SAML-based internal SSO | Out of scope — handled upstream by the org's IdP before reaching ClawQL |
-| Verifying who did what, when | Every auth event in the audit trail |
+| Problem                                                     | Mechanism                                                               |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Outbound token expired overnight                            | Proactive refresh, 60 seconds before expiry                             |
+| Concurrent sessions invalidating each other's refresh token | Mutex — one refresh per provider, others queue                          |
+| Per-user OAuth consent screens at enterprise scale          | EMA / ID-JAG, consumer role                                             |
+| Third-party identity provider holding session-token custody | EMA / ID-JAG, issuer role — ClawQL as the IdP                           |
+| Legacy SAML-based internal SSO                              | Out of scope — handled upstream by the org's IdP before reaching ClawQL |
+| Verifying who did what, when                                | Every auth event in the audit trail                                     |
