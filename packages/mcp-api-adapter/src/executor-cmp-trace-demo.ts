@@ -72,8 +72,7 @@ export function demoExecutorCmpRecords(sessionId: string): {
     },
     {
       role: "tool",
-      content:
-        `[ClawQL execute pulls/list · ${m.repo} · fields title,number · ${m.clawql.toolResultTokens} tok measured]`,
+      content: `[ClawQL execute pulls/list · ${m.repo} · fields title,number · ${m.clawql.toolResultTokens} tok measured]`,
       tokens: m.clawql.toolResultTokens,
     },
   ];
@@ -87,16 +86,13 @@ export function demoExecutorCmpRecords(sessionId: string): {
     },
     {
       role: "tool",
-      content:
-        `[Executor ${m.executor.toolPath} · full REST JSON · ${m.executor.toolResultTokens.toLocaleString()} tok measured · no projection]`,
+      content: `[Executor ${m.executor.toolPath} · full REST JSON · ${m.executor.toolResultTokens.toLocaleString()} tok measured · no projection]`,
       tokens: m.executor.toolResultTokens,
     },
   ];
 
   return {
-    clawql: [
-      mkMeasuredRecord("ec-c1", sessionId, clawqlMessages, m.clawql.combinedInputTokens),
-    ],
+    clawql: [mkMeasuredRecord("ec-c1", sessionId, clawqlMessages, m.clawql.combinedInputTokens)],
     executor: [
       mkMeasuredRecord("ec-e1", sessionId, executorMessages, m.executor.combinedInputTokensLive),
     ],
