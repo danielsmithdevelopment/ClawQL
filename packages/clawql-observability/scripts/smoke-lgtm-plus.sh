@@ -115,12 +115,19 @@ for _ in $(seq 1 12); do
   sleep 5
 done
 
-if [[ -z "${mimir_result}" ]] || ! grep -q '"status":"success"' <<<"${mimir_result}"; then
+if [[ -z "${mimir_result}" ]] || ! echo "${mimir_result}" | jq -e '.status == "success"' >/dev/null 2>&1; then
   echo "FAIL: Mimir Prometheus query unsuccessful" >&2
   echo "${mimir_result:-<empty>}" >&2
   docker compose -f "${COMPOSE_FILE}" -p "${PROJECT}" logs mimir alloy --no-color >&2 || true
   exit 1
 fi
-echo "OK: Mimir Prometheus API responding"
+
+if ! echo "${mimir_result}" | jq -e '[.data.result[]?.value[]?] | length > 0' >/dev/null 2>&1; then
+  echo "FAIL: Mimir query returned no metric samples for gen" >&2
+  echo "${mimir_result}" >&2
+  docker compose -f "${COMPOSE_FILE}" -p "${PROJECT}" logs mimir alloy --no-color >&2 || true
+  exit 1
+fi
+echo "OK: Mimir returned telemetrygen metric samples"
 
 echo "LGTM+ smoke passed (Alloy OTLP → Loki/Tempo/Mimir verified)"

@@ -33,3 +33,6 @@ export {
   resolvePackagePath,
   resolvePackagePathEffect,
 } from "./paths.js";
+
+export type { TelemetryJwtClaims } from "./telemetry-token.js";
+export { signTelemetryJwt, signTelemetryJwtEffect } from "./telemetry-token.js";

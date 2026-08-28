@@ -51,3 +51,23 @@ prometheus.remote_write "default" {
     url = "http://mimir:9009/api/v1/push"
   }
 }
+
+// Phase 2 — Grafana Faro browser ingest (Worker proxy forwards here privately).
+faro.receiver "frontend" {
+  server {
+    listen_address       = "0.0.0.0"
+    listen_port          = 8027
+    cors_allowed_origins = ["*"]
+  }
+
+  output {
+    logs   = [loki.write.faro.receiver]
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+loki.write "faro" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
