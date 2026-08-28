@@ -64,13 +64,13 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 
 ## Implementation phases
 
-| Phase | Scope |
-|-------|--------|
-| **1** | LGTM+ core + Alloy *(this release)* |
-| 2 | Faro + ephemeral-JWT Worker proxy |
-| 3 | Langfuse + Panguard correlation |
-| 4 | Falco / Tetragon / Wazuh security layer |
-| 5 | Full alerting + Vault-backed signing keys |
+| Phase | Scope                                     |
+| ----- | ----------------------------------------- |
+| **1** | LGTM+ core + Alloy _(this release)_       |
+| 2     | Faro + ephemeral-JWT Worker proxy         |
+| 3     | Langfuse + Panguard correlation           |
+| 4     | Falco / Tetragon / Wazuh security layer   |
+| 5     | Full alerting + Vault-backed signing keys |
 
 ## License
 

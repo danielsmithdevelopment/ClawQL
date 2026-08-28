@@ -73,9 +73,7 @@ export const readObservabilityProfileEffect = (): Effect.Effect<ObservabilityPro
       (profile === "bundled" ? "http://alloy:4318" : undefined);
 
     const resolvedLokiPushUrl =
-      lokiPushUrl === "auto"
-        ? "http://loki:3100/loki/api/v1/push"
-        : lokiPushUrl;
+      lokiPushUrl === "auto" ? "http://loki:3100/loki/api/v1/push" : lokiPushUrl;
 
     return {
       profile,

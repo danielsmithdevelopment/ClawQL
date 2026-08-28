@@ -53,18 +53,20 @@ Five components, as declared in the source architecture:
 lgtmPlus:
   loki:
     enabled: true
-    retentionPeriod: 744h      # NOTE: must match maxLookBackPeriod exactly —
-                                # a shorter look-back silently returns empty
-                                # results on older queries
+    retentionPeriod:
+      744h # NOTE: must match maxLookBackPeriod exactly —
+      # a shorter look-back silently returns empty
+      # results on older queries
   grafana:
     enabled: true
   tempo:
     enabled: true
   mimir:
     enabled: true
-    ingestionRate: 10000       # default; watch cortex_discarded_samples_total
-                                # and raise if Beyla-instrumented services
-                                # or high-cardinality labels hit this silently
+    ingestionRate:
+      10000 # default; watch cortex_discarded_samples_total
+      # and raise if Beyla-instrumented services
+      # or high-cardinality labels hit this silently
   pyroscope:
     enabled: true
 ```
@@ -93,6 +95,6 @@ Phases 2–5 (Faro JWT proxy, Langfuse, security layer, alerting, secrets) are s
 
 ---
 
-*clawql-observability Package Specification · v0.1 · August 2026*
-*Location: packages/clawql-observability/*
-*Reference implementation: github.com/danielsmithdevelopment/DevSecOps-boilerplate*
+_clawql-observability Package Specification · v0.1 · August 2026_
+_Location: packages/clawql-observability/_
+_Reference implementation: github.com/danielsmithdevelopment/DevSecOps-boilerplate_

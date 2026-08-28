@@ -32,8 +32,7 @@ export const defaultLocalEndpoints = (): LgtmPlusLocalEndpoints => ({
 
 export const resolvePackagePathEffect = (
   key: keyof typeof packagePaths
-): Effect.Effect<string, ObservabilityError> =>
-  Effect.sync(() => packagePaths[key]);
+): Effect.Effect<string, ObservabilityError> => Effect.sync(() => packagePaths[key]);
 
 export const resolvePackagePath = (key: keyof typeof packagePaths): string =>
   Effect.runSync(resolvePackagePathEffect(key));

@@ -40,17 +40,13 @@ export const createErrorFingerprintEffect = (
         topFrame?.filename ?? "",
       ].join("|");
 
-      const hashBuffer = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(raw)
-      );
+      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
       return Array.from(new Uint8Array(hashBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("")
         .slice(0, 16);
     },
-    catch: (cause) =>
-      new ObservabilityError({ reason: "fingerprint_digest_failed", cause }),
+    catch: (cause) => new ObservabilityError({ reason: "fingerprint_digest_failed", cause }),
   });
 
 /** Node / Worker façade — uses Web Crypto when available. */

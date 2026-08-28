@@ -5,7 +5,11 @@ export type {
   FaroExceptionFrame,
   FaroExceptionPayload,
 } from "./fingerprint.js";
-export { createErrorFingerprint, createErrorFingerprintEffect, normaliseErrorMessage } from "./fingerprint.js";
+export {
+  createErrorFingerprint,
+  createErrorFingerprintEffect,
+  normaliseErrorMessage,
+} from "./fingerprint.js";
 
 export {
   defaultLgtmPlusHelmValues,

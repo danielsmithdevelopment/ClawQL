@@ -1,10 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import {
-  defaultLgtmPlusHelmValues,
-  readObservabilityProfileEffect,
-} from "./config.js";
+import { defaultLgtmPlusHelmValues, readObservabilityProfileEffect } from "./config.js";
 import { createErrorFingerprintEffect, normaliseErrorMessage } from "./fingerprint.js";
 import { defaultLocalEndpoints, packagePaths } from "./paths.js";
 
