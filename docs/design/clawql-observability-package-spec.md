@@ -81,9 +81,26 @@ See `packages/clawql-observability/alloy/config.river` for the Phase 1 pipeline 
 
 ---
 
-## 5–16. Later phases
+## 5. Phase 2 — Faro + ephemeral-JWT Worker proxy
 
-Phases 2–5 (Faro JWT proxy, Langfuse, security layer, alerting, secrets) are specified in full in the authoring brief and tracked in the package README implementation table. Phase 1 ships the LGTM+ core, Alloy config, Helm values, docker-compose, and Grafana datasource wiring so operators can connect dashboards immediately.
+Browser RUM (Grafana Faro) never writes to a static public DSN. Flow:
+
+1. **Backend** mints a short-lived HS256 JWT (`signTelemetryJwt` in `src/telemetry-token.ts`) bound to `sub` (session), `project`, and `origin`.
+2. **Browser** sends Faro JSON to the **Cloudflare Worker** (`worker/`) with `Authorization: Bearer <jwt>`.
+3. **Worker** validates JWT, rate-limits by session, validates payload shape, enriches exceptions with `error_fingerprint`, forwards to private **Alloy `faro.receiver`** (`:8027/collect`).
+4. **Alloy** routes Faro logs to Loki and traces to Tempo (same LGTM+ stack as Phase 1 OTLP).
+
+Invalid or missing credentials return **HTTP 204** with no body — silent drop, no attacker feedback.
+
+Deploy secrets via `wrangler secret put JWT_SIGNING_KEY`; never commit signing keys. Vault-backed rotation is Phase 5.
+
+## 6. Error fingerprinting
+
+Exception events receive a 16-char SHA-256 fingerprint (`src/fingerprint.ts`) normalising dynamic message segments before hash. Labels land in Loki for Sentry-style grouping. The Worker attaches `error_fingerprint` on forward; the browser SDK may also pre-compute via `createErrorFingerprint`.
+
+## 7–16. Later phases
+
+Phases 3–5 (Langfuse, security layer, alerting, Vault keys) remain as in the README implementation table.
 
 ---
 

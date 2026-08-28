@@ -1,6 +1,7 @@
 # LGTM+ local stack: Loki, Grafana, Tempo, Mimir, Pyroscope + Grafana Alloy collector.
 # Grafana UI: http://localhost:3000 (anonymous admin for local dev only)
 # Alloy OTLP: grpc localhost:4317 · http localhost:4318
+# Alloy Faro (private): http localhost:8027/collect — fronted by Worker in production
 #
 #   npm run compose:up -w clawql-observability
 #   npm run compose:down -w clawql-observability
@@ -11,6 +12,7 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+      - "8027:8027"
       - "12345:12345"
     volumes:
       - ../alloy/config.river:/etc/alloy/config.alloy:ro

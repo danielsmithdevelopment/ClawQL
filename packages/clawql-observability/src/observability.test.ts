@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { defaultLgtmPlusHelmValues, readObservabilityProfileEffect } from "./config.js";
 import { createErrorFingerprintEffect, normaliseErrorMessage } from "./fingerprint.js";
 import { defaultLocalEndpoints, packagePaths } from "./paths.js";
+import { signTelemetryJwtEffect } from "./telemetry-token.js";
+import { verifyTelemetryJwt } from "./jwt-hs256.js";
 
 describe("clawql-observability config", () => {
   it("exposes default LGTM+ helm values", () => {
@@ -62,5 +64,29 @@ describe("clawql-observability fingerprint", () => {
     const b = await Effect.runPromise(createErrorFingerprintEffect(event));
     expect(a).toBe(b);
     expect(a).toHaveLength(16);
+  });
+});
+
+describe("clawql-observability telemetry token", () => {
+  it("mints JWTs verifiable by the Faro worker", async () => {
+    const secret = "backend-signing-key-at-least-32-chars";
+    const now = Math.floor(Date.now() / 1000);
+    const { token, expiresAt } = await Effect.runPromise(
+      signTelemetryJwtEffect({
+        signingKey: secret,
+        claims: {
+          sub: "session-test",
+          project: "clawql-local",
+          origin: "http://localhost:3000",
+        },
+        ttlSeconds: 600,
+        now: () => now,
+      })
+    );
+
+    expect(expiresAt).toBe(now + 600);
+    const claims = await verifyTelemetryJwt(token, secret);
+    expect(claims?.sub).toBe("session-test");
+    expect(claims?.project).toBe("clawql-local");
   });
 });
