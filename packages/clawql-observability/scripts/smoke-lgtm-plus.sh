@@ -103,11 +103,22 @@ if ! echo "${loki_result}" | jq -e '[.data.result[].values[]?] | length > 0' >/d
 fi
 echo "OK: Loki returned log lines"
 
-echo "Checking Mimir Prometheus query API"
-mimir_result="$(curl -sf "http://127.0.0.1:9009/prometheus/api/v1/query?query=up")"
-if ! grep -q '"status":"success"' <<<"${mimir_result}"; then
+echo "Checking Mimir for telemetrygen metrics"
+mimir_result=""
+for _ in $(seq 1 12); do
+  if mimir_result="$(curl -sf --max-time 10 \
+    -H "X-Scope-OrgID: anonymous" \
+    -G "http://127.0.0.1:9009/prometheus/api/v1/query" \
+    --data-urlencode "query=gen")"; then
+    break
+  fi
+  sleep 5
+done
+
+if [[ -z "${mimir_result}" ]] || ! grep -q '"status":"success"' <<<"${mimir_result}"; then
   echo "FAIL: Mimir Prometheus query unsuccessful" >&2
-  echo "${mimir_result}" >&2
+  echo "${mimir_result:-<empty>}" >&2
+  docker compose -f "${COMPOSE_FILE}" -p "${PROJECT}" logs mimir alloy --no-color >&2 || true
   exit 1
 fi
 echo "OK: Mimir Prometheus API responding"
