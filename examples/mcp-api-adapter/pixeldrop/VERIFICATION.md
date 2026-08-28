@@ -82,17 +82,31 @@ No `heic2any` polyfill required on either iPhone browser.
 
 ---
 
-## Priority 2: WebMCP CDP test (Chrome preview) — **OPEN**
+## Priority 2: WebMCP CDP / judge-environment test — **OPEN** (API surface fixed; runtime gate pending)
 
-**Goal:** Exercise the real discovery → execute path that production `clawql sources add --kind webmcp` uses — not the harness iframe bypass. Unrelated to mobile; isolated remaining task.
+**Goal:** Exercise real discovery → execute on Chrome 149+ (or ChatGPT desktop browser) — not the harness iframe bypass.
 
-**Prerequisites**
+### API surface (fixed 2026-08-28, before runtime gate)
 
-- Chrome **preview** with WebMCP + `document.modelContext`
-- CDP on `http://127.0.0.1:9222`
-- Demo served: `cd examples/mcp-api-adapter/pixeldrop && python3 -m http.server 8765`
+| Item | Status |
+| --- | --- |
+| Register via `document.modelContext ?? navigator.modelContext` | **Fixed** in PixelDrop + landing `WebMcpRegister` |
+| `execute` returns `JSON.stringify(...)` (DOMString) | **Fixed** — Chrome Imperative API returns string from `executeTool` |
+| CDP `executeTool(tool, jsonString)` | **Fixed** in `webmcp-browser.ts` |
+| Runtime verify on Chrome 149+ | **Blocked in cloud VM** — environment has Chrome **148.0.7778.96**; WebMCP flag/OT needs **149+** |
+
+### Console probe (run on your Mac — the actual gate)
+
+1. Chrome **149+** → `chrome://flags/#enable-webmcp-testing` → Enabled → **relaunch**
+2. Open https://clawql.com/mcp-ui/pixeldrop/pixeldrop-broken-demo.html (hard-refresh after deploy)
+3. Paste contents of `webmcp-console-probe.js` into DevTools console
+
+**Pass:** `documentMC: true`, `tools` includes `upload_photo`, `executeParsed.uploadId` like `up_…`, `galleryGrew: true`, `executeRawType: "string"`.
+
+**Fail modes to fear:** tools empty with no error (dead registration path); execute throws; result is object ChatGPT cannot parse as text.
 
 ```bash
+# Optional local serve + CDP (still needs Chrome 149+ with flag + CDP port)
 node examples/mcp-api-adapter/pixeldrop/webmcp-cdp-smoke.mjs \
   --page-url http://127.0.0.1:8765/pixeldrop-broken-demo.html \
   --cdp-url http://127.0.0.1:9222
