@@ -1,4 +1,5 @@
 import {
+  analyticsMisconfiguredReason,
   analyticsServerConfigured,
   capturePageview,
   resolveAnalyticsCorsOrigin,
@@ -36,8 +37,12 @@ export async function POST(request: Request) {
   const origin = resolveAnalyticsCorsOrigin(request.headers.get('origin'))
 
   if (!analyticsServerConfigured()) {
+    const misconfigured = analyticsMisconfiguredReason()
     return NextResponse.json(
-      { ok: false, reason: 'analytics_disabled' },
+      {
+        ok: false,
+        reason: misconfigured ?? 'analytics_disabled',
+      },
       { status: 503, headers: corsHeaders(origin) },
     )
   }

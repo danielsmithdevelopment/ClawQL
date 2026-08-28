@@ -24,6 +24,7 @@ export default defineConfig({
       "packages/clawql-merkle/src/**/*.test.ts",
       "packages/clawql-audit/src/**/*.test.ts",
       "packages/clawql-analytics/src/**/*.test.ts",
+      "website/src/lib/**/*.test.ts",
       "packages/clawql-agents/src/**/*.test.ts",
       "packages/clawql-core/src/**/*.test.ts",
       "packages/clawql-api/src/**/*.test.ts",

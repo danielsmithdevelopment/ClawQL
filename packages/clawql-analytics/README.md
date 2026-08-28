@@ -75,6 +75,20 @@ Server (docs Worker): `CLAWQL_ANALYTICS_ENABLED=1`, `CLAWQL_ANALYTICS_POSTHOG_AP
 
 Optional overrides: `NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT`, `CLAWQL_ANALYTICS_CORS_ORIGINS` (comma-separated extra origins for marketing → docs CORS).
 
+Optional client debug logging: `NEXT_PUBLIC_CLAWQL_ANALYTICS_DEBUG=1` (or `NODE_ENV=development`) logs failed pageview POSTs to the browser console — network errors, CORS, ad/privacy blockers, and collector `503` responses.
+
+## Deploy failure modes (explicit)
+
+| State | Build/deploy | Runtime |
+| ----- | ------------ | ------- |
+| Flags unset | Succeeds; no pageview calls | N/A |
+| `CLAWQL_ANALYTICS_ENABLED=1` + missing PostHog secret | **Deploy fails** (`verify-analytics-deploy-config.mjs`) | — |
+| Client enabled, server flag off | **Deploy fails** (same script) | — |
+| Client enabled, collector misconfigured | Build succeeds | POST → `503`; visible in console when debug/dev |
+| Ad blocker / privacy mode blocks cross-origin POST | Build succeeds | POST fails silently in production unless debug — **expected**; use PostHog/server-side or observability (LGTM+) for coverage gaps |
+
+When enabling analytics, set repo variable `CLAWQL_ANALYTICS_ENABLED=1` **and** GitHub secret `CLAWQL_ANALYTICS_POSTHOG_API_KEY`, then deploy **docs first** (collector), then landing (client).
+
 ## License
 
 Apache-2.0

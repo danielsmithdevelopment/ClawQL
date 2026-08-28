@@ -49,6 +49,15 @@ jobs:
       - name: Install website dependencies
         run: npm ci --prefix website
 
+      - name: Verify analytics deploy config
+        working-directory: website
+        env:
+          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
+          CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
+          CLAWQL_ANALYTICS_POSTHOG_API_KEY: ${{ secrets.CLAWQL_ANALYTICS_POSTHOG_API_KEY }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        run: node scripts/verify-analytics-deploy-config.mjs
+
       - name: OpenNext build
         working-directory: website
         env:

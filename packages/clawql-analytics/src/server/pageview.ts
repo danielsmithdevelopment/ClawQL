@@ -73,6 +73,21 @@ export async function capturePageview(event: PageviewEvent): Promise<void> {
 
 export const analyticsServerConfigured = (): boolean => readPostHogConfig() !== null;
 
+/** When analytics flags are on but PostHog key is missing (misconfigured deploy). */
+export const analyticsMisconfiguredReason = (): string | null => {
+  const enabled =
+    process.env.CLAWQL_ANALYTICS_ENABLED?.trim() === "1" ||
+    process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED?.trim() === "1";
+  if (!enabled) return null;
+
+  const apiKey =
+    process.env.CLAWQL_ANALYTICS_POSTHOG_API_KEY?.trim() ??
+    process.env.POSTHOG_API_KEY?.trim() ??
+    "";
+  if (!apiKey) return "analytics_enabled_but_posthog_key_missing";
+  return null;
+};
+
 /** Allowed browser origins for cross-site marketing → docs API pageviews. */
 export const defaultAnalyticsCorsOrigins = [
   "https://clawql.com",

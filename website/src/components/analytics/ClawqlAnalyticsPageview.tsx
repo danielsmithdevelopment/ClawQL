@@ -1,5 +1,6 @@
 'use client'
 
+import { postAnalyticsPageview } from '@/lib/analytics-pageview-client'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef } from 'react'
 
@@ -46,7 +47,7 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
     const endpoint =
       process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT ?? defaultEndpoint
 
-    const body = JSON.stringify({
+    void postAnalyticsPageview(endpoint, {
       path,
       referrer:
         typeof document !== 'undefined'
@@ -60,14 +61,6 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
           typeof window !== 'undefined' ? window.location.hostname : undefined,
       },
     })
-
-    void fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-      keepalive: true,
-      mode: 'cors',
-    }).catch(() => {})
   }, [pathname, searchParams, site])
 
   return null
