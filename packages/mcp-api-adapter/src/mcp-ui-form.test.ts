@@ -239,6 +239,9 @@ describe("mcp-ui-templates", () => {
   it("resolves templates for common ClawQL tools", () => {
     expect(resolveMcpUiTemplate({ name: "search", inputSchema: {} })?.id).toBe("search");
     expect(resolveMcpUiTemplate({ name: "cache", inputSchema: {} })?.resultKind).toBe("cache");
+    expect(resolveMcpUiTemplate({ name: "upload_photo", inputSchema: {} })?.customHtml).toBe(
+      "smart-upload"
+    );
     expect(resolveMcpUiTemplate({ name: "unknown_tool", inputSchema: {} })).toBeUndefined();
   });
 });
