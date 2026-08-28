@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./server/pageview": {
+      "types": "./dist/server/pageview.d.ts",
+      "import": "./dist/server/pageview.js",
+      "require": "./dist/server/pageview.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

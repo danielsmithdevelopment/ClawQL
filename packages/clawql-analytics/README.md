@@ -60,6 +60,21 @@ Logged: provider add/remove/config change, raw data access, export, access grant
 
 **Not logged:** individual pageviews or custom capture events.
 
+## Site wiring (docs + marketing)
+
+Both **docs.clawql.com** and **clawql.com** fire anonymous pageviews through a shared collector:
+
+| Site | Client | Collector |
+|------|--------|-----------|
+| docs | `ClawqlAnalyticsPageview` (`site="docs"`) | same-origin `POST /api/analytics/pageview` |
+| marketing | `ClawqlAnalyticsPageview` (`site="marketing"`) | cross-origin to docs API (static export) |
+
+Enable at build time: `NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED=1`
+
+Server (docs Worker): `CLAWQL_ANALYTICS_ENABLED=1`, `CLAWQL_ANALYTICS_POSTHOG_API_KEY` (or `POSTHOG_API_KEY`), optional `CLAWQL_ANALYTICS_POSTHOG_HOST`.
+
+Optional overrides: `NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT`, `CLAWQL_ANALYTICS_CORS_ORIGINS` (comma-separated extra origins for marketing → docs CORS).
+
 ## License
 
 Apache-2.0
