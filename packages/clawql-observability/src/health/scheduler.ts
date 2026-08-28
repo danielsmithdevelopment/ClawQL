@@ -25,10 +25,7 @@ export type ObservabilityHealthSnapshot = {
 };
 
 type RegistryServices =
-  | LogRegistryService
-  | MetricRegistryService
-  | TraceRegistryService
-  | ProfileRegistryService;
+  LogRegistryService | MetricRegistryService | TraceRegistryService | ProfileRegistryService;
 
 export class ObservabilityHealthService extends Context.Tag("clawql/ObservabilityHealthService")<
   ObservabilityHealthService,

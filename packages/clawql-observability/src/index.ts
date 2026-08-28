@@ -127,7 +127,4 @@ export {
   makeObservabilityHealthSchedulerLayer,
   runObservabilityHealthChecksEffect,
 } from "./health/scheduler.js";
-export type {
-  ObservabilityHealthSnapshot,
-  ProviderHealthReport,
-} from "./health/scheduler.js";
+export type { ObservabilityHealthSnapshot, ProviderHealthReport } from "./health/scheduler.js";

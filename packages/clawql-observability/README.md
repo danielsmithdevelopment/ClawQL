@@ -128,15 +128,15 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 
 ## Implementation phases
 
-| Phase | Scope                                      |
-| ----- | ------------------------------------------ |
-| **1** | LGTM+ core + Alloy _(merged)_              |
-| **2** | Faro + ephemeral-JWT Worker proxy _(merged)_ |
-| **3a** | Provider registry skeleton _(this release)_ |
-| **3b** | Alloy config generator                     |
-| **3c** | Query federation                           |
-| 4     | Langfuse + Panguard correlation            |
-| 5     | Full alerting + Vault-backed signing keys  |
+| Phase  | Scope                                        |
+| ------ | -------------------------------------------- |
+| **1**  | LGTM+ core + Alloy _(merged)_                |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
+| **3a** | Provider registry skeleton _(this release)_  |
+| **3b** | Alloy config generator                       |
+| **3c** | Query federation                             |
+| 4      | Langfuse + Panguard correlation              |
+| 5      | Full alerting + Vault-backed signing keys    |
 
 ## License
 

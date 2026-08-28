@@ -18,9 +18,7 @@ export type ObservabilityGovernanceEvent = {
   readonly detail?: Record<string, unknown>;
 };
 
-export class ObservabilityGovernanceSink extends Context.Tag(
-  "clawql/ObservabilityGovernanceSink"
-)<
+export class ObservabilityGovernanceSink extends Context.Tag("clawql/ObservabilityGovernanceSink")<
   ObservabilityGovernanceSink,
   {
     readonly append: (event: ObservabilityGovernanceEvent) => Effect.Effect<void>;
