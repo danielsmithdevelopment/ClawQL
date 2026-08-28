@@ -275,15 +275,16 @@ export function executeWebmcpToolEffect(
       const mc = document.modelContext;
       if (!mc?.getTools || !mc?.executeTool) throw new Error("WebMCP not available");
       const toolName = ${toolNameJson};
-      const input = ${inputJson};
+      // Chrome Imperative API: executeTool(tool, inputJsonString)
+      const inputJson = ${JSON.stringify(inputJson)};
       const tools = await mc.getTools();
       const tool = tools.find((t) => t.name === toolName);
       if (!tool) throw new Error("Tool not found: " + toolName);
-      const result = await mc.executeTool(tool, input);
+      const result = await mc.executeTool(tool, inputJson);
       try {
-        return { ok: true, data: JSON.parse(result) };
+        return { ok: true, data: typeof result === "string" ? JSON.parse(result) : result, rawType: typeof result };
       } catch {
-        return { ok: true, data: result };
+        return { ok: true, data: result, rawType: typeof result };
       }
     })()`;
 

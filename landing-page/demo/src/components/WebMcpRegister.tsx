@@ -15,7 +15,9 @@ export function WebMcpRegister() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const mc = navigator.modelContext
+    // Chrome 149+ / ChatGPT browser: document.modelContext is canonical.
+    // Prefer it so a deprecated navigator stub cannot swallow registration.
+    const mc = document.modelContext ?? navigator.modelContext
     if (!mc || typeof mc.registerTool !== 'function') return
 
     const ac = new AbortController()
@@ -44,10 +46,10 @@ export function WebMcpRegister() {
           const raw = input as { path?: string }
           const path = String(raw.path ?? '')
           if (!path.startsWith('/') || path.startsWith('//')) {
-            return { ok: false, error: 'Path must be a same-origin path starting with /' }
+            return JSON.stringify({ ok: false, error: 'Path must be a same-origin path starting with /' })
           }
           router.push(path)
-          return { ok: true, path }
+          return JSON.stringify({ ok: true, path })
         },
       },
       {
@@ -62,11 +64,11 @@ export function WebMcpRegister() {
         },
         annotations: { readOnlyHint: true },
         async execute(_input: object) {
-          return {
+          return JSON.stringify({
             pathname: pathnameRef.current,
             title: document.title,
             href: window.location.href,
-          }
+          })
         },
       },
       {
@@ -91,21 +93,21 @@ export function WebMcpRegister() {
           let id = String(raw.id ?? '').trim()
           if (id.startsWith('#')) id = id.slice(1)
           if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
-            return { ok: false, error: 'Invalid id' }
+            return JSON.stringify({ ok: false, error: 'Invalid id' })
           }
           const el = document.getElementById(id)
           if (!el) {
-            return { ok: false, error: 'No element with that id' }
+            return JSON.stringify({ ok: false, error: 'No element with that id' })
           }
           el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          return { ok: true, id }
+          return JSON.stringify({ ok: true, id })
         },
       },
     ]
 
     for (const tool of tools) {
       try {
-        mc.registerTool(tool, { signal })
+        void mc.registerTool(tool, { signal })
       } catch (err) {
         console.warn('[WebMCP] registerTool failed:', tool.name, err)
       }

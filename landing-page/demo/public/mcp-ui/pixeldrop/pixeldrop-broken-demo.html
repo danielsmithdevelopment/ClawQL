@@ -186,13 +186,14 @@
     // this tool directly bypasses BUG 3 and BUG 4 entirely, because those
     // bugs live in handleFileSelect(), not in uploadToBackend() itself.
     //
-    // NOTE: navigator.modelContext is the current (early 2026) WebMCP
-    // API surface. Per ongoing spec discussion this entry point may
-    // migrate to document.modelContext — check current spec status
-    // before wiring a production integration against this.
+    // WebMCP — Chrome 149+ / ChatGPT browser expect document.modelContext.
+    // navigator.modelContext is a deprecated alias (Chrome 150+); prefer document
+    // first so a dead navigator stub cannot swallow registration silently.
+    // execute must return a DOMString (Chrome Imperative API); agents/ChatGPT
+    // parse text — JSON.stringify keeps structured fields readable.
     // ---------------------------------------------------------------------
 
-    const modelContext = navigator.modelContext ?? document.modelContext
+    const modelContext = document.modelContext ?? navigator.modelContext
     if (modelContext?.registerTool) {
       modelContext.registerTool({
         name: 'upload_photo',
@@ -226,19 +227,20 @@
           // like a normal one would — proving it's the same code path.
           addToGallery(`data:image/jpeg;base64,${file}`)
           logUpload(result, 'webmcp')
-          return {
+          return JSON.stringify({
             uploadId: result.uploadId,
             timestamp: result.timestamp,
             caption: caption ?? null,
-          }
+          })
         },
       })
-      console.log('[PixelDrop] WebMCP tool "upload_photo" registered.')
+      console.log('[PixelDrop] WebMCP tool "upload_photo" registered via',
+        document.modelContext ? 'document.modelContext' : 'navigator.modelContext')
     } else {
       console.warn(
         '[PixelDrop] modelContext not available in this browser. ' +
-        'WebMCP tool was not registered. Requires a browser with the ' +
-        'WebMCP preview enabled (e.g. Chrome behind a flag as of early 2026).'
+        'WebMCP tool was not registered. Requires Chrome 149+ with ' +
+        'chrome://flags/#enable-webmcp-testing (or ChatGPT desktop browser).'
       )
     }
   </script>
