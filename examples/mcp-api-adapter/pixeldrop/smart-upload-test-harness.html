@@ -72,6 +72,24 @@
       display: block;
     }
     .fixed-pane-content { padding: 16px; min-height: 500px; }
+    .fixed-gallery {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .fixed-gallery img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+    }
+    .fixed-upload-log {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
     @media (max-width: 800px) {
       .panes { flex-direction: column; }
     }
@@ -85,7 +103,6 @@
     HEIC verified on iPhone Safari and iOS Chrome (2026-08-28) — see VERIFICATION.md.
     <br><br>
     <strong>Mobile:</strong> drag-and-drop is desktop-only; use the file picker on both sides.
-    HEIC decode on iPhone Safari needs a real device test before demo claims.
   </div>
 
   <div class="panes">
@@ -136,6 +153,28 @@
         });
 
       wireFormToIframe();
+      ensureFixedGallery();
+    }
+
+    function ensureFixedGallery() {
+      const pane = document.getElementById('fixed-pane');
+      if (!document.getElementById('fixed-gallery')) {
+        pane.insertAdjacentHTML('beforeend',
+          '<div class="fixed-gallery" id="fixed-gallery"></div>' +
+          '<div class="fixed-upload-log" id="fixed-upload-log"></div>');
+      }
+    }
+
+    function addToFixedGallery(dataUrl) {
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = 'Uploaded photo';
+      document.getElementById('fixed-gallery').appendChild(img);
+    }
+
+    function logFixedUpload(result, source) {
+      document.getElementById('fixed-upload-log').textContent =
+        `Last upload: ${result.uploadId} · ${result.timestamp} · via ${source}`;
     }
 
     function wireFormToIframe() {
@@ -170,10 +209,13 @@
         // registered tool invocation, not a direct function reference -
         // this is a stand-in specifically for testing conversion logic
         // without requiring a WebMCP-preview browser.
+        // Backend only — same uploadToBackend() the broken UI would call if it
+        // worked. Gallery + log stay on the fixed pane; do not mutate the
+        // broken iframe's DOM (that would imply the broken UI succeeded).
         try {
           const result = await targetWindow.uploadToBackend(fileBase64, filename);
-          targetWindow.addToGallery(`data:image/jpeg;base64,${fileBase64}`);
-          targetWindow.logUpload(result, 'smart-upload-harness');
+          addToFixedGallery(`data:image/jpeg;base64,${fileBase64}`);
+          logFixedUpload(result, 'smart-upload-harness');
 
           document.getElementById('result-upload_photo').innerHTML =
             `<div style="background:#dcfce7;color:#166534;padding:10px 14px;` +
