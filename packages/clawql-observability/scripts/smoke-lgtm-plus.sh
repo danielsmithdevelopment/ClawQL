@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 COMPOSE_FILE="${ROOT}/packages/clawql-observability/docker/docker-compose.yaml"
 PROJECT="${CLAWQL_LGTM_SMOKE_PROJECT:-clawql-lgtm-smoke}"
 SERVICE_NAME="${CLAWQL_LGTM_SMOKE_SERVICE:-clawql-lgtm-smoke}"
-TELEMETRYGEN_IMAGE="${TELEMETRYGEN_IMAGE:-ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:0.119.0}"
+TELEMETRYGEN_IMAGE="${TELEMETRYGEN_IMAGE:-otel/opentelemetry-collector-contrib:0.96.0}"
 
 cleanup() {
   docker compose -f "${COMPOSE_FILE}" -p "${PROJECT}" down -v --remove-orphans >/dev/null 2>&1 || true
@@ -40,14 +40,16 @@ wait_url "Mimir" "http://127.0.0.1:9009/ready"
 wait_url "Alloy" "http://127.0.0.1:12345/-/ready" 24
 # Pyroscope exposes /ready (not /healthz) in grafana/pyroscope 1.x images.
 if ! curl -sf "http://127.0.0.1:4040/ready" >/dev/null 2>&1; then
-  wait_url "Pyroscope" "http://127.0.0.1:4040/"
+  wait_url "Pyroscope" "http://127.0.0.1:4040/" 12
+else
+  echo "ready: Pyroscope (http://127.0.0.1:4040/ready)"
 fi
-echo "ready: Pyroscope (http://127.0.0.1:4040/)"
 
 run_telemetrygen() {
   local subcommand="$1"
   shift
-  docker run --rm --network host "${TELEMETRYGEN_IMAGE}" "${subcommand}" \
+  docker run --rm --network host --entrypoint telemetrygen "${TELEMETRYGEN_IMAGE}" \
+    "${subcommand}" \
     --otlp-http \
     --otlp-endpoint "http://127.0.0.1:4318" \
     --service "${SERVICE_NAME}" \
