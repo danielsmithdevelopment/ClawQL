@@ -2,22 +2,20 @@
 
 Side-by-side demo of a **deliberately broken** photo upload UI vs a **/mcp-ui smart-upload template** that fixes it client-side, then calls the **same backend** via WebMCP.
 
-Inspired by the OpenRouter/HEIC upload failure class (Wes Bos tweet, Aug 2026). The demo concept targets HEIC + resize + drag — but **only resize is verified today**. See [`VERIFICATION.md`](VERIFICATION.md) for the full proven/unproven matrix.
+Inspired by the OpenRouter/HEIC upload failure class (Wes Bos tweet, Aug 2026). **HEIC + resize verified on real iPhone** (Safari and iOS Chrome, 2026-08-28). See [`VERIFICATION.md`](VERIFICATION.md).
 
 ## What is verified vs unproven
 
 | Claim | Status |
 | --- | --- |
-| Large image resize/compress before upload (desktop) | **Verified** — 18MB PNG 8000×6000 → 2048×1536, uploaded via same `uploadToBackend()` |
+| HEIC from iPhone camera roll (Safari + iOS Chrome) | **Verified** — `IMG_6432.HEIC` → `up_7vjocs3`, native decode, no polyfill |
+| Large image resize/compress (desktop + iPhone) | **Verified** — 18MB PNG; 3.7MB JPEG on iPhone |
 | Same backend path as broken frontend (`up_…` IDs) | **Verified** |
-| HEIC from iPhone camera roll in Safari | **Unproven** — `createImageBitmap` never tested on real device |
-| WebMCP discovery → execute (bolt-on path) | **Unproven** — harness bypasses WebMCP; use `webmcp-cdp-smoke.mjs` when Chrome preview available |
+| WebMCP discovery → execute (bolt-on path) | **Open** — Priority 2; desktop Chrome preview only |
 
-**Safe public lead:** resize/compression wrapper calling the site's own backend without code changes.
+**Safe public lead:** "We fixed the iPhone HEIC upload problem — tested on Safari and iOS Chrome with real camera-roll files, client-side conversion, same backend."
 
-**Do not claim yet:** "We fixed the iPhone HEIC problem" or "WebMCP bolt-on works end-to-end."
-
-**Interim HEIC framing:** "Expected to work on Safari where HEIC decodes natively — pending device verification."
+**Do not claim yet:** "WebMCP bolt-on works end-to-end" until Priority 2 passes.
 
 ## Files
 
@@ -44,7 +42,7 @@ Open: [http://127.0.0.1:8765/smart-upload-test-harness.html](http://127.0.0.1:87
 
 1. **Large JPEG/PNG (>2MB)** — left rejects size; right resizes/compresses under 2MB. **(Verified on desktop.)**
 2. **Drag-and-drop (desktop)** — left ignores drops; right handles drop on the smart-upload pane.
-3. **HEIC from iPhone** — left rejects with "Unsupported binary file"; right *may* convert to JPEG and upload **if** the browser decodes HEIC. **Not verified — see [`VERIFICATION.md`](VERIFICATION.md) Priority 1.**
+3. **HEIC from iPhone** — left rejects with "Unsupported binary file"; right converts to JPEG and uploads. **Verified on Safari and iOS Chrome (2026-08-28).**
 
 Both sides should show the **same upload ID format** (`up_…`) and timestamp when the smart side succeeds — proof it's the identical `uploadToBackend()` call path.
 
@@ -72,20 +70,17 @@ The harness **bypasses WebMCP discovery** and calls `uploadToBackend()` in the i
 
 | Fix | Desktop | Mobile |
 | --- | --- | --- |
-| Resize / canvas / JPEG encode | **Verified** (18MB PNG test) | Expected to work (standard Web APIs) |
+| Resize / canvas / JPEG encode | **Verified** (desktop + iPhone Safari) | **Verified** — 3.7MB JPEG + HEIC on clawql.com |
 | Drag-and-drop anywhere | Works in template scope | **N/A** — no drag gesture; use file picker |
-| HEIC conversion (`createImageBitmap`) | Untested even on desktop | **Unproven** — tweet's core pain point; needs real iPhone Safari test |
+| HEIC conversion (`createImageBitmap`) | Untested on desktop Chrome | **Verified** — Safari + iOS Chrome, same device, `IMG_6432.HEIC` (2026-08-28) |
 
-Do not use "we fixed iPhone HEIC" in public framing until [`VERIFICATION.md`](VERIFICATION.md) Priority 1 passes.
-
-**Update (2026-08-28):** Priority 1 passed — real iPhone Safari test with `IMG_6432.HEIC` on clawql.com. HEIC headline is now fair game; WebMCP CDP (Priority 2) still open.
+**iPhone HEIC claim is verified on both mobile browsers.** WebMCP CDP (Priority 2) is the only open item — see [`VERIFICATION.md`](VERIFICATION.md).
 
 ## Before flagship demo (Act 2/3)
 
-1. **iPhone Safari + camera-roll HEIC** (~5 min, any iPhone) — determines whether the tweet's pain point is actually solved
-2. **WebMCP CDP smoke** — `node webmcp-cdp-smoke.mjs` with Chrome preview; exercises discovery → execute, not the harness bypass
-
-Neither blocks merging this folder as an example artifact on `main`.
+1. ~~**iPhone Safari + camera-roll HEIC**~~ — **Done** (Safari + iOS Chrome, 2026-08-28)
+2. **WebMCP CDP smoke** — `node webmcp-cdp-smoke.mjs` with Chrome preview
+3. **Optional:** ~30s iPhone screen recording of HEIC rejection-then-fix for public demo clip (recommended in VERIFICATION.md)
 
 ## Deliberate JS exception
 
