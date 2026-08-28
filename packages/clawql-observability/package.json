@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config ../../vitest.config.ts packages/clawql-observability",
     "compose:up": "docker compose -f docker/docker-compose.yaml up -d",
-    "compose:down": "docker compose -f docker/docker-compose.yaml down"
+    "compose:down": "docker compose -f docker/docker-compose.yaml down",
+    "smoke:compose": "bash scripts/smoke-lgtm-plus.sh"
   },
   "dependencies": {
     "effect": "^3.21.4"

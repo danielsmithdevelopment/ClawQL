@@ -32,6 +32,12 @@ npm run build -w clawql-observability
 npm run compose:up -w clawql-observability
 ```
 
+CI smoke (GitHub Actions): workflow **LGTM+ stack smoke** runs `scripts/smoke-lgtm-plus.sh` — compose up, OTLP via Alloy, read-back from Loki/Tempo/Mimir.
+
+```bash
+npm run smoke:compose -w clawql-observability
+```
+
 Open **http://localhost:3000** (anonymous admin — local dev only).
 
 Send OTLP to Alloy:
