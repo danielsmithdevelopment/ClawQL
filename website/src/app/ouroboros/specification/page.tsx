@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'DAOS Coordination Layer — transport & Ouroboros',
@@ -57,7 +57,10 @@ export default function DaosSpecificationPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/ouroboros/specification" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/ouroboros/specification"
+        className="flex-auto"
+      />
     </article>
   )
 }

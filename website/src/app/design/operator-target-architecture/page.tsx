@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Operator target architecture (planned)',
@@ -66,7 +66,10 @@ export default function OperatorTargetArchitecturePage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/design/operator-target-architecture" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/design/operator-target-architecture"
+        className="flex-auto"
+      />
     </article>
   )
 }

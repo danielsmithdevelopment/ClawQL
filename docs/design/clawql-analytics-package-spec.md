@@ -75,13 +75,13 @@ Production code in the monorepo uses **Effect**-returning methods (see `packages
 
 ```typescript
 export interface AnalyticsProvider {
-  id: string
-  name: string
-  initialize(config: ProviderConfig): Promise<void>
-  pageview(event: PageviewEvent): Promise<void>
-  capture(event: CustomEvent): Promise<void>
-  identify(sessionId: string, traits?: Record<string, unknown>): Promise<void>
-  health(): Promise<{ status: 'healthy' | 'degraded' | 'down'; details?: string }>
+  id: string;
+  name: string;
+  initialize(config: ProviderConfig): Promise<void>;
+  pageview(event: PageviewEvent): Promise<void>;
+  capture(event: CustomEvent): Promise<void>;
+  identify(sessionId: string, traits?: Record<string, unknown>): Promise<void>;
+  health(): Promise<{ status: "healthy" | "degraded" | "down"; details?: string }>;
 }
 ```
 
@@ -99,7 +99,7 @@ The first provider implementation, wrapping PostHog's open-core (MIT) capture an
 
 The single most important design decision in this package: **individual pageview and event capture calls are not written to the WORM audit trail.** A page view is not a compliance-relevant action, and logging every one through `clawql-audit`'s hash-chained, Merkle-batched, multi-chain-anchored trail would be enormous, pointless volume for data that has no forensic or regulatory significance.
 
-What *does* get audited, because these are the actions that matter for the governance story:
+What _does_ get audited, because these are the actions that matter for the governance story:
 
 - `ANALYTICS_PROVIDER_ADDED`
 - `ANALYTICS_PROVIDER_REMOVED`
@@ -115,12 +115,12 @@ What *does* get audited, because these are the actions that matter for the gover
 
 Reading or changing analytics configuration goes through the same ATR scope mechanism as any other ClawQL-mediated action:
 
-| Scope | Meaning |
-|-------|---------|
+| Scope                      | Meaning                                    |
+| -------------------------- | ------------------------------------------ |
 | `analytics:view_aggregate` | View dashboards and aggregate metrics only |
-| `analytics:view_raw` | View underlying, non-aggregated event data |
-| `analytics:configure` | Add, remove, or reconfigure providers |
-| `analytics:export` | Export raw data out of the provider |
+| `analytics:view_raw`       | View underlying, non-aggregated event data |
+| `analytics:configure`      | Add, remove, or reconfigure providers      |
+| `analytics:export`         | Export raw data out of the provider        |
 
 ---
 
@@ -134,12 +134,12 @@ Reading or changing analytics configuration goes through the same ATR scope mech
 
 ## 9. Provider Comparison Reference
 
-| Provider | License | Grafana | Depth | Notes |
-|---|---|---|---|---|
-| PostHog | MIT core, `ee/` proprietary | Custom exporter only | Full product analytics | v0 provider |
-| Matomo | GPL | Native plugin | Full-featured | Best Grafana fit |
-| Plausible | AGPL | Custom exporter only | Minimal pageviews/events | Lightweight |
-| Umami | MIT | Custom exporter only | Similar to Plausible | Simple self-host |
+| Provider  | License                     | Grafana              | Depth                    | Notes            |
+| --------- | --------------------------- | -------------------- | ------------------------ | ---------------- |
+| PostHog   | MIT core, `ee/` proprietary | Custom exporter only | Full product analytics   | v0 provider      |
+| Matomo    | GPL                         | Native plugin        | Full-featured            | Best Grafana fit |
+| Plausible | AGPL                        | Custom exporter only | Minimal pageviews/events | Lightweight      |
+| Umami     | MIT                         | Custom exporter only | Similar to Plausible     | Simple self-host |
 
 ---
 
@@ -170,4 +170,4 @@ Reading or changing analytics configuration goes through the same ATR scope mech
 
 ---
 
-*clawql-analytics Package Specification · v0.1 · August 2026*
+_clawql-analytics Package Specification · v0.1 · August 2026_

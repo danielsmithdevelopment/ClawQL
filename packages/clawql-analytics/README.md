@@ -47,12 +47,12 @@ await Effect.runPromise(program.pipe(Effect.provide(AnalyticsLive)));
 
 ## Scopes
 
-| Scope | Purpose |
-|-------|---------|
-| `analytics:view_aggregate` | Dashboards / aggregates only |
-| `analytics:view_raw` | Underlying event data |
-| `analytics:configure` | Add/remove/reconfigure providers |
-| `analytics:export` | Export raw data |
+| Scope                      | Purpose                          |
+| -------------------------- | -------------------------------- |
+| `analytics:view_aggregate` | Dashboards / aggregates only     |
+| `analytics:view_raw`       | Underlying event data            |
+| `analytics:configure`      | Add/remove/reconfigure providers |
+| `analytics:export`         | Export raw data                  |
 
 ## Governance audit (WORM)
 

@@ -42,7 +42,8 @@ export const AnalyticsServiceLive = Layer.effect(
     return AnalyticsService.of({
       pageview: (event) => withActive((provider) => provider.pageview(event)),
       capture: (event) => withActive((provider) => provider.capture(event)),
-      identify: (sessionId, traits) => withActive((provider) => provider.identify(sessionId, traits)),
+      identify: (sessionId, traits) =>
+        withActive((provider) => provider.identify(sessionId, traits)),
       health: () => withActive((provider) => provider.health()),
     });
   })
@@ -57,10 +58,7 @@ export const AnalyticsLive = Layer.merge(
 export function createAnalyticsLayer(
   registryLayer: Layer.Layer<AnalyticsRegistryService>
 ): Layer.Layer<AnalyticsRegistryService | AnalyticsService> {
-  return Layer.merge(
-    registryLayer,
-    AnalyticsServiceLive.pipe(Layer.provide(registryLayer))
-  );
+  return Layer.merge(registryLayer, AnalyticsServiceLive.pipe(Layer.provide(registryLayer)));
 }
 
 export { createAnalyticsRegistryLayer };

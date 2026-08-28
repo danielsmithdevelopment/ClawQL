@@ -58,7 +58,9 @@ export function createAnalyticsRegistryLayer(
         Effect.gen(function* () {
           if (state.providers.has(provider.id)) {
             return yield* Effect.fail(
-              new AnalyticsError({ reason: `Analytics provider already registered: ${provider.id}` })
+              new AnalyticsError({
+                reason: `Analytics provider already registered: ${provider.id}`,
+              })
             );
           }
           yield* provider.initialize(config);

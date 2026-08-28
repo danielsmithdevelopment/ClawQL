@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'Custom sources — register MCP servers into one gateway',
@@ -66,7 +66,10 @@ export default function GettingStartedCustomSourcesPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/getting-started/custom-sources" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/getting-started/custom-sources"
+        className="flex-auto"
+      />
     </article>
   )
 }

@@ -36,8 +36,9 @@ export const exportAggregateMetricsEffect = (
       [`clawql_analytics_unique_sessions{provider="${provider.id}"}`]: stats.uniqueSessions,
     };
     stats.topPages?.forEach((row, i) => {
-      metrics[`clawql_analytics_top_page_count{provider="${provider.id}",rank="${i + 1}",path="${row.path}"}`] =
-        row.count;
+      metrics[
+        `clawql_analytics_top_page_count{provider="${provider.id}",rank="${i + 1}",path="${row.path}"}`
+      ] = row.count;
     });
     stats.topReferrers?.forEach((row, i) => {
       metrics[

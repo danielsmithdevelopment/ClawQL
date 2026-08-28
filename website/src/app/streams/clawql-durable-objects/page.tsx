@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
-import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 
 export const metadata = docsPageMetadata({
   title: 'ClawQL Durable Objects — session runtime',
@@ -62,7 +62,10 @@ export default function ClawqlDurableObjectsPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/streams/clawql-durable-objects" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/streams/clawql-durable-objects"
+        className="flex-auto"
+      />
     </article>
   )
 }

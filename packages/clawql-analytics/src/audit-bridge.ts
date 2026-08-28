@@ -26,9 +26,7 @@ export type AnalyticsGovernanceEvent = {
   readonly detail?: Record<string, unknown>;
 };
 
-const appendGovernanceEvent = (
-  event: AnalyticsGovernanceEvent
-): Effect.Effect<void> =>
+const appendGovernanceEvent = (event: AnalyticsGovernanceEvent): Effect.Effect<void> =>
   appendProcessWormEffect({
     type: event.type,
     timestamp: event.timestamp,
