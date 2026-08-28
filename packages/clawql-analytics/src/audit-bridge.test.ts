@@ -18,9 +18,7 @@ describe("clawql-analytics governance WORM boundary", () => {
   });
 
   it("writes WORM entries for provider governance events", async () => {
-    await Effect.runPromise(
-      logProviderAddedEffect({ actorId: "admin-1", providerId: "posthog" })
-    );
+    await Effect.runPromise(logProviderAddedEffect({ actorId: "admin-1", providerId: "posthog" }));
 
     expect(appendProcessWormEffect).toHaveBeenCalledTimes(1);
     expect(appendProcessWormEffect).toHaveBeenCalledWith(

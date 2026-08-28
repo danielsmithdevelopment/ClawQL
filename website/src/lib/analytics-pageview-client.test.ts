@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   postAnalyticsPageview,
   shouldLogAnalyticsClientFailures,
-  warnAnalyticsClientFailure,
 } from './analytics-pageview-client'
 
 describe('analytics-pageview-client', () => {
