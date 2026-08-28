@@ -78,6 +78,8 @@ The harness **bypasses WebMCP discovery** and calls `uploadToBackend()` in the i
 
 Do not use "we fixed iPhone HEIC" in public framing until [`VERIFICATION.md`](VERIFICATION.md) Priority 1 passes.
 
+**Update (2026-08-28):** Priority 1 passed — real iPhone Safari test with `IMG_6432.HEIC` on clawql.com. HEIC headline is now fair game; WebMCP CDP (Priority 2) still open.
+
 ## Before flagship demo (Act 2/3)
 
 1. **iPhone Safari + camera-roll HEIC** (~5 min, any iPhone) — determines whether the tweet's pain point is actually solved
