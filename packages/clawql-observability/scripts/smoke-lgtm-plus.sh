@@ -38,7 +38,11 @@ wait_url "Loki" "http://127.0.0.1:3100/ready"
 wait_url "Tempo" "http://127.0.0.1:3200/ready"
 wait_url "Mimir" "http://127.0.0.1:9009/ready"
 wait_url "Alloy" "http://127.0.0.1:12345/-/ready" 24
-wait_url "Pyroscope" "http://127.0.0.1:4040/healthz"
+# Pyroscope exposes /ready (not /healthz) in grafana/pyroscope 1.x images.
+if ! curl -sf "http://127.0.0.1:4040/ready" >/dev/null 2>&1; then
+  wait_url "Pyroscope" "http://127.0.0.1:4040/"
+fi
+echo "ready: Pyroscope (http://127.0.0.1:4040/)"
 
 run_telemetrygen() {
   local subcommand="$1"
