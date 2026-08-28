@@ -18,11 +18,11 @@ The TypeScript registry is the **authorized front door** to observability config
 
 ClawQL already applies this elsewhere:
 
-| Package | Solved elsewhere | ClawQL's job |
-| ------- | ---------------- | ------------ |
-| **`clawql-web3`** | Chainlink oracle consensus | Governance and integration around the oracle — not a second consensus layer |
-| **`clawql-cellrt`** | celld coordination primitives | Fork/adopt celld — not rebuild DO-style coordination from scratch |
-| **`clawql-observability`** | Alloy OTLP pipeline (batch, retry, fan-out) | Registry, auth, WORM, health, config generation, query federation |
+| Package                    | Solved elsewhere                            | ClawQL's job                                                                |
+| -------------------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
+| **`clawql-web3`**          | Chainlink oracle consensus                  | Governance and integration around the oracle — not a second consensus layer |
+| **`clawql-cellrt`**        | celld coordination primitives               | Fork/adopt celld — not rebuild DO-style coordination from scratch           |
+| **`clawql-observability`** | Alloy OTLP pipeline (batch, retry, fan-out) | Registry, auth, WORM, health, config generation, query federation           |
 
 **Grafana Alloy** already implements hot-path telemetry correctly: receivers → processors → multiple exporters via River `output` lists, with batching, retries, backpressure, and per-exporter failure isolation. Reimplementing that fan-out in TypeScript would produce a second, worse version of the same problem.
 
@@ -55,12 +55,12 @@ Nothing in the registry pushes individual spans, log lines, or metric samples in
 
 Observability backends differ by signal. A single `ObservabilityProvider` interface would force awkward no-ops (a metrics-only vendor implementing empty `pushTrace`). Instead:
 
-| Interface | Signal | Example backends |
-| --------- | ------ | ---------------- |
-| **`LogProvider`** | Logs | Loki, Elasticsearch, Datadog logs API |
-| **`MetricProvider`** | Metrics | Mimir, Prometheus remote_write, Grafana Cloud |
-| **`TraceProvider`** | Traces | Tempo, Jaeger, Honeycomb |
-| **`ProfileProvider`** | Profiles | Pyroscope, Grafana Cloud profiles |
+| Interface             | Signal   | Example backends                              |
+| --------------------- | -------- | --------------------------------------------- |
+| **`LogProvider`**     | Logs     | Loki, Elasticsearch, Datadog logs API         |
+| **`MetricProvider`**  | Metrics  | Mimir, Prometheus remote_write, Grafana Cloud |
+| **`TraceProvider`**   | Traces   | Tempo, Jaeger, Honeycomb                      |
+| **`ProfileProvider`** | Profiles | Pyroscope, Grafana Cloud profiles             |
 
 Each interface defines:
 
@@ -80,12 +80,12 @@ Loki, Mimir, Tempo, and Pyroscope are the **default first plugins** for their re
 
 ## 5. Contrast with `clawql-analytics`
 
-| Aspect | `clawql-analytics` | `clawql-observability` registry |
-| ------ | ------------------ | ------------------------------- |
-| Active providers | **One** active at a time (`setActive`) | **Many** per signal type (redundant fan-out) |
-| Hot-path capture | TypeScript → provider HTTP API | Alloy → exporter(s) |
-| Provider shape | Single `AnalyticsProvider` | Four signal-typed interfaces |
-| Query | Provider dashboard / Phase 4 aggregate API | **Federated query layer** in ClawQL (§7) |
+| Aspect           | `clawql-analytics`                         | `clawql-observability` registry              |
+| ---------------- | ------------------------------------------ | -------------------------------------------- |
+| Active providers | **One** active at a time (`setActive`)     | **Many** per signal type (redundant fan-out) |
+| Hot-path capture | TypeScript → provider HTTP API             | Alloy → exporter(s)                          |
+| Provider shape   | Single `AnalyticsProvider`                 | Four signal-typed interfaces                 |
+| Query            | Provider dashboard / Phase 4 aggregate API | **Federated query layer** in ClawQL (§7)     |
 
 Analytics intentionally picks one product-analytics backend. Observability intentionally duplicates to N backends for resilience and multi-tenant routing — but that duplication happens in Alloy `output` lists, not in TS loops over providers.
 
@@ -125,12 +125,12 @@ Ingest fan-out is Alloy's job. **Query federation is where the TypeScript layer 
 
 Each signal type speaks a different query language and HTTP API:
 
-| Signal | Typical query API |
-| ------ | ----------------- |
-| Logs | LogQL (Loki) |
-| Metrics | PromQL (Mimir/Prometheus) |
-| Traces | TraceQL / Tempo search API |
-| Profiles | Pyroscope label/query API |
+| Signal   | Typical query API          |
+| -------- | -------------------------- |
+| Logs     | LogQL (Loki)               |
+| Metrics  | PromQL (Mimir/Prometheus)  |
+| Traces   | TraceQL / Tempo search API |
+| Profiles | Pyroscope label/query API  |
 
 The registry exposes a **governed read facade**:
 
@@ -149,7 +149,7 @@ Grafana remains the primary human correlation UI; the federation layer serves Cl
 
 Some vendors cannot accept OTLP and require a **direct TypeScript push adapter** (custom HTTP, proprietary SDK, legacy agent protocol). This path is **exceptional** — expected to be **rare**, not the default.
 
-**Governance rule:** *Exceptional means rare, not less audited.*
+**Governance rule:** _Exceptional means rare, not less audited._
 
 Any provider on the escape hatch MUST receive the **same** treatment as OTLP-backed providers:
 
@@ -186,14 +186,14 @@ Document any future quorum processor with explicit SLO impact analysis before im
 
 Following `clawql-analytics`, define stable scope keys (exact names TBD in implementation):
 
-| Scope | Purpose |
-| ----- | ------- |
-| `observability:configure` | Register, remove, or reconfigure providers |
-| `observability:query_logs` | Federated LogQL / log read |
-| `observability:query_metrics` | Federated PromQL / metric read |
-| `observability:query_traces` | Federated trace search |
-| `observability:query_profiles` | Federated profile read |
-| `observability:export` | Export raw telemetry out of governed backends |
+| Scope                          | Purpose                                       |
+| ------------------------------ | --------------------------------------------- |
+| `observability:configure`      | Register, remove, or reconfigure providers    |
+| `observability:query_logs`     | Federated LogQL / log read                    |
+| `observability:query_metrics`  | Federated PromQL / metric read                |
+| `observability:query_traces`   | Federated trace search                        |
+| `observability:query_profiles` | Federated profile read                        |
+| `observability:export`         | Export raw telemetry out of governed backends |
 
 Ingest credentials (Faro JWT, OTLP mTLS) remain separate from registry scopes — browsers and collectors do not hold configure scopes.
 
@@ -217,11 +217,11 @@ Bridge to `clawql-audit` using the same Effect patterns as analytics governance 
 
 Order is deliberate — each phase unlocks the next without painting into a corner.
 
-| Phase | Deliverable | Rationale |
-| ----- | ----------- | --------- |
+| Phase  | Deliverable                                                                                                                 | Rationale                                                           |
+| ------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **3a** | Signal-typed interfaces, per-type registries, built-in LGTM+ provider adapters, scopes + WORM hooks, health check scheduler | Governance and data model first; no Alloy coupling yet beyond types |
-| **3b** | Alloy config generator (snapshot → River), apply/reload integration, tests against `config.river` golden files | Runtime fan-out wired from registry without TS push |
-| **3c** | Query federation facade per signal type, MCP/HTTP read API, raw-access audit | Hard read-path problem; depends on stable provider metadata from 3a |
+| **3b** | Alloy config generator (snapshot → River), apply/reload integration, tests against `config.river` golden files              | Runtime fan-out wired from registry without TS push                 |
+| **3c** | Query federation facade per signal type, MCP/HTTP read API, raw-access audit                                                | Hard read-path problem; depends on stable provider metadata from 3a |
 
 **Explicitly not in 3a–3c:** blocking N-of-M quorum processor, broad escape-hatch provider catalog, Langfuse/security-layer correlation (later package-spec phases).
 
