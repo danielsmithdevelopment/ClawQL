@@ -1,0 +1,41 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "Mimir" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "sum(rate({app=\"frontend\", level=\"error\"}[5m]))",
+          "legendFormat": "frontend errors/s"
+        }
+      ],
+      "title": "Frontend error rate (placeholder — wire labels in Phase 2 Faro)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [{ "expr": "{service=~\".+\"}", "legendFormat": "" }],
+      "title": "Recent logs",
+      "type": "logs"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["clawql", "lgtm-plus"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "ClawQL LGTM+ Overview",
+  "uid": "clawql-lgtm-plus-overview",
+  "version": 1
+}

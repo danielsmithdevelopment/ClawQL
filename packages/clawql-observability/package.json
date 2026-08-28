@@ -1,0 +1,73 @@
+{
+  "name": "clawql-observability",
+  "version": "0.1.0",
+  "description": "ClawQL LGTM+ observability stack (Loki, Grafana, Tempo, Mimir, Pyroscope) with Alloy collection — distinct from clawql-audit and clawql-analytics",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./paths": {
+      "types": "./dist/paths.d.ts",
+      "import": "./dist/paths.js",
+      "require": "./dist/paths.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts packages/clawql-observability",
+    "compose:up": "docker compose -f docker/docker-compose.yaml up -d",
+    "compose:down": "docker compose -f docker/docker-compose.yaml down",
+    "smoke:compose": "bash scripts/smoke-lgtm-plus.sh"
+  },
+  "dependencies": {
+    "effect": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "alloy",
+    "alerts",
+    "dashboards",
+    "docker",
+    "helm",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-observability"
+  },
+  "keywords": [
+    "clawql",
+    "observability",
+    "grafana",
+    "lgtm",
+    "alloy",
+    "loki",
+    "tempo",
+    "mimir",
+    "pyroscope"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
