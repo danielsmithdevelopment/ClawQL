@@ -37,4 +37,5 @@ export const signTelemetryJwtEffect = (
 
 export const signTelemetryJwt = (
   input: SignTelemetryJwtInput
-): Promise<{ token: string; expiresAt: number }> => Effect.runPromise(signTelemetryJwtEffect(input));
+): Promise<{ token: string; expiresAt: number }> =>
+  Effect.runPromise(signTelemetryJwtEffect(input));

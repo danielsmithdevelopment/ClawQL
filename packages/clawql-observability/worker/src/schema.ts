@@ -3,23 +3,12 @@
  * Reject oversized / malformed shapes before they reach Alloy.
  */
 
-const ALLOWED_EVENT_TYPES = new Set([
-  "exception",
-  "measurement",
-  "event",
-  "log",
-  "trace",
-]);
+const ALLOWED_EVENT_TYPES = new Set(["exception", "measurement", "event", "log", "trace"]);
 
 export type SchemaResult =
-  | { readonly ok: true; readonly value: unknown }
-  | { readonly ok: false; readonly reason: string };
+  { readonly ok: true; readonly value: unknown } | { readonly ok: false; readonly reason: string };
 
-export const validatePayload = (
-  body: unknown,
-  maxBytes: number,
-  rawSize: number
-): SchemaResult => {
+export const validatePayload = (body: unknown, maxBytes: number, rawSize: number): SchemaResult => {
   if (rawSize > maxBytes) {
     return { ok: false, reason: "payload_too_large" };
   }

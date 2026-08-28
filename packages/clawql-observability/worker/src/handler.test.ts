@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { enrichExceptions } from "./enrich.js";
-import {
-  createFaroHandlerState,
-  handleFaroRequest,
-} from "./handler.js";
+import { createFaroHandlerState, handleFaroRequest } from "./handler.js";
 import { signJwt, verifyJwt } from "./jwt.js";
 import { checkRateLimit } from "./rate-limit.js";
 import { validatePayload } from "./schema.js";

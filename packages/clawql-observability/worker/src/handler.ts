@@ -44,7 +44,10 @@ const corsPreflight = (request: Request, allowed: Set<string>): Response => {
   });
 };
 
-const corsAccepted = (reqOrigin: string | null, allowed: Set<string>): Record<string, string> | undefined => {
+const corsAccepted = (
+  reqOrigin: string | null,
+  allowed: Set<string>
+): Record<string, string> | undefined => {
   if (reqOrigin && (allowed.has(reqOrigin) || allowed.has("*"))) {
     return { "Access-Control-Allow-Origin": reqOrigin, Vary: "Origin" };
   }

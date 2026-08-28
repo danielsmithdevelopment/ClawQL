@@ -14,4 +14,5 @@ export default {
 };
 
 /** Test helper — mint a telemetry JWT with explicit claims. */
-export const signTelemetryJwt = (claims: JwtClaims, secret: string): Promise<string> => signJwt(claims, secret);
+export const signTelemetryJwt = (claims: JwtClaims, secret: string): Promise<string> =>
+  signJwt(claims, secret);

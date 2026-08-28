@@ -71,9 +71,15 @@ export const signTelemetryJwtRaw = async (
   claims: TelemetryJwtClaims,
   secret: string
 ): Promise<string> => {
-  const header = bytesToB64url(new TextEncoder().encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));
+  const header = bytesToB64url(
+    new TextEncoder().encode(JSON.stringify({ alg: "HS256", typ: "JWT" }))
+  );
   const payload = bytesToB64url(new TextEncoder().encode(JSON.stringify(claims)));
   const key = await importHmacKey(secret, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${header}.${payload}`));
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`${header}.${payload}`)
+  );
   return `${header}.${payload}.${bytesToB64url(sig)}`;
 };
