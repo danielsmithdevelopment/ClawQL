@@ -1,0 +1,249 @@
+<!--
+  /mcp-ui smart-upload template
+
+  Wraps a WebMCP-discovered upload tool (e.g. PixelDrop's `upload_photo`,
+  discovered via `clawql sources add <url> --kind webmcp`) with client-side
+  fixes for the exact bug class shown in the OpenRouter/HEIC clip:
+
+    - HEIC/AVIF (and anything else the browser's <canvas> can decode)
+      gets converted to JPEG before submission
+    - Oversized images get resized client-side before submission
+    - Dropping a file ANYWHERE on this template's drop zone is handled,
+      not just a drop onto the exact <input> element
+
+  IMPORTANT — this is the one place /mcp-ui takes a deliberate exception
+  to its "server-rendered, no client JS framework" posture. This is
+  narrow and consistent: a small amount of vanilla JS for format
+  conversion/resize/drag handling, loaded the same way htmx.min.js
+  itself is loaded (no build step, no framework, no bundler). Everything
+  downstream of this template — the actual tool `execute` call, IDP
+  routing, WORM logging — is unchanged from the rest of the /mcp-ui spec.
+
+  Template selection: this overrides the auto-generated fallback form
+  for any tool whose description or tags match "upload" + "photo"/"image",
+  per Section 2.3 of the /mcp-ui spec (pre-built templates override
+  auto-generation when present).
+-->
+
+<div class="mcp-ui-smart-upload" id="smart-upload-{{toolName}}">
+  <style>
+    .mcp-ui-smart-upload .drop-zone {
+      border: 2px dashed #6b7280;
+      border-radius: 8px;
+      padding: 32px;
+      text-align: center;
+      color: #6b7280;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .mcp-ui-smart-upload .drop-zone.drag-active {
+      border-color: #2563eb;
+      background-color: #eff6ff;
+      color: #2563eb;
+    }
+    .mcp-ui-smart-upload .preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .mcp-ui-smart-upload .preview img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .mcp-ui-smart-upload .conversion-note {
+      font-size: 12px;
+      color: #059669;
+      margin-top: 4px;
+    }
+    .mcp-ui-smart-upload .field-help {
+      /* matches the rest of /mcp-ui's wrapping fix from PR #979 */
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .mcp-ui-smart-upload .result--error {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+  </style>
+
+  <div class="drop-zone" id="drop-zone-{{toolName}}">
+    <p>Drop an image anywhere in this box — HEIC, AVIF, oversized photos,
+       all handled automatically.</p>
+    <input type="file" id="file-input-{{toolName}}"
+           accept="image/*,.heic,.heif,.avif"
+           style="display:none">
+    <button type="button"
+            onclick="document.getElementById('file-input-{{toolName}}').click()">
+      Or click to choose a file
+    </button>
+  </div>
+
+  <div class="preview" id="preview-{{toolName}}" style="display:none">
+    <img id="preview-img-{{toolName}}" alt="Preview">
+    <div>
+      <div id="preview-filename-{{toolName}}"></div>
+      <div class="conversion-note" id="conversion-note-{{toolName}}"></div>
+    </div>
+  </div>
+
+  <!--
+    This is still a normal HTMX form. The JS below only intercepts BEFORE
+    submission to fix the file; the actual submission mechanism is
+    unchanged from every other /mcp-ui form.
+  -->
+  <form hx-post="/mcp-ui/execute/{{toolName}}"
+        hx-target="#result-{{toolName}}"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        id="upload-form-{{toolName}}">
+    <input type="hidden" name="file" id="processed-file-{{toolName}}">
+    <input type="hidden" name="filename" id="processed-filename-{{toolName}}">
+    <label class="field-help">Caption (optional)</label>
+    <input type="text" name="caption" placeholder="A caption for this photo">
+    <button type="submit" id="submit-btn-{{toolName}}" disabled>
+      Upload
+    </button>
+  </form>
+
+  <div id="result-{{toolName}}"></div>
+
+  <script>
+    (function () {
+      const toolName = "{{toolName}}";
+      const MAX_DIMENSION = 2048;       // resize target, matches most
+                                         // upload-tool practical limits
+      const MAX_OUTPUT_BYTES = 1.8 * 1024 * 1024; // stay under common
+                                                    // 2MB backend limits
+                                                    // with margin
+
+      const root = document.getElementById(`smart-upload-${toolName}`);
+      const dropZone = document.getElementById(`drop-zone-${toolName}`);
+      const fileInput = document.getElementById(`file-input-${toolName}`);
+      const submitBtn = document.getElementById(`submit-btn-${toolName}`);
+
+      // --- Drag-anywhere handling -------------------------------------
+      // Fixes bug class: "drop image anywhere, handle it, don't refresh"
+      // Scoped to this template root so multiple upload tools on one
+      // catalog page don't fight over the same drag events.
+      ['dragenter', 'dragover'].forEach(evt => {
+        root.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('drag-active');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        root.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('drag-active');
+        });
+      });
+      root.addEventListener('drop', async (e) => {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) await processFile(file);
+      });
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (file) await processFile(file);
+      });
+
+      // --- Core fix: convert + resize before anything is submitted ----
+      async function processFile(file) {
+        const notes = [];
+
+        // Decode via <canvas>. Modern browsers with HEIC/AVIF codec
+        // support (or a small polyfill, loaded the same no-build-step
+        // way as htmx.min.js) can draw these formats to canvas directly.
+        // If the browser can't decode the source format at all, this
+        // is where a conversion library would be invoked - kept generic
+        // here since exact library choice is a deployment decision, not
+        // a template decision.
+        let bitmap = await createImageBitmap(file).catch(() => null);
+        if (!bitmap) {
+          showError(
+            `Could not read "${file.name}" as an image. If this is a ` +
+            `HEIC/AVIF file, this browser may need codec support enabled.`
+          );
+          return;
+        }
+
+        if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+          notes.push(`Converted from ${file.type || 'unknown format'} to JPEG`);
+        }
+
+        // Resize if needed
+        let { width, height } = bitmap;
+        const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+        if (scale < 1) {
+          notes.push(
+            `Resized from ${width}×${height} to ` +
+            `${Math.round(width * scale)}×${Math.round(height * scale)}`
+          );
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+        bitmap.close?.();
+
+        // Encode as JPEG, stepping down quality if still oversized
+        let quality = 0.9;
+        let blob = await canvasToBlob(canvas, quality);
+        while (blob.size > MAX_OUTPUT_BYTES && quality > 0.4) {
+          quality -= 0.1;
+          blob = await canvasToBlob(canvas, quality);
+        }
+        if (quality < 0.9) {
+          notes.push(`Compressed to fit under ${(MAX_OUTPUT_BYTES / 1024 / 1024).toFixed(1)}MB`);
+        }
+
+        const base64 = await blobToBase64(blob);
+        const cleanFilename = file.name.replace(/\.(heic|heif|avif)$/i, '.jpg');
+
+        // Populate the hidden fields the real HTMX form submits
+        document.getElementById(`processed-file-${toolName}`).value = base64;
+        document.getElementById(`processed-filename-${toolName}`).value = cleanFilename;
+
+        // Preview
+        const previewEl = document.getElementById(`preview-${toolName}`);
+        previewEl.style.display = 'flex';
+        document.getElementById(`preview-img-${toolName}`).src =
+          URL.createObjectURL(blob);
+        document.getElementById(`preview-filename-${toolName}`).textContent =
+          cleanFilename;
+        document.getElementById(`conversion-note-${toolName}`).textContent =
+          notes.length ? notes.join(' · ') : 'No conversion needed';
+
+        submitBtn.disabled = false;
+      }
+
+      function canvasToBlob(canvas, quality) {
+        return new Promise(resolve =>
+          canvas.toBlob(resolve, 'image/jpeg', quality)
+        );
+      }
+      function blobToBase64(blob) {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result.split(',')[1]);
+          reader.readAsDataURL(blob);
+        });
+      }
+      function showError(msg) {
+        const resultEl = document.getElementById(`result-${toolName}`);
+        resultEl.innerHTML = `<div class="result result--error">${msg}</div>`;
+      }
+    })();
+  </script>
+</div>
