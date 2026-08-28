@@ -16,6 +16,7 @@ import {
   NavbarLogo,
   NavbarWithLinksActionsAndCenteredLogo,
 } from '@/components/sections/navbar-with-links-actions-and-centered-logo'
+import { ClawqlAnalyticsPageview } from '@/components/analytics/ClawqlAnalyticsPageview'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { DEFAULT_OG_IMAGE_ALT, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_PATH, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo'
@@ -114,6 +115,7 @@ export default function RootLayout({
             Skip to main content
           </a>
           <SiteStructuredData />
+          <ClawqlAnalyticsPageview site="marketing" />
           <WebMcpRegister />
           <NavbarWithLinksActionsAndCenteredLogo
             id="navbar"
