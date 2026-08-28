@@ -49,11 +49,13 @@ fi
 run_telemetrygen() {
   local subcommand="$1"
   shift
+  # Host-only endpoint with --otlp-http; including http:// breaks URL construction in older telemetrygen.
   docker run --rm --network host "${TELEMETRYGEN_IMAGE}" \
     "${subcommand}" \
     --otlp-http \
-    --otlp-endpoint "http://127.0.0.1:4318" \
-    --service "${SERVICE_NAME}" \
+    --otlp-insecure \
+    --otlp-endpoint "127.0.0.1:4318" \
+    --otlp-attributes "service.name=\"${SERVICE_NAME}\"" \
     "$@"
 }
 
