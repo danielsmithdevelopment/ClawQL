@@ -23,25 +23,10 @@ otelcol.processor.batch "default" {
   send_batch_size = 1000
 
   output {
-    metrics = [otelcol.processor.transform.align_metrics.input]
+    // Phase 1: direct export; deltatocumulative transform added when validated against Alloy OTTL.
+    metrics = [otelcol.exporter.prometheus.mimir.input]
     logs    = [otelcol.exporter.otlphttp.loki.input]
     traces  = [otelcol.exporter.otlphttp.tempo.input]
-  }
-}
-
-// Delta-to-cumulative — required for Mimir compatibility (see package spec §4).
-otelcol.processor.transform "align_metrics" {
-  error_mode = "ignore"
-
-  metric_statements {
-    context    = "metric"
-    statements = [
-      "set(temporality, \"Cumulative\") where temporality == \"Delta\"",
-    ]
-  }
-
-  output {
-    metrics = [otelcol.exporter.prometheus.mimir.input]
   }
 }
 
