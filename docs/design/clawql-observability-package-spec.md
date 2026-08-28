@@ -98,9 +98,15 @@ Deploy secrets via `wrangler secret put JWT_SIGNING_KEY`; never commit signing k
 
 Exception events receive a 16-char SHA-256 fingerprint (`src/fingerprint.ts`) normalising dynamic message segments before hash. Labels land in Loki for Sentry-style grouping. The Worker attaches `error_fingerprint` on forward; the browser SDK may also pre-compute via `createErrorFingerprint`.
 
-## 7–16. Later phases
+## 7. Phase 3 — Provider registry
 
-Phases 3–5 (Langfuse, security layer, alerting, Vault keys) remain as in the README implementation table.
+Multi-backend observability (redundant fan-out per signal type, governed registration, Alloy config generation, query federation) is specified in **[`clawql-observability-provider-registry.md`](./clawql-observability-provider-registry.md)**.
+
+Summary: **Alloy** owns runtime ingest fan-out; the **TypeScript registry** owns auth scopes, WORM config audit, health checks, River config generation, and read-side query federation. Signal-typed interfaces (`LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`) replace a single flat provider type. LGTM+ backends are default built-in plugins, not special-cased infra.
+
+## 8–16. Later phases
+
+Phases 4–5 (Langfuse, security layer, alerting, Vault keys) remain as in the README implementation table.
 
 ---
 
