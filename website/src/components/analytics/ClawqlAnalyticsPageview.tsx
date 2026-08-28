@@ -43,14 +43,22 @@ function ClawqlAnalyticsPageviewInner({ site }: ClawqlAnalyticsPageviewProps) {
       site === 'docs'
         ? '/api/analytics/pageview'
         : 'https://docs.clawql.com/api/analytics/pageview'
-    const endpoint = process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT ?? defaultEndpoint
+    const endpoint =
+      process.env.NEXT_PUBLIC_CLAWQL_ANALYTICS_ENDPOINT ?? defaultEndpoint
 
     const body = JSON.stringify({
       path,
-      referrer: typeof document !== 'undefined' ? document.referrer || undefined : undefined,
+      referrer:
+        typeof document !== 'undefined'
+          ? document.referrer || undefined
+          : undefined,
       sessionId: readOrCreateSessionId(),
       timestamp: new Date().toISOString(),
-      properties: { site, hostname: typeof window !== 'undefined' ? window.location.hostname : undefined },
+      properties: {
+        site,
+        hostname:
+          typeof window !== 'undefined' ? window.location.hostname : undefined,
+      },
     })
 
     void fetch(endpoint, {

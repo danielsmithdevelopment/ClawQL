@@ -5,10 +5,7 @@
 import { Effect, Layer } from "effect";
 
 import { createPostHogProvider } from "../providers/posthog.js";
-import {
-  AnalyticsRegistryService,
-  createAnalyticsRegistryLayer,
-} from "../registry.js";
+import { AnalyticsRegistryService, createAnalyticsRegistryLayer } from "../registry.js";
 import { AnalyticsService, createAnalyticsLayer } from "../service.js";
 import type { PageviewEvent } from "../types.js";
 
@@ -29,8 +26,7 @@ const readPostHogConfig = (): { apiKey: string; host?: string } | null => {
   if (!apiKey) return null;
 
   const host =
-    process.env.CLAWQL_ANALYTICS_POSTHOG_HOST?.trim() ??
-    process.env.POSTHOG_HOST?.trim();
+    process.env.CLAWQL_ANALYTICS_POSTHOG_HOST?.trim() ?? process.env.POSTHOG_HOST?.trim();
   return { apiKey, host: host || undefined };
 };
 
@@ -60,9 +56,7 @@ const bootRuntime = (): Effect.Effect<AnalyticsRuntime | null> =>
     return runtime;
   }).pipe(Effect.catchAll(() => Effect.succeed(null)));
 
-export const capturePageviewEffect = (
-  event: PageviewEvent
-): Effect.Effect<void> =>
+export const capturePageviewEffect = (event: PageviewEvent): Effect.Effect<void> =>
   Effect.gen(function* () {
     const layer = yield* bootRuntime();
     if (!layer) return;

@@ -53,7 +53,8 @@ export async function POST(request: Request) {
   }
 
   const path = typeof body.path === 'string' ? body.path.trim() : ''
-  const sessionId = typeof body.sessionId === 'string' ? body.sessionId.trim() : ''
+  const sessionId =
+    typeof body.sessionId === 'string' ? body.sessionId.trim() : ''
   if (!path || !sessionId) {
     return NextResponse.json(
       { ok: false, reason: 'path_and_sessionId_required' },
@@ -65,10 +66,18 @@ export async function POST(request: Request) {
     path,
     referrer: typeof body.referrer === 'string' ? body.referrer : undefined,
     sessionId,
-    timestamp: typeof body.timestamp === 'string' ? body.timestamp : new Date().toISOString(),
+    timestamp:
+      typeof body.timestamp === 'string'
+        ? body.timestamp
+        : new Date().toISOString(),
     properties:
-      body.properties && typeof body.properties === 'object' ? body.properties : undefined,
+      body.properties && typeof body.properties === 'object'
+        ? body.properties
+        : undefined,
   })
 
-  return NextResponse.json({ ok: true }, { status: 202, headers: corsHeaders(origin) })
+  return NextResponse.json(
+    { ok: true },
+    { status: 202, headers: corsHeaders(origin) },
+  )
 }

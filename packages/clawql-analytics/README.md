@@ -64,10 +64,10 @@ Logged: provider add/remove/config change, raw data access, export, access grant
 
 Both **docs.clawql.com** and **clawql.com** fire anonymous pageviews through a shared collector:
 
-| Site | Client | Collector |
-|------|--------|-----------|
-| docs | `ClawqlAnalyticsPageview` (`site="docs"`) | same-origin `POST /api/analytics/pageview` |
-| marketing | `ClawqlAnalyticsPageview` (`site="marketing"`) | cross-origin to docs API (static export) |
+| Site      | Client                                         | Collector                                  |
+| --------- | ---------------------------------------------- | ------------------------------------------ |
+| docs      | `ClawqlAnalyticsPageview` (`site="docs"`)      | same-origin `POST /api/analytics/pageview` |
+| marketing | `ClawqlAnalyticsPageview` (`site="marketing"`) | cross-origin to docs API (static export)   |
 
 Enable at build time: `NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED=1`
 
