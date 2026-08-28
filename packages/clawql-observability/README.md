@@ -8,12 +8,15 @@ Runtime telemetry and security monitoring for ClawQL — the **LGTM+** stack:
 - **M**imir — long-term Prometheus-compatible metrics
 - **+** Pyroscope — continuous profiling
 
+**Public docs:** [docs.clawql.com/observability](https://docs.clawql.com/observability) — LGTM+ ingest, governed multi-provider registry, Alloy fan-out, and Faro JWT proxy.
+
 Distinct from:
 
 - **`clawql-audit`** — compliance-grade, tamper-evident logging of consequential actions
 - **`clawql-analytics`** — product/marketing interaction tracking (pageviews, funnels)
 
-Full specification: [`docs/design/clawql-observability-package-spec.md`](../../docs/design/clawql-observability-package-spec.md)
+Full specification: [`docs/design/clawql-observability-package-spec.md`](../../docs/design/clawql-observability-package-spec.md)  
+Provider registry: [`docs/design/clawql-observability-provider-registry.md`](../../docs/design/clawql-observability-provider-registry.md)
 
 ## Phase 1 (v0.1)
 
@@ -26,12 +29,38 @@ Full specification: [`docs/design/clawql-observability-package-spec.md`](../../d
 
 ## Phase 2 (v0.2) — Faro + ephemeral-JWT Worker proxy
 
-Shipped in this release:
-
 - **Cloudflare Worker** (`worker/`) — HS256 JWT gate, rate limit, schema validation, silent 204 drops
 - **Exception fingerprint enrichment** before forward to Alloy
 - **Backend token mint** — `signTelemetryJwt` / `signTelemetryJwtEffect` for session-scoped ingest JWTs
 - **Alloy `faro.receiver`** on `:8027/collect` → Loki logs + Tempo traces (private; no static public DSN)
+
+## Phase 3a (v0.3) — Provider registry skeleton
+
+- **Signal-typed interfaces** — `LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`
+- **Per-type registries** — multi-provider per signal (register / remove / list / snapshot / updateConfig)
+- **Built-in LGTM+ adapters** — Loki, Mimir, Tempo, Pyroscope as default plugins
+- **ATR scopes** — `observability:configure`, `observability:query_*`, `observability:export`
+- **WORM governance hooks** — provider add/remove/config change (via `ObservabilityGovernanceSink`)
+- **Health checks** — `ObservabilityHealthService.runOnce()` and optional scheduler
+
+### Registry quick start
+
+```typescript
+import { Effect, Layer } from "effect";
+import {
+  ObservabilityLive,
+  registerBuiltinLgtmProvidersEffect,
+  ObservabilityHealthService,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const health = yield* ObservabilityHealthService;
+  return yield* health.runOnce();
+});
+
+await Effect.runPromise(program.pipe(Effect.provide(ObservabilityLive)));
+```
 
 ### Worker deploy
 
@@ -91,8 +120,8 @@ packages/clawql-observability/
   docker/docker-compose.yaml   — local LGTM+ stack
   helm/values.yaml             — LGTM+ enable/disable + retention
   worker/                      — Cloudflare Faro proxy (Phase 2)
-  src/                         — Effect config, fingerprint, telemetry JWT mint
-  scripts/smoke-lgtm-plus.sh     — CI compose smoke
+  src/                         — Effect config, registry, fingerprint, telemetry JWT mint
+  scripts/smoke-lgtm-plus.sh   — CI compose smoke
 ```
 
 Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmithdevelopment/DevSecOps-boilerplate)
@@ -102,9 +131,11 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 | Phase | Scope                                      |
 | ----- | ------------------------------------------ |
 | **1** | LGTM+ core + Alloy _(merged)_              |
-| **2** | Faro + ephemeral-JWT Worker proxy _(this)_ |
-| 3     | Langfuse + Panguard correlation            |
-| 4     | Falco / Tetragon / Wazuh security layer    |
+| **2** | Faro + ephemeral-JWT Worker proxy _(merged)_ |
+| **3a** | Provider registry skeleton _(this release)_ |
+| **3b** | Alloy config generator                     |
+| **3c** | Query federation                           |
+| 4     | Langfuse + Panguard correlation            |
 | 5     | Full alerting + Vault-backed signing keys  |
 
 ## License

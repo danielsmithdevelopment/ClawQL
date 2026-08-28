@@ -1,6 +1,6 @@
 # clawql-observability — Provider Registry Design
 
-**Status:** Draft (August 2026)  
+**Status:** Phase 3a shipped (August 2026)  
 **Audience:** Contributors implementing Phase 3+ of `clawql-observability`  
 **Related:** [`clawql-observability-package-spec.md`](./clawql-observability-package-spec.md) · [`clawql-plugin-model.md`](./clawql-plugin-model.md) · `packages/clawql-analytics` (registry/governance pattern) · `packages/clawql-observability/alloy/config.river`
 

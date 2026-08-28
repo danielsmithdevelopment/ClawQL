@@ -437,6 +437,13 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     icon: ListIcon,
   }),
   card({
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+  }),
+  card({
     href: '/troubleshooting',
     name: 'Troubleshooting',
     description: 'Common MCP, spec, auth, and deploy failure modes.',

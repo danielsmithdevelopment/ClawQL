@@ -102,7 +102,13 @@ Exception events receive a 16-char SHA-256 fingerprint (`src/fingerprint.ts`) no
 
 Multi-backend observability (redundant fan-out per signal type, governed registration, Alloy config generation, query federation) is specified in **[`clawql-observability-provider-registry.md`](./clawql-observability-provider-registry.md)**.
 
-Summary: **Alloy** owns runtime ingest fan-out; the **TypeScript registry** owns auth scopes, WORM config audit, health checks, River config generation, and read-side query federation. Signal-typed interfaces (`LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`) replace a single flat provider type. LGTM+ backends are default built-in plugins, not special-cased infra.
+**Phase 3a (v0.3, shipped):** signal-typed interfaces (`LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`), per-type registries, built-in LGTM+ adapters, ATR scopes, WORM governance hooks, and health checks in `packages/clawql-observability/src/`.
+
+**Phase 3b–3c (next):** Alloy River config generator and query federation.
+
+Summary: **Alloy** owns runtime ingest fan-out; the **TypeScript registry** owns auth scopes, WORM config audit, health checks, River config generation, and read-side query federation. LGTM+ backends are default built-in plugins, not special-cased infra.
+
+Public overview: [docs.clawql.com/observability](https://docs.clawql.com/observability).
 
 ## 8–16. Later phases
 
