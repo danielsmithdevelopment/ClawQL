@@ -7,7 +7,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 COMPOSE_FILE="${ROOT}/packages/clawql-observability/docker/docker-compose.yaml"
 PROJECT="${CLAWQL_LGTM_SMOKE_PROJECT:-clawql-lgtm-smoke}"
 SERVICE_NAME="${CLAWQL_LGTM_SMOKE_SERVICE:-clawql-lgtm-smoke}"
-TELEMETRYGEN_IMAGE="${TELEMETRYGEN_IMAGE:-otel/opentelemetry-collector-contrib:0.96.0}"
+# GHCR tags use a leading "v" (e.g. v0.159.0); bare semver tags 404.
+TELEMETRYGEN_IMAGE="${TELEMETRYGEN_IMAGE:-ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:v0.119.0}"
 
 cleanup() {
   docker compose -f "${COMPOSE_FILE}" -p "${PROJECT}" down -v --remove-orphans >/dev/null 2>&1 || true
@@ -48,7 +49,7 @@ fi
 run_telemetrygen() {
   local subcommand="$1"
   shift
-  docker run --rm --network host --entrypoint telemetrygen "${TELEMETRYGEN_IMAGE}" \
+  docker run --rm --network host "${TELEMETRYGEN_IMAGE}" \
     "${subcommand}" \
     --otlp-http \
     --otlp-endpoint "http://127.0.0.1:4318" \
