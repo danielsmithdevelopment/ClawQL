@@ -1,15 +1,14 @@
 /**
  * Boot-time SECURITY WARNING when no tool-scope enforcement is active.
  *
- * Generic — does not check for Panguard by name. Any mcp-proxy plugin with
- * `beforeCallTool`, or any HookRegistry blocking `pre-execute` hook, counts.
+ * Generic — does not check for Panguard by name. Any ProviderPlugin with a
+ * blocking `tool` / `pre-execute` hook counts.
  *
  * @see docs/design/clawql-core-plugin-architecture.md §5.4 / §9
- * @see docs/design/clawql-8.0-plugin-architecture-action-items.md Wave 7b
  */
 
 import { Effect } from "effect";
-import type { Plugin } from "clawql-core";
+import { isProviderPlugin, type AnyPlugin } from "clawql-core";
 
 export const NO_ENFORCEMENT_SECURITY_WARNING =
   "[clawql-api] SECURITY WARNING: no tool-scope enforcement provider is active — " +
@@ -19,9 +18,12 @@ export const NO_ENFORCEMENT_SECURITY_WARNING =
   "that registers blocking tool/pre-execute hooks) before production use. " +
   "Silence only if intentional: CLAWQL_ALLOW_NO_ENFORCEMENT=1.";
 
-/** True when at least one registered plugin can gate tool calls. */
-export function hasActiveToolEnforcement(plugins: readonly Plugin[]): boolean {
-  return plugins.some((p) => p.kind === "mcp-proxy" && typeof p.beforeCallTool === "function");
+/** True when at least one registered plugin declares a blocking pre-execute hook. */
+export function hasActiveToolEnforcement(plugins: readonly AnyPlugin[]): boolean {
+  return plugins.some((p) => {
+    if (!isProviderPlugin(p)) return false;
+    return (p.hooks ?? []).some((h) => h.event === "pre-execute" && h.blocking === true);
+  });
 }
 
 export function allowNoEnforcementExplicitly(): boolean {
@@ -33,7 +35,7 @@ export function allowNoEnforcementExplicitly(): boolean {
  * Effect-typed for consistency with boot paths; side effect is intentional.
  */
 export function warnIfNoEnforcementActiveEffect(
-  plugins: readonly Plugin[]
+  plugins: readonly AnyPlugin[]
 ): Effect.Effect<boolean, never> {
   return Effect.sync(() => {
     if (allowNoEnforcementExplicitly()) return false;
@@ -44,6 +46,6 @@ export function warnIfNoEnforcementActiveEffect(
 }
 
 /** Sync host façade for createClawQLApi / startup. */
-export function warnIfNoEnforcementActive(plugins: readonly Plugin[]): boolean {
+export function warnIfNoEnforcementActive(plugins: readonly AnyPlugin[]): boolean {
   return Effect.runSync(warnIfNoEnforcementActiveEffect(plugins));
 }

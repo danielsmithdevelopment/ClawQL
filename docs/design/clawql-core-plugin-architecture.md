@@ -188,14 +188,11 @@ With the index/content split, `always`-visible skills only cost a lightweight in
 
 ---
 
-## 11. Legacy bridge (8.0)
+## 11. Hard break (8.0) — no compatibility bridge
 
-Existing `Plugin` + `beforeCallTool` (`kind: "mcp-proxy"`) maps to:
+Phase-2 `Plugin` / `onRegister` / `beforeCallTool` / `kind: "mcp-proxy"` is **removed**. There is no `legacyPluginToProviderPlugin`. Breaking release means rewrite against `ProviderPlugin` / `StandaloneSkillPlugin` (see [`migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md)).
 
-- `ProviderPlugin` with tools registered via install
-- A `tool` / `pre-execute` hook wrapping `beforeCallTool`
-
-Deprecated in docs; bridge kept until all in-tree consumers migrate. Prefer extending this contract forever over a 9.0 break.
+In-tree packages ship only the new shape. Third-party plugins must do the same before upgrading.
 
 ---
 

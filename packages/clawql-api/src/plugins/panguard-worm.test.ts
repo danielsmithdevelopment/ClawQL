@@ -1,7 +1,11 @@
 import { bootProcessWormFromEnvEffect, resetProcessWormForTests } from "clawql-audit";
+import { WormAuditSink } from "clawql-core";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { createPanguardProxyPlugin } from "./panguard-proxy-plugin.js";
+
+const emptySession = { id: "t", atrScope: new Set<string>() };
+const noopWorm = { append: () => Effect.void };
 
 describe("Panguard → process WORM dual-write", () => {
   afterEach(async () => {
@@ -26,11 +30,13 @@ describe("Panguard → process WORM dual-write", () => {
     expect(svc).not.toBeNull();
 
     const plugin = createPanguardProxyPlugin();
-    const { Exit } = await import("effect");
-    const blocked = await Effect.runPromiseExit(
-      plugin.beforeCallTool!({ toolName: "memory_ingest", args: {} })
+    const hook = plugin.hooks![0]!;
+    const blocked = await Effect.runPromise(
+      hook.handler({ session: emptySession, toolName: "memory_ingest", args: {} }).pipe(
+        Effect.provideService(WormAuditSink, noopWorm)
+      )
     );
-    expect(Exit.isFailure(blocked)).toBe(true);
+    expect(blocked.allow).toBe(false);
 
     const entries = await Effect.runPromise(svc!.query({ type: "PANGUARD_DENY" }));
     expect(entries.length).toBeGreaterThanOrEqual(1);

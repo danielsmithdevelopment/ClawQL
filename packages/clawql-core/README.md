@@ -15,7 +15,8 @@ Canonical spec: [`docs/design/clawql-core-plugin-architecture.md`](../../docs/de
 | `fireHook`                               | Core hook bus — ATR never-loosen invariant                     |
 | `SkillRegistry`                          | Two-tier skill index/content (Skills-over-MCP)                 |
 | `defineProviderPlugin` / `installPlugin` | Effect install/uninstall                                       |
-| `legacyPluginToProviderPlugin`           | Bridge from Phase-2 `Plugin` + `beforeCallTool`                |
+| `defineRegisteringProviderPlugin`        | Install-time MCP tool registration (env-gated sets)            |
+| `createInMemoryPluginHostServices`       | Shared HookRegistry + install Layer for hosts                  |
 | `loadPluginModuleEffect`                 | Dynamic `import()` loader (pairs with optionalDependencies)    |
 | `PanguardProviderPlugin`                 | Reference hooks-only provider plugin                           |
 
@@ -25,4 +26,4 @@ Canonical spec: [`docs/design/clawql-core-plugin-architecture.md`](../../docs/de
 
 **Internal modules:** `merkle/`, `cuckoo/`, `plugin/`, `audit/`.
 
-Legacy `Plugin` remains exported and **@deprecated** — prefer `ProviderPlugin`.
+**8.0 hard break:** Phase-2 `Plugin` / `beforeCallTool` and any compatibility bridge are removed — rewrite against `ProviderPlugin`.

@@ -16,7 +16,7 @@ export type McpToolDefinition = {
   readonly handler: McpToolHandler;
 };
 
-/** Passed to `Plugin.onRegister` so plugins can register MCP tools without importing transport. */
+/** Passed to ProviderPlugin install so plugins can register MCP tools without importing transport. */
 export interface ClawQLPluginRegistrationApi {
   registerMcpTool(
     tool: McpToolDefinition

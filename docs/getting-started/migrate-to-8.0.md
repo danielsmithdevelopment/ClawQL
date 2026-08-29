@@ -1,6 +1,6 @@
 # Migrating to ClawQL 8.0.0
 
-**Loudest changes are defaults, not the ProviderPlugin API.** The Wave 5 bridge keeps Phase-2 `Plugin` / `beforeCallTool` working. You must still **opt in** to providers and enforcement.
+**Breaking release means breaking release.** The Phase-2 `Plugin` / `onRegister` / `beforeCallTool` interface is **removed**. There is no compatibility bridge. Rewrite plugins against `ProviderPlugin` / `StandaloneSkillPlugin`. Defaults also change (empty catalog, enforcement off).
 
 ## Breaking defaults (read first)
 
@@ -10,15 +10,51 @@
 | Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                       |
 | In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                  |
 | Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                  |
+| `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                     |
 
 Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.
 
-## ProviderPlugin architecture (non-breaking for most)
+## Plugin interface (hard break)
 
-- Prefer `ProviderPlugin` / `StandaloneSkillPlugin` from `clawql-core`.
-- Existing `Plugin` + `beforeCallTool` still works; map with `legacyPluginToProviderPlugin()`.
-- `beforeCallTool` remains **awaited** (bridged as blocking `tool` / `pre-execute`).
+- **Only** `ProviderPlugin` and `StandaloneSkillPlugin` from `clawql-core` are installable.
+- Tool registration: declare `tools` on the plugin, or use `defineRegisteringProviderPlugin({ register })` for env-gated sets.
+- Enforcement: blocking `tool` / `pre-execute` hooks (not `beforeCallTool`). Awaited by `McpProxyPipeline` via `fireHook` (ATR never-loosen).
 - Horizontal tiers: production MCP boot uses **dynamic** `import()` via `ensureClawqlApi()` / `createRegisteredMcpServerAsync()`. Sync `getClawqlApi()` still static-composes for tests.
+
+### Rewrite sketch
+
+```ts
+import { defineProviderPlugin, defineRegisteringProviderPlugin } from "clawql-core";
+import { Effect } from "effect";
+
+// Tools
+export const myPlugin = defineRegisteringProviderPlugin({
+  id: "my-plugin",
+  version: "1.0.0",
+  description: "…",
+  register: (api) =>
+    Effect.gen(function* () {
+      yield* api.registerMcpTool({ name: "my_tool", schema, handler });
+    }),
+});
+
+// Enforcement (hooks-only is valid)
+export const gate = defineProviderPlugin({
+  id: "my-gate",
+  version: "1.0.0",
+  description: "…",
+  hooks: [
+    {
+      id: "my-gate:pre-execute",
+      scope: "tool",
+      event: "pre-execute",
+      toolPattern: ".*",
+      blocking: true,
+      handler: (ctx) => Effect.succeed({ allow: true }),
+    },
+  ],
+});
+```
 
 ## Skills-over-MCP
 
@@ -32,14 +68,15 @@ Empty until something calls `registerProcessSkills` / ProviderPlugin install wit
 ## Minimal upgrade checklist
 
 ```bash
-# 1. Restore curated APIs (if you relied on the old default pack)
+# 1. Rewrite any out-of-tree plugins to ProviderPlugin (no bridge)
+# 2. Restore curated APIs (if you relied on the old default pack)
 export CLAWQL_PROVIDER=default
 
-# 2. Restore enforcement (recommended for production)
+# 3. Restore enforcement (recommended for production)
 export CLAWQL_PANGUARD_PROXY_PLUGIN=1
 export CLAWQL_PANGUARD_IN_PROCESS=1
 
-# 3. Or acknowledge ungated tools (dev only)
+# 4. Or acknowledge ungated tools (dev only)
 # export CLAWQL_ALLOW_NO_ENFORCEMENT=1
 ```
 

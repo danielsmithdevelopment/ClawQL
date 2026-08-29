@@ -129,7 +129,7 @@ export function registerClawqlApiShutdownHooks(): void {
   process.once("SIGTERM", once);
 }
 
-/** Run mcp-proxy `beforeCallTool` hooks (Panguard policy, x402 payment gates, …). */
+/** Run HookRegistry pre-execute hooks (Panguard policy, x402 payment gates, …). */
 export async function runMcpProxyBeforeCallTool(toolName: string, args: unknown): Promise<void> {
   await getClawqlApi().run(
     Effect.gen(function* () {

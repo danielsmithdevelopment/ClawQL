@@ -17,12 +17,12 @@
 | **2**  | `fireHook` ATR never-loosen + WORM events                                                                          | **Done**                           |
 | **3**  | Skill registry + MCP `skills_list` / `skills_get`                                                                  | **Done**                           |
 | **4**  | Effect install/uninstall + vault-seed port                                                                         | **Done**                           |
-| **5**  | Legacy `Plugin` → `ProviderPlugin` bridge                                                                          | **Done**                           |
+| **5**  | ~~Legacy bridge~~ → **Hard break:** delete `Plugin` / `beforeCallTool` / bridge; rewrite all in-tree plugins | **Done**                           |
 | **6**  | Dynamic loader + Panguard hooks-only reference                                                                     | **Done**                           |
-| **7**  | Horizontal ProviderPlugin exports (memory + Panguard bridge); proxy `fireHook` path                                | **Done**                           |
+| **7**  | Horizontal native ProviderPlugin (all packages); proxy `fireHook`-only path                                        | **Done**                           |
 | **7b** | Boot SECURITY WARNING when zero enforcement; Panguard opt-in                                                       | **Done**                           |
 | **8**  | Production boot uses dynamic compose (`ensureClawqlApi` / `createRegisteredMcpServerAsync`); static kept for tests | **Done**                           |
-| **9**  | Migration guide + CHANGELOG loud defaults; tag after CI green + #982                                               | **Docs done** — tag on release day |
+| **9**  | Migration guide + CHANGELOG loud defaults + hard-break wording; tag after CI green + #982                          | **Docs done** — tag on release day |
 
 ---
 
@@ -31,13 +31,11 @@
 1. Bundled OpenAPI catalog **default-off** (#982).
 2. Enforcement / Panguard **default-off** (`CLAWQL_PANGUARD_PROXY_PLUGIN=1`).
 3. Boot **SECURITY WARNING** if no tool-scope enforcement (`CLAWQL_ALLOW_NO_ENFORCEMENT=1` to silence).
-
-ProviderPlugin refactor is bridge-compatible; the major is for **behavior defaults**.
+4. **Plugin interface hard break** — Phase-2 `Plugin` removed; no compatibility bridge.
 
 ### Wave 5 note
 
-Legacy `beforeCallTool` was already awaited; bridge maps to blocking `pre-execute`.
-
+No soft landing. `beforeCallTool` callers rewrite to blocking `tool` / `pre-execute` hooks.
 ---
 
 ## Exit criteria

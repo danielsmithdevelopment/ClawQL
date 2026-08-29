@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Plugin } from "clawql-core";
+import { defineProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import {
   hasActiveToolEnforcement,
@@ -16,20 +16,35 @@ describe("enforcement boot warning", () => {
     vi.restoreAllMocks();
   });
 
-  it("detects active beforeCallTool as enforcement", () => {
-    const plugins: Plugin[] = [
-      {
+  it("detects blocking pre-execute hooks as enforcement", () => {
+    const plugins = [
+      defineProviderPlugin({
         id: "proxy",
         version: "1",
-        kind: "mcp-proxy",
-        beforeCallTool: () => Effect.void,
-      },
+        description: "enforcing",
+        hooks: [
+          {
+            id: "proxy:pre-execute",
+            scope: "tool",
+            event: "pre-execute",
+            toolPattern: ".*",
+            blocking: true,
+            handler: () => Effect.succeed({ allow: true }),
+          },
+        ],
+      }),
     ];
     expect(hasActiveToolEnforcement(plugins)).toBe(true);
   });
 
-  it("treats passive mcp-proxy (no beforeCallTool) as no enforcement", () => {
-    const plugins: Plugin[] = [{ id: "panguard-mcp-proxy", version: "1", kind: "mcp-proxy" }];
+  it("treats plugins without blocking pre-execute as no enforcement", () => {
+    const plugins = [
+      defineProviderPlugin({
+        id: "panguard-mcp-proxy",
+        version: "1",
+        description: "passive",
+      }),
+    ];
     expect(hasActiveToolEnforcement(plugins)).toBe(false);
   });
 

@@ -8,14 +8,16 @@ This page is the **registry** of ClawQL plugins: what exists today, what horizon
 
 ---
 
-## 1. Plugin kinds
+## 1. Plugin kinds (8.0)
 
-| Kind            | Registers MCP tools? | Primary hook               | Example                                                                              |
-| --------------- | -------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
-| **`default`**   | Yes (when composed)  | `onRegister`, `onTeardown` | `clawql-memory` (✅ shipped); domain verticals such as `clawql-lending` (📋 planned) |
-| **`mcp-proxy`** | No                   | `beforeCallTool`           | `panguard-mcp-proxy` (shipped)                                                       |
+| Shape                      | Registers MCP tools? | Primary mechanism                         | Example                                              |
+| -------------------------- | -------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| **`ProviderPlugin`**       | Optional             | `tools` / `defineRegisteringProviderPlugin` + optional `hooks` | `clawql-memory`, `panguard-mcp-proxy` (hooks-only) |
+| **`StandaloneSkillPlugin`**| No                   | `skills` (+ optional vault-seed)          | Utility skill packs                                  |
 
-**Domain verticals** are `default`-kind plugins with industry scope (`verticals/clawql-*`): **presets** that compose horizontal plugins (typically Memory + Documents) and ship domain-tailored boilerplate (e.g. `.cqw` workflows). They are not a separate extension mechanism — see [Verticals guide](https://docs.clawql.com/plugins#verticals) and the searchable [Plugins](https://docs.clawql.com/plugins#registry) registry.
+Hooks-only providers (Panguard, x402) use blocking `tool` / `pre-execute` hooks — there is no separate `mcp-proxy` kind and no `beforeCallTool`.
+
+**Domain verticals** are `ProviderPlugin`s with industry scope (`verticals/clawql-*`): **presets** that compose horizontal plugins (typically Memory + Documents) and ship domain-tailored boilerplate (e.g. `.cqw` workflows). They are not a separate extension mechanism — see [Verticals guide](https://docs.clawql.com/plugins#verticals) and the searchable [Plugins](https://docs.clawql.com/plugins#registry) registry.
 
 **Not plugins:** `search`, `execute`, `cache`, and `audit` are **gateway core** — always composed in `clawql-api`, not optional plugin Layers.
 
