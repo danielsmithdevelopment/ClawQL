@@ -11,7 +11,11 @@ export type McpProxyCallContext = {
 
 /**
  * Vertical / horizontal extension contract (enablement §5.4).
- * `ClawQLApi` is provided at registration time — full hook surface grows in Phase 2+.
+ *
+ * @deprecated ClawQL 8.0 — prefer {@link ProviderPlugin} from `./provider-types.js`.
+ * Use `legacyPluginToProviderPlugin()` to bridge. `beforeCallTool` maps to
+ * `tool` / `pre-execute` lifecycle hooks.
+ * @see docs/design/clawql-core-plugin-architecture.md
  */
 export interface Plugin {
   readonly id: string;

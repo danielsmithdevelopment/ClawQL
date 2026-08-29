@@ -1,2 +1,11 @@
 export * from "./registration-api.js";
 export * from "./types.js";
+export * from "./provider-types.js";
+export * from "./hook-runtime.js";
+export * from "./hook-registry.js";
+export * from "./skill-registry.js";
+export * from "./plugin-installer.js";
+export * from "./legacy-bridge.js";
+export * from "./dynamic-loader.js";
+export * from "./worm-sink.js";
+export { PanguardProviderPlugin } from "./providers/panguard.js";
