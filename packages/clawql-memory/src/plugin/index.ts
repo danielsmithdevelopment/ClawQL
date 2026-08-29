@@ -1,5 +1,6 @@
 export {
   createMemoryPlugin,
+  createMemoryProviderPlugin,
   handleMemoryIngestToolInput,
   handleMemoryRecallToolInput,
   MEMORY_PLUGIN_ID,

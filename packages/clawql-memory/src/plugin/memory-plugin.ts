@@ -31,7 +31,7 @@ import {
   memoryRecallToolZodShape,
 } from "../schema/index.js";
 
-import type { Plugin } from "clawql-core";
+import { legacyPluginToProviderPlugin, type Plugin, type ProviderPlugin } from "clawql-core";
 
 export const MEMORY_PLUGIN_ID = "clawql-memory";
 
@@ -336,6 +336,11 @@ async function handleCodegraphSyncGraphify(args: unknown): Promise<{
       },
     ],
   };
+}
+
+/** ProviderPlugin bridge for 8.0 install/uninstall (skills + MCP tools via legacy onRegister). */
+export function createMemoryProviderPlugin(): ProviderPlugin {
+  return legacyPluginToProviderPlugin(createMemoryPlugin());
 }
 
 /** Registers `memory_ingest` and `memory_recall` via `Plugin.onRegister`. */

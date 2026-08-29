@@ -9,7 +9,12 @@ import {
   wormInputFromPanguardAllow,
   wormInputFromPanguardDeny,
 } from "clawql-audit";
-import { ClawQLError, type Plugin } from "clawql-core";
+import {
+  ClawQLError,
+  legacyPluginToProviderPlugin,
+  type Plugin,
+  type ProviderPlugin,
+} from "clawql-core";
 import { Effect } from "effect";
 
 export type PanguardProxyPluginOptions = {
@@ -73,6 +78,13 @@ export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = 
   }
 
   return plugin;
+}
+
+/** {@link PanguardProviderPlugin} in clawql-core is the hooks-only reference; in-process proxy remains this api Plugin. */
+export function createPanguardProviderPlugin(
+  options: PanguardProxyPluginOptions = {}
+): ProviderPlugin {
+  return legacyPluginToProviderPlugin(createPanguardProxyPlugin(options));
 }
 
 /** Registered when `CLAWQL_PANGUARD_PROXY_PLUGIN=1` (8.0+ default off — opt in). */

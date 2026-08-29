@@ -6,6 +6,7 @@ import {
   atrScopeFromTokens,
   fireHooksForEvent,
   ClawQLError,
+  isSecurityError,
   WormAuditSink,
   type RegisteredHook,
 } from "clawql-core";
@@ -78,7 +79,14 @@ export function mcpProxyPipelineLayer(
                   args: ctx.args,
                 },
                 { stopOnDeny: true }
-              ).pipe(Effect.provideService(WormAuditSink, worm));
+              ).pipe(
+                Effect.provideService(WormAuditSink, worm),
+                Effect.mapError((e) =>
+                  isSecurityError(e)
+                    ? new ClawQLError({ reason: e.reason })
+                    : e
+                )
+              );
 
               if (!result.allow) {
                 return yield* Effect.fail(
