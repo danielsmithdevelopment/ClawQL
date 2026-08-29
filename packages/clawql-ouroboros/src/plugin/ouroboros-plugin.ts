@@ -1,4 +1,4 @@
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { ensureOuroborosPoolShutdownHooks, resetOuroborosContextForTests } from "./context.js";
 import {
@@ -15,12 +15,12 @@ export const OUROBOROS_PLUGIN_ID = "clawql-ouroboros";
  * (MCP composes `makeHarnessLayer`). Kept for library embedders that use the
  * clawql-core Plugin API directly without a harness.
  */
-export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plugin {
-  return {
+export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): ProviderPlugin {
+  return defineRegisteringProviderPlugin({
     id: OUROBOROS_PLUGIN_ID,
     version: "0.2.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "Ouroboros evolutionary specification MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         ensureOuroborosPoolShutdownHooks();
         for (const tool of buildOuroborosMcpToolDefinitions(options)) {
@@ -28,5 +28,5 @@ export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plu
         }
       }),
     onTeardown: () => Effect.sync(() => resetOuroborosContextForTests()),
-  };
+  });
 }
