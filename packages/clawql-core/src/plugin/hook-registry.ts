@@ -7,7 +7,6 @@ import { ClawQLError } from "../errors/clawql-error.js";
 import { toolMatchesPattern } from "./hook-runtime.js";
 import {
   HookRegistry,
-  type LifecycleEvent,
   type LifecycleHook,
   type RegisteredHook,
 } from "./provider-types.js";
