@@ -630,8 +630,11 @@ async function main() {
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
-  const { registerClawqlApiShutdownHooks } = await import("./clawql-api-adapters.js");
+  const { ensureClawqlApi, registerClawqlApiShutdownHooks } = await import(
+    "./clawql-api-adapters.js"
+  );
   registerClawqlApiShutdownHooks();
+  await ensureClawqlApi();
   const { ensureProcessWormHostBooted } = await import("./process-worm-host.js");
   await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();

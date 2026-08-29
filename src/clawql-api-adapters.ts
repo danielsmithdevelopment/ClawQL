@@ -15,7 +15,8 @@ import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
 import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
 import { Effect, Layer } from "effect";
-import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
+import { composeHorizontalPluginLayersDynamic } from "./compose-horizontal-plugin-layers-dynamic.js";
+import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
@@ -42,20 +43,47 @@ function buildExecuteLive() {
 }
 
 let apiHandle: ClawQLApiHandle | undefined;
+let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
+
+function buildClawqlApi(pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"]): ClawQLApiHandle {
+  return createClawQLApi({
+    searchLayer: buildSearchLive(),
+    executeLayer: buildExecuteLive(),
+    plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
+    pluginLayers,
+    runtimeLayers: [makeEffectOtelTracerLayer()],
+    prepareEffect: attachActiveOtelParent,
+  });
+}
+
+/**
+ * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
+ * packages are not statically loaded. Safe to call multiple times; returns existing handle.
+ */
+export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
+  if (apiHandle) return apiHandle;
+  if (ensureApiPromise) return ensureApiPromise;
+  ensureApiPromise = (async () => {
+    void ensureProcessWormHostBooted().catch(() => undefined);
+    const pluginLayers = await composeHorizontalPluginLayersDynamic(resolvePluginCompositionFlags());
+    apiHandle = buildClawqlApi(pluginLayers);
+    return apiHandle;
+  })();
+  try {
+    return await ensureApiPromise;
+  } finally {
+    ensureApiPromise = undefined;
+  }
+}
 
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
     void ensureProcessWormHostBooted().catch(() => undefined);
-    apiHandle = createClawQLApi({
-      searchLayer: buildSearchLive(),
-      executeLayer: buildExecuteLive(),
-      plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
-      pluginLayers: composeHorizontalPluginLayers(resolvePluginCompositionFlags()),
-      runtimeLayers: [makeEffectOtelTracerLayer()],
-      prepareEffect: attachActiveOtelParent,
-    });
+    apiHandle = buildClawqlApi(
+      composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags())
+    );
   }
   return apiHandle;
 }
@@ -67,6 +95,7 @@ export function getClawqlApi(): ClawQLApiHandle {
 export async function disposeClawqlApi(): Promise<void> {
   const handle = apiHandle;
   apiHandle = undefined;
+  ensureApiPromise = undefined;
   if (handle) {
     await handle.dispose().catch(() => undefined);
   }
@@ -82,6 +111,7 @@ export function resetClawqlApiForTests(): void {
   if (!apiHandle) return;
   Effect.runSync(apiHandle.registry.teardownAll());
   apiHandle = undefined;
+  ensureApiPromise = undefined;
 }
 
 /** Register SIGINT/SIGTERM → {@link disposeClawqlApi} once per process. */
