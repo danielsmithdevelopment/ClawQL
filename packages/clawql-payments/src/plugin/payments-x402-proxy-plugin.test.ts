@@ -46,9 +46,9 @@ describe("createPaymentsX402ProxyPlugin", () => {
 
     await expect(
       Effect.runPromise(
-        hook.handler({ session: hookSession, toolName: "search", args: {} }).pipe(
-          Effect.catchAll((err) => Effect.fail(err))
-        )
+        hook
+          .handler({ session: hookSession, toolName: "search", args: {} })
+          .pipe(Effect.catchAll((err) => Effect.fail(err)))
       )
     ).resolves.toEqual({ allow: true });
   });

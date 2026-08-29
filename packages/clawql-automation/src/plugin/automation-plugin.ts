@@ -198,7 +198,9 @@ export type CreateAutomationPluginOptions = {
   readonly enableHitlLabelStudio?: boolean;
 };
 
-export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): ProviderPlugin {
+export function createAutomationPlugin(
+  options: CreateAutomationPluginOptions = {}
+): ProviderPlugin {
   const enableSchedule = options.enableSchedule ?? false;
   const enableNotify = options.enableNotify ?? false;
   const enableWorkflow = options.enableWorkflow ?? false;

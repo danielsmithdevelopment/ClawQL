@@ -5,10 +5,7 @@
  * CLAWQL_PAYMENTS_MCP_REQUIRE_AP2=1 (mandate JWT in tool args).
  */
 
-import {
-  defineRegisteringProviderPlugin,
-  type ProviderPlugin,
-} from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";

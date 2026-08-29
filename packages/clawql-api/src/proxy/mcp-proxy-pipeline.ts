@@ -29,9 +29,7 @@ export class McpProxyPipeline extends Context.Tag("clawql/McpProxyPipeline")<
   }
 >() {}
 
-export function mcpProxyPipelineLayer(
-  registry: PluginRegistry
-): Layer.Layer<McpProxyPipeline> {
+export function mcpProxyPipelineLayer(registry: PluginRegistry): Layer.Layer<McpProxyPipeline> {
   return Layer.succeed(
     McpProxyPipeline,
     McpProxyPipeline.of({
@@ -53,9 +51,7 @@ export function mcpProxyPipelineLayer(
             { stopOnDeny: true }
           ).pipe(
             Effect.provideService(WormAuditSink, registry.worm),
-            Effect.mapError((e) =>
-              isSecurityError(e) ? new ClawQLError({ reason: e.reason }) : e
-            )
+            Effect.mapError((e) => (isSecurityError(e) ? new ClawQLError({ reason: e.reason }) : e))
           );
 
           if (!result.allow) {

@@ -2,11 +2,7 @@
  * Payments x402 MCP proxy plugin — routes in-process x402 enforcement through pre-execute hooks.
  */
 
-import {
-  defineRegisteringProviderPlugin,
-  type HookResult,
-  type ProviderPlugin,
-} from "clawql-core";
+import { defineRegisteringProviderPlugin, type HookResult, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { isX402EnforcementActive } from "../x402/config.js";
 import { mcpX402BeforeCallToolEffect } from "../x402/mcp-enforce-effect.js";

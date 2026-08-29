@@ -27,10 +27,10 @@ The Panguard proxy plugin registers a blocking **`tool` / `pre-execute`** hook f
 
 ## Enable / disable
 
-| Env                                  | Default | Effect                                           |
-| ------------------------------------ | ------- | ------------------------------------------------ |
-| **`CLAWQL_PANGUARD_PROXY_PLUGIN=1`** | off     | Register the proxy plugin in composition         |
-| **`CLAWQL_PANGUARD_IN_PROCESS=1`**   | off     | Active in-process policy path (blocking hooks)   |
+| Env                                  | Default | Effect                                             |
+| ------------------------------------ | ------- | -------------------------------------------------- |
+| **`CLAWQL_PANGUARD_PROXY_PLUGIN=1`** | off     | Register the proxy plugin in composition           |
+| **`CLAWQL_PANGUARD_IN_PROCESS=1`**   | off     | Active in-process policy path (blocking hooks)     |
 | **`CLAWQL_ALLOW_NO_ENFORCEMENT=1`**  | off     | Silence boot warning when no enforcement is active |
 
 ## When to use

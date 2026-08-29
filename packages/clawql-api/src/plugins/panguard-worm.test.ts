@@ -32,9 +32,9 @@ describe("Panguard → process WORM dual-write", () => {
     const plugin = createPanguardProxyPlugin();
     const hook = plugin.hooks![0]!;
     const blocked = await Effect.runPromise(
-      hook.handler({ session: emptySession, toolName: "memory_ingest", args: {} }).pipe(
-        Effect.provideService(WormAuditSink, noopWorm)
-      )
+      hook
+        .handler({ session: emptySession, toolName: "memory_ingest", args: {} })
+        .pipe(Effect.provideService(WormAuditSink, noopWorm))
     );
     expect(blocked.allow).toBe(false);
 

@@ -60,7 +60,10 @@ describe("McpProxyPipeline", () => {
           toolPattern: "search",
           blocking: true,
           handler: () =>
-            Effect.succeed({ allow: false, denyReason: "blocked by test hook" } satisfies HookResult),
+            Effect.succeed({
+              allow: false,
+              denyReason: "blocked by test hook",
+            } satisfies HookResult),
         },
       ],
     });

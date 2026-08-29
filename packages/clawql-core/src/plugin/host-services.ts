@@ -21,10 +21,7 @@ export type PluginHostServices = {
   readonly worm: Context.Tag.Service<typeof WormAuditSink>;
 };
 
-function extractService<I, S>(
-  tag: Context.Tag<I, S>,
-  layer: Layer.Layer<I, never, never>
-): S {
+function extractService<I, S>(tag: Context.Tag<I, S>, layer: Layer.Layer<I, never, never>): S {
   return Effect.runSync(
     Effect.gen(function* () {
       return yield* tag;

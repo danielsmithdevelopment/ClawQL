@@ -17,7 +17,7 @@
 | **2**  | `fireHook` ATR never-loosen + WORM events                                                                          | **Done**                           |
 | **3**  | Skill registry + MCP `skills_list` / `skills_get`                                                                  | **Done**                           |
 | **4**  | Effect install/uninstall + vault-seed port                                                                         | **Done**                           |
-| **5**  | ~~Legacy bridge~~ → **Hard break:** delete `Plugin` / `beforeCallTool` / bridge; rewrite all in-tree plugins | **Done**                           |
+| **5**  | ~~Legacy bridge~~ → **Hard break:** delete `Plugin` / `beforeCallTool` / bridge; rewrite all in-tree plugins       | **Done**                           |
 | **6**  | Dynamic loader + Panguard hooks-only reference                                                                     | **Done**                           |
 | **7**  | Horizontal native ProviderPlugin (all packages); proxy `fireHook`-only path                                        | **Done**                           |
 | **7b** | Boot SECURITY WARNING when zero enforcement; Panguard opt-in                                                       | **Done**                           |

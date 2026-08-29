@@ -18,9 +18,9 @@ async function runPreExecute(
 ) {
   const hook = plugin.hooks![0]!;
   return Effect.runPromise(
-    hook.handler({ session: emptySession, toolName, args: {} }).pipe(
-      Effect.provideService(WormAuditSink, noopWorm)
-    )
+    hook
+      .handler({ session: emptySession, toolName, args: {} })
+      .pipe(Effect.provideService(WormAuditSink, noopWorm))
   );
 }
 
