@@ -1,8 +1,8 @@
 ---
 title: Panguard MCP proxy
-description: In-process beforeCallTool policy chokepoint for JWT ATR and enterprise MCP defense-in-depth. Default on; disable with CLAWQL_PANGUARD_PROXY_PLUGIN=0.
+description: In-process beforeCallTool policy chokepoint for JWT ATR and enterprise MCP defense-in-depth. 8.0+ opt-in — set CLAWQL_PANGUARD_PROXY_PLUGIN=1.
 slug: panguard-proxy
-status: default-on
+status: opt-in
 package: clawql-api (PanguardProxyPlugin)
 order: 2
 prev: core
@@ -17,6 +17,8 @@ next: memory
 
 The Panguard proxy plugin is the synchronous **`beforeCallTool`** chokepoint for policy enforcement when ClawQL runs behind an enterprise MCP proxy or with in-process ATR rules ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
 
+**8.0+:** enforcement providers are **default-off**. A bare install has no tool-scope enforcement until you opt in. Boot emits a **SECURITY WARNING** when none is active (silence with `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional).
+
 ## What it does
 
 - Intercepts every MCP tool call before execution
@@ -25,10 +27,11 @@ The Panguard proxy plugin is the synchronous **`beforeCallTool`** chokepoint for
 
 ## Enable / disable
 
-| Env                                  | Default | Effect                                          |
-| ------------------------------------ | ------- | ----------------------------------------------- |
-| **`CLAWQL_PANGUARD_PROXY_PLUGIN=0`** | on      | Omit the proxy plugin from composition          |
-| **`CLAWQL_PANGUARD_IN_PROCESS=1`**   | off     | Use in-process policy path (active development) |
+| Env                                  | Default | Effect                                             |
+| ------------------------------------ | ------- | -------------------------------------------------- |
+| **`CLAWQL_PANGUARD_PROXY_PLUGIN=1`** | off     | Register the proxy plugin in composition           |
+| **`CLAWQL_PANGUARD_IN_PROCESS=1`**   | off     | Active in-process policy path (`beforeCallTool`)   |
+| **`CLAWQL_ALLOW_NO_ENFORCEMENT=1`**  | off     | Silence boot warning when no enforcement is active |
 
 ## When to use
 

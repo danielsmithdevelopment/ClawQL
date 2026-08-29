@@ -5,11 +5,21 @@ import { ClawQLApi, createClawQLApi } from "./index.js";
 import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
 describe("createClawQLApi", () => {
-  it("registers Panguard proxy plugin by default", () => {
-    const api = createClawQLApi({ plugins: [] });
-    const withDefaults = createClawQLApi();
-    expect(withDefaults.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
-    expect(api.registry.list()).toHaveLength(0);
+  it("does not register Panguard by default (8.0+ opt-in)", () => {
+    const prev = process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+    delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+    try {
+      const withDefaults = createClawQLApi();
+      expect(withDefaults.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(
+        false
+      );
+      process.env.CLAWQL_PANGUARD_PROXY_PLUGIN = "1";
+      const optedIn = createClawQLApi();
+      expect(optedIn.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+      else process.env.CLAWQL_PANGUARD_PROXY_PLUGIN = prev;
+    }
   });
 
   it("does not register MemoryPlugin via default sync plugins", () => {

@@ -75,9 +75,9 @@ export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = 
   return plugin;
 }
 
-/** Registered by default unless `CLAWQL_PANGUARD_PROXY_PLUGIN=0`. */
+/** Registered when `CLAWQL_PANGUARD_PROXY_PLUGIN=1` (8.0+ default off — opt in). */
 export function panguardProxyPluginEnabled(): boolean {
-  return process.env.CLAWQL_PANGUARD_PROXY_PLUGIN?.trim() !== "0";
+  return process.env.CLAWQL_PANGUARD_PROXY_PLUGIN?.trim() === "1";
 }
 
 export function defaultPlugins(): readonly Plugin[] {

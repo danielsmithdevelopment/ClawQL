@@ -10,6 +10,7 @@ import { ClawQLApi, clawqlApiLayer } from "./clawql-api-service.js";
 import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
 import { McpToolRegistry } from "./mcp-tool-registry.js";
 import { composeDefaultPlugins } from "./plugins/compose-default-plugins.js";
+import { warnIfNoEnforcementActive } from "./plugins/enforcement-boot-warning.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipeline.js";
 import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
@@ -25,7 +26,7 @@ export type CreateClawQLApiOptions = {
   readonly searchLayer?: Layer.Layer<SearchService, never, never>;
   /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
   readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
-  /** Plugins registered synchronously at composition root (defaults include Panguard + Memory when enabled). */
+  /** Plugins registered synchronously at composition root (8.0+: empty unless opted in). */
   readonly plugins?: readonly Plugin[];
   /**
    * Effect Layers that register plugins at runtime via `ClawQLApi.registerPlugin`.
@@ -104,6 +105,9 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
   // Eager build so registry / MCP tools are populated synchronously after create.
   runtime.runSync(Effect.void);
   const prepare = options.prepareEffect;
+
+  // 8.0: loud boot warning when zero tool-scope enforcement is active (not Panguard-by-name).
+  warnIfNoEnforcementActive(registry.list());
 
   return {
     registry,

@@ -7,7 +7,8 @@ import {
 } from "./privacy-filter-gateway-plugin.js";
 
 /**
- * Default sync plugins for `createClawQLApi()` — Panguard proxy + optional Presidio + Privacy Filter.
+ * Default sync plugins for `createClawQLApi()` — 8.0+: empty unless opted in
+ * (`CLAWQL_PANGUARD_PROXY_PLUGIN=1`, optional Presidio / Privacy Filter flags).
  * Horizontal tiers register via `pluginLayers` (see `composeHorizontalPluginLayers`).
  */
 export function composeDefaultPlugins(): readonly Plugin[] {
