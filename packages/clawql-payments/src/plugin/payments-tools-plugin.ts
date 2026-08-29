@@ -5,7 +5,10 @@
  * CLAWQL_PAYMENTS_MCP_REQUIRE_AP2=1 (mandate JWT in tool args).
  */
 
-import type { Plugin } from "clawql-core";
+import {
+  defineRegisteringProviderPlugin,
+  type ProviderPlugin,
+} from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
@@ -263,13 +266,12 @@ const creditsTransferConfirmSchema = {
   mandateJwt: z.string().optional(),
 };
 
-export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
-  return {
+export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env): ProviderPlugin {
+  return defineRegisteringProviderPlugin({
     id: PAYMENTS_TOOLS_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    vertical: "payments",
-    onRegister: (api) =>
+    description: "Payments payout, ramp, offramp, credits, and compensation MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "payments_payout_create",
@@ -1200,5 +1202,5 @@ export function createPaymentsToolsPlugin(env: NodeJS.ProcessEnv = process.env):
           });
         } // isCompensationEnabled
       }),
-  };
+  });
 }

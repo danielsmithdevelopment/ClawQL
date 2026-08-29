@@ -49,7 +49,7 @@ function summarizeForAudit(result: HookResult): string {
 export function fireHook(
   hook: LifecycleHook & { readonly pluginId: string },
   ctx: HookContext
-): Effect.Effect<HookResult, ClawQLError | SecurityError, WormAuditSink> {
+): Effect.Effect<HookResult, ClawQLError | SecurityError | Error, WormAuditSink> {
   return Effect.gen(function* () {
     const worm = yield* WormAuditSink;
     const result = yield* hook.handler(ctx);
@@ -93,7 +93,7 @@ export function fireHooksForEvent(
   hooks: readonly RegisteredHook[],
   ctx: HookContext,
   options: { readonly stopOnDeny?: boolean } = {}
-): Effect.Effect<HookResult, ClawQLError | SecurityError, WormAuditSink> {
+): Effect.Effect<HookResult, ClawQLError | SecurityError | Error, WormAuditSink> {
   const stopOnDeny = options.stopOnDeny !== false;
   return Effect.gen(function* () {
     let last: HookResult = { allow: true };

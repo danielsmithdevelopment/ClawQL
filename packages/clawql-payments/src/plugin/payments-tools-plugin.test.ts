@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { Effect } from "effect";
-import type { ClawQLPluginRegistrationApi } from "clawql-core";
+import {
+  createInMemoryPluginHostServices,
+  type ClawQLPluginRegistrationApi,
+  type ProviderPlugin,
+} from "clawql-core";
 import { createPaymentsToolsPlugin, paymentsMcpToolsEnabled } from "./payments-tools-plugin.js";
+
+function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.install({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
 
 describe("payments tools MCP plugin", () => {
   it("omits P2P and compensation tools by default (compliance perimeter)", () => {
@@ -13,7 +24,7 @@ describe("payments tools MCP plugin", () => {
         }),
     };
     const plugin = createPaymentsToolsPlugin({ CLAWQL_PAYMENTS_MCP_TOOLS: "1" });
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     expect(names).toEqual([
       "payments_payout_create",
       "payments_ramp_agent_card_issue",
@@ -54,7 +65,7 @@ describe("payments tools MCP plugin", () => {
       CLAWQL_CREDITS_P2P_ENABLED: "1",
       CLAWQL_COMPENSATION_ENABLED: "1",
     });
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     expect(names).toContain("payments_credits_request_accept");
     expect(names).toContain("payments_credits_transfer_stage");
     expect(names).toContain("payments_credits_transfer_confirm");
@@ -75,7 +86,7 @@ describe("payments tools MCP plugin", () => {
       CLAWQL_CREDITS_P2P_ENABLED: "1",
       CLAWQL_COMPENSATION_ENABLED: "1",
     });
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     expect(names).not.toContain("payments_credits_transfer_stage");
     expect(names).not.toContain("agent_compensation_deposit_stage");
   });

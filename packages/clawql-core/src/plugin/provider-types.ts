@@ -85,7 +85,7 @@ export type LifecycleHook = {
   readonly blocking: boolean;
   readonly handler: (
     ctx: HookContext
-  ) => Effect.Effect<HookResult, ClawQLError | SecurityError, HookRuntimeServices>;
+  ) => Effect.Effect<HookResult, ClawQLError | SecurityError | Error, HookRuntimeServices>;
 };
 
 /** Lightweight index row ranked by search / skills/list. */
