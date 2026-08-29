@@ -10,18 +10,18 @@
 
 ## Action item waves
 
-| Wave  | Deliverable                                                                                                    | Breaking?        | Status                                                         |
-| ----- | -------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------- |
-| **0** | Spec v0.1 landed (`clawql-core-plugin-architecture.md`) incl. §8 skills + Effect clarifications                | Docs             | **Done**                                                       |
-| **1** | Types in `clawql-core`: `ProviderPlugin`, `StandaloneSkillPlugin`, `LifecycleHook`, `Skill*`, `VaultSeedEntry` | API surface      | **Done**                                                       |
-| **2** | `fireHook` Effect runtime: ATR never-loosen + `HOOK_SCOPE_VIOLATION_BLOCKED` / `HOOK_TRIGGERED`                | Runtime contract | **Done**                                                       |
-| **3** | Two-tier skill index/fetch + `skills/list` / `skills/get` registry APIs                                        | New MCP surface  | **Done** (registry; MCP RPC wiring follow-on)                  |
-| **4** | `PluginInstaller` Effect: install/uninstall, tagged vault-seed ports, WORM config events                       | Runtime          | **Done**                                                       |
-| **5** | Compat: legacy `Plugin` / `beforeCallTool` → `ProviderPlugin` + `tool`/`pre-execute` hook                      | Migration        | **Done** (`legacyPluginToProviderPlugin`)                      |
-| **6** | Dynamic loader (`optionalDependencies` + `import()`); Panguard as hooks-only provider plugin                   | Composition      | **Done** (loader + reference plugin; api composition follow-on) |
-| **7** | Migrate horizontal packages (memory, documents, …) onto `ProviderPlugin.install`                               | Package APIs     | **Next**                                                       |
-| **8** | Composition root: replace static imports in `compose-horizontal-plugin-layers.ts`                              | Boot path        | **Next**                                                       |
-| **9** | CHANGELOG `[8.0.0]`, migration guide, version lockstep, CI green, tag                                          | Release          | After waves 7–8                                                |
+| Wave  | Deliverable                                                                                                    | Breaking?        | Status                                                                                        |
+| ----- | -------------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------- |
+| **0** | Spec v0.1 landed (`clawql-core-plugin-architecture.md`) incl. §8 skills + Effect clarifications                | Docs             | **Done**                                                                                      |
+| **1** | Types in `clawql-core`: `ProviderPlugin`, `StandaloneSkillPlugin`, `LifecycleHook`, `Skill*`, `VaultSeedEntry` | API surface      | **Done**                                                                                      |
+| **2** | `fireHook` Effect runtime: ATR never-loosen + `HOOK_SCOPE_VIOLATION_BLOCKED` / `HOOK_TRIGGERED`                | Runtime contract | **Done**                                                                                      |
+| **3** | Two-tier skill index/fetch + `skills/list` / `skills/get` registry APIs                                        | New MCP surface  | **Done** (registry; MCP RPC wiring follow-on)                                                 |
+| **4** | `PluginInstaller` Effect: install/uninstall, tagged vault-seed ports, WORM config events                       | Runtime          | **Done**                                                                                      |
+| **5** | Compat: legacy `Plugin` / `beforeCallTool` → `ProviderPlugin` + `tool`/`pre-execute` hook                      | Migration        | **Done** (`legacyPluginToProviderPlugin`)                                                     |
+| **6** | Dynamic loader (`optionalDependencies` + `import()`); Panguard as hooks-only provider plugin                   | Composition      | **Done** (loader + reference plugin; api composition follow-on)                               |
+| **7** | Migrate horizontal packages (memory, documents, …) onto `ProviderPlugin.install`                               | Package APIs     | **In progress** — proxy pipeline accepts HookRegistry + `fireHook`; full package migrate next |
+| **8** | Composition root: replace static imports in `compose-horizontal-plugin-layers.ts`                              | Boot path        | **Partial** — `compose-horizontal-plugin-layers-dynamic.ts` added (opt-in); cutover next      |
+| **9** | CHANGELOG `[8.0.0]`, migration guide, version lockstep, CI green, tag                                          | Release          | After waves 7–8                                                                               |
 
 ---
 
