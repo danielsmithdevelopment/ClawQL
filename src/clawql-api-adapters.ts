@@ -45,7 +45,9 @@ function buildExecuteLive() {
 let apiHandle: ClawQLApiHandle | undefined;
 let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
 
-function buildClawqlApi(pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"]): ClawQLApiHandle {
+function buildClawqlApi(
+  pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"]
+): ClawQLApiHandle {
   return createClawQLApi({
     searchLayer: buildSearchLive(),
     executeLayer: buildExecuteLive(),
@@ -65,7 +67,9 @@ export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
   if (ensureApiPromise) return ensureApiPromise;
   ensureApiPromise = (async () => {
     void ensureProcessWormHostBooted().catch(() => undefined);
-    const pluginLayers = await composeHorizontalPluginLayersDynamic(resolvePluginCompositionFlags());
+    const pluginLayers = await composeHorizontalPluginLayersDynamic(
+      resolvePluginCompositionFlags()
+    );
     apiHandle = buildClawqlApi(pluginLayers);
     return apiHandle;
   })();

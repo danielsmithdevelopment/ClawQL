@@ -82,9 +82,7 @@ export function mcpProxyPipelineLayer(
               ).pipe(
                 Effect.provideService(WormAuditSink, worm),
                 Effect.mapError((e) =>
-                  isSecurityError(e)
-                    ? new ClawQLError({ reason: e.reason })
-                    : e
+                  isSecurityError(e) ? new ClawQLError({ reason: e.reason }) : e
                 )
               );
 

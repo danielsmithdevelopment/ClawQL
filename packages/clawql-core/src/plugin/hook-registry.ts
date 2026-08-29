@@ -5,11 +5,7 @@
 import { Effect, Layer, Ref } from "effect";
 import { ClawQLError } from "../errors/clawql-error.js";
 import { toolMatchesPattern } from "./hook-runtime.js";
-import {
-  HookRegistry,
-  type LifecycleHook,
-  type RegisteredHook,
-} from "./provider-types.js";
+import { HookRegistry, type LifecycleHook, type RegisteredHook } from "./provider-types.js";
 
 type HookStore = {
   readonly byPlugin: ReadonlyMap<string, readonly RegisteredHook[]>;

@@ -6,10 +6,7 @@ import {
   resetProcessSkillsRegistryForTests,
   unregisterProcessSkills,
 } from "./process-skills.js";
-import {
-  handleSkillsGetToolInput,
-  handleSkillsListToolInput,
-} from "./skills-tool-handlers.js";
+import { handleSkillsGetToolInput, handleSkillsListToolInput } from "./skills-tool-handlers.js";
 
 describe("process-skills registry", () => {
   beforeEach(async () => {
