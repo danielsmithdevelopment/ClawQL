@@ -104,8 +104,8 @@ Agent (stdio / HTTP / gRPC)
 
 ### 4.1 `clawql-core`
 
-| In package                                                                                                                                                          | Still shimmed in `src/`              |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| In package                                                                                                                     | Still shimmed in `src/`              |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
 | `audit/`, `cache` helpers, Merkle, Cuckoo, **ProviderPlugin / fireHook / skill registry (8.0)**, legacy `Plugin` types, errors | `clawql-audit.ts`, `clawql-cache.ts` |
 
 **8.0 plugin architecture:** Spec [`clawql-core-plugin-architecture.md`](./clawql-core-plugin-architecture.md). Waves 0–6 foundation in package; horizontal package migration + dynamic composition root are follow-on (same major). Legacy `Plugin` is `@deprecated` — use `legacyPluginToProviderPlugin`.
