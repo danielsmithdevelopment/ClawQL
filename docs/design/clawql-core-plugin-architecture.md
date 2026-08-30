@@ -31,12 +31,12 @@ This is a `clawql-core` specification, not a `clawql-harness` or `clawql-agents`
 
 Every unit of pluggable content in `clawql-core` is one of these four kinds. A single plugin may declare any combination.
 
-| Kind           | What it is                                              | Who consumes it                 | Executable?                             |
-| -------------- | ------------------------------------------------------- | ------------------------------- | --------------------------------------- |
-| **Tool**       | A callable operation registered with `search`/`execute` | An agent, by calling it         | Yes                                     |
-| **Hook**       | Provider-declared logic at a fixed lifecycle point      | `clawql-core`'s firing mechanism | Yes (never called directly by an agent) |
-| **Skill**      | Procedural knowledge — instructions, not code           | An agent, by reading it         | No — informs, doesn't execute           |
-| **Vault-seed** | System self-knowledge ingested into the vault at install  | An agent, via `memory_recall`   | No — informational only                 |
+| Kind           | What it is                                               | Who consumes it                  | Executable?                             |
+| -------------- | -------------------------------------------------------- | -------------------------------- | --------------------------------------- |
+| **Tool**       | A callable operation registered with `search`/`execute`  | An agent, by calling it          | Yes                                     |
+| **Hook**       | Provider-declared logic at a fixed lifecycle point       | `clawql-core`'s firing mechanism | Yes (never called directly by an agent) |
+| **Skill**      | Procedural knowledge — instructions, not code            | An agent, by reading it          | No — informs, doesn't execute           |
+| **Vault-seed** | System self-knowledge ingested into the vault at install | An agent, via `memory_recall`    | No — informational only                 |
 
 None of these four kinds requires any of the others to be present. A provider can ship tools with no skills. A skill can exist with no owning provider at all (§7). A hook can exist with no tools attached to the plugin that registers it (Panguard is exactly this case — see §5).
 
@@ -89,13 +89,9 @@ export interface ProviderPlugin {
   /** Lifecycle hooks (§5). */
   hooks?: LifecycleHook[];
 
-  install(
-    ctx: PluginContext
-  ): Effect.Effect<void, PluginInstallError, PluginInstallServices>;
+  install(ctx: PluginContext): Effect.Effect<void, PluginInstallError, PluginInstallServices>;
 
-  uninstall(
-    ctx: PluginContext
-  ): Effect.Effect<void, PluginInstallError, PluginInstallServices>;
+  uninstall(ctx: PluginContext): Effect.Effect<void, PluginInstallError, PluginInstallServices>;
 }
 ```
 
@@ -128,7 +124,9 @@ export interface LifecycleHook {
   event: LifecycleEvent;
   toolPattern?: string; // regex; required for 'tool' scope
   blocking: boolean; // required true for enforcement hooks (§5.3)
-  handler: (ctx: HookContext) => Effect.Effect<HookResult, ClawQLError | SecurityError | Error, HookRuntimeServices>;
+  handler: (
+    ctx: HookContext
+  ) => Effect.Effect<HookResult, ClawQLError | SecurityError | Error, HookRuntimeServices>;
 }
 ```
 
@@ -277,10 +275,10 @@ Clients (or core cache) compare digest before re-fetching full content after edi
 
 Expose MCP tools:
 
-| Tool          | Returns              |
-| ------------- | -------------------- |
-| `skills_list` | `SkillIndexEntry[]`  |
-| `skills_get`  | `SkillContent` body  |
+| Tool          | Returns             |
+| ------------- | ------------------- |
+| `skills_list` | `SkillIndexEntry[]` |
+| `skills_get`  | `SkillContent` body |
 
 Same underlying store serves `search`/`execute`-mediated agents and native Skills-over-MCP clients (Codex, ChatGPT, …).
 

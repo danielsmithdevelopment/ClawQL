@@ -23,7 +23,7 @@
 | **7b** | Boot SECURITY WARNING when zero enforcement; Panguard opt-in                                                       | **Done**                           |
 | **8**  | Production boot uses dynamic compose (`ensureClawqlApi` / `createRegisteredMcpServerAsync`); static kept for tests | **Done**                           |
 | **9**  | Migration guide + CHANGELOG loud defaults + hard-break wording; tag after CI green + #982                          | **Docs done** — tag on release day |
-| **10** | Scenario synthesis (§9 spec) — optional cold-start eval from `ToolDefinition` + `parameterNotes`                 | **Future** — spec only             |
+| **10** | Scenario synthesis (§9 spec) — optional cold-start eval from `ToolDefinition` + `parameterNotes`                   | **Future** — spec only             |
 
 ---
 
