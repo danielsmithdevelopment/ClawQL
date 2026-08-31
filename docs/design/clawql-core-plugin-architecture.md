@@ -31,11 +31,11 @@ This is a `clawql-core` specification, not a `clawql-harness` or `clawql-agents`
 
 Every unit of pluggable content in `clawql-core` is one of these four kinds. A single plugin may declare any combination.
 
-| Kind           | What it is                                              | Who consumes it                  | Executable?                             |
-| -------------- | ------------------------------------------------------- | -------------------------------- | --------------------------------------- |
-| **Tool**       | A callable operation registered with `search`/`execute`   | An agent, by calling it          | Yes                                     |
-| **Hook**       | Provider-declared logic at a fixed lifecycle point      | `clawql-core`'s firing mechanism | Yes (never called directly by an agent) |
-| **Skill**      | Procedural knowledge — instructions, not code           | An agent, by reading it          | No — informs, doesn't execute           |
+| Kind           | What it is                                               | Who consumes it                  | Executable?                             |
+| -------------- | -------------------------------------------------------- | -------------------------------- | --------------------------------------- |
+| **Tool**       | A callable operation registered with `search`/`execute`  | An agent, by calling it          | Yes                                     |
+| **Hook**       | Provider-declared logic at a fixed lifecycle point       | `clawql-core`'s firing mechanism | Yes (never called directly by an agent) |
+| **Skill**      | Procedural knowledge — instructions, not code            | An agent, by reading it          | No — informs, doesn't execute           |
 | **Vault-seed** | System self-knowledge ingested into the vault at install | An agent, via `memory_recall`    | No — informational only                 |
 
 None of these four kinds requires any of the others to be present. A provider can ship tools with no skills. A skill can exist with no owning provider at all (§7). A hook can exist with no tools attached to the plugin that registers it (Panguard is exactly this case — see §5).
