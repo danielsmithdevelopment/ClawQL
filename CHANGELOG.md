@@ -16,6 +16,7 @@
 ### Added
 
 - **8.0.0 skills approach** — unified `search` ranks operations **and** skills (`kind: "operation" | "skill"`); shared host `SkillRegistry`; default-on `handoff` / `session-handoff` standalone pack; `MemoryVaultSeedLive`; ATR-filter for provider-bundled skills; MCP HTTP `session-start`/`session-end`; inference `modelHooks` / `withModelLifecycleHooks`.
+- **8.0.0 scenario synthesis (Agent Seer §9)** — deterministic cold-start scenarios from `ToolDefinition` (+ `parameterNotes`); harness bridge `clawql-harness/bench/scenario-synthesis`; host helpers `synthesizeScenariosFromApi` / `modelHooksFromClawqlApi`.
 - **8.0.0 boot SECURITY WARNING — no tool-scope enforcement** — when zero blocking `tool` / `pre-execute` hooks are active, stderr warns (generic, not Panguard-by-name). Opt out only with `CLAWQL_ALLOW_NO_ENFORCEMENT=1`. Panguard proxy plugin is **opt-in** (`CLAWQL_PANGUARD_PROXY_PLUGIN=1`). See [`docs/design/clawql-8.0-plugin-architecture-action-items.md`](docs/design/clawql-8.0-plugin-architecture-action-items.md) Wave 7b.
 - **8.0.0 migration guide** — [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md) (hard break — rewrite plugins, no bridge).
 - **MCP `skills_list` / `skills_get`** — Skills-over-MCP two-tier index/fetch against process skill registry (`clawql-api`).

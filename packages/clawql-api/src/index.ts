@@ -9,6 +9,7 @@ export * from "./config/optional-flags.js";
 export * from "./config/providers-composition.js";
 export * from "./config/horizontal-composition.js";
 export * from "./create-api.js";
+export * from "./host-hooks.js";
 export * from "./plugins/compose-default-plugins.js";
 export * from "./execute/index.js";
 export * from "./execute-service.js";

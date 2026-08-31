@@ -12,12 +12,15 @@ import {
 import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
 import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
+import { createRequire } from "node:module";
 import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamic } from "./compose-horizontal-plugin-layers-dynamic.js";
 import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
 import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
+
+const requireFromHere = createRequire(import.meta.url);
 
 let loadSpecOverride: LoadSpecFn | undefined;
 let shutdownHooksRegistered = false;
@@ -68,6 +71,21 @@ async function resolveVaultSeedLayer(): Promise<
   return undefined;
 }
 
+/** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
+function resolveVaultSeedLayerSync():
+  | Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"]
+  | undefined {
+  try {
+    const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
+    if (typeof mem.MemoryVaultSeedLive !== "undefined") {
+      return mem.MemoryVaultSeedLive;
+    }
+  } catch {
+    /* optional */
+  }
+  return undefined;
+}
+
 /**
  * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
  * packages are not statically loaded. Safe to call multiple times; returns existing handle.
@@ -97,7 +115,8 @@ export function getClawqlApi(): ClawQLApiHandle {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
     void ensureProcessWormHostBooted().catch(() => undefined);
     apiHandle = buildClawqlApi(
-      composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags())
+      composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
+      resolveVaultSeedLayerSync()
     );
   }
   return apiHandle;

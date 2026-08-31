@@ -69,7 +69,9 @@ Empty skill index until a ProviderPlugin / StandaloneSkillPlugin installs skills
 
 **ATR visibility:** provider-bundled skills inherit tool ATR (`SkillIndexEntry.source: "provider"`). Standalone skills are not ATR-gated. Hosts bind tokens via `bindProcessSearchAtrTokens` / `CLAWQL_SESSION_ATR`, or pass `atrScopeTokens` on the search layer.
 
-**Session / model hooks:** MCP HTTP fires `session-start` / `session-end`; inference callers pass `modelHooks: { hookRegistry, worm }` into `createInferenceGateway`.
+**Session / model hooks:** MCP HTTP fires `session-start` / `session-end`; inference callers pass `modelHooks: { hookRegistry, worm }` into `createInferenceGateway` (helper: `modelHooksFromClawqlApi` / `getHostInferenceGateway`).
+
+**Cold-start scenarios (Agent Seer §9):** `synthesizeScenarios` / `synthesizeScenariosFromApi` build graded scenarios from tool schemas + `parameterNotes`; map to harness tasks via `clawql-harness/bench/scenario-synthesis`.
 
 ## Minimal upgrade checklist
 

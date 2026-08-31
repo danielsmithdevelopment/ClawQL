@@ -4,6 +4,7 @@ import {
   type ClawQLError,
   type McpToolAlreadyRegisteredError,
   type PluginAlreadyRegisteredError,
+  type PluginInstallError,
   type ProviderPlugin,
 } from "clawql-core";
 import {
@@ -23,6 +24,7 @@ const EmptyToolSchema = z.object({});
 
 export type HarnessLayerError =
   | PluginAlreadyRegisteredError
+  | PluginInstallError
   | ClawQLError
   | McpToolAlreadyRegisteredError
   | HarnessPluginError
