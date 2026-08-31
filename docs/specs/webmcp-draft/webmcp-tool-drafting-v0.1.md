@@ -2,7 +2,7 @@
 title: "WebMCP Tool Drafting — Specification"
 status: "August 2026"
 version: "0.1"
-package: "packages/clawql-core/providers/webmcp-draft/"
+package: "packages/clawql-core/src/providers/webmcp-draft/"
 ---
 
 # WebMCP Tool Drafting
@@ -29,9 +29,9 @@ This is a `ProviderPlugin` (per the plugin architecture spec) like any other —
 
 ```
 clawql-core/
-  providers/
+  src/providers/
     webmcp-draft/
-      index.ts             — the ProviderPlugin itself
+      index.ts             — the ProviderPlugin itself (WebMcpDraftPlugin)
       inference/
         from-openapi.ts     — draft candidates from an OpenAPI spec
         from-graphql.ts      — draft candidates from a GraphQL schema
@@ -41,9 +41,10 @@ clawql-core/
       lifecycle/
         draft-store.ts        — versioned candidate storage
         approval.ts            — review/edit/approve/reject flow
-        publish.ts              — emits navigator.modelContext
+        publish.ts              — emits document.modelContext
                                    .registerTool() calls once approved
         rollback.ts             — reverts to a prior published version
+        pre-ingest-gate.ts      — stub pre-ingest allowlist gate
 ```
 
 ---
@@ -220,6 +221,6 @@ This binding is what makes the published tool genuinely functional rather than a
 
 ---
 
-_WebMCP Tool Drafting Specification · v0.1 · August 2026_  
-_Location: packages/clawql-core/providers/webmcp-draft/_  
-_Contact: daniel@clawql.com_
+*WebMCP Tool Drafting Specification · v0.1 · August 2026*  
+*Location: packages/clawql-core/src/providers/webmcp-draft/*  
+*Contact: daniel@clawql.com*

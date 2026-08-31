@@ -2,7 +2,7 @@
 
 Effect-TS foundation for ClawQL modularization ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)). Ground truth: [`docs/design/modularization-implementation-status.md`](../../docs/design/modularization-implementation-status.md).
 
-**Shipped:** `AuditService` + in-process audit ring buffer (MCP `audit` tool delegates here); Merkle + Cuckoo modules; **Plugin / ProviderPlugin architecture (8.0)**; cache helpers.
+**Shipped:** `AuditService` + in-process **hash-chained** audit ring buffer (MCP `audit` tool delegates here; `verify` for the retained window); Merkle + Cuckoo modules; **Plugin / ProviderPlugin architecture (8.0)**; cache helpers; **`webmcp-draft`** provider stub (heuristic draft → review → publish → rollback — see [`docs/specs/webmcp-draft/`](../../docs/specs/webmcp-draft/)).
 
 ## Plugin architecture (8.0)
 
@@ -19,11 +19,12 @@ Canonical spec: [`docs/design/clawql-core-plugin-architecture.md`](../../docs/de
 | `createInMemoryPluginHostServices`       | Shared HookRegistry + install Layer for hosts                  |
 | `loadPluginModuleEffect`                 | Dynamic `import()` loader (pairs with optionalDependencies)    |
 | `PanguardProviderPlugin`                 | Reference hooks-only provider plugin                           |
+| `WebMcpDraftPlugin`                      | Draft WebMCP tools from OpenAPI/GraphQL/forms (stub)           |
 
 **Security:** Hooks may restrict, never loosen ATR — enforced in `fireHook`, not in any provider. Effect types structure errors and DI; they do **not** replace the runtime ATR check.
 
 **Zero-import-if-absent:** `optionalDependencies` + `loadPluginModuleEffect` — not Effect Layers alone.
 
-**Internal modules:** `merkle/`, `cuckoo/`, `plugin/`, `audit/`.
+**Internal modules:** `merkle/`, `hash-chain/`, `cuckoo/`, `loki/`, `plugin/`, `audit/`, `providers/webmcp-draft/`.
 
 **8.0 hard break:** Phase-2 `Plugin` / `beforeCallTool` and any compatibility bridge are removed — rewrite against `ProviderPlugin`.
