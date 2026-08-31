@@ -49,8 +49,10 @@ function buildClawqlApiOptions(
   vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
 ): CreateClawQLApiOptions {
   // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
+  // Pass loadSpecFn so setLoadSpecForTests overrides both search and execute.
   return {
     executeLayer: buildExecuteLive(),
+    loadSpecFn: resolveLoadSpec(),
     plugins: [...composeDefaultPlugins(), ...defaultPaymentsProxyPlugins()],
     pluginLayers,
     vaultSeedLayer,
