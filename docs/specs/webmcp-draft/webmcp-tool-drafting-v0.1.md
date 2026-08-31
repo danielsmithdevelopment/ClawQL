@@ -221,6 +221,6 @@ This binding is what makes the published tool genuinely functional rather than a
 
 ---
 
-*WebMCP Tool Drafting Specification · v0.1 · August 2026*  
-*Location: packages/clawql-core/src/providers/webmcp-draft/*  
-*Contact: daniel@clawql.com*
+_WebMCP Tool Drafting Specification · v0.1 · August 2026_  
+_Location: packages/clawql-core/src/providers/webmcp-draft/_  
+_Contact: daniel@clawql.com_
