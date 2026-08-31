@@ -5,6 +5,7 @@ import {
   makeExecuteLive,
   McpProxyPipeline,
   type ClawQLApiHandle,
+  type CreateClawQLApiOptions,
   type ExecuteClawqlOperationParams,
   type LoadedSpec,
   type LoadSpecFn,
@@ -43,8 +44,8 @@ let apiHandle: ClawQLApiHandle | undefined;
 let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
 
 function buildClawqlApi(
-  pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"],
-  vaultSeedLayer?: Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"]
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
 ): ClawQLApiHandle {
   // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
   return createClawQLApi({
@@ -58,7 +59,7 @@ function buildClawqlApi(
 }
 
 async function resolveVaultSeedLayer(): Promise<
-  Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"] | undefined
+  CreateClawQLApiOptions["vaultSeedLayer"] | undefined
 > {
   try {
     const mem = await import("clawql-memory/plugin");
@@ -72,8 +73,7 @@ async function resolveVaultSeedLayer(): Promise<
 }
 
 /** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
-function resolveVaultSeedLayerSync():
-  Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"] | undefined {
+function resolveVaultSeedLayerSync(): CreateClawQLApiOptions["vaultSeedLayer"] | undefined {
   try {
     const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
     if (typeof mem.MemoryVaultSeedLive !== "undefined") {
