@@ -6,6 +6,7 @@ package: "packages/clawql-core/providers/webmcp-draft/"
 ---
 
 # WebMCP Tool Drafting
+
 ## A clawql-core Provider for Inferring WebMCP Tools From Existing Structured Interfaces
 
 **August 2026**
@@ -24,7 +25,7 @@ This provider drafts candidate WebMCP tool declarations (`navigator.modelContext
 
 ## 2. Why clawql-core, Not a New Package
 
-This is a `ProviderPlugin` (per the plugin architecture spec) like any other — it has tools (draft, review, publish, rollback), it has hooks (a `pre-ingest`-scope hook that gates what an approved draft is allowed to declare), and it participates in the exact same WORM-audited install/uninstall lifecycle as every other provider. There is no reason for this to be a separate package; it belongs alongside `clawql-core`'s other source-ingestion adapters (REST, GraphQL, gRPC, WebMCP-consumption, CLI) because drafting WebMCP tools is the *output* side of the same ingestion pipeline that already reads OpenAPI and GraphQL schemas for the *input* side.
+This is a `ProviderPlugin` (per the plugin architecture spec) like any other — it has tools (draft, review, publish, rollback), it has hooks (a `pre-ingest`-scope hook that gates what an approved draft is allowed to declare), and it participates in the exact same WORM-audited install/uninstall lifecycle as every other provider. There is no reason for this to be a separate package; it belongs alongside `clawql-core`'s other source-ingestion adapters (REST, GraphQL, gRPC, WebMCP-consumption, CLI) because drafting WebMCP tools is the _output_ side of the same ingestion pipeline that already reads OpenAPI and GraphQL schemas for the _input_ side.
 
 ```
 clawql-core/
@@ -51,11 +52,11 @@ clawql-core/
 
 ### 3.1 Input Sources, Ranked by Reliability
 
-| Source | Reliability | Why |
-|---|---|---|
-| OpenAPI spec | Highest | Explicit operation names, typed parameters, often has descriptions already — closest to a WebMCP tool declaration's own shape |
-| GraphQL schema | High | Typed, self-describing, mutations map naturally to actions worth drafting as tools |
-| Rendered HTML forms / interactive elements | Lowest | No types, no guaranteed semantic naming (`<input name="q1">` tells you nothing); requires the LLM to infer intent from field labels, surrounding text, and form action URLs, which is meaningfully less reliable than reading an explicit schema |
+| Source                                     | Reliability | Why                                                                                                                                                                                                                                              |
+| ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OpenAPI spec                               | Highest     | Explicit operation names, typed parameters, often has descriptions already — closest to a WebMCP tool declaration's own shape                                                                                                                    |
+| GraphQL schema                             | High        | Typed, self-describing, mutations map naturally to actions worth drafting as tools                                                                                                                                                               |
+| Rendered HTML forms / interactive elements | Lowest      | No types, no guaranteed semantic naming (`<input name="q1">` tells you nothing); requires the LLM to infer intent from field labels, surrounding text, and form action URLs, which is meaningfully less reliable than reading an explicit schema |
 
 A site with none of these — no OpenAPI, no GraphQL, no discoverable forms, purely dynamic client-side interaction with no server-visible structure — is out of scope for this provider entirely. That gap is real and is exactly what a full static-code-analysis engine would close; this provider does not attempt to close it.
 
@@ -65,27 +66,25 @@ A site with none of these — no OpenAPI, no GraphQL, no discoverable forms, pur
 // packages/clawql-core/providers/webmcp-draft/inference/from-openapi.ts
 
 export interface DraftCandidate {
-  candidateId: string
-  sourceType: 'openapi' | 'graphql' | 'forms'
-  sourceRef: string              // the spec path, schema field, or form
-                                  // selector this candidate was inferred from
+  candidateId: string;
+  sourceType: "openapi" | "graphql" | "forms";
+  sourceRef: string; // the spec path, schema field, or form
+  // selector this candidate was inferred from
   proposedTool: {
-    name: string
-    description: string
-    inputSchema: JSONSchema
-  }
-  confidence: 'high' | 'medium' | 'low'
-  inferenceNotes: string          // why the drafter believes this is a
-                                    // meaningful user-facing action, not
-                                    // just an available operation — e.g.
-                                    // "POST /cart/items with a productId
-                                    // and quantity parameter matches the
-                                    // add-to-cart pattern"
+    name: string;
+    description: string;
+    inputSchema: JSONSchema;
+  };
+  confidence: "high" | "medium" | "low";
+  inferenceNotes: string; // why the drafter believes this is a
+  // meaningful user-facing action, not
+  // just an available operation — e.g.
+  // "POST /cart/items with a productId
+  // and quantity parameter matches the
+  // add-to-cart pattern"
 }
 
-export async function draftFromOpenApi(
-  spec: OpenApiDocument,
-): Promise<DraftCandidate[]> {
+export async function draftFromOpenApi(spec: OpenApiDocument): Promise<DraftCandidate[]> {
   // Not every operation in a spec is worth drafting as a WebMCP tool —
   // a health-check endpoint or an internal admin operation isn't a
   // "user-facing action" in the sense WebMCP tools are meant to expose.
@@ -106,32 +105,28 @@ This reuses the plugin architecture's existing patterns rather than inventing ne
 // packages/clawql-core/providers/webmcp-draft/lifecycle/approval.ts
 
 export interface DraftReviewAction {
-  candidateId: string
-  action: 'approve' | 'reject' | 'edit-and-approve'
-  editedTool?: Partial<DraftCandidate['proposedTool']>  // a reviewer can
-                                                          // correct a
-                                                          // drafted schema
-                                                          // before approval,
-                                                          // not just accept
-                                                          // or reject wholesale
-  reviewedBy: string
+  candidateId: string;
+  action: "approve" | "reject" | "edit-and-approve";
+  editedTool?: Partial<DraftCandidate["proposedTool"]>; // a reviewer can
+  // correct a
+  // drafted schema
+  // before approval,
+  // not just accept
+  // or reject wholesale
+  reviewedBy: string;
 }
 
-export async function reviewDraft(
-  action: DraftReviewAction,
-): Promise<void> {
+export async function reviewDraft(action: DraftReviewAction): Promise<void> {
   await worm.append({
-    type: action.action === 'reject'
-      ? 'WEBMCP_DRAFT_REJECTED'
-      : 'WEBMCP_DRAFT_APPROVED',
+    type: action.action === "reject" ? "WEBMCP_DRAFT_REJECTED" : "WEBMCP_DRAFT_APPROVED",
     candidateId: action.candidateId,
     reviewedBy: action.reviewedBy,
     edited: !!action.editedTool,
     timestamp: new Date().toISOString(),
-  })
+  });
 
-  if (action.action !== 'reject') {
-    await publishApprovedTool(action)
+  if (action.action !== "reject") {
+    await publishApprovedTool(action);
   }
 }
 ```
@@ -140,13 +135,13 @@ export async function reviewDraft(
 
 ```typescript
 export interface PublishedWebMcpVersion {
-  versionId: string
-  publishedTools: DraftCandidate['proposedTool'][]
-  publishedAt: string
-  publishedBy: string
-  previousVersionId: string | null   // forms a chain — rollback means
-                                       // re-activating a prior version,
-                                       // not deleting the current one
+  versionId: string;
+  publishedTools: DraftCandidate["proposedTool"][];
+  publishedAt: string;
+  publishedBy: string;
+  previousVersionId: string | null; // forms a chain — rollback means
+  // re-activating a prior version,
+  // not deleting the current one
 }
 ```
 
@@ -161,10 +156,10 @@ Once approved, publishing is nothing more than emitting the standard `navigator.
 ```typescript
 // packages/clawql-core/providers/webmcp-draft/lifecycle/publish.ts
 
-export function generatePublishScript(
-  version: PublishedWebMcpVersion,
-): string {
-  return version.publishedTools.map(tool => `
+export function generatePublishScript(version: PublishedWebMcpVersion): string {
+  return version.publishedTools
+    .map(
+      (tool) => `
     document.modelContext.registerTool({
       name: ${JSON.stringify(tool.name)},
       description: ${JSON.stringify(tool.description)},
@@ -176,7 +171,9 @@ export function generatePublishScript(
         return callBoundOperation(${JSON.stringify(tool.name)}, args)
       },
     })
-  `).join('\n')
+  `
+    )
+    .join("\n");
 }
 ```
 
@@ -184,15 +181,15 @@ export function generatePublishScript(
 
 ## 6. Binding a Published Tool to Its Underlying Operation
 
-A drafted-and-approved tool declaration is only half of what's needed — it also needs to actually *call* the real operation it was drafted from when an agent invokes it. This binding is established at draft time (§3.2's `sourceRef`) and carried through to publish:
+A drafted-and-approved tool declaration is only half of what's needed — it also needs to actually _call_ the real operation it was drafted from when an agent invokes it. This binding is established at draft time (§3.2's `sourceRef`) and carried through to publish:
 
 ```typescript
 export interface BoundOperation {
-  toolName: string
-  sourceType: 'openapi' | 'graphql' | 'forms'
-  sourceRef: string             // the exact operationId, GraphQL
-                                   // mutation name, or form submission
-                                   // target this tool calls when invoked
+  toolName: string;
+  sourceType: "openapi" | "graphql" | "forms";
+  sourceRef: string; // the exact operationId, GraphQL
+  // mutation name, or form submission
+  // target this tool calls when invoked
 }
 ```
 
@@ -212,17 +209,17 @@ This binding is what makes the published tool genuinely functional rather than a
 
 ## 8. Package Boundaries — Summary
 
-| Concern | Package | Why |
-|---|---|---|
-| Drafting candidates from OpenAPI/GraphQL/forms | `clawql-core` (`webmcp-draft` provider) | Same ingestion architecture that already parses these interfaces for unrelated purposes |
-| Review, approval, edit, versioning, rollback | `clawql-core` (`webmcp-draft` provider), reusing plugin install-lifecycle patterns | No new lifecycle mechanism needed — this is the same reversible, WORM-audited pattern every provider plugin already follows |
-| Publishing the actual `registerTool()` calls | `clawql-core` (`webmcp-draft` provider) | Standard public WebMCP API, no proprietary mechanism |
-| Binding a published tool to its real underlying operation | `clawql-core`'s existing source-adapter execution path | The tool must actually work, not just declare a plausible shape |
-| Usage analytics on the published tools (visits, success rate) | `clawql-analytics` | Separate, already-specced concern — not duplicated here |
-| Full static-code-analysis of arbitrary repositories | Out of scope | Genuinely harder, ongoing engineering investment; the Sodium-shaped product this provider deliberately does not attempt to replicate |
+| Concern                                                       | Package                                                                            | Why                                                                                                                                  |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Drafting candidates from OpenAPI/GraphQL/forms                | `clawql-core` (`webmcp-draft` provider)                                            | Same ingestion architecture that already parses these interfaces for unrelated purposes                                              |
+| Review, approval, edit, versioning, rollback                  | `clawql-core` (`webmcp-draft` provider), reusing plugin install-lifecycle patterns | No new lifecycle mechanism needed — this is the same reversible, WORM-audited pattern every provider plugin already follows          |
+| Publishing the actual `registerTool()` calls                  | `clawql-core` (`webmcp-draft` provider)                                            | Standard public WebMCP API, no proprietary mechanism                                                                                 |
+| Binding a published tool to its real underlying operation     | `clawql-core`'s existing source-adapter execution path                             | The tool must actually work, not just declare a plausible shape                                                                      |
+| Usage analytics on the published tools (visits, success rate) | `clawql-analytics`                                                                 | Separate, already-specced concern — not duplicated here                                                                              |
+| Full static-code-analysis of arbitrary repositories           | Out of scope                                                                       | Genuinely harder, ongoing engineering investment; the Sodium-shaped product this provider deliberately does not attempt to replicate |
 
 ---
 
-*WebMCP Tool Drafting Specification · v0.1 · August 2026*  
-*Location: packages/clawql-core/providers/webmcp-draft/*  
-*Contact: daniel@clawql.com*
+_WebMCP Tool Drafting Specification · v0.1 · August 2026_  
+_Location: packages/clawql-core/providers/webmcp-draft/_  
+_Contact: daniel@clawql.com_
