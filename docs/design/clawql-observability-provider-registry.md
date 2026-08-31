@@ -220,8 +220,8 @@ Order is deliberate — each phase unlocks the next without painting into a corn
 | Phase  | Deliverable                                                                                                                 | Rationale                                                           |
 | ------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **3a** | Signal-typed interfaces, per-type registries, built-in LGTM+ provider adapters, scopes + WORM hooks, health check scheduler | Governance and data model first; no Alloy coupling yet beyond types |
-| **3b** | Alloy config generator (snapshot → River), apply/reload integration, tests against `config.river` golden files _(shipped)_ | Runtime fan-out wired from registry without TS push |
-| **3c** | Query federation facade per signal type, MCP/HTTP read API, raw-access audit | Hard read-path problem; depends on stable provider metadata from 3a |
+| **3b** | Alloy config generator (snapshot → River), apply/reload integration, tests against `config.river` golden files _(shipped)_  | Runtime fan-out wired from registry without TS push                 |
+| **3c** | Query federation facade per signal type, MCP/HTTP read API, raw-access audit                                                | Hard read-path problem; depends on stable provider metadata from 3a |
 
 **Explicitly not in 3a–3c:** blocking N-of-M quorum processor, broad escape-hatch provider catalog, Langfuse/security-layer correlation (later package-spec phases).
 

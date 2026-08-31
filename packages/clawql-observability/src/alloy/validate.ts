@@ -6,9 +6,7 @@ import { ObservabilityError } from "../errors.js";
  * Structural River validation — brace balance and required component markers.
  * Full `alloy fmt` / dry-run belongs at the apply host when Alloy CLI is available.
  */
-export const validateAlloyRiverEffect = (
-  river: string
-): Effect.Effect<void, ObservabilityError> =>
+export const validateAlloyRiverEffect = (river: string): Effect.Effect<void, ObservabilityError> =>
   Effect.gen(function* () {
     const trimmed = river.trim();
     if (trimmed === "") {
@@ -31,10 +29,7 @@ export const validateAlloyRiverEffect = (
       );
     }
 
-    const required = [
-      "otelcol.receiver.otlp",
-      "otelcol.processor.batch",
-    ] as const;
+    const required = ["otelcol.receiver.otlp", "otelcol.processor.batch"] as const;
     for (const marker of required) {
       if (!trimmed.includes(marker)) {
         return yield* Effect.fail(
@@ -45,10 +40,7 @@ export const validateAlloyRiverEffect = (
       }
     }
 
-    if (
-      !trimmed.includes("otelcol.exporter.") &&
-      !trimmed.includes("prometheus.remote_write")
-    ) {
+    if (!trimmed.includes("otelcol.exporter.") && !trimmed.includes("prometheus.remote_write")) {
       return yield* Effect.fail(
         new ObservabilityError({ reason: "River config has no exporters" })
       );

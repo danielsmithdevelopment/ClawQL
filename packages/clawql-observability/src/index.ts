@@ -134,14 +134,8 @@ export type {
   AlloyGeneratedConfig,
   AlloyProviderEntry,
 } from "./alloy/types.js";
-export {
-  generateAlloyRiver,
-  generateAlloyRiverEffect,
-} from "./alloy/generate.js";
-export {
-  sanitizeRiverComponentName,
-  sanitizeRiverComponentNameEffect,
-} from "./alloy/sanitize.js";
+export { generateAlloyRiver, generateAlloyRiverEffect } from "./alloy/generate.js";
+export { sanitizeRiverComponentName, sanitizeRiverComponentNameEffect } from "./alloy/sanitize.js";
 export { validateAlloyRiver, validateAlloyRiverEffect } from "./alloy/validate.js";
 export { applyAlloyConfigEffect } from "./alloy/apply.js";
 export type { ApplyAlloyConfigInput, ApplyAlloyConfigResult } from "./alloy/apply.js";

@@ -66,9 +66,7 @@ describe("alloy generate", () => {
 
     const golden = await readFile(goldenPath, "utf8");
     expect(generated.river).toBe(golden);
-    expect(generated.exporterRefs.logs).toEqual([
-      "otelcol.exporter.otlphttp.lgtm_loki.input",
-    ]);
+    expect(generated.exporterRefs.logs).toEqual(["otelcol.exporter.otlphttp.lgtm_loki.input"]);
   });
 
   it("fans out logs to multiple exporters in batch output", async () => {
@@ -169,9 +167,7 @@ describe("alloy from registry + apply", () => {
     const written = await readFile(result.outputPath, "utf8");
     expect(written).toContain("otelcol.exporter.otlphttp");
     expect(written).toContain("prometheus.remote_write");
-    expect(events.some((event) => event.type === "OBSERVABILITY_ALLOY_CONFIG_APPLIED")).toBe(
-      true
-    );
+    expect(events.some((event) => event.type === "OBSERVABILITY_ALLOY_CONFIG_APPLIED")).toBe(true);
   });
 
   it("denies apply without configure scope", async () => {
