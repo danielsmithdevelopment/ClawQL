@@ -33,9 +33,7 @@ export function ensureWebMcpDraftDurableDefaults(): Effect.Effect<void> {
  * Call once after {@link createClawQLApi} builds its ManagedRuntime.
  */
 export function wireWebMcpDraftBoundInvoker(
-  run: (
-    program: Effect.Effect<unknown, Error, ExecuteService>
-  ) => Promise<unknown>
+  run: (program: Effect.Effect<unknown, Error, ExecuteService>) => Promise<unknown>
 ): Effect.Effect<void> {
   return Effect.sync(() => {
     installBoundOperationInvoker({
@@ -51,8 +49,7 @@ export function wireWebMcpDraftBoundInvoker(
                 });
               })
             ),
-          catch: (cause) =>
-            cause instanceof Error ? cause : new Error(String(cause)),
+          catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
         }),
     });
   });

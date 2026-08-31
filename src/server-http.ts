@@ -487,7 +487,6 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
-
   // WebMCP draft bound execute — browser publish scripts POST here (§6).
   app.post("/webmcp-draft/bound-execute", applyGatewayAuth, async (req, res) => {
     try {
@@ -527,9 +526,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
             return yield* Effect.fail(new Error(`no binding for tool ${toolName}`));
           }
           return yield* executeBoundOperation(binding, body.args ?? {});
-        }).pipe(
-          Effect.provide(Layer.mergeAll(DraftStoreLive, BoundOperationInvokerHostLive))
-        )
+        }).pipe(Effect.provide(Layer.mergeAll(DraftStoreLive, BoundOperationInvokerHostLive)))
       );
       res.status(200).json(result);
     } catch (err: unknown) {

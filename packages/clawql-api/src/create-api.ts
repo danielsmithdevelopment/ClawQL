@@ -196,16 +196,11 @@ export async function createClawQLApiAsync(
   return handle;
 }
 
-function wireWebMcpDraftIfPresent(
-  plugins: readonly AnyPlugin[],
-  handle: ClawQLApiHandle
-): void {
+function wireWebMcpDraftIfPresent(plugins: readonly AnyPlugin[], handle: ClawQLApiHandle): void {
   if (!plugins.some((p) => p.id === WEBMCP_DRAFT_PLUGIN_ID)) return;
   Effect.runSync(
     wireWebMcpDraftBoundInvoker((program) =>
-      handle.run(
-        program as Effect.Effect<unknown, Error, ClawQLApiRuntimeServices>
-      )
+      handle.run(program as Effect.Effect<unknown, Error, ClawQLApiRuntimeServices>)
     )
   );
 }
