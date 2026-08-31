@@ -2,6 +2,7 @@ import type {
   ClawQLError,
   McpToolAlreadyRegisteredError,
   PluginAlreadyRegisteredError,
+  PluginInstallError,
 } from "clawql-core";
 import { ClawQLApi, ExecuteService } from "clawql-api";
 import { Effect, Layer } from "effect";
@@ -9,7 +10,11 @@ import { configureDocumentsPluginDeps, getDocumentsPluginDeps } from "./deps.js"
 import { createDocumentsPlugin, type CreateDocumentsPluginOptions } from "./documents-plugin.js";
 
 export type DocumentsLayerError =
-  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError | Error;
+  | PluginAlreadyRegisteredError
+  | PluginInstallError
+  | ClawQLError
+  | McpToolAlreadyRegisteredError
+  | Error;
 
 /**
  * Effect Layer that wires Documents execute deps and registers {@link createDocumentsPlugin}.
