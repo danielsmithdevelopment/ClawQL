@@ -157,6 +157,7 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'MCP tools', href: '/tools' },
       { title: 'Authentication', href: '/auth' },
       { title: 'Audit Trail', href: '/audit' },
+      { title: 'Observability', href: '/observability' },
       { title: 'mcp-api-adapter', href: '/mcp/mcp-api-adapter' },
       {
         title: '/mcp-ui',
