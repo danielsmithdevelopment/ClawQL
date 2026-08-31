@@ -23,10 +23,7 @@ function sessionIdFor(request: InferenceRequest): string {
   return request.correlationId ?? request.virtualKeyId ?? request.tenantId ?? "inference";
 }
 
-function applyRedactedMessages(
-  request: InferenceRequest,
-  result: HookResult
-): InferenceRequest {
+function applyRedactedMessages(request: InferenceRequest, result: HookResult): InferenceRequest {
   if (result.redactedPayload === undefined) return request;
   const payload = result.redactedPayload as { messages?: InferenceRequest["messages"] };
   if (payload.messages) return { ...request, messages: payload.messages };
@@ -55,9 +52,7 @@ export function withModelLifecycleHooks(
         atrScope: atrScopeFromTokens(options.atrScopeTokens ?? []),
       };
 
-      const preListed = await Effect.runPromise(
-        options.hookRegistry.list("pre-model")
-      );
+      const preListed = await Effect.runPromise(options.hookRegistry.list("pre-model"));
       let working = request;
       if (preListed.length > 0) {
         const pre = await Effect.runPromise(
@@ -75,9 +70,7 @@ export function withModelLifecycleHooks(
 
       const response = await inner.complete(working);
 
-      const postListed = await Effect.runPromise(
-        options.hookRegistry.list("post-model")
-      );
+      const postListed = await Effect.runPromise(options.hookRegistry.list("post-model"));
       if (postListed.length === 0) return response;
 
       const post = await Effect.runPromise(

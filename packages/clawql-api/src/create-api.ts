@@ -53,11 +53,7 @@ export type CreateClawQLApiOptions = {
    * Vault seed Layer (e.g. MemoryVaultSeedLive from clawql-memory).
    * Default: NoopVaultSeedLive inside createInMemoryPluginHostServices.
    */
-  readonly vaultSeedLayer?: Layer.Layer<
-    import("clawql-core").VaultSeedPort,
-    never,
-    never
-  >;
+  readonly vaultSeedLayer?: Layer.Layer<import("clawql-core").VaultSeedPort, never, never>;
   /** Override loadSpec used by the default unified search layer. */
   readonly loadSpecFn?: typeof loadSpec;
 };

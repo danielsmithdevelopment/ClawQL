@@ -56,9 +56,7 @@ describe("withModelLifecycleHooks", () => {
         });
         return { gateway: wrapped };
       }).pipe(
-        Effect.provide(
-          Layer.mergeAll(InMemoryHookRegistryLive, Layer.succeed(WormAuditSink, worm))
-        )
+        Effect.provide(Layer.mergeAll(InMemoryHookRegistryLive, Layer.succeed(WormAuditSink, worm)))
       )
     );
 

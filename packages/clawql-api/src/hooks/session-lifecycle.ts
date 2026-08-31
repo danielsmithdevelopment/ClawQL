@@ -50,9 +50,7 @@ export function fireSessionStartEffect(
 }
 
 /** Fire `session-end` hooks when an MCP HTTP session closes. */
-export function fireSessionEndEffect(
-  options: SessionLifecycleOptions
-): Effect.Effect<void, never> {
+export function fireSessionEndEffect(options: SessionLifecycleOptions): Effect.Effect<void, never> {
   return fireSessionEvent("session-end", options);
 }
 

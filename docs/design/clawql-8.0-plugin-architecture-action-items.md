@@ -10,26 +10,26 @@
 
 ## Action item waves
 
-| Wave   | Deliverable                                                                                                        | Status                                      |
-| ------ | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| **0**  | Spec v0.1 (+ Effect clarifications, §8 skills)                                                                     | **Done**                                    |
-| **1**  | `ProviderPlugin` / `StandaloneSkillPlugin` / hooks / skills / vault-seed types                                     | **Done**                                    |
-| **2**  | `fireHook` ATR never-loosen + WORM events                                                                          | **Done**                                    |
-| **3**  | Skill registry + MCP `skills_list` / `skills_get`                                                                  | **Done**                                    |
-| **4**  | Effect install/uninstall + vault-seed port                                                                         | **Done**                                    |
-| **5**  | Hard break: delete Phase-2 `Plugin` / bridge; rewrite in-tree plugins                                              | **Done**                                    |
-| **6**  | Dynamic loader + Panguard hooks-only reference                                                                     | **Done**                                    |
-| **7**  | Horizontal native ProviderPlugin; proxy `fireHook`-only path                                                       | **Done**                                    |
-| **7b** | Boot SECURITY WARNING; Panguard opt-in                                                                             | **Done**                                    |
-| **8**  | Production dynamic compose; static for tests                                                                       | **Done**                                    |
-| **9a** | Migration guide + CHANGELOG hard-break wording                                                                     | **Done**                                    |
-| **9b** | **Skills in 8.0:** unify SkillRegistry; rank skills in `search`; handoff standalone pack                           | **Done** (#999)                             |
-| **9c** | **Vault-seed live:** `MemoryVaultSeedLive` + host wiring when vault configured                                     | **Done** (#999)                             |
-| **9d** | **Model hooks:** `withModelLifecycleHooks` on inference gateway (`pre-model` / `post-model`)                       | **Done** (#999)                             |
-| **9e** | Session `session-start` / `session-end` fire points on MCP HTTP transport                                          | **Done** (#999)                             |
-| **9f** | ATR-filter provider-bundled skills on search when session ATR available                                            | **Done** (#999)                             |
-| **10** | Scenario synthesis (§9 spec) + `parameterNotes` on tools                                                           | **`parameterNotes` additive Done**; synthesis **Remaining** |
-| **11** | CI green #999 + merge; coordinate #982; tag `v8.0.0`                                                               | **Remaining**                               |
+| Wave   | Deliverable                                                                                  | Status                                                      |
+| ------ | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **0**  | Spec v0.1 (+ Effect clarifications, §8 skills)                                               | **Done**                                                    |
+| **1**  | `ProviderPlugin` / `StandaloneSkillPlugin` / hooks / skills / vault-seed types               | **Done**                                                    |
+| **2**  | `fireHook` ATR never-loosen + WORM events                                                    | **Done**                                                    |
+| **3**  | Skill registry + MCP `skills_list` / `skills_get`                                            | **Done**                                                    |
+| **4**  | Effect install/uninstall + vault-seed port                                                   | **Done**                                                    |
+| **5**  | Hard break: delete Phase-2 `Plugin` / bridge; rewrite in-tree plugins                        | **Done**                                                    |
+| **6**  | Dynamic loader + Panguard hooks-only reference                                               | **Done**                                                    |
+| **7**  | Horizontal native ProviderPlugin; proxy `fireHook`-only path                                 | **Done**                                                    |
+| **7b** | Boot SECURITY WARNING; Panguard opt-in                                                       | **Done**                                                    |
+| **8**  | Production dynamic compose; static for tests                                                 | **Done**                                                    |
+| **9a** | Migration guide + CHANGELOG hard-break wording                                               | **Done**                                                    |
+| **9b** | **Skills in 8.0:** unify SkillRegistry; rank skills in `search`; handoff standalone pack     | **Done** (#999)                                             |
+| **9c** | **Vault-seed live:** `MemoryVaultSeedLive` + host wiring when vault configured               | **Done** (#999)                                             |
+| **9d** | **Model hooks:** `withModelLifecycleHooks` on inference gateway (`pre-model` / `post-model`) | **Done** (#999)                                             |
+| **9e** | Session `session-start` / `session-end` fire points on MCP HTTP transport                    | **Done** (#999)                                             |
+| **9f** | ATR-filter provider-bundled skills on search when session ATR available                      | **Done** (#999)                                             |
+| **10** | Scenario synthesis (§9 spec) + `parameterNotes` on tools                                     | **`parameterNotes` additive Done**; synthesis **Remaining** |
+| **11** | CI green #999 + merge; coordinate #982; tag `v8.0.0`                                         | **Remaining**                                               |
 
 ---
 

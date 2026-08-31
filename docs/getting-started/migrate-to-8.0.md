@@ -58,11 +58,11 @@ export const gate = defineProviderPlugin({
 
 ## Skills-over-MCP + unified search (8.0)
 
-| Tool / path     | Role                                                                  |
-| --------------- | --------------------------------------------------------------------- |
-| `search`        | Ranks **operations and skills** together (`kind: "operation" \| "skill"`) |
-| `skills_list`   | Lightweight index (`SkillIndexEntry`)                                 |
-| `skills_get`    | Full skill body by `skillId`                                          |
+| Tool / path     | Role                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `search`        | Ranks **operations and skills** together (`kind: "operation" \| "skill"`)            |
+| `skills_list`   | Lightweight index (`SkillIndexEntry`)                                                |
+| `skills_get`    | Full skill body by `skillId`                                                         |
 | Standalone pack | `handoff` / `session-handoff` — default on (`CLAWQL_ENABLE_HANDOFF_SKILL=0` to omit) |
 
 Empty skill index until a ProviderPlugin / StandaloneSkillPlugin installs skills (handoff is composed by default).
@@ -70,7 +70,6 @@ Empty skill index until a ProviderPlugin / StandaloneSkillPlugin installs skills
 **ATR visibility:** provider-bundled skills inherit tool ATR (`SkillIndexEntry.source: "provider"`). Standalone skills are not ATR-gated. Hosts bind tokens via `bindProcessSearchAtrTokens` / `CLAWQL_SESSION_ATR`, or pass `atrScopeTokens` on the search layer.
 
 **Session / model hooks:** MCP HTTP fires `session-start` / `session-end`; inference callers pass `modelHooks: { hookRegistry, worm }` into `createInferenceGateway`.
-
 
 ## Minimal upgrade checklist
 

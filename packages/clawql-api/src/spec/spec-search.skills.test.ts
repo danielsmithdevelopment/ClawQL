@@ -62,9 +62,7 @@ describe("skill search ranking", () => {
     const formatted = JSON.parse(formatSearchResults(merged)) as {
       results: { kind: string }[];
     };
-    expect(formatted.results.every((r) => r.kind === "operation" || r.kind === "skill")).toBe(
-      true
-    );
+    expect(formatted.results.every((r) => r.kind === "operation" || r.kind === "skill")).toBe(true);
   });
 
   it("scoreSkillIndexEntry boosts name and description", () => {

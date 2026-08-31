@@ -49,7 +49,7 @@ export function defaultInstallEffect(
       const standalone = isStandaloneSkillPlugin(plugin);
       const scopeTokens = standalone
         ? undefined
-        : (plugin as ProviderPlugin).tools?.map((t) => t.name) ?? [];
+        : ((plugin as ProviderPlugin).tools?.map((t) => t.name) ?? []);
       yield* skills.register(plugin.id, skillDefs, {
         source: standalone ? "standalone" : "provider",
         scopeTokens,

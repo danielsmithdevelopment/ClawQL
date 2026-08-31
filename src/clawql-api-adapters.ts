@@ -68,7 +68,6 @@ async function resolveVaultSeedLayer(): Promise<
   return undefined;
 }
 
-
 /**
  * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
  * packages are not statically loaded. Safe to call multiple times; returns existing handle.

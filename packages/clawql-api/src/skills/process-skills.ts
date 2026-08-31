@@ -84,9 +84,7 @@ export function getProcessSkillContentEffect(
   );
 }
 
-export function unregisterProcessSkillsEffect(
-  pluginId: string
-): Effect.Effect<void, never, never> {
+export function unregisterProcessSkillsEffect(pluginId: string): Effect.Effect<void, never, never> {
   return withRegistry(
     Effect.gen(function* () {
       const reg = yield* SkillRegistry;

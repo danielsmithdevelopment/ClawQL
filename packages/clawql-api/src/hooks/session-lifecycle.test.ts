@@ -51,9 +51,7 @@ describe("session lifecycle hooks", () => {
           sessionId: "s1",
         });
       }).pipe(
-        Effect.provide(
-          Layer.mergeAll(InMemoryHookRegistryLive, Layer.succeed(WormAuditSink, worm))
-        )
+        Effect.provide(Layer.mergeAll(InMemoryHookRegistryLive, Layer.succeed(WormAuditSink, worm)))
       )
     );
 

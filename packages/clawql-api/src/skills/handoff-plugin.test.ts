@@ -1,14 +1,8 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { Effect } from "effect";
 import { createClawQLApi } from "../create-api.js";
-import {
-  createHandoffSkillPlugin,
-  HANDOFF_SKILL_PLUGIN_ID,
-} from "./handoff-plugin.js";
-import {
-  listProcessSkillIndex,
-  resetProcessSkillsRegistryForTests,
-} from "./process-skills.js";
+import { createHandoffSkillPlugin, HANDOFF_SKILL_PLUGIN_ID } from "./handoff-plugin.js";
+import { listProcessSkillIndex, resetProcessSkillsRegistryForTests } from "./process-skills.js";
 import { SearchService } from "../search-service.js";
 import type { LoadedSpec } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";

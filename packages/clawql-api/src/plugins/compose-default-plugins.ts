@@ -5,10 +5,7 @@ import {
   createPrivacyFilterGatewayPlugin,
   privacyFilterPluginEnabled,
 } from "./privacy-filter-gateway-plugin.js";
-import {
-  createHandoffSkillPlugin,
-  handoffSkillPluginEnabled,
-} from "../skills/handoff-plugin.js";
+import { createHandoffSkillPlugin, handoffSkillPluginEnabled } from "../skills/handoff-plugin.js";
 
 /**
  * Default sync plugins for `createClawQLApi()` — 8.0+:

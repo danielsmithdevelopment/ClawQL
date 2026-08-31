@@ -42,9 +42,7 @@ function toIndexEntry(
     pluginId,
     applicability: skill.applicability ?? "query-matched",
     source,
-    ...(source === "provider" && options?.scopeTokens
-      ? { scopeTokens: options.scopeTokens }
-      : {}),
+    ...(source === "provider" && options?.scopeTokens ? { scopeTokens: options.scopeTokens } : {}),
   };
 }
 
