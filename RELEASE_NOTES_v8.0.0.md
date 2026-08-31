@@ -27,11 +27,11 @@ On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed E
 
 ### 1. Bundled providers: default empty
 
-| | **7.2.0** | **8.0.0** |
-| --- | --- | --- |
-| No provider env / instance `providers` | Auto-load pack **`default`** | **Empty** catalog (native GraphQL/gRPC only when configured) |
-| Helm | `provider: default` | `providers.pack: none` (set **`default`** to restore) |
-| `CLAWQL_ENABLE_GOOGLE\|AWS\|CLOUDFLARE` | Cloud add-ons on default stack | **Deprecated** for stack selection |
+|                                         | **7.2.0**                      | **8.0.0**                                                    |
+| --------------------------------------- | ------------------------------ | ------------------------------------------------------------ |
+| No provider env / instance `providers`  | Auto-load pack **`default`**   | **Empty** catalog (native GraphQL/gRPC only when configured) |
+| Helm                                    | `provider: default`            | `providers.pack: none` (set **`default`** to restore)        |
+| `CLAWQL_ENABLE_GOOGLE\|AWS\|CLOUDFLARE` | Cloud add-ons on default stack | **Deprecated** for stack selection                           |
 
 ```bash
 export CLAWQL_PROVIDER=default
@@ -77,15 +77,15 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ## What’s new since the first 8.0.0 prep PR (post-#982 / through #999)
 
-| Area | What landed | PRs |
-| --- | --- | --- |
-| **ProviderPlugin architecture** | Hard break, skills MCP tools, dynamic compose, Agent Seer scenarios, enforcement boot warn | [#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999) |
-| **Observability** | LGTM+ Phase 1 + CI smoke; Faro JWT Worker proxy; provider registry design | [#993](https://github.com/danielsmithdevelopment/ClawQL/pull/993), [#994](https://github.com/danielsmithdevelopment/ClawQL/pull/994), [#995](https://github.com/danielsmithdevelopment/ClawQL/pull/995) |
-| **MCP UI / demos** | PixelDrop smart-upload demo + `/mcp-ui` template | [#997](https://github.com/danielsmithdevelopment/ClawQL/pull/997) |
-| **WebMCP** | Core source adapter + diagram sources | [#984](https://github.com/danielsmithdevelopment/ClawQL/pull/984), [#985](https://github.com/danielsmithdevelopment/ClawQL/pull/985) |
-| **Audit / TEE** | Merkle+audit npm wedge, WORM host dual-write, simulated TEE | [#980](https://github.com/danielsmithdevelopment/ClawQL/pull/980), [#981](https://github.com/danielsmithdevelopment/ClawQL/pull/981), [#986](https://github.com/danielsmithdevelopment/ClawQL/pull/986), [#987](https://github.com/danielsmithdevelopment/ClawQL/pull/987) |
-| **Auth host + docs** | Auth host wiring; public auth docs; blog methodology landing | [#977](https://github.com/danielsmithdevelopment/ClawQL/pull/977), [#990](https://github.com/danielsmithdevelopment/ClawQL/pull/990), [#989](https://github.com/danielsmithdevelopment/ClawQL/pull/989) |
-| **Harness** | Executor comparison harness | [#988](https://github.com/danielsmithdevelopment/ClawQL/pull/988) |
+| Area                            | What landed                                                                                | PRs                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ProviderPlugin architecture** | Hard break, skills MCP tools, dynamic compose, Agent Seer scenarios, enforcement boot warn | [#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999)                                                                                                                                                                                                          |
+| **Observability**               | LGTM+ Phase 1 + CI smoke; Faro JWT Worker proxy; provider registry design                  | [#993](https://github.com/danielsmithdevelopment/ClawQL/pull/993), [#994](https://github.com/danielsmithdevelopment/ClawQL/pull/994), [#995](https://github.com/danielsmithdevelopment/ClawQL/pull/995)                                                                    |
+| **MCP UI / demos**              | PixelDrop smart-upload demo + `/mcp-ui` template                                           | [#997](https://github.com/danielsmithdevelopment/ClawQL/pull/997)                                                                                                                                                                                                          |
+| **WebMCP**                      | Core source adapter + diagram sources                                                      | [#984](https://github.com/danielsmithdevelopment/ClawQL/pull/984), [#985](https://github.com/danielsmithdevelopment/ClawQL/pull/985)                                                                                                                                       |
+| **Audit / TEE**                 | Merkle+audit npm wedge, WORM host dual-write, simulated TEE                                | [#980](https://github.com/danielsmithdevelopment/ClawQL/pull/980), [#981](https://github.com/danielsmithdevelopment/ClawQL/pull/981), [#986](https://github.com/danielsmithdevelopment/ClawQL/pull/986), [#987](https://github.com/danielsmithdevelopment/ClawQL/pull/987) |
+| **Auth host + docs**            | Auth host wiring; public auth docs; blog methodology landing                               | [#977](https://github.com/danielsmithdevelopment/ClawQL/pull/977), [#990](https://github.com/danielsmithdevelopment/ClawQL/pull/990), [#989](https://github.com/danielsmithdevelopment/ClawQL/pull/989)                                                                    |
+| **Harness**                     | Executor comparison harness                                                                | [#988](https://github.com/danielsmithdevelopment/ClawQL/pull/988)                                                                                                                                                                                                          |
 
 ---
 
@@ -131,13 +131,13 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ### Standalone npm (this tag)
 
-| Package | Version | Notes |
-| --- | --- | --- |
-| `clawql-mcp` | **8.0.0** | Lockstep consumer surface |
-| `mcp-grpc-transport` | **1.0.0** | Major vs npm **0.2.0** for standalone grpc users |
-| `mcp-api-adapter` | **0.6.0** | First registry publish |
-| `clawql-observability` | **0.2.0** | Independent cadence |
-| `clawql-merkle` / `clawql-audit` | wedge | Prefer audit-wedge workflow if OIDC-gated full publish |
+| Package                          | Version   | Notes                                                  |
+| -------------------------------- | --------- | ------------------------------------------------------ |
+| `clawql-mcp`                     | **8.0.0** | Lockstep consumer surface                              |
+| `mcp-grpc-transport`             | **1.0.0** | Major vs npm **0.2.0** for standalone grpc users       |
+| `mcp-api-adapter`                | **0.6.0** | First registry publish                                 |
+| `clawql-observability`           | **0.2.0** | Independent cadence                                    |
+| `clawql-merkle` / `clawql-audit` | wedge     | Prefer audit-wedge workflow if OIDC-gated full publish |
 
 ---
 
@@ -171,11 +171,11 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 ## Helm
 
-| Chart | Chart version | appVersion |
-| --- | --- | --- |
-| `charts/clawql-mcp` | `0.8.0` | `8.0.0` |
-| `charts/clawql-operator` | `0.3.0` | `8.0.0` |
-| `charts/clawql-idp` | `0.2.0` | `8.0.0` |
+| Chart                    | Chart version | appVersion |
+| ------------------------ | ------------- | ---------- |
+| `charts/clawql-mcp`      | `0.8.0`       | `8.0.0`    |
+| `charts/clawql-operator` | `0.3.0`       | `8.0.0`    |
+| `charts/clawql-idp`      | `0.2.0`       | `8.0.0`    |
 
 ---
 
