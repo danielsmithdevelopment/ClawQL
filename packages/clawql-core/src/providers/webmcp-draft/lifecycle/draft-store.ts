@@ -41,6 +41,8 @@ const defaultStore: MutableDraftStore = {
 export class DraftStoreService extends Context.Tag("clawql/webmcp-draft/DraftStoreService")<
   DraftStoreService,
   {
+    /** Stub stores are process-local — restart loses unreviewed drafts with no durable error. */
+    readonly durability: "ephemeral";
     readonly putCandidates: (
       candidates: readonly DraftCandidate[]
     ) => Effect.Effect<readonly StoredDraftCandidate[]>;
@@ -93,6 +95,7 @@ type StoreOps = {
 
 function serviceFromOps(ops: StoreOps) {
   return DraftStoreService.of({
+    durability: "ephemeral",
     putCandidates: (candidates) =>
       Effect.gen(function* () {
         const stored: StoredDraftCandidate[] = candidates.map((c) => ({

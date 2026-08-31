@@ -1,16 +1,26 @@
 import { Effect } from "effect";
 import { AuditService } from "../../../audit/audit-service.js";
+import { ClawQLError } from "../../../errors/clawql-error.js";
+import { fireHooksForEvent } from "../../../plugin/hook-runtime.js";
+import {
+  HookRegistry,
+  WormAuditSink,
+  type HookContext,
+  type SecurityError,
+} from "../../../plugin/provider-types.js";
 import {
   WebMcpDraftInvalidStateError,
   WebMcpDraftNotFoundError,
 } from "../errors.js";
 import type { BoundOperation, PublishedWebMcpVersion } from "../types.js";
 import { DraftStoreService } from "./draft-store.js";
+import { webMcpDraftPreIngestHook } from "./pre-ingest-gate.js";
 
 /**
  * Emit standard WebMCP `document.modelContext.registerTool()` calls for a published version.
- * Uses `document.modelContext` first (PixelDrop / Imperative API preference), with a
- * navigator fallback comment for hosts that only expose the older surface.
+ *
+ * `callBoundOperation` is intentionally a stub — published tools are declarations only
+ * until source-adapter binding lands (§6). Do not treat generated scripts as demo-ready.
  */
 export const generatePublishScript = (
   version: PublishedWebMcpVersion
@@ -19,7 +29,9 @@ export const generatePublishScript = (
     const bindingMap = new Map<string, BoundOperation>(
       version.bindings.map((b) => [b.toolName, b])
     );
-    const header = `/* WebMCP publish ${version.versionId} @ ${version.publishedAt} by ${version.publishedBy} */\n` +
+    const header =
+      `/* WebMCP publish ${version.versionId} @ ${version.publishedAt} by ${version.publishedBy} */\n` +
+      `/* WARNING: callBoundOperation is a stub — not bound to real source adapters yet */\n` +
       `(function(){\n` +
       `  var mc = (typeof document !== "undefined" && document.modelContext)\n` +
       `    || (typeof navigator !== "undefined" && navigator.modelContext);\n` +
@@ -28,7 +40,7 @@ export const generatePublishScript = (
       `    return;\n` +
       `  }\n` +
       `  function callBoundOperation(toolName, args) {\n` +
-      `    // Bound at publish time — execute via clawql-core source adapters in a later revision.\n` +
+      `    // STUB: not wired to clawql-core source adapters (§6). Returns placeholder JSON.\n` +
       `    return Promise.resolve({ ok: true, toolName: toolName, args: args, stub: true });\n` +
       `  }\n`;
 
@@ -56,17 +68,86 @@ export const generatePublishScript = (
     return `${header}${tools}\n})();\n`;
   });
 
+function sessionCtx(
+  publishedBy: string,
+  tool: { readonly name: string; readonly description: string; readonly inputSchema: unknown }
+): HookContext {
+  return {
+    session: {
+      id: `webmcp-draft-publish:${publishedBy}`,
+      atrScope: new Set(),
+    },
+    toolName: tool.name,
+    payload: tool,
+  };
+}
+
+/** Ensure our LifecycleHook is on this HookRegistry (install path or Live MCP self-heal). */
+const ensurePreIngestHook = Effect.gen(function* () {
+  const hooksReg = yield* HookRegistry;
+  const listed = yield* hooksReg.list("pre-ingest");
+  if (listed.some((h) => h.id === webMcpDraftPreIngestHook.id)) return;
+  yield* hooksReg.register("clawql-webmcp-draft", [webMcpDraftPreIngestHook]);
+});
+
 export const publishApprovedTool = (input: {
   readonly publishedBy: string;
   readonly candidateIds?: readonly string[];
 }): Effect.Effect<
   PublishedWebMcpVersion,
-  WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError,
-  DraftStoreService | AuditService
+  | WebMcpDraftNotFoundError
+  | WebMcpDraftInvalidStateError
+  | ClawQLError
+  | SecurityError
+  | Error,
+  DraftStoreService | AuditService | HookRegistry | WormAuditSink
 > =>
   Effect.gen(function* () {
     const store = yield* DraftStoreService;
     const audit = yield* AuditService;
+    const hooksReg = yield* HookRegistry;
+
+    yield* ensurePreIngestHook;
+
+    const approved = yield* store.listCandidates("approved");
+    const toPublish = approved.filter((c) => {
+      if (input.candidateIds && !input.candidateIds.includes(c.candidateId)) return false;
+      return true;
+    });
+
+    const registered = yield* hooksReg.list("pre-ingest");
+    for (const candidate of toPublish) {
+      const tool = candidate.editedTool
+        ? {
+            name: candidate.editedTool.name ?? candidate.proposedTool.name,
+            description:
+              candidate.editedTool.description ?? candidate.proposedTool.description,
+            inputSchema:
+              candidate.editedTool.inputSchema ?? candidate.proposedTool.inputSchema,
+          }
+        : candidate.proposedTool;
+
+      const result = yield* fireHooksForEvent(
+        registered,
+        sessionCtx(input.publishedBy, tool),
+        { stopOnDeny: true }
+      );
+
+      if (!result.allow) {
+        yield* audit.append({
+          category: "webmcp-draft",
+          action: "WEBMCP_DRAFT_PRE_INGEST_BLOCKED",
+          summary: `pre-ingest blocked publish of ${tool.name}: ${result.denyReason ?? "denied"}`,
+          correlationId: candidate.candidateId,
+        });
+        return yield* Effect.fail(
+          new ClawQLError({
+            reason: result.denyReason ?? `pre-ingest blocked ${tool.name}`,
+          })
+        );
+      }
+    }
+
     const version = yield* store.publishApproved(input);
     yield* audit.append({
       category: "webmcp-draft",

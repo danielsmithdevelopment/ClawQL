@@ -1,5 +1,11 @@
 import { Effect } from "effect";
 import { AuditService } from "../../../audit/audit-service.js";
+import type { ClawQLError } from "../../../errors/clawql-error.js";
+import type {
+  HookRegistry,
+  SecurityError,
+  WormAuditSink,
+} from "../../../plugin/provider-types.js";
 import {
   WebMcpDraftInvalidStateError,
   WebMcpDraftNotFoundError,
@@ -10,14 +16,19 @@ import { publishApprovedTool } from "./publish.js";
 
 /**
  * Review / edit / approve / reject a draft candidate.
- * Appends a WORM-style audit event via AuditService, then optionally publishes.
+ * Appends a WORM-style audit event via AuditService, then optionally publishes
+ * (which fires core `pre-ingest` hooks via `fireHooksForEvent` before committing).
  */
 export const reviewDraft = (
   action: DraftReviewAction
 ): Effect.Effect<
   StoredDraftCandidate,
-  WebMcpDraftNotFoundError | WebMcpDraftInvalidStateError,
-  DraftStoreService | AuditService
+  | WebMcpDraftNotFoundError
+  | WebMcpDraftInvalidStateError
+  | ClawQLError
+  | SecurityError
+  | Error,
+  DraftStoreService | AuditService | HookRegistry | WormAuditSink
 > =>
   Effect.gen(function* () {
     const store = yield* DraftStoreService;

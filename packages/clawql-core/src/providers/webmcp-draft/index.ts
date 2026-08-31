@@ -5,15 +5,25 @@ import {
   AuditTestLayer,
 } from "../../audit/audit-service.js";
 import type { ClawQLError, McpToolAlreadyRegisteredError } from "../../errors/clawql-error.js";
+import { InMemoryHookRegistryLive } from "../../plugin/hook-registry.js";
+import { defineRegisteringProviderPlugin, NoopVaultSeedLive } from "../../plugin/plugin-installer.js";
+import {
+  HookRegistry,
+  WormAuditSink,
+  type PluginInstallServices,
+  type ProviderPlugin,
+} from "../../plugin/provider-types.js";
 import type { ClawQLPluginRegistrationApi, McpToolResult } from "../../plugin/registration-api.js";
-import type { Plugin } from "../../plugin/types.js";
-import { reviewDraft } from "./lifecycle/approval.js";
-import { DraftStoreLive, DraftStoreService, DraftStoreTestLayer } from "./lifecycle/draft-store.js";
-import { generatePublishScript, publishApprovedTool } from "./lifecycle/publish.js";
-import { rollbackPublishedVersion } from "./lifecycle/rollback.js";
+import { InMemorySkillRegistryLive } from "../../plugin/skill-registry.js";
+import { InMemoryWormAuditSinkLive } from "../../plugin/worm-sink.js";
 import { draftFromForms } from "./inference/from-forms.js";
 import { draftFromGraphql } from "./inference/from-graphql.js";
 import { draftFromOpenApi } from "./inference/from-openapi.js";
+import { reviewDraft } from "./lifecycle/approval.js";
+import { DraftStoreLive, DraftStoreService } from "./lifecycle/draft-store.js";
+import { webMcpDraftPreIngestHook } from "./lifecycle/pre-ingest-gate.js";
+import { generatePublishScript, publishApprovedTool } from "./lifecycle/publish.js";
+import { rollbackPublishedVersion } from "./lifecycle/rollback.js";
 import type {
   DraftReviewAction,
   GraphQlSchemaInput,
@@ -32,16 +42,32 @@ export * from "./lifecycle/publish.js";
 export * from "./lifecycle/rollback.js";
 export * from "./lifecycle/pre-ingest-gate.js";
 
-/** Combined live layer for drafting + WORM audit. */
-export const WebMcpDraftLive: Layer.Layer<DraftStoreService | AuditService> = Layer.merge(
+/** Combined live layer: draft store + audit + full plugin install services. */
+export const WebMcpDraftLive: Layer.Layer<
+  DraftStoreService | AuditService | PluginInstallServices
+> = Layer.mergeAll(
   DraftStoreLive,
-  AuditLive
+  AuditLive,
+  InMemoryHookRegistryLive,
+  InMemoryWormAuditSinkLive,
+  InMemorySkillRegistryLive,
+  NoopVaultSeedLive
 );
 
-/** Combined test layer. */
-export const WebMcpDraftTestLayer: Layer.Layer<DraftStoreService | AuditService> = Layer.merge(
-  DraftStoreTestLayer,
-  AuditTestLayer
+/**
+ * Test layer shares DraftStoreLive with the pre-ingest LifecycleHook handler
+ * (handler closes over DraftStoreLive so R stays HookRuntimeServices).
+ * Call `resetDefaultDraftStoreForTests()` between cases.
+ */
+export const WebMcpDraftTestLayer: Layer.Layer<
+  DraftStoreService | AuditService | PluginInstallServices
+> = Layer.mergeAll(
+  DraftStoreLive,
+  AuditTestLayer,
+  InMemoryHookRegistryLive,
+  InMemoryWormAuditSinkLive,
+  InMemorySkillRegistryLive,
+  NoopVaultSeedLive
 );
 
 function textResult(payload: unknown): McpToolResult {
@@ -50,10 +76,6 @@ function textResult(payload: unknown): McpToolResult {
   };
 }
 
-/**
- * Draft candidates from a structured source and persist them as pending.
- * Forced host boundary for MCP handlers uses `Effect.runPromise` over this program.
- */
 export const draftCandidatesProgram = (input: {
   readonly sourceType: "openapi" | "graphql" | "forms";
   readonly openapi?: OpenApiDocument;
@@ -128,84 +150,90 @@ function asRecord(args: unknown): Record<string, unknown> {
   return args && typeof args === "object" ? (args as Record<string, unknown>) : {};
 }
 
+function registerWebMcpDraftTools(
+  api: ClawQLPluginRegistrationApi
+): Effect.Effect<void, ClawQLError | McpToolAlreadyRegisteredError> {
+  return Effect.gen(function* () {
+    yield* api.registerMcpTool({
+      name: "webmcp_draft",
+      description:
+        "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic stub).",
+      schema: { ...draftSchema },
+      handler: async (args: unknown) => {
+        const a = asRecord(args);
+        const program = draftCandidatesProgram({
+          sourceType: a.sourceType as "openapi" | "graphql" | "forms",
+          openapi: a.openapi as OpenApiDocument | undefined,
+          graphql: a.graphql as GraphQlSchemaInput | undefined,
+          forms: a.forms as HtmlFormSnapshot[] | undefined,
+        }).pipe(Effect.provide(WebMcpDraftLive));
+        return textResult(await Effect.runPromise(program));
+      },
+    });
+
+    yield* api.registerMcpTool({
+      name: "webmcp_draft_review",
+      description: "Approve, reject, or edit-and-approve a WebMCP draft candidate.",
+      schema: { ...reviewSchema },
+      handler: async (args: unknown) => {
+        const a = asRecord(args);
+        const action: DraftReviewAction = {
+          candidateId: String(a.candidateId ?? ""),
+          action: a.action as DraftReviewAction["action"],
+          editedTool: a.editedTool as DraftReviewAction["editedTool"],
+          reviewedBy: String(a.reviewedBy ?? "anonymous"),
+        };
+        const program = reviewDraft(action).pipe(Effect.provide(WebMcpDraftLive));
+        return textResult(await Effect.runPromise(program));
+      },
+    });
+
+    yield* api.registerMcpTool({
+      name: "webmcp_draft_publish",
+      description:
+        "Publish approved drafts as an immutable WebMCP version and return a registerTool script.",
+      schema: { ...publishSchema },
+      handler: async (args: unknown) => {
+        const a = asRecord(args);
+        const program = Effect.gen(function* () {
+          const version = yield* publishApprovedTool({
+            publishedBy: String(a.publishedBy ?? "anonymous"),
+            candidateIds: a.candidateIds as string[] | undefined,
+          });
+          const script = yield* generatePublishScript(version);
+          return { version, script };
+        }).pipe(Effect.provide(WebMcpDraftLive));
+        return textResult(await Effect.runPromise(program));
+      },
+    });
+
+    yield* api.registerMcpTool({
+      name: "webmcp_draft_rollback",
+      description:
+        "Rollback to a prior published WebMCP version by appending a new immutable reactivation.",
+      schema: { ...rollbackSchema },
+      handler: async (args: unknown) => {
+        const a = asRecord(args);
+        const program = rollbackPublishedVersion({
+          versionId: String(a.versionId ?? ""),
+          publishedBy: String(a.publishedBy ?? "anonymous"),
+        }).pipe(Effect.provide(WebMcpDraftLive));
+        return textResult(await Effect.runPromise(program));
+      },
+    });
+  });
+}
+
 /**
- * Provider plugin: draft → review → publish → rollback for WebMCP tools.
- * Stub: heuristic inference only; execute binding returns stub JSON until source-adapter wiring lands.
+ * ProviderPlugin: draft → review → publish → rollback for WebMCP tools.
+ * Registers MCP tools at install and a blocking `pre-ingest` LifecycleHook on HookRegistry
+ * (core `fireHook` / ATR never-loosen — not a parallel hook bus).
  */
-export const WebMcpDraftPlugin: Plugin = {
+export const WebMcpDraftPlugin: ProviderPlugin = defineRegisteringProviderPlugin({
   id: "clawql-webmcp-draft",
   version: "0.1.0",
-  vertical: "webmcp",
-  onRegister: (
-    api: ClawQLPluginRegistrationApi
-  ): Effect.Effect<void, ClawQLError | McpToolAlreadyRegisteredError> =>
-    Effect.gen(function* () {
-      yield* api.registerMcpTool({
-        name: "webmcp_draft",
-        description:
-          "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic stub).",
-        schema: { ...draftSchema },
-        handler: async (args: unknown) => {
-          const a = asRecord(args);
-          const program = draftCandidatesProgram({
-            sourceType: a.sourceType as "openapi" | "graphql" | "forms",
-            openapi: a.openapi as OpenApiDocument | undefined,
-            graphql: a.graphql as GraphQlSchemaInput | undefined,
-            forms: a.forms as HtmlFormSnapshot[] | undefined,
-          }).pipe(Effect.provide(WebMcpDraftLive));
-          return textResult(await Effect.runPromise(program));
-        },
-      });
-
-      yield* api.registerMcpTool({
-        name: "webmcp_draft_review",
-        description: "Approve, reject, or edit-and-approve a WebMCP draft candidate.",
-        schema: { ...reviewSchema },
-        handler: async (args: unknown) => {
-          const a = asRecord(args);
-          const action: DraftReviewAction = {
-            candidateId: String(a.candidateId ?? ""),
-            action: a.action as DraftReviewAction["action"],
-            editedTool: a.editedTool as DraftReviewAction["editedTool"],
-            reviewedBy: String(a.reviewedBy ?? "anonymous"),
-          };
-          const program = reviewDraft(action).pipe(Effect.provide(WebMcpDraftLive));
-          return textResult(await Effect.runPromise(program));
-        },
-      });
-
-      yield* api.registerMcpTool({
-        name: "webmcp_draft_publish",
-        description:
-          "Publish approved drafts as an immutable WebMCP version and return a registerTool script.",
-        schema: { ...publishSchema },
-        handler: async (args: unknown) => {
-          const a = asRecord(args);
-          const program = Effect.gen(function* () {
-            const version = yield* publishApprovedTool({
-              publishedBy: String(a.publishedBy ?? "anonymous"),
-              candidateIds: a.candidateIds as string[] | undefined,
-            });
-            const script = yield* generatePublishScript(version);
-            return { version, script };
-          }).pipe(Effect.provide(WebMcpDraftLive));
-          return textResult(await Effect.runPromise(program));
-        },
-      });
-
-      yield* api.registerMcpTool({
-        name: "webmcp_draft_rollback",
-        description:
-          "Rollback to a prior published WebMCP version by appending a new immutable reactivation.",
-        schema: { ...rollbackSchema },
-        handler: async (args: unknown) => {
-          const a = asRecord(args);
-          const program = rollbackPublishedVersion({
-            versionId: String(a.versionId ?? ""),
-            publishedBy: String(a.publishedBy ?? "anonymous"),
-          }).pipe(Effect.provide(WebMcpDraftLive));
-          return textResult(await Effect.runPromise(program));
-        },
-      });
-    }),
-};
+  description:
+    "Draft WebMCP registerTool candidates from OpenAPI, GraphQL, or HTML forms (heuristic stub)",
+  hooks: [webMcpDraftPreIngestHook],
+  register: registerWebMcpDraftTools,
+});
