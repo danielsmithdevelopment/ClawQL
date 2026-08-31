@@ -62,6 +62,38 @@ const program = Effect.gen(function* () {
 await Effect.runPromise(program.pipe(Effect.provide(ObservabilityLive)));
 ```
 
+## Phase 3b (v0.4) — Alloy config generator
+
+Registry snapshot → complete River config (exporters, batch fan-out, optional Faro). Apply writes the file, validates braces/required components, and emits `OBSERVABILITY_ALLOY_CONFIG_APPLIED`.
+
+```typescript
+import { Effect } from "effect";
+import {
+  ObservabilityLive,
+  ObservabilityGovernanceSinkLive,
+  registerBuiltinLgtmProvidersEffect,
+  snapshotRegistriesForAlloyEffect,
+  applyAlloyConfigEffect,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const generation = yield* snapshotRegistriesForAlloyEffect();
+  return yield* applyAlloyConfigEffect({
+    session: { sub: "ops", scope: ["observability:configure"] },
+    actorId: "ops",
+    generation,
+    outputPath: "./alloy/config.generated.river",
+  });
+});
+
+await Effect.runPromise(
+  program.pipe(Effect.provide(ObservabilityLive), Effect.provide(ObservabilityGovernanceSinkLive))
+);
+```
+
+Golden fixture: `src/alloy/__fixtures__/lgtm-default.river.golden`.
+
 ### Worker deploy
 
 ```bash
@@ -132,8 +164,8 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 | ------ | -------------------------------------------- |
 | **1**  | LGTM+ core + Alloy _(merged)_                |
 | **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
-| **3a** | Provider registry skeleton _(this release)_  |
-| **3b** | Alloy config generator                       |
+| **3a** | Provider registry skeleton _(shipped)_       |
+| **3b** | Alloy config generator _(this release)_      |
 | **3c** | Query federation                             |
 | 4      | Langfuse + Panguard correlation              |
 | 5      | Full alerting + Vault-backed signing keys    |

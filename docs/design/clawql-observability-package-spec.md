@@ -104,7 +104,9 @@ Multi-backend observability (redundant fan-out per signal type, governed registr
 
 **Phase 3a (v0.3, shipped):** signal-typed interfaces (`LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`), per-type registries, built-in LGTM+ adapters, ATR scopes, WORM governance hooks, and health checks in `packages/clawql-observability/src/`.
 
-**Phase 3b–3c (next):** Alloy River config generator and query federation.
+**Phase 3b (v0.4, shipped):** Alloy River config generator (`generateAlloyRiverEffect`, `applyAlloyConfigEffect`, `snapshotRegistriesForAlloyEffect`) with golden-file tests against default LGTM+ exporters and multi-provider fan-out.
+
+**Phase 3c (next):** Query federation facade.
 
 Summary: **Alloy** owns runtime ingest fan-out; the **TypeScript registry** owns auth scopes, WORM config audit, health checks, River config generation, and read-side query federation. LGTM+ backends are default built-in plugins, not special-cased infra.
 

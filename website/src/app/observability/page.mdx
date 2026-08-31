@@ -26,7 +26,9 @@ Product pageviews and funnels live in **`clawql-analytics`**, not here — engin
 
 All OTLP-capable signals route through **Grafana Alloy** before landing in backends. Alloy handles batching, retries, backpressure, and **per-exporter failure isolation**. Fan-out to multiple backends per signal type (for example logs to two Loki endpoints) is configured in River `output` lists — not reimplemented in TypeScript.
 
-The TypeScript **provider registry** is the authorized front door to that configuration: who may register backends, which ATR scopes apply, WORM audit of config changes, health checks, and (in later phases) Alloy River generation and query federation.
+The TypeScript **provider registry** is the authorized front door to that configuration: who may register backends, which ATR scopes apply, WORM audit of config changes, health checks, Alloy River generation, and (next) query federation.
+
+**Phase 3b** ships `generateAlloyRiverEffect` / `applyAlloyConfigEffect`: a registry snapshot becomes a complete River file (exporters + batch fan-out + optional Faro), validated structurally, written to disk, and audited with `OBSERVABILITY_ALLOY_CONFIG_APPLIED`. Multi-provider log/metric/trace registration produces multiple entries in the batch `output` lists — Alloy owns the runtime fan-out.
 
 Browser RUM uses a **Cloudflare Worker** proxy with **ephemeral HS256 JWTs** — no static public DSN. Invalid credentials return **HTTP 204** with no body.
 
@@ -58,8 +60,8 @@ Unlike `clawql-analytics` (one active provider at a time), observability default
 | **1**  | LGTM+ docker-compose + Alloy OTLP pipeline                                              |
 | **2**  | Faro + ephemeral-JWT Worker proxy                                                       |
 | **3a** | Signal-typed registries, LGTM+ built-ins, scopes, WORM hooks, health checks _(shipped)_ |
-| **3b** | Registry → Alloy River config generator                                                 |
-| **3c** | Query federation (LogQL / PromQL / TraceQL / profiles)                                  |
+| **3b** | Registry → Alloy River config generator _(shipped)_ |
+| **3c** | Query federation (LogQL / PromQL / TraceQL / profiles) |
 | **4+** | Langfuse correlation, security layer, alerting, Vault-backed signing keys               |
 
 ---

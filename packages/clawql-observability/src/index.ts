@@ -128,3 +128,21 @@ export {
   runObservabilityHealthChecksEffect,
 } from "./health/scheduler.js";
 export type { ObservabilityHealthSnapshot, ProviderHealthReport } from "./health/scheduler.js";
+
+export type {
+  AlloyGenerationInput,
+  AlloyGeneratedConfig,
+  AlloyProviderEntry,
+} from "./alloy/types.js";
+export {
+  generateAlloyRiver,
+  generateAlloyRiverEffect,
+} from "./alloy/generate.js";
+export {
+  sanitizeRiverComponentName,
+  sanitizeRiverComponentNameEffect,
+} from "./alloy/sanitize.js";
+export { validateAlloyRiver, validateAlloyRiverEffect } from "./alloy/validate.js";
+export { applyAlloyConfigEffect } from "./alloy/apply.js";
+export type { ApplyAlloyConfigInput, ApplyAlloyConfigResult } from "./alloy/apply.js";
+export { snapshotRegistriesForAlloyEffect } from "./alloy/from-registry.js";
