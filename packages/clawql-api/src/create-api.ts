@@ -75,11 +75,16 @@ export type ClawQLApiHandle = {
   readonly dispose: () => Promise<void>;
 };
 
-/**
- * Composition root for ClawQL.
- * Binds one SkillRegistry for install + Skills-over-MCP + unified search.
- */
-export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
+type ClawQLApiAssembly = {
+  readonly mcpTools: McpToolRegistry;
+  readonly registrationApi: ReturnType<McpToolRegistry["registrationApi"]>;
+  readonly host: ReturnType<typeof createInMemoryPluginHostServices>;
+  readonly registry: PluginRegistry;
+  readonly plugins: readonly AnyPlugin[];
+  readonly options: CreateClawQLApiOptions;
+};
+
+function assembleClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiAssembly {
   const mcpTools = new McpToolRegistry();
   const registrationApi = mcpTools.registrationApi();
   const host = createInMemoryPluginHostServices({
@@ -92,9 +97,18 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     hookRegistry: host.hookRegistry,
     worm: host.worm,
   });
-  for (const plugin of options.plugins ?? composeDefaultPlugins()) {
-    Effect.runSync(registry.register(plugin, registrationApi));
-  }
+  return {
+    mcpTools,
+    registrationApi,
+    host,
+    registry,
+    plugins: options.plugins ?? composeDefaultPlugins(),
+    options,
+  };
+}
+
+function finalizeClawQLApi(assembly: ClawQLApiAssembly): ClawQLApiHandle {
+  const { mcpTools, registrationApi, host, registry, options } = assembly;
   const listMcpTools = () => mcpTools.list();
   const defaultSearch = makeSearchLive(options.loadSpecFn ?? loadSpec, {
     skillRegistry: host.skillRegistry,
@@ -144,6 +158,34 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
       await runtime.dispose();
     },
   };
+}
+
+/**
+ * Composition root for ClawQL.
+ * Binds one SkillRegistry for install + Skills-over-MCP + unified search.
+ * Plugin install uses `Effect.runSync` — vault seed Layers must be sync-safe
+ * (e.g. MemoryVaultSeedLive schedules IO best-effort).
+ */
+export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
+  const assembly = assembleClawQLApi(options);
+  for (const plugin of assembly.plugins) {
+    Effect.runSync(assembly.registry.register(plugin, assembly.registrationApi));
+  }
+  return finalizeClawQLApi(assembly);
+}
+
+/**
+ * Async composition root — prefer for production bootstrap (`ensureClawqlApi`)
+ * when plugin install may include async Effects.
+ */
+export async function createClawQLApiAsync(
+  options: CreateClawQLApiOptions = {}
+): Promise<ClawQLApiHandle> {
+  const assembly = assembleClawQLApi(options);
+  for (const plugin of assembly.plugins) {
+    await Effect.runPromise(assembly.registry.register(plugin, assembly.registrationApi));
+  }
+  return finalizeClawQLApi(assembly);
 }
 
 /** Minimal ProviderPlugin for tests / demos (no tools, no hooks). */

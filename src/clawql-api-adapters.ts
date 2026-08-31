@@ -1,5 +1,6 @@
 import {
   createClawQLApi,
+  createClawQLApiAsync,
   composeDefaultPlugins,
   loadSpec,
   makeExecuteLive,
@@ -43,19 +44,33 @@ function buildExecuteLive() {
 let apiHandle: ClawQLApiHandle | undefined;
 let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
 
-function buildClawqlApi(
+function buildClawqlApiOptions(
   pluginLayers: CreateClawQLApiOptions["pluginLayers"],
   vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
-): ClawQLApiHandle {
+): CreateClawQLApiOptions {
   // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
-  return createClawQLApi({
+  return {
     executeLayer: buildExecuteLive(),
     plugins: [...composeDefaultPlugins(), ...defaultPaymentsProxyPlugins()],
     pluginLayers,
     vaultSeedLayer,
     runtimeLayers: [makeEffectOtelTracerLayer()],
     prepareEffect: attachActiveOtelParent,
-  });
+  };
+}
+
+function buildClawqlApi(
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+): ClawQLApiHandle {
+  return createClawQLApi(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
+}
+
+async function buildClawqlApiAsync(
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+): Promise<ClawQLApiHandle> {
+  return createClawQLApiAsync(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
 }
 
 async function resolveVaultSeedLayer(): Promise<
@@ -98,7 +113,7 @@ export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
       resolvePluginCompositionFlags()
     );
     const vaultSeedLayer = await resolveVaultSeedLayer();
-    apiHandle = buildClawqlApi(pluginLayers, vaultSeedLayer);
+    apiHandle = await buildClawqlApiAsync(pluginLayers, vaultSeedLayer);
     return apiHandle;
   })();
   try {

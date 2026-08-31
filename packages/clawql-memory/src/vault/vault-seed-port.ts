@@ -35,48 +35,61 @@ function parseFrontmatterTags(text: string): string[] {
 }
 
 /**
+ * Schedule best-effort vault IO without introducing Async fibers.
+ * `createClawQLApi` installs plugins via `Effect.runSync`; `Effect.tryPromise` there
+ * raises AsyncFiberException and aborts MCP/Docker startup when a vault path is set.
+ */
+function scheduleBestEffort(work: () => Promise<void>): Effect.Effect<void, never> {
+  return Effect.sync(() => {
+    void work().catch(() => undefined);
+  });
+}
+
+async function ingestTaggedAsync(
+  pluginId: string,
+  entries: readonly VaultSeedEntry[]
+): Promise<void> {
+  if (!getObsidianVaultPath()) return;
+  const tag = pluginVaultSeedTag(pluginId);
+  for (const entry of entries) {
+    await runMemoryIngest({
+      title: entry.title,
+      insights: entry.content,
+      type: entry.ontologyType,
+      tags: [tag, "clawql-vault-seed"],
+      append: false,
+    });
+  }
+}
+
+async function deleteByPluginTagAsync(pluginId: string): Promise<void> {
+  const vault = getObsidianVaultPath();
+  if (!vault) return;
+  const tag = pluginVaultSeedTag(pluginId);
+  const rels = await listVaultMarkdownRelPaths(vault, "Memory", 5000);
+  for (const rel of rels) {
+    const { readFile } = await import("node:fs/promises");
+    let text: string;
+    try {
+      text = await readFile(join(vault, rel), "utf8");
+    } catch {
+      continue;
+    }
+    const tags = parseFrontmatterTags(text);
+    if (!tags.includes(tag)) continue;
+    await unlink(join(vault, rel)).catch(() => undefined);
+  }
+}
+
+/**
  * Live vault seed: ingest tagged notes; uninstall deletes notes carrying the plugin tag.
  * No-ops when vault path is unset (same posture as memory tools without vault).
+ *
+ * IO is best-effort and deferred so sync composition roots stay runSync-safe.
  */
 export const MemoryVaultSeedLive: Layer.Layer<VaultSeedPort> = Layer.succeed(VaultSeedPort, {
   ingestTagged: (pluginId, entries: readonly VaultSeedEntry[]) =>
-    Effect.tryPromise({
-      try: async () => {
-        if (!getObsidianVaultPath()) return;
-        const tag = pluginVaultSeedTag(pluginId);
-        for (const entry of entries) {
-          await runMemoryIngest({
-            title: entry.title,
-            insights: entry.content,
-            type: entry.ontologyType,
-            tags: [tag, "clawql-vault-seed"],
-            append: false,
-          });
-        }
-      },
-      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(Effect.catchAll(() => Effect.void)),
+    scheduleBestEffort(() => ingestTaggedAsync(pluginId, entries)),
 
-  deleteByPluginTag: (pluginId) =>
-    Effect.tryPromise({
-      try: async () => {
-        const vault = getObsidianVaultPath();
-        if (!vault) return;
-        const tag = pluginVaultSeedTag(pluginId);
-        const rels = await listVaultMarkdownRelPaths(vault, "Memory", 5000);
-        for (const rel of rels) {
-          const { readFile } = await import("node:fs/promises");
-          let text: string;
-          try {
-            text = await readFile(join(vault, rel), "utf8");
-          } catch {
-            continue;
-          }
-          const tags = parseFrontmatterTags(text);
-          if (!tags.includes(tag)) continue;
-          await unlink(join(vault, rel)).catch(() => undefined);
-        }
-      },
-      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(Effect.catchAll(() => Effect.void)),
+  deleteByPluginTag: (pluginId) => scheduleBestEffort(() => deleteByPluginTagAsync(pluginId)),
 });
