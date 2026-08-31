@@ -140,3 +140,33 @@ export { validateAlloyRiver, validateAlloyRiverEffect } from "./alloy/validate.j
 export { applyAlloyConfigEffect } from "./alloy/apply.js";
 export type { ApplyAlloyConfigInput, ApplyAlloyConfigResult } from "./alloy/apply.js";
 export { snapshotRegistriesForAlloyEffect } from "./alloy/from-registry.js";
+
+export type {
+  FederatedQueryMode,
+  FederatedQueryResult,
+  FederatedQuerySelection,
+  LogQueryRequest,
+  MetricQueryRequest,
+  ProfileQueryRequest,
+  ProviderQueryHit,
+  QueryTimeRange,
+  TelemetryQueryTransportApi,
+  TraceQueryRequest,
+} from "./query/types.js";
+export {
+  TelemetryQueryTransport,
+  TelemetryQueryTransportLive,
+} from "./query/transport.js";
+export {
+  ObservabilityQueryService,
+  makeObservabilityQueryService,
+  makeObservabilityQueryServiceLayer,
+} from "./query/federation.js";
+export type { ObservabilityQueryServiceApi } from "./query/federation.js";
+export {
+  appendQueryParamsEffect,
+  resolveQueryEndpointEffect,
+  selectProvidersEffect,
+  tenantHeadersEffect,
+} from "./query/select.js";
+export { ObservabilityQueryLive, ObservabilityWithQueryLive } from "./registry/layers.js";

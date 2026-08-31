@@ -94,6 +94,42 @@ await Effect.runPromise(
 
 Golden fixture: `src/alloy/__fixtures__/lgtm-default.river.golden`.
 
+## Phase 3c (v0.5) — Query federation (Effect-native)
+
+Governed read facade over registered backends. All IO is Effect (`Context.Tag` + `Layer`); HTTP goes through `TelemetryQueryTransport` so tests substitute a Layer instead of mocking `fetch`.
+
+```typescript
+import { Effect, Layer } from "effect";
+import {
+  ObservabilityWithQueryLive,
+  ObservabilityGovernanceSinkLive,
+  ObservabilityQueryService,
+  registerBuiltinLgtmProvidersEffect,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const query = yield* ObservabilityQueryService;
+  return yield* query.queryLogs(
+    { sub: "reader", scope: ["observability:query_logs"] },
+    {
+      logql: '{service="api"} |= "error"',
+      timeRange: { startMs: Date.now() - 3_600_000, endMs: Date.now() },
+      selection: { mode: "all" },
+    }
+  );
+});
+
+await Effect.runPromise(
+  program.pipe(
+    Effect.provide(ObservabilityWithQueryLive),
+    Effect.provide(ObservabilityGovernanceSinkLive)
+  )
+);
+```
+
+APIs: `queryLogs` (LogQL), `queryMetrics` (PromQL), `queryTraces` (TraceQL), `queryProfiles`. Selection modes: `one` | `all` | `primary`. Raw results emit `OBSERVABILITY_RAW_DATA_ACCESSED`.
+
 ### Worker deploy
 
 ```bash
@@ -152,7 +188,9 @@ packages/clawql-observability/
   docker/docker-compose.yaml   — local LGTM+ stack
   helm/values.yaml             — LGTM+ enable/disable + retention
   worker/                      — Cloudflare Faro proxy (Phase 2)
-  src/                         — Effect config, registry, fingerprint, telemetry JWT mint
+  src/                         — Effect config, registry, Alloy generator, query federation, JWT mint
+  src/alloy/                   — River generate / validate / apply (Phase 3b)
+  src/query/                   — Federated LogQL/PromQL/TraceQL/profile reads (Phase 3c)
   scripts/smoke-lgtm-plus.sh   — CI compose smoke
 ```
 
@@ -165,8 +203,8 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 | **1**  | LGTM+ core + Alloy _(merged)_                |
 | **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
 | **3a** | Provider registry skeleton _(shipped)_       |
-| **3b** | Alloy config generator _(this release)_      |
-| **3c** | Query federation                             |
+| **3b** | Alloy config generator _(shipped)_           |
+| **3c** | Query federation _(this release)_            |
 | 4      | Langfuse + Panguard correlation              |
 | 5      | Full alerting + Vault-backed signing keys    |
 

@@ -8,6 +8,8 @@ import type {
   SignalRegistrySnapshot,
   TraceProvider,
 } from "../providers/types.js";
+import { makeObservabilityQueryServiceLayer } from "../query/federation.js";
+import { TelemetryQueryTransportLive } from "../query/transport.js";
 import { LogRegistryService } from "./log-registry.js";
 import { MetricRegistryService } from "./metric-registry.js";
 import { ProfileRegistryService } from "./profile-registry.js";
@@ -42,8 +44,25 @@ export const ObservabilityHealthLive = makeObservabilityHealthServiceLayer().pip
   Layer.provide(ObservabilityRegistryLive)
 );
 
+/**
+ * Query federation service (registries + HTTP transport).
+ * Callers must also provide `ObservabilityGovernanceSink` when running query Effects
+ * (WORM audit of raw data access).
+ */
+export const ObservabilityQueryLive = makeObservabilityQueryServiceLayer().pipe(
+  Layer.provide(ObservabilityRegistryLive),
+  Layer.provide(TelemetryQueryTransportLive)
+);
+
 /** Registry + health services for hosts and tests. */
 export const ObservabilityLive = Layer.merge(ObservabilityRegistryLive, ObservabilityHealthLive);
+
+/** Full stack: registry + health + query transport/service. */
+export const ObservabilityWithQueryLive = Layer.mergeAll(
+  ObservabilityLive,
+  TelemetryQueryTransportLive,
+  ObservabilityQueryLive
+);
 
 export const createObservabilityRegistryLayer = (input?: {
   readonly log?: SignalRegistrySnapshot<LogProvider>;

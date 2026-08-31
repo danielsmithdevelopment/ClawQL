@@ -30,6 +30,8 @@ The TypeScript **provider registry** is the authorized front door to that config
 
 **Phase 3b** ships `generateAlloyRiverEffect` / `applyAlloyConfigEffect`: a registry snapshot becomes a complete River file (exporters + batch fan-out + optional Faro), validated structurally, written to disk, and audited with `OBSERVABILITY_ALLOY_CONFIG_APPLIED`. Multi-provider log/metric/trace registration produces multiple entries in the batch `output` lists — Alloy owns the runtime fan-out.
 
+**Phase 3c** ships Effect-native query federation (`ObservabilityQueryService`): governed LogQL / PromQL / TraceQL / profile reads with provider selection (`one` | `all` | `primary`), ATR scope checks, and `OBSERVABILITY_RAW_DATA_ACCESSED` WORM events. HTTP IO goes through `TelemetryQueryTransport` (`Effect.tryPromise` + fetch in Live; tests substitute a Layer).
+
 Browser RUM uses a **Cloudflare Worker** proxy with **ephemeral HS256 JWTs** — no static public DSN. Invalid credentials return **HTTP 204** with no body.
 
 ---
@@ -60,8 +62,8 @@ Unlike `clawql-analytics` (one active provider at a time), observability default
 | **1**  | LGTM+ docker-compose + Alloy OTLP pipeline                                              |
 | **2**  | Faro + ephemeral-JWT Worker proxy                                                       |
 | **3a** | Signal-typed registries, LGTM+ built-ins, scopes, WORM hooks, health checks _(shipped)_ |
-| **3b** | Registry → Alloy River config generator _(shipped)_                                     |
-| **3c** | Query federation (LogQL / PromQL / TraceQL / profiles)                                  |
+| **3b** | Registry → Alloy River config generator _(shipped)_ |
+| **3c** | Query federation (LogQL / PromQL / TraceQL / profiles) _(shipped)_ |
 | **4+** | Langfuse correlation, security layer, alerting, Vault-backed signing keys               |
 
 ---

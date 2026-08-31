@@ -106,7 +106,7 @@ Multi-backend observability (redundant fan-out per signal type, governed registr
 
 **Phase 3b (v0.4, shipped):** Alloy River config generator (`generateAlloyRiverEffect`, `applyAlloyConfigEffect`, `snapshotRegistriesForAlloyEffect`) with golden-file tests against default LGTM+ exporters and multi-provider fan-out.
 
-**Phase 3c (next):** Query federation facade.
+**Phase 3c (v0.5, shipped):** Effect-native query federation (`ObservabilityQueryService` + `TelemetryQueryTransport`) for LogQL / PromQL / TraceQL / profiles, with scope gates and raw-access WORM.
 
 Summary: **Alloy** owns runtime ingest fan-out; the **TypeScript registry** owns auth scopes, WORM config audit, health checks, River config generation, and read-side query federation. LGTM+ backends are default built-in plugins, not special-cased infra.
 
