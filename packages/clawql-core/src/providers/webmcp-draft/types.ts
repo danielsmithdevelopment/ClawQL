@@ -31,6 +31,9 @@ export type DraftCandidate = {
   readonly proposedTool: ProposedWebMcpTool;
   readonly confidence: DraftConfidence;
   readonly inferenceNotes: string;
+  /** Forms only — submission target captured at draft time for bound execute. */
+  readonly formAction?: string;
+  readonly formMethod?: string;
 };
 
 export type DraftCandidateStatus = "pending" | "approved" | "rejected" | "published";
@@ -55,6 +58,9 @@ export type BoundOperation = {
   readonly toolName: string;
   readonly sourceType: DraftSourceType;
   readonly sourceRef: string;
+  /** Present when sourceType is "forms" and the snapshot had an action URL. */
+  readonly formAction?: string;
+  readonly formMethod?: string;
 };
 
 export type PublishedWebMcpVersion = {

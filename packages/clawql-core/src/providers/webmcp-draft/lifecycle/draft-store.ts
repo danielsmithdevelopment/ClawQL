@@ -1,5 +1,7 @@
 import { Context, Effect, Layer, Ref } from "effect";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import {
   WebMcpDraftInvalidStateError,
   WebMcpDraftNotFoundError,
@@ -42,7 +44,7 @@ export class DraftStoreService extends Context.Tag("clawql/webmcp-draft/DraftSto
   DraftStoreService,
   {
     /** Stub stores are process-local — restart loses unreviewed drafts with no durable error. */
-    readonly durability: "ephemeral";
+    readonly durability: "ephemeral" | "durable";
     readonly putCandidates: (
       candidates: readonly DraftCandidate[]
     ) => Effect.Effect<readonly StoredDraftCandidate[]>;
@@ -93,9 +95,9 @@ type StoreOps = {
   readonly write: (next: DraftStoreState) => Effect.Effect<void>;
 };
 
-function serviceFromOps(ops: StoreOps) {
+function serviceFromOps(ops: StoreOps, durability: "ephemeral" | "durable" = "ephemeral") {
   return DraftStoreService.of({
-    durability: "ephemeral",
+    durability,
     putCandidates: (candidates) =>
       Effect.gen(function* () {
         const stored: StoredDraftCandidate[] = candidates.map((c) => ({
@@ -177,6 +179,9 @@ function serviceFromOps(ops: StoreOps) {
           toolName: resolveTool(c).name,
           sourceType: c.sourceType,
           sourceRef: c.sourceRef,
+          ...(c.formAction
+            ? { formAction: c.formAction, formMethod: c.formMethod ?? "POST" }
+            : {}),
         }));
         const version: PublishedWebMcpVersion = {
           versionId: `${versionIdFor(publishedTools)}_${randomUUID().slice(0, 8)}`,
@@ -252,27 +257,110 @@ export const DraftStoreTestLayer = Layer.effect(
     return serviceFromOps({
       read: () => Ref.get(stateRef),
       write: (next) => Ref.set(stateRef, next),
-    });
+    }, "ephemeral");
   })
 );
 
-/** Process-wide live layer (shared across MCP handler invocations until durable backend lands). */
-export const DraftStoreLive = Layer.sync(DraftStoreService, () =>
-  serviceFromOps({
-    read: () =>
-      Effect.sync(() => ({
-        candidates: new Map(defaultStore.candidates),
-        versions: new Map(defaultStore.versions),
-        activeVersionId: defaultStore.activeVersionId,
-      })),
+
+function snapshotFromMutable(store: MutableDraftStore): DraftStoreState {
+  return {
+    candidates: new Map(store.candidates),
+    versions: new Map(store.versions),
+    activeVersionId: store.activeVersionId,
+  };
+}
+
+function applySnapshot(store: MutableDraftStore, next: DraftStoreState): void {
+  store.candidates = new Map(next.candidates);
+  store.versions = new Map(next.versions);
+  store.activeVersionId = next.activeVersionId;
+}
+
+type PersistedDraftStore = {
+  readonly candidates: readonly StoredDraftCandidate[];
+  readonly versions: readonly PublishedWebMcpVersion[];
+  readonly activeVersionId: string | null;
+};
+
+const loadPersisted = (filePath: string): DraftStoreState => {
+  if (!existsSync(filePath)) return emptyState();
+  const raw = readFileSync(filePath, "utf8");
+  const parsed = JSON.parse(raw) as PersistedDraftStore;
+  return {
+    candidates: new Map((parsed.candidates ?? []).map((c) => [c.candidateId, c])),
+    versions: new Map((parsed.versions ?? []).map((v) => [v.versionId, v])),
+    activeVersionId: parsed.activeVersionId ?? null,
+  };
+};
+
+const persistState = (filePath: string, state: DraftStoreState): void => {
+  mkdirSync(dirname(filePath), { recursive: true });
+  const payload: PersistedDraftStore = {
+    candidates: [...state.candidates.values()],
+    versions: [...state.versions.values()],
+    activeVersionId: state.activeVersionId,
+  };
+  writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+};
+
+/** Resolve durable JSON path — unset/`0` keeps ephemeral process memory only. */
+export const resolveDraftStorePath = (): string | null => {
+  const flag = process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim();
+  if (flag === "0" || flag === "false") return null;
+  const explicit = process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH?.trim();
+  if (explicit) return resolve(explicit);
+  // Default on: durable under cwd so gateway restarts keep drafts.
+  if (flag === "1" || flag === "true" || flag === undefined || flag === "") {
+    // Opt-in durable by default when path or flag set; empty flag → durable default path.
+    // Tests set CLAWQL_WEBMCP_DRAFT_DURABLE=0.
+    if (flag === undefined) {
+      // Keep unit-test default ephemeral unless explicitly enabled — tests rely on ephemeral.
+      return null;
+    }
+    return resolve(process.cwd(), ".clawql", "webmcp-draft-store.json");
+  }
+  return resolve(process.cwd(), ".clawql", "webmcp-draft-store.json");
+};
+
+function makeProcessStoreOps(filePath: string | null): StoreOps {
+  if (filePath) {
+    const loaded = loadPersisted(filePath);
+    applySnapshot(defaultStore, loaded);
+  }
+  return {
+    read: () => Effect.sync(() => snapshotFromMutable(defaultStore)),
     write: (next) =>
       Effect.sync(() => {
-        defaultStore.candidates = new Map(next.candidates);
-        defaultStore.versions = new Map(next.versions);
-        defaultStore.activeVersionId = next.activeVersionId;
+        applySnapshot(defaultStore, next);
+        if (filePath) persistState(filePath, next);
       }),
-  })
-);
+  };
+}
+
+/**
+ * Process-wide live layer. Durable when `CLAWQL_WEBMCP_DRAFT_DURABLE=1` or
+ * `CLAWQL_WEBMCP_DRAFT_STORE_PATH` is set; otherwise ephemeral (test default).
+ */
+export const DraftStoreLive = Layer.sync(DraftStoreService, () => {
+  const filePath =
+    process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH?.trim()
+      ? resolve(process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH.trim())
+      : process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "1" ||
+          process.env.CLAWQL_WEBMCP_DRAFT_DURABLE?.trim() === "true"
+        ? resolve(process.cwd(), ".clawql", "webmcp-draft-store.json")
+        : null;
+  const durability = filePath ? ("durable" as const) : ("ephemeral" as const);
+  return serviceFromOps(makeProcessStoreOps(filePath), durability);
+});
+
+/** Explicit durable layer (gateway / production). */
+export const DraftStoreDurableLive = Layer.sync(DraftStoreService, () => {
+  const filePath = resolve(
+    process.env.CLAWQL_WEBMCP_DRAFT_STORE_PATH?.trim() ||
+      resolve(process.cwd(), ".clawql", "webmcp-draft-store.json")
+  );
+  return serviceFromOps(makeProcessStoreOps(filePath), "durable");
+});
 
 /** Reset the process-wide live store (tests that exercise Live layer). */
 export const resetDefaultDraftStoreForTests = (): void => {

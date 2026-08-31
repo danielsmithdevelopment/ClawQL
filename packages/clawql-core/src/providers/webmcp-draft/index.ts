@@ -17,6 +17,11 @@ import { draftFromOpenApi } from "./inference/from-openapi.js";
 import { reviewDraft } from "./lifecycle/approval.js";
 import { DraftStoreLive, DraftStoreService } from "./lifecycle/draft-store.js";
 import { webMcpDraftPreIngestHook } from "./lifecycle/pre-ingest-gate.js";
+import {
+  BoundOperationInvokerHostLive,
+  executeBoundOperation,
+  findBinding,
+} from "./lifecycle/bound-execute.js";
 import { generatePublishScript, publishApprovedTool } from "./lifecycle/publish.js";
 import { rollbackPublishedVersion } from "./lifecycle/rollback.js";
 import type {
@@ -36,6 +41,7 @@ export * from "./lifecycle/approval.js";
 export * from "./lifecycle/publish.js";
 export * from "./lifecycle/rollback.js";
 export * from "./lifecycle/pre-ingest-gate.js";
+export * from "./lifecycle/bound-execute.js";
 
 /** Combined live layer: draft store + audit + full plugin install services. */
 export const WebMcpDraftLive: Layer.Layer<
@@ -131,6 +137,18 @@ const publishSchema = {
   additionalProperties: false,
 } as const;
 
+
+const executeSchema = {
+  type: "object",
+  properties: {
+    toolName: { type: "string" },
+    args: { type: "object" },
+    versionId: { type: "string", description: "Published version id (defaults to active)" },
+  },
+  required: ["toolName"],
+  additionalProperties: false,
+} as const;
+
 const rollbackSchema = {
   type: "object",
   properties: {
@@ -152,7 +170,7 @@ function registerWebMcpDraftTools(
     yield* api.registerMcpTool({
       name: "webmcp_draft",
       description:
-        "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic stub).",
+        "Draft WebMCP tool candidates from OpenAPI, GraphQL, or HTML forms (heuristic).",
       schema: { ...draftSchema },
       handler: async (args: unknown) => {
         const a = asRecord(args);
@@ -202,6 +220,41 @@ function registerWebMcpDraftTools(
       },
     });
 
+    
+    yield* api.registerMcpTool({
+      name: "webmcp_draft_execute",
+      description:
+        "Execute a published WebMCP draft binding (OpenAPI/GraphQL via ExecuteService host; forms via formAction).",
+      schema: { ...executeSchema },
+      handler: async (args: unknown) => {
+        const a = asRecord(args);
+        const program = Effect.gen(function* () {
+          const store = yield* DraftStoreService;
+          const version = a.versionId
+            ? yield* store.getVersion(String(a.versionId))
+            : yield* store.getActiveVersion();
+          if (!version) {
+            return yield* Effect.fail(new Error("no active published WebMCP version"));
+          }
+          const toolName = String(a.toolName ?? "");
+          const binding = findBinding(version.bindings, toolName);
+          if (!binding) {
+            return yield* Effect.fail(new Error(`no binding for tool ${toolName} in ${version.versionId}`));
+          }
+          const argMap =
+            a.args && typeof a.args === "object" && !Array.isArray(a.args)
+              ? (a.args as Record<string, unknown>)
+              : {};
+          return yield* executeBoundOperation(binding, argMap);
+        }).pipe(
+          Effect.provide(
+            Layer.mergeAll(WebMcpDraftLive, BoundOperationInvokerHostLive)
+          )
+        );
+        return textResult(await Effect.runPromise(program));
+      },
+    });
+
     yield* api.registerMcpTool({
       name: "webmcp_draft_rollback",
       description:
@@ -228,7 +281,7 @@ export const WebMcpDraftPlugin: ProviderPlugin = defineRegisteringProviderPlugin
   id: "clawql-webmcp-draft",
   version: "0.1.0",
   description:
-    "Draft WebMCP registerTool candidates from OpenAPI, GraphQL, or HTML forms (heuristic stub)",
+    "Draft WebMCP registerTool candidates from OpenAPI, GraphQL, or HTML forms (heuristic)",
   hooks: [webMcpDraftPreIngestHook],
   register: registerWebMcpDraftTools,
 });

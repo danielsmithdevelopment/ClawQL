@@ -184,7 +184,9 @@ describe("webmcp-draft lifecycle via core fireHook", () => {
         expect(active).not.toBeNull();
         const script = yield* generatePublishScript(active!);
         expect(script).toContain("document.modelContext");
-        expect(script).toContain("STUB");
+        expect(script).toContain("fetch(BIND_URL");
+        expect(script).toContain("/webmcp-draft/bound-execute");
+        expect(script).not.toContain("stub: true");
         expect(script).toContain("add_to_cart");
 
         const firstVersionId = active!.versionId;
@@ -345,6 +347,7 @@ describe("WebMcpDraftPlugin (ProviderPlugin)", () => {
           "webmcp_draft",
           "webmcp_draft_review",
           "webmcp_draft_publish",
+          "webmcp_draft_execute",
           "webmcp_draft_rollback",
         ]);
       })

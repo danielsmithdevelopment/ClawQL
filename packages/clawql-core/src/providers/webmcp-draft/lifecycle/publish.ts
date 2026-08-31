@@ -19,19 +19,35 @@ import { webMcpDraftPreIngestHook } from "./pre-ingest-gate.js";
 /**
  * Emit standard WebMCP `document.modelContext.registerTool()` calls for a published version.
  *
- * `callBoundOperation` is intentionally a stub — published tools are declarations only
- * until source-adapter binding lands (§6). Do not treat generated scripts as demo-ready.
+ * `callBoundOperation` POSTs to a ClawQL bind endpoint which runs
+ * {@link executeBoundOperation} (forms → HTTP submit; openapi/graphql → ExecuteService).
  */
+export type GeneratePublishScriptOptions = {
+  /**
+   * Absolute or same-origin URL for `POST` bound execute.
+   * Defaults to `CLAWQL_WEBMCP_BIND_URL` or `/webmcp-draft/bound-execute`.
+   */
+  readonly bindUrl?: string;
+  readonly versionId?: string;
+};
+
 export const generatePublishScript = (
-  version: PublishedWebMcpVersion
+  version: PublishedWebMcpVersion,
+  options: GeneratePublishScriptOptions = {}
 ): Effect.Effect<string> =>
   Effect.sync(() => {
     const bindingMap = new Map<string, BoundOperation>(
       version.bindings.map((b) => [b.toolName, b])
     );
+    const bindUrl =
+      options.bindUrl?.trim() ||
+      (typeof process !== "undefined" && process.env?.CLAWQL_WEBMCP_BIND_URL?.trim()) ||
+      "/webmcp-draft/bound-execute";
+    const versionId = options.versionId ?? version.versionId;
+    const bindingsJson = JSON.stringify(version.bindings);
     const header =
       `/* WebMCP publish ${version.versionId} @ ${version.publishedAt} by ${version.publishedBy} */\n` +
-      `/* WARNING: callBoundOperation is a stub — not bound to real source adapters yet */\n` +
+      `/* callBoundOperation → ${bindUrl} (ExecuteService / form submit via clawql-api) */\n` +
       `(function(){\n` +
       `  var mc = (typeof document !== "undefined" && document.modelContext)\n` +
       `    || (typeof navigator !== "undefined" && navigator.modelContext);\n` +
@@ -39,9 +55,25 @@ export const generatePublishScript = (
       `    console.warn("[webmcp-draft] modelContext.registerTool unavailable");\n` +
       `    return;\n` +
       `  }\n` +
+      `  var BIND_URL = ${JSON.stringify(bindUrl)};\n` +
+      `  var VERSION_ID = ${JSON.stringify(versionId)};\n` +
+      `  var BINDINGS = ${bindingsJson};\n` +
       `  function callBoundOperation(toolName, args) {\n` +
-      `    // STUB: not wired to clawql-core source adapters (§6). Returns placeholder JSON.\n` +
-      `    return Promise.resolve({ ok: true, toolName: toolName, args: args, stub: true });\n` +
+      `    return fetch(BIND_URL, {\n` +
+      `      method: "POST",\n` +
+      `      headers: { "content-type": "application/json", "accept": "application/json" },\n` +
+      `      credentials: "same-origin",\n` +
+      `      body: JSON.stringify({ versionId: VERSION_ID, toolName: toolName, args: args || {}, bindings: BINDINGS })\n` +
+      `    }).then(function(res) {\n` +
+      `      return res.text().then(function(text) {\n` +
+      `        var data; try { data = JSON.parse(text); } catch (e) { data = { ok: res.ok, body: text }; }\n` +
+      `        if (!res.ok) {\n` +
+      `          var err = new Error((data && (data.error || data.reason)) || ("bound execute HTTP " + res.status));\n` +
+      `          err.payload = data; throw err;\n` +
+      `        }\n` +
+      `        return data;\n` +
+      `      });\n` +
+      `    });\n` +
       `  }\n`;
 
     const tools = version.publishedTools

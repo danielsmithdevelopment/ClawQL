@@ -63,6 +63,7 @@ export const draftFromForms = (
           description: `Submit form ${label}${form.action ? ` → ${form.method ?? "POST"} ${form.action}` : ""}`,
           inputSchema: fieldsToSchema(form),
         },
+        ...(form.action ? { formAction: form.action, formMethod: (form.method ?? "POST").toUpperCase() } : {}),
         confidence: "low",
         inferenceNotes:
           "Inferred from rendered HTML form fields only — no types or semantic names guaranteed; human review required.",

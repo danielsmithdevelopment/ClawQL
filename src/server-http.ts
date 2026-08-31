@@ -487,6 +487,60 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
     });
   }
 
+
+  // WebMCP draft bound execute — browser publish scripts POST here (§6).
+  app.post("/webmcp-draft/bound-execute", applyGatewayAuth, async (req, res) => {
+    try {
+      const body = (req.body ?? {}) as {
+        toolName?: string;
+        args?: Record<string, unknown>;
+        bindings?: import("clawql-core").BoundOperation[];
+        versionId?: string;
+      };
+      const toolName = String(body.toolName ?? "");
+      if (!toolName) {
+        res.status(400).json({ ok: false, error: "toolName required" });
+        return;
+      }
+      const { Effect, Layer } = await import("effect");
+      const {
+        BoundOperationInvokerHostLive,
+        DraftStoreLive,
+        DraftStoreService,
+        executeBoundOperation,
+        findBinding,
+      } = await import("clawql-core");
+      const result = await Effect.runPromise(
+        Effect.gen(function* () {
+          let binding = body.bindings ? findBinding(body.bindings, toolName) : undefined;
+          if (!binding) {
+            const store = yield* DraftStoreService;
+            const version = body.versionId
+              ? yield* store.getVersion(String(body.versionId))
+              : yield* store.getActiveVersion();
+            if (!version) {
+              return yield* Effect.fail(new Error("no active published WebMCP version"));
+            }
+            binding = findBinding(version.bindings, toolName);
+          }
+          if (!binding) {
+            return yield* Effect.fail(new Error(`no binding for tool ${toolName}`));
+          }
+          return yield* executeBoundOperation(binding, body.args ?? {});
+        }).pipe(
+          Effect.provide(Layer.mergeAll(DraftStoreLive, BoundOperationInvokerHostLive))
+        )
+      );
+      res.status(200).json(result);
+    } catch (err: unknown) {
+      console.error("[clawql-mcp-http] POST /webmcp-draft/bound-execute error:", err);
+      const message = err instanceof Error ? err.message : String(err);
+      if (!res.headersSent) {
+        res.status(400).json({ ok: false, error: message });
+      }
+    }
+  });
+
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {
     const protocolVersion = resolveHttpMcpProtocolVersion(req.header("mcp-protocol-version"));
     res.setHeader("mcp-protocol-version", protocolVersion);
