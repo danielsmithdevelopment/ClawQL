@@ -3,6 +3,8 @@ import type { FormRenderHints } from "./mcp-ui-form.js";
 
 export type McpUiResultKind = "json" | "search" | "memory" | "cache" | "audit" | "idp";
 
+export type McpUiCustomHtml = "smart-upload";
+
 export type McpUiTemplate = {
   /** Tool name or tag match. */
   id: string;
@@ -12,6 +14,8 @@ export type McpUiTemplate = {
   fileFields?: string[];
   hints?: Record<string, string>;
   resultKind: McpUiResultKind;
+  /** Pre-built HTMX fragment instead of auto-generated form fields. */
+  customHtml?: McpUiCustomHtml;
 };
 
 const TEMPLATES: Record<string, McpUiTemplate> = {
@@ -102,10 +106,45 @@ const TEMPLATES: Record<string, McpUiTemplate> = {
     },
     resultKind: "idp",
   },
+  upload_photo: {
+    id: "upload_photo",
+    primary: ["file", "filename", "caption"],
+    hints: {
+      file: "Base64-encoded image — smart-upload converts/resizes client-side before submit.",
+      filename: "Display filename after conversion (often .jpg).",
+    },
+    resultKind: "json",
+    customHtml: "smart-upload",
+  },
 };
+
+const SMART_UPLOAD_NAME = /^upload_(photo|image|file|picture)s?$/i;
+const SMART_UPLOAD_VERB = /\bupload\b/i;
+const SMART_UPLOAD_NOUN = /\b(photo|image|picture|gallery)\b/i;
+
+/** Match WebMCP-style upload tools for the smart-upload HTMX template. */
+export function isSmartUploadTool(tool: ListedMcpTool): boolean {
+  const explicit = TEMPLATES[tool.name];
+  if (explicit?.customHtml === "smart-upload") return true;
+  if (SMART_UPLOAD_NAME.test(tool.name)) return true;
+  const text = `${tool.name} ${tool.title ?? ""} ${tool.description ?? ""}`.toLowerCase();
+  if (SMART_UPLOAD_VERB.test(text) && SMART_UPLOAD_NOUN.test(text)) return true;
+  const props = (tool.inputSchema as { properties?: Record<string, unknown> } | undefined)
+    ?.properties;
+  if (props && "file" in props && SMART_UPLOAD_NOUN.test(text)) return true;
+  return false;
+}
 
 export function resolveMcpUiTemplate(tool: ListedMcpTool): McpUiTemplate | undefined {
   if (TEMPLATES[tool.name]) return TEMPLATES[tool.name];
+  if (isSmartUploadTool(tool)) {
+    return {
+      id: "smart-upload",
+      primary: ["file", "filename", "caption"],
+      resultKind: "json",
+      customHtml: "smart-upload",
+    };
+  }
   return undefined;
 }
 

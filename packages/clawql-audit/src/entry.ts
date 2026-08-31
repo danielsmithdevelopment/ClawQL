@@ -1,28 +1,9 @@
-export type BackendAck = "local" | "remote" | "remote_queued";
+/**
+ * WORM entry schema. Unknown additional fields on write input are accepted via metadata
+ * or by extending the body before seal — callers may add framework-specific context.
+ */
 
-export type WORMFilter = {
-  sessionId?: string;
-  type?: WORMEntryType;
-  since?: string;
-  until?: string;
-};
-
-export interface WORMEntry {
-  id: string;
-  hash: string;
-  prev_hash: string;
-  seq: number;
-  writtenAt: string;
-  backendAcks: BackendAck[];
-  type: WORMEntryType;
-  timestamp: string;
-  sessionId: string;
-  agentName?: string;
-  virtualKeyId?: string;
-  cellId?: string;
-  teeSignature?: string;
-  metadata?: Record<string, unknown>;
-}
+export const WORM_GENESIS_PREV_HASH = "0".repeat(64);
 
 export type WORMEntryType =
   | "SESSION_START"
@@ -57,15 +38,43 @@ export type WORMEntryType =
   | "HUMAN_DECISION_REQUESTED"
   | "BENCHMARK_TASK"
   | "SUSPICIOUS_MEMORY_CONTENT"
-  | "VENDOR_EXTENSION"
-  | "MCP_TOKEN_ISSUED"
-  | "MCP_TOKEN_REVOKED"
-  | "MCP_TOKEN_REFRESHED"
-  | "ID_JAG_ASSERTION_ISSUED"
-  | "API_KEY_ISSUED"
-  | "API_KEY_REVOKED";
+  | (string & {});
 
+export type WORMEntry = {
+  id: string;
+  hash: string;
+  prevHash: string;
+  chainIndex: number;
+  writtenAt: string;
+  backendAcks: string[];
+  type: WORMEntryType;
+  timestamp: string;
+  sessionId: string;
+  agentName?: string;
+  virtualKeyId?: string;
+  cellId?: string;
+  teeSignature?: string;
+  metadata?: Record<string, unknown>;
+};
+
+/** Caller-supplied fields for append (system fields filled by clawql-audit). */
 export type WORMAppendInput = Omit<
   WORMEntry,
-  "id" | "hash" | "prev_hash" | "seq" | "writtenAt" | "backendAcks"
+  "id" | "hash" | "prevHash" | "chainIndex" | "writtenAt" | "backendAcks"
 >;
+
+export type WORMFilter = {
+  sessionId?: string;
+  type?: string;
+  agentName?: string;
+  since?: string;
+  until?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type ChainVerifyResult = {
+  valid: boolean;
+  invalidAt?: number;
+  reason?: string;
+};

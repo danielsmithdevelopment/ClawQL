@@ -17,7 +17,7 @@ import {
 } from "../anydoc/convert-document.js";
 import { runIngestExternalKnowledge } from "../ingest/external-ingest.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import {
   decodeIngestExternalKnowledgeInput,
@@ -65,18 +65,18 @@ export type CreateDocumentsPluginOptions = {
   readonly enableAnydoc?: boolean;
 };
 
-export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): Plugin {
+export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}): ProviderPlugin {
   const enableOnyx = options.enableOnyx ?? false;
   const enableIdpPipeline = options.enableIdpPipeline ?? false;
   const enableIdpClassifier = options.enableIdpClassifier ?? false;
   const enableLangextract = options.enableLangextract ?? false;
   const enablePdfInspector = options.enablePdfInspector ?? false;
   const enableAnydoc = options.enableAnydoc ?? false;
-  return {
+  return defineRegisteringProviderPlugin({
     id: DOCUMENTS_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "External knowledge ingest, Onyx search, and IDP document tools",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "ingest_external_knowledge",
@@ -126,5 +126,5 @@ export function createDocumentsPlugin(options: CreateDocumentsPluginOptions = {}
           });
         }
       }),
-  };
+  });
 }

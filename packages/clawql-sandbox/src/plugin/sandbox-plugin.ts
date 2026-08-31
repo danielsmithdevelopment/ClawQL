@@ -1,5 +1,5 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import type { SandboxCodeToolInput } from "../bridge-client.js";
@@ -50,12 +50,12 @@ export async function handleSandboxExecToolInput(
   return runSandboxEffect(sandboxExecProgram(params));
 }
 
-export function createSandboxPlugin(): Plugin {
-  return {
+export function createSandboxPlugin(): ProviderPlugin {
+  return defineRegisteringProviderPlugin({
     id: SANDBOX_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "Isolated sandbox_exec MCP tool",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "sandbox_exec",
@@ -63,5 +63,5 @@ export function createSandboxPlugin(): Plugin {
           handler: (args) => handleSandboxExecToolInput(args as SandboxCodeToolInput),
         });
       }),
-  };
+  });
 }

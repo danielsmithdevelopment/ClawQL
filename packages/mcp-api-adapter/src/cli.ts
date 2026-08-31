@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 import { resolveGrpcAddressFromEnv } from "mcp-grpc-transport";
 import { generateToolCli } from "./gen-cli.js";
+import { resolveListTraceCallsFromEnv } from "./inference-trace-bridge.js";
 import { startMcpApiAdapter } from "./server.js";
 import { connectUpstream } from "./upstream.js";
 import type { UpstreamOptions } from "./types.js";
@@ -38,6 +39,10 @@ HTTP APIs:
   --mcp-ui-path <path>   HTMX MCP UI playground path (default /mcp-ui)
   --no-mcp-ui            Disable /mcp-ui browser surface
   --no-mcp-ui-atr-scoped  Show full catalog in /mcp-ui (ignore ATR tool filter)
+  Inference trace (/mcp-ui/trace/:correlationId):
+  MCP_API_ADAPTER_INFERENCE_TRACE=1  Wire listTraceCalls from clawql-inference store
+  CLAWQL_INFERENCE_STORE=jsonl       Shared store backend (default memory is per-process)
+  CLAWQL_INFERENCE_STORE_PATH        JSONL path shared with inference gateway
   --api-key <key>        Optional edge API key
   --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
   --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
@@ -264,6 +269,8 @@ async function runServe(argv: string[]): Promise<void> {
 
   const mcpUiAtrScoped = !values["no-mcp-ui-atr-scoped"];
 
+  const listTraceCalls = await resolveListTraceCallsFromEnv();
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
@@ -277,6 +284,7 @@ async function runServe(argv: string[]): Promise<void> {
     wsPath,
     mcpUiPath,
     mcpUiAtrScoped,
+    listTraceCalls,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 
@@ -301,6 +309,15 @@ async function runServe(argv: string[]): Promise<void> {
   }
   if (started.mcpUiPath) {
     console.log(`[mcp-api-adapter] mcp-ui:   ${started.url}${started.mcpUiPath}`);
+    if (listTraceCalls) {
+      console.log(
+        `[mcp-api-adapter] trace:  ${started.url}${started.mcpUiPath}/trace/<correlationId> (inference store)`
+      );
+    } else {
+      console.log(
+        `[mcp-api-adapter] trace:  ${started.url}${started.mcpUiPath}/trace/compare (demos; set MCP_API_ADAPTER_INFERENCE_TRACE=1 + shared store for live)`
+      );
+    }
   }
   if (started.grpcAddress) {
     console.log(

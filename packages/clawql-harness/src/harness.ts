@@ -1,4 +1,4 @@
-import { WORMAuditTrail, type WormStorageError } from "clawql-audit";
+import type { AuditError, WORMAuditTrailService } from "clawql-audit";
 import { Effect, Layer } from "effect";
 import {
   makeHarnessWormLayer,
@@ -21,9 +21,14 @@ import { verifyHarnessWormTrail } from "./worm-bridge.js";
 export type ClawQLHarness = {
   readonly config: ClawQLHarnessConfig;
   readonly state: HarnessRegistryState;
-  readonly layer: Layer.Layer<WORMAuditTrail, WormStorageError, never>;
-  run: (task: HarnessTask) => Effect.Effect<HarnessRunResult, HarnessPluginError | HarnessNotStartedError | WormStorageError>;
-  teardown: () => Effect.Effect<void, HarnessPluginError | WormStorageError>;
+  readonly layer: Layer.Layer<WORMAuditTrailService, AuditError, never>;
+  run: (
+    task: HarnessTask
+  ) => Effect.Effect<
+    HarnessRunResult,
+    HarnessPluginError | HarnessNotStartedError | AuditError
+  >;
+  teardown: () => Effect.Effect<void, HarnessPluginError | AuditError>;
 };
 
 const initialLoopState = (): LoopState => ({
@@ -33,7 +38,7 @@ const initialLoopState = (): LoopState => ({
 
 export const createClawQLHarness = (
   config: ClawQLHarnessConfig
-): Effect.Effect<ClawQLHarness, HarnessPluginError | WormStorageError> =>
+): Effect.Effect<ClawQLHarness, HarnessPluginError | AuditError> =>
   Effect.gen(function* () {
     const wormLayer = makeHarnessWormLayer(config.wormDbPath);
     const state = yield* registerHarnessPlugins(config).pipe(Effect.provide(wormLayer));

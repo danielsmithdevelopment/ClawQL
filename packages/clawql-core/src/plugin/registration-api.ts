@@ -14,9 +14,14 @@ export type McpToolDefinition = {
   readonly description?: string;
   readonly schema: Record<string, unknown>;
   readonly handler: McpToolHandler;
+  /**
+   * Optional per-parameter usage notes beyond bare JSON Schema types
+   * (improves hand-authored and synthesized eval quality — Agent Seer / spec §9.3).
+   */
+  readonly parameterNotes?: Record<string, string>;
 };
 
-/** Passed to `Plugin.onRegister` so plugins can register MCP tools without importing transport. */
+/** Passed to ProviderPlugin install so plugins can register MCP tools without importing transport. */
 export interface ClawQLPluginRegistrationApi {
   registerMcpTool(
     tool: McpToolDefinition

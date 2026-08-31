@@ -132,7 +132,7 @@ export function requestUsesToolCalling(body: OpenAiChatCompletionRequest): boole
   if (!Array.isArray(body.messages)) return false;
   for (const message of body.messages) {
     if (!message || typeof message !== "object") continue;
-    if (message.role === "tool") return true;
+    if (message.role === "tool" && message.tool_call_id) return true;
     if (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) return true;
   }
   return false;

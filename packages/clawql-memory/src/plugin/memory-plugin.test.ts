@@ -1,7 +1,16 @@
 import { Effect } from "effect";
 import { describe, expect, it, afterEach } from "vitest";
 import { McpToolRegistry } from "clawql-api";
+import { createInMemoryPluginHostServices, type ProviderPlugin } from "clawql-core";
+import type { ClawQLPluginRegistrationApi } from "clawql-core";
 import { createMemoryPlugin, MEMORY_PLUGIN_ID } from "./memory-plugin.js";
+
+function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.install({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
 
 describe("createMemoryPlugin", () => {
   const prevPageIndex = process.env.CLAWQL_ENABLE_PAGEINDEX;
@@ -14,15 +23,14 @@ describe("createMemoryPlugin", () => {
     else process.env.CLAWQL_ENABLE_CODEGRAPH = prevCodeGraph;
   });
 
-  it("registers memory_ingest and memory_recall on onRegister", () => {
+  it("registers memory_ingest and memory_recall on install", () => {
     process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
     process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     const plugin = createMemoryPlugin();
     expect(plugin.id).toBe(MEMORY_PLUGIN_ID);
-    expect(plugin.kind).toBe("default");
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["memory_ingest", "memory_recall"]);
   });
@@ -31,7 +39,7 @@ describe("createMemoryPlugin", () => {
     delete process.env.CLAWQL_ENABLE_PAGEINDEX;
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toContain("pageindex_build_tree");
     expect(names).toContain("pageindex_traverse");
@@ -44,7 +52,7 @@ describe("createMemoryPlugin", () => {
     process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["memory_ingest", "memory_recall"]);
   });
@@ -54,7 +62,7 @@ describe("createMemoryPlugin", () => {
     process.env.CLAWQL_ENABLE_CODEGRAPH = "1";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toContain("codegraph_index");
     expect(names).toContain("codegraph_query");
@@ -74,7 +82,7 @@ describe("createMemoryPlugin", () => {
     delete process.env.CLAWQL_ENABLE_CODEGRAPH;
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createMemoryPlugin().onRegister!(api));
+    installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["memory_ingest", "memory_recall"]);
   });

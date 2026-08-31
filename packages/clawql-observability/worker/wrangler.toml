@@ -1,0 +1,12 @@
+name = "clawql-faro-proxy"
+main = "src/index.ts"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Public route browsers / Faro SDKs hit. Secrets via: wrangler secret put JWT_SIGNING_KEY
+[vars]
+ALLOY_INGEST_URL = "http://127.0.0.1:8027/collect"
+ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+PROJECT_ID = "clawql-local"
+RATE_LIMIT_PER_MINUTE = "60"
+MAX_BODY_BYTES = "65536"

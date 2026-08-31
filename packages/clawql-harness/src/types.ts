@@ -1,4 +1,4 @@
-import type { WORMAppendInput, WORMAuditTrail } from "clawql-audit";
+import type { WORMAppendInput, WORMAuditTrailService } from "clawql-audit";
 import { Data, Effect } from "effect";
 
 export class HarnessPluginError extends Data.TaggedError("HarnessPluginError")<{
@@ -43,7 +43,7 @@ export type LoopState = {
 
 export type HarnessToolHandler = (
   args: Record<string, unknown>
-) => Effect.Effect<unknown, HarnessPluginError, WORMAuditTrail>;
+) => Effect.Effect<unknown, HarnessPluginError, WORMAuditTrailService>;
 
 export type HarnessTool = {
   readonly name: string;
@@ -68,7 +68,7 @@ export type HarnessContext = {
       entry: Omit<WORMAppendInput, "sessionId" | "timestamp"> & {
         readonly timestamp?: string;
       }
-    ): Effect.Effect<void, HarnessPluginError, WORMAuditTrail>;
+    ): Effect.Effect<void, HarnessPluginError, WORMAuditTrailService>;
   };
   readonly scope: {
     isInScope(toolName: string): boolean;
@@ -81,17 +81,17 @@ export type HarnessContext = {
 
 export type LoopHandler = (
   state: LoopState
-) => Effect.Effect<LoopState, HarnessPluginError, WORMAuditTrail>;
+) => Effect.Effect<LoopState, HarnessPluginError, WORMAuditTrailService>;
 
 export type HarnessPlugin = {
   readonly id: string;
   readonly version: string;
   readonly setup: (
     ctx: HarnessContext
-  ) => Effect.Effect<void, HarnessPluginError, WORMAuditTrail>;
+  ) => Effect.Effect<void, HarnessPluginError, WORMAuditTrailService>;
   readonly teardown?: (
     ctx: HarnessContext
-  ) => Effect.Effect<void, HarnessPluginError, WORMAuditTrail>;
+  ) => Effect.Effect<void, HarnessPluginError, WORMAuditTrailService>;
 };
 
 export type HarnessTask = {

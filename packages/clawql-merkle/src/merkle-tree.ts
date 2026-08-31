@@ -1,6 +1,9 @@
 /**
- * Binary Merkle tree over vault document rows (path + body SHA-256) for integrity snapshots
- * and membership proofs (issue #37). Leaf order is lexicographic by `path`.
+ * Binary Merkle tree over document rows (path + body SHA-256) for integrity snapshots
+ * and membership proofs. Leaf order is lexicographic by `path`.
+ *
+ * Extracted from clawql-core so clawql-audit (and other standalone packages) can depend
+ * on Merkle primitives without importing ClawQL.
  */
 
 import { createHash } from "node:crypto";

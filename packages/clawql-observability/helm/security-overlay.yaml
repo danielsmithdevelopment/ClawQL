@@ -1,0 +1,9 @@
+# Phase 4 — Falco / Tetragon / Wazuh DaemonSets (deploy in Monitor mode first).
+# See package spec §10 and DevSecOps-boilerplate reference implementation.
+falco:
+  enabled: false
+tetragon:
+  enabled: false
+  mode: monitor
+wazuh:
+  enabled: false

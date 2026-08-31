@@ -1,0 +1,23 @@
+# clawql-observability — LGTM+ core Helm values (Phase 1 excerpt)
+# Full charts: github.com/danielsmithdevelopment/DevSecOps-boilerplate
+lgtmPlus:
+  loki:
+    enabled: true
+    # Must match maxLookBackPeriod exactly — shorter look-back silently returns empty results.
+    retentionPeriod: 744h
+  grafana:
+    enabled: true
+  tempo:
+    enabled: true
+  mimir:
+    enabled: true
+    # Watch cortex_discarded_samples_total; raise if Beyla or high-cardinality labels hit this silently.
+    ingestionRate: 10000
+  pyroscope:
+    enabled: true
+
+alloy:
+  enabled: true
+  otlp:
+    grpcPort: 4317
+    httpPort: 4318

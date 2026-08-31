@@ -1,5 +1,6 @@
 import type { ListedMcpTool } from "mcp-grpc-transport";
 import type { CollapsedToolResult } from "./call.js";
+import type { TraceCallRecord } from "./mcp-ui-trace.js";
 
 export type { ListedMcpTool };
 
@@ -111,6 +112,13 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Set `false` to show the full catalog regardless of ATR (open demos).
    */
   mcpUiAtrScoped?: boolean;
+  /**
+   * Optional host hook for `GET /mcp-ui/trace/:sessionId` flamegraphs.
+   * Return inference-shaped records for a session/correlation id.
+   */
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>;
 };
 
 export type StartedMcpApiAdapter = {

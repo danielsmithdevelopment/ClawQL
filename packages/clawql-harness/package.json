@@ -33,6 +33,11 @@
       "import": "./dist/bench/harness-bench.js",
       "require": "./dist/bench/harness-bench.cjs"
     },
+    "./bench/scenario-synthesis": {
+      "types": "./dist/bench/scenario-synthesis-bridge.d.ts",
+      "import": "./dist/bench/scenario-synthesis-bridge.js",
+      "require": "./dist/bench/scenario-synthesis-bridge.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

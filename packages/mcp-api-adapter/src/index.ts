@@ -15,7 +15,8 @@ export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphq
 export { attachGraphqlRoutes } from "./graphql-http.js";
 export { attachMcpHttpRoutes } from "./mcp-http.js";
 export { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
-export { formHintsForTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+export { formHintsForTool, isSmartUploadTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+export { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
 export {
   attachWebSocketSurface,
   parseWsToolCall,
@@ -67,6 +68,31 @@ export {
   DEFAULT_LONG_RUNNING_TOOLS,
 } from "./mcp-ui-progress.js";
 export { mergeFilesIntoArgs, isMultipartRequest } from "./mcp-ui-multipart.js";
+export {
+  allocateInputFrameTokens,
+  buildContextFlamegraph,
+  coalesceFramesBySource,
+  demoCompressedVsFatRecords,
+  demoTraceTokenizationMeta,
+  estimateTokensFromChars,
+  meteredInputFromMessages,
+  resolveTraceRecords,
+  DEMO_TRACE_SESSION_COMPRESSED,
+  DEMO_TRACE_SESSION_FAT,
+  TRACE_SOURCE_ORDER,
+} from "./mcp-ui-trace.js";
+export {
+  createListTraceCallsFromStore,
+  inferenceRecordsToTraceCalls,
+  liveTraceTokenizationMeta,
+  resolveListTraceCallsFromEnv,
+} from "./inference-trace-bridge.js";
+export type { InferenceRecordLike } from "./inference-trace-bridge.js";
+export {
+  renderContextFlamegraphPage,
+  renderTraceComparePage,
+  renderTraceNotFoundPage,
+} from "./mcp-ui-trace-html.js";
 export type {
   McpApiAdapterOptions,
   McpApiAdapterHttpOptions,
@@ -85,6 +111,13 @@ export type {
   HttpUpstreamOptions,
   GrpcUpstreamOptions,
 } from "./types.js";
+export type {
+  ContextFlamegraph,
+  TraceCallMessage,
+  TraceCallRecord,
+  TraceFrame,
+  TraceSource,
+} from "./mcp-ui-trace.js";
 export type { CollapsedToolResult } from "./call.js";
 export type { UpstreamConnection } from "./upstream.js";
 export type { CreateMcpApiAdapterAppOptions } from "./server.js";

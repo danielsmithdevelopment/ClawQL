@@ -3,7 +3,7 @@
 **Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
-**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, and `POST /mcp-ui/generate` multi-step custom UIs.
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, `POST /mcp-ui/generate` multi-step custom UIs, and `GET /mcp-ui/trace/:sessionId` context-accumulation flamegraphs.
 
 ---
 
@@ -62,12 +62,14 @@ What nobody ships today:
 
 ### 3.1 Routes
 
-| Method / path                     | Role                                                             |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `GET /mcp-ui`                     | Full tool catalog playground (HTML)                              |
-| `GET /mcp-ui/tools/{toolName}`    | Optional deep-link to one tool card                              |
-| `POST /mcp-ui/execute/{toolName}` | HTMX form post → tool invoke → HTML fragment result              |
-| `GET /mcp-ui/partials/catalog`    | Optional HTMX refresh of the card list after `ListTools` refresh |
+| Method / path                                    | Role                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `GET /mcp-ui`                                    | Full tool catalog playground (HTML)                              |
+| `GET /mcp-ui/tools/{toolName}`                   | Optional deep-link to one tool card                              |
+| `POST /mcp-ui/execute/{toolName}`                | HTMX form post → tool invoke → HTML fragment result              |
+| `GET /mcp-ui/partials/catalog`                   | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/trace/{sessionId}`                  | Context-accumulation flamegraph (HTML; `?format=json` for data)  |
+| `GET /mcp-ui/trace/demo-compressed` / `demo-fat` | Built-in demos for search/execute vs fat tool dumps              |
 
 Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
 
@@ -164,6 +166,57 @@ A new teammate can open one URL and call Salesforce, GitHub, internal gRPC, and 
 ### 5.1 Effect-TS
 
 Render and execute paths stay Effect-based inside the adapter package; Express (or Node `http`) handlers remain thin façades that `run*Effect` at the host boundary — same rule as the rest of ClawQL.
+
+---
+
+## 5b. Context-accumulation flamegraph
+
+`GET /mcp-ui/trace/{sessionId}` visualizes **where tokens came from** turn by turn — harness prompt, vault/system-seed memory, tool schemas, tool results, agent reasoning, and model output — stacked like a CPU flamegraph.
+
+| Piece                          | Role                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `buildContextFlamegraph`       | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; non-tool sources keep stable counts; `tool_result` absorbs metered remainder |
+| `listTraceCalls(sessionId)`    | Optional host hook (e.g. clawql-inference store keyed by **correlation id**). Adapter stays standalone — no hard npm dependency                                    |
+| `resolveListTraceCallsFromEnv` | CLI / programmatic wiring when `clawql-inference` is installed and store env is set (see below)                                                                    |
+| `demo-compressed` / `demo-fat` | Built-in same-task fixtures with **cl100k_base tiktoken** counts — for the dual-side compression argument                                                          |
+| `GET /mcp-ui/trace/compare`    | Side-by-side compressed vs fat on shared scale                                                                                                                     |
+| `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                                          |
+
+Catalog nav links **`/mcp-ui/trace/compare`** (bare URL → `focus=input`). Do not embed `?focus=all` in docs, posts, or recording bookmarks unless you intentionally want outputs in the slide.
+
+### Live inference store (Act 3 primary)
+
+The adapter CLI wires `listTraceCalls` automatically when inference trace env is set:
+
+```bash
+export MCP_API_ADAPTER_INFERENCE_TRACE=1
+export CLAWQL_INFERENCE_STORE=jsonl
+export CLAWQL_INFERENCE_STORE_PATH=/tmp/clawql-inference/calls.jsonl   # shared with inference gateway
+
+npm run build -w clawql-inference -w mcp-api-adapter
+node examples/mcp-api-adapter/clawql-with-trace.mjs
+# or: node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --mcp-url http://127.0.0.1:8080/mcp
+```
+
+**Correlation id flow:** agents must send the same id on inference requests (`correlationId` / `x-correlation-id`) and open `/mcp-ui/trace/<correlationId>`. MCP `mcp-session-id` is **not** auto-linked.
+
+When `clawql-inference` records calls with tokenization enabled (default), per-message **cl100k_base** counts are stored on each message; provider `usage.inputTokens` / `outputTokens` drive turn totals.
+
+Programmatic wiring:
+
+```typescript
+import {
+  createListTraceCallsFromStore,
+  resolveListTraceCallsFromEnv,
+  startMcpApiAdapter,
+} from "mcp-api-adapter";
+import { createInferenceStore } from "clawql-inference";
+
+const listTraceCalls =
+  (await resolveListTraceCallsFromEnv()) ?? createListTraceCallsFromStore(createInferenceStore()!);
+
+await startMcpApiAdapter({ upstream, listTraceCalls /* … */ });
+```
 
 ---
 

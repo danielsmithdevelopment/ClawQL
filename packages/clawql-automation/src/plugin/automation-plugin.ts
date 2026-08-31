@@ -1,5 +1,5 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import {
@@ -198,18 +198,20 @@ export type CreateAutomationPluginOptions = {
   readonly enableHitlLabelStudio?: boolean;
 };
 
-export function createAutomationPlugin(options: CreateAutomationPluginOptions = {}): Plugin {
+export function createAutomationPlugin(
+  options: CreateAutomationPluginOptions = {}
+): ProviderPlugin {
   const enableSchedule = options.enableSchedule ?? false;
   const enableNotify = options.enableNotify ?? false;
   const enableWorkflow = options.enableWorkflow ?? false;
   const enableArgoCd = options.enableArgoCd ?? false;
   const enableNatsWorker = options.enableNatsWorker ?? false;
   const enableHitlLabelStudio = options.enableHitlLabelStudio ?? false;
-  return {
+  return defineRegisteringProviderPlugin({
     id: AUTOMATION_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "Schedule, notify, workflow, ArgoCD, and HITL automation MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         if (enableSchedule) {
           yield* api.registerMcpTool({
@@ -258,7 +260,7 @@ export function createAutomationPlugin(options: CreateAutomationPluginOptions = 
         if (enableSchedule) stopScheduleWorker();
         if (enableNatsWorker) void stopNatsWorkflowWorker();
       }),
-  };
+  });
 }
 
 export { SLACK_NOTIFY_OPERATION_ID };

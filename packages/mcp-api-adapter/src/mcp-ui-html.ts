@@ -8,6 +8,7 @@ import {
 import type { GeneratedUiForm } from "./mcp-ui-generate.js";
 import { renderResultContent } from "./mcp-ui-results.js";
 import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
 
 const MCP_UI_STYLES = `
   :root {
@@ -386,8 +387,6 @@ function renderToolCard(
   basePath: string,
   fieldErrors?: Record<string, string>
 ): string {
-  const hints = formHintsForTool(tool, fieldErrors);
-  const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const template = resolveMcpUiTemplate(tool);
   const title = tool.title?.trim() || tool.description?.trim() || tool.name;
   const description =
@@ -397,6 +396,19 @@ function renderToolCard(
   const templatePill = template
     ? `<span class="template-pill">Template · ${escapeMcpUiHtml(template.id)}</span>`
     : "";
+
+  if (template?.customHtml === "smart-upload") {
+    return `<article class="tool-card" id="tool-${escapeMcpUiHtml(tool.name)}">
+  <h2>${escapeMcpUiHtml(title)}</h2>
+  <p class="tool-name">${escapeMcpUiHtml(tool.name)}</p>
+  ${templatePill}
+  ${description}
+  ${renderSmartUploadFragment(tool.name, basePath)}
+</article>`;
+  }
+
+  const hints = formHintsForTool(tool, fieldErrors);
+  const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const multipartAttrs = hasFileFields
     ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
     : "";
@@ -463,6 +475,8 @@ export function renderMcpUiCatalogPage(options: {
       <a href="/docs">OpenAPI /docs</a>
       <a href="/graphiql">GraphiQL</a>
       <a href="/tools">Tool catalog JSON</a>
+      <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
+      · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor">Executor vs ClawQL</a>
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>

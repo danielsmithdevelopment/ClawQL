@@ -9,6 +9,9 @@ on:
     branches: [main]
     paths:
       - "landing-page/**"
+      - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
+      - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
+      - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
       - "scripts/deploy/ensure-dns-aid-records.sh"
       - "scripts/deploy/ensure-clawql-com-agent-edge.sh"
       - ".github/workflows/deploy-landing-page.yml"
@@ -73,6 +76,9 @@ jobs:
           test -f out/agent-markdown.json
           test -f out/inference/gtm/index.html
           test -f out/enterprise/gtm/index.html
+          test -f out/mcp-ui/trace/compare/executor/index.html
+          test -f out/mcp-ui/trace/compare/executor/compare.json
+          test -f out/benchmarks/executor-comparison/index.html
           grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
           grep -q 'inference/gtm' out/llms.txt
           grep -q 'inference/gtm' out/sitemap.xml

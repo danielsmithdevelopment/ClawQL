@@ -1,9 +1,18 @@
 # clawql-merkle
 
-Zero-dependency integrity primitives: a **Merkle tree** (`buildMerkleSnapshot`, inclusion proofs) and a **hash chain** (`sealHashChainRecord`, `verifyHashChain`).
+Zero-dependency Merkle tree primitives used by ClawQL vault snapshots and `clawql-audit` batch roots.
 
-This package has **no ClawQL product dependencies** and no runtime npm dependencies. `clawql-core` re-exports the same APIs for existing callers. `clawql-audit` imports this package directly and must not import `clawql-core`.
+## API
 
-Merkle trees and hash chains are different: the tree proves inclusion of a leaf in a root; the chain proves append order via `prev_hash`.
+- `buildMerkleSnapshot(rows)` — lexicographic path order; returns `rootHex`, leaf digests, height
+- `merkleProof(snapshot, leafIndex)` — sibling path from leaf to root
+- `verifyMerkleProof(leafHash, leafIndex, leafCount, proof, expectedRootHex)`
+- `leafHash(path, bodySha256Hex)` / `nodeHash(left, right)`
 
-Sync `node:crypto` helpers are the public API so this package stays dependency-free. Effect wrapping lives in product packages (`clawql-core`, `clawql-audit`).
+Leaf domain separator: `clawql:merkle:leaf:v1`. No ClawQL package dependencies.
+
+## Install
+
+```bash
+npm install clawql-merkle
+```

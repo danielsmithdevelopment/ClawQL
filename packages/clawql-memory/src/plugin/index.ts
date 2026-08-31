@@ -1,5 +1,6 @@
 export {
   createMemoryPlugin,
+  createMemoryProviderPlugin,
   handleMemoryIngestToolInput,
   handleMemoryRecallToolInput,
   MEMORY_PLUGIN_ID,
@@ -47,3 +48,4 @@ export {
   type VaultArtifactHints,
   type VaultPostSyncExtras,
 } from "../effect/index.js";
+export { MemoryVaultSeedLive, pluginVaultSeedTag } from "../vault/vault-seed-port.js";

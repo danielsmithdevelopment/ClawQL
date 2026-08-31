@@ -16,7 +16,13 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
-import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
+import {
+  fireSessionEnd,
+  fireSessionStart,
+  loadSpec,
+  registerSpecCacheShutdownHooks,
+} from "clawql-api";
+import { getClawqlApi } from "./clawql-api-adapters.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import {
@@ -49,26 +55,19 @@ import { createMcpOAuthRateLimiter } from "./mcp-oauth-rate-limit.js";
 import {
   attachMcpOAuthRoutes,
   createIdJagIssuerFromEnv,
-  createIssuedApiKeyStore,
   createMcpOAuthFromEnv,
   isIdJagIssuerEnabled,
   isMcpOAuthEnabled,
-  loadGatewayAuthConfig,
   resolveAtrClaimsFromHeadersEffect,
   resolveSecretStore,
   warnIfMcpOAuthAuditDisabled,
   warnIfMcpOAuthHs256Only,
   warnIfMcpOAuthAdminKeyMissing,
-  type ApiKeyClaimsResolver,
   type AtrClaims,
-  type GatewayAuthConfig,
   type IdJagIssuerRuntime,
   type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { validateVirtualKey } from "clawql-inference";
 import { attachCreditsHateoasRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
@@ -77,79 +76,10 @@ import {
   registerMcpX402TransportHooks,
   runWithMcpX402Context,
 } from "./mcp-x402-transport.js";
+import { buildGatewayAuthConfig, createInferenceVirtualKeyClaimsResolver } from "./gateway-auth.js";
 
-/**
- * Map clawql-inference virtual keys to ATR claims (tenantId = key.team).
- * Returns null when the secret is not a known virtual key so static CLAWQL_API_KEY can apply.
- */
-export function createInferenceVirtualKeyClaimsResolver(
-  env: NodeJS.ProcessEnv = process.env
-): ApiKeyClaimsResolver {
-  return (presented) => {
-    const result = validateVirtualKey(presented, env);
-    if (!result.ok) {
-      // Budget / rate-limit are hard failures for a recognized key path.
-      if (result.status === 402 || result.status === 429) {
-        return { ok: false, error: result.message };
-      }
-      return null;
-    }
-    return {
-      ok: true,
-      claims: {
-        sub: result.context.id,
-        role: "operator",
-        scope: ["execute", "search", "memory"],
-        tenantId: result.context.team,
-        virtualKeyId: result.context.id,
-      },
-    };
-  };
-}
-
-function composeApiKeyClaimsResolvers(
-  ...resolvers: Array<ApiKeyClaimsResolver | undefined>
-): ApiKeyClaimsResolver | undefined {
-  const active = resolvers.filter((r): r is ApiKeyClaimsResolver => r != null);
-  if (!active.length) return undefined;
-  if (active.length === 1) return active[0];
-  return (presented, headers) => {
-    for (const resolver of active) {
-      const result = resolver(presented, headers);
-      if (result !== null) return result;
-    }
-    return null;
-  };
-}
-
-function issuedApiKeyClaimsResolver(
-  env: NodeJS.ProcessEnv = process.env
-): ApiKeyClaimsResolver | undefined {
-  const explicit = env.CLAWQL_API_KEYS_PATH?.trim();
-  const homeDefault =
-    env.CLAWQL_HOME?.trim() != null
-      ? join(env.CLAWQL_HOME.trim(), "Auth", "api-keys.json")
-      : undefined;
-  const path = explicit || homeDefault;
-  if (!path) return undefined;
-  // Only auto-load $CLAWQL_HOME default when the file already exists (avoid creating empty store on boot).
-  if (!explicit && homeDefault && !existsSync(homeDefault)) return undefined;
-  return createIssuedApiKeyStore({ path }).asClaimsResolver();
-}
-
-function buildGatewayAuthConfig(
-  env: NodeJS.ProcessEnv = process.env,
-  mcpOAuthValidator?: (bearer: string) => Effect.Effect<AtrClaims, unknown>
-): GatewayAuthConfig {
-  const config = Effect.runSync(loadGatewayAuthConfig(env));
-  const withMcp = mcpOAuthValidator != null ? { ...config, mcpOAuthValidator } : config;
-  const issued = issuedApiKeyClaimsResolver(env);
-  const inference =
-    withMcp.mode === "apiKey" ? createInferenceVirtualKeyClaimsResolver(env) : undefined;
-  const composed = composeApiKeyClaimsResolvers(issued, inference, withMcp.apiKeyClaimsResolver);
-  if (!composed) return withMcp;
-  return { ...withMcp, apiKeyClaimsResolver: composed };
-}
+/** @deprecated Import from `./gateway-auth.js` instead. */
+export { createInferenceVirtualKeyClaimsResolver };
 
 const PORT = Number.parseInt(process.env.PORT ?? process.env.MCP_PORT ?? "8080", 10);
 const DEFAULT_MCP_PATH = "/mcp";
@@ -280,6 +210,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/revoke", express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
   app.use("/oauth/id-jag", express.json());
+  app.use("/oauth/passkey", express.json());
 
   const mcpOAuthRateLimiter = createMcpOAuthRateLimiter();
   app.use("/oauth/token", mcpOAuthRateLimiter);
@@ -287,6 +218,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   app.use("/oauth/authorize", mcpOAuthRateLimiter);
   app.use("/oauth/id-jag", mcpOAuthRateLimiter);
   app.use("/oauth/ema", mcpOAuthRateLimiter);
+  app.use("/oauth/passkey", mcpOAuthRateLimiter);
 
   const injectedMcpOAuth = options.mcpOAuthRuntime != null;
   let mcpOAuthRuntime: McpOAuthRuntime | null = options.mcpOAuthRuntime ?? null;
@@ -376,6 +308,12 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         : undefined,
     });
   }
+
+  const { attachHostPasskeyRoutes } = await import("./passkey-http-host.js");
+  attachHostPasskeyRoutes(app, {
+    adminAuth:
+      emaAdminAuth.adminApiKey || mcpOAuthRuntime || idJagIssuer ? emaAdminAuth : undefined,
+  });
 
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL MCP" });
   // HTMX forms on /credits/* (invite claim / accept / decline)
@@ -601,13 +539,28 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports.set(sid, transport!);
+            // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
+            const api = getClawqlApi();
+            void fireSessionStart({
+              hookRegistry: api.hookRegistry,
+              worm: api.worm,
+              sessionId: sid,
+            }).catch(() => undefined);
           },
           // JSON bodies instead of SSE for each POST — helps some MCP clients / proxies (e.g. Cursor + tight buffering).
           enableJsonResponse: streamableJson,
         });
         transport.onclose = () => {
           const sid = transport!.sessionId;
-          if (sid) transports.delete(sid);
+          if (sid) {
+            transports.delete(sid);
+            const api = getClawqlApi();
+            void fireSessionEnd({
+              hookRegistry: api.hookRegistry,
+              worm: api.worm,
+              sessionId: sid,
+            }).catch(() => undefined);
+          }
         };
 
         const server = createRegisteredMcpServer();
@@ -698,8 +651,12 @@ async function main() {
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
-  const { registerClawqlApiShutdownHooks } = await import("./clawql-api-adapters.js");
+  const { ensureClawqlApi, registerClawqlApiShutdownHooks } =
+    await import("./clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
+  await ensureClawqlApi();
+  const { ensureProcessWormHostBooted } = await import("./process-worm-host.js");
+  await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();
   const { logStartupSummary } = await import("./startup-summary.js");
   await logStartupSummary();

@@ -100,7 +100,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=4096' tsup",
+    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=8192' tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

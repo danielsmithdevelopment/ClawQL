@@ -86,11 +86,29 @@ function publishClawqlMcp(bundleWorkspace) {
     encoding: "utf8",
   }).trim();
   if (!tarball) throw new Error("npm pack did not produce clawql-mcp tarball");
-  execSync(`npm publish "${tarball}" --provenance --access public`, {
-    cwd: root,
-    stdio: "inherit",
-    env: process.env,
-  });
+  try {
+    execSync(`npm publish "${tarball}" --provenance --access public`, {
+      cwd: root,
+      stdio: "pipe",
+      env: process.env,
+      encoding: "utf8",
+    });
+  } catch (error) {
+    const output = `${error.stdout ?? ""}${error.stderr ?? ""}${error.message ?? ""}`;
+    if (
+      output.includes("EPUBLISHCONFLICT") ||
+      output.includes("cannot publish over") ||
+      output.includes("403 Forbidden")
+    ) {
+      console.warn(
+        "WARN: clawql-mcp publish skipped (already published or auth). Workspace packages above still apply.",
+      );
+      if (output) process.stderr.write(`${output}\n`);
+      return;
+    }
+    if (output) process.stderr.write(output);
+    throw error;
+  }
 }
 
 let bundleWorkspace = forceBundle;
@@ -119,11 +137,10 @@ if (!bundleWorkspace) {
     if (!result.ok) {
       console.warn(
         `WARN: ${name} publish failed (${result.reason}). ` +
-          "Falling back to bundled clawql-mcp — add NPM_TOKEN or link trusted publishers on npmjs.com, then re-run to publish workspace packages separately.",
+          "Continuing remaining packages; clawql-mcp may use bundledDependencies if any workspace package is missing.",
       );
       if (result.output && result.reason !== "404") process.stderr.write(`${result.output}\n`);
       bundleWorkspace = true;
-      break;
     }
   }
 }

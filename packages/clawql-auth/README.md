@@ -2,7 +2,9 @@
 
 Gateway authentication, **issued API keys** (org/team), outbound OAuth token refresh, and shared step-up primitives for the Agentic Gateway.
 
-**ClawQL is not an IdP.** Human SSO, account recovery, and phishing-resistant MFA stay with the customer’s identity provider. This package **consumes** IdP tokens, **issues and validates** ClawQL API keys, maps them to ATR claims, and provides reusable step-up helpers for high-impact tools (e.g. payments).
+**Public docs:** [docs.clawql.com/auth](https://docs.clawql.com/auth) — inbound vs outbound authentication (the page to link when answering “has MCP daily re-auth been solved?”).
+
+**ClawQL is not a human login IdP.** Human SSO, account recovery, and phishing-resistant MFA stay with the customer’s identity provider. This package **consumes** IdP tokens, **issues and validates** ClawQL API keys and MCP access JWTs, can **mint ID-JAG assertions** when the self-hosted EMA issuer is enabled, maps them to ATR claims, and provides reusable step-up helpers for high-impact tools (e.g. payments).
 
 ## Modes
 
@@ -192,51 +194,56 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 
 ## Environment
 
-| Variable                                        | Purpose                                                                                  |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `CLAWQL_AUTH_MODE`                              | `noAuth` \| `apiKey` \| `oidc` \| `mcpOAuth`                                             |
-| `CLAWQL_API_KEY`                                | Bootstrap when mode is `apiKey` (unless VK / issued keys)                                |
-| `CLAWQL_PROVIDER_AUTH_JSON`                     | Per-provider upstream headers for `execute`                                              |
-| `CLAWQL_AUTH_OIDC_JWKS_URL`                     | OIDC JWKS URL (RS256)                                                                    |
-| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`          | PEM public key path (RS256)                                                              |
-| `CLAWQL_AUTH_OIDC_HS256_SECRET`                 | **Tests/dev only** HS256 secret                                                          |
-| `CLAWQL_AUTH_OIDC_ISSUER`                       | Optional `iss` check                                                                     |
-| `CLAWQL_AUTH_OIDC_AUDIENCE`                     | Optional `aud` (comma-separated)                                                         |
-| `CLAWQL_AUTH_OIDC_ATR_CLAIM`                    | Claim holding ATR object (default `atr`)                                                 |
-| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS`        | Company SSO allowlist (`acme.com,acme.co.uk`)                                            |
-| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN`         | Force email/hd even without allowlist                                                    |
-| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`                  | Email claim name (default `email`)                                                       |
-| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`         | Require MFA-class `acr`/`amr` for financial MCP tools                                    |
-| `CLAWQL_AUTH_FINANCIAL_TOOLS`                   | Override financial tool name list (comma-separated)                                      |
-| `CLAWQL_MCP_OAUTH_ENABLED`                      | Enable inbound MCP OAuth AS on HTTP hosts                                                |
-| `CLAWQL_MCP_OAUTH`                              | Legacy alias for enabling MCP OAuth                                                      |
-| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`               | HS256 secret for issued MCP access JWTs (dev / single-node)                              |
-| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM`      | Inline RS256 PKCS#8 private key PEM (production — preferred)                             |
-| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH` | Path to RS256 private key PEM                                                            |
-| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM`       | Optional inline verify-only public key                                                   |
-| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`  | Optional verify-only public key path (defaults to private)                               |
-| `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`               | Optional `kid` for RS256 tokens and JWKS                                                 |
-| `CLAWQL_MCP_OAUTH_ISSUER`                       | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)                                             |
-| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`            | ID-JAG `aud` when org config omits audience                                              |
-| `CLAWQL_MCP_OAUTH_AUDIENCE`                     | Alias for resource audience                                                              |
-| `CLAWQL_MCP_OAUTH_TOKEN_TTL_SECONDS`            | Access token TTL (default 300)                                                           |
-| `CLAWQL_MCP_OAUTH_REFRESH_TTL_SECONDS`          | Refresh token TTL (default 3600)                                                         |
-| `CLAWQL_MCP_OAUTH_CLIENTS_JSON`                 | Bootstrap registered MCP clients (JSON)                                                  |
-| `CLAWQL_MCP_OAUTH_CLIENTS_PATH`                 | File path for MCP client registry JSON                                                   |
-| `CLAWQL_EMA_ORGS_JSON`                          | Bootstrap EMA org configs (JSON) into SecretStore                                        |
-| `CLAWQL_EMA_ORGS_PATH`                          | File path for EMA org configs JSON                                                       |
-| `CLAWQL_EMA_ORGS_FILE`                          | Alternate file path env for EMA org configs                                              |
-| `CLAWQL_AUTH_AUDIT_STORE`                       | Auth WORM backend: `sqlite` (default) \| `memory` \| `off`                               |
-| `CLAWQL_AUTH_AUDIT_PATH`                        | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)                                       |
-| `CLAWQL_ID_JAG_ISSUER_ENABLED`                  | Enable ClawQL self-hosted ID-JAG issuer (EMA IdP)                                        |
-| `CLAWQL_ID_JAG_ISSUER_ORG_ID`                   | Org id for single-tenant issuer material (or `CLAWQL_DEFAULT_ORG_ID`)                    |
-| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM`          | Inline dedicated RS256 PKCS#8 for ID-JAG                                                 |
-| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH`     | **Preferred** dedicated RS256 PKCS#8 for ID-JAG (avoid sharing MCP OAuth AS key in prod) |
-| `CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET`           | HS256 issuer secret (tests/dev)                                                          |
-| `CLAWQL_ID_JAG_ISSUER_KEY_ID`                   | Optional `kid` for issuer JWKS                                                           |
-| `CLAWQL_ID_JAG_ISSUER_URI`                      | Assertion `iss` (default `$ORIGIN/oauth/id-jag/{orgId}`)                                 |
-| `CLAWQL_ID_JAG_ISSUER_JWKS_URI`                 | Override published issuer JWKS URI                                                       |
-| `CLAWQL_ID_JAG_ISSUER_ORIGIN`                   | Override public origin for issuer URIs                                                   |
+| Variable                                         | Purpose                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `CLAWQL_AUTH_MODE`                               | `noAuth` \| `apiKey` \| `oidc` \| `mcpOAuth`                                             |
+| `CLAWQL_API_KEY`                                 | Bootstrap when mode is `apiKey` (unless VK / issued keys)                                |
+| `CLAWQL_PROVIDER_AUTH_JSON`                      | Per-provider upstream headers for `execute`                                              |
+| `CLAWQL_AUTH_OIDC_JWKS_URL`                      | OIDC JWKS URL (RS256)                                                                    |
+| `CLAWQL_AUTH_OIDC_PUBLIC_KEY_PEM_PATH`           | PEM public key path (RS256)                                                              |
+| `CLAWQL_AUTH_OIDC_HS256_SECRET`                  | **Tests/dev only** HS256 secret                                                          |
+| `CLAWQL_AUTH_OIDC_ISSUER`                        | Optional `iss` check                                                                     |
+| `CLAWQL_AUTH_OIDC_AUDIENCE`                      | Optional `aud` (comma-separated)                                                         |
+| `CLAWQL_AUTH_OIDC_ATR_CLAIM`                     | Claim holding ATR object (default `atr`)                                                 |
+| `CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS`         | Company SSO allowlist (`acme.com,acme.co.uk`)                                            |
+| `CLAWQL_AUTH_OIDC_REQUIRE_EMAIL_DOMAIN`          | Force email/hd even without allowlist                                                    |
+| `CLAWQL_AUTH_OIDC_EMAIL_CLAIM`                   | Email claim name (default `email`)                                                       |
+| `CLAWQL_AUTH_REQUIRE_MFA_FOR_FINANCIAL`          | Require MFA-class `acr`/`amr` for financial MCP tools                                    |
+| `CLAWQL_AUTH_FINANCIAL_TOOLS`                    | Override financial tool name list (comma-separated)                                      |
+| `CLAWQL_MCP_OAUTH_ENABLED`                       | Enable inbound MCP OAuth AS on HTTP hosts                                                |
+| `CLAWQL_MCP_OAUTH`                               | Legacy alias for enabling MCP OAuth                                                      |
+| `CLAWQL_MCP_OAUTH_SIGNING_SECRET`                | HS256 secret for issued MCP access JWTs (dev / single-node)                              |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM`       | Inline RS256 PKCS#8 private key PEM (production — preferred)                             |
+| `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM_PATH`  | Path to RS256 private key PEM                                                            |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM`        | Optional inline verify-only public key                                                   |
+| `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`   | Optional verify-only public key path (defaults to private)                               |
+| `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`                | Optional `kid` for RS256 tokens and JWKS                                                 |
+| `CLAWQL_MCP_OAUTH_ISSUER`                        | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)                                             |
+| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`             | ID-JAG `aud` when org config omits audience                                              |
+| `CLAWQL_MCP_OAUTH_AUDIENCE`                      | Alias for resource audience                                                              |
+| `CLAWQL_MCP_OAUTH_TOKEN_TTL_SECONDS`             | Access token TTL (default 300)                                                           |
+| `CLAWQL_MCP_OAUTH_REFRESH_TTL_SECONDS`           | Refresh token TTL (default 3600)                                                         |
+| `CLAWQL_MCP_OAUTH_CLIENTS_JSON`                  | Bootstrap registered MCP clients (JSON)                                                  |
+| `CLAWQL_MCP_OAUTH_CLIENTS_PATH`                  | File path for MCP client registry JSON                                                   |
+| `CLAWQL_EMA_ORGS_JSON`                           | Bootstrap EMA org configs (JSON) into SecretStore                                        |
+| `CLAWQL_EMA_ORGS_PATH`                           | File path for EMA org configs JSON                                                       |
+| `CLAWQL_EMA_ORGS_FILE`                           | Alternate file path env for EMA org configs                                              |
+| `CLAWQL_AUTH_AUDIT_STORE`                        | Auth WORM backend: `sqlite` (default) \| `memory` \| `off`                               |
+| `CLAWQL_AUTH_AUDIT_PATH`                         | SQLite path (default `$CLAWQL_HOME/auth-audit.db`)                                       |
+| `CLAWQL_ID_JAG_ISSUER_ENABLED`                   | Enable ClawQL self-hosted ID-JAG issuer (EMA IdP)                                        |
+| `CLAWQL_ID_JAG_ISSUER_ORG_ID`                    | Org id for single-tenant issuer material (or `CLAWQL_DEFAULT_ORG_ID`)                    |
+| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM`           | Inline dedicated RS256 PKCS#8 for ID-JAG                                                 |
+| `CLAWQL_ID_JAG_ISSUER_PRIVATE_KEY_PEM_PATH`      | **Preferred** dedicated RS256 PKCS#8 for ID-JAG (avoid sharing MCP OAuth AS key in prod) |
+| `CLAWQL_ID_JAG_ISSUER_SIGNING_SECRET`            | HS256 issuer secret (tests/dev)                                                          |
+| `CLAWQL_ID_JAG_ISSUER_KEY_ID`                    | Optional `kid` for issuer JWKS                                                           |
+| `CLAWQL_ID_JAG_ISSUER_URI`                       | Assertion `iss` (default `$ORIGIN/oauth/id-jag/{orgId}`)                                 |
+| `CLAWQL_ID_JAG_ISSUER_JWKS_URI`                  | Override published issuer JWKS URI                                                       |
+| `CLAWQL_ID_JAG_ISSUER_ORIGIN`                    | Override public origin for issuer URIs                                                   |
+| `CLAWQL_ID_JAG_TEE_SIGNER`                       | `1` = wrap issuer signing as Layer C TEE-shaped signer (`kind: "tee"`)                   |
+| `CLAWQL_ID_JAG_TEE_SIGN_CMD`                     | External signer binary (stdin JSON claims/header → stdout compact JWS)                   |
+| `CLAWQL_TEE_DEBUG`                               | `1` = log attestation ids when using `clawql-tee` bridge                                 |
+| `CLAWQL_PASSKEY_ENABLED`                         | `1` = attach `/oauth/passkey/challenge                                                   | enroll | login` (SimpleWebAuthn) |
+| `CLAWQL_PASSKEY_RP_ID` / `CLAWQL_PASSKEY_ORIGIN` | Relying party id + origin for passkey HTTP                                               |
 
 Setting `CLAWQL_AUTH_AUDIT_STORE=off` while MCP OAuth is enabled logs a **SECURITY WARNING** at `server-http` boot — auth is live but issuance is not persisted.
 
@@ -275,16 +282,16 @@ WebAuthn is a **pluggable** `WebAuthnStepUpVerifier` (fails closed until injecte
 
 ## Phase 4–7 surfaces (library)
 
-| Area            | Entry points                                                                                                                  |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                       |
-| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                             |
-| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                        |
-| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                              |
-| Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` (inject `WebAuthnStepUpVerifier` + `PasskeyCredentialStore`) |
-| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                    |
-| Re-auth UX      | `buildReauthUrl` on `OAuthTokenStore` + `notifyReauthRequiredEffect` (Hermes sends Telegram)                                  |
-| ID-JAG TEE      | `assertionSigner` on issuer deps (`createTeeIdJagAssertionSigner`)                                                            |
+| Area            | Entry points                                                                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain TXT      | `createDomainChallengeEffect` / `verifyDomainTxtEffect`                                                                                       |
+| Offboarding     | `offboardSubjectEffect` (revoke `cqk_` keys + mark OAuth re-auth)                                                                             |
+| SIWE login      | `issueSiweNonceEffect` / `verifySiweLoginEffect` → ATR                                                                                        |
+| Primary TOTP    | `primaryTotpLoginEffect` (uses `StepUpStoreService` enrollments)                                                                              |
+| Primary passkey | `issuePasskeyLoginChallengeEffect` + `primaryPasskeyLoginEffect` + `PasskeyCredentialStore.enroll`/`delete` (inject `WebAuthnStepUpVerifier`) |
+| Vault leases    | `VaultDynamicSecretProvider` / `VaultDynamicSecretService`                                                                                    |
+| Re-auth UX      | `buildReauthUrl` + `notifyReauthRequiredEffect`; Hermes: `createTelegramReauthNotifierFromEnv` (`clawql-agents`)                              |
+| ID-JAG TEE      | `CLAWQL_ID_JAG_TEE_SIGNER=1` or inject `assertionSigner` / `clawql-tee` `createDevTeeIdJagSigner`                                             |
 
 ```ts
 import { buildPasskeyAuthenticatorSelection } from "clawql-auth";

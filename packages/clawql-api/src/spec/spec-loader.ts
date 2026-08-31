@@ -32,6 +32,7 @@ import {
 } from "./native-protocol-env.js";
 import { resetNativeProtocolRegistry } from "./native-protocol-registry.js";
 import { resetMcpSourceRegistry } from "./mcp-source-registry.js";
+import { resetWebmcpSourceRegistry } from "./webmcp-source-registry.js";
 import { operationsFromOpenAPI } from "./openapi-operations.js";
 import { getPackageRoot } from "./package-root.js";
 import {
@@ -812,6 +813,7 @@ export function resetSpecCache(): void {
   loadGeneration++;
   resetNativeProtocolRegistry();
   resetMcpSourceRegistry();
+  resetWebmcpSourceRegistry();
 }
 
 let specCacheShutdownHooksRegistered = false;
