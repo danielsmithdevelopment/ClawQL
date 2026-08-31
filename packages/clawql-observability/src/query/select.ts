@@ -1,11 +1,7 @@
 import { Effect } from "effect";
 
 import { ObservabilityError } from "../errors.js";
-import type {
-  ProviderConfig,
-  RegisteredProvider,
-  SignalProvider,
-} from "../providers/types.js";
+import type { ProviderConfig, RegisteredProvider, SignalProvider } from "../providers/types.js";
 import type { FederatedQuerySelection } from "./types.js";
 
 export const resolveQueryEndpointEffect = (

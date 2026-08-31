@@ -153,10 +153,7 @@ export type {
   TelemetryQueryTransportApi,
   TraceQueryRequest,
 } from "./query/types.js";
-export {
-  TelemetryQueryTransport,
-  TelemetryQueryTransportLive,
-} from "./query/transport.js";
+export { TelemetryQueryTransport, TelemetryQueryTransportLive } from "./query/transport.js";
 export {
   ObservabilityQueryService,
   makeObservabilityQueryService,

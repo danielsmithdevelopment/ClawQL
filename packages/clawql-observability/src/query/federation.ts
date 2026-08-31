@@ -1,9 +1,7 @@
 import { Context, Effect, Layer } from "effect";
 
 import { ObservabilityError } from "../errors.js";
-import {
-  logRawDataAccessedEffect,
-} from "../governance/worm.js";
+import { logRawDataAccessedEffect } from "../governance/worm.js";
 import type { ObservabilityGovernanceSink } from "../governance/worm.js";
 import { LogRegistryService } from "../registry/log-registry.js";
 import { MetricRegistryService } from "../registry/metric-registry.js";
@@ -98,10 +96,7 @@ export const makeObservabilityQueryService = (): Effect.Effect<
         );
         const results: ProviderQueryHit[] = [];
         for (const entry of providers) {
-          const base = yield* resolveQueryEndpointEffect(
-            entry.config,
-            "/loki/api/v1/query_range"
-          );
+          const base = yield* resolveQueryEndpointEffect(entry.config, "/loki/api/v1/query_range");
           const url = yield* appendQueryParamsEffect(base, {
             query: request.logql,
             start: request.timeRange.startMs * 1_000_000,

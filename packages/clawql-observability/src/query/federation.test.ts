@@ -13,10 +13,7 @@ import {
   defaultMimirProviderConfig,
   registerBuiltinLgtmProvidersEffect,
 } from "../index.js";
-import {
-  ObservabilityQueryService,
-  makeObservabilityQueryServiceLayer,
-} from "./federation.js";
+import { ObservabilityQueryService, makeObservabilityQueryServiceLayer } from "./federation.js";
 import { TelemetryQueryTransport } from "./transport.js";
 
 const timeRange = { startMs: 1_700_000_000_000, endMs: 1_700_000_060_000 };
@@ -67,9 +64,7 @@ describe("observability query federation", () => {
     expect(payload.data.result[0]?.url).toContain("/loki/api/v1/query_range");
 
     const recorded = Effect.runSync(Ref.get(events));
-    expect(recorded.some((event) => event.type === "OBSERVABILITY_RAW_DATA_ACCESSED")).toBe(
-      true
-    );
+    expect(recorded.some((event) => event.type === "OBSERVABILITY_RAW_DATA_ACCESSED")).toBe(true);
   });
 
   it("fans out log queries to all enabled providers", async () => {
