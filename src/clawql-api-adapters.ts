@@ -73,8 +73,7 @@ async function resolveVaultSeedLayer(): Promise<
 
 /** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
 function resolveVaultSeedLayerSync():
-  | Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"]
-  | undefined {
+  Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"] | undefined {
   try {
     const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
     if (typeof mem.MemoryVaultSeedLive !== "undefined") {

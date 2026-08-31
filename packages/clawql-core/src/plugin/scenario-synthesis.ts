@@ -89,7 +89,10 @@ export function synthesizeArgsForTool(tool: ToolDefinition): Record<string, unkn
   return args;
 }
 
-function mockOutputForTool(tool: ToolDefinition, args: Record<string, unknown>): Record<string, unknown> {
+function mockOutputForTool(
+  tool: ToolDefinition,
+  args: Record<string, unknown>
+): Record<string, unknown> {
   return {
     ok: true,
     tool: tool.name,

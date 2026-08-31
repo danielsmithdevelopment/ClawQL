@@ -12,9 +12,7 @@ let gateway: InferenceGateway | undefined;
  * Inference gateway with `pre-model` / `post-model` hooks from the process ClawQL API.
  * Lazy — first call builds via {@link getClawqlApi}.
  */
-export function getHostInferenceGateway(
-  env: NodeJS.ProcessEnv = process.env
-): InferenceGateway {
+export function getHostInferenceGateway(env: NodeJS.ProcessEnv = process.env): InferenceGateway {
   if (!gateway) {
     const api = getClawqlApi();
     gateway = createInferenceGateway({
