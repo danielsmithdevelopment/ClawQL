@@ -7,12 +7,7 @@ import {
 import type { ClawQLError, McpToolAlreadyRegisteredError } from "../../errors/clawql-error.js";
 import { InMemoryHookRegistryLive } from "../../plugin/hook-registry.js";
 import { defineRegisteringProviderPlugin, NoopVaultSeedLive } from "../../plugin/plugin-installer.js";
-import {
-  HookRegistry,
-  WormAuditSink,
-  type PluginInstallServices,
-  type ProviderPlugin,
-} from "../../plugin/provider-types.js";
+import type { PluginInstallServices, ProviderPlugin } from "../../plugin/provider-types.js";
 import type { ClawQLPluginRegistrationApi, McpToolResult } from "../../plugin/registration-api.js";
 import { InMemorySkillRegistryLive } from "../../plugin/skill-registry.js";
 import { InMemoryWormAuditSinkLive } from "../../plugin/worm-sink.js";
