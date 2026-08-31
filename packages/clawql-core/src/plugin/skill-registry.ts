@@ -10,6 +10,7 @@ import {
   type SkillContent,
   type SkillDefinition,
   type SkillIndexEntry,
+  type SkillRegisterOptions,
 } from "./provider-types.js";
 
 type SkillStore = {
@@ -26,8 +27,13 @@ export function digestSkillContent(content: string): string {
   return createHash("sha256").update(content, "utf8").digest("hex").slice(0, 16);
 }
 
-function toIndexEntry(pluginId: string, skill: SkillDefinition): SkillIndexEntry {
+function toIndexEntry(
+  pluginId: string,
+  skill: SkillDefinition,
+  options?: SkillRegisterOptions
+): SkillIndexEntry {
   const digest = digestSkillContent(skill.content);
+  const source = options?.source ?? "standalone";
   return {
     skillId: skill.skillId,
     name: skill.name?.trim() || skill.skillId,
@@ -35,6 +41,10 @@ function toIndexEntry(pluginId: string, skill: SkillDefinition): SkillIndexEntry
     digest,
     pluginId,
     applicability: skill.applicability ?? "query-matched",
+    source,
+    ...(source === "provider" && options?.scopeTokens
+      ? { scopeTokens: options.scopeTokens }
+      : {}),
   };
 }
 
@@ -54,7 +64,7 @@ export const InMemorySkillRegistryLive: Layer.Layer<SkillRegistry> = Layer.effec
     const ref = yield* Ref.make(emptyStore());
 
     return {
-      register: (pluginId, skills) =>
+      register: (pluginId, skills, options) =>
         Effect.gen(function* () {
           yield* Ref.update(ref, (store) => {
             const index = new Map(store.index);
@@ -66,7 +76,7 @@ export const InMemorySkillRegistryLive: Layer.Layer<SkillRegistry> = Layer.effec
                 // skip invalid; caller should validate — keep register total for Effect typing
                 continue;
               }
-              const entry = toIndexEntry(pluginId, skill);
+              const entry = toIndexEntry(pluginId, skill, options);
               index.set(skill.skillId, entry);
               bodies.set(skill.skillId, toContent(pluginId, skill, entry.digest));
               ids.push(skill.skillId);

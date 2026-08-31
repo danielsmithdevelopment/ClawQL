@@ -32,16 +32,19 @@ function extractService<I, S>(tag: Context.Tag<I, S>, layer: Layer.Layer<I, neve
 /** Build long-lived install services (HookRegistry shared with the MCP proxy pipeline). */
 export function createInMemoryPluginHostServices(options?: {
   readonly worm?: Context.Tag.Service<typeof WormAuditSink>;
+  /** Defaults to NoopVaultSeedLive — pass MemoryVaultSeedLive from clawql-memory when vault is configured. */
+  readonly vaultSeedLayer?: Layer.Layer<import("./provider-types.js").VaultSeedPort, never, never>;
 }): PluginHostServices {
   const hookRegistry = extractService(HookRegistry, InMemoryHookRegistryLive);
   const skillRegistry = extractService(SkillRegistry, InMemorySkillRegistryLive);
   const worm = options?.worm ?? {
     append: () => Effect.void,
   };
+  const vaultSeed = options?.vaultSeedLayer ?? NoopVaultSeedLive;
   const layer = Layer.mergeAll(
     Layer.succeed(HookRegistry, hookRegistry),
     Layer.succeed(SkillRegistry, skillRegistry),
-    NoopVaultSeedLive,
+    vaultSeed,
     Layer.succeed(WormAuditSink, worm)
   ) as Layer.Layer<PluginInstallServices, never, never>;
   return { layer, hookRegistry, skillRegistry, worm };

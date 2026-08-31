@@ -21,4 +21,5 @@ export * from "./schema/index.js";
 export * from "./search/index.js";
 export * from "./search-service.js";
 export * from "./skills/index.js";
+export * from "./hooks/index.js";
 export * from "./spec/index.js";

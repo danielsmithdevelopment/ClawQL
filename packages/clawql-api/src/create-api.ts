@@ -7,7 +7,9 @@ import {
   type PluginInstallError,
   type AnyPlugin,
   PluginAlreadyRegisteredError,
+  type SkillRegistry,
 } from "clawql-core";
+import type { Context } from "effect";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { ClawQLApi, clawqlApiLayer } from "./clawql-api-service.js";
 import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
@@ -16,7 +18,10 @@ import { composeDefaultPlugins } from "./plugins/compose-default-plugins.js";
 import { warnIfNoEnforcementActive } from "./plugins/enforcement-boot-warning.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipeline.js";
-import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
+import { SearchService } from "./search-service.js";
+import { makeSearchLive } from "./search/search-live.js";
+import { bindProcessSkillRegistry } from "./skills/process-skills.js";
+import { loadSpec } from "./spec/spec-loader.js";
 
 export type ClawQLApiRuntimeServices =
   ClawQLApi | SearchService | ExecuteService | McpProxyPipeline;
@@ -29,36 +34,41 @@ export type ClawQLApiRuntimeError =
   | Error;
 
 export type CreateClawQLApiOptions = {
-  /** Replaces default SearchNotConfiguredLive (MCP adapter from clawql-mcp). */
+  /** Replaces default search (operations + skill index). */
   readonly searchLayer?: Layer.Layer<SearchService, never, never>;
   /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
   readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
   /** Plugins registered synchronously at composition root (8.0+: empty unless opted in). */
   readonly plugins?: readonly AnyPlugin[];
-  /**
-   * Effect Layers that register plugins at runtime via `ClawQLApi.registerPlugin`.
-   * Merged after the base layer; each layer may require `ClawQLApi`, `ExecuteService`, etc.
-   */
   readonly pluginLayers?: readonly Layer.Layer<
     never,
     ClawQLApiRuntimeError,
     ClawQLApiRuntimeServices
   >[];
-  /**
-   * Extra Layers merged into the ManagedRuntime (e.g. `@effect/opentelemetry` Tracer).
-   * Must be fully satisfied (`R = never`).
-   */
   readonly runtimeLayers?: readonly Layer.Layer<never, never, never>[];
-  /**
-   * Optional transform applied to every `run()` program (e.g. attach active OTEL parent span).
-   */
   readonly prepareEffect?: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
   ) => Effect.Effect<A, E, ClawQLApiRuntimeServices>;
+  /**
+   * Vault seed Layer (e.g. MemoryVaultSeedLive from clawql-memory).
+   * Default: NoopVaultSeedLive inside createInMemoryPluginHostServices.
+   */
+  readonly vaultSeedLayer?: Layer.Layer<
+    import("clawql-core").VaultSeedPort,
+    never,
+    never
+  >;
+  /** Override loadSpec used by the default unified search layer. */
+  readonly loadSpecFn?: typeof loadSpec;
 };
 
 export type ClawQLApiHandle = {
   readonly registry: PluginRegistry;
+  /** Shared with plugin install, `skills_list`/`skills_get`, and `search` ranking. */
+  readonly skillRegistry: Context.Tag.Service<typeof SkillRegistry>;
+  readonly hookRegistry: PluginRegistry["hookRegistry"];
+  /** Shared WORM sink for hooks (session / model / tool). */
+  readonly worm: PluginRegistry["worm"];
   readonly mcpTools: McpToolRegistry;
   readonly layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never>;
   readonly runtime: ManagedRuntime.ManagedRuntime<ClawQLApiRuntimeServices, ClawQLApiRuntimeError>;
@@ -66,18 +76,21 @@ export type ClawQLApiHandle = {
   readonly run: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
   ) => Promise<A>;
-  /** Tear down plugins then dispose the ManagedRuntime (call on process shutdown). */
   readonly dispose: () => Promise<void>;
 };
 
 /**
- * Composition root for ClawQL (enablement §5, plan Phase 1).
- * MCP transport calls `run(searchEffect)` / `run(executeEffect)` via adapters.
+ * Composition root for ClawQL.
+ * Binds one SkillRegistry for install + Skills-over-MCP + unified search.
  */
 export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
   const mcpTools = new McpToolRegistry();
   const registrationApi = mcpTools.registrationApi();
-  const host = createInMemoryPluginHostServices();
+  const host = createInMemoryPluginHostServices({
+    vaultSeedLayer: options.vaultSeedLayer,
+  });
+  bindProcessSkillRegistry(host.skillRegistry);
+
   const registry = new PluginRegistry({
     installLayer: host.layer,
     hookRegistry: host.hookRegistry,
@@ -87,15 +100,16 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
     Effect.runSync(registry.register(plugin, registrationApi));
   }
   const listMcpTools = () => mcpTools.list();
+  const defaultSearch = makeSearchLive(options.loadSpecFn ?? loadSpec, {
+    skillRegistry: host.skillRegistry,
+  });
   const baseLayer: Layer.Layer<ClawQLApiRuntimeServices, never, never> = Layer.mergeAll(
     AuditLive,
     Layer.succeed(ClawQLApi, clawqlApiLayer(registry, registrationApi, listMcpTools)),
     mcpProxyPipelineLayer(registry),
-    options.searchLayer ?? SearchNotConfiguredLive,
+    options.searchLayer ?? defaultSearch,
     options.executeLayer ?? ExecuteNotConfiguredLive
   );
-  // Keep horizontal plugin Layers inside ManagedRuntime Scope (plan §13) instead of
-  // throwaway Effect.scoped(Layer.build) that discards the Context immediately.
   let composition: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
   for (const pluginLayer of options.pluginLayers ?? []) {
     composition = Layer.provideMerge(pluginLayer, composition) as Layer.Layer<
@@ -114,15 +128,16 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
           never
         >);
   const runtime = ManagedRuntime.make(layer);
-  // Eager build so registry / MCP tools are populated synchronously after create.
   runtime.runSync(Effect.void);
   const prepare = options.prepareEffect;
 
-  // 8.0: loud boot warning when zero tool-scope enforcement is active (not Panguard-by-name).
   warnIfNoEnforcementActive(registry.list());
 
   return {
     registry,
+    skillRegistry: host.skillRegistry,
+    hookRegistry: host.hookRegistry,
+    worm: host.worm,
     mcpTools,
     layer,
     runtime,

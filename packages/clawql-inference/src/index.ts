@@ -39,6 +39,11 @@ export {
 } from "./gateway.js";
 
 export {
+  withModelLifecycleHooks,
+  type HookedInferenceGatewayOptions,
+} from "./hooks/hooked-gateway.js";
+
+export {
   EntitlementEnforcedGateway,
   EntitlementLimitError,
   assertInferenceEntitlement,

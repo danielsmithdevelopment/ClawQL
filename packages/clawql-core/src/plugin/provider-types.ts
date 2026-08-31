@@ -88,6 +88,19 @@ export type LifecycleHook = {
   ) => Effect.Effect<HookResult, ClawQLError | SecurityError | Error, HookRuntimeServices>;
 };
 
+/** Where the skill came from — drives ATR visibility on search (§6.4 / §7.3). */
+export type SkillSourceKind = "provider" | "standalone";
+
+/** Options when registering skills into the two-tier index. */
+export type SkillRegisterOptions = {
+  readonly source: SkillSourceKind;
+  /**
+   * Provider tool names / ATR tokens associated with this plugin.
+   * Used to filter provider-bundled skills under session ATR.
+   */
+  readonly scopeTokens?: readonly string[];
+};
+
 /** Lightweight index row ranked by search / skills/list. */
 export type SkillIndexEntry = {
   readonly skillId: string;
@@ -97,6 +110,10 @@ export type SkillIndexEntry = {
   readonly digest: string;
   readonly pluginId: string;
   readonly applicability: SkillApplicability;
+  /** Provider-bundled vs standalone — standalone ignores tool ATR. */
+  readonly source: SkillSourceKind;
+  /** Provider tool names used for ATR matching (provider skills only). */
+  readonly scopeTokens?: readonly string[];
 };
 
 export type SkillContent = {
@@ -178,7 +195,8 @@ export class SkillRegistry extends Context.Tag("clawql/SkillRegistry")<
   {
     readonly register: (
       pluginId: string,
-      skills: readonly SkillDefinition[]
+      skills: readonly SkillDefinition[],
+      options?: SkillRegisterOptions
     ) => Effect.Effect<void, ClawQLError>;
     readonly unregisterPlugin: (pluginId: string) => Effect.Effect<void, never>;
     readonly listIndex: () => Effect.Effect<readonly SkillIndexEntry[], never>;

@@ -48,3 +48,7 @@ export {
   type VaultArtifactHints,
   type VaultPostSyncExtras,
 } from "../effect/index.js";
+export {
+  MemoryVaultSeedLive,
+  pluginVaultSeedTag,
+} from "../vault/vault-seed-port.js";

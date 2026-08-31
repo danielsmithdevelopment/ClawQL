@@ -46,7 +46,14 @@ export function defaultInstallEffect(
     const skillDefs = plugin.skills ?? [];
     if (skillDefs.length) {
       yield* assertSkillDefinitions(skillDefs);
-      yield* skills.register(plugin.id, skillDefs);
+      const standalone = isStandaloneSkillPlugin(plugin);
+      const scopeTokens = standalone
+        ? undefined
+        : (plugin as ProviderPlugin).tools?.map((t) => t.name) ?? [];
+      yield* skills.register(plugin.id, skillDefs, {
+        source: standalone ? "standalone" : "provider",
+        scopeTokens,
+      });
     }
 
     const { hooks, tools } = providerHooksAndTools(plugin);

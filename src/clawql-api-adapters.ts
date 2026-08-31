@@ -1,11 +1,9 @@
 import {
   createClawQLApi,
-  defaultPlugins,
+  composeDefaultPlugins,
   loadSpec,
   makeExecuteLive,
-  makeSearchLive,
   McpProxyPipeline,
-  SearchService,
   type ClawQLApiHandle,
   type ExecuteClawqlOperationParams,
   type LoadedSpec,
@@ -14,7 +12,7 @@ import {
 import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
 import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import { composeHorizontalPluginLayersDynamic } from "./compose-horizontal-plugin-layers-dynamic.js";
 import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
@@ -34,10 +32,6 @@ function resolveLoadSpec(): LoadSpecFn {
   return loadSpecOverride ?? loadSpec;
 }
 
-function buildSearchLive(): Layer.Layer<SearchService> {
-  return makeSearchLive(resolveLoadSpec());
-}
-
 function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
@@ -46,17 +40,34 @@ let apiHandle: ClawQLApiHandle | undefined;
 let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
 
 function buildClawqlApi(
-  pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"]
+  pluginLayers: Parameters<typeof createClawQLApi>[0]["pluginLayers"],
+  vaultSeedLayer?: Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"]
 ): ClawQLApiHandle {
+  // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
   return createClawQLApi({
-    searchLayer: buildSearchLive(),
     executeLayer: buildExecuteLive(),
-    plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
+    plugins: [...composeDefaultPlugins(), ...defaultPaymentsProxyPlugins()],
     pluginLayers,
+    vaultSeedLayer,
     runtimeLayers: [makeEffectOtelTracerLayer()],
     prepareEffect: attachActiveOtelParent,
   });
 }
+
+async function resolveVaultSeedLayer(): Promise<
+  Parameters<typeof createClawQLApi>[0]["vaultSeedLayer"] | undefined
+> {
+  try {
+    const mem = await import("clawql-memory/plugin");
+    if (typeof mem.MemoryVaultSeedLive !== "undefined") {
+      return mem.MemoryVaultSeedLive;
+    }
+  } catch {
+    /* memory package optional at edge */
+  }
+  return undefined;
+}
+
 
 /**
  * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
@@ -70,7 +81,8 @@ export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
     const pluginLayers = await composeHorizontalPluginLayersDynamic(
       resolvePluginCompositionFlags()
     );
-    apiHandle = buildClawqlApi(pluginLayers);
+    const vaultSeedLayer = await resolveVaultSeedLayer();
+    apiHandle = buildClawqlApi(pluginLayers, vaultSeedLayer);
     return apiHandle;
   })();
   try {

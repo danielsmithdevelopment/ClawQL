@@ -1,6 +1,6 @@
 /**
- * Process-wide skill index (Skills-over-MCP tier-1 list / tier-2 get).
- * Empty by default — {@link ProviderPlugin} install should call {@link registerProcessSkills}.
+ * Process-wide skill index (Skills-over-MCP + search ranking).
+ * Bound to the host SkillRegistry from createClawQLApi so install and MCP share one store.
  */
 
 import {
@@ -9,88 +9,118 @@ import {
   type SkillContent,
   type SkillDefinition,
   type SkillIndexEntry,
+  type SkillRegisterOptions,
 } from "clawql-core";
-import { Effect, ManagedRuntime } from "effect";
+import { Context, Effect, Layer } from "effect";
 
-type ProcessSkillsRuntime = ManagedRuntime.ManagedRuntime<SkillRegistry, never>;
+let boundRegistry: Context.Tag.Service<typeof SkillRegistry> | undefined;
+let fallbackRegistry: Context.Tag.Service<typeof SkillRegistry> | undefined;
 
-let processSkillsRuntime: ProcessSkillsRuntime | undefined;
-
-function getProcessSkillsRuntime(): ProcessSkillsRuntime {
-  if (!processSkillsRuntime) {
-    processSkillsRuntime = ManagedRuntime.make(InMemorySkillRegistryLive);
-    processSkillsRuntime.runSync(Effect.void);
-  }
-  return processSkillsRuntime;
+function extractInMemory(): Context.Tag.Service<typeof SkillRegistry> {
+  return Effect.runSync(
+    Effect.gen(function* () {
+      return yield* SkillRegistry;
+    }).pipe(Effect.provide(InMemorySkillRegistryLive))
+  );
 }
 
-function runProcessSkillsEffect<A, E>(program: Effect.Effect<A, E, SkillRegistry>): Promise<A> {
-  return getProcessSkillsRuntime().runPromise(program);
+function activeRegistry(): Context.Tag.Service<typeof SkillRegistry> {
+  if (boundRegistry) return boundRegistry;
+  if (!fallbackRegistry) fallbackRegistry = extractInMemory();
+  return fallbackRegistry;
+}
+
+/** Wire MCP skills_* + search to the same SkillRegistry used by plugin install. */
+export function bindProcessSkillRegistry(
+  registry: Context.Tag.Service<typeof SkillRegistry>
+): void {
+  boundRegistry = registry;
+}
+
+export function getBoundSkillRegistry(): Context.Tag.Service<typeof SkillRegistry> {
+  return activeRegistry();
+}
+
+function withRegistry<A, E>(
+  program: Effect.Effect<A, E, SkillRegistry>
+): Effect.Effect<A, E, never> {
+  return program.pipe(Effect.provideService(SkillRegistry, activeRegistry()));
 }
 
 export function registerProcessSkillsEffect(
   pluginId: string,
-  skills: readonly SkillDefinition[]
-): Effect.Effect<void, import("clawql-core").ClawQLError, SkillRegistry> {
-  return Effect.gen(function* () {
-    const reg = yield* SkillRegistry;
-    yield* reg.register(pluginId, skills);
-  });
+  skills: readonly SkillDefinition[],
+  options?: SkillRegisterOptions
+): Effect.Effect<void, import("clawql-core").ClawQLError, never> {
+  return withRegistry(
+    Effect.gen(function* () {
+      const reg = yield* SkillRegistry;
+      yield* reg.register(pluginId, skills, options);
+    })
+  );
 }
 
 export function listProcessSkillIndexEffect(): Effect.Effect<
   readonly SkillIndexEntry[],
   never,
-  SkillRegistry
+  never
 > {
-  return Effect.gen(function* () {
-    const reg = yield* SkillRegistry;
-    return yield* reg.listIndex();
-  });
+  return withRegistry(
+    Effect.gen(function* () {
+      const reg = yield* SkillRegistry;
+      return yield* reg.listIndex();
+    })
+  );
 }
 
 export function getProcessSkillContentEffect(
   skillId: string
-): Effect.Effect<SkillContent | undefined, never, SkillRegistry> {
-  return Effect.gen(function* () {
-    const reg = yield* SkillRegistry;
-    return yield* reg.getContent(skillId);
-  });
+): Effect.Effect<SkillContent | undefined, never, never> {
+  return withRegistry(
+    Effect.gen(function* () {
+      const reg = yield* SkillRegistry;
+      return yield* reg.getContent(skillId);
+    })
+  );
 }
 
 export function unregisterProcessSkillsEffect(
   pluginId: string
-): Effect.Effect<void, never, SkillRegistry> {
-  return Effect.gen(function* () {
-    const reg = yield* SkillRegistry;
-    yield* reg.unregisterPlugin(pluginId);
-  });
+): Effect.Effect<void, never, never> {
+  return withRegistry(
+    Effect.gen(function* () {
+      const reg = yield* SkillRegistry;
+      yield* reg.unregisterPlugin(pluginId);
+    })
+  );
 }
 
 /** Promise façade for MCP / legacy callers. */
 export function registerProcessSkills(
   pluginId: string,
-  skills: readonly SkillDefinition[]
+  skills: readonly SkillDefinition[],
+  options?: SkillRegisterOptions
 ): Promise<void> {
-  return runProcessSkillsEffect(registerProcessSkillsEffect(pluginId, skills));
+  return Effect.runPromise(registerProcessSkillsEffect(pluginId, skills, options));
 }
 
 export function listProcessSkillIndex(): Promise<readonly SkillIndexEntry[]> {
-  return runProcessSkillsEffect(listProcessSkillIndexEffect());
+  return Effect.runPromise(listProcessSkillIndexEffect());
 }
 
 export function getProcessSkillContent(skillId: string): Promise<SkillContent | undefined> {
-  return runProcessSkillsEffect(getProcessSkillContentEffect(skillId));
+  return Effect.runPromise(getProcessSkillContentEffect(skillId));
 }
 
 export function unregisterProcessSkills(pluginId: string): Promise<void> {
-  return runProcessSkillsEffect(unregisterProcessSkillsEffect(pluginId));
+  return Effect.runPromise(unregisterProcessSkillsEffect(pluginId));
 }
 
-/** Test helper — disposes the singleton ManagedRuntime and clears the in-memory index. */
+/** Test helper — clear bound + fallback registries. */
 export async function resetProcessSkillsRegistryForTests(): Promise<void> {
-  if (processSkillsRuntime) {
-    await processSkillsRuntime.dispose();
-    processSkillsRuntime = undefined;
-  }
+  boundRegistry = undefined;
+  fallbackRegistry = undefined;
 }
+
+// silence unused Layer import if tree-shaken oddly
+void Layer;
