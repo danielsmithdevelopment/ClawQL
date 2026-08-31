@@ -16,7 +16,13 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "./mcp-server-factory.js";
-import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
+import {
+  fireSessionEnd,
+  fireSessionStart,
+  loadSpec,
+  registerSpecCacheShutdownHooks,
+} from "clawql-api";
+import { getClawqlApi } from "./clawql-api-adapters.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
 import {
@@ -533,13 +539,28 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
             transports.set(sid, transport!);
+            // 8.0 session-scope hooks (spec §5) — fire-and-forget; never block init.
+            const api = getClawqlApi();
+            void fireSessionStart({
+              hookRegistry: api.hookRegistry,
+              worm: api.worm,
+              sessionId: sid,
+            }).catch(() => undefined);
           },
           // JSON bodies instead of SSE for each POST — helps some MCP clients / proxies (e.g. Cursor + tight buffering).
           enableJsonResponse: streamableJson,
         });
         transport.onclose = () => {
           const sid = transport!.sessionId;
-          if (sid) transports.delete(sid);
+          if (sid) {
+            transports.delete(sid);
+            const api = getClawqlApi();
+            void fireSessionEnd({
+              hookRegistry: api.hookRegistry,
+              worm: api.worm,
+              sessionId: sid,
+            }).catch(() => undefined);
+          }
         };
 
         const server = createRegisteredMcpServer();
@@ -630,8 +651,10 @@ async function main() {
   await maybeVerifyReleaseManifestAtStartup();
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
-  const { registerClawqlApiShutdownHooks } = await import("./clawql-api-adapters.js");
+  const { ensureClawqlApi, registerClawqlApiShutdownHooks } =
+    await import("./clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
+  await ensureClawqlApi();
   const { ensureProcessWormHostBooted } = await import("./process-worm-host.js");
   await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();

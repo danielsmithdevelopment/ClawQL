@@ -1,56 +1,70 @@
 import {
   AuditLive,
+  createInMemoryPluginHostServices,
+  defineProviderPlugin,
   type ClawQLError,
   type McpToolAlreadyRegisteredError,
-  type Plugin,
+  type PluginInstallError,
+  type AnyPlugin,
   PluginAlreadyRegisteredError,
+  type SkillRegistry,
 } from "clawql-core";
+import type { Context } from "effect";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { ClawQLApi, clawqlApiLayer } from "./clawql-api-service.js";
 import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
 import { McpToolRegistry } from "./mcp-tool-registry.js";
 import { composeDefaultPlugins } from "./plugins/compose-default-plugins.js";
+import { warnIfNoEnforcementActive } from "./plugins/enforcement-boot-warning.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipeline.js";
-import { SearchNotConfiguredLive, SearchService } from "./search-service.js";
+import { SearchService } from "./search-service.js";
+import { makeSearchLive } from "./search/search-live.js";
+import { bindProcessSkillRegistry } from "./skills/process-skills.js";
+import { loadSpec } from "./spec/spec-loader.js";
 
 export type ClawQLApiRuntimeServices =
   ClawQLApi | SearchService | ExecuteService | McpProxyPipeline;
 
 export type ClawQLApiRuntimeError =
-  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError | Error;
+  | PluginAlreadyRegisteredError
+  | PluginInstallError
+  | ClawQLError
+  | McpToolAlreadyRegisteredError
+  | Error;
 
 export type CreateClawQLApiOptions = {
-  /** Replaces default SearchNotConfiguredLive (MCP adapter from clawql-mcp). */
+  /** Replaces default search (operations + skill index). */
   readonly searchLayer?: Layer.Layer<SearchService, never, never>;
   /** Replaces default ExecuteNotConfiguredLive (MCP adapter from clawql-mcp). */
   readonly executeLayer?: Layer.Layer<ExecuteService, never, never>;
-  /** Plugins registered synchronously at composition root (defaults include Panguard + Memory when enabled). */
-  readonly plugins?: readonly Plugin[];
-  /**
-   * Effect Layers that register plugins at runtime via `ClawQLApi.registerPlugin`.
-   * Merged after the base layer; each layer may require `ClawQLApi`, `ExecuteService`, etc.
-   */
+  /** Plugins registered synchronously at composition root (8.0+: empty unless opted in). */
+  readonly plugins?: readonly AnyPlugin[];
   readonly pluginLayers?: readonly Layer.Layer<
     never,
     ClawQLApiRuntimeError,
     ClawQLApiRuntimeServices
   >[];
-  /**
-   * Extra Layers merged into the ManagedRuntime (e.g. `@effect/opentelemetry` Tracer).
-   * Must be fully satisfied (`R = never`).
-   */
   readonly runtimeLayers?: readonly Layer.Layer<never, never, never>[];
-  /**
-   * Optional transform applied to every `run()` program (e.g. attach active OTEL parent span).
-   */
   readonly prepareEffect?: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
   ) => Effect.Effect<A, E, ClawQLApiRuntimeServices>;
+  /**
+   * Vault seed Layer (e.g. MemoryVaultSeedLive from clawql-memory).
+   * Default: NoopVaultSeedLive inside createInMemoryPluginHostServices.
+   */
+  readonly vaultSeedLayer?: Layer.Layer<import("clawql-core").VaultSeedPort, never, never>;
+  /** Override loadSpec used by the default unified search layer. */
+  readonly loadSpecFn?: typeof loadSpec;
 };
 
 export type ClawQLApiHandle = {
   readonly registry: PluginRegistry;
+  /** Shared with plugin install, `skills_list`/`skills_get`, and `search` ranking. */
+  readonly skillRegistry: Context.Tag.Service<typeof SkillRegistry>;
+  readonly hookRegistry: PluginRegistry["hookRegistry"];
+  /** Shared WORM sink for hooks (session / model / tool). */
+  readonly worm: PluginRegistry["worm"];
   readonly mcpTools: McpToolRegistry;
   readonly layer: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never>;
   readonly runtime: ManagedRuntime.ManagedRuntime<ClawQLApiRuntimeServices, ClawQLApiRuntimeError>;
@@ -58,31 +72,54 @@ export type ClawQLApiHandle = {
   readonly run: <A, E extends ClawQLApiRuntimeError>(
     program: Effect.Effect<A, E, ClawQLApiRuntimeServices>
   ) => Promise<A>;
-  /** Tear down plugins then dispose the ManagedRuntime (call on process shutdown). */
   readonly dispose: () => Promise<void>;
 };
 
-/**
- * Composition root for ClawQL (enablement §5, plan Phase 1).
- * MCP transport calls `run(searchEffect)` / `run(executeEffect)` via adapters.
- */
-export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
+type ClawQLApiAssembly = {
+  readonly mcpTools: McpToolRegistry;
+  readonly registrationApi: ReturnType<McpToolRegistry["registrationApi"]>;
+  readonly host: ReturnType<typeof createInMemoryPluginHostServices>;
+  readonly registry: PluginRegistry;
+  readonly plugins: readonly AnyPlugin[];
+  readonly options: CreateClawQLApiOptions;
+};
+
+function assembleClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiAssembly {
   const mcpTools = new McpToolRegistry();
   const registrationApi = mcpTools.registrationApi();
-  const registry = new PluginRegistry();
-  for (const plugin of options.plugins ?? composeDefaultPlugins()) {
-    Effect.runSync(registry.register(plugin, registrationApi));
-  }
+  const host = createInMemoryPluginHostServices({
+    vaultSeedLayer: options.vaultSeedLayer,
+  });
+  bindProcessSkillRegistry(host.skillRegistry);
+
+  const registry = new PluginRegistry({
+    installLayer: host.layer,
+    hookRegistry: host.hookRegistry,
+    worm: host.worm,
+  });
+  return {
+    mcpTools,
+    registrationApi,
+    host,
+    registry,
+    plugins: options.plugins ?? composeDefaultPlugins(),
+    options,
+  };
+}
+
+function finalizeClawQLApi(assembly: ClawQLApiAssembly): ClawQLApiHandle {
+  const { mcpTools, registrationApi, host, registry, options } = assembly;
   const listMcpTools = () => mcpTools.list();
+  const defaultSearch = makeSearchLive(options.loadSpecFn ?? loadSpec, {
+    skillRegistry: host.skillRegistry,
+  });
   const baseLayer: Layer.Layer<ClawQLApiRuntimeServices, never, never> = Layer.mergeAll(
     AuditLive,
     Layer.succeed(ClawQLApi, clawqlApiLayer(registry, registrationApi, listMcpTools)),
     mcpProxyPipelineLayer(registry),
-    options.searchLayer ?? SearchNotConfiguredLive,
+    options.searchLayer ?? defaultSearch,
     options.executeLayer ?? ExecuteNotConfiguredLive
   );
-  // Keep horizontal plugin Layers inside ManagedRuntime Scope (plan §13) instead of
-  // throwaway Effect.scoped(Layer.build) that discards the Context immediately.
   let composition: Layer.Layer<ClawQLApiRuntimeServices, ClawQLApiRuntimeError, never> = baseLayer;
   for (const pluginLayer of options.pluginLayers ?? []) {
     composition = Layer.provideMerge(pluginLayer, composition) as Layer.Layer<
@@ -101,12 +138,16 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
           never
         >);
   const runtime = ManagedRuntime.make(layer);
-  // Eager build so registry / MCP tools are populated synchronously after create.
   runtime.runSync(Effect.void);
   const prepare = options.prepareEffect;
 
+  warnIfNoEnforcementActive(registry.list());
+
   return {
     registry,
+    skillRegistry: host.skillRegistry,
+    hookRegistry: host.hookRegistry,
+    worm: host.worm,
     mcpTools,
     layer,
     runtime,
@@ -117,4 +158,41 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
       await runtime.dispose();
     },
   };
+}
+
+/**
+ * Composition root for ClawQL.
+ * Binds one SkillRegistry for install + Skills-over-MCP + unified search.
+ * Plugin install uses `Effect.runSync` — vault seed Layers must be sync-safe
+ * (e.g. MemoryVaultSeedLive schedules IO best-effort).
+ */
+export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApiHandle {
+  const assembly = assembleClawQLApi(options);
+  for (const plugin of assembly.plugins) {
+    Effect.runSync(assembly.registry.register(plugin, assembly.registrationApi));
+  }
+  return finalizeClawQLApi(assembly);
+}
+
+/**
+ * Async composition root — prefer for production bootstrap (`ensureClawqlApi`)
+ * when plugin install may include async Effects.
+ */
+export async function createClawQLApiAsync(
+  options: CreateClawQLApiOptions = {}
+): Promise<ClawQLApiHandle> {
+  const assembly = assembleClawQLApi(options);
+  for (const plugin of assembly.plugins) {
+    await Effect.runPromise(assembly.registry.register(plugin, assembly.registrationApi));
+  }
+  return finalizeClawQLApi(assembly);
+}
+
+/** Minimal ProviderPlugin for tests / demos (no tools, no hooks). */
+export function emptyProviderPlugin(id: string, version = "0.0.1") {
+  return defineProviderPlugin({
+    id,
+    version,
+    description: `test plugin ${id}`,
+  });
 }

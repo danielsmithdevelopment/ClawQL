@@ -1,9 +1,11 @@
 import { ClawQLApi, ExecuteService, SearchService } from "clawql-api";
-import type {
-  ClawQLError,
-  McpToolAlreadyRegisteredError,
-  Plugin,
-  PluginAlreadyRegisteredError,
+import {
+  defineRegisteringProviderPlugin,
+  type ClawQLError,
+  type McpToolAlreadyRegisteredError,
+  type PluginAlreadyRegisteredError,
+  type PluginInstallError,
+  type ProviderPlugin,
 } from "clawql-core";
 import {
   configureOuroborosPluginDeps,
@@ -22,6 +24,7 @@ const EmptyToolSchema = z.object({});
 
 export type HarnessLayerError =
   | PluginAlreadyRegisteredError
+  | PluginInstallError
   | ClawQLError
   | McpToolAlreadyRegisteredError
   | HarnessPluginError
@@ -81,11 +84,11 @@ export function makeHarnessLayer(
       activeHarness = harness;
 
       const claw = yield* ClawQLApi;
-      const bridgePlugin: Plugin = {
+      const bridgePlugin: ProviderPlugin = defineRegisteringProviderPlugin({
         id: HARNESS_MCP_PLUGIN_ID,
         version: "0.1.0",
-        kind: "default",
-        onRegister: (api) =>
+        description: "Bridges ClawQL harness tools onto the MCP tool registry",
+        register: (api) =>
           Effect.gen(function* () {
             for (const tool of listHarnessTools(harness.state)) {
               yield* api.registerMcpTool({
@@ -120,7 +123,7 @@ export function makeHarnessLayer(
               resetOuroborosContextForTests();
             }
           }),
-      };
+      });
 
       yield* claw.registerPlugin(bridgePlugin);
     })

@@ -7,6 +7,7 @@ export default defineConfig({
     "plugins/ouroboros/index": "plugins/ouroboros/index.ts",
     "plugins/opencode2/index": "plugins/opencode2/index.ts",
     "bench/harness-bench": "bench/harness-bench.ts",
+    "bench/scenario-synthesis-bridge": "bench/scenario-synthesis-bridge.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
