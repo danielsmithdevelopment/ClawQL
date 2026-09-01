@@ -1,0 +1,19 @@
+# ClawQL-augmented DeepSeek Harness overlay — Cordis plugin ATR lock
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: plugin_locked
+  allowedPlugins:
+    - core
+    - clawql-mcp
+    - filesystem-readonly
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+deepseek:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1

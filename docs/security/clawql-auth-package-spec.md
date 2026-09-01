@@ -1032,56 +1032,39 @@ When **`invalid_grant`** or missing refresh token surfaces **`ReauthRequiredErro
 
 ## Integration with clawql-agents
 
-Future **`clawql-agents`** package resolves outbound credentials before MCP `execute` calls — single entry point for Hermes/Cline:
+**`clawql-agents`** resolves outbound credentials before MCP `execute` via Effect `getOutboundCredential` (see `packages/clawql-agents/src/auth/outbound-credential.ts`):
 
 ```typescript
 import { Effect } from "effect";
-import { OAuthTokenStore } from "clawql-auth/outbound/oauth/token-store";
-import { OutboundAPIKeyManager, PROVIDER_AUTH_METHOD } from "clawql-auth/outbound-api-keys";
-import { ReauthRequiredError } from "clawql-auth/outbound/oauth/reauth";
+import { getOutboundCredential } from "clawql-agents";
+import {
+  createMemoryOAuthPersistence,
+  createMemorySecretSource,
+  createOAuthTokenStore,
+  createOutboundAPIKeyManager,
+} from "clawql-auth";
 
-export type OutboundCredential =
-  | { kind: "bearer"; token: string }
-  | { kind: "headers"; headers: Record<string, string> }
-  | { kind: "reauth_required"; error: ReauthRequiredError };
+const tokenStore = createOAuthTokenStore({
+  persistence: createMemoryOAuthPersistence(),
+  refresh: async (_key, cur) => cur,
+});
+const apiKeys = createOutboundAPIKeyManager({
+  secrets: createMemorySecretSource(),
+});
 
-/** Called by agent runtime before provider execute — never per-adapter refresh logic. */
-export async function getOutboundCredential(input: {
-  tenantId: string;
-  subject: string;
-  provider: string;
-  tokenStore: OAuthTokenStore;
-  apiKeys: OutboundAPIKeyManager;
-}): Promise<OutboundCredential> {
-  const method = input.apiKeys.resolveMethod(input.provider);
-
-  if (method === "oauth") {
-    const key = `${input.tenantId}:${input.provider}:${input.subject}` as const;
-    try {
-      const token = await input.tokenStore.getValidToken(key);
-      return { kind: "bearer", token };
-    } catch (err) {
-      if (err instanceof ReauthRequiredError) {
-        return { kind: "reauth_required", error: err };
-      }
-      throw err;
-    }
-  }
-
-  if (method === "api_key") {
-    const apiKey = await input.apiKeys.getApiKey(input.provider, input.tenantId);
-    return { kind: "headers", headers: { Authorization: `Bearer ${apiKey}` } };
-  }
-
-  if (method === "aws_sigv4") {
-    return { kind: "headers", headers: {} }; // SigV4 signing in clawql-auth/aws-sigv4
-  }
-
-  return { kind: "headers", headers: {} };
-}
+const cred = await Effect.runPromise(
+  getOutboundCredential({
+    tenantId: "t",
+    subject: "u",
+    provider: "google",
+    tokenStore,
+    apiKeys,
+  })
+);
+// cred.kind: "bearer" | "headers" | "reauth_required"
 ```
 
-Agents **must not** implement provider-specific refresh — delegate to **`OAuthTokenStore`**.
+Agents **must not** implement provider-specific refresh — delegate to **`OAuthTokenStore`** via this Effect helper.
 
 ---
 

@@ -1,0 +1,19 @@
+# ClawQL-augmented OpenHands overlay — budget enforcer at event stream
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: bounded_engineer
+  budget:
+    maxTokens: 500000
+    maxUsd: 5
+    maxTurns: 100
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+openhands:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1

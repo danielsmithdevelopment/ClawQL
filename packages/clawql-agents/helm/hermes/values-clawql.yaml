@@ -1,0 +1,17 @@
+# ClawQL-augmented Hermes overlay
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: orchestrator
+  worm:
+    enabled: true
+    runtimeClass: worm_agent.WORMInstrumentedAgent
+  tee:
+    enabled: false
+hermes:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1
+    WORM_HTTP_ENDPOINT: http://clawql-worm:9000/append

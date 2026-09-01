@@ -1,7 +1,7 @@
 {
   "name": "clawql-agents",
   "version": "8.0.0",
-  "description": "ClawQL hardened adapters for open-source agents (Cline, OpenClaw, Hermes)",
+  "description": "ClawQL hardened adapters for RockYourLobster catalog agents",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "clawql-audit": "8.0.0",
+    "clawql-auth": "8.0.0",
     "effect": "^3.21.4"
   },
   "peerDependencies": {
@@ -47,6 +48,7 @@
   "files": [
     "dist",
     "python",
+    "helm",
     "README.md"
   ],
   "engines": {
@@ -61,8 +63,12 @@
     "clawql",
     "agents",
     "cline",
+    "openclaw",
+    "hermes",
     "worm",
-    "mcp"
+    "mcp",
+    "atr",
+    "panguard"
   ],
   "publishConfig": {
     "access": "public"

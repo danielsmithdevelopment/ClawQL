@@ -1,0 +1,16 @@
+# ClawQL-augmented Cline overlay (reference adapter)
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: execution_worker
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+cline:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1
+    WORM_HTTP_ENDPOINT: http://clawql-worm:9000/append
