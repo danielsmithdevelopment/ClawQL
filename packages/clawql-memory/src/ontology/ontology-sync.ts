@@ -4,14 +4,25 @@
 
 import { listVaultMarkdownRelPaths } from "../vault/slug-index.js";
 import { readVaultTextFile } from "../vault/utils.js";
-import { extractMatterFromClawqlFields } from "./clawql-fields.js";
 import {
+  extractAttorneyFromClawqlFields,
+  extractClientFromClawqlFields,
+  extractDocumentFromClawqlFields,
+  extractMatterFromClawqlFields,
+} from "./clawql-fields.js";
+import {
+  countLegalEntities,
   openOntologyDb,
   ontologyDbEnabled,
+  upsertAttorney,
+  upsertClient,
+  upsertDocument,
   upsertMatter,
   withOntologyWriteLock,
   type OntologyDbHandle,
 } from "./ontology-db.js";
+
+type LegalEntitySchema = "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
 
 function defaultScanRoot(): string {
   const v = process.env.CLAWQL_MEMORY_RECALL_SCAN_ROOT;
@@ -20,30 +31,71 @@ function defaultScanRoot(): string {
   return t === "" ? "" : t;
 }
 
-/** Upsert a single vault note into ontology.db when it contains CLAWQL_MATTER_ID. */
+function upsertLegalEntityFromMarkdown(
+  handle: OntologyDbHandle,
+  relPath: string,
+  markdown: string
+): boolean {
+  const document = extractDocumentFromClawqlFields(markdown);
+  if (document) {
+    upsertDocument(handle.db, document, relPath);
+    return true;
+  }
+  const attorney = extractAttorneyFromClawqlFields(markdown);
+  if (attorney) {
+    upsertAttorney(handle.db, attorney, relPath);
+    return true;
+  }
+  const client = extractClientFromClawqlFields(markdown);
+  if (client) {
+    upsertClient(handle.db, client, relPath);
+    return true;
+  }
+  const matter = extractMatterFromClawqlFields(markdown);
+  if (matter) {
+    upsertMatter(handle.db, matter, relPath, matter.fields.title);
+    return true;
+  }
+  return false;
+}
+
+/** Upsert a single vault note into ontology.db when it contains a legal CLAWQL_* block. */
 export async function upsertOntologyFromVaultNote(
   vault: string,
   relPath: string,
   markdown: string
-): Promise<{ upserted: boolean; matterId?: string }> {
+): Promise<{ upserted: boolean; matterId?: string; clientId?: string }> {
   if (!ontologyDbEnabled()) return { upserted: false };
-  const extracted = extractMatterFromClawqlFields(markdown);
-  if (!extracted) return { upserted: false };
+  const matter = extractMatterFromClawqlFields(markdown);
+  if (
+    !matter &&
+    !extractClientFromClawqlFields(markdown) &&
+    !extractAttorneyFromClawqlFields(markdown) &&
+    !extractDocumentFromClawqlFields(markdown)
+  ) {
+    return { upserted: false };
+  }
   return withOntologyWriteLock(vault, async () => {
     const handle = await openOntologyDb(vault);
     if (!handle) return { upserted: false };
     try {
-      upsertMatter(handle.db, extracted, relPath, extracted.fields.title);
+      const upserted = upsertLegalEntityFromMarkdown(handle, relPath, markdown);
+      if (!upserted) return { upserted: false };
       await handle.persist();
-      return { upserted: true, matterId: extracted.fields.id };
+      const client = extractClientFromClawqlFields(markdown);
+      return {
+        upserted: true,
+        matterId: matter?.fields.id,
+        clientId: client?.fields.id,
+      };
     } finally {
       handle.close();
     }
   });
 }
 
-/** Scan vault Markdown and upsert all machine-readable Matter blocks. */
-export async function syncOntologyMattersFromVault(
+/** Scan vault Markdown and upsert all machine-readable legal entity blocks. */
+export async function syncOntologyLegalEntitiesFromVault(
   vault: string,
   existing?: OntologyDbHandle
 ): Promise<{ scanned: number; upserted: number }> {
@@ -67,14 +119,51 @@ export async function syncOntologyMattersFromVault(
       } catch {
         continue;
       }
-      const extracted = extractMatterFromClawqlFields(text);
-      if (!extracted) continue;
-      upsertMatter(handle.db, extracted, rel, extracted.fields.title);
-      upserted += 1;
+      if (upsertLegalEntityFromMarkdown(handle, rel, text)) upserted += 1;
     }
     await handle.persist();
     return { scanned: paths.length, upserted };
   } finally {
     if (ownsHandle) handle.close();
   }
+}
+
+/** @deprecated Use {@link syncOntologyLegalEntitiesFromVault}. */
+export async function syncOntologyMattersFromVault(
+  vault: string,
+  existing?: OntologyDbHandle
+): Promise<{ scanned: number; upserted: number }> {
+  return syncOntologyLegalEntitiesFromVault(vault, existing);
+}
+
+/** Lazy-sync vault CLAWQL blocks when the target legal entity table is empty. */
+export async function ensureOntologyLegalEntitiesIndexed(
+  vault: string,
+  schema: LegalEntitySchema
+): Promise<void> {
+  {
+    const probe = await openOntologyDb(vault);
+    if (!probe) return;
+    try {
+      if (countLegalEntities(probe.db, schema) > 0) return;
+    } finally {
+      probe.close();
+    }
+  }
+
+  await withOntologyWriteLock(vault, async () => {
+    const handle = await openOntologyDb(vault);
+    if (!handle) return;
+    try {
+      if (countLegalEntities(handle.db, schema) > 0) return;
+      await syncOntologyLegalEntitiesFromVault(vault, handle);
+    } finally {
+      handle.close();
+    }
+  });
+}
+
+/** @deprecated Use {@link ensureOntologyLegalEntitiesIndexed} with `legal.Matter`. */
+export async function ensureOntologyMattersIndexed(vault: string): Promise<void> {
+  return ensureOntologyLegalEntitiesIndexed(vault, "legal.Matter");
 }

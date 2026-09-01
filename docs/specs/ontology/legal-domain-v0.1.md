@@ -208,17 +208,20 @@ CLAWQL_NONCOMPETE_MONTHS=24
 
 Parser rules:
 
-| Raw field name                  | Ontology field                | Type         | Normalization               |
-| ------------------------------- | ----------------------------- | ------------ | --------------------------- |
-| `CLAWQL_MATTER_ID`              | `Matter.id`                   | MatterID     | Validate /^MAT-\d{4}$/      |
-| `CLAWQL_ESCROW_PCT`             | `Matter.escrowPct`            | Percentage   | Parse float, validate 0-100 |
-| `CLAWQL_NONCOMPETE_MONTHS`      | `Matter.nonCompeteMonths`     | Integer      | Parse int                   |
-| `CLAWQL_DEAL_VALUE_USD`         | `Matter.dealValueUSD`         | Integer      | Parse int                   |
-| `CLAWQL_CLIENT_ID`              | `Matter.client`               | ClientRef    | Validate /^CLT-\d{4}$/      |
-| `CLAWQL_PRACTICE_AREA`          | `Matter.practiceArea`         | PracticeArea | Enum match                  |
-| `CLAWQL_STATUS`                 | `Matter.status`               | MatterStatus | Enum match                  |
-| `CLAWQL_ESCROW_DURATION_MONTHS` | `Matter.escrowDurationMonths` | Integer      | Parse int                   |
-| `CLAWQL_NC_GEOGRAPHY`           | `Matter.nonCompeteGeography`  | string       | Trim                        |
+| Raw field name                                                    | Ontology field                | Type               | Normalization                       |
+| ----------------------------------------------------------------- | ----------------------------- | ------------------ | ----------------------------------- |
+| `CLAWQL_MATTER_ID`                                                | `Matter.id`                   | MatterID           | Validate /^MAT-\d{4}$/              |
+| `CLAWQL_ESCROW_PCT`                                               | `Matter.escrowPct`            | Percentage         | Parse float, validate 0-100         |
+| `CLAWQL_NONCOMPETE_MONTHS`                                        | `Matter.nonCompeteMonths`     | Integer            | Parse int                           |
+| `CLAWQL_DEAL_VALUE_USD`                                           | `Matter.dealValueUSD`         | Integer            | Parse int                           |
+| `CLAWQL_CLIENT_ID`                                                | `Matter.client`               | ClientRef          | Validate /^CLT-\d{4}$/              |
+| `CLAWQL_PRACTICE_AREA`                                            | `Matter.practiceArea`         | PracticeArea       | Enum match                          |
+| `CLAWQL_STATUS`                                                   | `Matter.status`               | MatterStatus       | Enum match                          |
+| `CLAWQL_ESCROW_DURATION_MONTHS`                                   | `Matter.escrowDurationMonths` | Integer            | Parse int                           |
+| `CLAWQL_NC_GEOGRAPHY`                                             | `Matter.nonCompeteGeography`  | string             | Trim                                |
+| `CLAWQL_CLIENT_ID` + `CLAWQL_CLIENT_NAME` (no `CLAWQL_MATTER_ID`) | `Client` entity               | ClientID + name    | Client profile notes (`CLT-xxxx`)   |
+| `CLAWQL_ATTORNEY_ID` + `CLAWQL_ATTORNEY_NAME`                     | `Attorney` entity             | AttorneyID + name  | Attorney profile notes (`ATY-xxxx`) |
+| `CLAWQL_DOCUMENT_ID` + `CLAWQL_DOCUMENT_TITLE`                    | `Document` entity             | DocumentID + title | May include `CLAWQL_MATTER_ID` link |
 
 ### 3.2 Structured heading extraction (second priority)
 

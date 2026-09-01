@@ -38,6 +38,37 @@ export const MATTER_FILTER_COLUMNS: Readonly<Record<string, string>> = {
   clientId: "m.client_id",
 };
 
+export const CLIENT_FILTER_COLUMNS: Readonly<Record<string, string>> = {
+  id: "c.id",
+  name: "c.name",
+  shortName: "c.short_name",
+  industry: "c.industry",
+  tier: "c.tier",
+};
+
+export const ATTORNEY_FILTER_COLUMNS: Readonly<Record<string, string>> = {
+  id: "a.id",
+  name: "a.name",
+  title: "a.title",
+};
+
+export const DOCUMENT_FILTER_COLUMNS: Readonly<Record<string, string>> = {
+  id: "d.id",
+  title: "d.title",
+  documentType: "d.document_type",
+  matterId: "d.matter_id",
+  status: "d.status",
+};
+
+export const LEGAL_SCHEMA_FILTER_COLUMNS: Readonly<
+  Record<string, Readonly<Record<string, string>>>
+> = {
+  "legal.Matter": MATTER_FILTER_COLUMNS,
+  "legal.Client": CLIENT_FILTER_COLUMNS,
+  "legal.Attorney": ATTORNEY_FILTER_COLUMNS,
+  "legal.Document": DOCUMENT_FILTER_COLUMNS,
+};
+
 /** camelCase → snake_case (`escrowPct` → `escrow_pct`). */
 export function camelToSnake(name: string): string {
   return name
@@ -88,6 +119,62 @@ export function matterFieldsFromSqlRow(row: Record<string, unknown>): {
     nonCompeteMonths: num("non_compete_months"),
     nonCompeteGeography: str("non_compete_geography"),
     clientId: str("client_id"),
+    vaultNotePath: String(row.vault_note_path ?? ""),
+  };
+}
+
+export function clientFieldsFromSqlRow(row: Record<string, unknown>): {
+  id: string;
+  name: string;
+  shortName?: string;
+  industry?: string;
+  tier?: string;
+  vaultNotePath: string;
+} {
+  const str = (k: string): string | undefined =>
+    row[k] != null && row[k] !== "" ? String(row[k]) : undefined;
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    shortName: str("short_name"),
+    industry: str("industry"),
+    tier: str("tier"),
+    vaultNotePath: String(row.vault_note_path ?? ""),
+  };
+}
+
+export function attorneyFieldsFromSqlRow(row: Record<string, unknown>): {
+  id: string;
+  name: string;
+  title?: string;
+  vaultNotePath: string;
+} {
+  const str = (k: string): string | undefined =>
+    row[k] != null && row[k] !== "" ? String(row[k]) : undefined;
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    title: str("title"),
+    vaultNotePath: String(row.vault_note_path ?? ""),
+  };
+}
+
+export function documentFieldsFromSqlRow(row: Record<string, unknown>): {
+  id: string;
+  title: string;
+  documentType?: string;
+  matterId?: string;
+  status?: string;
+  vaultNotePath: string;
+} {
+  const str = (k: string): string | undefined =>
+    row[k] != null && row[k] !== "" ? String(row[k]) : undefined;
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    documentType: str("document_type"),
+    matterId: str("matter_id"),
+    status: str("status"),
     vaultNotePath: String(row.vault_note_path ?? ""),
   };
 }
