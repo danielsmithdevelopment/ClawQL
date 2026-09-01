@@ -1,12 +1,12 @@
 import {
   createClawQLApi,
-  defaultPlugins,
+  createClawQLApiAsync,
+  composeDefaultPlugins,
   loadSpec,
   makeExecuteLive,
-  makeSearchLive,
   McpProxyPipeline,
-  SearchService,
   type ClawQLApiHandle,
+  type CreateClawQLApiOptions,
   type ExecuteClawqlOperationParams,
   type LoadedSpec,
   type LoadSpecFn,
@@ -14,14 +14,15 @@ import {
 import { defaultPaymentsProxyPlugins } from "clawql-payments/plugin";
 import { closeOuroborosPgPool } from "clawql-ouroboros/plugin";
 import { closePostgresVectorPool } from "clawql-memory/vector/pgvector";
-import { Effect, Layer } from "effect";
-import { composeHorizontalPluginLayers } from "./compose-horizontal-plugin-layers.js";
+import { createRequire } from "node:module";
+import { Effect } from "effect";
+import { composeHorizontalPluginLayersDynamic } from "./compose-horizontal-plugin-layers-dynamic.js";
+import { composeHorizontalPluginLayersStatic } from "./compose-horizontal-plugin-layers-static.js";
 import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
-import {
-  disposeProcessWormHost,
-  ensureProcessWormHostBooted,
-} from "./process-worm-host.js";
+import { disposeProcessWormHost, ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
+
+const requireFromHere = createRequire(import.meta.url);
 
 let loadSpecOverride: LoadSpecFn | undefined;
 let shutdownHooksRegistered = false;
@@ -36,29 +37,103 @@ function resolveLoadSpec(): LoadSpecFn {
   return loadSpecOverride ?? loadSpec;
 }
 
-function buildSearchLive(): Layer.Layer<SearchService> {
-  return makeSearchLive(resolveLoadSpec());
-}
-
 function buildExecuteLive() {
   return makeExecuteLive(resolveLoadSpec());
 }
 
 let apiHandle: ClawQLApiHandle | undefined;
+let ensureApiPromise: Promise<ClawQLApiHandle> | undefined;
+
+function buildClawqlApiOptions(
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+): CreateClawQLApiOptions {
+  // Omit searchLayer — createClawQLApi wires host.skillRegistry into unified search.
+  // Pass loadSpecFn so setLoadSpecForTests overrides both search and execute.
+  return {
+    executeLayer: buildExecuteLive(),
+    loadSpecFn: resolveLoadSpec(),
+    plugins: [...composeDefaultPlugins(), ...defaultPaymentsProxyPlugins()],
+    pluginLayers,
+    vaultSeedLayer,
+    runtimeLayers: [makeEffectOtelTracerLayer()],
+    prepareEffect: attachActiveOtelParent,
+  };
+}
+
+function buildClawqlApi(
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+): ClawQLApiHandle {
+  return createClawQLApi(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
+}
+
+async function buildClawqlApiAsync(
+  pluginLayers: CreateClawQLApiOptions["pluginLayers"],
+  vaultSeedLayer?: CreateClawQLApiOptions["vaultSeedLayer"]
+): Promise<ClawQLApiHandle> {
+  return createClawQLApiAsync(buildClawqlApiOptions(pluginLayers, vaultSeedLayer));
+}
+
+async function resolveVaultSeedLayer(): Promise<
+  CreateClawQLApiOptions["vaultSeedLayer"] | undefined
+> {
+  try {
+    const mem = await import("clawql-memory/plugin");
+    if (typeof mem.MemoryVaultSeedLive !== "undefined") {
+      return mem.MemoryVaultSeedLive;
+    }
+  } catch {
+    /* memory package optional at edge */
+  }
+  return undefined;
+}
+
+/** Sync vault-seed for {@link getClawqlApi} — same Layer as async when memory is installed. */
+function resolveVaultSeedLayerSync(): CreateClawQLApiOptions["vaultSeedLayer"] | undefined {
+  try {
+    const mem = requireFromHere("clawql-memory/plugin") as typeof import("clawql-memory/plugin");
+    if (typeof mem.MemoryVaultSeedLive !== "undefined") {
+      return mem.MemoryVaultSeedLive;
+    }
+  } catch {
+    /* optional */
+  }
+  return undefined;
+}
+
+/**
+ * Async production bootstrap — composes horizontal tiers via dynamic import so disabled
+ * packages are not statically loaded. Safe to call multiple times; returns existing handle.
+ */
+export async function ensureClawqlApi(): Promise<ClawQLApiHandle> {
+  if (apiHandle) return apiHandle;
+  if (ensureApiPromise) return ensureApiPromise;
+  ensureApiPromise = (async () => {
+    void ensureProcessWormHostBooted().catch(() => undefined);
+    const pluginLayers = await composeHorizontalPluginLayersDynamic(
+      resolvePluginCompositionFlags()
+    );
+    const vaultSeedLayer = await resolveVaultSeedLayer();
+    apiHandle = await buildClawqlApiAsync(pluginLayers, vaultSeedLayer);
+    return apiHandle;
+  })();
+  try {
+    return await ensureApiPromise;
+  } finally {
+    ensureApiPromise = undefined;
+  }
+}
 
 /** Process-wide ClawQL API runtime (search/execute + plugin registry). */
 export function getClawqlApi(): ClawQLApiHandle {
   if (!apiHandle) {
     // Fire-and-forget: durable WORM when CLAWQL_WORM_ENABLED=1 (does not block API build).
     void ensureProcessWormHostBooted().catch(() => undefined);
-    apiHandle = createClawQLApi({
-      searchLayer: buildSearchLive(),
-      executeLayer: buildExecuteLive(),
-      plugins: [...defaultPlugins(), ...defaultPaymentsProxyPlugins()],
-      pluginLayers: composeHorizontalPluginLayers(resolvePluginCompositionFlags()),
-      runtimeLayers: [makeEffectOtelTracerLayer()],
-      prepareEffect: attachActiveOtelParent,
-    });
+    apiHandle = buildClawqlApi(
+      composeHorizontalPluginLayersStatic(resolvePluginCompositionFlags()),
+      resolveVaultSeedLayerSync()
+    );
   }
   return apiHandle;
 }
@@ -70,6 +145,7 @@ export function getClawqlApi(): ClawQLApiHandle {
 export async function disposeClawqlApi(): Promise<void> {
   const handle = apiHandle;
   apiHandle = undefined;
+  ensureApiPromise = undefined;
   if (handle) {
     await handle.dispose().catch(() => undefined);
   }
@@ -85,6 +161,7 @@ export function resetClawqlApiForTests(): void {
   if (!apiHandle) return;
   Effect.runSync(apiHandle.registry.teardownAll());
   apiHandle = undefined;
+  ensureApiPromise = undefined;
 }
 
 /** Register SIGINT/SIGTERM → {@link disposeClawqlApi} once per process. */
@@ -98,7 +175,7 @@ export function registerClawqlApiShutdownHooks(): void {
   process.once("SIGTERM", once);
 }
 
-/** Run mcp-proxy `beforeCallTool` hooks (Panguard policy, x402 payment gates, …). */
+/** Run HookRegistry pre-execute hooks (Panguard policy, x402 payment gates, …). */
 export async function runMcpProxyBeforeCallTool(toolName: string, args: unknown): Promise<void> {
   await getClawqlApi().run(
     Effect.gen(function* () {

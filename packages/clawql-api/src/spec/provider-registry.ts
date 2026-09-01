@@ -381,8 +381,8 @@ export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
 
 /**
- * Opinionated default install stack — framework-style curated merge when no spec env is set.
- * **`CLAWQL_PROVIDER=default`** / **`default-providers`** resolves the same list (plus optional cloud add-ons).
+ * Opinionated curated pack — **`CLAWQL_PROVIDER=default`** / instance `providers.pack: "default"`.
+ * Not loaded automatically; catalog remains available without enabling.
  */
 export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
   "cloudflare",
@@ -394,21 +394,12 @@ export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
 ];
 
 /**
- * Default bundled merge when no spec env is set: **`DEFAULT_BUNDLED_PROVIDER_IDS`**, minus Cloudflare when
- * **`CLAWQL_ENABLE_CLOUDFLARE=0`**, plus **`google`** / **`aws`** when **`CLAWQL_ENABLE_GOOGLE`** /
- * **`CLAWQL_ENABLE_AWS`** are set. Does not respect **`CLAWQL_ENABLE_DOCUMENTS`** (Onyx stays in the default stack).
+ * Resolve the curated **`default`** pack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx).
+ * Cloud add-ons (google/aws) are **not** appended via env flags — list them in `providers.enabled`
+ * or use pack **`all-providers`** / **`CLAWQL_PROVIDER=google|aws`**.
  */
 export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
-  const flags = getClawqlOptionalToolFlags();
-  const ids = DEFAULT_BUNDLED_PROVIDER_IDS.filter((id) => {
-    if (id === "cloudflare" && !flags.enableCloudflare) return false;
-    return true;
-  });
-  const parts = [...ids];
-  if (flags.enableGoogle) parts.push("google");
-  if (flags.enableAws) parts.push("aws");
-  if (parts.length === 0) return [];
-  return resolveItemsFromBundledProviderEnvList(parts.join(","));
+  return resolveItemsFromBundledProviderEnvList(DEFAULT_BUNDLED_PROVIDER_IDS.join(","));
 }
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
@@ -452,14 +443,14 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   /** Merged bundled AWS APIs from `providers/aws/aws-top50-apis.json` (see providers docs). */
   aws: { resolve: resolveAwsTop50Items },
   /**
-   * Opinionated default stack (same as no-config install). Cloud add-ons via **`CLAWQL_ENABLE_GOOGLE`** /
-   * **`CLAWQL_ENABLE_AWS`**; omit Cloudflare with **`CLAWQL_ENABLE_CLOUDFLARE=0`**.
+   * Curated pack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Opt in via
+   * `providers.pack: "default"` or `CLAWQL_PROVIDER=default` — not the no-config default.
    */
   default: { resolve: resolveDefaultBundledProvidersItems },
   "default-providers": { resolve: resolveDefaultBundledProvidersItems },
   /**
    * Literally every bundled vendor plus Google top-50 and AWS top-50. Only **`CLAWQL_ENABLE_DOCUMENTS=0`**
-   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** — not the no-config default.
+   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** / `providers.pack: "all-providers"`.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

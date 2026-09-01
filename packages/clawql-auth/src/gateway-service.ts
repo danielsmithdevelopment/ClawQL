@@ -38,7 +38,7 @@ export function gatewayAuthServiceFromConfig(config: GatewayAuthConfig) {
 /** Live gateway auth service backed by `process.env` config. */
 export const GatewayAuthServiceLive = Layer.effect(
   GatewayAuthService,
-  Effect.sync(() => gatewayAuthServiceFromConfig(loadGatewayAuthConfig()))
+  Effect.map(loadGatewayAuthConfig(), gatewayAuthServiceFromConfig)
 );
 
 /** Build an isolated gateway auth service layer for tests / explicit config. */

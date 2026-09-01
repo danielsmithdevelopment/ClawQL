@@ -23,6 +23,14 @@ export {
   type WebAuthnStepUpVerifier,
 } from "./webauthn.js";
 export {
+  createSimpleWebAuthnVerifier,
+  publicKeyFromPasskeyRecord,
+  verifyPasskeyRegistrationEffect,
+  type SimpleWebAuthnVerifierOptions,
+  type VerifiedPasskeyRegistration,
+  type VerifyPasskeyRegistrationInput,
+} from "./simplewebauthn-verifier.js";
+export {
   buildPasskeyAuthenticatorSelection,
   PASSKEY_AUTHENTICATOR_CATALOG,
   resolveAuthenticatorAttachment,

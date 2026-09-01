@@ -72,11 +72,14 @@ metrics:
     interval: 30s
     scrapeTimeout: 10s
 
-# Mirrors docker/kustomize/base/deployment-mcp-http.yaml
-# Merged `CLAWQL_PROVIDER`: `default` (same opinionated stack as bare npm — Cloudflare, GitHub, Slack, Linear, Notion, Onyx).
-# Use `all-providers` for every bundled vendor + Google top-50 + AWS top-50, or set extraEnv / patchDeployment with
-# `CLAWQL_BUNDLED_PROVIDERS=…` and omit `CLAWQL_PROVIDER` if needed (see README "Configure the API spec").
-provider: default
+# Bundled OpenAPI/GraphQL catalog is **available** in the image but **not loaded** by default.
+# Opt in via `providers.pack` (`default` | `all-providers` | `google` | `aws` | `atlassian` | `none`)
+# and/or `providers.enabled: [github, linear, …]` — injected into CLAWQL_INSTANCE_SPEC.
+# Legacy escape hatch: set `provider` to a pack/vendor id to inject CLAWQL_PROVIDER (omit / empty = none).
+provider: ""
+providers:
+  pack: none
+  # enabled: []
 bundledOffline: "1"
 
 # MCP protobuf gRPC listener (port service.grpc.port). Alias for Convergence Week blog:
@@ -259,14 +262,19 @@ enablePdfInspector: false
 enableAnydoc: false
 enableIdpPipeline: false
 
-# Optional ClawQLInstance tier-spec overlay (#255). Default off — Helm `enable*` env flags remain authoritative unless this mount is enabled.
+# Optional ClawQLInstance tier-spec overlay (#255). Chart always injects CLAWQL_INSTANCE_SPEC from
+# Helm enable* values via clawql-mcp.instanceSpecJson. This mount is for operator-managed ConfigMaps.
 instanceSpec:
   enabled: false
   configMapName: ""
   mountPath: /etc/clawql/instance
 
-# Bundled cloud APIs — add Google/AWS to the default install stack; omit Cloudflare with enableCloudflare: false.
-# all-providers always includes Google, AWS, and Cloudflare regardless of these values.
+# Default tier when building CLAWQL_INSTANCE_SPEC from Helm enable* values.
+pluginTier:
+  tier: standard
+
+# Deprecated: use `providers.pack` / `providers.enabled` (or CLAWQL_PROVIDER) instead of these flags.
+# Kept for chart compatibility; they no longer gate the provider stack.
 enableGoogle: false
 enableCloudflare: true
 enableAws: false
@@ -573,8 +581,10 @@ onyx:
       memory: 2Gi
 
 # MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
+# Deprecated: Ouroboros tools always load via clawql-harness (no CLAWQL_ENABLE_OUROBOROS).
+# Kept so older values files do not break; ignored for tool registration.
 enableOuroboros: false
-# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250). Requires enableOuroboros.
+# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250).
 enableLangfuseEval: false
 # When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
 ouroborosDatabaseUrl: ""

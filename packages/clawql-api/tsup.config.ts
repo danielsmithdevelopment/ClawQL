@@ -11,5 +11,7 @@ export default defineConfig({
   clean: true,
   noExternal: ["clawql-auth"],
   // Node built-in used by clawql-auth SQLite SecretStore — leave unresolved in the bundle.
-  external: ["node:sqlite", "sqlite"],
+  // express-rate-limit (and express) are clawql-auth HTTP peers — must stay external so
+  // clawql-api's ESM bundle does not inline `debug` → dynamic require("tty").
+  external: ["node:sqlite", "sqlite", "express-rate-limit", "express"],
 });

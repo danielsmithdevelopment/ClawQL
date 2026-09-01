@@ -1,0 +1,36 @@
+# executor-cmp-001 OpenBench task manifest
+task_id: executor-cmp-001
+description: >
+  Find all open PRs authored by {user} in {repo} with more than
+  {threshold} review comments. Return title and comment count for each.
+source: github
+matched_conditions:
+  tokenizer: cl100k_base
+  model: same-model-both-runs  # when live model step is wired
+  num_predict: 256
+  temperature: 0
+  focus: input
+params:
+  user: alice-dev
+  repo: acme/platform
+  threshold: 3
+arms:
+  - id: executor
+    tool_interface: executor.sh search/describe/call pattern
+    measure: [input_tokens_tool_defs, input_tokens_tool_result, output_tokens]
+    layer1_reference:
+      source: https://executor.sh/
+      naive_catalog_tokens: 278800
+      codemode_tool_defs_tokens: 1044
+  - id: clawql
+    tool_interface: clawql search/execute with projection
+    measure: [input_tokens_tool_defs, input_tokens_tool_result, output_tokens]
+    harness: scripts/benchmarks/executor-comparison.mjs
+report:
+  focus: input
+  split: [tool_defs, tool_result]
+  output_path: docs/benchmarks/executor-comparison/executor-cmp-001.json
+notes:
+  - Executor Layer 1 numbers are published reference, not re-measured in CI.
+  - Layer 2 executor arm simulates raw JSON passthrough (no output projection).
+  - 862x multi-provider benchmark is a different metric; see README.

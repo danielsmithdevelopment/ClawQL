@@ -5,6 +5,8 @@
     "clawql-audit",
     "clawql-core",
     "clawql-auth",
+    "clawql-tee",
+    "clawql-agents",
     "clawql-pageindex",
     "clawql-codegraph",
     "clawql-api",
@@ -19,23 +21,30 @@
     "clawql-payments",
     "clawql-inference",
     "clawql-ouroboros",
+    "clawql-harness",
     "clawql-operator",
     "clawql-mcp"
   ],
-  "localPackExtras": [
-    "mcp-grpc-transport",
-    "mcp-api-adapter"
-  ],
+  "localPackExtras": ["mcp-grpc-transport"],
+  "localPackExtrasAfter": ["mcp-api-adapter"],
   "notes": [
     "clawql-merkle + clawql-audit form the standalone WORM wedge (0.1.x); publish before clawql-core (core depends on merkle).",
+    "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
+    "clawql-mcp (root) has its own version line (currently 7.2.0 on npm). Workspace claws start at 0.1.0 until first publish; clawql-ouroboros stays on its published line (0.1.1 in-tree matches npm).",
+    "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
-    "localPackExtras are packed/installed in CI npm-pack smoke so clawql-mcp can resolve unpublished peer versions (e.g. mcp-grpc-transport@1.0.0 before registry publish).",
-    "mcp-api-adapter depends on mcp-grpc-transport — pack/publish transport first.",
+    "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
+    "localPackExtrasAfter install after clawql-* packages (e.g. mcp-api-adapter optional peer clawql-inference).",
+    "mcp-api-adapter depends on mcp-grpc-transport \u2014 pack/publish transport first.",
     "clawql-telemetry is not yet a package (see #313).",
     "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order (after merkle/audit).",
+    "clawql-ontology has no clawql-* deps (ajv/yaml only) \u2014 safe early in the order.",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
+    "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
+    "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "Monorepo clawql-* horizontals use matching 7.2.0 semver; merkle/audit use independent 0.1.x; npm workspaces link packages locally."
+    "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch)."
   ]
 }

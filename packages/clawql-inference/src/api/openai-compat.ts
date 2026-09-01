@@ -5,6 +5,7 @@ import { getProviderAdapter } from "../providers/registry.js";
 import type { InferenceProviderAdapter, ProviderRegistry } from "../providers/types.js";
 import type { VirtualKeyRequest } from "./auth.js";
 import { resolveRequestModel } from "./model-resolve.js";
+import { DEFAULT_INFERENCE_MODEL_CATALOG } from "../catalog/index.js";
 import { createModelsHandlers } from "./models.js";
 import { sendOpenAiError } from "./openai-errors.js";
 import {
@@ -131,7 +132,7 @@ export function requestUsesToolCalling(body: OpenAiChatCompletionRequest): boole
   if (!Array.isArray(body.messages)) return false;
   for (const message of body.messages) {
     if (!message || typeof message !== "object") continue;
-    if (message.role === "tool") return true;
+    if (message.role === "tool" && message.tool_call_id) return true;
     if (Array.isArray(message.tool_calls) && message.tool_calls.length > 0) return true;
   }
   return false;
@@ -351,9 +352,17 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
       return;
     }
 
-    const resolved = registry ? resolveRequestModel(modelRaw, registry) : null;
+    const env = options.env ?? process.env;
+    const resolved = registry
+      ? resolveRequestModel(modelRaw, registry, DEFAULT_INFERENCE_MODEL_CATALOG, {
+          mlxUpstreamModel: env.CLAWQL_MLX_MODEL,
+        })
+      : null;
     const gatewayModelId = resolved?.gatewayModelId ?? modelRaw;
     const publicModelId = resolved?.publicModelId ?? modelRaw;
+    const gatewayCompleteModel = resolved
+      ? `${resolved.provider}/${resolved.model}`
+      : gatewayModelId;
 
     if (registry && !resolved) {
       sendOpenAiError(res, 404, `Model '${modelRaw}' is not available`, "invalid_request_error");
@@ -372,8 +381,6 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
     };
 
     try {
-      const env = options.env ?? process.env;
-
       if (resolved && registry && requestUsesToolCalling(body)) {
         const adapter = getProviderAdapter(registry, resolved.provider);
         if (adapter) {
@@ -433,7 +440,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
         }
 
         const result = await options.gateway.complete({
-          model: gatewayModelId,
+          model: gatewayCompleteModel,
           messages,
           correlationId,
           team: keyContext?.team,
@@ -450,7 +457,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
       }
 
       const result = await options.gateway.complete({
-        model: gatewayModelId,
+        model: gatewayCompleteModel,
         messages,
         correlationId,
         team: keyContext?.team,

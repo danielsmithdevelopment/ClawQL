@@ -7,6 +7,7 @@ import { Effect } from "effect";
 import { isX402McpPaymentError } from "clawql-payments/x402";
 import { isMppMcpJsonRpcPaymentError } from "clawql-payments/mpp";
 import { runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
+import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "./otel-tracing.js";
 
 /** Meta tools — ring buffer only; skip durable WORM to avoid noise/recursion. */
@@ -30,10 +31,24 @@ function argKeysFromToolArgs(args: unknown): string[] {
   return Object.keys(args as Record<string, unknown>);
 }
 
+function resultLooksError(result: unknown): boolean {
+  return Boolean(result && typeof result === "object" && (result as { isError?: unknown }).isError);
+}
+
 function toolResultLooksOk(result: unknown): boolean {
   if (!result || typeof result !== "object") return true;
   const rec = result as { isError?: boolean };
   return rec.isError !== true;
+}
+
+async function auditWrappedTool(
+  toolName: string,
+  args: unknown,
+  outcome: McpToolAuditOutcome,
+  result?: unknown,
+  errorMessage?: string
+): Promise<void> {
+  await recordMcpToolCallAudit({ toolName, args, outcome, result, errorMessage });
 }
 
 function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Effect<void> {
@@ -71,7 +86,7 @@ function appendMcpToolResultEffect(
 
 /**
  * Wrap MCP tool handlers with mcp-proxy pipeline hooks (Panguard, x402, …),
- * durable WORM audit (when CLAWQL_WORM_ENABLED), and OpenTelemetry spans.
+ * durable WORM audit (when CLAWQL_WORM_ENABLED), ephemeral ring audit, and OTEL spans.
  */
 export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
   toolName: string,
@@ -83,27 +98,30 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     try {
       await runMcpProxyBeforeCallTool(toolName, args[0]);
     } catch (err: unknown) {
-      await Effect.runPromise(
-        appendMcpToolResultEffect(
-          toolName,
-          false,
-          clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err))
-        )
-      );
+      const errDetail =
+        clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err));
+      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
 
       if (isMppMcpJsonRpcPaymentError(err)) {
-        return err.toToolResult() as TResult;
+        const result = err.toToolResult() as TResult;
+        await auditWrappedTool(toolName, args[0], "payment_required", result);
+        return result;
       }
       if (isX402McpPaymentError(err)) {
-        return err.toToolResult() as TResult;
+        const result = err.toToolResult() as TResult;
+        await auditWrappedTool(toolName, args[0], "payment_required", result);
+        return result;
       }
       const blocked = clawqlPolicyBlockMessage(err);
       if (blocked) {
-        return {
+        const result = {
           content: [{ type: "text" as const, text: blocked }],
           isError: true,
         } as TResult;
+        await auditWrappedTool(toolName, args[0], "blocked", result, blocked);
+        return result;
       }
+      await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;
     }
 
@@ -117,15 +135,12 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
           ok ? undefined : JSON.stringify(result).slice(0, 500)
         )
       );
+      await auditWrappedTool(toolName, args[0], resultLooksError(result) ? "error" : "ok", result);
       return result;
     } catch (err: unknown) {
-      await Effect.runPromise(
-        appendMcpToolResultEffect(
-          toolName,
-          false,
-          err instanceof Error ? err.message : String(err)
-        )
-      );
+      const errDetail = err instanceof Error ? err.message : String(err);
+      await Effect.runPromise(appendMcpToolResultEffect(toolName, false, errDetail));
+      await auditWrappedTool(toolName, args[0], "thrown", undefined, errDetail);
       throw err;
     }
   });

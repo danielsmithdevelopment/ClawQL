@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+- **`/mcp-ui` context flamegraph:** `GET /mcp-ui/trace/:sessionId` renders turn×source token stacks (harness / vault seed / tool schema / tool result / reasoning / model output) from inference-shaped records. Built-in demos `demo-compressed` vs `demo-fat` use **cl100k_base tiktoken** counts (generated fixture, not chars÷4). Optional `listTraceCalls` host hook; `?format=json` for harness-bench. Side-by-side **`/mcp-ui/trace/compare`**.
+
+- **`/mcp-ui` overflow fix:** schema descriptions render as wrapping `.field-help` (not truncating input placeholders); result snippets and card text use `overflow-wrap` so long vault snippets no longer spill out of columns.
+
+- **`/mcp-ui` nested forms:** `object` properties render as expandable `<fieldset>`s (`parent.child` names); `array` of scalars/objects get add/remove row controls (`items[0]`, `steps[0].tool`). Depth capped at 2; deeper schemas still fall back to the JSON bag.
+
+- **`/mcp-ui` ATR scoping:** catalog + execute filter by JWT `atr.scope` / `atr.tools` (default on). Internal `ouroboros_*` / `pageindex_*` require explicit or family grants. `--no-mcp-ui-atr-scoped` disables. API keys remain admin-equivalent.
+- **`/mcp-ui` file upload + IDP:** multipart forms for `pdf_base64` / `base64` (and format binary); uploads are base64-encoded into CallTool args. Document-processing ATR (`documents` / `idp` / explicit IDP tools) is separate from tool visibility. Template for `run_idp_pipeline`.
+- **`/mcp-ui` SSE progress:** long-running tools (`run_idp_pipeline`, `ouroboros_*`, …) return an EventSource shell; `GET /mcp-ui/progress/:jobId` streams progress/complete/error.
+- **`/mcp-ui` generate:** `POST /mcp-ui/generate` creates in-memory multi-step workflows; `GET /mcp-ui/custom/:slug` + step execute for agent-authored UIs.
+
+## 0.6.x (mcp-ui v0)
+
+- **`/mcp-ui` surface (v0):** HTMX playground auto-generated from the tool catalog — `GET /mcp-ui`, `POST /mcp-ui/execute/{toolName}`. Flat forms for string/number/boolean/enum; JSON textarea fallback for complex schemas. `--mcp-ui-path`, `--no-mcp-ui`.
+- **Form UX:** Required/optional badges, schema default prefills, blank optional enums, Advanced disclosure for non-primary fields, empty optional omit, HTMX swaps non-2xx error fragments, field-level validation errors.
+- **Templates:** `search`, `memory_recall`, `memory_ingest`, `cache`, `audit` — primary fields + readable result lists (raw JSON still available).
+
 ## 0.6.0
 
 - **WebSocket surface** (`/ws`): JSON tool-call messages over a persistent connection (sixth surface). `--ws-path`, `--no-ws`.

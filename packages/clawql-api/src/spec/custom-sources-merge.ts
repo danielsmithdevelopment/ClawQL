@@ -10,6 +10,7 @@ import { loadOpenAPIFromAbsolutePath } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
 import { loadCliSourceOperations } from "./cli-source-loader.js";
 import { loadMcpSourceOperations } from "./mcp-source-loader.js";
+import { loadWebmcpSourceOperations } from "./webmcp-source-loader.js";
 import { loadGraphqlNativeOperationsFromConfigs } from "./graphql-native-loader.js";
 import { loadGrpcNativeOperationsFromConfigs } from "./grpc-native-loader.js";
 import {
@@ -136,6 +137,9 @@ export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<L
 
   const cliOps = await loadCliSourceOperations(file.sources);
   operations = mergeOps(operations, cliOps);
+
+  const webmcpOps = await loadWebmcpSourceOperations(file.sources);
+  operations = mergeOps(operations, webmcpOps);
 
   const added = operations.length - loaded.operations.length;
   if (added > 0) {

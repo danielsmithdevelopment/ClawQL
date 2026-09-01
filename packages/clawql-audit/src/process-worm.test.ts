@@ -22,6 +22,8 @@ describe("process WORM boot + append", () => {
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;
+    delete process.env.CLAWQL_WORM_TEE;
+    delete process.env.CLAWQL_WORM_TEE_PLATFORM;
   });
 
   it("no-ops when CLAWQL_WORM_ENABLED is unset", async () => {
@@ -115,5 +117,25 @@ describe("process WORM boot + append", () => {
 
     const verify = await Effect.runPromise(svc!.verify());
     expect(verify.valid).toBe(true);
+  });
+
+  it("appends teeSignature when CLAWQL_WORM_TEE=1", async () => {
+    process.env.CLAWQL_WORM_ENABLED = "1";
+    process.env.CLAWQL_WORM_LOCAL = "memory";
+    process.env.CLAWQL_WORM_REMOTE = "memory";
+    process.env.CLAWQL_WORM_RECONCILE_MS = "0";
+    process.env.CLAWQL_WORM_TEE = "1";
+
+    const svc = await Effect.runPromise(bootProcessWormFromEnvEffect());
+    expect(svc).not.toBeNull();
+
+    const entry = await Effect.runPromise(
+      appendProcessWormEffect({
+        type: "SESSION_START",
+        timestamp: new Date().toISOString(),
+        sessionId: "tee-env",
+      })
+    );
+    expect(entry?.teeSignature).toBeTruthy();
   });
 });

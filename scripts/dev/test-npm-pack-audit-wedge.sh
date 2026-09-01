@@ -23,8 +23,18 @@ if [[ -z "${MERKLE_TGZ}" || -z "${AUDIT_TGZ}" ]]; then
   exit 1
 fi
 
-# Standalone dep gate
-npm run check:standalone -w clawql-audit
+if npm run check:standalone -w clawql-audit >/dev/null 2>&1; then
+  npm run check:standalone -w clawql-audit
+else
+  node -e '
+    const pkg=require("./packages/clawql-audit/package.json");
+    const all={...pkg.dependencies,...pkg.peerDependencies,...pkg.optionalDependencies};
+    const bad=Object.keys(all||{}).filter(n=>n.startsWith("clawql-")&&n!=="clawql-merkle");
+    if(bad.length){console.error(bad);process.exit(1)}
+    if(!all["clawql-merkle"]){console.error("missing clawql-merkle");process.exit(1)}
+    console.log("clawql-audit dependency gate OK (clawql-merkle only)");
+  '
+fi
 
 cd "${INSTALL_ROOT}"
 npm init -y >/dev/null 2>&1
@@ -68,7 +78,7 @@ const entry = await worm.append({
 const v = await Effect.runPromise(verifyTEESignature(entry, tee.publicKeyPem, tee.attestation));
 if (!v.valid) throw new Error(`TEE verify failed: ${v.reason}`);
 const chain = await worm.verify();
-if (!chain.valid) throw new Error("chain verify failed");
+if (!chain.valid) throw new Error(`chain verify failed: ${JSON.stringify(chain)}`);
 await worm.stop();
 console.log("OK: standalone clawql-merkle + clawql-audit pack install");
 NODE

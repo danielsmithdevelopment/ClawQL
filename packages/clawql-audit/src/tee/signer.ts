@@ -34,11 +34,7 @@ export const verifyTEESignature = (
     if (!entry.teeSignature) {
       return { valid: false, reason: "No TEE signature present" };
     }
-    const verified = yield* verifyEntryHashEcdsa(
-      entry.hash,
-      entry.teeSignature,
-      publicKeyPem
-    ).pipe(
+    const verified = yield* verifyEntryHashEcdsa(entry.hash, entry.teeSignature, publicKeyPem).pipe(
       Effect.map((ok) => ({ ok, error: undefined as string | undefined })),
       Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason }))
     );
@@ -54,10 +50,7 @@ export const verifyTEESignature = (
         reason: "ECDSA valid (simulated TEE — not hardware-attested)",
       };
     }
-    if (
-      attestationReport?.platform === "sev-snp" ||
-      attestationReport?.platform === "tdx"
-    ) {
+    if (attestationReport?.platform === "sev-snp" || attestationReport?.platform === "tdx") {
       return {
         valid: true,
         reason: `ECDSA valid; hardware attestation (${attestationReport.platform}) not yet verified by clawql-tee`,

@@ -1,5 +1,5 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import {
@@ -23,7 +23,10 @@ export const dataQuerySchema = {
 };
 
 export const dataIngestSchema = {
-  matters: z.array(jsonRecord).optional().describe("Matter rows (typed columns + optional _open_facts / _matter_documents)"),
+  matters: z
+    .array(jsonRecord)
+    .optional()
+    .describe("Matter rows (typed columns + optional _open_facts / _matter_documents)"),
   documents: z.array(jsonRecord).optional().describe("matter_documents rows"),
   openFacts: z.array(jsonRecord).optional(),
   mattersRoot: z
@@ -88,15 +91,20 @@ export async function handleDataStatusToolInput() {
   return textResult(status);
 }
 
-export function createDataPlugin(): Plugin {
-  return {
+export function createDataPlugin(): ProviderPlugin {
+  return defineRegisteringProviderPlugin({
     id: DATA_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "ClawQL data query, ingest, and status MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "data_query",
+          schema: dataQuerySchema,
+          handler: (args) => handleDataQueryToolInput(args as { sql: string }),
+        });
+        yield* api.registerMcpTool({
+          name: "clawql_sql",
           schema: dataQuerySchema,
           handler: (args) => handleDataQueryToolInput(args as { sql: string }),
         });
@@ -111,5 +119,5 @@ export function createDataPlugin(): Plugin {
           handler: () => handleDataStatusToolInput(),
         });
       }),
-  };
+  });
 }

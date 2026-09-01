@@ -13,6 +13,8 @@ export type McpToolRegistration = {
   readonly description?: string;
   readonly schema: Record<string, z.ZodTypeAny>;
   readonly handler: McpToolHandler;
+  /** Preserved for Agent Seer scenario synthesis / eval quality (§9.3). */
+  readonly parameterNotes?: Record<string, string>;
 };
 
 export class McpToolRegistry {
@@ -34,6 +36,17 @@ export class McpToolRegistry {
     return [...this.tools.values()];
   }
 
+  /** ToolDefinition-shaped rows for scenario synthesis (handlers omitted from eval surface). */
+  listForSynthesis(): readonly import("clawql-core").ToolDefinition[] {
+    return [...this.tools.values()].map((t) => ({
+      name: t.name,
+      description: t.description,
+      schema: t.schema as unknown as Record<string, unknown>,
+      handler: t.handler,
+      parameterNotes: t.parameterNotes,
+    }));
+  }
+
   registrationApi(): ClawQLPluginRegistrationApi {
     return {
       registerMcpTool: (tool: McpToolDefinition) =>
@@ -42,6 +55,7 @@ export class McpToolRegistry {
           description: tool.description ?? tool.name,
           schema: tool.schema as Record<string, z.ZodTypeAny>,
           handler: tool.handler,
+          parameterNotes: tool.parameterNotes,
         }),
     };
   }

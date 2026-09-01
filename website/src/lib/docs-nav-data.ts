@@ -155,11 +155,14 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
+      { title: 'Authentication', href: '/auth' },
+      { title: 'Audit Trail', href: '/audit' },
+      { title: 'Observability', href: '/observability' },
       { title: 'mcp-api-adapter', href: '/mcp/mcp-api-adapter' },
       {
         title: '/mcp-ui',
         href: '/mcp/mcp-ui',
-        tag: 'Draft',
+        tag: 'Shipped',
       },
       { title: 'Protocol Fabric', href: '/mcp/protocol-fabric' },
       { title: 'Configuration', href: '/spec-configuration' },

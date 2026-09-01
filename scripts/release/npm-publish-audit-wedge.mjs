@@ -2,7 +2,7 @@
 /**
  * Publish the standalone WORM wedge only: clawql-merkle then clawql-audit.
  *
- * Use for first registry publish of 0.1.x without tagging the full monorepo.
+ * Use for first registry publish of merkle/audit@0.1.0 without re-tagging clawql-mcp.
  * Requires NPM_TOKEN and/or npm OIDC trusted publishing (packages must be linked
  * on npmjs.com for provenance / trusted publishers).
  *
@@ -29,4 +29,6 @@ function publish(workspace) {
 for (const name of packages) {
   publish(name);
 }
-console.log(dryRun ? "Dry run complete (clawql-merkle → clawql-audit)." : "Wedge publish complete.");
+console.log(
+  dryRun ? "Dry run complete (clawql-merkle → clawql-audit)." : "Wedge publish complete."
+);

@@ -1,8 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  appendInferenceCallToWormEffect,
-  appendInferenceResultToWormEffect,
-} from "clawql-audit";
+import { appendInferenceCallToWormEffect, appendInferenceResultToWormEffect } from "clawql-audit";
 import { Effect } from "effect";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 import { estimateCostUsd } from "../keys/budget.js";
@@ -10,6 +7,7 @@ import { recordKeySpend } from "../keys/store.js";
 import { parseModelId } from "../providers/parse-model-id.js";
 import { buildInferenceRecord } from "../store/types.js";
 import type { InferenceStore } from "../store/types.js";
+import { tokenizeChatMessagesAsync } from "../tokenize/messages.js";
 
 function resolveRequestModelId(request: InferenceRequest): string {
   return request.model ?? request.routing?.modelId ?? "unknown";
@@ -32,7 +30,10 @@ function appendInferenceCallWorm(
     virtualKeyId: request.virtualKeyId,
     messageCount: request.messages.length,
     cacheIntent: request.cacheIntent,
-  }).pipe(Effect.catchAll(() => Effect.void), Effect.asVoid);
+  }).pipe(
+    Effect.catchAll(() => Effect.void),
+    Effect.asVoid
+  );
 }
 
 function appendInferenceResultWorm(input: {
@@ -56,7 +57,10 @@ function appendInferenceResultWorm(input: {
     inputTokens: input.response?.usage?.inputTokens,
     outputTokens: input.response?.usage?.outputTokens,
     detail: input.detail,
-  }).pipe(Effect.catchAll(() => Effect.void), Effect.asVoid);
+  }).pipe(
+    Effect.catchAll(() => Effect.void),
+    Effect.asVoid
+  );
 }
 
 /** Gateway decorator that persists every completion to an {@link InferenceStore}. */
@@ -78,11 +82,12 @@ export class ObservedInferenceGateway implements InferenceGateway {
       const response = await this.inner.complete(request);
       const resolvedModelId = request.model ?? request.routing?.modelId ?? response.model;
       const parsed = parseModelId(resolvedModelId);
+      const messages = await tokenizeChatMessagesAsync(request.messages, this.env);
 
       await this.store.append(
         buildInferenceRecord({
           id: randomUUID(),
-          request,
+          request: { ...request, messages },
           response,
           provider: parsed.provider,
           model: parsed.model,

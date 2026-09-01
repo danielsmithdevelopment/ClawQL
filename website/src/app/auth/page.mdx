@@ -1,0 +1,89 @@
+# Authentication
+
+ClawQL handles two distinct authentication problems. **Inbound** is how clients and human operators authenticate to ClawQL's own MCP gateway. **Outbound** is how ClawQL authenticates to upstream services — Slack, Google, GitHub, and anything else an agent needs to call — on an agent's behalf. Most confusion about MCP auth comes from treating these as one problem. They are handled separately here. {{ className: 'lead' }}
+
+**Package:** [`clawql-auth`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-auth) · [README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-auth/README.md) · [token store](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-auth/src/oauth/token-store.ts)
+
+**Agent discovery:** [`/auth.md`](/auth.md) is the machine-readable registration skill. This page is the human mechanism guide.
+
+**Related:** [Audit Trail](/audit) · [Observability](/observability)
+
+---
+
+## Outbound: token refresh
+
+The most common MCP auth complaint is a token that worked yesterday and doesn't today. This usually happens for one of two reasons: the token expired before anything tried to refresh it, or multiple concurrent sessions raced to refresh the same token and invalidated each other.
+
+ClawQL's outbound token store addresses both directly.
+
+**Refresh is proactive, not reactive.** A token is refreshed once it comes within 60 seconds of expiry, not after a call fails with a 401. Nothing in a normal session should ever hit an expired token.
+
+**Refresh is mutex-protected.** When several concurrent agent sessions share a credential for the same provider, only one refresh runs at a time. Every other session waiting on that credential queues behind the in-flight refresh instead of calling the provider's token endpoint independently. This matters because most OAuth providers issue single-use refresh tokens — two simultaneous refresh attempts against the same refresh token typically means one succeeds and the other fails with `invalid_grant`, taking a session down for no reason other than timing. ClawQL's token store makes that race structurally impossible rather than relying on retry logic to paper over it.
+
+```
+getValidToken(providerId, sessionId)
+  → token still valid?          → return it
+  → refresh already in flight?  → wait on that refresh, don't start another
+  → otherwise                   → own the refresh, others queue behind it
+```
+
+**Failure is explicit, not silent.** If a refresh token is dead (`invalid_grant`), the credential is marked as requiring re-authorization and the calling session receives a typed error rather than a generic failure. This is a real state change a human needs to act on — a stale credential doesn't quietly keep retrying in the background.
+
+This covers any provider ClawQL calls on an agent's behalf: Google, Microsoft, Slack, GitHub, and others. All of it applies whether ClawQL is calling one provider from one session or many sessions calling many providers concurrently.
+
+---
+
+## Inbound: connecting to ClawQL itself
+
+Inbound authentication is how something connects to ClawQL's MCP gateway — a human operator, a CI pipeline, or a client like Claude Desktop, Cursor, or Cline.
+
+### API keys
+
+The default for programmatic and machine-to-machine access. Issued keys (`cqk_…`) are hashed on storage, validated with a constant-time comparison, and scoped — a key can be limited to specific tools and a specific owner (a single developer, a team, or an organization). Keys are revocable; optional expiry is set at issue time.
+
+### Enterprise-Managed Authorization (EMA)
+
+ClawQL implements the open ID-JAG (Identity Assertion JWT Authorization Grant) extension to OAuth — the same mechanism behind Claude's, VS Code's, and other MCP hosts' Enterprise-Managed Authorization. This is not a proprietary integration; it's an open, IETF-track specification that any identity provider or MCP server can implement.
+
+ClawQL supports both roles independently:
+
+**As a Resource App Authorization Server (consumer role).** An enterprise's identity provider — Okta today, others as they add support — mints an ID-JAG assertion when an employee logs in. ClawQL verifies that assertion against the org's JWKS, maps the employee's IdP groups to a scoped access token, and the employee gets access with no individual OAuth consent screen. This is the standard EMA flow: the org's existing IdP stays the source of truth, ClawQL is the connector accepting its assertions.
+
+**As an Enterprise Identity Provider (issuer role).** ClawQL can also mint ID-JAG assertions itself, for organizations that want zero-touch provisioning without routing session-token custody through a third-party identity SaaS. In this mode, ClawQL is the org's IdP for the purposes of MCP connector access — any EMA-compliant connector, not just ClawQL's own, can accept assertions ClawQL issues.
+
+An organization can run either role alone or both simultaneously, with no third-party identity provider involved in the AI/MCP path at all.
+
+### What EMA does not cover
+
+ID-JAG assumes the underlying enterprise SSO already produced a standard identity assertion by the time it reaches an MCP connector. If an organization's internal SSO is SAML rather than OIDC, that exchange — SAML assertion to OAuth token to ID-JAG — happens entirely on the identity provider's side, before anything reaches ClawQL. ClawQL does not implement a SAML server itself; this is a deliberate scope boundary, not a missing feature.
+
+### Session tokens
+
+Once a client is authenticated by any of the above methods, it holds a short-lived session JWT (MCP OAuth access tokens default to **5 minutes**; refresh tokens default to **1 hour** — both configurable) carrying the scope it's authorized for — which tools it can call, what budget it has, how long the session lasts. This token is what gets checked on every subsequent tool call, not the original credential.
+
+---
+
+## Signing
+
+Production deployments sign tokens with RS256 and publish a JWKS endpoint, so a resource server can verify tokens without holding the signing key. A development-only HS256 fallback exists for local testing and is not intended for production use; ClawQL warns at startup if a production-shaped deployment is running on the development signing path.
+
+Where ClawQL acts as both a Resource App Authorization Server and an Enterprise Identity Provider in the same deployment, each role should use its own signing key. Sharing one key between the two roles is supported for convenience but means a compromise of either role compromises both; ClawQL warns at startup when this configuration is in use.
+
+---
+
+## Audit
+
+Every authentication event — a token issued, a token refused, a refresh that succeeded or failed, a re-authorization requested — is emitted through ClawQL's auth event sink into the append-only audit trail when a host has wired one (for example process WORM via `clawql-audit`). See **[Audit Trail](/audit)** for how that trail is structured and verified.
+
+---
+
+## Summary
+
+| Problem                                                     | Mechanism                                                               |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Outbound token expired overnight                            | Proactive refresh, 60 seconds before expiry                             |
+| Concurrent sessions invalidating each other's refresh token | Mutex — one refresh per provider, others queue                          |
+| Per-user OAuth consent screens at enterprise scale          | EMA / ID-JAG, consumer role                                             |
+| Third-party identity provider holding session-token custody | EMA / ID-JAG, issuer role — ClawQL as the IdP                           |
+| Legacy SAML-based internal SSO                              | Out of scope — handled upstream by the org's IdP before reaching ClawQL |
+| Verifying who did what, when                                | Every auth event in the audit trail                                     |

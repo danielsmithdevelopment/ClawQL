@@ -26,7 +26,8 @@ mapfile -t PUBLISH_ORDER < <(node -e "
 const order=require('./scripts/release/npm-publish-order.json');
 const extras=order.localPackExtras||[];
 const packages=order.packages||[];
-for (const name of [...extras, ...packages]) {
+const extrasAfter=order.localPackExtrasAfter||[];
+for (const name of [...extras, ...packages, ...extrasAfter]) {
   if (name === 'clawql-mcp') continue;
   console.log(name);
 }
@@ -65,6 +66,7 @@ resolve_pkg() {
 }
 
 for name in clawql-merkle clawql-audit clawql-api clawql-auth clawql-core clawql-codegraph clawql-memory clawql-ontology clawql-pageindex clawql-web clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-operator clawql-release mcp-grpc-transport; do
+for name in clawql-api clawql-auth clawql-merkle clawql-core clawql-audit clawql-agents clawql-codegraph clawql-memory clawql-ontology clawql-pageindex clawql-web clawql-documents clawql-automation clawql-sandbox clawql-inference clawql-payments clawql-ouroboros clawql-harness clawql-operator clawql-release mcp-grpc-transport; do
   resolve_pkg "${name}"
 done
 
@@ -73,8 +75,13 @@ node --input-type=module <<'NODE'
 import "clawql-merkle";
 import "clawql-audit";
 import "clawql-api";
+import "clawql-merkle";
 import "clawql-core";
+import "clawql-audit";
+import "clawql-agents";
 import "clawql-memory";
+import "clawql-ouroboros";
+import "clawql-harness";
 import "clawql-auth";
 import "clawql-pageindex";
 import "clawql-codegraph";

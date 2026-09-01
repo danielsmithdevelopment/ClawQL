@@ -89,6 +89,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - **Fine-tuned classifier runbook**: [`runbooks/fine-tuned-classifier.md`](runbooks/fine-tuned-classifier.md)
 
 - **Personal agent (Hermes/Ornith + Cline/Ornith)** on Mac Mini: [`homelab/personal-agent-hermes-cline.md`](homelab/personal-agent-hermes-cline.md) — both agents default to Ornith; Nemotron is smoke fallback; ATR scopes, WORM hooks (not the multi-channel OpenClaw path)
+- **WORM packages:** [`audit/README.md`](audit/README.md) (`clawql-merkle` / `clawql-audit`) · [`agents/README.md`](agents/README.md) (`clawql-agents` Cline adapter)
 - `openclaw/using-openclaw-with-clawql.md` — **full guide:** OpenClaw CLI + ClawQL MCP (install, `openclaw mcp set`, HTTP/stdio, validation, remote); website **`/openclaw`**
 - `openclaw/clawql-bootstrap.md` — register ClawQL in OpenClaw, env matrix, smoke checklist ([#226](https://github.com/danielsmithdevelopment/ClawQL/issues/226))
 - `openclaw/openclaw-idp-skill-profile.md` — **OpenClaw IDP** canonical tools, provider matrix, workflow contract ([#227](https://github.com/danielsmithdevelopment/ClawQL/issues/227))

@@ -1,0 +1,70 @@
+# Audit Trail
+
+Every consequential action ClawQL takes — a tool call, an authentication event, a scope denial, a document extraction, a payment, a model inference — is written to an append-only audit trail before that action is considered complete. This is not a logging feature added for compliance checkboxes. It's the mechanism that makes every other claim ClawQL makes about an agent's behavior checkable after the fact, rather than merely asserted at the time. {{ className: 'lead' }}
+
+**Package:** [`clawql-audit`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-audit) · [README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-audit/README.md) · companion [`clawql-merkle`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-merkle)
+
+**Related:** [Authentication](/auth) (auth events dual-write into this trail) · [Observability](/observability) (LGTM+ runtime telemetry — different surface) · [Audit tool & observability](/learn/audit-tool-and-observability) (in-process MCP `audit` ring buffer — different surface)
+
+---
+
+## What gets recorded
+
+Anything with a consequence gets an entry: which tool was called, with what arguments, by which session, at what time, and what happened as a result. This includes actions that don't involve a model call at all — a scheduled job firing, a file write, a credential refresh, a scope enforcement decision blocking a request. If an action changed something or was denied, it's in the trail.
+
+Entries carry enough context to answer, after the fact: what was this session authorized to do, what did it actually do, and did those match.
+
+---
+
+## How integrity is guaranteed
+
+Two distinct mechanisms are used here, deliberately kept separate because they prove two different things.
+
+**A hash chain proves the log itself hasn't been tampered with.** Every entry embeds the hash of the entry before it. If any entry is altered, deleted, or reordered after the fact, recomputing the chain from any earlier known-good point immediately reveals it. This is what makes the trail append-only in practice, not just by policy — modifying history breaks verifiably.
+
+**A Merkle root, computed periodically over a batch of entries, proves a specific entry belongs to a specific batch without needing the whole batch to check it.** This is what makes external verification cheap: rather than handing someone your entire log to confirm one entry, you hand them the entry and a short proof, and they can confirm it against a root that's been published independently of you.
+
+These aren't the same thing solving the same problem twice. The hash chain protects the log's internal order over time. The Merkle root is what makes a single entry externally checkable without trusting whoever operates the log.
+
+---
+
+## Replication
+
+An entry is written locally and queued for remote replication in the same operation — not written locally and then separately, optionally, sent elsewhere. A background process drains that queue to remote storage. If the remote write is delayed, the entry that produced it is already durable locally (with an outbox record); nothing is lost, and callers are not failed solely because remote is temporarily down.
+
+On restart, the outbox drains and the trail's current position is loaded from durable storage before anything new is accepted. A process that restarted with no memory of where the log left off would risk starting a second, conflicting sequence — this is checked for explicitly rather than assumed away.
+
+---
+
+## External verification
+
+Because the trail is Merkle-batched, its integrity doesn't depend on trusting the operator. A batch root can be published somewhere outside ClawQL's own infrastructure — anchored across multiple public chains chosen for stability and low cost rather than any single one — so that a specific entry's existence at a specific time is checkable by anyone, using only that entry and a short proof, against a root they didn't get from ClawQL.
+
+ClawQL computes and exposes those batch roots as the handoff for that external anchoring. Publishing a root onto public chains is an operator / integrator step on top of the trail (not a single hard-wired vendor chain).
+
+This matters for exactly the situations where "trust our logs" isn't good enough: an audit by a party that doesn't want to rely on the vendor's word, a dispute where both sides need to agree on what happened, a regulatory requirement that records be tamper-evident independent of who's holding them.
+
+---
+
+## What this enables
+
+**Incident review.** If an agent did something unexpected, the trail shows exactly what it was authorized to do, what it attempted, and where enforcement did or didn't intervene — not a reconstruction from memory or logs that could have been edited after the fact.
+
+**Scope enforcement is itself audited.** When a tool call is blocked because it falls outside a session's authorized scope, that denial is recorded with the same rigor as anything that succeeds. A pattern of denials against one session or one credential is visible, not silent.
+
+**Correlated chains across systems.** Where one action leads to another — an identity assertion issued, then exchanged for an access token, then used to call a tool — each step's entry carries a reference to the step before it, so the full sequence can be reconstructed from any point in it, not just inferred from timestamps.
+
+**Standalone use.** The audit trail has no dependency on the rest of ClawQL's stack. It can be adopted on its own, in front of any agent framework, by a team that wants tamper-evident logging without adopting anything else ClawQL does.
+
+---
+
+## Summary
+
+| Property                                          | Mechanism                                                                        |
+| ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Log can't be silently altered                     | Hash chain — every entry references the one before it                            |
+| One entry verifiable without the whole log        | Merkle batch root + short inclusion proof                                        |
+| No entry lost between local write and remote copy | Local write and replication outbox in one operation                              |
+| Restart can't fork the sequence                   | Chain position / outbox loaded from durable storage before accepting new entries |
+| Verifiable without trusting the operator          | Batch roots computed for external anchoring (multi-location publish)             |
+| Works without the rest of ClawQL                  | No dependency on other ClawQL components                                         |

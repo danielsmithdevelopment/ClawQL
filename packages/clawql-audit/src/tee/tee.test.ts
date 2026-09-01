@@ -21,12 +21,12 @@ describe("Phase 3 TEE ECDSA", () => {
       prevHash: "0".repeat(64),
       chainIndex: 0,
       writtenAt: new Date().toISOString(),
-      backendAcks: [],
-      type: "SESSION_START",
+      backendAcks: [] as string[],
+      type: "SESSION_START" as const,
       timestamp: new Date().toISOString(),
       sessionId: "tee-test",
       teeSignature: sig,
-    } as const;
+    };
 
     const ok = await Effect.runPromise(
       verifyTEESignature(entry, signer.publicKeyPem, signer.attestation)

@@ -6,7 +6,7 @@
 
 import type { Request, Response } from "express";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "clawql-api";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { publishDocumentInboxArrivedEvent } from "clawql-automation/nats/publish-hooks";
@@ -102,7 +102,7 @@ export async function handleNextcloudWebhookRequest(req: Request, res: Response)
     source: "nextcloud-webhook",
   });
 
-  const flags = getClawqlOptionalToolFlags();
+  const flags = resolvePluginCompositionFlags();
   const vault = getObsidianVaultPath();
   const insights = [
     "## Summary",

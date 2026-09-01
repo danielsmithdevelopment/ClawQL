@@ -1,9 +1,14 @@
 /**
  * HashiCorp Vault KV v2 SecretStore — enterprise TEE default (alongside OpenBao).
  * Uses fetch against the Vault HTTP API; no `node-vault` required at runtime.
+ * All network IO runs via `Effect.tryPromise` inside Effect methods, failing with
+ * {@link SecretStoreError}.
  */
 
+import { Effect } from "effect";
+
 import { PathSecretStore } from "./base.js";
+import { SecretStoreError } from "./types.js";
 
 export type VaultHttpResponse = {
   status: number;
@@ -32,6 +37,10 @@ export type HashiCorpVaultStoreOptions = {
 
 function trimSlashes(s: string): string {
   return s.replace(/^\/+|\/+$/g, "");
+}
+
+function errMsg(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
 }
 
 function defaultHttp(): VaultHttpClient {
@@ -90,64 +99,93 @@ export class HashiCorpVaultStore extends PathSecretStore {
     return h;
   }
 
-  async getSecret(path: string): Promise<string | null> {
-    const res = await this.http.request({
-      method: "GET",
-      url: this.dataUrl(path),
-      headers: this.headers(),
+  private request(input: {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: string;
+  }): Effect.Effect<VaultHttpResponse, SecretStoreError> {
+    return Effect.tryPromise({
+      try: () => this.http.request(input),
+      catch: (cause) =>
+        new SecretStoreError({ reason: `vault_request_failed: ${errMsg(cause)}`, cause }),
     });
-    if (res.status === 404) return null;
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(`vault_get_failed:${res.status}`);
-    }
-    const data = (res.json as { data?: { data?: { value?: string } } })?.data?.data;
-    return typeof data?.value === "string" ? data.value : null;
   }
 
-  async setSecret(path: string, value: string): Promise<void> {
-    const res = await this.http.request({
-      method: "POST",
-      url: this.dataUrl(path),
-      headers: this.headers(true),
-      body: JSON.stringify({ data: { value } }),
+  getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const res = yield* this.request({
+        method: "GET",
+        url: this.dataUrl(path),
+        headers: this.headers(),
+      });
+      if (res.status === 404) return null;
+      if (res.status < 200 || res.status >= 300) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vault_get_failed:${res.status}` })
+        );
+      }
+      const data = (res.json as { data?: { data?: { value?: string } } })?.data?.data;
+      return typeof data?.value === "string" ? data.value : null;
     });
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(`vault_set_failed:${res.status}`);
-    }
   }
 
-  async deleteSecret(path: string): Promise<void> {
-    const metaUrl = `${this.endpoint}/v1/${this.mount}/metadata/${this.logicalPath(path)}`;
-    const res = await this.http.request({
-      method: "DELETE",
-      url: metaUrl,
-      headers: this.headers(),
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const res = yield* this.request({
+        method: "POST",
+        url: this.dataUrl(path),
+        headers: this.headers(true),
+        body: JSON.stringify({ data: { value } }),
+      });
+      if (res.status < 200 || res.status >= 300) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vault_set_failed:${res.status}` })
+        );
+      }
     });
-    if (res.status === 404) return;
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(`vault_delete_failed:${res.status}`);
-    }
   }
 
-  async listSecrets(prefix: string): Promise<string[]> {
-    const res = await this.http.request({
-      method: "GET",
-      url: this.metadataListUrl(prefix),
-      headers: this.headers(),
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const metaUrl = `${this.endpoint}/v1/${this.mount}/metadata/${this.logicalPath(path)}`;
+      const res = yield* this.request({
+        method: "DELETE",
+        url: metaUrl,
+        headers: this.headers(),
+      });
+      if (res.status === 404) return;
+      if (res.status < 200 || res.status >= 300) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vault_delete_failed:${res.status}` })
+        );
+      }
     });
-    if (res.status === 404) return [];
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(`vault_list_failed:${res.status}`);
-    }
-    const keys =
-      ((res.json as { data?: { keys?: string[] } })?.data?.keys as string[] | undefined) ?? [];
-    const base = trimSlashes(prefix);
-    return keys
-      .map((k) => {
-        const name = k.replace(/\/$/, "");
-        return base ? `${base}/${name}` : name;
-      })
-      .sort();
+  }
+
+  listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
+    return Effect.gen(this, function* () {
+      const res = yield* this.request({
+        method: "GET",
+        url: this.metadataListUrl(prefix),
+        headers: this.headers(),
+      });
+      if (res.status === 404) return [];
+      if (res.status < 200 || res.status >= 300) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vault_list_failed:${res.status}` })
+        );
+      }
+      const keys =
+        ((res.json as { data?: { keys?: string[] } })?.data?.keys as string[] | undefined) ?? [];
+      const base = trimSlashes(prefix);
+      return keys
+        .map((k) => {
+          const name = k.replace(/\/$/, "");
+          return base ? `${base}/${name}` : name;
+        })
+        .sort();
+    });
   }
 }
 

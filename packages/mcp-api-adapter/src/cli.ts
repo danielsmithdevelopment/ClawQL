@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 import { resolveGrpcAddressFromEnv } from "mcp-grpc-transport";
 import { generateToolCli } from "./gen-cli.js";
+import { resolveListTraceCallsFromEnv } from "./inference-trace-bridge.js";
 import { startMcpApiAdapter } from "./server.js";
 import { connectUpstream } from "./upstream.js";
 import type { UpstreamOptions } from "./types.js";
@@ -35,7 +36,16 @@ HTTP APIs:
   --no-mcp               Disable Streamable HTTP /mcp surface
   --ws-path <path>       WebSocket tool-call path (default /ws)
   --no-ws                Disable WebSocket surface
+  --mcp-ui-path <path>   HTMX MCP UI playground path (default /mcp-ui)
+  --no-mcp-ui            Disable /mcp-ui browser surface
+  --no-mcp-ui-atr-scoped  Show full catalog in /mcp-ui (ignore ATR tool filter)
+  Inference trace (/mcp-ui/trace/:correlationId):
+  MCP_API_ADAPTER_INFERENCE_TRACE=1  Wire listTraceCalls from clawql-inference store
+  CLAWQL_INFERENCE_STORE=jsonl       Shared store backend (default memory is per-process)
+  CLAWQL_INFERENCE_STORE_PATH        JSONL path shared with inference gateway
   --api-key <key>        Optional edge API key
+  --jwks-url <url>       Accept ClawQL MCP JWTs via JWKS (/.well-known/jwks.json)
+  --jwt-issuer <iss>     Expected JWT iss when verifying MCP tokens
   --refresh-ms <n>       Catalog poll interval (default 0 = off)
   --title <string>       Docs / GraphiQL title
 
@@ -135,8 +145,13 @@ const sharedOpts = {
   "no-mcp": { type: "boolean", default: false },
   "ws-path": { type: "string" },
   "no-ws": { type: "boolean", default: false },
+  "mcp-ui-path": { type: "string" },
+  "no-mcp-ui": { type: "boolean", default: false },
+  "no-mcp-ui-atr-scoped": { type: "boolean", default: false },
   listen: { type: "string" },
   "api-key": { type: "string" },
+  "jwks-url": { type: "string" },
+  "jwt-issuer": { type: "string" },
   "refresh-ms": { type: "string" },
   title: { type: "string" },
   out: { type: "string" },
@@ -201,6 +216,24 @@ async function runServe(argv: string[]): Promise<void> {
     values["api-key"]?.trim() ||
     envFirst("MCP_API_ADAPTER_API_KEY", "MCP_OPENAPI_GATEWAY_API_KEY") ||
     undefined;
+  const jwksUrl =
+    values["jwks-url"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_JWKS_URL", "CLAWQL_MCP_OAUTH_JWKS_URL") ||
+    undefined;
+  const jwtIssuer =
+    values["jwt-issuer"]?.trim() ||
+    envFirst("MCP_API_ADAPTER_JWT_ISSUER", "CLAWQL_MCP_OAUTH_ISSUER") ||
+    undefined;
+  const jwtHs256Secret =
+    envFirst("MCP_API_ADAPTER_JWT_HS256_SECRET", "CLAWQL_MCP_OAUTH_SIGNING_SECRET") || undefined;
+  const jwtAuth =
+    jwksUrl || jwtHs256Secret
+      ? {
+          jwksUrl,
+          issuer: jwtIssuer,
+          hs256Secret: jwksUrl ? undefined : jwtHs256Secret,
+        }
+      : undefined;
   const refreshMs = Number.parseInt(
     values["refresh-ms"]?.trim() ||
       envFirst("MCP_API_ADAPTER_REFRESH_MS", "MCP_OPENAPI_GATEWAY_REFRESH_MS") ||
@@ -228,16 +261,30 @@ async function runServe(argv: string[]): Promise<void> {
       envFirst("MCP_API_ADAPTER_WS_PATH") ||
       "/ws";
 
+  const mcpUiPath: string | false = values["no-mcp-ui"]
+    ? false
+    : values["mcp-ui-path"]?.trim() ||
+      envFirst("MCP_API_ADAPTER_MCP_UI_PATH") ||
+      "/mcp-ui";
+
+  const mcpUiAtrScoped = !values["no-mcp-ui-atr-scoped"];
+
+  const listTraceCalls = await resolveListTraceCallsFromEnv();
+
   const started = await startMcpApiAdapter({
     upstream,
     host,
     port,
     apiKey,
+    jwtAuth,
     refreshMs: Number.isFinite(refreshMs) ? refreshMs : 0,
     title: values.title?.trim(),
     grpcListen,
     mcpPath,
     wsPath,
+    mcpUiPath,
+    mcpUiAtrScoped,
+    listTraceCalls,
     protocolVersion: process.env.MCP_PROTOCOL_VERSION?.trim(),
   });
 
@@ -259,6 +306,18 @@ async function runServe(argv: string[]): Promise<void> {
   }
   if (started.wsUrl) {
     console.log(`[mcp-api-adapter] websocket: ${started.wsUrl}`);
+  }
+  if (started.mcpUiPath) {
+    console.log(`[mcp-api-adapter] mcp-ui:   ${started.url}${started.mcpUiPath}`);
+    if (listTraceCalls) {
+      console.log(
+        `[mcp-api-adapter] trace:  ${started.url}${started.mcpUiPath}/trace/<correlationId> (inference store)`
+      );
+    } else {
+      console.log(
+        `[mcp-api-adapter] trace:  ${started.url}${started.mcpUiPath}/trace/compare (demos; set MCP_API_ADAPTER_INFERENCE_TRACE=1 + shared store for live)`
+      );
+    }
   }
   if (started.grpcAddress) {
     console.log(

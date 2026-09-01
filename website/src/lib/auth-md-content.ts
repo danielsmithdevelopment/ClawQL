@@ -108,6 +108,7 @@ Revoke tokens at the \`revocation_endpoint\` from authorization server metadata 
 
 ## Related docs
 
+- [Authentication (human guide)](${origin}/auth) — inbound vs outbound OAuth, EMA / ID-JAG
 - [Agent setup](${origin}/agent-setup)
 - [MCP tools](${origin}/tools)
 - [Spec configuration](${origin}/spec-configuration)

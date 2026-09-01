@@ -15,4 +15,13 @@ describe("ClawQLInstance spec", () => {
     expect(tier.memory?.enabled).toBe(true);
     expect(tier.ouroboros?.langfuseEval?.enabled).toBe(true);
   });
+
+  it("parses providers pack alongside horizontal toggles", () => {
+    const spec = parseClawqlInstanceSpec({
+      tier: "standard",
+      providers: { pack: "default", enabled: ["n8n"] },
+      memory: { enabled: true },
+    });
+    expect(spec.providers).toEqual({ pack: "default", enabled: ["n8n"] });
+  });
 });

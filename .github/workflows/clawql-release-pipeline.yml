@@ -56,7 +56,7 @@ jobs:
 
       - name: Build clawql-core + clawql-release
         run: |
-          npm run build -w clawql-core
+          npm run build -w clawql-merkle -w clawql-core
           npm run build -w clawql-release
 
       - name: Unit tests (clawql-release)

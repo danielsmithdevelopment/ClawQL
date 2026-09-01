@@ -5,7 +5,13 @@
  * - `CLAWQL_SECRET_STORE=sqlite|memory|env|hashicorp-vault|openbao|infisical|vaultwarden|onepassword`
  * - SQLite path: `CLAWQL_SECRET_STORE_PATH` (default `~/.clawql/secrets.db` or `$CLAWQL_HOME/secrets.db`)
  * - Vault/OpenBao: `VAULT_ADDR` / `BAO_ADDR`, `VAULT_TOKEN` / `BAO_TOKEN`, optional `CLAWQL_VAULT_MOUNT`
+ *
+ * `resolveSecretStore` is a sync construction helper (no IO — it just picks and
+ * `new`s a backend, each of which is Effect-primary on its own methods). The env
+ * flag reader it depends on, {@link resolveSecretStoreKindEffect}, is `Effect.sync`.
  */
+
+import { Effect } from "effect";
 
 import { createEnvSecretStore } from "./env.js";
 import { createHashiCorpVaultStore } from "./hashicorp-vault.js";
@@ -24,26 +30,37 @@ export type ResolveSecretStoreOptions = {
   sqlitePath?: string;
 };
 
+/** Effect: resolve the configured store kind from `explicit` or `CLAWQL_SECRET_STORE`. */
+export function resolveSecretStoreKindEffect(
+  explicit?: SecretStoreKind
+): Effect.Effect<SecretStoreKind, never> {
+  return Effect.sync(() => {
+    if (explicit) return explicit;
+    const raw = process.env.CLAWQL_SECRET_STORE?.trim().toLowerCase();
+    if (raw === "vault" || raw === "hashicorp-vault") return "hashicorp-vault";
+    if (raw === "1password" || raw === "onepassword") return "onepassword";
+    if (
+      raw === "sqlite" ||
+      raw === "memory" ||
+      raw === "env" ||
+      raw === "openbao" ||
+      raw === "infisical" ||
+      raw === "vaultwarden"
+    ) {
+      return raw;
+    }
+    return "sqlite";
+  });
+}
+
+/** Sync convenience wrapper for callers that just need the resolved kind (never fails). */
 export function resolveSecretStoreKind(explicit?: SecretStoreKind): SecretStoreKind {
-  if (explicit) return explicit;
-  const raw = process.env.CLAWQL_SECRET_STORE?.trim().toLowerCase();
-  if (raw === "vault" || raw === "hashicorp-vault") return "hashicorp-vault";
-  if (raw === "1password" || raw === "onepassword") return "onepassword";
-  if (
-    raw === "sqlite" ||
-    raw === "memory" ||
-    raw === "env" ||
-    raw === "openbao" ||
-    raw === "infisical" ||
-    raw === "vaultwarden"
-  ) {
-    return raw;
-  }
-  return "sqlite";
+  return Effect.runSync(resolveSecretStoreKindEffect(explicit));
 }
 
 /**
  * Build the configured SecretStore. Default is SQLite (local / Hermes / homelab).
+ * Sync construction; the returned store's CRUD/lifecycle methods are Effect-primary.
  */
 export function resolveSecretStore(options: ResolveSecretStoreOptions = {}): SecretStore {
   if (options.store) return options.store;

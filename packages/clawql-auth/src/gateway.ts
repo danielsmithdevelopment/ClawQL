@@ -12,7 +12,7 @@ import {
   type OidcAuthConfig,
 } from "./oidc.js";
 
-export type AuthMode = "noAuth" | "apiKey" | "oidc";
+export type AuthMode = "noAuth" | "apiKey" | "oidc" | "mcpOAuth";
 
 /** Typed failure for gateway auth resolution (Effect failure channel). */
 export class GatewayAuthError extends Data.TaggedError("GatewayAuthError")<{
@@ -54,6 +54,12 @@ export type AtrClaims = {
   emailDomain?: string;
   /** Company org id when resolved from email domain / claim. */
   orgId?: string;
+  /** IdP group membership from EMA / ID-JAG (audit + policy hooks). */
+  idpGroups?: string[];
+  /** Ethereum address when auth succeeded via SIWE. */
+  walletAddress?: string;
+  /** True when primary TOTP / step-up MFA succeeded. */
+  mfa?: boolean;
 };
 
 /**
@@ -73,23 +79,36 @@ export type GatewayAuthConfig = {
   apiKeyClaimsResolver?: ApiKeyClaimsResolver;
   /** OIDC / JWT verify settings when mode is `oidc`. */
   oidc?: OidcAuthConfig;
+  /**
+   * When set, Bearer tokens issued by {@link MCPOAuthServer} are accepted.
+   * Used for `mcpOAuth` mode or hybrid acceptance alongside apiKey/oidc.
+   * Effect-primary — no Promise domain API.
+   */
+  mcpOAuthValidator?: (bearerToken: string) => Effect.Effect<AtrClaims, unknown>;
 };
 
-export function resolveAuthMode(env: NodeJS.ProcessEnv = process.env): AuthMode {
-  const raw = env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
-  if (raw === "apikey" || raw === "api_key" || raw === "api-key") return "apiKey";
-  if (raw === "oidc" || raw === "oauth2") return "oidc";
-  return "noAuth";
+export function resolveAuthMode(env: NodeJS.ProcessEnv = process.env): Effect.Effect<AuthMode> {
+  return Effect.sync(() => {
+    const raw = env.CLAWQL_AUTH_MODE?.trim().toLowerCase();
+    if (raw === "apikey" || raw === "api_key" || raw === "api-key") return "apiKey";
+    if (raw === "oidc" || raw === "oauth2") return "oidc";
+    if (raw === "mcpoauth" || raw === "mcp_oauth" || raw === "mcp-oauth") return "mcpOAuth";
+    return "noAuth";
+  });
 }
 
-export function loadGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  const mode = resolveAuthMode(env);
-  const apiKey = env.CLAWQL_API_KEY?.trim();
-  return {
-    mode,
-    apiKey: apiKey || undefined,
-    oidc: mode === "oidc" ? loadOidcAuthConfig(env) : undefined,
-  };
+export function loadGatewayAuthConfig(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<GatewayAuthConfig> {
+  return Effect.gen(function* () {
+    const mode = yield* resolveAuthMode(env);
+    const apiKey = env.CLAWQL_API_KEY?.trim();
+    return {
+      mode,
+      apiKey: apiKey || undefined,
+      oidc: mode === "oidc" ? loadOidcAuthConfig(env) : undefined,
+    };
+  });
 }
 
 /** Permissive default when gateway auth is noAuth (modularization §4.3). */
@@ -103,6 +122,26 @@ export function defaultAdminAtrClaims(subject = "local"): AtrClaims {
 
 export type AuthHeaderSource = Record<string, string | string[] | undefined>;
 
+function extractBearer(headers: AuthHeaderSource): string | undefined {
+  const bearer = headerValue(headers, "authorization");
+  if (!bearer) return undefined;
+  const m = /^Bearer\s+(\S+)/i.exec(bearer);
+  return m?.[1] ?? (bearer.includes(" ") ? undefined : bearer);
+}
+
+function tryMcpOAuthValidator(
+  headers: AuthHeaderSource,
+  config: GatewayAuthConfig
+): Effect.Effect<AtrClaims | null> {
+  return Effect.gen(function* () {
+    const validator = config.mcpOAuthValidator;
+    if (!validator) return null;
+    const token = extractBearer(headers);
+    if (!token) return null;
+    return yield* validator(token).pipe(Effect.catchAll(() => Effect.succeed(null)));
+  });
+}
+
 function headerValue(headers: AuthHeaderSource, name: string): string | undefined {
   const v = headers[name.toLowerCase()] ?? headers[name];
   if (Array.isArray(v)) return v[0]?.trim();
@@ -115,13 +154,12 @@ function headerValue(headers: AuthHeaderSource, name: string): string | undefine
  */
 export function resolveAtrClaimsFromHeaders(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): { ok: true; claims: AtrClaims } | { ok: false; error: string } {
-  if (config.mode === "oidc") {
+  if (config.mode === "oidc" || config.mode === "mcpOAuth") {
     return {
       ok: false,
-      error:
-        "CLAWQL_AUTH_MODE=oidc requires async JWT verification — use resolveAtrClaimsFromHeadersEffect",
+      error: `CLAWQL_AUTH_MODE=${config.mode} requires async JWT verification — use resolveAtrClaimsFromHeadersEffect`,
     };
   }
 
@@ -173,23 +211,38 @@ export function resolveAtrClaimsFromHeaders(
  */
 export function resolveAtrClaimsFromHeadersEffect(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): Effect.Effect<AtrClaims, GatewayAuthError> {
-  if (config.mode === "oidc") {
-    return resolveOidcAtrClaimsFromHeadersEffect(headers, config.oidc ?? loadOidcAuthConfig()).pipe(
-      Effect.mapError((err) => new GatewayAuthError({ reason: err.reason, cause: err.cause }))
-    );
-  }
-  const result = resolveAtrClaimsFromHeaders(headers, config);
-  return result.ok
-    ? Effect.succeed(result.claims)
-    : Effect.fail(new GatewayAuthError({ reason: result.error }));
+  return Effect.gen(function* () {
+    if (config.mcpOAuthValidator) {
+      const fromMcp = yield* tryMcpOAuthValidator(headers, config);
+      if (fromMcp) return fromMcp;
+      if (config.mode === "mcpOAuth") {
+        return yield* Effect.fail(
+          new GatewayAuthError({ reason: "Invalid or missing MCP OAuth Bearer token" })
+        );
+      }
+    }
+
+    if (config.mode === "oidc") {
+      return yield* resolveOidcAtrClaimsFromHeadersEffect(
+        headers,
+        config.oidc ?? loadOidcAuthConfig()
+      ).pipe(
+        Effect.mapError((err) => new GatewayAuthError({ reason: err.reason, cause: err.cause }))
+      );
+    }
+
+    const result = resolveAtrClaimsFromHeaders(headers, config);
+    if (result.ok) return result.claims;
+    return yield* Effect.fail(new GatewayAuthError({ reason: result.error }));
+  });
 }
 
 /** Assert gateway auth (Effect form) — fails with {@link GatewayAuthError}. */
 export function assertGatewayAuthEffect(
   headers: AuthHeaderSource = {},
-  config: GatewayAuthConfig = loadGatewayAuthConfig()
+  config: GatewayAuthConfig = Effect.runSync(loadGatewayAuthConfig())
 ): Effect.Effect<AtrClaims, GatewayAuthError> {
   return resolveAtrClaimsFromHeadersEffect(headers, config);
 }

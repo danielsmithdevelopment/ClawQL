@@ -1,6 +1,6 @@
 /**
  * Langfuse eval webhook → Ouroboros seed revision ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)).
- * Opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** (requires **`CLAWQL_ENABLE_OUROBOROS=1`** for lineage).
+ * Opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** (Ouroboros lineage is always available via clawql-harness).
  */
 
 import type { Request, Response } from "express";
@@ -13,7 +13,7 @@ import {
 } from "clawql-ouroboros/eval";
 import { getOuroborosContext } from "clawql-ouroboros/plugin";
 import { handleAuditToolInput } from "./clawql-audit.js";
-import { getClawqlOptionalToolFlags } from "clawql-api";
+import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
 import { handleMemoryIngestToolInput } from "./memory-ingest.js";
 import { getObsidianVaultPath } from "./vault-config.js";
 import { enforceWebhookRateLimit } from "./webhook-rate-limit.js";
@@ -49,11 +49,12 @@ export async function handleLangfuseEvalWebhookRequest(req: Request, res: Respon
     return;
   }
 
-  const flags = getClawqlOptionalToolFlags();
-  if (!flags.enableOuroboros) {
+  const flags = resolvePluginCompositionFlags();
+  if (!flags.enableLangfuseEval) {
     res.status(503).json({
       ok: false,
-      error: "Set CLAWQL_ENABLE_OUROBOROS=1 for Langfuse eval → seed revision.",
+      error:
+        "Enable ouroboros.langfuseEval in ClawQLInstance / CLAWQL_INSTANCE_SPEC for Langfuse eval → seed revision.",
     });
     return;
   }

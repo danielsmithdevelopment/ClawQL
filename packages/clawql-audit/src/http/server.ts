@@ -48,8 +48,7 @@ export const startAuditHttpServer = (
         server.once("error", reject);
         server.listen(options.port, () => {
           const addr = server.address();
-          const port =
-            typeof addr === "object" && addr ? addr.port : options.port;
+          const port = typeof addr === "object" && addr ? addr.port : options.port;
           resolve({
             port,
             close: () =>
@@ -58,14 +57,12 @@ export const startAuditHttpServer = (
                   new Promise<void>((resClose, rejClose) => {
                     server.close((err) => (err ? rejClose(err) : resClose()));
                   }),
-                catch: (cause) =>
-                  new AuditError({ reason: "HTTP server close failed", cause }),
+                catch: (cause) => new AuditError({ reason: "HTTP server close failed", cause }),
               }),
           });
         });
       }),
-    catch: (cause) =>
-      new AuditError({ reason: "HTTP server listen failed", cause }),
+    catch: (cause) => new AuditError({ reason: "HTTP server listen failed", cause }),
   });
 
 async function dispatch(

@@ -71,7 +71,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'panguard-mcp-proxy',
     name: 'Panguard MCP proxy',
     description:
-      'beforeCallTool policy chokepoint for JWT ATR and enterprise MCP defense-in-depth.',
+      'Blocking tool/pre-execute hooks for JWT ATR and enterprise MCP defense-in-depth.',
     category: 'proxy',
     status: 'default-on',
     package: 'clawql-api (PanguardProxyPlugin)',

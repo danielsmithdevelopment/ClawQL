@@ -49,6 +49,7 @@ export {
   resolveKineticAtrClaimsForRuntime,
   runKineticTransaction,
   runLowKineticTransaction,
+  verifyKineticAudit,
   type KineticAtrClaims,
   type KineticMandate,
   type LowKineticWriteResult,

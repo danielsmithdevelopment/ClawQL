@@ -83,12 +83,50 @@ export {
   type AwsSignableRequestInit,
 } from "./aws-sigv4.js";
 export {
-  emitAuthEvent,
+  emitAuthEventEffect,
   noopAuthEventSink,
+  authEventSinkFromPromise,
+  composeAuthEventSinks,
   type AuthEvent,
   type AuthEventSink,
 } from "./audit/auth-events.js";
+export {
+  AUTH_WORM_GENESIS_HASH,
+  AuthWormError,
+  AuthWormService,
+  authWormLayerForTests,
+  authWormLayerFromEnv,
+  defaultAuthAuditDbPath,
+  hashAuthWormLink,
+  listAuthWormRecords,
+  resetAuthWormStoreForTests,
+  resolveAuthAuditStoreMode,
+  sealAuthWormRecord,
+  verifyAuthWormChain,
+  verifyAuthWormLog,
+  type AuthWormRecord,
+  type AuthWormStoreMode,
+  type AuthWormVerifyResult,
+} from "./audit/auth-worm.js";
+export {
+  createAuthEventSinkFromEnv,
+  resetAuthEventSinkCacheForTests,
+} from "./audit/auth-worm-sink.js";
+export {
+  MCP_OAUTH_AUDIT_DISABLED_WARNING,
+  MCP_OAUTH_HS256_ONLY_WARNING,
+  MCP_OAUTH_ADMIN_KEY_MISSING_WARNING,
+  MCP_OAUTH_BOOTSTRAP_INVALID_WARNING,
+  ID_JAG_ISSUER_SHARED_KEY_WARNING,
+  warnIfMcpOAuthAuditDisabled,
+  warnIfMcpOAuthHs256Only,
+  warnIfMcpOAuthAdminKeyMissing,
+  warnIfMcpOAuthBootstrapInvalid,
+  warnIfIdJagIssuerSharesMcpOAuthKey,
+} from "./audit/mcp-oauth-startup-warnings.js";
 export * from "./api-keys/index.js";
 export * from "./oauth/index.js";
 export * from "./inbound/index.js";
 export * from "./stores/index.js";
+export * from "./team/index.js";
+export * from "./vault/index.js";

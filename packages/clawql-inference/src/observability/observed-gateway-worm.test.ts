@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  bootProcessWormFromEnvEffect,
-  resetProcessWormForTests,
-} from "clawql-audit";
+import { bootProcessWormFromEnvEffect, resetProcessWormForTests } from "clawql-audit";
 import { ConfiguredInferenceGateway } from "../gateway.js";
 import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
 import { ObservedInferenceGateway } from "./observed-gateway.js";

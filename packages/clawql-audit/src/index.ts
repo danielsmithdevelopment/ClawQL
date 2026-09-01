@@ -15,17 +15,9 @@ export {
   sha256Hex,
 } from "./seal.js";
 export { HashChain, HashChainLive } from "./chain.js";
-export {
-  MerkleBatchLayer,
-  type MerkleInclusionProof,
-  type MerkleRoot,
-} from "./merkle.js";
+export { MerkleBatchLayer, type MerkleInclusionProof, type MerkleRoot } from "./merkle.js";
 export { DualAckReplicator } from "./replication/dual-ack.js";
-export {
-  defaultRetryConfig,
-  withRetry,
-  type RetryConfig,
-} from "./replication/retry.js";
+export { defaultRetryConfig, withRetry, type RetryConfig } from "./replication/retry.js";
 export { startOutboxReconciler, type ReconcilerHandle } from "./replication/reconciler.js";
 export {
   createWORMAuditTrailEffect,
@@ -61,7 +53,13 @@ export {
   type CreateEcdsaTeeSignerOptions,
   type VerifyTeeSignatureResult,
 } from "./tee/signer.js";
-export { handleAuditHttpRequest, authorizeApiKey, type HttpRequest, type HttpResponse } from "./http/routes.js";
+export { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
+export {
+  handleAuditHttpRequest,
+  authorizeApiKey,
+  type HttpRequest,
+  type HttpResponse,
+} from "./http/routes.js";
 export { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
 export {
   createWormTrailConfigFromEnvEffect,

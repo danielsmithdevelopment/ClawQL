@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "task": "executor-cmp-001",
+    "description": "List open PRs — representative GitHub REST list response vs GraphQL-projected fields (title, review comment count).",
+    "source": "Illustrative fixture shaped like GET /repos/{owner}/{repo}/pulls?state=open. Sizes tuned to show Layer 2 (tool result) savings; not from a live API call unless BENCHMARK_LIVE=1 replaces bodies."
+  },
+  "fullRest": [
+    {
+      "url": "https://api.github.com/repos/acme/platform/pulls/142",
+      "id": 9876543210,
+      "node_id": "PR_kwDOAbCdEf5nQ2x",
+      "html_url": "https://github.com/acme/platform/pull/142",
+      "diff_url": "https://github.com/acme/platform/pull/142.diff",
+      "patch_url": "https://github.com/acme/platform/pull/142.patch",
+      "issue_url": "https://api.github.com/repos/acme/platform/issues/142",
+      "number": 142,
+      "state": "open",
+      "locked": false,
+      "title": "feat(gateway): add rate-limit middleware",
+      "user": {
+        "login": "alice-dev",
+        "id": 10001,
+        "avatar_url": "https://avatars.githubusercontent.com/u/10001?v=4",
+        "html_url": "https://github.com/alice-dev",
+        "type": "User"
+      },
+      "body": "Adds token-bucket rate limiting for public routes.\n\n## Testing\n- unit tests in gateway/ratelimit\n- staging soak 24h",
+      "created_at": "2026-03-18T14:22:11Z",
+      "updated_at": "2026-03-24T09:01:44Z",
+      "closed_at": null,
+      "merged_at": null,
+      "merge_commit_sha": null,
+      "assignee": null,
+      "assignees": [],
+      "requested_reviewers": [
+        { "login": "bob-reviewer", "id": 10002 },
+        { "login": "carol-lead", "id": 10003 }
+      ],
+      "labels": [
+        { "id": 1, "name": "enhancement", "color": "a2eeef" },
+        { "id": 2, "name": "gateway", "color": "5319e7" }
+      ],
+      "milestone": { "title": "Q1 reliability", "number": 7 },
+      "draft": false,
+      "commits_url": "https://api.github.com/repos/acme/platform/pulls/142/commits",
+      "review_comments_url": "https://api.github.com/repos/acme/platform/pulls/142/comments",
+      "review_comment_url": "https://api.github.com/repos/acme/platform/pulls/comments{/number}",
+      "comments_url": "https://api.github.com/repos/acme/platform/issues/142/comments",
+      "statuses_url": "https://api.github.com/repos/acme/platform/statuses/abc123",
+      "head": {
+        "label": "acme:feat/rate-limit",
+        "ref": "feat/rate-limit",
+        "sha": "abc123def456",
+        "repo": {
+          "name": "platform",
+          "full_name": "acme/platform"
+        }
+      },
+      "base": {
+        "label": "acme:main",
+        "ref": "main",
+        "sha": "fedcba987654"
+      },
+      "_links": {
+        "self": { "href": "https://api.github.com/repos/acme/platform/pulls/142" },
+        "html": { "href": "https://github.com/acme/platform/pull/142" },
+        "issue": { "href": "https://api.github.com/repos/acme/platform/issues/142" },
+        "comments": { "href": "https://api.github.com/repos/acme/platform/issues/142/comments" },
+        "review_comments": { "href": "https://api.github.com/repos/acme/platform/pulls/142/comments" },
+        "review_comment": { "href": "https://api.github.com/repos/acme/platform/pulls/comments{/number}" },
+        "commits": { "href": "https://api.github.com/repos/acme/platform/pulls/142/commits" },
+        "statuses": { "href": "https://api.github.com/repos/acme/platform/statuses/abc123" }
+      },
+      "author_association": "MEMBER",
+      "auto_merge": null,
+      "active_lock_reason": null,
+      "review_comments": 5
+    },
+    {
+      "url": "https://api.github.com/repos/acme/platform/pulls/138",
+      "id": 9876543200,
+      "node_id": "PR_kwDOAbCdEf5nQ1y",
+      "html_url": "https://github.com/acme/platform/pull/138",
+      "number": 138,
+      "state": "open",
+      "title": "fix(auth): refresh token rotation edge case",
+      "user": { "login": "alice-dev", "id": 10001 },
+      "body": "Fixes rotation when concurrent refresh requests race.",
+      "created_at": "2026-03-10T11:00:00Z",
+      "updated_at": "2026-03-23T16:45:00Z",
+      "labels": [{ "name": "bug", "color": "d73a4a" }],
+      "head": { "ref": "fix/token-rotation", "sha": "111aaa222bbb" },
+      "base": { "ref": "main", "sha": "fedcba987654" },
+      "review_comments": 2
+    },
+    {
+      "url": "https://api.github.com/repos/acme/platform/pulls/130",
+      "id": 9876543100,
+      "number": 130,
+      "state": "open",
+      "title": "chore(deps): bump eslint majors",
+      "user": { "login": "dependabot[bot]", "id": 49699333 },
+      "body": "Automated dependency bump.",
+      "created_at": "2026-03-01T08:30:00Z",
+      "labels": [{ "name": "dependencies", "color": "0366d6" }],
+      "review_comments": 0
+    }
+  ],
+  "projected": [
+    { "number": 142, "title": "feat(gateway): add rate-limit middleware", "reviewCommentCount": 5 },
+    { "number": 138, "title": "fix(auth): refresh token rotation edge case", "reviewCommentCount": 2 },
+    { "number": 130, "title": "chore(deps): bump eslint majors", "reviewCommentCount": 0 }
+  ],
+  "requiredOutputFields": ["title", "reviewCommentCount"]
+}

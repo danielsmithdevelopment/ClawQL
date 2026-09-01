@@ -1,11 +1,23 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { McpToolRegistry } from "clawql-api";
+import {
+  createInMemoryPluginHostServices,
+  type ClawQLPluginRegistrationApi,
+  type ProviderPlugin,
+} from "clawql-core";
 import { configureDocumentsPluginDeps } from "./deps.js";
 import { createDocumentsPlugin, DOCUMENTS_PLUGIN_ID } from "./documents-plugin.js";
 
+function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.install({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
+
 describe("createDocumentsPlugin", () => {
-  it("registers ingest_external_knowledge on onRegister", () => {
+  it("registers ingest_external_knowledge on install", () => {
     configureDocumentsPluginDeps({
       execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
     });
@@ -13,7 +25,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     const plugin = createDocumentsPlugin();
     expect(plugin.id).toBe(DOCUMENTS_PLUGIN_ID);
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge"]);
   });
@@ -24,7 +36,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enableOnyx: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enableOnyx: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "knowledge_search_onyx"]);
   });
@@ -35,7 +47,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enableIdpPipeline: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enableIdpPipeline: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "run_idp_pipeline"]);
   });
@@ -46,7 +58,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enableIdpClassifier: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enableIdpClassifier: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "classify_document"]);
   });
@@ -57,7 +69,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enableLangextract: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enableLangextract: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "extract_document"]);
   });
@@ -68,7 +80,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enablePdfInspector: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enablePdfInspector: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "inspect_pdf"]);
   });
@@ -79,7 +91,7 @@ describe("createDocumentsPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createDocumentsPlugin({ enableAnydoc: true }).onRegister!(api));
+    installPluginMcpTools(createDocumentsPlugin({ enableAnydoc: true }), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["ingest_external_knowledge", "convert_document"]);
   });

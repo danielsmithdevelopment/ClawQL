@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveRequestModel, toPublicModelId } from "./model-resolve.js";
+import { resolveRequestModel } from "./model-resolve.js";
 import { createProviderRegistry } from "../providers/registry.js";
 import { composeDefaultProviderPlugins } from "../plugin/compose.js";
 import { DEFAULT_INFERENCE_MODEL_CATALOG } from "../catalog/index.js";
@@ -44,7 +44,24 @@ describe("resolveRequestModel", () => {
     expect(resolved?.gatewayModelId).toBe("openrouter/deepseek/deepseek-chat");
   });
 
-  it("keeps ollama ids namespaced", () => {
-    expect(toPublicModelId("ollama", "phi4")).toBe("ollama/phi4");
+  it("resolves Hermes/Cline Ornith ids onto the local MLX provider", () => {
+    const viaAlias = resolveRequestModel("openai/ornith-1.5-35b-a3b", registry);
+    expect(viaAlias?.provider).toBe("mlx");
+    expect(viaAlias?.model).toBe("ornith-1.5-35b-a3b");
+    expect(viaAlias?.gatewayModelId).toBe("mlx/ornith-1.5-35b-a3b");
+
+    const bare = resolveRequestModel("ornith-1.5-35b-a3b", registry);
+    expect(bare?.provider).toBe("mlx");
+    expect(bare?.gatewayModelId).toBe("mlx/ornith-1.5-35b-a3b");
+
+    const localPath = resolveRequestModel(
+      "openai/ornith-1.5-35b-a3b",
+      registry,
+      DEFAULT_INFERENCE_MODEL_CATALOG,
+      {
+        mlxUpstreamModel: "/Users/danielsmith/models/ornith-1.5-35b-a3b",
+      }
+    );
+    expect(localPath?.model).toBe("/Users/danielsmith/models/ornith-1.5-35b-a3b");
   });
 });
