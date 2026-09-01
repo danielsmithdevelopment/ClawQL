@@ -195,7 +195,8 @@ jobs:
         run: |
           # pii.ts imports clawql-api — build workspace deps so DTS resolve succeeds
           # clawql-api imports clawql-audit (process WORM dual-write)
-          npm run build -w clawql-merkle -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api -w clawql-ontology
+          # clawql-ontology imports clawql-memory/ontology (meta-ontology pipeline)
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit -w clawql-auth -w clawql-pageindex -w clawql-codegraph -w clawql-api -w clawql-memory -w clawql-ontology
 
       - name: Lint example ontology entities
         run: npm run ontology:lint
