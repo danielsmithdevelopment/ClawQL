@@ -89,7 +89,10 @@ async function errorToolResult(err: unknown): Promise<McpTextResult> {
     return {
       isError: true,
       content: [
-        { type: "text", text: JSON.stringify({ error: "observability_error", reason: err.reason }) },
+        {
+          type: "text",
+          text: JSON.stringify({ error: "observability_error", reason: err.reason }),
+        },
       ],
     };
   }
@@ -117,9 +120,7 @@ function logObservabilityTool(name: string, meta: Record<string, unknown>): void
   }
 }
 
-export function createObservabilityPlugin(
-  options: CreateObservabilityPluginOptions = {}
-): Plugin {
+export function createObservabilityPlugin(options: CreateObservabilityPluginOptions = {}): Plugin {
   const env = options.env ?? process.env;
 
   return {
@@ -253,7 +254,10 @@ export function createObservabilityPlugin(
           schema: observabilityApplyAlloySchema,
           handler: async (args) => {
             try {
-              logObservabilityTool("observability_apply_alloy_config", args as Record<string, unknown>);
+              logObservabilityTool(
+                "observability_apply_alloy_config",
+                args as Record<string, unknown>
+              );
               const session = await Effect.runPromise(
                 resolveObservabilitySessionForRuntimeEffect(env)
               );

@@ -1,10 +1,7 @@
 import { appendProcessWormEffect, type WORMAppendInput } from "clawql-audit";
 import { Effect, Layer } from "effect";
 
-import {
-  ObservabilityGovernanceSink,
-  type ObservabilityGovernanceEvent,
-} from "./worm.js";
+import { ObservabilityGovernanceSink, type ObservabilityGovernanceEvent } from "./worm.js";
 
 /** Map observability governance events to process WORM append input. */
 export const wormInputFromObservabilityGovernanceEvent = (
@@ -29,7 +26,10 @@ const appendObservabilityGovernanceToProcessWorm = (
   Effect.gen(function* () {
     const input = yield* wormInputFromObservabilityGovernanceEvent(event);
     yield* appendProcessWormEffect(input);
-  }).pipe(Effect.asVoid, Effect.catchAll(() => Effect.void));
+  }).pipe(
+    Effect.asVoid,
+    Effect.catchAll(() => Effect.void)
+  );
 
 /**
  * Live governance sink that dual-writes to the process WORM trail when booted.
