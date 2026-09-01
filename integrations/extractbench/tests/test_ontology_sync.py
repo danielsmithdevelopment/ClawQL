@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "provider"))
 
 from clawql_idp.ontology_sync import (  # noqa: E402
+    clawql_repo_root,
     derive_document_type,
     ontology_sync_enabled,
     run_ontology_pipeline,
@@ -29,6 +30,11 @@ class OntologySyncTests(unittest.TestCase):
             self.assertTrue(ontology_sync_enabled())
         with patch.dict("os.environ", {}, clear=True):
             self.assertFalse(ontology_sync_enabled())
+
+    def test_clawql_repo_root_walks_up_to_integrations(self) -> None:
+        root = clawql_repo_root()
+        script = root / "integrations/extractbench/scripts/run-ontology-pipeline.mjs"
+        self.assertTrue(script.is_file(), f"expected script at {script}")
 
     def test_run_ontology_pipeline_parses_stdout(self) -> None:
         summary = {

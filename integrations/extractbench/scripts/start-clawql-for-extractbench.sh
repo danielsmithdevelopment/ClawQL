@@ -8,11 +8,15 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 VAULT="${CLAWQL_OBSIDIAN_VAULT_PATH:-/tmp/clawql-extractbench-vault}"
 mkdir -p "$VAULT/Memory"
 
-export CLAWQL_ENABLE_DOCUMENTS="${CLAWQL_ENABLE_DOCUMENTS:-1}"
-export CLAWQL_ENABLE_PDF_INSPECTOR="${CLAWQL_ENABLE_PDF_INSPECTOR:-1}"
-export CLAWQL_ENABLE_IDP_PIPELINE="${CLAWQL_ENABLE_IDP_PIPELINE:-1}"
-# LangExtract optional — ExtractBench schema map uses Qwen/vLLM by default.
-export CLAWQL_ENABLE_LANGEXTRACT="${CLAWQL_ENABLE_LANGEXTRACT:-0}"
+# ClawQL 8.x: bare CLAWQL_ENABLE_* is ignored — use tier + provider pack + optional instance overrides.
+export CLAWQL_REPO_ROOT="$ROOT"
+export CLAWQL_ALLOW_NO_ENFORCEMENT="${CLAWQL_ALLOW_NO_ENFORCEMENT:-1}"
+export CLAWQL_TIER="${CLAWQL_TIER:-enterprise}"
+export CLAWQL_PROVIDER="${CLAWQL_PROVIDER:-default}"
+export CLAWQL_BUNDLED_PROVIDERS="${CLAWQL_BUNDLED_PROVIDERS:-docling}"
+# Enterprise tier enables idpPipeline; turn on pdf-inspector explicitly for inspect_pdf routing.
+export CLAWQL_INSTANCE_SPEC="${CLAWQL_INSTANCE_SPEC:-{\"tier\":\"enterprise\",\"documents\":{\"pdfInspector\":{\"enabled\":true}}}}"
+
 export CLAWQL_OBSIDIAN_VAULT_PATH="$VAULT"
 # Optional: scaffold → ontology.db → memory_recall after each EXTRACT (T1 completeness telemetry)
 export CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC="${CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC:-0}"
@@ -25,6 +29,7 @@ export DOCLING_BASE_URL="${DOCLING_BASE_URL:-http://127.0.0.1:5001}"
 
 echo "Starting ClawQL MCP for ExtractBench on :$PORT"
 echo "  vault=$VAULT"
+echo "  CLAWQL_REPO_ROOT=$CLAWQL_REPO_ROOT"
 echo "  DOCLING_BASE_URL=$DOCLING_BASE_URL"
 echo "  CLAWQL_MCP_URL=http://127.0.0.1:${PORT}/mcp"
 
