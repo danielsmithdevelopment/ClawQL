@@ -60,6 +60,36 @@ describe("runOntologyRecall legal.Client", () => {
     expect(result.hits[0]?.entityId).toBe("CLT-0017");
     expect(result.hits[0]?.fields.name).toBe("Meridian Capital");
   });
+
+  it("matches OpenBench B-7.2 Meridian seed layout (Memory/clients/…)", async () => {
+    await mkdir(join(vault, "Memory", "clients", "meridian-capital"), { recursive: true });
+    await writeFile(
+      join(vault, "Memory", "clients", "meridian-capital", "client.md"),
+      [
+        "# Client CLT-0017 — Meridian Capital",
+        "",
+        "Meridian prioritizes deal certainty over headline price.",
+        "",
+        "CLAWQL_CLIENT_ID=CLT-0017",
+        "CLAWQL_CLIENT_NAME=Meridian Capital",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = await runOntologyRecall(vault, {
+      query: "Meridian Capital client profile",
+      schema: "legal.Client",
+      filters: { id: { eq: "CLT-0017" } },
+      limit: 5,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.queryType).toBe("structured_predicate");
+    expect(result.filteredEntities).toBe(1);
+    expect(result.hits[0]?.entityId).toBe("CLT-0017");
+    expect(result.hits[0]?.path).toContain("clients/meridian-capital/client.md");
+  });
 });
 
 describe("runOntologyRecall legal.Document", () => {
