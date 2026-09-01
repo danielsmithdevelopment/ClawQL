@@ -41,9 +41,9 @@
     "smoke:compose": "bash scripts/smoke-lgtm-plus.sh"
   },
   "dependencies": {
-    "clawql-api": "0.1.0",
-    "clawql-audit": "0.1.0",
-    "clawql-core": "0.1.0",
+    "clawql-api": "8.0.0",
+    "clawql-audit": "8.0.0",
+    "clawql-core": "8.0.0",
     "effect": "^3.21.4",
     "zod": "4.3.6"
   },

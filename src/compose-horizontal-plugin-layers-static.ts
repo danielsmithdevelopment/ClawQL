@@ -16,6 +16,7 @@ import { makeOntologyLayer } from "clawql-ontology/plugin";
 import { createOuroborosHarnessPlugin, makeHarnessLayer } from "clawql-harness/plugin";
 import { makeSandboxLayer } from "clawql-sandbox/plugin";
 import { makeDataLayer } from "clawql-data/plugin";
+import { makeObservabilityLayer } from "clawql-observability/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
@@ -82,6 +83,9 @@ export function composeHorizontalPluginLayersStatic(
   }
   if (flags.enableWeb) {
     layers.push(makeWebLayer());
+  }
+  if (flags.enableObservability) {
+    layers.push(makeObservabilityLayer());
   }
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));

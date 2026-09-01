@@ -175,6 +175,7 @@ export type CreateMcpHttpAppOptions = {
     | "enableHitlLabelStudio"
     | "enableConeshare"
     | "enableLangfuseEval"
+    | "enableObservability"
     | "enableDocuments"
     | "enableIdpPipeline"
   >;
@@ -485,6 +486,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         }
       }
     });
+  }
+
+  if (optionalFlags.enableObservability) {
+    const { attachObservabilityHttpRoutes } = await import("clawql-observability/http");
+    attachObservabilityHttpRoutes(app, process.env);
   }
 
   // WebMCP draft bound execute — browser publish scripts POST here (§6).

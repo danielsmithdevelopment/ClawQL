@@ -12,9 +12,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   platform: "node",
-<<<<<<< HEAD
-  external: [/^clawql-/, "effect", "cbor", "debug", "express", "express-rate-limit"],
-=======
-  external: ["effect", "clawql-api", "clawql-audit", "clawql-core", "zod"],
->>>>>>> 9399c425 (feat(observability): host integration runtime, MCP plugin, WORM bridge, HTTP API (v0.6))
+  external: [/^clawql-/, "effect", "cbor", "debug", "express", "express-rate-limit", "zod"],
 });
