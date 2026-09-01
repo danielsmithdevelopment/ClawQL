@@ -123,7 +123,9 @@
     "release:git-tag:push": "bash scripts/release/git-release-tag.sh --push",
     "release:git-backfill-tags": "bash scripts/release/git-backfill-npm-release-tags.sh",
     "release:git-backfill-tags:push": "bash scripts/release/git-backfill-npm-release-tags.sh --push",
-    "release:manifest": "node scripts/release/build-release-manifest.mjs"
+    "release:manifest": "node scripts/release/build-release-manifest.mjs",
+    "release:audit-wedge:dry-run": "node scripts/release/npm-publish-audit-wedge.mjs --dry-run",
+    "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1090.0",
