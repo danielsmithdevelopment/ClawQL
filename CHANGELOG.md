@@ -40,7 +40,6 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 ### Added
 
-
 - **`clawql-core` ProviderPlugin architecture ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))** — `ProviderPlugin` / `StandaloneSkillPlugin`, lifecycle `fireHook` (ATR never-loosen + scope-violation block events), two-tier skill index/fetch, Effect install/uninstall, dynamic module load, reference `PanguardProviderPlugin`. Horizontal packages migrated to native `ProviderPlugin`. Spec: [`docs/design/clawql-core-plugin-architecture.md`](docs/design/clawql-core-plugin-architecture.md). Migration: [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md).
 - **8.0.0 skills approach** — unified `search` ranks operations **and** skills (`kind: "operation" | "skill"`); shared host `SkillRegistry`; default-on `handoff` / `session-handoff` standalone pack; `MemoryVaultSeedLive`; ATR-filter for provider-bundled skills; MCP HTTP `session-start`/`session-end`; inference `modelHooks` / `withModelLifecycleHooks`.
 - **8.0.0 scenario synthesis (Agent Seer §9)** — deterministic cold-start scenarios from `ToolDefinition` (+ `parameterNotes`); harness bridge `clawql-harness/bench/scenario-synthesis`; host helpers `synthesizeScenariosFromApi` / `modelHooksFromClawqlApi`.
