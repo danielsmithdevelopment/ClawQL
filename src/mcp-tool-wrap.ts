@@ -30,16 +30,10 @@ function clawqlPolicyBlockMessage(err: unknown): string | null {
   return null;
 }
 
-function emitPanguardDenyTelemetryEffect(
-  toolName: string,
-  reason: string
-): Effect.Effect<void> {
+function emitPanguardDenyTelemetryEffect(toolName: string, reason: string): Effect.Effect<void> {
   return Effect.gen(function* () {
     const lokiPushUrl = yield* resolvePanguardTelemetryLokiUrlEffect();
-    yield* emitPanguardTelemetryEffect(
-      { toolName, verdict: "deny", reason },
-      { lokiPushUrl }
-    );
+    yield* emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
   }).pipe(Effect.catchAll(() => Effect.void));
 }
 

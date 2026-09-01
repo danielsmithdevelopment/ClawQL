@@ -217,7 +217,6 @@ packages/clawql-observability/
 
 Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmithdevelopment/DevSecOps-boilerplate)
 
-
 ## Phase 4 (v0.7) — Langfuse + Panguard correlation
 
 - **Langfuse trace provider** (`langfuse-otel`) — opt-in via `CLAWQL_ENABLE_LANGFUSE` / `LANGFUSE_ENABLED`; Alloy dual-exports OTLP traces with `Authorization = sys.env(LANGFUSE_OTLP_AUTH_HEADER)`
@@ -232,15 +231,15 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 
 ## Implementation phases
 
-| Phase  | Scope                                        |
-| ------ | -------------------------------------------- |
-| **1**  | LGTM+ core + Alloy _(merged)_                |
-| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
-| **3a** | Provider registry skeleton _(shipped)_       |
-| **3b** | Alloy config generator _(shipped)_           |
-| **3c** | Query federation _(shipped)_            |
-| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_ |
-| **4**  | Langfuse work traces + Panguard correlation _(this release)_ |
+| Phase  | Scope                                                                 |
+| ------ | --------------------------------------------------------------------- |
+| **1**  | LGTM+ core + Alloy _(merged)_                                         |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_                          |
+| **3a** | Provider registry skeleton _(shipped)_                                |
+| **3b** | Alloy config generator _(shipped)_                                    |
+| **3c** | Query federation _(shipped)_                                          |
+| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_                      |
+| **4**  | Langfuse work traces + Panguard correlation _(this release)_          |
 | **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(this release)_ |
 
 ## License

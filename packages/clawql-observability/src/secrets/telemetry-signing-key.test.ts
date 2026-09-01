@@ -44,10 +44,9 @@ describe("telemetry signing key service", () => {
             token: "root",
             secretPath: "clawql/observability/worker",
             fetchImpl: async () =>
-              new Response(
-                JSON.stringify({ data: { data: { jwt_signing_key: "vault-key" } } }),
-                { status: 200 }
-              ),
+              new Response(JSON.stringify({ data: { data: { jwt_signing_key: "vault-key" } } }), {
+                status: 200,
+              }),
           })
         )
       )

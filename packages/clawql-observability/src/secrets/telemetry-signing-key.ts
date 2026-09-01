@@ -17,9 +17,7 @@ export type TelemetrySigningKeyMaterial = {
   readonly locator: string;
 };
 
-export class TelemetrySigningKeyService extends Context.Tag(
-  "clawql/TelemetrySigningKeyService"
-)<
+export class TelemetrySigningKeyService extends Context.Tag("clawql/TelemetrySigningKeyService")<
   TelemetrySigningKeyService,
   {
     readonly resolve: () => Effect.Effect<TelemetrySigningKeyMaterial, ObservabilityError>;
@@ -133,8 +131,7 @@ export const resolveTelemetrySigningKeyLayer = (
 ): Layer.Layer<TelemetrySigningKeyService> => {
   const endpoint = env.CLAWQL_TELEMETRY_JWT_VAULT_ADDR?.trim() || env.VAULT_ADDR?.trim();
   const token = env.CLAWQL_TELEMETRY_JWT_VAULT_TOKEN?.trim() || env.VAULT_TOKEN?.trim();
-  const secretPath =
-    env.CLAWQL_TELEMETRY_JWT_VAULT_PATH?.trim() || "clawql/observability/worker";
+  const secretPath = env.CLAWQL_TELEMETRY_JWT_VAULT_PATH?.trim() || "clawql/observability/worker";
   const useVault = envTruthy(env.CLAWQL_TELEMETRY_JWT_VAULT) || Boolean(endpoint && token);
 
   if (useVault && endpoint && token) {

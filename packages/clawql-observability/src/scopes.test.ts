@@ -4,9 +4,9 @@ import { hasObservabilityScope } from "./scopes.js";
 
 describe("hasObservabilityScope", () => {
   it("accepts wildcard scope", () => {
-    expect(
-      hasObservabilityScope({ sub: "local", scope: ["*"] }, "observability:query_logs")
-    ).toBe(true);
+    expect(hasObservabilityScope({ sub: "local", scope: ["*"] }, "observability:query_logs")).toBe(
+      true
+    );
   });
 
   it("requires exact scope otherwise", () => {

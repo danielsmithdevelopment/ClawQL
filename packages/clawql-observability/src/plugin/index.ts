@@ -8,4 +8,7 @@ export {
   observabilityQueryTracesSchema,
 } from "./observability-plugin.js";
 export { makeObservabilityLayer } from "./observability-layer.js";
-export type { MakeObservabilityLayerOptions, ObservabilityLayerError } from "./observability-layer.js";
+export type {
+  MakeObservabilityLayerOptions,
+  ObservabilityLayerError,
+} from "./observability-layer.js";

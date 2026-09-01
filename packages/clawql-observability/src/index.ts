@@ -236,13 +236,8 @@ export {
   wormInputFromObservabilityGovernanceEvent,
 } from "./governance/audit-bridge.js";
 
-export {
-  readObservabilityHostConfigEffect,
-  type ObservabilityHostConfig,
-} from "./host/config.js";
-export {
-  resolveObservabilitySessionForRuntimeEffect,
-} from "./host/session-context.js";
+export { readObservabilityHostConfigEffect, type ObservabilityHostConfig } from "./host/config.js";
+export { resolveObservabilitySessionForRuntimeEffect } from "./host/session-context.js";
 export {
   ensureObservabilityHostRuntimeEffect,
   resetObservabilityHostRuntimeForTests,

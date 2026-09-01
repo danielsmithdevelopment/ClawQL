@@ -489,9 +489,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   }
 
   if (optionalFlags.enableObservability) {
-    const { attachObservabilityHttpRoutes } = await import(
-      "clawql-observability/http"
-    );
+    const { attachObservabilityHttpRoutes } = await import("clawql-observability/http");
     attachObservabilityHttpRoutes(app, process.env);
   }
 
