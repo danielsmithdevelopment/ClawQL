@@ -30,9 +30,12 @@ export default function ClawqlNetworkSpecPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Headscale for standing relationships, Tailcat for genuinely ephemeral links.</strong>{' '}
-          The package contribution is the selector (safe-by-default routing) and enforcement (ATR-gated
-          tailcat with WORM audit). Operator bootstrap:{' '}
+          <strong>
+            Headscale for standing relationships, Tailcat for genuinely
+            ephemeral links.
+          </strong>{' '}
+          The package contribution is the selector (safe-by-default routing) and
+          enforcement (ATR-gated tailcat with WORM audit). Operator bootstrap:{' '}
           <code className="text-sm">clawql init --networking</code>. Source:{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/network/clawql-network-v0.1.md"
