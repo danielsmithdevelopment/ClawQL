@@ -2,6 +2,7 @@ import type {
   ClawQLError,
   McpToolAlreadyRegisteredError,
   PluginAlreadyRegisteredError,
+  PluginInstallError,
 } from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
@@ -9,7 +10,10 @@ import { Effect, Layer } from "effect";
 import { createObservabilityPlugin } from "./observability-plugin.js";
 
 export type ObservabilityLayerError =
-  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
+  | PluginAlreadyRegisteredError
+  | PluginInstallError
+  | ClawQLError
+  | McpToolAlreadyRegisteredError;
 
 export type MakeObservabilityLayerOptions = {
   readonly env?: NodeJS.ProcessEnv;
