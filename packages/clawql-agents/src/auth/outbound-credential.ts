@@ -54,10 +54,7 @@ export const getOutboundCredential = (
 
     if (method === "oauth_code" || method === "oauth_client_credentials") {
       const key = `${input.tenantId}:${input.provider}:${input.subject}`;
-      const result = yield* Effect.tryPromise({
-        try: (): Promise<StoredOAuthToken> => input.tokenStore.getValidToken(key),
-        catch: (err): unknown => err,
-      }).pipe(Effect.either);
+      const result = yield* input.tokenStore.getValidToken(key).pipe(Effect.either);
 
       if (result._tag === "Left") {
         const err = result.left;
@@ -84,20 +81,27 @@ export const getOutboundCredential = (
     }
 
     if (method === "api_key") {
-      const apiKey = yield* Effect.tryPromise({
-        try: () => input.apiKeys.getKey(input.provider, input.sessionId ?? input.subject),
-        catch: (err) => {
-          if (err instanceof OutboundApiKeyError) return err;
-          return new OutboundCredentialError({
+      const apiKeyResult = yield* input.apiKeys
+        .getKey(input.provider, input.sessionId ?? input.subject)
+        .pipe(Effect.either);
+
+      if (apiKeyResult._tag === "Left") {
+        const err = apiKeyResult.left;
+        if (err instanceof OutboundApiKeyError) {
+          return yield* Effect.fail(err);
+        }
+        return yield* Effect.fail(
+          new OutboundCredentialError({
             reason: err instanceof Error ? err.message : String(err),
             provider: input.provider,
             cause: err,
-          });
-        },
-      });
+          })
+        );
+      }
+
       return {
         kind: "headers" as const,
-        headers: { Authorization: `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKeyResult.right}` },
       };
     }
 

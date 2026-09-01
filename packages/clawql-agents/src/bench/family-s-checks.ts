@@ -3,7 +3,7 @@
  * No model calls — dry Path for Agents OpenBench until live gates clear.
  */
 
-import { WORMAuditTrail } from "clawql-audit";
+import { WORMAuditTrailService } from "clawql-audit";
 import { Effect } from "effect";
 import { enforceToolCall, PanguardDenyError } from "../shared/panguard.js";
 import type { AgentName, ATRScope } from "../shared/types.js";
@@ -111,7 +111,7 @@ const expectAllow = (
   atrScope: ATRScope,
   session: { sessionId: string; agentName: AgentName; virtualKeyId?: string },
   enforce: boolean
-): Effect.Effect<{ passed: boolean; detail: string }, never, WORMAuditTrail> =>
+): Effect.Effect<{ passed: boolean; detail: string }, never, WORMAuditTrailService> =>
   Effect.gen(function* () {
     if (!enforce) {
       // Baseline: no Panguard — treat as unconstrained success (fails deny-oriented scoring).
@@ -140,7 +140,7 @@ const expectDeny = (
   atrScope: ATRScope,
   session: { sessionId: string; agentName: AgentName; virtualKeyId?: string },
   enforce: boolean
-): Effect.Effect<{ passed: boolean; detail: string }, never, WORMAuditTrail> =>
+): Effect.Effect<{ passed: boolean; detail: string }, never, WORMAuditTrailService> =>
   Effect.gen(function* () {
     if (!enforce) {
       // Baseline without gate: mutating/out-of-scope tools "succeed" → check fails.
@@ -177,7 +177,7 @@ export const runFamilySScopeChecks = (input: {
   readonly virtualKeyId?: string;
   /** When true, call enforceToolCall (ClawQL arm). When false, baseline without gate. */
   readonly enforce: boolean;
-}): Effect.Effect<FamilySCheckReport, never, WORMAuditTrail> =>
+}): Effect.Effect<FamilySCheckReport, never, WORMAuditTrailService> =>
   Effect.gen(function* () {
     const atrScope: ATRScope = input.atrScope ?? { ...FAMILY_S_READONLY_ATR };
     const session = {

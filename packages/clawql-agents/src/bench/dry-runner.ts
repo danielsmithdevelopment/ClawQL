@@ -82,13 +82,14 @@ export const runAgentBenchmarkDry = (input: {
       input.config.wormDbPath
     );
     const layer = Layer.merge(wormLayer, adapterLayer);
-    const results: TaskResult[] = [];
 
-    for (const task of input.tasks) {
-      const useScopeChecks = task.scopeChecks ?? (task.family === "S" || input.family === "S");
-      const atrScope: ATRScope = task.atrScope;
+    return yield* Effect.gen(function* () {
+      const results: TaskResult[] = [];
 
-      const taskResult = yield* Effect.gen(function* () {
+      for (const task of input.tasks) {
+        const useScopeChecks = task.scopeChecks ?? (task.family === "S" || input.family === "S");
+        const atrScope: ATRScope = task.atrScope;
+
         const adapter = yield* AgentAdapter;
         yield* adapter.initialize(input.config);
         const session = yield* adapter.start(atrScope);
@@ -119,7 +120,7 @@ export const runAgentBenchmarkDry = (input: {
         }
 
         yield* adapter.stop(session);
-        return {
+        results.push({
           taskId: task.id,
           baseline,
           clawql,
@@ -128,16 +129,15 @@ export const runAgentBenchmarkDry = (input: {
             tokenReduction: 1 - clawql.tokens / baseline.tokens,
             wormComplete: clawql.wormComplete,
           },
-        } satisfies TaskResult;
-      }).pipe(Effect.provide(layer));
-      results.push(taskResult);
-    }
+        });
+      }
 
-    return {
-      agentName: input.agentName,
-      family: input.family,
-      results,
-    };
+      return {
+        agentName: input.agentName,
+        family: input.family,
+        results,
+      };
+    }).pipe(Effect.provide(layer));
   });
 
 export const catalogAgentsForBench = (): readonly AgentName[] => IMPLEMENTED_AGENTS;

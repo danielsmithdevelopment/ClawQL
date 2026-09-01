@@ -77,13 +77,15 @@ describe("OpenClaw live MCP wiring", () => {
 describe("getOutboundCredential", () => {
   it("returns bearer for oauth when token present", async () => {
     const persistence = createMemoryOAuthPersistence();
-    await persistence.save("t:google:u", {
-      accessToken: "ya29.test",
-      expiresAtMs: Date.now() + 3_600_000,
-    });
+    await Effect.runPromise(
+      persistence.save("t:google:u", {
+        accessToken: "ya29.test",
+        expiresAtMs: Date.now() + 3_600_000,
+      })
+    );
     const store = createOAuthTokenStore({
       persistence,
-      refresh: async (_k, cur) => cur,
+      refresh: (_k, cur) => Effect.succeed(cur),
     });
     const apiKeys = createOutboundAPIKeyManager({
       secrets: createMemorySecretSource(),
@@ -103,7 +105,7 @@ describe("getOutboundCredential", () => {
   it("returns reauth_required when oauth token missing", async () => {
     const store = createOAuthTokenStore({
       persistence: createMemoryOAuthPersistence(),
-      refresh: async (_k, cur) => cur,
+      refresh: (_k, cur) => Effect.succeed(cur),
     });
     const apiKeys = createOutboundAPIKeyManager({
       secrets: createMemorySecretSource(),
@@ -126,7 +128,7 @@ describe("getOutboundCredential", () => {
   it("returns Authorization header for api_key providers", async () => {
     const store = createOAuthTokenStore({
       persistence: createMemoryOAuthPersistence(),
-      refresh: async (_k, cur) => cur,
+      refresh: (_k, cur) => Effect.succeed(cur),
     });
     const apiKeys = createOutboundAPIKeyManager({
       secrets: createMemorySecretSource({
