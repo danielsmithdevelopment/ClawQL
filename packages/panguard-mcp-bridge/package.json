@@ -22,7 +22,7 @@
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.2.1",
-    "jose": "^6.2.4",
+    "jose": "^6.2.10",
     "mcp-grpc-transport": "^0.2.0"
   },
   "repository": {

@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import EnterpriseOntologyBody from '@/generated/enterprise-ontology-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -87,7 +87,7 @@ export default function EnterpriseOntologyPage() {
       </div>
 
       <Prose className="flex-auto">
-        <EnterpriseOntologyBody />
+        <AgentMarkdownDocBody path="/architecture/enterprise-ontology" />
       </Prose>
     </article>
   )

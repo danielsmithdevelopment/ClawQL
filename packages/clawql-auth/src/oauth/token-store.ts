@@ -2,9 +2,22 @@
  * Mutex-protected outbound OAuth token store.
  * Concurrent sessions share one in-flight refresh per token key — avoids
  * invalid_grant races on single-use refresh tokens (MCP ecosystem failure mode).
+ *
+ * Effect-primary: {@link OAuthTokenStoreService} + {@link createOAuthTokenStoreLayer} mirror
+ * {@link GatewayAuthService} / {@link IdJagIssuerService}. The in-flight refresh dedup uses a
+ * `Map<OAuthTokenKey, Fiber.RuntimeFiber<...>>` — an Effect-native replacement for the
+ * `Map<OAuthTokenKey, Promise<...>>` mutex — with `Effect.forkDaemon` + `Fiber.join` so all
+ * concurrent waiters share the same underlying refresh fiber.
  */
 
-import { emitAuthEvent, noopAuthEventSink, type AuthEventSink } from "../audit/auth-events.js";
+import { Context, Effect, Fiber, Layer } from "effect";
+
+import {
+  emitAuthEventEffect,
+  noopAuthEventSink,
+  type AuthEvent,
+  type AuthEventSink,
+} from "../audit/auth-events.js";
 import { oauthErrorCode, ReauthRequiredError } from "./errors.js";
 import {
   OAUTH_PROACTIVE_REFRESH_MS,
@@ -22,6 +35,22 @@ export type OAuthTokenStoreOptions = {
   eventSink?: AuthEventSink;
   proactiveRefreshMs?: number;
   now?: () => number;
+  /**
+   * When re-auth is required, build a PKCE/consent URL (no secrets).
+   * Hermes / Telegram hosts use {@link ReauthRequiredError.reauthUrl}.
+   */
+  buildReauthUrl?: (input: {
+    providerId: string;
+    tokenKey: OAuthTokenKey;
+    reason: "no_token" | "invalid_grant" | "refresh_failed";
+  }) => Effect.Effect<string | undefined>;
+  /** When set, marks the provider token as `needs_reauth` on invalid_grant / no_token. */
+  markRequiresReauth?: (providerId: string) => Effect.Effect<void>;
+  /**
+   * Host hook fired immediately before failing with {@link ReauthRequiredError}
+   * (e.g. Hermes Telegram via `notifyReauthRequiredEffect`). Errors are swallowed.
+   */
+  onReauthRequired?: (error: ReauthRequiredError) => Effect.Effect<void>;
 };
 
 function defaultProviderId(key: OAuthTokenKey): string {
@@ -33,8 +62,15 @@ function defaultProviderId(key: OAuthTokenKey): string {
   return parts[0]!;
 }
 
+function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> {
+  return emitAuthEventEffect(sink, event);
+}
+
 export class OAuthTokenStore {
-  private readonly refreshLock = new Map<OAuthTokenKey, Promise<StoredOAuthToken>>();
+  private readonly refreshLock = new Map<
+    OAuthTokenKey,
+    Fiber.RuntimeFiber<StoredOAuthToken, unknown>
+  >();
   private readonly proactiveRefreshMs: number;
   private readonly now: () => number;
   private readonly eventSink: AuthEventSink;
@@ -53,90 +89,168 @@ export class OAuthTokenStore {
 
   /**
    * Returns a valid access token, refreshing proactively when within the window.
-   * Concurrent callers for the same key share one refresh promise.
+   * Concurrent callers for the same key share one refresh fiber.
    */
-  async getValidToken(key: OAuthTokenKey): Promise<StoredOAuthToken> {
-    const current = await this.options.persistence.load(key);
-    if (!current) {
-      const providerId = this.resolveProviderId(key);
-      await emitAuthEvent(this.eventSink, {
-        type: "OAUTH_REAUTH_REQUIRED",
-        providerId,
-        tokenKey: key,
-        reason: "no_token",
-        timestamp: new Date(this.now()).toISOString(),
-      });
-      throw new ReauthRequiredError({
-        tokenKey: key,
-        providerId,
-        reason: "no_token",
-      });
-    }
+  getValidToken(
+    key: OAuthTokenKey
+  ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
+    return Effect.gen(this, function* () {
+      const current = yield* this.options.persistence.load(key);
+      if (!current) {
+        const providerId = this.resolveProviderId(key);
+        yield* emitEffect(this.eventSink, {
+          type: "OAUTH_REAUTH_REQUIRED",
+          providerId,
+          tokenKey: key,
+          reason: "no_token",
+          timestamp: new Date(this.now()).toISOString(),
+        });
+        if (this.options.markRequiresReauth) {
+          yield* this.options
+            .markRequiresReauth(providerId)
+            .pipe(Effect.catchAll(() => Effect.void));
+        }
+        const reauthUrl = this.options.buildReauthUrl
+          ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
+          : undefined;
+        const error = new ReauthRequiredError({
+          tokenKey: key,
+          providerId,
+          reason: "no_token",
+          reauthUrl,
+        });
+        if (this.options.onReauthRequired) {
+          yield* this.options.onReauthRequired(error).pipe(Effect.catchAll(() => Effect.void));
+        }
+        return yield* Effect.fail(error);
+      }
 
-    if (!this.isExpiringSoon(current.expiresAtMs)) {
-      return current;
-    }
+      if (!this.isExpiringSoon(current.expiresAtMs)) {
+        return current;
+      }
 
-    return this.executeRefresh(key, current);
+      return yield* this.executeRefresh(key, current);
+    });
   }
 
-  /** Mutex-protected refresh — all waiters share the in-flight promise. */
-  async executeRefresh(key: OAuthTokenKey, current: StoredOAuthToken): Promise<StoredOAuthToken> {
-    const inflight = this.refreshLock.get(key);
-    if (inflight) return inflight;
+  /** Mutex-protected refresh — all waiters share the in-flight fiber. */
+  executeRefresh(
+    key: OAuthTokenKey,
+    current: StoredOAuthToken
+  ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
+    return Effect.gen(this, function* () {
+      const inflight = this.refreshLock.get(key);
+      if (inflight) return yield* Fiber.join(inflight);
 
-    const providerId = this.resolveProviderId(key);
+      const providerId = this.resolveProviderId(key);
 
-    const refreshPromise = (async () => {
-      try {
-        const next = await this.options.refresh(key, current);
-        await this.options.persistence.save(key, next);
-        await emitAuthEvent(this.eventSink, {
-          type: "OAUTH_TOKEN_REFRESHED",
-          providerId,
-          tokenKey: key,
-          expiresAt: new Date(next.expiresAtMs).toISOString(),
-          timestamp: new Date(this.now()).toISOString(),
-        });
-        return next;
-      } catch (err: unknown) {
-        const errorCode = oauthErrorCode(err);
-        const requiresReauth = errorCode === "invalid_grant";
-        await emitAuthEvent(this.eventSink, {
-          type: "OAUTH_REFRESH_FAILED",
-          providerId,
-          tokenKey: key,
-          errorCode,
-          requiresReauth,
-          timestamp: new Date(this.now()).toISOString(),
-        });
-        if (requiresReauth) {
-          await emitAuthEvent(this.eventSink, {
-            type: "OAUTH_REAUTH_REQUIRED",
+      const refreshEffect: Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> =
+        Effect.gen(this, function* () {
+          const next = yield* this.options.refresh(key, current);
+          yield* this.options.persistence.save(key, next);
+          yield* emitEffect(this.eventSink, {
+            type: "OAUTH_TOKEN_REFRESHED",
             providerId,
             tokenKey: key,
-            reason: "invalid_grant",
+            expiresAt: new Date(next.expiresAtMs).toISOString(),
             timestamp: new Date(this.now()).toISOString(),
           });
-          throw new ReauthRequiredError({
-            tokenKey: key,
-            providerId,
-            reason: "invalid_grant",
-          });
-        }
-        throw err;
-      } finally {
-        this.refreshLock.delete(key);
-      }
-    })();
+          return next;
+        }).pipe(
+          Effect.catchAll((err) =>
+            Effect.gen(this, function* () {
+              const errorCode = oauthErrorCode(err);
+              const requiresReauth = errorCode === "invalid_grant";
+              yield* emitEffect(this.eventSink, {
+                type: "OAUTH_REFRESH_FAILED",
+                providerId,
+                tokenKey: key,
+                errorCode,
+                requiresReauth,
+                timestamp: new Date(this.now()).toISOString(),
+              });
+              if (requiresReauth) {
+                yield* emitEffect(this.eventSink, {
+                  type: "OAUTH_REAUTH_REQUIRED",
+                  providerId,
+                  tokenKey: key,
+                  reason: "invalid_grant",
+                  timestamp: new Date(this.now()).toISOString(),
+                });
+                if (this.options.markRequiresReauth) {
+                  yield* this.options
+                    .markRequiresReauth(providerId)
+                    .pipe(Effect.catchAll(() => Effect.void));
+                }
+                const reauthUrl = this.options.buildReauthUrl
+                  ? yield* this.options.buildReauthUrl({
+                      providerId,
+                      tokenKey: key,
+                      reason: "invalid_grant",
+                    })
+                  : undefined;
+                const error = new ReauthRequiredError({
+                  tokenKey: key,
+                  providerId,
+                  reason: "invalid_grant",
+                  reauthUrl,
+                });
+                if (this.options.onReauthRequired) {
+                  yield* this.options
+                    .onReauthRequired(error)
+                    .pipe(Effect.catchAll(() => Effect.void));
+                }
+                return yield* Effect.fail(error);
+              }
+              return yield* Effect.fail(err);
+            })
+          ),
+          Effect.ensuring(Effect.sync(() => this.refreshLock.delete(key)))
+        );
 
-    this.refreshLock.set(key, refreshPromise);
-    return refreshPromise;
+      const fiber = yield* Effect.forkDaemon(refreshEffect);
+      this.refreshLock.set(key, fiber);
+      return yield* Fiber.join(fiber);
+    });
   }
 }
 
 export function createOAuthTokenStore(options: OAuthTokenStoreOptions): OAuthTokenStore {
   return new OAuthTokenStore(options);
+}
+
+export class OAuthTokenStoreService extends Context.Tag("clawql/OAuthTokenStoreService")<
+  OAuthTokenStoreService,
+  {
+    readonly isExpiringSoon: (expiresAtMs: number, nowMs?: number) => boolean;
+    readonly getValidToken: (
+      key: OAuthTokenKey
+    ) => Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown>;
+    readonly executeRefresh: (
+      key: OAuthTokenKey,
+      current: StoredOAuthToken
+    ) => Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown>;
+  }
+>() {}
+
+export function oauthTokenStoreServiceFromStore(
+  store: OAuthTokenStore
+): OAuthTokenStoreService["Type"] {
+  return OAuthTokenStoreService.of({
+    isExpiringSoon: (expiresAtMs, nowMs) => store.isExpiringSoon(expiresAtMs, nowMs),
+    getValidToken: (key) => store.getValidToken(key),
+    executeRefresh: (key, current) => store.executeRefresh(key, current),
+  });
+}
+
+/** Build an isolated OAuth token store service layer (mirrors `createIdJagIssuerLayer`). */
+export function createOAuthTokenStoreLayer(
+  options: OAuthTokenStoreOptions
+): Layer.Layer<OAuthTokenStoreService> {
+  return Layer.succeed(
+    OAuthTokenStoreService,
+    oauthTokenStoreServiceFromStore(createOAuthTokenStore(options))
+  );
 }
 
 /** In-memory persistence for tests and single-process demos. */
@@ -146,11 +260,10 @@ export function createMemoryOAuthPersistence(): OAuthTokenPersistence & {
   const map = new Map<OAuthTokenKey, StoredOAuthToken>();
   return {
     map,
-    async load(key) {
-      return map.get(key) ?? null;
-    },
-    async save(key, token) {
-      map.set(key, token);
-    },
+    load: (key) => Effect.sync(() => map.get(key) ?? null),
+    save: (key, token) =>
+      Effect.sync(() => {
+        map.set(key, token);
+      }),
   };
 }

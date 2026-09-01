@@ -434,8 +434,9 @@ Usage:
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
-  clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
+  clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
+  clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
@@ -739,6 +740,12 @@ async function main(): Promise<void> {
         id: typeof flags.id === "string" ? flags.id : undefined,
         command: typeof flags.command === "string" ? flags.command : undefined,
         args: argsList,
+        webmcpCdpUrl:
+          typeof flags["webmcp-cdp-url"] === "string" ? flags["webmcp-cdp-url"] : undefined,
+        webmcpReadyMs:
+          typeof flags["webmcp-ready-ms"] === "string"
+            ? Number.parseInt(flags["webmcp-ready-ms"], 10)
+            : undefined,
         home,
       });
       return;

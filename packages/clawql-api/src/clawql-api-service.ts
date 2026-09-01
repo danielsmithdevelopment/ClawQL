@@ -2,9 +2,8 @@ import { Context, Effect } from "effect";
 import {
   PluginAlreadyRegisteredError,
   type ClawQLPluginRegistrationApi,
-  type ClawQLError,
-  type McpToolAlreadyRegisteredError,
-  type Plugin,
+  type PluginInstallError,
+  type AnyPlugin,
 } from "clawql-core";
 import type { McpToolRegistration } from "./mcp-tool-registry.js";
 import { PluginRegistry } from "./plugin-registry.js";
@@ -13,12 +12,9 @@ export class ClawQLApi extends Context.Tag("clawql/ClawQLApi")<
   ClawQLApi,
   {
     readonly registerPlugin: (
-      plugin: Plugin
-    ) => Effect.Effect<
-      void,
-      PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError
-    >;
-    readonly listPlugins: () => readonly Plugin[];
+      plugin: AnyPlugin
+    ) => Effect.Effect<void, PluginAlreadyRegisteredError | PluginInstallError>;
+    readonly listPlugins: () => readonly AnyPlugin[];
     readonly listMcpTools: () => readonly McpToolRegistration[];
   }
 >() {}

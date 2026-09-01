@@ -2,9 +2,15 @@
  * Env SecretStore — minimal CI / smoke only.
  * Reads `CLAWQL_SECRET_<PATH>` (slashes → underscores, uppercased).
  * Writes are rejected except for an optional in-process overlay used by tests.
+ *
+ * Map/env reads are infallible (`Effect.sync`); readonly-write rejection is a typed
+ * {@link SecretStoreError} failure rather than a thrown exception.
  */
 
+import { Effect } from "effect";
+
 import { PathSecretStore } from "./base.js";
+import { SecretStoreError } from "./types.js";
 
 export type EnvSecretStoreOptions = {
   /** Prefix for env keys (default `CLAWQL_SECRET_`). */
@@ -33,38 +39,46 @@ export class EnvSecretStore extends PathSecretStore {
     this.allowOverlayWrites = options.allowOverlayWrites ?? false;
   }
 
-  async getSecret(path: string): Promise<string | null> {
-    if (this.overlay.has(path)) return this.overlay.get(path) as string;
-    const v = process.env[envKey(this.prefix, path)];
-    return v === undefined || v === "" ? null : v;
+  getSecret(path: string): Effect.Effect<string | null, never> {
+    return Effect.sync(() => {
+      if (this.overlay.has(path)) return this.overlay.get(path) as string;
+      const v = process.env[envKey(this.prefix, path)];
+      return v === undefined || v === "" ? null : v;
+    });
   }
 
-  async setSecret(path: string, value: string): Promise<void> {
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
     if (!this.allowOverlayWrites) {
-      throw new Error("env_secret_store_readonly");
+      return Effect.fail(new SecretStoreError({ reason: "env_secret_store_readonly" }));
     }
-    this.overlay.set(path, value);
+    return Effect.sync(() => {
+      this.overlay.set(path, value);
+    });
   }
 
-  async deleteSecret(path: string): Promise<void> {
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
     if (!this.allowOverlayWrites) {
-      throw new Error("env_secret_store_readonly");
+      return Effect.fail(new SecretStoreError({ reason: "env_secret_store_readonly" }));
     }
-    this.overlay.delete(path);
+    return Effect.sync(() => {
+      this.overlay.delete(path);
+    });
   }
 
-  async listSecrets(prefix: string): Promise<string[]> {
-    const keys = new Set<string>([...this.overlay.keys()]);
-    const needle = envKey(this.prefix, prefix);
-    for (const k of Object.keys(process.env)) {
-      if (!k.startsWith(this.prefix)) continue;
-      // Best-effort: only return overlay paths that match; env enumeration of
-      // logical paths is lossy. Prefer SQLite/Vault for listSecrets.
-      if (k.startsWith(needle) || prefix === "") {
-        keys.add(k.slice(this.prefix.length).toLowerCase().replace(/_/g, "/"));
+  listSecrets(prefix: string): Effect.Effect<string[], never> {
+    return Effect.sync(() => {
+      const keys = new Set<string>([...this.overlay.keys()]);
+      const needle = envKey(this.prefix, prefix);
+      for (const k of Object.keys(process.env)) {
+        if (!k.startsWith(this.prefix)) continue;
+        // Best-effort: only return overlay paths that match; env enumeration of
+        // logical paths is lossy. Prefer SQLite/Vault for listSecrets.
+        if (k.startsWith(needle) || prefix === "") {
+          keys.add(k.slice(this.prefix.length).toLowerCase().replace(/_/g, "/"));
+        }
       }
-    }
-    return [...keys].filter((p) => p.startsWith(prefix)).sort();
+      return [...keys].filter((p) => p.startsWith(prefix)).sort();
+    });
   }
 }
 

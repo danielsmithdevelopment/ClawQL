@@ -208,8 +208,12 @@ describe("scaffold + fixtures + pii", () => {
 describe("LOW Transaction Sandbox (3.3)", () => {
   it("commits update_contract_status when ATR allows", async () => {
     const { resetOntologyFixtureDbForTests, getContract } = await import("./fixture-store.js");
-    const { resetKineticAuditForTests, runLowKineticTransaction, listKineticAudit } =
-      await import("./kinetic/index.js");
+    const {
+      resetKineticAuditForTests,
+      runLowKineticTransaction,
+      listKineticAudit,
+      verifyKineticAudit,
+    } = await import("./kinetic/index.js");
     resetOntologyFixtureDbForTests();
     resetKineticAuditForTests();
     const result = await runLowKineticTransaction({
@@ -228,6 +232,7 @@ describe("LOW Transaction Sandbox (3.3)", () => {
     }
     expect(getContract("acc-8821")?.status).toBe("expired");
     expect(listKineticAudit().some((e) => e.action === "KINETIC_COMMITTED")).toBe(true);
+    expect(verifyKineticAudit().ok).toBe(true);
   });
 
   it("denies update when ATR scope is insufficient", async () => {

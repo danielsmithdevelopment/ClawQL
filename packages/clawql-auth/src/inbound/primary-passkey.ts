@@ -1,0 +1,318 @@
+/**
+ * Phase 5 — passkey (WebAuthn) as primary inbound login → ATR claims.
+ * Host injects {@link WebAuthnStepUpVerifier} and {@link PasskeyCredentialStore}.
+ */
+
+import { randomBytes } from "node:crypto";
+import { Data, Effect } from "effect";
+
+import type { AtrClaims } from "../gateway.js";
+import type { SecretStore } from "../stores/types.js";
+import { SecretStoreError } from "../stores/types.js";
+import type { WebAuthnStepUpVerifier } from "../step-up/webauthn.js";
+import { requireWebAuthnStepUpEffect } from "../step-up/webauthn.js";
+
+export class PrimaryPasskeyError extends Data.TaggedError("PrimaryPasskeyError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+export type PasskeyCredentialRecord = {
+  subjectId: string;
+  credentialId: string;
+  label?: string;
+  enrolledAt: string;
+  /** base64url-encoded credential public key (COSE/SPKI bytes). */
+  publicKeyBase64Url?: string;
+  /** Signature counter from last successful assertion. */
+  counter?: number;
+  transports?: string[];
+};
+
+export type PasskeyCredentialStore = {
+  getByCredentialId: (
+    credentialId: string
+  ) => Effect.Effect<PasskeyCredentialRecord | null, PrimaryPasskeyError>;
+  listBySubject: (
+    subjectId: string
+  ) => Effect.Effect<PasskeyCredentialRecord[], PrimaryPasskeyError>;
+  enroll: (
+    record: Omit<PasskeyCredentialRecord, "enrolledAt"> & { enrolledAt?: string }
+  ) => Effect.Effect<PasskeyCredentialRecord, PrimaryPasskeyError>;
+  delete: (credentialId: string) => Effect.Effect<boolean, PrimaryPasskeyError>;
+};
+
+export type PasskeyLoginChallenge = {
+  challenge: string;
+  expiresAtMs: number;
+  rpId?: string;
+  origin?: string;
+};
+
+export type PrimaryPasskeyLoginInput = {
+  credentialId: string;
+  assertion: unknown;
+  role?: string;
+  scope?: string[];
+  rpId?: string;
+  origin?: string;
+};
+
+const NONCE_PURPOSE = "passkey-login";
+const ENROLL_NONCE_PURPOSE = "passkey-enroll";
+const DEFAULT_TTL_SECONDS = 300;
+
+function toBase64Url(buf: Buffer): string {
+  return buf.toString("base64url");
+}
+
+export function createMemoryPasskeyCredentialStore(
+  initial: PasskeyCredentialRecord[] = []
+): PasskeyCredentialStore {
+  const byCred = new Map(initial.map((r) => [r.credentialId, r]));
+  const bySubject = new Map<string, PasskeyCredentialRecord[]>();
+  for (const row of initial) {
+    const list = bySubject.get(row.subjectId) ?? [];
+    list.push(row);
+    bySubject.set(row.subjectId, list);
+  }
+  return {
+    getByCredentialId: (credentialId) => Effect.sync(() => byCred.get(credentialId) ?? null),
+    listBySubject: (subjectId) => Effect.sync(() => bySubject.get(subjectId) ?? []),
+    enroll: (input) =>
+      Effect.gen(function* () {
+        const credentialId = input.credentialId.trim();
+        const subjectId = input.subjectId.trim();
+        if (!credentialId || !subjectId) {
+          return yield* Effect.fail(new PrimaryPasskeyError({ reason: "invalid_enroll_record" }));
+        }
+        const existing = byCred.get(credentialId);
+        if (existing && existing.subjectId !== subjectId) {
+          return yield* Effect.fail(
+            new PrimaryPasskeyError({ reason: "credential_subject_conflict" })
+          );
+        }
+        const record: PasskeyCredentialRecord = {
+          subjectId,
+          credentialId,
+          label: input.label,
+          enrolledAt: input.enrolledAt ?? new Date().toISOString(),
+          publicKeyBase64Url: input.publicKeyBase64Url,
+          counter: input.counter,
+          transports: input.transports,
+        };
+        byCred.set(credentialId, record);
+        const list = (bySubject.get(subjectId) ?? []).filter(
+          (r) => r.credentialId !== credentialId
+        );
+        list.push(record);
+        bySubject.set(subjectId, list);
+        return record;
+      }),
+    delete: (credentialId) =>
+      Effect.sync(() => {
+        const existing = byCred.get(credentialId);
+        if (!existing) return false;
+        byCred.delete(credentialId);
+        const list = (bySubject.get(existing.subjectId) ?? []).filter(
+          (r) => r.credentialId !== credentialId
+        );
+        if (list.length === 0) bySubject.delete(existing.subjectId);
+        else bySubject.set(existing.subjectId, list);
+        return true;
+      }),
+  };
+}
+
+/**
+ * Issue a one-time WebAuthn challenge stored in {@link SecretStore}.
+ */
+export function issuePasskeyLoginChallengeEffect(input: {
+  store: SecretStore;
+  subjectId: string;
+  rpId?: string;
+  origin?: string;
+  ttlSeconds?: number;
+  now?: () => number;
+}): Effect.Effect<PasskeyLoginChallenge, PrimaryPasskeyError | SecretStoreError> {
+  return Effect.gen(function* () {
+    const now = input.now?.() ?? Date.now();
+    const ttl = (input.ttlSeconds ?? DEFAULT_TTL_SECONDS) * 1000;
+    const challenge = toBase64Url(randomBytes(32));
+    const expiresAtMs = now + ttl;
+
+    yield* input.store.storeNonce(challenge, {
+      nonce: challenge,
+      purpose: NONCE_PURPOSE,
+      createdAtMs: now,
+      expiresAtMs,
+      meta: {
+        subjectId: input.subjectId,
+        ...(input.rpId ? { rpId: input.rpId } : {}),
+        ...(input.origin ? { origin: input.origin } : {}),
+      },
+    });
+
+    return { challenge, expiresAtMs, rpId: input.rpId, origin: input.origin };
+  });
+}
+
+/**
+ * Verify a passkey assertion against a stored challenge and return ATR claims.
+ */
+export function primaryPasskeyLoginEffect(input: {
+  verifier: WebAuthnStepUpVerifier;
+  credentials: PasskeyCredentialStore;
+  store: SecretStore;
+  login: PrimaryPasskeyLoginInput;
+  challenge: string;
+  now?: () => number;
+}): Effect.Effect<AtrClaims, PrimaryPasskeyError | SecretStoreError> {
+  return Effect.gen(function* () {
+    const cred = yield* input.credentials.getByCredentialId(input.login.credentialId);
+    if (!cred) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "unknown_credential" }));
+    }
+
+    const stored = yield* input.store.getNonce(input.challenge);
+    if (!stored || stored.purpose !== NONCE_PURPOSE) {
+      return yield* Effect.fail(
+        new PrimaryPasskeyError({ reason: "challenge_expired_or_missing" })
+      );
+    }
+    const now = input.now?.() ?? Date.now();
+    if (stored.consumedAtMs != null) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "challenge_consumed" }));
+    }
+    if (stored.expiresAtMs <= now) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "challenge_expired" }));
+    }
+    const meta = stored.meta ?? {};
+    if (meta.subjectId && meta.subjectId !== cred.subjectId) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "subject_mismatch" }));
+    }
+
+    const rpId = input.login.rpId ?? meta.rpId;
+    const origin = input.login.origin ?? meta.origin;
+
+    const credential =
+      cred.publicKeyBase64Url != null
+        ? {
+            id: cred.credentialId,
+            publicKey: Buffer.from(cred.publicKeyBase64Url, "base64url"),
+            counter: cred.counter ?? 0,
+            transports: cred.transports,
+          }
+        : undefined;
+
+    yield* requireWebAuthnStepUpEffect(input.verifier, {
+      assertion: input.login.assertion,
+      expectedChallenge: input.challenge,
+      rpId,
+      origin,
+      credential,
+    }).pipe(
+      Effect.mapError(
+        (cause) =>
+          new PrimaryPasskeyError({
+            reason: "webauthn_verify_failed",
+            cause,
+          })
+      )
+    );
+
+    yield* input.store.markNonceConsumed(input.challenge);
+
+    return {
+      sub: cred.subjectId,
+      role: input.login.role ?? "operator",
+      scope: input.login.scope ?? ["execute", "search", "memory"],
+      mfa: true,
+      amr: ["webauthn"],
+    } satisfies AtrClaims;
+  });
+}
+
+/**
+ * Issue a one-time WebAuthn *registration* challenge stored in {@link SecretStore}.
+ */
+export function issuePasskeyEnrollChallengeEffect(input: {
+  store: SecretStore;
+  subjectId: string;
+  rpId?: string;
+  origin?: string;
+  ttlSeconds?: number;
+  now?: () => number;
+}): Effect.Effect<PasskeyLoginChallenge, PrimaryPasskeyError | SecretStoreError> {
+  return Effect.gen(function* () {
+    const now = input.now?.() ?? Date.now();
+    const ttl = (input.ttlSeconds ?? DEFAULT_TTL_SECONDS) * 1000;
+    const challenge = toBase64Url(randomBytes(32));
+    const expiresAtMs = now + ttl;
+
+    yield* input.store.storeNonce(challenge, {
+      nonce: challenge,
+      purpose: ENROLL_NONCE_PURPOSE,
+      createdAtMs: now,
+      expiresAtMs,
+      meta: {
+        subjectId: input.subjectId,
+        ...(input.rpId ? { rpId: input.rpId } : {}),
+        ...(input.origin ? { origin: input.origin } : {}),
+      },
+    });
+
+    return { challenge, expiresAtMs, rpId: input.rpId, origin: input.origin };
+  });
+}
+
+export type PrimaryPasskeyEnrollInput = {
+  subjectId: string;
+  credentialId: string;
+  publicKeyBase64Url: string;
+  counter?: number;
+  transports?: string[];
+  label?: string;
+};
+
+/**
+ * Consume an enroll challenge and persist a credential (after host WebAuthn registration verify).
+ */
+export function primaryPasskeyEnrollEffect(input: {
+  credentials: PasskeyCredentialStore;
+  store: SecretStore;
+  enroll: PrimaryPasskeyEnrollInput;
+  challenge: string;
+  now?: () => number;
+}): Effect.Effect<PasskeyCredentialRecord, PrimaryPasskeyError | SecretStoreError> {
+  return Effect.gen(function* () {
+    const stored = yield* input.store.getNonce(input.challenge);
+    if (!stored || stored.purpose !== ENROLL_NONCE_PURPOSE) {
+      return yield* Effect.fail(
+        new PrimaryPasskeyError({ reason: "challenge_expired_or_missing" })
+      );
+    }
+    const now = input.now?.() ?? Date.now();
+    if (stored.consumedAtMs != null) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "challenge_consumed" }));
+    }
+    if (stored.expiresAtMs <= now) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "challenge_expired" }));
+    }
+    const meta = stored.meta ?? {};
+    if (meta.subjectId && meta.subjectId !== input.enroll.subjectId) {
+      return yield* Effect.fail(new PrimaryPasskeyError({ reason: "subject_mismatch" }));
+    }
+
+    const record = yield* input.credentials.enroll({
+      subjectId: input.enroll.subjectId,
+      credentialId: input.enroll.credentialId,
+      publicKeyBase64Url: input.enroll.publicKeyBase64Url,
+      counter: input.enroll.counter ?? 0,
+      transports: input.enroll.transports,
+      label: input.enroll.label,
+    });
+    yield* input.store.markNonceConsumed(input.challenge);
+    return record;
+  });
+}

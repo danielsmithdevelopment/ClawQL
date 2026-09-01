@@ -2,9 +2,9 @@
  * createClawQLAuth — composition helper for gateway hosts (modularization §4.3).
  * ClawQL remains an auth *consumer* / step-up library, not a full IdP.
  *
- * The surface is Effect-first: `resolveClaimsEffect` / `assertToolAccessEffect` and an Effect
- * step-up layer. A single `resolveClaimsAsync` Promise method is kept as a thin `Effect.runPromise`
- * wrapper for MCP / Express hosts that consume the discriminated-union shape at their edge.
+ * Effect-primary: `resolveClaimsEffect` / `assertToolAccessEffect` + Effect step-up.
+ * Hosts that need a Promise call `Effect.runPromise` at their own Express/MCP edge —
+ * this package does not ship convenience Promise façades.
  */
 
 import { Effect, type Layer } from "effect";
@@ -73,15 +73,11 @@ export type ClawQLAuth = {
   readonly apiKeys: IssuedApiKeyStore | undefined;
   /** Pluggable secret backend (OAuth tokens, keys, nonces). */
   readonly secretStore: SecretStore;
-  /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` requires the Effect/async forms. */
+  /** Sync claim resolution for `noAuth` / `apiKey`; `oidc` / `mcpOAuth` require Effect. */
   resolveClaims(
     headers?: AuthHeaderSource
   ): { ok: true; claims: AtrClaims } | { ok: false; error: string };
-  /** Thin `Effect.runPromise` wrapper for MCP / Express hosts (supports oidc JWT verify). */
-  resolveClaimsAsync(
-    headers?: AuthHeaderSource
-  ): Promise<{ ok: true; claims: AtrClaims } | { ok: false; error: string }>;
-  /** Effect form of claim resolution (supports oidc JWT verify + sync modes). */
+  /** Effect claim resolution (supports oidc JWT verify + sync modes). */
   resolveClaimsEffect(headers?: AuthHeaderSource): Effect.Effect<AtrClaims, GatewayAuthError>;
   /** Effect form of tool-access policy — fails on the typed AuthPolicyError channel. */
   assertToolAccessEffect(
@@ -127,7 +123,7 @@ function resolveAuthSecretStore(input: CreateClawQLAuthOptions["secretStore"]): 
 }
 
 export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLAuth {
-  const base = loadGatewayAuthConfig();
+  const base = Effect.runSync(loadGatewayAuthConfig());
   const apiKeys = options.apiKeyStorePath
     ? createIssuedApiKeyStore({
         path: options.apiKeyStorePath,
@@ -157,14 +153,6 @@ export function createClawQLAuth(options: CreateClawQLAuthOptions = {}): ClawQLA
     secretStore,
     resolveClaims(headers = {}) {
       return resolveAtrClaimsFromHeaders(headers, config);
-    },
-    resolveClaimsAsync(headers = {}) {
-      return Effect.runPromise(
-        resolveAtrClaimsFromHeadersEffect(headers, config).pipe(
-          Effect.map((claims) => ({ ok: true, claims }) as const),
-          Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
-        )
-      );
     },
     resolveClaimsEffect(headers = {}) {
       return resolveAtrClaimsFromHeadersEffect(headers, config);

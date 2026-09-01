@@ -1,3 +1,4 @@
+import { appendPaymentEventToWormEffect } from "clawql-audit";
 import { AuditService } from "clawql-core";
 import { Context, Effect, Layer } from "effect";
 import type { PaymentAuditVerifyResult } from "../audit/chain.js";
@@ -62,6 +63,15 @@ export function paymentAuditLiveLayer(
               summary: entry.summary,
               correlationId: entry.correlationId,
             });
+            // Dual-write to process clawql-audit trail when CLAWQL_WORM_ENABLED=1.
+            yield* appendPaymentEventToWormEffect({
+              ts: entry.ts,
+              category: entry.category,
+              action: entry.action,
+              summary: entry.summary,
+              correlationId: entry.correlationId,
+              payload: entry.payload as unknown as Record<string, unknown>,
+            }).pipe(Effect.catchAll(() => Effect.succeed(null)));
             if (isPaymentAuditLokiPushEnabled(env)) {
               // Fire-and-forget: Loki must not block WORM append.
               yield* Effect.forkDaemon(

@@ -44,6 +44,20 @@ Entity `sources: [{ type: sql, … }]` entries are **declarations** for generate
 
 See [meta-ontology-v0.1](../../docs/specs/ontology/meta-ontology-v0.1.md) for `CLAWQL_ONTOLOGY_SCAFFOLD_*` and `CLAWQL_ONTOLOGY_META_*`.
 
+## memory_recall (dynamic schemas)
+
+Layer 2/3 entity ids sync into vault `ontology.db` (`dynamic_entities` / `dynamic_records`) and query via `memory_recall`:
+
+```ts
+import { runOntologyRecall } from "clawql-memory/ontology";
+import {
+  runExtractBenchOntologyPipeline,
+  syncDocumentToMemoryOntology,
+} from "clawql-ontology";
+```
+
+See [meta-ontology-v0.1 § memory_recall](../../docs/specs/ontology/meta-ontology-v0.1.md#memory_recall-integration) and [ontology CLI](../../docs/ontology/cli.md).
+
 ## Schema packaging
 
 `entity.schema.json` ships inside this package under `schemas/ontology/` so standalone

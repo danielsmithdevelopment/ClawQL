@@ -80,7 +80,55 @@ const program = scaffoldWithMeta(jsonSchema, "invoice").pipe(
 
 ## memory_recall integration
 
-Dynamic Layer 2/3 entity ids (e.g. `invoice`) are durable in vault `ontology.db` (`dynamic_entities` / `dynamic_records`, schema v2) and queryable via `memory_recall({ schema, filters })`. Sync helpers: `syncEntityToMemoryOntology` / `syncDocumentToMemoryOntology`. ExtractBench path: `runExtractBenchOntologyPipeline`.
+Dynamic Layer 2/3 entity ids (e.g. `invoice`) are durable in vault `ontology.db` (`dynamic_entities` / `dynamic_records`, schema v2) and queryable via `memory_recall({ schema, filters })`.
+
+### Routing
+
+| `schema` value | Storage | Query path |
+| -------------- | ------- | ---------- |
+| `legal.Matter` | `matters` table (v1) | Typed SQL predicates (`escrowPct`, `nonCompeteMonths`, …) |
+| `legal.Client` / `Attorney` / `Document` | tables exist | Recall not implemented yet (same as pre–meta-ontology) |
+| Any other string (e.g. `invoice`, `invoice__lineItems_record`) | `dynamic_entities` + `dynamic_records` | In-process JSON field predicates |
+
+`schema` is a **string** in the MCP tool (not a fixed enum). `legal.*` schemas still require non-empty `filters`. Dynamic schemas may omit `filters` to enumerate all rows (use `limit: 10000` for long lists).
+
+### Sync helpers (ontology → memory, acyclic)
+
+```ts
+import { Effect } from "effect";
+import {
+  scaffoldWithMeta,
+  syncDocumentToMemoryOntology,
+  runExtractBenchOntologyPipeline,
+} from "clawql-ontology";
+import { runOntologyRecall } from "clawql-memory/ontology";
+
+// After scaffold + populate:
+await Effect.runPromise(
+  syncDocumentToMemoryOntology(entity, documentId, record, { nested })
+);
+
+// ExtractBench end-to-end (scaffold → populateFromRecord → ontology.db → recall):
+const out = await Effect.runPromise(runExtractBenchOntologyPipeline({
+  jsonSchema, documentType: "invoice", documentId, extracted, limit: 10000,
+}));
+```
+
+Package export: `clawql-memory/ontology` (`registerDynamicOntologyEntity`, `syncDynamicOntologyDocument`, `runOntologyRecall`).
+
+### Example recall (invoice line items)
+
+```json
+{
+  "query": "invoice line items",
+  "schema": "invoice",
+  "filters": { "lineItems": { "isNull": false } },
+  "limit": 10000,
+  "confidenceMinimum": "EXTRACTED"
+}
+```
+
+Nested repeated rows are also registered under `invoice__lineItems_record` (or `<parent>__<rel>_record`) for row-level enumeration.
 
 ## Promotion path
 

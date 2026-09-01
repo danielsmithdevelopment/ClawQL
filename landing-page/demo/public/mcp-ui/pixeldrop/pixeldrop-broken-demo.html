@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<!--
+  ClawQL WebMCP Demo — "PixelDrop" (fictional photo gallery)
+
+  PURPOSE: This is a deliberately broken upload UI, built to realistically
+  model the class of bug shown in the OpenRouter/HEIC clip this demo is
+  based on. The bug lives ENTIRELY in this page's own frontend JS.
+
+  The backend upload capability (uploadToBackend / the WebMCP tool below)
+  is fine and unmodified — same call path whether it's invoked by this
+  page's broken <input onchange> handler or by an external WebMCP client
+  (i.e. the ClawQL /mcp-ui smart-upload template) that supplies a clean file.
+
+  This is the honest shape of the real-world bug: broken glue code in
+  front of a working capability, not a broken capability itself.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PixelDrop — Photo Gallery (demo)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; }
+    .upload-box {
+      border: 2px dashed #999;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      color: #666;
+    }
+    .error {
+      background: #fee;
+      color: #900;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 16px;
+      display: none;
+    }
+    .success {
+      background: #efe;
+      color: #060;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 16px;
+      display: none;
+    }
+    .gallery { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+    .gallery img { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; }
+    .upload-log { font-size: 12px; color: #999; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <h1>📷 PixelDrop</h1>
+  <p>Upload a photo to your gallery.</p>
+
+  <div class="upload-box">
+    <p>Drop an image here, or click to select</p>
+    <!--
+      BUG 1: no `accept` restriction communicated to the user up front,
+      but the onchange handler below rejects HEIC/AVIF outright.
+      BUG 2: no drop handling at all on this box despite the "drop here"
+      copy — dropping a file anywhere does nothing (or refreshes,
+      depending on the browser's default drag behavior).
+    -->
+    <input type="file" id="file-input" onchange="handleFileSelect(event)">
+  </div>
+
+  <div class="error" id="error-box"></div>
+  <div class="success" id="success-box"></div>
+  <div class="gallery" id="gallery"></div>
+  <div class="upload-log" id="upload-log"></div>
+
+  <script>
+    // ---------------------------------------------------------------------
+    // BROKEN FRONTEND LOGIC — this is the bug, intentionally.
+    // Do not "fix" this file directly for the demo — the point is that
+    // the /mcp-ui smart-upload template fixes it from OUTSIDE, without
+    // touching this code, by calling uploadToBackend() (exposed below
+    // via WebMCP) with an already-clean file.
+    // ---------------------------------------------------------------------
+
+    const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2MB — realistic "too small" limit
+                                            // that a raw iPhone photo (often
+                                            // 3-8MB) blows straight past
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      hideMessages()
+
+      // BUG 3: rejects HEIC/AVIF/anything not in the tiny allow-list,
+      // with no client-side conversion attempted at all — this is the
+      // exact "unsupported binary files" failure from the OpenRouter clip
+      if (!SUPPORTED_TYPES.includes(file.type)) {
+        showError(
+          `Unsupported binary file: "${file.type || 'unknown format'}". ` +
+          `Please upload a JPEG, PNG, GIF, or WEBP.`
+        )
+        return
+      }
+
+      // BUG 4: no client-side resize — just a hard rejection
+      if (file.size > MAX_SIZE_BYTES) {
+        showError(
+          `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). ` +
+          `Maximum size is 2MB. Please resize your image and try again.`
+        )
+        return
+      }
+
+      // If it happens to pass both checks, proceed to the real upload call
+      submitUpload(file)
+    }
+
+    // Note: no ondrop handler exists anywhere on this page.
+    // Dragging a file onto .upload-box or anywhere else does nothing useful.
+
+    async function submitUpload(file) {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1]
+        try {
+          const result = await uploadToBackend(base64, file.name)
+          showSuccess(`Uploaded! Upload ID: ${result.uploadId}`)
+          addToGallery(reader.result)
+          logUpload(result, 'broken-frontend')
+        } catch (err) {
+          showError(`Upload failed: ${err.message}`)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+
+    function hideMessages() {
+      document.getElementById('error-box').style.display = 'none'
+      document.getElementById('success-box').style.display = 'none'
+    }
+    function showError(msg) {
+      const el = document.getElementById('error-box')
+      el.textContent = msg
+      el.style.display = 'block'
+    }
+    function showSuccess(msg) {
+      const el = document.getElementById('success-box')
+      el.textContent = msg
+      el.style.display = 'block'
+    }
+    function addToGallery(dataUrl) {
+      const img = document.createElement('img')
+      img.src = dataUrl
+      document.getElementById('gallery').appendChild(img)
+    }
+    function logUpload(result, source) {
+      const el = document.getElementById('upload-log')
+      el.textContent = `Last upload: ${result.uploadId} · ${result.timestamp} · via ${source}`
+    }
+
+    // ---------------------------------------------------------------------
+    // THE ACTUAL BACKEND CALL — this part is fine, unmodified, and is the
+    // same function whether it's called by the broken handler above OR
+    // by an external WebMCP caller (the /mcp-ui smart-upload template).
+    // No format/size validation happens here — that was always meant to
+    // be the frontend's job, which is exactly why fixing the frontend
+    // from outside, without touching backend code, is a legitimate fix.
+    // ---------------------------------------------------------------------
+
+    async function uploadToBackend(base64File, filename) {
+      // Simulated backend — in a real deployment this would be a real
+      // fetch() to a real upload endpoint. Kept in-memory here so the
+      // demo is fully self-contained with no server required.
+      await new Promise(r => setTimeout(r, 300)) // simulate network latency
+
+      const uploadId = 'up_' + Math.random().toString(36).slice(2, 10)
+      const timestamp = new Date().toISOString()
+
+      window.__pixeldropUploads = window.__pixeldropUploads || []
+      window.__pixeldropUploads.push({ uploadId, filename, timestamp, size: base64File.length })
+
+      return { uploadId, timestamp }
+    }
+
+    // ---------------------------------------------------------------------
+    // WEBMCP DECLARATION — exposes uploadToBackend as a tool, independent
+    // of this page's broken frontend. An external agent/template calling
+    // this tool directly bypasses BUG 3 and BUG 4 entirely, because those
+    // bugs live in handleFileSelect(), not in uploadToBackend() itself.
+    //
+    // WebMCP — Chrome 149+ / ChatGPT browser expect document.modelContext.
+    // navigator.modelContext is a deprecated alias (Chrome 150+); prefer document
+    // first so a dead navigator stub cannot swallow registration silently.
+    // execute must return a DOMString (Chrome Imperative API); agents/ChatGPT
+    // parse text — JSON.stringify keeps structured fields readable.
+    // ---------------------------------------------------------------------
+
+    const modelContext = document.modelContext ?? navigator.modelContext
+    if (modelContext?.registerTool) {
+      modelContext.registerTool({
+        name: 'upload_photo',
+        description:
+          'Upload a photo to the PixelDrop gallery. Accepts a base64-encoded ' +
+          'image file and an optional caption. No format or size validation ' +
+          'is performed here — the caller is responsible for supplying a ' +
+          'well-formed file.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            file: {
+              type: 'string',
+              description: 'Base64-encoded image file contents',
+            },
+            filename: {
+              type: 'string',
+              description: 'Original filename, used for display/logging',
+            },
+            caption: {
+              type: 'string',
+              description: 'Optional caption for the photo',
+            },
+          },
+          required: ['file', 'filename'],
+        },
+        async execute({ file, filename, caption }) {
+          const result = await uploadToBackend(file, filename)
+          // Reflect the upload into the visible gallery too, so a human
+          // watching the page sees the WebMCP-driven upload land exactly
+          // like a normal one would — proving it's the same code path.
+          addToGallery(`data:image/jpeg;base64,${file}`)
+          logUpload(result, 'webmcp')
+          return JSON.stringify({
+            uploadId: result.uploadId,
+            timestamp: result.timestamp,
+            caption: caption ?? null,
+          })
+        },
+      })
+      console.log('[PixelDrop] WebMCP tool "upload_photo" registered via',
+        document.modelContext ? 'document.modelContext' : 'navigator.modelContext')
+    } else {
+      console.warn(
+        '[PixelDrop] modelContext not available in this browser. ' +
+        'WebMCP tool was not registered. Requires Chrome 149+ with ' +
+        'chrome://flags/#enable-webmcp-testing (or ChatGPT desktop browser).'
+      )
+    }
+  </script>
+</body>
+</html>

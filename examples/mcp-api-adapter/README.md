@@ -56,7 +56,18 @@ node examples/mcp-api-adapter/demo-rest.mjs
 node examples/mcp-api-adapter/demo-graphql.mjs
 node examples/mcp-api-adapter/demo-grpc.mjs
 node examples/mcp-api-adapter/demo-all.mjs   # parity check
+node examples/mcp-api-adapter/clawql-with-trace.mjs   # live /mcp-ui/trace + shared inference JSONL
 ```
+
+**PixelDrop smart-upload demo** (broken upload vs /mcp-ui fix):
+
+```bash
+cd examples/mcp-api-adapter/pixeldrop && python3 -m http.server 8765
+# open http://127.0.0.1:8765/smart-upload-test-harness.html
+node examples/mcp-api-adapter/pixeldrop/smoke-test.mjs
+```
+
+See [`pixeldrop/README.md`](pixeldrop/README.md).
 
 ```bash
 curl -s -X POST http://127.0.0.1:8090/echo \

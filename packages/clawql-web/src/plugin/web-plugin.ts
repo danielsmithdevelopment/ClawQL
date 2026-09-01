@@ -1,5 +1,5 @@
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import { installWebAuditWormSink } from "../audit.js";
@@ -65,14 +65,14 @@ function toolError(err: unknown): { content: { type: "text"; text: string }[]; i
   };
 }
 
-export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
+export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): ProviderPlugin {
   const web = createWebService(env);
   installWebAuditWormSink(env);
-  return {
+  return defineRegisteringProviderPlugin({
     id: WEB_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "Web search, fetch, screenshot, and browser interaction MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         if (!isWebEnabled(env)) return;
 
@@ -196,5 +196,5 @@ export function createWebPlugin(env: NodeJS.ProcessEnv = process.env): Plugin {
           },
         });
       }),
-  };
+  });
 }

@@ -3,8 +3,18 @@ import type { Server } from "node:http";
 import { httpBodyFromCollapsed } from "./call.js";
 import { refreshCatalog } from "./catalog.js";
 import { swaggerDocsHtml } from "./docs-html.js";
+import {
+  createJwtVerifier,
+  edgeAuthConfigured,
+  resolveEdgeCredential,
+  type McpApiAdapterJwtAuthOptions,
+  type VerifiedMcpAdapterAtr,
+} from "./edge-auth.js";
+import { createEdgeAuthRateLimiter } from "./edge-rate-limit.js";
 import { attachGraphqlRoutes } from "./graphql-http.js";
 import { attachMcpHttpRoutes } from "./mcp-http.js";
+import { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
+import type { TraceCallRecord } from "./mcp-ui-trace.js";
 import { buildOpenApiDocument } from "./openapi.js";
 import { isSafeToolPathName } from "./schema-convert.js";
 import type {
@@ -14,12 +24,12 @@ import type {
   StartedMcpApiAdapter,
   ToolCatalog,
 } from "./types.js";
-import {
-  buildCatalogFromUpstream,
-  connectUpstream,
-  type UpstreamConnection,
-} from "./upstream.js";
+import { buildCatalogFromUpstream, connectUpstream, type UpstreamConnection } from "./upstream.js";
 import { attachWebSocketSurface, DEFAULT_WS_PATH } from "./websocket.js";
+
+export type McpApiAdapterRequest = Request & {
+  mcpAtr?: VerifiedMcpAdapterAtr;
+};
 
 function readApiKey(req: Request): string | undefined {
   const headerKey = req.header("x-api-key")?.trim();
@@ -47,10 +57,19 @@ function resolveWsPath(wsPath: string | false | undefined): string | undefined {
   return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || DEFAULT_WS_PATH : `/${trimmed}`;
 }
 
+function resolveMcpUiPath(mcpUiPath: string | false | undefined): string | undefined {
+  if (mcpUiPath === false) return undefined;
+  if (mcpUiPath === undefined) return DEFAULT_MCP_UI_PATH;
+  const trimmed = mcpUiPath.trim();
+  if (!trimmed || trimmed === "/") return DEFAULT_MCP_UI_PATH;
+  return trimmed.startsWith("/") ? trimmed.replace(/\/$/, "") || DEFAULT_MCP_UI_PATH : `/${trimmed}`;
+}
+
 export type CreateMcpApiAdapterAppOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
   apiKey?: string;
+  jwtAuth?: McpApiAdapterJwtAuthOptions;
   title?: string;
   serverName?: string;
   grpcAddress?: string;
@@ -58,6 +77,20 @@ export type CreateMcpApiAdapterAppOptions = {
   mcpPath?: string;
   /** WebSocket path when enabled (advertised on /healthz). */
   wsPath?: string;
+  /** HTMX MCP UI path when enabled (advertised on /healthz). */
+  mcpUiPath?: string;
+  /**
+   * When true, `/mcp-ui` filters the catalog (and execute) by the caller's ATR.
+   * Default true. Disable with `--no-mcp-ui-atr-scoped` for open demos.
+   */
+  mcpUiAtrScoped?: boolean;
+  /**
+   * Optional host hook for GET /mcp-ui/trace/:sessionId — inference-shaped
+   * call records (e.g. clawql-inference store keyed by correlation/session id).
+   */
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>;
   createBridgedMcpServer?: () => import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
 };
 
@@ -65,16 +98,33 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   const app = express();
   app.use(express.json({ limit: "2mb" }));
 
-  const apiKey = options.apiKey?.trim();
-  if (apiKey) {
+  const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
+  if (edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth })) {
+    app.use(createEdgeAuthRateLimiter());
+    const mcpUiProgressPrefix =
+      typeof options.mcpUiPath === "string" && options.mcpUiPath.trim()
+        ? `${options.mcpUiPath.replace(/\/$/, "")}/progress/`
+        : "/mcp-ui/progress/";
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path === "/healthz") return next();
-      const provided = readApiKey(req);
-      if (provided !== apiKey) {
-        res.status(401).json({ error: "unauthorized" });
-        return;
-      }
-      next();
+      // EventSource/fetch cannot set Authorization; opaque job UUIDs + TTL are the capability.
+      if (req.method === "GET" && req.path.startsWith(mcpUiProgressPrefix)) return next();
+      void resolveEdgeCredential(
+        readApiKey(req),
+        { apiKey: options.apiKey, jwt: options.jwtAuth },
+        verifyJwt
+      )
+        .then((atr) => {
+          if (!atr) {
+            res.status(401).json({ error: "unauthorized" });
+            return;
+          }
+          (req as McpApiAdapterRequest).mcpAtr = atr;
+          next();
+        })
+        .catch(() => {
+          res.status(401).json({ error: "unauthorized" });
+        });
     });
   }
 
@@ -88,6 +138,7 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
       grpcAddress: catalog.grpcAddress ?? options.grpcAddress,
       mcpPath: catalog.mcpPath ?? options.mcpPath,
       wsPath: options.wsPath,
+      mcpUiPath: catalog.mcpUiPath ?? options.mcpUiPath,
       toolCount: catalog.tools.length,
       fetchedAt: catalog.fetchedAt,
       surfaces: catalog.surfaces,
@@ -126,6 +177,17 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
     grpcAddress: options.grpcAddress,
   });
 
+  if (options.mcpUiPath) {
+    attachMcpUiRoutes(app, {
+      getCatalog: options.getCatalog,
+      callTool: options.callTool,
+      title: options.title,
+      path: options.mcpUiPath,
+      atrScoped: options.mcpUiAtrScoped !== false,
+      listTraceCalls: options.listTraceCalls,
+    });
+  }
+
   if (options.mcpPath && options.createBridgedMcpServer) {
     attachMcpHttpRoutes(app, {
       path: options.mcpPath,
@@ -134,8 +196,9 @@ export function createMcpApiAdapterApp(options: CreateMcpApiAdapterAppOptions): 
   }
 
   const reserved = new Set(
-    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp", "ws"].concat(
-      options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : []
+    ["tools", "docs", "openapi.json", "healthz", "graphql", "graphiql", "mcp", "ws", "mcp-ui"].concat(
+      options.mcpPath ? [options.mcpPath.replace(/^\//, "")] : [],
+      options.mcpUiPath ? [options.mcpUiPath.replace(/^\//, "")] : []
     )
   );
 
@@ -210,8 +273,7 @@ async function listenHttp(
     s.on("error", reject);
   });
   const addr = server.address();
-  const boundPort =
-    typeof addr === "object" && addr && "port" in addr ? addr.port : port;
+  const boundPort = typeof addr === "object" && addr && "port" in addr ? addr.port : port;
   return { server, boundPort };
 }
 
@@ -219,12 +281,13 @@ function attachRefreshTimer(
   upstream: UpstreamConnection,
   mcpPath: string | undefined,
   wsPath: string | undefined,
+  mcpUiPath: string | undefined,
   setCatalog: (c: ToolCatalog) => void,
   refreshMs: number
 ): ReturnType<typeof setInterval> | undefined {
   if (refreshMs <= 0) return undefined;
   const timer = setInterval(() => {
-    void refreshCatalog(upstream, mcpPath, wsPath)
+    void refreshCatalog(upstream, mcpPath, wsPath, mcpUiPath)
       .then((next) => setCatalog(next))
       .catch((err) => {
         console.error("[mcp-api-adapter] catalog refresh failed:", err);
@@ -243,21 +306,26 @@ export async function startMcpApiAdapter(
 ): Promise<StartedMcpApiAdapter> {
   const mcpPath = resolveMcpPath(options.mcpPath);
   const wsPath = resolveWsPath(options.wsPath);
+  const mcpUiPath = resolveMcpUiPath(options.mcpUiPath);
   const upstream = await connectUpstream(options.upstream, {
     grpcListen: options.grpcListen,
   });
 
-  let catalog = buildCatalogFromUpstream(upstream, { mcpPath, wsPath });
+  let catalog = buildCatalogFromUpstream(upstream, { mcpPath, wsPath, mcpUiPath });
 
   const app = createMcpApiAdapterApp({
     getCatalog: () => catalog,
     callTool: upstream.callTool,
     apiKey: options.apiKey,
+    jwtAuth: options.jwtAuth,
     title: options.title,
     serverName: options.serverName,
     grpcAddress: upstream.grpcAddress ?? options.grpcAddress,
     mcpPath,
     wsPath,
+    mcpUiPath,
+    mcpUiAtrScoped: options.mcpUiAtrScoped,
+    listTraceCalls: options.listTraceCalls,
     createBridgedMcpServer: mcpPath ? upstream.createBridgedMcpServer : undefined,
   });
 
@@ -273,6 +341,7 @@ export async function startMcpApiAdapter(
           getCatalog: () => catalog,
           callTool: upstream.callTool,
           apiKey: options.apiKey,
+          jwtAuth: options.jwtAuth,
         })
       : undefined;
 
@@ -280,6 +349,7 @@ export async function startMcpApiAdapter(
     upstream,
     mcpPath,
     wsPath,
+    mcpUiPath,
     (next) => {
       catalog = next;
     },
@@ -297,13 +367,14 @@ export async function startMcpApiAdapter(
     grpcAddress: upstream.grpcAddress,
     mcpPath,
     wsPath: ws?.path,
+    mcpUiPath,
     wsUrl,
     upstream: upstream.label,
     upstreamKind: upstream.kind,
     getCatalog: () => catalog,
     refreshCatalog: async () => {
       const tools = await upstream.refreshTools();
-      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath });
+      catalog = buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath, mcpUiPath });
       return catalog;
     },
     close: async () => {

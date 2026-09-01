@@ -25,7 +25,8 @@ describe("attachGraphqlHttpToMcpApp", () => {
     saved.CLAWQL_PROVIDER = process.env.CLAWQL_PROVIDER;
     saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
     saved.CLAWQL_SPEC_PATHS = process.env.CLAWQL_SPEC_PATHS;
-    saved.CLAWQL_BUNDLED_PROVIDERS = process.env.CLAWQL_BUNDLED_PROVIDERS;
+    saved.CLAWQL_INSTANCE_SPEC = process.env.CLAWQL_INSTANCE_SPEC;
+    saved.CLAWQL_INSTANCE_SPEC_FILE = process.env.CLAWQL_INSTANCE_SPEC_FILE;
     resetSpecCache();
   });
 
@@ -68,6 +69,35 @@ describe("attachGraphqlHttpToMcpApp", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_BUNDLED_PROVIDERS;
     process.env.CLAWQL_SPEC_PATHS = `${minimalSpec},${minimalWidgets}`;
+
+    const app = express();
+    await expect(attachGraphqlHttpToMcpApp(app)).resolves.toBeUndefined();
+
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("expected TCP address");
+    const base = `http://127.0.0.1:${addr.port}`;
+    try {
+      const res = await fetch(`${base}/graphql`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: "{ __typename }" }),
+      });
+      expect(res.status).toBe(404);
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
+  it("skips /graphql for empty provider catalog without failing startup", async () => {
+    delete process.env.CLAWQL_SPEC_PATH;
+    delete process.env.CLAWQL_PROVIDER;
+    delete process.env.CLAWQL_BUNDLED_PROVIDERS;
+    delete process.env.CLAWQL_SPEC_PATHS;
+    delete process.env.CLAWQL_INSTANCE_SPEC;
+    delete process.env.CLAWQL_INSTANCE_SPEC_FILE;
 
     const app = express();
     await expect(attachGraphqlHttpToMcpApp(app)).resolves.toBeUndefined();

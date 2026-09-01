@@ -42,6 +42,7 @@ describe("inference model catalog", () => {
     expect(providerCredentialPresent("deepseek", {})).toBe(false);
     expect(providerCredentialPresent("deepseek", { DEEPSEEK_API_KEY: "sk-test" })).toBe(true);
     expect(providerCredentialPresent("ollama", {})).toBe(true);
+    expect(providerCredentialPresent("mlx", {})).toBe(true);
     expect(providerCredentialPresent("openrouter", { OPENROUTER_API_KEY: "sk-or" })).toBe(true);
   });
 });

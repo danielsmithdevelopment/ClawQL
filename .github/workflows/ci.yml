@@ -194,7 +194,8 @@ jobs:
       - name: Build clawql-ontology
         run: |
           # pii.ts imports clawql-api — build workspace deps so DTS resolve succeeds
-          npm run build -w clawql-core -w clawql-auth -w clawql-api -w clawql-ontology
+          # clawql-api imports clawql-audit (process WORM dual-write)
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api -w clawql-ontology
 
       - name: Lint example ontology entities
         run: npm run ontology:lint
@@ -203,6 +204,30 @@ jobs:
         run: |
           diff -u schemas/ontology/entity.schema.json \
             packages/clawql-ontology/schemas/ontology/entity.schema.json
+
+  clawql-audit-standalone:
+    name: clawql-audit standalone deps
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Enforce zero ClawQL deps except clawql-merkle
+        run: npm run check:standalone -w clawql-audit
+
+      - name: Build + unit test clawql-audit
+        run: |
+          npm run build -w clawql-merkle -w clawql-audit
+          npx vitest run packages/clawql-merkle packages/clawql-audit
 
   # OSS Gitleaks CLI (Docker) — avoids org licensing on gitleaks-action. No npm install / node_modules on disk.
   secret-scan:
@@ -280,7 +305,7 @@ jobs:
             -t clawql-website:ci-smoke \
             --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
             --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
-            ./website
+            .
 
       - name: Run website container
         run: |
@@ -384,7 +409,17 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: website/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      - name: Build clawql-analytics (docs API route dependency)
+        run: |
+          npm ci
+          npm run build -w clawql-merkle
+          npm run build -w clawql-audit
+          npm run build -w clawql-auth
+          npm run build -w clawql-analytics
 
       - name: Install website dependencies
         run: npm ci --prefix website

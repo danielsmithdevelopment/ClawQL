@@ -432,7 +432,7 @@ jobs:
 
       - name: Setup Node (ClawQL MCP)
         if: contains(matrix.arm, 'clawql')
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -454,7 +454,7 @@ jobs:
 
       - name: Upload scorecard + arm artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-${{ matrix.arm }}-${{ matrix.task_id }}-${{ github.run_id }}
           path: integrations/harvey-labs/results/
@@ -495,7 +495,7 @@ jobs:
           cat integrations/harvey-labs/results/sweep-summary.json
 
       - name: Upload sweep summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-sweep-summary-${{ github.run_id }}
           path: integrations/harvey-labs/results/sweep-summary.json
@@ -511,6 +511,7 @@ jobs:
       - name: Report skip
         env:
           REASON: ${{ needs.resolve-matrix.outputs.skip_reason }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           echo "::warning::Skipped Harvey LAB live matrix — ${REASON}"
@@ -519,8 +520,11 @@ jobs:
               echo "::notice::Intentional pause (.skip-lab-matrix). Not a credential failure."
               exit 0
               ;;
-            *)
-              echo "::error::Set the missing GitHub Actions secret(s), then re-run."
-              exit 1
-              ;;
           esac
+          # Dependabot / fork PRs cannot read Actions secrets — treat as a soft skip.
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            echo "::notice::pull_request without live LAB secrets; soft-skip (exit 0)."
+            exit 0
+          fi
+          echo "::error::Set the missing GitHub Actions secret(s), then re-run."
+          exit 1

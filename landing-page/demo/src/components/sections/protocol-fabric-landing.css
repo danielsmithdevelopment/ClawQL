@@ -1,0 +1,269 @@
+/* ClawQL Protocol Fabric marketing landing — mesh atmosphere, WCAG contrast */
+
+.fabric-page {
+  --fabric-ink: oklch(14% 0.02 250);
+  --fabric-foam: oklch(98% 0.004 240);
+  --fabric-signal: oklch(62% 0.09 230);
+  --fabric-signal-deep: oklch(38% 0.07 240);
+  --fabric-body: oklch(28% 0.02 250);
+  --fabric-muted: oklch(38% 0.02 250);
+  --fabric-surface: oklch(97% 0.006 240);
+  --fabric-surface-band: oklch(94% 0.01 245);
+  --fabric-border: oklch(45% 0.02 250 / 0.3);
+  color: var(--fabric-body);
+}
+
+@media (prefers-color-scheme: dark) {
+  .fabric-page {
+    --fabric-ink: oklch(97% 0.004 240);
+    --fabric-foam: oklch(97% 0.004 240);
+    --fabric-signal: oklch(78% 0.08 220);
+    --fabric-signal-deep: oklch(78% 0.08 220);
+    --fabric-body: oklch(88% 0.015 240);
+    --fabric-muted: oklch(78% 0.02 240);
+    --fabric-surface: oklch(16% 0.015 250);
+    --fabric-surface-band: oklch(13% 0.012 255);
+    --fabric-border: oklch(70% 0.02 240 / 0.35);
+  }
+}
+
+.fabric-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: min(100svh, 52rem);
+  display: flex;
+  align-items: flex-end;
+  padding-block: 5rem 4.5rem;
+  color: var(--fabric-foam);
+  background:
+    radial-gradient(110% 75% at 15% -5%, oklch(32% 0.05 230 / 0.5), transparent 55%),
+    radial-gradient(80% 60% at 95% 90%, oklch(28% 0.04 260 / 0.4), transparent 50%),
+    linear-gradient(160deg, oklch(12% 0.02 255) 0%, oklch(15% 0.025 245) 45%, oklch(17% 0.03 230) 100%);
+}
+
+.fabric-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(oklch(100% 0 0 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(100% 0 0 / 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(180deg, oklch(0% 0 0 / 0.6), transparent 88%);
+  pointer-events: none;
+}
+
+.fabric-hero__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.fabric-hero__visual svg {
+  width: 100%;
+  height: 100%;
+}
+
+.fabric-thread {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fabric-thread--a {
+  stroke: oklch(78% 0.08 220 / 0.5);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 12;
+  animation: fabric-weave 20s linear infinite;
+}
+
+.fabric-thread--b {
+  stroke: oklch(70% 0.06 250 / 0.4);
+  stroke-width: 2;
+  stroke-dasharray: 3 16;
+  animation: fabric-weave 26s linear infinite reverse;
+}
+
+.fabric-thread--c {
+  stroke: oklch(85% 0.04 230 / 0.3);
+  stroke-width: 1;
+  animation: fabric-pulse 14s ease-in-out infinite alternate;
+}
+
+.fabric-node {
+  fill: oklch(82% 0.08 220);
+  opacity: 0.85;
+  animation: fabric-blink 4s ease-in-out infinite;
+}
+
+.fabric-node--late {
+  animation-delay: 1.6s;
+}
+
+@keyframes fabric-weave {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
+
+@keyframes fabric-pulse {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+@keyframes fabric-blink {
+  0%,
+  100% {
+    opacity: 0.45;
+    r: 4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.fabric-hero__content {
+  position: relative;
+  z-index: 1;
+}
+
+.fabric-brand {
+  font-family: 'Mona Sans', ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(2.75rem, 7vw, 4.5rem);
+  font-weight: 700;
+  font-stretch: 112.5%;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--fabric-foam);
+}
+
+.fabric-brand span {
+  display: block;
+  font-size: 0.38em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: oklch(82% 0.07 220);
+  margin-bottom: 0.55em;
+}
+
+.fabric-hero__headline {
+  margin-top: 1.25rem;
+  max-width: 36rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+  font-weight: 550;
+  line-height: 1.35;
+  color: oklch(94% 0.01 230);
+}
+
+.fabric-hero__lede {
+  margin-top: 1rem;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: oklch(82% 0.02 240);
+}
+
+.fabric-section-band {
+  background: var(--fabric-surface-band);
+}
+
+.fabric-surface {
+  background: var(--fabric-surface);
+}
+
+.fabric-diagram {
+  margin: 0;
+}
+
+.fabric-diagram img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0.25rem;
+}
+
+.fabric-diagram figcaption {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--fabric-muted);
+}
+
+.fabric-dir {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fabric-dir__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fabric-signal-deep);
+}
+
+.fabric-dir__title {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--fabric-ink);
+}
+
+.fabric-dir__detail {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--fabric-muted);
+}
+
+.fabric-loop {
+  font-family: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--fabric-ink);
+  background: oklch(0% 0 0 / 0.04);
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+@media (prefers-color-scheme: dark) {
+  .fabric-loop {
+    background: oklch(100% 0 0 / 0.06);
+  }
+}
+
+.fabric-spec-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 42rem;
+}
+
+.fabric-spec-list li {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--fabric-body);
+}
+
+.fabric-spec-list a {
+  font-weight: 600;
+  color: var(--fabric-signal-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .fabric-spec-list a {
+    color: var(--fabric-signal);
+  }
+}

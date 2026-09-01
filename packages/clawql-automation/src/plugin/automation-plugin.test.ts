@@ -1,8 +1,27 @@
 import { McpToolRegistry } from "clawql-api";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
+import {
+  createInMemoryPluginHostServices,
+  type ClawQLPluginRegistrationApi,
+  type ProviderPlugin,
+} from "clawql-core";
 import { configureAutomationPluginDeps } from "./deps.js";
 import { AUTOMATION_PLUGIN_ID, createAutomationPlugin } from "./automation-plugin.js";
+
+function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.install({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
+
+function uninstallPlugin(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.uninstall({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
 
 describe("createAutomationPlugin", () => {
   it("registers schedule and starts worker when enableSchedule", () => {
@@ -13,9 +32,9 @@ describe("createAutomationPlugin", () => {
     const api = registry.registrationApi();
     const plugin = createAutomationPlugin({ enableSchedule: true });
     expect(plugin.id).toBe(AUTOMATION_PLUGIN_ID);
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     expect(registry.list().map((t) => t.name)).toEqual(["schedule"]);
-    Effect.runSync(plugin.onTeardown!());
+    uninstallPlugin(plugin, api);
   });
 
   it("registers notify when enableNotify", () => {
@@ -24,7 +43,7 @@ describe("createAutomationPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createAutomationPlugin({ enableNotify: true }).onRegister!(api));
+    installPluginMcpTools(createAutomationPlugin({ enableNotify: true }), api);
     expect(registry.list().map((t) => t.name)).toEqual(["notify"]);
   });
 
@@ -34,7 +53,7 @@ describe("createAutomationPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createAutomationPlugin({ enableWorkflow: true }).onRegister!(api));
+    installPluginMcpTools(createAutomationPlugin({ enableWorkflow: true }), api);
     expect(registry.list().map((t) => t.name)).toEqual(["workflow"]);
   });
 
@@ -44,7 +63,7 @@ describe("createAutomationPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createAutomationPlugin({ enableArgoCd: true }).onRegister!(api));
+    installPluginMcpTools(createAutomationPlugin({ enableArgoCd: true }), api);
     expect(registry.list().map((t) => t.name)).toEqual(["argocd"]);
   });
 
@@ -54,7 +73,7 @@ describe("createAutomationPlugin", () => {
     });
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
-    Effect.runSync(createAutomationPlugin({ enableHitlLabelStudio: true }).onRegister!(api));
+    installPluginMcpTools(createAutomationPlugin({ enableHitlLabelStudio: true }), api);
     expect(registry.list().map((t) => t.name)).toEqual(["hitl_enqueue_label_studio"]);
   });
 });

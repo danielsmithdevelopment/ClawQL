@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { SignJWT } from "jose";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -5,7 +6,7 @@ import {
   atrClaimsFromJwtPayload,
   loadOidcAuthConfig,
   resetOidcVerifyCaches,
-  verifyOidcBearerToken,
+  verifyOidcBearerTokenEffect,
 } from "./oidc.js";
 import { assertEmailDomainAllowed, extractEmailDomain } from "./policy.js";
 
@@ -50,7 +51,7 @@ describe("company email SSO domain policy", () => {
     expect(claims.emailVerified).toBe(true);
   });
 
-  it("verifyOidcBearerToken enforces CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS", async () => {
+  it("verifyOidcBearerTokenEffect enforces CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS", async () => {
     stash("CLAWQL_AUTH_OIDC_HS256_SECRET");
     stash("CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS");
     stash("CLAWQL_AUTH_OIDC_ISSUER");
@@ -75,9 +76,8 @@ describe("company email SSO domain policy", () => {
       .setExpirationTime("2h")
       .sign(key);
 
-    const ok = await verifyOidcBearerToken(good, config);
-    expect(ok.ok).toBe(true);
-    if (ok.ok) expect(ok.claims.emailDomain).toBe("acme.com");
+    const ok = await Effect.runPromise(verifyOidcBearerTokenEffect(good, config));
+    expect(ok.claims.emailDomain).toBe("acme.com");
 
     const bad = await new SignJWT({
       sub: "eve",
@@ -89,8 +89,7 @@ describe("company email SSO domain policy", () => {
       .setExpirationTime("2h")
       .sign(key);
 
-    const denied = await verifyOidcBearerToken(bad, config);
-    expect(denied.ok).toBe(false);
-    if (!denied.ok) expect(denied.error).toMatch(/not allowed/i);
+    const denied = await Effect.runPromiseExit(verifyOidcBearerTokenEffect(bad, config));
+    expect(denied._tag).toBe("Failure");
   });
 });

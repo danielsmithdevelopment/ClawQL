@@ -16,7 +16,10 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-government-body.mdx': '/government/clawql-government',
   'mcp-api-adapter-body.mdx': '/mcp/mcp-api-adapter',
   'mcp-ui-body.mdx': '/mcp/mcp-ui',
+  'protocol-fabric-body.mdx': '/mcp/protocol-fabric',
   'clawql-token-efficiency-body.mdx': '/architecture/token-efficiency',
+  'getting-started-immutable-releases-body.mdx':
+    '/getting-started/immutable-releases',
   'enterprise-ontology-body.mdx': '/architecture/enterprise-ontology',
   'zero-trust-agentic-fabric-body.mdx': '/architecture/agentic-fabric',
   'clawql-vision-roadmap-body.mdx': '/vision/roadmap',

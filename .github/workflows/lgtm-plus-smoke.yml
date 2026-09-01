@@ -1,0 +1,36 @@
+# Smoke-test packages/clawql-observability LGTM+ docker-compose stack on GitHub-hosted runners.
+# Required gate before Phase 2 (Faro Worker proxy) builds on an unverified foundation.
+name: LGTM+ stack smoke
+
+on:
+  pull_request:
+    paths:
+      - "packages/clawql-observability/**"
+      - ".github/workflows/lgtm-plus-smoke.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-observability/**"
+      - ".github/workflows/lgtm-plus-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lgtm-plus-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: LGTM+ compose smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Docker info
+        run: docker version && docker compose version
+
+      - name: Run LGTM+ smoke (compose + OTLP ingest)
+        run: bash packages/clawql-observability/scripts/smoke-lgtm-plus.sh

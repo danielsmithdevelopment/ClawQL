@@ -198,6 +198,44 @@ export const multiProviderBenchmark = {
   percentReduction: '99.9%',
   compressionRatio: '~862×',
   href: 'https://docs.clawql.com/benchmarks',
-  workflowHref:
-    'https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/workflows/workflow-multi-provider.md',
+  workflowHref: 'https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/workflows/workflow-multi-provider.md',
+} as const
+
+/** Homepage hero proof chips — compact credibility under the CTA. */
+export const homepageProofChips = [
+  'Apache 2.0 core',
+  'Event-driven, not prompt-driven',
+  'OpenBench mini-firm proven',
+  'TEE-ready from day one',
+] as const
+
+/**
+ * OpenBench mini-firm B-7.1 — structured ontology recall vs keyword/semantic.
+ * Run: https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31255172649
+ */
+export const openBenchMiniFirm = {
+  runId: '31255172649',
+  runUrl: 'https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31255172649',
+  essayUrl: 'https://pragmaticvectors.com/posts/memory-finds-ontology-decides/',
+  caption: 'OpenBench mini-firm (B-7.1) — same notes, same model, different retrieval mechanism.',
+  rows: [
+    { arm: 'ClawQL on', score: '3/3 (1.0)', found: '5/5', path: 'structured_predicate' },
+    { arm: 'ClawQL off', score: '0/3', found: '0/5', path: 'could not complete' },
+    { arm: 'No memory', score: '0/3', found: '0/5', path: 'could not complete' },
+  ],
+} as const
+
+/** Protocol Fabric surface lists — shipped + planned, kept honest for homepage. */
+export const protocolFabricSurfaces = {
+  inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · QR stream · WebMCP (preview)',
+  outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · QR · /mcp-ui',
+  /** Dedicated marketing landing on clawql.com. */
+  pageHref: '/protocol-fabric',
+  docsHref: 'https://docs.clawql.com/mcp/protocol-fabric',
+  adapterHref: 'https://docs.clawql.com/mcp/mcp-api-adapter',
+} as const
+
+export const clawqlTeeSummary = {
+  href: 'https://docs.clawql.com/streams/clawql-tee',
+  body: 'For regulated environments where the operator itself cannot be trusted: clawql-tee is a DO-compatible runtime with AMD SEV-SNP, Intel TDX, and AWS Nitro Enclaves. Hardware attestation gates secrets; the audit trail can leave via QR optical channel — no network path across the boundary.',
 } as const

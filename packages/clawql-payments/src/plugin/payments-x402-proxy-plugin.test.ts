@@ -7,24 +7,26 @@ import {
   paymentsX402ProxyPluginEnabled,
 } from "./payments-x402-proxy-plugin.js";
 
+const hookSession = { id: "t", atrScope: new Set<string>() };
+
 describe("createPaymentsX402ProxyPlugin", () => {
-  it("returns mcp-proxy plugin with stable id", () => {
+  it("returns ProviderPlugin with stable id", () => {
     const plugin = createPaymentsX402ProxyPlugin();
     expect(plugin.id).toBe(PAYMENTS_X402_PROXY_PLUGIN_ID);
-    expect(plugin.kind).toBe("mcp-proxy");
-    expect(plugin.vertical).toBe("payments");
+    expect(plugin.description).toContain("x402");
   });
 
-  it("registers beforeCallTool when x402 enforcement is active", () => {
+  it("registers pre-execute hooks when x402 enforcement is active", () => {
     const env = { CLAWQL_X402_ENFORCE: "1" };
     const plugin = createPaymentsX402ProxyPlugin({ env });
-    expect(plugin.beforeCallTool).toBeDefined();
+    expect(plugin.hooks).toBeDefined();
+    expect(plugin.hooks!.length).toBeGreaterThan(0);
   });
 
   it("is passive when x402 enforcement is off", () => {
     const env = { CLAWQL_X402_ENFORCE: "0" };
     const plugin = createPaymentsX402ProxyPlugin({ env });
-    expect(plugin.beforeCallTool).toBeUndefined();
+    expect(plugin.hooks).toBeUndefined();
   });
 
   it("defaultPaymentsProxyPlugins respects disable flag", () => {
@@ -37,18 +39,18 @@ describe("createPaymentsX402ProxyPlugin", () => {
     expect(defaultPaymentsProxyPlugins(disabledEnv)).toHaveLength(0);
   });
 
-  it("beforeCallTool propagates ClawQLError-compatible failures via Effect", async () => {
+  it("hook handler propagates ClawQLError-compatible failures via Effect", async () => {
     const env = { CLAWQL_X402_ENFORCE: "1", CLAWQL_HOME: "/nonexistent-payments-test" };
     const plugin = createPaymentsX402ProxyPlugin({ env, passive: false });
-    expect(plugin.beforeCallTool).toBeDefined();
+    const hook = plugin.hooks![0];
 
     await expect(
       Effect.runPromise(
-        plugin.beforeCallTool!({ toolName: "search", args: {} }).pipe(
-          Effect.catchAll((err) => Effect.fail(err))
-        )
+        hook
+          .handler({ session: hookSession, toolName: "search", args: {} })
+          .pipe(Effect.catchAll((err) => Effect.fail(err)))
       )
-    ).resolves.toBeUndefined();
+    ).resolves.toEqual({ allow: true });
   });
 });
 
@@ -59,8 +61,9 @@ describe("mcpX402BeforeCallToolEffect integration", () => {
       CLAWQL_HOME: process.env.CLAWQL_HOME,
     };
     const plugin = createPaymentsX402ProxyPlugin({ env, passive: false });
+    const hook = plugin.hooks![0];
     await expect(
-      Effect.runPromise(plugin.beforeCallTool!({ toolName: "cache", args: {} }))
-    ).resolves.toBeUndefined();
+      Effect.runPromise(hook.handler({ session: hookSession, toolName: "cache", args: {} }))
+    ).resolves.toEqual({ allow: true });
   });
 });

@@ -11,6 +11,9 @@
 /mcp/protocol-fabric/*
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 
+/streams/*
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
+
 /case-studies/*
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 

@@ -1,5 +1,6 @@
 /**
- * gRPC ListTools: optional `schedule` appears when `CLAWQL_ENABLE_SCHEDULE=1` (#76).
+ * gRPC ListTools: optional `schedule` appears when instance
+ * `automation.schedule.enabled` (#76).
  */
 
 import { mkdtempSync } from "node:fs";
@@ -15,6 +16,7 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
+import { instanceSpecWith } from "./server-stdio-env.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -52,7 +54,9 @@ describe("gRPC ListTools schedule parity (#76)", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-schedule-"));
-    process.env.CLAWQL_ENABLE_SCHEDULE = "1";
+    process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+      automation: { schedule: { enabled: true } },
+    });
     process.env.CLAWQL_SCHEDULE_DB_PATH = join(
       process.env.CLAWQL_OBSIDIAN_VAULT_PATH,
       "schedule.db"
@@ -67,7 +71,7 @@ describe("gRPC ListTools schedule parity (#76)", () => {
     resetSchemaFieldCache();
   });
 
-  it("ListTools includes schedule when CLAWQL_ENABLE_SCHEDULE=1", async () => {
+  it("ListTools includes schedule when automation.schedule.enabled", async () => {
     const started = await maybeStartGrpcMcpServer({
       createMcpServer: createRegisteredMcpServer,
       bindAddress: "127.0.0.1:0",

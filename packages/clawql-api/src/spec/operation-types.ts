@@ -6,7 +6,7 @@
 export const INLINE_OPENAPI_REQUEST_BODY = "__clawql_inline_request_body__";
 
 /** Execution path for merged operations (defaults to OpenAPI-derived REST / in-process GraphQL-from-OAI). */
-export type ProtocolKind = "openapi" | "graphql" | "grpc" | "mcp" | "cli";
+export type ProtocolKind = "openapi" | "graphql" | "grpc" | "mcp" | "cli" | "webmcp";
 
 export interface Operation {
   id: string;
@@ -57,6 +57,12 @@ export interface Operation {
     command: string;
     args: string[];
     env: Record<string, string>;
+  };
+  /** Proxied WebMCP tool from a page registered via navigator.modelContext. */
+  nativeWebmcp?: {
+    sourceId: string;
+    toolName: string;
+    pageUrl: string;
   };
 }
 

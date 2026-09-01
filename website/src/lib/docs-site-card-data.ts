@@ -274,6 +274,48 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — proactive OAuth refresh, API keys, EMA / ID-JAG.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 12,
+      squares: [
+        [0, 1],
+        [1, 0],
+      ],
+    },
+  },
+  {
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle batch roots, dual-ack replication.',
+    icon: ListIcon,
+    pattern: {
+      y: 16,
+      squares: [
+        [0, 0],
+        [1, 2],
+      ],
+    },
+  },
+  {
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+    pattern: {
+      y: 18,
+      squares: [
+        [1, 1],
+        [0, 2],
+      ],
+    },
+  },
+  {
     href: '/security',
     name: 'Security',
     description:
@@ -429,6 +471,48 @@ export const referenceSiteCards: Array<ReferenceCard> = [
     pattern: {
       y: 22,
       squares: [[0, 1]],
+    },
+  },
+  {
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — proactive OAuth refresh, API keys, EMA / ID-JAG.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 6,
+      squares: [
+        [1, 0],
+        [0, 2],
+      ],
+    },
+  },
+  {
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle batch roots, dual-ack replication.',
+    icon: ListIcon,
+    pattern: {
+      y: 14,
+      squares: [
+        [0, 1],
+        [2, 0],
+      ],
+    },
+  },
+  {
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+    pattern: {
+      y: 16,
+      squares: [
+        [1, 0],
+        [0, 2],
+      ],
     },
   },
   {

@@ -1,15 +1,25 @@
 import { Effect, Layer, Ref } from "effect";
 import { describe, expect, it } from "vitest";
 import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
-import { ClawQLApi, createClawQLApi } from "./index.js";
+import { ClawQLApi, createClawQLApi, emptyProviderPlugin } from "./index.js";
 import { PANGUARD_PROXY_PLUGIN_ID } from "./plugins/panguard-proxy-plugin.js";
 
 describe("createClawQLApi", () => {
-  it("registers Panguard proxy plugin by default", () => {
-    const api = createClawQLApi({ plugins: [] });
-    const withDefaults = createClawQLApi();
-    expect(withDefaults.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
-    expect(api.registry.list()).toHaveLength(0);
+  it("does not register Panguard by default (8.0+ opt-in)", () => {
+    const prev = process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+    delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+    try {
+      const withDefaults = createClawQLApi();
+      expect(withDefaults.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(
+        false
+      );
+      process.env.CLAWQL_PANGUARD_PROXY_PLUGIN = "1";
+      const optedIn = createClawQLApi();
+      expect(optedIn.registry.list().some((p) => p.id === PANGUARD_PROXY_PLUGIN_ID)).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_PANGUARD_PROXY_PLUGIN;
+      else process.env.CLAWQL_PANGUARD_PROXY_PLUGIN = prev;
+    }
   });
 
   it("does not register MemoryPlugin via default sync plugins", () => {
@@ -29,7 +39,7 @@ describe("createClawQLApi", () => {
     await api.run(
       Effect.gen(function* () {
         const claw = yield* ClawQLApi;
-        yield* claw.registerPlugin({ id: "demo", version: "0.0.1" });
+        yield* claw.registerPlugin(emptyProviderPlugin("demo"));
         const plugins = claw.listPlugins();
         expect(plugins).toHaveLength(1);
         expect(plugins[0]?.id).toBe("demo");
@@ -43,8 +53,8 @@ describe("createClawQLApi", () => {
       api.run(
         Effect.gen(function* () {
           const claw = yield* ClawQLApi;
-          yield* claw.registerPlugin({ id: "dup", version: "1" });
-          yield* claw.registerPlugin({ id: "dup", version: "2" });
+          yield* claw.registerPlugin(emptyProviderPlugin("dup", "1"));
+          yield* claw.registerPlugin(emptyProviderPlugin("dup", "2"));
         })
       )
     ).rejects.toThrow();
@@ -55,7 +65,7 @@ describe("createClawQLApi", () => {
     await api.run(
       Effect.gen(function* () {
         const claw = yield* ClawQLApi;
-        yield* claw.registerPlugin({ id: "demo-dispose", version: "0.0.1" });
+        yield* claw.registerPlugin(emptyProviderPlugin("demo-dispose"));
       })
     );
     expect(api.registry.list().some((p) => p.id === "demo-dispose")).toBe(true);
@@ -68,7 +78,7 @@ describe("createClawQLApi", () => {
     const pluginLayer = Layer.scopedDiscard(
       Effect.gen(function* () {
         const claw = yield* ClawQLApi;
-        yield* claw.registerPlugin({ id: "from-plugin-layer", version: "0.0.1" });
+        yield* claw.registerPlugin(emptyProviderPlugin("from-plugin-layer"));
         yield* Effect.addFinalizer(() => Ref.set(finalizerRan, true));
       })
     );

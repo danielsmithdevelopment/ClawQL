@@ -1,5 +1,32 @@
 ## [Unreleased]
 
+## [8.0.0] - 2026-08-31
+
+Semver-**major** on the Agentic Gateway line: **empty-by-default bundled provider catalog**, **`ProviderPlugin` hard break** (no legacy bridge), skills-unified search + Agent Seer scenarios, enforcement opt-in, Managed Edge Gateway / enterprise control plane, payments + Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, audit/TEE wedge, OpenBench B-7, and personal-agent / Protocol Fabric work since **`v7.2.0`**. Release notes: **[`RELEASE_NOTES_v8.0.0.md`](RELEASE_NOTES_v8.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)**. Checklist: **[`docs/release/v8.0.0-checklist.md`](docs/release/v8.0.0-checklist.md)**. Inventory (as of 2026-08-31): **~920 commits**, **~125 merge PRs** (~100 product) after `v7.2.0`.
+
+### Breaking
+
+- **Bundled providers opt-in (default empty).** Fresh install with no `CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS` / `CLAWQL_SPEC_*` / instance `providers` loads **no** OpenAPI catalog (native GraphQL/gRPC only when configured). **7.x** auto-loaded pack **`default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). **Migration:** `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}`. Helm: set `providers.pack: default` (chart default is **`none`**). Boot logs `BREAKING (8.0.0)` when the catalog is empty. See [`docs/plugins/bundled-providers.md`](docs/plugins/bundled-providers.md).
+- **Plugin interface hard break ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999)).** Phase-2 `Plugin` / `onRegister` / `beforeCallTool` and `legacyPluginToProviderPlugin` are **removed**. Install only `ProviderPlugin` / `StandaloneSkillPlugin`. Rewrite out-of-tree plugins — **no soft landing**. Guide: [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md). Spec: [`docs/design/clawql-core-plugin-architecture.md`](docs/design/clawql-core-plugin-architecture.md).
+- **Tool-scope enforcement default off.** Bare install does not install a blocking enforcement provider. Opt in (e.g. `CLAWQL_PANGUARD_PROXY_PLUGIN=1` + `CLAWQL_PANGUARD_IN_PROCESS=1`). Boot **SECURITY WARNING** if none active unless `CLAWQL_ALLOW_NO_ENFORCEMENT=1`.
+- **`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` / `CLAWQL_ENABLE_CLOUDFLARE` no longer select the provider stack.** Use `providers.pack` / `providers.enabled` or `CLAWQL_PROVIDER`.
+- **Horizontal `CLAWQL_ENABLE_*` ignored without `CLAWQL_INSTANCE_SPEC`.** Composition uses `CLAWQL_TIER` (default **`standard`**). Helm still maps `enable*` → instance JSON. Put toggles in `CLAWQL_INSTANCE_SPEC` or set `CLAWQL_TIER`. Boot warns when legacy ENABLE flags are set without instance JSON.
+- **Workspace Effect-only public APIs** (`clawql-auth`, `clawql-payments`): sync/Promise façades removed for deep importers of workspace packages (not a separate npm surface for most `clawql-mcp` consumers).
+
+### Migration (7.2.0 → 8.0.0)
+
+```bash
+export CLAWQL_PROVIDER=default
+# or
+export CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'
+
+npm install clawql-mcp@8.0.0
+
+helm upgrade --install clawql ./charts/clawql-mcp \
+  --set image.tag=8.0.0 \
+  --set providers.pack=default
+```
+
 ### Changed
 
 - **Payments compliance posture** — prepaid cross-tenant P2P and agent compensation default **off**; forced off when `CLAWQL_MANAGED_HOSTING=1`. Closed-loop **company org credits** (role budgets, CFO allocate, within-org transfer) allowed on managed — [`docs/payments/org-credits.md`](docs/payments/org-credits.md), [`hosted-vs-self-hosted-compliance.md`](docs/payments/hosted-vs-self-hosted-compliance.md).
@@ -13,6 +40,18 @@
 
 ### Added
 
+- **`clawql-core` ProviderPlugin architecture ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))** — `ProviderPlugin` / `StandaloneSkillPlugin`, lifecycle `fireHook` (ATR never-loosen + scope-violation block events), two-tier skill index/fetch, Effect install/uninstall, dynamic module load, reference `PanguardProviderPlugin`. Horizontal packages migrated to native `ProviderPlugin`. Spec: [`docs/design/clawql-core-plugin-architecture.md`](docs/design/clawql-core-plugin-architecture.md). Migration: [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md).
+- **8.0.0 skills approach** — unified `search` ranks operations **and** skills (`kind: "operation" | "skill"`); shared host `SkillRegistry`; default-on `handoff` / `session-handoff` standalone pack; `MemoryVaultSeedLive`; ATR-filter for provider-bundled skills; MCP HTTP `session-start`/`session-end`; inference `modelHooks` / `withModelLifecycleHooks`.
+- **8.0.0 scenario synthesis (Agent Seer §9)** — deterministic cold-start scenarios from `ToolDefinition` (+ `parameterNotes`); harness bridge `clawql-harness/bench/scenario-synthesis`; host helpers `synthesizeScenariosFromApi` / `modelHooksFromClawqlApi`.
+- **MCP `skills_list` / `skills_get`** — Skills-over-MCP two-tier index/fetch against process skill registry (`clawql-api`).
+- **Production dynamic plugin Layers** — `ensureClawqlApi()` / `createRegisteredMcpServerAsync()` load horizontal packages via dynamic `import()`; sync static compose remains for tests.
+- **`clawql-observability` LGTM+ + Faro ([#993](https://github.com/danielsmithdevelopment/ClawQL/pull/993), [#994](https://github.com/danielsmithdevelopment/ClawQL/pull/994), [#995](https://github.com/danielsmithdevelopment/ClawQL/pull/995))** — Phase 1 LGTM+ stack with CI smoke; Phase 2 Faro JWT Worker proxy + Alloy ingest; provider registry design docs. Package version **0.2.0** (independent cadence).
+- **PixelDrop smart-upload demo ([#997](https://github.com/danielsmithdevelopment/ClawQL/pull/997))** — `/mcp-ui` template + harness for smart-upload; verified vs unproven claims documented in demo.
+- **WebMCP core source adapter + diagram sources ([#984](https://github.com/danielsmithdevelopment/ClawQL/pull/984), [#985](https://github.com/danielsmithdevelopment/ClawQL/pull/985))** — WebMCP provenance wiring for core adapters.
+- **`clawql-merkle` + `clawql-audit` npm wedge ([#980](https://github.com/danielsmithdevelopment/ClawQL/pull/980), [#981](https://github.com/danielsmithdevelopment/ClawQL/pull/981), [#987](https://github.com/danielsmithdevelopment/ClawQL/pull/987))** — standalone Merkle + WORM trail packages; wedge publish workflow; process WORM host dual-write when `CLAWQL_WORM_ENABLED=1` (MCP tools, API keys, inference, Panguard, execute, memory, OAuth, payments). Docs: [`docs/security/clawql-audit-standalone.md`](docs/security/clawql-audit-standalone.md).
+- **`clawql-tee` simulated TEE ([#986](https://github.com/danielsmithdevelopment/ClawQL/pull/986))** — simulated TEE signing path for ID-JAG / Layer C.
+- **Executor comparison harness ([#988](https://github.com/danielsmithdevelopment/ClawQL/pull/988))** — side-by-side executor bench harness.
+- **Auth docs page + blog methodology landing ([#990](https://github.com/danielsmithdevelopment/ClawQL/pull/990), [#989](https://github.com/danielsmithdevelopment/ClawQL/pull/989))** — public auth documentation + methodology landing.
 - **`clawql-data` (Node DuckDB)** — workspace package `packages/clawql-data` registers MCP **`data_query`**, **`data_ingest`**, and **`data_status`** when **`CLAWQL_ENABLE_DATA=1`**. Engine is **Node DuckDB** (`@duckdb/node-api`). Python `duckdb` and chDB are not supported. Harvey LAB `clawql_sql` calls **`data_query`**. Docs: [`docs/plugins/data.md`](docs/plugins/data.md).
 
 - **Helm `managedGateway` hardening** — non-root nginx (uid 101), read-only root + emptyDir, stderr/stdout logs, tunable probes, default NetworkPolicy (DNS + MCP + inference egress). JWT ATR remains on MCP/proxy upstream.

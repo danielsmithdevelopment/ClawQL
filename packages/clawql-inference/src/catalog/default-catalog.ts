@@ -32,6 +32,8 @@ export const DEFAULT_INFERENCE_MODEL_CATALOG: InferenceModelCatalog = {
     "clawql/cheap-chat": "deepseek/deepseek-chat",
     "clawql/fast-chat": "groq/llama-3.3-70b-versatile",
     "clawql/code": "deepseek/deepseek-chat",
+    "ornith-1.5-35b-a3b": "mlx/ornith-1.5-35b-a3b",
+    "openai/ornith-1.5-35b-a3b": "mlx/ornith-1.5-35b-a3b",
   },
   models: [
     // DeepSeek (direct)
@@ -115,6 +117,16 @@ export const DEFAULT_INFERENCE_MODEL_CATALOG: InferenceModelCatalog = {
       display_name: "Grok 2",
       tier_hint: "frontier",
       tags: ["chat", "byok"],
+    },
+    // Local MLX (personal agent — Hermes + Cline Ornith default)
+    {
+      id: "mlx/ornith-1.5-35b-a3b",
+      provider: "mlx",
+      upstream_model: "ornith-1.5-35b-a3b",
+      display_name: "Ornith 1.5 35B-A3B (local MLX)",
+      tier_hint: "standard",
+      context_tokens: 65536,
+      tags: ["local", "mlx", "personal-agent"],
     },
     // OpenAI / Anthropic (still first-class BYOK)
     {

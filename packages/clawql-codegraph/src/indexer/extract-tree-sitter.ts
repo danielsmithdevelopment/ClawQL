@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { Parser, Language, type Node } from "web-tree-sitter";
@@ -12,8 +13,11 @@ export type TreeSitterExtractResult = {
 };
 
 /**
- * Languages with a `tree-sitter-wasms` grammar. TS/JS still prefer the compiler API;
+ * Languages with a tree-sitter WASM grammar. TS/JS still prefer the compiler API;
  * these ids are used for everything else (and as a TS/JS fallback).
+ *
+ * Grammar WASMs: prefer `@vscode/tree-sitter-wasm` (ABI-matched to web-tree-sitter
+ * ≥0.26); fall back to `tree-sitter-wasms` for languages VS Code does not ship.
  */
 export type TreeSitterLanguageId =
   | "python"
@@ -496,9 +500,30 @@ async function ensureParser(): Promise<void> {
   await parserInit;
 }
 
-function wasmPath(profile: LangProfile): string {
+function vscodeWasmPath(profile: LangProfile): string | null {
+  try {
+    const pkgRoot = path.dirname(require.resolve("@vscode/tree-sitter-wasm/package.json"));
+    // VS Code package uses kebab-case for C# (`c-sharp`); profiles use `c_sharp`.
+    const file =
+      profile.wasm === "tree-sitter-c_sharp.wasm"
+        ? "tree-sitter-c-sharp.wasm"
+        : profile.wasm;
+    const candidate = path.join(pkgRoot, "wasm", file);
+    return existsSync(candidate) ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
+function legacyWasmPath(profile: LangProfile): string {
   const pkgRoot = path.dirname(require.resolve("tree-sitter-wasms/package.json"));
   return path.join(pkgRoot, "out", profile.wasm);
+}
+
+function wasmPath(profile: LangProfile): string {
+  // Prefer @vscode/tree-sitter-wasm (ABI-compatible with web-tree-sitter ≥0.26).
+  // Fall back to tree-sitter-wasms for languages VS Code does not ship yet.
+  return vscodeWasmPath(profile) ?? legacyWasmPath(profile);
 }
 
 async function getLanguage(id: TreeSitterLanguageId): Promise<Language> {

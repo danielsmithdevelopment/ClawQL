@@ -1,8 +1,27 @@
 import { McpToolRegistry } from "clawql-api";
 import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
+import {
+  createInMemoryPluginHostServices,
+  type ClawQLPluginRegistrationApi,
+  type ProviderPlugin,
+} from "clawql-core";
 import { configureOuroborosPluginDeps } from "./deps.js";
 import { OUROBOROS_PLUGIN_ID, createOuroborosPlugin } from "./ouroboros-plugin.js";
+
+function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.install({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
+
+function uninstallPlugin(plugin: ProviderPlugin, api: ClawQLPluginRegistrationApi) {
+  const host = createInMemoryPluginHostServices();
+  Effect.runSync(
+    plugin.uninstall({ registrationApi: api, pluginId: plugin.id }).pipe(Effect.provide(host.layer))
+  );
+}
 
 describe("createOuroborosPlugin", () => {
   it("registers ouroboros_* tools", () => {
@@ -14,7 +33,7 @@ describe("createOuroborosPlugin", () => {
     const api = registry.registrationApi();
     const plugin = createOuroborosPlugin();
     expect(plugin.id).toBe(OUROBOROS_PLUGIN_ID);
-    Effect.runSync(plugin.onRegister!(api));
+    installPluginMcpTools(plugin, api);
     expect(
       registry
         .list()
@@ -26,6 +45,6 @@ describe("createOuroborosPlugin", () => {
       "ouroboros_measure_drift",
       "ouroboros_run_evolutionary_loop",
     ]);
-    Effect.runSync(plugin.onTeardown!());
+    uninstallPlugin(plugin, api);
   });
 });

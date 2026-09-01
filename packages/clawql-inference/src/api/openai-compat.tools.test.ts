@@ -70,6 +70,11 @@ describe("requestUsesToolCalling", () => {
     ).toBe(true);
     expect(
       requestUsesToolCalling({
+        messages: [{ role: "tool", content: '{"compact":true}' }],
+      })
+    ).toBe(false);
+    expect(
+      requestUsesToolCalling({
         messages: [
           {
             role: "assistant",

@@ -1,15 +1,24 @@
 # Ontology CLI (ADR 0009)
 
-Lint entity YAML/`.cqe`, scaffold trees/packs, and generate MCP read tools (stubs + live fixture plugin).
+Lint entity YAML/`.cqe`, scaffold trees/packs, generate MCP read tools (stubs + live fixture plugin), and run the **three-layer meta-ontology** (Layer 2 scaffold + Layer 3 learning). Full spec: [meta-ontology-v0.1](../specs/ontology/meta-ontology-v0.1.md).
 
 ```bash
 # Validate examples (or .clawql/ontology/entities)
 clawql ontology lint --dir examples/ontology/entities
 
-# Day-1 scaffold
+# Day-1 scaffold (Layer 1)
 clawql ontology init
 clawql ontology create-entity Matter
 clawql ontology import --pack legal
+
+# Layer 2 — runtime scaffold from JSON Schema (ExtractBench / ad-hoc extraction)
+clawql ontology scaffold --schema invoice-schema.json --document-type invoice --ttl permanent
+
+# Layer 3 — meta-ontology learning + promotion
+clawql ontology meta status
+clawql ontology meta patterns --document-type invoice
+clawql ontology meta promote --check
+clawql ontology meta promote --document-type invoice --output packs/invoice/
 
 # Generate tools.json + OKF index + Onyx stubs + TypeScript catalog
 clawql ontology generate --dir examples/ontology/entities --out generated/ontology
@@ -23,6 +32,20 @@ CLAWQL_ENABLE_ONTOLOGY=1 CLAWQL_ENABLE_ONTOLOGY_WRITES=1 npx clawql-mcp
 # Optional: CLAWQL_ONTOLOGY_ATR_SCOPE=ontology:write
 # Note: sources[type=sql] is a declaration for stubs/partners — not a live DB adapter in v1 (ADR 0009 §9).
 ```
+
+## Meta-ontology env (Layer 2 + Layer 3)
+
+| Variable | Default | Meaning |
+| -------- | ------- | ------- |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED` | on | Layer 2 JSON Schema / Docling scaffolding |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_TTL` | `session` | `session` \| `permanent` \| seconds |
+| `CLAWQL_ONTOLOGY_META_ENABLED` | on | Layer 3 OBT/RTP learning |
+| `CLAWQL_ONTOLOGY_META_DB_PATH` | `~/.ClawQL/meta-ontology.db` | Meta store (learning only) |
+| `CLAWQL_ONTOLOGY_META_MIN_EVIDENCE` | `10` | Sessions before Layer 3 scaffolds |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_EVIDENCE` | `50` | Promotion candidate threshold |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_QUALITY` | `0.85` | Min avg criterion pass rate |
+
+Dynamic Layer 2/3 **instance** rows land in vault-colocated `ontology.db` (`dynamic_entities` / `dynamic_records`, schema v2) and are queryable via `memory_recall({ schema: "<entityId>", filters })`. See [meta-ontology-v0.1 § memory_recall](../specs/ontology/meta-ontology-v0.1.md#memory_recall-integration).
 
 ## Read backends (v1)
 
@@ -91,8 +114,17 @@ See [essay gap closure](./essay-gap-closure.md) **7.3** and [Command Deck UX not
 ## Library
 
 ```ts
-import { lintOntology, generateOntologyReadTools, initOntologyTree } from "clawql-ontology";
+import {
+  lintOntology,
+  generateOntologyReadTools,
+  initOntologyTree,
+  scaffoldFromJsonSchema,
+  scaffoldWithMeta,
+  runExtractBenchOntologyPipeline,
+  syncDocumentToMemoryOntology,
+} from "clawql-ontology";
 import { makeOntologyLayer } from "clawql-ontology/plugin";
+import { runOntologyRecall } from "clawql-memory/ontology";
 ```
 
-See [ADR 0009](../adr/0009-enterprise-ontology.md), [ADR 0010](../adr/0010-cq-file-extensions.md), and [enterprise-ontology.md](../architecture/enterprise-ontology.md).
+See [ADR 0009](../adr/0009-enterprise-ontology.md), [ADR 0010](../adr/0010-cq-file-extensions.md), [enterprise-ontology.md](../architecture/enterprise-ontology.md), and [meta-ontology-v0.1](../specs/ontology/meta-ontology-v0.1.md).
