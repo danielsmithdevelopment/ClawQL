@@ -69,7 +69,7 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 | Date       | Split        | Pipeline                   | Notes                                                                                        |
 | ---------- | ------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
 | 2026-09-01 | test (6 doc) | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args                      |
-| 2026-09-01 | short (252)  | clawql_idp_docling_extract | In progress — `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`, log `/tmp/extractbench-short-split.log` |
+| 2026-09-01 | short (252)  | clawql_idp_docling_extract | **In progress** (~1 doc/min) — `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`; first 10/10 `raw_output.ontology.t1.recallOk`; log `/tmp/extractbench-short-split.log`, tmux `eb-short-split` |
 
 ## Implementation notes
 
