@@ -164,6 +164,7 @@
     "clawql-payments": "0.1.0",
     "clawql-release": "0.1.0",
     "clawql-sandbox": "0.1.0",
+    "clawql-network": "0.1.0",
     "clawql-tee": "0.1.0",
     "clawql-web": "0.1.0",
     "dotenv": "^17.4.2",

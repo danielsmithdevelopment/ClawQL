@@ -117,6 +117,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: DocumentIcon,
   }),
   card({
+    href: '/specs/network/clawql-network',
+    name: 'clawql-network',
+    description:
+      'Headscale mesh + governed Tailcat ephemeral transport, selector, and ATR audit hooks.',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/specs/cq-extensions',
     name: '.cq* file extensions',
     description:

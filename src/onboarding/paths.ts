@@ -41,4 +41,6 @@ export const INIT_DIRECTORIES = [
   "Dashboard/logs",
   "vault",
   "sources",
+  "network",
+  "network/headscale",
 ] as const;

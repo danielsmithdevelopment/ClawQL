@@ -130,6 +130,11 @@ export const docsNavigation: Array<NavGroup> = [
         href: '/specs/ontology/legal-domain',
         tag: 'Draft',
       },
+      {
+        title: 'clawql-network',
+        href: '/specs/network/clawql-network',
+        tag: 'v0.1',
+      },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
       {
