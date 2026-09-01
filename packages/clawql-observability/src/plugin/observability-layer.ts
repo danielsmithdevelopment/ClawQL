@@ -10,10 +10,7 @@ import { Effect, Layer } from "effect";
 import { createObservabilityPlugin } from "./observability-plugin.js";
 
 export type ObservabilityLayerError =
-  | PluginAlreadyRegisteredError
-  | PluginInstallError
-  | ClawQLError
-  | McpToolAlreadyRegisteredError;
+  PluginAlreadyRegisteredError | PluginInstallError | ClawQLError | McpToolAlreadyRegisteredError;
 
 export type MakeObservabilityLayerOptions = {
   readonly env?: NodeJS.ProcessEnv;
