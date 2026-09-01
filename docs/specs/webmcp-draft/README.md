@@ -18,3 +18,14 @@ Draft extensions for inferring **WebMCP** `registerTool()` declarations from str
 - Gateway composition: opt-in with **`CLAWQL_ENABLE_WEBMCP_DRAFT=1`** (`composeDefaultPlugins` → `createWebMcpDraftGatewayPlugin`)
 
 **Challenge timeline:** OpenAI WebMCP Challenge uses hand-authored PixelDrop tools; this provider is post-challenge infrastructure.
+
+## Enable (gateway)
+
+| Variable                         | Default                              | Purpose                                                          |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------------------------- |
+| `CLAWQL_ENABLE_WEBMCP_DRAFT`     | off                                  | Register `WebMcpDraftPlugin` in `composeDefaultPlugins`          |
+| `CLAWQL_WEBMCP_DRAFT_DURABLE`    | off (tests); `1` when plugin enabled | Persist drafts to `.clawql/webmcp-draft-store.json`              |
+| `CLAWQL_WEBMCP_DRAFT_STORE_PATH` | —                                    | Override durable JSON path                                       |
+| `CLAWQL_WEBMCP_BIND_URL`         | `/webmcp-draft/bound-execute`        | URL embedded in publish scripts for browser `callBoundOperation` |
+
+**MCP tools:** `webmcp_draft`, `webmcp_draft_review`, `webmcp_draft_publish`, `webmcp_draft_execute`, `webmcp_draft_rollback`.

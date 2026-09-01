@@ -152,29 +152,15 @@ Every publish is a new immutable version, never an in-place mutation of the live
 
 ## 5. The One-Script-Tag Publish Mechanism
 
-Once approved, publishing is nothing more than emitting the standard `navigator.modelContext.registerTool()` calls (or `document.modelContext`, per the deprecation noted in the PixelDrop work) for the site to load via a single script tag — no proprietary mechanism, the same public WebMCP API the PixelDrop demo already calls directly.
+Once approved, publishing emits standard `document.modelContext.registerTool()` (or `navigator.modelContext`) calls for the site to load via a single script tag. The generated script embeds binding metadata and routes `callBoundOperation` through the gateway:
 
 ```typescript
-// packages/clawql-core/providers/webmcp-draft/lifecycle/publish.ts
+// packages/clawql-core/src/providers/webmcp-draft/lifecycle/publish.ts (simplified)
 
 export function generatePublishScript(version: PublishedWebMcpVersion): string {
-  return version.publishedTools
-    .map(
-      (tool) => `
-    document.modelContext.registerTool({
-      name: ${JSON.stringify(tool.name)},
-      description: ${JSON.stringify(tool.description)},
-      inputSchema: ${JSON.stringify(tool.inputSchema)},
-      async execute(args) {
-        // Bound at publish time to the underlying operation this
-        // candidate was drafted from (the OpenAPI operationId,
-        // GraphQL mutation, or form action) — see §6.
-        return callBoundOperation(${JSON.stringify(tool.name)}, args)
-      },
-    })
-  `
-    )
-    .join("\n");
+  // Emits fetch(BIND_URL, { toolName, args, bindings, versionId })
+  // BIND_URL defaults to /webmcp-draft/bound-execute (CLAWQL_WEBMCP_BIND_URL override)
+  return version.publishedTools.map(/* registerTool + callBoundOperation */).join("\n");
 }
 ```
 
@@ -188,13 +174,22 @@ A drafted-and-approved tool declaration is only half of what's needed — it als
 export interface BoundOperation {
   toolName: string;
   sourceType: "openapi" | "graphql" | "forms";
-  sourceRef: string; // the exact operationId, GraphQL
-  // mutation name, or form submission
-  // target this tool calls when invoked
+  sourceRef: string; // operationId, GraphQL mutation name, or form selector
+  formAction?: string; // forms only — HTTP submit target
+  formMethod?: string; // forms only — default POST
 }
 ```
 
-This binding is what makes the published tool genuinely functional rather than a plausible-looking declaration with nothing behind it — an agent calling the published `add_to_cart` tool actually triggers the real `POST /cart/items` operation (or the real GraphQL mutation, or the real form submission) it was drafted from, through `clawql-core`'s normal source-adapter execution path, not a separate mechanism invented for this provider.
+At runtime, bound execute flows through the gateway (not a browser-local stub):
+
+| `sourceType`          | Execute path                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `openapi` / `graphql` | `POST /webmcp-draft/bound-execute` → `clawql-api` **`ExecuteService`** (`operationId` = `sourceRef`) |
+| `forms`               | Same endpoint → core **`executeBoundOperation`** submits `formAction` with URL-encoded args          |
+
+Enable the provider with **`CLAWQL_ENABLE_WEBMCP_DRAFT=1`** (`composeDefaultPlugins` → `createWebMcpDraftGatewayPlugin`). Durable draft store: **`CLAWQL_WEBMCP_DRAFT_DURABLE=1`** or **`CLAWQL_WEBMCP_DRAFT_STORE_PATH`**.
+
+This binding is what makes the published tool genuinely functional — an agent calling the published `add_to_cart` tool triggers the real operation it was drafted from, through `clawql-api`'s normal execute pipeline, not a separate mechanism invented for this provider.
 
 ---
 
@@ -215,7 +210,7 @@ This binding is what makes the published tool genuinely functional rather than a
 | Drafting candidates from OpenAPI/GraphQL/forms                | `clawql-core` (`webmcp-draft` provider)                                            | Same ingestion architecture that already parses these interfaces for unrelated purposes                                              |
 | Review, approval, edit, versioning, rollback                  | `clawql-core` (`webmcp-draft` provider), reusing plugin install-lifecycle patterns | No new lifecycle mechanism needed — this is the same reversible, WORM-audited pattern every provider plugin already follows          |
 | Publishing the actual `registerTool()` calls                  | `clawql-core` (`webmcp-draft` provider)                                            | Standard public WebMCP API, no proprietary mechanism                                                                                 |
-| Binding a published tool to its real underlying operation     | `clawql-core`'s existing source-adapter execution path                             | The tool must actually work, not just declare a plausible shape                                                                      |
+| Binding a published tool to its real underlying operation     | `clawql-api` **`ExecuteService`** (+ forms HTTP submit in core)                    | OpenAPI/GraphQL reuse the gateway execute pipeline; forms submit via `formAction` at draft time                                      |
 | Usage analytics on the published tools (visits, success rate) | `clawql-analytics`                                                                 | Separate, already-specced concern — not duplicated here                                                                              |
 | Full static-code-analysis of arbitrary repositories           | Out of scope                                                                       | Genuinely harder, ongoing engineering investment; the Sodium-shaped product this provider deliberately does not attempt to replicate |
 
