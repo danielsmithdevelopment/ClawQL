@@ -87,7 +87,7 @@ Dynamic Layer 2/3 entity ids (e.g. `invoice`) are durable in vault `ontology.db`
 | `schema` value                                                 | Storage                                | Query path                                                |
 | -------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------- |
 | `legal.Matter`                                                 | `matters` table (v1)                   | Typed SQL predicates (`escrowPct`, `nonCompeteMonths`, …) |
-| `legal.Client` / `Attorney` / `Document`                       | tables exist                           | Recall not implemented yet (same as pre–meta-ontology)    |
+| `legal.Client` / `Attorney` / `Document`                       | `clients` / `attorneys` / `documents`  | Typed SQL predicates (same filter DSL as Matter)          |
 | Any other string (e.g. `invoice`, `invoice__lineItems_record`) | `dynamic_entities` + `dynamic_records` | In-process JSON field predicates                          |
 
 `schema` is a **string** in the MCP tool (not a fixed enum). `legal.*` schemas still require non-empty `filters`. Dynamic schemas may omit `filters` to enumerate all rows (use `limit: 10000` for long lists).

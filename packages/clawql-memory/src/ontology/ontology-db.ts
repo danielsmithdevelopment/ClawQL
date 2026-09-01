@@ -11,8 +11,20 @@ import { dirname, isAbsolute, join } from "node:path";
 import initSqlJs, { type Database } from "sql.js";
 import { getObsidianVaultPath } from "../vault/config.js";
 import { resolveVaultPath } from "../vault/utils.js";
-import type { ExtractedMatter, FieldConfidence, MatterFields } from "./clawql-fields.js";
-import { matterFieldsFromSqlRow } from "./field-map.js";
+import type {
+  ExtractedMatter,
+  ExtractedClient,
+  ExtractedAttorney,
+  ExtractedDocument,
+  FieldConfidence,
+  MatterFields,
+} from "./clawql-fields.js";
+import {
+  matterFieldsFromSqlRow,
+  clientFieldsFromSqlRow,
+  attorneyFieldsFromSqlRow,
+  documentFieldsFromSqlRow,
+} from "./field-map.js";
 import { migrateDynamicOntologyTables } from "./ontology-dynamic.js";
 
 const SCHEMA_VERSION = 2;
@@ -251,6 +263,39 @@ export function countMatters(db: Database): number {
   return Number(cell) || 0;
 }
 
+function countTable(db: Database, table: string): number {
+  const r = db.exec(`SELECT COUNT(*) FROM ${table}`);
+  const cell = r[0]?.values[0]?.[0];
+  return Number(cell) || 0;
+}
+
+export function countClients(db: Database): number {
+  return countTable(db, "clients");
+}
+
+export function countAttorneys(db: Database): number {
+  return countTable(db, "attorneys");
+}
+
+export function countDocuments(db: Database): number {
+  return countTable(db, "documents");
+}
+
+export function countLegalEntities(db: Database, schema: string): number {
+  switch (schema) {
+    case "legal.Matter":
+      return countMatters(db);
+    case "legal.Client":
+      return countClients(db);
+    case "legal.Attorney":
+      return countAttorneys(db);
+    case "legal.Document":
+      return countDocuments(db);
+    default:
+      return 0;
+  }
+}
+
 export function upsertMatter(
   db: Database,
   extracted: ExtractedMatter,
@@ -310,6 +355,61 @@ export function upsertMatter(
   }
 }
 
+export function upsertClient(
+  db: Database,
+  extracted: ExtractedClient,
+  vaultNotePath: string
+): void {
+  const f = extracted.fields;
+  db.run(
+    `INSERT INTO clients (id, name, short_name, industry, tier, vault_note_path)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       name=excluded.name,
+       short_name=excluded.short_name,
+       industry=excluded.industry,
+       tier=excluded.tier,
+       vault_note_path=excluded.vault_note_path`,
+    [f.id, f.name, f.shortName ?? null, f.industry ?? null, f.tier ?? null, vaultNotePath]
+  );
+}
+
+export function upsertAttorney(
+  db: Database,
+  extracted: ExtractedAttorney,
+  vaultNotePath: string
+): void {
+  const f = extracted.fields;
+  db.run(
+    `INSERT INTO attorneys (id, name, title, vault_note_path)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       name=excluded.name,
+       title=excluded.title,
+       vault_note_path=excluded.vault_note_path`,
+    [f.id, f.name, f.title ?? null, vaultNotePath]
+  );
+}
+
+export function upsertDocument(
+  db: Database,
+  extracted: ExtractedDocument,
+  vaultNotePath: string
+): void {
+  const f = extracted.fields;
+  db.run(
+    `INSERT INTO documents (id, title, document_type, matter_id, status, vault_note_path)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       title=excluded.title,
+       document_type=excluded.document_type,
+       matter_id=excluded.matter_id,
+       status=excluded.status,
+       vault_note_path=excluded.vault_note_path`,
+    [f.id, f.title, f.documentType ?? null, f.matterId ?? null, f.status ?? null, vaultNotePath]
+  );
+}
+
 export type MatterRow = MatterFields & {
   vaultNotePath: string;
   confidence?: FieldConfidence;
@@ -354,6 +454,64 @@ export function queryMattersSql(
       extractionMethod:
         r.extraction_method != null ? String(r.extraction_method) : "machine_readable",
     });
+  }
+  stmt.free();
+  return rows;
+}
+
+export type ClientRow = ReturnType<typeof clientFieldsFromSqlRow>;
+export type AttorneyRow = ReturnType<typeof attorneyFieldsFromSqlRow>;
+export type DocumentRow = ReturnType<typeof documentFieldsFromSqlRow>;
+
+type LegalTableConfig = {
+  table: string;
+  alias: string;
+  select: string;
+  fromRow: (row: Record<string, unknown>) => Record<string, unknown> & { vaultNotePath: string };
+};
+
+const LEGAL_TABLE_CONFIG: Record<string, LegalTableConfig> = {
+  "legal.Client": {
+    table: "clients",
+    alias: "c",
+    select: "c.id, c.name, c.short_name, c.industry, c.tier, c.vault_note_path",
+    fromRow: clientFieldsFromSqlRow,
+  },
+  "legal.Attorney": {
+    table: "attorneys",
+    alias: "a",
+    select: "a.id, a.name, a.title, a.vault_note_path",
+    fromRow: attorneyFieldsFromSqlRow,
+  },
+  "legal.Document": {
+    table: "documents",
+    alias: "d",
+    select: "d.id, d.title, d.document_type, d.matter_id, d.status, d.vault_note_path",
+    fromRow: documentFieldsFromSqlRow,
+  },
+};
+
+export function queryLegalEntitiesSql(
+  db: Database,
+  schema: string,
+  whereSql: string,
+  values: unknown[],
+  limit: number
+): Array<Record<string, unknown> & { vaultNotePath: string }> {
+  const cfg = LEGAL_TABLE_CONFIG[schema];
+  if (!cfg) return [];
+  const sql = `
+    SELECT ${cfg.select}
+    FROM ${cfg.table} ${cfg.alias}
+    WHERE ${whereSql}
+    ORDER BY ${cfg.alias}.id ASC
+    LIMIT ?
+  `;
+  const stmt = db.prepare(sql);
+  stmt.bind([...values, limit] as Array<string | number | null | Uint8Array>);
+  const rows: Array<Record<string, unknown> & { vaultNotePath: string }> = [];
+  while (stmt.step()) {
+    rows.push(cfg.fromRow(stmt.getAsObject() as Record<string, unknown>));
   }
   stmt.free();
   return rows;
