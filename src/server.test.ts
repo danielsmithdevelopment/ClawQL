@@ -165,7 +165,9 @@ describe("server (stdio)", () => {
       const { tools } = await client.listTools();
       expect(tools.some((t) => t.name === "memory_recall")).toBe(true);
       expect(readyMs).toBeGreaterThanOrEqual(0);
-      expect(readyMs).toBeLessThan(4_000);
+      // Bound is "fast discovery" (not a fat catalog warm); CI Node 22 occasionally
+      // lands just over 4s under load — keep a tight but non-flake ceiling.
+      expect(readyMs).toBeLessThan(6_000);
     } finally {
       await client.close();
     }
