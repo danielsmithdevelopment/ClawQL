@@ -259,16 +259,17 @@ Blocking quorum across exporters stays **out of TypeScript** (provider-registry 
 
 ## Implementation phases
 
-| Phase  | Scope                                                                 |
-| ------ | --------------------------------------------------------------------- |
-| **1**  | LGTM+ core + Alloy _(merged)_                                         |
-| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_                          |
-| **3a** | Provider registry skeleton _(shipped)_                                |
-| **3b** | Alloy config generator _(shipped)_                                    |
-| **3c** | Query federation _(shipped)_                                          |
-| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_                      |
-| **4**  | Langfuse work traces + Panguard correlation _(this release)_          |
-| **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(this release)_ |
+| Phase  | Scope                                                                    |
+| ------ | ------------------------------------------------------------------------ |
+| **1**  | LGTM+ core + Alloy _(merged)_                                            |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_                             |
+| **3a** | Provider registry skeleton _(shipped)_                                   |
+| **3b** | Alloy config generator _(shipped)_                                       |
+| **3c** | Query federation _(shipped)_                                             |
+| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_                         |
+| **4**  | Langfuse work traces + Panguard correlation _(this release)_             |
+| **4b** | Falco / Tetragon / Wazuh → Loki + correlation dashboard _(this release)_ |
+| **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(this release)_    |
 
 ## License
 

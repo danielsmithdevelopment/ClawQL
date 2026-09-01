@@ -114,7 +114,13 @@ Public overview: [docs.clawql.com/observability](https://docs.clawql.com/observa
 
 ## 8–16. Later phases
 
-Phases 4–5 (Langfuse dual-export, Panguard correlation, alerting, Vault keys, Alloy reload) ship in package v0.7 — see README Phase 4/5 sections.
+Phases 4–5 ship in package v0.7 — see README Phase 4/5 sections:
+
+- **4:** Langfuse dual-export + Panguard correlation attributes / optional Loki push
+- **4b:** Falco / Tetragon / Wazuh → Alloy → Loki (`alloy/security-sensors.river`, compose profile `security`, Helm `security-overlay.yaml`); Grafana Langfuse ↔ Panguard correlation dashboard
+- **5:** Alert catalog, Vault/env Faro JWT signing keys, Alloy reload after apply
+
+**Still deferred:** blocking N-of-M exporter quorum (provider-registry design §9 — Alloy-scoped only if ever needed).
 
 ---
 

@@ -1,4 +1,4 @@
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 
@@ -122,14 +122,16 @@ function logObservabilityTool(name: string, meta: Record<string, unknown>): void
   }
 }
 
-export function createObservabilityPlugin(options: CreateObservabilityPluginOptions = {}): Plugin {
+export function createObservabilityPlugin(
+  options: CreateObservabilityPluginOptions = {}
+): ProviderPlugin {
   const env = options.env ?? process.env;
 
-  return {
+  return defineRegisteringProviderPlugin({
     id: OBSERVABILITY_PLUGIN_ID,
-    version: "0.6.0",
-    kind: "default",
-    onRegister: (api) =>
+    version: "0.7.0",
+    description: "LGTM+ query federation, health, alerts, and Alloy apply tools",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "observability_query_logs",
@@ -307,5 +309,5 @@ export function createObservabilityPlugin(options: CreateObservabilityPluginOpti
           },
         });
       }),
-  };
+  });
 }
