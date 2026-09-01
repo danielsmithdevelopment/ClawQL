@@ -1,6 +1,6 @@
 {
   "name": "clawql-harness",
-  "version": "8.0.0",
+  "version": "0.1.0",
   "description": "ClawQL execution-loop harness \u2014 plugin registry, tool/WORM bridges, Ouroboros and OpenCode2 plugins",
   "license": "Apache-2.0",
   "type": "module",
@@ -80,7 +80,8 @@
   "files": [
     "dist",
     "plugins",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22"
