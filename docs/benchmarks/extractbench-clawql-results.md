@@ -42,27 +42,27 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 
 ## Arm B — ClawQL IDP Docling-only (structural)
 
-| Split   |  Value F1 | Precision | Recall | Page F1 | Cost/page | Latency (P50) | Notes |
-| ------- | --------: | --------: | -----: | ------: | --------: | ------------: | ----- |
+| Split   |  Value F1 | Precision | Recall | Page F1 | Cost/page | Latency (P50) | Notes                                                      |
+| ------- | --------: | --------: | -----: | ------: | --------: | ------------: | ---------------------------------------------------------- |
 | Short   | **39.18** |     43.54 |  37.89 |    0.00 |    $0.000 |         19.1s | **Partial** — 44/252 docs (17%); ontology 44/44 `recallOk` |
-| Overall | _pending_ |         — |      — |       — |         — |             — | No LLM schema map |
-| Long    | _pending_ |         — |      — |       — |         — |             — | Ablation vs Arm A |
+| Overall | _pending_ |         — |      — |       — |         — |             — | No LLM schema map                                          |
+| Long    | _pending_ |         — |      — |       — |         — |             — | Ablation vs Arm A                                          |
 
 Partial short-split details (2026-09-01, `clawql_idp_docling_extract`, structural schema map):
 
-| Metric | Value |
-| ------ | ----: |
-| Docs evaluated | 44 / 252 (17%) |
-| Value F1 (macro avg) | 39.18 |
-| Value precision | 43.54 |
-| Value recall | 37.89 |
-| Array record F1 | 35.97 |
-| Accuracy | 31.26 |
-| Median per-doc Value F1 | 51.9 |
-| Best doc Value F1 | 64.9 (`2A-9-160294_109927`) |
-| Worst doc Value F1 | 0.0 (`real_wyo_Goshen_2024`) |
-| Latency P50 / P95 | 19.1s / 80.1s per doc |
-| Latency max (outlier) | 10.1h (`3N1AB7AP8FY283932_professional_valuation`) |
+| Metric                  |                                              Value |
+| ----------------------- | -------------------------------------------------: |
+| Docs evaluated          |                                     44 / 252 (17%) |
+| Value F1 (macro avg)    |                                              39.18 |
+| Value precision         |                                              43.54 |
+| Value recall            |                                              37.89 |
+| Array record F1         |                                              35.97 |
+| Accuracy                |                                              31.26 |
+| Median per-doc Value F1 |                                               51.9 |
+| Best doc Value F1       |                        64.9 (`2A-9-160294_109927`) |
+| Worst doc Value F1      |                       0.0 (`real_wyo_Goshen_2024`) |
+| Latency P50 / P95       |                              19.1s / 80.1s per doc |
+| Latency max (outlier)   | 10.1h (`3N1AB7AP8FY283932_professional_valuation`) |
 
 Re-evaluate as more docs complete:
 
@@ -90,11 +90,11 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 
 ## Run diary
 
-| Date       | Split          | Pipeline                   | Notes                                                                                                                                 |
-| ---------- | -------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-01 | test (6 doc)   | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args                                                               |
-| 2026-09-01 | short (252)    | clawql_idp_docling_extract | **In progress** (44/252) — partial eval Value F1 **39.18**; ontology 44/44 `recallOk`; tmux `eb-short-split`                          |
-| 2026-09-01 | short (44/252) | clawql_idp_docling_extract | Partial re-eval (`--skip_inference`); reports at `vendor/ExtractBench/output/clawql_idp_docling_extract/_evaluation_report.*`         |
+| Date       | Split          | Pipeline                   | Notes                                                                                                                         |
+| ---------- | -------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-01 | test (6 doc)   | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args                                                       |
+| 2026-09-01 | short (252)    | clawql_idp_docling_extract | **In progress** (44/252) — partial eval Value F1 **39.18**; ontology 44/44 `recallOk`; tmux `eb-short-split`                  |
+| 2026-09-01 | short (44/252) | clawql_idp_docling_extract | Partial re-eval (`--skip_inference`); reports at `vendor/ExtractBench/output/clawql_idp_docling_extract/_evaluation_report.*` |
 
 ## Implementation notes
 
