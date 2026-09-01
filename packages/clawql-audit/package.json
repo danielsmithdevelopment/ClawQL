@@ -44,6 +44,8 @@
     "check:standalone": "node ./scripts/check-standalone-deps.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1116.0",
+    "cbor": "^9.0.2",
     "clawql-merkle": "8.0.0",
     "effect": "^3.21.4",
     "qrcode": "^1.5.4",

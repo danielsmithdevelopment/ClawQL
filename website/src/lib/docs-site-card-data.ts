@@ -302,6 +302,20 @@ export const learnRelatedGuideSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+    pattern: {
+      y: 18,
+      squares: [
+        [1, 1],
+        [0, 2],
+      ],
+    },
+  },
+  {
     href: '/security',
     name: 'Security',
     description:
@@ -484,6 +498,20 @@ export const referenceSiteCards: Array<ReferenceCard> = [
       squares: [
         [0, 1],
         [2, 0],
+      ],
+    },
+  },
+  {
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+    pattern: {
+      y: 16,
+      squares: [
+        [1, 0],
+        [0, 2],
       ],
     },
   },

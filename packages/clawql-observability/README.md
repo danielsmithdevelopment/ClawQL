@@ -8,12 +8,15 @@ Runtime telemetry and security monitoring for ClawQL — the **LGTM+** stack:
 - **M**imir — long-term Prometheus-compatible metrics
 - **+** Pyroscope — continuous profiling
 
+**Public docs:** [docs.clawql.com/observability](https://docs.clawql.com/observability) — LGTM+ ingest, governed multi-provider registry, Alloy fan-out, and Faro JWT proxy.
+
 Distinct from:
 
 - **`clawql-audit`** — compliance-grade, tamper-evident logging of consequential actions
 - **`clawql-analytics`** — product/marketing interaction tracking (pageviews, funnels)
 
-Full specification: [`docs/design/clawql-observability-package-spec.md`](../../docs/design/clawql-observability-package-spec.md)
+Full specification: [`docs/design/clawql-observability-package-spec.md`](../../docs/design/clawql-observability-package-spec.md)  
+Provider registry: [`docs/design/clawql-observability-provider-registry.md`](../../docs/design/clawql-observability-provider-registry.md)
 
 ## Phase 1 (v0.1)
 
@@ -26,12 +29,106 @@ Full specification: [`docs/design/clawql-observability-package-spec.md`](../../d
 
 ## Phase 2 (v0.2) — Faro + ephemeral-JWT Worker proxy
 
-Shipped in this release:
-
 - **Cloudflare Worker** (`worker/`) — HS256 JWT gate, rate limit, schema validation, silent 204 drops
 - **Exception fingerprint enrichment** before forward to Alloy
 - **Backend token mint** — `signTelemetryJwt` / `signTelemetryJwtEffect` for session-scoped ingest JWTs
 - **Alloy `faro.receiver`** on `:8027/collect` → Loki logs + Tempo traces (private; no static public DSN)
+
+## Phase 3a (v0.3) — Provider registry skeleton
+
+- **Signal-typed interfaces** — `LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`
+- **Per-type registries** — multi-provider per signal (register / remove / list / snapshot / updateConfig)
+- **Built-in LGTM+ adapters** — Loki, Mimir, Tempo, Pyroscope as default plugins
+- **ATR scopes** — `observability:configure`, `observability:query_*`, `observability:export`
+- **WORM governance hooks** — provider add/remove/config change (via `ObservabilityGovernanceSink`)
+- **Health checks** — `ObservabilityHealthService.runOnce()` and optional scheduler
+
+### Registry quick start
+
+```typescript
+import { Effect, Layer } from "effect";
+import {
+  ObservabilityLive,
+  registerBuiltinLgtmProvidersEffect,
+  ObservabilityHealthService,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const health = yield* ObservabilityHealthService;
+  return yield* health.runOnce();
+});
+
+await Effect.runPromise(program.pipe(Effect.provide(ObservabilityLive)));
+```
+
+## Phase 3b (v0.4) — Alloy config generator
+
+Registry snapshot → complete River config (exporters, batch fan-out, optional Faro). Apply writes the file, validates braces/required components, and emits `OBSERVABILITY_ALLOY_CONFIG_APPLIED`.
+
+```typescript
+import { Effect } from "effect";
+import {
+  ObservabilityLive,
+  ObservabilityGovernanceSinkLive,
+  registerBuiltinLgtmProvidersEffect,
+  snapshotRegistriesForAlloyEffect,
+  applyAlloyConfigEffect,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const generation = yield* snapshotRegistriesForAlloyEffect();
+  return yield* applyAlloyConfigEffect({
+    session: { sub: "ops", scope: ["observability:configure"] },
+    actorId: "ops",
+    generation,
+    outputPath: "./alloy/config.generated.river",
+  });
+});
+
+await Effect.runPromise(
+  program.pipe(Effect.provide(ObservabilityLive), Effect.provide(ObservabilityGovernanceSinkLive))
+);
+```
+
+Golden fixture: `src/alloy/__fixtures__/lgtm-default.river.golden`.
+
+## Phase 3c (v0.5) — Query federation (Effect-native)
+
+Governed read facade over registered backends. All IO is Effect (`Context.Tag` + `Layer`); HTTP goes through `TelemetryQueryTransport` so tests substitute a Layer instead of mocking `fetch`.
+
+```typescript
+import { Effect, Layer } from "effect";
+import {
+  ObservabilityWithQueryLive,
+  ObservabilityGovernanceSinkLive,
+  ObservabilityQueryService,
+  registerBuiltinLgtmProvidersEffect,
+} from "clawql-observability";
+
+const program = Effect.gen(function* () {
+  yield* registerBuiltinLgtmProvidersEffect();
+  const query = yield* ObservabilityQueryService;
+  return yield* query.queryLogs(
+    { sub: "reader", scope: ["observability:query_logs"] },
+    {
+      logql: '{service="api"} |= "error"',
+      timeRange: { startMs: Date.now() - 3_600_000, endMs: Date.now() },
+      selection: { mode: "all" },
+    }
+  );
+});
+
+await Effect.runPromise(
+  program.pipe(
+    Effect.provide(ObservabilityWithQueryLive),
+    Effect.provide(ObservabilityGovernanceSinkLive)
+  )
+);
+```
+
+APIs: `queryLogs` (LogQL), `queryMetrics` (PromQL), `queryTraces` (TraceQL), `queryProfiles`. Selection modes: `one` | `all` | `primary`. Raw results emit `OBSERVABILITY_RAW_DATA_ACCESSED`.
 
 ### Worker deploy
 
@@ -91,21 +188,25 @@ packages/clawql-observability/
   docker/docker-compose.yaml   — local LGTM+ stack
   helm/values.yaml             — LGTM+ enable/disable + retention
   worker/                      — Cloudflare Faro proxy (Phase 2)
-  src/                         — Effect config, fingerprint, telemetry JWT mint
-  scripts/smoke-lgtm-plus.sh     — CI compose smoke
+  src/                         — Effect config, registry, Alloy generator, query federation, JWT mint
+  src/alloy/                   — River generate / validate / apply (Phase 3b)
+  src/query/                   — Federated LogQL/PromQL/TraceQL/profile reads (Phase 3c)
+  scripts/smoke-lgtm-plus.sh   — CI compose smoke
 ```
 
 Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmithdevelopment/DevSecOps-boilerplate)
 
 ## Implementation phases
 
-| Phase | Scope                                      |
-| ----- | ------------------------------------------ |
-| **1** | LGTM+ core + Alloy _(merged)_              |
-| **2** | Faro + ephemeral-JWT Worker proxy _(this)_ |
-| 3     | Langfuse + Panguard correlation            |
-| 4     | Falco / Tetragon / Wazuh security layer    |
-| 5     | Full alerting + Vault-backed signing keys  |
+| Phase  | Scope                                        |
+| ------ | -------------------------------------------- |
+| **1**  | LGTM+ core + Alloy _(merged)_                |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
+| **3a** | Provider registry skeleton _(shipped)_       |
+| **3b** | Alloy config generator _(shipped)_           |
+| **3c** | Query federation _(this release)_            |
+| 4      | Langfuse + Panguard correlation              |
+| 5      | Full alerting + Vault-backed signing keys    |
 
 ## License
 

@@ -16,6 +16,10 @@ import { ExecuteNotConfiguredLive, ExecuteService } from "./execute-service.js";
 import { McpToolRegistry } from "./mcp-tool-registry.js";
 import { composeDefaultPlugins } from "./plugins/compose-default-plugins.js";
 import { warnIfNoEnforcementActive } from "./plugins/enforcement-boot-warning.js";
+import {
+  WEBMCP_DRAFT_PLUGIN_ID,
+  wireWebMcpDraftBoundInvoker,
+} from "./plugins/webmcp-draft-gateway-plugin.js";
 import { PluginRegistry } from "./plugin-registry.js";
 import { McpProxyPipeline, mcpProxyPipelineLayer } from "./proxy/mcp-proxy-pipeline.js";
 import { SearchService } from "./search-service.js";
@@ -171,7 +175,9 @@ export function createClawQLApi(options: CreateClawQLApiOptions = {}): ClawQLApi
   for (const plugin of assembly.plugins) {
     Effect.runSync(assembly.registry.register(plugin, assembly.registrationApi));
   }
-  return finalizeClawQLApi(assembly);
+  const handle = finalizeClawQLApi(assembly);
+  wireWebMcpDraftIfPresent(assembly.plugins, handle);
+  return handle;
 }
 
 /**
@@ -185,7 +191,18 @@ export async function createClawQLApiAsync(
   for (const plugin of assembly.plugins) {
     await Effect.runPromise(assembly.registry.register(plugin, assembly.registrationApi));
   }
-  return finalizeClawQLApi(assembly);
+  const handle = finalizeClawQLApi(assembly);
+  wireWebMcpDraftIfPresent(assembly.plugins, handle);
+  return handle;
+}
+
+function wireWebMcpDraftIfPresent(plugins: readonly AnyPlugin[], handle: ClawQLApiHandle): void {
+  if (!plugins.some((p) => p.id === WEBMCP_DRAFT_PLUGIN_ID)) return;
+  Effect.runSync(
+    wireWebMcpDraftBoundInvoker((program) =>
+      handle.run(program as Effect.Effect<unknown, Error, ClawQLApiRuntimeServices>)
+    )
+  );
 }
 
 /** Minimal ProviderPlugin for tests / demos (no tools, no hooks). */

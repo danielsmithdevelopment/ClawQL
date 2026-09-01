@@ -58,12 +58,24 @@ export const gate = defineProviderPlugin({
 
 ## Skills-over-MCP + unified search (8.0)
 
-| Tool / path     | Role                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `search`        | Ranks **operations and skills** together (`kind: "operation" \| "skill"`)            |
-| `skills_list`   | Lightweight index (`SkillIndexEntry`)                                                |
-| `skills_get`    | Full skill body by `skillId`                                                         |
-| Standalone pack | `handoff` / `session-handoff` — default on (`CLAWQL_ENABLE_HANDOFF_SKILL=0` to omit) |
+| Tool / path     | Role                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `search`        | Ranks **operations and skills** together (`kind: "operation" \| "skill"`)                                                    |
+| `skills_list`   | Lightweight index (`SkillIndexEntry`)                                                                                        |
+| `skills_get`    | Full skill body by `skillId`                                                                                                 |
+| Standalone pack | `handoff` / `session-handoff` — default on (`CLAWQL_ENABLE_HANDOFF_SKILL=0` to omit)                                         |
+| WebMCP draft    | `webmcp_draft*` — opt-in (`CLAWQL_ENABLE_WEBMCP_DRAFT=1`); see [`docs/specs/webmcp-draft/`](../specs/webmcp-draft/README.md) |
+
+**WebMCP draft (opt-in):**
+
+```bash
+export CLAWQL_ENABLE_WEBMCP_DRAFT=1
+export CLAWQL_WEBMCP_DRAFT_DURABLE=1          # JSON store under .clawql/ (gateway default when enabled)
+# export CLAWQL_WEBMCP_DRAFT_STORE_PATH=/path/to/store.json
+# export CLAWQL_WEBMCP_BIND_URL=https://gateway.example/webmcp-draft/bound-execute
+```
+
+MCP tools: `webmcp_draft`, `webmcp_draft_review`, `webmcp_draft_publish`, `webmcp_draft_execute`, `webmcp_draft_rollback`. Published browser tools POST `/webmcp-draft/bound-execute` (OpenAPI/GraphQL → `ExecuteService`; forms → `formAction` submit).
 
 Empty skill index until a ProviderPlugin / StandaloneSkillPlugin installs skills (handoff is composed by default).
 

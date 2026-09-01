@@ -1,0 +1,91 @@
+# Observability
+
+ClawQL observability answers operational questions about agent deployments: is the system healthy, what is slow, what broke, and — for agent traffic — is something behaving in a way it should not be. This is **runtime telemetry** (logs, metrics, traces, profiles) collected through **Grafana Alloy**, governed by a **multi-provider registry**, and correlated in **LGTM+** (Loki, Grafana, Tempo, Mimir, plus Pyroscope). It is not compliance-grade proof of what happened later — that is **[Audit Trail](/audit)**. It is not product analytics — that is **`clawql-analytics`**. {{ className: 'lead' }}
+
+**Package:** [`clawql-observability`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-observability) · [README](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-observability/README.md) · [package spec](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-observability-package-spec.md) · [provider registry design](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-observability-provider-registry.md)
+
+**Related:** [Audit Trail](/audit) (WORM proof, not live telemetry) · [Audit tool & observability](/learn/audit-tool-and-observability) (in-process MCP `audit` ring buffer — different surface) · [Authentication](/auth) (Faro ingest JWTs and ATR scopes)
+
+---
+
+## What this package is not
+
+Three surfaces are often confused:
+
+| Surface                    | Question it answers                                               |
+| -------------------------- | ----------------------------------------------------------------- |
+| **`clawql-observability`** | What is the system doing right now? (LGTM+, Alloy, dashboards)    |
+| **`clawql-audit`**         | What can we prove happened later? (hash-chained WORM trail)       |
+| **MCP `audit` tool**       | What did this session record in-process? (ring buffer, not LGTM+) |
+
+Product pageviews and funnels live in **`clawql-analytics`**, not here — engineers use Faro RUM for errors and performance; product teams use analytics for retention and funnels.
+
+---
+
+## Ingest: Alloy owns the hot path
+
+All OTLP-capable signals route through **Grafana Alloy** before landing in backends. Alloy handles batching, retries, backpressure, and **per-exporter failure isolation**. Fan-out to multiple backends per signal type (for example logs to two Loki endpoints) is configured in River `output` lists — not reimplemented in TypeScript.
+
+The TypeScript **provider registry** is the authorized front door to that configuration: who may register backends, which ATR scopes apply, WORM audit of config changes, health checks, Alloy River generation, and (next) query federation.
+
+**Phase 3b** ships `generateAlloyRiverEffect` / `applyAlloyConfigEffect`: a registry snapshot becomes a complete River file (exporters + batch fan-out + optional Faro), validated structurally, written to disk, and audited with `OBSERVABILITY_ALLOY_CONFIG_APPLIED`. Multi-provider log/metric/trace registration produces multiple entries in the batch `output` lists — Alloy owns the runtime fan-out.
+
+**Phase 3c** ships Effect-native query federation (`ObservabilityQueryService`): governed LogQL / PromQL / TraceQL / profile reads with provider selection (`one` | `all` | `primary`), ATR scope checks, and `OBSERVABILITY_RAW_DATA_ACCESSED` WORM events. HTTP IO goes through `TelemetryQueryTransport` (`Effect.tryPromise` + fetch in Live; tests substitute a Layer).
+
+Browser RUM uses a **Cloudflare Worker** proxy with **ephemeral HS256 JWTs** — no static public DSN. Invalid credentials return **HTTP 204** with no body.
+
+---
+
+## Provider registry (Phase 3)
+
+Observability uses **signal-typed** provider interfaces — not one flat provider type:
+
+| Signal   | Interface         | Built-in LGTM+ plugin |
+| -------- | ----------------- | --------------------- |
+| Logs     | `LogProvider`     | Loki                  |
+| Metrics  | `MetricProvider`  | Mimir                 |
+| Traces   | `TraceProvider`   | Tempo                 |
+| Profiles | `ProfileProvider` | Pyroscope             |
+
+Unlike `clawql-analytics` (one active provider at a time), observability defaults to **multiple providers per signal type** for redundant fan-out — but that fan-out is expressed in Alloy config generated from the registry, not in application push loops.
+
+**Governance scopes** include `observability:configure`, `observability:query_*`, and `observability:export`. Provider add/remove/config change emits WORM governance events (not individual telemetry samples).
+
+**Escape hatch:** vendors that cannot speak OTLP may use a rare direct TypeScript push adapter. _Exceptional means rare, not less audited_ — same scopes, WORM, health checks, and **documented justification required** at registration.
+
+---
+
+## Phases
+
+| Phase  | Scope                                                                                   |
+| ------ | --------------------------------------------------------------------------------------- |
+| **1**  | LGTM+ docker-compose + Alloy OTLP pipeline                                              |
+| **2**  | Faro + ephemeral-JWT Worker proxy                                                       |
+| **3a** | Signal-typed registries, LGTM+ built-ins, scopes, WORM hooks, health checks _(shipped)_ |
+| **3b** | Registry → Alloy River config generator _(shipped)_                                     |
+| **3c** | Query federation (LogQL / PromQL / TraceQL / profiles) _(shipped)_                      |
+| **4+** | Langfuse correlation, security layer, alerting, Vault-backed signing keys               |
+
+---
+
+## Local quick start
+
+```bash
+npm run build -w clawql-observability
+npm run compose:up -w clawql-observability
+```
+
+Open Grafana at **http://localhost:3000** (local dev). Send OTLP to Alloy on **4317** (gRPC) or **4318** (HTTP). CI runs the LGTM+ stack smoke workflow on every change to the package.
+
+---
+
+## Summary
+
+| Property                              | Mechanism                                                         |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| Runtime telemetry vs proof vs product | LGTM+ observability · WORM audit · analytics — separate packages  |
+| Hot-path fan-out                      | Grafana Alloy River `output` lists — not TypeScript loops         |
+| Registry job                          | Governed config, health, WORM, Alloy generation, query federation |
+| Browser ingest                        | Ephemeral JWT → Worker → private Alloy `faro.receiver`            |
+| Multi-backend per signal              | Signal-typed registries; LGTM+ as default built-in plugins        |
+| Escape hatch governance               | Same scopes and audit as main path; justification required        |

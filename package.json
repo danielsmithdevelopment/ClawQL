@@ -129,7 +129,7 @@
     "@aws-sdk/client-s3": "^3.1090.0",
     "@effect/opentelemetry": "^0.64.0",
     "@effect/platform": "^0.97.0",
-    "@graphql-mesh/utils": "^0.104.36",
+    "@graphql-mesh/utils": "^0.107.0",
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@modelcontextprotocol/sdk": "^1.29.0",

@@ -4,6 +4,7 @@ export * from "./privacy-filter/client.js";
 export * from "./redaction/gateway-redact.js";
 export * from "./plugins/presidio-gateway-plugin.js";
 export * from "./plugins/privacy-filter-gateway-plugin.js";
+export * from "./plugins/webmcp-draft-gateway-plugin.js";
 export * from "./clawql-api-service.js";
 export * from "./config/optional-flags.js";
 export * from "./config/providers-composition.js";
