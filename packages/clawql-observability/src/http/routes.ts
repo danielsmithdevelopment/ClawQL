@@ -1,9 +1,13 @@
 import { Effect } from "effect";
 
 import { applyAlloyConfigEffect } from "../alloy/apply.js";
+import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
+import { ObservabilityAlertingService } from "../alerting/service.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
+import { resolveTelemetrySigningKeyLayer } from "../secrets/telemetry-signing-key.js";
+import { signTelemetryJwtWithResolvedKeyEffect } from "../telemetry-token.js";
 import { readObservabilityHostConfigEffect } from "../host/config.js";
 import { runObservabilityHostEffect } from "../host/runtime.js";
 import { resolveObservabilitySessionForRuntimeEffect } from "../host/session-context.js";
@@ -198,6 +202,45 @@ export const handleObservabilityHttpRequestEffect = (
       return json(200, result);
     }
 
+    if (req.method === "GET" && pathname === "/observability/alerts") {
+      const events = yield* Effect.tryPromise({
+        try: () =>
+          runObservabilityHostEffect(
+            Effect.gen(function* () {
+              const alerting = yield* ObservabilityAlertingService;
+              return yield* alerting.evaluateHealth();
+            }),
+            env
+          ),
+        catch: (cause) =>
+          new ObservabilityError({
+            reason: "observability alerts evaluation failed",
+            cause,
+          }),
+      });
+      return json(200, { events });
+    }
+
+    if (req.method === "POST" && pathname === "/observability/telemetry/token") {
+      const body = (req.body ?? {}) as {
+        claims?: Record<string, unknown>;
+        ttlSeconds?: number;
+      };
+      const claims = body.claims;
+      if (!claims || typeof claims !== "object") {
+        return json(400, { error: "claims_required" });
+      }
+      const minted = yield* signTelemetryJwtWithResolvedKeyEffect({
+        claims: claims as never,
+        ttlSeconds: body.ttlSeconds,
+      }).pipe(Effect.provide(resolveTelemetrySigningKeyLayer(env)));
+      return json(200, {
+        token: minted.token,
+        expiresAt: minted.expiresAt,
+        keySource: minted.keySource,
+      });
+    }
+
     if (req.method === "POST" && pathname === "/observability/alloy/apply") {
       const body = (req.body ?? {}) as { outputPath?: string };
       const outputPath = body.outputPath?.trim() || config.alloyOutputPath;
@@ -206,11 +249,13 @@ export const handleObservabilityHttpRequestEffect = (
           runObservabilityHostEffect(
             Effect.gen(function* () {
               const generation = yield* snapshotRegistriesForAlloyEffect();
+              const { reload } = yield* resolveAlloyReloadFromEnvEffect(env);
               return yield* applyAlloyConfigEffect({
                 session,
                 actorId: session.sub,
                 generation,
                 outputPath,
+                reload,
               });
             }),
             env
@@ -277,6 +322,12 @@ export const attachObservabilityHttpRoutes = (
     void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
   });
   app.post("/observability/query/profiles", (req, res) => {
+    void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
+  });
+  app.get("/observability/alerts", (req, res) => {
+    void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
+  });
+  app.post("/observability/telemetry/token", (req, res) => {
     void send(req as Parameters<typeof send>[0], res as Parameters<typeof send>[1]);
   });
   app.post("/observability/alloy/apply", (req, res) => {

@@ -92,7 +92,7 @@ Browser RUM (Grafana Faro) never writes to a static public DSN. Flow:
 
 Invalid or missing credentials return **HTTP 204** with no body — silent drop, no attacker feedback.
 
-Deploy secrets via `wrangler secret put JWT_SIGNING_KEY`; never commit signing keys. Vault-backed rotation is Phase 5.
+Deploy secrets via `wrangler secret put JWT_SIGNING_KEY`; never commit signing keys. Vault-backed rotation ships in Phase 5 (`TelemetrySigningKeyService` / `CLAWQL_TELEMETRY_JWT_VAULT_*`).
 
 ## 6. Error fingerprinting
 
@@ -114,7 +114,7 @@ Public overview: [docs.clawql.com/observability](https://docs.clawql.com/observa
 
 ## 8–16. Later phases
 
-Phases 4–5 (Langfuse, security layer, alerting, Vault keys) remain as in the README implementation table.
+Phases 4–5 (Langfuse dual-export, Panguard correlation, alerting, Vault keys, Alloy reload) ship in package v0.7 — see README Phase 4/5 sections.
 
 ---
 

@@ -24,6 +24,11 @@ import {
   defaultTempoProviderConfig,
   LGTM_TEMPO_PROVIDER_ID,
 } from "./lgtm-tempo.js";
+import {
+  createLangfuseTraceProvider,
+  defaultLangfuseProviderConfig,
+  LANGFUSE_TRACE_PROVIDER_ID,
+} from "./langfuse-trace.js";
 
 /** Register built-in LGTM+ providers when not already present. Idempotent. */
 export const registerBuiltinLgtmProvidersEffect = (): Effect.Effect<
@@ -56,6 +61,17 @@ export const registerBuiltinLgtmProvidersEffect = (): Effect.Effect<
       const tempo = createTempoTraceProvider();
       yield* tempo.initialize(defaultTempoProviderConfig());
       yield* traceRegistry.register(tempo, defaultTempoProviderConfig());
+    }
+
+    // Phase 4 — Langfuse work traces (opt-in via CLAWQL_ENABLE_LANGFUSE / LANGFUSE_ENABLED).
+    const langfuseConfig = defaultLangfuseProviderConfig();
+    if (
+      langfuseConfig.enabled === true &&
+      !traceSnapshot.providers.some((entry) => entry.id === LANGFUSE_TRACE_PROVIDER_ID)
+    ) {
+      const langfuse = createLangfuseTraceProvider();
+      yield* langfuse.initialize(langfuseConfig);
+      yield* traceRegistry.register(langfuse, langfuseConfig);
     }
 
     const profileSnapshot = yield* profileRegistry.snapshot();

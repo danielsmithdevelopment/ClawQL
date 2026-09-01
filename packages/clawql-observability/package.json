@@ -1,6 +1,6 @@
 {
   "name": "clawql-observability",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "ClawQL LGTM+ observability stack (Loki, Grafana, Tempo, Mimir, Pyroscope) with Alloy collection — distinct from clawql-audit and clawql-analytics",
   "license": "Apache-2.0",
   "type": "module",

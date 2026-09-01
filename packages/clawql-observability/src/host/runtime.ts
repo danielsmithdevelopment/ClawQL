@@ -1,6 +1,7 @@
 import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 
 import { applyAlloyConfigEffect } from "../alloy/apply.js";
+import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
 import { resolveObservabilityGovernanceSinkLayer } from "../governance/audit-bridge.js";
@@ -9,6 +10,10 @@ import {
   ObservabilityHealthSchedulerService,
   ObservabilityHealthService,
 } from "../health/scheduler.js";
+import {
+  makeObservabilityAlertingServiceLayer,
+  ObservabilityAlertingService,
+} from "../alerting/service.js";
 import { registerBuiltinLgtmProvidersEffect } from "../providers/lgtm-builtin.js";
 import { ObservabilityQueryService } from "../query/federation.js";
 import { LogRegistryService } from "../registry/log-registry.js";
@@ -29,7 +34,8 @@ export type ObservabilityHostServices =
   | LogRegistryService
   | MetricRegistryService
   | TraceRegistryService
-  | ProfileRegistryService;
+  | ProfileRegistryService
+  | ObservabilityAlertingService;
 
 const readHealthIntervalMs = (env: NodeJS.ProcessEnv): number => {
   const raw = env.CLAWQL_OBSERVABILITY_HEALTH_INTERVAL_MS?.trim();
@@ -42,8 +48,9 @@ const observabilityHostLayer = (env: NodeJS.ProcessEnv): Layer.Layer<Observabili
   const scheduler = makeObservabilityHealthSchedulerLayer({
     intervalMs: readHealthIntervalMs(env),
   }).pipe(Layer.provide(ObservabilityWithQueryLive));
+  const alerting = makeObservabilityAlertingServiceLayer();
 
-  return Layer.mergeAll(ObservabilityWithQueryLive, governance, scheduler);
+  return Layer.mergeAll(ObservabilityWithQueryLive, governance, scheduler, alerting);
 };
 
 const bootObservabilityHostEffect = (env: NodeJS.ProcessEnv) =>
@@ -60,11 +67,13 @@ const bootObservabilityHostEffect = (env: NodeJS.ProcessEnv) =>
 
     const session = yield* resolveObservabilitySessionForRuntimeEffect(env);
     const generation = yield* snapshotRegistriesForAlloyEffect();
+    const { reload } = yield* resolveAlloyReloadFromEnvEffect(env);
     yield* applyAlloyConfigEffect({
       session,
       actorId: session.sub,
       generation,
       outputPath: config.alloyOutputPath,
+      reload,
     });
   }).pipe(Effect.catchAll(() => Effect.void));
 

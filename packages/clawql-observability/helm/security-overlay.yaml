@@ -1,9 +1,23 @@
-# Phase 4 — Falco / Tetragon / Wazuh DaemonSets (deploy in Monitor mode first).
-# See package spec §10 and DevSecOps-boilerplate reference implementation.
+# Phase 4 — runtime security sensors (deploy Monitor-first, then enforce).
+# See package README Phase 4 / design registry §13.
+#
+# Alloy should scrape Falco/Tetragon JSON logs into Loki with labels:
+#   service_name=clawql-falco|clawql-tetragon
+# so UnexpectedAgentToolUse alerts can join Panguard denies + Langfuse spans.
 falco:
   enabled: false
+  # falcosidekick → Alloy loki.write when enabled
+  sidekick:
+    enabled: false
 tetragon:
   enabled: false
-  mode: monitor
+  mode: monitor # monitor | enforce
 wazuh:
   enabled: false
+langfuse:
+  # Dual-export work traces (gen_ai / clawql.*) alongside Tempo infra traces
+  enabled: false
+  otlpAuthHeaderSecret: LANGFUSE_OTLP_AUTH_HEADER
+panguardCorrelation:
+  # Loki push URL for policy decision telemetry (optional)
+  lokiPushUrlSecret: CLAWQL_PANGUARD_TELEMETRY_LOKI_URL

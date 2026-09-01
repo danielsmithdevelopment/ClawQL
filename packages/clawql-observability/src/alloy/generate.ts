@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 
 import { ObservabilityError } from "../errors.js";
+import { LANGFUSE_TRACE_PROVIDER_ID } from "../providers/langfuse-trace.js";
 import { LGTM_LOKI_PROVIDER_ID } from "../providers/lgtm-loki.js";
 import { LGTM_MIMIR_PROVIDER_ID } from "../providers/lgtm-mimir.js";
 import { LGTM_TEMPO_PROVIDER_ID } from "../providers/lgtm-tempo.js";
@@ -22,6 +23,14 @@ const resolveOtlpEndpoint = (entry: AlloyProviderEntry): string => {
   }
   if (entry.id === LGTM_TEMPO_PROVIDER_ID) {
     return "http://tempo:4318";
+  }
+  if (entry.id === LANGFUSE_TRACE_PROVIDER_ID) {
+    const otlp = entry.config.otlpEndpoint;
+    if (typeof otlp === "string" && otlp.trim() !== "") {
+      return otlp.trim();
+    }
+    const base = (entry.config.endpoint ?? "http://langfuse:3000").replace(/\/$/, "");
+    return `${base}/api/public/otel/v1/traces`;
   }
   const endpoint = entry.config.endpoint?.trim();
   if (!endpoint) {
@@ -82,11 +91,22 @@ const renderTraceExporter = (
   entry: AlloyProviderEntry
 ): { readonly block: string; readonly batchRef: string } => {
   const otlp = resolveOtlpEndpoint(entry);
+  const authHeaderEnv =
+    typeof entry.config.authHeaderEnv === "string" && entry.config.authHeaderEnv.trim() !== ""
+      ? entry.config.authHeaderEnv.trim()
+      : undefined;
+  const headersBlock =
+    entry.id === LANGFUSE_TRACE_PROVIDER_ID && authHeaderEnv
+      ? `
+    headers = {
+      Authorization = sys.env("${authHeaderEnv}"),
+    }`
+      : "";
   return {
     batchRef: `otelcol.exporter.otlphttp.${componentName}.input`,
     block: `otelcol.exporter.otlphttp "${componentName}" {
   client {
-    endpoint = "${otlp}"
+    endpoint = "${otlp}"${headersBlock}
   }
 }`,
   };

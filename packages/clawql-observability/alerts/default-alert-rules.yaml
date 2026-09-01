@@ -1,5 +1,6 @@
 # Phase 5 alert rules — applied when LGTM+ core is live.
-# See package spec §9 for LogQL / routing details.
+# Consumed by ObservabilityAlertingService + Grafana/Mimir rule evaluation.
+# See package README Phase 5 / design registry §13.
 groups:
   - name: clawql-observability
     rules:
@@ -10,3 +11,39 @@ groups:
           severity: warning
         annotations:
           summary: Elevated frontend error rate
+
+      - alert: UnexpectedAgentToolUse
+        expr: |
+          sum(rate({service_name="clawql-panguard", verdict="deny"}[5m])) > 0
+          or sum(rate({service_name="clawql-mcp"} |= "Panguard policy blocked"[5m])) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Panguard denied agent tool use — correlate with Langfuse work traces
+
+      - alert: ClientErrorNoServerSpan
+        expr: |
+          sum(rate({job="faro", level="error"}[5m])) > 5
+          unless on() (sum(rate({service_name=~".+"}[5m])) > 0)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Browser errors without matching server spans
+
+      - alert: ObservabilityProviderDown
+        expr: clawql_observability_provider_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: An observability provider health check is failing
+
+      - alert: NewErrorFingerprintBurst
+        expr: count(count_over_time({job="faro"} | json | __error__="" | error_fingerprint != ""[15m])) by (error_fingerprint) > 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: New or bursting Faro error fingerprint

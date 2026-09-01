@@ -209,10 +209,26 @@ packages/clawql-observability/
   src/                         — Effect config, registry, Alloy generator, query federation, JWT mint
   src/alloy/                   — River generate / validate / apply (Phase 3b)
   src/query/                   — Federated LogQL/PromQL/TraceQL/profile reads (Phase 3c)
+  src/alerting/                — Health-driven alerts + rule catalog (Phase 5)
+  src/correlation/             — Panguard deny/allow telemetry (Phase 4)
+  src/secrets/                 — Vault/env Faro JWT signing keys (Phase 5)
   scripts/smoke-lgtm-plus.sh   — CI compose smoke
 ```
 
 Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmithdevelopment/DevSecOps-boilerplate)
+
+
+## Phase 4 (v0.7) — Langfuse + Panguard correlation
+
+- **Langfuse trace provider** (`langfuse-otel`) — opt-in via `CLAWQL_ENABLE_LANGFUSE` / `LANGFUSE_ENABLED`; Alloy dual-exports OTLP traces with `Authorization = sys.env(LANGFUSE_OTLP_AUTH_HEADER)`
+- **Panguard telemetry** — `emitPanguardTelemetryEffect` emits shared `clawql.*` attributes (optional Loki push via `CLAWQL_PANGUARD_TELEMETRY_LOKI_URL`); host MCP tool wrap records deny decisions
+
+## Phase 5 (v0.7) — Alerting, Vault JWT keys, Alloy reload
+
+- **Alert catalog** — `alerts/default-alert-rules.yaml` plus health→alert mapping (`ObservabilityAlertingService`)
+- **MCP / HTTP** — `observability_alerts`, `GET /observability/alerts`, `POST /observability/telemetry/token`
+- **Vault-backed signing** — `TelemetrySigningKeyService` + `signTelemetryJwtWithResolvedKeyEffect` (`CLAWQL_TELEMETRY_JWT_VAULT_*` or `TELEMETRY_JWT_SIGNING_KEY`)
+- **Alloy reload after apply** — `CLAWQL_ALLOY_RELOAD_PID` (SIGHUP) or `CLAWQL_ALLOY_RELOAD_K8S_DEPLOYMENT` (+ optional namespace)
 
 ## Implementation phases
 
@@ -223,9 +239,9 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 | **3a** | Provider registry skeleton _(shipped)_       |
 | **3b** | Alloy config generator _(shipped)_           |
 | **3c** | Query federation _(shipped)_            |
-| **3d** | Host integration (MCP + HTTP + WORM) _(this release)_ |
-| 4      | Langfuse + Panguard correlation              |
-| 5      | Full alerting + Vault-backed signing keys    |
+| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_ |
+| **4**  | Langfuse work traces + Panguard correlation _(this release)_ |
+| **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(this release)_ |
 
 ## License
 

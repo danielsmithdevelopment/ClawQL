@@ -231,7 +231,7 @@ Order is deliberate — each phase unlocks the next without painting into a corn
 
 - **Phase 1 (LGTM+ compose + Alloy OTLP):** Single-backend River config; registry replaces hand-edited exporter list as providers multiply.
 - **Phase 2 (Faro + JWT Worker):** Ingest auth stays at the Worker/OTLP edge; registry does not mint browser JWTs. Registry may record which log/trace providers receive Faro-derived signals via generated Alloy wiring.
-- **Phases 4–5 (Langfuse, security layer, alerting, Vault keys):** Additional providers register through the same signal-typed registries; alerting consumes federation + health, not duplicate provider lists.
+- **Phases 4–5 (Langfuse, security layer, alerting, Vault keys):** Additional providers (e.g. Langfuse) register through the same signal-typed registries; alerting consumes federation + health via `ObservabilityAlertingService`, not duplicate provider lists. Alloy reload hooks run after apply (SIGHUP / Kubernetes rollout).
 
 ---
 

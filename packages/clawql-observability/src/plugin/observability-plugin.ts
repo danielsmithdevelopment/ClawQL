@@ -3,8 +3,10 @@ import { Effect } from "effect";
 import { z } from "zod";
 
 import { applyAlloyConfigEffect } from "../alloy/apply.js";
+import { resolveAlloyReloadFromEnvEffect } from "../alloy/reload.js";
 import { snapshotRegistriesForAlloyEffect } from "../alloy/from-registry.js";
 import { ObservabilityError } from "../errors.js";
+import { ObservabilityAlertingService } from "../alerting/service.js";
 import { ObservabilityHealthService } from "../health/scheduler.js";
 import { readObservabilityHostConfigEffect } from "../host/config.js";
 import { runObservabilityHostEffect } from "../host/runtime.js";
@@ -249,6 +251,26 @@ export function createObservabilityPlugin(
         });
 
         yield* api.registerMcpTool({
+          name: "observability_alerts",
+          schema: {},
+          handler: async () => {
+            try {
+              logObservabilityTool("observability_alerts", {});
+              const events = await runObservabilityHostEffect(
+                Effect.gen(function* () {
+                  const alerting = yield* ObservabilityAlertingService;
+                  return yield* alerting.evaluateHealth();
+                }),
+                env
+              );
+              return textToolResult({ events });
+            } catch (err) {
+              return errorToolResult(err);
+            }
+          },
+        });
+
+        yield* api.registerMcpTool({
           name: "observability_apply_alloy_config",
           schema: observabilityApplyAlloySchema,
           handler: async (args) => {
@@ -263,11 +285,13 @@ export function createObservabilityPlugin(
               const result = await runObservabilityHostEffect(
                 Effect.gen(function* () {
                   const generation = yield* snapshotRegistriesForAlloyEffect();
+                  const { reload } = yield* resolveAlloyReloadFromEnvEffect(env);
                   return yield* applyAlloyConfigEffect({
                     session,
                     actorId: session.sub,
                     generation,
                     outputPath,
+                    reload,
                   });
                 }),
                 env
