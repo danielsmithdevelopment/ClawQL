@@ -63,11 +63,30 @@ function rehypeDocsTable() {
   }
 }
 
+/**
+ * Prose CSS uses `overflow-x: auto` on `pre`. Axe `scrollable-region-focusable`
+ * requires keyboard access — match CodePanel (`tabIndex={0}`) for ASSETS HTML.
+ */
+function rehypeDocsPre() {
+  return (tree: Root) => {
+    visit(tree, 'element', (node) => {
+      if (node.tagName !== 'pre') return
+      const props = node.properties ?? {}
+      if (props.tabIndex != null || props.tabindex != null) return
+      node.properties = {
+        ...props,
+        tabIndex: 0,
+      }
+    })
+  }
+}
+
 export async function markdownToHtml(markdown: string): Promise<string> {
   const file = await remark()
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeDocsTable)
+    .use(rehypeDocsPre)
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown)
   return String(file)
