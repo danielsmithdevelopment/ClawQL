@@ -8,22 +8,19 @@ declare module "posthog-node" {
     constructor(
       apiKey: string,
       options?: {
-        host?: string
-        flushAt?: number
-        flushInterval?: number
-      },
-    )
+        host?: string;
+        flushAt?: number;
+        flushInterval?: number;
+      }
+    );
     capture(payload: {
-      distinctId: string
-      event: string
-      properties?: Record<string, unknown>
-      timestamp?: Date
-    }): void
-    identify(payload: {
-      distinctId: string
-      properties?: Record<string, unknown>
-    }): void
-    flush(): Promise<void>
-    shutdown(): Promise<void>
+      distinctId: string;
+      event: string;
+      properties?: Record<string, unknown>;
+      timestamp?: Date;
+    }): void;
+    identify(payload: { distinctId: string; properties?: Record<string, unknown> }): void;
+    flush(): Promise<void>;
+    shutdown(): Promise<void>;
   }
 }
