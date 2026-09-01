@@ -114,13 +114,15 @@ export const wormInputFromToolAttempt = (input: {
   operationId?: string;
   sessionId?: string;
   argKeys?: string[];
+  /** Defaults to `execute` when operationId set, else `mcp`. */
+  source?: string;
 }): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: "TOOL_CALL_ATTEMPT",
     timestamp: new Date().toISOString(),
     sessionId: input.sessionId ?? "",
     metadata: {
-      source: "execute",
+      source: input.source ?? (input.operationId ? "execute" : "mcp"),
       toolName: input.toolName,
       operationId: input.operationId,
       argKeys: input.argKeys,
@@ -133,13 +135,14 @@ export const wormInputFromToolResult = (input: {
   sessionId?: string;
   ok: boolean;
   detail?: string;
+  source?: string;
 }): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     type: "TOOL_CALL_RESULT",
     timestamp: new Date().toISOString(),
     sessionId: input.sessionId ?? "",
     metadata: {
-      source: "execute",
+      source: input.source ?? (input.operationId ? "execute" : "mcp"),
       toolName: input.toolName,
       operationId: input.operationId,
       ok: input.ok,
@@ -159,6 +162,19 @@ export const wormInputFromPanguardDeny = (input: {
       source: "panguard",
       toolName: input.toolName,
       reason: input.reason ?? `Panguard policy blocked tool: ${input.toolName}`,
+    },
+  }));
+
+export const wormInputFromPanguardAllow = (input: {
+  toolName: string;
+}): Effect.Effect<WORMAppendInput> =>
+  Effect.sync(() => ({
+    type: "PANGUARD_ALLOW",
+    timestamp: new Date().toISOString(),
+    sessionId: "",
+    metadata: {
+      source: "panguard",
+      toolName: input.toolName,
     },
   }));
 

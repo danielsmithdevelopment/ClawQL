@@ -82,6 +82,7 @@ export {
   createMemoryWormSink,
   wormInputFromAuthEvent,
   wormInputFromMemoryEvent,
+  wormInputFromPanguardAllow,
   wormInputFromPanguardDeny,
   wormInputFromPaymentEvent,
   wormInputFromToolAttempt,
