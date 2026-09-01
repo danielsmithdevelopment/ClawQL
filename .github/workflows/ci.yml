@@ -305,7 +305,7 @@ jobs:
             -t clawql-website:ci-smoke \
             --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
             --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
-            ./website
+            .
 
       - name: Run website container
         run: |
@@ -409,7 +409,17 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: website/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      - name: Build clawql-analytics (docs API route dependency)
+        run: |
+          npm ci
+          npm run build -w clawql-merkle
+          npm run build -w clawql-audit
+          npm run build -w clawql-auth
+          npm run build -w clawql-analytics
 
       - name: Install website dependencies
         run: npm ci --prefix website

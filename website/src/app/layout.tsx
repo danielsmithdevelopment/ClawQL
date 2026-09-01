@@ -1,6 +1,7 @@
 import { type Metadata, type Viewport } from 'next'
 
 import { Providers } from '@/app/providers'
+import { ClawqlAnalyticsPageview } from '@/components/analytics/ClawqlAnalyticsPageview'
 import { Layout } from '@/components/Layout'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import {
@@ -110,6 +111,7 @@ export default function RootLayout({
         </a>
         <SiteStructuredData />
         <Providers>
+          <ClawqlAnalyticsPageview site="docs" />
           <div className="w-full">
             <Layout>{children}</Layout>
           </div>
