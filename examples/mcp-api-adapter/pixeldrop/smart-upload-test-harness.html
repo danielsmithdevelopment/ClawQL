@@ -122,6 +122,25 @@
   </div>
 
   <script>
+    function renderResultMessage(containerId, variant, message) {
+      const host = document.getElementById(containerId);
+      if (!host) return;
+      host.replaceChildren();
+      const div = document.createElement('div');
+      div.style.cssText =
+        variant === 'error'
+          ? 'background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:6px;margin-top:12px;'
+          : 'background:#dcfce7;color:#166534;padding:10px 14px;border-radius:6px;margin-top:12px;';
+      div.textContent = message;
+      host.appendChild(div);
+    }
+
+    function mountTemplateHtml(container, html) {
+      container.replaceChildren();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      container.append(...doc.body.childNodes);
+    }
+
     // -------------------------------------------------------------------
     // Inject the smart-upload template into the right pane, with its
     // {{toolName}} placeholder resolved and its hx-post form replaced
@@ -133,14 +152,16 @@
     async function loadSmartUploadTemplate() {
       const res = await fetch('file-upload-smart.htmx.html');
       if (!res.ok) {
-        document.getElementById('fixed-pane').innerHTML =
-          `<p style="color:#991b1b">Failed to load template: ${res.status}. ` +
-          `Serve this folder over HTTP (python3 -m http.server), not file://.</p>`;
+        renderResultMessage(
+          'fixed-pane',
+          'error',
+          `Failed to load template: ${res.status}. Serve this folder over HTTP (python3 -m http.server), not file://.`
+        );
         return;
       }
       let html = await res.text();
       html = html.replaceAll('{{toolName}}', 'upload_photo');
-      document.getElementById('fixed-pane').innerHTML = html;
+      mountTemplateHtml(document.getElementById('fixed-pane'), html);
 
       // Re-run any <script> tags injected via innerHTML (browsers don't
       // execute these automatically when set via innerHTML).
@@ -217,18 +238,19 @@
           addToFixedGallery(`data:image/jpeg;base64,${fileBase64}`);
           logFixedUpload(result, 'smart-upload-harness');
 
-          document.getElementById('result-upload_photo').innerHTML =
-            `<div style="background:#dcfce7;color:#166534;padding:10px 14px;` +
-            `border-radius:6px;margin-top:12px;">` +
+          renderResultMessage(
+            'result-upload_photo',
+            'success',
             `Uploaded via smart-upload template. Upload ID: ${result.uploadId}` +
-            (caption ? ` · Caption: ${caption}` : '') +
-            `</div>`;
+              (caption ? ` · Caption: ${caption}` : '')
+          );
         } catch (err) {
           console.error('Direct backend call failed:', err);
-          document.getElementById('result-upload_photo').innerHTML =
-            `<div style="background:#fee2e2;color:#991b1b;padding:10px 14px;` +
-            `border-radius:6px;margin-top:12px;">` +
-            `Upload failed: ${err.message}</div>`;
+          renderResultMessage(
+            'result-upload_photo',
+            'error',
+            `Upload failed: ${err instanceof Error ? err.message : String(err)}`
+          );
         }
       });
     }
