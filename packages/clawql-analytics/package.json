@@ -1,0 +1,66 @@
+{
+  "name": "clawql-analytics",
+  "version": "0.1.0",
+  "description": "ClawQL product analytics: provider adapters (PostHog v0), clawql-auth scopes, clawql-audit governance events \u2014 distinct from audit and observability",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server/pageview": {
+      "types": "./dist/server/pageview.d.ts",
+      "import": "./dist/server/pageview.js",
+      "require": "./dist/server/pageview.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config ../../vitest.config.ts packages/clawql-analytics"
+  },
+  "dependencies": {
+    "clawql-audit": "8.0.0",
+    "clawql-auth": "8.0.0",
+    "effect": "^3.21.4"
+  },
+  "optionalDependencies": {
+    "posthog-node": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "posthog-node": "^4.18.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-analytics"
+  },
+  "keywords": [
+    "clawql",
+    "analytics",
+    "posthog",
+    "product-analytics"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

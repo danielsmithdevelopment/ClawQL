@@ -50,6 +50,7 @@ jobs:
           # Custom domain at repo root. For project Pages only, set to /ClawQL in repo vars.
           NEXT_PUBLIC_BASE_PATH: ${{ vars.LANDING_PAGE_BASE_PATH || '' }}
           NEXT_PUBLIC_SITE_URL: https://clawql.com
+          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npm run build
 
       - name: Verify SEO/agent static assets

@@ -1,8 +1,31 @@
+# Build from repo root so `file:../packages/clawql-analytics` resolves and dist exists:
+#   docker build -f website/Dockerfile -t clawql-website .
+#
+# Website-only context cannot see monorepo packages (docs API imports clawql-analytics).
+
+FROM node:25-alpine AS analytics-builder
+WORKDIR /repo
+RUN apk upgrade --no-cache
+COPY package.json package-lock.json ./
+COPY packages ./packages
+COPY infra/pulumi/package.json ./infra/pulumi/package.json
+RUN npm ci
+# Analytics DTS needs auth + audit types; audit needs merkle.
+RUN npm run build -w clawql-merkle \
+  && npm run build -w clawql-audit \
+  && npm run build -w clawql-auth \
+  && npm run build -w clawql-analytics
+
 FROM node:25-alpine AS deps
 WORKDIR /app
 RUN apk upgrade --no-cache
-COPY package*.json ./
-RUN npm ci
+COPY website/package*.json ./
+# From /app, file:../packages/clawql-analytics → /packages/clawql-analytics
+COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
+RUN npm ci \
+  && mkdir -p /packages/clawql-analytics/node_modules \
+  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
 
 FROM node:25-alpine AS builder
 WORKDIR /app
@@ -12,7 +35,12 @@ ARG CLAWQL_PACKAGE_DESCRIPTION="ClawQL MCP server"
 ENV CLAWQL_PACKAGE_VERSION=${CLAWQL_PACKAGE_VERSION}
 ENV CLAWQL_PACKAGE_DESCRIPTION=${CLAWQL_PACKAGE_DESCRIPTION}
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
+# Same resolution for webpack walking from /packages/.../dist
+RUN mkdir -p /packages/clawql-analytics/node_modules \
+  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
+COPY website/ .
 RUN npm run build
 
 FROM node:25-alpine AS runner
