@@ -180,15 +180,25 @@
     function ensureFixedGallery() {
       const pane = document.getElementById('fixed-pane');
       if (!document.getElementById('fixed-gallery')) {
-        pane.insertAdjacentHTML('beforeend',
-          '<div class="fixed-gallery" id="fixed-gallery"></div>' +
-          '<div class="fixed-upload-log" id="fixed-upload-log"></div>');
+        const gallery = document.createElement('div');
+        gallery.className = 'fixed-gallery';
+        gallery.id = 'fixed-gallery';
+        const log = document.createElement('div');
+        log.className = 'fixed-upload-log';
+        log.id = 'fixed-upload-log';
+        pane.append(gallery, log);
       }
     }
 
-    function addToFixedGallery(dataUrl) {
+    function addToFixedGallery(fileBase64) {
+      if (!/^[A-Za-z0-9+/=]+$/.test(fileBase64)) {
+        console.error('Invalid base64 payload for gallery preview');
+        return;
+      }
       const img = document.createElement('img');
-      img.src = dataUrl;
+      const bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
+      img.src = URL.createObjectURL(blob);
       img.alt = 'Uploaded photo';
       document.getElementById('fixed-gallery').appendChild(img);
     }
@@ -235,7 +245,7 @@
         // broken iframe's DOM (that would imply the broken UI succeeded).
         try {
           const result = await targetWindow.uploadToBackend(fileBase64, filename);
-          addToFixedGallery(`data:image/jpeg;base64,${fileBase64}`);
+          addToFixedGallery(fileBase64);
           logFixedUpload(result, 'smart-upload-harness');
 
           renderResultMessage(
