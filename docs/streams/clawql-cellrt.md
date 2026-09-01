@@ -5,7 +5,7 @@
 **Package:** `clawql-cellrt` (planned — `crates/clawql-cellrt`)  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-inference`](../inference/clawql-inference.md) · `@clawql/wasm-polyfills` (planned) · `@clawql/effect-wasm` (planned)  
 **Repo home:** ClawQL monorepo — `crates/clawql-cellrt/` (not a separate product repo)  
-**Related:** [`clawql-tee.md`](./clawql-tee.md) · [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [defense-in-depth](../security/clawql-security-defense-in-depth.md) · [codegraph](../plugins/codegraph.md) · [correctness-by-construction](../design/correctness-by-construction.md) (NASA/SPARK → Rust + TLA+ for key/WORM/liveness invariants)
+**Related:** [`clawql-tee.md`](./clawql-tee.md) · [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`../specs/network/clawql-network-v0.1.md`](../specs/network/clawql-network-v0.1.md) · [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) · [defense-in-depth](../security/clawql-security-defense-in-depth.md) · [codegraph](../plugins/codegraph.md) · [correctness-by-construction](../design/correctness-by-construction.md) (NASA/SPARK → Rust + TLA+ for key/WORM/liveness invariants)
 
 ---
 
