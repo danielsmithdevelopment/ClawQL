@@ -1,6 +1,6 @@
 {
   "name": "mcp-api-adapter",
-  "version": "0.6.0",
+  "version": "0.1.0",
   "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket + HTMX /mcp-ui, plus gen-cli for a thin tool CLI",
   "license": "Apache-2.0",
   "type": "module",
@@ -60,14 +60,14 @@
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
     "@types/ws": "^8.18.1",
-    "clawql-inference": "8.0.0",
+    "clawql-inference": "0.1.0",
     "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"
   },
   "peerDependencies": {
-    "clawql-inference": ">=0.1.0"
+    "clawql-inference": "0.1.0"
   },
   "peerDependenciesMeta": {
     "clawql-inference": {

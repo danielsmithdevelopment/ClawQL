@@ -118,7 +118,7 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ### Observability / audit
 
-- **`clawql-observability@0.2.0`** — LGTM+ + Faro JWT Worker
+- **`clawql-observability@0.1.0`** — first npm release: LGTM+ through Phase 5 (Faro, registry, Alloy, query, host wiring, Langfuse/Panguard, security sensors, alerting)
 - **`clawql-merkle` + `clawql-audit`** wedge + WORM dual-write
 - **`clawql-tee`** simulated TEE
 
@@ -131,13 +131,17 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ### Standalone npm (this tag)
 
-| Package                          | Version   | Notes                                                  |
-| -------------------------------- | --------- | ------------------------------------------------------ |
-| `clawql-mcp`                     | **8.0.0** | Lockstep consumer surface                              |
-| `mcp-grpc-transport`             | **1.0.0** | Major vs npm **0.2.0** for standalone grpc users       |
-| `mcp-api-adapter`                | **0.6.0** | First registry publish                                 |
-| `clawql-observability`           | **0.2.0** | Independent cadence                                    |
-| `clawql-merkle` / `clawql-audit` | wedge     | Prefer audit-wedge workflow if OIDC-gated full publish |
+| Package                                       | Version   | Notes                                                       |
+| --------------------------------------------- | --------- | ----------------------------------------------------------- |
+| `clawql-mcp`                                  | **8.0.0** | Gateway consumer surface                                    |
+| `mcp-grpc-transport`                          | **1.0.0** | Major vs npm **0.2.0**                                      |
+| `mcp-api-adapter`                             | **0.1.0** | First registry publish                                      |
+| `clawql-ouroboros`                            | **0.1.1** | Aligns with npm (monorepo catch-up)                         |
+| `clawql-merkle` / `clawql-audit`              | **0.1.0** | Audit wedge; prefer wedge workflow if OIDC-gated            |
+| `clawql-core`, `clawql-api`, `clawql-auth`, … | **0.1.0** | First publish for each (were in-tree `8.0.0` lockstep only) |
+| `clawql-observability`                        | **0.1.0** | LGTM+ Phases 1–5                                            |
+
+Full policy: [`docs/release/clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md).
 
 ---
 
@@ -184,7 +188,7 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 - Reverting empty-by-default providers or reintroducing the legacy `Plugin` bridge (intentional majors).
 - Soft-landing Helm `providers.pack: default` while npm stays empty (intentionally aligned empty).
 - Full separate registry publish of every `clawql-*` package if OIDC linking still blocks (`clawql-mcp` remains the consumer surface; audit wedge has its own workflow).
-- Reconciling legacy **`clawql-ouroboros@0.1.1`** on npm vs monorepo line beyond release-note callout.
+- Reconciling legacy **`clawql-ouroboros@0.1.1`** on npm vs monorepo line beyond aligning in-tree to **0.1.1** (see [`clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md)).
 
 ---
 

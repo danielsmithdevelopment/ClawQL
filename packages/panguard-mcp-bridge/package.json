@@ -23,7 +23,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "express": "^5.2.1",
     "jose": "^6.2.10",
-    "mcp-grpc-transport": "^0.2.0"
+    "mcp-grpc-transport": "1.0.0"
   },
   "repository": {
     "type": "git",

@@ -18,7 +18,19 @@ Distinct from:
 Full specification: [`docs/design/clawql-observability-package-spec.md`](../../docs/design/clawql-observability-package-spec.md)  
 Provider registry: [`docs/design/clawql-observability-provider-registry.md`](../../docs/design/clawql-observability-provider-registry.md)
 
-## Phase 1 (v0.1)
+## Versioning
+
+|                        |                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **First npm release**  | **`0.1.0`** — full stack through Phase 5 (nothing published before this)                                             |
+| **Development phases** | Internal delivery labels (Phase 1–5 below) — **not** semver bumps                                                    |
+| **Policy**             | [`docs/release/clawql-observability-versioning.md`](../../docs/release/clawql-observability-versioning.md)           |
+| **Publish checklist**  | [`docs/release/clawql-observability-0.1.0-checklist.md`](../../docs/release/clawql-observability-0.1.0-checklist.md) |
+| **Changelog**          | [`CHANGELOG.md`](./CHANGELOG.md)                                                                                     |
+
+> **Note:** An earlier in-tree `package.json` version (`0.7.0`) tracked phase progress only. It was **never** on npm. Do not interpret Phase N as npm `0.N.0`.
+
+## Phase 1 — LGTM+ core
 
 - Local **docker-compose** LGTM+ core + **Grafana Alloy** collector (`alloy/config.river`)
 - Helm **values.yaml** for Kubernetes deploys
@@ -27,14 +39,14 @@ Provider registry: [`docs/design/clawql-observability-provider-registry.md`](../
 - Grafana datasource provisioning for Loki / Tempo / Mimir / Pyroscope
 - CI **LGTM+ stack smoke** (compose + OTLP + read-back)
 
-## Phase 2 (v0.2) — Faro + ephemeral-JWT Worker proxy
+## Phase 2 — Faro + ephemeral-JWT Worker proxy
 
 - **Cloudflare Worker** (`worker/`) — HS256 JWT gate, rate limit, schema validation, silent 204 drops
 - **Exception fingerprint enrichment** before forward to Alloy
 - **Backend token mint** — `signTelemetryJwt` / `signTelemetryJwtEffect` for session-scoped ingest JWTs
 - **Alloy `faro.receiver`** on `:8027/collect` → Loki logs + Tempo traces (private; no static public DSN)
 
-## Phase 3a (v0.3) — Provider registry skeleton
+## Phase 3a — Provider registry skeleton
 
 - **Signal-typed interfaces** — `LogProvider`, `MetricProvider`, `TraceProvider`, `ProfileProvider`
 - **Per-type registries** — multi-provider per signal (register / remove / list / snapshot / updateConfig)
@@ -62,7 +74,7 @@ const program = Effect.gen(function* () {
 await Effect.runPromise(program.pipe(Effect.provide(ObservabilityLive)));
 ```
 
-## Phase 3b (v0.4) — Alloy config generator
+## Phase 3b — Alloy config generator
 
 Registry snapshot → complete River config (exporters, batch fan-out, optional Faro). Apply writes the file, validates braces/required components, and emits `OBSERVABILITY_ALLOY_CONFIG_APPLIED`.
 
@@ -94,7 +106,7 @@ await Effect.runPromise(
 
 Golden fixture: `src/alloy/__fixtures__/lgtm-default.river.golden`.
 
-## Phase 3c (v0.5) — Query federation (Effect-native)
+## Phase 3c — Query federation (Effect-native)
 
 Governed read facade over registered backends. All IO is Effect (`Context.Tag` + `Layer`); HTTP goes through `TelemetryQueryTransport` so tests substitute a Layer instead of mocking `fetch`.
 
@@ -130,7 +142,7 @@ await Effect.runPromise(
 
 APIs: `queryLogs` (LogQL), `queryMetrics` (PromQL), `queryTraces` (TraceQL), `queryProfiles`. Selection modes: `one` | `all` | `primary`. Raw results emit `OBSERVABILITY_RAW_DATA_ACCESSED`.
 
-## Phase 3d (v0.6) — Host integration
+## Phase 3d — Host integration
 
 Wires the Phase 3 library into the MCP host and optional HTTP read API.
 
@@ -219,7 +231,7 @@ packages/clawql-observability/
 
 Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmithdevelopment/DevSecOps-boilerplate)
 
-## Phase 4 (v0.7) — Langfuse + Panguard correlation
+## Phase 4 — Langfuse + Panguard correlation
 
 - **Langfuse trace provider** (`langfuse-otel`) — opt-in via `CLAWQL_ENABLE_LANGFUSE` / `LANGFUSE_ENABLED`; Alloy dual-exports OTLP traces with `Authorization = sys.env(LANGFUSE_OTLP_AUTH_HEADER)`
 - **Panguard telemetry** — `emitPanguardTelemetryEffect` emits shared `clawql.*` attributes (optional Loki push via `CLAWQL_PANGUARD_TELEMETRY_LOKI_URL`); host MCP tool wrap records deny decisions
@@ -250,7 +262,7 @@ Provisioned under folder **ClawQL** after `compose:up`:
 
 Blocking quorum across exporters stays **out of TypeScript** (provider-registry design §9). If needed later, implement as an Alloy-scoped processor with an explicit SLO impact analysis — do not port the web3 quorum pattern onto the ingest hot path.
 
-## Phase 5 (v0.7) — Alerting, Vault JWT keys, Alloy reload
+## Phase 5 — Alerting, Vault JWT keys, Alloy reload
 
 - **Alert catalog** — `alerts/default-alert-rules.yaml` plus health→alert mapping (`ObservabilityAlertingService`)
 - **MCP / HTTP** — `observability_alerts`, `GET /observability/alerts`, `POST /observability/telemetry/token`
@@ -261,15 +273,15 @@ Blocking quorum across exporters stays **out of TypeScript** (provider-registry 
 
 | Phase  | Scope                                                                    |
 | ------ | ------------------------------------------------------------------------ |
-| **1**  | LGTM+ core + Alloy _(merged)_                                            |
-| **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_                             |
-| **3a** | Provider registry skeleton _(shipped)_                                   |
-| **3b** | Alloy config generator _(shipped)_                                       |
-| **3c** | Query federation _(shipped)_                                             |
-| **3d** | Host integration (MCP + HTTP + WORM) _(shipped)_                         |
-| **4**  | Langfuse work traces + Panguard correlation _(this release)_             |
-| **4b** | Falco / Tetragon / Wazuh → Loki + correlation dashboard _(this release)_ |
-| **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(this release)_    |
+| **1**  | LGTM+ core + Alloy _(in **0.1.0**)_                                      |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(in **0.1.0**)_                       |
+| **3a** | Provider registry skeleton _(in **0.1.0**)_                              |
+| **3b** | Alloy config generator _(in **0.1.0**)_                                  |
+| **3c** | Query federation _(in **0.1.0**)_                                        |
+| **3d** | Host integration (MCP + HTTP + WORM) _(in **0.1.0**)_                    |
+| **4**  | Langfuse work traces + Panguard correlation _(in **0.1.0**)_             |
+| **4b** | Falco / Tetragon / Wazuh → Loki + correlation dashboard _(in **0.1.0**)_ |
+| **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(in **0.1.0**)_    |
 
 ## License
 
