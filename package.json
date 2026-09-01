@@ -1,7 +1,7 @@
 {
   "name": "clawql-mcp",
   "version": "8.0.0",
-  "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+  "description": "Agentic Gateway \u2014 Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -156,6 +156,7 @@
     "clawql-inference": "8.0.0",
     "clawql-memory": "8.0.0",
     "clawql-merkle": "8.0.0",
+    "clawql-observability": "0.7.0",
     "clawql-ontology": "8.0.0",
     "clawql-operator": "8.0.0",
     "clawql-ouroboros": "8.0.0",
@@ -180,8 +181,7 @@
     "sql.js": "^1.14.1",
     "swagger2openapi": "^7.0.8",
     "yaml": "^2.9.0",
-    "zod": "4.3.6",
-    "clawql-observability": "0.7.0"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

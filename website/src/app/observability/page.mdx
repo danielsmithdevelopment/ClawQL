@@ -64,7 +64,11 @@ Unlike `clawql-analytics` (one active provider at a time), observability default
 | **3a** | Signal-typed registries, LGTM+ built-ins, scopes, WORM hooks, health checks _(shipped)_ |
 | **3b** | Registry → Alloy River config generator _(shipped)_                                     |
 | **3c** | Query federation (LogQL / PromQL / TraceQL / profiles) _(shipped)_                      |
-| **4+** | Langfuse correlation, security layer, alerting, Vault-backed signing keys               |
+| **3d** | Host MCP + HTTP + WORM bridge _(shipped)_                                               |
+| **4**  | Langfuse dual-export + Panguard correlation + Falco/Tetragon/Wazuh → Loki _(shipped)_   |
+| **5**  | Alerting catalog + Vault/env Faro JWT keys + Alloy reload _(shipped)_                   |
+
+**Still deferred:** blocking N-of-M exporter quorum (provider-registry design §9 — Alloy-scoped only if ever needed).
 
 ---
 
@@ -77,6 +81,29 @@ npm run compose:up -w clawql-observability
 
 Open Grafana at **http://localhost:3000** (local dev). Send OTLP to Alloy on **4317** (gRPC) or **4318** (HTTP). CI runs the LGTM+ stack smoke workflow on every change to the package.
 
+Opt-in security sensor stubs (Falco / Tetragon / Wazuh → Loki):
+
+```bash
+npm run compose:security -w clawql-observability
+```
+
+---
+
+## Phase 4 / 5 enablement
+
+Host flag `CLAWQL_ENABLE_OBSERVABILITY=1` (or CRD `observability.enabled`) turns on MCP tools and HTTP routes. Layer flags on top:
+
+| Area                         | Env / knobs                                                                                                                                                           |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Langfuse dual-export**     | `CLAWQL_ENABLE_LANGFUSE` or `LANGFUSE_ENABLED`; `LANGFUSE_OTLP_AUTH_HEADER` (Alloy `sys.env`); Langfuse OTLP base URL as configured for the provider                  |
+| **Panguard → Loki**          | `CLAWQL_PANGUARD_TELEMETRY_LOKI_URL` (optional push; host wrap still emits deny attributes without it)                                                                |
+| **Faro JWT mint**            | `TELEMETRY_JWT_SIGNING_KEY` **or** `CLAWQL_TELEMETRY_JWT_VAULT_*` via `TelemetrySigningKeyService`; `POST /observability/telemetry/token`                             |
+| **Alerts**                   | MCP `observability_alerts` · `GET /observability/alerts` · catalog `alerts/default-alert-rules.yaml`                                                                  |
+| **Alloy reload after apply** | `CLAWQL_ALLOY_RELOAD_PID` (SIGHUP) or `CLAWQL_ALLOY_RELOAD_K8S_DEPLOYMENT` (+ optional namespace)                                                                     |
+| **Security sensors**         | Compose profile `security`; Helm `helm/security-overlay.yaml`; River `alloy/security-sensors.river` labels `service_name=clawql-falco\|clawql-tetragon\|clawql-wazuh` |
+
+Grafana folder **ClawQL** provisions **LGTM+ Overview** and **Langfuse ↔ Panguard correlation** (`uid: clawql-langfuse-panguard`).
+
 ---
 
 ## Summary
@@ -88,4 +115,6 @@ Open Grafana at **http://localhost:3000** (local dev). Send OTLP to Alloy on **4
 | Registry job                          | Governed config, health, WORM, Alloy generation, query federation |
 | Browser ingest                        | Ephemeral JWT → Worker → private Alloy `faro.receiver`            |
 | Multi-backend per signal              | Signal-typed registries; LGTM+ as default built-in plugins        |
+| Agent / security correlation          | Langfuse traces + Panguard denies + Falco/Tetragon/Wazuh logs     |
 | Escape hatch governance               | Same scopes and audit as main path; justification required        |
+| Quorum                                | Deferred — not in TypeScript; Alloy-only if ever needed (§9)      |
