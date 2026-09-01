@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import TeeBody from '@/generated/clawql-tee-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -56,9 +55,7 @@ export default function ClawqlTeePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <TeeBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/streams/clawql-tee" className="flex-auto" />
     </article>
   )
 }

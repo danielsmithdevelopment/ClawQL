@@ -1,4 +1,4 @@
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
 import {
@@ -39,13 +39,13 @@ async function textResult(
   };
 }
 
-export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): Plugin {
+export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): ProviderPlugin {
   const enableWrites = opts.enableWrites === true;
-  return {
+  return defineRegisteringProviderPlugin({
     id: ONTOLOGY_PLUGIN_ID,
     version: "0.1.0",
-    kind: "default",
-    onRegister: (api) =>
+    description: "Contract and organization ontology read/write MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
           name: "get_contract",
@@ -236,5 +236,5 @@ export function createOntologyPlugin(opts: CreateOntologyPluginOptions = {}): Pl
           });
         }
       }),
-  };
+  });
 }

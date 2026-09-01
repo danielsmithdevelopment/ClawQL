@@ -18,6 +18,8 @@ import { withEntitlementEnforcement } from "./entitlements/enforced-gateway.js";
 import { withTokenEfficiency } from "./efficiency/efficiency-gateway.js";
 import type { CacheIntent } from "./efficiency/types.js";
 import { resolveInferenceEffectiveEnv } from "./policy/manifest.js";
+import { withModelLifecycleHooks } from "./hooks/hooked-gateway.js";
+import type { HookedInferenceGatewayOptions } from "./hooks/hooked-gateway.js";
 
 export type ChatRole = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -82,6 +84,11 @@ export type CreateInferenceGatewayOptions = {
   fallback?: WithFallbackChainOptions | false;
   /** Emit OTLP spans (infra + Langfuse) when configured. Default true. */
   tracing?: boolean;
+  /**
+   * When set, wraps the gateway with model-scope lifecycle hooks
+   * (`pre-model` / `post-model` via clawql-core fireHook).
+   */
+  readonly modelHooks?: HookedInferenceGatewayOptions;
 };
 
 export class ConfiguredInferenceGateway implements InferenceGateway {
@@ -156,8 +163,9 @@ function composeInferenceGateway(
   const entitled = withEntitlementEnforcement(efficient, env);
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
   const observed = withInferenceStore(entitled, store, env);
-  if (options.tracing === false) return observed;
-  return withInferenceTracing(observed, env);
+  const traced = options.tracing === false ? observed : withInferenceTracing(observed, env);
+  if (!options.modelHooks) return traced;
+  return withModelLifecycleHooks(traced, options.modelHooks);
 }
 
 export function createInferenceGateway(

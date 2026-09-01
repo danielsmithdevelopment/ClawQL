@@ -1,6 +1,6 @@
 {
   "name": "clawql-agents",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "ClawQL hardened adapters for open-source agents (Cline, OpenClaw, Hermes)",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,8 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-audit": "0.1.0",
-    "clawql-auth": "0.1.0",
+    "clawql-audit": "8.0.0",
     "effect": "^3.21.4"
   },
   "peerDependencies": {

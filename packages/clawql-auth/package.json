@@ -1,6 +1,6 @@
 {
   "name": "clawql-auth",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "ClawQL gateway auth (noAuth/apiKey/oidc JWT consumer), inbound MCP OAuth 2.1 AS + EMA/ID-JAG, issued API keys, ATR claims, step-up TOTP/WebAuthn, outbound OAuth token store with mutex refresh",
   "license": "Apache-2.0",
   "type": "module",
@@ -29,7 +29,7 @@
     "@types/express": "^5.0.6",
     "effect": "^3.21.4",
     "express-rate-limit": "^8.5.2",
-    "jose": "^6.2.8",
+    "jose": "^6.2.10",
     "viem": "^2.55.4"
   },
   "peerDependencies": {
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@simplewebauthn/server": "^13.3.3",
     "@types/node": "^26.1.1",
-    "clawql-audit": "0.1.0",
+    "clawql-audit": "8.0.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1"

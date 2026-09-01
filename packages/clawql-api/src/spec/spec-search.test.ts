@@ -36,7 +36,7 @@ describe("spec-search", () => {
     const text = formatSearchResults([]);
     const json = JSON.parse(text) as { results: unknown[]; message: string };
     expect(json.results).toEqual([]);
-    expect(json.message).toContain("No matching operations found");
+    expect(json.message).toContain("No matching operations or skills found");
   });
 
   it("respects limit when returning results", () => {

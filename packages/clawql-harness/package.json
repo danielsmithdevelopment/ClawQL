@@ -1,6 +1,6 @@
 {
   "name": "clawql-harness",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "ClawQL execution-loop harness \u2014 plugin registry, tool/WORM bridges, Ouroboros and OpenCode2 plugins",
   "license": "Apache-2.0",
   "type": "module",
@@ -33,6 +33,11 @@
       "import": "./dist/bench/harness-bench.js",
       "require": "./dist/bench/harness-bench.cjs"
     },
+    "./bench/scenario-synthesis": {
+      "types": "./dist/bench/scenario-synthesis-bridge.d.ts",
+      "import": "./dist/bench/scenario-synthesis-bridge.js",
+      "require": "./dist/bench/scenario-synthesis-bridge.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -43,10 +48,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-api": "0.1.0",
-    "clawql-audit": "0.1.0",
-    "clawql-core": "0.1.0",
-    "clawql-ouroboros": "0.1.1",
+    "clawql-api": "8.0.0",
+    "clawql-audit": "8.0.0",
+    "clawql-core": "8.0.0",
+    "clawql-ouroboros": "8.0.0",
     "effect": "^3.21.4",
     "zod": "^4.3.6"
   },

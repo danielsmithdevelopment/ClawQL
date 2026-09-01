@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import OperatorTargetArchitectureBody from '@/generated/clawql-operator-target-architecture-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -67,9 +66,10 @@ export default function OperatorTargetArchitecturePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <OperatorTargetArchitectureBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/design/operator-target-architecture"
+        className="flex-auto"
+      />
     </article>
   )
 }

@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import CqExtensionsIndexBody from '@/generated/cq-extensions-index-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -48,7 +48,7 @@ export default function CqExtensionsIndexPage() {
       </div>
 
       <Prose className="flex-auto">
-        <CqExtensionsIndexBody />
+        <AgentMarkdownDocBody path="/specs/cq-extensions" />
       </Prose>
     </article>
   )

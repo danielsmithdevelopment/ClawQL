@@ -1,7 +1,7 @@
 {
   "name": "clawql-merkle",
-  "version": "0.1.0",
-  "description": "Zero-dependency Merkle tree snapshots and inclusion proofs (path + body SHA-256 leaves)",
+  "version": "8.0.0",
+  "description": "Zero-dependency Merkle trees and hash-chain seal/verify for ClawQL (and clawql-audit)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",

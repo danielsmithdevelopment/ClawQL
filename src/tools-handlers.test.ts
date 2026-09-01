@@ -55,9 +55,12 @@ describe("MCP tool handlers", () => {
       limit: 5,
     });
     const text = out.content[0].text;
-    const parsed = JSON.parse(text) as { results: { id: string }[] };
+    const parsed = JSON.parse(text) as {
+      results: { id?: string; kind?: string; skillId?: string }[];
+    };
     expect(parsed.results.length).toBeGreaterThan(0);
-    expect(parsed.results[0].id).toBe("pets.list");
+    const petOp = parsed.results.find((r) => r.kind === "operation" && r.id === "pets.list");
+    expect(petOp?.id).toBe("pets.list");
   });
 
   it("handleClawqlExecuteToolInput returns error for unknown operationId", async () => {

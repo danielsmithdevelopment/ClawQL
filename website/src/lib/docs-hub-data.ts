@@ -527,7 +527,7 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/panguard-proxy',
     name: 'Panguard MCP proxy',
-    description: 'beforeCallTool policy chokepoint for enterprise MCP defense.',
+    description: 'Blocking pre-execute hooks for enterprise MCP defense.',
     icon: ShapesIcon,
   }),
   card({
