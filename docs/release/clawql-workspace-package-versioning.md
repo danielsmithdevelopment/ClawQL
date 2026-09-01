@@ -8,12 +8,12 @@
 
 ## Summary
 
-| Line | Package(s) | In-tree version | npm today | Rule |
-| ---- | ---------- | --------------- | --------- | ---- |
-| **Gateway** | `clawql-mcp` (root) | **8.0.0** | **7.2.0** | Major consumer surface; publish on `v8.0.0` tag |
-| **First publish** | Most `clawql-*`, `mcp-api-adapter`, `panguard-mcp-bridge`, `openbench-dataset` | **0.1.0** | **404** | Never published — reset from in-tree `8.0.0` lockstep |
-| **Already published** | `clawql-ouroboros` | **0.1.1** | **0.1.1** | Align to registry; do **not** reset to `0.1.0` |
-| **Next major (grpc)** | `mcp-grpc-transport` | **1.0.0** | **0.2.0** | Published; planned major for v8 tag — not `0.1.0` |
+| Line                  | Package(s)                                                                     | In-tree version | npm today | Rule                                                  |
+| --------------------- | ------------------------------------------------------------------------------ | --------------- | --------- | ----------------------------------------------------- |
+| **Gateway**           | `clawql-mcp` (root)                                                            | **8.0.0**       | **7.2.0** | Major consumer surface; publish on `v8.0.0` tag       |
+| **First publish**     | Most `clawql-*`, `mcp-api-adapter`, `panguard-mcp-bridge`, `openbench-dataset` | **0.1.0**       | **404**   | Never published — reset from in-tree `8.0.0` lockstep |
+| **Already published** | `clawql-ouroboros`                                                             | **0.1.1**       | **0.1.1** | Align to registry; do **not** reset to `0.1.0`        |
+| **Next major (grpc)** | `mcp-grpc-transport`                                                           | **1.0.0**       | **0.2.0** | Published; planned major for v8 tag — not `0.1.0`     |
 
 The in-tree **`8.0.0`** on workspace `clawql-*` packages tracked the **`clawql-mcp` 8.0 major line**, not independent semver releases. **`npm view <pkg>`** returns **404** for almost all of them — so first publish is **`0.1.0`**, not `8.0.0`.
 
@@ -35,47 +35,47 @@ Publishing `clawql-api@8.0.0` when nothing was ever on npm would falsely imply s
 
 ### Gateway (stays on major 8 in-tree)
 
-| Package | In-tree | npm | Notes |
-| ------- | ------- | --- | ----- |
-| `clawql-mcp` | 8.0.0 | 7.2.0 | Root; bundles workspace packages at publish via `prepack` |
+| Package      | In-tree | npm   | Notes                                                     |
+| ------------ | ------- | ----- | --------------------------------------------------------- |
+| `clawql-mcp` | 8.0.0   | 7.2.0 | Root; bundles workspace packages at publish via `prepack` |
 
 ### First npm publish at `0.1.0` (npm 404 as of audit)
 
-| Package | Role |
-| ------- | ---- |
-| `clawql-merkle` | Merkle tree primitives (audit wedge) |
-| `clawql-audit` | WORM audit trail (audit wedge) |
-| `clawql-core` | Plugin architecture, Effect runtime |
-| `clawql-auth` | Auth / ID-JAG |
-| `clawql-analytics` | Product analytics (PostHog bridge) |
-| `clawql-tee` | Simulated TEE signing |
-| `clawql-agents` | Agent adapters (Cline, etc.) |
-| `clawql-pageindex` | PageIndex MCP |
-| `clawql-codegraph` | Code graph indexer |
-| `clawql-api` | Composition root, search/execute |
-| `clawql-memory` | Vault / memory MCP |
-| `clawql-ontology` | Ontology CLI + lint |
-| `clawql-release` | Release manifest helpers |
-| `clawql-sandbox` | Sandbox exec MCP |
-| `clawql-data` | DuckDB data MCP |
-| `clawql-web` | Web / IDP fetch helpers |
-| `clawql-documents` | Documents pipeline |
-| `clawql-automation` | NATS / workflows |
-| `clawql-payments` | Stripe / x402 / credits |
-| `clawql-inference` | Inference gateway |
-| `clawql-harness` | Bench / scenario harness |
+| Package                | Role                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `clawql-merkle`        | Merkle tree primitives (audit wedge)                                               |
+| `clawql-audit`         | WORM audit trail (audit wedge)                                                     |
+| `clawql-core`          | Plugin architecture, Effect runtime                                                |
+| `clawql-auth`          | Auth / ID-JAG                                                                      |
+| `clawql-analytics`     | Product analytics (PostHog bridge)                                                 |
+| `clawql-tee`           | Simulated TEE signing                                                              |
+| `clawql-agents`        | Agent adapters (Cline, etc.)                                                       |
+| `clawql-pageindex`     | PageIndex MCP                                                                      |
+| `clawql-codegraph`     | Code graph indexer                                                                 |
+| `clawql-api`           | Composition root, search/execute                                                   |
+| `clawql-memory`        | Vault / memory MCP                                                                 |
+| `clawql-ontology`      | Ontology CLI + lint                                                                |
+| `clawql-release`       | Release manifest helpers                                                           |
+| `clawql-sandbox`       | Sandbox exec MCP                                                                   |
+| `clawql-data`          | DuckDB data MCP                                                                    |
+| `clawql-web`           | Web / IDP fetch helpers                                                            |
+| `clawql-documents`     | Documents pipeline                                                                 |
+| `clawql-automation`    | NATS / workflows                                                                   |
+| `clawql-payments`      | Stripe / x402 / credits                                                            |
+| `clawql-inference`     | Inference gateway                                                                  |
+| `clawql-harness`       | Bench / scenario harness                                                           |
 | `clawql-observability` | LGTM+ stack (see [observability versioning](./clawql-observability-versioning.md)) |
-| `clawql-operator` | Operator scaffold |
-| `mcp-api-adapter` | MCP → OpenAPI/gRPC adapter |
-| `panguard-mcp-bridge` | Panguard bridge |
-| `openbench-dataset` | OpenBench dataset helpers |
+| `clawql-operator`      | Operator scaffold                                                                  |
+| `mcp-api-adapter`      | MCP → OpenAPI/gRPC adapter                                                         |
+| `panguard-mcp-bridge`  | Panguard bridge                                                                    |
+| `openbench-dataset`    | OpenBench dataset helpers                                                          |
 
 ### Exceptions (already on npm)
 
-| Package | In-tree | npm | Rule |
-| ------- | ------- | --- | ---- |
-| `clawql-ouroboros` | **0.1.1** | **0.1.1** | Match published line; next publish is `0.1.2+` or `0.2.0` |
-| `mcp-grpc-transport` | **1.0.0** | **0.2.0** | Next publish is **major** `1.0.0` per v8 release notes |
+| Package              | In-tree   | npm       | Rule                                                      |
+| -------------------- | --------- | --------- | --------------------------------------------------------- |
+| `clawql-ouroboros`   | **0.1.1** | **0.1.1** | Match published line; next publish is `0.1.2+` or `0.2.0` |
+| `mcp-grpc-transport` | **1.0.0** | **0.2.0** | Next publish is **major** `1.0.0` per v8 release notes    |
 
 ---
 

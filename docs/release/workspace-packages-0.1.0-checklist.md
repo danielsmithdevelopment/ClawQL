@@ -72,11 +72,11 @@ npm run test:npm-pack-audit-wedge   # if audit wedge pack path is in scope
 
 ## Exceptions (do not reset to `0.1.0`)
 
-| Package | In-tree | Reason |
-| ------- | ------- | ------ |
-| `clawql-mcp` | 8.0.0 | Gateway major line |
-| `clawql-ouroboros` | 0.1.1 | Already on npm at 0.1.1 |
-| `mcp-grpc-transport` | 1.0.0 | Already on npm at 0.2.0; next publish is major 1.0.0 |
+| Package              | In-tree | Reason                                               |
+| -------------------- | ------- | ---------------------------------------------------- |
+| `clawql-mcp`         | 8.0.0   | Gateway major line                                   |
+| `clawql-ouroboros`   | 0.1.1   | Already on npm at 0.1.1                              |
+| `mcp-grpc-transport` | 1.0.0   | Already on npm at 0.2.0; next publish is major 1.0.0 |
 
 ---
 
