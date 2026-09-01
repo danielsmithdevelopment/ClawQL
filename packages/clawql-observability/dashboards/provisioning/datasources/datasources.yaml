@@ -4,23 +4,27 @@ datasources:
   - name: Loki
     type: loki
     access: proxy
+    uid: Loki
     url: http://loki:3100
     isDefault: false
   - name: Tempo
     type: tempo
     access: proxy
+    uid: Tempo
     url: http://tempo:3200
     jsonData:
-      tracesToLogs:
-        datasourceUid: loki
+      tracesToLogsV2:
+        datasourceUid: Loki
       serviceMap:
-        datasourceUid: mimir
+        datasourceUid: Mimir
   - name: Mimir
     type: prometheus
     access: proxy
+    uid: Mimir
     url: http://mimir:9009/prometheus
     isDefault: true
   - name: Pyroscope
     type: grafana-pyroscope-datasource
     access: proxy
+    uid: Pyroscope
     url: http://pyroscope:4040

@@ -1,0 +1,77 @@
+// Phase 4 — Falco / Tetragon / Wazuh JSON → Loki.
+// Opt-in via docker-compose.security.yaml (shared log volume + profile "security").
+// Labels use service_name so UnexpectedAgentToolUse can join Panguard + Langfuse.
+
+loki.write "security" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+loki.source.file "falco" {
+  targets = [{
+    __path__ = "/var/log/clawql-security/falco/*.json",
+  }]
+
+  forward_to = [loki.process.falco.receiver]
+}
+
+loki.process "falco" {
+  stage.json {
+    expressions = {
+      priority = "priority",
+      rule     = "rule",
+    }
+  }
+
+  stage.labels {
+    values = {
+      priority = "priority",
+      rule     = "rule",
+    }
+  }
+
+  stage.static_labels {
+    values = {
+      service_name = "clawql-falco",
+    }
+  }
+
+  forward_to = [loki.write.security.receiver]
+}
+
+loki.source.file "tetragon" {
+  targets = [{
+    __path__ = "/var/log/clawql-security/tetragon/*.json",
+  }]
+
+  forward_to = [loki.process.tetragon.receiver]
+}
+
+loki.process "tetragon" {
+  stage.static_labels {
+    values = {
+      service_name = "clawql-tetragon",
+    }
+  }
+
+  forward_to = [loki.write.security.receiver]
+}
+
+loki.source.file "wazuh" {
+  targets = [{
+    __path__ = "/var/log/clawql-security/wazuh/*.json",
+  }]
+
+  forward_to = [loki.process.wazuh.receiver]
+}
+
+loki.process "wazuh" {
+  stage.static_labels {
+    values = {
+      service_name = "clawql-wazuh",
+    }
+  }
+
+  forward_to = [loki.write.security.receiver]
+}

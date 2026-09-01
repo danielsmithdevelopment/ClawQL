@@ -1,3 +1,57 @@
-# Phase 4 overlay — Falco / Tetragon / Wazuh (not started in Phase 1).
-# Reference: github.com/danielsmithdevelopment/DevSecOps-boilerplate
-services: {}
+# Phase 4 security overlay — Falco / Tetragon / Wazuh JSON → Alloy → Loki.
+# Opt-in (does not start with Phase 1 compose):
+#
+#   npm run compose:security -w clawql-observability
+#
+# Alloy loads the /etc/alloy directory (config.alloy + security-sensors.alloy).
+# Real eBPF sensors replace the log stubs on Linux hosts; stubs keep CI / macOS smoke green.
+services:
+  alloy:
+    volumes:
+      - ../alloy/config.river:/etc/alloy/config.alloy:ro
+      - ../alloy/security-sensors.river:/etc/alloy/security-sensors.alloy:ro
+      - clawql-security-logs:/var/log/clawql-security:ro
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy
+
+  falco-log-stub:
+    profiles: ["security"]
+    image: busybox:1.36
+    command:
+      [
+        "sh",
+        "-c",
+        "mkdir -p /var/log/clawql-security/falco && while true; do echo '{\"priority\":\"Warning\",\"rule\":\"StubAgentExec\",\"output\":\"clawql stub falco event\"}' >> /var/log/clawql-security/falco/events.json; sleep 30; done",
+      ]
+    volumes:
+      - clawql-security-logs:/var/log/clawql-security
+
+  tetragon-log-stub:
+    profiles: ["security"]
+    image: busybox:1.36
+    command:
+      [
+        "sh",
+        "-c",
+        "mkdir -p /var/log/clawql-security/tetragon && while true; do echo '{\"process_exec\":{\"process\":{\"binary\":\"/usr/bin/stub\"}}}' >> /var/log/clawql-security/tetragon/events.json; sleep 30; done",
+      ]
+    volumes:
+      - clawql-security-logs:/var/log/clawql-security
+
+  wazuh-log-stub:
+    profiles: ["security"]
+    image: busybox:1.36
+    command:
+      [
+        "sh",
+        "-c",
+        "mkdir -p /var/log/clawql-security/wazuh && while true; do echo '{\"rule\":{\"id\":\"100001\",\"description\":\"clawql stub wazuh alert\"},\"agent\":{\"name\":\"clawql\"}}' >> /var/log/clawql-security/wazuh/alerts.json; sleep 30; done",
+      ]
+    volumes:
+      - clawql-security-logs:/var/log/clawql-security
+
+volumes:
+  clawql-security-logs:

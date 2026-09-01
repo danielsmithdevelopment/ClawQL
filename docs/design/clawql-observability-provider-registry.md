@@ -223,7 +223,7 @@ Order is deliberate — each phase unlocks the next without painting into a corn
 | **3b** | Alloy config generator (snapshot → River), apply/reload integration, tests against `config.river` golden files _(shipped)_  | Runtime fan-out wired from registry without TS push                 |
 | **3c** | Query federation facade per signal type, MCP/HTTP read API, raw-access audit _(shipped)_                                    | Hard read-path problem; depends on stable provider metadata from 3a |
 
-**Explicitly not in 3a–3c:** blocking N-of-M quorum processor, broad escape-hatch provider catalog, Langfuse/security-layer correlation (later package-spec phases).
+**Explicitly not in 3a–3c (and still deferred after Phase 4/5):** blocking N-of-M quorum processor and a broad escape-hatch provider catalog. Langfuse dual-export, Panguard correlation, Falco/Tetragon/Wazuh → Loki, alerting, and Vault/env Faro JWT keys ship in package v0.7 — quorum remains Alloy-scoped only if ever needed (§9).
 
 ---
 

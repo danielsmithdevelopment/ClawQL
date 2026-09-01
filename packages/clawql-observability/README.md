@@ -203,6 +203,7 @@ Faro ingest (private, local):
 ```
 packages/clawql-observability/
   alloy/config.river           — OTLP + Faro collection pipeline
+  alloy/security-sensors.river — Falco/Tetragon/Wazuh → Loki (Phase 4b)
   docker/docker-compose.yaml   — local LGTM+ stack
   helm/values.yaml             — LGTM+ enable/disable + retention
   worker/                      — Cloudflare Faro proxy (Phase 2)
@@ -212,6 +213,7 @@ packages/clawql-observability/
   src/alerting/                — Health-driven alerts + rule catalog (Phase 5)
   src/correlation/             — Panguard deny/allow telemetry (Phase 4)
   src/secrets/                 — Vault/env Faro JWT signing keys (Phase 5)
+  dashboards/                  — Grafana overview + Langfuse/Panguard correlation
   scripts/smoke-lgtm-plus.sh   — CI compose smoke
 ```
 
@@ -221,6 +223,32 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 
 - **Langfuse trace provider** (`langfuse-otel`) — opt-in via `CLAWQL_ENABLE_LANGFUSE` / `LANGFUSE_ENABLED`; Alloy dual-exports OTLP traces with `Authorization = sys.env(LANGFUSE_OTLP_AUTH_HEADER)`
 - **Panguard telemetry** — `emitPanguardTelemetryEffect` emits shared `clawql.*` attributes (optional Loki push via `CLAWQL_PANGUARD_TELEMETRY_LOKI_URL`); host MCP tool wrap records deny decisions
+
+## Phase 4b — Falco / Tetragon / Wazuh → Loki
+
+Opt-in runtime sensors ship as Alloy file scrapes (Monitor-first):
+
+```bash
+npm run compose:security -w clawql-observability
+```
+
+- River fragment: `alloy/security-sensors.river` labels `service_name=clawql-falco|clawql-tetragon|clawql-wazuh`
+- Helm knobs: `helm/security-overlay.yaml` (`falco.logPath`, `tetragon.exportPath`, `wazuh.alertsPath`)
+- Env (documentational for host mounts): `CLAWQL_FALCO_LOG_PATH`, `CLAWQL_TETRAGON_EXPORT_PATH`, `CLAWQL_WAZUH_ALERTS_PATH`
+- `UnexpectedAgentToolUse` also fires on Falco/Tetragon Loki rates (join with Panguard denies + Langfuse spans in Grafana)
+
+## Grafana dashboards
+
+Provisioned under folder **ClawQL** after `compose:up`:
+
+| Dashboard                       | UID                         | Purpose                             |
+| ------------------------------- | --------------------------- | ----------------------------------- |
+| LGTM+ Overview                  | `clawql-lgtm-plus-overview` | Phase 1 stub panels                 |
+| Langfuse ↔ Panguard correlation | `clawql-langfuse-panguard`  | Deny rates, sensor logs, Tempo join |
+
+## Deferred — N-of-M quorum
+
+Blocking quorum across exporters stays **out of TypeScript** (provider-registry design §9). If needed later, implement as an Alloy-scoped processor with an explicit SLO impact analysis — do not port the web3 quorum pattern onto the ingest hot path.
 
 ## Phase 5 (v0.7) — Alerting, Vault JWT keys, Alloy reload
 

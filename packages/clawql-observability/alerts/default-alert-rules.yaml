@@ -16,11 +16,13 @@ groups:
         expr: |
           sum(rate({service_name="clawql-panguard", verdict="deny"}[5m])) > 0
           or sum(rate({service_name="clawql-mcp"} |= "Panguard policy blocked"[5m])) > 0
+          or sum(rate({service_name="clawql-falco"}[5m])) > 0
+          or sum(rate({service_name="clawql-tetragon"}[5m])) > 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: Panguard denied agent tool use — correlate with Langfuse work traces
+          summary: Panguard deny or runtime sensor event — correlate with Langfuse work traces
 
       - alert: ClientErrorNoServerSpan
         expr: |

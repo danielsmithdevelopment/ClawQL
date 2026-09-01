@@ -90,7 +90,7 @@ export const emitPanguardTelemetryEffect = (
       streams: [
         {
           stream: {
-            service: "clawql-panguard",
+            service_name: "clawql-panguard",
             verdict: event.verdict,
             tool: event.toolName,
           },

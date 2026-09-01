@@ -70,6 +70,7 @@ services:
       GF_FEATURE_TOGGLES_ENABLE: tempoSearch tempoBackendSearch traceqlEditor
     volumes:
       - ../dashboards/provisioning:/etc/grafana/provisioning:ro
+      - ../dashboards:/var/lib/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     depends_on:
       - loki
