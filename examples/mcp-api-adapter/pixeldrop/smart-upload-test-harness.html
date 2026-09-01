@@ -72,6 +72,24 @@
       display: block;
     }
     .fixed-pane-content { padding: 16px; min-height: 500px; }
+    .fixed-gallery {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .fixed-gallery img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+    }
+    .fixed-upload-log {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 8px;
+    }
     @media (max-width: 800px) {
       .panes { flex-direction: column; }
     }
@@ -81,11 +99,10 @@
   <h1>ClawQL Smart Upload — Left/Right Comparison</h1>
   <div class="instructions">
     Drop or select <strong>the same image</strong> on both sides.
-    Try a large image over 2MB to see the verified resize path (left rejects, right succeeds).
-    HEIC from iPhone is the target use case but is <strong>not yet verified</strong> — see VERIFICATION.md.
+    Try a camera-roll HEIC or a large image over 2MB on both sides.
+    HEIC verified on iPhone Safari and iOS Chrome (2026-08-28) — see VERIFICATION.md.
     <br><br>
     <strong>Mobile:</strong> drag-and-drop is desktop-only; use the file picker on both sides.
-    HEIC decode on iPhone Safari needs a real device test before demo claims.
   </div>
 
   <div class="panes">
@@ -105,6 +122,25 @@
   </div>
 
   <script>
+    function renderResultMessage(containerId, variant, message) {
+      const host = document.getElementById(containerId);
+      if (!host) return;
+      host.replaceChildren();
+      const div = document.createElement('div');
+      div.style.cssText =
+        variant === 'error'
+          ? 'background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:6px;margin-top:12px;'
+          : 'background:#dcfce7;color:#166534;padding:10px 14px;border-radius:6px;margin-top:12px;';
+      div.textContent = message;
+      host.appendChild(div);
+    }
+
+    function mountTemplateHtml(container, html) {
+      container.replaceChildren();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      container.append(...doc.body.childNodes);
+    }
+
     // -------------------------------------------------------------------
     // Inject the smart-upload template into the right pane, with its
     // {{toolName}} placeholder resolved and its hx-post form replaced
@@ -116,14 +152,16 @@
     async function loadSmartUploadTemplate() {
       const res = await fetch('file-upload-smart.htmx.html');
       if (!res.ok) {
-        document.getElementById('fixed-pane').innerHTML =
-          `<p style="color:#991b1b">Failed to load template: ${res.status}. ` +
-          `Serve this folder over HTTP (python3 -m http.server), not file://.</p>`;
+        renderResultMessage(
+          'fixed-pane',
+          'error',
+          `Failed to load template: ${res.status}. Serve this folder over HTTP (python3 -m http.server), not file://.`
+        );
         return;
       }
       let html = await res.text();
       html = html.replaceAll('{{toolName}}', 'upload_photo');
-      document.getElementById('fixed-pane').innerHTML = html;
+      mountTemplateHtml(document.getElementById('fixed-pane'), html);
 
       // Re-run any <script> tags injected via innerHTML (browsers don't
       // execute these automatically when set via innerHTML).
@@ -136,6 +174,38 @@
         });
 
       wireFormToIframe();
+      ensureFixedGallery();
+    }
+
+    function ensureFixedGallery() {
+      const pane = document.getElementById('fixed-pane');
+      if (!document.getElementById('fixed-gallery')) {
+        const gallery = document.createElement('div');
+        gallery.className = 'fixed-gallery';
+        gallery.id = 'fixed-gallery';
+        const log = document.createElement('div');
+        log.className = 'fixed-upload-log';
+        log.id = 'fixed-upload-log';
+        pane.append(gallery, log);
+      }
+    }
+
+    function addToFixedGallery(fileBase64) {
+      if (!/^[A-Za-z0-9+/=]+$/.test(fileBase64)) {
+        console.error('Invalid base64 payload for gallery preview');
+        return;
+      }
+      const img = document.createElement('img');
+      const bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
+      img.src = URL.createObjectURL(blob);
+      img.alt = 'Uploaded photo';
+      document.getElementById('fixed-gallery').appendChild(img);
+    }
+
+    function logFixedUpload(result, source) {
+      document.getElementById('fixed-upload-log').textContent =
+        `Last upload: ${result.uploadId} · ${result.timestamp} · via ${source}`;
     }
 
     function wireFormToIframe() {
@@ -170,23 +240,27 @@
         // registered tool invocation, not a direct function reference -
         // this is a stand-in specifically for testing conversion logic
         // without requiring a WebMCP-preview browser.
+        // Backend only — same uploadToBackend() the broken UI would call if it
+        // worked. Gallery + log stay on the fixed pane; do not mutate the
+        // broken iframe's DOM (that would imply the broken UI succeeded).
         try {
           const result = await targetWindow.uploadToBackend(fileBase64, filename);
-          targetWindow.addToGallery(`data:image/jpeg;base64,${fileBase64}`);
-          targetWindow.logUpload(result, 'smart-upload-harness');
+          addToFixedGallery(fileBase64);
+          logFixedUpload(result, 'smart-upload-harness');
 
-          document.getElementById('result-upload_photo').innerHTML =
-            `<div style="background:#dcfce7;color:#166534;padding:10px 14px;` +
-            `border-radius:6px;margin-top:12px;">` +
+          renderResultMessage(
+            'result-upload_photo',
+            'success',
             `Uploaded via smart-upload template. Upload ID: ${result.uploadId}` +
-            (caption ? ` · Caption: ${caption}` : '') +
-            `</div>`;
+              (caption ? ` · Caption: ${caption}` : '')
+          );
         } catch (err) {
           console.error('Direct backend call failed:', err);
-          document.getElementById('result-upload_photo').innerHTML =
-            `<div style="background:#fee2e2;color:#991b1b;padding:10px 14px;` +
-            `border-radius:6px;margin-top:12px;">` +
-            `Upload failed: ${err.message}</div>`;
+          renderResultMessage(
+            'result-upload_photo',
+            'error',
+            `Upload failed: ${err instanceof Error ? err.message : String(err)}`
+          );
         }
       });
     }
