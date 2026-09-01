@@ -22,6 +22,7 @@
     "clawql-inference",
     "clawql-ouroboros",
     "clawql-harness",
+    "clawql-observability",
     "clawql-operator",
     "clawql-mcp"
   ],
@@ -29,7 +30,7 @@
   "localPackExtrasAfter": ["mcp-api-adapter"],
   "notes": [
     "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
-    "clawql-mcp (root) has its own version line (currently 7.2.0 on npm). Workspace claws start at 0.1.0 until first publish; clawql-ouroboros stays on its published line (0.1.1 in-tree matches npm).",
+    "clawql-mcp (root) version line: 8.0.0 in-tree for this major (npm still 7.2.0 until tag). Independent package cadence where noted (e.g. clawql-observability 0.2.0); clawql-ouroboros stays on its published 0.1.x line until reconciled.",
     "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
@@ -42,6 +43,8 @@
     "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
     "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
+    "clawql-tee after clawql-auth (optional peer; ID-JAG TEE bridge).",
+    "Monorepo clawql-mcp line is 8.0.0; many workspace packages still lockstep for this major — clawql-observability publishes on its own 0.x cadence (0.2.0).",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch)."
   ]
 }

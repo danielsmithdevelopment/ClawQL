@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   platform: "node",
-  external: ["effect"],
+  external: [/^clawql-/, "effect", "cbor", "debug", "express", "express-rate-limit"],
 });
