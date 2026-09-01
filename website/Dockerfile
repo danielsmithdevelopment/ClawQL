@@ -22,7 +22,10 @@ RUN apk upgrade --no-cache
 COPY website/package*.json ./
 # From /app, file:../packages/clawql-analytics → /packages/clawql-analytics
 COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
-RUN npm ci
+RUN npm ci \
+  && mkdir -p /packages/clawql-analytics/node_modules \
+  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
 
 FROM node:25-alpine AS builder
 WORKDIR /app
@@ -33,6 +36,10 @@ ENV CLAWQL_PACKAGE_VERSION=${CLAWQL_PACKAGE_VERSION}
 ENV CLAWQL_PACKAGE_DESCRIPTION=${CLAWQL_PACKAGE_DESCRIPTION}
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
+# Same resolution for webpack walking from /packages/.../dist
+RUN mkdir -p /packages/clawql-analytics/node_modules \
+  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
 COPY website/ .
 RUN npm run build
 

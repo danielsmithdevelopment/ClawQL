@@ -142,7 +142,6 @@
     "@opentelemetry/semantic-conventions": "^1.43.0",
     "@simplewebauthn/server": "^13.3.3",
     "clawql-agents": "0.1.0",
-    "clawql-analytics": "0.1.0",
     "clawql-api": "0.1.0",
     "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
