@@ -72,6 +72,10 @@
     "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
     "directory": "packages/clawql-audit"
   },
+  "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-audit",
+  "bugs": {
+    "url": "https://github.com/danielsmithdevelopment/ClawQL/issues"
+  },
   "keywords": [
     "audit-trail",
     "worm",
