@@ -2,6 +2,7 @@ import type {
   ClawQLError,
   McpToolAlreadyRegisteredError,
   PluginAlreadyRegisteredError,
+  PluginInstallError,
 } from "clawql-core";
 import { ClawQLApi, ExecuteService, SearchService } from "clawql-api";
 import { Effect, Layer } from "effect";
@@ -9,7 +10,11 @@ import { configureOuroborosPluginDeps } from "./deps.js";
 import { createOuroborosPlugin, type OuroborosPluginOptions } from "./ouroboros-plugin.js";
 
 export type OuroborosLayerError =
-  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError | Error;
+  | PluginAlreadyRegisteredError
+  | PluginInstallError
+  | ClawQLError
+  | McpToolAlreadyRegisteredError
+  | Error;
 
 /**
  * Effect Layer that wires Ouroboros search/execute deps and registers {@link createOuroborosPlugin}.

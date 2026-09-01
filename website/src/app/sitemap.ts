@@ -294,6 +294,7 @@ const ENTRIES: Array<Entry> = [
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.9 },
   { path: '/auth', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/audit', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/observability', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
   {
     path: '/security/defense-in-depth',

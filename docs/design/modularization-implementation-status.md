@@ -104,9 +104,11 @@ Agent (stdio / HTTP / gRPC)
 
 ### 4.1 `clawql-core`
 
-| In package                                                        | Still shimmed in `src/`              |
-| ----------------------------------------------------------------- | ------------------------------------ |
-| `audit/`, `cache` helpers, Merkle, Cuckoo, `Plugin` types, errors | `clawql-audit.ts`, `clawql-cache.ts` |
+| In package                                                                                                                     | Still shimmed in `src/`              |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| `audit/`, `cache` helpers, Merkle, Cuckoo, **ProviderPlugin / fireHook / skill registry (8.0)**, legacy `Plugin` types, errors | `clawql-audit.ts`, `clawql-cache.ts` |
+
+**8.0 plugin architecture:** Spec [`clawql-core-plugin-architecture.md`](./clawql-core-plugin-architecture.md). Hard break — Phase-2 `Plugin` / bridge removed; in-tree packages are native `ProviderPlugin` only. See [`migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md).
 
 ### 4.2 `clawql-api`
 

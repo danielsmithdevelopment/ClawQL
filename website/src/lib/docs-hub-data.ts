@@ -437,6 +437,13 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     icon: ListIcon,
   }),
   card({
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
+  }),
+  card({
     href: '/troubleshooting',
     name: 'Troubleshooting',
     description: 'Common MCP, spec, auth, and deploy failure modes.',
@@ -520,7 +527,7 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/panguard-proxy',
     name: 'Panguard MCP proxy',
-    description: 'beforeCallTool policy chokepoint for enterprise MCP defense.',
+    description: 'Blocking pre-execute hooks for enterprise MCP defense.',
     icon: ShapesIcon,
   }),
   card({

@@ -29,6 +29,10 @@ import {
   searchToolZodShape,
   cacheToolZodShape,
   auditToolZodShape,
+  skillsListToolZodShape,
+  skillsGetToolZodShape,
+  handleSkillsListToolInput,
+  handleSkillsGetToolInput,
   buildVarArgs,
   buildVarDeclarations,
   capturePathParams,
@@ -177,6 +181,16 @@ export function registerTools(server: McpServer) {
     "audit",
     auditToolZodShape,
     wrapRegisteredMcpToolHandler("audit", handleAuditToolInput)
+  );
+  server.tool(
+    "skills_list",
+    skillsListToolZodShape,
+    wrapRegisteredMcpToolHandler("skills_list", handleSkillsListToolInput)
+  );
+  server.tool(
+    "skills_get",
+    skillsGetToolZodShape,
+    wrapRegisteredMcpToolHandler("skills_get", handleSkillsGetToolInput)
   );
 
   registerPluginMcpTools(server);

@@ -1,0 +1,12 @@
+# Phase 5 alert rules — applied when LGTM+ core is live.
+# See package spec §9 for LogQL / routing details.
+groups:
+  - name: clawql-observability
+    rules:
+      - alert: HighFrontendErrorRate
+        expr: sum(rate({app="frontend", level="error"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated frontend error rate
