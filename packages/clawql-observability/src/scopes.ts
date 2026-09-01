@@ -25,7 +25,7 @@ export type ObservabilitySessionContext = {
 export const hasObservabilityScope = (
   session: ObservabilitySessionContext,
   scope: ObservabilityScope
-): boolean => session.scope.includes(scope);
+): boolean => session.scope.includes("*") || session.scope.includes(scope);
 
 export const requireObservabilityScopeEffect = (
   session: ObservabilitySessionContext,

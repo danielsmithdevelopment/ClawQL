@@ -167,3 +167,23 @@ export {
   tenantHeadersEffect,
 } from "./query/select.js";
 export { ObservabilityQueryLive, ObservabilityWithQueryLive } from "./registry/layers.js";
+
+export {
+  ObservabilityGovernanceSinkLiveFromProcessWorm,
+  resolveObservabilityGovernanceSinkLayer,
+  wormInputFromObservabilityGovernanceEvent,
+} from "./governance/audit-bridge.js";
+
+export {
+  readObservabilityHostConfigEffect,
+  type ObservabilityHostConfig,
+} from "./host/config.js";
+export {
+  resolveObservabilitySessionForRuntimeEffect,
+} from "./host/session-context.js";
+export {
+  ensureObservabilityHostRuntimeEffect,
+  resetObservabilityHostRuntimeForTests,
+  runObservabilityHostEffect,
+  type ObservabilityHostServices,
+} from "./host/runtime.js";
