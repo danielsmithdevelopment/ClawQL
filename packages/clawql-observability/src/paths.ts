@@ -11,11 +11,13 @@ const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 export const packagePaths = {
   root: packageRoot,
   alloyConfig: join(packageRoot, "alloy", "config.river"),
+  alloySecuritySensors: join(packageRoot, "alloy", "security-sensors.river"),
   helmValues: join(packageRoot, "helm", "values.yaml"),
   helmSecurityOverlay: join(packageRoot, "helm", "security-overlay.yaml"),
   dockerCompose: join(packageRoot, "docker", "docker-compose.yaml"),
   dockerComposeSecurity: join(packageRoot, "docker", "docker-compose.security.yaml"),
   dashboards: join(packageRoot, "dashboards", "default-grafana-dashboards.json"),
+  dashboardsCorrelation: join(packageRoot, "dashboards", "langfuse-panguard-correlation.json"),
   alerts: join(packageRoot, "alerts", "default-alert-rules.yaml"),
 } as const;
 

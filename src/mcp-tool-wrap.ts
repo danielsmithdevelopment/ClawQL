@@ -3,6 +3,10 @@ import {
   wormInputFromToolAttempt,
   wormInputFromToolResult,
 } from "clawql-audit";
+import {
+  emitPanguardTelemetryEffect,
+  resolvePanguardTelemetryLokiUrlEffect,
+} from "clawql-observability";
 import { Effect } from "effect";
 import { isX402McpPaymentError } from "clawql-payments/x402";
 import { isMppMcpJsonRpcPaymentError } from "clawql-payments/mpp";
@@ -24,6 +28,13 @@ function clawqlPolicyBlockMessage(err: unknown): string | null {
   }
   if (rec.cause) return clawqlPolicyBlockMessage(rec.cause);
   return null;
+}
+
+function emitPanguardDenyTelemetryEffect(toolName: string, reason: string): Effect.Effect<void> {
+  return Effect.gen(function* () {
+    const lokiPushUrl = yield* resolvePanguardTelemetryLokiUrlEffect();
+    yield* emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
+  }).pipe(Effect.catchAll(() => Effect.void));
 }
 
 function argKeysFromToolArgs(args: unknown): string[] {
@@ -114,6 +125,7 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       }
       const blocked = clawqlPolicyBlockMessage(err);
       if (blocked) {
+        await Effect.runPromise(emitPanguardDenyTelemetryEffect(toolName, blocked));
         const result = {
           content: [{ type: "text" as const, text: blocked }],
           isError: true,

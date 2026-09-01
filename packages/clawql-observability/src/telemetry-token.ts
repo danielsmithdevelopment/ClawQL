@@ -1,6 +1,10 @@
 import { Effect } from "effect";
 
 import { ObservabilityError } from "./errors.js";
+import {
+  resolveTelemetrySigningKeyEffect,
+  TelemetrySigningKeyService,
+} from "./secrets/telemetry-signing-key.js";
 import { signTelemetryJwtRaw, type TelemetryJwtClaims } from "./jwt-hs256.js";
 
 export type { TelemetryJwtClaims } from "./jwt-hs256.js";
@@ -39,3 +43,29 @@ export const signTelemetryJwt = (
   input: SignTelemetryJwtInput
 ): Promise<{ token: string; expiresAt: number }> =>
   Effect.runPromise(signTelemetryJwtEffect(input));
+
+export type SignTelemetryJwtResolvedInput = Omit<SignTelemetryJwtInput, "signingKey">;
+
+/**
+ * Mint a Faro telemetry JWT using TelemetrySigningKeyService (Vault KV or env).
+ * Prefer this at host boundaries so signing material never sits in ProviderConfig.
+ */
+export const signTelemetryJwtWithResolvedKeyEffect = (
+  input: SignTelemetryJwtResolvedInput
+): Effect.Effect<
+  { token: string; expiresAt: number; keySource: string; keyLocator: string },
+  ObservabilityError,
+  TelemetrySigningKeyService
+> =>
+  Effect.gen(function* () {
+    const material = yield* resolveTelemetrySigningKeyEffect();
+    const minted = yield* signTelemetryJwtEffect({
+      ...input,
+      signingKey: material.key,
+    });
+    return {
+      ...minted,
+      keySource: material.source,
+      keyLocator: material.locator,
+    };
+  });

@@ -36,7 +36,12 @@ export {
 } from "./paths.js";
 
 export type { TelemetryJwtClaims } from "./telemetry-token.js";
-export { signTelemetryJwt, signTelemetryJwtEffect } from "./telemetry-token.js";
+export {
+  signTelemetryJwt,
+  signTelemetryJwtEffect,
+  signTelemetryJwtWithResolvedKeyEffect,
+} from "./telemetry-token.js";
+export type { SignTelemetryJwtResolvedInput } from "./telemetry-token.js";
 
 export type {
   LogProvider,
@@ -140,6 +145,63 @@ export { validateAlloyRiver, validateAlloyRiverEffect } from "./alloy/validate.j
 export { applyAlloyConfigEffect } from "./alloy/apply.js";
 export type { ApplyAlloyConfigInput, ApplyAlloyConfigResult } from "./alloy/apply.js";
 export { snapshotRegistriesForAlloyEffect } from "./alloy/from-registry.js";
+export {
+  reloadAlloyViaSighupEffect,
+  reloadAlloyViaKubernetesRolloutEffect,
+  resolveAlloyReloadFromEnvEffect,
+} from "./alloy/reload.js";
+export type {
+  AlloySighupReloadConfig,
+  AlloyKubernetesReloadConfig,
+  ResolveAlloyReloadFromEnvResult,
+} from "./alloy/reload.js";
+
+export {
+  createLangfuseTraceProvider,
+  defaultLangfuseProviderConfig,
+  LANGFUSE_TRACE_PROVIDER_ID,
+} from "./providers/langfuse-trace.js";
+
+export {
+  buildPanguardTelemetryAttributesEffect,
+  emitPanguardTelemetryEffect,
+  formatPanguardLokiLineEffect,
+  resolvePanguardTelemetryLokiUrlEffect,
+} from "./correlation/panguard-telemetry.js";
+export type {
+  PanguardTelemetryAttributes,
+  PanguardTelemetryEvent,
+  PanguardTelemetryVerdict,
+} from "./correlation/panguard-telemetry.js";
+
+export {
+  TelemetrySigningKeyService,
+  TelemetrySigningKeyFromEnvLive,
+  makeTelemetrySigningKeyFromVaultLayer,
+  makeTelemetrySigningKeyFromMemoryLayer,
+  resolveTelemetrySigningKeyLayer,
+  resolveTelemetrySigningKeyEffect,
+} from "./secrets/telemetry-signing-key.js";
+export type {
+  TelemetrySigningKeyMaterial,
+  TelemetrySigningKeySource,
+  VaultKvSigningKeyConfig,
+} from "./secrets/telemetry-signing-key.js";
+
+export {
+  ObservabilityAlertingService,
+  makeObservabilityAlertingServiceLayer,
+  loadObservabilityAlertRulesEffect,
+  parseAlertRulesYamlEffect,
+  alertsFromHealthSnapshotEffect,
+  summarizeAlertRulesEffect,
+} from "./alerting/service.js";
+export type {
+  ObservabilityAlertEvent,
+  ObservabilityAlertRule,
+  ObservabilityAlertRulesFile,
+  ObservabilityAlertSeverity,
+} from "./alerting/service.js";
 
 export type {
   FederatedQueryMode,
@@ -167,3 +229,18 @@ export {
   tenantHeadersEffect,
 } from "./query/select.js";
 export { ObservabilityQueryLive, ObservabilityWithQueryLive } from "./registry/layers.js";
+
+export {
+  ObservabilityGovernanceSinkLiveFromProcessWorm,
+  resolveObservabilityGovernanceSinkLayer,
+  wormInputFromObservabilityGovernanceEvent,
+} from "./governance/audit-bridge.js";
+
+export { readObservabilityHostConfigEffect, type ObservabilityHostConfig } from "./host/config.js";
+export { resolveObservabilitySessionForRuntimeEffect } from "./host/session-context.js";
+export {
+  ensureObservabilityHostRuntimeEffect,
+  resetObservabilityHostRuntimeForTests,
+  runObservabilityHostEffect,
+  type ObservabilityHostServices,
+} from "./host/runtime.js";

@@ -108,6 +108,12 @@ export function composeHorizontalPluginLayersDynamicEffect(
       const mod = yield* loadPlugin<{ makeWebLayer: () => HorizLayer }>("clawql-web/plugin");
       layers.push(mod.makeWebLayer());
     }
+    if (flags.enableObservability) {
+      const mod = yield* loadPlugin<{ makeObservabilityLayer: () => HorizLayer }>(
+        "clawql-observability/plugin"
+      );
+      layers.push(mod.makeObservabilityLayer());
+    }
 
     if (flags.enableOntology) {
       const mod = yield* loadPlugin<{
