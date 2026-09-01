@@ -66,17 +66,18 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 
 ## Run diary
 
-| Date | Split | Pipeline | Notes                      |
-| ---- | ----- | -------- | -------------------------- |
-| —    | —     | —        | Overlay landed; scores TBD |
+| Date       | Split        | Pipeline                   | Notes                                                                                        |
+| ---------- | ------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
+| 2026-09-01 | test (6 doc) | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args                      |
+| 2026-09-01 | short (252)  | clawql_idp_docling_extract | In progress — `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`, log `/tmp/extractbench-short-split.log` |
 
 ## Implementation notes
 
 - Provider: `inspect_pdf` → Docling when needed → schema map (LLM or structural)
 - Long-list completeness: chunked text mapping with array merge (no page-image VLM oneshot)
 - Missing fields must stay `null` (no invention) — T3 dense-doc failure mode
-- Env: `CLAWQL_MCP_URL`, `QWEN35_SERVER_URL` (Arm A), `DOCLING_BASE_URL`
-- Startup: `integrations/extractbench/scripts/start-clawql-for-extractbench.sh`
+- Env: `CLAWQL_MCP_URL`, `QWEN35_SERVER_URL` (Arm A), `DOCLING_BASE_URL`, `CLAWQL_REPO_ROOT`, `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`
+- Startup: `integrations/extractbench/scripts/start-clawql-for-extractbench.sh` (ClawQL 8.x tier + docling provider)
 
 ## Related
 
