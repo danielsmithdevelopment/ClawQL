@@ -1,6 +1,6 @@
 {
   "name": "clawql-audit",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "Tamper-evident WORM audit trail for AI agent deployments",
   "license": "Apache-2.0",
   "type": "module",
@@ -44,9 +44,9 @@
     "check:standalone": "node ./scripts/check-standalone-deps.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1090.0",
+    "@aws-sdk/client-s3": "^3.1116.0",
     "cbor": "^9.0.2",
-    "clawql-merkle": "0.1.0",
+    "clawql-merkle": "8.0.0",
     "effect": "^3.21.4",
     "qrcode": "^1.5.4",
     "raptorq": "^1.7.24"

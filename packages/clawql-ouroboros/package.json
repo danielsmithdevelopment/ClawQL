@@ -1,6 +1,6 @@
 {
   "name": "clawql-ouroboros",
-  "version": "0.1.1",
+  "version": "8.0.0",
   "description": "Embeddable TypeScript evolutionary loop: Zod Seeds, Wonder/Reflect, Executor/Evaluator, ontology convergence, optional MCP tool shapes — use with any agent backend or job worker (Node ≥22).",
   "license": "Apache-2.0",
   "type": "module",
@@ -43,9 +43,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-api": "0.1.0",
-    "clawql-core": "0.1.0",
-    "clawql-inference": "0.1.0",
+    "clawql-api": "8.0.0",
+    "clawql-core": "8.0.0",
+    "clawql-inference": "8.0.0",
     "effect": "^3.21.4",
     "pg": "^8.21.0",
     "uuid": "^14.0.2",
