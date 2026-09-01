@@ -1,9 +1,12 @@
 /**
  * Single source of truth for docs sidebar navigation.
  * Hub card grids (`docs-hub-data.ts`) surface long-tail pages not listed here.
+ * Off-sidebar routes are also indexed on `/archive` (generated catalog).
  */
 
 import { trainingModules } from '@/generated/security-training/registry'
+import { pluginsHubCards } from '@/lib/docs-hub-data'
+import { learnModuleSiteCards } from '@/lib/docs-site-card-data'
 
 export type NavLink = {
   title: string
@@ -30,6 +33,36 @@ const securityBestPracticeLinks: Array<NavLink> = trainingModules.map(
     tag: String(module.part),
   }),
 )
+
+/** Stable sidebar order for `/learn/*` modules (titles from hub cards). */
+const LEARN_MODULE_HREFS = [
+  '/learn/search-and-execute-mcp',
+  '/learn/memory',
+  '/learn/external-ingest-knowledge',
+  '/learn/knowledge-search-onyx',
+  '/learn/document-pipeline',
+  '/learn/sandbox-exec',
+  '/learn/effect-ts',
+  '/learn/ouroboros-tools',
+  '/learn/schedule-notify-workflows',
+  '/learn/cache-handoff-between-chats',
+  '/learn/audit-tool-and-observability',
+] as const
+
+const learnModuleByHref = new Map(
+  learnModuleSiteCards.map((card) => [card.href, card.name]),
+)
+
+const learnModuleLinks: Array<NavLink> = LEARN_MODULE_HREFS.map((href) => ({
+  title:
+    learnModuleByHref.get(href) ?? href.split('/').pop()!.replace(/-/g, ' '),
+  href,
+}))
+
+const pluginDetailLinks: Array<NavLink> = pluginsHubCards.map((card) => ({
+  title: card.name,
+  href: card.href,
+}))
 
 /** First-run sidebar — Security lists every /security/* page. */
 export const docsNavigation: Array<NavGroup> = [
@@ -85,7 +118,7 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Learn', href: '/learn' },
       { title: 'Concepts', href: '/concepts' },
-      { title: 'Memory', href: '/learn/memory' },
+      ...learnModuleLinks,
       {
         title: 'Token efficiency',
         href: '/architecture/token-efficiency',
@@ -99,12 +132,7 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Plugins', href: '/plugins' },
       { title: 'Domain verticals', href: '/plugins#verticals' },
       { title: 'Plugin model', href: '/plugins#plugin-model' },
-      { title: 'Gateway core', href: '/plugins/core' },
-      { title: 'Memory', href: '/plugins/memory' },
-      { title: 'Documents', href: '/plugins/documents' },
-      { title: 'Automation', href: '/plugins/automation' },
-      { title: 'Sandbox', href: '/plugins/sandbox' },
-      { title: 'Third-party', href: '/plugins/third-party' },
+      ...pluginDetailLinks,
     ],
   },
   {
@@ -132,6 +160,11 @@ export const docsNavigation: Array<NavGroup> = [
       },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
+      { title: 'clawql-payments', href: '/payments/clawql-payments' },
+      {
+        title: 'Immutable releases vision',
+        href: '/vision/immutable-releases',
+      },
       {
         title: 'clawql-surveillance',
         href: '/surveillance/clawql-surveillance',
@@ -206,7 +239,9 @@ export const docsNavigation: Array<NavGroup> = [
     title: 'More',
     links: [
       { title: 'Examples', href: '/examples' },
+      { title: 'Benchmarks', href: '/benchmarks' },
       { title: 'Changelog', href: '/resources/changelog' },
+      { title: 'Docs archive', href: '/archive' },
     ],
   },
 ]

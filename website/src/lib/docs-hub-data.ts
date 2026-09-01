@@ -417,6 +417,13 @@ export const referenceHubCards: Array<ReferenceCard> = [
 /** Resources hub — meta only. */
 export const resourcesHubCards: Array<ReferenceCard> = [
   card({
+    href: '/archive',
+    name: 'Docs archive',
+    description:
+      'Searchable index of every page kept off the first-run sidebar (case studies, specs, infra guides, legacy URLs).',
+    icon: MagnifyingGlassIcon,
+  }),
+  card({
     href: '/resources/changelog',
     name: 'Changelog & releases',
     description: 'Major versions and GitHub release notes.',
@@ -581,6 +588,13 @@ export const pluginsHubCards: Array<ReferenceCard> = [
     description:
       'OpenAI, Anthropic, Ollama builtins and third-party clawql-inference plugins.',
     icon: BoltIcon,
+  }),
+  card({
+    href: '/plugins/payments',
+    name: 'Payments',
+    description:
+      'Stripe, x402, MPP, Adyen — see also the clawql-payments platform guide.',
+    icon: TagIcon,
   }),
   card({
     href: '/plugins/hitl-label-studio',

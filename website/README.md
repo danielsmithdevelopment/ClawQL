@@ -13,6 +13,8 @@ Open [http://localhost:3000](http://localhost:3000). Global search (⌘K) indexe
 
 **In-page TOC:** pages with two or more `##` headings get an **On this page** nav (and left-sidebar section links). Section metadata is generated Workers-safely by `scripts/generate-doc-layout-sections.mjs` → `src/generated/doc-layout-sections.generated.ts` (wired into `prebuild` / `dev` after doc sync scripts). Only one TOC renders per page (claim guard in `OnThisPageProvider`).
 
+**Docs archive:** `/archive` lists every route intentionally kept off the first-run sidebar (`scripts/generate-docs-archive.mjs` → `src/generated/docs-archive.json`). Prefer hub cards for curated discovery; use the archive when you need to search the long tail.
+
 **Caching:** HTML uses short edge TTLs (`edge-cache-control.mjs` / `public/_headers`) so prerendered pages cannot keep pointing at deleted `/_next/static/*.css` hashes after a deploy. Static assets remain immutable.
 
 ## Build
