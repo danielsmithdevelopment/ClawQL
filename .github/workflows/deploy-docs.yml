@@ -24,7 +24,7 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
@@ -37,11 +37,20 @@ jobs:
       - name: Install website dependencies
         run: npm ci --prefix website
 
-      - name: OpenNext build + wrangler deploy
+      - name: OpenNext build
+        working-directory: website
+        env:
+          NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
+        run: npx opennextjs-cloudflare build
+
+      - name: Fail if Worker gzip ≥ 3 MiB (free-plan limit)
+        working-directory: website
+        run: node scripts/check-worker-gzip-limit.mjs
+
+      - name: wrangler deploy
         working-directory: website
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          # Optional: set when the API token is scoped to multiple accounts or wrangler does not default correctly.
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
-        run: npm run deploy
+        run: npx wrangler deploy

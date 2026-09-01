@@ -1,8 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Button } from '@/components/Button'
-import { DocProse } from '@/components/DocProse'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import GettingStartedImmutableReleasesBody from '@/generated/getting-started-immutable-releases-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -96,9 +95,10 @@ export default function GettingStartedImmutableReleasesPage() {
         ))}
       </ol>
 
-      <DocProse className="flex-auto [&_h1]:sr-only">
-        <GettingStartedImmutableReleasesBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/getting-started/immutable-releases"
+        className="flex-auto [&_h1]:sr-only"
+      />
 
       <p className="not-prose mt-12 text-sm text-zinc-500 dark:text-zinc-500">
         Source:{' '}

@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import GettingStartedInferenceBody from '@/generated/getting-started-inference-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -53,9 +52,10 @@ export default function GettingStartedInferencePage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <GettingStartedInferenceBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/getting-started/inference"
+        className="flex-auto"
+      />
     </article>
   )
 }

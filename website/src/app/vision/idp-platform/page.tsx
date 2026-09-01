@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import IdpPlatformBody from '@/generated/clawql-idp-platform-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -62,9 +61,7 @@ export default function VisionIdpPlatformPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <IdpPlatformBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/vision/idp-platform" className="flex-auto" />
     </article>
   )
 }
