@@ -5,6 +5,7 @@
  * CLAWQL_WORM_LOCAL=memory|sqlite|postgres (default: sqlite when path set, else memory)
  * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
  * CLAWQL_WORM_SQLITE_PATH, CLAWQL_WORM_POSTGRES_URL, CLAWQL_WORM_S3_* for backends
+ * CLAWQL_WORM_TEE=1 enables ECDSA P-256 teeSignature on append (PEM or ephemeral)
  */
 
 import { Effect } from "effect";
@@ -14,6 +15,8 @@ import { PostgresBackend } from "./storage/postgres.js";
 import { S3Backend } from "./storage/s3.js";
 import { SQLiteBackend } from "./storage/sqlite.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
+import type { TEESigner } from "./tee/signer.js";
+import { createEcdsaTeeSigner, createSimulatedTeeSigner } from "./tee/signer.js";
 import type { WORMAuditTrailConfig } from "./trail.js";
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {
@@ -118,6 +121,33 @@ function makeRemote(
   });
 }
 
+function makeTee(
+  env: NodeJS.ProcessEnv
+): Effect.Effect<TEESigner | undefined, AuditError> {
+  return Effect.gen(function* () {
+    if (envTrim(env, "CLAWQL_WORM_TEE") !== "1") return undefined;
+    const privateKeyPem = envTrim(env, "CLAWQL_WORM_TEE_PRIVATE_KEY_PEM");
+    const publicKeyPem = envTrim(env, "CLAWQL_WORM_TEE_PUBLIC_KEY_PEM");
+    if (privateKeyPem && publicKeyPem) {
+      return yield* createEcdsaTeeSigner({
+        privateKeyPem: privateKeyPem.replace(/\\n/g, "\n"),
+        publicKeyPem: publicKeyPem.replace(/\\n/g, "\n"),
+        platform: "simulated",
+      });
+    }
+    // Ephemeral simulated key when enabled without PEM (dev / tests).
+    if (envTrim(env, "CLAWQL_WORM_TEE_EPHEMERAL") === "1" || (!privateKeyPem && !publicKeyPem)) {
+      return yield* createSimulatedTeeSigner();
+    }
+    return yield* Effect.fail(
+      new AuditError({
+        reason:
+          "CLAWQL_WORM_TEE=1 requires CLAWQL_WORM_TEE_PRIVATE_KEY_PEM + CLAWQL_WORM_TEE_PUBLIC_KEY_PEM, or omit both for ephemeral simulated keys",
+      })
+    );
+  });
+}
+
 /**
  * Build trail config from env, or `null` when `CLAWQL_WORM_ENABLED` is not `1`.
  */
@@ -128,10 +158,12 @@ export const createWormTrailConfigFromEnvEffect = (
     if (!(yield* wormEnabledFromEnv(env))) return null;
     const local = yield* makeLocal(env);
     const remote = yield* makeRemote(env);
+    const tee = yield* makeTee(env);
     const httpPort = parseIntEnv(env, "CLAWQL_WORM_HTTP_PORT");
     return {
       local,
       remote,
+      tee,
       retryMaxAttempts: parseIntEnv(env, "CLAWQL_WORM_RETRY_MAX"),
       retryBackoffMs: parseIntEnv(env, "CLAWQL_WORM_RETRY_BACKOFF_MS"),
       reconcileIntervalMs: parseIntEnv(env, "CLAWQL_WORM_RECONCILE_MS") ?? 2000,
