@@ -93,6 +93,13 @@ const rawOptionalFlagsSchema = z.object({
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
   /**
+   * Governed observability MCP tools + HTTP read API (query federation, health, Alloy apply).
+   * Default false — register with `CLAWQL_ENABLE_OBSERVABILITY=1`.
+   */
+  CLAWQL_ENABLE_OBSERVABILITY: z.string().optional(),
+  /** Optional API key for `/observability/*` HTTP routes (`Authorization: ApiKey …`). */
+  CLAWQL_OBSERVABILITY_API_KEY: z.string().optional(),
+  /**
    * Bundled Google Cloud manifest (50 Discovery APIs). Default **false** — opt in with `1` / `true` / `yes`.
    * Adds GCP to the **default install stack**; explicit `CLAWQL_PROVIDER=google` or `CLAWQL_BUNDLED_PROVIDERS=google` still loads GCP.
    * Does **not** gate **`all-providers`** (that preset always includes Google).
@@ -211,6 +218,11 @@ export type ClawqlOptionalToolFlags = {
    */
   enableLangfuseEval: boolean;
   /**
+   * Governed observability MCP tools (`observability_query_*`, health, Alloy apply) + optional HTTP read API.
+   * Default false — register with **`CLAWQL_ENABLE_OBSERVABILITY=1`**.
+   */
+  enableObservability: boolean;
+  /**
    * Adds Google Cloud to the **default install stack**. Default **false** (opt in).
    */
   enableGoogle: boolean;
@@ -269,6 +281,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enablePdfInspector: envTruthy(raw.CLAWQL_ENABLE_PDF_INSPECTOR),
     enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
+    enableObservability: envTruthy(raw.CLAWQL_ENABLE_OBSERVABILITY),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
     enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
@@ -326,6 +339,7 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enablePdfInspector: false,
     enableAnydoc: false,
     enableLangfuseEval: false,
+    enableObservability: false,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,

@@ -1,3 +1,4 @@
+import { OBSERVABILITY_PLUGIN_ID } from "clawql-observability/plugin";
 import { describe, expect, it } from "vitest";
 import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
 import { SANDBOX_PLUGIN_ID } from "clawql-sandbox/plugin";
@@ -29,6 +30,7 @@ describe("composeHorizontalPluginLayers", () => {
       enablePdfInspector: false,
       enableAnydoc: false,
       enableLangfuseEval: false,
+      enableObservability: false,
       enableGrpc: false,
       enableGrpcReflection: false,
       externalIngestPreview: false,
@@ -66,5 +68,42 @@ describe("composeHorizontalPluginLayers", () => {
     const api = createClawQLApi({ plugins: [], pluginLayers: layers });
     expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
     expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
+  });
+
+  it("registers observability plugin when enabled", () => {
+    const layers = composeHorizontalPluginLayers({
+      enableMemory: false,
+      enableDocuments: false,
+      enableSandbox: false,
+      enableData: false,
+      enableWeb: false,
+      enableSchedule: false,
+      enableNotify: false,
+      enableWorkflow: false,
+      enableArgoCd: false,
+      enableHitlLabelStudio: false,
+      enableOnyxKnowledge: false,
+      enableIdpPipeline: false,
+      enableIdpClassifier: false,
+      enableLangextract: false,
+      enablePdfInspector: false,
+      enableAnydoc: false,
+      enableLangfuseEval: false,
+      enableObservability: true,
+      enableGrpc: false,
+      enableGrpcReflection: false,
+      externalIngestPreview: false,
+      enableVision: false,
+      enableConeshare: false,
+      enableCodeGraph: false,
+      enableOntology: false,
+      enableOntologyWrites: false,
+      enableGoogle: false,
+      enableCloudflare: true,
+      enableAws: false,
+    });
+    const api = createClawQLApi({ plugins: [], pluginLayers: layers });
+    expect(api.registry.list().some((p) => p.id === OBSERVABILITY_PLUGIN_ID)).toBe(true);
+    expect(api.listMcpTools().some((t) => t.name === "observability_health")).toBe(true);
   });
 });

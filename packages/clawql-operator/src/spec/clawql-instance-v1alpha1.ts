@@ -59,6 +59,7 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       })
       .strict()
       .optional(),
+    observability: tierToggleSchema,
     mcp: z
       .object({
         deploymentName: z.string().min(1).optional(),
@@ -101,6 +102,7 @@ export function clawqlInstanceSpecToHorizontalTierSpec(
     web: spec.web,
     ontology: spec.ontology,
     ouroboros: spec.ouroboros,
+    observability: spec.observability,
   };
 }
 

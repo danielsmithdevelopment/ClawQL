@@ -169,6 +169,7 @@ export type CreateMcpHttpAppOptions = {
     | "enableHitlLabelStudio"
     | "enableConeshare"
     | "enableLangfuseEval"
+    | "enableObservability"
     | "enableDocuments"
     | "enableIdpPipeline"
   >;
@@ -479,6 +480,13 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         }
       }
     });
+  }
+
+  if (optionalFlags.enableObservability) {
+    const { attachObservabilityHttpRoutes } = await import(
+      "clawql-observability/http"
+    );
+    attachObservabilityHttpRoutes(app, process.env);
   }
 
   app.post(mcpPath, applyGatewayAuth, async (req, res) => {

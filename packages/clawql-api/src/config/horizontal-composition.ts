@@ -40,6 +40,7 @@ export type ClawQLHorizontalTierSpec = {
     readonly enabled?: boolean;
     readonly langfuseEval?: { readonly enabled?: boolean };
   };
+  readonly observability?: { readonly enabled?: boolean };
 };
 
 const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional();
@@ -89,6 +90,7 @@ const instanceBodyForFlagsSchema = z
       })
       .strict()
       .optional(),
+    observability: toggle,
   })
   .passthrough();
 
@@ -189,6 +191,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enablePdfInspector: false,
     enableAnydoc: false,
     enableLangfuseEval: false,
+    enableObservability: false,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
@@ -215,6 +218,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableOntology: tierEnabled(spec.ontology, d.enableOntology),
     enableOntologyWrites: tierEnabled(spec.ontology?.writes, d.enableOntologyWrites),
     enableLangfuseEval: tierEnabled(spec.ouroboros?.langfuseEval, d.enableLangfuseEval),
+    enableObservability: tierEnabled(spec.observability, d.enableObservability),
   };
 }
 
@@ -268,6 +272,7 @@ function mergeHorizontal(
       ...override.ouroboros,
       langfuseEval: mergeToggle(base.ouroboros?.langfuseEval, override.ouroboros?.langfuseEval),
     },
+    observability: mergeToggle(base.observability, override.observability),
   };
 }
 
