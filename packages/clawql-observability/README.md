@@ -20,13 +20,13 @@ Provider registry: [`docs/design/clawql-observability-provider-registry.md`](../
 
 ## Versioning
 
-| | |
-| --- | --- |
-| **First npm release** | **`0.1.0`** — full stack through Phase 5 (nothing published before this) |
-| **Development phases** | Internal delivery labels (Phase 1–5 below) — **not** semver bumps |
-| **Policy** | [`docs/release/clawql-observability-versioning.md`](../../docs/release/clawql-observability-versioning.md) |
-| **Publish checklist** | [`docs/release/clawql-observability-0.1.0-checklist.md`](../../docs/release/clawql-observability-0.1.0-checklist.md) |
-| **Changelog** | [`CHANGELOG.md`](./CHANGELOG.md) |
+|                        |                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **First npm release**  | **`0.1.0`** — full stack through Phase 5 (nothing published before this)                                             |
+| **Development phases** | Internal delivery labels (Phase 1–5 below) — **not** semver bumps                                                    |
+| **Policy**             | [`docs/release/clawql-observability-versioning.md`](../../docs/release/clawql-observability-versioning.md)           |
+| **Publish checklist**  | [`docs/release/clawql-observability-0.1.0-checklist.md`](../../docs/release/clawql-observability-0.1.0-checklist.md) |
+| **Changelog**          | [`CHANGELOG.md`](./CHANGELOG.md)                                                                                     |
 
 > **Note:** An earlier in-tree `package.json` version (`0.7.0`) tracked phase progress only. It was **never** on npm. Do not interpret Phase N as npm `0.N.0`.
 
@@ -273,12 +273,12 @@ Blocking quorum across exporters stays **out of TypeScript** (provider-registry 
 
 | Phase  | Scope                                                                    |
 | ------ | ------------------------------------------------------------------------ |
-| **1**  | LGTM+ core + Alloy _(in **0.1.0**)_                                            |
-| **2**  | Faro + ephemeral-JWT Worker proxy _(in **0.1.0**)_                             |
-| **3a** | Provider registry skeleton _(in **0.1.0**)_                                   |
-| **3b** | Alloy config generator _(in **0.1.0**)_                                       |
-| **3c** | Query federation _(in **0.1.0**)_                                             |
-| **3d** | Host integration (MCP + HTTP + WORM) _(in **0.1.0**)_                         |
+| **1**  | LGTM+ core + Alloy _(in **0.1.0**)_                                      |
+| **2**  | Faro + ephemeral-JWT Worker proxy _(in **0.1.0**)_                       |
+| **3a** | Provider registry skeleton _(in **0.1.0**)_                              |
+| **3b** | Alloy config generator _(in **0.1.0**)_                                  |
+| **3c** | Query federation _(in **0.1.0**)_                                        |
+| **3d** | Host integration (MCP + HTTP + WORM) _(in **0.1.0**)_                    |
 | **4**  | Langfuse work traces + Panguard correlation _(in **0.1.0**)_             |
 | **4b** | Falco / Tetragon / Wazuh → Loki + correlation dashboard _(in **0.1.0**)_ |
 | **5**  | Alerting + Vault-backed Faro JWT keys + Alloy reload _(in **0.1.0**)_    |

@@ -8,11 +8,11 @@
 
 ## Summary
 
-| Concept | Meaning |
-| -------- | ------- |
-| **npm semver** | Public releases: `0.1.0`, `0.1.1`, `0.2.0`, … — independent of `clawql-mcp` |
-| **Development phase** | Internal delivery label (Phase 1, 2, 3a–3d, 4, 4b, 5) — **not** an npm version bump |
-| **In-tree `0.7.0` (historical)** | Temporary workspace version tracking phase progress before first publish — **never shipped to npm** |
+| Concept                            | Meaning                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **npm semver**                     | Public releases: `0.1.0`, `0.1.1`, `0.2.0`, … — independent of `clawql-mcp`                            |
+| **Development phase**              | Internal delivery label (Phase 1, 2, 3a–3d, 4, 4b, 5) — **not** an npm version bump                    |
+| **In-tree `0.7.0` (historical)**   | Temporary workspace version tracking phase progress before first publish — **never shipped to npm**    |
 | **Draft `0.2.0` in release notes** | Early v8.0 prep assumed Phase 1+2 would publish first — superseded by single **`0.1.0`** first release |
 
 ---
@@ -35,17 +35,17 @@ Phases are documented in:
 - [`docs/design/clawql-observability-package-spec.md`](../design/clawql-observability-package-spec.md)
 - [`docs/design/clawql-observability-provider-registry.md`](../design/clawql-observability-provider-registry.md)
 
-| Phase | Scope (shipped in **0.1.0**) |
-| ----- | ------------------------------ |
-| **1** | LGTM+ compose, Alloy OTLP, Helm values, CI smoke |
-| **2** | Faro JWT Worker proxy, backend token mint |
-| **3a** | Provider registry skeleton, built-in LGTM+ adapters |
-| **3b** | Alloy config generator from registry snapshot |
+| Phase  | Scope (shipped in **0.1.0**)                           |
+| ------ | ------------------------------------------------------ |
+| **1**  | LGTM+ compose, Alloy OTLP, Helm values, CI smoke       |
+| **2**  | Faro JWT Worker proxy, backend token mint              |
+| **3a** | Provider registry skeleton, built-in LGTM+ adapters    |
+| **3b** | Alloy config generator from registry snapshot          |
 | **3c** | Query federation (LogQL / PromQL / TraceQL / profiles) |
-| **3d** | Host MCP tools + HTTP routes + WORM bridge |
-| **4** | Langfuse OTLP export, Panguard deny telemetry |
+| **3d** | Host MCP tools + HTTP routes + WORM bridge             |
+| **4**  | Langfuse OTLP export, Panguard deny telemetry          |
 | **4b** | Falco / Tetragon / Wazuh → Loki, correlation dashboard |
-| **5** | Alerting catalog, Vault/env JWT keys, Alloy reload |
+| **5**  | Alerting catalog, Vault/env JWT keys, Alloy reload     |
 
 **Future npm bumps** follow semver on **user-visible breaking or additive changes**, not automatic “one phase = one minor” mapping. Example: a breaking change to `ObservabilityQueryService` APIs might warrant `0.2.0` even if no new “phase” is declared.
 
@@ -61,13 +61,13 @@ Phases are documented in:
 
 ## Where versions are defined
 
-| Location | Role |
-| -------- | ---- |
-| `packages/clawql-observability/package.json` | **Source of truth** for npm version |
-| Root `package.json` / `package-lock.json` | Workspace dependency pin |
-| `packages/clawql-observability/CHANGELOG.md` | Package-level release notes |
-| Root `CHANGELOG.md` | Monorepo narrative (links here for cadence) |
-| `RELEASE_NOTES_v8.0.0.md` | Gateway major release; observability row must match **0.1.0** |
+| Location                                     | Role                                                          |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `packages/clawql-observability/package.json` | **Source of truth** for npm version                           |
+| Root `package.json` / `package-lock.json`    | Workspace dependency pin                                      |
+| `packages/clawql-observability/CHANGELOG.md` | Package-level release notes                                   |
+| Root `CHANGELOG.md`                          | Monorepo narrative (links here for cadence)                   |
+| `RELEASE_NOTES_v8.0.0.md`                    | Gateway major release; observability row must match **0.1.0** |
 
 ---
 

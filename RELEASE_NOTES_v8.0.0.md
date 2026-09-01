@@ -136,7 +136,7 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 | `clawql-mcp`                     | **8.0.0** | Lockstep consumer surface                              |
 | `mcp-grpc-transport`             | **1.0.0** | Major vs npm **0.2.0** for standalone grpc users       |
 | `mcp-api-adapter`                | **0.6.0** | First registry publish                                 |
-| `clawql-observability`           | **0.1.0** | First publish; independent 0.x cadence (Phases 1–5)   |
+| `clawql-observability`           | **0.1.0** | First publish; independent 0.x cadence (Phases 1–5)    |
 | `clawql-merkle` / `clawql-audit` | wedge     | Prefer audit-wedge workflow if OIDC-gated full publish |
 
 ---
