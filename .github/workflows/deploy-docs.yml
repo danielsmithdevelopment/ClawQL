@@ -7,6 +7,9 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      - "packages/clawql-analytics/**"
+      - "packages/clawql-auth/**"
+      - "packages/clawql-audit/**"
       - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
       - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
       - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
@@ -32,15 +35,35 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: website/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      - name: Build clawql-analytics (docs API route dependency)
+        run: |
+          npm ci
+          npm run build -w clawql-merkle
+          npm run build -w clawql-audit
+          npm run build -w clawql-auth
+          npm run build -w clawql-analytics
 
       - name: Install website dependencies
         run: npm ci --prefix website
+
+      - name: Verify analytics deploy config
+        working-directory: website
+        env:
+          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
+          CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
+          CLAWQL_ANALYTICS_POSTHOG_API_KEY: ${{ secrets.CLAWQL_ANALYTICS_POSTHOG_API_KEY }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+        run: node scripts/verify-analytics-deploy-config.mjs
 
       - name: OpenNext build
         working-directory: website
         env:
           NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
+          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npx opennextjs-cloudflare build
 
       - name: Fail if Worker gzip ≥ 3 MiB (free-plan limit)
@@ -53,4 +76,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
+          CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
+          CLAWQL_ANALYTICS_POSTHOG_API_KEY: ${{ secrets.CLAWQL_ANALYTICS_POSTHOG_API_KEY }}
+          CLAWQL_ANALYTICS_POSTHOG_HOST: ${{ vars.CLAWQL_ANALYTICS_POSTHOG_HOST }}
         run: npx wrangler deploy
