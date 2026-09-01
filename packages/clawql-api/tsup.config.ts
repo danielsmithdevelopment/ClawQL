@@ -20,9 +20,9 @@ export default defineConfig({
     "sqlite",
     "express-rate-limit",
     "express",
-    "clawql-audit",
-    "clawql-merkle",
+    /^clawql-/,
     "cbor",
     "qrcode",
+    "debug",
   ],
 });

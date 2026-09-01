@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   // Same as clawql-api / clawql-payments: do not bundle clawql-audit → cbor into ESM.
-  external: ["clawql-audit", "clawql-merkle", "cbor", "qrcode"],
+  external: [/^clawql-/, "cbor", "qrcode", "debug", "express", "express-rate-limit"],
 });

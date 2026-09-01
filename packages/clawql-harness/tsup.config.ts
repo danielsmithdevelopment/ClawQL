@@ -16,11 +16,12 @@ export default defineConfig({
   external: [
     "@opencode-ai/sdk",
     "@opencode-ai/plugin",
-    "clawql-api",
-    "clawql-audit",
-    "clawql-core",
-    "clawql-ouroboros",
+    /^clawql-/,
     "effect",
     "zod",
+    "cbor",
+    "debug",
+    "express",
+    "express-rate-limit",
   ],
 });

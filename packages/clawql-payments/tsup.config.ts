@@ -17,5 +17,5 @@ export default defineConfig({
   clean: true,
   // clawql-audit (and its cbor/qrcode stack) must stay external — if bundled, cbor's
   // CommonJS `require("stream")` blows up under ESM (MCP Docker /healthz smoke).
-  external: ["clawql-audit", "clawql-merkle", "cbor", "qrcode"],
+  external: [/^clawql-/, "cbor", "qrcode", "debug", "express", "express-rate-limit"],
 });
