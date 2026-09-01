@@ -92,7 +92,7 @@ Workflow [`.github/workflows/deploy-landing-page.yml`](../.github/workflows/depl
 
 ### Cloudflare Pages (for full agent score)
 
-When `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set, the same workflow also deploys to **Cloudflare Pages** (`clawql-website`). Opt out with repo variable **`LANDING_PAGE_CLOUDFLARE_DEPLOY=false`**. Wrangler runs from `landing-page/demo/` so sibling `functions/` (Link headers + markdown negotiation) is bundled with `out/`.
+When `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are set, the same workflow also deploys to **Cloudflare Pages** (`clawql-website`). CI runs [`scripts/deploy/ensure-cloudflare-pages-project.sh`](../../scripts/deploy/ensure-cloudflare-pages-project.sh) before the first deploy so the project is created when missing. Opt out with repo variable **`LANDING_PAGE_CLOUDFLARE_DEPLOY=false`**. Wrangler runs from `landing-page/demo/` so sibling `functions/` (Link headers + markdown negotiation) is bundled with `out/`.
 
 **DNS (one-time, when switching):** Attach custom domain `clawql.com` to the Pages project in the Cloudflare dashboard (preferred path to level 5 on [isitagentready.com](https://isitagentready.com/clawql.com)).
 
