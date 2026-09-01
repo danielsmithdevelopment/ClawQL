@@ -10,25 +10,25 @@ ExtractBench's headline finding: on documents longer than ~50 pages, commercial 
 
 ClawQL IDP routes with **pdf-inspector**, extracts with **Docling** (page/table structural, no VLM attention window), then maps to the JSON Schema with either:
 
-| Arm | Pipeline name | Schema map |
-| --- | --- | --- |
-| A | `clawql_idp_qwen_extract` | Self-hosted Qwen3.6 35B (OpenAI-compatible) over extracted text |
-| B | `clawql_idp_docling_extract` | Deterministic table/label mapping (no LLM) |
+| Arm | Pipeline name                | Schema map                                                      |
+| --- | ---------------------------- | --------------------------------------------------------------- |
+| A   | `clawql_idp_qwen_extract`    | Self-hosted Qwen3.6 35B (OpenAI-compatible) over extracted text |
+| B   | `clawql_idp_docling_extract` | Deterministic table/label mapping (no LLM)                      |
 
 Arm A is the primary leaderboard candidate. Arm B is the cost-floor / ablation.
 
 ## Layout
 
-| Path | Purpose |
-| --- | --- |
-| `provider/clawql_idp/` | Provider package copied into ExtractBench |
-| `scripts/apply_clawql_provider.py` | Copy + register pipelines / docs / env |
-| `scripts/start-clawql-for-extractbench.sh` | MCP HTTP with IDP flags |
-| `scripts/run-extractbench.sh` | Apply + `extract-bench run` |
-| `tests/test_schema_map.py` | Offline unit tests |
-| `leaderboard-entry.template.csv` | Submission row template |
-| `../../docs/benchmarks/extractbench-clawql-results.md` | Results ledger |
-| `../../docs/gtm/pragmaticvectors/extractbench-long-documents.md` | Essay draft |
+| Path                                                             | Purpose                                   |
+| ---------------------------------------------------------------- | ----------------------------------------- |
+| `provider/clawql_idp/`                                           | Provider package copied into ExtractBench |
+| `scripts/apply_clawql_provider.py`                               | Copy + register pipelines / docs / env    |
+| `scripts/start-clawql-for-extractbench.sh`                       | MCP HTTP with IDP flags                   |
+| `scripts/run-extractbench.sh`                                    | Apply + `extract-bench run`               |
+| `tests/test_schema_map.py`                                       | Offline unit tests                        |
+| `leaderboard-entry.template.csv`                                 | Submission row template                   |
+| `../../docs/benchmarks/extractbench-clawql-results.md`           | Results ledger                            |
+| `../../docs/gtm/pragmaticvectors/extractbench-long-documents.md` | Essay draft                               |
 
 ## Setup
 
@@ -86,6 +86,10 @@ list truncation experiments without changing ExtractBench scoring.
 
 Requires `CLAWQL_OBSIDIAN_VAULT_PATH` (set by `start-clawql-for-extractbench.sh`) and
 built `clawql-ontology` / `clawql-memory` packages.
+
+**ClawQL 8.x:** use `start-clawql-for-extractbench.sh` (sets `CLAWQL_TIER=enterprise`,
+`CLAWQL_PROVIDER=default`, `CLAWQL_BUNDLED_PROVIDERS=docling`, `CLAWQL_REPO_ROOT`) —
+bare `CLAWQL_ENABLE_*` flags are ignored without instance/tier composition.
 
 ## Success criteria (publishable)
 
