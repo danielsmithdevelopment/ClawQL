@@ -42,8 +42,9 @@ jobs:
       - name: Build clawql-analytics (docs API route dependency)
         run: |
           npm ci
-          npm run build -w clawql-auth
+          npm run build -w clawql-merkle
           npm run build -w clawql-audit
+          npm run build -w clawql-auth
           npm run build -w clawql-analytics
 
       - name: Install website dependencies

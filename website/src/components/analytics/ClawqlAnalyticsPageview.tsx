@@ -11,10 +11,7 @@ function readOrCreateSessionId(): string {
   try {
     const existing = window.localStorage.getItem(SESSION_STORAGE_KEY)
     if (existing) return existing
-    const id =
-      typeof crypto !== 'undefined' && 'randomUUID' in crypto
-        ? crypto.randomUUID()
-        : `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const id = crypto.randomUUID()
     window.localStorage.setItem(SESSION_STORAGE_KEY, id)
     return id
   } catch {
