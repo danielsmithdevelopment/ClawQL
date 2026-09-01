@@ -130,6 +130,24 @@ await Effect.runPromise(
 
 APIs: `queryLogs` (LogQL), `queryMetrics` (PromQL), `queryTraces` (TraceQL), `queryProfiles`. Selection modes: `one` | `all` | `primary`. Raw results emit `OBSERVABILITY_RAW_DATA_ACCESSED`.
 
+## Phase 3d (v0.6) — Host integration
+
+Wires the Phase 3 library into the MCP host and optional HTTP read API.
+
+- **MCP tools** (when `CLAWQL_ENABLE_OBSERVABILITY=1` or CRD `observability.enabled`): `observability_query_logs`, `observability_query_metrics`, `observability_query_traces`, `observability_query_profiles`, `observability_health`, `observability_apply_alloy_config`
+- **HTTP routes** (same flag): `GET /observability/health`, `POST /observability/query/*`, `POST /observability/alloy/apply` — optional `CLAWQL_OBSERVABILITY_API_KEY`
+- **WORM bridge**: governance events dual-write to process WORM when `CLAWQL_WORM_ENABLED=1`
+- **Health scheduler**: background checks every `CLAWQL_OBSERVABILITY_HEALTH_INTERVAL_MS` (default 60000)
+- **Alloy auto-apply**: set `CLAWQL_OBSERVABILITY_ALLOY_AUTO_APPLY=1` to regenerate River on boot
+
+Session scopes for MCP/HTTP calls resolve from `CLAWQL_OBSERVABILITY_ATR_SCOPE` (comma/space separated) or default to permissive local `*` for noAuth demos.
+
+```bash
+CLAWQL_ENABLE_OBSERVABILITY=1 \
+CLAWQL_OBSERVABILITY_ATR_SCOPE="observability:query_logs observability:configure" \
+npm run start:http
+```
+
 ### Worker deploy
 
 ```bash
@@ -204,7 +222,8 @@ Reference implementation: [DevSecOps-boilerplate](https://github.com/danielsmith
 | **2**  | Faro + ephemeral-JWT Worker proxy _(merged)_ |
 | **3a** | Provider registry skeleton _(shipped)_       |
 | **3b** | Alloy config generator _(shipped)_           |
-| **3c** | Query federation _(this release)_            |
+| **3c** | Query federation _(shipped)_            |
+| **3d** | Host integration (MCP + HTTP + WORM) _(this release)_ |
 | 4      | Langfuse + Panguard correlation              |
 | 5      | Full alerting + Vault-backed signing keys    |
 
