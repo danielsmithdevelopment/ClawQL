@@ -55,6 +55,9 @@ QWEN35_SERVER_URL=http://127.0.0.1:8000   # Arm A only — your vLLM / OpenAI-co
 ## Cost-safe run order
 
 ```bash
+# Build ontology packages when enabling CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1
+npm run build -w clawql-pageindex -w clawql-codegraph -w clawql-api -w clawql-memory -w clawql-ontology
+
 # 6 docs
 uv run extract-bench run clawql_idp_qwen_extract --test
 uv run extract-bench serve clawql_idp_qwen_extract
@@ -72,6 +75,17 @@ uv run extract-bench compare \
 ```
 
 **Do not use Opus for the full 4,869-page run.** Self-hosted Qwen for schema mapping; set `CLAWQL_EXTRACTBENCH_COST_PER_PAGE` (or pipeline `cost_per_page_usd`) to attribute measured infra cost when submitting.
+
+### Meta-ontology sync (optional)
+
+When `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`, each EXTRACT also runs
+[`runExtractBenchOntologyPipeline`](../../docs/specs/ontology/meta-ontology-v0.1.md)
+(scaffold → `ontology.db` → structured `memory_recall`). Results land in
+`raw_output.ontology` with T1 array completeness metrics — useful for long-document
+list truncation experiments without changing ExtractBench scoring.
+
+Requires `CLAWQL_OBSIDIAN_VAULT_PATH` (set by `start-clawql-for-extractbench.sh`) and
+built `clawql-ontology` / `clawql-memory` packages.
 
 ## Success criteria (publishable)
 
