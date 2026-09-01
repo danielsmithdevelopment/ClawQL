@@ -152,7 +152,7 @@
     "clawql-core": "8.0.0",
     "clawql-data": "8.0.0",
     "clawql-documents": "8.0.0",
-    "clawql-harness": "8.0.0",
+    "clawql-harness": "0.1.0",
     "clawql-inference": "8.0.0",
     "clawql-memory": "8.0.0",
     "clawql-merkle": "8.0.0",

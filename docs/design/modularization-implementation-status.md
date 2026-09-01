@@ -339,7 +339,7 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-documents`  | `clawql-documents`  | 8.0.0       |
 | `packages/clawql-web`        | `clawql-web`        | 8.0.0       |
 | `packages/clawql-data`       | `clawql-data`       | 8.0.0       |
-| `packages/clawql-harness`    | `clawql-harness`    | 8.0.0       |
+| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0       |
 | `packages/clawql-tee`        | `clawql-tee`        | 8.0.0       |
 | `packages/clawql-automation` | `clawql-automation` | 8.0.0       |
 | `packages/clawql-sandbox`    | `clawql-sandbox`    | 8.0.0       |
