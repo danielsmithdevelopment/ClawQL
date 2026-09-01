@@ -1,6 +1,6 @@
 {
   "name": "clawql-data",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "ClawQL structured data: Node DuckDB + MCP data_query / data_ingest",
   "license": "Apache-2.0",
   "type": "module",
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@duckdb/node-api": "1.5.5-r.4",
-    "clawql-api": "0.1.0",
-    "clawql-core": "0.1.0",
+    "clawql-api": "8.0.0",
+    "clawql-core": "8.0.0",
     "effect": "^3.21.4",
     "fflate": "^0.8.2",
     "zod": "4.3.6"

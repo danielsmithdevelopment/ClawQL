@@ -45,9 +45,12 @@ describe("providers composition", () => {
     vi.stubEnv("CLAWQL_BUNDLED_OFFLINE", "1");
     resetSpecCache();
 
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const loaded = await loadSpec();
     expect(loaded.operations).toHaveLength(0);
     expect((loaded.rawSource as { stub?: boolean }).stub).toBe(true);
+    expect(err.mock.calls.some((c) => String(c[0]).includes("BREAKING (8.0.0)"))).toBe(true);
+    err.mockRestore();
   });
 
   it("loadSpec honors instance providers.enabled for a single vendor", async () => {

@@ -1,6 +1,6 @@
 {
   "name": "clawql-documents",
-  "version": "0.1.0",
+  "version": "8.0.0",
   "description": "ClawQL document ingest pipeline: external knowledge import into vault (#307 order 5)",
   "license": "Apache-2.0",
   "type": "module",
@@ -40,10 +40,10 @@
   "dependencies": {
     "@firecrawl/anydoc": "^0.1.2",
     "@firecrawl/pdf-inspector": "1.12.0",
-    "clawql-api": "0.1.0",
-    "clawql-core": "0.1.0",
-    "clawql-memory": "0.1.0",
-    "clawql-web": "0.1.0",
+    "clawql-api": "8.0.0",
+    "clawql-core": "8.0.0",
+    "clawql-memory": "8.0.0",
+    "clawql-web": "8.0.0",
     "effect": "^3.21.4",
     "node-html-markdown": "^2.0.0",
     "zod": "4.3.6"

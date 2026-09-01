@@ -9,5 +9,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["@duckdb/node-api"],
+  external: [/^clawql-/, "@duckdb/node-api", "cbor", "debug", "express", "express-rate-limit"],
 });

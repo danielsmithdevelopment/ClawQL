@@ -23,6 +23,7 @@
     "clawql-inference",
     "clawql-ouroboros",
     "clawql-harness",
+    "clawql-observability",
     "clawql-operator",
     "clawql-mcp"
   ],
@@ -34,20 +35,22 @@
   ],
   "notes": [
     "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
-    "clawql-mcp (root) has its own version line (currently 7.2.0 on npm). Workspace claws start at 0.1.0 until first publish; clawql-ouroboros stays on its published line (0.1.1 in-tree matches npm).",
+    "clawql-mcp (root) version line: 8.0.0 in-tree for this major (npm still 7.2.0 until tag). Independent package cadence where noted (e.g. clawql-observability 0.2.0); clawql-ouroboros stays on its published 0.1.x line until reconciled.",
     "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
     "localPackExtrasAfter install after clawql-* packages (e.g. mcp-api-adapter optional peer clawql-inference).",
-    "mcp-api-adapter depends on mcp-grpc-transport — pack/publish transport first.",
+    "mcp-api-adapter depends on mcp-grpc-transport \u2014 pack/publish transport first.",
     "clawql-telemetry is not yet a package (see #313).",
-    "clawql-ontology has no clawql-* deps (ajv/yaml only) — safe early in the order.",
+    "clawql-ontology has no clawql-* deps (ajv/yaml only) \u2014 safe early in the order.",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
     "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
+    "clawql-tee after clawql-auth (optional peer; ID-JAG TEE bridge).",
+    "Monorepo clawql-mcp line is 8.0.0; many workspace packages still lockstep for this major \u2014 clawql-observability publishes on its own 0.x cadence (0.2.0).",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch).",
-    "clawql-analytics after clawql-auth (and clawql-audit) — docs pageview adapter; not a clawql-mcp runtime dep."
+    "clawql-analytics after clawql-auth (and clawql-audit) \u2014 docs pageview adapter; not a clawql-mcp runtime dep."
   ]
 }

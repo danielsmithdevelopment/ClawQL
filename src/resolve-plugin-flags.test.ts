@@ -1,8 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { resolvePluginCompositionFlags } from "./resolve-plugin-flags.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  resetLegacyPluginEnableWarningForTests,
+  resolvePluginCompositionFlags,
+} from "./resolve-plugin-flags.js";
 
 describe("resolvePluginCompositionFlags", () => {
+  afterEach(() => {
+    resetLegacyPluginEnableWarningForTests();
+    vi.restoreAllMocks();
+  });
+
   it("uses standard tier preset when no instance spec is configured (ignores CLAWQL_ENABLE_*)", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const flags = resolvePluginCompositionFlags({
       CLAWQL_ENABLE_MEMORY: "0",
       CLAWQL_ENABLE_DOCUMENTS: "0",
@@ -12,6 +21,7 @@ describe("resolvePluginCompositionFlags", () => {
     expect(flags.enableMemory).toBe(true);
     expect(flags.enableDocuments).toBe(true);
     expect(flags.enableSandbox).toBe(false);
+    expect(err.mock.calls.some((c) => String(c[0]).includes("BREAKING (8.0.0)"))).toBe(true);
   });
 
   it("loads plugin toggles from CLAWQL_INSTANCE_SPEC JSON", () => {

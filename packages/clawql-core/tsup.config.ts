@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["clawql-merkle", "effect"],
+  external: [/^clawql-/, "effect", "cbor", "debug", "express", "express-rate-limit"],
 });
