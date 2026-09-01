@@ -22,9 +22,10 @@ export async function fetchToolCatalog(options: {
 export async function refreshCatalog(
   upstream: UpstreamConnection,
   mcpPath?: string,
-  wsPath?: string
+  wsPath?: string,
+  mcpUiPath?: string
 ): Promise<ToolCatalog> {
   const tools = await upstream.refreshTools();
   upstream.tools = tools;
-  return buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath });
+  return buildCatalogFromUpstream(upstream, { tools, mcpPath, wsPath, mcpUiPath });
 }

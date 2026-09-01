@@ -1,0 +1,58 @@
+# Executor.sh comparison (executor-cmp-001)
+
+Side-by-side token comparison against [executor.sh](https://executor.sh/) on a GitHub PR list — the benchmark behind [Both Sides of Context Compression](https://pragmaticvectors.com/posts/both-sides-of-context-compression/). {{ className: 'lead' }}
+
+Tokenizer: `cl100k_base`. `focus=input` (model output omitted from headline ratios).
+
+## Headline numbers (live, `vercel/next.js`)
+
+| Layer        |                                     Executor |                         ClawQL | Notes                          |
+| ------------ | -------------------------------------------: | -----------------------------: | ------------------------------ |
+| **Layer 1**  |  1,044 (homepage) / **115** (live `execute`) |             **394** (codemode) | **394 does not beat live 115** |
+| **Layer 2**  |        **143,466** (`pulls.list`, full REST) | **907** (`execute` + `fields`) | **158×** on tool result alone  |
+| **Combined** | **144,510** (pub L1) / **143,581** (live L1) |                      **1,301** | **111×** / **110×**            |
+
+Layer 2 is **100%** of Executor's input and **70%** of ClawQL's on this task.
+
+## Live flamegraph (public)
+
+Static snapshot — same HTML as mcp-api-adapter's built-in demo:
+
+- **[clawql.com/mcp-ui/trace/compare/executor](https://clawql.com/mcp-ui/trace/compare/executor)** (canonical blog link)
+- **[docs.clawql.com mirror](https://docs.clawql.com/mcp-ui/trace/compare/executor)** (same page)
+- **JSON:** [compare.json](https://clawql.com/mcp-ui/trace/compare/executor/compare.json)
+
+Regenerate after measurement changes: `npm run generate:executor-cmp-static` (from repo root).
+
+## Reproduce
+
+```bash
+# Fixture (CI shape)
+npm run benchmark:executor-comparison
+
+# Live GitHub + ClawQL
+BENCHMARK_LIVE=1 CMP_GITHUB_REPO=vercel/next.js CMP_PER_PAGE=30 \
+  npm run benchmark:executor-comparison
+
+# Live both arms (Executor CLI + ClawQL)
+BENCHMARK_LIVE=1 CMP_GITHUB_REPO=vercel/next.js CMP_PER_PAGE=30 \
+  EXECUTOR_BIN=/path/to/executor EXECUTOR_CWD=/path/to/executor-cwd \
+  EXECUTOR_GITHUB_PULLS_PATH=github.user.githubMain.pulls.list \
+  npm run benchmark:executor-comparison
+```
+
+Multi-turn series: `npm run benchmark:executor-comparison:multiturn` and `npm run benchmark:executor-comparison:uniform`.
+
+## Raw artifacts (repo)
+
+- Methodology: [`docs/benchmarks/executor-comparison/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/README.md)
+- Live single-action: [`executor-cmp-001.live.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-001.live.json)
+- Uniform N=5: [`executor-cmp-002b.uniform-pulls.live.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-002b.uniform-pulls.live.json)
+- Mixed N=5: [`executor-cmp-002.multiturn.live.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/executor-comparison/executor-cmp-002.multiturn.live.json)
+- OpenBench task: [`openbench/tasks/executor-github-pr-filter/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/openbench/tasks/executor-github-pr-filter)
+
+## What not to claim
+
+- **862×** multi-provider workflow — different metric; do not blend into this comparison
+- Fixture **953 vs 23** — harness sanity only, not for headlines
+- ClawQL **883** / **3,548** — context tiers, not Executor chart parity

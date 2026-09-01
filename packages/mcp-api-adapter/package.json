@@ -1,7 +1,7 @@
 {
   "name": "mcp-api-adapter",
   "version": "0.6.0",
-  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket, plus gen-cli for a thin tool CLI",
+  "description": "Standalone adapter: point at any MCP server and instantly serve OpenAPI + GraphQL + Streamable HTTP /mcp + gRPC + WebSocket + HTMX /mcp-ui, plus gen-cli for a thin tool CLI",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,22 +47,38 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "busboy": "^1.6.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "graphql": "^16.14.0",
+    "jose": "^6.2.10",
     "mcp-grpc-transport": "1.0.0",
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/express": "^5.0.3",
     "@types/node": "^26.1.1",
     "@types/ws": "^8.18.1",
+    "clawql-inference": "0.1.0",
+    "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^4.1.1",
     "zod": "^3.24.0"
   },
+  "peerDependencies": {
+    "clawql-inference": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "clawql-inference": {
+      "optional": true
+    }
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
+    "generate:trace-demos": "node scripts/generate-trace-demo-fixtures.mjs",
+    "generate:executor-cmp-static": "npm run build && node scripts/generate-executor-cmp-compare-static.mjs",
     "prepublishOnly": "npm run build",
     "test": "vitest run",
     "start": "node bin/mcp-api-adapter.mjs"

@@ -14,11 +14,19 @@ Not a gateway product name for one port — the **bidirectional** protocol trans
 
 ---
 
+## Architecture diagram
+
+![ClawQL Protocol Fabric — Anything to MCP to Anything](/images/protocol-fabric/clawql-protocol-fabric.webp)
+
+Seven API sources on the left (plus **WebMCP (preview)** at the bottom-left inbound arrow), **ClawQL Core + mcp-api-adapter** at the center, seven transport layers on the right. **WORM Audit Log** below the hub; **HTMX / MCP-UI** on the bottom-right outbound arrow. Marketing landing: [clawql.com/protocol-fabric](https://clawql.com/protocol-fabric). Site assets: `/images/protocol-fabric/clawql-protocol-fabric.webp` (WebP) and `.png` fallback — kept under `/images/` so they do not collide with this docs route at `/mcp/protocol-fabric`. Repo copies in [`images/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/mcp/images).
+
+---
+
 ## Both directions
 
 ```text
 Any input protocol
-  CLI · OpenAPI · GraphQL · gRPC · WebSocket · MCP
+  CLI · OpenAPI · GraphQL · gRPC · WebSocket · MCP · WebMCP (preview)
            │
            ▼
     ClawQL Core (→ MCP)

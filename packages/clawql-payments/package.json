@@ -1,6 +1,6 @@
 {
   "name": "clawql-payments",
-  "version": "7.2.0",
+  "version": "0.1.0",
   "description": "ClawQL payments layer: Stripe billing, prepaid credits + ACH bank top-up (Financial Connections), Connect payouts, Base USDC sends, Ramp agent cards, Cloudflare Wallets (identity + Virtual Wallets prep), Moonpay/Transak off-ramp, x402 micropayments, MPP, AP2 mandates, ACP checkout, PayPal Orders, Adyen Checkout, managed plan entitlements, and WORM-auditable payment events",
   "license": "Apache-2.0",
   "type": "module",
@@ -100,21 +100,21 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=4096' tsup",
+    "build": "npm run clean && NODE_OPTIONS='--max-old-space-size=8192' tsup",
     "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-api": "7.2.0",
+    "clawql-api": "0.1.0",
     "clawql-audit": "0.1.0",
-    "clawql-auth": "7.2.0",
-    "clawql-core": "7.2.0",
+    "clawql-auth": "0.1.0",
+    "clawql-core": "0.1.0",
     "effect": "^3.21.4",
     "nats": "^2.29.3",
     "pg": "^8.21.0",
     "qrcode": "^1.5.4",
-    "stripe": "^22.3.2",
+    "stripe": "^22.5.0",
     "zod": "^4.3.6"
   },
   "optionalDependencies": {

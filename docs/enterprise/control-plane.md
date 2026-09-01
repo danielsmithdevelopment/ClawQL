@@ -32,7 +32,7 @@ export CLAWQL_AUTH_OIDC_ISSUER=https://idp.example
 export CLAWQL_AUTH_OIDC_ALLOWED_EMAIL_DOMAINS=acme.com
 
 # Multi-tenant: bind IdP per company org, then use createOrgCreditsIdpRouter +
-# verifyOidcBearerTokenWithOrgRouting from clawql-auth.
+# verifyOidcBearerTokenWithOrgRoutingEffect from clawql-auth.
 clawql payments org create --org-id acme --actor-tenant cfo --domains acme.com --email cfo@acme.com
 clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
 ```
@@ -40,12 +40,15 @@ clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
 Library:
 
 ```ts
-import { verifyOidcBearerTokenWithOrgRouting } from "clawql-auth";
+import { Effect } from "effect";
+import { verifyOidcBearerTokenWithOrgRoutingEffect } from "clawql-auth";
 import { createOrgCreditsIdpRouter } from "clawql-payments";
 
-const result = await verifyOidcBearerTokenWithOrgRouting(token, {
-  router: createOrgCreditsIdpRouter(),
-});
+const result = await Effect.runPromise(
+  verifyOidcBearerTokenWithOrgRoutingEffect(token, {
+    router: createOrgCreditsIdpRouter(),
+  })
+);
 // result.claims.orgId set from route when domain matches
 ```
 

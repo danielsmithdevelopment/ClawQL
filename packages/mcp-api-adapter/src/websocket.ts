@@ -13,6 +13,12 @@
 import type { Server as HttpServer, IncomingMessage } from "node:http";
 import { WebSocketServer, type RawData, type WebSocket } from "ws";
 import { httpBodyFromCollapsed } from "./call.js";
+import {
+  createJwtVerifier,
+  edgeAuthConfigured,
+  verifyEdgeCredential,
+  type McpApiAdapterJwtAuthOptions,
+} from "./edge-auth.js";
 import type { CallToolFn, ToolCatalog } from "./types.js";
 
 export const DEFAULT_WS_PATH = "/ws";
@@ -85,6 +91,7 @@ export type AttachWebSocketSurfaceOptions = {
   getCatalog: () => ToolCatalog;
   callTool: CallToolFn;
   apiKey?: string;
+  jwtAuth?: McpApiAdapterJwtAuthOptions;
 };
 
 export type AttachedWebSocketSurface = {
@@ -100,91 +107,100 @@ export function attachWebSocketSurface(
     return raw.startsWith("/") ? raw.replace(/\/$/, "") || DEFAULT_WS_PATH : `/${raw}`;
   })();
 
-  const apiKey = options.apiKey?.trim();
+  const verifyJwt = createJwtVerifier(options.jwtAuth ?? {});
+  const authEnabled = edgeAuthConfigured({ apiKey: options.apiKey, jwt: options.jwtAuth });
   const wss = new WebSocketServer({ server: options.server, path });
 
   wss.on("connection", (socket: WebSocket, req: IncomingMessage) => {
-    if (apiKey) {
-      const provided = readWsApiKey(req);
-      if (provided !== apiKey) {
-        socket.close(4401, "unauthorized");
-        return;
+    void (async () => {
+      if (authEnabled) {
+        const ok = await verifyEdgeCredential(
+          readWsApiKey(req),
+          { apiKey: options.apiKey, jwt: options.jwtAuth },
+          verifyJwt
+        );
+        if (!ok) {
+          socket.close(4401, "unauthorized");
+          return;
+        }
       }
-    }
 
-    socket.send(
-      JSON.stringify({
-        type: "ready",
-        path,
-        surfaces: options.getCatalog().surfaces,
-        toolCount: options.getCatalog().tools.length,
-      })
-    );
+      socket.send(
+        JSON.stringify({
+          type: "ready",
+          path,
+          surfaces: options.getCatalog().surfaces,
+          toolCount: options.getCatalog().tools.length,
+        })
+      );
 
-    socket.on("message", (data: RawData) => {
-      void (async () => {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(String(data));
-        } catch {
-          socket.send(JSON.stringify({ ok: false, error: "invalid JSON" }));
-          return;
-        }
+      socket.on("message", (data: RawData) => {
+        void (async () => {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(String(data));
+          } catch {
+            socket.send(JSON.stringify({ ok: false, error: "invalid JSON" }));
+            return;
+          }
 
-        // Allow ping without a tool call
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          !Array.isArray(parsed) &&
-          (parsed as { type?: string }).type === "ping"
-        ) {
-          socket.send(JSON.stringify({ type: "pong", id: (parsed as { id?: unknown }).id ?? null }));
-          return;
-        }
+          // Allow ping without a tool call
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            !Array.isArray(parsed) &&
+            (parsed as { type?: string }).type === "ping"
+          ) {
+            socket.send(
+              JSON.stringify({ type: "pong", id: (parsed as { id?: unknown }).id ?? null })
+            );
+            return;
+          }
 
-        const call = parseWsToolCall(parsed);
-        if ("error" in call) {
-          socket.send(JSON.stringify({ id: null, ok: false, error: call.error }));
-          return;
-        }
+          const call = parseWsToolCall(parsed);
+          if ("error" in call) {
+            socket.send(JSON.stringify({ id: null, ok: false, error: call.error }));
+            return;
+          }
 
-        const tool = options.getCatalog().tools.find((t) => t.name === call.toolName);
-        if (!tool) {
-          socket.send(
-            JSON.stringify({
-              id: call.id,
-              ok: false,
-              error: `unknown tool: ${call.toolName}`,
-            })
-          );
-          return;
-        }
+          const tool = options.getCatalog().tools.find((t) => t.name === call.toolName);
+          if (!tool) {
+            socket.send(
+              JSON.stringify({
+                id: call.id,
+                ok: false,
+                error: `unknown tool: ${call.toolName}`,
+              })
+            );
+            return;
+          }
 
-        try {
-          const result = await options.callTool(tool, call.args);
-          socket.send(
-            JSON.stringify({
-              id: call.id,
-              ok: true,
-              tool: call.toolName,
-              result: httpBodyFromCollapsed(result),
-            })
-          );
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          const withResult = err as Error & { result?: unknown };
-          socket.send(
-            JSON.stringify({
-              id: call.id,
-              ok: false,
-              tool: call.toolName,
-              error: message,
-              result: withResult.result,
-            })
-          );
-        }
-      })();
-    });
+          try {
+            const result = await options.callTool(tool, call.args);
+            socket.send(
+              JSON.stringify({
+                id: call.id,
+                ok: true,
+                tool: call.toolName,
+                result: httpBodyFromCollapsed(result),
+              })
+            );
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            const withResult = err as Error & { result?: unknown };
+            socket.send(
+              JSON.stringify({
+                id: call.id,
+                ok: false,
+                tool: call.toolName,
+                error: message,
+                result: withResult.result,
+              })
+            );
+          }
+        })();
+      });
+    })();
   });
 
   return {

@@ -1,21 +1,21 @@
 import { getClawqlOptionalToolFlags, type ClawqlOptionalToolFlags } from "clawql-api";
-import {
-  clawqlInstanceSpecToHorizontalTierSpec,
-  loadClawqlInstanceSpecFromEnvSync,
-  optionalFlagsFromHorizontalTierSpec,
-} from "clawql-operator/spec";
 
 /**
- * Resolves MCP plugin flags: env vars remain the default path; an optional ClawQLInstance
- * spec (file or inline JSON) overlays tier toggles when present. When unset, behavior is
- * identical to {@link getClawqlOptionalToolFlags} alone.
+ * Resolves MCP **plugin** composition flags from ClawQLInstance / tier — **not** `CLAWQL_ENABLE_*`.
+ *
+ * When instance JSON is unset, applies `CLAWQL_TIER` or **`standard`** preset (env ENABLE flags ignored).
+ * Transport (`ENABLE_GRPC`) remains env-based inside {@link getClawqlOptionalToolFlags}.
  */
 export function resolvePluginCompositionFlags(
   env: NodeJS.ProcessEnv = process.env
 ): ClawqlOptionalToolFlags {
-  const envFlags = getClawqlOptionalToolFlags(env);
-  const instanceSpec = loadClawqlInstanceSpecFromEnvSync(env);
-  if (!instanceSpec) return envFlags;
-  const tierSpec = clawqlInstanceSpecToHorizontalTierSpec(instanceSpec);
-  return optionalFlagsFromHorizontalTierSpec(tierSpec, envFlags);
+  const hasInstance =
+    Boolean(env.CLAWQL_INSTANCE_SPEC?.trim()) || Boolean(env.CLAWQL_INSTANCE_SPEC_FILE?.trim());
+  if (hasInstance) {
+    return getClawqlOptionalToolFlags(env);
+  }
+  return getClawqlOptionalToolFlags({
+    ...env,
+    CLAWQL_TIER: env.CLAWQL_TIER?.trim() || "standard",
+  });
 }

@@ -2,6 +2,8 @@
 
 Tamper-evident **WORM** audit trail for AI agent deployments. Standalone — no dependency on `clawql-core`, `clawql-memory`, or other ClawQL packages (only `clawql-merkle` + Effect + AWS SDK / CBOR / QR / RaptorQ; optional `pg`).
 
+**Public docs:** [docs.clawql.com/audit](https://docs.clawql.com/audit) — hash chain, Merkle batch roots, dual-ack replication, and external verification.
+
 ## Capabilities
 
 - Hash-chained append (`sealHashChainRecord`)
@@ -37,7 +39,7 @@ await worm.stop();
 ```typescript
 const worm = await WORMAuditTrail.create({
   local: new SQLiteBackend({ path: "./audit.db" }),
-  remote: new S3Backend({ bucket: "agent-audit-trail", /* … */ }),
+  remote: new S3Backend({ bucket: "agent-audit-trail" /* … */ }),
   httpPort: 8787,
   apiKey: process.env.CLAWQL_AUDIT_API_KEY!,
 });
@@ -53,15 +55,19 @@ Set `CLAWQL_AUDIT_QR_ENCRYPTION_KEY` and `CLAWQL_AUDIT_QR_HMAC_KEY` (32-byte hex
 
 Set `CLAWQL_WORM_ENABLED=1` to boot a process-scoped trail. Callers dual-write via `appendProcessWormEffect` / sink helpers:
 
-| Variable | Role |
-| --- | --- |
-| `CLAWQL_WORM_LOCAL` | `memory` \| `sqlite` \| `postgres` |
-| `CLAWQL_WORM_SQLITE_PATH` | SQLite file (implies local=sqlite when unset) |
-| `CLAWQL_WORM_POSTGRES_URL` | Postgres DSN |
-| `CLAWQL_WORM_REMOTE` | `memory` \| `s3` |
-| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote |
-| `CLAWQL_WORM_SESSION_ID` | Default `sessionId` on append |
-| `CLAWQL_WORM_RECONCILE_MS` | Outbox drain interval (`0` disables) |
+| Variable                                     | Role                                                                    |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| `CLAWQL_WORM_LOCAL`                          | `memory` \| `sqlite` \| `postgres`                                      |
+| `CLAWQL_WORM_SQLITE_PATH`                    | SQLite file (implies local=sqlite when unset)                           |
+| `CLAWQL_WORM_POSTGRES_URL`                   | Postgres DSN                                                            |
+| `CLAWQL_WORM_REMOTE`                         | `memory` \| `s3`                                                        |
+| `CLAWQL_WORM_S3_BUCKET` / `_ENDPOINT` / `_…` | S3/R2 remote                                                            |
+| `CLAWQL_WORM_SESSION_ID`                     | Default `sessionId` on append                                           |
+| `CLAWQL_WORM_RECONCILE_MS`                   | Outbox drain interval (`0` disables)                                    |
+| `CLAWQL_WORM_TEE`                            | `1` = ECDSA P-256 `teeSignature` on append                              |
+| `CLAWQL_WORM_TEE_PLATFORM`                   | `simulated` (default); `sev-snp`/`tdx` need clawql-tee hardware adapter |
+| `CLAWQL_WORM_TEE_PRIVATE_KEY_PEM` / `_PATH`  | Optional PEM pair; ephemeral if omitted (simulated only)                |
+| `CLAWQL_WORM_TEE_PUBLIC_KEY_PEM` / `_PATH`   | Public half of TEE signing key                                          |
 
 Host boots via `bootProcessWormFromEnv` / `ensureProcessWormHostBooted` (MCP). Auth injects `createAuthEventWormSink()`; memory uses `createMemoryWormSink()` + `registerMemoryWormSink`.
 
@@ -69,21 +75,12 @@ Host boots via `bootProcessWormFromEnv` / `ensureProcessWormHostBooted` (MCP). A
 
 Prefer `makeWORMAuditTrailLayer` / `WORMAuditTrailService` inside ClawQL. The `WORMAuditTrail` class is a thin host façade.
 
-## Not this package
+## Phase 3 TEE (simulated)
 
-The MCP `audit` tool ring buffer is ephemeral operator breadcrumbs — a different product surface.
-
-## Phase 3 — TEE ECDSA (shipped; hardware later)
-
-Per-entry `teeSignature` via **ECDSA P-256** (`node:crypto`):
+ECDSA P-256 signatures over entry content hashes (`teeSignature`, excluded from hash body). Software simulated keys ship in-package; verify with `verifyTEESignature`. Hardware attestation (SEV-SNP / TDX) is a `clawql-tee` follow-up.
 
 ```typescript
-import {
-  WORMAuditTrail,
-  MemoryBackend,
-  createSimulatedTeeSigner,
-  verifyTEESignature,
-} from "clawql-audit";
+import { WORMAuditTrail, MemoryBackend, createSimulatedTeeSigner } from "clawql-audit";
 import { Effect } from "effect";
 
 const tee = await Effect.runPromise(createSimulatedTeeSigner());
@@ -92,16 +89,8 @@ const worm = await WORMAuditTrail.create({
   remote: new MemoryBackend(),
   tee,
 });
-const entry = await worm.append({ /* … */ });
-console.log(await Effect.runPromise(verifyTEESignature(entry, tee.publicKeyPem, tee.attestation)));
 ```
 
-Env (process trail): `CLAWQL_WORM_TEE=1` plus PEM keys, or omit PEMs for ephemeral simulated keys.
+## Not this package
 
-| Variable | Role |
-| --- | --- |
-| `CLAWQL_WORM_TEE` | `1` enables signing on append |
-| `CLAWQL_WORM_TEE_PRIVATE_KEY_PEM` | PKCS8 PEM (use `\n` in env) |
-| `CLAWQL_WORM_TEE_PUBLIC_KEY_PEM` | SPKI PEM |
-
-`platform: "simulated"` until **clawql-tee** (SEV-SNP / TDX remote attestation) lands — ECDSA crypto is real; hardware attestation report verification is not.
+The MCP `audit` tool ring buffer is ephemeral operator breadcrumbs — a different product surface.

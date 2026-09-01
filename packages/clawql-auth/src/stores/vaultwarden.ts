@@ -5,10 +5,16 @@
  * Note: classic Vaultwarden is password-manager oriented; for machine secrets
  * prefer the Bitwarden Secrets Manager API against a compatible endpoint, or
  * store ClawQL secrets as secure notes via an org API token.
+ *
+ * `cache` mode delegates to {@link MemorySecretStore} (`Effect.sync`); `http` mode
+ * runs network IO via `Effect.tryPromise`, failing with {@link SecretStoreError}.
  */
+
+import { Effect } from "effect";
 
 import { PathSecretStore } from "./base.js";
 import { MemorySecretStore } from "./memory.js";
+import { SecretStoreError } from "./types.js";
 
 export type VaultwardenStoreOptions = {
   /** Vaultwarden / Bitwarden API base URL. */
@@ -26,6 +32,10 @@ export type VaultwardenStoreOptions = {
   fetchImpl?: typeof fetch;
 };
 
+function errMsg(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
+
 /**
  * Thin adapter: `cache` mode is safe for tests/dev; `http` mode uses Bitwarden
  * Secrets Manager REST (`/api/secrets`) when projectId is set.
@@ -42,76 +52,122 @@ export class VaultwardenStore extends PathSecretStore {
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 
-  private assertHttpReady(): void {
+  private assertHttpReady(): Effect.Effect<void, SecretStoreError> {
     if (!this.opts.projectId) {
-      throw new Error("vaultwarden_project_id_required");
+      return Effect.fail(new SecretStoreError({ reason: "vaultwarden_project_id_required" }));
     }
+    return Effect.void;
   }
 
-  async getSecret(path: string): Promise<string | null> {
+  getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
     if (this.opts.mode === "cache") return this.cache.getSecret(path);
-    this.assertHttpReady();
-    const res = await this.fetchImpl(
-      `${this.opts.endpoint.replace(/\/$/, "")}/api/secrets?projectId=${encodeURIComponent(this.opts.projectId!)}`,
-      { headers: { Authorization: `Bearer ${this.opts.accessToken}` } }
-    );
-    if (!res.ok) throw new Error(`vaultwarden_list_failed:${res.status}`);
-    const json = (await res.json()) as {
-      data?: Array<{ key?: string; value?: string }>;
-      secrets?: Array<{ key?: string; value?: string }>;
-    };
-    const rows = json.data ?? json.secrets ?? [];
-    const hit = rows.find((r) => r.key === path);
-    return hit?.value ?? null;
-  }
-
-  async setSecret(path: string, value: string): Promise<void> {
-    if (this.opts.mode === "cache") {
-      await this.cache.setSecret(path, value);
-      return;
-    }
-    this.assertHttpReady();
-    const res = await this.fetchImpl(`${this.opts.endpoint.replace(/\/$/, "")}/api/secrets`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.opts.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key: path,
-        value,
-        projectId: this.opts.projectId,
-        organizationId: this.opts.organizationId,
-      }),
+    return Effect.gen(this, function* () {
+      yield* this.assertHttpReady();
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(
+            `${this.opts.endpoint.replace(/\/$/, "")}/api/secrets?projectId=${encodeURIComponent(this.opts.projectId!)}`,
+            { headers: { Authorization: `Bearer ${this.opts.accessToken}` } }
+          ),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `vaultwarden_list_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vaultwarden_list_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () =>
+          res.json() as Promise<{
+            data?: Array<{ key?: string; value?: string }>;
+            secrets?: Array<{ key?: string; value?: string }>;
+          }>,
+        catch: (cause) =>
+          new SecretStoreError({
+            reason: `vaultwarden_list_parse_failed: ${errMsg(cause)}`,
+            cause,
+          }),
+      });
+      const rows = json.data ?? json.secrets ?? [];
+      const hit = rows.find((r) => r.key === path);
+      return hit?.value ?? null;
     });
-    if (!res.ok) throw new Error(`vaultwarden_set_failed:${res.status}`);
   }
 
-  async deleteSecret(path: string): Promise<void> {
-    if (this.opts.mode === "cache") {
-      await this.cache.deleteSecret(path);
-      return;
-    }
-    throw new Error(`vaultwarden_delete_requires_secret_id:${path}`);
+  setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
+    if (this.opts.mode === "cache") return this.cache.setSecret(path, value);
+    return Effect.gen(this, function* () {
+      yield* this.assertHttpReady();
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(`${this.opts.endpoint.replace(/\/$/, "")}/api/secrets`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${this.opts.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              key: path,
+              value,
+              projectId: this.opts.projectId,
+              organizationId: this.opts.organizationId,
+            }),
+          }),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `vaultwarden_set_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vaultwarden_set_failed:${res.status}` })
+        );
+      }
+    });
   }
 
-  async listSecrets(prefix: string): Promise<string[]> {
-    if (this.opts.mode === "cache") return this.cache.listSecrets(prefix);
-    this.assertHttpReady();
-    const res = await this.fetchImpl(
-      `${this.opts.endpoint.replace(/\/$/, "")}/api/secrets?projectId=${encodeURIComponent(this.opts.projectId!)}`,
-      { headers: { Authorization: `Bearer ${this.opts.accessToken}` } }
+  deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
+    if (this.opts.mode === "cache") return this.cache.deleteSecret(path);
+    return Effect.fail(
+      new SecretStoreError({ reason: `vaultwarden_delete_requires_secret_id:${path}` })
     );
-    if (!res.ok) throw new Error(`vaultwarden_list_failed:${res.status}`);
-    const json = (await res.json()) as {
-      data?: Array<{ key?: string }>;
-      secrets?: Array<{ key?: string }>;
-    };
-    const rows = json.data ?? json.secrets ?? [];
-    return rows
-      .map((r) => r.key ?? "")
-      .filter((k) => k.startsWith(prefix))
-      .sort();
+  }
+
+  listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
+    if (this.opts.mode === "cache") return this.cache.listSecrets(prefix);
+    return Effect.gen(this, function* () {
+      yield* this.assertHttpReady();
+      const res = yield* Effect.tryPromise({
+        try: () =>
+          this.fetchImpl(
+            `${this.opts.endpoint.replace(/\/$/, "")}/api/secrets?projectId=${encodeURIComponent(this.opts.projectId!)}`,
+            { headers: { Authorization: `Bearer ${this.opts.accessToken}` } }
+          ),
+        catch: (cause) =>
+          new SecretStoreError({ reason: `vaultwarden_list_failed: ${errMsg(cause)}`, cause }),
+      });
+      if (!res.ok) {
+        return yield* Effect.fail(
+          new SecretStoreError({ reason: `vaultwarden_list_failed:${res.status}` })
+        );
+      }
+      const json = yield* Effect.tryPromise({
+        try: () =>
+          res.json() as Promise<{
+            data?: Array<{ key?: string }>;
+            secrets?: Array<{ key?: string }>;
+          }>,
+        catch: (cause) =>
+          new SecretStoreError({
+            reason: `vaultwarden_list_parse_failed: ${errMsg(cause)}`,
+            cause,
+          }),
+      });
+      const rows = json.data ?? json.secrets ?? [];
+      return rows
+        .map((r) => r.key ?? "")
+        .filter((k) => k.startsWith(prefix))
+        .sort();
+    });
   }
 }
 

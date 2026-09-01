@@ -1,0 +1,90 @@
+{
+  "task": {
+    "id": "executor-cmp-002b",
+    "description": "Uniform-fat measured: pulls.list pages 1..N — napkin assumption (similarly verbose each turn)",
+    "repo": "vercel/next.js",
+    "turns": 5
+  },
+  "layer1Once": {
+    "executorLiveExecuteOnly": 115,
+    "clawqlCodemode": 394
+  },
+  "perTurnLayer2": [
+    {
+      "page": 1,
+      "executor": 143466,
+      "clawql": 907,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "page": 2,
+      "executor": 141586,
+      "clawql": 907,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "page": 3,
+      "executor": 146572,
+      "clawql": 907,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "page": 4,
+      "executor": 149790,
+      "clawql": 907,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "page": 5,
+      "executor": 148386,
+      "clawql": 907,
+      "executorItems": 30,
+      "clawqlItems": 30
+    }
+  ],
+  "cumulative": {
+    "ratios": [
+      {
+        "n": 1,
+        "executorCombined": 143581,
+        "clawqlCombined": 1301,
+        "ratio": 110.36,
+        "executorLayer2SharePct": 99.9
+      },
+      {
+        "n": 2,
+        "executorCombined": 285167,
+        "clawqlCombined": 2208,
+        "ratio": 129.15,
+        "executorLayer2SharePct": 100
+      },
+      {
+        "n": 3,
+        "executorCombined": 431739,
+        "clawqlCombined": 3115,
+        "ratio": 138.6,
+        "executorLayer2SharePct": 100
+      },
+      {
+        "n": 4,
+        "executorCombined": 581529,
+        "clawqlCombined": 4022,
+        "ratio": 144.59,
+        "executorLayer2SharePct": 100
+      },
+      {
+        "n": 5,
+        "executorCombined": 729915,
+        "clawqlCombined": 4929,
+        "ratio": 148.09,
+        "executorLayer2SharePct": 100
+      }
+    ],
+    "layer2MeanRatioAsymptote": 160.93
+  },
+  "generatedAt": "2026-08-27T03:45:31.498Z"
+}

@@ -99,8 +99,11 @@ spec:
               containerPort: {{ .Values.service.grpc.targetPort | int }}
               protocol: TCP
           env:
+            {{- $provider := .Values.provider | default "" | toString | trim }}
+            {{- if and $provider (ne $provider "none") }}
             - name: CLAWQL_PROVIDER
-              value: {{ .Values.provider | quote }}
+              value: {{ $provider | quote }}
+            {{- end }}
             - name: CLAWQL_OBSIDIAN_VAULT_PATH
               value: {{ .Values.obsidianVaultPath | quote }}
             - name: PORT
@@ -111,6 +114,9 @@ spec:
               value: {{ .Values.bundledOffline | quote }}
             - name: NODE_OPTIONS
               value: {{ .Values.nodeOptions | quote }}
+            # Authoritative plugin + provider composition (ClawQLInstance).
+            - name: CLAWQL_INSTANCE_SPEC
+              value: {{ include "clawql-mcp.instanceSpecJson" . | quote }}
             {{- $enableGrpc := or .Values.enableGrpc (dig "clawql-mcp-grpc" "enabled" false .Values) }}
             {{- if $enableGrpc }}
             - name: ENABLE_GRPC
@@ -122,49 +128,9 @@ spec:
             - name: ENABLE_GRPC_REFLECTION
               value: "1"
             {{- end }}
-            {{- if not .Values.enableMemory }}
-            - name: CLAWQL_ENABLE_MEMORY
-              value: "0"
-            {{- end }}
-            # Always set so chart intent wins over duplicate keys from envFrom Secret (e.g. clawql-provider-env).
-            - name: CLAWQL_ENABLE_DOCUMENTS
-              value: {{ ternary "1" "0" .Values.enableDocuments | quote }}
-            {{- if .Values.enableIdpClassifier }}
-            - name: CLAWQL_ENABLE_IDP_CLASSIFIER
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableLangextract }}
-            - name: CLAWQL_ENABLE_LANGEXTRACT
-              value: "1"
-            {{- end }}
+            {{/* Horizontal plugins: CLAWQL_INSTANCE_SPEC only — do not dual-write CLAWQL_ENABLE_*. */}}
             {{- if .Values.enablePrivacyFilter }}
             - name: CLAWQL_ENABLE_PRIVACY_FILTER
-              value: "1"
-            {{- end }}
-            {{- if .Values.enablePdfInspector }}
-            - name: CLAWQL_ENABLE_PDF_INSPECTOR
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableAnydoc }}
-            - name: CLAWQL_ENABLE_ANYDOC
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableIdpPipeline }}
-            - name: CLAWQL_ENABLE_IDP_PIPELINE
-              value: "1"
-            {{- end }}
-            - name: CLAWQL_ENABLE_GOOGLE
-              value: {{ ternary "1" "0" (.Values.enableGoogle | default false) | quote }}
-            - name: CLAWQL_ENABLE_CLOUDFLARE
-              value: {{ ternary "1" "0" (.Values.enableCloudflare | default true) | quote }}
-            - name: CLAWQL_ENABLE_AWS
-              value: {{ ternary "1" "0" (.Values.enableAws | default false) | quote }}
-            {{- if .Values.enableSandbox }}
-            - name: CLAWQL_ENABLE_SANDBOX
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableData }}
-            - name: CLAWQL_ENABLE_DATA
               value: "1"
             {{- end }}
             {{- if and .Values.enableSandbox .Values.sandboxKata.enabled (not .Values.sandboxDocker.enabled) }}
@@ -192,13 +158,7 @@ spec:
             - name: CLAWQL_SANDBOX_DOCKER_BIN
               value: "/opt/clawql-docker/docker"
             {{- end }}
-            {{- if .Values.enableNotify }}
-            - name: CLAWQL_ENABLE_NOTIFY
-              value: "1"
-            {{- end }}
             {{- if .Values.enableWorkflow }}
-            - name: CLAWQL_ENABLE_WORKFLOW
-              value: "1"
             - name: CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST
               value: {{ include "clawql-mcp.workflowNamespaceList" . | quote }}
             - name: CLAWQL_WORKFLOW_DEFAULT_NAMESPACE
@@ -233,8 +193,6 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.enableArgoCd }}
-            - name: CLAWQL_ENABLE_ARGO_CD
-              value: "1"
             - name: CLAWQL_ARGO_CD_NAMESPACE_ALLOWLIST
               value: {{ include "clawql-mcp.argocdNamespaceList" . | quote }}
             - name: CLAWQL_ARGO_CD_DEFAULT_NAMESPACE
@@ -244,14 +202,6 @@ spec:
               value: "1"
             {{- end }}
             {{- end }}
-            {{- if .Values.enableHitlLabelStudio }}
-            - name: CLAWQL_ENABLE_HITL_LABEL_STUDIO
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableOnyx }}
-            - name: CLAWQL_ENABLE_ONYX
-              value: "1"
-            {{- end }}
             {{- if .Values.onyxBaseUrl }}
             - name: ONYX_BASE_URL
               value: {{ .Values.onyxBaseUrl | quote }}
@@ -260,10 +210,6 @@ spec:
               value: "http://{{ include "clawql-mcp.onyxName" . }}:{{ .Values.onyx.service.port }}"
             {{- end }}
             {{- /* clawql-web — docs/web/clawql-web.md */ -}}
-            {{- if .Values.enableWeb }}
-            - name: CLAWQL_ENABLE_WEB
-              value: "1"
-            {{- end }}
             {{- if .Values.webSearch.provider }}
             - name: CLAWQL_WEB_SEARCH_PROVIDER
               value: {{ .Values.webSearch.provider | quote }}
@@ -291,14 +237,6 @@ spec:
             {{- if .Values.webAuditStore }}
             - name: CLAWQL_WEB_AUDIT_STORE
               value: {{ .Values.webAuditStore | quote }}
-            {{- end }}
-            {{- if .Values.enableOuroboros }}
-            - name: CLAWQL_ENABLE_OUROBOROS
-              value: "1"
-            {{- end }}
-            {{- if .Values.enableLangfuseEval }}
-            - name: CLAWQL_ENABLE_LANGFUSE_EVAL
-              value: "1"
             {{- end }}
             {{- if and .Values.instanceSpec.enabled .Values.instanceSpec.configMapName }}
             - name: CLAWQL_INSTANCE_SPEC_FILE
@@ -396,8 +334,6 @@ spec:
             {{- if or .Values.idpCollaboration.coneshare.enabled .Values.idpCollaboration.coneshare.externalUrl }}
             - name: CONESHARE_BASE_URL
               value: {{ default (printf "http://%s:%d" (include "clawql-mcp.coneshareName" .) (.Values.idpCollaboration.coneshare.service.port | int)) .Values.idpCollaboration.coneshare.externalUrl | quote }}
-            - name: CLAWQL_ENABLE_CONESHARE
-              value: "1"
             {{- end }}
             {{- end }}
             {{- if .Values.teamSync.enabled }}

@@ -126,13 +126,23 @@ Hermes (Ornith-1.5-35B-A3B, Mac Mini MLX :8082)
 
 ### 3.2 ClawQL MCP Tool Availability
 
-Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`. Tool availability is controlled per agent via ATR scoping at session creation. Prefer **ACP for filesystem/shell**; MCP for ClawQL tools (`memory_*`, `clawql_sql`, …).
+Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`. Tool availability is controlled per agent via ATR scoping at session creation. Prefer **ACP for filesystem/shell**; MCP for ClawQL tools.
+
+Shipped MCP names (enable **`CLAWQL_ENABLE_DATA=1`** and **`CLAWQL_ENABLE_WEB=1`**): `memory_recall`, `memory_ingest`, `data_query` (alias **`clawql_sql`**), `web_search`, `search`, `execute`, `audit`, `cache`. There is **no** `clawql_think` tool yet. `file_read` / `file_write` / `terminal_exec` are Cline-native, not MCP.
 
 **Hermes ATR scope (orchestration tasks):**
 
 ```json
 {
-  "tools": ["memory_recall", "memory_ingest", "clawql_think", "clawql_sql", "web_search"],
+  "tools": [
+    "memory_recall",
+    "memory_ingest",
+    "clawql_sql",
+    "web_search",
+    "search",
+    "execute",
+    "audit"
+  ],
   "budget": {
     "maxTokens": 500000,
     "maxUsd": 5.0
@@ -144,7 +154,7 @@ Both agents connect to the ClawQL MCP server running on the Mac Mini at `:8080`.
 
 ```json
 {
-  "tools": ["clawql_sql", "memory_recall", "clawql_think"],
+  "tools": ["clawql_sql", "memory_recall", "search", "execute", "audit"],
   "budget": {
     "maxTokens": 200000,
     "maxUsd": 2.0
@@ -190,15 +200,21 @@ cp /tmp/sharp-template/chat_template.jinja \
   ~/models/ornith-1.5-35b-a3b/
 
 # Single MLX server — Hermes and Cline (default)
+# Mini Metal: keep prompt-cache-size=1 and concurrency=1 or KV cache OOMs
+# (`metal::malloc` resource limit). Prefer scripts/dev/start-ornith-mlx-for-personal-agent.sh
 mlx_lm.server \
   --model ~/models/ornith-1.5-35b-a3b \
   --port 8082 \
   --host 127.0.0.1 \
   --temp 0.6 \
-  --seed 42
+  --max-tokens 2048 \
+  --prompt-cache-size 1 \
+  --prompt-cache-bytes 2GB \
+  --decode-concurrency 1 \
+  --prompt-concurrency 1
 ```
 
-Set Hermes context ≥ **64K** via `hermes config set` (tool calling is unreliable below that). Temperature 0.6 matches Ornith published bench conditions for the orchestrator; Cline overrides per-request via clawql-inference.
+Hermes may advertise a **64K** context for tool calling, but on this Mini compact earlier (`compression.threshold_tokens: 8192`) and cap `max_tokens` at **2048**. Disable `auxiliary.title_generation` so a second Ornith call does not share the GPU with the main turn. Temperature 0.6 matches Ornith published bench conditions for the orchestrator; Cline overrides per-request via clawql-inference.
 
 ### 4.2 Nemotron 3.5 Lightning (optional Cline fallback)
 
@@ -673,7 +689,7 @@ cline server --port 8095 --acp-enabled
 - Cron job triggers (no inference call)
 - Session start and end
 - Panguard blocks on any out-of-scope action
-- All ClawQL MCP tool calls (already captured via execute path)
+- All ClawQL MCP tool calls (auto-appended to the `audit` ring as `category=mcp_tool`; optional Loki stream `job=clawql-audit`)
 
 Together these provide complete coverage. Nothing consequential happens without a record.
 
@@ -1053,6 +1069,33 @@ ORDER BY e.ts ASC;
 4. Start a chat with your bot and send `/start`.
 5. Hermes reads `${TELEGRAM_BOT_TOKEN}` and `${YOUR_TELEGRAM_USER_ID}` from env (see §5.2 `hermes.yaml`).
 
+### 8.1.1 OAuth re-auth DMs (Phase 7)
+
+When outbound OAuth refresh fails (`invalid_grant` / missing token), Hermes should DM you a **re-auth URL only** (never refresh tokens or client secrets).
+
+```ts
+import { createTelegramReauthNotifierFromEnv } from "clawql-agents";
+import { notifyReauthRequiredEffect } from "clawql-auth";
+import { Effect } from "effect";
+
+const notifier = createTelegramReauthNotifierFromEnv();
+if (notifier) {
+  await Effect.runPromise(
+    notifyReauthRequiredEffect(notifier, reauthError, { channel: "telegram" })
+  );
+}
+```
+
+Message shape:
+
+```
+ClawQL re-auth required: google
+Reason: invalid_grant
+Open: https://…/oauth/authorize?provider=google&state=…
+```
+
+Requires the same `TELEGRAM_BOT_TOKEN` + `YOUR_TELEGRAM_USER_ID` as §8.1. Wire `buildReauthUrl` on `OAuthTokenStore` so `ReauthRequiredError.reauthUrl` is populated.
+
 ### 8.2 Notification Formats
 
 Hermes sends terse messages per SOUL.md. Canonical formats:
@@ -1395,7 +1438,8 @@ curl -s http://localhost:8080/mcp \
   -H "X-ClawQL-ATR: $(cat ~/.hermes/personal/atr-hermes.json | base64 -w0)" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools[].name'
 
-# Expected: memory_recall, memory_ingest, clawql_think, clawql_sql, web_search
+# Expected: memory_recall, memory_ingest, clawql_sql, web_search, search, execute, audit
+# (no clawql_think; file_* / terminal_* are Cline-native, not MCP)
 
 # Cline-scoped tools (execution ATR)
 curl -s http://localhost:8080/mcp \
@@ -1403,11 +1447,11 @@ curl -s http://localhost:8080/mcp \
   -H "X-ClawQL-ATR: $(cat ~/.cline/atr-cline.json | base64 -w0)" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | jq '.result.tools[].name'
 
-# Expected: clawql_sql, memory_recall, clawql_think, file_read, file_write, terminal_exec
+# Expected: clawql_sql, memory_recall, search, execute, audit
 
 # clawql-inference lists Ornith (required); Nemotron only if fallback enabled
 curl -s http://localhost:8091/v1/models | jq '.data[].id'
-# Expected: ornith-1.5-35b-a3b (+ nemotron-3.5-lightning if §10.1 forced fallback)
+# Expected: mlx/ornith-1.5-35b-a3b (and openai/ornith-1.5-35b-a3b alias)
 ```
 
 ### 10.3 WORM Completeness Verification
@@ -1562,6 +1606,8 @@ After one to two weeks of live use, also run OpenBench **Family M** (cross-sessi
 ## Related repo docs
 
 - Homelab overview: [`README.md`](README.md)
+- Start scripts: [`../../scripts/dev/start-clawql-for-personal-agent.sh`](../../scripts/dev/start-clawql-for-personal-agent.sh), [`../../scripts/dev/start-clawql-inference-for-personal-agent.sh`](../../scripts/dev/start-clawql-inference-for-personal-agent.sh)
+- Cline MCP snippet: [`../../examples/personal-agent/README.md`](../../examples/personal-agent/README.md)
 - Inference ports: [`inference-stack.md`](inference-stack.md)
 - MCP on Mac Mini: [`mcp-mac-mini.md`](mcp-mac-mini.md)
 - Harvey LAB smoke gate (Ornith decision): [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md)

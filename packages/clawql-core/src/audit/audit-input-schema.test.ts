@@ -20,6 +20,8 @@ describe("AuditInputSchema", () => {
     });
     const listed = await Effect.runPromise(decodeAuditInput({ operation: "list" }));
     expect(listed).toEqual({ operation: "list", limit: 20 });
+    const verified = await Effect.runPromise(decodeAuditInput({ operation: "verify" }));
+    expect(verified).toEqual({ operation: "verify" });
   });
 
   it("rejects whitespace-only append category", async () => {

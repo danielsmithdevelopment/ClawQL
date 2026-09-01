@@ -5,7 +5,6 @@
  * CLAWQL_WORM_LOCAL=memory|sqlite|postgres (default: sqlite when path set, else memory)
  * CLAWQL_WORM_REMOTE=memory|s3 (default: memory)
  * CLAWQL_WORM_SQLITE_PATH, CLAWQL_WORM_POSTGRES_URL, CLAWQL_WORM_S3_* for backends
- * CLAWQL_WORM_TEE=1 enables ECDSA P-256 teeSignature on append (PEM or ephemeral)
  */
 
 import { Effect } from "effect";
@@ -15,8 +14,7 @@ import { PostgresBackend } from "./storage/postgres.js";
 import { S3Backend } from "./storage/s3.js";
 import { SQLiteBackend } from "./storage/sqlite.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
-import type { TEESigner } from "./tee/signer.js";
-import { createEcdsaTeeSigner, createSimulatedTeeSigner } from "./tee/signer.js";
+import { createWormTeeSignerFromEnvEffect } from "./tee/env.js";
 import type { WORMAuditTrailConfig } from "./trail.js";
 
 function envTrim(env: NodeJS.ProcessEnv, key: string): string | undefined {
@@ -31,29 +29,20 @@ function parseIntEnv(env: NodeJS.ProcessEnv, key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export const wormEnabledFromEnv = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<boolean> =>
+export const wormEnabledFromEnv = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<boolean> =>
   Effect.sync(() => envTrim(env, "CLAWQL_WORM_ENABLED") === "1");
 
-export const defaultWormSessionId = (
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string> =>
+export const defaultWormSessionId = (env: NodeJS.ProcessEnv = process.env): Effect.Effect<string> =>
   Effect.sync(
     () =>
-      envTrim(env, "CLAWQL_WORM_SESSION_ID") ??
-      envTrim(env, "CLAWQL_SESSION_ID") ??
-      "clawql-host"
+      envTrim(env, "CLAWQL_WORM_SESSION_ID") ?? envTrim(env, "CLAWQL_SESSION_ID") ?? "clawql-host"
   );
 
 export const defaultWormAgentName = (
   env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<string | undefined> =>
-  Effect.sync(() => envTrim(env, "CLAWQL_WORM_AGENT_NAME"));
+): Effect.Effect<string | undefined> => Effect.sync(() => envTrim(env, "CLAWQL_WORM_AGENT_NAME"));
 
-function makeLocal(
-  env: NodeJS.ProcessEnv
-): Effect.Effect<LocalStorageBackend, AuditError> {
+function makeLocal(env: NodeJS.ProcessEnv): Effect.Effect<LocalStorageBackend, AuditError> {
   return Effect.try({
     try: () => {
       const mode =
@@ -65,8 +54,7 @@ function makeLocal(
             : "memory");
       if (mode === "memory") return new MemoryBackend();
       if (mode === "sqlite") {
-        const path =
-          envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
+        const path = envTrim(env, "CLAWQL_WORM_SQLITE_PATH") ?? "./data/clawql-worm.sqlite";
         return new SQLiteBackend({ path });
       }
       if (mode === "postgres") {
@@ -86,9 +74,7 @@ function makeLocal(
   });
 }
 
-function makeRemote(
-  env: NodeJS.ProcessEnv
-): Effect.Effect<StorageBackend, AuditError> {
+function makeRemote(env: NodeJS.ProcessEnv): Effect.Effect<StorageBackend, AuditError> {
   return Effect.try({
     try: () => {
       const mode = envTrim(env, "CLAWQL_WORM_REMOTE") ?? "memory";
@@ -106,9 +92,7 @@ function makeRemote(
           region: envTrim(env, "CLAWQL_WORM_S3_REGION") ?? "auto",
           prefix: envTrim(env, "CLAWQL_WORM_S3_PREFIX") ?? "worm/",
           credentials:
-            accessKeyId && secretAccessKey
-              ? { accessKeyId, secretAccessKey }
-              : undefined,
+            accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined,
         });
       }
       throw new Error(`Unknown CLAWQL_WORM_REMOTE=${mode}`);
@@ -118,33 +102,6 @@ function makeRemote(
         reason: `WORM remote backend config failed: ${cause instanceof Error ? cause.message : String(cause)}`,
         cause,
       }),
-  });
-}
-
-function makeTee(
-  env: NodeJS.ProcessEnv
-): Effect.Effect<TEESigner | undefined, AuditError> {
-  return Effect.gen(function* () {
-    if (envTrim(env, "CLAWQL_WORM_TEE") !== "1") return undefined;
-    const privateKeyPem = envTrim(env, "CLAWQL_WORM_TEE_PRIVATE_KEY_PEM");
-    const publicKeyPem = envTrim(env, "CLAWQL_WORM_TEE_PUBLIC_KEY_PEM");
-    if (privateKeyPem && publicKeyPem) {
-      return yield* createEcdsaTeeSigner({
-        privateKeyPem: privateKeyPem.replace(/\\n/g, "\n"),
-        publicKeyPem: publicKeyPem.replace(/\\n/g, "\n"),
-        platform: "simulated",
-      });
-    }
-    // Ephemeral simulated key when enabled without PEM (dev / tests).
-    if (envTrim(env, "CLAWQL_WORM_TEE_EPHEMERAL") === "1" || (!privateKeyPem && !publicKeyPem)) {
-      return yield* createSimulatedTeeSigner();
-    }
-    return yield* Effect.fail(
-      new AuditError({
-        reason:
-          "CLAWQL_WORM_TEE=1 requires CLAWQL_WORM_TEE_PRIVATE_KEY_PEM + CLAWQL_WORM_TEE_PUBLIC_KEY_PEM, or omit both for ephemeral simulated keys",
-      })
-    );
   });
 }
 
@@ -158,12 +115,12 @@ export const createWormTrailConfigFromEnvEffect = (
     if (!(yield* wormEnabledFromEnv(env))) return null;
     const local = yield* makeLocal(env);
     const remote = yield* makeRemote(env);
-    const tee = yield* makeTee(env);
+    const tee = yield* createWormTeeSignerFromEnvEffect(env);
     const httpPort = parseIntEnv(env, "CLAWQL_WORM_HTTP_PORT");
     return {
       local,
       remote,
-      tee,
+      ...(tee ? { tee } : {}),
       retryMaxAttempts: parseIntEnv(env, "CLAWQL_WORM_RETRY_MAX"),
       retryBackoffMs: parseIntEnv(env, "CLAWQL_WORM_RETRY_BACKOFF_MS"),
       reconcileIntervalMs: parseIntEnv(env, "CLAWQL_WORM_RECONCILE_MS") ?? 2000,

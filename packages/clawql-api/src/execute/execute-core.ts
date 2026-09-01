@@ -14,6 +14,7 @@ import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
+import { executeNativeWebmcp } from "./native-webmcp.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -121,6 +122,22 @@ export function executeClawqlOperationEffect(
             error: exec.error,
             specLabel: op.specLabel ?? null,
             hint: "CLI source execute failed (check command, args, and env).",
+          })
+        );
+      }
+      return yield* textContentEffect(
+        JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
+      );
+    }
+
+    if (op.protocolKind === "webmcp" && op.nativeWebmcp) {
+      const exec = yield* fromPromise(() => executeNativeWebmcp(op as Operation, args));
+      if (!exec.ok) {
+        return yield* textContentEffect(
+          JSON.stringify({
+            error: exec.error,
+            specLabel: op.specLabel ?? null,
+            hint: "WebMCP execute failed (check CDP browser, page URL, and tool arguments).",
           })
         );
       }

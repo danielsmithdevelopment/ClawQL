@@ -31,11 +31,14 @@ Install:
 npm install clawql-mcp
 ```
 
-Run with the **default bundled stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx):
+Run with a **slim** server (no bundled OpenAPI catalog loaded). Opt into the curated pack when you want it:
 
 ```bash
 npx -p clawql-mcp clawql init --interactive   # vault-first onboarding
 npx -p clawql-mcp clawql mcp-config           # MCP JSON for Cursor
+# Optional curated pack (CF + GitHub + Slack + Linear + Notion + Onyx):
+CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}' npx -p clawql-mcp clawql-mcp
+# Or: CLAWQL_PROVIDER=default npx -p clawql-mcp clawql-mcp
 npx -p clawql-mcp clawql-mcp
 ```
 

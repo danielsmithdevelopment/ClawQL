@@ -1,9 +1,12 @@
-/**
- * Single place to interpret optional feature flags (env → typed booleans).
- * See docs/mcp/mcp-tools.md and GitHub #79.
- */
-
 import { z } from "zod";
+import { resolveCompositionFlagsFromEnv } from "./horizontal-composition.js";
+
+export type { ClawQLHorizontalTierSpec } from "./horizontal-composition.js";
+export {
+  optionalFlagsFromHorizontalTierSpec,
+  readInstanceBodyForFlagsFromEnv,
+  resolveCompositionFlagsFromEnv,
+} from "./horizontal-composition.js";
 
 /** `1`, `true`, `yes` (case-insensitive) → true; unset or other → false. */
 function envTruthy(v: string | undefined): boolean {
@@ -37,7 +40,6 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
-  CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /**
    * Structured data / Node DuckDB MCP tools (`data_query`, `data_ingest`). Default false —
@@ -151,10 +153,6 @@ export type ClawqlOptionalToolFlags = {
    */
   enableOnyxKnowledge: boolean;
   /**
-   * ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): Ouroboros MCP tools (`ouroboros_*`). Default false.
-   */
-  enableOuroboros: boolean;
-  /**
    * ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)): MCP **`sandbox_exec`** (bridge / Seatbelt / Docker). Default false — register with **`CLAWQL_ENABLE_SANDBOX=1`**.
    */
   enableSandbox: boolean;
@@ -256,7 +254,6 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
-    enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
     enableWeb: resolveEnableWeb(raw),
@@ -280,10 +277,57 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
 
 /**
  * Parsed optional tool flags from the given env (default `process.env`).
+ *
+ * When `CLAWQL_INSTANCE_SPEC` / `CLAWQL_TIER` is set, horizontal plugins come from
+ * instance/tier composition — **not** `CLAWQL_ENABLE_*`. Legacy env flags apply only
+ * when neither instance nor tier is configured (local onboarding / bare npm).
  */
 export function getClawqlOptionalToolFlags(
   env: NodeJS.ProcessEnv = process.env
 ): ClawqlOptionalToolFlags {
+  const hasInstance =
+    Boolean(env.CLAWQL_INSTANCE_SPEC?.trim()) || Boolean(env.CLAWQL_INSTANCE_SPEC_FILE?.trim());
+  const hasTier = Boolean(env.CLAWQL_TIER?.trim());
+  if (hasInstance || hasTier) {
+    return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags());
+  }
   const raw = rawOptionalFlagsSchema.parse(env);
-  return rawToFlags(raw);
+  return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags(), rawToFlags(raw));
+}
+
+/**
+ * Hard defaults for horizontal plugin composition (no env). Matches the `standard`
+ * tier preset baseline before overlays: memory + documents on; opt-in tiers off.
+ */
+export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
+  return {
+    enableGrpc: false,
+    enableGrpcReflection: false,
+    externalIngestPreview: false,
+    enableMemory: true,
+    enableDocuments: true,
+    enableSchedule: false,
+    enableNotify: false,
+    enableWorkflow: false,
+    enableArgoCd: false,
+    enableVision: false,
+    enableOnyxKnowledge: false,
+    enableSandbox: false,
+    enableData: false,
+    enableWeb: false,
+    enableCodeGraph: false,
+    enableOntology: false,
+    enableOntologyWrites: false,
+    enableHitlLabelStudio: false,
+    enableConeshare: false,
+    enableIdpPipeline: false,
+    enableIdpClassifier: false,
+    enableLangextract: false,
+    enablePdfInspector: false,
+    enableAnydoc: false,
+    enableLangfuseEval: false,
+    enableGoogle: false,
+    enableCloudflare: true,
+    enableAws: false,
+  };
 }

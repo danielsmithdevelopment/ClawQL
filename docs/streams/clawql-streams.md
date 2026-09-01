@@ -13,6 +13,10 @@ ClawQL Streams is the event-driven autonomous agent execution layer for ClawQL. 
 
 Together with ClawQL Core (any protocol → MCP) and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md) (MCP → any protocol), Streams completes the **Protocol Fabric**: MCP as the common intermediate representation, plus an event loop that can act on world events — not only interactive agent sessions.
 
+![ClawQL Streams architecture — Event Stream into Core + mcp-api-adapter + NATS JetStream; API sources including WebMCP (preview); transport layers including HTMX / MCP-UI; WORM audit and RTP finetune exports](/images/streams/clawql-streams-architecture.webp)
+
+Marketing landing: [clawql.com/streams](https://clawql.com/streams). **WebMCP** (`navigator.modelContext`) is an emerging browser-native source — Chrome preview only; ClawQL Core ingests page-declared tools the same way it ingests REST or GraphQL. **HTMX / MCP-UI** is the inverse: MCP catalog → human-facing forms on the adapter surface.
+
 ### v0.2 changes (from v0.1.x)
 
 | Decision               | v0.1.x                                                 | v0.2                                                                                                     |

@@ -292,6 +292,9 @@ const ENTRIES: Array<Entry> = [
   { path: '/ouroboros/build-plan', changeFrequency: 'monthly', priority: 0.55 },
   { path: '/spec-configuration', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/troubleshooting', changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/auth', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/audit', changeFrequency: 'weekly', priority: 0.95 },
+  { path: '/observability', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
   {
     path: '/security/defense-in-depth',
@@ -309,6 +312,11 @@ const ENTRIES: Array<Entry> = [
   { path: '/graphql-proxy', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/bundled-specs', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/benchmarks', changeFrequency: 'monthly', priority: 0.75 },
+  {
+    path: '/benchmarks/executor-comparison',
+    changeFrequency: 'monthly',
+    priority: 0.76,
+  },
   {
     path: '/case-studies/cloudflare-docs-mcp',
     changeFrequency: 'monthly',

@@ -1,11 +1,12 @@
 import type { ListedMcpTool } from "mcp-grpc-transport";
 import type { CollapsedToolResult } from "./call.js";
+import type { TraceCallRecord } from "./mcp-ui-trace.js";
 
 export type { ListedMcpTool };
 
 export type UpstreamKind = "grpc" | "stdio" | "http";
 
-export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc" | "websocket";
+export type ApiSurface = "openapi" | "graphql" | "mcp" | "grpc" | "websocket" | "mcp-ui";
 
 export type ToolCatalog = {
   tools: ListedMcpTool[];
@@ -14,6 +15,8 @@ export type ToolCatalog = {
   grpcAddress?: string;
   /** Streamable HTTP MCP path when enabled (e.g. `/mcp`). */
   mcpPath?: string;
+  /** HTMX MCP UI path when enabled (e.g. `/mcp-ui`). */
+  mcpUiPath?: string;
   /** Human-readable upstream label (command, URL, or host:port). */
   upstream: string;
   upstreamKind: UpstreamKind;
@@ -33,6 +36,18 @@ export type McpApiAdapterHttpOptions = {
   port?: number;
   /** Optional edge API key (`Authorization: Bearer` or `X-API-Key`). */
   apiKey?: string;
+  /**
+   * Accept ClawQL-issued MCP access JWTs (with `atr` claim) via JWKS and/or HS256.
+   * When set alongside `apiKey`, either credential is accepted.
+   */
+  jwtAuth?: {
+    /** ClawQL AS JWKS URL (`/.well-known/jwks.json`). */
+    jwksUrl?: string;
+    /** Expected JWT `iss`. */
+    issuer?: string;
+    /** HS256 secret for tests / single-node (prefer JWKS in production). */
+    hs256Secret?: string;
+  };
   /** Optional catalog poll interval in ms (0 / unset = no poll). */
   refreshMs?: number;
   /** OpenAPI / GraphiQL title. */
@@ -86,6 +101,24 @@ export type McpApiAdapterOptions = McpApiAdapterHttpOptions & {
    * Set `false` to disable the WebSocket surface.
    */
   wsPath?: string | false;
+  /**
+   * HTMX MCP UI playground path (default `/mcp-ui`).
+   * Set `false` to disable the browser UI surface.
+   */
+  mcpUiPath?: string | false;
+  /**
+   * When true (default), `/mcp-ui` filters catalog + execute by the caller's ATR.
+   * JWT scopes/tools control visibility; API keys are treated as admin.
+   * Set `false` to show the full catalog regardless of ATR (open demos).
+   */
+  mcpUiAtrScoped?: boolean;
+  /**
+   * Optional host hook for `GET /mcp-ui/trace/:sessionId` flamegraphs.
+   * Return inference-shaped records for a session/correlation id.
+   */
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>;
 };
 
 export type StartedMcpApiAdapter = {
@@ -96,6 +129,8 @@ export type StartedMcpApiAdapter = {
   grpcAddress?: string;
   /** Streamable HTTP MCP path when enabled. */
   mcpPath?: string;
+  /** HTMX MCP UI path when enabled (e.g. `/mcp-ui`). */
+  mcpUiPath?: string;
   /** WebSocket tool-call path when enabled (e.g. `/ws`). */
   wsPath?: string;
   /** `ws://host:port/ws` when the WebSocket surface is enabled. */

@@ -66,9 +66,7 @@ export const sealHashChainRecord = (input: {
   });
 
 /** Recompute content hash for verify (excludes hash, backendAcks; teeSignature excluded from hash body). */
-export const recomputeEntryHash = (
-  entry: WORMEntry
-): Effect.Effect<string> =>
+export const recomputeEntryHash = (entry: WORMEntry): Effect.Effect<string> =>
   Effect.gen(function* () {
     const { hash: _h, backendAcks: _a, teeSignature: _t, ...content } = entry;
     const json = yield* canonicalJSON(content);

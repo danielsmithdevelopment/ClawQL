@@ -138,7 +138,14 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
       surfaces: string[];
     };
     expect(toolsBody.upstreamKind).toBe("grpc");
-    expect(toolsBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc", "websocket"]);
+    expect(toolsBody.surfaces).toEqual([
+      "openapi",
+      "graphql",
+      "mcp",
+      "grpc",
+      "websocket",
+      "mcp-ui",
+    ]);
     expect(toolsBody.tools.map((t) => t.name).sort()).toEqual(["add", "echo"]);
 
     const restEcho = await fetch(`${gateway.url}/echo`, {
@@ -188,6 +195,23 @@ describe("mcp-api-adapter e2e (gRPC upstream)", () => {
       await mcpClient.close().catch(() => {});
       await mcpTransport.close().catch(() => {});
     }
+
+    const uiPage = await fetch(`${gateway.url}/mcp-ui`);
+    expect(uiPage.status).toBe(200);
+    const uiHtml = await uiPage.text();
+    expect(uiHtml).toContain("echo");
+    expect(uiHtml).toContain('hx-post="/mcp-ui/execute/add"');
+
+    const uiExecute = await fetch(`${gateway.url}/mcp-ui/execute/add`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ a: "2", b: "40" }).toString(),
+    });
+    expect(uiExecute.status).toBe(200);
+    const uiResult = await uiExecute.text();
+    expect(uiResult).toContain("sum");
+    expect(uiResult).toContain("42");
+    expect(uiResult).toContain("result--success");
   });
 });
 
@@ -229,7 +253,14 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
     };
     expect(healthBody.upstreamKind).toBe("http");
     expect(healthBody.mcpPath).toBe("/mcp");
-    expect(healthBody.surfaces).toEqual(["openapi", "graphql", "mcp", "grpc", "websocket"]);
+    expect(healthBody.surfaces).toEqual([
+      "openapi",
+      "graphql",
+      "mcp",
+      "grpc",
+      "websocket",
+      "mcp-ui",
+    ]);
 
     const restAdd = await fetch(`${gateway.url}/add`, {
       method: "POST",
@@ -276,5 +307,15 @@ describe("mcp-api-adapter e2e (HTTP upstream → scaffold OpenAPI+GraphQL+gRPC)"
       await mcpClient.close().catch(() => {});
       await mcpTransport.close().catch(() => {});
     }
+
+    const uiExecute = await fetch(`${gateway.url}/mcp-ui/execute/echo`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ message: "hello-mcp-ui" }).toString(),
+    });
+    expect(uiExecute.status).toBe(200);
+    const uiResult = await uiExecute.text();
+    expect(uiResult).toContain("hello-mcp-ui");
+    expect(uiResult).toContain("result--success");
   });
 });

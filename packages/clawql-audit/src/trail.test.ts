@@ -22,9 +22,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 describe("package constraint", () => {
   it("depends only on clawql-merkle among clawql-* packages", () => {
-    const pkg = JSON.parse(
-      readFileSync(join(here, "..", "package.json"), "utf8")
-    ) as {
+    const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as {
       dependencies?: Record<string, string>;
       peerDependencies?: Record<string, string>;
       optionalDependencies?: Record<string, string>;
@@ -134,14 +132,10 @@ describe("WORMAuditTrail (memory dual-ack)", () => {
     let failRemote = true;
     const remote: StorageBackend = {
       write: () =>
-        failRemote
-          ? Effect.fail(new AuditError({ reason: "remote down" }))
-          : Effect.void,
-      query: () =>
-        Effect.fail(new AuditError({ reason: "no query" })),
+        failRemote ? Effect.fail(new AuditError({ reason: "remote down" })) : Effect.void,
+      query: () => Effect.fail(new AuditError({ reason: "no query" })),
       all: () => Effect.fail(new AuditError({ reason: "no all" })),
-      latestEntry: () =>
-        Effect.fail(new AuditError({ reason: "no latest" })),
+      latestEntry: () => Effect.fail(new AuditError({ reason: "no latest" })),
     };
 
     const worm = await WORMAuditTrail.create({

@@ -1,3 +1,5 @@
+import type { Effect } from "effect";
+
 export type StoredOAuthToken = {
   accessToken: string;
   refreshToken?: string;
@@ -10,14 +12,20 @@ export type StoredOAuthToken = {
 /** `tenant:provider:subject` or any stable opaque key. */
 export type OAuthTokenKey = string;
 
+/**
+ * Host-supplied refresh callback (talks to the upstream IdP token endpoint).
+ * Failure is `unknown` — hosts throw/fail with whatever shape their IdP client returns
+ * (inspected via {@link oauthErrorCode}), matching pre-Effect behavior.
+ */
 export type OAuthRefreshFn = (
   key: OAuthTokenKey,
   current: StoredOAuthToken
-) => Promise<StoredOAuthToken>;
+) => Effect.Effect<StoredOAuthToken, unknown>;
 
+/** Host-injected token persistence (Vault / SecretStore / memory). Effect-primary. */
 export type OAuthTokenPersistence = {
-  load: (key: OAuthTokenKey) => Promise<StoredOAuthToken | null>;
-  save: (key: OAuthTokenKey, token: StoredOAuthToken) => Promise<void>;
+  load: (key: OAuthTokenKey) => Effect.Effect<StoredOAuthToken | null, unknown>;
+  save: (key: OAuthTokenKey, token: StoredOAuthToken) => Effect.Effect<void, unknown>;
 };
 
 /** Default proactive refresh window (60 seconds). */

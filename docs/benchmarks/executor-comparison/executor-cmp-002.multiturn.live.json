@@ -1,0 +1,202 @@
+{
+  "task": {
+    "id": "executor-cmp-002",
+    "description": "N sequential verbose GitHub list actions — cumulative input context (Layer1 once + sum Layer2). Measured live, not projected.",
+    "repo": "vercel/next.js",
+    "perPage": 30,
+    "turns": 5,
+    "actions": [
+      "pulls_list",
+      "issues_list",
+      "commits_list",
+      "repo_events",
+      "releases_list"
+    ]
+  },
+  "matchedConditions": {
+    "tokenizer": "cl100k_base",
+    "focus": "input",
+    "benchmarkLive": true,
+    "layer1Source": "/workspace/docs/benchmarks/executor-comparison/executor-cmp-001.live.json",
+    "note": "Layer 2 payloads are fresh each turn (not cross-turn cached). Layer 1 is the stable prefix. Ratio climbs toward pure Layer-2 mean as N grows."
+  },
+  "layer1Once": {
+    "executorLiveExecuteOnly": 115,
+    "clawqlCodemode": 394,
+    "executorPublishedReference": 1044,
+    "clarification": "Using live Executor execute-only for compounding (honest). Published ~1044 is chart-only."
+  },
+  "perTurnLayer2": [
+    {
+      "id": "pulls_list",
+      "executorTokens": 143466,
+      "clawqlTokens": 907,
+      "ratio": 158.18,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "id": "issues_list",
+      "executorTokens": 32802,
+      "clawqlTokens": 907,
+      "ratio": 36.17,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "id": "commits_list",
+      "executorTokens": 72349,
+      "clawqlTokens": 979,
+      "ratio": 73.9,
+      "executorItems": 30,
+      "clawqlItems": 30
+    },
+    {
+      "id": "repo_events",
+      "executorTokens": 50995,
+      "clawqlTokens": 668,
+      "ratio": 76.34,
+      "executorItems": 29,
+      "clawqlItems": 29
+    },
+    {
+      "id": "releases_list",
+      "executorTokens": 27303,
+      "clawqlTokens": 1073,
+      "ratio": 25.45,
+      "executorItems": 30,
+      "clawqlItems": 30
+    }
+  ],
+  "cumulative": {
+    "executor": [
+      {
+        "n": 1,
+        "layer1Once": 115,
+        "layer2ThisTurn": 143466,
+        "layer2Cumulative": 143466,
+        "combined": 143581,
+        "layer2ShareOfCombined": 99.9
+      },
+      {
+        "n": 2,
+        "layer1Once": 115,
+        "layer2ThisTurn": 32802,
+        "layer2Cumulative": 176268,
+        "combined": 176383,
+        "layer2ShareOfCombined": 99.9
+      },
+      {
+        "n": 3,
+        "layer1Once": 115,
+        "layer2ThisTurn": 72349,
+        "layer2Cumulative": 248617,
+        "combined": 248732,
+        "layer2ShareOfCombined": 100
+      },
+      {
+        "n": 4,
+        "layer1Once": 115,
+        "layer2ThisTurn": 50995,
+        "layer2Cumulative": 299612,
+        "combined": 299727,
+        "layer2ShareOfCombined": 100
+      },
+      {
+        "n": 5,
+        "layer1Once": 115,
+        "layer2ThisTurn": 27303,
+        "layer2Cumulative": 326915,
+        "combined": 327030,
+        "layer2ShareOfCombined": 100
+      }
+    ],
+    "clawql": [
+      {
+        "n": 1,
+        "layer1Once": 394,
+        "layer2ThisTurn": 907,
+        "layer2Cumulative": 907,
+        "combined": 1301,
+        "layer2ShareOfCombined": 69.7
+      },
+      {
+        "n": 2,
+        "layer1Once": 394,
+        "layer2ThisTurn": 907,
+        "layer2Cumulative": 1814,
+        "combined": 2208,
+        "layer2ShareOfCombined": 82.2
+      },
+      {
+        "n": 3,
+        "layer1Once": 394,
+        "layer2ThisTurn": 979,
+        "layer2Cumulative": 2793,
+        "combined": 3187,
+        "layer2ShareOfCombined": 87.6
+      },
+      {
+        "n": 4,
+        "layer1Once": 394,
+        "layer2ThisTurn": 668,
+        "layer2Cumulative": 3461,
+        "combined": 3855,
+        "layer2ShareOfCombined": 89.8
+      },
+      {
+        "n": 5,
+        "layer1Once": 394,
+        "layer2ThisTurn": 1073,
+        "layer2Cumulative": 4534,
+        "combined": 4928,
+        "layer2ShareOfCombined": 92
+      }
+    ],
+    "ratios": [
+      {
+        "n": 1,
+        "executorCombined": 143581,
+        "clawqlCombined": 1301,
+        "ratio": 110.36,
+        "executorLayer2SharePct": 99.9,
+        "clawqlLayer2SharePct": 69.7
+      },
+      {
+        "n": 2,
+        "executorCombined": 176383,
+        "clawqlCombined": 2208,
+        "ratio": 79.88,
+        "executorLayer2SharePct": 99.9,
+        "clawqlLayer2SharePct": 82.2
+      },
+      {
+        "n": 3,
+        "executorCombined": 248732,
+        "clawqlCombined": 3187,
+        "ratio": 78.05,
+        "executorLayer2SharePct": 100,
+        "clawqlLayer2SharePct": 87.6
+      },
+      {
+        "n": 4,
+        "executorCombined": 299727,
+        "clawqlCombined": 3855,
+        "ratio": 77.75,
+        "executorLayer2SharePct": 100,
+        "clawqlLayer2SharePct": 89.8
+      },
+      {
+        "n": 5,
+        "executorCombined": 327030,
+        "clawqlCombined": 4928,
+        "ratio": 66.36,
+        "executorLayer2SharePct": 100,
+        "clawqlLayer2SharePct": 92
+      }
+    ],
+    "layer2MeanRatioAsymptote": 72.1
+  },
+  "thesis": "At N≥1, Executor's combined bill is already ~99% Layer 2 (uncacheable fresh tool results). Caching the Layer-1 prefix barely helps him; ClawQL's advantage is that almost none of the marginal cost is the uncacheable fat payload.",
+  "generatedAt": "2026-08-27T03:42:22.012Z"
+}

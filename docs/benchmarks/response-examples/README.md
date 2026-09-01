@@ -10,3 +10,6 @@ same logical responses.
 They are **illustrative** (sizes tuned to show Phase 2 savings). With **`BENCHMARK_LIVE=1`**
 and valid credentials, the script replaces them with **real** API responses when both REST and
 GraphQL calls succeed.
+
+- **`github-pr-list.json`** — open PR list (full REST) vs projected `{ title, reviewCommentCount }`
+  for the [Executor comparison](../executor-comparison/README.md) (`executor-cmp-001`).

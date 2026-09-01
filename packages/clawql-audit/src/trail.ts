@@ -1,18 +1,9 @@
 import { Context, Effect, Layer } from "effect";
 import { HashChain, HashChainLive } from "./chain.js";
-import type {
-  ChainVerifyResult,
-  WORMAppendInput,
-  WORMEntry,
-  WORMFilter,
-} from "./entry.js";
+import type { ChainVerifyResult, WORMAppendInput, WORMEntry, WORMFilter } from "./entry.js";
 import { AuditError } from "./errors.js";
 import { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
-import {
-  MerkleBatchLayer,
-  type MerkleInclusionProof,
-  type MerkleRoot,
-} from "./merkle.js";
+import { MerkleBatchLayer, type MerkleInclusionProof, type MerkleRoot } from "./merkle.js";
 import {
   exportEntries,
   type ExportFormat,
@@ -70,8 +61,7 @@ function retryFromConfig(config: WORMAuditTrailConfig): RetryConfig {
   return {
     maxAttempts: config.retryMaxAttempts ?? defaultRetryConfig.maxAttempts,
     backoffMs: config.retryBackoffMs ?? defaultRetryConfig.backoffMs,
-    backoffMultiplier:
-      config.retryBackoffMultiplier ?? defaultRetryConfig.backoffMultiplier,
+    backoffMultiplier: config.retryBackoffMultiplier ?? defaultRetryConfig.backoffMultiplier,
   };
 }
 
@@ -100,16 +90,15 @@ export const makeWORMAuditTrailLayer = (
       let sinceLastRoot = 0;
       let lastRootToIndex = -1;
 
-      const existingRoots = yield* config.local.listMerkleRoots().pipe(
-        Effect.catchAll(() => Effect.succeed([] as MerkleRoot[]))
-      );
+      const existingRoots = yield* config.local
+        .listMerkleRoots()
+        .pipe(Effect.catchAll(() => Effect.succeed([] as MerkleRoot[])));
       if (existingRoots.length) {
         lastRootToIndex = existingRoots[existingRoots.length - 1]!.toChainIndex;
       }
 
       let reconciler: ReconcilerHandle | undefined;
-      const interval =
-        config.reconcileIntervalMs === undefined ? 2000 : config.reconcileIntervalMs;
+      const interval = config.reconcileIntervalMs === undefined ? 2000 : config.reconcileIntervalMs;
       if (interval > 0) {
         reconciler = yield* startOutboxReconciler(replicator, interval);
       }
@@ -126,66 +115,64 @@ export const makeWORMAuditTrailLayer = (
           return root;
         });
 
-      const service: Context.Tag.Service<typeof WORMAuditTrailService> =
-        WORMAuditTrailService.of({
-          merkle,
-          drainOutbox: () => replicator.drainOutbox(),
-          listMerkleRoots: () => config.local.listMerkleRoots(),
-          sealMerkleBatch,
-          stop: () =>
-            Effect.gen(function* () {
-              if (reconciler) yield* reconciler.stop();
-              if (http) yield* http.close();
-            }),
-          append: (input) =>
-            Effect.gen(function* () {
-              const prev = yield* chain.latest();
-              const id = yield* generateUUIDv7();
-              const writtenAt = new Date().toISOString();
-              const sealed = yield* sealHashChainRecord({
-                prev: prev ? { hash: prev.hash, seq: prev.chainIndex } : null,
-                body: {
-                  id,
-                  writtenAt,
-                  ...input,
-                },
-              });
-              let signed: Omit<WORMEntry, "backendAcks"> = sealed;
-              if (tee) {
-                signed = {
-                  ...sealed,
-                  teeSignature: yield* tee.sign(sealed.hash),
-                };
-              }
-              const acks = yield* replicator.write(signed);
-              const final: WORMEntry = { ...signed, backendAcks: acks };
-              yield* chain.update(final);
-              sinceLastRoot += 1;
-              if (batchSize > 0 && sinceLastRoot >= batchSize) {
-                const from = lastRootToIndex + 1;
-                const all = yield* replicator.all();
-                const slice = all.filter((e) => e.chainIndex >= from);
-                if (slice.length) yield* sealMerkleBatch(slice);
-              }
-              return final;
-            }),
-          query: (filter) => replicator.query(filter),
-          verify: (entries) =>
-            Effect.gen(function* () {
-              const toVerify = entries ?? (yield* replicator.all());
-              return yield* chain.verify(toVerify);
-            }),
-          exportEntries: (filter, format, options) =>
-            Effect.gen(function* () {
-              const rows = yield* replicator.query(filter);
-              return yield* exportEntries(rows, format, options);
-            }),
-        });
+      const service: Context.Tag.Service<typeof WORMAuditTrailService> = WORMAuditTrailService.of({
+        merkle,
+        drainOutbox: () => replicator.drainOutbox(),
+        listMerkleRoots: () => config.local.listMerkleRoots(),
+        sealMerkleBatch,
+        stop: () =>
+          Effect.gen(function* () {
+            if (reconciler) yield* reconciler.stop();
+            if (http) yield* http.close();
+          }),
+        append: (input) =>
+          Effect.gen(function* () {
+            const prev = yield* chain.latest();
+            const id = yield* generateUUIDv7();
+            const writtenAt = new Date().toISOString();
+            const sealed = yield* sealHashChainRecord({
+              prev: prev ? { hash: prev.hash, seq: prev.chainIndex } : null,
+              body: {
+                id,
+                writtenAt,
+                ...input,
+              },
+            });
+            let signed: Omit<WORMEntry, "backendAcks"> = sealed;
+            if (tee) {
+              signed = {
+                ...sealed,
+                teeSignature: yield* tee.sign(sealed.hash),
+              };
+            }
+            const acks = yield* replicator.write(signed);
+            const final: WORMEntry = { ...signed, backendAcks: acks };
+            yield* chain.update(final);
+            sinceLastRoot += 1;
+            if (batchSize > 0 && sinceLastRoot >= batchSize) {
+              const from = lastRootToIndex + 1;
+              const all = yield* replicator.all();
+              const slice = all.filter((e) => e.chainIndex >= from);
+              if (slice.length) yield* sealMerkleBatch(slice);
+            }
+            return final;
+          }),
+        query: (filter) => replicator.query(filter),
+        verify: (entries) =>
+          Effect.gen(function* () {
+            const toVerify = entries ?? (yield* replicator.all());
+            return yield* chain.verify(toVerify);
+          }),
+        exportEntries: (filter, format, options) =>
+          Effect.gen(function* () {
+            const rows = yield* replicator.query(filter);
+            return yield* exportEntries(rows, format, options);
+          }),
+      });
 
       let http: AuditHttpServerHandle | undefined;
       if (config.httpPort !== undefined) {
-        const apiKey =
-          config.apiKey?.trim() || process.env.CLAWQL_AUDIT_API_KEY?.trim();
+        const apiKey = config.apiKey?.trim() || process.env.CLAWQL_AUDIT_API_KEY?.trim();
         if (!apiKey) {
           return yield* Effect.fail(
             new AuditError({
@@ -225,9 +212,7 @@ export class WORMAuditTrail {
   /** Prefer Effect Layers in ClawQL; this factory is the npm-host boundary. */
   static create(config: WORMAuditTrailConfig): Promise<WORMAuditTrail> {
     return Effect.runPromise(
-      createWORMAuditTrailEffect(config).pipe(
-        Effect.map((service) => new WORMAuditTrail(service))
-      )
+      createWORMAuditTrailEffect(config).pipe(Effect.map((service) => new WORMAuditTrail(service)))
     );
   }
 
@@ -243,11 +228,7 @@ export class WORMAuditTrail {
     return Effect.runPromise(this.service.verify(entries));
   }
 
-  export(
-    filter: WORMFilter,
-    format: ExportFormat,
-    options?: ExportOptions
-  ): Promise<ExportResult> {
+  export(filter: WORMFilter, format: ExportFormat, options?: ExportOptions): Promise<ExportResult> {
     return Effect.runPromise(this.service.exportEntries(filter, format, options));
   }
 
@@ -263,10 +244,7 @@ export class WORMAuditTrail {
     return Effect.runPromise(this.service.listMerkleRoots());
   }
 
-  proveInclusion(
-    entry: WORMEntry,
-    batch: readonly WORMEntry[]
-  ): Promise<MerkleInclusionProof> {
+  proveInclusion(entry: WORMEntry, batch: readonly WORMEntry[]): Promise<MerkleInclusionProof> {
     return Effect.runPromise(this.service.merkle.prove(entry, batch));
   }
 

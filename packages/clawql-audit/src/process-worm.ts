@@ -12,10 +12,7 @@ import {
   defaultWormAgentName,
   defaultWormSessionId,
 } from "./env-config.js";
-import {
-  createWORMAuditTrailEffect,
-  WORMAuditTrailService,
-} from "./trail.js";
+import { createWORMAuditTrailEffect, WORMAuditTrailService } from "./trail.js";
 
 type TrailSvc = Context.Tag.Service<typeof WORMAuditTrailService>;
 
@@ -33,9 +30,7 @@ export const processWormReady = (): Effect.Effect<boolean> =>
   Effect.sync(() => bootState === "ready" && trailSvc !== null);
 
 /** Fill sessionId / agentName when callers omit them. */
-export const withProcessWormDefaults = (
-  input: WORMAppendInput
-): Effect.Effect<WORMAppendInput> =>
+export const withProcessWormDefaults = (input: WORMAppendInput): Effect.Effect<WORMAppendInput> =>
   Effect.sync(() => ({
     ...input,
     sessionId: input.sessionId || defaultSession,
@@ -56,8 +51,7 @@ export const bootProcessWormFromEnvEffect = (
     if (bootFiber) {
       return yield* Effect.tryPromise({
         try: () => bootFiber!,
-        catch: (cause) =>
-          new AuditError({ reason: "WORM boot wait failed", cause }),
+        catch: (cause) => new AuditError({ reason: "WORM boot wait failed", cause }),
       });
     }
 
@@ -104,27 +98,25 @@ export const bootProcessWormFromEnvEffect = (
  * Best-effort append. No-ops when trail is not booted / disabled.
  * Never fails — errors are swallowed after optional stderr log.
  */
-export const appendProcessWormEffect = (
-  input: WORMAppendInput
-): Effect.Effect<WORMEntry | null> =>
+export const appendProcessWormEffect = (input: WORMAppendInput): Effect.Effect<WORMEntry | null> =>
   Effect.gen(function* () {
     const svc = trailSvc;
     const sem = appendSem;
     if (!svc || !sem || bootState !== "ready") return null;
     const body = yield* withProcessWormDefaults(input);
-    return yield* sem.withPermits(1)(svc.append(body)).pipe(
-      Effect.map((e) => e as WORMEntry | null),
-      Effect.catchAll((err) =>
-        Effect.sync(() => {
-          if (process.env.CLAWQL_WORM_DEBUG?.trim() === "1") {
-            process.stderr.write(
-              `[clawql-audit] process WORM append failed: ${err.reason}\n`
-            );
-          }
-          return null;
-        })
-      )
-    );
+    return yield* sem
+      .withPermits(1)(svc.append(body))
+      .pipe(
+        Effect.map((e) => e as WORMEntry | null),
+        Effect.catchAll((err) =>
+          Effect.sync(() => {
+            if (process.env.CLAWQL_WORM_DEBUG?.trim() === "1") {
+              process.stderr.write(`[clawql-audit] process WORM append failed: ${err.reason}\n`);
+            }
+            return null;
+          })
+        )
+      );
   });
 
 export const stopProcessWormEffect = (): Effect.Effect<void> =>
@@ -139,8 +131,7 @@ export const stopProcessWormEffect = (): Effect.Effect<void> =>
     }
   });
 
-export const resetProcessWormForTests = (): Effect.Effect<void> =>
-  stopProcessWormEffect();
+export const resetProcessWormForTests = (): Effect.Effect<void> => stopProcessWormEffect();
 
 /** Thin host façade — MCP / Express boot. */
 export async function bootProcessWormFromEnv(
@@ -152,9 +143,7 @@ export async function bootProcessWormFromEnv(
 }
 
 /** Thin host façade — AuthEventSink / MemoryWormSink / fire-and-forget. */
-export async function appendProcessWorm(
-  input: WORMAppendInput
-): Promise<WORMEntry | null> {
+export async function appendProcessWorm(input: WORMAppendInput): Promise<WORMEntry | null> {
   return Effect.runPromise(appendProcessWormEffect(input));
 }
 

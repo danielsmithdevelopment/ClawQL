@@ -1,11 +1,14 @@
 export {
   AuthCodeError,
   AuthorizationCodeFlow,
+  authorizationCodeFlowServiceFromFlow,
+  AuthorizationCodeFlowService,
   createAuthorizationCodeFlow,
+  createAuthorizationCodeFlowLayer,
   createMemoryAuthFlowPersistence,
-  generateCodeChallenge,
-  generateCodeVerifier,
-  generateOAuthState,
+  generateCodeChallengeEffect,
+  generateCodeVerifierEffect,
+  generateOAuthStateEffect,
   type AuthCodeConfig,
   type AuthFlowPersistence,
   type AuthFlowStart,
@@ -14,15 +17,21 @@ export {
 } from "./auth-code.js";
 export {
   ClientCredentialsFlow,
+  clientCredentialsFlowServiceFromFlow,
+  ClientCredentialsFlowService,
   createClientCredentialsFlow,
+  createClientCredentialsFlowLayer,
   OAuthFlowError,
   type ClientCredentialsConfig,
 } from "./client-creds.js";
 export { OAuthTokenStoreError, ReauthRequiredError, oauthErrorCode } from "./errors.js";
 export {
   createOutboundAPIKeyManager,
+  createOutboundAPIKeyManagerLayer,
   createMemorySecretSource,
   OutboundAPIKeyManager,
+  outboundAPIKeyManagerServiceFromManager,
+  OutboundAPIKeyManagerService,
   OutboundApiKeyError,
   type OutboundAPIKeyManagerOptions,
   type SecretSource,
@@ -40,7 +49,10 @@ export {
 export {
   createMemoryOAuthPersistence,
   createOAuthTokenStore,
+  createOAuthTokenStoreLayer,
+  oauthTokenStoreServiceFromStore,
   OAuthTokenStore,
+  OAuthTokenStoreService,
   type OAuthTokenStoreOptions,
 } from "./token-store.js";
 export {
@@ -50,3 +62,12 @@ export {
   type OAuthTokenPersistence,
   type StoredOAuthToken,
 } from "./types.js";
+export {
+  ReauthNotifyError,
+  buildOAuthReauthUrlEffect,
+  noopReauthNotifier,
+  notifyReauthRequiredEffect,
+  type ReauthNotifyChannel,
+  type ReauthNotifyPayload,
+  type ReauthNotifier,
+} from "./reauth-notify.js";

@@ -2,16 +2,19 @@
  * Gateway auth composition for HTTP MCP — uses createClawQLAuth with WORM authEventSink.
  */
 
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
   createClawQLAuth,
   loadGatewayAuthConfig,
   type ApiKeyClaimsResolver,
+  type AtrClaims,
   type ClawQLAuth,
   type GatewayAuthConfig,
 } from "clawql-auth";
+import { Effect } from "effect";
 import { validateVirtualKey } from "clawql-inference";
-import { getProcessWormAuthEventSink } from "./process-worm-host.js";
+import { resolveHostAuthEventSink } from "./auth-process-worm-sink.js";
 
 let gatewayAuth: ClawQLAuth | undefined;
 
@@ -44,11 +47,16 @@ export function createInferenceVirtualKeyClaimsResolver(
 }
 
 function resolveIssuedApiKeyStorePath(env: NodeJS.ProcessEnv): string | undefined {
-  const explicit = env.CLAWQL_AUTH_API_KEY_STORE_PATH?.trim();
+  const explicit = env.CLAWQL_AUTH_API_KEY_STORE_PATH?.trim() ?? env.CLAWQL_API_KEYS_PATH?.trim();
   if (explicit) return explicit;
   if (env.CLAWQL_AUTH_ISSUED_API_KEYS?.trim() === "1") {
     const home = env.CLAWQL_HOME?.trim();
     if (home) return join(home, "Auth", "api-keys.json");
+  }
+  const home = env.CLAWQL_HOME?.trim();
+  if (home) {
+    const homeDefault = join(home, "Auth", "api-keys.json");
+    if (existsSync(homeDefault)) return homeDefault;
   }
   return undefined;
 }
@@ -56,21 +64,26 @@ function resolveIssuedApiKeyStorePath(env: NodeJS.ProcessEnv): string | undefine
 /** Process-wide gateway auth (issued keys + WORM sink when configured). */
 export function getClawqlGatewayAuth(env: NodeJS.ProcessEnv = process.env): ClawQLAuth {
   if (!gatewayAuth) {
-    const base = loadGatewayAuthConfig(env);
+    const base = Effect.runSync(loadGatewayAuthConfig(env));
     gatewayAuth = createClawQLAuth({
       mode: base.mode,
       apiKey: base.apiKey,
       oidc: base.oidc,
       apiKeyStorePath: resolveIssuedApiKeyStorePath(env),
-      authEventSink: getProcessWormAuthEventSink(),
+      authEventSink: resolveHostAuthEventSink(env),
       apiKeyClaimsResolver: createInferenceVirtualKeyClaimsResolver(env),
     });
   }
   return gatewayAuth;
 }
 
-export function buildGatewayAuthConfig(env: NodeJS.ProcessEnv = process.env): GatewayAuthConfig {
-  return getClawqlGatewayAuth(env).config;
+export function buildGatewayAuthConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  mcpOAuthValidator?: (bearer: string) => Effect.Effect<AtrClaims, unknown>
+): GatewayAuthConfig {
+  const config = getClawqlGatewayAuth(env).config;
+  if (mcpOAuthValidator == null) return config;
+  return { ...config, mcpOAuthValidator };
 }
 
 /** Test helper — rebuild auth on next get. */

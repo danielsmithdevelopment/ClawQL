@@ -17,7 +17,6 @@ describe("composeHorizontalPluginLayers", () => {
       enableSandbox: true,
       enableData: true,
       enableWeb: false,
-      enableOuroboros: false,
       enableSchedule: false,
       enableNotify: false,
       enableWorkflow: false,
@@ -54,10 +53,11 @@ describe("composeHorizontalPluginLayers", () => {
       memory: { enabled: true },
       documents: { enabled: false },
       sandbox: { enabled: false },
-      ouroboros: { enabled: false },
+      ouroboros: { enabled: false, langfuseEval: { enabled: true } },
     });
     expect(flags.enableMemory).toBe(true);
     expect(flags.enableDocuments).toBe(false);
+    expect(flags.enableLangfuseEval).toBe(true);
 
     const layers = composeHorizontalPluginLayersFromTierSpec({
       memory: { enabled: true },
@@ -65,5 +65,6 @@ describe("composeHorizontalPluginLayers", () => {
     });
     const api = createClawQLApi({ plugins: [], pluginLayers: layers });
     expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
   });
 });

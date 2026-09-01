@@ -16,11 +16,12 @@ export const appendInferenceAuditToProcessWormEffect = (
     summary: entry.summary,
     correlationId: entry.correlationId,
     payload: entry.payload as unknown as Record<string, unknown>,
-  }).pipe(Effect.catchAll(() => Effect.void), Effect.asVoid);
+  }).pipe(
+    Effect.catchAll(() => Effect.void),
+    Effect.asVoid
+  );
 
 /** Thin host façade for ouroboros / coordination hooks. */
-export async function appendInferenceAuditToProcessWorm(
-  entry: InferenceAuditEntry
-): Promise<void> {
+export async function appendInferenceAuditToProcessWorm(entry: InferenceAuditEntry): Promise<void> {
   await Effect.runPromise(appendInferenceAuditToProcessWormEffect(entry));
 }

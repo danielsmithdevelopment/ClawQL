@@ -37,18 +37,20 @@ describe("gateway-auth WORM sink", () => {
     expect(auth.apiKeys).toBeDefined();
     expect(buildGatewayAuthConfig().mode).toBe("apiKey");
 
-    const { secret } = await auth.apiKeys!.issue({
-      subjectId: "alice@test",
-      role: "operator",
-      scope: ["search"],
-      label: "test",
-    });
+    const { secret } = await Effect.runPromise(
+      auth.apiKeys!.issue({
+        subjectId: "alice@test",
+        role: "operator",
+        scope: ["search"],
+        label: "test",
+      })
+    );
 
     const svc = await Effect.runPromise(bootProcessWormFromEnvEffect());
     const issued = await Effect.runPromise(svc!.query({ type: "API_KEY_ISSUED" }));
     expect(issued.length).toBeGreaterThanOrEqual(1);
 
-    const validated = auth.apiKeys!.validate(secret);
+    const validated = Effect.runSync(auth.apiKeys!.validate(secret));
     expect(validated.ok).toBe(true);
     await new Promise((r) => setTimeout(r, 20));
 

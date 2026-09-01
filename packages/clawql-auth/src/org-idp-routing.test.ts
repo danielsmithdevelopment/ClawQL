@@ -1,10 +1,11 @@
+import { Effect } from "effect";
 import { SignJWT } from "jose";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   createStaticOrgIdpRouter,
   mergeOidcConfigWithRoute,
-  verifyOidcBearerTokenWithOrgRouting,
+  verifyOidcBearerTokenWithOrgRoutingEffect,
 } from "./org-idp-routing.js";
 import { loadOidcAuthConfig, resetOidcVerifyCaches } from "./oidc.js";
 
@@ -49,16 +50,15 @@ describe("per-org IdP routing", () => {
       .setExpirationTime("2h")
       .sign(key);
 
-    const result = await verifyOidcBearerTokenWithOrgRouting(token, {
-      baseConfig: loadOidcAuthConfig(),
-      router,
-    });
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.claims.orgId).toBe("acme");
-      expect(result.claims.emailDomain).toBe("acme.com");
-      expect(result.route?.orgId).toBe("acme");
-    }
+    const result = await Effect.runPromise(
+      verifyOidcBearerTokenWithOrgRoutingEffect(token, {
+        baseConfig: loadOidcAuthConfig(),
+        router,
+      })
+    );
+    expect(result.claims.orgId).toBe("acme");
+    expect(result.claims.emailDomain).toBe("acme.com");
+    expect(result.route?.orgId).toBe("acme");
   });
 
   it("mergeOidcConfigWithRoute prefers route JWKS/issuer", () => {

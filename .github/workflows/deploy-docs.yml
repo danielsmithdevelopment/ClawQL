@@ -7,6 +7,9 @@ on:
     branches: [main]
     paths:
       - "website/**"
+      - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
+      - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
+      - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
       - ".github/workflows/deploy-docs.yml"
   workflow_dispatch:
 

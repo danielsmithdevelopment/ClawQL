@@ -1,14 +1,14 @@
 export const site = {
   name: 'ClawQL',
-  tagline: 'Agentic Gateway for Auditable Production AI',
+  tagline: 'Agentic Infrastructure for Regulated Industries',
   description:
-    'Token-efficient search → execute workflows over OpenAPI, Google Discovery, GraphQL, and gRPC — with vault memory, documents, and enterprise tooling.',
+    'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a WORM audit trail on every action. Apache 2.0.',
   earlyAccess: {
     badge: '14-day free trial — no credit card required',
     summary:
-      'ClawQL is the open-source MCP core for production agent work: search, execute, vault memory, and optional IDP. Self-host free on Apache 2.0, or start a 14-day Developer trial with full persistent memory and unlimited executions.',
+      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and TEE-ready audit. Self-host free on Apache 2.0, or start a 14-day Developer trial.',
     pricingNote:
-      'Self-host free forever on Apache 2.0, or start a 14-day Developer trial. Gateway tiers deploy at the global edge with unlimited MCP executions, vault memory with no egress penalties on recall, and Onyx search on Teams. IDP tiers (Starter $299+) activate document processing, VDR, and sovereign inference on a dedicated tenant. One MCP endpoint for every tier: upgrade from Teams to Starter and your URL, auth token, and vault history stay the same.',
+      'Self-host free forever on Apache 2.0, or start a 14-day Developer trial. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
   },
   waitlistPromise:
     'Start your 14-day trial or self-host free with npm or Helm — full Apache 2.0 stack, no license fee.',
@@ -35,6 +35,8 @@ export const site = {
     idpGtm: '/idp/gtm',
     /** ClawQL Streams — event-driven autonomous agents / Protocol Fabric. */
     streams: '/streams',
+    /** Protocol Fabric — any protocol ↔ any protocol via MCP (Core + mcp-api-adapter). */
+    protocolFabric: '/protocol-fabric',
     /** Agentic Platform marketing landing — Streams + ontology + /mcp-ui + TEE. */
     agents: '/agents',
     /** Secondary enterprise / Palantir-facing GTM motion. */

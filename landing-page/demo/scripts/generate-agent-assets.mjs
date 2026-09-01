@@ -115,10 +115,10 @@ Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm inst
 
 function getAgentMarkdownMap() {
   const description =
-    'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, and Edge swarm. Self-host free or start a trial.'
+    'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or start a trial.'
 
   return {
-    '/': `# ClawQL — Agentic Gateway for Auditable Production AI
+    '/': `# ClawQL — Agentic Infrastructure for Regulated Industries
 
 ${description}
 
@@ -133,11 +133,15 @@ npm install -g clawql-mcp
 - Documentation: ${docs}
 - Sign up: ${origin}/signup/
 - Pricing: ${origin}/pricing/
+- Agents: ${origin}/agents/
+- Protocol Fabric: ${origin}/protocol-fabric/
+- Streams: ${origin}/streams/
 `,
     '/pricing': `# Pricing\n\nSee ${origin}/pricing/ for ClawQL tiers.`,
     '/about': `# About\n\nSee ${origin}/about/.`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways with NATS/Valkey, Edge swarm).\n\nSee ${origin}/inference/gtm/.`,
     '/enterprise/gtm': `# Enterprise GTM playbook\n\nSecondary enterprise / Palantir-facing motion — Auditable Production AI on the Zero-Trust Agentic Fabric; sovereign alternative to Palantir AIP.\n\nSee ${origin}/enterprise/gtm/.`,
+    '/protocol-fabric': `# ClawQL Protocol Fabric\n\nAny protocol to any protocol via MCP — Core inbound, mcp-api-adapter outbound.\n\nSee ${origin}/protocol-fabric/.\n\nDocs: ${docs}/mcp/protocol-fabric · ${docs}/mcp/mcp-api-adapter`,
     '/streams': `# ClawQL Streams\n\nEvent-driven autonomous agents with WORM audit, Protocol Fabric, and Durable Object / K8s scale.\n\nSee ${origin}/streams/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/streams/clawql-durable-objects`,
     '/idp': `# Intelligent Document Processing\n\nSee ${origin}/idp/.`,
     '/signup': `# Sign up\n\n${origin}/signup/`,

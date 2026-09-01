@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AuthEvent } from "../audit/auth-events.js";
@@ -20,9 +21,9 @@ describe("OAuthTokenStore", () => {
       refreshToken: "r",
       expiresAtMs: 1_000_000 + 120_000,
     };
-    await persistence.save("acme:google:user", token);
+    await Effect.runPromise(persistence.save("acme:google:user", token));
 
-    const got = await store.getValidToken("acme:google:user");
+    const got = await Effect.runPromise(store.getValidToken("acme:google:user"));
     expect(got.accessToken).toBe("a");
     expect(refresh).not.toHaveBeenCalled();
   });
@@ -36,21 +37,24 @@ describe("OAuthTokenStore", () => {
       eventSink: (e) => {
         events.push(e);
       },
-      refresh: async (_key, current) => ({
-        accessToken: "fresh",
-        refreshToken: "r2",
-        expiresAtMs: 1_000_000 + 3_600_000,
-        scope: current.scope,
-      }),
+      refresh: (_key, current) =>
+        Effect.succeed({
+          accessToken: "fresh",
+          refreshToken: "r2",
+          expiresAtMs: 1_000_000 + 3_600_000,
+          scope: current.scope,
+        }),
     });
 
-    await persistence.save("acme:google:user", {
-      accessToken: "stale",
-      refreshToken: "r1",
-      expiresAtMs: 1_000_000 + 30_000,
-    });
+    await Effect.runPromise(
+      persistence.save("acme:google:user", {
+        accessToken: "stale",
+        refreshToken: "r1",
+        expiresAtMs: 1_000_000 + 30_000,
+      })
+    );
 
-    const got = await store.getValidToken("acme:google:user");
+    const got = await Effect.runPromise(store.getValidToken("acme:google:user"));
     expect(got.accessToken).toBe("fresh");
     expect(events.some((e) => e.type === "OAUTH_TOKEN_REFRESHED")).toBe(true);
   });
@@ -66,22 +70,26 @@ describe("OAuthTokenStore", () => {
     const store = createOAuthTokenStore({
       persistence,
       now: () => 1_000_000,
-      refresh: async () => {
-        refreshCalls += 1;
-        return refreshGate;
-      },
+      refresh: () =>
+        Effect.sync(() => {
+          refreshCalls += 1;
+        }).pipe(Effect.flatMap(() => Effect.promise(() => refreshGate))),
     });
 
-    await persistence.save("t:google:u", {
-      accessToken: "old",
-      refreshToken: "r",
-      expiresAtMs: 1_000_000 + 10_000,
-    });
+    await Effect.runPromise(
+      persistence.save("t:google:u", {
+        accessToken: "old",
+        refreshToken: "r",
+        expiresAtMs: 1_000_000 + 10_000,
+      })
+    );
 
-    const waiters = Array.from({ length: 50 }, () => store.getValidToken("t:google:u"));
+    const waiters = Array.from({ length: 50 }, () =>
+      Effect.runPromise(store.getValidToken("t:google:u"))
+    );
 
-    // Allow microtasks to queue behind the lock
-    await Promise.resolve();
+    // Allow queued fibers to reach the shared in-flight refresh before asserting dedup.
+    await new Promise((resolve) => setTimeout(resolve, 10));
     expect(refreshCalls).toBe(1);
 
     resolveRefresh({
@@ -104,34 +112,80 @@ describe("OAuthTokenStore", () => {
       eventSink: (e) => {
         events.push(e);
       },
-      refresh: async () => {
-        const err = new Error("revoked") as Error & { error: string };
-        err.error = "invalid_grant";
-        throw err;
-      },
+      refresh: () =>
+        Effect.fail(
+          Object.assign(new Error("revoked"), { error: "invalid_grant" }) as Error & {
+            error: string;
+          }
+        ),
     });
 
-    await persistence.save("t:microsoft:u", {
-      accessToken: "old",
-      refreshToken: "dead",
-      expiresAtMs: 1_000_000 + 5_000,
-    });
+    await Effect.runPromise(
+      persistence.save("t:microsoft:u", {
+        accessToken: "old",
+        refreshToken: "dead",
+        expiresAtMs: 1_000_000 + 5_000,
+      })
+    );
 
-    await expect(store.getValidToken("t:microsoft:u")).rejects.toBeInstanceOf(ReauthRequiredError);
+    const exit = await Effect.runPromiseExit(store.getValidToken("t:microsoft:u"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      expect(exit.cause.error).toBeInstanceOf(ReauthRequiredError);
+      expect((exit.cause.error as ReauthRequiredError).reason).toBe("invalid_grant");
+    }
     expect(events.some((e) => e.type === "OAUTH_REFRESH_FAILED")).toBe(true);
     expect(events.some((e) => e.type === "OAUTH_REAUTH_REQUIRED")).toBe(true);
   });
 
-  it("throws ReauthRequiredError when no token stored", async () => {
+  it("fails with ReauthRequiredError when no token stored", async () => {
     const store = createOAuthTokenStore({
       persistence: createMemoryOAuthPersistence(),
-      refresh: async () => {
-        throw new Error("should not refresh");
-      },
+      refresh: () => Effect.die("should not refresh"),
     });
-    await expect(store.getValidToken("missing")).rejects.toMatchObject({
-      _tag: "ReauthRequiredError",
-      reason: "no_token",
+    const exit = await Effect.runPromiseExit(store.getValidToken("missing"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      expect(exit.cause.error).toBeInstanceOf(ReauthRequiredError);
+      expect((exit.cause.error as ReauthRequiredError).reason).toBe("no_token");
+    }
+  });
+
+  it("attaches reauthUrl and calls markRequiresReauth on no_token", async () => {
+    const marked: string[] = [];
+    const store = createOAuthTokenStore({
+      persistence: createMemoryOAuthPersistence(),
+      refresh: () => Effect.die("should not refresh"),
+      markRequiresReauth: (providerId) =>
+        Effect.sync(() => {
+          marked.push(providerId);
+        }),
+      buildReauthUrl: ({ providerId, tokenKey }) =>
+        Effect.succeed(`https://auth.test/reauth?provider=${providerId}&key=${tokenKey}`),
     });
+    const exit = await Effect.runPromiseExit(store.getValidToken("acme:google:user"));
+    expect(exit._tag).toBe("Failure");
+    if (exit._tag === "Failure" && exit.cause._tag === "Fail") {
+      const err = exit.cause.error as ReauthRequiredError;
+      expect(err.reauthUrl).toBe("https://auth.test/reauth?provider=google&key=acme:google:user");
+      expect(err.providerId).toBe("google");
+    }
+    expect(marked).toEqual(["google"]);
+  });
+
+  it("calls onReauthRequired before failing with no_token", async () => {
+    const notified: string[] = [];
+    const store = createOAuthTokenStore({
+      persistence: createMemoryOAuthPersistence(),
+      refresh: () => Effect.die("should not refresh"),
+      buildReauthUrl: ({ providerId }) => Effect.succeed(`https://auth.test/?p=${providerId}`),
+      onReauthRequired: (error) =>
+        Effect.sync(() => {
+          notified.push(error.providerId);
+        }),
+    });
+    const exit = await Effect.runPromiseExit(store.getValidToken("tenant:slack:u"));
+    expect(exit._tag).toBe("Failure");
+    expect(notified).toEqual(["slack"]);
   });
 });

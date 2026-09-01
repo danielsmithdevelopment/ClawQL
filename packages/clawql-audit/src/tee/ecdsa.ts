@@ -71,7 +71,9 @@ export const signEntryHashEcdsa = (
   Effect.gen(function* () {
     if (!/^[a-fA-F0-9]{64}$/.test(hashHex)) {
       return yield* Effect.fail(
-        new AuditError({ reason: `TEE sign expects 64-char hex hash, got length ${hashHex.length}` })
+        new AuditError({
+          reason: `TEE sign expects 64-char hex hash, got length ${hashHex.length}`,
+        })
       );
     }
     const key = yield* loadPrivateKey(privateKeyPem);
@@ -128,7 +130,10 @@ export type CreateEcdsaTeeSignerOptions = {
  */
 export const createEcdsaTeeSigner = (
   options: CreateEcdsaTeeSignerOptions
-): Effect.Effect<TEESigner & { readonly publicKeyPem: string; readonly attestation: TEEAttestationReport }, AuditError> =>
+): Effect.Effect<
+  TEESigner & { readonly publicKeyPem: string; readonly attestation: TEEAttestationReport },
+  AuditError
+> =>
   Effect.gen(function* () {
     // Validate keys early
     yield* loadPrivateKey(options.privateKeyPem);
@@ -163,7 +168,11 @@ export const createEcdsaTeeSigner = (
 
 /** Generate an ephemeral simulated TEE signer (tests / local without key material). */
 export const createSimulatedTeeSigner = (): Effect.Effect<
-  TEESigner & { readonly publicKeyPem: string; readonly privateKeyPem: string; readonly attestation: TEEAttestationReport },
+  TEESigner & {
+    readonly publicKeyPem: string;
+    readonly privateKeyPem: string;
+    readonly attestation: TEEAttestationReport;
+  },
   AuditError
 > =>
   Effect.gen(function* () {

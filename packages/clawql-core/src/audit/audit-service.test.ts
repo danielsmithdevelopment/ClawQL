@@ -28,6 +28,8 @@ describe("AuditService (Effect)", () => {
     expect(list.total).toBe(1);
     expect(list.entries[0]?.category).toBe("tool");
     expect(list.entries[0]?.correlationId).toBe("c1");
+    expect(list.entries[0]?.hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(list.entries[0]?.seq).toBe(1);
   });
 
   it("clear via Effect Layer", async () => {

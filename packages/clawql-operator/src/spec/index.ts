@@ -1,3 +1,4 @@
+export { applyTierPreset, TIER_PRESET_SPECS } from "./tier-presets.js";
 export {
   clawqlInstanceSpecToHorizontalTierSpec,
   clawqlInstanceSpecV1Alpha1Schema,

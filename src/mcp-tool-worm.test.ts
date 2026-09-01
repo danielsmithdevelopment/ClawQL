@@ -1,10 +1,6 @@
 import { Effect } from "effect";
-import {
-  bootProcessWormFromEnvEffect,
-  resetProcessWormForTests,
-} from "clawql-audit";
+import { bootProcessWormFromEnvEffect, resetProcessWormForTests } from "clawql-audit";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 
 vi.mock("./clawql-api-adapters.js", async (importOriginal) => {
