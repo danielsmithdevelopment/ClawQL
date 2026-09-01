@@ -41,6 +41,11 @@ from extract_bench.schemas.pipeline_io import (
 from extract_bench.schemas.product import ProductType
 
 from .mcp_client import ClawQLMcpClient
+from .ontology_sync import (
+    ontology_sync_enabled,
+    run_ontology_pipeline,
+    t1_completeness_metrics,
+)
 from .schema_map import (
     SCHEMA_MAP_SYSTEM_PROMPT,
     chunk_text_for_mapping,
@@ -164,6 +169,8 @@ class ClawQLIDPProvider(Provider):
             or 0.0
         )
         self._force_docling = bool(self.base_config.get("force_docling", False))
+        self._ontology_sync = ontology_sync_enabled(self.base_config)
+        self._ontology_limit = int(self.base_config.get("ontology_recall_limit", 10_000))
         self._mcp = ClawQLMcpClient(self._mcp_url, timeout_s=self._timeout_s)
 
     def _inspect_pdf(self, file_path: Path) -> dict[str, Any]:
@@ -432,6 +439,22 @@ class ClawQLIDPProvider(Provider):
             if not isinstance(extracted, dict) or extracted == {}:
                 raise ProviderPermanentError("schema mapping produced empty extraction")
 
+            ontology_meta: dict[str, Any] | None = None
+            if self._ontology_sync and isinstance(extracted, dict):
+                try:
+                    ontology_result = run_ontology_pipeline(
+                        json_schema=request.schema_override,
+                        extracted=extracted,
+                        document_id=str(request.example_id or file_path.stem),
+                        limit=self._ontology_limit,
+                    )
+                    ontology_meta = {
+                        "pipeline": ontology_result,
+                        "t1": t1_completeness_metrics(ontology_result, request.schema_override),
+                    }
+                except Exception as exc:  # noqa: BLE001 — optional enrichment; do not fail EXTRACT
+                    ontology_meta = {"error": str(exc)}
+
             cost_usd = self._cost_per_page_usd * pages if pages > 0 else self._cost_per_page_usd
             raw_output: dict[str, Any] = {
                 "extracted_data": extracted,
@@ -440,6 +463,7 @@ class ClawQLIDPProvider(Provider):
                 "inspect_pdf": inspect,
                 "docling": inspect_docling if used_docling else None,
                 "schema_map": map_meta,
+                "ontology": ontology_meta,
                 "num_pages": pages or None,
                 "cost_usd": cost_usd,
                 "cost_per_page_usd": self._cost_per_page_usd if pages else None,
@@ -448,6 +472,7 @@ class ClawQLIDPProvider(Provider):
                     "model": self._model if self._schema_map_mode == "llm" else None,
                     "mcp_url": self._mcp_url,
                     "force_docling": self._force_docling,
+                    "ontology_sync": self._ontology_sync,
                 },
             }
 

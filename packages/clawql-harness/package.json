@@ -80,7 +80,8 @@
   "files": [
     "dist",
     "plugins",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22"
@@ -100,5 +101,6 @@
   ],
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "version": "0.1.0"
 }

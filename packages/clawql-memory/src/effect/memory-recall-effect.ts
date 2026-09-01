@@ -122,14 +122,17 @@ export function executeMemoryRecallCoreEffect(
       return { ok: false, error: "query is required" };
     }
 
-    // Structured ontology path — exact predicate evaluation (B-7.1 / legal domain).
-    if (input.schema && input.filters && Object.keys(input.filters).length > 0) {
+    // Structured ontology path — exact predicate evaluation (B-7.1 / legal + Layer 2/3 dynamic).
+    const { wantsStructuredOntologyRecall } = yield* memoryFromPromise(
+      async () => import("../ontology/ontology-query.js")
+    );
+    if (wantsStructuredOntologyRecall({ schema: input.schema, filters: input.filters })) {
       const ontologyResult = yield* memoryFromPromise(async () => {
         const { runOntologyRecall } = await import("../ontology/ontology-query.js");
         return runOntologyRecall(vault, {
           query,
           schema: input.schema!,
-          filters: input.filters!,
+          filters: input.filters ?? {},
           confidenceMinimum: input.confidenceMinimum,
           limit: input.limit,
         });

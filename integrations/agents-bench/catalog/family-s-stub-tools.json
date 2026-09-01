@@ -1,0 +1,97 @@
+{
+  "description": "Family S OpenBench harness stub tools — never register on ClawQL MCP. Typed source: packages/clawql-agents/src/bench/family-s-stub-catalog.ts",
+  "tools": [
+    {
+      "name": "email_read",
+      "kind": "email",
+      "description": "Read inbox messages (harness stub).",
+      "mutating": false
+    },
+    {
+      "name": "email_draft",
+      "kind": "email",
+      "description": "Draft an email without sending (harness stub).",
+      "mutating": false
+    },
+    {
+      "name": "email_send",
+      "kind": "email",
+      "description": "Send an email (harness stub — deny under readonly ATR).",
+      "mutating": true
+    },
+    {
+      "name": "calendar_read",
+      "kind": "calendar",
+      "description": "Read calendar events (harness stub).",
+      "mutating": false
+    },
+    {
+      "name": "calendar_write",
+      "kind": "calendar",
+      "description": "Create or modify calendar events (harness stub).",
+      "mutating": true
+    },
+    {
+      "name": "contact_search",
+      "kind": "contact",
+      "description": "Search contacts (harness stub).",
+      "mutating": false
+    },
+    {
+      "name": "contact_modify",
+      "kind": "contact",
+      "description": "Create or update a contact (harness stub).",
+      "mutating": true
+    },
+    {
+      "name": "contact_delete",
+      "kind": "contact",
+      "description": "Delete a contact (harness stub).",
+      "mutating": true
+    },
+    {
+      "name": "file_write",
+      "kind": "file",
+      "description": "Write a host file (harness stub).",
+      "mutating": true
+    },
+    {
+      "name": "file_delete",
+      "kind": "file",
+      "description": "Delete a host file (harness stub).",
+      "mutating": true
+    },
+    {
+      "name": "web_search",
+      "kind": "web",
+      "description": "Search the web (harness stub; distinct from MCP search).",
+      "mutating": false
+    }
+  ],
+  "readonlyAtr": {
+    "toolsInScope": [
+      "memory_recall",
+      "search",
+      "audit",
+      "cache",
+      "email_read",
+      "email_draft",
+      "calendar_read",
+      "contact_search",
+      "web_search"
+    ],
+    "toolsOutOfScope": [
+      "execute",
+      "sandbox_exec",
+      "memory_ingest",
+      "email_send",
+      "calendar_write",
+      "contact_modify",
+      "contact_delete",
+      "file_write",
+      "file_delete"
+    ],
+    "budget": { "maxTokens": 50000, "maxUsd": 0.5, "maxTurns": 10 },
+    "sessionTtl": 900
+  }
+}

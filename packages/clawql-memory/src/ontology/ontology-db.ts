@@ -13,8 +13,9 @@ import { getObsidianVaultPath } from "../vault/config.js";
 import { resolveVaultPath } from "../vault/utils.js";
 import type { ExtractedMatter, FieldConfidence, MatterFields } from "./clawql-fields.js";
 import { matterFieldsFromSqlRow } from "./field-map.js";
+import { migrateDynamicOntologyTables } from "./ontology-dynamic.js";
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const INGEST_VERSION = "legal-domain-v0.1";
 const ONTOLOGY_LOCK_NAME = ".clawql-ontology-write.lock";
 const LOCK_POLL_MS = 50;
@@ -198,6 +199,14 @@ function migrate(db: Database): void {
       [isoNow()]
     );
   }
+
+  if (v < 2) {
+    migrateDynamicOntologyTables(db);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'dynamic_entities_v0_1', ?)",
+      [isoNow()]
+    );
+  }
 }
 
 export type OntologyDbHandle = {
@@ -334,7 +343,7 @@ export function queryMattersSql(
     LIMIT ?
   `;
   const stmt = db.prepare(sql);
-  stmt.bind([...values, limit]);
+  stmt.bind([...values, limit] as Array<string | number | null | Uint8Array>);
   const rows: MatterRow[] = [];
   while (stmt.step()) {
     const r = stmt.getAsObject() as Record<string, unknown>;

@@ -41,6 +41,7 @@
     "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
     "localPackExtrasAfter install after clawql-* packages (e.g. mcp-api-adapter optional peer clawql-inference).",
     "mcp-api-adapter depends on mcp-grpc-transport \u2014 pack/publish transport first.",
+    "clawql-auth before clawql-agents (agents getOutboundCredential depends on clawql-auth).",
     "clawql-telemetry is not yet a package (see #313).",
     "clawql-ontology has no clawql-* deps (ajv/yaml only) \u2014 safe early in the order.",
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",

@@ -14,6 +14,8 @@ export CLAWQL_ENABLE_IDP_PIPELINE="${CLAWQL_ENABLE_IDP_PIPELINE:-1}"
 # LangExtract optional — ExtractBench schema map uses Qwen/vLLM by default.
 export CLAWQL_ENABLE_LANGEXTRACT="${CLAWQL_ENABLE_LANGEXTRACT:-0}"
 export CLAWQL_OBSIDIAN_VAULT_PATH="$VAULT"
+# Optional: scaffold → ontology.db → memory_recall after each EXTRACT (T1 completeness telemetry)
+export CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC="${CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC:-0}"
 # Allow inspect_pdf / anydoc to read ExtractBench dataset paths.
 export CLAWQL_PDF_INSPECTOR_FILE_ROOTS="${CLAWQL_PDF_INSPECTOR_FILE_ROOTS:-/:/tmp:$HOME:$ROOT}"
 export CLAWQL_ANYDOC_FILE_ROOTS="${CLAWQL_ANYDOC_FILE_ROOTS:-$CLAWQL_PDF_INSPECTOR_FILE_ROOTS}"

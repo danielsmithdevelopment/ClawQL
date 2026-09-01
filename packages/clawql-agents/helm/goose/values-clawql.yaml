@@ -1,0 +1,17 @@
+# ClawQL-augmented Goose overlay — path ATR enforced in adapter
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: scoped_coder
+  allowedPaths:
+    - /workspace
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+goose:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1

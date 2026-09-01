@@ -1,0 +1,18 @@
+# ClawQL-augmented Pi overlay — vault memory for cross-session continuity
+clawql:
+  mcp:
+    url: http://clawql-mcp-http:8080/mcp
+  inference:
+    url: http://clawql-inference:8091/v1
+  atrTemplate: conversational_memory
+  memory:
+    recallOnStart: true
+    ingestOnEnd: true
+  worm:
+    enabled: true
+  tee:
+    enabled: false
+pi:
+  env:
+    CLAWQL_MCP_URL: http://clawql-mcp-http:8080/mcp
+    CLAWQL_INFERENCE_URL: http://clawql-inference:8091/v1

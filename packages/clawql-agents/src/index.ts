@@ -126,3 +126,46 @@ export {
   DEFAULT_MEMORY_TOOLS,
   SHIPPABLE_MCP_TOOLS,
 } from "./shared/shippable-tools.js";
+
+export {
+  buildOpenClawMcpSetHttpJson,
+  buildOpenClawMcpSetStdioJson,
+  formatOpenClawMcpSetCommands,
+  planOpenClawLiveWiring,
+} from "./adapters/openclaw/live-mcp.js";
+
+export {
+  installPersonalAgentHooks,
+  planPersonalAgentInstall,
+  CLINE_WORM_HOOK_STUB,
+} from "./personal/install.js";
+export type { PersonalAgentInstallPaths, PersonalAgentInstallPlan } from "./personal/install.js";
+
+export { getOutboundCredential, OutboundCredentialError } from "./auth/outbound-credential.js";
+export type { GetOutboundCredentialInput, OutboundCredential } from "./auth/outbound-credential.js";
+
+export { runAgentBenchmarkDry, catalogAgentsForBench } from "./bench/dry-runner.js";
+export type {
+  ArmResult,
+  BenchmarkFamily,
+  BenchmarkScorecard,
+  BenchmarkTask,
+  TaskResult,
+} from "./bench/dry-runner.js";
+
+export {
+  FAMILY_S_STUB_TOOLS,
+  FAMILY_S_STUB_TOOL_NAMES,
+  FAMILY_S_READONLY_ATR,
+  isFamilySStubTool,
+  getFamilySStubTool,
+} from "./bench/family-s-stub-catalog.js";
+export type { FamilySStubTool, FamilySStubToolKind } from "./bench/family-s-stub-catalog.js";
+
+export { runFamilySScopeChecks, invokeHarnessStub } from "./bench/family-s-checks.js";
+export type {
+  FamilySCheckDetail,
+  FamilySCheckName,
+  FamilySCheckReport,
+  InvokeHarnessStubResult,
+} from "./bench/family-s-checks.js";

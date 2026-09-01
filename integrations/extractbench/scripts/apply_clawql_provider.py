@@ -76,6 +76,9 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp
 QWEN35_SERVER_URL=
 # Optional measured infra cost attribution (USD / page)
 # CLAWQL_EXTRACTBENCH_COST_PER_PAGE=0.10
+# Optional meta-ontology sync after schema map (requires built clawql-ontology)
+# CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1
+# CLAWQL_OBSIDIAN_VAULT_PATH=/tmp/clawql-extractbench-vault
 """
 
 
