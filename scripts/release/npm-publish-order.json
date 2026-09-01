@@ -35,7 +35,7 @@
   ],
   "notes": [
     "Each clawql-* package uses independent semver. Do NOT lockstep package versions to clawql-mcp.",
-    "clawql-mcp (root) version line: 8.0.0 in-tree for this major (npm still 7.2.0 until tag). Independent package cadence where noted (e.g. clawql-observability 0.1.0 first publish); clawql-ouroboros stays on its published 0.1.x line until reconciled.",
+    "clawql-mcp (root) version line: 8.0.0 in-tree for this major (npm still 7.2.0 until tag). Workspace clawql-* libs: first publish 0.1.0 (see docs/release/clawql-workspace-package-versioning.md). clawql-ouroboros in-tree 0.1.1 matches npm.",
     "clawql-merkle + clawql-audit form the standalone WORM wedge; publish before clawql-core so a soft-fail on core still lands merkle/audit.",
     "mcp-grpc-transport, mcp-api-adapter, and panguard-mcp-bridge publish on their own cadence.",
     "localPackExtras install before clawql-* packages (e.g. mcp-grpc-transport for clawql-mcp peers).",
@@ -49,7 +49,7 @@
     "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "clawql-tee after clawql-auth (optional peer; ID-JAG TEE bridge).",
-    "Monorepo clawql-mcp line is 8.0.0; many workspace packages still lockstep for this major — clawql-observability publishes on its own 0.x cadence (first publish 0.1.0; see docs/release/clawql-observability-versioning.md).",
+    "Monorepo clawql-mcp line is 8.0.0; workspace clawql-* libraries publish at 0.1.0 first release unless already on npm (ouroboros 0.1.1, mcp-grpc-transport 1.0.0). Apply: node scripts/release/apply-package-npm-versions.mjs",
     "Wedge-only CI: .github/workflows/npm-publish-audit-wedge.yml (workflow_dispatch).",
     "clawql-analytics after clawql-auth (and clawql-audit) \u2014 docs pageview adapter; not a clawql-mcp runtime dep."
   ]

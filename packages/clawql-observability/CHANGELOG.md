@@ -61,7 +61,7 @@ All notable changes to this package are documented here. The package uses [Seman
 
 ### Peer / workspace dependencies (at publish time)
 
-- `clawql-api@8.0.0`, `clawql-audit@8.0.0`, `clawql-core@8.0.0`
+- `clawql-api@0.1.0`, `clawql-audit@0.1.0`, `clawql-core@0.1.0`
 - Node `>=22`
 
 ### Install

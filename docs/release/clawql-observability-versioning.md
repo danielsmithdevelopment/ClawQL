@@ -53,9 +53,7 @@ Phases are documented in:
 
 ## Relationship to `clawql-mcp@8.0.0`
 
-- **`clawql-mcp`** (root) uses lockstep **8.0.0** for the Agentic Gateway major line.
-- **`clawql-observability`** publishes on its **own 0.x cadence** — listed in [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) **before** `clawql-mcp` so workspace `workspace:*` resolves to concrete versions in the published tarball.
-- Host wiring (`CLAWQL_ENABLE_OBSERVABILITY`, dynamic horizontal layers) lives in the root package; the observability **library** is consumable standalone via npm.
+See the monorepo-wide policy: [`clawql-workspace-package-versioning.md`](./clawql-workspace-package-versioning.md).
 
 ---
 

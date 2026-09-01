@@ -89,7 +89,7 @@ npm pack clawql-observability@0.1.0 --dry-run
 # Smoke install in empty dir
 mkdir /tmp/obs-test && cd /tmp/obs-test
 npm init -y
-npm install clawql-observability@0.1.0 clawql-api@8.0.0 clawql-core@8.0.0 clawql-audit@8.0.0
+npm install clawql-observability@0.1.0 clawql-api@0.1.0 clawql-core@0.1.0 clawql-audit@0.1.0
 node -e "import('clawql-observability').then(m => console.log(Object.keys(m).slice(0,5)))"
 ```
 

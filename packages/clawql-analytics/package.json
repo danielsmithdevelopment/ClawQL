@@ -1,7 +1,7 @@
 {
   "name": "clawql-analytics",
   "version": "0.1.0",
-  "description": "ClawQL product analytics: provider adapters (PostHog v0), clawql-auth scopes, clawql-audit governance events \u2014 distinct from audit and observability",
+  "description": "ClawQL product analytics: provider adapters (PostHog v0), clawql-auth scopes, clawql-audit governance events — distinct from audit and observability",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -28,8 +28,8 @@
     "test": "vitest run --config ../../vitest.config.ts packages/clawql-analytics"
   },
   "dependencies": {
-    "clawql-audit": "8.0.0",
-    "clawql-auth": "8.0.0",
+    "clawql-audit": "0.1.0",
+    "clawql-auth": "0.1.0",
     "effect": "^3.21.4"
   },
   "optionalDependencies": {
