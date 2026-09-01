@@ -3,6 +3,8 @@
  * Hub card grids (`docs-hub-data.ts`) surface long-tail pages not listed here.
  */
 
+import { trainingModules } from '@/generated/security-training/registry'
+
 export type NavLink = {
   title: string
   href: string
@@ -15,7 +17,21 @@ export type NavGroup = {
   links: Array<NavLink>
 }
 
-/** First-run sidebar — hubs only; long-tail lives on hub pages. */
+/** Prefer the clause before `:` so long training titles fit the sidebar. */
+function shortSecurityTitle(title: string): string {
+  const beforeColon = title.split(':')[0]?.trim()
+  return beforeColon && beforeColon.length > 0 ? beforeColon : title
+}
+
+const securityBestPracticeLinks: Array<NavLink> = trainingModules.map(
+  (module) => ({
+    title: shortSecurityTitle(module.title),
+    href: `/security/best-practices/${module.slug}`,
+    tag: String(module.part),
+  }),
+)
+
+/** First-run sidebar — Security lists every /security/* page. */
 export const docsNavigation: Array<NavGroup> = [
   {
     title: 'Getting started',
@@ -35,6 +51,21 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Immutable releases',
         href: '/getting-started/immutable-releases',
       },
+    ],
+  },
+  {
+    title: 'Security',
+    links: [
+      { title: 'Overview', href: '/security' },
+      {
+        title: 'Defense in depth',
+        href: '/security/defense-in-depth',
+      },
+      {
+        title: 'Best practices',
+        href: '/security/best-practices',
+      },
+      ...securityBestPracticeLinks,
     ],
   },
   {
@@ -59,7 +90,6 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Token efficiency',
         href: '/architecture/token-efficiency',
       },
-      { title: 'Security', href: '/security' },
       { title: 'Troubleshooting', href: '/troubleshooting' },
     ],
   },
@@ -185,6 +215,7 @@ export const docsNavigation: Array<NavGroup> = [
 export const docsMobileShortcuts: Array<{ title: string; href: string }> = [
   { title: 'Home', href: '/' },
   { title: 'Quickstart', href: '/quickstart' },
+  { title: 'Security', href: '/security' },
   { title: 'Deploy', href: '/deployment' },
   { title: 'Learn', href: '/learn' },
   { title: 'Plugins', href: '/plugins' },
