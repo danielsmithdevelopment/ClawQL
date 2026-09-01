@@ -10,9 +10,7 @@ export type NetworkDoctorCheck = {
   readonly detail?: string;
 };
 
-export const networkDoctorCheck = (
-  home?: string
-): Effect.Effect<NetworkDoctorCheck, never> =>
+export const networkDoctorCheck = (home?: string): Effect.Effect<NetworkDoctorCheck, never> =>
   Effect.gen(function* () {
     const state = yield* loadNetworkState(home);
     if (!state) {
@@ -45,9 +43,7 @@ export const networkDoctorCheck = (
     };
   });
 
-export const networkStatusLines = (
-  home?: string
-): Effect.Effect<string[], never> =>
+export const networkStatusLines = (home?: string): Effect.Effect<string[], never> =>
   Effect.gen(function* () {
     const state = yield* loadNetworkState(home);
     if (!state) return ["Networking not configured — run: clawql init --networking"];
@@ -61,7 +57,9 @@ export const networkStatusLines = (
       lines.push(`Mesh node: ${state.meshIdentity.nodeId} (${state.meshIdentity.meshAddress})`);
     }
     if (state.derpRelay) {
-      lines.push(`DERP relay: ${state.derpRelay.region} @ ${state.derpRelay.endpoint ?? "unknown"}`);
+      lines.push(
+        `DERP relay: ${state.derpRelay.region} @ ${state.derpRelay.endpoint ?? "unknown"}`
+      );
     }
     lines.push(`Initialized: ${state.initializedAt}`);
     return lines;

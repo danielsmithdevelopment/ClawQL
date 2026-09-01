@@ -46,9 +46,9 @@ export const joinMesh = (
           { timeoutMs: 120_000 }
         ).pipe(Effect.catchAll(() => Effect.succeed(undefined)));
       }
-      const status = yield* spawnCollect("tailscale", ["status", "--json"], { timeoutMs: 15_000 }).pipe(
-        Effect.catchAll(() => Effect.succeed({ stdout: "{}", stderr: "", exitCode: 0 }))
-      );
+      const status = yield* spawnCollect("tailscale", ["status", "--json"], {
+        timeoutMs: 15_000,
+      }).pipe(Effect.catchAll(() => Effect.succeed({ stdout: "{}", stderr: "", exitCode: 0 })));
       const identity = parseTailscaleStatus(status.stdout, namespace);
       if (identity) return identity;
     }
@@ -63,8 +63,7 @@ export const joinMesh = (
         name?: string;
         givenName?: string;
       }>;
-      const match =
-        list.find((n) => n.name === nodeId || n.givenName === nodeId) ?? list[0];
+      const match = list.find((n) => n.name === nodeId || n.givenName === nodeId) ?? list[0];
       if (match?.id) {
         return {
           nodeId: match.id,

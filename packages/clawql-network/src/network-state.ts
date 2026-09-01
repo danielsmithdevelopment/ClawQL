@@ -34,9 +34,7 @@ export const defaultNetworkState = (
   namespace,
 });
 
-export const loadNetworkState = (
-  home?: string
-): Effect.Effect<NetworkState | null, never> =>
+export const loadNetworkState = (home?: string): Effect.Effect<NetworkState | null, never> =>
   Effect.tryPromise({
     try: async () => {
       const path = networkStatePath(home);
@@ -47,10 +45,7 @@ export const loadNetworkState = (
     catch: () => null,
   });
 
-export const saveNetworkState = (
-  state: NetworkState,
-  home?: string
-): Effect.Effect<void, never> =>
+export const saveNetworkState = (state: NetworkState, home?: string): Effect.Effect<void, never> =>
   Effect.tryPromise({
     try: async () => {
       const root = networkRoot(home);

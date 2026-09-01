@@ -61,9 +61,7 @@ const writeHeadscaleConfigTemplate = (
           "dns_config:",
           "  magic_dns: true",
           "  base_domain: clawql.local",
-          ...(config.derpMapPath
-            ? ["derp:", "  urls:", `    - file://${config.derpMapPath}`]
-            : []),
+          ...(config.derpMapPath ? ["derp:", "  urls:", `    - file://${config.derpMapPath}`] : []),
           "",
         ];
         await writeFile(path, lines.join("\n"), { encoding: "utf8", mode: 0o600 });
@@ -87,9 +85,7 @@ export const bootstrapHeadscale = (
     if (headscaleCli && isLocalControlPlane(config.controlPlaneHost)) {
       yield* spawnCollect("headscale", ["namespaces", "create", namespace], {
         timeoutMs: 30_000,
-      }).pipe(
-        Effect.catchAll(() => Effect.succeed(undefined))
-      );
+      }).pipe(Effect.catchAll(() => Effect.succeed(undefined)));
       bootstrapped = true;
     }
 

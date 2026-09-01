@@ -71,15 +71,7 @@ export const startSelfHostedDerper = (
     if (dockerCli) {
       const child = spawn(
         "docker",
-        [
-          "run",
-          "--rm",
-          "--name",
-          `clawql-derper-${region}`,
-          "-p",
-          "443:443",
-          "tailscale/derper",
-        ],
+        ["run", "--rm", "--name", `clawql-derper-${region}`, "-p", "443:443", "tailscale/derper"],
         { detached: false, stdio: "ignore" }
       );
       return {

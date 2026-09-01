@@ -93,7 +93,8 @@ const spawnTailcat = (
       try: () =>
         new Promise<{ child: ChildProcess; stdout: string }>((resolve, reject) => {
           const child = spawn(bin.command, args, {
-            stdio: subcommand === "listen" ? ["ignore", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
+            stdio:
+              subcommand === "listen" ? ["ignore", "pipe", "pipe"] : ["ignore", "pipe", "pipe"],
             env: process.env,
           });
           let stdout = "";

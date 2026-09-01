@@ -36,11 +36,7 @@ import {
   runSandboxStatusCmd,
   runSandboxVerifyCmd,
 } from "./sandbox-cli.js";
-import {
-  runNetworkInitCmd,
-  runNetworkStatusCmd,
-  runNetworkVerifyCmd,
-} from "./network-cli.js";
+import { runNetworkInitCmd, runNetworkStatusCmd, runNetworkVerifyCmd } from "./network-cli.js";
 import {
   runInferenceCacheStatusCmd,
   runInferenceFallbackShowCmd,

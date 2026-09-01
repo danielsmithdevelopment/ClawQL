@@ -44,8 +44,7 @@ export const initNetworking = (
   Effect.gen(function* () {
     const home = options.home;
     const existing = yield* loadNetworkState(home);
-    const controlPlaneHost =
-      options.controlPlaneHost ?? existing?.controlPlaneHost ?? "localhost";
+    const controlPlaneHost = options.controlPlaneHost ?? existing?.controlPlaneHost ?? "localhost";
     const nodeId = options.nodeId ?? hostname();
     const namespace = existing?.namespace ?? "clawql";
 
