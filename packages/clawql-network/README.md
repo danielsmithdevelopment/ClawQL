@@ -4,23 +4,36 @@ Headscale persistent mesh + governed Tailcat ephemeral transport for ClawQL node
 
 **Spec:** [`docs/specs/network/clawql-network-v0.1.md`](../../docs/specs/network/clawql-network-v0.1.md)
 
-## Status
+## Operator bootstrap
 
-v0.1 scaffold — selector, enforcement hook, and init API surface. Headscale bootstrap, Tailcat subprocess adapter, and DERP relay are spec-defined stubs pending implementation.
+```bash
+clawql init --networking
+clawql init --networking --offer-derp   # optional self-hosted DERP relay
+clawql network status
+clawql network verify
+```
 
-## Usage
+Mesh enrollment with Headscale may require `CLAWQL_HEADSCALE_AUTHKEY` for `tailscale up --login-server …`.
+
+## Tailcat binaries
+
+Prebuilt binaries live under `tailcat/bin/` (or set `CLAWQL_TAILCAT_BIN`). Fetch from GitHub releases:
+
+```bash
+node scripts/network/fetch-tailcat-binaries.mjs
+```
+
+When no release binary is available, the package falls back to `tailcat-dev.mjs` (development shim implementing the subprocess JSON-line protocol).
+
+## Programmatic API
 
 ```typescript
 import { selectTransport } from "clawql-network";
 import { createNetworkPlugin } from "clawql-network/plugin";
+import { initNetworking } from "clawql-network/init";
+import { startTailcatListener, connectViaTailcat } from "clawql-network";
 
 selectTransport({ targetType: "unknown" }); // => 'headscale-mesh' (safe default)
-```
-
-Operator bootstrap (planned):
-
-```bash
-clawql init --networking
 ```
 
 ## Related deployment docs

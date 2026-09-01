@@ -45,6 +45,7 @@
   },
   "files": [
     "dist",
+    "tailcat/bin",
     "README.md"
   ],
   "engines": {
