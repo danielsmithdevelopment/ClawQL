@@ -5,8 +5,8 @@
  */
 
 import { trainingModules } from '@/generated/security-training/registry'
-import { learnModuleSiteCards } from '@/lib/docs-site-card-data'
 import { pluginsHubCards } from '@/lib/docs-hub-data'
+import { learnModuleSiteCards } from '@/lib/docs-site-card-data'
 
 export type NavLink = {
   title: string
@@ -54,7 +54,8 @@ const learnModuleByHref = new Map(
 )
 
 const learnModuleLinks: Array<NavLink> = LEARN_MODULE_HREFS.map((href) => ({
-  title: learnModuleByHref.get(href) ?? href.split('/').pop()!.replace(/-/g, ' '),
+  title:
+    learnModuleByHref.get(href) ?? href.split('/').pop()!.replace(/-/g, ' '),
   href,
 }))
 

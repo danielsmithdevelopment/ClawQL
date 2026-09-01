@@ -18,7 +18,8 @@ export type ArchiveGroup = {
 
 function matchesQuery(entry: ArchiveEntry, q: string) {
   if (!q) return true
-  const hay = `${entry.title} ${entry.href} ${entry.description} ${entry.group}`.toLowerCase()
+  const hay =
+    `${entry.title} ${entry.href} ${entry.description} ${entry.group}`.toLowerCase()
   return q
     .toLowerCase()
     .split(/\s+/)
@@ -56,7 +57,7 @@ export function DocsArchiveBrowser({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by title, path, or topic…"
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-950 shadow-sm outline-none ring-claw-cyan/40 placeholder:text-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500"
+          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-950 shadow-sm ring-claw-cyan/40 outline-none placeholder:text-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500"
         />
       </label>
       <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
