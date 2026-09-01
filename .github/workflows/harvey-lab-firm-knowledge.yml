@@ -511,6 +511,7 @@ jobs:
       - name: Report skip
         env:
           REASON: ${{ needs.resolve-matrix.outputs.skip_reason }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
           echo "::warning::Skipped Harvey LAB live matrix — ${REASON}"
@@ -519,8 +520,11 @@ jobs:
               echo "::notice::Intentional pause (.skip-lab-matrix). Not a credential failure."
               exit 0
               ;;
-            *)
-              echo "::error::Set the missing GitHub Actions secret(s), then re-run."
-              exit 1
-              ;;
           esac
+          # Dependabot / fork PRs cannot read Actions secrets — treat as a soft skip.
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            echo "::notice::pull_request without live LAB secrets; soft-skip (exit 0)."
+            exit 0
+          fi
+          echo "::error::Set the missing GitHub Actions secret(s), then re-run."
+          exit 1
