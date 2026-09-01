@@ -1,9 +1,20 @@
 /**
- * Panguard MCP proxy plugin (effect-ts plan Phase 3 / #308).
- * Registers as first-class `mcp-proxy` plugin; sidecar bridge remains until in-process cutover.
+ * Panguard MCP proxy ProviderPlugin — hooks-only enforcement (8.0 hard break).
+ * Denies dual-write to process `clawql-audit` WORM when enabled.
  */
 
-import { ClawQLError, type Plugin } from "clawql-core";
+import {
+  appendProcessWormEffect,
+  wormInputFromPanguardAllow,
+  wormInputFromPanguardDeny,
+} from "clawql-audit";
+import {
+  defineProviderPlugin,
+  type HookContext,
+  type HookResult,
+  type LifecycleHook,
+  type ProviderPlugin,
+} from "clawql-core";
 import { Effect } from "effect";
 
 export type PanguardProxyPluginOptions = {
@@ -18,53 +29,88 @@ export function panguardInProcessEnabled(): boolean {
   return process.env.CLAWQL_PANGUARD_IN_PROCESS?.trim() === "1";
 }
 
-/**
- * Factory for the Panguard gateway proxy plugin.
- * Active routing when `CLAWQL_PANGUARD_IN_PROCESS=1` (runs `beforeCallTool` hook).
- */
-export function createPanguardProxyPlugin(options: PanguardProxyPluginOptions = {}): Plugin {
-  const inProcess = panguardInProcessEnabled();
-  const passive = options.passive ?? !inProcess;
-  const plugin: Plugin = {
-    id: PANGUARD_PROXY_PLUGIN_ID,
-    version: "0.1.0",
-    kind: "mcp-proxy",
-    vertical: "security",
-    onRegister: (_api) =>
-      Effect.sync(() => {
-        if (process.env.CLAWQL_PANGUARD_PROXY_DEBUG?.trim() === "1") {
-          process.stderr.write(
-            `[clawql-api] PanguardProxyPlugin registered (passive=${passive}, inProcess=${inProcess})\n`
-          );
-        }
-      }),
-  };
-
-  if (!passive) {
-    plugin.beforeCallTool = ({ toolName }) =>
+function atrBlockHook(): LifecycleHook {
+  return {
+    id: `${PANGUARD_PROXY_PLUGIN_ID}:pre-execute`,
+    scope: "tool",
+    event: "pre-execute",
+    toolPattern: ".*",
+    blocking: true,
+    handler: (ctx: HookContext) =>
       Effect.gen(function* () {
+        const toolName = ctx.toolName ?? "";
         const blocked = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim();
-        if (!blocked) return;
+        if (!blocked) {
+          const ok: HookResult = { allow: true };
+          if (process.env.CLAWQL_WORM_PANGUARD_ALLOW?.trim() === "1") {
+            yield* Effect.gen(function* () {
+              const input = yield* wormInputFromPanguardAllow({ toolName });
+              yield* appendProcessWormEffect(input);
+            }).pipe(Effect.catchAll(() => Effect.void));
+          }
+          return ok;
+        }
         const deny = blocked
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
         if (deny.includes(toolName) || deny.includes("*")) {
-          return yield* Effect.fail(
-            new ClawQLError({ reason: `Panguard policy blocked tool: ${toolName}` })
-          );
+          const reason = `Panguard policy blocked tool: ${toolName}`;
+          yield* Effect.gen(function* () {
+            const input = yield* wormInputFromPanguardDeny({ toolName, reason });
+            yield* appendProcessWormEffect(input);
+          }).pipe(Effect.catchAll(() => Effect.void));
+          const denied: HookResult = { allow: false, denyReason: reason };
+          return denied;
         }
-      });
+        if (process.env.CLAWQL_WORM_PANGUARD_ALLOW?.trim() === "1") {
+          yield* Effect.gen(function* () {
+            const input = yield* wormInputFromPanguardAllow({ toolName });
+            yield* appendProcessWormEffect(input);
+          }).pipe(Effect.catchAll(() => Effect.void));
+        }
+        const ok: HookResult = { allow: true };
+        return ok;
+      }),
+  };
+}
+
+/**
+ * Factory for the Panguard gateway ProviderPlugin.
+ * Active routing when `CLAWQL_PANGUARD_IN_PROCESS=1` (blocking `pre-execute` hook).
+ */
+export function createPanguardProxyPlugin(
+  options: PanguardProxyPluginOptions = {}
+): ProviderPlugin {
+  const inProcess = panguardInProcessEnabled();
+  const passive = options.passive ?? !inProcess;
+
+  if (process.env.CLAWQL_PANGUARD_PROXY_DEBUG?.trim() === "1") {
+    process.stderr.write(
+      `[clawql-api] PanguardProxyPlugin created (passive=${passive}, inProcess=${inProcess})\n`
+    );
   }
 
-  return plugin;
+  return defineProviderPlugin({
+    id: PANGUARD_PROXY_PLUGIN_ID,
+    version: "0.1.0",
+    description: "Panguard ATR / tool-block enforcement (hooks-only ProviderPlugin)",
+    hooks: passive ? undefined : [atrBlockHook()],
+  });
 }
 
-/** Registered by default unless `CLAWQL_PANGUARD_PROXY_PLUGIN=0`. */
+/** Alias — same native ProviderPlugin (no legacy bridge). */
+export function createPanguardProviderPlugin(
+  options: PanguardProxyPluginOptions = {}
+): ProviderPlugin {
+  return createPanguardProxyPlugin(options);
+}
+
+/** Registered when `CLAWQL_PANGUARD_PROXY_PLUGIN=1` (8.0+ default off — opt in). */
 export function panguardProxyPluginEnabled(): boolean {
-  return process.env.CLAWQL_PANGUARD_PROXY_PLUGIN?.trim() !== "0";
+  return process.env.CLAWQL_PANGUARD_PROXY_PLUGIN?.trim() === "1";
 }
 
-export function defaultPlugins(): readonly Plugin[] {
+export function defaultPlugins(): readonly ProviderPlugin[] {
   return panguardProxyPluginEnabled() ? [createPanguardProxyPlugin()] : [];
 }

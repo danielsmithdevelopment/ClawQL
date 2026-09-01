@@ -1,0 +1,49 @@
+{
+  "description": "Canonical npm semver targets for ClawQL workspace packages. clawql-mcp (root) is the gateway consumer line; other clawql-* packages use independent 0.x until first publish.",
+  "generatedBy": "scripts/release/apply-package-npm-versions.mjs",
+  "gateway": {
+    "clawql-mcp": "8.0.0"
+  },
+  "publishedOnNpm": {
+    "clawql-mcp": "7.2.0",
+    "clawql-ouroboros": "0.1.1",
+    "mcp-grpc-transport": "0.2.0"
+  },
+  "inTreeTargets": {
+    "clawql-mcp": "8.0.0",
+    "clawql-merkle": "0.1.0",
+    "clawql-audit": "0.1.0",
+    "clawql-core": "0.1.0",
+    "clawql-auth": "0.1.0",
+    "clawql-analytics": "0.1.0",
+    "clawql-tee": "0.1.0",
+    "clawql-agents": "0.1.0",
+    "clawql-pageindex": "0.1.0",
+    "clawql-codegraph": "0.1.0",
+    "clawql-api": "0.1.0",
+    "clawql-memory": "0.1.0",
+    "clawql-ontology": "0.1.0",
+    "clawql-release": "0.1.0",
+    "clawql-sandbox": "0.1.0",
+    "clawql-data": "0.1.0",
+    "clawql-web": "0.1.0",
+    "clawql-documents": "0.1.0",
+    "clawql-automation": "0.1.0",
+    "clawql-payments": "0.1.0",
+    "clawql-inference": "0.1.0",
+    "clawql-ouroboros": "0.1.1",
+    "clawql-harness": "0.1.0",
+    "clawql-observability": "0.1.0",
+    "clawql-operator": "0.1.0",
+    "mcp-grpc-transport": "1.0.0",
+    "mcp-api-adapter": "0.1.0",
+    "panguard-mcp-bridge": "0.1.0",
+    "openbench-dataset": "0.1.0"
+  },
+  "notes": [
+    "firstPublish0.1.0: packages with npm 404 — in-tree 8.0.0 was lockstep with clawql-mcp major, not published semver.",
+    "clawql-ouroboros: npm already at 0.1.1 — in-tree aligns to published line, not reset to 0.1.0.",
+    "mcp-grpc-transport: npm 0.2.0; in-tree 1.0.0 is the planned next major for v8 gateway tag.",
+    "clawql-mcp: gateway consumer stays 8.0.0 in-tree (npm 7.2.0 until v8.0.0 tag)."
+  ]
+}

@@ -1,9 +1,12 @@
-/**
- * Single place to interpret optional feature flags (env → typed booleans).
- * See docs/mcp/mcp-tools.md and GitHub #79.
- */
-
 import { z } from "zod";
+import { resolveCompositionFlagsFromEnv } from "./horizontal-composition.js";
+
+export type { ClawQLHorizontalTierSpec } from "./horizontal-composition.js";
+export {
+  optionalFlagsFromHorizontalTierSpec,
+  readInstanceBodyForFlagsFromEnv,
+  resolveCompositionFlagsFromEnv,
+} from "./horizontal-composition.js";
 
 /** `1`, `true`, `yes` (case-insensitive) → true; unset or other → false. */
 function envTruthy(v: string | undefined): boolean {
@@ -37,8 +40,12 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
   CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
-  CLAWQL_ENABLE_OUROBOROS: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
+  /**
+   * Structured data / Node DuckDB MCP tools (`data_query`, `data_ingest`). Default false —
+   * register with `CLAWQL_ENABLE_DATA=1`. Not Python duckdb and not chDB.
+   */
+  CLAWQL_ENABLE_DATA: z.string().optional(),
   /** Web search/fetch MCP tools (`web_*`). Auto-on when a provider/key is set; `0` forces off. */
   CLAWQL_ENABLE_WEB: z.string().optional(),
   CLAWQL_WEB_SEARCH_PROVIDER: z.string().optional(),
@@ -85,6 +92,13 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ANYDOC: z.string().optional(),
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
+  /**
+   * Governed observability MCP tools + HTTP read API (query federation, health, Alloy apply).
+   * Default false — register with `CLAWQL_ENABLE_OBSERVABILITY=1`.
+   */
+  CLAWQL_ENABLE_OBSERVABILITY: z.string().optional(),
+  /** Optional API key for `/observability/*` HTTP routes (`Authorization: ApiKey …`). */
+  CLAWQL_OBSERVABILITY_API_KEY: z.string().optional(),
   /**
    * Bundled Google Cloud manifest (50 Discovery APIs). Default **false** — opt in with `1` / `true` / `yes`.
    * Adds GCP to the **default install stack**; explicit `CLAWQL_PROVIDER=google` or `CLAWQL_BUNDLED_PROVIDERS=google` still loads GCP.
@@ -146,13 +160,14 @@ export type ClawqlOptionalToolFlags = {
    */
   enableOnyxKnowledge: boolean;
   /**
-   * ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)): Ouroboros MCP tools (`ouroboros_*`). Default false.
-   */
-  enableOuroboros: boolean;
-  /**
    * ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)): MCP **`sandbox_exec`** (bridge / Seatbelt / Docker). Default false — register with **`CLAWQL_ENABLE_SANDBOX=1`**.
    */
   enableSandbox: boolean;
+  /**
+   * MCP **`data_query` / `data_ingest` / `data_status`** (`clawql-data`, Node DuckDB).
+   * Default false — register with **`CLAWQL_ENABLE_DATA=1`**.
+   */
+  enableData: boolean;
   /**
    * MCP **`web_search` / `web_fetch` / `web_screenshot` / `web_interact`** (`clawql-web`).
    * Default false unless `CLAWQL_ENABLE_WEB=1` or a web provider/API key is configured.
@@ -203,6 +218,11 @@ export type ClawqlOptionalToolFlags = {
    */
   enableLangfuseEval: boolean;
   /**
+   * Governed observability MCP tools (`observability_query_*`, health, Alloy apply) + optional HTTP read API.
+   * Default false — register with **`CLAWQL_ENABLE_OBSERVABILITY=1`**.
+   */
+  enableObservability: boolean;
+  /**
    * Adds Google Cloud to the **default install stack**. Default **false** (opt in).
    */
   enableGoogle: boolean;
@@ -246,8 +266,8 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
     enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
-    enableOuroboros: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
+    enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
     enableWeb: resolveEnableWeb(raw),
     enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
     enableOntology:
@@ -261,6 +281,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enablePdfInspector: envTruthy(raw.CLAWQL_ENABLE_PDF_INSPECTOR),
     enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
+    enableObservability: envTruthy(raw.CLAWQL_ENABLE_OBSERVABILITY),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
     enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
@@ -269,10 +290,58 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
 
 /**
  * Parsed optional tool flags from the given env (default `process.env`).
+ *
+ * When `CLAWQL_INSTANCE_SPEC` / `CLAWQL_TIER` is set, horizontal plugins come from
+ * instance/tier composition — **not** `CLAWQL_ENABLE_*`. Legacy env flags apply only
+ * when neither instance nor tier is configured (local onboarding / bare npm).
  */
 export function getClawqlOptionalToolFlags(
   env: NodeJS.ProcessEnv = process.env
 ): ClawqlOptionalToolFlags {
+  const hasInstance =
+    Boolean(env.CLAWQL_INSTANCE_SPEC?.trim()) || Boolean(env.CLAWQL_INSTANCE_SPEC_FILE?.trim());
+  const hasTier = Boolean(env.CLAWQL_TIER?.trim());
+  if (hasInstance || hasTier) {
+    return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags());
+  }
   const raw = rawOptionalFlagsSchema.parse(env);
-  return rawToFlags(raw);
+  return resolveCompositionFlagsFromEnv(env, basePluginCompositionFlags(), rawToFlags(raw));
+}
+
+/**
+ * Hard defaults for horizontal plugin composition (no env). Matches the `standard`
+ * tier preset baseline before overlays: memory + documents on; opt-in tiers off.
+ */
+export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
+  return {
+    enableGrpc: false,
+    enableGrpcReflection: false,
+    externalIngestPreview: false,
+    enableMemory: true,
+    enableDocuments: true,
+    enableSchedule: false,
+    enableNotify: false,
+    enableWorkflow: false,
+    enableArgoCd: false,
+    enableVision: false,
+    enableOnyxKnowledge: false,
+    enableSandbox: false,
+    enableData: false,
+    enableWeb: false,
+    enableCodeGraph: false,
+    enableOntology: false,
+    enableOntologyWrites: false,
+    enableHitlLabelStudio: false,
+    enableConeshare: false,
+    enableIdpPipeline: false,
+    enableIdpClassifier: false,
+    enableLangextract: false,
+    enablePdfInspector: false,
+    enableAnydoc: false,
+    enableLangfuseEval: false,
+    enableObservability: false,
+    enableGoogle: false,
+    enableCloudflare: true,
+    enableAws: false,
+  };
 }

@@ -1,0 +1,69 @@
+{
+  "name": "clawql-tee",
+  "version": "0.1.0",
+  "description": "TEE-shaped signing bridge for ClawQL ID-JAG issuer (Layer C)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "clawql-tee-id-jag-sign": "./bin/id-jag-sign-cmd.mjs"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "effect": "^3.21.4",
+    "jose": "^6.2.10"
+  },
+  "peerDependencies": {
+    "clawql-auth": "0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "clawql-auth": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "clawql-auth": "0.1.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-tee"
+  },
+  "keywords": [
+    "clawql",
+    "tee",
+    "id-jag",
+    "signing"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

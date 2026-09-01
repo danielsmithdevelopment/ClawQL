@@ -36,7 +36,7 @@ ClawQL closes all three gaps simultaneously through a layered, defense-in-depth 
 | **3** | Memory & Documents                 | `clawql-memory` (Vault + Graph + PageIndex), `clawql-documents`, `clawql-pageindex`              | Persistent hybrid knowledge with Merkle stamping                              |
 | **4** | Strategic Coordination             | `clawql-ouroboros` evolutionary loop (shipped); DAOS swarm coordination — NSV + SGDOP (roadmap)  | Swarm diversity, reputation, recruitment, convergence control                 |
 | **5** | Security & Compliance              | ATRClaims, Presidio, Merkle/WORM, Vault, external-provider policies                              | Uniform zero-trust controls across all boundaries                             |
-| **6** | Observability & Runtime Protection | LGTMP (Alloy + Langfuse + Beyla + Faro + Loki/Tempo/Mimir/Pyroscope + Falco/Tetragon/Wazuh + k6) | Full visibility, AI tracing, runtime enforcement, anomaly detection           |
+| **6** | Observability & Runtime Protection | LGTM+ (Alloy + Langfuse + Beyla + Faro + Loki/Tempo/Mimir/Pyroscope + Falco/Tetragon/Wazuh + k6) | Full visibility, AI tracing, runtime enforcement, anomaly detection           |
 
 **Dependency Rule**: Strictly acyclic and enforced by CI. Verticals never import other verticals. Everything routes through the gateway.
 
@@ -112,7 +112,7 @@ _Full design: [Token efficiency (12 layers)](../architecture/clawql-token-effici
 
 _Full design: [Defense-in-Depth Security Guide](../security/clawql-defense-in-depth-security-guide.md) · [Security curriculum (32 modules)](../security/security-best-practices-series/README.md)._
 
-## IX. Observability (LGTMP Stack)
+## IX. Observability (LGTM+ Stack)
 
 Full open-source, AI-native observability:
 
@@ -143,7 +143,7 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 3. Operator/admission controller verifies manifest.
 4. Agent calls `search()`/`execute()` on gateway.
 5. Gateway enforces security → routes to Memory 2.0 or tools.
-6. Operation is Merkle-stamped, observed in Langfuse + LGTMP; DAOS/Ouroboros swarm coordination applies when deployed (roadmap).
+6. Operation is Merkle-stamped, observed in Langfuse + LGTM+; DAOS/Ouroboros swarm coordination applies when deployed (roadmap).
 7. Everything remains auditable and reversible via manifest policy.
 
 ## XII. Current Status & Roadmap (July 2026)

@@ -1,0 +1,106 @@
+{
+  "name": "clawql-harness",
+  "version": "0.1.0",
+  "description": "ClawQL execution-loop harness — plugin registry, tool/WORM bridges, Ouroboros and OpenCode2 plugins",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./plugin": {
+      "types": "./dist/plugin/index.d.ts",
+      "import": "./dist/plugin/index.js",
+      "require": "./dist/plugin/index.cjs"
+    },
+    "./plugins/ouroboros": {
+      "types": "./dist/plugins/ouroboros/index.d.ts",
+      "import": "./dist/plugins/ouroboros/index.js",
+      "require": "./dist/plugins/ouroboros/index.cjs"
+    },
+    "./plugins/opencode2": {
+      "types": "./dist/plugins/opencode2/index.d.ts",
+      "import": "./dist/plugins/opencode2/index.js",
+      "require": "./dist/plugins/opencode2/index.cjs"
+    },
+    "./bench": {
+      "types": "./dist/bench/harness-bench.d.ts",
+      "import": "./dist/bench/harness-bench.js",
+      "require": "./dist/bench/harness-bench.cjs"
+    },
+    "./bench/scenario-synthesis": {
+      "types": "./dist/bench/scenario-synthesis-bridge.d.ts",
+      "import": "./dist/bench/scenario-synthesis-bridge.js",
+      "require": "./dist/bench/scenario-synthesis-bridge.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clawql-api": "0.1.0",
+    "clawql-audit": "0.1.0",
+    "clawql-core": "0.1.0",
+    "clawql-ouroboros": "0.1.1",
+    "effect": "^3.21.4",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "@opencode-ai/sdk": "*",
+    "opencode-ai": "*",
+    "@opencode-ai/plugin": "*"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/sdk": {
+      "optional": true
+    },
+    "opencode-ai": {
+      "optional": true
+    },
+    "@opencode-ai/plugin": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "plugins",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-harness"
+  },
+  "keywords": [
+    "clawql",
+    "harness",
+    "ouroboros",
+    "opencode",
+    "execution-loop",
+    "mcp"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "version": "0.1.0"
+}

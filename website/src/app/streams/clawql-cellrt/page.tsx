@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import CellrtBody from '@/generated/clawql-cellrt-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -72,9 +71,10 @@ export default function ClawqlCellrtPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <CellrtBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/streams/clawql-cellrt"
+        className="flex-auto"
+      />
     </article>
   )
 }

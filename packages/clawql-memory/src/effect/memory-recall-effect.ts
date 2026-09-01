@@ -122,14 +122,17 @@ export function executeMemoryRecallCoreEffect(
       return { ok: false, error: "query is required" };
     }
 
-    // Structured ontology path — exact predicate evaluation (B-7.1 / legal domain).
-    if (input.schema && input.filters && Object.keys(input.filters).length > 0) {
+    // Structured ontology path — exact predicate evaluation (B-7.1 / legal + Layer 2/3 dynamic).
+    const { wantsStructuredOntologyRecall } = yield* memoryFromPromise(
+      async () => import("../ontology/ontology-query.js")
+    );
+    if (wantsStructuredOntologyRecall({ schema: input.schema, filters: input.filters })) {
       const ontologyResult = yield* memoryFromPromise(async () => {
         const { runOntologyRecall } = await import("../ontology/ontology-query.js");
         return runOntologyRecall(vault, {
           query,
           schema: input.schema!,
-          filters: input.filters!,
+          filters: input.filters ?? {},
           confidenceMinimum: input.confidenceMinimum,
           limit: input.limit,
         });
@@ -156,21 +159,25 @@ export function executeMemoryRecallCoreEffect(
           extractionMethod: h.extractionMethod,
         },
       }));
-      return {
-        ok: true,
-        query: ontologyResult.query,
-        results: ontologyResult.results,
-        hits: normalizedHits,
-        sourcesUsed: ontologyResult.sourcesUsed,
-        queryType: ontologyResult.queryType,
-        indexUsed: ontologyResult.indexUsed,
-        schema: ontologyResult.schema,
-        filters: ontologyResult.filters,
-        scannedEntities: ontologyResult.scannedEntities,
-        filteredEntities: ontologyResult.filteredEntities,
-        confidenceMinimum: ontologyResult.confidenceMinimum,
-        scannedFiles: ontologyResult.scannedEntities,
-      };
+      return yield* memoryFromPromise(async () => {
+        const base: MemoryRecallResult = {
+          ok: true,
+          query: ontologyResult.query,
+          results: ontologyResult.results,
+          hits: normalizedHits,
+          sourcesUsed: ontologyResult.sourcesUsed,
+          queryType: ontologyResult.queryType,
+          indexUsed: ontologyResult.indexUsed,
+          schema: ontologyResult.schema,
+          filters: ontologyResult.filters,
+          scannedEntities: ontologyResult.scannedEntities,
+          filteredEntities: ontologyResult.filteredEntities,
+          confidenceMinimum: ontologyResult.confidenceMinimum,
+          scannedFiles: ontologyResult.scannedEntities,
+        };
+        const { maybeEnrichHarveyLabRecall } = await import("../recall/harvey-lab-enrich.js");
+        return maybeEnrichHarveyLabRecall(base);
+      });
     }
 
     const sources = resolveMemoryRecallSources({
@@ -636,7 +643,10 @@ export function executeMemoryRecallCoreEffect(
       });
     }).pipe(Effect.catchAll(() => Effect.void));
 
-    return result;
+    return yield* memoryFromPromise(async () => {
+      const { maybeEnrichHarveyLabRecall } = await import("../recall/harvey-lab-enrich.js");
+      return maybeEnrichHarveyLabRecall(result);
+    });
   });
 }
 

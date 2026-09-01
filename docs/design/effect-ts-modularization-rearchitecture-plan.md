@@ -1,6 +1,9 @@
 # Effect-TS + modularization + plugin rearchitecture plan
 
 **Status:** In progress (June 2026) — extraction **phases 1–9** merged ([#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)); Effect foundation partial. See [`modularization-implementation-status.md`](./modularization-implementation-status.md). **Plugin model (horizontal packages):** [`clawql-plugin-model.md`](./clawql-plugin-model.md).
+
+**Correctness companion:** [`correctness-by-construction.md`](./correctness-by-construction.md) — NASA Power of 10 / SPARK contracts → what Effect-TS already enforces vs what needs TLA+ on tee critical paths.
+
 **Canonical vision:** [`docs/vision/clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md) (§5–§6, plugin interface, execute pipeline)  
 **Package checklist companion:** [`docs/vision/clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) · epic [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)
 

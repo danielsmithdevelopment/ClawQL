@@ -87,8 +87,9 @@ export const MEMORY_RECALL_SOURCES_DESCRIPTION =
   "Returns normalized hits[] + followUps for specialist tools. " +
   "Ignored when schema + filters select structured ontology recall.";
 export const MEMORY_RECALL_SCHEMA_DESCRIPTION =
-  "Ontology schema for structured predicate mode (e.g. legal.Matter). Requires filters. " +
-  "Exact field matching via ontology.db — use for enumeration (escrowPct >= 10), not narrative search.";
+  "Ontology schema for structured predicate mode. Layer 1: legal.Matter (etc). " +
+  "Layer 2/3: any dynamically scaffolded entity id (e.g. invoice). Requires filters for legal.*; " +
+  "dynamic schemas may omit filters to enumerate all rows. Exact field matching via ontology.db.";
 export const MEMORY_RECALL_FILTERS_DESCRIPTION =
   "Field predicate filters for structured mode. Keys are camelCase field names. " +
   "Values are predicates: { gte: 10 }, { gt: 18 }, { eq: 'Active' }, { in: ['A','B'] }, { between: [10, 20] }.";
@@ -114,12 +115,7 @@ const MemoryRebuildSchema = Schema.Struct({
 }).annotations({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
 const MemoryRecallSourceSchema = Schema.Literal(...MEMORY_RECALL_SOURCES);
-const OntologySchemaNameSchema = Schema.Literal(
-  "legal.Matter",
-  "legal.Client",
-  "legal.Attorney",
-  "legal.Document"
-);
+const OntologySchemaNameSchema = Schema.String.pipe(Schema.minLength(1), Schema.maxLength(200));
 const OntologyConfidenceSchema = Schema.Literal("EXTRACTED", "INFERRED", "AMBIGUOUS");
 /** Predicate object — keys like gte/gt/eq; values validated at query time. */
 const OntologyFilterPredicateSchema = Schema.Record({

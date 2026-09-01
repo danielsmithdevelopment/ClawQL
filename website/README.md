@@ -54,6 +54,7 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/streams/clawql-qr-stream-transport` | `docs/streams/clawql-qr-stream-transport.md` | `scripts/sync-clawql-qr-stream-transport-doc.mjs` |
 | `/government/clawql-government` | `docs/government/clawql-government.md` | `scripts/sync-clawql-government-doc.mjs` |
 | `/mcp/mcp-api-adapter` | `docs/mcp/mcp-api-adapter.md` | `scripts/sync-mcp-api-adapter-doc.mjs` |
+| `/mcp/mcp-ui` | `docs/mcp/mcp-ui.md` | `scripts/sync-mcp-ui-doc.mjs` |
 | `/mcp/protocol-fabric` | `docs/mcp/protocol-fabric.md` | `scripts/sync-protocol-fabric-doc.mjs` |
 | `/architecture` | `docs/vision/clawql-master-enablement-guide.md` (full technical reference)| `scripts/sync-clawql-master-enablement-doc.mjs` |
 | `/architecture`       | `docs/vision/clawql-modularization-v2.md` (companion)                     | `scripts/sync-clawql-modularization-doc.mjs`    |

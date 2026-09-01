@@ -1,5 +1,6 @@
 import type { Implementation } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ensureClawqlApi } from "./clawql-api-adapters.js";
 import { assertNonnegotiableMcpToolsRegistered } from "./mcp-nonnegotiable-tools.js";
 import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 import { registerTools } from "./tools.js";
@@ -17,4 +18,12 @@ export function createRegisteredMcpServer(serverInfo: Implementation = DEFAULT_I
   registerTools(server);
   assertNonnegotiableMcpToolsRegistered(server);
   return server;
+}
+
+/** Production path — dynamic plugin composition via {@link ensureClawqlApi}. */
+export async function createRegisteredMcpServerAsync(
+  serverInfo: Implementation = DEFAULT_INFO
+): Promise<McpServer> {
+  await ensureClawqlApi();
+  return createRegisteredMcpServer(serverInfo);
 }

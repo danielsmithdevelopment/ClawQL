@@ -1,0 +1,132 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        {
+          "expr": "sum(rate({service_name=\"clawql-panguard\", verdict=\"deny\"}[5m]))",
+          "legendFormat": "panguard denies/s"
+        }
+      ],
+      "title": "Panguard deny rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "sum(rate({service_name=~\"clawql-falco|clawql-tetragon|clawql-wazuh\"}[5m])) by (service_name)",
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "title": "Runtime sensor event rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "tempo", "uid": "Tempo" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "targets": [
+        {
+          "queryType": "traceqlSearch",
+          "filters": [
+            {
+              "id": "service-name",
+              "operator": "=",
+              "scope": "resource",
+              "tag": "service.name",
+              "value": ["clawql-mcp"],
+              "valueType": "string"
+            }
+          ]
+        }
+      ],
+      "title": "Recent MCP / agent traces (Tempo)",
+      "type": "traces"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 6 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "{service_name=\"clawql-panguard\"} | json | line_format \"{{.clawql_tool_name}} verdict={{.clawql_panguard_verdict}} corr={{.clawql_correlation_id}} {{.clawql_panguard_reason}}\"",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Panguard decisions (join on clawql.correlation_id → Langfuse / Tempo)",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 6 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "{service_name=~\"clawql-falco|clawql-tetragon|clawql-wazuh|clawql-mcp\"} |= \"$tool\"",
+          "legendFormat": ""
+        }
+      ],
+      "title": "Sensor + MCP logs (filter by $tool)",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 16 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum(rate({service_name=\"clawql-panguard\", verdict=\"deny\"}[5m])) > 0 or sum(rate({service_name=\"clawql-falco\"}[5m])) > 0 or sum(rate({service_name=\"clawql-tetragon\"}[5m])) > 0",
+          "legendFormat": "UnexpectedAgentToolUse mirror"
+        }
+      ],
+      "title": "UnexpectedAgentToolUse signal mirror",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["clawql", "phase4", "panguard", "langfuse", "security"],
+  "templating": {
+    "list": [
+      {
+        "name": "verdict",
+        "type": "custom",
+        "query": "deny,allow",
+        "current": { "text": "deny", "value": "deny" },
+        "options": [
+          { "text": "deny", "value": "deny", "selected": true },
+          { "text": "allow", "value": "allow", "selected": false }
+        ]
+      },
+      {
+        "name": "tool",
+        "type": "textbox",
+        "query": "",
+        "current": { "text": "", "value": "" }
+      },
+      {
+        "name": "correlation_id",
+        "type": "textbox",
+        "query": "",
+        "current": { "text": "", "value": "" }
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "ClawQL Langfuse ↔ Panguard correlation",
+  "uid": "clawql-langfuse-panguard",
+  "version": 1
+}

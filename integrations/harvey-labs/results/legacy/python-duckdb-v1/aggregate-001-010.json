@@ -1,0 +1,125 @@
+{
+  "run_id": "harvey-lab-local-001-010",
+  "agent_model": "openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "judge_model": "ollama/qwen3.6:35b",
+  "pipeline": "clawql-inference\u2192MLX/Ollama + call-store",
+  "arms": "nemotron-clawql",
+  "tasks": {
+    "firm-knowledge/tasks/001": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 7,
+      "n_criteria": 7,
+      "turns": 9,
+      "input_tokens": 349748,
+      "output_tokens": 13651,
+      "run_id": "firm-knowledge/tasks/001/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-160152"
+    },
+    "firm-knowledge/tasks/002": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 4,
+      "n_criteria": 4,
+      "turns": 11,
+      "input_tokens": 222742,
+      "output_tokens": 4648,
+      "run_id": "firm-knowledge/tasks/002/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-163220"
+    },
+    "firm-knowledge/tasks/003": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.6666666666666666,
+      "n_passed": 2,
+      "n_criteria": 3,
+      "turns": 35,
+      "input_tokens": 784400,
+      "output_tokens": 14189,
+      "run_id": "firm-knowledge/tasks/003/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-163725"
+    },
+    "firm-knowledge/tasks/004": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.5,
+      "n_passed": 1,
+      "n_criteria": 2,
+      "turns": 16,
+      "input_tokens": 518707,
+      "output_tokens": 21880,
+      "run_id": "firm-knowledge/tasks/004/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-164559"
+    },
+    "firm-knowledge/tasks/005": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.6666666666666666,
+      "n_passed": 4,
+      "n_criteria": 6,
+      "turns": 27,
+      "input_tokens": 745832,
+      "output_tokens": 48721,
+      "run_id": "firm-knowledge/tasks/005/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-165652"
+    },
+    "firm-knowledge/tasks/006": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.6666666666666666,
+      "n_passed": 2,
+      "n_criteria": 3,
+      "turns": 11,
+      "input_tokens": 211918,
+      "output_tokens": 7622,
+      "run_id": "firm-knowledge/tasks/006/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-172302"
+    },
+    "firm-knowledge/tasks/007": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.6666666666666666,
+      "n_passed": 2,
+      "n_criteria": 3,
+      "turns": 19,
+      "input_tokens": 327633,
+      "output_tokens": 5066,
+      "run_id": "firm-knowledge/tasks/007/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-172813"
+    },
+    "firm-knowledge/tasks/008": {
+      "exit": 0,
+      "all_pass": 1.0,
+      "criterion_pass_rate": 1.0,
+      "n_passed": 4,
+      "n_criteria": 4,
+      "turns": 13,
+      "input_tokens": 381434,
+      "output_tokens": 15537,
+      "run_id": "firm-knowledge/tasks/008/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-173231"
+    },
+    "firm-knowledge/tasks/009": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.10526315789473684,
+      "n_passed": 2,
+      "n_criteria": 19,
+      "turns": 9,
+      "input_tokens": 119177,
+      "output_tokens": 4236,
+      "run_id": "firm-knowledge/tasks/009/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-174057"
+    },
+    "firm-knowledge/tasks/010": {
+      "exit": 0,
+      "all_pass": 0.0,
+      "criterion_pass_rate": 0.5,
+      "n_passed": 1,
+      "n_criteria": 2,
+      "turns": 9,
+      "input_tokens": 172948,
+      "output_tokens": 4463,
+      "run_id": "firm-knowledge/tasks/010/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260815-175020"
+    }
+  },
+  "summary": {
+    "done": 10,
+    "all_pass_count": 3,
+    "all_pass_rate": 0.3,
+    "perfect": false
+  }
+}

@@ -4,14 +4,16 @@
  * JWKS/issuer to verify against based on email domain (or token `iss`).
  */
 
+import { Effect } from "effect";
 import { decodeJwt, type JWTPayload } from "jose";
 
 import type { AtrClaims } from "./gateway.js";
 import {
   atrClaimsFromJwtPayload,
   loadOidcAuthConfig,
+  OidcAuthError,
   type OidcAuthConfig,
-  verifyOidcBearerToken,
+  verifyOidcBearerTokenEffect,
 } from "./oidc.js";
 import { extractEmailDomain, normalizeEmailDomain } from "./policy.js";
 
@@ -28,14 +30,12 @@ export type OrgIdpRoute = {
 
 /**
  * Pluggable lookup — typically backed by org-credits SSO policy in clawql-payments.
- * clawql-auth stays free of a payments dependency.
+ * clawql-auth stays free of a payments dependency. Methods return Effect (no Promise façade).
  */
 export type OrgIdpRouter = {
-  resolveByEmailDomain: (
-    domain: string
-  ) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
-  resolveByIssuer?: (issuer: string) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
-  resolveByOrgId?: (orgId: string) => OrgIdpRoute | undefined | Promise<OrgIdpRoute | undefined>;
+  resolveByEmailDomain: (domain: string) => Effect.Effect<OrgIdpRoute | undefined, unknown>;
+  resolveByIssuer?: (issuer: string) => Effect.Effect<OrgIdpRoute | undefined, unknown>;
+  resolveByOrgId?: (orgId: string) => Effect.Effect<OrgIdpRoute | undefined, unknown>;
 };
 
 /** Decode JWT payload without verifying signature (routing peek only). */
@@ -78,84 +78,87 @@ export function mergeOidcConfigWithRoute(base: OidcAuthConfig, route: OrgIdpRout
   };
 }
 
-export async function resolveOrgIdpRouteForToken(
+export function resolveOrgIdpRouteForTokenEffect(
   token: string,
   router: OrgIdpRouter,
   emailClaim = "email"
-): Promise<OrgIdpRoute | undefined> {
-  const payload = peekJwtPayloadUnsafe(token);
-  if (!payload) return undefined;
+): Effect.Effect<OrgIdpRoute | undefined, unknown> {
+  return Effect.gen(function* () {
+    const payload = peekJwtPayloadUnsafe(token);
+    if (!payload) return undefined;
 
-  const domain = emailDomainFromJwtPayload(payload, emailClaim);
-  if (domain) {
-    const byDomain = await router.resolveByEmailDomain(domain);
-    if (byDomain) return byDomain;
-  }
+    const domain = emailDomainFromJwtPayload(payload, emailClaim);
+    if (domain) {
+      const byDomain = yield* router.resolveByEmailDomain(domain);
+      if (byDomain) return byDomain;
+    }
 
-  if (typeof payload.iss === "string" && router.resolveByIssuer) {
-    const byIss = await router.resolveByIssuer(payload.iss);
-    if (byIss) return byIss;
-  }
+    if (typeof payload.iss === "string" && router.resolveByIssuer) {
+      const byIss = yield* router.resolveByIssuer(payload.iss);
+      if (byIss) return byIss;
+    }
 
-  const orgRaw = payload.org_id ?? payload.orgId;
-  if (typeof orgRaw === "string" && router.resolveByOrgId) {
-    return router.resolveByOrgId(orgRaw);
-  }
+    const orgRaw = payload.org_id ?? payload.orgId;
+    if (typeof orgRaw === "string" && router.resolveByOrgId) {
+      return yield* router.resolveByOrgId(orgRaw);
+    }
 
-  return undefined;
+    return undefined;
+  });
 }
 
 /**
  * Verify Bearer JWT, optionally routing to a per-org IdP (JWKS/issuer/domains).
  * When no route matches, falls back to the global `CLAWQL_AUTH_OIDC_*` config.
  */
-export async function verifyOidcBearerTokenWithOrgRouting(
+export function verifyOidcBearerTokenWithOrgRoutingEffect(
   token: string,
   options: {
     baseConfig?: OidcAuthConfig;
     router?: OrgIdpRouter;
   } = {}
-): Promise<
-  | { ok: true; claims: AtrClaims; payload: JWTPayload; route?: OrgIdpRoute }
-  | { ok: false; error: string }
-> {
-  const base = options.baseConfig ?? loadOidcAuthConfig();
-  let route: OrgIdpRoute | undefined;
-  let config = base;
+): Effect.Effect<{ claims: AtrClaims; payload: JWTPayload; route?: OrgIdpRoute }, OidcAuthError> {
+  return Effect.gen(function* () {
+    const base = options.baseConfig ?? loadOidcAuthConfig();
+    let route: OrgIdpRoute | undefined;
+    let config = base;
 
-  if (options.router) {
-    route = await resolveOrgIdpRouteForToken(token, options.router, base.emailClaim);
-    if (route) {
-      config = mergeOidcConfigWithRoute(base, route);
-      // Per-org JWKS/issuer must be present when route overrides keys
-      if (!config.jwksUrl && !config.publicKeyPemPath && !config.hs256Secret) {
-        return {
-          ok: false,
-          error: `Org ${route.orgId} SSO route has no JWKS/PEM/HS256 verify key`,
-        };
+    if (options.router) {
+      route = yield* resolveOrgIdpRouteForTokenEffect(token, options.router, base.emailClaim).pipe(
+        Effect.mapError(
+          (cause) =>
+            new OidcAuthError({
+              reason: cause instanceof Error ? cause.message : "Org IdP routing failed",
+              cause,
+            })
+        )
+      );
+      if (route) {
+        config = mergeOidcConfigWithRoute(base, route);
+        if (!config.jwksUrl && !config.publicKeyPemPath && !config.hs256Secret) {
+          return yield* Effect.fail(
+            new OidcAuthError({
+              reason: `Org ${route.orgId} SSO route has no JWKS/PEM/HS256 verify key`,
+            })
+          );
+        }
       }
     }
-  }
 
-  const result = await verifyOidcBearerToken(token, config);
-  if (!result.ok) return result;
-
-  const claims = { ...result.claims };
-  if (route) {
-    claims.orgId = route.orgId;
-    if (!claims.emailDomain && route.allowedEmailDomains[0]) {
-      // leave as-is; emailDomain should already be set from token
+    const verified = yield* verifyOidcBearerTokenEffect(token, config);
+    const claims = { ...verified.claims };
+    if (route) {
+      claims.orgId = route.orgId;
     }
-  }
-  // Re-map in case route changed claim names — payload already verified
-  const remapped = atrClaimsFromJwtPayload(result.payload, config);
-  const merged: AtrClaims = {
-    ...remapped,
-    ...claims,
-    orgId: claims.orgId ?? remapped.orgId ?? route?.orgId,
-  };
+    const remapped = atrClaimsFromJwtPayload(verified.payload, config);
+    const merged: AtrClaims = {
+      ...remapped,
+      ...claims,
+      orgId: claims.orgId ?? remapped.orgId ?? route?.orgId,
+    };
 
-  return { ok: true, claims: merged, payload: result.payload, route };
+    return { claims: merged, payload: verified.payload, route };
+  });
 }
 
 /** In-memory router for tests / static maps. */
@@ -171,8 +174,8 @@ export function createStaticOrgIdpRouter(routes: OrgIdpRoute[]): OrgIdpRouter {
     if (r.issuer) byIssuer.set(r.issuer, r);
   }
   return {
-    resolveByEmailDomain: (domain) => byDomain.get(normalizeEmailDomain(domain)),
-    resolveByIssuer: (issuer) => byIssuer.get(issuer),
-    resolveByOrgId: (orgId) => byOrg.get(orgId.trim().toLowerCase()),
+    resolveByEmailDomain: (domain) => Effect.succeed(byDomain.get(normalizeEmailDomain(domain))),
+    resolveByIssuer: (issuer) => Effect.succeed(byIssuer.get(issuer)),
+    resolveByOrgId: (orgId) => Effect.succeed(byOrg.get(orgId.trim().toLowerCase())),
   };
 }

@@ -1,3 +1,4 @@
+import { clawqlProvidersCompositionSchema } from "clawql-api";
 import { z } from "zod";
 import type { ClawQLHorizontalTierSpec } from "./horizontal-tier-spec.js";
 import { applyTierPreset } from "./tier-presets.js";
@@ -12,6 +13,11 @@ const tierToggleSchema = z
 export const clawqlInstanceSpecV1Alpha1Schema = z
   .object({
     tier: z.enum(["local", "standard", "enterprise"]).optional(),
+    /**
+     * Bundled OpenAPI/GraphQL catalog selection — available in the image, loaded only when opted in.
+     * Prefer this over `CLAWQL_PROVIDER` / `CLAWQL_ENABLE_GOOGLE|AWS|CLOUDFLARE`.
+     */
+    providers: clawqlProvidersCompositionSchema.optional(),
     memory: tierToggleSchema,
     documents: z
       .object({
@@ -20,6 +26,9 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
         idpPipeline: tierToggleSchema,
         idpClassifier: tierToggleSchema,
         langextract: tierToggleSchema,
+        pdfInspector: tierToggleSchema,
+        anydoc: tierToggleSchema,
+        coneshare: tierToggleSchema,
       })
       .strict()
       .optional(),
@@ -34,6 +43,15 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       .strict()
       .optional(),
     sandbox: tierToggleSchema,
+    data: tierToggleSchema,
+    web: tierToggleSchema,
+    ontology: z
+      .object({
+        enabled: z.boolean().optional(),
+        writes: tierToggleSchema,
+      })
+      .strict()
+      .optional(),
     ouroboros: z
       .object({
         enabled: z.boolean().optional(),
@@ -41,6 +59,7 @@ export const clawqlInstanceSpecV1Alpha1Schema = z
       })
       .strict()
       .optional(),
+    observability: tierToggleSchema,
     mcp: z
       .object({
         deploymentName: z.string().min(1).optional(),
@@ -79,7 +98,11 @@ export function clawqlInstanceSpecToHorizontalTierSpec(
     documents: spec.documents,
     automation: spec.automation,
     sandbox: spec.sandbox,
+    data: spec.data,
+    web: spec.web,
+    ontology: spec.ontology,
     ouroboros: spec.ouroboros,
+    observability: spec.observability,
   };
 }
 

@@ -42,11 +42,13 @@ const nextConfig = {
   output: 'standalone',
   // Monorepo: lockfile at repo root caused Next to trace from parent; OpenNext/Workers needs app-root tracing.
   outputFileTracingRoot: __dirname,
+  // file:../packages/clawql-analytics is outside /app in Docker; transpile + resolve deps from website/node_modules.
+  transpilePackages: ['clawql-analytics'],
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'mdx'],
+  // Prefer ASSETS (`public/agent-markdown.json`) over tracing raw MDX into the
+  // OpenNext Worker — compiled/traced MDX tipped free-plan gzip over 3 MiB.
   outputFileTracingIncludes: {
     '/**/*': [
-      './src/app/**/*.mdx',
-      './src/generated/security-training/**/*.mdx',
       './src/generated/security-training/sitemap-paths.json',
       './public/llms.txt',
       './public/AGENTS.md',
@@ -60,6 +62,20 @@ const nextConfig = {
       '@headlessui/react',
       '@algolia/autocomplete-core',
     ],
+  },
+  webpack: (config) => {
+    // Prebuilt analytics dist lives at /packages/... in Docker; Node/webpack would resolve
+    // `effect` / `posthog-node` from there (missing) instead of website/node_modules.
+    config.resolve.modules = [
+      path.join(__dirname, 'node_modules'),
+      ...(config.resolve.modules || ['node_modules']),
+    ]
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      effect: path.join(__dirname, 'node_modules/effect'),
+      'posthog-node': path.join(__dirname, 'node_modules/posthog-node'),
+    }
+    return config
   },
   async redirects() {
     return [

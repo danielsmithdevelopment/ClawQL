@@ -198,7 +198,9 @@
 }
 
 /* Eyebrow / muted labels — override Tailwind mist utilities that desync in dark mode */
-.streams-page section:not(.streams-hero) :is([class*='text-mist-700'], [class*='text-mist-400'], [class*='text-mist-600']) {
+.streams-page
+  section:not(.streams-hero)
+  :is([class*='text-mist-700'], [class*='text-mist-400'], [class*='text-mist-600']) {
   color: var(--streams-muted) !important;
 }
 
@@ -272,6 +274,33 @@
   background: var(--streams-table-accent);
   color: var(--streams-ink);
   font-weight: 550;
+}
+
+.streams-diagram {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--streams-border);
+  background: oklch(100% 0 0 / 0.55);
+  animation: streams-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streams-diagram img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.streams-diagram figcaption {
+  padding: 0.85rem 1.1rem;
+  font-size: 0.9rem;
+  color: var(--streams-muted);
+  border-top: 1px solid var(--streams-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  .streams-diagram {
+    background: oklch(20% 0.015 215 / 0.85);
+  }
 }
 
 .streams-fabric {

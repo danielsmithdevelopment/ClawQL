@@ -106,18 +106,14 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
-  it("clawqlMcpChildEnv forwards Ouroboros enablement and generation cap", () => {
-    const prevEn = process.env.CLAWQL_ENABLE_OUROBOROS;
+  it("clawqlMcpChildEnv forwards Ouroboros generation cap", () => {
     const prevCap = process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS;
-    process.env.CLAWQL_ENABLE_OUROBOROS = "1";
     process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS = "4";
     try {
       const env = clawqlMcpChildEnv("/tmp/ouro-home");
-      expect(env.CLAWQL_ENABLE_OUROBOROS).toBe("1");
+      expect(env.CLAWQL_ENABLE_OUROBOROS).toBeUndefined();
       expect(env.CLAWQL_OUROBOROS_MAX_GENERATIONS).toBe("4");
     } finally {
-      if (prevEn === undefined) delete process.env.CLAWQL_ENABLE_OUROBOROS;
-      else process.env.CLAWQL_ENABLE_OUROBOROS = prevEn;
       if (prevCap === undefined) delete process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS;
       else process.env.CLAWQL_OUROBOROS_MAX_GENERATIONS = prevCap;
     }

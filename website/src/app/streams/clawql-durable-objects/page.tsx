@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DurableObjectsBody from '@/generated/clawql-durable-objects-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -63,9 +62,10 @@ export default function ClawqlDurableObjectsPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <DurableObjectsBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/streams/clawql-durable-objects"
+        className="flex-auto"
+      />
     </article>
   )
 }

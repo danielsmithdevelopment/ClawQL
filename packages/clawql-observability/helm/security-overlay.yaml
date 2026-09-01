@@ -1,0 +1,32 @@
+# Phase 4 — runtime security sensors (deploy Monitor-first, then enforce).
+# See package README Phase 4 / design registry §13.
+#
+# Alloy scrapes sensor JSON into Loki with labels:
+#   service_name=clawql-falco|clawql-tetragon|clawql-wazuh
+# so UnexpectedAgentToolUse can join Panguard denies + Langfuse spans.
+# River fragment: alloy/security-sensors.river
+falco:
+  enabled: false
+  # HostPath / emptyDir glob consumed by loki.source.file "falco"
+  logPath: /var/log/clawql-security/falco/*.json
+  # falcosidekick → Alloy loki.write when enabled
+  sidekick:
+    enabled: false
+tetragon:
+  enabled: false
+  mode: monitor # monitor | enforce
+  exportPath: /var/log/clawql-security/tetragon/*.json
+wazuh:
+  enabled: false
+  alertsPath: /var/log/clawql-security/wazuh/*.json
+  serviceName: clawql-wazuh
+langfuse:
+  # Dual-export work traces (gen_ai / clawql.*) alongside Tempo infra traces
+  enabled: false
+  otlpAuthHeaderSecret: LANGFUSE_OTLP_AUTH_HEADER
+panguardCorrelation:
+  # Loki push URL for policy decision telemetry (optional)
+  lokiPushUrlSecret: CLAWQL_PANGUARD_TELEMETRY_LOKI_URL
+alloy:
+  # Merge security-sensors.river after apply / ConfigMap mount
+  securitySensorsRiver: security-sensors.river

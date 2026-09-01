@@ -1,6 +1,6 @@
 {
   "name": "clawql-codegraph",
-  "version": "7.2.0",
+  "version": "0.1.0",
   "description": "Structural code knowledge graph for ClawQL Memory — Graphify-style tree-sitter/AST indexing without embeddings",
   "license": "MIT",
   "type": "module",
@@ -35,8 +35,9 @@
     "graphology-types": "^0.24.8",
     "tree-sitter-wasms": "^0.1.13",
     "typescript": "^6.0.3",
-    "web-tree-sitter": "^0.25.6",
-    "zod": "4.3.6"
+    "web-tree-sitter": "^0.26.12",
+    "zod": "4.3.6",
+    "@vscode/tree-sitter-wasm": "^0.3.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

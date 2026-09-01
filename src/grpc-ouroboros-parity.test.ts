@@ -1,5 +1,5 @@
 /**
- * gRPC ListTools: optional **`ouroboros_*`** tools appear when **`CLAWQL_ENABLE_OUROBOROS=1`** (#141).
+ * gRPC ListTools: **`ouroboros_*`** tools always appear via clawql-harness (#141).
  */
 
 import { mkdtempSync } from "node:fs";
@@ -52,7 +52,7 @@ describe("gRPC ListTools ouroboros parity (#141)", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-ouroboros-"));
-    process.env.CLAWQL_ENABLE_OUROBOROS = "1";
+    delete process.env.CLAWQL_ENABLE_OUROBOROS;
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -63,7 +63,7 @@ describe("gRPC ListTools ouroboros parity (#141)", () => {
     resetSchemaFieldCache();
   });
 
-  it("ListTools includes ouroboros_* when CLAWQL_ENABLE_OUROBOROS=1", async () => {
+  it("ListTools includes ouroboros_* via clawql-harness by default", async () => {
     const started = await maybeStartGrpcMcpServer({
       createMcpServer: createRegisteredMcpServer,
       bindAddress: "127.0.0.1:0",

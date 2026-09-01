@@ -1,7 +1,16 @@
-# Harvey LAB × ClawQL — firm-knowledge two-arm runs (GHA / OpenRouter).
+# Harvey LAB × ClawQL — firm-knowledge matrix (GHA).
 #
-# Same secret pattern as OpenBench: OPENROUTER_API_KEY from repo secrets.
-# workflow_dispatch only — full firm-knowledge is 250 tasks; keep runs intentional.
+# OpenBench-style:
+#   - pull_request / push (path-filtered): default Nemotron ± ClawQL on task 001
+#   - Marker integrations/harvey-labs/.run-nemotron-sweep:
+#       Nemotron ± ClawQL over task range (N or START-END, e.g. 16-25)
+#   - Marker integrations/harvey-labs/.run-opus-ledger:
+#       Opus 4.8 ± ClawQL on task 001 via OpenRouter
+#   - workflow_dispatch: pick task / task_limit / arms / models
+#
+# Secrets:
+#   OPENROUTER_API_KEY — Nemotron + OpenRouter Claude (default)
+#   ANTHROPIC_API_KEY  — optional; required only when use_openrouter=0
 
 name: Harvey LAB firm-knowledge (ClawQL vs baseline)
 
@@ -9,97 +18,513 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "Harvey LAB task id under tasks/"
+        description: "Single task (ignored when task_limit > 1)"
         required: true
         type: string
         default: firm-knowledge/tasks/001
-      model:
-        description: "Short Claude id (mapped to OpenRouter anthropic/*)"
+      task_limit:
+        description: "Run first N firm-knowledge tasks (1–250). 1 = single task input."
         required: true
         type: string
-        default: claude-sonnet-4-6
+        default: "1"
+      model:
+        description: "Claude short id for baseline/clawql arms only"
+        required: true
+        type: string
+        default: claude-opus-4-8
+      nemotron_model:
+        description: "OpenRouter model id for Nemotron arms"
+        required: true
+        type: string
+        default: nvidia/nemotron-3.5-lightning
       max_turns:
         description: "Agent max turns (15 debug / 40 fuller)"
         required: true
         type: string
-        default: "15"
+        default: "40"
       arms:
         description: "Comma-separated arms"
         required: true
         type: choice
         options:
+          - nemotron,nemotron-clawql
+          - nemotron-clawql
+          - nemotron
           - baseline,clawql
+          - baseline,clawql,nemotron-clawql
           - baseline
           - clawql
-        default: baseline,clawql
+        default: nemotron,nemotron-clawql
       judge_model:
-        description: "Judge model short id"
+        description: "Judge model id"
         required: true
         type: string
-        default: claude-sonnet-4-6
+        default: openai/gpt-5.4-mini
       max_matters:
-        description: "Optional DMS ingest cap (0 = all matters). Use 5–20 for cheap smoke."
+        description: "DMS ingest cap (0 = all matters into ontology)"
         required: true
         type: string
         default: "0"
+      use_openrouter:
+        description: "1 = OpenRouter; 0 = direct Anthropic"
+        required: true
+        type: string
+        default: "1"
+  pull_request:
+    paths:
+      - "integrations/harvey-labs/**"
+      - "scripts/start-clawql-for-lab.sh"
+      - ".github/workflows/harvey-lab-firm-knowledge.yml"
+  push:
+    branches: [main]
+    paths:
+      - "integrations/harvey-labs/**"
+      - "scripts/start-clawql-for-lab.sh"
+      - ".github/workflows/harvey-lab-firm-knowledge.yml"
 
 concurrency:
-  group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}-${{ inputs.task }}
+  group: harvey-lab-fk-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  lab-two-arm:
-    name: LAB ${{ inputs.task }}
+  resolve-matrix:
+    name: Resolve arm × task matrix
+    runs-on: ubuntu-latest
+    outputs:
+      arms: ${{ steps.set.outputs.arms }}
+      tasks: ${{ steps.set.outputs.tasks }}
+      matrix: ${{ steps.set.outputs.matrix }}
+      task_count: ${{ steps.set.outputs.task_count }}
+      has_arms: ${{ steps.set.outputs.has_arms }}
+      model: ${{ steps.set.outputs.model }}
+      nemotron_model: ${{ steps.set.outputs.nemotron_model }}
+      max_turns: ${{ steps.set.outputs.max_turns }}
+      judge_model: ${{ steps.set.outputs.judge_model }}
+      max_matters: ${{ steps.set.outputs.max_matters }}
+      use_openrouter: ${{ steps.set.outputs.use_openrouter }}
+      needs_anthropic: ${{ steps.set.outputs.needs_anthropic }}
+      needs_openrouter: ${{ steps.set.outputs.needs_openrouter }}
+      has_openrouter: ${{ steps.secret.outputs.has_openrouter }}
+      has_anthropic: ${{ steps.secret.outputs.has_anthropic }}
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      mode: ${{ steps.set.outputs.mode }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
+          fi
+          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "has_anthropic=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "has_anthropic=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - id: set
+        run: |
+          set -euo pipefail
+          MODE="smoke"
+          TASK_LIMIT=1
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ARMS_CSV="${{ inputs.arms }}"
+            TASK="${{ inputs.task }}"
+            TASK_LIMIT="${{ inputs.task_limit }}"
+            TASK_START=1
+            TASK_END="${TASK_LIMIT}"
+            MODEL="${{ inputs.model }}"
+            NEMO="${{ inputs.nemotron_model }}"
+            TURNS="${{ inputs.max_turns }}"
+            JUDGE="${{ inputs.judge_model }}"
+            MATTERS="${{ inputs.max_matters }}"
+            USE_OR="${{ inputs.use_openrouter }}"
+            MODE="dispatch"
+          elif [ -f integrations/harvey-labs/.run-opus-ledger ]; then
+            ARMS_CSV="baseline,clawql"
+            TASK="firm-knowledge/tasks/001"
+            TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
+            MODEL="claude-opus-4-8"
+            NEMO="nvidia/nemotron-3.5-lightning"
+            TURNS="40"
+            JUDGE="claude-sonnet-4-6"
+            MATTERS="0"
+            USE_OR="1"
+            MODE="opus"
+            echo "::notice::Detected .run-opus-ledger → Opus A/B via OpenRouter"
+          elif [ -f integrations/harvey-labs/.run-nemotron-sweep ]; then
+            ARMS_CSV="nemotron,nemotron-clawql"
+            TASK="firm-knowledge/tasks/001"
+            # First non-comment line: N  |  START-END  |  START END
+            #   N         → tasks 001..00N
+            #   START-END → tasks START..END (inclusive), e.g. 16-25
+            # Empty / comment-only marker → smoke (do NOT default to 1–25).
+            SWEEP_SPEC="$(
+              awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
+            )"
+            if [ -z "${SWEEP_SPEC}" ]; then
+              echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N or START-END on a non-comment line to arm a sweep."
+              TASK_LIMIT=1
+              TASK_START=1
+              TASK_END=1
+              MODEL="claude-sonnet-4-6"
+              NEMO="nvidia/nemotron-3.5-lightning"
+              TURNS="40"
+              JUDGE="openai/gpt-5.4-mini"
+              MATTERS="0"
+              USE_OR="1"
+              MODE="smoke"
+            else
+              TASK_START=1
+              TASK_END=25
+              if [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*-[[:space:]]*([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START="${BASH_REMATCH[1]}"
+                TASK_END="${BASH_REMATCH[2]}"
+              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]+([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START="${BASH_REMATCH[1]}"
+                TASK_END="${BASH_REMATCH[2]}"
+              elif [[ "${SWEEP_SPEC}" =~ ^([0-9]+)[[:space:]]*$ ]]; then
+                TASK_START=1
+                TASK_END="${BASH_REMATCH[1]}"
+              else
+                echo "::error::Invalid .run-nemotron-sweep spec (got '${SWEEP_SPEC}'). Use N or START-END."
+                exit 1
+              fi
+              TASK_LIMIT="${TASK_END}"
+              MODEL="claude-sonnet-4-6"
+              NEMO="nvidia/nemotron-3.5-lightning"
+              TURNS="40"
+              JUDGE="claude-sonnet-4-6"
+              MATTERS="0"
+              USE_OR="1"
+              MODE="nemotron-sweep"
+              echo "::notice::Detected .run-nemotron-sweep → Nemotron ± ClawQL tasks ${TASK_START}–${TASK_END}, judge=claude-sonnet-4-6"
+            fi
+          else
+            ARMS_CSV="nemotron,nemotron-clawql"
+            TASK="firm-knowledge/tasks/001"
+            TASK_LIMIT=1
+            TASK_START=1
+            TASK_END=1
+            MODEL="claude-sonnet-4-6"
+            NEMO="nvidia/nemotron-3.5-lightning"
+            TURNS="40"
+            JUDGE="openai/gpt-5.4-mini"
+            MATTERS="0"
+            USE_OR="1"
+            MODE="smoke"
+          fi
+
+          # Default start/end when not set by sweep marker
+          TASK_START="${TASK_START:-1}"
+          TASK_END="${TASK_END:-${TASK_LIMIT}}"
+
+          # Clamp task range
+          if ! [[ "${TASK_START}" =~ ^[0-9]+$ ]] || ! [[ "${TASK_END}" =~ ^[0-9]+$ ]]; then
+            echo "::error::task range must be integers (got ${TASK_START}–${TASK_END})"
+            exit 1
+          fi
+          if [ "${TASK_START}" -lt 1 ]; then TASK_START=1; fi
+          if [ "${TASK_END}" -gt 250 ]; then TASK_END=250; fi
+          if [ "${TASK_START}" -gt "${TASK_END}" ]; then
+            echo "::error::TASK_START (${TASK_START}) > TASK_END (${TASK_END})"
+            exit 1
+          fi
+          TASK_LIMIT="${TASK_END}"
+
+          ARMS_JSON="$(
+            ARMS_CSV="${ARMS_CSV}" python3 -c \
+              'import json,os; print(json.dumps([a.strip() for a in os.environ["ARMS_CSV"].split(",") if a.strip()]))'
+          )"
+          TASKS_JSON="$(
+            TASK_START="${TASK_START}" TASK_END="${TASK_END}" TASK="${TASK}" python3 -c '
+          import json, os
+          start = int(os.environ["TASK_START"])
+          end = int(os.environ["TASK_END"])
+          if start == end == 1:
+              tasks = [os.environ.get("TASK") or "firm-knowledge/tasks/001"]
+          else:
+              tasks = [f"firm-knowledge/tasks/{i:03d}" for i in range(start, end + 1)]
+          print(json.dumps(tasks))
+          '
+          )"
+          MATRIX_JSON="$(
+            ARMS_JSON="${ARMS_JSON}" TASKS_JSON="${TASKS_JSON}" python3 -c '
+          import json, os
+          arms = json.loads(os.environ["ARMS_JSON"])
+          tasks = json.loads(os.environ["TASKS_JSON"])
+          include = []
+          for task in tasks:
+              tid = task.rsplit("/", 1)[-1]
+              for arm in arms:
+                  include.append({"arm": arm, "task": task, "task_id": tid})
+          print(json.dumps({"include": include}))
+          '
+          )"
+          TASK_COUNT="$(
+            TASKS_JSON="${TASKS_JSON}" python3 -c 'import json,os; print(len(json.loads(os.environ["TASKS_JSON"])))'
+          )"
+
+          NEEDS_ANTHROPIC=false
+          NEEDS_OPENROUTER=false
+          case ",${ARMS_CSV}," in
+            *,baseline,*|*,clawql,*)
+              if [[ "${USE_OR}" == "1" ]]; then
+                NEEDS_OPENROUTER=true
+              else
+                NEEDS_ANTHROPIC=true
+              fi
+              ;;
+          esac
+          case ",${ARMS_CSV}," in
+            *,nemotron,*|*,nemotron-clawql,*|*,nemotron-baseline,*|*,clawql-nemotron,*)
+              NEEDS_OPENROUTER=true
+              ;;
+          esac
+          if [[ "${JUDGE}" == claude* ]]; then
+            if [[ "${USE_OR}" == "1" ]]; then
+              NEEDS_OPENROUTER=true
+            else
+              NEEDS_ANTHROPIC=true
+            fi
+          fi
+          if [[ "${JUDGE}" == openai/* ]] || [[ "${JUDGE}" == openrouter/* ]]; then
+            NEEDS_OPENROUTER=true
+          fi
+
+          {
+            echo "has_arms=true"
+            echo "model=${MODEL}"
+            echo "nemotron_model=${NEMO}"
+            echo "max_turns=${TURNS}"
+            echo "judge_model=${JUDGE}"
+            echo "max_matters=${MATTERS}"
+            echo "use_openrouter=${USE_OR}"
+            echo "needs_anthropic=${NEEDS_ANTHROPIC}"
+            echo "needs_openrouter=${NEEDS_OPENROUTER}"
+            echo "mode=${MODE}"
+            echo "task_count=${TASK_COUNT}"
+            echo "arms<<EOF"
+            echo "${ARMS_JSON}"
+            echo "EOF"
+            echo "tasks<<EOF"
+            echo "${TASKS_JSON}"
+            echo "EOF"
+            echo "matrix<<EOF"
+            echo "${MATRIX_JSON}"
+            echo "EOF"
+          } >>"$GITHUB_OUTPUT"
+          echo "::notice::mode=${MODE} tasks=${TASK_COUNT} arms=${ARMS_JSON} judge=${JUDGE} use_openrouter=${USE_OR}"
+
+      - id: gate
+        env:
+          HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
+          HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
+          NEED_OR: ${{ steps.set.outputs.needs_openrouter }}
+          NEED_AN: ${{ steps.set.outputs.needs_anthropic }}
+          MODE: ${{ steps.set.outputs.mode }}
+        run: |
+          set -euo pipefail
+          CAN=true
+          REASON=""
+          if [ -f integrations/harvey-labs/.skip-lab-matrix ] && [ "${MODE}" != "dispatch" ]; then
+            CAN=false
+            REASON="integrations/harvey-labs/.skip-lab-matrix present — matrix sweeps paused until ts-clawql-data-v2 baseline (remove file to resume; workflow_dispatch still allowed)"
+            echo "::warning::${REASON}"
+          fi
+          if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
+            CAN=false
+            REASON="ANTHROPIC_API_KEY missing (required for Opus/Sonnet arms or Sonnet judge)"
+          fi
+          if [ "${NEED_OR}" = "true" ] && [ "${HAS_OR}" != "true" ]; then
+            CAN=false
+            if [ -n "${REASON}" ]; then
+              REASON="${REASON}; OPENROUTER_API_KEY missing"
+            else
+              REASON="OPENROUTER_API_KEY missing (required for Nemotron / OpenRouter judge)"
+            fi
+          fi
+          echo "can_run=${CAN}" >>"$GITHUB_OUTPUT"
+          echo "skip_reason=${REASON}" >>"$GITHUB_OUTPUT"
+          if [ "${CAN}" = "true" ]; then
+            echo "::notice::Credential gate passed"
+          else
+            echo "::warning::Credential gate blocked live LAB: ${REASON}"
+          fi
+
+  lab-arm:
+    name: LAB ${{ matrix.arm }} ${{ matrix.task_id }}
+    needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.can_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      # Free-tier daily cap is the binding constraint (not concurrency). Prefer
+      # higher parallel for wall-clock; drop to 2 only if OpenRouter 429s return.
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.resolve-matrix.outputs.matrix) }}
     env:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      CLAWQL_LAB_USE_OPENROUTER: "1"
+      CLAWQL_LAB_USE_OPENROUTER: ${{ needs.resolve-matrix.outputs.use_openrouter }}
+      CLAWQL_LAB_ALLOW_CLAUDE_JUDGE_VIA_OPENROUTER: "1"
+      CLAWQL_LAB_OPENROUTER_MAX_TOKENS: "32768"
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Harvey LAB
-      LAB_TASK: ${{ inputs.task }}
-      LAB_MODEL: ${{ inputs.model }}
-      LAB_MAX_TURNS: ${{ inputs.max_turns }}
-      LAB_ARMS: ${{ inputs.arms }}
-      LAB_JUDGE_MODEL: ${{ inputs.judge_model }}
-      CLAWQL_LAB_MAX_MATTERS: ${{ inputs.max_matters }}
+      LAB_TASK: ${{ matrix.task }}
+      LAB_MODEL: ${{ needs.resolve-matrix.outputs.model }}
+      LAB_NEMOTRON_MODEL: ${{ needs.resolve-matrix.outputs.nemotron_model }}
+      LAB_MAX_TURNS: ${{ needs.resolve-matrix.outputs.max_turns }}
+      LAB_ARMS: ${{ matrix.arm }}
+      LAB_JUDGE_MODEL: ${{ needs.resolve-matrix.outputs.judge_model }}
+      CLAWQL_LAB_MAX_MATTERS: ${{ needs.resolve-matrix.outputs.max_matters }}
       CLAWQL_ENABLE_MEMORY: "1"
+      CLAWQL_ENABLE_DATA: "1"
       CLAWQL_ONTOLOGY_DB: "1"
       CLAWQL_ONTOLOGY_LLM_EXTRACTION: "0"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
-      - name: Require OpenRouter (or Anthropic) secret
+      - name: Guard credentials for this arm
         run: |
-          if [ -z "${OPENROUTER_API_KEY:-}" ] && [ -z "${ANTHROPIC_API_KEY:-}" ]; then
-            echo "::error::Set repository secret OPENROUTER_API_KEY (preferred, same as OpenBench) or ANTHROPIC_API_KEY."
-            exit 1
+          set -euo pipefail
+          echo "::notice::Arm=${LAB_ARMS} task=${LAB_TASK} judge=${LAB_JUDGE_MODEL} use_openrouter=${CLAWQL_LAB_USE_OPENROUTER}"
+          if echo "${LAB_ARMS}" | tr ',' '\n' | grep -qxE 'baseline|clawql'; then
+            if [ "${CLAWQL_LAB_USE_OPENROUTER}" = "0" ] || [ "${CLAWQL_LAB_USE_OPENROUTER}" = "false" ]; then
+              if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+                echo "::error::Claude ledger arms require ANTHROPIC_API_KEY (direct Anthropic)."
+                exit 1
+              fi
+            elif [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Claude arms require ANTHROPIC_API_KEY or OPENROUTER_API_KEY."
+              exit 1
+            fi
           fi
-          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            echo "::notice::Using OPENROUTER_API_KEY for Harvey LAB (GHA path)."
+          if echo "${LAB_ARMS}" | tr ',' '\n' | grep -qE '^nemotron'; then
+            if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Nemotron arms require OPENROUTER_API_KEY."
+              exit 1
+            fi
+          fi
+          if [[ "${LAB_JUDGE_MODEL}" == claude* ]]; then
+            if [ "${CLAWQL_LAB_USE_OPENROUTER}" = "0" ] || [ "${CLAWQL_LAB_USE_OPENROUTER}" = "false" ]; then
+              if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+                echo "::error::Sonnet/Claude judge with direct Anthropic requires ANTHROPIC_API_KEY."
+                exit 1
+              fi
+            elif [ -z "${OPENROUTER_API_KEY:-}" ]; then
+              echo "::error::Sonnet/Claude judge via OpenRouter requires OPENROUTER_API_KEY."
+              exit 1
+            fi
           fi
 
       - name: Setup Node (ClawQL MCP)
-        uses: actions/setup-node@v4
+        if: contains(matrix.arm, 'clawql')
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
 
       - name: npm ci (for local clawql-mcp-http)
+        if: contains(matrix.arm, 'clawql')
         run: npm ci --ignore-scripts
 
-      - name: Run Harvey LAB arms
+      - name: Build ClawQL (MCP HTTP needs dist/server-http.js)
+        if: contains(matrix.arm, 'clawql')
+        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Run Harvey LAB arm
         run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
+        env:
+          CLAWQL_EXTERNAL_INGEST: "1"
 
       - name: Upload scorecard + arm artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: harvey-lab-${{ inputs.task }}-${{ github.run_id }}
+          name: harvey-lab-${{ matrix.arm }}-${{ matrix.task_id }}-${{ github.run_id }}
           path: integrations/harvey-labs/results/
           if-no-files-found: warn
           retention-days: 30
+
+  aggregate:
+    name: Aggregate sweep scorecard
+    needs: [resolve-matrix, lab-arm]
+    if: always() && needs.resolve-matrix.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Download all LAB artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: harvey-lab-*-${{ github.run_id }}
+          path: /tmp/lab-artifacts
+          merge-multiple: false
+
+      - name: Build aggregate summary
+        env:
+          MODE: ${{ needs.resolve-matrix.outputs.mode }}
+          TASK_COUNT: ${{ needs.resolve-matrix.outputs.task_count }}
+          JUDGE: ${{ needs.resolve-matrix.outputs.judge_model }}
+          NEMO: ${{ needs.resolve-matrix.outputs.nemotron_model }}
+        run: |
+          set -euo pipefail
+          mkdir -p integrations/harvey-labs/results
+          python3 integrations/harvey-labs/scripts/aggregate-lab-scorecards.py \
+            --artifacts-root /tmp/lab-artifacts \
+            --out integrations/harvey-labs/results/sweep-summary.json \
+            --mode "${MODE}" \
+            --task-count "${TASK_COUNT}" \
+            --judge-model "${JUDGE}" \
+            --nemotron-model "${NEMO}"
+          cat integrations/harvey-labs/results/sweep-summary.json
+
+      - name: Upload sweep summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: harvey-lab-sweep-summary-${{ github.run_id }}
+          path: integrations/harvey-labs/results/sweep-summary.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  lab-skip:
+    name: Skip (matrix paused or missing credentials)
+    needs: resolve-matrix
+    if: needs.resolve-matrix.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report skip
+        env:
+          REASON: ${{ needs.resolve-matrix.outputs.skip_reason }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          echo "::warning::Skipped Harvey LAB live matrix — ${REASON}"
+          case "${REASON}" in
+            *".skip-lab-matrix"*)
+              echo "::notice::Intentional pause (.skip-lab-matrix). Not a credential failure."
+              exit 0
+              ;;
+          esac
+          # Dependabot / fork PRs cannot read Actions secrets — treat as a soft skip.
+          if [ "${EVENT_NAME}" = "pull_request" ]; then
+            echo "::notice::pull_request without live LAB secrets; soft-skip (exit 0)."
+            exit 0
+          fi
+          echo "::error::Set the missing GitHub Actions secret(s), then re-run."
+          exit 1

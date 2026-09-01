@@ -30,8 +30,37 @@ export type ExtractedMatter = {
   fieldMeta: Partial<Record<keyof MatterFields, ExtractedFieldMeta>>;
 };
 
-const MATTER_ID_RE = /^MAT-\d{4}$/;
+export type ClientFields = {
+  id: string;
+  name: string;
+  shortName?: string;
+  industry?: string;
+  tier?: string;
+};
+
+export type AttorneyFields = {
+  id: string;
+  name: string;
+  title?: string;
+};
+
+export type DocumentFields = {
+  id: string;
+  title: string;
+  documentType?: string;
+  matterId?: string;
+  status?: string;
+};
+
+export type ExtractedClient = { fields: ClientFields };
+export type ExtractedAttorney = { fields: AttorneyFields };
+export type ExtractedDocument = { fields: DocumentFields };
+
+/** Calderwood B-7 ids (`MAT-2401`) plus Harvey LAB DMS ids (`1003-00001`). */
+const MATTER_ID_RE = /^(?:MAT-\d{4}|\d{4}-\d{5})$/;
 const CLIENT_ID_RE = /^CLT-\d{4}$/;
+const ATTORNEY_ID_RE = /^ATY-\d{4}$/;
+const DOCUMENT_ID_RE = /^DOC-\d{4}$/;
 
 const KEY_MAP: Record<string, keyof MatterFields> = {
   CLAWQL_MATTER_ID: "id",
@@ -125,4 +154,58 @@ export function extractMatterFromClawqlFields(text: string): ExtractedMatter | n
   }
 
   return { fields, fieldMeta };
+}
+
+/** Client entity note: CLAWQL_CLIENT_ID + CLAWQL_CLIENT_NAME, no matter id. */
+export function extractClientFromClawqlFields(text: string): ExtractedClient | null {
+  const raw = parseClawqlFieldBlock(text);
+  const idRaw = raw.CLAWQL_CLIENT_ID?.trim();
+  const name = raw.CLAWQL_CLIENT_NAME?.trim();
+  if (!idRaw || !CLIENT_ID_RE.test(idRaw) || !name) return null;
+  if (raw.CLAWQL_MATTER_ID?.trim()) return null;
+
+  return {
+    fields: {
+      id: idRaw,
+      name,
+      shortName: raw.CLAWQL_SHORT_NAME?.trim() || raw.CLAWQL_CLIENT_SHORT_NAME?.trim(),
+      industry: raw.CLAWQL_INDUSTRY?.trim() || raw.CLAWQL_CLIENT_INDUSTRY?.trim(),
+      tier: raw.CLAWQL_TIER?.trim() || raw.CLAWQL_CLIENT_TIER?.trim(),
+    },
+  };
+}
+
+/** Attorney entity note. */
+export function extractAttorneyFromClawqlFields(text: string): ExtractedAttorney | null {
+  const raw = parseClawqlFieldBlock(text);
+  const idRaw = raw.CLAWQL_ATTORNEY_ID?.trim();
+  const name = raw.CLAWQL_ATTORNEY_NAME?.trim();
+  if (!idRaw || !ATTORNEY_ID_RE.test(idRaw) || !name) return null;
+
+  return {
+    fields: {
+      id: idRaw,
+      name,
+      title: raw.CLAWQL_ATTORNEY_TITLE?.trim() || raw.CLAWQL_TITLE?.trim(),
+    },
+  };
+}
+
+/** Document entity note. */
+export function extractDocumentFromClawqlFields(text: string): ExtractedDocument | null {
+  const raw = parseClawqlFieldBlock(text);
+  const idRaw = raw.CLAWQL_DOCUMENT_ID?.trim();
+  const title = raw.CLAWQL_DOCUMENT_TITLE?.trim() || raw.CLAWQL_TITLE?.trim();
+  if (!idRaw || !DOCUMENT_ID_RE.test(idRaw) || !title) return null;
+
+  const matterId = raw.CLAWQL_MATTER_ID?.trim();
+  return {
+    fields: {
+      id: idRaw,
+      title,
+      documentType: raw.CLAWQL_DOCUMENT_TYPE?.trim(),
+      matterId: matterId && MATTER_ID_RE.test(matterId) ? matterId : undefined,
+      status: raw.CLAWQL_DOCUMENT_STATUS?.trim() || raw.CLAWQL_STATUS?.trim(),
+    },
+  };
 }

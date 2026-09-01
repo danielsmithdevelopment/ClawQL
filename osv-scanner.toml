@@ -19,6 +19,10 @@ reason = "Same Next.js-vendored postcss@8.4.31 under dashboard (sourceMappingURL
 id = "GHSA-fxqj-rqcc-2cmp"
 reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/next; top-level postcss is patched to 8.5.23 via overrides. Remove when Next ships nested postcss >= 8.5.23."
 
+[[IgnoredVulns]]
+id = "GHSA-jmr9-qjv8-65gv"
+reason = "extract-zip@2.0.1 (symlink path traversal) is transitive via website lighthouse → puppeteer-core → @puppeteer/browsers; OSV lists no fixed version beyond 2.0.1. Dev-only browser download path, not production runtime. Remove when upstream ships a patched extract-zip or puppeteer drops it."
+
 # Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; now on 16.2.11.
 # Keep this stanza only if an older lock still appears in a long-lived branch scan.
 [[PackageOverrides]]

@@ -1,13 +1,12 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import McpApiAdapterBody from '@/generated/mcp-api-adapter-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'mcp-api-adapter — six surfaces, one catalog',
+  title: 'mcp-api-adapter — seven surfaces today, eight with QR planned',
   description:
-    'Language-agnostic MCP → APIs adapter: wrap any MCP server (stdio, HTTP, or gRPC) and expose OpenAPI, GraphQL, Streamable HTTP /mcp, gRPC, WebSocket, and a generated CLI from one catalog. In-repo at 0.6.0; npm publish pending. Multi-surface alternative to mcpo.',
+    'Language-agnostic MCP → APIs adapter: wrap any MCP server and expose OpenAPI, GraphQL, /mcp, gRPC, WebSocket, gen-cli, and /mcp-ui today; QR stream planned. In-repo at 0.6.0; npm publish pending.',
   path: '/mcp/mcp-api-adapter',
   ogType: 'article',
 })
@@ -51,7 +50,21 @@ export default function McpApiAdapterPage() {
             href="https://pragmaticvectors.com/posts/mcp-api-adapter/"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Seven surfaces, one catalog
+            Eight surfaces, one catalog
+          </a>
+          . Specs:{' '}
+          <a
+            href="/mcp/mcp-ui"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            /mcp-ui
+          </a>
+          {' · '}
+          <a
+            href="/streams/clawql-qr-stream-transport"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            QR stream
           </a>
           . Related:{' '}
           <a
@@ -85,9 +98,7 @@ export default function McpApiAdapterPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <McpApiAdapterBody />
-      </DocProse>
+      <AgentMarkdownDocBody path="/mcp/mcp-api-adapter" className="flex-auto" />
     </article>
   )
 }

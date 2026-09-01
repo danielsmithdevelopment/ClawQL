@@ -2,13 +2,14 @@ import type {
   ClawQLError,
   McpToolAlreadyRegisteredError,
   PluginAlreadyRegisteredError,
+  PluginInstallError,
 } from "clawql-core";
 import { ClawQLApi } from "clawql-api";
 import { Effect, Layer } from "effect";
 import { createOntologyPlugin, type CreateOntologyPluginOptions } from "./ontology-plugin.js";
 
 export type OntologyLayerError =
-  PluginAlreadyRegisteredError | ClawQLError | McpToolAlreadyRegisteredError;
+  PluginAlreadyRegisteredError | PluginInstallError | ClawQLError | McpToolAlreadyRegisteredError;
 
 export type MakeOntologyLayerOptions = CreateOntologyPluginOptions;
 

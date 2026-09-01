@@ -13,8 +13,10 @@ fullnameOverride: clawql-mcp-http
 deploymentStrategy:
   type: Recreate
 
-# Same default as npm / values.yaml; use `helm --set provider=all-providers` for full IDP lab.
-provider: default
+# Opt into curated bundled pack for local demos (catalog is available; default chart is pack: none).
+provider: ""
+providers:
+  pack: default
 
 image:
   repository: ghcr.io/danielsmithdevelopment/clawql-mcp

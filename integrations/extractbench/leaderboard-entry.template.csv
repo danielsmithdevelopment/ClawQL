@@ -1,0 +1,3 @@
+Provider,Category,Overall,Short,Medium,Long,Cost_Per_Page,Cost_Short,Cost_Medium,Cost_Long,P_Short,P_Medium,P_Long,R_Short,R_Medium,R_Long,Word_Grounding,Word_Grounding_Short,Word_Grounding_Medium,Word_Grounding_Long,Page_Grounding,Page_Grounding_Short,Page_Grounding_Medium,Page_Grounding_Long,Latency_S_Per_Doc_Short,Latency_S_Per_Doc_Medium,Latency_S_Per_Doc_Long
+ClawQL IDP + Qwen3.6 35B,OSS,,,,,,,,,,pending — fill after full reproducible run,,,,,,,,,,,,,,,,,,
+ClawQL IDP Docling-only,OSS,,,,,,,,,,pending — structural arm ablation,,,,,,,,,,,,,,,,,,

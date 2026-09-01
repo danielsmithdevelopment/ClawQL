@@ -1,0 +1,220 @@
+{
+  "task": {
+    "id": "executor-cmp-001",
+    "description": "Find all open PRs authored by {user} in {repo} with more than {threshold} review comments. Return title and comment count for each.",
+    "params": {
+      "user": "alice-dev",
+      "repo": "acme/platform",
+      "threshold": 3,
+      "perPage": 30
+    },
+    "requiredOutputFields": [
+      "title",
+      "reviewCommentCount"
+    ],
+    "projectionFields": [
+      "title",
+      "number",
+      "review_comments"
+    ]
+  },
+  "matchedConditions": {
+    "tokenizer": "cl100k_base",
+    "numPredict": 256,
+    "temperature": 0,
+    "systemPromptFixed": true,
+    "focus": "input",
+    "benchmarkLive": false
+  },
+  "executorPublishedReference": {
+    "source": "https://executor.sh/",
+    "capturedAt": "2026-08-27",
+    "withoutExecutor": {
+      "toolCount": 1640,
+      "approxTokens": 278800,
+      "integrations": {
+        "github": 720,
+        "stripe": 510,
+        "jira": 240,
+        "sentry": 170,
+        "linear": 130,
+        "gmail": 95,
+        "notion": 80,
+        "slack": 70
+      }
+    },
+    "withExecutor": {
+      "toolCount": 1,
+      "approxTokens": 1044,
+      "pattern": "tools.search → tools.describe.tool → tools[path](input)"
+    },
+    "traceFeatureNote": "\"Trace every call\" on executor.sh is audit/observability (Coming soon), not output-side token compression."
+  },
+  "layer1": {
+    "focus": "input",
+    "split": "tool_defs",
+    "headlineNumber": "gatewayCodemodeOnly.codemodeOnlyTokens",
+    "headlineClarification": "394-class number is search+execute only — fairest parity with Executor's single-tool chart. Core quartet (883) and standard-tier all-tools (3,548) are ClawQL with more capability on; those are not what Executor's ~1,044 represents. Keep them separate in any post.",
+    "executorPublished": {
+      "naiveCatalogTokens": 278800,
+      "codemodeToolDefsTokens": 1044,
+      "source": "https://executor.sh/"
+    },
+    "executorLiveMcp": {
+      "wired": false,
+      "note": "EXECUTOR_BIN / EXECUTOR_MCP_URL unset — Layer 1 uses published executor.sh reference only (~1,044 tok)."
+    },
+    "clawqlMeasured": {
+      "gatewayCodemodeOnly": {
+        "toolCount": 4,
+        "toolNames": [
+          "search",
+          "execute",
+          "cache",
+          "audit"
+        ],
+        "perTool": [
+          {
+            "name": "search",
+            "tokens": 113
+          },
+          {
+            "name": "execute",
+            "tokens": 255
+          },
+          {
+            "name": "cache",
+            "tokens": 229
+          },
+          {
+            "name": "audit",
+            "tokens": 217
+          }
+        ],
+        "codemodeOnlyTokens": 394,
+        "coreQuartetTokens": 883,
+        "allToolsTokens": 883
+      },
+      "defaultStandardTier": {
+        "toolCount": 12,
+        "toolNames": [
+          "search",
+          "execute",
+          "cache",
+          "audit",
+          "memory_ingest",
+          "memory_recall",
+          "pageindex_build_tree",
+          "pageindex_traverse",
+          "pageindex_synthesize",
+          "pageindex_get_content",
+          "ingest_external_knowledge",
+          "memory_sync"
+        ],
+        "perTool": [
+          {
+            "name": "search",
+            "tokens": 113
+          },
+          {
+            "name": "execute",
+            "tokens": 255
+          },
+          {
+            "name": "cache",
+            "tokens": 229
+          },
+          {
+            "name": "audit",
+            "tokens": 217
+          },
+          {
+            "name": "memory_ingest",
+            "tokens": 1082
+          },
+          {
+            "name": "memory_recall",
+            "tokens": 581
+          },
+          {
+            "name": "pageindex_build_tree",
+            "tokens": 105
+          },
+          {
+            "name": "pageindex_traverse",
+            "tokens": 97
+          },
+          {
+            "name": "pageindex_synthesize",
+            "tokens": 98
+          },
+          {
+            "name": "pageindex_get_content",
+            "tokens": 79
+          },
+          {
+            "name": "ingest_external_knowledge",
+            "tokens": 285
+          },
+          {
+            "name": "memory_sync",
+            "tokens": 123
+          }
+        ],
+        "codemodeOnlyTokens": 394,
+        "coreQuartetTokens": 883,
+        "allToolsTokens": 3548
+      }
+    },
+    "ratioCodemodeVsExecutorPublished": 2.65,
+    "ratioCoreVsExecutorPublished": 1.18,
+    "interpretation": "ClawQL search+execute tool schemas are smaller than Executor's published single-tool baseline on cl100k_base (gateway-only arm)."
+  },
+  "layer2": {
+    "focus": "input",
+    "split": "tool_result",
+    "source": "fixture",
+    "publishableAsLive": false,
+    "executorSdkWired": false,
+    "executor": {
+      "toolResultTokens": 953,
+      "rawResultFieldCount": 36,
+      "itemCount": 3,
+      "requiredFieldCount": 2,
+      "note": "FIXTURE — simulates Executor: full REST JSON enters context (no projection)."
+    },
+    "clawql": {
+      "toolResultTokens": 23,
+      "rawResultFieldCount": 3,
+      "itemCount": 1,
+      "requiredFieldCount": 2,
+      "note": "FIXTURE — projected title/reviewCommentCount after task filter."
+    },
+    "ratioExecutorRawVsClawqlProjected": 41.43,
+    "interpretation": "FIXTURE Layer 2 — not for public headlines. Re-run with BENCHMARK_LIVE=1."
+  },
+  "benchmark862x": {
+    "label": "862x multi-provider workflow (NOT apples-to-apples with Executor chart)",
+    "source": "/workspace/docs/benchmarks/multi-provider-complex-workflow/experiment-multi-provider-complex-workflow-stats.json",
+    "fullTaskRatio": 861.9829653396378,
+    "naiveSpecTokens": 10208896,
+    "workflowArtifactTokens": 11844,
+    "variantB_specResentEveryTurn": {
+      "assumption": "Each of the 14 model requests includes the full spec for the active provider in the input (typical stateless chat API without prompt caching). Spec-only input tokens; excludes growing chat history and queries.",
+      "totalSpecInputTokensApprox": 50732711,
+      "calculation": "5*5130764 + 5*4766363 + 4*311769"
+    },
+    "inputIsolation": {
+      "note": "862x compares full provider spec corpora on disk vs emitted workflow JSON for a 14-step task. It is NOT the same measurement as Executor's static tool-definition snapshot (~278k → ~1k). Workflow artifact (~11.8k tok) includes search hits + draft output, not MCP tool schemas alone. Do not use 862× in the Executor comparison post.",
+      "clawqlToolDefsMeasuredSeparately": true,
+      "executorPublishedToolDefs": 1044,
+      "phase1SearchPayloadAvgPerProvider": {
+        "fullSpecTokensAvg": 852371,
+        "top5SearchPayloadTokensAvg": 1815,
+        "note": "From docs/benchmarks/latest.json — one search turn, not full workflow."
+      }
+    },
+    "comparableLayer1Question": "Compare clawql layer1 gatewayCodemodeOnly.codemodeOnlyTokens (measured) vs executorPublished.withExecutor.approxTokens — both hide the catalog from tool definitions."
+  },
+  "generatedAt": "2026-08-27T03:06:36.216Z"
+}

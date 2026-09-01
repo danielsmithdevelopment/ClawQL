@@ -85,6 +85,15 @@ export async function detectSourceFromUrl(
   const fetchFn = options.fetchFn ?? fetch;
   const kindHint = options.kindHint;
 
+  if (kindHint === "webmcp") {
+    return {
+      kind: "webmcp",
+      name: new URL(url).hostname,
+      bodyText: "",
+      parsed: null,
+    };
+  }
+
   if (kindHint === "mcp" || (kindHint === undefined && looksLikeMcpEndpoint(url))) {
     return {
       kind: "mcp",
@@ -177,6 +186,6 @@ export async function detectSourceFromUrl(
   }
 
   throw new Error(
-    "Could not detect source kind. Use --kind openapi|discovery|graphql|grpc|mcp|cli."
+    "Could not detect source kind. Use --kind openapi|discovery|graphql|grpc|mcp|cli|webmcp."
   );
 }

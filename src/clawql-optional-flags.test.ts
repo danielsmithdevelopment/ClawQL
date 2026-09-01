@@ -15,8 +15,8 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_WORKFLOW: undefined,
       CLAWQL_ENABLE_VISION: undefined,
       CLAWQL_ENABLE_ONYX: undefined,
-      CLAWQL_ENABLE_OUROBOROS: undefined,
       CLAWQL_ENABLE_SANDBOX: undefined,
+      CLAWQL_ENABLE_DATA: undefined,
       CLAWQL_ENABLE_WEB: undefined,
       CLAWQL_ENABLE_HITL_LABEL_STUDIO: undefined,
       CLAWQL_ENABLE_CONESHARE: undefined,
@@ -37,8 +37,8 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableWorkflow).toBe(false);
     expect(f.enableVision).toBe(false);
     expect(f.enableOnyxKnowledge).toBe(false);
-    expect(f.enableOuroboros).toBe(false);
     expect(f.enableSandbox).toBe(false);
+    expect(f.enableData).toBe(false);
     expect(f.enableWeb).toBe(false);
     expect(f.enableHitlLabelStudio).toBe(false);
     expect(f.enableConeshare).toBe(false);
@@ -91,8 +91,8 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_WORKFLOW: "1",
       CLAWQL_ENABLE_VISION: "0",
       CLAWQL_ENABLE_ONYX: "1",
-      CLAWQL_ENABLE_OUROBOROS: "yes",
       CLAWQL_ENABLE_SANDBOX: "1",
+      CLAWQL_ENABLE_DATA: "1",
       CLAWQL_ENABLE_WEB: "1",
       CLAWQL_ENABLE_DOCUMENTS: "1",
       CLAWQL_ENABLE_IDP_PIPELINE: "1",
@@ -109,8 +109,8 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableWorkflow).toBe(true);
     expect(f.enableVision).toBe(false);
     expect(f.enableOnyxKnowledge).toBe(true);
-    expect(f.enableOuroboros).toBe(true);
     expect(f.enableSandbox).toBe(true);
+    expect(f.enableData).toBe(true);
     expect(f.enableWeb).toBe(true);
     expect(f.enableIdpPipeline).toBe(true);
     expect(f.enableIdpClassifier).toBe(true);

@@ -16,7 +16,9 @@ This section tracks ClawQL security architecture, shipped controls, and roadmap 
 - **Runtime containment** (Kata vs gVisor, **`security.kata`**, Kyverno **`runtimeClassPolicy`**, issue [#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)): [`runtime-class-containment.md`](runtime-class-containment.md)
 - **Local Privacy Filter** (gateway backup after Presidio, [#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)): [`privacy-filter-local.md`](privacy-filter-local.md)
 - **clawql-auth OIDC consumer + step-up** (not a full IdP): [`clawql-auth-oidc-stepup.md`](clawql-auth-oidc-stepup.md)
+- **clawql-auth package spec + shipped OAuth/API-key slice:** [`clawql-auth-package-spec.md`](clawql-auth-package-spec.md) — issued `cqk_` keys (org/team), mutex outbound refresh; inbound MCP OAuth 2.1 still roadmap
 - **MCP proxy JWT ATR** (mesh / Panguard chokepoint): [`mcp-proxy-jwt-atr.md`](mcp-proxy-jwt-atr.md)
+- **Security ↔ ontology knowledge loop** (ATR gates as grammar-adversarial validation, `SecurityEvent` / `FailedStrategy`, capability Gate 3, one loop with WORM): [`security-ontology-knowledge-loop.md`](security-ontology-knowledge-loop.md)
 
 ## Supply-chain pipeline (summary)
 

@@ -76,6 +76,36 @@ See [`credits-deeplinks.md`](../payments/credits-deeplinks.md).
 
 Payments path: `$CLAWQL_HOME/Payments/step-up-totp.json` via `clawql payments credits step-up enroll`. Secrets never go in payment WORM.
 
+### Passkeys: Face ID / Touch ID / YubiKey
+
+Face ID, Touch ID, Windows Hello, and hardware keys (YubiKey, Titan, …) are **not** separate ClawQL features. They are WebAuthn authenticators under one ceremony:
+
+| Category                     | Examples                                            | WebAuthn `authenticatorAttachment` |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------- |
+| **Platform** (built-in)      | Face ID, Touch ID, Windows Hello, Android biometric | `platform`                         |
+| **Roaming** (external FIDO2) | YubiKey 5 / Bio, Google Titan, Feitian              | `cross-platform`                   |
+
+`residentKey: 'required'` + `userVerification: 'required'` is what triggers the OS biometric / PIN prompt for platform authenticators. The browser or OS owns that prompt — ClawQL never receives biometric raw data; private keys stay in Secure Enclave, TPM, or the hardware token.
+
+Omit `authenticatorAttachment` (recommended default) so the browser offers both biometrics and hardware keys. Map product policy via `buildPasskeyAuthenticatorSelection`:
+
+```ts
+import { buildPasskeyAuthenticatorSelection } from "clawql-auth";
+
+// User chooses (Face ID *or* YubiKey)
+buildPasskeyAuthenticatorSelection();
+
+// Enterprise: hardware token only
+buildPasskeyAuthenticatorSelection({ requirement: "hardware-only" });
+// → authenticatorAttachment: "cross-platform"
+
+// Device biometric only
+buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
+// → authenticatorAttachment: "platform"
+```
+
+Prefer IdP passkeys for human SSO. Use these helpers when a host wires `@simplewebauthn/server` (or equivalent) for ClawQL step-up / operator pairing.
+
 ## `createClawQLAuth`
 
 ```ts
@@ -101,4 +131,4 @@ if (result.ok) {
 - User registration, password reset, email OTP delivery
 - Replacing Okta / Entra / Auth0
 
-See also: [`clawql-defense-in-depth-security-guide.md`](./clawql-defense-in-depth-security-guide.md), package README [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md).
+See also: [`clawql-defense-in-depth-security-guide.md`](./clawql-defense-in-depth-security-guide.md), package README [`packages/clawql-auth/README.md`](../../packages/clawql-auth/README.md), OAuth / MCP OAuth 2.1 package roadmap [`clawql-auth-package-spec.md`](./clawql-auth-package-spec.md).

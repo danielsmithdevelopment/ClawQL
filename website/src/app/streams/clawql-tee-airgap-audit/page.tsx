@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import AirgapBody from '@/generated/clawql-tee-airgap-audit-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -56,9 +55,10 @@ export default function ClawqlTeeAirgapAuditPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <AirgapBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/streams/clawql-tee-airgap-audit"
+        className="flex-auto"
+      />
     </article>
   )
 }

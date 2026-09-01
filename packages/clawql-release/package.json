@@ -1,7 +1,7 @@
 {
   "name": "clawql-release",
-  "version": "7.2.0",
-  "description": "ClawQL Layer 0 \u2014 immutable releases: workspaces (git-worktree/rift), signed artifacts, Radicle+GitHub, IPFS staging, Lit/x402 access, Arweave/ar.io permanence",
+  "version": "0.1.0",
+  "description": "ClawQL Layer 0 — immutable releases: workspaces (git-worktree/rift), signed artifacts, Radicle+GitHub, IPFS staging, Lit/x402 access, Arweave/ar.io permanence",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -26,7 +26,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "clawql-core": "7.2.0",
+    "clawql-core": "0.1.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

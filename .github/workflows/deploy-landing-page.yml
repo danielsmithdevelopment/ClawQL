@@ -9,6 +9,9 @@ on:
     branches: [main]
     paths:
       - "landing-page/**"
+      - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
+      - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
+      - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
       - "scripts/deploy/ensure-dns-aid-records.sh"
       - "scripts/deploy/ensure-clawql-com-agent-edge.sh"
       - ".github/workflows/deploy-landing-page.yml"
@@ -47,6 +50,7 @@ jobs:
           # Custom domain at repo root. For project Pages only, set to /ClawQL in repo vars.
           NEXT_PUBLIC_BASE_PATH: ${{ vars.LANDING_PAGE_BASE_PATH || '' }}
           NEXT_PUBLIC_SITE_URL: https://clawql.com
+          NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npm run build
 
       - name: Verify SEO/agent static assets
@@ -73,6 +77,9 @@ jobs:
           test -f out/agent-markdown.json
           test -f out/inference/gtm/index.html
           test -f out/enterprise/gtm/index.html
+          test -f out/mcp-ui/trace/compare/executor/index.html
+          test -f out/mcp-ui/trace/compare/executor/compare.json
+          test -f out/benchmarks/executor-comparison/index.html
           grep -qi 'Agentic Gateway for Auditable Production AI' out/llms.txt
           grep -q 'inference/gtm' out/llms.txt
           grep -q 'inference/gtm' out/sitemap.xml
@@ -168,6 +175,13 @@ jobs:
         with:
           name: landing-page-out
           path: landing-page/demo/out
+
+      - name: Ensure Cloudflare Pages project exists
+        if: steps.cf.outputs.enabled == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: bash scripts/deploy/ensure-cloudflare-pages-project.sh
 
       - name: Deploy to Cloudflare Pages
         if: steps.cf.outputs.enabled == 'true'

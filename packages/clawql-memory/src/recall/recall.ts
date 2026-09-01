@@ -13,8 +13,7 @@ import { stripVaultFrontmatter } from "../vault/markdown.js";
 /** Re-export for tests and callers that imported from this module. */
 export { extractWikilinkTargets } from "../vault/markdown.js";
 
-export type OntologySchemaName =
-  "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
+export type OntologySchemaName = string;
 
 export type OntologyFilterPredicate = Record<string, unknown>;
 export type OntologyFilterMap = Record<string, OntologyFilterPredicate>;
@@ -53,7 +52,7 @@ export type RecallHit = {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector" | "codegraph";
+  reason: "keyword" | "link" | "vector" | "codegraph" | "structured_predicate";
   linkFrom?: string;
   snippet: string;
 };
@@ -215,6 +214,12 @@ export async function runMemoryRecall(input: MemoryRecallInput): Promise<MemoryR
     await import("../effect/memory-effect-runtime.js");
   return runMemoryEffect(memoryRecallProgram(input));
 }
+
+export {
+  harveyLabRecallEnabled,
+  maybeEnrichHarveyLabRecall,
+  enrichLabMemoryRecall,
+} from "./harvey-lab-enrich.js";
 
 /** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
 export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {

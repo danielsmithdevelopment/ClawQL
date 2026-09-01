@@ -10,7 +10,18 @@ const library = defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["clawql-api", "clawql-core", "effect", "ajv", "yaml", "zod"],
+  external: [
+    /^clawql-/,
+    "effect",
+    "ajv",
+    "yaml",
+    "zod",
+    "sql.js",
+    "cbor",
+    "debug",
+    "express",
+    "express-rate-limit",
+  ],
 });
 
 /** CLI entry — shebang for `bin` / `node dist/cli.js`. */
@@ -22,7 +33,18 @@ const cli = defineConfig({
   dts: true,
   sourcemap: true,
   clean: false,
-  external: ["clawql-api", "clawql-core", "effect", "ajv", "yaml", "zod"],
+  external: [
+    /^clawql-/,
+    "effect",
+    "ajv",
+    "yaml",
+    "zod",
+    "sql.js",
+    "cbor",
+    "debug",
+    "express",
+    "express-rate-limit",
+  ],
   banner: {
     js: "#!/usr/bin/env node",
   },

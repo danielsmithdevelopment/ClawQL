@@ -18,12 +18,13 @@ import "./load-env.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 import { loadSpec, registerSpecCacheShutdownHooks } from "clawql-api";
-import { createRegisteredMcpServer } from "./mcp-server-factory.js";
+import { createRegisteredMcpServerAsync } from "./mcp-server-factory.js";
 import { preloadSchemaFieldCacheFromDisk } from "./tools.js";
 import { validateOrDegradeObsidianVaultAtStartup } from "./vault-config.js";
 import { registerPostgresPoolShutdownHooks } from "clawql-memory/vector/pgvector";
 import { registerClawqlApiShutdownHooks } from "./clawql-api-adapters.js";
 import { maybeInitOtelTracing } from "./otel-tracing.js";
+import { ensureProcessWormHostBooted } from "./process-worm-host.js";
 import { maybeVerifyReleaseManifestAtStartup } from "./release-manifest-startup.js";
 
 /** Warm specs after Ready; failures are logged and do not kill the process. */
@@ -45,9 +46,10 @@ async function main() {
   registerSpecCacheShutdownHooks();
   registerPostgresPoolShutdownHooks();
   registerClawqlApiShutdownHooks();
+  await ensureProcessWormHostBooted();
   await validateOrDegradeObsidianVaultAtStartup();
 
-  const server = createRegisteredMcpServer({
+  const server = await createRegisteredMcpServerAsync({
     name: "cloudrun-mcp",
     version: NPM_PACKAGE_VERSION,
   });

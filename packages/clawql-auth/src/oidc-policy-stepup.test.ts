@@ -35,7 +35,7 @@ import { join } from "node:path";
 /** Run the gateway Effect at the test edge, mapping to the discriminated-union shape. */
 function resolveClaimsUnion(headers: Record<string, string | string[] | undefined>) {
   return Effect.runPromise(
-    resolveAtrClaimsFromHeadersEffect(headers, loadGatewayAuthConfig()).pipe(
+    resolveAtrClaimsFromHeadersEffect(headers, Effect.runSync(loadGatewayAuthConfig())).pipe(
       Effect.map((claims) => ({ ok: true as const, claims })),
       Effect.catchAll((err) => Effect.succeed({ ok: false as const, error: err.reason }))
     )
@@ -60,7 +60,7 @@ describe("clawql-auth oidc", () => {
   it("resolveAuthMode recognizes oidc", () => {
     stash("CLAWQL_AUTH_MODE");
     process.env.CLAWQL_AUTH_MODE = "oidc";
-    expect(resolveAuthMode()).toBe("oidc");
+    expect(Effect.runSync(resolveAuthMode())).toBe("oidc");
   });
 
   it("sync resolve rejects oidc (async required)", () => {
@@ -68,7 +68,7 @@ describe("clawql-auth oidc", () => {
     stash("CLAWQL_AUTH_OIDC_HS256_SECRET");
     process.env.CLAWQL_AUTH_MODE = "oidc";
     process.env.CLAWQL_AUTH_OIDC_HS256_SECRET = "test-secret-at-least-32-chars!!";
-    const r = resolveAtrClaimsFromHeaders({}, loadGatewayAuthConfig());
+    const r = resolveAtrClaimsFromHeaders({}, Effect.runSync(loadGatewayAuthConfig()));
     expect(r.ok).toBe(false);
   });
 
@@ -193,7 +193,10 @@ describe("clawql-auth step-up", () => {
   });
 
   it("createClawQLAuth exposes step-up + policy", () => {
-    const auth = createClawQLAuth({ mode: "noAuth" });
+    const auth = createClawQLAuth({
+      mode: "noAuth",
+      secretStore: { kind: "memory" },
+    });
     expect(auth.mode).toBe("noAuth");
     const r = auth.resolveClaims({});
     expect(r.ok).toBe(true);

@@ -1,0 +1,270 @@
+# `/mcp-ui` — Swagger UI for MCP (HTMX / HATEOAS)
+
+**Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
+**Path:** `GET /mcp-ui` (adapter HTTP process)  
+**Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
+**Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, `POST /mcp-ui/generate` multi-step custom UIs, and `GET /mcp-ui/trace/:sessionId` context-accumulation flamegraphs.
+
+---
+
+## Screenshots
+
+Live ClawQL Operations Console (`mcp-api-adapter` pointed at ClawQL Core):
+
+![ClawQL /mcp-ui demo — search and memory_recall](/images/mcp-ui/clawql-mcp-ui-demo.gif)
+
+![search form with Required/Optional badges and prefilled limit](/images/mcp-ui/search-form-badges.webp)
+
+![search results as a readable operation list](/images/mcp-ui/search-results.webp)
+
+![memory_recall with Advanced options collapsed](/images/mcp-ui/memory-recall-advanced.webp)
+
+![memory_recall vault hits as a readable list](/images/mcp-ui/memory-recall-results.webp)
+
+---
+
+## 1. What this is
+
+`/mcp-ui` is the **Swagger UI for MCP**: an auto-scaffolded, browser-navigable playground that ships **inside** `mcp-api-adapter`. Point the adapter at any MCP server; open `/mcp-ui`; every tool appears as a card with a form generated from its `inputSchema`. Submit runs the tool; the result renders inline. No separate playground product, no React SPA, no build step — server-rendered HTML with HTMX for interactivity.
+
+```text
+Any API / CLI / gRPC / WebSocket
+         │
+    ClawQL Core (indexes → MCP tools)
+         │
+    mcp-api-adapter
+         │
+    GET /mcp-ui  — interactive forms for every tool
+                   generated from inputSchema
+```
+
+Swagger made REST explorable in a browser. `/mcp-ui` makes **any** API ClawQL has turned into MCP explorable the same way — regardless of the original protocol.
+
+---
+
+## 2. Why not the existing MCP UIs
+
+External playgrounds (MCP Playground, MCP Explorer, Chrome extensions) and [MCP-UI / MCP Apps (SEP-1865)](https://github.com/modelcontextprotocol) solve a different problem: you point a **separate** host at an MCP server, or the server delivers rich `ui://` resources into an MCP host iframe.
+
+What nobody ships today:
+
+| Existing pattern                       | Gap                                                          |
+| -------------------------------------- | ------------------------------------------------------------ |
+| Standalone playground site / extension | User must go somewhere else or install something else        |
+| SEP-1865 MCP Apps                      | Server authors build UI resources; not auto from inputSchema |
+| Swagger at `/docs`                     | JSON API explorer — not a human-first form catalog for MCP   |
+
+`/mcp-ui` is **embedded, zero-config, and automatic** — the same way `/docs` appears when you run the adapter. That is the differentiation.
+
+---
+
+## 3. Surface contract
+
+### 3.1 Routes
+
+| Method / path                                    | Role                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `GET /mcp-ui`                                    | Full tool catalog playground (HTML)                              |
+| `GET /mcp-ui/tools/{toolName}`                   | Optional deep-link to one tool card                              |
+| `POST /mcp-ui/execute/{toolName}`                | HTMX form post → tool invoke → HTML fragment result              |
+| `GET /mcp-ui/partials/catalog`                   | Optional HTMX refresh of the card list after `ListTools` refresh |
+| `GET /mcp-ui/trace/{sessionId}`                  | Context-accumulation flamegraph (HTML; `?format=json` for data)  |
+| `GET /mcp-ui/trace/demo-compressed` / `demo-fat` | Built-in demos for search/execute vs fat tool dumps              |
+
+Disable with `--no-mcp-ui`. Override path with `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` (default `/mcp-ui`).
+
+Auth: same API key gate as `/docs` and `/graphiql` when configured. With JWT edge auth, `/mcp-ui` **ATR-scopes** the catalog and execute path by default (`--no-mcp-ui-atr-scoped` to disable):
+
+| ATR grant                                                             | Visible tools                                                                    |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `role: admin` or scope/tools `*`                                      | All tools                                                                        |
+| Capability scopes `search` / `execute` / `memory` / `audit` / `cache` | Mapped public tools only                                                         |
+| Exact tool name in `scope` or `tools`                                 | That tool                                                                        |
+| Family scopes `pageindex` / `ouroboros`                               | Matching internal prefixes                                                       |
+| (default)                                                             | `ouroboros_*` and `pageindex_*` are **not** granted by generic capability scopes |
+
+API keys are treated as admin for `/mcp-ui` visibility.
+
+### 3.2 Catalog → form mapping
+
+One `inputSchema`, three representations already exist (OpenAPI, GraphQL, REST). `/mcp-ui` is the fourth:
+
+| JSON Schema                        | HTML control                                |
+| ---------------------------------- | ------------------------------------------- |
+| `string`                           | `<input type="text">`                       |
+| `string` + `format: uri` / `email` | matching input type when safe               |
+| `number` / `integer`               | `<input type="number">`                     |
+| `boolean`                          | checkbox                                    |
+| `enum`                             | `<select>`                                  |
+| `object`                           | expandable `<fieldset>` (nested properties) |
+| `array`                            | add/remove row controls                     |
+| required                           | `required` attribute + visual marker        |
+| `description`                      | help text under the field                   |
+
+Unknown or awkward schemas fall back to a JSON textarea with the raw arguments object (same escape hatch idea as GraphQL `callTool`).
+
+### 3.3 HTMX / HATEOAS shape
+
+```text
+GET /mcp-ui → renders the tool catalog as a page
+  └─ one card per tool
+       ├─ name + description
+       ├─ form fields from inputSchema
+       └─ Submit → hx-post="/mcp-ui/execute/{toolName}"
+                → hx-target="#result-{toolName}"
+                → result fragment + next-action links
+```
+
+Example result fragment (illustrative):
+
+```html
+<div id="result-memory_recall">
+  <p>Found 3 notes matching "escrow non-compete"</p>
+  <ul>
+    <li>
+      MAT-2401 — Escrow 12%, NC 24mo
+      <button
+        hx-post="/mcp-ui/execute/memory_ingest"
+        hx-vals='{"title":"MAT-2401 follow-up"}'
+        hx-target="#result-memory_ingest"
+      >
+        Ingest finding
+      </button>
+    </li>
+  </ul>
+  <a hx-get="/mcp-ui/tools/memory_recall" hx-target="#card-memory_recall"> Search again </a>
+</div>
+```
+
+HATEOAS here means **next actions travel with the response** — not a separate schema the human must memorize. MCP tool discovery is already hypermedia for agents; `/mcp-ui` expresses the same idea in HTML browsers already understand.
+
+---
+
+## 4. ClawQL chain (the real product story)
+
+Every existing MCP UI assumes an MCP server already exists. ClawQL + `/mcp-ui` closes the loop:
+
+1. **Ingest** any REST / GraphQL / gRPC / CLI / WebSocket source into ClawQL Core.
+2. **Expose** the resulting tools through `mcp-api-adapter`.
+3. **Explore** every operation in a browser at `/mcp-ui` — forms, buttons, inline results.
+
+A new teammate can open one URL and call Salesforce, GitHub, internal gRPC, and legacy REST through the same interface — without learning each protocol or installing Postman collections.
+
+---
+
+## 5. Implementation notes (draft)
+
+- **Templating:** server-side HTML only (no SPA). Prefer a small Effect-friendly render helper in `packages/mcp-api-adapter` — no React/Vite dependency in the adapter process.
+- **HTMX:** load from a pinned CDN or vendored static asset under `/mcp-ui/assets/htmx.min.js`.
+- **Reuse:** form field generation should share schema-walk helpers with OpenAPI/GraphQL builders where practical (one walk, multiple emitters).
+- **Safety:** HTML-escape all tool names, descriptions, and result text. Never eval result content as HTML unless explicitly marked safe structured content later.
+- **Streaming:** Long-running tools return an HTMX/EventSource progress shell; `GET /mcp-ui/progress/:jobId` streams `progress` / `complete` / `error` SSE events with the final result HTML embedded.
+- **File upload / IDP:** Tools with `pdf_base64` / `base64` (or format binary) render `<input type="file">` with `multipart/form-data`. Uploads are base64-encoded into CallTool args. Document **processing** requires ATR scopes `documents` / `idp` (or admin / explicit IDP tool grant) — separate from catalog visibility.
+- **Generated UIs:** `POST /mcp-ui/generate` with `{ title, steps: [{ tool, label? }], slug? }` returns a `/mcp-ui/custom/:slug` multi-step form (in-memory, TTL).
+- **Proof:** clawql-payments `/credits/*` already demonstrates HTMX fragment UX inside ClawQL — generalize that pattern to arbitrary MCP catalogs.
+
+### 5.1 Effect-TS
+
+Render and execute paths stay Effect-based inside the adapter package; Express (or Node `http`) handlers remain thin façades that `run*Effect` at the host boundary — same rule as the rest of ClawQL.
+
+---
+
+## 5b. Context-accumulation flamegraph
+
+`GET /mcp-ui/trace/{sessionId}` visualizes **where tokens came from** turn by turn — harness prompt, vault/system-seed memory, tool schemas, tool results, agent reasoning, and model output — stacked like a CPU flamegraph.
+
+| Piece                          | Role                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `buildContextFlamegraph`       | Groups inference-shaped records (`messages[]`, `usage`, `response`) by turn × source; non-tool sources keep stable counts; `tool_result` absorbs metered remainder |
+| `listTraceCalls(sessionId)`    | Optional host hook (e.g. clawql-inference store keyed by **correlation id**). Adapter stays standalone — no hard npm dependency                                    |
+| `resolveListTraceCallsFromEnv` | CLI / programmatic wiring when `clawql-inference` is installed and store env is set (see below)                                                                    |
+| `demo-compressed` / `demo-fat` | Built-in same-task fixtures with **cl100k_base tiktoken** counts — for the dual-side compression argument                                                          |
+| `GET /mcp-ui/trace/compare`    | Side-by-side compressed vs fat on shared scale                                                                                                                     |
+| `?format=json`                 | Machine-readable graph for `harness-bench` / CI artifacts                                                                                                          |
+
+Catalog nav links **`/mcp-ui/trace/compare`** (bare URL → `focus=input`). Do not embed `?focus=all` in docs, posts, or recording bookmarks unless you intentionally want outputs in the slide.
+
+### Live inference store (Act 3 primary)
+
+The adapter CLI wires `listTraceCalls` automatically when inference trace env is set:
+
+```bash
+export MCP_API_ADAPTER_INFERENCE_TRACE=1
+export CLAWQL_INFERENCE_STORE=jsonl
+export CLAWQL_INFERENCE_STORE_PATH=/tmp/clawql-inference/calls.jsonl   # shared with inference gateway
+
+npm run build -w clawql-inference -w mcp-api-adapter
+node examples/mcp-api-adapter/clawql-with-trace.mjs
+# or: node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --mcp-url http://127.0.0.1:8080/mcp
+```
+
+**Correlation id flow:** agents must send the same id on inference requests (`correlationId` / `x-correlation-id`) and open `/mcp-ui/trace/<correlationId>`. MCP `mcp-session-id` is **not** auto-linked.
+
+When `clawql-inference` records calls with tokenization enabled (default), per-message **cl100k_base** counts are stored on each message; provider `usage.inputTokens` / `outputTokens` drive turn totals.
+
+Programmatic wiring:
+
+```typescript
+import {
+  createListTraceCallsFromStore,
+  resolveListTraceCallsFromEnv,
+  startMcpApiAdapter,
+} from "mcp-api-adapter";
+import { createInferenceStore } from "clawql-inference";
+
+const listTraceCalls =
+  (await resolveListTraceCallsFromEnv()) ?? createListTraceCallsFromStore(createInferenceStore()!);
+
+await startMcpApiAdapter({ upstream, listTraceCalls /* … */ });
+```
+
+---
+
+## 6. Non-goals (v1)
+
+| Non-goal                           | Why                                              |
+| ---------------------------------- | ------------------------------------------------ |
+| Full SEP-1865 MCP Apps host        | Different problem (server-authored UI resources) |
+| Replacing Swagger `/docs`          | `/docs` stays for OpenAPI clients                |
+| Pixel-perfect design system        | Utility HTML first; theme later                  |
+| Multi-server Desktop config matrix | One upstream per adapter process                 |
+| Untrusted HTML from tool results   | Escape by default                                |
+
+---
+
+## 7. Acceptance (draft)
+
+1. `mcp-api-adapter --stdio -- <server>` → `GET /mcp-ui` lists every tool from `ListTools`.
+2. Each tool card’s form fields match top-level `inputSchema` properties (with JSON fallback).
+3. Submit invokes the same call path as `POST /{toolName}` and renders a result fragment.
+4. With API key set, `/mcp-ui` requires the same auth as `/docs`.
+5. `--no-mcp-ui` removes the surface; `/docs` and `/graphiql` still work.
+
+---
+
+## 8. Relationship to other surfaces
+
+| Surface         | Audience                   | Path / bind        |
+| --------------- | -------------------------- | ------------------ |
+| OpenAPI         | Machines + Swagger         | `/docs`            |
+| GraphQL         | GraphQL clients + GraphiQL | `/graphiql`        |
+| Streamable HTTP | IDE / MCP SDK              | `/mcp`             |
+| gRPC            | Mesh / production          | `:50051`           |
+| gen-cli         | Bash / CI                  | generated disk CLI |
+| WebSocket       | Long-lived clients / DOs   | `/ws`              |
+| QR (planned)    | Air-gap optical            | physical channel   |
+| **`/mcp-ui`**   | **Humans in a browser**    | **`/mcp-ui`**      |
+
+---
+
+## Further reading
+
+- User guide: [`mcp-api-adapter.md`](./mcp-api-adapter.md)
+- Design: [`../design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
+- Essay draft: [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
+- Protocol Fabric: [`protocol-fabric.md`](./protocol-fabric.md)
+- QR (7th surface): [`../streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
+
+---
+
+_/mcp-ui · Spec draft · August 2026 · mcp-api-adapter 8th surface_

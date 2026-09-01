@@ -1,0 +1,13 @@
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: {
+    index: "src/index.ts",
+    "plugin/index": "src/plugin/index.ts",
+  },
+  format: ["esm", "cjs"],
+  dts: true,
+  sourcemap: true,
+  clean: true,
+  external: [/^clawql-/, "@duckdb/node-api", "cbor", "debug", "express", "express-rate-limit"],
+});

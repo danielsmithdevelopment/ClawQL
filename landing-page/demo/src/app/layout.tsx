@@ -16,6 +16,7 @@ import {
   NavbarLogo,
   NavbarWithLinksActionsAndCenteredLogo,
 } from '@/components/sections/navbar-with-links-actions-and-centered-logo'
+import { ClawqlAnalyticsPageview } from '@/components/analytics/ClawqlAnalyticsPageview'
 import { SiteStructuredData } from '@/components/SiteStructuredData'
 import { WebMcpRegister } from '@/components/WebMcpRegister'
 import { DEFAULT_OG_IMAGE_ALT, DEFAULT_OG_IMAGE_HEIGHT, DEFAULT_OG_IMAGE_PATH, DEFAULT_OG_IMAGE_WIDTH } from '@/lib/seo'
@@ -24,7 +25,7 @@ import { getSiteOrigin } from '@/lib/site-url'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
-const defaultTitle = 'ClawQL — Agentic Gateway for Auditable Production AI'
+const defaultTitle = 'ClawQL — Agentic Infrastructure for Regulated Industries'
 
 export const metadata: Metadata = {
   metadataBase: getSiteOrigin(),
@@ -114,15 +115,17 @@ export default function RootLayout({
             Skip to main content
           </a>
           <SiteStructuredData />
+          <ClawqlAnalyticsPageview site="marketing" />
           <WebMcpRegister />
           <NavbarWithLinksActionsAndCenteredLogo
             id="navbar"
             links={
               <>
-                <NavbarLink href="/#tools">Tools</NavbarLink>
-                <NavbarLink href="/#workflows" className="max-lg:hidden">
-                  Workflows
+                <NavbarLink href={site.urls.protocolFabric}>Fabric</NavbarLink>
+                <NavbarLink href="/#autonomous" className="max-lg:hidden">
+                  Autonomous
                 </NavbarLink>
+                <NavbarLink href={site.urls.agents}>Agents</NavbarLink>
                 <NavbarLink href={site.urls.idp}>IDP</NavbarLink>
                 <NavbarLink href={site.urls.streams} className="max-lg:hidden">
                   Streams
@@ -172,8 +175,11 @@ export default function RootLayout({
             links={
               <>
                 <FooterCategory title="Product">
-                  <FooterLink href="/#tools">Tools</FooterLink>
-                  <FooterLink href="/#workflows">Workflows</FooterLink>
+                  <FooterLink href={site.urls.protocolFabric}>Protocol Fabric</FooterLink>
+                  <FooterLink href="/#autonomous">Autonomous agents</FooterLink>
+                  <FooterLink href="/#proof">OpenBench proof</FooterLink>
+                  <FooterLink href="/#tools">Core tools</FooterLink>
+                  <FooterLink href={site.urls.agents}>Agents</FooterLink>
                   <FooterLink href={site.urls.idp}>IDP</FooterLink>
                   <FooterLink href={site.urls.streams}>Streams</FooterLink>
                   <FooterLink href="/#security">Security</FooterLink>

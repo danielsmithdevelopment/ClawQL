@@ -1,7 +1,7 @@
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Prose } from '@/components/Prose'
 import { Tag } from '@/components/Tag'
-import PaymentsBody from '@/generated/clawql-payments-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -57,7 +57,7 @@ export default function ClawqlPaymentsPage() {
       </div>
 
       <Prose className="flex-auto">
-        <PaymentsBody />
+        <AgentMarkdownDocBody path="/payments/clawql-payments" />
       </Prose>
     </article>
   )

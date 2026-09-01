@@ -150,6 +150,8 @@ import {
   runOntologyImport,
   runOntologyInit,
   runOntologyLint,
+  runOntologyScaffold,
+  runOntologyMeta,
 } from "./ontology-cli.js";
 import { runMemoryLint, runMemoryMigrate, runMemoryQuery } from "./memory-cli.js";
 
@@ -221,6 +223,10 @@ function parse(argv: string[]): {
     else if (a === "--out") flags.out = argv[++i] ?? "";
     else if (a === "--schema") flags.schema = argv[++i] ?? "";
     else if (a === "--pack") flags.pack = argv[++i] ?? "";
+    else if (a === "--document-type") flags.documentType = argv[++i] ?? "";
+    else if (a === "--ttl") flags.ttl = argv[++i] ?? "";
+    else if (a === "--entity-id") flags.entityId = argv[++i] ?? "";
+    else if (a === "--check") flags.check = true;
     else if (a === "--strict") flags.strict = true;
     else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--dry-run") flags.dryRun = true;
@@ -428,11 +434,14 @@ Usage:
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
-  clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli] | remove <id>
+  clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
+  clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
+  clawql ontology scaffold --schema FILE [--document-type TYPE] [--ttl session|permanent|SECONDS]
+  clawql ontology meta status | patterns --document-type TYPE | promote --check | promote --document-type TYPE --output DIR
   clawql memory lint [--vault DIR] [--check-stale] [--open-prs] [--json]
   clawql memory migrate --okf-version 0.2 [--vault DIR] [--dry-run]
   clawql memory query --filter 'type == decision' [--vault DIR]
@@ -502,9 +511,11 @@ release (Layer 0 — immutable releases):
   publish         manifest + optional --github / --stage-ipfs / --permanent / --encrypt
   verify <target> Verify bundle, manifest.json, or Arweave tx id
 
-ontology (ADR 0009 — enterprise Ontology):
+ontology (ADR 0009 — enterprise Ontology + meta-ontology v0.1):
   lint            Validate entity YAML against schemas/ontology/entity.schema.json
   generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
+  scaffold        Layer 2: scaffold CQE entity from JSON Schema
+  meta            Layer 3: status | patterns | promote
 
 memory (OKF v0.2 vault):
   lint            Validate OKF trust signals (--check-stale, --open-prs)
@@ -729,6 +740,12 @@ async function main(): Promise<void> {
         id: typeof flags.id === "string" ? flags.id : undefined,
         command: typeof flags.command === "string" ? flags.command : undefined,
         args: argsList,
+        webmcpCdpUrl:
+          typeof flags["webmcp-cdp-url"] === "string" ? flags["webmcp-cdp-url"] : undefined,
+        webmcpReadyMs:
+          typeof flags["webmcp-ready-ms"] === "string"
+            ? Number.parseInt(flags["webmcp-ready-ms"], 10)
+            : undefined,
         home,
       });
       return;
@@ -1751,13 +1768,23 @@ async function main(): Promise<void> {
         (typeof flags.home === "string" && flags.home ? flags.home : undefined),
       schema: typeof flags.schema === "string" && flags.schema ? flags.schema : undefined,
       dir: typeof flags.dir === "string" && flags.dir ? flags.dir : undefined,
-      out: typeof flags.out === "string" && flags.out ? flags.out : undefined,
+      out:
+        (typeof flags.out === "string" && flags.out ? flags.out : undefined) ||
+        (typeof flags.output === "string" && flags.output ? flags.output : undefined),
       pack: typeof flags.pack === "string" && flags.pack ? flags.pack : undefined,
       name: rest[0],
       strict: Boolean(flags.strict),
       skipLint: Boolean(flags.skipLint),
       json: Boolean(flags.json),
       paths: rest,
+      documentType:
+        typeof flags.documentType === "string" && flags.documentType
+          ? flags.documentType
+          : undefined,
+      ttl: typeof flags.ttl === "string" && flags.ttl ? flags.ttl : undefined,
+      entityId: typeof flags.entityId === "string" && flags.entityId ? flags.entityId : undefined,
+      check: Boolean(flags.check),
+      metaSub: rest[0],
     };
     if (subcmd === "lint") {
       process.exitCode = await runOntologyLint(ontologyOpts);
@@ -1779,8 +1806,16 @@ async function main(): Promise<void> {
       process.exitCode = await runOntologyImport(ontologyOpts);
       return;
     }
+    if (subcmd === "scaffold") {
+      process.exitCode = await runOntologyScaffold(ontologyOpts);
+      return;
+    }
+    if (subcmd === "meta") {
+      process.exitCode = await runOntologyMeta(ontologyOpts);
+      return;
+    }
     console.error(
-      "Usage: clawql ontology lint | generate --out DIR | init | create-entity <Name> | import --pack legal"
+      "Usage: clawql ontology lint | generate --out DIR | init | create-entity <Name> | import --pack legal | scaffold --schema FILE | meta status|patterns|promote"
     );
     process.exitCode = 1;
     return;

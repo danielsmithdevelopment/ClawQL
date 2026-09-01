@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import CustomSourcesBody from '@/generated/getting-started-custom-sources-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -67,9 +66,10 @@ export default function GettingStartedCustomSourcesPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <CustomSourcesBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/getting-started/custom-sources"
+        className="flex-auto"
+      />
     </article>
   )
 }

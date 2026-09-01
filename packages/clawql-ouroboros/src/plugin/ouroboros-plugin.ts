@@ -1,121 +1,32 @@
-import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
-import type { Plugin } from "clawql-core";
+import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
-import { z } from "zod";
-import {
-  CreateSeedFromDocumentSchema,
-  GetLineageStatusSchema,
-  MeasureDriftSchema,
-  ProposeSeedRevisionFromEvalSchema,
-  RunOuroborosSchema,
-  ouroborosMcpTools,
-} from "../mcp-hooks.js";
 import { ensureOuroborosPoolShutdownHooks, resetOuroborosContextForTests } from "./context.js";
+import {
+  buildOuroborosMcpToolDefinitions,
+  type OuroborosToolDefOptions,
+} from "./ouroboros-tool-defs.js";
 
-export type OuroborosPluginOptions = {
-  /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): register `ouroboros_propose_seed_revision_from_eval`. */
-  enableLangfuseEval?: boolean;
-};
+export type OuroborosPluginOptions = OuroborosToolDefOptions;
 
 export const OUROBOROS_PLUGIN_ID = "clawql-ouroboros";
 
-function textResult(obj: unknown): { content: { type: "text"; text: string }[] } {
-  return { content: [{ type: "text", text: JSON.stringify(obj) }] };
-}
-
-export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): Plugin {
-  const t = ouroborosMcpTools;
-  const enableLangfuseEval = options.enableLangfuseEval === true;
-  return {
+/**
+ * @deprecated Prefer registering Ouroboros via `clawql-harness` `OuroborosPlugin`
+ * (MCP composes `makeHarnessLayer`). Kept for library embedders that use the
+ * clawql-core Plugin API directly without a harness.
+ */
+export function createOuroborosPlugin(options: OuroborosPluginOptions = {}): ProviderPlugin {
+  return defineRegisteringProviderPlugin({
     id: OUROBOROS_PLUGIN_ID,
-    version: "0.1.1",
-    kind: "default",
-    onRegister: (api) =>
+    version: "0.2.0",
+    description: "Ouroboros evolutionary specification MCP tools",
+    register: (api) =>
       Effect.gen(function* () {
         ensureOuroborosPoolShutdownHooks();
-        yield* api.registerMcpTool({
-          name: t.createSeedFromDocument.name,
-          schema: CreateSeedFromDocumentSchema.shape,
-          handler: async (args) => {
-            logMcpToolShape(t.createSeedFromDocument.name, {
-              documentIdLen: (args as { documentId?: string }).documentId?.length,
-              taskType: (args as { taskType?: string }).taskType,
-            });
-            const { runOuroborosEffect, ouroborosCreateSeedProgram } =
-              await import("../effect/ouroboros-effect-runtime.js");
-            const r = await runOuroborosEffect(
-              ouroborosCreateSeedProgram(args as z.infer<typeof CreateSeedFromDocumentSchema>)
-            );
-            return textResult(r);
-          },
-        });
-        yield* api.registerMcpTool({
-          name: t.runEvolutionaryLoop.name,
-          schema: RunOuroborosSchema.shape,
-          handler: async (args) => {
-            logMcpToolShape(t.runEvolutionaryLoop.name, {
-              maxGenerations: (args as { maxGenerations?: number }).maxGenerations,
-            });
-            const { runOuroborosEffect, ouroborosRunLoopProgram } =
-              await import("../effect/ouroboros-effect-runtime.js");
-            const r = await runOuroborosEffect(
-              ouroborosRunLoopProgram(args as z.infer<typeof RunOuroborosSchema>)
-            );
-            return textResult(r);
-          },
-        });
-        yield* api.registerMcpTool({
-          name: t.getLineageStatus.name,
-          schema: GetLineageStatusSchema.shape,
-          handler: async (args) => {
-            logMcpToolShape(t.getLineageStatus.name, {
-              seedIdLen: (args as { seedId?: string }).seedId?.length,
-            });
-            const { runOuroborosEffect, ouroborosLineageProgram } =
-              await import("../effect/ouroboros-effect-runtime.js");
-            const r = await runOuroborosEffect(
-              ouroborosLineageProgram(args as z.infer<typeof GetLineageStatusSchema>)
-            );
-            return textResult(r);
-          },
-        });
-        yield* api.registerMcpTool({
-          name: t.measureDrift.name,
-          schema: MeasureDriftSchema.shape,
-          handler: async (args) => {
-            logMcpToolShape(t.measureDrift.name, {
-              seedIdLen: (args as { seedId?: string }).seedId?.length,
-              outputLen: (args as { currentOutput?: string }).currentOutput?.length,
-            });
-            const { runOuroborosEffect, ouroborosMeasureDriftProgram } =
-              await import("../effect/ouroboros-effect-runtime.js");
-            const r = await runOuroborosEffect(
-              ouroborosMeasureDriftProgram(args as z.infer<typeof MeasureDriftSchema>)
-            );
-            return textResult(r);
-          },
-        });
-        if (enableLangfuseEval) {
-          yield* api.registerMcpTool({
-            name: t.proposeSeedRevisionFromEval.name,
-            schema: ProposeSeedRevisionFromEvalSchema.shape,
-            handler: async (args) => {
-              logMcpToolShape(t.proposeSeedRevisionFromEval.name, {
-                hasPayload: (args as { payload?: unknown }).payload !== undefined,
-                scoreValue: (args as { scoreValue?: number }).scoreValue,
-              });
-              const { runOuroborosEffect, ouroborosProposeRevisionProgram } =
-                await import("../effect/ouroboros-effect-runtime.js");
-              const r = await runOuroborosEffect(
-                ouroborosProposeRevisionProgram(
-                  args as z.infer<typeof ProposeSeedRevisionFromEvalSchema>
-                )
-              );
-              return textResult(r);
-            },
-          });
+        for (const tool of buildOuroborosMcpToolDefinitions(options)) {
+          yield* api.registerMcpTool(tool);
         }
       }),
     onTeardown: () => Effect.sync(() => resetOuroborosContextForTests()),
-  };
+  });
 }

@@ -12,5 +12,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ["clawql-api", "clawql-core", "clawql-inference", "effect", "pg"],
+  external: [/^clawql-/, "effect", "pg", "cbor", "debug", "express", "express-rate-limit"],
 });

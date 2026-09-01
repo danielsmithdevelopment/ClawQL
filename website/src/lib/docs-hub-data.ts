@@ -346,8 +346,15 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/mcp/mcp-api-adapter',
     name: 'mcp-api-adapter',
     description:
-      'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, gen-cli (in-repo; npm pending).',
+      'Any MCP → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui; QR planned.',
     icon: PackageIcon,
+  }),
+  card({
+    href: '/mcp/mcp-ui',
+    name: '/mcp-ui',
+    description:
+      'Swagger UI for MCP — HTMX forms from inputSchema (8th surface, shipped).',
+    icon: DocumentIcon,
   }),
   card({
     href: '/mcp/protocol-fabric',
@@ -414,6 +421,27 @@ export const resourcesHubCards: Array<ReferenceCard> = [
     name: 'Changelog & releases',
     description: 'Major versions and GitHub release notes.',
     icon: TagIcon,
+  }),
+  card({
+    href: '/auth',
+    name: 'Authentication',
+    description:
+      'Inbound vs outbound MCP auth — token refresh, EMA / ID-JAG, signing.',
+    icon: ShapesIcon,
+  }),
+  card({
+    href: '/audit',
+    name: 'Audit Trail',
+    description:
+      'Append-only WORM trail — hash chain, Merkle roots, dual-ack replication.',
+    icon: ListIcon,
+  }),
+  card({
+    href: '/observability',
+    name: 'Observability',
+    description:
+      'LGTM+ runtime telemetry — Alloy ingest, governed provider registry, Faro JWT proxy.',
+    icon: BoltIcon,
   }),
   card({
     href: '/troubleshooting',
@@ -499,7 +527,7 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/panguard-proxy',
     name: 'Panguard MCP proxy',
-    description: 'beforeCallTool policy chokepoint for enterprise MCP defense.',
+    description: 'Blocking pre-execute hooks for enterprise MCP defense.',
     icon: ShapesIcon,
   }),
   card({

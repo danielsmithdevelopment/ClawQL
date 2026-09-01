@@ -9,19 +9,38 @@
 import { readVaultTextFile } from "../vault/utils.js";
 import { stripVaultFrontmatter } from "../vault/markdown.js";
 import type { FieldConfidence } from "./clawql-fields.js";
-import { MATTER_FILTER_COLUMNS } from "./field-map.js";
+import { MATTER_FILTER_COLUMNS, LEGAL_SCHEMA_FILTER_COLUMNS } from "./field-map.js";
 import {
-  countMatters,
+  countLegalEntities,
   openOntologyDb,
   ontologyDbEnabled,
   ontologyDbExplicitlyDisabled,
+  queryLegalEntitiesSql,
   queryMattersSql,
-  withOntologyWriteLock,
   type MatterRow,
 } from "./ontology-db.js";
-import { syncOntologyMattersFromVault } from "./ontology-sync.js";
+import { ensureOntologyLegalEntitiesIndexed } from "./ontology-sync.js";
+import { countDynamicRecords, getDynamicEntity, listDynamicRecords } from "./ontology-dynamic.js";
+import { matchDynamicFilters } from "./dynamic-filter.js";
 
-export type OntologySchema = "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document";
+export type OntologySchema = string;
+
+export const LEGAL_ONTOLOGY_SCHEMAS = [
+  "legal.Matter",
+  "legal.Client",
+  "legal.Attorney",
+  "legal.Document",
+] as const;
+
+export type LegalOntologySchema = (typeof LEGAL_ONTOLOGY_SCHEMAS)[number];
+
+export function isLegalOntologySchema(schema: string): schema is LegalOntologySchema {
+  return (LEGAL_ONTOLOGY_SCHEMAS as readonly string[]).includes(schema);
+}
+
+export function isDynamicOntologySchema(schema: string): boolean {
+  return !schema.startsWith("legal.");
+}
 
 export type FilterPredicate = Record<string, unknown>;
 export type OntologyFilter = Record<string, FilterPredicate>;
@@ -58,7 +77,8 @@ export type OntologyRecallResult = {
     path: string;
     score: number;
     depth: number;
-    reason: "keyword";
+    /** Structured recalls use `structured_predicate`; never mislabel as keyword. */
+    reason: "structured_predicate" | "keyword";
     snippet: string;
   }>;
   queryType: "structured_predicate";
@@ -146,15 +166,15 @@ function buildPredicate(col: string, predicate: FilterPredicate, values: unknown
   return null;
 }
 
-export function buildMatterWhereClause(
+export function buildLegalWhereClause(
   filters: OntologyFilter,
-  confidenceMinimum?: FieldConfidence
+  columnMap: Readonly<Record<string, string>>
 ): { where: string; values: unknown[] } {
   const clauses: string[] = [];
   const values: unknown[] = [];
 
   for (const [field, predicate] of Object.entries(filters)) {
-    const col = MATTER_FILTER_COLUMNS[field];
+    const col = columnMap[field];
     if (!col || !predicate || typeof predicate !== "object") {
       throw new Error(`Unsupported ontology filter field: ${field}`);
     }
@@ -164,6 +184,19 @@ export function buildMatterWhereClause(
     }
     clauses.push(clause);
   }
+
+  return {
+    where: clauses.length > 0 ? clauses.join(" AND ") : "1=1",
+    values,
+  };
+}
+
+export function buildMatterWhereClause(
+  filters: OntologyFilter,
+  confidenceMinimum?: FieldConfidence
+): { where: string; values: unknown[] } {
+  const { where: baseWhere, values } = buildLegalWhereClause(filters, MATTER_FILTER_COLUMNS);
+  const clauses = [baseWhere];
 
   if (confidenceMinimum) {
     const levels = confidenceLevelsAtOrAbove(confidenceMinimum);
@@ -215,31 +248,215 @@ async function snippetFor(vault: string, path: string): Promise<string> {
   }
 }
 
-/**
- * Double-checked lazy sync under ontology write lock — safe for concurrent
- * schema+filters recalls hitting an empty matters table.
- */
-export async function ensureOntologyMattersIndexed(vault: string): Promise<void> {
-  {
-    const probe = await openOntologyDb(vault);
-    if (!probe) return;
-    try {
-      if (countMatters(probe.db) > 0) return;
-    } finally {
-      probe.close();
-    }
+const LEGAL_ENTITY_TYPE: Record<LegalOntologySchema, string> = {
+  "legal.Matter": "Matter",
+  "legal.Client": "Client",
+  "legal.Attorney": "Attorney",
+  "legal.Document": "Document",
+};
+
+export {
+  ensureOntologyMattersIndexed,
+  ensureOntologyLegalEntitiesIndexed,
+} from "./ontology-sync.js";
+
+async function runLegalLayerOneRecall(
+  vault: string,
+  input: OntologyRecallInput & { schema: LegalOntologySchema }
+): Promise<OntologyRecallResult | OntologyRecallFailure> {
+  if (!input.filters || Object.keys(input.filters).length === 0) {
+    return {
+      ok: false,
+      error: "filters are required for structured ontology recall",
+      errorType: "ontology_invalid_filters",
+    };
   }
 
-  await withOntologyWriteLock(vault, async () => {
-    const handle = await openOntologyDb(vault);
-    if (!handle) return;
+  await ensureOntologyLegalEntitiesIndexed(vault, input.schema);
+
+  const handle = await openOntologyDb(vault);
+  if (!handle) {
+    return {
+      ok: false,
+      error: "Could not open ontology.db",
+      errorType: "ontology_open_failed",
+    };
+  }
+
+  try {
+    const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
+    const limit = input.limit ?? 20;
+    const scannedEntities = countLegalEntities(handle.db, input.schema);
+    const entityType = LEGAL_ENTITY_TYPE[input.schema];
+
+    let where: string;
+    let values: unknown[];
     try {
-      if (countMatters(handle.db) > 0) return;
-      await syncOntologyMattersFromVault(vault, handle);
-    } finally {
-      handle.close();
+      if (input.schema === "legal.Matter") {
+        ({ where, values } = buildMatterWhereClause(input.filters, confidenceMinimum));
+      } else {
+        const columnMap = LEGAL_SCHEMA_FILTER_COLUMNS[input.schema];
+        if (!columnMap) {
+          return {
+            ok: false,
+            error: `Unsupported legal schema '${input.schema}'`,
+            errorType: "ontology_unsupported_schema",
+          };
+        }
+        ({ where, values } = buildLegalWhereClause(input.filters, columnMap));
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+        errorType: "ontology_invalid_filters",
+      };
     }
-  });
+
+    const hits: OntologyRecallHit[] = [];
+
+    if (input.schema === "legal.Matter") {
+      const rows = queryMattersSql(handle.db, where, values, limit);
+      for (const row of rows) {
+        const snippet = await snippetFor(vault, row.vaultNotePath);
+        hits.push({
+          path: row.vaultNotePath,
+          score: 1,
+          snippet,
+          entityId: row.id,
+          entityType,
+          fields: rowToFields(row),
+          confidence: row.confidence,
+          extractionMethod: row.extractionMethod,
+        });
+      }
+    } else {
+      const rows = queryLegalEntitiesSql(handle.db, input.schema, where, values, limit);
+      for (const row of rows) {
+        const { vaultNotePath, ...fields } = row;
+        const snippet = vaultNotePath ? await snippetFor(vault, vaultNotePath) : "";
+        hits.push({
+          path: vaultNotePath || `ontology://legal/${input.schema}/${fields.id}`,
+          score: 1,
+          snippet,
+          entityId: String(fields.id),
+          entityType,
+          fields,
+          confidence: "EXTRACTED",
+          extractionMethod: "machine_readable",
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      query: input.query,
+      hits,
+      results: hits.map((h) => ({
+        path: h.path,
+        score: h.score,
+        depth: 0,
+        reason: "structured_predicate" as const,
+        snippet: h.snippet,
+      })),
+      queryType: "structured_predicate",
+      indexUsed: "ontology",
+      schema: input.schema,
+      filters: input.filters,
+      scannedEntities,
+      filteredEntities: hits.length,
+      confidenceMinimum,
+      sourcesUsed: ["vault"],
+    };
+  } finally {
+    handle.close();
+  }
+}
+
+async function runDynamicOntologyRecall(
+  vault: string,
+  input: OntologyRecallInput
+): Promise<OntologyRecallResult | OntologyRecallFailure> {
+  const handle = await openOntologyDb(vault);
+  if (!handle) {
+    return {
+      ok: false,
+      error: "Could not open ontology.db",
+      errorType: "ontology_open_failed",
+    };
+  }
+
+  try {
+    const entity = getDynamicEntity(handle.db, input.schema);
+    if (!entity) {
+      return {
+        ok: false,
+        error: `Unknown dynamic ontology schema '${input.schema}' (register via Layer 2 scaffold / syncDynamicOntologyDocument)`,
+        errorType: "ontology_unsupported_schema",
+      };
+    }
+
+    const filters = input.filters ?? {};
+    const knownFields = new Set([
+      ...entity.fields.map((f) => f.name),
+      ...(entity.relationships ?? []).map((r) => r.name),
+      "id",
+    ]);
+    for (const field of Object.keys(filters)) {
+      if (!knownFields.has(field)) {
+        return {
+          ok: false,
+          error: `Unsupported ontology filter field: ${field}`,
+          errorType: "ontology_invalid_filters",
+        };
+      }
+    }
+
+    const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
+    const limit = input.limit ?? 20;
+    const scannedEntities = countDynamicRecords(handle.db, input.schema);
+    const rows = listDynamicRecords(handle.db, input.schema);
+    const matched = rows.filter((row) => matchDynamicFilters(row.fields, filters)).slice(0, limit);
+
+    const hits: OntologyRecallHit[] = [];
+    for (const row of matched) {
+      const path = row.vaultNotePath ?? `ontology://dynamic/${input.schema}/${row.recordId}`;
+      const snippet = row.vaultNotePath ? await snippetFor(vault, row.vaultNotePath) : "";
+      hits.push({
+        path,
+        score: 1,
+        snippet,
+        entityId: row.recordId,
+        entityType: input.schema,
+        fields: row.fields,
+        confidence: "EXTRACTED",
+        extractionMethod: entity.source,
+      });
+    }
+
+    return {
+      ok: true,
+      query: input.query,
+      hits,
+      results: hits.map((h) => ({
+        path: h.path,
+        score: h.score,
+        depth: 0,
+        reason: "structured_predicate" as const,
+        snippet: h.snippet,
+      })),
+      queryType: "structured_predicate",
+      indexUsed: "ontology",
+      schema: input.schema,
+      filters,
+      scannedEntities,
+      filteredEntities: hits.length,
+      confidenceMinimum,
+      sourcesUsed: ["vault"],
+    };
+  } finally {
+    handle.close();
+  }
 }
 
 export async function runOntologyRecall(
@@ -260,89 +477,19 @@ export async function runOntologyRecall(
       errorType: "ontology_disabled",
     };
   }
-  if (input.schema !== "legal.Matter") {
-    return {
-      ok: false,
-      error: `Structured ontology query for schema '${input.schema}' is not implemented yet (Phase 1: legal.Matter only).`,
-      errorType: "ontology_unsupported_schema",
-    };
-  }
-  if (!input.filters || Object.keys(input.filters).length === 0) {
-    return {
-      ok: false,
-      error: "filters are required for structured ontology recall",
-      errorType: "ontology_invalid_filters",
-    };
+  if (isDynamicOntologySchema(input.schema)) {
+    return runDynamicOntologyRecall(vault, input);
   }
 
-  await ensureOntologyMattersIndexed(vault);
-
-  const handle = await openOntologyDb(vault);
-  if (!handle) {
-    return {
-      ok: false,
-      error: "Could not open ontology.db",
-      errorType: "ontology_open_failed",
-    };
+  if (isLegalOntologySchema(input.schema)) {
+    return runLegalLayerOneRecall(vault, { ...input, schema: input.schema });
   }
 
-  try {
-    let where: string;
-    let values: unknown[];
-    try {
-      const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
-      ({ where, values } = buildMatterWhereClause(input.filters, confidenceMinimum));
-    } catch (err) {
-      return {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        errorType: "ontology_invalid_filters",
-      };
-    }
-
-    const confidenceMinimum = input.confidenceMinimum ?? "EXTRACTED";
-    const limit = input.limit ?? 20;
-    const scannedEntities = countMatters(handle.db);
-    const rows = queryMattersSql(handle.db, where, values, limit);
-
-    const hits: OntologyRecallHit[] = [];
-    for (const row of rows) {
-      const snippet = await snippetFor(vault, row.vaultNotePath);
-      hits.push({
-        path: row.vaultNotePath,
-        score: 1,
-        snippet,
-        entityId: row.id,
-        entityType: "Matter",
-        fields: rowToFields(row),
-        confidence: row.confidence,
-        extractionMethod: row.extractionMethod,
-      });
-    }
-
-    return {
-      ok: true,
-      query: input.query,
-      hits,
-      results: hits.map((h) => ({
-        path: h.path,
-        score: h.score,
-        depth: 0,
-        reason: "keyword" as const,
-        snippet: h.snippet,
-      })),
-      queryType: "structured_predicate",
-      indexUsed: "ontology",
-      schema: input.schema,
-      filters: input.filters,
-      scannedEntities,
-      filteredEntities: hits.length,
-      confidenceMinimum,
-      sourcesUsed: ["vault"],
-    };
-  } finally {
-    handle.close();
-  }
+  return {
+    ok: false,
+    error: `Unknown ontology schema '${input.schema}'`,
+    errorType: "ontology_unsupported_schema",
+  };
 }
 
 /** True when recall should take the structured ontology path. */
@@ -350,5 +497,8 @@ export function wantsStructuredOntologyRecall(input: {
   schema?: string;
   filters?: OntologyFilter;
 }): boolean {
-  return Boolean(input.schema && input.filters && Object.keys(input.filters).length > 0);
+  if (!input.schema) return false;
+  // Dynamic Layer 2/3 schemas may enumerate with empty filters (return all rows).
+  if (isDynamicOntologySchema(input.schema)) return true;
+  return Boolean(input.filters && Object.keys(input.filters).length > 0);
 }

@@ -1,5 +1,6 @@
 /**
- * gRPC ListTools: optional **`hitl_enqueue_label_studio`** appears when **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** (#228).
+ * gRPC ListTools: optional **`hitl_enqueue_label_studio`** appears when
+ * instance `automation.hitlLabelStudio.enabled` (#228).
  */
 
 import { mkdtempSync } from "node:fs";
@@ -15,6 +16,7 @@ import { createRegisteredMcpServer } from "./mcp-server-factory.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { resetSpecCache } from "clawql-api";
 import { resetSchemaFieldCache } from "./tools.js";
+import { instanceSpecWith } from "./server-stdio-env.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
@@ -52,7 +54,9 @@ describe("gRPC ListTools hitl_enqueue_label_studio parity (#228)", () => {
     delete process.env.CLAWQL_PROVIDER;
     delete process.env.CLAWQL_SPEC_PATHS;
     process.env.CLAWQL_OBSIDIAN_VAULT_PATH = mkdtempSync(join(tmpdir(), "clawql-grpc-hitl-"));
-    process.env.CLAWQL_ENABLE_HITL_LABEL_STUDIO = "1";
+    process.env.CLAWQL_INSTANCE_SPEC = instanceSpecWith({
+      automation: { hitlLabelStudio: { enabled: true } },
+    });
     resetSpecCache();
     resetSchemaFieldCache();
   });
@@ -63,7 +67,7 @@ describe("gRPC ListTools hitl_enqueue_label_studio parity (#228)", () => {
     resetSchemaFieldCache();
   });
 
-  it("ListTools includes hitl_enqueue_label_studio when CLAWQL_ENABLE_HITL_LABEL_STUDIO=1", async () => {
+  it("ListTools includes hitl_enqueue_label_studio when hitlLabelStudio.enabled", async () => {
     const started = await maybeStartGrpcMcpServer({
       createMcpServer: createRegisteredMcpServer,
       bindAddress: "127.0.0.1:0",

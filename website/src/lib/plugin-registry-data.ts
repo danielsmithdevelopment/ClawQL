@@ -71,7 +71,7 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     id: 'panguard-mcp-proxy',
     name: 'Panguard MCP proxy',
     description:
-      'beforeCallTool policy chokepoint for JWT ATR and enterprise MCP defense-in-depth.',
+      'Blocking tool/pre-execute hooks for JWT ATR and enterprise MCP defense-in-depth.',
     category: 'proxy',
     status: 'default-on',
     package: 'clawql-api (PanguardProxyPlugin)',
@@ -172,6 +172,19 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     enable: 'CLAWQL_ENABLE_SANDBOX=1',
     href: '/plugins/sandbox',
     keywords: ['kata', 'seatbelt', 'isolation'],
+  },
+  {
+    id: 'clawql-data',
+    name: 'Data',
+    description:
+      'Node DuckDB structured SQL — data_query / data_ingest. Not Python duckdb. Not chDB.',
+    category: 'horizontal',
+    status: 'opt-in',
+    package: 'clawql-data',
+    tools: ['data_query', 'data_ingest', 'data_status'],
+    enable: 'CLAWQL_ENABLE_DATA=1',
+    href: '/plugins/data',
+    keywords: ['duckdb', 'sql', 'data_query'],
   },
   {
     id: 'clawql-ouroboros',

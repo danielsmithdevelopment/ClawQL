@@ -32,7 +32,7 @@ Any MCP upstream
 
 When upstream is already gRPC, REST/GraphQL forward into **`mcp-grpc-transport` `CallTool`**. When upstream is stdio or Streamable HTTP, REST/GraphQL use the MCP SDK client, and the gateway **scaffolds a local gRPC MCP server** that delegates to that client — so consumers still get the triple surface without requiring the upstream to speak gRPC first.
 
-This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, OpenAPI/REST-focused, strong Open WebUI mindshare). mcpo remains the right single-surface REST proxy for that community. This package is **transport-agnostic on the left** (stdio / Streamable HTTP / gRPC — **any language** upstream), **six surfaces on the right today** (OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli) with **QR planned as seventh**, TypeScript-native as the _adapter process_, and positioned to drive traffic to **`mcp-grpc-transport`** for production/mesh. Essay draft: [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md) → `https://pragmaticvectors.com/posts/mcp-api-adapter/`.
+This is **not** a clone of [mcpo](https://github.com/open-webui/mcpo) (Python, OpenAPI/REST-focused, strong Open WebUI mindshare). mcpo remains the right single-surface REST proxy for that community. This package is **transport-agnostic on the left** (stdio / Streamable HTTP / gRPC — **any language** upstream), **six surfaces on the right today** (OpenAPI + GraphQL + `/mcp` + gRPC + `/ws` + gen-cli) with **QR planned as seventh** and **[`/mcp-ui`](../mcp/mcp-ui.md) as eighth** (HTMX / HATEOAS Swagger UI for MCP), TypeScript-native as the _adapter process_, and positioned to drive traffic to **`mcp-grpc-transport`** for production/mesh. Essay draft: [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md) → `https://pragmaticvectors.com/posts/mcp-api-adapter/`.
 
 **Inverse of ClawQL Core:** `search` / `execute` is **OpenAPI → MCP** (upstream APIs behind tools). This package is **MCP tools → APIs** (tools as REST/GraphQL/gRPC/CLI for non-MCP clients). Combined claim: **[Protocol Fabric](../gtm/protocol-fabric.md)**. Keep the names and docs distinct.
 
@@ -79,6 +79,7 @@ Every Swagger UI visitor should see the gRPC path (`x-clawql-grpc` extensions, d
 | Replacing Streamable HTTP for Cursor / Claude Desktop                    | IDEs stay on `/mcp`; we _wrap_ those servers                          |
 | Product REST paths (`/payments/stripe/checkout`)                         | Tool-name REST only; domain gateways remain separate                  |
 | Replacing ClawQL `search` / `execute`                                    | Opposite direction                                                    |
+| Shipping a separate MCP playground product                               | `/mcp-ui` is embedded in the adapter (like Swagger at `/docs`)        |
 
 ---
 

@@ -1,8 +1,8 @@
 ---
 title: Bundled providers
-description: Opinionated default API stack on install, all-providers for everything, and CLAWQL_ENABLE_* cloud add-ons. Spec merge — not an MCP plugin.
+description: Available on-disk API catalog; opt in via instance providers pack/enabled (or CLAWQL_PROVIDER). Spec merge — not an MCP plugin.
 slug: bundled-providers
-status: default-on
+status: default-available
 package: providers/ (on-disk specs)
 order: 5
 prev: documents
@@ -13,53 +13,58 @@ next: automation
 
 Bundled providers are **on-disk OpenAPI / Discovery / GraphQL specs** under `providers/`. They power **`search`** and **`execute`** — they are not MCP plugins and have no `Plugin.onRegister` hook.
 
-Think of this as the **framework vs library** install model: an opinionated default stack with escape hatches.
+**Available by default, loaded only when opted in** — same spirit as horizontal MCP plugins.
 
-## Default install (no spec env)
+## No-config default
 
-Fresh install with no `CLAWQL_*` spec variables loads the **opinionated default stack**:
+Fresh install with no provider selection loads **nothing** from the catalog (native GraphQL/gRPC only when configured). Core MCP tools (`search`, `execute`, `audit`, `cache`) still register.
 
-| Provider       | Notes                                                                             |
-| -------------- | --------------------------------------------------------------------------------- |
-| **Cloudflare** | Edge/DNS/Workers APIs                                                             |
-| **GitHub**     | REST automation                                                                   |
-| **Slack**      | Web API (powers optional **`notify`** when enabled)                               |
-| **Linear**     | Bundled GraphQL-only vendor                                                       |
-| **Notion**     | Official REST OpenAPI                                                             |
-| **Onyx**       | Enterprise search spec (pair with **`CLAWQL_ENABLE_ONYX=1`** for MCP search tool) |
+## Opt-in (preferred)
 
-## Cloud add-ons (default stack only)
+| Mechanism                    | Example                                                 |
+| ---------------------------- | ------------------------------------------------------- |
+| Instance `providers.pack`    | `CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}` |
+| Instance `providers.enabled` | `{"providers":{"enabled":["github","linear"]}}`         |
+| Helm                         | `providers.pack: default` (chart default is **`none`**) |
 
-| Env                              | Effect                                                   |
-| -------------------------------- | -------------------------------------------------------- |
-| **`CLAWQL_ENABLE_GOOGLE=1`**     | Add Google Cloud top-50 Discovery merge to default stack |
-| **`CLAWQL_ENABLE_AWS=1`**        | Add AWS top-50 OpenAPI merge (SigV4 via **`execute`**)   |
-| **`CLAWQL_ENABLE_CLOUDFLARE=0`** | Omit Cloudflare from default stack                       |
+### Curated pack `default`
 
-These flags do **not** gate **`all-providers`**.
+| Provider       | Notes                                                         |
+| -------------- | ------------------------------------------------------------- |
+| **Cloudflare** | Edge/DNS/Workers APIs                                         |
+| **GitHub**     | REST automation                                               |
+| **Slack**      | Web API (powers optional **`notify`** when enabled)           |
+| **Linear**     | Bundled GraphQL-only vendor                                   |
+| **Notion**     | Official REST OpenAPI                                         |
+| **Onyx**       | Enterprise search spec (pair with Onyx MCP tool when enabled) |
 
-## Presets
+### Other packs
 
-| `CLAWQL_PROVIDER`                        | Behavior                                                    |
-| ---------------------------------------- | ----------------------------------------------------------- |
-| **`default`** / **`default-providers`**  | Same as no-config install (+ cloud add-ons above)           |
-| **`all-providers`**                      | Literally every bundled vendor + Google top-50 + AWS top-50 |
-| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets                                      |
-| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`**     | Custom explicit subset                                      |
+| `pack` / `CLAWQL_PROVIDER`               | Behavior                                          |
+| ---------------------------------------- | ------------------------------------------------- |
+| **`none`**                               | Explicit empty (same as no-config)                |
+| **`default`** / **`default-providers`**  | Curated six-vendor pack above                     |
+| **`all-providers`**                      | Every bundled vendor + Google top-50 + AWS top-50 |
+| **`google`**, **`aws`**, **`atlassian`** | Focused merged presets                            |
+| **`CLAWQL_BUNDLED_PROVIDERS=a,b,…`**     | Custom explicit subset                            |
 
 Only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP vendor set from **`all-providers`**.
+
+## Deprecated env flags
+
+`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` / `CLAWQL_ENABLE_CLOUDFLARE` **no longer** select the provider stack. Use `providers.enabled: ["google"]` or `pack: "google"` / `all-providers` instead.
 
 ## Precedence
 
 1. `CLAWQL_SPEC_PATHS`
 2. `CLAWQL_BUNDLED_PROVIDERS`
-3. `CLAWQL_PROVIDER` (merged preset)
-4. **Default bundled stack** (when nothing else is set)
+3. Instance `providers` (`CLAWQL_INSTANCE_SPEC`)
+4. `CLAWQL_PROVIDER` (merged pack or single vendor)
+5. **Empty** stack when nothing else is set
 
 Single-spec mode (`CLAWQL_SPEC_PATH`, `CLAWQL_PROVIDER=cloudflare`, …) bypasses the merge rules above.
 
-## Learn more
+## See also
 
-- [Bundled specs](/bundled-specs)
-- [Spec configuration](/spec-configuration)
-- [providers/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/providers/README.md)
+- [`providers/README.md`](../../providers/README.md)
+- [Configuration](../readme/configuration.md)

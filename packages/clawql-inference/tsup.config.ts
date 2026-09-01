@@ -6,9 +6,11 @@ export default defineConfig({
     "routing/index": "src/routing/index.ts",
     "api/server": "src/api/server.ts",
     "plugin/index": "src/plugin/index.ts",
+    "audit/process-worm": "src/audit/process-worm.ts",
   },
   format: ["esm", "cjs"],
   dts: true,
   sourcemap: true,
   clean: true,
+  external: [/^clawql-/, "cbor", "debug", "express", "express-rate-limit"],
 });

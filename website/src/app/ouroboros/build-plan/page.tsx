@@ -1,7 +1,6 @@
-import { DocProse } from '@/components/DocProse'
+import { AgentMarkdownDocBody } from '@/components/AgentMarkdownDocBody'
 import { Note } from '@/components/mdx'
 import { Tag } from '@/components/Tag'
-import DaosBuildPlanBody from '@/generated/daos-build-plan-body.mdx'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
@@ -58,9 +57,10 @@ export default function DaosBuildPlanPage() {
         </Note>
       </div>
 
-      <DocProse className="flex-auto">
-        <DaosBuildPlanBody />
-      </DocProse>
+      <AgentMarkdownDocBody
+        path="/ouroboros/build-plan"
+        className="flex-auto"
+      />
     </article>
   )
 }
