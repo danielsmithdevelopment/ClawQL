@@ -40,10 +40,7 @@ function rehypeDocsTable() {
       if (cols > 0) {
         node.properties = {
           ...node.properties,
-          className: [
-            'docs-table',
-            cols ? `docs-table-cols-${cols}` : undefined,
-          ].filter(Boolean),
+          className: ['docs-table', `docs-table-cols-${cols}`],
           dataCols: cols,
         }
       } else {
