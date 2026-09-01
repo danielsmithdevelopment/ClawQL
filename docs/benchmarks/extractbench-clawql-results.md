@@ -21,14 +21,14 @@ Do **not** use Opus for the full ExtractBench corpus. Prefer self-hosted Qwen3.6
 
 ## Lessons learned (Arm B)
 
-| Finding | Implication |
-| ------- | ----------- |
-| Value F1 **34.4** at 93 docs (macro avg) | Structural-only is a **floor**, not a product — validates layered design |
-| Median doc F1 **39.6** vs macro **34.4** | Hard doc types (13F filings) drag averages; **routing by doc class** matters |
-| Page/bbox grounding **0%** | Evidence spans must come from layout pipeline or LLM map — needed for leaderboard grounding metrics |
-| Ontology sync **93/93** `recallOk` | Layer 2/3 meta-ontology bridge works; keep enabled for Arm A runs |
-| Docling outliers (**10h** on one valuation PDF) | Need async convert + per-doc timeouts before batch runs |
-| Architecture end-to-end ✓ | MCP → Docling → schema map → ontology recall — ready for Arm A swap-in |
+| Finding                                         | Implication                                                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Value F1 **34.4** at 93 docs (macro avg)        | Structural-only is a **floor**, not a product — validates layered design                            |
+| Median doc F1 **39.6** vs macro **34.4**        | Hard doc types (13F filings) drag averages; **routing by doc class** matters                        |
+| Page/bbox grounding **0%**                      | Evidence spans must come from layout pipeline or LLM map — needed for leaderboard grounding metrics |
+| Ontology sync **93/93** `recallOk`              | Layer 2/3 meta-ontology bridge works; keep enabled for Arm A runs                                   |
+| Docling outliers (**10h** on one valuation PDF) | Need async convert + per-doc timeouts before batch runs                                             |
+| Architecture end-to-end ✓                       | MCP → Docling → schema map → ontology recall — ready for Arm A swap-in                              |
 
 **Verdict:** Good for ClawQL **orchestration + ontology** thesis; bad if misread as extraction quality. Arm A is the decisive test.
 
@@ -56,11 +56,11 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 
 ### Arm A next stage (prerequisites)
 
-Cloud agent VM has **no GPU** — Qwen3.6 35B must be external:
+Cloud agent VM has **no GPU** — Qwen3.6 35B must be external. **Mac mini (MLX):** serve an OpenAI-compatible `/v1` endpoint locally (e.g. `mlx-lm.server` on port 8000) and point `QWEN35_SERVER_URL` at it:
 
 ```bash
 # Required
-export QWEN35_SERVER_URL=https://your-vllm-host:8000   # OpenAI-compatible /v1
+export QWEN35_SERVER_URL=http://127.0.0.1:8000   # MLX OpenAI-compatible /v1 on Mac mini
 export CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp
 export DOCLING_BASE_URL=http://127.0.0.1:5001
 export CLAWQL_REPO_ROOT=/path/to/ClawQL
@@ -83,26 +83,26 @@ uv run extract-bench compare \
 
 ## Arm B — ClawQL IDP Docling-only (structural) — FINAL PARTIAL
 
-| Split   |  Value F1 | Precision | Recall | Page F1 | Cost/page | Latency (P50) | Notes |
-| ------- | --------: | --------: | -----: | ------: | --------: | ------------: | ----- |
+| Split   |  Value F1 | Precision | Recall | Page F1 | Cost/page | Latency (P50) | Notes                                                  |
+| ------- | --------: | --------: | -----: | ------: | --------: | ------------: | ------------------------------------------------------ |
 | Short   | **34.43** |     39.38 |  33.28 |    0.00 |    $0.000 |         19.4s | **Stopped** at 93/252 (37%); ontology 93/93 `recallOk` |
-| Overall | _n/a_     |         — |      — |       — |         — |             — | Ablation only |
-| Long    | _n/a_     |         — |      — |       — |         — |             — | Not run separately |
+| Overall |     _n/a_ |         — |      — |       — |         — |             — | Ablation only                                          |
+| Long    |     _n/a_ |         — |      — |       — |         — |             — | Not run separately                                     |
 
 Partial short-split details (2026-09-01, `clawql_idp_docling_extract`, structural schema map, **93 docs**):
 
-| Metric | Value |
-| ------ | ----: |
-| Docs evaluated | 93 / 252 (37%) — run **stopped** |
-| Value F1 (macro avg) | 34.43 |
-| Value precision | 39.38 |
-| Value recall | 33.28 |
-| Array record F1 | 22.45 |
-| Accuracy | 22.91 |
-| Median per-doc Value F1 | 39.6 |
-| Ontology `recallOk` | 93 / 93 |
-| Latency P50 / P95 | 19.4s / 89.5s per doc |
-| Latency max (outlier) | 10.1h (`3N1AB7AP8FY283932_professional_valuation`) |
+| Metric                  |                                              Value |
+| ----------------------- | -------------------------------------------------: |
+| Docs evaluated          |                   93 / 252 (37%) — run **stopped** |
+| Value F1 (macro avg)    |                                              34.43 |
+| Value precision         |                                              39.38 |
+| Value recall            |                                              33.28 |
+| Array record F1         |                                              22.45 |
+| Accuracy                |                                              22.91 |
+| Median per-doc Value F1 |                                               39.6 |
+| Ontology `recallOk`     |                                            93 / 93 |
+| Latency P50 / P95       |                              19.4s / 89.5s per doc |
+| Latency max (outlier)   | 10.1h (`3N1AB7AP8FY283932_professional_valuation`) |
 
 Re-evaluate partial results:
 
@@ -113,11 +113,11 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 
 ## Delta vs raw Qwen oneshot
 
-| Metric     | Raw Qwen | ClawQL IDP + Qwen | Arm B (structural) |         Δ (target) |
-| ---------- | -------: | ----------------: | -----------------: | -----------------: |
-| Overall F1 |    87.33 |         _pending_ |              34.43 | _pending_ |
+| Metric     | Raw Qwen | ClawQL IDP + Qwen | Arm B (structural) |     Δ (target) |
+| ---------- | -------: | ----------------: | -----------------: | -------------: |
+| Overall F1 |    87.33 |         _pending_ |              34.43 |      _pending_ |
 | Long F1    |    26.75 |         _pending_ |                n/a | **beat 26.75** |
-| Cost/page  |        — |         _pending_ |             $0.000 | ≤ $1.00 |
+| Cost/page  |        — |         _pending_ |             $0.000 |        ≤ $1.00 |
 
 ## Publishability checklist
 
@@ -131,12 +131,12 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 
 ## Run diary
 
-| Date       | Split           | Pipeline                   | Notes                                                                                                                                 |
-| ---------- | --------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-01 | test (6 doc)    | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args                                                               |
-| 2026-09-01 | short (93/252)  | clawql_idp_docling_extract | **Stopped** — final partial Value F1 **34.43**; ontology 93/93 `recallOk`; PR #1022                                                   |
-| 2026-09-01 | short (44/252)  | clawql_idp_docling_extract | Mid-run partial re-eval (Value F1 39.18)                                                                                                |
-| _next_     | test (6 doc)    | clawql_idp_qwen_extract    | Requires `QWEN35_SERVER_URL`                                                                                                          |
+| Date       | Split          | Pipeline                   | Notes                                                                               |
+| ---------- | -------------- | -------------------------- | ----------------------------------------------------------------------------------- |
+| 2026-09-01 | test (6 doc)   | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args             |
+| 2026-09-01 | short (93/252) | clawql_idp_docling_extract | **Stopped** — final partial Value F1 **34.43**; ontology 93/93 `recallOk`; PR #1022 |
+| 2026-09-01 | short (44/252) | clawql_idp_docling_extract | Mid-run partial re-eval (Value F1 39.18)                                            |
+| _next_     | test (6 doc)   | clawql_idp_qwen_extract    | Requires `QWEN35_SERVER_URL`                                                        |
 
 ## Implementation notes
 
