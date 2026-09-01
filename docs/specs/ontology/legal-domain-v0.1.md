@@ -372,12 +372,12 @@ memory_recall({
 
 Not every legal task needs the same retrieval surface. Pick by **question shape**, not by benchmark name.
 
-| Task shape | Example | Path | Why |
-| ---------- | ------- | ---- | --- |
-| Exact set membership / numeric predicates | B-7.1 escrow + non-compete; Harvey HSR second-request enumeration | `memory_recall` + `schema` + `filters` → `ontology.db` (`structured_predicate`) | Typed SQL is exact; semantic recall introduces near-misses |
-| Identity lookup (client, attorney, document) | `legal.Client` by `id` or `name`; documents for a matter | Same Layer 1 ontology path | Small cardinality; vault `CLAWQL_*` → lazy sync is enough — no separate DuckDB table |
-| Cohort frequency / market practice | Harvey task 018 springing-lien share across credit facilities | Pre-ingest `matters.duckdb` + `clawql_sql` / `data_query` | Rich boolean columns (`is_credit_facility`, covenant flags) come from DMS extract; SQL defines **N** then **k** |
-| Prose / preference reconstruction | B-7.2 Meridian term-sheet ranking | Semantic `memory_recall` first; optional `legal.Client` filter to anchor `CLT-0017` | Ranking needs narrative history, not a WHERE clause — structured client recall is a bootstrap, not the verdict |
+| Task shape                                   | Example                                                           | Path                                                                                | Why                                                                                                             |
+| -------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Exact set membership / numeric predicates    | B-7.1 escrow + non-compete; Harvey HSR second-request enumeration | `memory_recall` + `schema` + `filters` → `ontology.db` (`structured_predicate`)     | Typed SQL is exact; semantic recall introduces near-misses                                                      |
+| Identity lookup (client, attorney, document) | `legal.Client` by `id` or `name`; documents for a matter          | Same Layer 1 ontology path                                                          | Small cardinality; vault `CLAWQL_*` → lazy sync is enough — no separate DuckDB table                            |
+| Cohort frequency / market practice           | Harvey task 018 springing-lien share across credit facilities     | Pre-ingest `matters.duckdb` + `clawql_sql` / `data_query`                           | Rich boolean columns (`is_credit_facility`, covenant flags) come from DMS extract; SQL defines **N** then **k** |
+| Prose / preference reconstruction            | B-7.2 Meridian term-sheet ranking                                 | Semantic `memory_recall` first; optional `legal.Client` filter to anchor `CLT-0017` | Ranking needs narrative history, not a WHERE clause — structured client recall is a bootstrap, not the verdict  |
 
 **Harvey LAB Pattern E** (PR #915) is the Matter enumeration row: seed `HSR_SECOND_REQUEST` / `CREDIT_FACILITY` title tokens in vault, filter with `schema: "legal.Matter"`. **Pattern F** is the frequency row: DuckDB cohort SQL, with ontology recall as fallback for **N**.
 
@@ -401,7 +401,7 @@ Do **not** duplicate Harvey's DuckDB pre-ingest for Client/Attorney/Document —
 
 ### B-7.2 (institutional-client-preference)
 
-Primary retrieval is **semantic** (Meridian risk profile, prior matter prose). OpenBench seeds `CLAWQL_CLIENT_ID` / `CLAWQL_CLIENT_NAME` on client notes so agents *may* anchor with:
+Primary retrieval is **semantic** (Meridian risk profile, prior matter prose). OpenBench seeds `CLAWQL_CLIENT_ID` / `CLAWQL_CLIENT_NAME` on client notes so agents _may_ anchor with:
 
 ```typescript
 memory_recall({
