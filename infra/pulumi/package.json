@@ -37,7 +37,7 @@
   "dependencies": {
     "@pulumi/aws": "^7.43.0",
     "@pulumi/cloudflare": "^6.19.0",
-    "@pulumi/gcp": "^9.31.0",
+    "@pulumi/gcp": "^9.35.1",
     "@pulumi/pulumi": "^3.259.0",
     "zod": "4.3.6"
   },
