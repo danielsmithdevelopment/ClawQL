@@ -84,11 +84,11 @@ Dynamic Layer 2/3 entity ids (e.g. `invoice`) are durable in vault `ontology.db`
 
 ### Routing
 
-| `schema` value | Storage | Query path |
-| -------------- | ------- | ---------- |
-| `legal.Matter` | `matters` table (v1) | Typed SQL predicates (`escrowPct`, `nonCompeteMonths`, …) |
-| `legal.Client` / `Attorney` / `Document` | tables exist | Recall not implemented yet (same as pre–meta-ontology) |
-| Any other string (e.g. `invoice`, `invoice__lineItems_record`) | `dynamic_entities` + `dynamic_records` | In-process JSON field predicates |
+| `schema` value                                                 | Storage                                | Query path                                                |
+| -------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------- |
+| `legal.Matter`                                                 | `matters` table (v1)                   | Typed SQL predicates (`escrowPct`, `nonCompeteMonths`, …) |
+| `legal.Client` / `Attorney` / `Document`                       | tables exist                           | Recall not implemented yet (same as pre–meta-ontology)    |
+| Any other string (e.g. `invoice`, `invoice__lineItems_record`) | `dynamic_entities` + `dynamic_records` | In-process JSON field predicates                          |
 
 `schema` is a **string** in the MCP tool (not a fixed enum). `legal.*` schemas still require non-empty `filters`. Dynamic schemas may omit `filters` to enumerate all rows (use `limit: 10000` for long lists).
 
@@ -104,14 +104,18 @@ import {
 import { runOntologyRecall } from "clawql-memory/ontology";
 
 // After scaffold + populate:
-await Effect.runPromise(
-  syncDocumentToMemoryOntology(entity, documentId, record, { nested })
-);
+await Effect.runPromise(syncDocumentToMemoryOntology(entity, documentId, record, { nested }));
 
 // ExtractBench end-to-end (scaffold → populateFromRecord → ontology.db → recall):
-const out = await Effect.runPromise(runExtractBenchOntologyPipeline({
-  jsonSchema, documentType: "invoice", documentId, extracted, limit: 10000,
-}));
+const out = await Effect.runPromise(
+  runExtractBenchOntologyPipeline({
+    jsonSchema,
+    documentType: "invoice",
+    documentId,
+    extracted,
+    limit: 10000,
+  })
+);
 ```
 
 Package export: `clawql-memory/ontology` (`registerDynamicOntologyEntity`, `syncDynamicOntologyDocument`, `runOntologyRecall`).
@@ -133,6 +137,18 @@ Nested repeated rows are also registered under `invoice__lineItems_record` (or `
 ## Promotion path
 
 When Layer 3 evidence ≥ promotion thresholds, `meta promote` emits a reviewable `.cqe` under `packs/<document_type>/entities/entity.cqe`. Domain experts refine and register as Layer 1.
+
+## Monorepo integration (v8.0.0)
+
+This feature landed on branch `cursor/meta-ontology-three-layer-4c7e` ([PR #963](https://github.com/danielsmithdevelopment/ClawQL/pull/963)) after merging `main` at v8.0.0. Conflict resolutions:
+
+| File                                      | Resolution                                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| `packages/clawql-ontology/package.json`   | Monorepo `8.0.0` versions; added `clawql-memory@8.0.0` (acyclic: ontology → memory) |
+| `packages/clawql-ontology/tsup.config.ts` | Kept main's `/^clawql-/` external pattern; added `sql.js` for Layer 3 meta store    |
+| `package-lock.json`                       | Regenerated via `npm install` after dependency merge                                |
+
+Dependency direction: `clawql-ontology` imports `clawql-memory/ontology` for dynamic recall sync; `clawql-memory` does **not** depend on `clawql-ontology`.
 
 ## Open questions
 

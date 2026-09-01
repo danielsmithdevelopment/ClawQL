@@ -35,15 +35,15 @@ CLAWQL_ENABLE_ONTOLOGY=1 CLAWQL_ENABLE_ONTOLOGY_WRITES=1 npx clawql-mcp
 
 ## Meta-ontology env (Layer 2 + Layer 3)
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED` | on | Layer 2 JSON Schema / Docling scaffolding |
-| `CLAWQL_ONTOLOGY_SCAFFOLD_TTL` | `session` | `session` \| `permanent` \| seconds |
-| `CLAWQL_ONTOLOGY_META_ENABLED` | on | Layer 3 OBT/RTP learning |
-| `CLAWQL_ONTOLOGY_META_DB_PATH` | `~/.ClawQL/meta-ontology.db` | Meta store (learning only) |
-| `CLAWQL_ONTOLOGY_META_MIN_EVIDENCE` | `10` | Sessions before Layer 3 scaffolds |
-| `CLAWQL_ONTOLOGY_META_PROMOTION_EVIDENCE` | `50` | Promotion candidate threshold |
-| `CLAWQL_ONTOLOGY_META_PROMOTION_QUALITY` | `0.85` | Min avg criterion pass rate |
+| Variable                                  | Default                      | Meaning                                   |
+| ----------------------------------------- | ---------------------------- | ----------------------------------------- |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_ENABLED`        | on                           | Layer 2 JSON Schema / Docling scaffolding |
+| `CLAWQL_ONTOLOGY_SCAFFOLD_TTL`            | `session`                    | `session` \| `permanent` \| seconds       |
+| `CLAWQL_ONTOLOGY_META_ENABLED`            | on                           | Layer 3 OBT/RTP learning                  |
+| `CLAWQL_ONTOLOGY_META_DB_PATH`            | `~/.ClawQL/meta-ontology.db` | Meta store (learning only)                |
+| `CLAWQL_ONTOLOGY_META_MIN_EVIDENCE`       | `10`                         | Sessions before Layer 3 scaffolds         |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_EVIDENCE` | `50`                         | Promotion candidate threshold             |
+| `CLAWQL_ONTOLOGY_META_PROMOTION_QUALITY`  | `0.85`                       | Min avg criterion pass rate               |
 
 Dynamic Layer 2/3 **instance** rows land in vault-colocated `ontology.db` (`dynamic_entities` / `dynamic_records`, schema v2) and are queryable via `memory_recall({ schema: "<entityId>", filters })`. See [meta-ontology-v0.1 § memory_recall](../specs/ontology/meta-ontology-v0.1.md#memory_recall-integration).
 

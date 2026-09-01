@@ -50,10 +50,7 @@ Layer 2/3 entity ids sync into vault `ontology.db` (`dynamic_entities` / `dynami
 
 ```ts
 import { runOntologyRecall } from "clawql-memory/ontology";
-import {
-  runExtractBenchOntologyPipeline,
-  syncDocumentToMemoryOntology,
-} from "clawql-ontology";
+import { runExtractBenchOntologyPipeline, syncDocumentToMemoryOntology } from "clawql-ontology";
 ```
 
 See [meta-ontology-v0.1 § memory_recall](../../docs/specs/ontology/meta-ontology-v0.1.md#memory_recall-integration) and [ontology CLI](../../docs/ontology/cli.md).
