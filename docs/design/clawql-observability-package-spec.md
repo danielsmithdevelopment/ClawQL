@@ -2,13 +2,16 @@
 title: "clawql-observability — Package Specification"
 status: "August 2026"
 version: "0.1"
+npmVersion: "0.1.0"
 package: "packages/clawql-observability/"
 source: "pragmaticvectors.com/posts/serverless-observability-stack/ (LGTM+ stack, as declared)"
 ---
 
 # clawql-observability — Package Specification
 
-**August 2026 · v0.1**
+**August 2026 · spec v0.1 · npm `0.1.0` (first publish)**
+
+> **npm versioning:** The first public registry release is **`clawql-observability@0.1.0`**, shipping all development phases (1–5) in one initial package. In-tree phase labels are **not** semver releases. See [`docs/release/clawql-observability-versioning.md`](../release/clawql-observability-versioning.md).
 
 ---
 

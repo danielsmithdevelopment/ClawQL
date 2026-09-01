@@ -156,7 +156,7 @@
     "clawql-inference": "8.0.0",
     "clawql-memory": "8.0.0",
     "clawql-merkle": "8.0.0",
-    "clawql-observability": "0.7.0",
+    "clawql-observability": "0.1.0",
     "clawql-ontology": "8.0.0",
     "clawql-operator": "8.0.0",
     "clawql-ouroboros": "8.0.0",
