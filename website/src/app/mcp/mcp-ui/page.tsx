@@ -27,9 +27,8 @@ export default function McpUiPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>7th mcp-api-adapter surface.</strong>{' '}
-          Auto-scaffolded HTMX playground at{' '}
-          <code className="text-sm">/mcp-ui</code> — forms from{' '}
+          <strong>7th mcp-api-adapter surface.</strong> Auto-scaffolded HTMX
+          playground at <code className="text-sm">/mcp-ui</code> — forms from{' '}
           <code className="text-sm">inputSchema</code>, inline results, no
           separate frontend. Templates cover ClawQL{' '}
           <code className="text-sm">search</code>,{' '}

@@ -6,10 +6,19 @@ ClawQL exposes **`search`**, **`execute`**, **`ingest_external_knowledge`**, in-
 
 <div className="not-prose my-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
   <strong>Two different “audit” surfaces.</strong>{' '}
-  <code className="text-xs">audit</code> here is the <strong>in-process MCP tool</strong> (RAM ring buffer, always on).{' '}
-  <a href="/audit" className="font-medium underline underline-offset-2">clawql-audit</a>{' '}
-  is the <strong>durable WORM trail</strong> package (disk, Merkle chain, replication).{' '}
-  <a href="/learn/audit-tool-and-observability" className="font-medium underline underline-offset-2">Learn: audit tool</a>{' '}
+  <code className="text-xs">audit</code> here is the{' '}
+  <strong>in-process MCP tool</strong> (RAM ring buffer, always on).{' '}
+  <a href="/audit" className="font-medium underline underline-offset-2">
+    clawql-audit
+  </a>{' '}
+  is the <strong>durable WORM trail</strong> package (disk, Merkle chain,
+  replication).{' '}
+  <a
+    href="/learn/audit-tool-and-observability"
+    className="font-medium underline underline-offset-2"
+  >
+    Learn: audit tool
+  </a>{' '}
   covers Prometheus/Loki for the MCP tool only.
 </div>
 
