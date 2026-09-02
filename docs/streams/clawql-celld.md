@@ -210,17 +210,17 @@ celld deploy (esbuild)
   └─ Worker + DO classes
         ├─ clawql-streams (router, filter, stream_* MCP) — planned package
         ├─ clawql-core/streams-slim (audit, cache, hash-chain) — Workers-safe entry
-        └─ fetch(CLAWQL_MCP_URL) → clawql-mcp search/execute/memory_* (Streamable HTTP)
-             · mcp-api-adapter still host-side or deferred
+        ├─ fetch(CLAWQL_MCP_URL) → clawql-mcp search/execute/memory_* (Streamable HTTP)
+        └─ fetch(CLAWQL_MCP_ADAPTER_URL) → mcp-api-adapter REST POST /{tool}
   env / vars ≤ 1 MiB
   code ≤ 64 MiB
 ```
 
 **In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`examples/streams-celld`](../../examples/streams-celld/).
 
-**Out-of-process today:** `search` / `execute` / `memory_ingest` / `memory_recall` via thin `fetch` to Streamable HTTP MCP (`CLAWQL_MCP_URL`, prefer protocol **2026-07-28** / JSON responses). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
+**Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /{tool}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 
-**Still deferred:** protocol fan-out (`mcp-api-adapter`).
+**Still deferred:** offline Workers-safe `clawql-api` slim; durable isolate audit ring → DO LTX (WORM rows already use `storage.put`).
 
 **Provider specs:** ship a **slim default set** in the bundle; load additional OpenAPI/GraphQL specs via `fetch` into SQLite on first use or at subscription create — do not embed full enterprise catalogs in env.
 

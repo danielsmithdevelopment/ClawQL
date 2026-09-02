@@ -1,6 +1,6 @@
 /**
  * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim)
- * plus optional fetch(CLAWQL_MCP_URL) for search/execute/memory_*.
+ * plus optional fetch(CLAWQL_MCP_URL) and fetch(CLAWQL_MCP_ADAPTER_URL).
  * Model calls use fetch(INFERENCE_URL) — never child_process.
  */
 import {
@@ -10,6 +10,7 @@ import {
   memoryIngestViaMcp,
   memoryRecallViaMcp,
   searchViaMcp,
+  toolViaAdapter,
   verifyAuditChain,
 } from "./streams-core-facade.js";
 
@@ -17,6 +18,14 @@ function resolveMcpConfig(env) {
   const url =
     (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
   const bearer = (env.CLAWQL_MCP_BEARER_TOKEN || "").trim() || undefined;
+  return { url, bearer };
+}
+
+function resolveAdapterConfig(env) {
+  const url = (env.CLAWQL_MCP_ADAPTER_URL || "").trim() || undefined;
+  const bearer =
+    (env.CLAWQL_MCP_ADAPTER_BEARER_TOKEN || env.CLAWQL_MCP_BEARER_TOKEN || "")
+      .trim() || undefined;
   return { url, bearer };
 }
 
@@ -112,6 +121,7 @@ export class AgentSessionDO {
       }
 
       const mcp = resolveMcpConfig(this.env);
+      const adapter = resolveAdapterConfig(this.env);
       const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const tools = {
         search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {
@@ -130,13 +140,28 @@ export class AgentSessionDO {
           `streams-celld ${subscriptionId}`,
           { limit: 3 }
         ),
+        adapter_search: await toolViaAdapter(adapter, "search", {
+          query: `adapter:${subscriptionId}`,
+          limit: 1,
+        }),
       };
+
+      const outOfProcess = ["inference"];
+      if (mcp.url) outOfProcess.unshift("search", "execute", "memory_*");
+      if (adapter.url) outOfProcess.push("mcp-api-adapter");
+
+      const deferred = [];
+      if (!mcp.url) deferred.push("search", "execute", "memory_*");
+      if (!adapter.url) deferred.push("mcp-api-adapter");
+
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
         executeOk: tools.execute?.ok === true,
         memoryIngestOk: tools.memory_ingest?.ok === true,
         memoryRecallOk: tools.memory_recall?.ok === true,
-        deferred: !mcp.url,
+        adapterSearchOk: tools.adapter_search?.ok === true,
+        mcpDeferred: !mcp.url,
+        adapterDeferred: !adapter.url,
       });
 
       return Response.json({
@@ -153,13 +178,10 @@ export class AgentSessionDO {
         core: {
           package: "clawql-core/streams-slim",
           inProcess: ["audit", "cache", "hash-chain"],
-          outOfProcess: mcp.url
-            ? ["search", "execute", "memory_*", "inference"]
-            : ["inference"],
-          deferred: mcp.url
-            ? ["mcp-api-adapter"]
-            : ["search", "execute", "memory_*", "mcp-api-adapter"],
+          outOfProcess,
+          deferred,
           mcpUrlConfigured: Boolean(mcp.url),
+          adapterUrlConfigured: Boolean(adapter.url),
         },
       });
     }
