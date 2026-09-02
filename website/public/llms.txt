@@ -10,6 +10,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 - [Custom sources](https://docs.clawql.com/getting-started/custom-sources): Register other MCP servers into one gateway surface
 - [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
 - [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and install options
+- [Migrate to 8.0](https://docs.clawql.com/getting-started/migrate-to-8.0): Breaking changes: empty catalog, ProviderPlugin, enforcement opt-in
 - [Quickstart](https://docs.clawql.com/quickstart): npx, install options, and first MCP connect
 
 ## Core reference

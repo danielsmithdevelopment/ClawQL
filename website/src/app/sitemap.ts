@@ -48,6 +48,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.95,
   },
   {
+    path: '/getting-started/migrate-to-8.0',
+    changeFrequency: 'weekly',
+    priority: 0.98,
+  },
+  {
     path: '/getting-started/immutable-releases',
     changeFrequency: 'weekly',
     priority: 0.94,

@@ -51,15 +51,16 @@ Effect-TS requires explicit, typed error handling. You cannot accidentally swall
 
 Because each layer’s dependencies are explicit **`Layer`** provisions, you can:
 
-- Test Gateway / PEP in isolation with mock Layers for Memory, Ouroboros, Watchdog, and peers
-- Exercise the Coordinator Watchdog without a live Gateway
-- Rely on types to catch cross-layer breakage when one package changes
+- Test Gateway / PEP in isolation with mock Layers for Memory, **`clawql-ouroboros`** (evolutionary loop), and other horizontal plugins
+- Exercise **`clawql-ouroboros`** seeds and lineage without a live gateway when tests provide the right Layers
+
+**Do not confuse** the shipped **`clawql-ouroboros`** package (document/workflow evolutionary loops) with the **DAOS Coordinator Watchdog** in the [DAOS unified architecture](/ouroboros/daos) spec — that Watchdog monitors a future swarm Coordinator and is **not** part of the ouroboros npm package today.
 
 That matters for partial-failure scenarios — circuit breaker trips, air-gap breakout, degraded optional plugins.
 
 ### Long-term maintainability
 
-ClawQL combines cryptographic verification (Manifest + ActionLeaves), policy enforcement (ATRClaims + two-phase commit), coordination (Ouroboros + Watchdog), observability (LGTM+ + WORM), and security redaction. Without structural enforcement, those concerns bleed together over time.
+ClawQL combines cryptographic verification (Manifest + ActionLeaves), policy enforcement (ATRClaims + two-phase commit), evolutionary coordination (**`clawql-ouroboros`** loops today; [DAOS](/ouroboros/daos) swarm coordination roadmap), observability (LGTM+ + WORM), and security redaction. Without structural enforcement, those concerns bleed together over time.
 
 Effect-TS is a **structural contract** that keeps the layered model intact as the codebase and contributor base grow.
 

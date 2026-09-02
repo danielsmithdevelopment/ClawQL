@@ -84,6 +84,11 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Immutable releases',
         href: '/getting-started/immutable-releases',
       },
+      {
+        title: 'Migrate to 8.0',
+        href: '/getting-started/migrate-to-8.0',
+        tag: 'Breaking',
+      },
     ],
   },
   {
@@ -160,12 +165,12 @@ export const docsNavigation: Array<NavGroup> = [
       {
         title: 'memory_recall structured filters',
         href: '/specs/memory/memory-recall-structured-filter',
-        tag: 'Draft',
+        tag: 'v0.1',
       },
       {
         title: 'Legal domain ontology',
         href: '/specs/ontology/legal-domain',
-        tag: 'Draft',
+        tag: 'v0.1',
       },
       {
         title: 'clawql-network',

@@ -34,6 +34,11 @@ const SECTIONS = [
       ],
       ['Quickstart', '/quickstart', 'Fastest path to a running gateway'],
       ['Getting started', '/getting-started', 'Quickstart paths, teams, and install options'],
+      [
+        'Migrate to 8.0',
+        '/getting-started/migrate-to-8.0',
+        'Breaking changes: empty catalog, ProviderPlugin, enforcement opt-in',
+      ],
       ['Quickstart', '/quickstart', 'npx, install options, and first MCP connect'],
     ],
   },

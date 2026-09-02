@@ -61,8 +61,6 @@ Share `~/.ClawQL` memory notes across your team via a centralized object-storage
 
 Ontology entity definitions and static knowledge belong in Git (small, PR-reviewed). Dynamic `Memory/` instances and generated indexes belong in the bucket (unbounded growth, not tracked in GitHub). See [Enterprise Ontology — Git vs R2](https://docs.clawql.com/architecture/enterprise-ontology#git-vs-r2--what-lives-where) and [ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md).
 
-**Schema vs data:** Ontology entity _definitions_ and static knowledge belong in **Git** (small, PR-reviewed). Dynamic **`Memory/`** instances and generated indexes belong in the **bucket** (unbounded growth). Do not put the full vault in GitHub — see [Enterprise Ontology — Git vs R2](/architecture/enterprise-ontology#git-vs-r2--what-lives-where) and [ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md).
-
 ### What syncs
 
 | Path                        | Shared                                        |
@@ -234,13 +232,14 @@ Config file: `~/.ClawQL/sync.json` — safe to commit bucket/prefix in team docs
 
 When the MCP server runs with sync configured, enable automatic background sync:
 
-| Variable                           | Behavior                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------- |
-| `CLAWQL_SYNC_AUTO=1`               | Debounced push after each successful `memory_ingest` (default debounce 30s) |
-| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Push debounce interval (default `30000`)                                    |
-| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s)            |
-| `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                 |
-| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                   |
+| Variable                           | Behavior                                                                                                                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_SYNC_AUTO=1`               | Auto-push after `memory_ingest` (see debounce + min interval below)                                                                                                               |
+| `CLAWQL_SYNC_AUTO_DEBOUNCE_MS`     | Quiet period after the last ingest before a push is considered (default `2000`) — coalesces note + index/log                                                                      |
+| `CLAWQL_SYNC_AUTO_PUSH_MIN_MS`     | Minimum gap between successful auto-pushes during sustained ingest (default `30000`) — avoids R2 spam; **shutdown flush ignores this** so short-lived processes do not drop notes |
+| `CLAWQL_SYNC_AUTO_PULL=1`          | Throttled pull before `memory_recall` (default min interval 60s)                                                                                                                  |
+| `CLAWQL_SYNC_AUTO_PULL_MIN_MS`     | Min ms between auto-pulls (default `60000`)                                                                                                                                       |
+| `CLAWQL_SYNC_AUTO_PULL_ON_START=1` | Pull once when MCP starts                                                                                                                                                         |
 
 Auto sync logs to stderr (`[clawql-mcp] team sync auto-push/...`). Failures are non-fatal — ingest/recall still succeed.
 

@@ -41,7 +41,7 @@
       "type": "skill-md",
       "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks.",
       "url": "/.well-known/agent-skills/clawql-memory-ingest/SKILL.md",
-      "digest": "sha256:91c4efc207b66b62d86e18515df9d07a6b0478a6b3399c39f894d9bc966dd5ad"
+      "digest": "sha256:1b0ce672a2238354066d2561b8130cd20f26a7484f66294c95d45c1d067d7606"
     },
     {
       "name": "clawql-memory-recall",
@@ -97,7 +97,14 @@
       "type": "skill-md",
       "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes, or when the user mentions Obsidian, the vault, memory, or long-running project context.",
       "url": "/.well-known/agent-skills/clawql-vault-memory/SKILL.md",
-      "digest": "sha256:8baa5eb23d0a900ccd4823344d3d1b824dce1f04396aae483a022e10952e3484"
+      "digest": "sha256:a22913be6bd2c94d53dbb01be2cafea9a82e372a03bdb90c1490f67b5dcb9b5f"
+    },
+    {
+      "name": "deep-thinking",
+      "type": "skill-md",
+      "description": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failures, or when the user asks for deep thinking, chain of thought, CoT, or postmortems.",
+      "url": "/.well-known/agent-skills/deep-thinking/SKILL.md",
+      "digest": "sha256:dd44ac365ee6a5fdd92691e37acf9a85cd5011c2de5d6d535c0146f47c4a0fa6"
     }
   ]
 }
