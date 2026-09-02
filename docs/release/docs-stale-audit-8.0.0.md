@@ -94,13 +94,13 @@ Crawler now validates **all** unique external hrefs (not just same-origin). Soft
 
 ## SEO / sitemap / WCAG / Lighthouse (follow-up)
 
-| Area | Finding | Fix |
-|------|---------|-----|
-| Sitemap | Missing `/memory/okf`; duplicate `/security` + `/plugins` locs | Add OKF route; dedupe ENTRIES + plugin list |
-| robots.txt | `Content-Signal:` failed Lighthouse SEO (`Unknown directive`) | Valid Allow/Sitemap only; preference in comments |
-| WCAG 2.5.3 | Logo `aria-label="Home"` vs visible "ClawQL"; Search label missing `…` | `ClawQL home` / `Search documentation…` |
-| WCAG 1.4.3 | Plugins registry `text-zinc-500` on dark bg (~3.5:1) | `text-zinc-600 dark:text-zinc-400` |
-| Heading hierarchy | Extra `<h1>` from embedded markdown / unfenced Dockerfile `# Stage` | `demoteH1` on AgentMarkdownDocBody; fence Dockerfile sample |
-| Axe | Expand coverage | Include `/memory/okf` |
+| Area              | Finding                                                                | Fix                                                         |
+| ----------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Sitemap           | Missing `/memory/okf`; duplicate `/security` + `/plugins` locs         | Add OKF route; dedupe ENTRIES + plugin list                 |
+| robots.txt        | `Content-Signal:` failed Lighthouse SEO (`Unknown directive`)          | Valid Allow/Sitemap only; preference in comments            |
+| WCAG 2.5.3        | Logo `aria-label="Home"` vs visible "ClawQL"; Search label missing `…` | `ClawQL home` / `Search documentation…`                     |
+| WCAG 1.4.3        | Plugins registry `text-zinc-500` on dark bg (~3.5:1)                   | `text-zinc-600 dark:text-zinc-400`                          |
+| Heading hierarchy | Extra `<h1>` from embedded markdown / unfenced Dockerfile `# Stage`    | `demoteH1` on AgentMarkdownDocBody; fence Dockerfile sample |
+| Axe               | Expand coverage                                                        | Include `/memory/okf`                                       |
 
 Redirect-only hubs (`/cache`, `/notify`, `/schedule`, `/reference/plugins`, `/reference/verticals`, `/kubernetes`) stay **out** of the sitemap (canonical targets only).
