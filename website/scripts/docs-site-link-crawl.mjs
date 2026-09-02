@@ -321,10 +321,15 @@ async function main() {
       );
       const outs = [];
       for (const h of hrefs) {
+        // Skip non-navigable / executable schemes (CodeQL js/incomplete-url-scheme-check:
+        // javascript: alone is insufficient — also reject data: and vbscript:).
+        const scheme = String(h).trim().toLowerCase();
         if (
-          h.startsWith("mailto:") ||
-          h.startsWith("tel:") ||
-          h.startsWith("javascript:")
+          scheme.startsWith("mailto:") ||
+          scheme.startsWith("tel:") ||
+          scheme.startsWith("javascript:") ||
+          scheme.startsWith("data:") ||
+          scheme.startsWith("vbscript:")
         ) {
           continue;
         }
