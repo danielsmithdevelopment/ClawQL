@@ -44,6 +44,7 @@
   "overrides": {
     "@hono/node-server": "2.0.11",
     "brace-expansion": "5.0.9",
+    "browserslist": "4.28.7",
     "fast-uri": "3.1.5",
     "hono": "4.12.34",
     "js-yaml": "4.3.1",

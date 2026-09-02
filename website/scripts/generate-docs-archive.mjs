@@ -128,6 +128,14 @@ function parseSidebarHrefs(source) {
     const href = match[1].split('#')[0]
     hrefs.add(href)
   }
+
+  const learnBlock = source.match(/LEARN_MODULE_HREFS\s*=\s*\[([\s\S]*?)\]\s*as const/)
+  if (learnBlock) {
+    for (const match of learnBlock[1].matchAll(/'(\/learn\/[^']+)'/g)) {
+      hrefs.add(match[1])
+    }
+  }
+
   // Security training modules come from the generated registry (not string literals).
   if (hrefs.has('/security') || hrefs.has('/security/best-practices')) {
     hrefs.add('/security/defense-in-depth')
@@ -137,6 +145,16 @@ function parseSidebarHrefs(source) {
       hrefs.add(p)
     }
   }
+
+  // Plugin detail pages are spread from pluginsHubCards (dynamic hrefs).
+  if (hrefs.has('/plugins')) {
+    for (const p of loadJsonArray(
+      'src/generated/clawql-plugins/sitemap-paths.json',
+    )) {
+      hrefs.add(p)
+    }
+  }
+
   return hrefs
 }
 
