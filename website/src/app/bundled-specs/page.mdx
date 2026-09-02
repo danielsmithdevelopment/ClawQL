@@ -10,20 +10,20 @@ The npm package ships **`providers/`**—optional on-disk API descriptions so co
 
 Use this as the **opt-in pack** reference for **REST / OpenAPI–heavy** workflows. The table includes the **eight-vendor IDP stack** (plus in-process **anydoc** via MCP `convert_document` and **pdf-inspector** via `inspect_pdf`) and common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
 
-| Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                                      |
-| ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `cloudflare`                                                 | `CLAWQL_CLOUDFLARE_API_TOKEN`                        | Edge and DNS operations, Workers deploy/debug paths, docs-site operations                                     |
-| `github`                                                     | `CLAWQL_GITHUB_TOKEN`                                | Issues/PR/repo automation and release workflow actions                                                        |
-| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications; in pack **`default`**; powers optional `notify`                                           |
-| `notion`                                                     | `NOTION_API_TOKEN` (+ `Notion-Version`)              | Notion workspace automation; in pack **`default`**                                                            |
-| `paperless`                                                  | `PAPERLESS_API_TOKEN` (+ `PAPERLESS_BASE_URL`)       | Document archive lookup and ingestion workflows                                                               |
-| `stirling`                                                   | `STIRLING_API_KEY` (+ `STIRLING_BASE_URL`)           | PDF conversion/splitting/merge operations                                                                     |
-| `tika`                                                       | `CLAWQL_BEARER_TOKEN` (+ `TIKA_BASE_URL`)            | Text/metadata extraction from many file types                                                                 |
-| `gotenberg`                                                  | `CLAWQL_BEARER_TOKEN` (+ `GOTENBERG_BASE_URL`)       | HTML/office/markdown to PDF conversion                                                                        |
-| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise search; in pack **`default`**; MCP `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`              |
-| `nextcloud`                                                  | `NEXTCLOUD_USERNAME`, `NEXTCLOUD_APP_PASSWORD`       | WebDAV intake/outbox, OCS shares for IDP                                                                      |
-| `coneshare`                                                  | `CONESHARE_API_TOKEN` (+ `CONESHARE_BASE_URL`)       | Secure share links, VDR; webhook `POST /idp/coneshare/webhook` when `CLAWQL_ENABLE_CONESHARE=1`               |
-| `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); opt-in via pack / `CLAWQL_BUNDLED_PROVIDERS`            |
+| Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                           |
+| ------------------------------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `cloudflare`                                                 | `CLAWQL_CLOUDFLARE_API_TOKEN`                        | Edge and DNS operations, Workers deploy/debug paths, docs-site operations                          |
+| `github`                                                     | `CLAWQL_GITHUB_TOKEN`                                | Issues/PR/repo automation and release workflow actions                                             |
+| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications; in pack **`default`**; powers optional `notify`                                |
+| `notion`                                                     | `NOTION_API_TOKEN` (+ `Notion-Version`)              | Notion workspace automation; in pack **`default`**                                                 |
+| `paperless`                                                  | `PAPERLESS_API_TOKEN` (+ `PAPERLESS_BASE_URL`)       | Document archive lookup and ingestion workflows                                                    |
+| `stirling`                                                   | `STIRLING_API_KEY` (+ `STIRLING_BASE_URL`)           | PDF conversion/splitting/merge operations                                                          |
+| `tika`                                                       | `CLAWQL_BEARER_TOKEN` (+ `TIKA_BASE_URL`)            | Text/metadata extraction from many file types                                                      |
+| `gotenberg`                                                  | `CLAWQL_BEARER_TOKEN` (+ `GOTENBERG_BASE_URL`)       | HTML/office/markdown to PDF conversion                                                             |
+| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise search; in pack **`default`**; MCP `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`  |
+| `nextcloud`                                                  | `NEXTCLOUD_USERNAME`, `NEXTCLOUD_APP_PASSWORD`       | WebDAV intake/outbox, OCS shares for IDP                                                           |
+| `coneshare`                                                  | `CONESHARE_API_TOKEN` (+ `CONESHARE_BASE_URL`)       | Secure share links, VDR; webhook `POST /idp/coneshare/webhook` when `CLAWQL_ENABLE_CONESHARE=1`    |
+| `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); opt-in via pack / `CLAWQL_BUNDLED_PROVIDERS` |
 
 ## Bundled GraphQL-only: `linear`
 
