@@ -276,6 +276,12 @@ export function navigateSameOrigin(
       error: 'Path must be a same-origin path starting with /',
     }
   }
-  router.push(path)
+  // Prefer hard navigation for agent tool calls — App Router soft pushes from
+  // outside React event handlers are unreliable for cross-segment routes.
+  if (typeof window !== 'undefined') {
+    window.location.assign(path)
+  } else {
+    router.push(path)
+  }
   return { ok: true, path }
 }

@@ -288,7 +288,8 @@ export function WebMcpRegister() {
             status?: string
           }
           const preview = previewPluginFilter(raw)
-          router.push(preview.path)
+          // Hard assign so App Router picks up query + hash from agent tools.
+          window.location.assign(preview.path)
           return { ok: true, ...preview }
         },
       },
@@ -319,7 +320,7 @@ export function WebMcpRegister() {
               error: 'No plugin matched that id/name/package/slug',
             }
           }
-          router.push(entry.href)
+          window.location.assign(entry.href)
           return {
             ok: true,
             id: entry.id,

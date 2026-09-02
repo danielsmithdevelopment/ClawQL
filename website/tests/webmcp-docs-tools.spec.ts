@@ -8,6 +8,7 @@ test.describe('WebMCP docs tools', () => {
   test('registers sitewide tools and executes search / sections / markdown', async ({
     page,
   }) => {
+    test.setTimeout(90_000)
     await page.addInitScript(() => {
       const tools = new Map<
         string,
@@ -139,6 +140,15 @@ test.describe('WebMCP docs tools', () => {
     })
     expect(filter).toMatchObject({ ok: true })
     expect((filter as { matchCount: number }).matchCount).toBeGreaterThan(0)
+    await page.waitForURL(/\/plugins\?.*q=memory/)
+    await page.waitForFunction(() => {
+      const stub = (
+        window as unknown as {
+          __webmcpStub?: { __tools: Map<string, unknown> }
+        }
+      ).__webmcpStub
+      return stub && stub.__tools.has('clawql.docs.open_plugin')
+    })
 
     const opened = await page.evaluate(async () => {
       const stub = (window as unknown as {
@@ -148,7 +158,10 @@ test.describe('WebMCP docs tools', () => {
       }).__webmcpStub
       return stub.executeTool('clawql.docs.open_plugin', { plugin: 'memory' })
     })
-    expect(opened).toMatchObject({ ok: true })
-    await page.waitForURL(/\/plugins\/memory/)
+    expect(opened).toMatchObject({
+      ok: true,
+      href: '/plugins/memory',
+    })
+    await page.waitForURL(/\/plugins\/memory/, { timeout: 30_000 })
   })
 })
