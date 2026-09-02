@@ -195,22 +195,20 @@ class ClawQLIDPProvider(Provider):
             return self._mcp.call_tool(
                 "execute",
                 {
-                    "operationId": "docling::docling_convert_source",
+                    "operationId": "docling_convert_source",
                     "args": {
-                        "body": {
-                            "sources": [
-                                {
-                                    "kind": "file",
-                                    "base64_string": b64,
-                                    "filename": file_path.name,
-                                }
-                            ],
-                            "options": {
-                                "to_formats": ["md", "json"],
-                                "do_ocr": True,
-                                "do_table_structure": True,
-                            },
-                        }
+                        "sources": [
+                            {
+                                "kind": "file",
+                                "base64_string": b64,
+                                "filename": file_path.name,
+                            }
+                        ],
+                        "options": {
+                            "to_formats": ["md", "json"],
+                            "do_ocr": True,
+                            "do_table_structure": True,
+                        },
                     },
                 },
             )

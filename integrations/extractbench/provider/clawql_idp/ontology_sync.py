@@ -35,7 +35,15 @@ def clawql_repo_root() -> Path:
     env = os.environ.get("CLAWQL_REPO_ROOT", "").strip()
     if env:
         return Path(env).resolve()
-    # integrations/extractbench/provider/clawql_idp/ontology_sync.py → repo root
+    cur = Path(__file__).resolve().parent
+    for _ in range(10):
+        script = cur / "integrations/extractbench/scripts/run-ontology-pipeline.mjs"
+        if script.is_file():
+            return cur
+        if cur.parent == cur:
+            break
+        cur = cur.parent
+    # Fallback when provider is copied into ExtractBench (integrations/ not under cwd).
     return Path(__file__).resolve().parents[4]
 
 
