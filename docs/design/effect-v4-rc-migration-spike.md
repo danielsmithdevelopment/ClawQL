@@ -2,7 +2,8 @@
 
 **Status:** Tracking — spike not started  
 **Created:** 2026-09-02  
-**Tracking issue:** [#TBD](https://github.com/danielsmithdevelopment/ClawQL/issues/TBD)  
+**Tracking issue:** [#1034](https://github.com/danielsmithdevelopment/ClawQL/issues/1034)  
+**Tracking PR (this doc):** [#1035](https://github.com/danielsmithdevelopment/ClawQL/pull/1035)  
 **Baseline (production today):** `effect@3.22.1` (root pin), `^3.21.4` in workspace packages  
 **Target (spike):** `effect@rc` (currently `4.0.0-rc.*`) + matching `@effect/*@rc` where still separate
 
