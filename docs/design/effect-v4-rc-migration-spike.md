@@ -204,3 +204,4 @@ Production pin remains `effect@3.22.1` in root `package.json` `overrides` until 
 | ---------- | ----- | ------------------------------------------------------------------------------------------------- |
 | 2026-09-02 | 0     | Tracking doc + issue #1034; PR #1035 merged                                                       |
 | 2026-09-02 | 0     | Stage 0 tooling: inventory/try-rc scripts, non-blocking CI, tsconfig.effect-v4-spike.json (#1037) |
+| 2026-09-02 | 0     | `clawql-network` Effect error-channel fix (unblocks CI pack smoke)                                  |
