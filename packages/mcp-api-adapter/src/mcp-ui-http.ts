@@ -17,10 +17,13 @@ import {
 } from "./mcp-ui-generate.js";
 import {
   AGENT_LAB_PRESET_SLUG,
+  CLOUDFLARE_CLAIM_PRESET_SLUG,
   McpUiPresetError,
   runResolveAgentLabPreset,
+  runResolveCloudflareClaimPreset,
 } from "./mcp-ui-presets.js";
 import { runRenderAgentLabLandingPage } from "./mcp-ui-agent-lab-html.js";
+import { runRenderCloudflareClaimLandingPage } from "./mcp-ui-cloudflare-claim-html.js";
 import {
   renderMcpUiCatalogPage,
   renderMcpUiCustomFormPage,
@@ -613,6 +616,77 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     }
   });
 
+
+  router.get("/presets/cloudflare-claim", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveCloudflareClaimPreset(authorized);
+      res.type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition,
+        })
+      );
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Cloudflare-style click-to-claim",
+            description:
+              "Third-party WebMCP coupon tools re-humanized through /mcp-ui.",
+            slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
+  router.post("/presets/cloudflare-claim/start", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveCloudflareClaimPreset(authorized);
+      deleteGeneratedUiBySlug(CLOUDFLARE_CLAIM_PRESET_SLUG);
+      const form = createGeneratedUi(definition, authorized);
+      res.redirect(303, `${basePath}/custom/${encodeURIComponent(form.slug)}`);
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Cloudflare-style click-to-claim",
+            description:
+              "Third-party WebMCP coupon tools re-humanized through /mcp-ui.",
+            slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
   router.post("/generate", (req, res) => {
     const atr = atrFromRequest(req);
     const catalog = options.getCatalog();
@@ -623,6 +697,12 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
       if (body.preset === "agent-lab" || body.preset === AGENT_LAB_PRESET_SLUG) {
         definition = runResolveAgentLabPreset(authorized);
         deleteGeneratedUiBySlug(AGENT_LAB_PRESET_SLUG);
+      } else if (
+        body.preset === "cloudflare-claim" ||
+        body.preset === CLOUDFLARE_CLAIM_PRESET_SLUG
+      ) {
+        definition = runResolveCloudflareClaimPreset(authorized);
+        deleteGeneratedUiBySlug(CLOUDFLARE_CLAIM_PRESET_SLUG);
       }
       const form = createGeneratedUi(definition, authorized);
       res.status(201).json({

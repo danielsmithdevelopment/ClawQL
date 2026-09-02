@@ -3,9 +3,12 @@ import { Effect } from "effect";
 import type { ListedMcpTool } from "mcp-grpc-transport";
 import {
   AGENT_LAB_PRESET_SLUG,
+  CLOUDFLARE_CLAIM_PRESET_SLUG,
   McpUiPresetError,
   resolveAgentLabPresetDefinition,
+  resolveCloudflareClaimPresetDefinition,
   runResolveAgentLabPreset,
+  runResolveCloudflareClaimPreset,
 } from "./mcp-ui-presets.js";
 
 function tool(name: string): ListedMcpTool {
@@ -48,6 +51,42 @@ describe("agent-lab mcp-ui preset", () => {
   it("fails when fewer than two tools match", async () => {
     const result = await Effect.runPromise(
       Effect.either(resolveAgentLabPresetDefinition([tool("echo")]))
+    );
+    expect(result._tag).toBe("Left");
+    if (result._tag === "Left") {
+      expect(result.left).toBeInstanceOf(McpUiPresetError);
+    }
+  });
+});
+
+describe("cloudflare-claim mcp-ui preset", () => {
+  it("resolves reveal + claim cf_* tools", () => {
+    const def = runResolveCloudflareClaimPreset([
+      tool("cf_reveal_challenge"),
+      tool("cf_claim_coupon"),
+      tool("search"),
+    ]);
+    expect(def.slug).toBe(CLOUDFLARE_CLAIM_PRESET_SLUG);
+    expect(def.steps.map((s) => s.tool)).toEqual([
+      "cf_reveal_challenge",
+      "cf_claim_coupon",
+    ]);
+  });
+
+  it("accepts unprefixed reveal_challenge / claim_coupon aliases", () => {
+    const def = runResolveCloudflareClaimPreset([
+      tool("reveal_challenge"),
+      tool("claim_coupon"),
+    ]);
+    expect(def.steps.map((s) => s.tool)).toEqual([
+      "reveal_challenge",
+      "claim_coupon",
+    ]);
+  });
+
+  it("fails when claim tools are missing", async () => {
+    const result = await Effect.runPromise(
+      Effect.either(resolveCloudflareClaimPresetDefinition([tool("cf_reveal_challenge")]))
     );
     expect(result._tag).toBe("Left");
     if (result._tag === "Left") {

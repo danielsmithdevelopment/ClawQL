@@ -10,8 +10,8 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 | Act           | Primary                                                                 | Guaranteed fallback                                                                                                                   |
 | ------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
-| 2 Custom view | Live `/mcp-ui/presets/agent-lab` (docs_* demo server)                   | `POST /mcp-ui/generate` `{"preset":"agent-lab"}` or catalog `search` + `memory_recall`                                                |
+| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`); optional `clawql sources add <url> --kind webmcp` when CDP WebMCP is available | Show browser `registerTool` in DevTools / agent host; or local mock `examples/mcp-api-adapter/cloudflare-claim/site.html` |
+| 2 Custom view | Live `/mcp-ui/presets/agent-lab` (docs_* demo) **or** `/mcp-ui/presets/cloudflare-claim` (click-to-claim) | `POST /mcp-ui/generate` `{"preset":"agent-lab"}` / `{"preset":"cloudflare-claim"}` or catalog `search` + `memory_recall` |
 | 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                                           |
 
 **Rule:** rehearse full sequence off-camera twice. Record with live Act 3 only after two clean runs. Otherwise close on **`/mcp-ui/trace/compare`**.
@@ -29,11 +29,17 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 2. In a WebMCP-capable browser / agent host, confirm tools registered:
    - `clawql.site.navigate` → `/pricing`, `/industries/lending`
    - `clawql.site.page_context`
-3. **Do not** claim `clawql sources add --kind webmcp` — server-side WebMCP source kind is not shipped; WebMCP is **page-local** via `WebMcpRegister.tsx`.
+3. **Optional (Protocol Fabric):** when Chromium WebMCP + CDP is available, index the page as a ClawQL source:
+   ```bash
+   clawql sources add https://clawql.com --kind webmcp --name "ClawQL site"
+   # or the local click-to-claim mock:
+   clawql sources add http://127.0.0.1:8765 --kind webmcp --name "Challenge coupon"
+   ```
+   Without CDP, Act 1 still works as page-local `registerTool` (see `WebMcpRegister.tsx` / `examples/mcp-api-adapter/cloudflare-claim/site.html`).
 
-**Pass:** navigate + page_context return sensible JSON.
+**Pass:** navigate + page_context return sensible JSON (or mock `cf_*` tools appear in the adapter catalog).
 
-**Known gap:** CDP lifecycle for WebMCP has not been stress-tested; treat Act 1 as shortest act.
+**Known gap:** CDP lifecycle for WebMCP is less rehearsed than the MCP mirror path; for a guaranteed Act 1→2 story use `node examples/mcp-api-adapter/cloudflare-claim-server.mjs` (site :8765 + `/mcp-ui/presets/cloudflare-claim`).
 
 ---
 
@@ -60,6 +66,19 @@ node examples/mcp-api-adapter/docs-agent-lab-server.mjs
 
 WebMCP Act 1 unlocks the on-page Agent Lab panel; Act 2 is the adapter-scaffolded
 `/mcp-ui/presets/agent-lab` workflow (same narrative tools, different surface).
+
+**Alternate Act 2 — click-to-claim (third-party WebMCP → human button):**
+
+```bash
+npm run build -w mcp-grpc-transport -w mcp-api-adapter
+node examples/mcp-api-adapter/cloudflare-claim-server.mjs
+# open http://127.0.0.1:8765/                         # agent-facing WebMCP page
+# open http://127.0.0.1:8093/mcp-ui/presets/cloudflare-claim
+# POST start → /mcp-ui/custom/cloudflare-claim (reveal → Click to claim)
+```
+
+This is the Cloudflare-style coupon pattern inverted: tools published for agents on a
+third-party page, re-humanized through `/mcp-ui` as a one-click claim button.
 
 **Interim fallback (Core catalog):**
 

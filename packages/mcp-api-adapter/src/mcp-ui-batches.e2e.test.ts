@@ -33,6 +33,16 @@ const catalogTools: ListedMcpTool[] = [
       required: ["query"],
     },
   },
+  {
+    name: "cf_reveal_challenge",
+    description: "Reveal Cloudflare-style challenge coupon",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "cf_claim_coupon",
+    description: "Claim the challenge coupon",
+    inputSchema: { type: "object", properties: {} },
+  },
 ];
 
 function catalog(): ToolCatalog {
@@ -246,6 +256,71 @@ describe("mcp-ui batches 2-4 e2e", () => {
     expect(json.slug).toBe("agent-lab");
     expect(json.url).toContain("/mcp-ui/custom/agent-lab");
     expect(json.steps.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("GET /mcp-ui/presets/cloudflare-claim scaffolds click-to-claim and start redirects", async () => {
+    const base = await startApp();
+    const token = await mintJwt({
+      sub: "ops",
+      role: "admin",
+      scope: ["*"],
+    });
+    const landing = await fetch(`${base}/mcp-ui/presets/cloudflare-claim`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(landing.status).toBe(200);
+    const landingHtml = await landing.text();
+    expect(landingHtml).toMatch(/click-to-claim|Click to claim/i);
+    expect(landingHtml).toContain("/mcp-ui/presets/cloudflare-claim/start");
+    expect(landingHtml).toContain("cf_reveal_challenge");
+    expect(landingHtml).toContain("cf_claim_coupon");
+
+    const started = await fetch(`${base}/mcp-ui/presets/cloudflare-claim/start`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      redirect: "manual",
+    });
+    expect(started.status).toBe(303);
+    const location = started.headers.get("location") ?? "";
+    expect(location).toContain("/mcp-ui/custom/cloudflare-claim");
+
+    const page = await fetch(
+      `${base}${location.startsWith("http") ? new URL(location).pathname : location}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toMatch(/Step 1 of/i);
+    expect(html).toContain('hx-post="/mcp-ui/custom/cloudflare-claim/step"');
+  });
+
+  it("POST /mcp-ui/generate with preset cloudflare-claim creates claim workflow", async () => {
+    const base = await startApp();
+    const token = await mintJwt({
+      sub: "ops",
+      role: "admin",
+      scope: ["*"],
+    });
+    const created = await fetch(`${base}/mcp-ui/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ preset: "cloudflare-claim" }),
+    });
+    expect(created.status).toBe(201);
+    const json = (await created.json()) as {
+      slug: string;
+      url: string;
+      steps: Array<{ tool: string }>;
+    };
+    expect(json.slug).toBe("cloudflare-claim");
+    expect(json.url).toContain("/mcp-ui/custom/cloudflare-claim");
+    expect(json.steps.map((s) => s.tool)).toEqual([
+      "cf_reveal_challenge",
+      "cf_claim_coupon",
+    ]);
   });
 
   it("POST /mcp-ui/generate creates a custom multi-step form", async () => {

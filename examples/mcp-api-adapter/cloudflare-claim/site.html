@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Challenge coupon · third-party WebMCP demo</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151b2d;
+      --ink: #e8eef9;
+      --muted: #93a0b8;
+      --orange: #f6821f;
+      --line: #2a344c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(800px 360px at 100% 0%, rgba(246,130,31,.25), transparent 55%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+    }
+    .card {
+      width: min(34rem, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.5rem 1.4rem 1.35rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    .eyebrow {
+      color: var(--orange);
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: .55rem;
+    }
+    h1 { margin: 0 0 .45rem; font-size: 1.45rem; letter-spacing: -.02em; }
+    p { color: var(--muted); line-height: 1.5; margin: 0 0 .85rem; }
+    .tools { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; color: var(--ink); }
+    .tools li { margin: .25rem 0; }
+    .status {
+      margin-top: 1rem;
+      padding: .75rem .85rem;
+      border-radius: 10px;
+      background: rgba(246,130,31,.08);
+      border: 1px dashed rgba(246,130,31,.35);
+      font-size: .86rem;
+      color: var(--muted);
+    }
+    code { color: var(--orange); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">Third-party site · WebMCP</div>
+    <h1>Checking your browser… almost.</h1>
+    <p>
+      This page stands in for a Cloudflare-style agent challenge. Instead of a
+      human CAPTCHA, it publishes <strong>WebMCP tools</strong> agents can call
+      to reveal and claim a coupon.
+    </p>
+    <p>
+      ClawQL’s Protocol Fabric indexes those tools, then <code>/mcp-ui</code>
+      turns the claim step back into a one-click human button.
+    </p>
+    <ul class="tools">
+      <li>cf.challenge.reveal_coupon</li>
+      <li>cf.challenge.claim_coupon</li>
+    </ul>
+    <div class="status" id="status">
+      Waiting for WebMCP host… If your browser supports WebMCP, tools register
+      automatically. For the ClawQL demo, the MCP mirror on :8093 is enough.
+    </div>
+  </main>
+  <script>
+    (function () {
+      const status = document.getElementById("status");
+      const tools = [
+        {
+          name: "cf.challenge.reveal_coupon",
+          description: "Reveal a challenge coupon for agents (demo).",
+          inputSchema: { type: "object", properties: {}, additionalProperties: false },
+          async execute() {
+            return {
+              ok: true,
+              challengeId: "ch_site_" + Math.random().toString(16).slice(2, 8),
+              next: "cf.challenge.claim_coupon",
+              tip: "Mirrored as cf_reveal_challenge in the ClawQL /mcp-ui demo.",
+            };
+          },
+        },
+        {
+          name: "cf.challenge.claim_coupon",
+          description: "Claim the challenge coupon (demo).",
+          inputSchema: { type: "object", properties: {}, additionalProperties: false },
+          async execute() {
+            return {
+              ok: true,
+              couponCode: "CF-SITE-" + Math.random().toString(16).slice(2, 8).toUpperCase(),
+              reward: "Protocol Fabric sticker pack (metaphorical)",
+            };
+          },
+        },
+      ];
+
+      function register(mc) {
+        for (const tool of tools) {
+          try {
+            void mc.registerTool(tool);
+          } catch (err) {
+            console.warn("WebMCP registerTool failed", tool.name, err);
+          }
+        }
+        status.textContent =
+          "WebMCP tools registered: " + tools.map((t) => t.name).join(", ");
+      }
+
+      const mc = navigator.modelContext || document.modelContext;
+      if (mc && typeof mc.registerTool === "function") {
+        register(mc);
+        return;
+      }
+      // Some hosts expose modelContext later
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries += 1;
+        const late = navigator.modelContext || document.modelContext;
+        if (late && typeof late.registerTool === "function") {
+          clearInterval(timer);
+          register(late);
+        } else if (tries > 20) {
+          clearInterval(timer);
+          status.textContent =
+            "No WebMCP host detected — use the ClawQL MCP mirror at :8093 (/mcp-ui/presets/cloudflare-claim).";
+        }
+      }, 250);
+    })();
+  </script>
+</body>
+</html>

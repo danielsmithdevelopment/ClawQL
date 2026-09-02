@@ -9,6 +9,7 @@ import type { GeneratedUiForm } from "./mcp-ui-generate.js";
 import { renderResultContent } from "./mcp-ui-results.js";
 import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 import { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
+import { runRenderClaimButtonFragment } from "./mcp-ui-claim-html.js";
 
 const MCP_UI_STYLES = `
   :root {
@@ -467,6 +468,16 @@ function renderToolCard(
 </article>`;
   }
 
+  if (template?.customHtml === "claim-button") {
+    return `<article class="tool-card" id="tool-${escapeMcpUiHtml(tool.name)}">
+  <h2>${escapeMcpUiHtml(title)}</h2>
+  <p class="tool-name">${escapeMcpUiHtml(tool.name)}</p>
+  ${templatePill}
+  ${description}
+  ${runRenderClaimButtonFragment(tool.name, basePath)}
+</article>`;
+  }
+
   const hints = formHintsForTool(tool, fieldErrors);
   const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const multipartAttrs = hasFileFields
@@ -538,6 +549,7 @@ export function renderMcpUiCatalogPage(options: {
       <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
       · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor">Executor vs ClawQL</a>
       <a href="${escapeMcpUiHtml(basePath)}/presets/agent-lab">Agent Lab (generated)</a>
+      <a href="${escapeMcpUiHtml(basePath)}/presets/cloudflare-claim">Click-to-claim (WebMCP)</a>
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>
@@ -682,14 +694,27 @@ export function renderMcpUiCustomFormPage(options: {
     body = `<div class="result result--success"><p>Workflow complete.</p>
 <pre>${escapeMcpUiHtml(JSON.stringify(form.stepOutputs, null, 2))}</pre></div>`;
   } else {
-    const multipartAttrs = options.hasFileFields
-      ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
-      : "";
-    body = `<article class="tool-card">
+    const stepPost = `${basePath}/custom/${form.slug}/step`;
+    const template = resolveMcpUiTemplate(options.tool);
+    if (template?.customHtml === "claim-button") {
+      body = `<article class="tool-card">
+  <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
+  <p class="tool-name">Step ${stepIndex + 1} of ${total}: ${escapeMcpUiHtml(options.tool.name)}</p>
+  ${runRenderClaimButtonFragment(options.tool.name, basePath, {
+    postUrl: stepPost,
+    buttonLabel: "Claim coupon",
+    resultTarget: "#custom-result",
+  })}
+</article>`;
+    } else {
+      const multipartAttrs = options.hasFileFields
+        ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
+        : "";
+      body = `<article class="tool-card">
   <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
   <p class="tool-name">Step ${stepIndex + 1} of ${total}: ${escapeMcpUiHtml(options.tool.name)}</p>
   <form
-    hx-post="${escapeMcpUiHtml(basePath)}/custom/${escapeMcpUiHtml(form.slug)}/step"
+    hx-post="${escapeMcpUiHtml(stepPost)}"
     hx-target="#custom-result"
     hx-swap="innerHTML"
     hx-indicator="#custom-spinner"${multipartAttrs}
@@ -702,6 +727,7 @@ export function renderMcpUiCustomFormPage(options: {
   </form>
   <div id="custom-result" class="result-pane"></div>
 </article>`;
+    }
   }
 
   return `<!DOCTYPE html>

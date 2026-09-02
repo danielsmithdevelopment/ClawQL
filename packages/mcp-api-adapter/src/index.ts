@@ -15,7 +15,7 @@ export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphq
 export { attachGraphqlRoutes } from "./graphql-http.js";
 export { attachMcpHttpRoutes } from "./mcp-http.js";
 export { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
-export { formHintsForTool, isSmartUploadTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+export { formHintsForTool, isClaimButtonTool, isSmartUploadTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 export { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
 export {
   attachWebSocketSurface,
@@ -65,14 +65,26 @@ export {
 export {
   AGENT_LAB_PRESET_SLUG,
   AGENT_LAB_STEP_CANDIDATES,
+  CLOUDFLARE_CLAIM_PRESET_SLUG,
+  CLOUDFLARE_CLAIM_STEP_CANDIDATES,
   McpUiPresetError,
   resolveAgentLabPresetDefinition,
+  resolveCloudflareClaimPresetDefinition,
   runResolveAgentLabPreset,
+  runResolveCloudflareClaimPreset,
 } from "./mcp-ui-presets.js";
 export {
   renderAgentLabLandingPage,
   runRenderAgentLabLandingPage,
 } from "./mcp-ui-agent-lab-html.js";
+export {
+  renderCloudflareClaimLandingPage,
+  runRenderCloudflareClaimLandingPage,
+} from "./mcp-ui-cloudflare-claim-html.js";
+export {
+  renderClaimButtonFragment,
+  runRenderClaimButtonFragment,
+} from "./mcp-ui-claim-html.js";
 export {
   createProgressJob,
   getProgressJob,

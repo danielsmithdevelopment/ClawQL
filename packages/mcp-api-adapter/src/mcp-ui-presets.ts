@@ -65,3 +65,60 @@ export const resolveAgentLabPresetDefinition = (
 export const runResolveAgentLabPreset = (
   tools: readonly ListedMcpTool[]
 ): GeneratedUiDefinition => Effect.runSync(resolveAgentLabPresetDefinition(tools));
+
+/** Cloudflare-style coupon claim: reveal challenge → claim (agent tools → human UI). */
+export const CLOUDFLARE_CLAIM_STEP_CANDIDATES: ReadonlyArray<{
+  readonly candidates: readonly string[];
+  readonly label: string;
+}> = [
+  {
+    candidates: [
+      "cf_reveal_challenge",
+      "reveal_challenge",
+      "cloudflare_reveal_coupon",
+    ],
+    label: "Reveal challenge coupon",
+  },
+  {
+    candidates: [
+      "cf_claim_coupon",
+      "claim_coupon",
+      "cloudflare_claim_coupon",
+    ],
+    label: "Claim coupon",
+  },
+];
+
+export const CLOUDFLARE_CLAIM_PRESET_SLUG = "cloudflare-claim";
+
+export const resolveCloudflareClaimPresetDefinition = (
+  tools: readonly ListedMcpTool[]
+): Effect.Effect<GeneratedUiDefinition, McpUiPresetError> =>
+  Effect.gen(function* () {
+    const known = new Set(tools.map((t) => t.name));
+    const steps: GeneratedUiStep[] = [];
+    for (const row of CLOUDFLARE_CLAIM_STEP_CANDIDATES) {
+      const hit = row.candidates.find((name) => known.has(name));
+      if (hit) {
+        steps.push({ tool: hit, label: row.label });
+      }
+    }
+    if (steps.length < 2) {
+      return yield* new McpUiPresetError({
+        reason:
+          "Cloudflare-claim preset needs reveal + claim tools. Point the adapter at examples/mcp-api-adapter/cloudflare-claim-server.mjs (cf_*).",
+      });
+    }
+    return {
+      title: "Cloudflare-style click-to-claim",
+      description:
+        "Third-party WebMCP coupon tools re-humanized through /mcp-ui — Protocol Fabric: agent interface → human click.",
+      slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
+      steps,
+    } satisfies GeneratedUiDefinition;
+  });
+
+export const runResolveCloudflareClaimPreset = (
+  tools: readonly ListedMcpTool[]
+): GeneratedUiDefinition =>
+  Effect.runSync(resolveCloudflareClaimPresetDefinition(tools));
