@@ -423,7 +423,9 @@ clawql streams celld bundle-check
 
 Expect ≈ **0.4 MiB** (~0.6% of the **64 MiB** Workers limit). The full `clawql-core` barrel is **not** used — it would pull `webmcp-draft` (`node:fs`).
 
-Webhook responses include `session.audit.clawqlCore` (hash-chained append) and `session.core.inProcess: ["audit","cache","hash-chain"]`. `search` / `execute` remain **deferred** to the MCP host.
+Webhook responses include `session.audit.clawqlCore` (hash-chained append) and `session.core.inProcess: ["audit","cache","hash-chain"]`. With **`CLAWQL_MCP_URL`** set, `session.tools.search` / `session.tools.execute` call Streamable HTTP MCP (`tools/call`, prefer protocol **2026-07-28**). When unset, those tools return `{ deferred: true }`. Full `clawql-api` stays on the MCP host — not in the Worker bundle.
+
+Smoke with a mock MCP: `bash examples/streams-celld/scripts/smoke.sh`.
 
 CI and local dev should fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
 
@@ -446,9 +448,9 @@ helm upgrade --install clawql ./charts/clawql-mcp \
   -n clawql --create-namespace
 ```
 
-The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0). Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld).
+The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0) and injects **`CLAWQL_MCP_URL`** + **`INFERENCE_URL`**. Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld).
 
-**Success:** Webhook spawns a session with in-process **clawql-core** audit/cache; bundle-check stays under 64 MiB; optional Helm deploy with `streams.scalingBackend: celld`.
+**Success:** Webhook spawns a session with in-process **clawql-core** audit/cache; optional MCP fetch for search/execute; bundle-check stays under 64 MiB; optional Helm deploy with `streams.scalingBackend: celld`.
 
 ## K8s operator sketch
 

@@ -1053,6 +1053,9 @@ streams:
     healthPath: /.well-known/celld/health
     # Worker INFERENCE_URL for deployed bundle — auto when inference.enabled and empty.
     inferenceUrl: ""
+    # Worker CLAWQL_MCP_URL for search/execute (Streamable HTTP). Empty → in-cluster MCP
+    # (or mcpProxy when enabled). Set to "" only via extraEnv override if cells must not call MCP.
+    mcpUrl: ""
     service:
       type: ClusterIP
       workerPort: 8080
