@@ -382,14 +382,78 @@ celld diagnose --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT" --region "$AWS
 celld cell list --bucket "$CELLD_BUCKET" --json | head
 ```
 
-**Success:** Counter increments locally; you understand `celld dev` vs fleet deploy, v0.4.0 health probes, and how DO naming maps to Streams sidecars. Next: embed `clawql-streams` + `clawql-core` in a Wrangler bundle ([celld integration §5](/streams/clawql-celld)) and run `clawql streams celld bundle-check` when that CLI ships.
+**Success:** Counter increments locally; you understand `celld dev` vs fleet deploy, v0.4.0 health probes, and how DO naming maps to Streams sidecars. Continue to **Lab 5b** for the ClawQL Wrangler skeleton and bundle gate.
+
+### Lab 5b — ClawQL Streams Wrangler skeleton + bundle-check (~30 min)
+
+**Goal:** Run the in-repo **GatewayDO / SubscriptionDO / AgentSessionDO** skeleton ([`examples/streams-celld`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/streams-celld)) under celld v0.4.0 and enforce the **64 MiB** Workers bundle limit.
+
+**Prerequisites:** Lab 5 celld v0.4.0 + esbuild on `PATH`.
+
+**1 — Local dev with the ClawQL skeleton**
+
+```bash
+cd examples/streams-celld
+clawql streams celld dev --port 9876
+# or: celld dev --port 9876
+```
+
+**2 — Webhook → significance → session spawn**
+
+```bash
+curl -s http://127.0.0.1:9876/health | jq .
+curl -s -X POST http://127.0.0.1:9876/webhook/demo-lab \
+  -H 'content-type: application/json' \
+  -H 'x-clawql-event-id: lab-5b-1' \
+  -d '{"hello":"streams"}' | jq .
+curl -s http://127.0.0.1:9876/admin/status | jq .
+```
+
+Repeat the POST with the same `x-clawql-event-id` — `AgentSessionDO` should report **`idempotent: true`**.
+
+**3 — Bundle size gate**
+
+```bash
+clawql streams celld bundle-check
+# equivalent: node scripts/bundle-check.mjs
+```
+
+CI and local dev should fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
+
+**4 — Optional: fleet deploy + Helm celld backend**
+
+Deploy the skeleton to your fleet bucket, then enable the chart overlay:
+
+```bash
+export CELLD_BUCKET=s3://clawql-streams-state
+export S3_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+
+clawql streams celld deploy --project examples/streams-celld \
+  --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT"
+
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -f ./charts/clawql-mcp/values-streams-celld.example.yaml \
+  --set envFromSecret=clawql-provider-env \
+  --set streams.celld.bucket="$CELLD_BUCKET" \
+  --set streams.celld.endpoint="$S3_ENDPOINT" \
+  -n clawql --create-namespace
+```
+
+The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0). Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld).
+
+**Success:** Webhook spawns a session with a WORM row stub; bundle-check passes; you can optional deploy to K8s with `streams.scalingBackend: celld`.
 
 ## K8s operator sketch
 
 ```bash
-# Event backbone (Lab 2)
+# Event backbone (Lab 2) or celld fleet (Lab 5b)
 helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
   --set nats.enabled=true --set nats.jetStream.enabled=true
+
+# celld Streams path (Lab 5b overlay)
+# helm upgrade --install clawql ./charts/clawql-mcp -n clawql \
+#   -f ./charts/clawql-mcp/values-streams-celld.example.yaml \
+#   --set streams.celld.bucket=s3://clawql-streams-state
 
 # MCP + inference (cells call inference over HTTP)
 export CLAWQL_ENABLE_SCHEDULE=1

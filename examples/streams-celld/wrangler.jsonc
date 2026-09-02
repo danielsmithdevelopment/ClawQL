@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clawql-streams-celld-skeleton",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "INFERENCE_URL": "http://127.0.0.1:8080"
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "GATEWAY", "class_name": "GatewayDO" },
+      { "name": "SUBSCRIPTION", "class_name": "SubscriptionDO" },
+      { "name": "AGENT_SESSION", "class_name": "AgentSessionDO" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["GatewayDO", "SubscriptionDO", "AgentSessionDO"]
+    }
+  ]
+}

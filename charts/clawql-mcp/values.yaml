@@ -1028,6 +1028,62 @@ nats:
     # Pre-create JetStream consumer so KEDA can read lag before first worker pod.
     bootstrapConsumer: true
 
+# ClawQL Streams — event-driven agent cells (draft). See docs/streams/clawql-streams.md.
+streams:
+  enabled: false
+  # kubernetes | celld | cloudflare
+  scalingBackend: kubernetes
+  celld:
+    enabled: false
+    # Pin celld v0.4.0 — do not mix v0.3.x and v0.4.x in one fleet.
+    version: v0.4.0
+    image:
+      repository: ghcr.io/denoland/celld
+      tag: v0.4.0
+      pullPolicy: IfNotPresent
+    # Fleet bucket (required when enabled). Example: s3://clawql-streams-state
+    bucket: ""
+    endpoint: ""
+    region: auto
+    # Secret with AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (and optional AWS_SESSION_TOKEN).
+    # Defaults to envFromSecret when empty.
+    credentialsSecret: ""
+    replicaCount: 1
+    # v0.4.0 health probe path (not /__celld/health).
+    healthPath: /.well-known/celld/health
+    # Worker INFERENCE_URL for deployed bundle — auto when inference.enabled and empty.
+    inferenceUrl: ""
+    service:
+      type: ClusterIP
+      workerPort: 8080
+      internalPort: 8081
+    terminationGracePeriodSeconds: 120
+    probes:
+      readiness:
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+      liveness:
+        initialDelaySeconds: 15
+        periodSeconds: 20
+        timeoutSeconds: 3
+        failureThreshold: 3
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    podAnnotations: {}
+    podSecurityContext: {}
+    securityContext: {}
+    extraEnv: []
+  ambientDelivery: true
+  auditLevel: WORM
+  subscriptionStore: postgres
+
 # Extra env (e.g. tokens from literal — prefer existing secrets for production).
 extraEnv: []
 

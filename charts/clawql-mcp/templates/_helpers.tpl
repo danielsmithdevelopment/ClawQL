@@ -396,6 +396,45 @@ envFrom:
 {{- printf "%s-inference" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* ClawQL Streams celld fleet node (self-hosted DO runtime, v0.4.0 baseline). */}}
+{{- define "clawql-mcp.celldName" -}}
+{{- printf "%s-celld" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.celldHeadlessName" -}}
+{{- printf "%s-celld-headless" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "clawql-mcp.celldLabels" -}}
+{{ include "clawql-mcp.labels" . }}
+app.kubernetes.io/component: streams-celld
+{{- end }}
+
+{{- define "clawql-mcp.celldSelectorLabels" -}}
+{{ include "clawql-mcp.selectorLabels" . }}
+app.kubernetes.io/component: streams-celld
+{{- end }}
+
+{{- define "clawql-mcp.celldCredentialsSecret" -}}
+{{- if .Values.streams.celld.credentialsSecret -}}
+{{- .Values.streams.celld.credentialsSecret | trunc 63 | trimSuffix "-" -}}
+{{- else if .Values.envFromSecret -}}
+{{- .Values.envFromSecret | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-celld-credentials" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end }}
+
+{{- define "clawql-mcp.celldInferenceUrl" -}}
+{{- if .Values.streams.celld.inferenceUrl -}}
+{{- .Values.streams.celld.inferenceUrl -}}
+{{- else if .Values.inference.enabled -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v" (include "clawql-mcp.inferenceName" .) .Release.Namespace (.Values.inference.service.http.port | int) -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end }}
+
 {{/* Optional Managed Edge Gateway nginx (one hostname for /mcp + /v1). */}}
 {{- define "clawql-mcp.managedGatewayName" -}}
 {{- printf "%s-managed-gateway" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}

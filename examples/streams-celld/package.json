@@ -1,0 +1,11 @@
+{
+  "name": "@clawql/example-streams-celld",
+  "private": true,
+  "version": "0.0.0",
+  "description": "ClawQL Streams celld DO skeleton (Lab 5b)",
+  "type": "module",
+  "scripts": {
+    "bundle-check": "node scripts/bundle-check.mjs",
+    "dev": "celld dev --port 9876"
+  }
+}
