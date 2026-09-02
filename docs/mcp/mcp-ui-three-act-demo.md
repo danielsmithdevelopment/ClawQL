@@ -32,7 +32,7 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 3. **Optional (Protocol Fabric):** when Chromium WebMCP + CDP is available, index the page as a ClawQL source:
    ```bash
    clawql sources add https://clawql.com --kind webmcp --name "ClawQL site"
-   # or the local click-to-claim mock:
+   # or the local click-to-claim WebMCP page:
    clawql sources add http://127.0.0.1:8765 --kind webmcp --name "Challenge coupon"
    ```
    Without CDP, Act 1 still works as page-local `registerTool` (see `WebMcpRegister.tsx` / `examples/mcp-api-adapter/cloudflare-claim/site.html`).

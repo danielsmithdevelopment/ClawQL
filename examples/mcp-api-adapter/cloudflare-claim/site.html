@@ -55,6 +55,7 @@
       font-size: .86rem;
       color: var(--muted);
       word-break: break-word;
+      white-space: pre-wrap;
     }
     code { color: var(--orange); }
   </style>
@@ -66,11 +67,10 @@
     <p>
       This page is the <strong>source of truth</strong>. It registers WebMCP tools on
       <code>document.modelContext</code>. Agents (and ClawQL via CDP) call those tools —
-      there is no parallel fake API.
+      there is no parallel fake API in Node.
     </p>
     <p>
-      ClawQL’s Protocol Fabric opens this page over CDP, lists
-      <code>document.modelContext.getTools()</code>, and
+      ClawQL opens this page over CDP, lists <code>getTools()</code>, and
       <code>/mcp-ui</code> turns the claim tool into a human button that still
       executes <em>here</em>.
     </p>
@@ -86,7 +86,6 @@
       const status = document.getElementById("status");
       const audit = document.getElementById("audit");
 
-      /** Page-owned coupon state — only mutated by WebMCP tool handlers. */
       const pageState = {
         revealed: false,
         claimed: false,
@@ -108,8 +107,8 @@
       }
 
       /**
-       * Minimal WebMCP polyfill when Chrome's native modelContext is absent.
-       * Still uses the same document.modelContext surface ClawQL CDP discovers.
+       * Minimal WebMCP polyfill when native modelContext is absent.
+       * Same document.modelContext surface ClawQL CDP discovers.
        */
       function ensureModelContext() {
         const existing = document.modelContext || navigator.modelContext;
@@ -119,9 +118,8 @@
         const tools = [];
         const polyfill = {
           registerTool(tool) {
-            const name = tool.name;
             tools.push(tool);
-            return { name };
+            return { name: tool.name };
           },
           async getTools() {
             return tools.slice();
@@ -161,7 +159,11 @@
           name: "cf_reveal_challenge",
           description:
             "Reveal a challenge coupon for agents. Unlocks cf_claim_coupon. Runs in the page.",
-          inputSchema: { type: "object", properties: {}, additionalProperties: false },
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
           async execute() {
             pageState.revealed = true;
             pageState.challengeId =
@@ -182,7 +184,11 @@
           name: "cf_claim_coupon",
           description:
             "Claim the challenge coupon. Same tool agents call — ClawQL /mcp-ui wraps this for humans.",
-          inputSchema: { type: "object", properties: {}, additionalProperties: false },
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
           async execute() {
             if (!pageState.revealed) {
               const err = {
@@ -194,7 +200,8 @@
             }
             if (!pageState.couponCode) {
               pageState.couponCode =
-                "CF-PAGE-" + Math.random().toString(16).slice(2, 8).toUpperCase();
+                "CF-PAGE-" +
+                Math.random().toString(16).slice(2, 8).toUpperCase();
             }
             pageState.claimed = true;
             const result = {
@@ -228,7 +235,6 @@
         toolDefs.map((t) => t.name).join(", ") +
         ". Calls must go through modelContext — page audit updates below.";
 
-      // Expose for CDP smoke probes
       window.__clawqlWebmcpPageState = pageState;
     })();
   </script>

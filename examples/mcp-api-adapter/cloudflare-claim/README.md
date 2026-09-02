@@ -13,7 +13,7 @@ does not mint codes.
 [ Chrome --remote-debugging-port ]
         ↑
 [ cloudflare-claim-server.mjs ]  thin MCP proxy (no page logic)
-        ↑ gRPC / Streamable HTTP
+        ↑ gRPC
 [ mcp-api-adapter /mcp-ui ]
   presets/cloudflare-claim → customHtml: claim-button
 ```
@@ -36,7 +36,7 @@ you already have a debugger at `CLAWQL_WEBMCP_CDP_URL`.
 Walk the preset: **Start** → reveal challenge → **Click to claim**. After claim,
 `/__webmcp/page-state` shows `calls` that prove execution hit the document.
 
-Smoke test (starts its own ports):
+Smoke test:
 
 ```bash
 node examples/mcp-api-adapter/cloudflare-claim/e2e-webmcp-bridge.mjs
@@ -45,7 +45,6 @@ node examples/mcp-api-adapter/cloudflare-claim/e2e-webmcp-bridge.mjs
 Optional Core indexing of the same page:
 
 ```bash
-# with CDP already up (the demo leaves Chrome on :9222 while running)
 clawql sources add http://127.0.0.1:8765 --kind webmcp --name "Challenge coupon"
 ```
 

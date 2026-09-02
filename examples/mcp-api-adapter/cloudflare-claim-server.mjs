@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Protocol Fabric demo: wrap a third-party page's WebMCP tools → /mcp-ui click-to-claim.
+ * Protocol Fabric demo: wrap a third-party page's WebMCP → /mcp-ui click-to-claim.
  *
  * Architecture (no Node-side coupon logic):
  *
@@ -15,7 +15,7 @@
  *   npm run build -w mcp-grpc-transport -w mcp-api-adapter
  *   node examples/mcp-api-adapter/cloudflare-claim-server.mjs
  *   open http://127.0.0.1:8093/mcp-ui/presets/cloudflare-claim
- *   open http://127.0.0.1:8765/   # third-party WebMCP page
+ *   open http://127.0.0.1:8765/
  */
 
 import http from "node:http";
@@ -82,9 +82,7 @@ function launchChrome({ cdpPort, userDataDir }) {
   return { child, chrome, args };
 }
 
-/**
- * MCP façade: every tool handler only calls bridge.callTool (page WebMCP).
- */
+/** MCP façade: every tool handler only calls bridge.callTool (page WebMCP). */
 function createPageWebmcpProxyServer(bridge) {
   const server = new McpServer({
     name: "webmcp-page-bridge",
@@ -197,12 +195,16 @@ async function main() {
   let chromeProc = null;
   let userDataDir = null;
   if (!skipChromeLaunch) {
-    userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "clawql-webmcp-chrome-"));
+    userDataDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "clawql-webmcp-chrome-")
+    );
     chromeProc = launchChrome({ cdpPort, userDataDir });
     console.log(`[chrome] launching ${chromeProc.chrome} CDP :${cdpPort}`);
     await waitForCdpHttp(cdpHttpUrl);
   } else {
-    console.log(`[chrome] WEBMCP_SKIP_CHROME_LAUNCH=1 — using existing CDP ${cdpHttpUrl}`);
+    console.log(
+      `[chrome] WEBMCP_SKIP_CHROME_LAUNCH=1 — using existing CDP ${cdpHttpUrl}`
+    );
     await waitForCdpHttp(cdpHttpUrl);
   }
 

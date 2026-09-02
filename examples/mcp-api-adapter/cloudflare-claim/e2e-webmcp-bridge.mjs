@@ -26,7 +26,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function waitFor(url, { attempts = 80, delayMs = 400 } = {}) {
+async function waitForUi(url, { attempts = 80, delayMs = 400 } = {}) {
   let last;
   for (let i = 0; i < attempts; i++) {
     try {
@@ -39,6 +39,33 @@ async function waitFor(url, { attempts = 80, delayMs = 400 } = {}) {
     await sleep(delayMs);
   }
   throw new Error(`Timeout waiting for ${url}: ${last?.message}`);
+}
+
+async function waitForBridgeReady(
+  siteBase,
+  { attempts = 90, delayMs = 500 } = {}
+) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(`${siteBase}/__webmcp/health`, {
+        signal: AbortSignal.timeout(3_000),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.bridgeReady && body.tools?.includes("cf_claim_coupon")) {
+          return body;
+        }
+        last = new Error("bridge not ready yet: " + JSON.stringify(body));
+      } else {
+        last = new Error(`HTTP ${res.status}`);
+      }
+    } catch (err) {
+      last = err instanceof Error ? err : new Error(String(err));
+    }
+    await sleep(delayMs);
+  }
+  throw new Error(`Timeout waiting for CDP bridge: ${last?.message}`);
 }
 
 async function main() {
@@ -58,15 +85,8 @@ async function main() {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  let out = "";
-  child.stdout.on("data", (c) => {
-    out += String(c);
-    process.stdout.write(c);
-  });
-  child.stderr.on("data", (c) => {
-    out += String(c);
-    process.stderr.write(c);
-  });
+  child.stdout.on("data", (c) => process.stdout.write(c));
+  child.stderr.on("data", (c) => process.stderr.write(c));
 
   const kill = () => {
     if (!child.killed) child.kill("SIGTERM");
@@ -81,7 +101,7 @@ async function main() {
     const siteBase = `http://127.0.0.1:${SITE_PORT}`;
     const uiBase = `http://127.0.0.1:${OPENAPI_PORT}`;
 
-    await waitFor(`${siteBase}/__webmcp/health`);
+    await waitForBridgeReady(siteBase);
     const health = await (await fetch(`${siteBase}/__webmcp/health`)).json();
     if (!health.bridgeReady) {
       throw new Error("bridge not ready: " + JSON.stringify(health));
@@ -90,34 +110,40 @@ async function main() {
       throw new Error("page tools missing claim: " + JSON.stringify(health));
     }
 
-    await waitFor(`${uiBase}/mcp-ui`);
+    await waitForUi(`${uiBase}/mcp-ui`);
 
-    const before = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
+    const before = await (
+      await fetch(`${siteBase}/__webmcp/page-state`)
+    ).json();
     if (before.state?.calls?.length) {
       throw new Error("expected empty page audit before claim");
     }
 
-    // Reveal via mcp-ui execute (same path claim button uses)
-    const reveal = await fetch(`${uiBase}/mcp-ui/execute/cf_reveal_challenge`, {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: "",
-      redirect: "manual",
-    });
-    if (![200, 302, 303].includes(reveal.status) && reveal.status !== 201) {
-      const body = await reveal.text();
-      // HTMX fragment responses are usually 200
-      if (reveal.status !== 200) {
-        throw new Error(`reveal failed HTTP ${reveal.status}: ${body.slice(0, 400)}`);
+    const reveal = await fetch(
+      `${uiBase}/mcp-ui/execute/cf_reveal_challenge`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: "",
+        redirect: "manual",
       }
+    );
+    if (![200, 201, 302, 303].includes(reveal.status)) {
+      throw new Error(
+        `reveal failed HTTP ${reveal.status}: ${(await reveal.text()).slice(0, 400)}`
+      );
     }
 
     const mid = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
     if (!mid.state?.revealed) {
-      throw new Error("page state not revealed after MCP execute: " + JSON.stringify(mid));
+      throw new Error(
+        "page state not revealed after MCP execute: " + JSON.stringify(mid)
+      );
     }
     if (!mid.state.calls?.some((c) => c.name === "cf_reveal_challenge")) {
-      throw new Error("page audit missing reveal call: " + JSON.stringify(mid));
+      throw new Error(
+        "page audit missing reveal call: " + JSON.stringify(mid)
+      );
     }
 
     const claim = await fetch(`${uiBase}/mcp-ui/execute/cf_claim_coupon`, {
@@ -126,34 +152,43 @@ async function main() {
       body: "",
     });
     if (claim.status !== 200) {
-      throw new Error(`claim failed HTTP ${claim.status}: ${(await claim.text()).slice(0, 400)}`);
+      throw new Error(
+        `claim failed HTTP ${claim.status}: ${(await claim.text()).slice(0, 400)}`
+      );
     }
     const claimHtml = await claim.text();
     if (!claimHtml.includes("CF-PAGE-") && !claimHtml.includes("couponCode")) {
-      // Accept either structured text in fragment
-      console.warn("claim HTML did not obviously include coupon; checking page state");
+      console.warn(
+        "claim HTML did not obviously include coupon; checking page state"
+      );
     }
 
     const after = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
     if (!after.state?.claimed || !after.state?.couponCode) {
-      throw new Error("page did not claim via WebMCP: " + JSON.stringify(after));
+      throw new Error(
+        "page did not claim via WebMCP: " + JSON.stringify(after)
+      );
     }
     if (!String(after.state.couponCode).startsWith("CF-PAGE-")) {
       throw new Error(
-        "coupon must be minted on the page (CF-PAGE-*), got " + after.state.couponCode
+        "coupon must be minted on the page (CF-PAGE-*), got " +
+          after.state.couponCode
       );
     }
     if (!after.state.calls?.some((c) => c.name === "cf_claim_coupon")) {
-      throw new Error("page audit missing claim call: " + JSON.stringify(after));
+      throw new Error(
+        "page audit missing claim call: " + JSON.stringify(after)
+      );
     }
 
-    // Preset landing still works
     const landing = await fetch(`${uiBase}/mcp-ui/presets/cloudflare-claim`);
     if (!landing.ok) {
       throw new Error(`preset landing HTTP ${landing.status}`);
     }
 
-    console.log("\nE2E OK — mcp-ui execute hit document.modelContext on the page");
+    console.log(
+      "\nE2E OK — mcp-ui execute hit document.modelContext on the page"
+    );
     console.log(JSON.stringify(after.state, null, 2));
   } finally {
     kill();

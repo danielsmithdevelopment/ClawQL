@@ -4,8 +4,6 @@
  *
  * Does NOT reimplement page tools. tools/list and tools/call go through
  * Chrome CDP → document.modelContext.getTools() / executeTool().
- *
- * Used by cloudflare-claim-server.mjs (in-process) or as a standalone helper.
  */
 import { randomUUID } from "node:crypto";
 
@@ -22,7 +20,10 @@ export async function resolveCdpWebSocketUrl(cdpHttpUrl) {
   return body.webSocketDebuggerUrl;
 }
 
-export async function waitForCdpHttp(cdpHttpUrl, { attempts = 60, delayMs = 250 } = {}) {
+export async function waitForCdpHttp(
+  cdpHttpUrl,
+  { attempts = 60, delayMs = 250 } = {}
+) {
   const base = cdpHttpUrl.replace(/\/$/, "");
   let lastErr;
   for (let i = 0; i < attempts; i++) {
@@ -80,7 +81,7 @@ export function connectCdp(wsUrl) {
   });
 }
 
-const DISCOVER_EXPR = `(!async function(){
+const DISCOVER_EXPR = `(async () => {
   const mc = document.modelContext || navigator.modelContext;
   if (!mc || typeof mc.getTools !== "function") {
     return { ok: false, error: "document.modelContext.getTools unavailable", tools: [] };
@@ -96,7 +97,7 @@ const DISCOVER_EXPR = `(!async function(){
   };
 })()`;
 
-const PAGE_STATE_EXPR = `(!async function(){
+const PAGE_STATE_EXPR = `(async () => {
   const s = window.__clawqlWebmcpPageState;
   if (!s) return { ok: false, error: "window.__clawqlWebmcpPageState missing" };
   return {
@@ -114,7 +115,7 @@ const PAGE_STATE_EXPR = `(!async function(){
 function executeExpr(toolName, args) {
   const nameJson = JSON.stringify(toolName);
   const argsJson = JSON.stringify(args ?? {});
-  return `(!async function(){
+  return `(async () => {
   const mc = document.modelContext || navigator.modelContext;
   if (!mc?.getTools || !mc?.executeTool) {
     throw new Error("document.modelContext.executeTool unavailable");
@@ -174,9 +175,12 @@ export async function openWebmcpPageBridge({
       returnByValue: true,
     });
     if (evaluated.exceptionDetails) {
-      throw new Error(
-        evaluated.exceptionDetails.text ?? "WebMCP discovery threw"
-      );
+      const detail = evaluated.exceptionDetails;
+      const msg =
+        detail.exception?.description ||
+        detail.text ||
+        "WebMCP discovery threw";
+      throw new Error(msg);
     }
     const value = evaluated.result?.value;
     if (!value?.ok) {
