@@ -28,6 +28,15 @@ const TEMPLATES: Record<string, McpUiTemplate> = {
     },
     resultKind: "search",
   },
+  docs_search: {
+    id: "docs_search",
+    primary: ["query", "limit"],
+    defaults: { limit: 6 },
+    hints: {
+      query: "Keywords across curated docs snippets — e.g. mcp-ui, celld, memory.",
+    },
+    resultKind: "search",
+  },
   memory_recall: {
     id: "memory_recall",
     primary: ["query", "limit"],
@@ -167,7 +176,10 @@ export function formHintsForTool(
 }
 
 export function resultKindForTool(toolName: string): McpUiResultKind {
-  return TEMPLATES[toolName]?.resultKind ?? "json";
+  const explicit = TEMPLATES[toolName]?.resultKind;
+  if (explicit) return explicit;
+  if (/(^|_)search$/i.test(toolName) || /search_/i.test(toolName)) return "search";
+  return "json";
 }
 
 export function listMcpUiTemplates(): McpUiTemplate[] {

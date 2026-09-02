@@ -325,6 +325,66 @@ const MCP_UI_STYLES = `
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+    gap: 0.75rem;
+    margin: 0.35rem 0 0.5rem;
+  }
+  .result-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: linear-gradient(165deg, rgba(61, 214, 198, 0.08), rgba(255,255,255,0.02) 42%, var(--surface));
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  }
+  .result-card__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .result-card__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .result-card__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .result-card__path {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .result-card__path code {
+    font-size: 0.75rem;
+    color: var(--accent, #3dd6c6);
+  }
+  .result-card__snippet {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .pill--method {
+    background: rgba(61, 214, 198, 0.18);
+    color: var(--accent, #3dd6c6);
+  }
+  .pill--score {
+    background: rgba(250, 204, 21, 0.14);
+  }
+
   .result-list {
     margin: 0;
     padding-left: 1.15rem;

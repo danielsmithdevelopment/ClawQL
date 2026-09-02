@@ -28,19 +28,52 @@ const HUB_ROUTES = [
 
 const DOC_HITS = [
   {
-    path: "/learn/streams/lab-5b",
-    title: "Lab 5b — celld Helm",
-    snippet: "Deploy celld with the Lab 5b Helm chart and verify Streams MCP fetch.",
-  },
-  {
     path: "/mcp/mcp-ui",
     title: "/mcp-ui — Swagger UI for MCP",
     snippet: "HTMX playground from inputSchema; presets scaffold views that are not static docs pages.",
+    kind: "guide",
   },
   {
     path: "/mcp/mcp-ui-three-act-demo",
     title: "Three-act demo",
     snippet: "WebMCP → custom /mcp-ui view → flamegraph. Act 2 is the Agent Lab preset.",
+    kind: "demo",
+  },
+  {
+    path: "/learn/streams/lab-5b",
+    title: "Lab 5b — celld Helm",
+    snippet: "Deploy celld with the Lab 5b Helm chart and verify Streams MCP fetch.",
+    kind: "lab",
+  },
+  {
+    path: "/learn/memory",
+    title: "Memory vault",
+    snippet: "memory_recall / memory_ingest against an Obsidian-compatible vault with OKF frontmatter.",
+    kind: "guide",
+  },
+  {
+    path: "/agent-setup",
+    title: "Agent setup",
+    snippet: "Wire Cursor / Claude / MCP clients to clawql-mcp without putting secrets in mcp.json.",
+    kind: "quickstart",
+  },
+  {
+    path: "/plugins",
+    title: "Plugin registry",
+    snippet: "Browse horizontal plugins — memory, documents, inference providers, and more.",
+    kind: "registry",
+  },
+  {
+    path: "/security/atr",
+    title: "ATR scopes",
+    snippet: "Capability tokens that gate which MCP tools an agent may call — including /mcp-ui execute.",
+    kind: "security",
+  },
+  {
+    path: "/mcp/mcp-api-adapter",
+    title: "MCP API Adapter",
+    snippet: "Seven surfaces from one catalog: OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui.",
+    kind: "guide",
   },
 ];
 
@@ -64,10 +97,10 @@ function createDocsAgentLabServer() {
           h.title.toLowerCase().includes(q) ||
           h.snippet.toLowerCase().includes(q) ||
           h.path.includes(q)
-      ).slice(0, limit ?? 5);
+      ).slice(0, limit ?? 8);
       const payload = {
         query,
-        hits: hits.length ? hits : DOC_HITS.slice(0, limit ?? 3),
+        hits: hits.length ? hits : DOC_HITS.slice(0, limit ?? 6),
       };
       return {
         content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],

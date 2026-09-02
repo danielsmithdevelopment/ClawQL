@@ -247,8 +247,9 @@ describe("mcp-ui-templates", () => {
 });
 
 describe("mcp-ui-results", () => {
-  it("renders search hits as a list", () => {
+  it("renders search hits as a card grid", () => {
     const html = renderResultContent("search", {
+      query: "repos",
       results: [
         {
           id: "repos/list",
@@ -260,9 +261,35 @@ describe("mcp-ui-results", () => {
         },
       ],
     });
+    expect(html).toContain("result-grid");
+    expect(html).toContain("result-card");
     expect(html).toContain("repos/list");
     expect(html).toContain("github");
     expect(html).toContain("Raw JSON");
+  });
+
+  it("renders docs_search hits array as cards", () => {
+    const html = renderResultContent("search", {
+      query: "mcp-ui",
+      hits: [
+        {
+          path: "/mcp/mcp-ui",
+          title: "/mcp-ui — Swagger UI for MCP",
+          snippet: "HTMX playground from inputSchema.",
+          kind: "guide",
+        },
+        {
+          path: "/mcp/mcp-ui-three-act-demo",
+          title: "Three-act demo",
+          snippet: "WebMCP → custom /mcp-ui view → flamegraph.",
+          kind: "demo",
+        },
+      ],
+    });
+    expect(html).toContain("result-grid");
+    expect(html).toContain("/mcp-ui — Swagger UI for MCP");
+    expect(html).toContain("Three-act demo");
+    expect(html).toContain("guide");
   });
 
   it("renders memory recall hits", () => {
