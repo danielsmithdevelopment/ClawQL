@@ -37,6 +37,13 @@ export default function ClawqlStreamsPage() {
           >
             docs/streams/clawql-streams.md
           </a>
+          ,{' '}
+          <a
+            href="/learn/streams-getting-started"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>
           . Complements{' '}
           <a
             href="/streams/clawql-durable-objects"

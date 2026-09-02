@@ -1,0 +1,134 @@
+import { Note } from '@/components/mdx'
+
+# Optional MCP tools
+
+**ClawQL Core** always registers **`search`**, **`execute`**, **`audit`**, and **`cache`**. Everything in this guide is **optional** — enable per tool with **`CLAWQL_ENABLE_*`** env vars. Use this page to pick the right tool, compose workflows, and jump to deep-dive Learn modules. {{ className: 'lead' }}
+
+**Hub index:** [Optional tools reference](/reference/optional-tools) · **Full API:** [MCP tools](/tools) · **Feature tiers:** [Configuration](/spec-configuration)
+
+## Core vs optional (quick map)
+
+| Always on (Core)    | Optional (this guide)                                            |
+| ------------------- | ---------------------------------------------------------------- |
+| `search`, `execute` | `schedule`, `notify`, `sandbox_exec`, `knowledge_search_onyx`, … |
+| `audit`, `cache`    | `memory_ingest` / `memory_recall` (default on — see Memory)      |
+|                     | `hitl_enqueue_label_studio` (planned full plugin)                |
+
+`audit` and `cache` are Core but often taught here because operators enable **Loki**, **schedule**, and **vault** workflows around them.
+
+## Enablement cheat sheet
+
+| Tool / area          | Enable                                                                   | Prerequisites                                  |
+| -------------------- | ------------------------------------------------------------------------ | ---------------------------------------------- |
+| **Schedule**         | `CLAWQL_ENABLE_SCHEDULE=1`                                               | SQLite job store; URL allowlist for synthetics |
+| **Notify**           | `CLAWQL_ENABLE_NOTIFY=1`                                                 | Slack in merged spec / `CLAWQL_SLACK_*`        |
+| **Schedule → Slack** | `CLAWQL_SCHEDULE_NOTIFY_CHANNEL` + `CLAWQL_SCHEDULE_NOTIFY_ON_FAILURE=1` | Notify enabled                                 |
+| **Onyx search**      | `CLAWQL_ENABLE_ONYX=1`                                                   | Enterprise Onyx index + ACL                    |
+| **Sandbox**          | `CLAWQL_ENABLE_SANDBOX=1`                                                | Kata / Docker / Seatbelt harness               |
+| **Memory**           | default on; disable with plugin config                                   | Obsidian vault path                            |
+| **Audit → Loki**     | `CLAWQL_LOKI_PUSH_URL`                                                   | Loki push endpoint (no extra tool flag)        |
+
+Restart the MCP server after changing flags. Confirm with [Tools](/tools) or `search` for the tool name in your client's tool list.
+
+## Pick the right tool
+
+| Your goal                     | Start here                      | Deep dive                                                    |
+| ----------------------------- | ------------------------------- | ------------------------------------------------------------ |
+| Scratch state between chats   | **`cache`**                     | [Cache handoff](/learn/cache-handoff-between-chats)          |
+| Durable notes + graph recall  | **`memory_*`**                  | [clawql-memory](/learn/memory)                               |
+| Live session breadcrumbs      | **`audit`**                     | [Audit & observability](/learn/audit-tool-and-observability) |
+| Cron / HTTP synthetics        | **`schedule`**                  | [Schedule & notify](/learn/schedule-notify-workflows)        |
+| Slack milestones / paging     | **`notify`**                    | [Schedule & notify](/learn/schedule-notify-workflows)        |
+| Enterprise semantic search    | **`knowledge_search_onyx`**     | [Onyx search](/learn/knowledge-search-onyx)                  |
+| Run untrusted code safely     | **`sandbox_exec`**              | [Sandbox exec](/learn/sandbox-exec)                          |
+| Human review queues           | **HITL / Label Studio**         | [HITL — Label Studio](/hitl-label-studio)                    |
+| Import URLs/Markdown to vault | **`ingest_external_knowledge`** | [External ingest](/learn/external-ingest-knowledge)          |
+
+## Composed workflows (recipes)
+
+### 1. Probe → page humans
+
+```text
+schedule (synthetic) ──fail──► built-in Slack notify OR agent notify
+```
+
+1. `CLAWQL_ENABLE_SCHEDULE=1` + `CLAWQL_ENABLE_NOTIFY=1`
+2. Create job with `schedule` `create`; validate with `trigger` + `dry_run: true`
+3. Set `CLAWQL_SCHEDULE_NOTIFY_ON_FAILURE=1` for automatic posts, or call **`notify`** yourself for richer Block Kit messages
+
+Details: [Schedule & notify workflows](/learn/schedule-notify-workflows).
+
+### 2. Execute → audit → vault
+
+```text
+execute ──► audit.append ──► memory_ingest (summary)
+```
+
+Use **`correlationId`** in `audit` to thread a multi-step run. For compliance-grade trails, add [Audit Trail](/audit) WORM — the in-process `audit` ring is **not** legal hold by itself.
+
+### 3. Search → execute → cache handoff
+
+```text
+search ──► execute ──► cache.set ──► (new chat) cache.get
+```
+
+Keeps planning context small; see [Cache handoff](/learn/cache-handoff-between-chats).
+
+### 4. Onyx evidence → execute
+
+```text
+knowledge_search_onyx ──► execute (with citations in summary)
+```
+
+Ground regulated workflows before mutating upstream systems: [Onyx enterprise search](/learn/knowledge-search-onyx).
+
+### 5. Sandbox → notify on failure
+
+```text
+sandbox_exec ──► notify (thread_ts for incident channel)
+```
+
+Pair with [Panguard enforcement](/learn/panguard-mcp-enforcement) so only approved tools run in production.
+
+## Observability stack (optional tools + platform)
+
+| Layer     | Tool / path                                                        |
+| --------- | ------------------------------------------------------------------ |
+| Metrics   | `GET /metrics` — `clawql_audit_*` counters                         |
+| Logs      | `CLAWQL_LOKI_PUSH_URL` on `audit.append`                           |
+| Traces    | OTel → Tempo ([Docker Desktop lab](/docker-desktop-observability)) |
+| Immutable | [Audit Trail](/audit) WORM (separate from `audit` ring)            |
+
+Walkthrough: [Audit tool & observability](/learn/audit-tool-and-observability).
+
+## Safety habits
+
+- **Redact** secrets in `audit.summary` and `notify.text` — exports are production data.
+- **Allowlist** synthetic probe URLs (`CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES`).
+- **Fail closed** on sandbox and Panguard paths — do not disable enforcement to “unblock” agents.
+- Prefer **`dry_run: true`** on schedule and external ingest before live jobs.
+
+## Troubleshooting
+
+| Symptom                          | Fix                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| Tool missing in client           | Env flag off or wrong MCP process — check [Configuration](/spec-configuration) |
+| `notify` auth error              | Slack token / merged spec provider                                             |
+| Schedule never fires             | Worker poll `CLAWQL_SCHEDULE_POLL_MS`; job `enabled`                           |
+| Onyx empty results               | ACL + index connector; `CLAWQL_ENABLE_ONYX=1`                                  |
+| Audit buffer empty after restart | Expected — enable Loki or `memory_ingest` for durability                       |
+
+## Module index (deep dives)
+
+- [Cache handoff between chats](/learn/cache-handoff-between-chats)
+- [Schedule & notify workflows](/learn/schedule-notify-workflows)
+- [Audit tool & observability](/learn/audit-tool-and-observability)
+- [Onyx enterprise search](/learn/knowledge-search-onyx)
+- [Sandbox exec](/learn/sandbox-exec)
+- [clawql-memory (Memory 2.0)](/learn/memory)
+- [External ingest & knowledge lake](/learn/external-ingest-knowledge)
+
+<Note>
+  Parameter-level reference stays on [Tools](/tools). These Learn pages teach
+  **workflows**, not duplicate OpenAPI-style tool docs.
+</Note>
