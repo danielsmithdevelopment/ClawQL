@@ -50,6 +50,7 @@ Read top-to-bottom once, then dive into the runtime that matches your deployment
 ### 3. [celld integration](/streams/clawql-celld)
 
 - Workers API parity path (Apache 2.0, Deno celld)
+- **Baseline: celld v0.4.0** — `celld dev`, KV/Queues/R2 bindings, versioned peer tunnel
 - Bundle constraints (64 MiB, no `child_process`, `setAlarm` not `setInterval`)
 - **LTX bucket = WORM trail** on the celld path
 
@@ -304,6 +305,85 @@ export CLAWQL_ENABLE_AUDIT=1
 
 After each synthetic run, agents (or the bridge in Lab 3) append **`audit`** entries with **`job_id`**, correlation ids, and runbook links. See [Audit tool & observability](/learn/audit-tool-and-observability).
 
+### Lab 5 — celld v0.4.0 local smoke (~25 min)
+
+**Goal:** Run the upstream Durable Object counter on **celld v0.4.0** with `celld dev` — the same Workers/DO surface ClawQL Streams targets for `GatewayDO` / `SubscriptionDO` / `AgentSessionDO` cells ([celld integration §0](/streams/clawql-celld#0-version-baseline--celld-v040)).
+
+**Prerequisites:** `git`, `curl`, `esbuild` on `PATH` ([celld deploy requirements](https://celld.dev/docs/#deploy-an-application)).
+
+**1 — Pin celld v0.4.0**
+
+```bash
+CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+celld --version
+# optional supply-chain check:
+gh attestation verify --repo denoland/celld
+```
+
+**Important:** v0.3.x and v0.4.x **cannot share a fleet**. If you already run v0.3 nodes, stop every node before upgrading ([release notes](https://github.com/denoland/celld/releases/tag/v0.4.0)).
+
+**2 — Start the counter example with `celld dev`**
+
+```bash
+git clone --depth 1 --branch v0.4.0 https://github.com/denoland/celld /tmp/celld-v040
+cd /tmp/celld-v040/examples/counter
+celld dev --port 9876
+```
+
+`celld dev` (new in v0.4.0) uses a local object store under `.celld/dev` — no Docker or cloud bucket. Add `.celld/` to `.gitignore` in your own Worker projects.
+
+**3 — Exercise the Durable Object**
+
+In another terminal:
+
+```bash
+curl -s http://127.0.0.1:9876/
+curl -s http://127.0.0.1:9876/increment
+curl -s http://127.0.0.1:9876/increment
+curl -s http://127.0.0.1:9876/
+```
+
+Each increment wakes a named cell, persists SQLite state, and survives `celld dev` restarts (state lives in `.celld/dev` until you delete it).
+
+**4 — Map to ClawQL Streams**
+
+| Counter example | ClawQL Streams cell |
+| --------------- | ------------------- |
+| Named DO + SQLite counter | `SubscriptionDO` config + `worm:*` audit rows |
+| HTTP route → DO stub | `GatewayDO` webhook ingress |
+| Persistent state across restarts | LTX → fleet bucket on production deploy (Lab 5b) |
+| `setAlarm` (not `setInterval`) | Cron / reconnect / api_poll sources ([celld §3](/streams/clawql-celld)) |
+
+Model calls in a real Streams bundle still use **`fetch()` to clawql-inference** — never subprocess — and stay under the **64 MiB** bundle cap.
+
+**5 — Optional: fleet deploy smoke**
+
+When you have S3-compatible credentials (R2, GCS, or S3):
+
+```bash
+export CELLD_BUCKET=s3://clawql-streams-state
+export S3_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+export AWS_REGION=auto
+export AWS_ACCESS_KEY_ID=…
+export AWS_SECRET_ACCESS_KEY=…
+
+cd /tmp/celld-v040/examples/counter
+celld deploy . --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT" --region "$AWS_REGION"
+celld --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT" --region "$AWS_REGION" \
+  --listen 127.0.0.1:8080 --advertise 127.0.0.1:8081
+```
+
+Verify readiness on the **v0.4.0** health path (not `/__celld/health`):
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8080/.well-known/celld/health
+celld diagnose --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT" --region "$AWS_REGION"
+celld cell list --bucket "$CELLD_BUCKET" --json | head
+```
+
+**Success:** Counter increments locally; you understand `celld dev` vs fleet deploy, v0.4.0 health probes, and how DO naming maps to Streams sidecars. Next: embed `clawql-streams` + `clawql-core` in a Wrangler bundle ([celld integration §5](/streams/clawql-celld)) and run `clawql streams celld bundle-check` when that CLI ships.
+
 ## K8s operator sketch
 
 ```bash
@@ -339,6 +419,8 @@ Streams v0.2 **adopts celld** for the JS/Workers path; **cellrt** is the long-ru
 | Cell bundle too large          | 64 MiB Workers limit — tree-shake, keep inference out-of-process        |
 | Model calls fail in cell       | Must use `fetch()` to `clawql-inference`, not subprocess                |
 | WORM gaps on celld             | LTX → bucket path; verify bucket replication config                     |
+| Upgrading celld fleet          | v0.3 → v0.4 requires **full stop** — no rolling update                  |
+| Health probe 404 after upgrade | Use `/.well-known/celld/health` (v0.4.0+), not `/__celld/health`        |
 | Regulator needs offline proof  | TEE air-gap + [QR transport](/streams/clawql-qr-stream-transport) chain |
 
 ## What to read next

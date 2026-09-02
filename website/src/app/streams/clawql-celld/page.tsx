@@ -45,7 +45,7 @@ export default function ClawqlCelldPage() {
           >
             Learn walkthrough
           </a>{' '}
-          (§3 celld reading order; Labs 1–3 for schedule + NATS today).
+          (§3 celld v0.4.0 baseline; Lab 5 local smoke; Labs 1–3 for schedule + NATS today).
           Companion to{' '}
           <a
             href="/streams/clawql-streams"
