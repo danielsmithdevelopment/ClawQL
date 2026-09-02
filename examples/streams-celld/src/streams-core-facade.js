@@ -129,3 +129,13 @@ export async function verifyAuditChain() {
   const text = result.content?.[0]?.text;
   return text ? JSON.parse(text) : { ok: false };
 }
+
+/**
+ * Snapshot the in-process hash-chained audit ring (for DO LTX flush).
+ * @param {number} [limit]
+ */
+export async function listAuditEntries(limit = 50) {
+  const result = await runAuditOperation({ operation: "list", limit });
+  const text = result.content?.[0]?.text;
+  return text ? JSON.parse(text) : { ok: false, entries: [] };
+}

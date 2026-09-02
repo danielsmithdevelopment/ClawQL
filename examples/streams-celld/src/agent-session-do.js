@@ -7,6 +7,7 @@ import {
   appendSessionCreatedAudit,
   cacheSessionMeta,
   executeViaMcp,
+  listAuditEntries,
   memoryIngestViaMcp,
   memoryRecallViaMcp,
   searchViaMcp,
@@ -34,6 +35,47 @@ function resolveInferenceUrl(env) {
     (env.INFERENCE_URL || env.CLAWQL_STREAMS_INFERENCE_URL || "").trim() ||
     undefined
   );
+}
+
+/**
+ * Flush the isolate-local clawql-core audit ring into DO durable storage (LTX).
+ * Snapshot at audit:ring; per-seq WORM rows at audit:seq:{n}.
+ * @param {{ storage: { put: (k: string, v: unknown) => Promise<void> } }} state
+ * @param {{ verify?: unknown, eventId: string, startedAt: number }} ctx
+ */
+async function persistAuditRingToLtx(state, ctx) {
+  const listed = await listAuditEntries(50);
+  const entries = Array.isArray(listed?.entries) ? listed.entries : [];
+  const snapshot = {
+    ok: listed?.ok === true,
+    total: listed?.total ?? entries.length,
+    maxEntries: listed?.maxEntries,
+    verify: ctx.verify ?? null,
+    eventId: ctx.eventId,
+    flushedAt: Date.now(),
+    startedAt: ctx.startedAt,
+    entries,
+  };
+  await state.storage.put("audit:ring", snapshot);
+  const seqKeys = [];
+  for (const entry of entries) {
+    const seq = entry?.seq;
+    if (typeof seq !== "number") continue;
+    const key = `audit:seq:${seq}`;
+    await state.storage.put(key, {
+      ...entry,
+      eventId: ctx.eventId,
+      flushedAt: snapshot.flushedAt,
+    });
+    seqKeys.push(key);
+  }
+  return {
+    ok: true,
+    snapshotKey: "audit:ring",
+    seqKeys,
+    entryCount: entries.length,
+    headHash: entries.length ? entries[entries.length - 1]?.hash : null,
+  };
 }
 
 export class AgentSessionDO {
@@ -81,6 +123,7 @@ export class AgentSessionDO {
       let audit = { ok: false };
       let cache = { ok: false };
       let auditVerify = { ok: false };
+      let auditPersisted = { ok: false };
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -90,6 +133,11 @@ export class AgentSessionDO {
         });
         cache = await cacheSessionMeta(eventId, meta);
         auditVerify = await verifyAuditChain();
+        auditPersisted = await persistAuditRingToLtx(this.state, {
+          verify: auditVerify,
+          eventId,
+          startedAt,
+        });
       } catch (err) {
         audit = {
           ok: false,
@@ -172,12 +220,14 @@ export class AgentSessionDO {
           wormKey: `worm:${startedAt}`,
           clawqlCore: audit,
           verify: auditVerify,
+          ltx: auditPersisted,
         },
         cache,
         tools,
         core: {
           package: "clawql-core/streams-slim",
           inProcess: ["audit", "cache", "hash-chain"],
+          durable: ["audit:ring", "audit:seq:*", "worm:*"],
           outOfProcess,
           deferred,
           mcpUrlConfigured: Boolean(mcp.url),
@@ -187,6 +237,11 @@ export class AgentSessionDO {
     }
 
     const meta = await this.state.storage.get("session_meta");
-    return Response.json({ do: "AgentSessionDO", session: meta ?? null });
+    const auditRing = await this.state.storage.get("audit:ring");
+    return Response.json({
+      do: "AgentSessionDO",
+      session: meta ?? null,
+      auditRing: auditRing ?? null,
+    });
   }
 }

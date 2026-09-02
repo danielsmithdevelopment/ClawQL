@@ -200,6 +200,8 @@ Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and w
 | `tool_calls`      | tool name, args hash, ATR result                                              |
 | `export_status`   | pending / flushed / failed                                                    |
 | `worm:*`          | append-only forensic trail                                                    |
+| `audit:ring`      | latest isolate hash-chain snapshot (flushed on spawn)                         |
+| `audit:seq:\{n\}` | per-seq WORM rows from the clawql-core audit ring                             |
 
 ---
 
@@ -220,7 +222,9 @@ celld deploy (esbuild)
 
 **Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /\{tool\}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 
-**Still deferred:** offline Workers-safe `clawql-api` slim; durable isolate audit ring → DO LTX (WORM rows already use `storage.put`).
+**Durable audit:** after each spawn, the isolate hash-chain is flushed to DO storage (`audit:ring` snapshot + `audit:seq:\{n\}` WORM rows) so LTX survives isolate restarts (alongside existing `worm:*` DO_CREATED rows).
+
+**Still deferred:** offline Workers-safe `clawql-api` slim.
 
 **Provider specs:** ship a **slim default set** in the bundle; load additional OpenAPI/GraphQL specs via `fetch` into SQLite on first use or at subscription create — do not embed full enterprise catalogs in env.
 

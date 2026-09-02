@@ -86,5 +86,8 @@ echo "$RESP" | grep -q 'memory_\*' || fail "expected memory_* in core surface li
 echo "$RESP" | grep -q 'mcp-api-adapter-rest' || fail "expected adapter REST transport"
 echo "$RESP" | grep -q '"source":"mock-adapter"' || fail "expected mock-adapter search payload"
 echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUrlConfigured true"
+echo "$RESP" | grep -q '"snapshotKey":"audit:ring"' || fail "expected audit LTX snapshotKey"
+echo "$RESP" | grep -q 'audit:seq:' || fail "expected audit:seq WORM keys"
+echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
 
 echo "smoke: PASS"
