@@ -42,8 +42,8 @@ export const loadNetworkState = (home?: string): Effect.Effect<NetworkState | nu
       const raw = await readFile(path, "utf8");
       return JSON.parse(raw) as NetworkState;
     },
-    catch: () => null,
-  });
+    catch: (cause) => cause,
+  }).pipe(Effect.catchAll(() => Effect.succeed(null)));
 
 export const saveNetworkState = (state: NetworkState, home?: string): Effect.Effect<void, never> =>
   Effect.tryPromise({
@@ -55,5 +55,5 @@ export const saveNetworkState = (state: NetworkState, home?: string): Effect.Eff
         mode: 0o600,
       });
     },
-    catch: () => undefined,
-  });
+    catch: (cause) => cause,
+  }).pipe(Effect.catchAll(() => Effect.void));
