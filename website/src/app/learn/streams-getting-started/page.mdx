@@ -348,12 +348,12 @@ Each increment wakes a named cell, persists SQLite state, and survives `celld de
 
 **4 — Map to ClawQL Streams**
 
-| Counter example | ClawQL Streams cell |
-| --------------- | ------------------- |
-| Named DO + SQLite counter | `SubscriptionDO` config + `worm:*` audit rows |
-| HTTP route → DO stub | `GatewayDO` webhook ingress |
-| Persistent state across restarts | LTX → fleet bucket on production deploy (Lab 5b) |
-| `setAlarm` (not `setInterval`) | Cron / reconnect / api_poll sources ([celld §3](/streams/clawql-celld)) |
+| Counter example                  | ClawQL Streams cell                                                     |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| Named DO + SQLite counter        | `SubscriptionDO` config + `worm:*` audit rows                           |
+| HTTP route → DO stub             | `GatewayDO` webhook ingress                                             |
+| Persistent state across restarts | LTX → fleet bucket on production deploy (Lab 5b)                        |
+| `setAlarm` (not `setInterval`)   | Cron / reconnect / api_poll sources ([celld §3](/streams/clawql-celld)) |
 
 Model calls in a real Streams bundle still use **`fetch()` to clawql-inference** — never subprocess — and stay under the **64 MiB** bundle cap.
 
