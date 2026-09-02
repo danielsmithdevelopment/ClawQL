@@ -1,7 +1,9 @@
 # ClawQL — Contributor Technical Specification
 
-**For developers building verticals, providers, and extensions · May 2026**
+**For developers building verticals, providers, and extensions · May 2026 (contracts updated for 8.0.0)**
 Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
+
+> **8.0.0:** Phase-2 `Plugin.onRegister` / `beforeCallTool` is **removed**. Author **`ProviderPlugin`** / **`StandaloneSkillPlugin`** (`tools` / `hooks`). See [Migrate to 8.0](../getting-started/migrate-to-8.0.md) and [clawql-core plugin architecture](../design/clawql-core-plugin-architecture.md). Sections below that still mention `onRegister` are **historical** until rewritten.
 
 ---
 
@@ -11,7 +13,7 @@ This document is a specification of contracts, not a getting-started guide. It a
 
 If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) ([Helm](../deployment/helm.md) or `npx clawql-mcp`). Come back here when you are ready to build something.
 
-**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](../../docs/design/clawql-plugin-model.md) and [implementation status](../../docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
+**Package extraction (phases 1–9) is on `main`.** Vertical contributions use the **`ProviderPlugin`** contract (`tools`, `hooks`, `requiredSpecs`) — see [Plugin model](../design/clawql-plugin-model.md), [clawql-core plugin architecture](../design/clawql-core-plugin-architecture.md), and [implementation status](../design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4.
 
 ### Required Familiarity
 

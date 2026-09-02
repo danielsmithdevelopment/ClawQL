@@ -131,7 +131,7 @@ Layer 0 (`clawql-release`) depends only on core utilities and produces bundles c
 
 **Shipped today**
 
-- Native and proxy plugins (`Plugin.onRegister`, `beforeCallTool` for Panguard)
+- `ProviderPlugin` / `StandaloneSkillPlugin` (`tools`, `hooks` — Panguard is hooks-only and opt-in); Phase-2 `Plugin.onRegister` / `beforeCallTool` removed in 8.0.0 ([migration](../getting-started/migrate-to-8.0.md))
 - OpenAPI, Discovery, GraphQL, gRPC, MCP, and CLI protocol execute paths
 - Custom sources from URL (`~/.ClawQL/sources.json`, 7.0)
 - `search()` / `execute()` via Effect `SearchService` / `ExecuteService`
@@ -148,7 +148,7 @@ Layer 0 (`clawql-release`) depends only on core utilities and produces bundles c
 
 All downstream calls (native or proxied) are designed to pass through the same security and auditing pipeline.
 
-**Horizontal plugins:** memory, documents, automation, sandbox, and ouroboros **register MCP tools via `Plugin.onRegister`** when composed — see [ClawQL plugin model](../design/clawql-plugin-model.md).
+**Horizontal plugins:** memory, documents, automation, sandbox, and ouroboros are **`ProviderPlugin`s that declare `tools`** when composed — see [ClawQL plugin model](../design/clawql-plugin-model.md).
 
 ---
 

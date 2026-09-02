@@ -34,7 +34,7 @@ npx -p clawql-mcp clawql doctor --smoke
 
 Provider tokens live in **`~/.ClawQL/vault/providers.json`** (same KV shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`** via **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
 
-Default install loads the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** only for every bundled vendor plus Google top-50 and AWS top-50.
+Default install loads an **empty provider catalog** — no bundled vendors until you opt in. Set **`CLAWQL_PROVIDER=default`** for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx), or **`CLAWQL_PROVIDER=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50.
 
 Restart Cursor or Claude Desktop after MCP config is written.
 
@@ -66,7 +66,8 @@ Goals:
 6. Confirm memory_ingest works: CLAWQL_OBSIDIAN_VAULT_PATH should be ~/.ClawQL after init.
 
 Important facts:
-- Default install: opinionated stack = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+- Default install: empty provider catalog (no bundled vendors until opt-in).
+- Opinionated stack (opt-in): CLAWQL_PROVIDER=default = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
 - Full bundle: CLAWQL_PROVIDER=all-providers.
 - MCP loads ~/.ClawQL/clawql.env + vault/providers.json at startup (no secrets in MCP JSON).
 - K8s: make local-k8s-up then clawql init --push-vault with VAULT_TOKEN set.

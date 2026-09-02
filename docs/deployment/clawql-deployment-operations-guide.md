@@ -133,7 +133,7 @@ cp .env.example .env   # set TIKA_BASE_URL, PAPERLESS_API_TOKEN, etc.
 npm run start:http
 ```
 
-When no spec env is set, the opinionated default stack loads (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Helm `provider: default` matches npm. Use `CLAWQL_PROVIDER=all-providers` or `helm --set provider=all-providers` for every bundled vendor plus Google top-50 and AWS top-50.
+When no spec env is set, the provider catalog is **empty by default** — no bundled vendors are loaded. Set `CLAWQL_PROVIDER=default` (Helm: `providers.pack: default`) for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). The Helm chart's `providers.pack` also defaults to `none`. Use `CLAWQL_PROVIDER=all-providers` or `helm --set providers.pack=all-providers` for every bundled vendor plus Google top-50 and AWS top-50.
 
 ---
 

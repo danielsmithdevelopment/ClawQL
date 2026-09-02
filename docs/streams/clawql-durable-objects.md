@@ -156,7 +156,7 @@ Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation
 
 ## 10. mcp-api-adapter on DOs
 
-Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. On Streams v0.2, **mcp-api-adapter is embedded in the DO/cell bundle** alongside clawql-core (64 MiB budget). gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §3.1 / §12 and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md).
+Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. **As shipped (Streams Lab 5b), `mcp-api-adapter` is not embedded in the DO/cell bundle** — cells reach it over `fetch(CLAWQL_MCP_ADAPTER_URL)`, keeping the Worker bundle well under the 64 MiB budget without needing `clawql-core` in-process either. gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §3.1 / §12 and [`mcp-api-adapter`](../mcp/mcp-api-adapter.md).
 
 ---
 
@@ -174,7 +174,7 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 
 ## 12. Open questions
 
-1. Bundle fit: full `clawql-core` + `mcp-api-adapter` under 64 MiB vs Streams-slim profile ([Streams §15](./clawql-streams.md)).
+1. Bundle fit: **resolved for the shipped path** — `streams-slim` + `fetch()` to the gateway/adapter is ~0.4 MiB, well under 64 MiB ([Streams §15](./clawql-streams.md)). Open: whether an offline Workers-safe `clawql-api` slim (with adapter logic in-process) is still worth pursuing, and whether it would still fit.
 2. Whether SubscriptionDO and AgentSessionDO share a DO namespace or separate script names for IAM (Cloudflare) / fleet isolation (celld).
 3. Miniflare maturity vs `celld diagnose` smoke for CI parity.
 4. Batching: one AgentSessionDO per batch window vs N DOs with a parent batch coordinator.

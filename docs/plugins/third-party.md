@@ -11,13 +11,13 @@ next:
 
 # Third-party plugins
 
-ClawQL is moving toward a **plugin registry** model where horizontal features ship as composable `Plugin` implementations. Third-party npm packages are on the roadmap — the public registration API is not frozen yet.
+ClawQL ships a **plugin registry** model where horizontal features are composable **`ProviderPlugin`** / **`StandaloneSkillPlugin`** implementations. Third-party npm packages are on the roadmap — the public registration API surface may still evolve, but the Phase-2 `Plugin.onRegister` interface itself is **removed as of 8.0.0** ([#999](https://github.com/danielsmithdevelopment/ClawQL/issues/999)); see [Migrate to 8.0](../getting-started/migrate-to-8.0.md).
 
 ## Target contract
 
 1. Publish **`clawql-yourname-feature`** depending on **`clawql-core`** + **`clawql-api`** (not `clawql-mcp` transport).
-2. Export a **`Plugin`** factory (eventually an Effect **`Layer`**).
-3. Implement **`onRegister`** to register MCP tools and declare **`requiredSpecs`**.
+2. Export a **`ProviderPlugin`** (Effect `Layer` under the hood) via **`defineProviderPlugin`** / **`defineRegisteringProviderPlugin`**.
+3. Declare **`tools`** and/or **`hooks`** to register MCP tools and enforcement, and declare **`requiredSpecs`**.
 4. Document the Operator toggle or **`CLAWQL_ENABLE_*`** flag.
 5. Open a PR to add a row to the [plugin registry](/plugins).
 

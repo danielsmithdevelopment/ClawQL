@@ -110,7 +110,7 @@ When Stage 1 is active:
 | **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for Linear         | Auto-routes to bundled **linear**; bad path ignored                                        |
 | **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for an unknown API | Path ignored; HTTP introspection attempted                                                 |
 | Custom provider env set but provider unreachable                            | Clear startup error — does not silently load unrelated providers                           |
-| No provider env set                                                         | Default stack loads (Cloudflare, GitHub, Slack, Linear, Notion, Onyx)                      |
+| No provider env set                                                         | Empty catalog (no bundled providers) — set `CLAWQL_PROVIDER=default` for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx) |
 
 ClawQL picks the best internal connection per provider (**gRPC → GraphQL → OpenAPI**). Users only need **`search`** and **`execute`**.
 

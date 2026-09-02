@@ -219,7 +219,7 @@ Full shape and examples: **`.env.example`**, **`docs/adr/0002-multi-protocol-sup
 
 ## `sandbox_exec`
 
-**Registration:** set **`CLAWQL_ENABLE_SANDBOX=1`** (`1` / `true` / `yes`) so **`listTools`** includes **`sandbox_exec`** (diagram **default off — opt in**). Registered by **`SandboxPlugin`** via `onRegister`. Without the flag, the tool is not registered.
+**Registration:** set **`CLAWQL_ENABLE_SANDBOX=1`** (`1` / `true` / `yes`) so **`listTools`** includes **`sandbox_exec`** (diagram **default off — opt in**). Registered by the sandbox **`ProviderPlugin`** (`tools`). Without the flag, the tool is not registered.
 
 Runs a snippet using **`CLAWQL_SANDBOX_BACKEND`** or **auto-selection** (same MCP tool shape):
 
