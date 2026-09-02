@@ -30,7 +30,21 @@ export default function ClawqlDurableObjectsPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Planned runtime — not yet shipped.</strong> Companion to{' '}
+          <strong>Planned runtime — not yet shipped.</strong> Generated from{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-durable-objects.md
+          </a>
+          ,{' '}
+          <a
+            href="/learn/streams-getting-started"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>{' '}
+          (§2 Durable Objects reading order). Companion to{' '}
           <a
             href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
@@ -50,13 +64,6 @@ export default function ClawqlDurableObjectsPage() {
             className="font-medium text-inherit underline underline-offset-2"
           >
             clawql-cellrt
-          </a>
-          . Source:{' '}
-          <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-durable-objects.md"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            docs/streams/clawql-durable-objects.md
           </a>
           .
         </Note>

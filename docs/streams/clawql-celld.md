@@ -1,5 +1,7 @@
 # ClawQL Celld Integration — Spec v0.1
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§3** celld reading order; Labs 1–3 for schedule + NATS today.
+
 **Status:** Draft · August 2026 · v0.1  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-inference`](../inference/clawql-inference.md) · `clawql-core` · `mcp-api-adapter`  

@@ -1,5 +1,7 @@
 # clawql-tee Air-Gap Audit Transport — Specification v0.1
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§5** TEE + air-gap reading order (with [clawql-tee](./clawql-tee.md)).
+
 **Status:** Draft · August 2026 · v0.1  
 **Component:** `cellrt-attestation` · `cellrt-storage` · `clawql-tee-verifier` (standalone)  
 **Depends on:** [`clawql-cellrt`](./clawql-cellrt.md) v0.1 · [`clawql-tee`](./clawql-tee.md) v0.1 · AMD SEV-SNP (or TDX) attestation
