@@ -1,6 +1,6 @@
 # OKF memory vault serialization (v0.2)
 
-ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://okf.io)–compatible Markdown: YAML frontmatter + body. Obsidian remains the human UI.
+ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)–compatible Markdown: YAML frontmatter + body. Obsidian remains the human UI.
 
 **Decision:** [ADR 0009](../adr/0009-enterprise-ontology.md) · [Enterprise Ontology](../architecture/enterprise-ontology.md) · Convergence context: [PragmaticVectors — Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)
 

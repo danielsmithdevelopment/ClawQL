@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T06:19:30.121Z",
+  "generatedAt": "2026-09-02T21:28:40.169Z",
   "sidebarHrefCount": 157,
-  "entryCount": 3,
+  "entryCount": 4,
   "groups": [
     {
       "name": "Legacy redirects",
@@ -26,6 +26,17 @@
           "description": "Redirects to /learn/schedule-notify-workflows",
           "group": "Legacy redirects",
           "redirectTo": "/learn/schedule-notify-workflows"
+        }
+      ]
+    },
+    {
+      "name": "Other",
+      "entries": [
+        {
+          "href": "/memory/okf",
+          "title": "OKF memory vault serialization (v0.2)",
+          "description": "",
+          "group": "Other"
         }
       ]
     }

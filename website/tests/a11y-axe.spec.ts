@@ -12,6 +12,7 @@ const routes = [
   '/inference/clawql-inference',
   '/plugins',
   '/learn',
+  '/memory/okf',
   '/security/best-practices',
   '/security/best-practices/input-validation-protocol-hardening',
 ] as const

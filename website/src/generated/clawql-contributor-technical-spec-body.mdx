@@ -1,7 +1,9 @@
 # ClawQL — Contributor Technical Specification
 
-**For developers building verticals, providers, and extensions · May 2026**
-Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/clawql/clawql)
+**For developers building verticals, providers, and extensions · May 2026 (contracts updated for 8.0.0)**
+Apache 2.0 / MIT · [github.com/clawql/clawql](https://github.com/danielsmithdevelopment/ClawQL)
+
+> **8.0.0:** Phase-2 `Plugin.onRegister` / `beforeCallTool` is **removed**. Author **`ProviderPlugin`** / **`StandaloneSkillPlugin`** (`tools` / `hooks`). See [Migrate to 8.0](/getting-started/migrate-to-8.0) and [clawql-core plugin architecture](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-core-plugin-architecture.md). Sections below that still mention `onRegister` are **historical** until rewritten.
 
 ---
 
@@ -11,7 +13,7 @@ This document is a specification of contracts, not a getting-started guide. It a
 
 If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide) ([Helm](/helm) or `npx clawql-mcp`). Come back here when you are ready to build something.
 
-**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](/reference/plugins) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
+**Package extraction (phases 1–9) is on `main`.** Vertical contributions use the **`ProviderPlugin`** contract (`tools`, `hooks`, `requiredSpecs`) — see [Plugin model](/plugins#plugin-model), [clawql-core plugin architecture](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-core-plugin-architecture.md), and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4.
 
 ### Required Familiarity
 
@@ -62,7 +64,7 @@ These are the interfaces every contributor must understand. They live in `clawql
 
 Every vertical and every major horizontal package implements `Plugin`. It is the registration contract between a package and `clawql-api`.
 
-**Horizontal packages (memory, documents, automation):** see [ClawQL plugin model](/reference/plugins) for how these become plugins that register their MCP tools (`memory_ingest`, `ingest_external_knowledge`, `schedule`, etc.) and how that differs from the current `tools.ts` layout.
+**Horizontal packages (memory, documents, automation):** see [ClawQL plugin model](/plugins#plugin-model) for how these become plugins that register their MCP tools (`memory_ingest`, `ingest_external_knowledge`, `schedule`, etc.) and how that differs from the current `tools.ts` layout.
 
 ```typescript
 export interface Plugin {

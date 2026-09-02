@@ -1,6 +1,8 @@
 # Modularization implementation status
 
-**As of July 2026** · Ground truth for package extraction ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
+> **⚠️ 8.0.0 update:** §11's npm version table is corrected — workspace `clawql-*` packages are **first publish `0.1.0`** (npm 404 today), not lockstep `8.0.0`; only the root **`clawql-mcp`** gateway stays on **`8.0.0`**. §6's Phase-2 `Plugin.onRegister` / `beforeCallTool` description is **historical** — current plugins are `ProviderPlugin` / `StandaloneSkillPlugin` (`tools` / `hooks`). See [Migrate to 8.0](../getting-started/migrate-to-8.0.md), [clawql-core plugin architecture](./clawql-core-plugin-architecture.md), and [workspace package versioning](../release/clawql-workspace-package-versioning.md).
+
+**As of July 2026, version table corrected for 8.0.0 (September 2026)** · Ground truth for package extraction ([#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306))
 
 > **Read this first** when you need **shipped vs planned** for the monorepo layout, MCP wiring, plugin roadmap, or Effect-TS migration. Vision docs ([`clawql-master-enablement-guide.md`](../vision/clawql-master-enablement-guide.md), [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md)) describe **target** architecture; this file describes **what is in the tree today**.
 
@@ -34,7 +36,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; all horizontal tiers register via **`pluginLayers`** (`makeMemoryLayer`, `makeDocumentsLayer`, `makeAutomationLayer`, `makeSandboxLayer`, `makeOuroborosLayer`) composed by `composeHorizontalPluginLayers()` in `src/compose-horizontal-plugin-layers.ts`. Domain packages remain largely **`async`/`await`** at IO edges.
 
-**Plugin ecosystem:** **Phase 2 shipped.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`** (includes **`hitl_enqueue_label_studio`** when enabled), **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** and Argo CD **`argocd`** ship in `AutomationPlugin` when enabled ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
+**Plugin ecosystem:** **Phase 2 shipped in 7.x** (historical `onRegister`). **As of 8.0.0**, horizontal packages install as **`ProviderPlugin`** / **`StandaloneSkillPlugin`** declaring **`tools`** / **`hooks`**. Argo Workflows **`workflow`** and Argo CD **`argocd`** ship in the automation provider when enabled ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)). Migration: [migrate-to-8.0.md](../getting-started/migrate-to-8.0.md).
 
 ---
 
@@ -195,10 +197,14 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 
 ## 6. Plugin ecosystem — shipped vs roadmap
 
-### 6.1 Shipped today
+### 6.1 Shipped today (8.0.0: `ProviderPlugin`)
+
+Plugins are **`ProviderPlugin`** / **`StandaloneSkillPlugin`** values from `clawql-core`, declaring `tools` and/or `hooks` (installed via `defineProviderPlugin` / `defineRegisteringProviderPlugin`). Hooks fire through **`fireHook`**.
+
+> **Historical (7.x, Phase 2):** the contract below (`Plugin.onRegister` / `beforeCallTool`) shipped in 7.x and is **removed in 8.0.0** ([#999](https://github.com/danielsmithdevelopment/ClawQL/issues/999), no compatibility bridge) — see [Migrate to 8.0](../getting-started/migrate-to-8.0.md).
 
 ```ts
-// packages/clawql-core — minimal contract
+// packages/clawql-core — 7.x (Phase 2, historical) minimal contract
 interface Plugin {
   id: string;
   version: string;
@@ -322,40 +328,42 @@ These vision items are **not** done by package extraction alone:
 
 ## 11. npm distribution (8.0.0 — separate packages)
 
-**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`8.0.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
+> **Corrected for 8.0.0 publish:** workspace `clawql-*` packages have **never been published** (`npm view <pkg>` returns 404) — in-tree `8.0.0` tracked the `clawql-mcp` major line, not independent semver. First publish is **`0.1.0`** for nearly all of them. Only the root **`clawql-mcp`** gateway is versioned `8.0.0`. See [workspace package versioning](../release/clawql-workspace-package-versioning.md) (canonical) for the full policy and exceptions.
 
-| Package                      | npm name            | Version     |
-| ---------------------------- | ------------------- | ----------- |
-| `packages/clawql-merkle`     | `clawql-merkle`     | 8.0.0       |
-| `packages/clawql-core`       | `clawql-core`       | 8.0.0       |
-| `packages/clawql-audit`      | `clawql-audit`      | 8.0.0       |
-| `packages/clawql-agents`     | `clawql-agents`     | 8.0.0       |
-| `packages/clawql-auth`       | `clawql-auth`       | 8.0.0       |
-| `packages/clawql-pageindex`  | `clawql-pageindex`  | 8.0.0 (MIT) |
-| `packages/clawql-codegraph`  | `clawql-codegraph`  | 8.0.0       |
-| `packages/clawql-api`        | `clawql-api`        | 8.0.0       |
-| `packages/clawql-memory`     | `clawql-memory`     | 8.0.0       |
-| `packages/clawql-ontology`   | `clawql-ontology`   | 8.0.0       |
-| `packages/clawql-documents`  | `clawql-documents`  | 8.0.0       |
-| `packages/clawql-web`        | `clawql-web`        | 8.0.0       |
-| `packages/clawql-data`       | `clawql-data`       | 8.0.0       |
-| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0       |
-| `packages/clawql-tee`        | `clawql-tee`        | 8.0.0       |
-| `packages/clawql-automation` | `clawql-automation` | 8.0.0       |
-| `packages/clawql-sandbox`    | `clawql-sandbox`    | 8.0.0       |
-| `packages/clawql-inference`  | `clawql-inference`  | 8.0.0       |
-| `packages/clawql-payments`   | `clawql-payments`   | 8.0.0       |
-| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 8.0.0       |
-| `packages/clawql-operator`   | `clawql-operator`   | 8.0.0       |
-| `packages/clawql-release`    | `clawql-release`    | 8.0.0       |
-| Root                         | `clawql-mcp`        | 8.0.0       |
+**Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** on its own semver (npm workspaces) — **not** lockstep with `clawql-mcp`. **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
+
+| Package                      | npm name            | Version                                           |
+| ---------------------------- | ------------------- | ------------------------------------------------- |
+| `packages/clawql-merkle`     | `clawql-merkle`     | 0.1.0                                             |
+| `packages/clawql-core`       | `clawql-core`       | 0.1.0                                             |
+| `packages/clawql-audit`      | `clawql-audit`      | 0.1.0                                             |
+| `packages/clawql-agents`     | `clawql-agents`     | 0.1.0                                             |
+| `packages/clawql-auth`       | `clawql-auth`       | 0.1.0                                             |
+| `packages/clawql-pageindex`  | `clawql-pageindex`  | 0.1.0 (MIT)                                       |
+| `packages/clawql-codegraph`  | `clawql-codegraph`  | 0.1.0                                             |
+| `packages/clawql-api`        | `clawql-api`        | 0.1.0                                             |
+| `packages/clawql-memory`     | `clawql-memory`     | 0.1.0                                             |
+| `packages/clawql-ontology`   | `clawql-ontology`   | 0.1.0                                             |
+| `packages/clawql-documents`  | `clawql-documents`  | 0.1.0                                             |
+| `packages/clawql-web`        | `clawql-web`        | 0.1.0                                             |
+| `packages/clawql-data`       | `clawql-data`       | 0.1.0                                             |
+| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0                                             |
+| `packages/clawql-tee`        | `clawql-tee`        | 0.1.0                                             |
+| `packages/clawql-automation` | `clawql-automation` | 0.1.0                                             |
+| `packages/clawql-sandbox`    | `clawql-sandbox`    | 0.1.0                                             |
+| `packages/clawql-inference`  | `clawql-inference`  | 0.1.0                                             |
+| `packages/clawql-payments`   | `clawql-payments`   | 0.1.0                                             |
+| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 0.1.1 (already published — do not reset to 0.1.0) |
+| `packages/clawql-operator`   | `clawql-operator`   | 0.1.0                                             |
+| `packages/clawql-release`    | `clawql-release`    | 0.1.0                                             |
+| Root                         | `clawql-mcp`        | 8.0.0                                             |
 
 **Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
 
 **CI smoke:** [`scripts/dev/test-npm-pack-install.sh`](../../scripts/dev/test-npm-pack-install.sh) packs all workspace packages, installs from tarballs, verifies module resolution.
 
-**Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
+**Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `panguard-mcp-bridge` first-publishes at `0.1.0` on independent cadence; `mcp-grpc-transport` is already published (`0.2.0` on npm) with a planned `1.0.0` major for the v8 line — not `0.1.0`.
 
-**Adjacent package:** `mcp-api-adapter` (`0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
+**Adjacent package:** `mcp-api-adapter` (`0.1.0` first publish) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
 
 **npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v8.0.0`** when ready — see [`docs/release/v8.0.0-checklist.md`](../release/v8.0.0-checklist.md).

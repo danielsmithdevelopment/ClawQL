@@ -72,7 +72,7 @@ When `ENABLE_GRPC=1` (and optionally `ENABLE_GRPC_REFLECTION=1` for `grpcurl lis
 ### What the Helm install sets
 
 - **Namespace:** `clawql`
-- **`CLAWQL_PROVIDER`:** `default` in `values-docker-desktop.yaml` (same opinionated stack as bare `npx clawql-mcp`). Use `all-providers` for full IDP + every bundled vendor + Google + AWS — see [Bundled specs](https://docs.clawql.com/bundled-specs). Override via `helm --set provider=...`.
+- **`providers.pack` / `CLAWQL_PROVIDER`:** chart default is **`none`** (empty catalog). Docker Desktop overlay may still leave `provider: ""`. Opt in with `helm --set providers.pack=default` (curated six) or `providers.pack=all-providers` for full IDP + every bundled vendor + Google + AWS — see [Bundled specs](/bundled-specs) and [Migrate to 8.0](/getting-started/migrate-to-8.0).
 - **Kube context:** the script prefers `docker-desktop` when present so you don't accidentally deploy to another cluster.
 
 Cold start can take a while while specs load. Wait until `/healthz` returns `{"status":"ok",...}` or the pod is Ready before the client connects.

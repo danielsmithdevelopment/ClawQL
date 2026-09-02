@@ -179,7 +179,7 @@ After retrieval + any local processing, post a short Slack update that reference
 ## Tests and maintenance
 
 - **Unit / handler tests:** [`src/knowledge-search-onyx.test.ts`](../src/knowledge-search-onyx.test.ts), [`src/server.test.ts`](../src/server.test.ts) (tool appears when **`CLAWQL_ENABLE_ONYX=1`**).
-- **Bundled spec:** minimal subset in **`providers/onyx/openapi.yaml`**. For the **full** Onyx OpenAPI from a running instance, set **`ONYX_BASE_URL`** (and optional Bearer token) and run **`npm run fetch-provider-specs`** — writes **`providers/onyx/openapi.yaml`** from **`/openapi.json`** or **`/openapi.yaml`** (may be very large; trim before committing if needed). See **`providers/README.md`**.
+- **Bundled spec:** minimal subset in **`providers/onyx/openapi.yaml`**. For the **full** Onyx OpenAPI from a running instance, set **`ONYX_BASE_URL`** (and optional Bearer token) and run **`npm run fetch-provider-specs`** — writes **`providers/onyx/openapi.yaml`** from **`/openapi.json`** or **`/openapi.yaml`** (may be very large; trim before committing if needed). See **[`providers/README.md`](../../providers/README.md)**.
 - **Deeper tests:** see **[backlog/archive/onyx-knowledge-tool-test-backlog.md](backlog/archive/onyx-knowledge-tool-test-backlog.md)** / **[#144](https://github.com/danielsmithdevelopment/ClawQL/issues/144)** (stdio **`callTool`** + fetch stub covered in **`src/server.test.ts`**).
 
 ---
@@ -187,6 +187,6 @@ After retrieval + any local processing, post a short Slack update that reference
 ## Related links
 
 - **[mcp-tools.md § `knowledge_search_onyx` (optional)](mcp-tools.md#knowledge_search_onyx-optional)** — matrix + env flags.
-- **[providers/README.md](../providers/README.md)** — **`onyx`** row, **`ONYX_BASE_URL`**, tokens.
+- **[providers/README.md](../../providers/README.md)** — **`onyx`** row, **`ONYX_BASE_URL`**, tokens.
 - **`.env.example`** — copy-paste env block.
 - **[#121](https://github.com/danielsmithdevelopment/ClawQL/issues/121)** — public site / matrix / topology docs umbrella.

@@ -10,7 +10,7 @@
 npx -p clawql-mcp clawql-mcp
 ```
 
-With no spec-related environment variables, ClawQL loads the **opinionated default stack**: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**.
+With no spec-related environment variables, ClawQL's provider catalog is **empty by default** — `search` / `execute` start with zero bundled providers loaded. Opt in to the bundled stack with **`CLAWQL_PROVIDER=default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx), or point at your own OpenAPI/Discovery spec.
 
 2. Configure your MCP client (Cursor / Claude Desktop) for stdio — see [deployment.md](./deployment.md) and [Agent setup](../getting-started/agent-setup.md).
 
@@ -54,11 +54,21 @@ See [local-provider-vault.md](../getting-started/local-provider-vault.md).
 
 ## TL;DR run modes
 
-### Default stack (recommended first run)
+### Empty catalog (default, no opt-in)
 
 ```bash
 npx -p clawql-mcp clawql-mcp
 ```
+
+No bundled providers are loaded until you opt in — see below, or supply your own spec via `CLAWQL_SPEC_PATH` / `CLAWQL_SPEC_URL` / `CLAWQL_DISCOVERY_URL`.
+
+### Opinionated default stack (opt-in)
+
+```bash
+CLAWQL_PROVIDER=default npx -p clawql-mcp clawql-mcp
+```
+
+Loads Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
 
 ### Full framework bundle (explicit opt-in)
 
@@ -66,13 +76,15 @@ npx -p clawql-mcp clawql-mcp
 CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 ```
 
-Literally every bundled vendor plus Google top-50 and AWS top-50. Helm **`clawql-mcp`** chart defaults here for full IDP/K8s stacks.
+Literally every bundled vendor plus Google top-50 and AWS top-50. The Helm **`clawql-mcp`** chart's `providers.pack` also defaults to **`none`** (empty catalog); set `providers.pack: default` or `providers.pack: all-providers` to opt in for K8s/IDP stacks.
 
-### Add Google or AWS to the default stack only
+### Add Google or AWS (requires an opted-in pack)
+
+`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` / `CLAWQL_ENABLE_CLOUDFLARE` **no longer select the provider stack** in 8.0. Opt in with `CLAWQL_PROVIDER=default` (or `all-providers`) / Helm `providers.pack`, then use instance `providers.enabled` or `CLAWQL_BUNDLED_PROVIDERS` for vendor lists. See [Migrate to 8.0](../getting-started/migrate-to-8.0.md).
 
 ```bash
-CLAWQL_ENABLE_GOOGLE=1 npx -p clawql-mcp clawql-mcp
-CLAWQL_ENABLE_AWS=1 npx -p clawql-mcp clawql-mcp
+CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
+# or: CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default","enabled":["github","google"]}}'
 ```
 
 ### Local OpenAPI file

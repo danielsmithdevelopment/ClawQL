@@ -97,7 +97,8 @@ export default function GettingStartedImmutableReleasesPage() {
 
       <AgentMarkdownDocBody
         path="/getting-started/immutable-releases"
-        className="flex-auto [&_h1]:sr-only"
+        className="flex-auto"
+        demoteH1="all"
       />
 
       <p className="not-prose mt-12 text-sm text-zinc-500 dark:text-zinc-500">

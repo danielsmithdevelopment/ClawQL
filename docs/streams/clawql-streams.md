@@ -21,13 +21,13 @@ Marketing landing: [clawql.com/streams](https://clawql.com/streams). **WebMCP** 
 
 ### v0.2 changes (from v0.1.x)
 
-| Decision               | v0.1.x                                                 | v0.2                                                                                                     |
-| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))        |
-| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **`clawql-streams` + `clawql-core` + `mcp-api-adapter` embedded in the DO/cell bundle**                  |
-| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`        |
-| WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket |
-| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                     |
+| Decision               | v0.1.x                                                 | v0.2                                                                                                                                                                                                                                                        |
+| ---------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))                                                                                                                                                           |
+| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **Streams Lab 5b (shipped):** `streams-slim` in-process; `search` / `execute` / `memory_*` via `fetch(CLAWQL_MCP_URL)`; adapter surfaces via `fetch(CLAWQL_MCP_ADAPTER_URL)` — not embedded (see [`examples/streams-celld`](../../examples/streams-celld/)) |
+| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`                                                                                                                                                           |
+| WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket                                                                                                                                                    |
+| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                                                                                                                                                                        |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use **[celld](https://celld.dev/)** for Workers/DO-compatible self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped until a DO runtime is production-stable. **[`clawql-cellrt`](./clawql-cellrt.md)** is the ClawQL-owned Rust + Wasmtime production runtime (security-first, embedded Vault/inference/observability) — not a Node rewrite.
 
@@ -49,32 +49,29 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 ## 3. Core architecture
 
-### 3.1 Embedded stack
+### 3.1 In-process router + fetch to gateways (shipped: Streams Lab 5b)
 
-On the **celld / Cloudflare** path, each agent cell is an in-process stack — not a sidecar fleet of containers:
+On the **celld / Cloudflare** path, each agent cell runs a slim in-process event router — `clawql-core` and `mcp-api-adapter` are **not** embedded in the Worker/DO bundle. `search` / `execute` / `memory_*` go over `fetch(CLAWQL_MCP_URL)` to the ClawQL gateway; adapter-exposed upstream tools go over `fetch(CLAWQL_MCP_ADAPTER_URL)`. This keeps the cell bundle small (§3.1 constraints) and lets the gateway and adapter deploy/scale independently. See [`examples/streams-celld`](../../examples/streams-celld/).
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
 │  celld Durable Object / Cloudflare DO (one cell)        │
 │                                                         │
-│  ┌───────────────┐  ┌─────────────┐  ┌───────────────┐  │
-│  │ clawql-streams│  │ clawql-core │  │mcp-api-adapter│  │
-│  │ (event loop,  │  │ (search /   │  │ (MCP → REST / │  │
-│  │  filter, MCP  │  │  execute /  │  │  GQL / gRPC / │  │
-│  │  stream_*)    │  │  memory_*)  │  │  WS surfaces) │  │
-│  └───────┬───────┘  └──────┬──────┘  └───────┬───────┘  │
-│          │                 │                 │          │
-│          └────────────┬────┴─────────────────┘          │
-│                       │ in-process MCP                  │
-│                       ▼                                 │
-│              AgentSessionDO logic                       │
-│              storage.put → SQLite → LTX (WORM)          │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │ clawql-core/streams-slim (event loop, filter,      │  │
+│  │ MCP stream_* — in-process, ~0.4 MiB)               │  │
+│  └───────────────────────┬───────────────────────────┘  │
+│                          │                               │
+│                       AgentSessionDO logic                │
+│              storage.put → SQLite → LTX (WORM, persisted)│
 │              setAlarm (reconnect / TTL / batch)         │
-└───────────────────────┬─────────────────────────────────┘
-                        │ fetch() only
-                        ▼
-              clawql-inference (HTTP)
-              (PAL · virtual keys · call store)
+└──────────┬──────────────────────────┬────────────────────┘
+           │ fetch() only             │ fetch() only
+           ▼                          ▼
+  clawql-inference (HTTP)     clawql-mcp gateway (HTTP)
+  (PAL · virtual keys ·       search / execute / memory_* via
+   call store)                CLAWQL_MCP_URL; adapter surfaces
+                              via CLAWQL_MCP_ADAPTER_URL
 ```
 
 **Constraints (Workers / celld Code Mode):**
@@ -174,8 +171,11 @@ export class AgentSessionDO extends DurableObject {
       context: body.context,
       tools: body.allowedTools,
       maxTurns: body.maxTurns,
-      // In-process MCP: clawql-core + mcp-api-adapter
-      mcp: env.EMBEDDED_MCP,
+      // MCP tools reach the gateway/adapter over fetch() — not embedded (Streams Lab 5b)
+      mcp: createFetchMcpClient({
+        mcpUrl: env.CLAWQL_MCP_URL,
+        adapterUrl: env.CLAWQL_MCP_ADAPTER_URL,
+      }),
       // Model: fetch only — never child_process
       inference: async (req) =>
         fetch(env.INFERENCE_URL, {
@@ -709,27 +709,28 @@ Operational detail: [`clawql-celld.md`](./clawql-celld.md) §7.
 
 ## 12. Package dependencies
 
-| Package / system     | Role in Streams                                                           |
-| -------------------- | ------------------------------------------------------------------------- |
-| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*`                |
-| `clawql-core`        | Embedded in DO bundle — `search` / `execute` / memory tools               |
-| `mcp-api-adapter`    | Embedded in DO bundle — MCP → OpenAPI / GraphQL / gRPC / WebSocket        |
-| `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache |
-| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)             |
-| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                       |
-| Cloudflare Workers   | Hosted Durable Objects path                                               |
-| NATS JetStream       | Durable event buffer for Kubernetes HPA path                              |
-| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                        |
-| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                       |
-| Panguard / ATR       | Tool-scope enforcement inside agent sessions                              |
-| OpenBenchTrace / RTP | Training-data emission                                                    |
+| Package / system     | Role in Streams                                                                                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-streams`     | Coordination: subscriptions, filter, spawn, MCP `stream_*`                                                                                                    |
+| `clawql-core`        | `streams-slim` in-process for the event loop; `search` / `execute` / `memory_*` reach the gateway via `fetch(CLAWQL_MCP_URL)` — not embedded (Streams Lab 5b) |
+| `mcp-api-adapter`    | **Out of process** — `fetch(CLAWQL_MCP_ADAPTER_URL)`; MCP → OpenAPI / GraphQL / gRPC / WebSocket runs on the adapter service, not in the cell bundle          |
+| `clawql-inference`   | **Out of process** — `fetch()` only; PAL, virtual keys, call store, cache                                                                                     |
+| celld                | Self-hosted Durable Objects runtime (Apache 2.0, Workers API)                                                                                                 |
+| `clawql-cellrt`      | ClawQL-owned Rust + Wasmtime cell runtime (planned)                                                                                                           |
+| Cloudflare Workers   | Hosted Durable Objects path                                                                                                                                   |
+| NATS JetStream       | Durable event buffer for Kubernetes HPA path                                                                                                                  |
+| `clawql-payments`    | `DeductionService` for credit-gated agent sessions                                                                                                            |
+| `clawql-ouroboros`   | Optional ensemble validation before kinetic actions                                                                                                           |
+| Panguard / ATR       | Tool-scope enforcement inside agent sessions                                                                                                                  |
+| OpenBenchTrace / RTP | Training-data emission                                                                                                                                        |
 
 ```text
 clawql-streams (coordination)
   ├─ DO / cell bundle
-  │     ├─ clawql-core (in-process)
-  │     └─ mcp-api-adapter (in-process)
+  │     └─ clawql-core/streams-slim (in-process event loop only)
   ├─ fetch → clawql-inference
+  ├─ fetch(CLAWQL_MCP_URL) → clawql-mcp gateway (search / execute / memory_*)
+  ├─ fetch(CLAWQL_MCP_ADAPTER_URL) → mcp-api-adapter (upstream tools)
   ├─ celld | cellrt (planned) | Cloudflare | K8s HPA
   ├─ clawql-payments (optional holds)
   └─ clawql-ouroboros (optional ensemble)
@@ -790,4 +791,4 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 - [`docs/mcp/schedule-synthetic-checks.md`](../mcp/schedule-synthetic-checks.md) — existing cron pattern Streams unifies
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld)
 - Essay: [What Convergence Week actually proved](https://pragmaticvectors.com/posts/openbench-convergence-week/)
-- Essay: [OpenBenchTrace and RTP](https://pragmaticvectors.com/posts/openbench-rtp-relationship/)
+- Essay: [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/) (OpenBench / RTP context)

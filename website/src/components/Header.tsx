@@ -68,11 +68,13 @@ function SearchPlaceholder({ onActivate }: { onActivate: () => void }) {
         type="button"
         onClick={onActivate}
         className="flex h-8 w-full items-center gap-2 rounded-full bg-white pr-3 pl-2 text-sm text-zinc-600 ring-1 ring-zinc-900/10 transition hover:ring-zinc-900/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-claw-cyan dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10 dark:ring-inset dark:hover:ring-white/20 dark:focus-visible:outline-claw-cyan-bright"
-        aria-label="Search documentation"
       >
         <span className="ml-1 size-5 shrink-0 rounded-full border border-zinc-400/60 dark:border-zinc-500" />
         Search documentation…
-        <kbd className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300">
+        <kbd
+          className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300"
+          aria-hidden="true"
+        >
           <kbd className="font-sans">⌘</kbd>
           <kbd className="font-sans">K</kbd>
         </kbd>
@@ -155,7 +157,7 @@ export const Header = forwardRef<
       )}
       <div className="flex items-center gap-5 lg:hidden">
         <MobileNavigation />
-        <CloseButton as={Link} href="/" aria-label="Home">
+        <CloseButton as={Link} href="/" aria-label="ClawQL home">
           <Logo />
         </CloseButton>
       </div>

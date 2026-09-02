@@ -4,7 +4,7 @@
 
 ### Version 2.7 · June 2026
 
-**Related:** [Coordination layer](/ouroboros/specification) · [Build plan v2.7.1](/ouroboros/build-plan) · [Ouroboros library](/ouroboros) · [Master enablement guide](/architecture) · [NATS JetStream](/helm
+**Related:** [Coordination layer](/ouroboros/specification) · [Build plan v2.7.1](/ouroboros/build-plan) · [Ouroboros library](/ouroboros) · [Master enablement guide](/architecture) · [NATS JetStream](/helm)
 
 > **Vision & roadmap document.** This specification describes target design intent for the full DAOS platform. **NSV, SGDOP, model fingerprinting, the Coordinator, Diversity Dividends, Circuit Breaker, Command Deck, and full PEP ActionType enforcement are not shipped yet.** The shipped [`clawql-ouroboros`](/ouroboros) package today provides the evolutionary loop (seeds, ontology convergence gates, optional MCP tools) — not DAOS swarm coordination. Verify shipped status against [modularization implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md) before citing externally.
 
@@ -26,7 +26,7 @@ Four open-source agent runtimes ship as bundled options: **OpenClaw**, **Hermes*
 
 **Governance-as-Code** is a first-class design principle: all coordination tuning parameters and **ActionType contracts** live in the versioned, Merkle-anchored **Manifest**. **Policy Presets** provide validated starting configurations for common deployment archetypes. The **Manifest schema** is proposed as the **Universal Agent Manifest** open standard, with the standalone `clawql-manifest-validator` library enabling broad adoption across the agent ecosystem.
 
-**Implementation status**: MCP transport, the `clawql-ouroboros` evolutionary loop library, Layer 0 tooling, and LGTMP observability are shipped. **NSV, SGDOP, model fingerprinting, the Coordinator, Diversity Dividends,** the Coordinator Watchdog, Circuit Breaker, Command Deck Action Views, Semantic Pruning, Memory 2.0, and full ActionType PEP are roadmap or in active development. Design intent and shipped status remain explicitly separated throughout.
+**Implementation status**: MCP transport, the `clawql-ouroboros` evolutionary loop library, Layer 0 tooling, and LGTM+ observability are shipped. **NSV, SGDOP, model fingerprinting, the Coordinator, Diversity Dividends,** the Coordinator Watchdog, Circuit Breaker, Command Deck Action Views, Semantic Pruning, Memory 2.0, and full ActionType PEP are roadmap or in active development. Design intent and shipped status remain explicitly separated throughout.
 
 ---
 
@@ -42,7 +42,7 @@ The architecture enforces a strictly acyclic dependency graph. All cross-layer c
 | **3** | Memory & Documents                 | Persistent hybrid knowledge + semantic pruning + pre-pruning snapshots | `clawql-memory`, `clawql-documents`, PageIndex                                                                                         |
 | **4** | Strategic Coordination             | Diversity, convergence control, evolution, circuit breaker             | `clawql-ouroboros` evolutionary loop (shipped); DAOS coordination — NSV + SGDOP + model fingerprinting + Diversity Dividends (roadmap) |
 | **5** | Security & Compliance              | Zero-trust + air-gap breakout                                          | ATRClaims, Presidio, WORM audit, Tetragon                                                                                              |
-| **6** | Observability & Runtime Protection | Visibility + enforcement + Watchdog + Command Deck                     | LGTMP stack + Langfuse + Beyla + Falco                                                                                                 |
+| **6** | Observability & Runtime Protection | Visibility + enforcement + Watchdog + Command Deck                     | LGTM+ stack + Langfuse + Beyla + Falco                                                                                                 |
 
 ---
 
@@ -404,6 +404,8 @@ Long-lived agents accumulate session history that can exhaust model context wind
 
 **Third-party client boundary**: In environments where ClawQL does not control the host client's context window, pruning shifts from corrective to preventive — agents offload working state to Memory 2.0 rather than accumulating it in the visible conversation.
 
+**P2 navigation (design):** Guided, warm-started graph traversal (Lifelong MAPF heuristics) is specified in [`lifelong-guided-traversal.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/lifelong-guided-traversal.md) — distillation as guided exploration and fidelity biased by high-ROI traversed paths.
+
 #### 5.2 Pre-Pruning Snapshot and Retention
 
 **Snapshot**: Before any distillation, a bit-perfect snapshot of the agent's current context is written to encrypted cold storage. The encryption key is derived from the Manifest's HSM-backed Merkle root — not the agent's session keys — ensuring recoverability even if the agent's runtime state is fully compromised. The snapshot write must confirm as durable before active context replacement proceeds.
@@ -749,7 +751,7 @@ All Command Deck actions are appended to the WORM audit trail with operator iden
 - MCP transport layer (stdio/HTTP/gRPC)
 - `clawql-ouroboros` evolutionary loop library (seeds, ontology convergence gates, optional MCP tools when `CLAWQL_ENABLE_OUROBOROS=1`) — **not** DAOS NSV/SGDOP coordination
 - Layer 0 tooling: `clawql-release`, Arweave bundling, Manifest v1.1 schema draft
-- LGTMP observability reference stack
+- LGTM+ observability reference stack
 - Tier 1 Docker Compose evaluation stack
 - Bundled runtimes: OpenClaw, Hermes (v0.17.0), Goose, Pi
 

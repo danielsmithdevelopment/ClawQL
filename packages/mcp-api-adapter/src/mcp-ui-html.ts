@@ -9,6 +9,7 @@ import type { GeneratedUiForm } from "./mcp-ui-generate.js";
 import { renderResultContent } from "./mcp-ui-results.js";
 import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
 import { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
+import { runRenderClaimButtonFragment } from "./mcp-ui-claim-html.js";
 
 const MCP_UI_STYLES = `
   :root {
@@ -325,6 +326,66 @@ const MCP_UI_STYLES = `
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14.5rem, 1fr));
+    gap: 0.75rem;
+    margin: 0.35rem 0 0.5rem;
+  }
+  .result-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: linear-gradient(165deg, rgba(61, 214, 198, 0.08), rgba(255,255,255,0.02) 42%, var(--surface));
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  }
+  .result-card__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .result-card__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .result-card__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .result-card__path {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .result-card__path code {
+    font-size: 0.75rem;
+    color: var(--accent, #3dd6c6);
+  }
+  .result-card__snippet {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  .pill--method {
+    background: rgba(61, 214, 198, 0.18);
+    color: var(--accent, #3dd6c6);
+  }
+  .pill--score {
+    background: rgba(250, 204, 21, 0.14);
+  }
+
   .result-list {
     margin: 0;
     padding-left: 1.15rem;
@@ -407,6 +468,16 @@ function renderToolCard(
 </article>`;
   }
 
+  if (template?.customHtml === "claim-button") {
+    return `<article class="tool-card" id="tool-${escapeMcpUiHtml(tool.name)}">
+  <h2>${escapeMcpUiHtml(title)}</h2>
+  <p class="tool-name">${escapeMcpUiHtml(tool.name)}</p>
+  ${templatePill}
+  ${description}
+  ${runRenderClaimButtonFragment(tool.name, basePath)}
+</article>`;
+  }
+
   const hints = formHintsForTool(tool, fieldErrors);
   const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const multipartAttrs = hasFileFields
@@ -477,6 +548,8 @@ export function renderMcpUiCatalogPage(options: {
       <a href="/tools">Tool catalog JSON</a>
       <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
       · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor">Executor vs ClawQL</a>
+      <a href="${escapeMcpUiHtml(basePath)}/presets/agent-lab">Agent Lab (generated)</a>
+      <a href="${escapeMcpUiHtml(basePath)}/presets/cloudflare-claim">Click-to-claim (WebMCP)</a>
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>
@@ -621,14 +694,27 @@ export function renderMcpUiCustomFormPage(options: {
     body = `<div class="result result--success"><p>Workflow complete.</p>
 <pre>${escapeMcpUiHtml(JSON.stringify(form.stepOutputs, null, 2))}</pre></div>`;
   } else {
-    const multipartAttrs = options.hasFileFields
-      ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
-      : "";
-    body = `<article class="tool-card">
+    const stepPost = `${basePath}/custom/${form.slug}/step`;
+    const template = resolveMcpUiTemplate(options.tool);
+    if (template?.customHtml === "claim-button") {
+      body = `<article class="tool-card">
+  <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
+  <p class="tool-name">Step ${stepIndex + 1} of ${total}: ${escapeMcpUiHtml(options.tool.name)}</p>
+  ${runRenderClaimButtonFragment(options.tool.name, basePath, {
+    postUrl: stepPost,
+    buttonLabel: "Claim coupon",
+    resultTarget: "#custom-result",
+  })}
+</article>`;
+    } else {
+      const multipartAttrs = options.hasFileFields
+        ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
+        : "";
+      body = `<article class="tool-card">
   <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
   <p class="tool-name">Step ${stepIndex + 1} of ${total}: ${escapeMcpUiHtml(options.tool.name)}</p>
   <form
-    hx-post="${escapeMcpUiHtml(basePath)}/custom/${escapeMcpUiHtml(form.slug)}/step"
+    hx-post="${escapeMcpUiHtml(stepPost)}"
     hx-target="#custom-result"
     hx-swap="innerHTML"
     hx-indicator="#custom-spinner"${multipartAttrs}
@@ -641,6 +727,7 @@ export function renderMcpUiCustomFormPage(options: {
   </form>
   <div id="custom-result" class="result-pane"></div>
 </article>`;
+    }
   }
 
   return `<!DOCTYPE html>

@@ -219,7 +219,7 @@ Full shape and examples: **`.env.example`**, **`docs/adr/0002-multi-protocol-sup
 
 ## `sandbox_exec`
 
-**Registration:** set **`CLAWQL_ENABLE_SANDBOX=1`** (`1` / `true` / `yes`) so **`listTools`** includes **`sandbox_exec`** (diagram **default off — opt in**). Registered by **`SandboxPlugin`** via `onRegister`. Without the flag, the tool is not registered.
+**Registration:** set **`CLAWQL_ENABLE_SANDBOX=1`** (`1` / `true` / `yes`) so **`listTools`** includes **`sandbox_exec`** (diagram **default off — opt in**). Registered by the sandbox **`ProviderPlugin`** (`tools`). Without the flag, the tool is not registered.
 
 Runs a snippet using **`CLAWQL_SANDBOX_BACKEND`** or **auto-selection** (same MCP tool shape):
 
@@ -298,7 +298,7 @@ The MCP tool is named **`sandbox_exec`** so it is not confused with editing or r
 }
 ```
 
-**OKF frontmatter:** New notes are [OKF v0.2](https://okf.io)–compatible. Required **`type`** defaults to **`context`**. Trust signals (`generated`, `status`, optional `verified` / `sources` / `staleAfter`) are written automatically. Optional MCP fields map to frontmatter: **`description`**, **`resource`**, **`tags`**, **`correlationId`** → `correlation_id`, **`wormRef`**, **`agentId`**, **`verdict`**, **`staleAfter`**, **`status`**. Legacy markers (`clawql_ingest`, `clawql_ingest_created`, `date`) are retained for compatibility. Full contract: **[memory/okf.md](../memory/okf.md)**.
+**OKF frontmatter:** New notes are [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)–compatible. Required **`type`** defaults to **`context`**. Trust signals (`generated`, `status`, optional `verified` / `sources` / `staleAfter`) are written automatically. Optional MCP fields map to frontmatter: **`description`**, **`resource`**, **`tags`**, **`correlationId`** → `correlation_id`, **`wormRef`**, **`agentId`**, **`verdict`**, **`staleAfter`**, **`status`**. Legacy markers (`clawql_ingest`, `clawql_ingest_created`, `date`) are retained for compatibility. Full contract: **[memory/okf.md](../memory/okf.md)**.
 
 **`enterpriseCitations`:** Optional array (max **30** rows) of short citation fields for vault-safe trails after enterprise search — e.g. chaining **`knowledge_search_onyx`** → **`memory_ingest`** ([#130](https://github.com/danielsmithdevelopment/ClawQL/issues/130)). See **[onyx-knowledge-tool.md](onyx-knowledge-tool.md)** §4 and **`enterpriseCitationsFromOnyxSearchToolText`** in **`src/enterprise-citations.ts`**.
 

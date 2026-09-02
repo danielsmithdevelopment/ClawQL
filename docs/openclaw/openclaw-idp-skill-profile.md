@@ -146,4 +146,4 @@ when the HTTP bridge supplies it (see docs/dashboard/agent-chat.md).
 5. **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — dashboard Agent Chat API, SSE, vault schema, rich JSON contract.
 6. **[`slack-first-idp-runbook.md`](slack-first-idp-runbook.md)** — Slack @mention IDP flow ([#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256)).
 7. **[`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md)** — authoritative tool catalog.
-8. **[`providers/README.md`](../providers/README.md)** — bundled **`operationId`** sources.
+8. **[`providers/README.md`](../../providers/README.md)** — bundled **`operationId`** sources.

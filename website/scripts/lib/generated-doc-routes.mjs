@@ -53,6 +53,7 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-agents-body.mdx': '/agents/clawql-agents',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
   'getting-started-inference-body.mdx': '/getting-started/inference',
+  'okf-memory-body.mdx': '/memory/okf',
   'getting-started-custom-sources-body.mdx': '/getting-started/custom-sources',
   'getting-started-migrate-to-8-body.mdx': '/getting-started/migrate-to-8.0',
 }

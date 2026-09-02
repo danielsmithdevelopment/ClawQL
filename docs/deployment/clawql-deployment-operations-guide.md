@@ -115,11 +115,11 @@ Adjust `replicas` on the MCP Deployment in values, or `kubectl scale` for quick 
 ### Observability
 
 - `GET /metrics` on MCP HTTP — [Grafana dashboard](https://docs.clawql.com/learn/audit-tool-and-observability) ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
-- Docker Desktop stack: [docker-desktop-observability](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/docker/docker-desktop-observability.md)
+- Docker Desktop stack: [docker-desktop-observability](https://docs.clawql.com/docker-desktop-observability)
 
 ### Troubleshooting
 
-Start with [troubleshooting](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/troubleshooting.md) and [helm.md](https://docs.clawql.com/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` — the chart placeholder secrets are a starting point, the actual token comes from Paperless itself.
+Start with [troubleshooting](https://docs.clawql.com/troubleshooting) and [helm.md](https://docs.clawql.com/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` — the chart placeholder secrets are a starting point, the actual token comes from Paperless itself.
 
 ---
 
@@ -133,7 +133,7 @@ cp .env.example .env   # set TIKA_BASE_URL, PAPERLESS_API_TOKEN, etc.
 npm run start:http
 ```
 
-When no spec env is set, the opinionated default stack loads (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Helm `provider: default` matches npm. Use `CLAWQL_PROVIDER=all-providers` or `helm --set provider=all-providers` for every bundled vendor plus Google top-50 and AWS top-50.
+When no spec env is set, the provider catalog is **empty by default** — no bundled vendors are loaded. Set `CLAWQL_PROVIDER=default` (Helm: `providers.pack: default`) for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). The Helm chart's `providers.pack` also defaults to `none`. Use `CLAWQL_PROVIDER=all-providers` or `helm --set providers.pack=all-providers` for every bundled vendor plus Google top-50 and AWS top-50.
 
 ---
 

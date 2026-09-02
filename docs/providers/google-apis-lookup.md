@@ -36,7 +36,7 @@ export CLAWQL_DISCOVERY_URL="https://run.googleapis.com/\$discovery/rest?version
 clawql-mcp
 ```
 
-Unset `CLAWQL_PROVIDER` when you set `CLAWQL_DISCOVERY_URL` (provider is ignored if discovery URL is set — see [`providers/README.md`](../providers/README.md)).
+Unset `CLAWQL_PROVIDER` when you set `CLAWQL_DISCOVERY_URL` (provider is ignored if discovery URL is set — see [`providers/README.md`](../../providers/README.md)).
 
 ## Pre-downloaded “top 50” GCP services
 

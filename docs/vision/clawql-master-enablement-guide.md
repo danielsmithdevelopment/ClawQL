@@ -2,7 +2,7 @@
 
 **Master Architecture & Enablement Guide**  
 **Version 2.1 · June 2026**  
-**Apache 2.0 / MIT** · [github.com/clawql/clawql](https://github.com/clawql/clawql)
+**Apache 2.0 / MIT** · [github.com/clawql/clawql](https://github.com/danielsmithdevelopment/ClawQL)
 
 > **Canonical vision.** This document is the unified index for the ClawQL platform. Detailed specifications live in the companion docs linked in [Documentation suite](#documentation-suite) below — when a companion disagrees on package boundaries or implementation contracts, the **Contributor Technical Specification** wins for code; this guide wins for platform intent and architecture.
 

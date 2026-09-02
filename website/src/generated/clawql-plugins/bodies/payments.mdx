@@ -1,13 +1,13 @@
 # Payments (`clawql-payments`)
 
 **Status:** Shipped (foundation + Tier 1 protocols + Adyen + Connect payouts / Ramp / off-ramp + prepaid credits + agent compensation + accounting export / tax evidence)  
-**Package:** [`packages/clawql-payments`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/../packages/clawql-payments)  
+**Package:** [`packages/clawql-payments`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-payments)  
 **Toggle:** Always available as a library; gate rails via `CLAWQL_X402_ENFORCE`, `CLAWQL_MPP_ENABLED`, `CLAWQL_AP2_ENABLED`, `CLAWQL_ACP_ENABLED`, `CLAWQL_PAYPAL_ENABLED`, `CLAWQL_ADYEN_ENABLED`, `CLAWQL_CREDITS_ENABLED`, `CLAWQL_CREDITS_P2P_ENABLED` (default off), `CLAWQL_COMPENSATION_ENABLED` (default off), `CLAWQL_MANAGED_HOSTING`, `CLAWQL_PAYMENTS_MCP_TOOLS`, `CLAWQL_TAX_PROFILE_ENFORCE`, plan entitlements  
 **Plugin:** `PaymentsX402ProxyPlugin` (`payments-x402-mcp-proxy`) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks); optional payout / compensation tools via `CLAWQL_PAYMENTS_MCP_TOOLS=1`
 
 ## Positioning
 
-**Read first:** [hosted vs self-hosted compliance](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/hosted-vs-self-hosted-compliance.md). Managed hosting uses Stripe for **platform fees** and optional **closed-loop company credits** ([org-credits](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/org-credits.md)). **Cross-tenant P2P** and **agent compensation** are self-hosted opt-in and forced off when `CLAWQL_MANAGED_HOSTING=1`.
+**Read first:** [hosted vs self-hosted compliance](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/hosted-vs-self-hosted-compliance.md). Managed hosting uses Stripe for **platform fees** and optional **closed-loop company credits** ([org-credits](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/org-credits.md)). **Cross-tenant P2P** and **agent compensation** are self-hosted opt-in and forced off when `CLAWQL_MANAGED_HOSTING=1`.
 
 ClawQL’s Agentic Gateway includes native **Stripe + x402 + MPP + AP2 + ACP** surfaces, **PayPal**, **Adyen**, **Connect payouts / Ramp / off-ramp**, **Cloudflare Wallets** (dry-run prep), **closed-loop prepaid credits**, optional **self-hosted P2P / agent compensation**, a **WORM-audited** payment trail, and an **accounting subledger export**:
 
@@ -26,7 +26,7 @@ ClawQL’s Agentic Gateway includes native **Stripe + x402 + MPP + AP2 + ACP** s
 | **Compensation**       | Agent deposit / cash-out — `CLAWQL_COMPENSATION_ENABLED=1` (self-hosted)                                            |
 | **Accounting**         | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack                                         |
 
-Operator guide: [clawql-payments](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/clawql-payments.md) → `/payments/clawql-payments` (includes [Accounting & tax](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/clawql-payments.md#accounting--tax)). **Learn walkthrough:** [Payments & entitlements](https://docs.clawql.com/learn/payments-and-entitlements). Cloudflare prep: [cloudflare-wallets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/cloudflare-wallets.md).
+Operator guide: [clawql-payments](/payments/clawql-payments) → `/payments/clawql-payments` (includes [Accounting & tax](/payments/clawql-payments#accounting--tax)). **Learn walkthrough:** [Payments & entitlements](https://docs.clawql.com/learn/payments-and-entitlements). Cloudflare prep: [cloudflare-wallets](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/cloudflare-wallets.md).
 
 ### Accounting & tax (operator quick start)
 
@@ -37,7 +37,7 @@ clawql payments accounting tax-evidence --tax-year 2026
 clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
 ```
 
-Full ownership model (subledger vs GL, 1099 / W-9, no in-process e-file): [accounting-and-tax.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/accounting-and-tax.md).
+Full ownership model (subledger vs GL, 1099 / W-9, no in-process e-file): [accounting-and-tax.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/accounting-and-tax.md).
 
 ## Roadmap
 
@@ -48,8 +48,8 @@ Docs-site UCP discovery remains a stub. Adyen/AP2/ACP/PayPal live when env flags
 
 ## Related
 
-- [Accounting & tax](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/payments/accounting-and-tax.md)
-- [Inference payments integration](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/plugins/inference/clawql-inference.md#plan-entitlements-and-payments-clawql-payments)
+- [Accounting & tax](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/accounting-and-tax.md)
+- [Inference payments integration](/inference/clawql-inference#plan-entitlements-and-payments-clawql-payments)
 - [Plugin registry](/plugins#registry)
 
 export function wrapper({ children }) {

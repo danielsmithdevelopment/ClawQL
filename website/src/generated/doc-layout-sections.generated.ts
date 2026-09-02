@@ -13,6 +13,30 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Next steps', id: 'next-steps' },
   ],
+  '/agents/clawql-agents': [
+    {
+      title:
+        "title: 'clawql-agents — Package Specification'\nstatus: 'target architecture · August 2026'\nversion: '0.1'\npackage: 'packages/clawql-agents/'",
+      id: 'title-clawql-agents-package-specification-status-target-architecture-august-2026-version-0-1-package-packages-clawql-agents',
+    },
+    { title: '1. Purpose', id: '1-purpose' },
+    { title: '2. The Seven Agents', id: '2-the-seven-agents' },
+    { title: '3. Package Structure', id: '3-package-structure' },
+    { title: '4. Agent Adapters', id: '4-agent-adapters' },
+    { title: '5. ATR Scope Templates', id: '5-atr-scope-templates' },
+    { title: '6. RockYourLobster Tiers', id: '6-rock-your-lobster-tiers' },
+    { title: '7. Benchmark Integration', id: '7-benchmark-integration' },
+    { title: '8. Implementation Sequence', id: '8-implementation-sequence' },
+    { title: '9. Package Dependencies', id: '9-package-dependencies' },
+    {
+      title: '10. What This Package Is Not',
+      id: '10-what-this-package-is-not',
+    },
+    {
+      title: '11. First code when authorized',
+      id: '11-first-code-when-authorized',
+    },
+  ],
   '/architecture/agentic-fabric': [
     { title: 'Terminology', id: 'terminology' },
     { title: 'Three-layer topology', id: 'three-layer-topology' },
@@ -124,11 +148,33 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Implementation Map', id: 'implementation-map' },
     { title: 'Putting It Together', id: 'putting-it-together' },
+    {
+      title: 'Live behavioral evidence (OpenBench)',
+      id: 'live-behavioral-evidence-open-bench',
+    },
     { title: 'Known Trade-offs', id: 'known-trade-offs' },
     {
       title: 'Comparison to Published Benchmarks',
       id: 'comparison-to-published-benchmarks',
     },
+  ],
+  '/audit': [
+    { title: 'What gets recorded', id: 'what-gets-recorded' },
+    { title: 'How integrity is guaranteed', id: 'how-integrity-is-guaranteed' },
+    { title: 'Replication', id: 'replication' },
+    { title: 'External verification', id: 'external-verification' },
+    { title: 'What this enables', id: 'what-this-enables' },
+    { title: 'Summary', id: 'summary' },
+  ],
+  '/auth': [
+    { title: 'Outbound: token refresh', id: 'outbound-token-refresh' },
+    {
+      title: 'Inbound: connecting to ClawQL itself',
+      id: 'inbound-connecting-to-claw-ql-itself',
+    },
+    { title: 'Signing', id: 'signing' },
+    { title: 'Audit', id: 'audit' },
+    { title: 'Summary', id: 'summary' },
   ],
   '/benchmarks': [
     { title: 'What the highlights measure', id: 'what-the-highlights-measure' },
@@ -137,6 +183,16 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       title: 'Normal usage vs pasted specs',
       id: 'normal-usage-vs-pasted-specs',
     },
+  ],
+  '/benchmarks/executor-comparison': [
+    {
+      title: 'Headline numbers (live, vercel/next.js)',
+      id: 'headline-numbers-live-vercel-next-js',
+    },
+    { title: 'Live flamegraph (public)', id: 'live-flamegraph-public' },
+    { title: 'Reproduce', id: 'reproduce' },
+    { title: 'Raw artifacts (repo)', id: 'raw-artifacts-repo' },
+    { title: 'What not to claim', id: 'what-not-to-claim' },
   ],
   '/bundled-specs': [
     {
@@ -487,7 +543,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Related docs', id: 'related-docs' },
   ],
   '/deployment': [
-    { title: 'Shipped paths (use today)', id: 'shipped-paths-use-today' },
+    { title: 'Install paths', id: 'install-paths' },
     { title: 'Platform operations', id: 'platform-operations' },
     { title: 'Planned (design only)', id: 'planned-design-only' },
     { title: 'All deployment topics', id: 'all-deployment-topics' },
@@ -665,6 +721,28 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Verify end-to-end', id: 'verify-end-to-end' },
     { title: 'Next steps', id: 'next-steps' },
   ],
+  '/getting-started/immutable-releases': [
+    { title: 'What you get', id: 'what-you-get' },
+    { title: 'Prerequisites', id: 'prerequisites' },
+    { title: 'Path A: dry-run (start here)', id: 'path-a-dry-run-start-here' },
+    {
+      title: 'Path B: real workspaces (laptop)',
+      id: 'path-b-real-workspaces-laptop',
+    },
+    {
+      title: 'Path C: full publish (production-shaped)',
+      id: 'path-c-full-publish-production-shaped',
+    },
+    { title: 'Configuration', id: 'configuration' },
+    {
+      title: 'Live network knobs (laptop / self-hosted)',
+      id: 'live-network-knobs-laptop-self-hosted',
+    },
+    { title: 'What the manifest records', id: 'what-the-manifest-records' },
+    { title: 'Suggested learning order', id: 'suggested-learning-order' },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'Related docs', id: 'related-docs' },
+  ],
   '/getting-started/inference': [
     { title: 'Already on OpenRouter?', id: 'already-on-open-router' },
     { title: 'What you get', id: 'what-you-get' },
@@ -677,6 +755,58 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'What “good” looks like next', id: 'what-good-looks-like-next' },
     { title: 'Troubleshooting', id: 'troubleshooting' },
     { title: 'Next reading', id: 'next-reading' },
+  ],
+  '/getting-started/migrate-to-8.0': [
+    {
+      title: 'Breaking defaults (read first)',
+      id: 'breaking-defaults-read-first',
+    },
+    {
+      title: 'Plugin interface (hard break)',
+      id: 'plugin-interface-hard-break',
+    },
+    {
+      title: 'Skills-over-MCP + unified search (8.0)',
+      id: 'skills-over-mcp-unified-search-8-0',
+    },
+    { title: 'Minimal upgrade checklist', id: 'minimal-upgrade-checklist' },
+    { title: 'Docs', id: 'docs' },
+  ],
+  '/government/clawql-government': [
+    {
+      title: 'The problem this vertical solves',
+      id: 'the-problem-this-vertical-solves',
+    },
+    {
+      title: 'Three requirements outcome measurement currently lacks',
+      id: 'three-requirements-outcome-measurement-currently-lacks',
+    },
+    { title: 'Architecture', id: 'architecture' },
+    { title: 'Domain tools (MCP)', id: 'domain-tools-mcp' },
+    { title: 'Core services', id: 'core-services' },
+    { title: 'Environment variables', id: 'environment-variables' },
+    { title: 'CLI reference', id: 'cli-reference' },
+    { title: 'Use cases', id: 'use-cases' },
+    { title: 'Deployment topology', id: 'deployment-topology' },
+    { title: 'The legislative opportunity', id: 'the-legislative-opportunity' },
+    {
+      title: 'Nonprofit contractor accountability',
+      id: 'nonprofit-contractor-accountability',
+    },
+    {
+      title: 'Relationship to other ClawQL verticals',
+      id: 'relationship-to-other-claw-ql-verticals',
+    },
+    { title: 'Pricing and GTM', id: 'pricing-and-gtm' },
+    {
+      title: 'Design principles specific to this vertical',
+      id: 'design-principles-specific-to-this-vertical',
+    },
+    {
+      title: 'Relationship to QR / TEE air-gap transport',
+      id: 'relationship-to-qr-tee-air-gap-transport',
+    },
+    { title: 'Further reading', id: 'further-reading' },
   ],
   '/graphql-proxy': [
     {
@@ -981,6 +1111,34 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       id: 'related-guides-and-references',
     },
   ],
+  '/learn/nats-idp-pipeline': [
+    { title: 'Before you start', id: 'before-you-start' },
+    { title: 'Architecture', id: 'architecture' },
+    { title: 'Path A — Helm overlay (lean)', id: 'path-a-helm-overlay-lean' },
+    { title: 'Path B — KEDA autoscaling', id: 'path-b-keda-autoscaling' },
+    { title: 'Path C — Smoke tests', id: 'path-c-smoke-tests' },
+    {
+      title: 'Path D — Agent bridge (Hermes / Pi)',
+      id: 'path-d-agent-bridge-hermes-pi',
+    },
+    { title: 'Subjects and durables', id: 'subjects-and-durables' },
+    { title: 'Local / non-Helm', id: 'local-non-helm' },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'What to read next', id: 'what-to-read-next' },
+  ],
+  '/learn/optional-mcp-tools': [
+    { title: 'Core vs optional (quick map)', id: 'core-vs-optional-quick-map' },
+    { title: 'Enablement cheat sheet', id: 'enablement-cheat-sheet' },
+    { title: 'Pick the right tool', id: 'pick-the-right-tool' },
+    { title: 'Composed workflows (recipes)', id: 'composed-workflows-recipes' },
+    {
+      title: 'Observability stack (optional tools + platform)',
+      id: 'observability-stack-optional-tools-platform',
+    },
+    { title: 'Safety habits', id: 'safety-habits' },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'Module index (deep dives)', id: 'module-index-deep-dives' },
+  ],
   '/learn/ouroboros-tools': [
     {
       title: 'What clawql-ouroboros and the three MCP tools are',
@@ -1014,6 +1172,55 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       title: 'Related guides and references',
       id: 'related-guides-and-references',
     },
+  ],
+  '/learn/panguard-mcp-enforcement': [
+    { title: 'Mental model', id: 'mental-model' },
+    { title: 'Before you start', id: 'before-you-start' },
+    {
+      title: 'Path A — Local stdio (works today)',
+      id: 'path-a-local-stdio-works-today',
+    },
+    {
+      title: 'Path B — In-process PanguardProxyPlugin',
+      id: 'path-b-in-process-panguard-proxy-plugin',
+    },
+    {
+      title: 'Path C — Kubernetes (Helm mcpProxy)',
+      id: 'path-c-kubernetes-helm-mcp-proxy',
+    },
+    {
+      title: 'Pair with payments and audit',
+      id: 'pair-with-payments-and-audit',
+    },
+    { title: 'Operations checklist', id: 'operations-checklist' },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'What to read next', id: 'what-to-read-next' },
+  ],
+  '/learn/payments-and-entitlements': [
+    { title: 'Before you start', id: 'before-you-start' },
+    {
+      title: 'Path A — Local plan limits (no Stripe)',
+      id: 'path-a-local-plan-limits-no-stripe',
+    },
+    {
+      title: 'Path B — Stripe subscriptions + optional Billing Meters',
+      id: 'path-b-stripe-subscriptions-optional-billing-meters',
+    },
+    {
+      title: 'Path C — x402 pay-per-call on MCP or HTTP',
+      id: 'path-c-x402-pay-per-call-on-mcp-or-http',
+    },
+    {
+      title: 'Path D — WORM audit (always do this in prod)',
+      id: 'path-d-worm-audit-always-do-this-in-prod',
+    },
+    { title: 'Accounting close (operators)', id: 'accounting-close-operators' },
+    {
+      title: 'End-to-end checklist (self-hosted production)',
+      id: 'end-to-end-checklist-self-hosted-production',
+    },
+    { title: 'Troubleshooting', id: 'troubleshooting' },
+    { title: 'What to read next', id: 'what-to-read-next' },
   ],
   '/learn/sandbox-exec': [
     {
@@ -1094,6 +1301,20 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Case studies for background', id: 'case-studies-for-background' },
     { title: 'Limits and common errors', id: 'limits-and-common-errors' },
   ],
+  '/learn/streams-getting-started': [
+    { title: 'Mental model', id: 'mental-model' },
+    { title: 'Before you start', id: 'before-you-start' },
+    { title: 'Recommended reading order', id: 'recommended-reading-order' },
+    {
+      title: 'What you can try today (while specs are draft)',
+      id: 'what-you-can-try-today-while-specs-are-draft',
+    },
+    { title: 'Hands-on labs', id: 'hands-on-labs' },
+    { title: 'K8s operator sketch', id: 'k8s-operator-sketch' },
+    { title: 'cellrt vs celld decision', id: 'cellrt-vs-celld-decision' },
+    { title: 'Troubleshooting orientation', id: 'troubleshooting-orientation' },
+    { title: 'What to read next', id: 'what-to-read-next' },
+  ],
   '/mcp-clients': [
     { title: 'What is MCP?', id: 'what-is-mcp' },
     { title: 'stdio (npm)', id: 'stdio-npm' },
@@ -1112,16 +1333,13 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
       title: 'The client fragmentation problem',
       id: 'the-client-fragmentation-problem',
     },
-    {
-      title: 'Direction: MCP → APIs (inverse of ClawQL Core)',
-      id: 'direction-mcp-apis-inverse-of-claw-ql-core',
-    },
+    { title: 'Direction: MCP → APIs', id: 'direction-mcp-apis' },
     { title: 'Quick start', id: 'quick-start' },
-    { title: 'The five surfaces', id: 'the-five-surfaces' },
+    { title: 'The surfaces', id: 'the-surfaces' },
     { title: 'What shipped', id: 'what-shipped' },
     {
-      title: 'Planned — WebSocket (sixth surface)',
-      id: 'planned-web-socket-sixth-surface',
+      title: 'Candidates considered (not yet surfaces)',
+      id: 'candidates-considered-not-yet-surfaces',
     },
     { title: 'When to use it', id: 'when-to-use-it' },
     { title: 'CLI reference', id: 'cli-reference' },
@@ -1135,6 +1353,63 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Troubleshooting', id: 'troubleshooting' },
     { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/mcp/mcp-ui': [
+    { title: 'Screenshots', id: 'screenshots' },
+    { title: '1. What this is', id: '1-what-this-is' },
+    {
+      title: '2. Why not the existing MCP UIs',
+      id: '2-why-not-the-existing-mcp-uis',
+    },
+    { title: '3. Surface contract', id: '3-surface-contract' },
+    {
+      title: '4. ClawQL chain (the real product story)',
+      id: '4-claw-ql-chain-the-real-product-story',
+    },
+    {
+      title: '5. Implementation notes (draft)',
+      id: '5-implementation-notes-draft',
+    },
+    {
+      title: '5b. Context-accumulation flamegraph',
+      id: '5b-context-accumulation-flamegraph',
+    },
+    { title: '6. Non-goals (v1)', id: '6-non-goals-v1' },
+    { title: '7. Acceptance (draft)', id: '7-acceptance-draft' },
+    {
+      title: '8. Relationship to other surfaces',
+      id: '8-relationship-to-other-surfaces',
+    },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/mcp/protocol-fabric': [
+    { title: 'One-liner', id: 'one-liner' },
+    { title: 'Architecture diagram', id: 'architecture-diagram' },
+    { title: 'Both directions', id: 'both-directions' },
+    { title: 'Proven end-to-end loop', id: 'proven-end-to-end-loop' },
+    {
+      title: 'Why “Protocol Fabric” (not two package names)',
+      id: 'why-protocol-fabric-not-two-package-names',
+    },
+    { title: 'Competitive framing', id: 'competitive-framing' },
+    { title: 'Language-agnostic', id: 'language-agnostic' },
+    { title: 'Related docs', id: 'related-docs' },
+  ],
+  '/memory/okf': [
+    { title: 'What ships', id: 'what-ships' },
+    {
+      title: 'Frontmatter contract (OKF v0.2)',
+      id: 'frontmatter-contract-okf-v0-2',
+    },
+    { title: 'Migration', id: 'migration' },
+    { title: 'Env knobs', id: 'env-knobs' },
+    {
+      title: 'Flywheel export filters (planned / next)',
+      id: 'flywheel-export-filters-planned-next',
+    },
+    { title: 'Backward compatibility', id: 'backward-compatibility' },
+    { title: 'Code', id: 'code' },
+    { title: 'See also', id: 'see-also' },
   ],
   '/nats-jetstream': [
     { title: 'Why this exists', id: 'why-this-exists' },
@@ -1155,6 +1430,18 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
   '/notify': [
     { title: 'Quick examples', id: 'quick-examples' },
     { title: 'Testing', id: 'testing' },
+  ],
+  '/observability': [
+    { title: 'What this package is not', id: 'what-this-package-is-not' },
+    {
+      title: 'Ingest: Alloy owns the hot path',
+      id: 'ingest-alloy-owns-the-hot-path',
+    },
+    { title: 'Provider registry (Phase 3)', id: 'provider-registry-phase-3' },
+    { title: 'Phases', id: 'phases' },
+    { title: 'Local quick start', id: 'local-quick-start' },
+    { title: 'Phase 4 / 5 enablement', id: 'phase-4-5-enablement' },
+    { title: 'Summary', id: 'summary' },
   ],
   '/onyx-knowledge': [
     {
@@ -1249,6 +1536,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Stripe billing', id: 'stripe-billing' },
     { title: 'x402 micropayments', id: 'x402-micropayments' },
     { title: 'Payment audit (WORM)', id: 'payment-audit-worm' },
+    { title: 'Accounting & tax', id: 'accounting-and-tax' },
     { title: 'Full CLI reference', id: 'full-cli-reference' },
     {
       title: 'Inference integration checklist',
@@ -1264,17 +1552,11 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Learn more', id: 'learn-more' },
   ],
   '/plugins/bundled-providers': [
-    {
-      title: 'Default install (no spec env)',
-      id: 'default-install-no-spec-env',
-    },
-    {
-      title: 'Cloud add-ons (default stack only)',
-      id: 'cloud-add-ons-default-stack-only',
-    },
-    { title: 'Presets', id: 'presets' },
+    { title: 'No-config default', id: 'no-config-default' },
+    { title: 'Opt-in (preferred)', id: 'opt-in-preferred' },
+    { title: 'Deprecated env flags', id: 'deprecated-env-flags' },
     { title: 'Precedence', id: 'precedence' },
-    { title: 'Learn more', id: 'learn-more' },
+    { title: 'See also', id: 'see-also' },
   ],
   '/plugins/codegraph': [
     { title: 'Why add this?', id: 'why-add-this' },
@@ -1304,6 +1586,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: 'Configuration', id: 'configuration' },
     { title: 'Learn more', id: 'learn-more' },
+  ],
+  '/plugins/data': [
+    { title: 'MCP tools', id: 'mcp-tools' },
+    { title: 'Enable', id: 'enable' },
   ],
   '/plugins/documents': [
     { title: 'MCP tools', id: 'mcp-tools' },
@@ -1371,6 +1657,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Target contract', id: 'target-contract' },
     { title: 'Until the API stabilizes', id: 'until-the-api-stabilizes' },
     { title: 'Learn more', id: 'learn-more' },
+  ],
+  '/plugins/web': [
+    { title: 'MCP tools', id: 'mcp-tools' },
+    { title: 'Enable', id: 'enable' },
   ],
   '/quickstart': [
     { title: '1. Start the MCP server', id: '1-start-the-mcp-server' },
@@ -2475,6 +2765,138 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: 'Non-goals', id: 'non-goals' },
     { title: 'Example (illustrative)', id: 'example-illustrative' },
   ],
+  '/specs/memory/memory-recall-structured-filter': [
+    { title: '1. Problem', id: '1-problem' },
+    { title: '2. New Parameters', id: '2-new-parameters' },
+    { title: '3. Routing Logic', id: '3-routing-logic' },
+    {
+      title: '4. Ontology Query Implementation',
+      id: '4-ontology-query-implementation',
+    },
+    { title: '5. Result Format', id: '5-result-format' },
+    {
+      title: '6. MCP Tool Specification Update',
+      id: '6-mcp-tool-specification-update',
+    },
+    {
+      title: '7. Interaction with Existing Sources',
+      id: '7-interaction-with-existing-sources',
+    },
+    {
+      title: '8. Benchmarks: Before and After',
+      id: '8-benchmarks-before-and-after',
+    },
+    { title: '9. Testing', id: '9-testing' },
+    {
+      title: '10. Effect-TS Implementation Notes',
+      id: '10-effect-ts-implementation-notes',
+    },
+  ],
+  '/specs/network/clawql-network': [
+    {
+      title:
+        "title: 'clawql-network — Specification'\nstatus: 'August 2026'\nversion: '0.1'\npackage: 'packages/clawql-network/'",
+      id: 'title-clawql-network-specification-status-august-2026-version-0-1-package-packages-clawql-network',
+    },
+    { title: 'Specification v0.1', id: 'specification-v0-1' },
+    { title: '1. Purpose', id: '1-purpose' },
+    {
+      title: '2. What Each Piece Is Actually For',
+      id: '2-what-each-piece-is-actually-for',
+    },
+    { title: '3. Package Structure', id: '3-package-structure' },
+    {
+      title: '4. Headscale: Persistent Mesh',
+      id: '4-headscale-persistent-mesh',
+    },
+    {
+      title: '5. Tailcat: Ephemeral Connections',
+      id: '5-tailcat-ephemeral-connections',
+    },
+    {
+      title: '6. The Selector: Deciding Which Transport to Use',
+      id: '6-the-selector-deciding-which-transport-to-use',
+    },
+    {
+      title: '7. Enforcement: Tailcat Requires Explicit Scope, Every Time',
+      id: '7-enforcement-tailcat-requires-explicit-scope-every-time',
+    },
+    {
+      title: '8. The clawql-network Init Flow',
+      id: '8-the-clawql-network-init-flow',
+    },
+    {
+      title: '9. Cross-Region Cost Awareness',
+      id: '9-cross-region-cost-awareness',
+    },
+    {
+      title: '10. Package Boundaries — Summary',
+      id: '10-package-boundaries-summary',
+    },
+    { title: 'Related', id: 'related' },
+  ],
+  '/specs/ontology/legal-domain': [
+    { title: 'Repo alignment', id: 'repo-alignment' },
+    { title: '1. Purpose', id: '1-purpose' },
+    { title: '2. Entity Definitions', id: '2-entity-definitions' },
+    { title: '3. Field Extraction Rules', id: '3-field-extraction-rules' },
+    { title: '4. Ontology Index', id: '4-ontology-index' },
+    {
+      title: '5. Integration with memory_recall',
+      id: '5-integration-with-memory-recall',
+    },
+    { title: '6. Ontology Linter', id: '6-ontology-linter' },
+    { title: '7. B-7 Benchmark Impact', id: '7-b-7-benchmark-impact' },
+    { title: '8. Implementation Sequence', id: '8-implementation-sequence' },
+    {
+      title: '9. Connection to clawql-streams and Training Pipeline',
+      id: '9-connection-to-clawql-streams-and-training-pipeline',
+    },
+  ],
+  '/streams/clawql-celld': [
+    {
+      title: '0. Version baseline — celld v0.4.0',
+      id: '0-version-baseline-celld-v0-4-0',
+    },
+    { title: '1. What this is', id: '1-what-this-is' },
+    { title: '2. Runtime constraints', id: '2-runtime-constraints' },
+    {
+      title: '3. Patterns: alarms, fetch, WebSocket reconnect',
+      id: '3-patterns-alarms-fetch-web-socket-reconnect',
+    },
+    { title: '4. DO architecture', id: '4-do-architecture' },
+    { title: '5. Bundle architecture', id: '5-bundle-architecture' },
+    { title: '6. Bucket layout', id: '6-bucket-layout' },
+    { title: '7. Deployment', id: '7-deployment' },
+    { title: '8. Security hardening', id: '8-security-hardening' },
+    { title: '9. Cloudflare vs celld', id: '9-cloudflare-vs-celld' },
+    { title: '10. Testing', id: '10-testing' },
+    { title: '11. Known gaps', id: '11-known-gaps' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/streams/clawql-cellrt': [
+    { title: '1. What this is', id: '1-what-this-is' },
+    { title: '2. Architecture overview', id: '2-architecture-overview' },
+    { title: '3. Rust crate structure', id: '3-rust-crate-structure' },
+    { title: '4. Cell lifecycle', id: '4-cell-lifecycle' },
+    { title: '5. WASM capability model', id: '5-wasm-capability-model' },
+    {
+      title: '6. Virtual key lifecycle in Rust',
+      id: '6-virtual-key-lifecycle-in-rust',
+    },
+    { title: '7. LTX replication and WORM', id: '7-ltx-replication-and-worm' },
+    { title: '8. Security layer', id: '8-security-layer' },
+    { title: '9. Fleet coordination', id: '9-fleet-coordination' },
+    {
+      title: '10. Effect-TS → WASM build path',
+      id: '10-effect-ts-wasm-build-path',
+    },
+    { title: '11. Deployment', id: '11-deployment' },
+    { title: '12. Comparison', id: '12-comparison' },
+    { title: '13. Build sequence', id: '13-build-sequence' },
+    { title: '14. Open questions', id: '14-open-questions' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
   '/streams/clawql-durable-objects': [
     { title: '1. Purpose', id: '1-purpose' },
     { title: '2. Object types', id: '2-object-types' },
@@ -2499,6 +2921,27 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: '12. Open questions', id: '12-open-questions' },
     { title: 'Further reading', id: 'further-reading' },
   ],
+  '/streams/clawql-qr-stream-transport': [
+    { title: '1. What this is', id: '1-what-this-is' },
+    { title: '2. Transport modes', id: '2-transport-modes' },
+    { title: '3. Frame format', id: '3-frame-format' },
+    {
+      title: '4. mcp-api-adapter — 8th surface (planned)',
+      id: '4-mcp-api-adapter-8th-surface-planned',
+    },
+    {
+      title: '5. clawql-streams — qr source type',
+      id: '5-clawql-streams-qr-source-type',
+    },
+    { title: '6. Election module', id: '6-election-module' },
+    {
+      title: '7. clawql-tee-verifier additions',
+      id: '7-clawql-tee-verifier-additions',
+    },
+    { title: '8. Helm values (planned)', id: '8-helm-values-planned' },
+    { title: '9. Positioning', id: '9-positioning' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
   '/streams/clawql-streams': [
     { title: '1. What this is', id: '1-what-this-is' },
     { title: '2. Problem statement', id: '2-problem-statement' },
@@ -2521,6 +2964,39 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     },
     { title: '14. Positioning', id: '14-positioning' },
     { title: '15. Open questions', id: '15-open-questions' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/streams/clawql-tee': [
+    { title: '1. What this is', id: '1-what-this-is' },
+    { title: '2. Gaps from cellrt → tee', id: '2-gaps-from-cellrt-tee' },
+    { title: '3. Architecture', id: '3-architecture' },
+    { title: '4. Zero-trust chain', id: '4-zero-trust-chain' },
+    { title: '5. cellrt-attestation crate', id: '5-cellrt-attestation-crate' },
+    { title: '6. Hardware requirements', id: '6-hardware-requirements' },
+    { title: '7. Helm (tee additions)', id: '7-helm-tee-additions' },
+    {
+      title: '8. Build sequence (tee track)',
+      id: '8-build-sequence-tee-track',
+    },
+    { title: '9. Open questions', id: '9-open-questions' },
+    { title: 'Further reading', id: 'further-reading' },
+  ],
+  '/streams/clawql-tee-airgap-audit': [
+    { title: '1. Problem', id: '1-problem' },
+    { title: '2. Transport model', id: '2-transport-model' },
+    { title: '3. QR sequence format', id: '3-qr-sequence-format' },
+    {
+      title: '4. Display and scan protocol',
+      id: '4-display-and-scan-protocol',
+    },
+    { title: '5. Frame count estimates', id: '5-frame-count-estimates' },
+    { title: '6. Integration', id: '6-integration' },
+    { title: '7. Threat model coverage', id: '7-threat-model-coverage' },
+    { title: '8. Zero-trust story', id: '8-zero-trust-story' },
+    {
+      title: '9. clawql-tee-verifier (standalone)',
+      id: '9-clawql-tee-verifier-standalone',
+    },
     { title: 'Further reading', id: 'further-reading' },
   ],
   '/surveillance/clawql-surveillance': [
@@ -2660,7 +3136,10 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: '1. What ClawQL Is', id: '1-what-claw-ql-is' },
     { title: '2. The Problem Space', id: '2-the-problem-space' },
     { title: '3. The Approach', id: '3-the-approach' },
-    { title: '4. What Exists Today (7.1.0)', id: '4-what-exists-today-7-1-0' },
+    {
+      title: '4. What Exists Today (7.1.0 + 8.0 prep on main)',
+      id: '4-what-exists-today-7-1-0-8-0-prep-on-main',
+    },
     {
       title: '5. What Gets Built Next and Why',
       id: '5-what-gets-built-next-and-why',

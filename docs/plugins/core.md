@@ -24,7 +24,7 @@ next: panguard-proxy
 
 ## How it fits the plugin model
 
-Optional **horizontal plugins** (`clawql-memory`, `clawql-documents`, …) register additional tools via `Plugin.onRegister`. Core tools are registered directly by the gateway and are never omitted from a standard `clawql-mcp` process.
+Optional **horizontal plugins** (`clawql-memory`, `clawql-documents`, …) are **`ProviderPlugin`** implementations that register additional tools by declaring `tools` (directly, or via `defineRegisteringProviderPlugin`) — see [Migrate to 8.0](../getting-started/migrate-to-8.0.md). Core tools are registered directly by the gateway and are never omitted from a standard `clawql-mcp` process.
 
 ## Configuration
 

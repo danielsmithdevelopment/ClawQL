@@ -1,7 +1,7 @@
 # clawql-inference
 
 **Status:** Shipped (July 2026)
-**Package:** [`packages/clawql-inference`](https://docs.clawql.com/packages/clawql-inference)
+**Package:** [`packages/clawql-inference`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-inference)
 
 `clawql-inference` is ClawQL's TypeScript-native inference gateway and model-improvement platform — a LiteLLM-class layer with ClawQL's trust model: WORM-auditable routing, semantic cache, model tier escalation, agent coordination hooks, verdict-filtered export, and fine-tuning flywheel. It is designed as a drop-in OpenAI replacement (`OPENAI_BASE_URL=http://127.0.0.1:8080/v1`) while closing the production loop that generic proxies leave open.
 
@@ -30,7 +30,7 @@
 
 ## Quick Start
 
-**Example policy + walkthrough:** [`examples/inference/`](https://docs.clawql.com/examples/inference/) (`policy.yaml` + README).
+**Example policy + walkthrough:** [`examples/inference/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/inference) (`policy.yaml` + README).
 
 ```bash
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
@@ -399,7 +399,7 @@ clawql inference policy show [--json]
 
 `resolveInferencePolicy()` aggregates the effective view from manifest YAML (`$CLAWQL_HOME/Inference/policy.yaml` or `CLAWQL_INFERENCE_POLICY_MANIFEST`) merged with environment variables — env wins on conflicts. Source is `manifest+env` when a manifest is loaded, otherwise `env`.
 
-Example manifest (full copy: [`examples/inference/policy.yaml`](https://docs.clawql.com/examples/inference/policy.yaml)):
+Example manifest (full copy: [`examples/inference/policy.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/inference/policy.yaml)):
 
 ```yaml
 policyVersion: "2026.07.01"

@@ -58,7 +58,11 @@ export default function VisionSlideDeckPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody path="/vision/slide-deck" className="flex-auto" />
+      <AgentMarkdownDocBody
+        path="/vision/slide-deck"
+        className="flex-auto"
+        demoteH1="after-first"
+      />
     </article>
   )
 }

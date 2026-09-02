@@ -85,7 +85,7 @@ clawql-release pull local_<…> --rift
 CLAWQL_RELEASE_DRY_RUN=1 node scripts/release/ci-pipeline-e2e.mjs
 ```
 
-Workflow: [`.github/workflows/clawql-release-pipeline.yml`](https://docs.clawql.com/.github/workflows/clawql-release-pipeline.yml)
+Workflow: [`.github/workflows/clawql-release-pipeline.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/clawql-release-pipeline.yml)
 
 Dry-run stores live under `.clawql/` (gitignored):
 

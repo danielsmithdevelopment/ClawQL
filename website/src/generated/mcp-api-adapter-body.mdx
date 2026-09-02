@@ -1,10 +1,10 @@
 # mcp-api-adapter — seven surfaces today, QR eighth planned
 
-**Package:** [`mcp-api-adapter`](../../packages/mcp-api-adapter/) (in-repo; first npm publish targets `0.1.0` with 8.0 workspace release)  
+**Package:** [`mcp-api-adapter`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-api-adapter) (in-repo; first npm publish targets `0.1.0` with 8.0 workspace release)  
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
 **Essay:** [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/pragmaticvectors/mcp-api-adapter.md))  
 **Design:** [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md)  
-**Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
+**Example:** [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/mcp-api-adapter)  
 **Protocol Fabric:** [`protocol-fabric.md`](/mcp/protocol-fabric) (proven WS → CLI → REST → vault loop)
 
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **seven API surfaces** from one tool catalog without changing the server (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, WebSocket `/ws`, gen-cli, HTMX **`/mcp-ui`**). No ClawQL install required.
@@ -17,7 +17,7 @@
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
-> **Install note:** The package lives under [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/) and is listed in `localPackExtras` for the npm publish workflow, but the name is not on the registry yet — bare `npx mcp-api-adapter` fails until the first publish. Use the **from-source** commands below until then.
+> **Install note:** The package lives under [`packages/mcp-api-adapter`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-api-adapter) and is listed in `localPackExtras` for the npm publish workflow, but the name is not on the registry yet — bare `npx mcp-api-adapter` fails until the first publish. Use the **from-source** commands below until then.
 
 ```text
 Any MCP server
@@ -160,7 +160,7 @@ Re-exports the upstream catalog as standard Streamable HTTP MCP:
 
 ### gRPC — the production path
 
-If the upstream is already gRPC, REST and GraphQL forward into it. If the upstream is stdio or Streamable HTTP, the adapter starts a local [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/) server that delegates into the session.
+If the upstream is already gRPC, REST and GraphQL forward into it. If the upstream is stdio or Streamable HTTP, the adapter starts a local [`mcp-grpc-transport`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport) server that delegates into the session.
 
 Either way, `:50051` is available for grpcurl, mesh routing, and protobuf clients. `model_context_protocol.Mcp/CallTool` takes a tool name and `google.protobuf.Struct` arguments. Argument schemas live in OpenAPI and GraphQL — clients do not need generated stubs.
 
@@ -361,9 +361,9 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](/streams/clawql-streams)
 - QR stream transport (draft, 8th surface): [`docs/streams/clawql-qr-stream-transport.md`](/streams/clawql-qr-stream-transport)
 - `/mcp-ui` (7th surface, shipped): [`docs/mcp/mcp-ui.md`](/mcp/mcp-ui)
-- Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
-- gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
-- Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
+- Earlier post: [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/)
+- gRPC transport: [`packages/mcp-grpc-transport`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport)
+- Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/dev/smoke-protocol-fabric-loop.sh)
 - Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](/streams/clawql-streams)
 
 export function wrapper({ children }) {

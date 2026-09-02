@@ -52,13 +52,13 @@ Operator guides: [`workflow-tool.md`](../mcp/workflow-tool.md), [`argocd-tool.md
 
 ### Abuse scenarios
 
-| Threat                                  | Mitigation                                                                         |
-| --------------------------------------- | ---------------------------------------------------------------------------------- |
-| Agent merges malicious WorkflowTemplate | PR review + CI on workflows repo; Argo CD sync to staging first                    |
-| Over-privileged GitHub token            | Fine-scoped PAT or GitHub App with `contents:write` on workflows repo only         |
-| Cross-namespace workflow submit         | Namespace allowlist env + Kubernetes RBAC (`workflow-rbac.yaml`)                   |
-| Unauthorized Argo CD sync               | `allowSync` false by default; Panguard `beforeCallTool` can deny `argocd` sync ops |
-| Denial of service (workflow spam)       | Rate limits at gateway; `audit` correlation for operator alerts                    |
+| Threat                                  | Mitigation                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Agent merges malicious WorkflowTemplate | PR review + CI on workflows repo; Argo CD sync to staging first                                 |
+| Over-privileged GitHub token            | Fine-scoped PAT or GitHub App with `contents:write` on workflows repo only                      |
+| Cross-namespace workflow submit         | Namespace allowlist env + Kubernetes RBAC (`workflow-rbac.yaml`)                                |
+| Unauthorized Argo CD sync               | `allowSync` false by default; Panguard **`pre-execute` / ATR hooks** can deny `argocd` sync ops |
+| Denial of service (workflow spam)       | Rate limits at gateway; `audit` correlation for operator alerts                                 |
 
 ### Human-in-the-loop gates
 

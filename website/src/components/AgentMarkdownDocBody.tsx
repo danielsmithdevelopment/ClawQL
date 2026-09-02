@@ -1,11 +1,19 @@
 import { DocProse } from '@/components/DocProse'
 import { loadAgentMarkdownMap } from '@/lib/agent-markdown-loader'
-import { markdownToHtml } from '@/lib/markdown-to-html'
+import {
+  markdownToHtml,
+  type MarkdownToHtmlOptions,
+} from '@/lib/markdown-to-html'
 
 type AgentMarkdownDocBodyProps = {
   /** Route key in public/agent-markdown.json (e.g. `/vision/slide-deck`). */
   path: string
   className?: string
+  /**
+   * Demote markdown `#` headings so the page keeps a single document `<h1>`
+   * (WCAG / SEO heading hierarchy).
+   */
+  demoteH1?: MarkdownToHtmlOptions['demoteH1']
 }
 
 /**
@@ -19,6 +27,7 @@ type AgentMarkdownDocBodyProps = {
 export async function AgentMarkdownDocBody({
   path,
   className,
+  demoteH1,
 }: AgentMarkdownDocBodyProps) {
   const map = await loadAgentMarkdownMap()
   const markdown = map[path]
@@ -27,7 +36,7 @@ export async function AgentMarkdownDocBody({
       `AgentMarkdownDocBody: no agent-markdown.json entry for path ${path} (re-run node scripts/generate-agent-markdown.mjs)`,
     )
   }
-  const html = await markdownToHtml(markdown)
+  const html = await markdownToHtml(markdown, { demoteH1 })
   return (
     <DocProse className={className}>
       <div dangerouslySetInnerHTML={{ __html: html }} />

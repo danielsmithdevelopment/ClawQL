@@ -49,7 +49,7 @@ There is **no** supported `mcp.json` field to rename this to bare `clawql` for `
 
 **Dedup:** Identical payload hash → ingest is skipped (no duplicate sections).
 
-**Frontmatter (automatic):** New files get YAML with `title`, `date`, `tags: [clawql-ingest]`, `clawql_ingest: true`. The MCP tool does **not** accept custom YAML tags—put extra tagging **inside `insights`** (see Tagging).
+**Frontmatter (automatic):** New files get OKF-compatible YAML with required **`type`** (default `context`), **`title`**, **`timestamp`**, **`tags`** (includes `clawql-ingest`), **`clawql_ingest`**, **`clawql_okf`**, plus optional ClawQL extensions when passed (`correlation_id`, `worm_ref`, `agent_id`, `verdict`). The MCP tool accepts **`type`**, **`description`**, **`resource`**, **`tags`**, **`correlationId`**, **`wormRef`**, **`agentId`**, **`verdict`** — see **[`docs/memory/okf.md`](../../../docs/memory/okf.md)**. Put extra tagging **inside `insights`** as well when useful for humans.
 
 ### `memory_recall`
 

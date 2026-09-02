@@ -283,7 +283,7 @@ Hermes is Python-based. The ClawQL adapter is implemented as a Python subclass o
 
 The subclass approach means no Hermes source code modifications are needed — the adapter is a standalone Python file that Hermes loads via its `runtime_class` configuration key.
 
-See the [personal agent setup](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hermes/personal-agent-setup.md) document for the full `WORMInstrumentedAgent` subclass implementation.
+See the [personal agent setup](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/homelab/personal-agent-hermes-cline.md) document for the full `WORMInstrumentedAgent` subclass implementation.
 
 **MCP bridge for Hermes:**
 
@@ -427,7 +427,7 @@ export class OpenHandsBudgetEnforcer {
 
 Cline is the most naturally compatible agent because it natively speaks MCP. The adapter registers ClawQL's MCP server directly into Cline's MCP server list. No bridge layer is needed for tool calls — Cline calls ClawQL MCP tools natively.
 
-The WORM hooks use Cline's SDK hook system, which exposes pre/post hooks for file operations and terminal execution. The full hook implementation is in the [personal agent setup](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/hermes/personal-agent-setup.md) document.
+The WORM hooks use Cline's SDK hook system, which exposes pre/post hooks for file operations and terminal execution. The full hook implementation is in the [personal agent setup](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/homelab/personal-agent-hermes-cline.md) document.
 
 **The Cline integration is the reference implementation** because it represents the intended architecture: an agent that natively calls ClawQL MCP tools, with WORM hooks added at the SDK level for non-MCP actions. Future agents should integrate this way where possible.
 

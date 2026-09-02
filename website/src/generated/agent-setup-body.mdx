@@ -34,7 +34,7 @@ npx -p clawql-mcp clawql doctor --smoke
 
 Provider tokens live in **`~/.ClawQL/vault/providers.json`** (same KV shape as HashiCorp **`secret/clawql/providers`**). Memory tools use **`~/.ClawQL/Memory/`** via **`CLAWQL_OBSIDIAN_VAULT_PATH`**.
 
-Default install loads the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** only for every bundled vendor plus Google top-50 and AWS top-50.
+Default install loads an **empty provider catalog** — no bundled vendors until you opt in. Set **`CLAWQL_PROVIDER=default`** for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx), or **`CLAWQL_PROVIDER=all-providers`** for every bundled vendor plus Google top-50 and AWS top-50.
 
 Restart Cursor or Claude Desktop after MCP config is written.
 
@@ -66,7 +66,8 @@ Goals:
 6. Confirm memory_ingest works: CLAWQL_OBSIDIAN_VAULT_PATH should be ~/.ClawQL after init.
 
 Important facts:
-- Default install: opinionated stack = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+- Default install: empty provider catalog (no bundled vendors until opt-in).
+- Opinionated stack (opt-in): CLAWQL_PROVIDER=default = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
 - Full bundle: CLAWQL_PROVIDER=all-providers.
 - MCP loads ~/.ClawQL/clawql.env + vault/providers.json at startup (no secrets in MCP JSON).
 - K8s: make local-k8s-up then clawql init --push-vault with VAULT_TOKEN set.
@@ -218,7 +219,7 @@ Teams can add `.cursor/environment.json` with an install script that runs `clawq
 
 `memory_sync` replaces shell `clawql sync push` / `pull` on Cloud Agents. See [For teams — `memory_sync`](https://docs.clawql.com/getting-started/for-teams#memory-sync-mcp-tool).
 
-Auto sync (`CLAWQL_SYNC_AUTO=1`) debounces push after each `memory_ingest`; still call `memory_sync` at the end of important runs to flush immediately and reconcile conflicts.
+Auto sync (`CLAWQL_SYNC_AUTO=1`) waits a short quiet period after ingest (default **2s**), then rate-limits pushes (default **30s** min interval) so sustained sessions do not hammer R2. Pending dirty writes still **flush on MCP shutdown** (SIGINT/SIGTERM/`beforeExit`) so Cloud Agent exits do not drop notes. Call `memory_sync` at the end of important runs to flush immediately and reconcile conflicts.
 
 ### 5. Copy-paste prompt (iOS / Cloud Agent)
 

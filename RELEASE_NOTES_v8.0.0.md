@@ -1,9 +1,9 @@
 ## clawql-mcp 8.0.0
 
 **npm:** [`clawql-mcp@8.0.0`](https://www.npmjs.com/package/clawql-mcp/v/8.0.0) (publish on tag `v8.0.0`)  
-**Full changelog:** [CHANGELOG.md#800---2026-08-31](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-08-31)  
-**Release date:** 2026-08-31 (prep; tag when checklist clears)  
-**Since:** `v7.2.0` (2026-08-04) — **~920 commits**, **~125 merge PRs** (~100 product + Dependabot)
+**Full changelog:** [CHANGELOG.md#800---2026-09-02](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-09-02)  
+**Release date:** 2026-09-02 (prep; tag when checklist clears)  
+**Since:** `v7.2.0` (2026-08-04) — **~1217 commits**, **~197 merge PRs** (tip **#1047**)
 
 ---
 
@@ -15,7 +15,7 @@
 2. **`ProviderPlugin` only** — legacy `Plugin` bridge removed ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))
 3. **Tool-scope enforcement default off** — Panguard proxy is opt-in; boot warns if none active
 
-On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, audit/TEE wedge, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
+On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, a Learn/docs wave for 8.0 migration, **Streams celld Lab 5b** (streams-slim + MCP/adapter fetch + audit LTX), workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
@@ -89,6 +89,35 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ---
 
+## What’s new since the Aug 31 refresh (through #1036)
+
+| Area                              | What landed                                                                                                                                           | PRs                                                                                                                                                                                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Network**                       | `clawql-network` spec v0.1 — Headscale/Tailscale/DERP/init CLI, Effect network state                                                                  | [#1024](https://github.com/danielsmithdevelopment/ClawQL/pull/1024)                                                                                                                                                                                                               |
+| **Analytics**                     | `clawql-analytics` PostHog/docs pageview adapter                                                                                                      | [#992](https://github.com/danielsmithdevelopment/ClawQL/pull/992)                                                                                                                                                                                                                 |
+| **Ontology / ExtractBench**       | Meta-ontology three-layer; ExtractBench wire + Arm A prep; legal-entity structured recall                                                             | [#963](https://github.com/danielsmithdevelopment/ClawQL/pull/963), [#1018](https://github.com/danielsmithdevelopment/ClawQL/pull/1018), [#1020](https://github.com/danielsmithdevelopment/ClawQL/pull/1020), [#1023](https://github.com/danielsmithdevelopment/ClawQL/pull/1023)  |
+| **Agents / PV**                   | `clawql-agents` follow-on; PV anything-to-MCP bridge                                                                                                  | [#967](https://github.com/danielsmithdevelopment/ClawQL/pull/967), [#911](https://github.com/danielsmithdevelopment/ClawQL/pull/911)                                                                                                                                              |
+| **Audit / observability publish** | Audit phase 4 publish; observability Phase 5 security dashboards; `0.1.0` versioning resets                                                           | [#1007](https://github.com/danielsmithdevelopment/ClawQL/pull/1007), [#1013](https://github.com/danielsmithdevelopment/ClawQL/pull/1013), [#1017](https://github.com/danielsmithdevelopment/ClawQL/pull/1017)                                                                     |
+| **Auth / security docs**          | clawql.com auth audit; Security sidebar; OSV supply-chain docs                                                                                        | [#991](https://github.com/danielsmithdevelopment/ClawQL/pull/991), [#1021](https://github.com/danielsmithdevelopment/ClawQL/pull/1021), [#1026](https://github.com/danielsmithdevelopment/ClawQL/pull/1026)                                                                       |
+| **Demos**                         | PixelDrop iPhone HEIC verified                                                                                                                        | [#998](https://github.com/danielsmithdevelopment/ClawQL/pull/998)                                                                                                                                                                                                                 |
+| **Harness**                       | `clawql-harness@0.1.0` workspace alignment                                                                                                            | [#1019](https://github.com/danielsmithdevelopment/ClawQL/pull/1019)                                                                                                                                                                                                               |
+| **Effect everywhere**             | `*Live` / `*Layer` in every package; Effect v4 RC spike docs                                                                                          | [#1031](https://github.com/danielsmithdevelopment/ClawQL/pull/1031), [#1035](https://github.com/danielsmithdevelopment/ClawQL/pull/1035)                                                                                                                                          |
+| **Learn / 8.0 docs**              | Discoverability (Learn sidebar, Plugins, `/archive`); payments/Panguard; Streams + optional tools; IDP labs; migrate-to-8 site audit; NATS IDP + KEDA | [#1025](https://github.com/danielsmithdevelopment/ClawQL/pull/1025)–[#1032](https://github.com/danielsmithdevelopment/ClawQL/pull/1032), [#1028](https://github.com/danielsmithdevelopment/ClawQL/pull/1028), [#1036](https://github.com/danielsmithdevelopment/ClawQL/pull/1036) |
+| **Workspace semver**              | Independent `0.1.0` first-publish policy (not lockstep `8.0.0` on every `clawql-*`)                                                                   | [#1017](https://github.com/danielsmithdevelopment/ClawQL/pull/1017), [#1019](https://github.com/danielsmithdevelopment/ClawQL/pull/1019) + [`clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md)                                        |
+
+---
+
+## What’s new since the Sep 2 midday tip (through #1047)
+
+| Area                       | What landed                                                                                                                                           | PRs                                                                                                                                                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Effect Stage 0**         | Effect v4 inventory + RC dry-run CI (no runtime bump)                                                                                                 | [#1037](https://github.com/danielsmithdevelopment/ClawQL/pull/1037)                                                                                                                                                                               |
+| **Docs site**              | Mobile padding; promote off-sidebar pages + archive redirects; security status page                                                                   | [#1039](https://github.com/danielsmithdevelopment/ClawQL/pull/1039), [#1040](https://github.com/danielsmithdevelopment/ClawQL/pull/1040), [#1033](https://github.com/danielsmithdevelopment/ClawQL/pull/1033)                                     |
+| **Streams / celld Lab 5b** | celld **v0.4.0** Learn + Helm; embed `clawql-core/streams-slim`; MCP fetch for search/execute/memory; mcp-api-adapter REST fetch; audit ring → DO LTX | [#1041](https://github.com/danielsmithdevelopment/ClawQL/pull/1041)–[#1047](https://github.com/danielsmithdevelopment/ClawQL/pull/1047) · [`examples/streams-celld`](examples/streams-celld/) · [`clawql-celld.md`](docs/streams/clawql-celld.md) |
+| **Docs stale cleanup**     | Pre-publish pass: empty-catalog / ProviderPlugin / Lab 5b wording across `docs/`                                                                      | See [`docs/release/docs-stale-audit-8.0.0.md`](docs/release/docs-stale-audit-8.0.0.md)                                                                                                                                                            |
+
+---
+
 ## What’s new (full 7.2.0 → 8.0.0 operator truths)
 
 ### Gateway / edge / enterprise
@@ -122,12 +151,27 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 - **`clawql-merkle` + `clawql-audit`** wedge + WORM dual-write
 - **`clawql-tee`** simulated TEE
 
+### Network / analytics / ontology
+
+- **`clawql-network@0.1.0`** — Headscale/Tailscale/DERP/init CLI (#1024)
+- **`clawql-analytics@0.1.0`** — PostHog/docs pageview adapter (#992)
+- Meta-ontology three-layer + ExtractBench wire (#963, #1018, #1023)
+- Legal-entity structured recall (#1020)
+
 ### OpenBench / agents / fabric
 
 - OpenBench B-7 suite + advanced Phase 1 packs
-- Personal agent / Harvey Lab / `clawql-agents`
-- Streams + Protocol Fabric site (#962, #966)
+- Personal agent / Harvey Lab / `clawql-agents` (#967)
+- PV anything-to-MCP (#911)
+- Streams + Protocol Fabric site (#962, #966); **celld Lab 5b** streams-slim + MCP/adapter fetch + audit LTX (#1041–#1047)
 - IDP NATS agent bridge; WebMCP provenance
+- Learn wave for 8.0 migration (#1025–#1032, #1036); site audit (#1028); docs stale cleanup before tag
+
+### Docs / Learn (8.0 migration)
+
+- Learn sidebar: Plugins, Streams, optional MCP tools, payments/Panguard, IDP labs
+- Security section + OSV supply-chain docs (#1021, #1026)
+- [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md) linked from site audit (#1028)
 
 ### Standalone npm (this tag)
 
@@ -140,6 +184,8 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 | `clawql-merkle` / `clawql-audit`              | **0.1.0** | Audit wedge; prefer wedge workflow if OIDC-gated            |
 | `clawql-core`, `clawql-api`, `clawql-auth`, … | **0.1.0** | First publish for each (were in-tree `8.0.0` lockstep only) |
 | `clawql-observability`                        | **0.1.0** | LGTM+ Phases 1–5                                            |
+| `clawql-network` / `clawql-analytics`         | **0.1.0** | Network mesh CLI; docs analytics adapter                    |
+| `clawql-harness`                              | **0.1.0** | Bench / scenario harness                                    |
 
 Full policy: [`docs/release/clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md).
 

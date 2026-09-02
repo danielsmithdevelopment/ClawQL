@@ -255,6 +255,7 @@ export default function PluginsHubPage() {
       <AgentMarkdownDocBody
         path="/plugins#plugin-model"
         className="flex-auto"
+        demoteH1="all"
       />
     </article>
   )

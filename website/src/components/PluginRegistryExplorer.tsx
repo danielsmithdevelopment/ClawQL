@@ -431,7 +431,7 @@ export function PluginRegistryExplorer() {
             ) : null}
           </p>
           <label className="flex items-center gap-2 text-xs">
-            <span className="text-zinc-500">Rows</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Rows</span>
             <select
               value={pageSize}
               onChange={(e) => {
@@ -515,7 +515,7 @@ export function PluginRegistryExplorer() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-zinc-500 dark:text-zinc-500">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
               Page {safePage} of {pageCount}
             </p>
             <div className="flex gap-2">
@@ -561,7 +561,7 @@ function RegistryTableRow({ entry }: { entry: PluginRegistryEntry }) {
             {entry.description}
           </span>
           {entry.boilerplate ? (
-            <span className="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
+            <span className="mt-1 block text-xs text-zinc-600 dark:text-zinc-400">
               <span className="font-medium text-zinc-600 dark:text-zinc-400">
                 Boilerplate
               </span>{' '}

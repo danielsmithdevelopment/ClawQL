@@ -3,11 +3,13 @@ import { NextResponse } from 'next/server'
 import { getSiteOrigin } from '@/lib/site-url'
 
 /**
- * Content Signals (https://contentsignals.org/) — declare AI/search usage preferences.
- * Next.js `MetadataRoute.Robots` does not emit Content-Signal; use a plain-text route instead.
+ * Plain-text robots.txt (not `MetadataRoute.Robots`) so we can add comments.
+ *
+ * Intentionally omit Cloudflare `Content-Signal:` lines: they are non-REP
+ * directives, ignored by major crawlers, and fail Lighthouse/GSC robots
+ * parsers as "Unknown directive" (SEO score hit). Prefer bot-specific Allow /
+ * Disallow when a preference must be machine-enforceable.
  */
-const CONTENT_SIGNAL = 'Content-Signal: ai-train=no, search=yes, ai-input=no'
-
 const RULES: Array<{
   userAgent: string | string[]
   allow?: string | string[]
@@ -33,13 +35,16 @@ function resolveArray<T>(value: T | T[] | undefined): T[] {
 function buildRobotsTxt(): string {
   const base = getSiteOrigin().toString().replace(/\/$/, '')
   const sitemap = `${base}/sitemap.xml`
-  let content = ''
+  let content = `# ClawQL documentation robots
+# Preference (informational): index for search; discourage AI training reuse.
+# Enforce via bot Allow/Disallow or edge policy when needed — not Content-Signal.
+
+`
 
   for (const rule of RULES) {
     for (const agent of resolveArray(rule.userAgent)) {
       content += `User-Agent: ${agent}\n`
     }
-    content += `${CONTENT_SIGNAL}\n`
     for (const item of resolveArray(rule.allow)) {
       content += `Allow: ${item}\n`
     }

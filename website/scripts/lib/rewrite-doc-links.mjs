@@ -72,7 +72,13 @@ export const DOC_SITE_ROUTES = {
     '/docker-desktop-observability',
   'docs/grafana/README.md': '/learn/audit-tool-and-observability',
   'docs/memory/memory-obsidian.md': '/learn/memory',
+  'docs/memory/okf.md': '/memory/okf',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
+  'docs/ouroboros/daos-unified-architecture-specification-v2.7.md':
+    '/ouroboros/daos',
+  'docs/ouroboros/daos-coordination-layer-specification.md':
+    '/ouroboros/specification',
+  'docs/ouroboros/daos-build-plan-v2.7.1.md': '/ouroboros/build-plan',
   'docs/inference/clawql-inference.md': '/inference/clawql-inference',
   'docs/payments/clawql-payments.md': '/payments/clawql-payments',
   'docs/surveillance/clawql-surveillance.md':
@@ -105,7 +111,11 @@ export const DOC_SITE_ROUTES = {
     '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':
     '/security/defense-in-depth',
+  'docs/security/clawql-defense-in-depth-security-guide.md':
+    '/security/defense-in-depth',
   'docs/security/security-best-practices-series/README.md':
+    '/security/best-practices',
+  'docs/security/security-best-practices-series':
     '/security/best-practices',
 }
 
@@ -153,6 +163,100 @@ export function escapeMdxCurlyOutsideFences(body) {
     .join('\n')
 }
 
+/** Repo trees that have no docs.clawql.com route — always point at GitHub. */
+const REPO_TREE_PREFIXES = [
+  'packages/',
+  'examples/',
+  'scripts/',
+  'schemas/',
+  'charts/',
+  'providers/',
+  'infra/',
+  'crates/',
+  'verticals/',
+  '.github/',
+  'data/',
+  'docker/',
+  'grafana/',
+]
+
+const GH_TREE = GH_MAIN.replace('/blob/main', '/tree/main')
+
+/**
+ * Absolute docs.clawql.com URLs that were mistakenly authored for repo paths.
+ * Rewrite to GitHub so the live site does not 404.
+ */
+const MISTAKEN_SITE_REPO_PATHS = [
+  '/packages/',
+  '/examples/',
+  '/scripts/',
+  '/schemas/',
+  '/charts/',
+  '/providers/',
+  '/infra/',
+  '/crates/',
+  '/docker/',
+  '/grafana/',
+  '/.github/',
+  '/data/',
+  '/verticals/',
+]
+
+/**
+ * @param {string} resolved repo-relative path (no leading ./)
+ * @param {string} hash including leading # or ''
+ */
+function hrefForResolvedRepoPath(resolved, hash = '') {
+  const clean = resolved.replace(/^\.\//, '').replace(/\/$/, '')
+  if (DOC_SITE_ROUTES[clean]) {
+    return `${DOC_SITE_ROUTES[clean]}${hash}`
+  }
+  // Directory form of a mapped README route (e.g. security-best-practices-series/)
+  if (DOC_SITE_ROUTES[`${clean}/README.md`]) {
+    return `${DOC_SITE_ROUTES[`${clean}/README.md`]}${hash}`
+  }
+  if (REPO_TREE_PREFIXES.some((p) => clean === p.slice(0, -1) || clean.startsWith(p))) {
+    const isProbablyDir =
+      resolved.endsWith('/') ||
+      !path.posix.extname(clean) ||
+      REPO_TREE_PREFIXES.some((p) => clean === p.slice(0, -1))
+    const base = isProbablyDir ? GH_TREE : GH_MAIN
+    return `${base}/${clean}${hash}`
+  }
+  // Other relative docs without a site route → GitHub blob
+  if (clean.startsWith('docs/') || clean.endsWith('.md') || clean.endsWith('.mdx')) {
+    return `${GH_MAIN}/${clean}${hash}`
+  }
+  return null
+}
+
+/**
+ * Absolute site paths that are really repo trees or missing .md companions.
+ * @param {string} pathname pathname only (may include hash stripped)
+ * @param {string} hash including leading # or ''
+ */
+function hrefForAbsoluteSitePath(pathname, hash = '') {
+  const clean = pathname.replace(/^\//, '').replace(/\/$/, '')
+  if (!clean) return null
+  if (MISTAKEN_SITE_REPO_PATHS.some((p) => pathname.startsWith(p))) {
+    // Grafana dashboards live under docs/grafana/ in-repo (not repo-root grafana/)
+    let pathPart = clean
+    if (pathPart.startsWith('grafana/')) {
+      pathPart = `docs/${pathPart}`
+    }
+    const isDir = !path.posix.extname(pathPart)
+    return `${isDir ? GH_TREE : GH_MAIN}/${pathPart}${hash}`
+  }
+  // Mistaken absolute links to markdown that should be GitHub or site routes
+  if (clean.endsWith('.md') || clean.endsWith('.mdx')) {
+    const asDocs = clean.startsWith('docs/') ? clean : `docs/${clean}`
+    if (DOC_SITE_ROUTES[asDocs]) return `${DOC_SITE_ROUTES[asDocs]}${hash}`
+    if (DOC_SITE_ROUTES[clean]) return `${DOC_SITE_ROUTES[clean]}${hash}`
+    return `${GH_MAIN}/${asDocs.startsWith('docs/') ? asDocs : clean}${hash}`
+  }
+  return null
+}
+
 /**
  * @param {string} body
  * @param {string} sourceDocPathFromRepoRoot e.g. `docs/presentations/clawql-slides.md`
@@ -162,14 +266,36 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
     sourceDocPathFromRepoRoot.replace(/\\/g, '/'),
   )
 
-  const rewritten = body.replace(
-    /\]\(([^)]+\.md(?:#[^)]*)?)\)/g,
+  let rewritten = body.replace(
+    // Markdown links: any relative path (not only *.md)
+    /\]\(([^)]+)\)/g,
     (match, linkPath) => {
       if (
         linkPath.startsWith('http://') ||
         linkPath.startsWith('https://') ||
-        linkPath.startsWith('mailto:')
+        linkPath.startsWith('mailto:') ||
+        linkPath.startsWith('#')
       ) {
+        // Absolute site paths that are really repo trees (mistaken docs.clawql.com authoring)
+        if (linkPath.startsWith('https://docs.clawql.com/')) {
+          try {
+            const u = new URL(linkPath)
+            const abs = hrefForAbsoluteSitePath(u.pathname, u.hash || '')
+            if (abs) return `](${abs})`
+          } catch {
+            /* keep */
+          }
+        }
+        return match
+      }
+
+      // Root-absolute paths on the docs site (e.g. /packages/..., /architecture/foo.md)
+      if (linkPath.startsWith('/')) {
+        const hashIdx = linkPath.indexOf('#')
+        const pathPart = hashIdx >= 0 ? linkPath.slice(0, hashIdx) : linkPath
+        const hash = hashIdx >= 0 ? linkPath.slice(hashIdx) : ''
+        const abs = hrefForAbsoluteSitePath(pathPart, hash)
+        if (abs) return `](${abs})`
         return match
       }
 
@@ -181,11 +307,19 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
         path.posix.join(sourceDir, filePart),
       )
 
-      if (DOC_SITE_ROUTES[resolved]) {
-        return `](${DOC_SITE_ROUTES[resolved]}${hash})`
-      }
+      const href = hrefForResolvedRepoPath(resolved, hash)
+      if (href) return `](${href})`
+      return match
+    },
+  )
 
-      return `](${GH_MAIN}/${resolved}${hash})`
+  // Bare absolute mistaken site→repo links outside markdown (rare)
+  rewritten = rewritten.replace(
+    /https:\/\/docs\.clawql\.com(\/(?:packages|examples|scripts|schemas|charts|providers|infra|crates|docker|grafana|data|verticals|\.github)\/[^\s)"']+)/g,
+    (_m, pathname) => {
+      const pathPart = pathname.replace(/^\//, '').replace(/\/$/, '')
+      const isDir = !path.posix.extname(pathPart)
+      return `${isDir ? GH_TREE : GH_MAIN}/${pathPart}`
     },
   )
 

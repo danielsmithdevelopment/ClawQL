@@ -156,7 +156,7 @@ Parity target: **same session contract and WORM/RTP schemas**. Exact hibernation
 
 ## 10. mcp-api-adapter on DOs
 
-Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. On Streams v0.2, **mcp-api-adapter is embedded in the DO/cell bundle** alongside clawql-core (64 MiB budget). gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §3.1 / §12 and [`mcp-api-adapter`](/mcp/mcp-api-adapter).
+Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / `/mcp` / gRPC / WebSocket from SQLite-cached `ListTools`. **As shipped (Streams Lab 5b), `mcp-api-adapter` is not embedded in the DO/cell bundle** — cells reach it over `fetch(CLAWQL_MCP_ADAPTER_URL)`, keeping the Worker bundle well under the 64 MiB budget without needing `clawql-core` in-process either. gen-cli stays build-time. Catalog refresh on wake avoids re-`ListTools` on every request after hibernation. See Streams §3.1 / §12 and [`mcp-api-adapter`](/mcp/mcp-api-adapter).
 
 ---
 
@@ -174,7 +174,7 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 
 ## 12. Open questions
 
-1. Bundle fit: full `clawql-core` + `mcp-api-adapter` under 64 MiB vs Streams-slim profile ([Streams §15](/streams/clawql-streams)).
+1. Bundle fit: **resolved for the shipped path** — `streams-slim` + `fetch()` to the gateway/adapter is ~0.4 MiB, well under 64 MiB ([Streams §15](/streams/clawql-streams)). Open: whether an offline Workers-safe `clawql-api` slim (with adapter logic in-process) is still worth pursuing, and whether it would still fit.
 2. Whether SubscriptionDO and AgentSessionDO share a DO namespace or separate script names for IAM (Cloudflare) / fleet isolation (celld).
 3. Miniflare maturity vs `celld diagnose` smoke for CI parity.
 4. Batching: one AgentSessionDO per batch window vs N DOs with a parent batch coordinator.
@@ -187,10 +187,12 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 - [`docs/streams/clawql-streams.md`](/streams/clawql-streams) — Streams Specification v0.2
 - [`docs/streams/clawql-celld.md`](/streams/clawql-celld) — celld integration (constraints, LTX, deploy)
 - [`docs/streams/clawql-cellrt.md`](/streams/clawql-cellrt) — ClawQL-owned Rust + Wasmtime cell runtime
+- [`docs/streams/clawql-tee.md`](/streams/clawql-tee) — hardware TEE + attestation-gated secrets
+- [`docs/streams/clawql-tee-airgap-audit.md`](/streams/clawql-tee-airgap-audit) — QR air-gap audit transport
 - [`docs/inference/clawql-inference.md`](/inference/clawql-inference) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md) — OBT + RTP
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)
-- Essay: [OpenBenchTrace and RTP](https://pragmaticvectors.com/posts/openbench-rtp-relationship/)
+- Essay: [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/) (OpenBench / RTP context)
 - Essay: [What Convergence Week actually proved](https://pragmaticvectors.com/posts/openbench-convergence-week/)
 
 export function wrapper({ children }) {

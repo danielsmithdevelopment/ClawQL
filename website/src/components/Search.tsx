@@ -474,7 +474,10 @@ export function Search({ defaultOpen = false }: { defaultOpen?: boolean }) {
       >
         <SearchIcon className="h-5 w-5 stroke-current" />
         Search documentation…
-        <kbd className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300">
+        <kbd
+          className="ml-auto text-2xs text-zinc-500 dark:text-zinc-300"
+          aria-hidden="true"
+        >
           <kbd className="font-sans">{modifierKey}</kbd>
           <kbd className="font-sans">K</kbd>
         </kbd>
