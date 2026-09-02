@@ -1,0 +1,39 @@
+# Example: ClawQL Streams on celld v0.4.0 (self-hosted Durable Objects).
+#
+# Prerequisite — deploy the Worker bundle to the fleet bucket (once per app version):
+#
+#   cd examples/streams-celld
+#   export CELLD_BUCKET=s3://clawql-streams-state
+#   export S3_ENDPOINT=https://ACCOUNT.r2.cloudflarestorage.com
+#   export AWS_REGION=auto
+#   export AWS_ACCESS_KEY_ID=…
+#   export AWS_SECRET_ACCESS_KEY=…
+#   clawql streams celld deploy --bucket "$CELLD_BUCKET" --endpoint "$S3_ENDPOINT"
+#
+# Secret `clawql-provider-env` (or streams.celld.credentialsSecret) must include bucket creds.
+#
+#   helm upgrade --install clawql charts/clawql-mcp \
+#     -f charts/clawql-mcp/values-streams-celld.example.yaml \
+#     --set envFromSecret=clawql-provider-env \
+#     --set streams.celld.bucket=s3://clawql-streams-state \
+#     --set streams.celld.endpoint=https://ACCOUNT.r2.cloudflarestorage.com \
+#     -n clawql --create-namespace
+
+streams:
+  enabled: true
+  scalingBackend: celld
+  celld:
+    enabled: true
+    bucket: s3://clawql-streams-state
+    endpoint: ""
+    region: auto
+    replicaCount: 1
+
+inference:
+  enabled: true
+
+enableMemory: true
+
+# MCP HTTP remains the operator control plane; cells call inference over HTTP.
+nats:
+  enabled: false

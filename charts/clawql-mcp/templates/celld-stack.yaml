@@ -1,0 +1,130 @@
+{{- if and .Values.streams.enabled .Values.streams.celld.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.celldName" . }}
+  labels:
+    {{- include "clawql-mcp.celldLabels" . | nindent 4 }}
+spec:
+  type: {{ .Values.streams.celld.service.type }}
+  selector:
+    {{- include "clawql-mcp.celldSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: worker
+      port: {{ .Values.streams.celld.service.workerPort | int }}
+      targetPort: worker
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "clawql-mcp.celldHeadlessName" . }}
+  labels:
+    {{- include "clawql-mcp.celldLabels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    {{- include "clawql-mcp.celldSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: internal
+      port: {{ .Values.streams.celld.service.internalPort | int }}
+      targetPort: internal
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "clawql-mcp.celldName" . }}
+  labels:
+    {{- include "clawql-mcp.celldLabels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "clawql-mcp.celldHeadlessName" . }}
+  replicas: {{ .Values.streams.celld.replicaCount | int }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      {{- include "clawql-mcp.celldSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "clawql-mcp.celldSelectorLabels" . | nindent 8 }}
+      {{- with .Values.streams.celld.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.streams.celld.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.streams.celld.terminationGracePeriodSeconds | int }}
+      containers:
+        - name: celld
+          image: "{{ .Values.streams.celld.image.repository }}:{{ .Values.streams.celld.image.tag }}"
+          imagePullPolicy: {{ .Values.streams.celld.image.pullPolicy }}
+          command:
+            - celld
+          ports:
+            - name: worker
+              containerPort: {{ .Values.streams.celld.service.workerPort | int }}
+              protocol: TCP
+            - name: internal
+              containerPort: {{ .Values.streams.celld.service.internalPort | int }}
+              protocol: TCP
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: CELLD_BUCKET
+              value: {{ required "streams.celld.bucket is required when streams.celld.enabled=true" .Values.streams.celld.bucket | quote }}
+            - name: CELLD_ADDR
+              value: "0.0.0.0:{{ .Values.streams.celld.service.workerPort | int }}"
+            - name: CELLD_INTERNAL_ADDR
+              value: "0.0.0.0:{{ .Values.streams.celld.service.internalPort | int }}"
+            - name: CELLD_ADVERTISE
+              value: "$(POD_NAME).{{ include "clawql-mcp.celldHeadlessName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.streams.celld.service.internalPort | int }}"
+            {{- if .Values.streams.celld.endpoint }}
+            - name: S3_ENDPOINT
+              value: {{ .Values.streams.celld.endpoint | quote }}
+            {{- end }}
+            - name: AWS_REGION
+              value: {{ .Values.streams.celld.region | default "auto" | quote }}
+            {{- $infUrl := include "clawql-mcp.celldInferenceUrl" . }}
+            {{- if $infUrl }}
+            - name: CLAWQL_STREAMS_INFERENCE_URL
+              value: {{ $infUrl | quote }}
+            {{- end }}
+            {{- with .Values.streams.celld.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "clawql-mcp.celldCredentialsSecret" . }}
+          {{- with .Values.streams.celld.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.streams.celld.healthPath | default "/.well-known/celld/health" }}
+              port: worker
+            initialDelaySeconds: {{ .Values.streams.celld.probes.readiness.initialDelaySeconds | int }}
+            periodSeconds: {{ .Values.streams.celld.probes.readiness.periodSeconds | int }}
+            timeoutSeconds: {{ .Values.streams.celld.probes.readiness.timeoutSeconds | int }}
+            failureThreshold: {{ .Values.streams.celld.probes.readiness.failureThreshold | int }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.streams.celld.healthPath | default "/.well-known/celld/health" }}
+              port: worker
+            initialDelaySeconds: {{ .Values.streams.celld.probes.liveness.initialDelaySeconds | int }}
+            periodSeconds: {{ .Values.streams.celld.probes.liveness.periodSeconds | int }}
+            timeoutSeconds: {{ .Values.streams.celld.probes.liveness.timeoutSeconds | int }}
+            failureThreshold: {{ .Values.streams.celld.probes.liveness.failureThreshold | int }}
+          resources:
+            {{- toYaml .Values.streams.celld.resources | nindent 12 }}
+{{- end }}
