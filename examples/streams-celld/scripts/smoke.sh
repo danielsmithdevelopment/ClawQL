@@ -17,7 +17,7 @@ fi
 node "$ROOT/scripts/bundle-check.mjs"
 node "$ROOT/scripts/mcp-fetch.test.mjs"
 
-# Mock MCP for search/execute (stateless JSON tools/call).
+# Mock MCP for search/execute/memory_* (stateless JSON tools/call).
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &
 MCP_PID=$!
 
@@ -54,9 +54,10 @@ done
 
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
+EVENT_ID="smoke-mcp-$(date +%s)-$$"
 RESP=$(curl -sf -X POST "$BASE/webhook/smoke" \
   -H 'content-type: application/json' \
-  -H 'x-clawql-event-id: smoke-mcp-1' \
+  -H "x-clawql-event-id: ${EVENT_ID}" \
   -d '{"probe":true}')
 
 fail() {
@@ -72,5 +73,8 @@ echo "$RESP" | grep -q 'streams:session:' || fail "expected cache session key"
 echo "$RESP" | grep -q 'streamable-http' || fail "expected MCP streamable-http transport"
 echo "$RESP" | grep -q '"source":"mock-mcp"' || fail "expected mock-mcp search/execute payload"
 echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigured true"
+echo "$RESP" | grep -q 'memory_ingest' || fail "expected memory_ingest tool result"
+echo "$RESP" | grep -q 'memory_recall' || fail "expected memory_recall tool result"
+echo "$RESP" | grep -q 'memory_\*' || fail "expected memory_* in core surface list"
 
 echo "smoke: PASS"

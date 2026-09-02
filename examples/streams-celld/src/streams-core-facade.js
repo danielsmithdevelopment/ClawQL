@@ -7,9 +7,9 @@
  *
  * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP:
  * - search / execute → clawql-mcp (clawql-api on the host)
+ * - memory_ingest / memory_recall → clawql-mcp (clawql-memory + vault on host)
  *
  * Still deferred:
- * - memory_ingest / memory_recall → clawql-memory + vault (or MCP when enabled)
  * - inference completions → fetch(INFERENCE_URL)
  * - mcp-api-adapter protocol surfaces → Node Express/gRPC host
  */
@@ -72,6 +72,39 @@ export async function executeViaMcp(mcp, operationId, args = {}) {
     { url: mcp.url ?? "", bearer: mcp.bearer },
     "execute",
     { operationId, args }
+  );
+}
+
+/**
+ * Persist a short vault note via host memory_ingest (MCP).
+ * @param {{ url?: string, bearer?: string }} mcp
+ * @param {{ title: string, insights: string, sessionId?: string, type?: string, tags?: string[] }} input
+ */
+export async function memoryIngestViaMcp(mcp, input) {
+  return callMcpTool(
+    { url: mcp.url ?? "", bearer: mcp.bearer },
+    "memory_ingest",
+    {
+      title: input.title,
+      insights: input.insights,
+      ...(input.sessionId ? { sessionId: input.sessionId } : {}),
+      ...(input.type ? { type: input.type } : {}),
+      ...(input.tags ? { tags: input.tags } : {}),
+    }
+  );
+}
+
+/**
+ * Recall vault context via host memory_recall (MCP).
+ * @param {{ url?: string, bearer?: string }} mcp
+ * @param {string} query
+ * @param {{ limit?: number }} [opts]
+ */
+export async function memoryRecallViaMcp(mcp, query, opts = {}) {
+  return callMcpTool(
+    { url: mcp.url ?? "", bearer: mcp.bearer },
+    "memory_recall",
+    { query, limit: opts.limit ?? 5 }
   );
 }
 

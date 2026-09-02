@@ -19,12 +19,12 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | Hash-chain verify | **In-process** — via clawql-merkle (needs `nodejs_compat`) |
 | Inference | **Out-of-process** — `fetch(INFERENCE_URL)` |
 | `search` / `execute` | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP (`tools/call`, MCP **2026-07-28** preferred) |
-| `memory_*` | **Deferred** — clawql-memory + vault (or MCP when enabled) |
+| `memory_ingest` / `memory_recall` | **Out-of-process** — same MCP fetch path (vault stays on the host) |
 | `mcp-api-adapter` | **Deferred** — Node Express/gRPC host |
 
-`streams-slim` **excludes** `webmcp-draft` (`node:fs`), cuckoo, Loki, and plugin dynamic loaders. Full **`clawql-api` is not embedded** (disk-backed specs + gRPC) — cells call the MCP host instead.
+`streams-slim` **excludes** `webmcp-draft` (`node:fs`), cuckoo, Loki, and plugin dynamic loaders. Full **`clawql-api` / `clawql-memory` are not embedded** — cells call the MCP host instead.
 
-Set `CLAWQL_MCP_URL` (and optional `CLAWQL_MCP_BEARER_TOKEN`) in Wrangler `vars` / fleet env. When unset, `tools.search` / `tools.execute` return `{ deferred: true, … }`. Prefer `CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1` on clawql-mcp so POSTs return JSON (Workers still parse SSE `data:` lines).
+Set `CLAWQL_MCP_URL` (and optional `CLAWQL_MCP_BEARER_TOKEN`) in Wrangler `vars` / fleet env. When unset, MCP tools return `{ deferred: true, … }`. Prefer `CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1` on clawql-mcp so POSTs return JSON (Workers still parse SSE `data:` lines).
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ curl -s -X POST http://127.0.0.1:9876/webhook/demo-lab \
   -d '{"hello":"streams"}' | jq '.session.audit, .session.core, .session.tools'
 ```
 
-Expect `audit.clawqlCore.ok: true`, a hash-chain `verify.ok: true`, and `core.package: "clawql-core/streams-slim"`. With `CLAWQL_MCP_URL` set, `tools.search.ok` / `tools.execute.ok` should be true.
+Expect `audit.clawqlCore.ok: true`, a hash-chain `verify.ok: true`, and `core.package: "clawql-core/streams-slim"`. With `CLAWQL_MCP_URL` set, `tools.search` / `tools.execute` / `tools.memory_ingest` / `tools.memory_recall` should succeed via Streamable HTTP.
 
 ## Bundle size gate (64 MiB Workers limit)
 
@@ -77,4 +77,4 @@ Helm injects `CLAWQL_MCP_URL` (in-cluster `/mcp`) and `INFERENCE_URL` when the s
 
 - Optional Workers-safe slim `clawql-api` for offline/in-cell search without network
 - Persist isolate audit ring beyond process memory (LTX WORM on fleet bucket already covers DO `storage.put` rows)
-- Wire `memory_*` via the same MCP fetch path when vault is available on the host
+- Optional `mcp-api-adapter` protocol fan-out still host-side

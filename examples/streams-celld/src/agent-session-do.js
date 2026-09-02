@@ -1,12 +1,14 @@
 /**
  * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim)
- * plus optional fetch(CLAWQL_MCP_URL) for search/execute.
+ * plus optional fetch(CLAWQL_MCP_URL) for search/execute/memory_*.
  * Model calls use fetch(INFERENCE_URL) — never child_process.
  */
 import {
   appendSessionCreatedAudit,
   cacheSessionMeta,
   executeViaMcp,
+  memoryIngestViaMcp,
+  memoryRecallViaMcp,
   searchViaMcp,
   verifyAuditChain,
 } from "./streams-core-facade.js";
@@ -110,15 +112,30 @@ export class AgentSessionDO {
       }
 
       const mcp = resolveMcpConfig(this.env);
+      const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const tools = {
         search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {
           limit: 3,
         }),
         execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
+        memory_ingest: await memoryIngestViaMcp(mcp, {
+          title: memoryTitle,
+          insights: `AgentSessionDO spawned subscription=${subscriptionId} event=${eventId}`,
+          sessionId: eventId,
+          type: "context",
+          tags: ["streams", "celld"],
+        }),
+        memory_recall: await memoryRecallViaMcp(
+          mcp,
+          `streams-celld ${subscriptionId}`,
+          { limit: 3 }
+        ),
       };
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
         executeOk: tools.execute?.ok === true,
+        memoryIngestOk: tools.memory_ingest?.ok === true,
+        memoryRecallOk: tools.memory_recall?.ok === true,
         deferred: !mcp.url,
       });
 
@@ -137,10 +154,10 @@ export class AgentSessionDO {
           package: "clawql-core/streams-slim",
           inProcess: ["audit", "cache", "hash-chain"],
           outOfProcess: mcp.url
-            ? ["search", "execute", "inference"]
+            ? ["search", "execute", "memory_*", "inference"]
             : ["inference"],
           deferred: mcp.url
-            ? ["memory_*", "mcp-api-adapter"]
+            ? ["mcp-api-adapter"]
             : ["search", "execute", "memory_*", "mcp-api-adapter"],
           mcpUrlConfigured: Boolean(mcp.url),
         },
