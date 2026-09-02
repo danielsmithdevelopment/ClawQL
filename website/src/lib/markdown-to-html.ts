@@ -81,7 +81,45 @@ function rehypeDocsPre() {
   }
 }
 
-export async function markdownToHtml(markdown: string): Promise<string> {
+export type MarkdownToHtmlOptions = {
+  /**
+   * Heading hierarchy for pages that already expose a page-level `<h1>`,
+   * or decks that misuse `#` for every slide.
+   * - `all`: every `<h1>` → `<h2>`
+   * - `after-first`: keep the first `<h1>`, demote the rest to `<h2>`
+   */
+  demoteH1?: 'all' | 'after-first'
+}
+
+/** Post-stringify demotion keeps unified/rehype plugin typing simple. */
+function demoteH1Tags(
+  html: string,
+  mode: NonNullable<MarkdownToHtmlOptions['demoteH1']>,
+): string {
+  let seenFirstOpen = false
+  let pendingFirstClose = false
+  return html.replace(/<\/?h1\b([^>]*)>/gi, (full, attrs: string) => {
+    const isClose = full.startsWith('</')
+    if (!isClose) {
+      if (mode === 'all' || seenFirstOpen) {
+        return `<h2${attrs}>`
+      }
+      seenFirstOpen = true
+      pendingFirstClose = true
+      return full
+    }
+    if (pendingFirstClose) {
+      pendingFirstClose = false
+      return full
+    }
+    return '</h2>'
+  })
+}
+
+export async function markdownToHtml(
+  markdown: string,
+  options: MarkdownToHtmlOptions = {},
+): Promise<string> {
   const file = await remark()
     .use(remarkGfm)
     .use(remarkRehype, { allowDangerousHtml: true })
@@ -89,5 +127,6 @@ export async function markdownToHtml(markdown: string): Promise<string> {
     .use(rehypeDocsPre)
     .use(rehypeStringify, { allowDangerousHtml: true })
     .process(markdown)
-  return String(file)
+  const html = String(file)
+  return options.demoteH1 ? demoteH1Tags(html, options.demoteH1) : html
 }

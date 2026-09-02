@@ -203,6 +203,11 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'weekly',
     priority: 0.93,
   },
+  {
+    path: '/memory/okf',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
   { path: '/agent-setup', changeFrequency: 'weekly', priority: 0.97 },
   { path: '/architecture', changeFrequency: 'monthly', priority: 0.93 },
   { path: '/reference', changeFrequency: 'weekly', priority: 0.9 },
@@ -342,7 +347,6 @@ const ENTRIES: Array<Entry> = [
   { path: '/auth', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/audit', changeFrequency: 'weekly', priority: 0.95 },
   { path: '/observability', changeFrequency: 'weekly', priority: 0.95 },
-  { path: '/security', changeFrequency: 'monthly', priority: 0.9 },
   {
     path: '/security/defense-in-depth',
     changeFrequency: 'monthly',
@@ -410,18 +414,33 @@ function trainingSitemapEntries(): Entry[] {
 }
 
 function pluginSitemapEntries(): Entry[] {
-  return (pluginPaths as string[]).map((p) => ({
-    path: p as Entry['path'],
-    changeFrequency: 'monthly' as const,
-    priority: p === '/plugins' ? 0.9 : 0.87,
-  }))
+  // `/plugins` is already in ENTRIES — avoid duplicate locs.
+  return (pluginPaths as string[])
+    .filter((p) => p !== '/plugins')
+    .map((p) => ({
+      path: p as Entry['path'],
+      changeFrequency: 'monthly' as const,
+      priority: 0.87,
+    }))
 }
 
-const ALL_ENTRIES: Entry[] = [
+/** First-wins dedupe so generated lists cannot reintroduce duplicate locs. */
+function dedupeEntries(entries: Entry[]): Entry[] {
+  const seen = new Set<string>()
+  const out: Entry[] = []
+  for (const entry of entries) {
+    if (seen.has(entry.path)) continue
+    seen.add(entry.path)
+    out.push(entry)
+  }
+  return out
+}
+
+const ALL_ENTRIES: Entry[] = dedupeEntries([
   ...ENTRIES,
   ...trainingSitemapEntries(),
   ...pluginSitemapEntries(),
-]
+])
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteOrigin().toString().replace(/\/$/, '')
