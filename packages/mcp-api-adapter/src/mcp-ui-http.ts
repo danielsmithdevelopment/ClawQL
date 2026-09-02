@@ -11,9 +11,16 @@ import {
 import { canProcessDocuments, filterToolsForAtr } from "./mcp-ui-atr.js";
 import {
   createGeneratedUi,
+  deleteGeneratedUiBySlug,
   getGeneratedUiBySlug,
   type GeneratedUiDefinition,
 } from "./mcp-ui-generate.js";
+import {
+  AGENT_LAB_PRESET_SLUG,
+  McpUiPresetError,
+  runResolveAgentLabPreset,
+} from "./mcp-ui-presets.js";
+import { runRenderAgentLabLandingPage } from "./mcp-ui-agent-lab-html.js";
 import {
   renderMcpUiCatalogPage,
   renderMcpUiCustomFormPage,
@@ -536,13 +543,88 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     });
   });
 
+  router.get("/presets/agent-lab", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveAgentLabPreset(authorized);
+      res.type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition,
+        })
+      );
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Docs Agent Lab",
+            description:
+              "HTMX-scaffolded multi-step view that does not exist as a static page on the docs site.",
+            slug: AGENT_LAB_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
+  router.post("/presets/agent-lab/start", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveAgentLabPreset(authorized);
+      deleteGeneratedUiBySlug(AGENT_LAB_PRESET_SLUG);
+      const form = createGeneratedUi(definition, authorized);
+      res.redirect(303, `${basePath}/custom/${encodeURIComponent(form.slug)}`);
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Docs Agent Lab",
+            description:
+              "HTMX-scaffolded multi-step view that does not exist as a static page on the docs site.",
+            slug: AGENT_LAB_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
   router.post("/generate", (req, res) => {
     const atr = atrFromRequest(req);
     const catalog = options.getCatalog();
     const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
-    const body = (req.body ?? {}) as GeneratedUiDefinition;
+    const body = (req.body ?? {}) as GeneratedUiDefinition & { preset?: string };
     try {
-      const form = createGeneratedUi(body, authorized);
+      let definition: GeneratedUiDefinition = body;
+      if (body.preset === "agent-lab" || body.preset === AGENT_LAB_PRESET_SLUG) {
+        definition = runResolveAgentLabPreset(authorized);
+        deleteGeneratedUiBySlug(AGENT_LAB_PRESET_SLUG);
+      }
+      const form = createGeneratedUi(definition, authorized);
       res.status(201).json({
         id: form.id,
         slug: form.slug,
@@ -552,7 +634,12 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         url: `${basePath}/custom/${form.slug}`,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
       res.status(400).json({ error: message });
     }
   });

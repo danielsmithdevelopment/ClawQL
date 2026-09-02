@@ -13,6 +13,11 @@ const SAMPLE_PROMPTS = [
   'On /plugins, filter horizontal plugins for memory and open the memory plugin.',
 ]
 
+const MCP_UI_AGENT_LAB_HREF =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_MCP_UI_ORIGIN
+    ? `${process.env.NEXT_PUBLIC_MCP_UI_ORIGIN.replace(/\/$/, '')}/mcp-ui/presets/agent-lab`
+    : null
+
 const TOOL_ROWS: Array<{ name: string; blurb: string }> = [
   { name: 'clawql.docs.search', blurb: 'Full-text docs search' },
   { name: 'clawql.docs.list_routes', blurb: 'Curated hub map' },
@@ -179,6 +184,39 @@ export function WebMcpAgentLab() {
           >
             MCP-UI
           </Link>
+        </section>
+
+
+        <section>
+          <h3 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+            Act 2 · /mcp-ui view
+          </h3>
+          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+            WebMCP unlocks this panel on-site. The HTMX Agent Lab workflow is a
+            different surface — dynamically scaffolded by mcp-api-adapter, not a
+            static docs page.
+          </p>
+          {MCP_UI_AGENT_LAB_HREF ? (
+            <a
+              href={MCP_UI_AGENT_LAB_HREF}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block font-medium text-zinc-900 underline-offset-2 hover:underline dark:text-claw-cyan-bright"
+            >
+              Open /mcp-ui Agent Lab preset
+            </a>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Run{" "}
+              <code className="font-mono">
+                node examples/mcp-api-adapter/docs-agent-lab-server.mjs
+              </code>{" "}
+              then open{" "}
+              <code className="font-mono">/mcp-ui/presets/agent-lab</code>. Set{" "}
+              <code className="font-mono">NEXT_PUBLIC_MCP_UI_ORIGIN</code> to deep-link
+              from this panel.
+            </p>
+          )}
         </section>
 
         {claimedAt ? (

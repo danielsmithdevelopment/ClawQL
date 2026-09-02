@@ -477,6 +477,7 @@ export function renderMcpUiCatalogPage(options: {
       <a href="/tools">Tool catalog JSON</a>
       <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
       · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor">Executor vs ClawQL</a>
+      <a href="${escapeMcpUiHtml(basePath)}/presets/agent-lab">Agent Lab (generated)</a>
     </nav>
     <main class="tool-grid">${cards}</main>
   </div>

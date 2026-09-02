@@ -58,9 +58,21 @@ export {
 } from "./mcp-ui-atr.js";
 export {
   createGeneratedUi,
+  deleteGeneratedUiBySlug,
   getGeneratedUiBySlug,
   listGeneratedUis,
 } from "./mcp-ui-generate.js";
+export {
+  AGENT_LAB_PRESET_SLUG,
+  AGENT_LAB_STEP_CANDIDATES,
+  McpUiPresetError,
+  resolveAgentLabPresetDefinition,
+  runResolveAgentLabPreset,
+} from "./mcp-ui-presets.js";
+export {
+  renderAgentLabLandingPage,
+  runRenderAgentLabLandingPage,
+} from "./mcp-ui-agent-lab-html.js";
 export {
   createProgressJob,
   getProgressJob,

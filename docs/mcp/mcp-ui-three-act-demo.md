@@ -11,7 +11,7 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 | Act           | Primary                                                                 | Guaranteed fallback                                                                                                                   |
 | ------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
-| 2 Custom view | Live `/mcp-ui` industry fit form (when built)                           | `POST /mcp-ui/generate` preset or catalog `search` + `memory_recall`                                                                  |
+| 2 Custom view | Live `/mcp-ui/presets/agent-lab` (docs_* demo server)                  | `POST /mcp-ui/generate` `{"preset":"agent-lab"}` or catalog `search` + `memory_recall`                                                 |
 | 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                                           |
 
 **Rule:** rehearse full sequence off-camera twice. Record with live Act 3 only after two clean runs. Otherwise close on **`/mcp-ui/trace/compare`**.
@@ -41,18 +41,32 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 **Goal:** Pick an industry → computed tier / agent / package recommendations from data spread across pricing + industries + agent catalog — a view **not** on clawql.com today.
 
-**Target UX (to build):** `/mcp-ui/custom/industry-fit` or template `industry_fit`:
+**Shipped UX:** `/mcp-ui/presets/agent-lab` → `/mcp-ui/custom/agent-lab` (Agent Lab).
+
+**Also planned:** `/mcp-ui/custom/industry-fit` or template `industry_fit`:
 
 - Input: industry slug (e.g. `lending`)
 - Steps: `search` (ops) or static pulls from `landing-page/demo/src/lib/{pricing,industries,competitive-pricing}.ts`
 - Output card: recommended gateway tier, IDP bundle, domain tools, agent skills links
 
-**Interim (smoke today):**
+**Primary (shipped — Agent Lab preset):** a view that does **not** exist on the docs site:
+
+```bash
+npm run build -w mcp-grpc-transport -w mcp-api-adapter
+node examples/mcp-api-adapter/docs-agent-lab-server.mjs
+# open http://127.0.0.1:8091/mcp-ui/presets/agent-lab
+# POST start → /mcp-ui/custom/agent-lab (HTMX multi-step: search → routes → reveal → claim)
+```
+
+WebMCP Act 1 unlocks the on-page Agent Lab panel; Act 2 is the adapter-scaffolded
+`/mcp-ui/presets/agent-lab` workflow (same narrative tools, different surface).
+
+**Interim fallback (Core catalog):**
 
 ```bash
 npm run build -w mcp-grpc-transport -w mcp-api-adapter
 node examples/mcp-api-adapter/server.mjs
-# POST /mcp-ui/generate with search + memory_recall steps
+# POST /mcp-ui/generate {"preset":"agent-lab"}  # uses search + memory_recall when docs_* absent
 ```
 
 **Pass:** audience reaction “that’s actually useful” — Act 1 feels justified.

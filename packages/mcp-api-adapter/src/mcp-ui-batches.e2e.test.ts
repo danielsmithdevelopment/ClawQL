@@ -196,6 +196,58 @@ describe("mcp-ui batches 2-4 e2e", () => {
     expect(await deniedUpload.text()).toMatch(/document\/file processing/i);
   });
 
+  it("GET /mcp-ui/presets/agent-lab scaffolds Act-2 landing and start redirects", async () => {
+    const base = await startApp();
+    const token = await mintJwt({ sub: "ops", scope: ["search", "memory"] });
+    const landing = await fetch(`${base}/mcp-ui/presets/agent-lab`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(landing.status).toBe(200);
+    const landingHtml = await landing.text();
+    expect(landingHtml).toMatch(/Agent Lab/i);
+    expect(landingHtml).toContain("/mcp-ui/presets/agent-lab/start");
+    expect(landingHtml).toMatch(/search|memory_recall/);
+
+    const started = await fetch(`${base}/mcp-ui/presets/agent-lab/start`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      redirect: "manual",
+    });
+    expect(started.status).toBe(303);
+    const location = started.headers.get("location") ?? "";
+    expect(location).toContain("/mcp-ui/custom/agent-lab");
+
+    const page = await fetch(`${base}${location.startsWith("http") ? new URL(location).pathname : location}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toMatch(/Step 1 of/i);
+    expect(html).toContain('hx-post="/mcp-ui/custom/agent-lab/step"');
+  });
+
+  it("POST /mcp-ui/generate with preset agent-lab creates the custom workflow", async () => {
+    const base = await startApp();
+    const token = await mintJwt({ sub: "ops", scope: ["search", "memory"] });
+    const created = await fetch(`${base}/mcp-ui/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ preset: "agent-lab" }),
+    });
+    expect(created.status).toBe(201);
+    const json = (await created.json()) as {
+      slug: string;
+      url: string;
+      steps: unknown[];
+    };
+    expect(json.slug).toBe("agent-lab");
+    expect(json.url).toContain("/mcp-ui/custom/agent-lab");
+    expect(json.steps.length).toBeGreaterThanOrEqual(2);
+  });
+
   it("POST /mcp-ui/generate creates a custom multi-step form", async () => {
     const base = await startApp();
     const token = await mintJwt({ sub: "ops", scope: ["search", "memory"] });
