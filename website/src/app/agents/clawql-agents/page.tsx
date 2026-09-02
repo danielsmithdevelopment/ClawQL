@@ -4,62 +4,60 @@ import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL Ontology — Legal Domain Spec',
+  title: 'clawql-agents — hardened open-source agent adapters',
   description:
-    'Legal pack entities (Matter, Client, Attorney, Document) that power memory_recall structured filters and OpenBench B-7 enumeration.',
-  path: '/specs/ontology/legal-domain',
+    'Seven agent adapters (OpenClaw, Hermes, Pi, Goose, DeepSeek Harness, OpenHands, Cline) with Panguard, WORM hooks, vault memory, Helm overlays, and dry OpenBench runner.',
+  path: '/agents/clawql-agents',
   ogType: 'article',
 })
 
 export const dynamic = 'force-static'
 
-export default function OntologyLegalDomainPage() {
+export default function ClawqlAgentsSpecPage() {
   return (
     <article className="flex h-full flex-col pt-10 pb-10">
       <div className="not-prose mb-6 flex flex-wrap items-center gap-2">
         <Tag color="claw" variant="medium">
-          Specs
-        </Tag>
-        <Tag color="claw" variant="medium">
-          Ontology
+          Agents
         </Tag>
         <Tag color="amber" variant="medium">
-          v0.1 spec
+          v0.1
         </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Legal domain pack for clawql-ontology.</strong> Typed entities
-          that seed <code className="text-sm">ontology.db</code> so{' '}
-          <code className="text-sm">memory_recall</code> can evaluate exact
-          field predicates. Source:{' '}
+          <strong>
+            Wraps open-source agents — does not ship the agents themselves.
+          </strong>{' '}
+          Adapters wire ClawQL MCP tools, Panguard ATR, and WORM audit into each
+          agent family. Durable trail:{' '}
           <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/ontology/legal-domain-v0.1.md"
+            href="/audit"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            docs/specs/ontology/legal-domain-v0.1.md
+            clawql-audit
           </a>
-          . Related:{' '}
+          . Personal setup:{' '}
           <a
-            href="/specs/memory/memory-recall-structured-filter"
+            href="/agent-setup"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            memory_recall structured filters
+            Agent setup
           </a>
-          {' · '}
+          . Source:{' '}
           <a
-            href="/architecture/enterprise-ontology"
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/agents/clawql-agents-spec-v0.1.md"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            Enterprise Ontology
+            docs/agents/clawql-agents-spec-v0.1.md
           </a>
           .
         </Note>
       </div>
 
       <AgentMarkdownDocBody
-        path="/specs/ontology/legal-domain"
+        path="/agents/clawql-agents"
         className="flex-auto"
       />
     </article>

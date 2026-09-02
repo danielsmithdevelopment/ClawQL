@@ -23,9 +23,6 @@ export default function ProtocolFabricPage() {
         <Tag color="claw" variant="medium">
           Protocol Fabric
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped
-        </Tag>
       </div>
 
       <div className="not-prose mb-8">

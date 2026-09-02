@@ -23,9 +23,6 @@ export default function ClawqlInferencePage() {
         <Tag color="claw" variant="medium">
           Inference
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped
-        </Tag>
       </div>
 
       <div className="not-prose mb-8">

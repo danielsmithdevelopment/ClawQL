@@ -10,11 +10,15 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 - [Custom sources](https://docs.clawql.com/getting-started/custom-sources): Register other MCP servers into one gateway surface
 - [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
 - [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and install options
+- [Migrate to 8.0](https://docs.clawql.com/getting-started/migrate-to-8.0): Breaking changes: empty catalog, ProviderPlugin, enforcement opt-in
 - [Quickstart](https://docs.clawql.com/quickstart): npx, install options, and first MCP connect
 
 ## Core reference
 - [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
-- [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter): Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli
+- [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter): Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui
+- [mcp-ui](https://docs.clawql.com/mcp/mcp-ui): HTMX Swagger UI for MCP — seventh adapter surface
+- [clawql-network](https://docs.clawql.com/specs/network/clawql-network): Headscale mesh + Tailcat ephemeral transport, selector, ATR audit
+- [clawql-agents](https://docs.clawql.com/agents/clawql-agents): Seven open-source agent adapters with Panguard and WORM hooks
 - [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs, Dedicated Virtual Gateways, Edge swarm
 - [Enterprise Ontology](https://docs.clawql.com/architecture/enterprise-ontology): Open YAML/OKF typed entities, kinetic actions, Git vs R2
 - [.cq* file extensions](https://docs.clawql.com/specs/cq-extensions): Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)
@@ -28,8 +32,6 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 
 ## Deployment & security
 - [Deployment](https://docs.clawql.com/deployment): Docker, Kubernetes, and operations
-- [Authentication](https://docs.clawql.com/auth): Inbound vs outbound auth — OAuth refresh, EMA / ID-JAG, signing
-- [Audit Trail](https://docs.clawql.com/audit): Append-only WORM trail — hash chain, Merkle roots, dual-ack replication
 - [Defense in depth](https://docs.clawql.com/security/defense-in-depth): Layered MCP security model
 - [Security best practices](https://docs.clawql.com/security/best-practices): 32-module agentic AI security series
 

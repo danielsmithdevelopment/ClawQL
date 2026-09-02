@@ -42,6 +42,8 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/architecture/enterprise-ontology` | `docs/architecture/enterprise-ontology.md` | `scripts/sync-enterprise-ontology-doc.mjs` |
 | `/specs/memory/memory-recall-structured-filter` | `docs/specs/memory/memory-recall-structured-filter-v0.1.md` | `scripts/sync-memory-ontology-specs-docs.mjs` |
 | `/specs/network/clawql-network` | `docs/specs/network/clawql-network-v0.1.md` | `scripts/sync-clawql-network-doc.mjs` |
+| `/agents/clawql-agents` | `docs/agents/clawql-agents-spec-v0.1.md` | `scripts/sync-clawql-agents-doc.mjs` |
+| `/getting-started/migrate-to-8.0` | `docs/getting-started/migrate-to-8.0.md` | `scripts/sync-getting-started-migrate-to-8-doc.mjs` |
 | `/specs/ontology/legal-domain` | `docs/specs/ontology/legal-domain-v0.1.md` | `scripts/sync-memory-ontology-specs-docs.mjs` |
 | `/specs/cq-extensions` (+ `/cqe` `/cqm` `/cqk` `/cqw`) | `docs/specs/cq-extensions/*` | `scripts/sync-cq-extensions-docs.mjs` |
 | `/architecture/agentic-fabric` | `docs/architecture/zero-trust-agentic-fabric.md` | `scripts/sync-zero-trust-agentic-fabric-doc.mjs` |

@@ -41,7 +41,7 @@ export const PLUGIN_STATUS_LABELS: Record<PluginStatus, string> = {
   'always-on': 'Always on',
   'default-on': 'Default on',
   'opt-in': 'Opt-in',
-  shipped: 'Shipped',
+  shipped: 'Available',
   planned: 'Planned',
   roadmap: 'Roadmap',
 }
@@ -185,6 +185,40 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     enable: 'CLAWQL_ENABLE_DATA=1',
     href: '/plugins/data',
     keywords: ['duckdb', 'sql', 'data_query'],
+  },
+  {
+    id: 'clawql-network',
+    name: 'Network',
+    description:
+      'Headscale standing mesh + Tailcat ephemeral transport, safe-by-default selector, ATR-gated tailcat audit.',
+    category: 'horizontal',
+    status: 'shipped',
+    package: 'clawql-network',
+    enable: 'clawql init --networking',
+    href: '/specs/network/clawql-network',
+    keywords: ['headscale', 'tailcat', 'mesh', 'tailscale', 'derp'],
+  },
+  {
+    id: 'clawql-agents',
+    name: 'Agents',
+    description:
+      'Hardened adapters for seven open-source agents — Panguard, WORM hooks, vault, Helm overlays.',
+    category: 'horizontal',
+    status: 'shipped',
+    package: 'clawql-agents',
+    href: '/agents/clawql-agents',
+    keywords: ['openclaw', 'hermes', 'cline', 'openhands', 'goose', 'adapter'],
+  },
+  {
+    id: 'clawql-audit',
+    name: 'Audit (WORM)',
+    description:
+      'Durable tamper-evident WORM trail — distinct from in-process MCP audit ring in gateway core.',
+    category: 'horizontal',
+    status: 'shipped',
+    package: 'clawql-audit',
+    href: '/audit',
+    keywords: ['worm', 'merkle', 'compliance', 'trail'],
   },
   {
     id: 'clawql-ouroboros',

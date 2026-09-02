@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: '/mcp-ui — Swagger UI for MCP',
   description:
-    'Shipped 8th mcp-api-adapter surface: HTMX forms auto-scaffolded from MCP inputSchema — embedded, zero-config playground like Swagger at /docs, with ClawQL templates for search and memory.',
+    '7th mcp-api-adapter surface: HTMX forms auto-scaffolded from MCP inputSchema — embedded, zero-config playground like Swagger at /docs, with ClawQL templates for search and memory.',
   path: '/mcp/mcp-ui',
   ogType: 'article',
 })
@@ -23,16 +23,12 @@ export default function McpUiPage() {
         <Tag color="claw" variant="medium">
           Adapter
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped
-        </Tag>
       </div>
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>8th mcp-api-adapter surface — shipped in-repo.</strong>{' '}
-          Auto-scaffolded HTMX playground at{' '}
-          <code className="text-sm">/mcp-ui</code> — forms from{' '}
+          <strong>7th mcp-api-adapter surface.</strong> Auto-scaffolded HTMX
+          playground at <code className="text-sm">/mcp-ui</code> — forms from{' '}
           <code className="text-sm">inputSchema</code>, inline results, no
           separate frontend. Templates cover ClawQL{' '}
           <code className="text-sm">search</code>,{' '}
@@ -64,7 +60,7 @@ export default function McpUiPage() {
             href="/streams/clawql-qr-stream-transport"
             className="font-medium text-inherit underline underline-offset-2"
           >
-            QR stream (7th)
+            QR stream (8th, planned)
           </a>
           .
         </Note>

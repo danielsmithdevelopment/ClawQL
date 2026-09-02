@@ -2,6 +2,18 @@
 
 The **`audit`** MCP tool is **ClawQL Core** — **always registered** (no env toggle). It records **structured breadcrumbs** (`category`, `action`, `summary`, optional **`correlationId`**) into an **in-process ring buffer**. You **recall** them with **`list`** while the process is alive; they are **not** written to disk by default. {{ className: 'lead' }}
 
+<div className="not-prose my-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+  <strong>Not the WORM compliance trail.</strong> This page documents the MCP{' '}
+  <code className="text-xs">audit</code> tool only. For tamper-evident durable
+  logs, see{' '}
+  <a href="/audit" className="font-medium underline underline-offset-2">
+    clawql-audit
+  </a>{' '}
+  (<code className="text-xs">packages/clawql-audit</code>). Gateway operators
+  often use both: live breadcrumbs via <code className="text-xs">audit</code>,
+  long-term evidence via <code className="text-xs">clawql-audit</code>.
+</div>
+
 The server also exposes **Prometheus aggregate counters** for **`audit`** on the same **`GET /metrics`** registry as native-protocol metrics (**`clawql_audit_*`** — no per-event labels). Optionally set **`CLAWQL_LOKI_PUSH_URL`** so each **`append`** **POST**s one JSON line to **Loki** (fire-and-forget).
 
 This page explains **`audit`** operations, **recall**, **Prometheus + Grafana** dashboards, **Loki** (built-in push plus alternative bridges), and where **Tempo** fits for **optional MCP OTLP traces** (orthogonal to **`audit`** text, same Grafana lab).

@@ -4,9 +4,9 @@ import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'ClawQL QR Stream Transport — 7th MCP surface',
+  title: 'ClawQL QR Stream Transport — 8th MCP surface (planned)',
   description:
-    'Optical QR streaming as mcp-api-adapter’s seventh surface and clawql-streams qr source — air-gap MCP, Merkle verification, and election ballot streaming.',
+    'Optical QR streaming as mcp-api-adapter’s eighth planned surface and clawql-streams qr source — air-gap MCP, Merkle verification, and election ballot streaming.',
   path: '/streams/clawql-qr-stream-transport',
   ogType: 'article',
 })
@@ -31,7 +31,7 @@ export default function ClawqlQrStreamTransportPage() {
       <div className="not-prose mb-8">
         <Note>
           <strong>
-            Planned 7th mcp-api-adapter surface — not yet shipped.
+            Planned 8th mcp-api-adapter surface — not yet shipped.
           </strong>{' '}
           Extends{' '}
           <a

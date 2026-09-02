@@ -49,6 +49,7 @@
 
 /specs/memory/memory-recall-structured-filter
 /specs/network/clawql-network
+/agents/clawql-agents
   Cache-Control: public, max-age=0, must-revalidate, s-maxage=300, stale-while-revalidate=900
 
 /specs/ontology/legal-domain
