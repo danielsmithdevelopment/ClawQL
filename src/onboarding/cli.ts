@@ -65,6 +65,14 @@ import {
 } from "./inference-cli.js";
 import { runGatewayCreate, runGatewayDestroy, runGatewayStatus } from "./gateway-cli.js";
 import {
+  runStreamsCelldBundleCheck,
+  runStreamsCelldDeploy,
+  runStreamsCelldDev,
+  runStreamsCelldDiagnose,
+  runStreamsCelldInstall,
+  runStreamsCelldStart,
+} from "./streams-cli.js";
+import {
   runPaymentsAuditCmd,
   runPaymentsAuditVerifyCmd,
   runPaymentsPlanShowCmd,
@@ -172,6 +180,7 @@ type Command =
   | "network"
   | "inference"
   | "gateway"
+  | "streams"
   | "payments"
   | "claude"
   | "codex"
@@ -237,6 +246,12 @@ function parse(argv: string[]): {
     else if (a === "--force") flags.force = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
+    else if (a === "--project") flags.project = argv[++i] ?? "";
+    else if (a === "--endpoint") flags.endpoint = argv[++i] ?? "";
+    else if (a === "--region") flags.region = argv[++i] ?? "";
+    else if (a === "--listen") flags.listen = argv[++i] ?? "";
+    else if (a === "--advertise") flags.advertise = argv[++i] ?? "";
+    else if (a === "--internal-listen") flags.internalListen = argv[++i] ?? "";
     else if (a === "--prefix") flags.prefix = argv[++i] ?? "";
     else if (a === "--location") flags.location = argv[++i] ?? "";
     else if (a === "--path") flags.path = argv[++i] ?? "";
@@ -404,6 +419,7 @@ function parse(argv: string[]): {
     cmd === "network" ||
     cmd === "inference" ||
     cmd === "gateway" ||
+    cmd === "streams" ||
     cmd === "payments"
       ? positional[1]
       : undefined;
@@ -416,6 +432,7 @@ function parse(argv: string[]): {
     cmd === "network" ||
     cmd === "inference" ||
     cmd === "gateway" ||
+    cmd === "streams" ||
     cmd === "payments"
       ? positional.slice(2)
       : cmd === "release" || cmd === "ontology" || cmd === "memory"
@@ -607,6 +624,15 @@ gateway (Managed Edge Gateway — /mcp + /v1 + memory):
   destroy --yes   Stop processes/compose and remove ManagedGateway materials
   Flags: --profile process|local-docker --team NAME --port 8080 --no-start --json
   Docs: https://docs.clawql.com/getting-started/inference
+
+streams (ClawQL Streams — celld v0.4.0):
+  celld install [--version v0.4.0]   Pin-install celld (CELLD_VERSION)
+  celld dev [--project DIR] [--port N]   Local dev (default: examples/streams-celld)
+  celld deploy [--project DIR] --bucket s3://… [--endpoint URL] [--region auto]
+  celld start --bucket s3://… [--listen HOST:PORT] [--advertise HOST:PORT]
+  celld diagnose --bucket s3://…     Fleet lease + peer probes
+  celld bundle-check [--project DIR] Enforce Worker bundle ≤ 64 MiB
+  Docs: https://docs.clawql.com/learn/streams-getting-started
 
 Docs: https://docs.clawql.com/agent-setup
 `);
@@ -1144,6 +1170,60 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql gateway create | status | destroy --yes");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "streams") {
+    const celldOpts = {
+      version: typeof flags.version === "string" ? flags.version : undefined,
+      project: typeof flags.project === "string" ? flags.project : undefined,
+      bucket: typeof flags.bucket === "string" ? flags.bucket : undefined,
+      endpoint: typeof flags.endpoint === "string" ? flags.endpoint : undefined,
+      region: typeof flags.region === "string" ? flags.region : undefined,
+      listen: typeof flags.listen === "string" ? flags.listen : undefined,
+      advertise: typeof flags.advertise === "string" ? flags.advertise : undefined,
+      internalListen:
+        typeof flags.internalListen === "string" ? flags.internalListen : undefined,
+      json: Boolean(flags.json),
+      port:
+        typeof flags.port === "string" && flags.port
+          ? Number.parseInt(flags.port, 10)
+          : undefined,
+    };
+    if (subcmd === "celld") {
+      const action = rest[0];
+      if (action === "install") {
+        process.exitCode = await runStreamsCelldInstall(celldOpts);
+        return;
+      }
+      if (action === "dev") {
+        process.exitCode = await runStreamsCelldDev(celldOpts);
+        return;
+      }
+      if (action === "deploy") {
+        process.exitCode = await runStreamsCelldDeploy(celldOpts);
+        return;
+      }
+      if (action === "start") {
+        process.exitCode = await runStreamsCelldStart(celldOpts);
+        return;
+      }
+      if (action === "diagnose") {
+        process.exitCode = await runStreamsCelldDiagnose(celldOpts);
+        return;
+      }
+      if (action === "bundle-check") {
+        process.exitCode = await runStreamsCelldBundleCheck(celldOpts);
+        return;
+      }
+      console.error(
+        "Usage: clawql streams celld install | dev | deploy | start | diagnose | bundle-check",
+      );
+      process.exitCode = 1;
+      return;
+    }
+    console.error("Usage: clawql streams celld <subcommand>");
     process.exitCode = 1;
     return;
   }
