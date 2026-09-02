@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
  * Fail if the bundled Worker artifact exceeds the Cloudflare/celld 64 MiB limit.
- * Uses esbuild (same toolchain as celld deploy) — no fleet bucket required.
+ * Bundles with nodejs_compat-friendly settings (node:crypto / Buffer via runtime).
  */
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
@@ -12,6 +13,7 @@ import { tmpdir } from "node:os";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, "..");
 const WRANGLER_LIMIT = 64 * 1024 * 1024;
+const require = createRequire(import.meta.url);
 
 function parseJsonc(text) {
   const stripped = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -20,9 +22,15 @@ function parseJsonc(text) {
 
 function findEsbuild() {
   const fromPath = spawnSync("esbuild", ["--version"], { encoding: "utf8" });
-  if (fromPath.status === 0) return "esbuild";
+  if (fromPath.status === 0) return { bin: "esbuild", prefix: [] };
+  try {
+    const esbuildBin = join(dirname(require.resolve("esbuild/package.json")), "bin", "esbuild");
+    if (existsSync(esbuildBin)) return { bin: esbuildBin, prefix: [] };
+  } catch {
+    // fall through
+  }
   const fromNpx = spawnSync("npx", ["esbuild", "--version"], { encoding: "utf8" });
-  if (fromNpx.status === 0) return "npx esbuild";
+  if (fromNpx.status === 0) return { bin: "npx", prefix: ["esbuild"] };
   console.error("bundle-check: esbuild not found on PATH");
   process.exit(1);
 }
@@ -34,32 +42,28 @@ const tmpDir = mkdtempSync(join(tmpdir(), "clawql-streams-celld-"));
 const outfile = join(tmpDir, "bundle.js");
 const metafile = join(tmpDir, "meta.json");
 
-const esbuildCmd = findEsbuild();
-const args =
-  esbuildCmd === "esbuild"
-    ? [
-        entry,
-        "--bundle",
-        "--format=esm",
-        "--platform=browser",
-        `--outfile=${outfile}`,
-        `--metafile=${metafile}`,
-        "--minify",
-      ]
-    : [
-        "esbuild",
-        entry,
-        "--bundle",
-        "--format=esm",
-        "--platform=browser",
-        `--outfile=${outfile}`,
-        `--metafile=${metafile}`,
-        "--minify",
-      ];
+const { bin, prefix } = findEsbuild();
+const args = [
+  ...prefix,
+  entry,
+  "--bundle",
+  "--format=esm",
+  // celld Workers use nodejs_compat — leave Node builtins for the runtime.
+  "--platform=node",
+  "--target=es2022",
+  "--conditions=worker,workerd,import",
+  "--main-fields=module,main",
+  "--packages=bundle",
+  `--outfile=${outfile}`,
+  `--metafile=${metafile}`,
+  "--minify",
+];
 
-const run = spawnSync(esbuildCmd === "esbuild" ? "esbuild" : "npx", args, {
+const run = spawnSync(bin, args, {
   encoding: "utf8",
   stdio: ["ignore", "pipe", "pipe"],
+  cwd: projectRoot,
+  env: process.env,
 });
 
 if (run.status !== 0) {

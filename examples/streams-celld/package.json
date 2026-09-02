@@ -2,10 +2,16 @@
   "name": "@clawql/example-streams-celld",
   "private": true,
   "version": "0.0.0",
-  "description": "ClawQL Streams celld DO skeleton (Lab 5b)",
+  "description": "ClawQL Streams celld DO skeleton with clawql-core/streams-slim (Lab 5b)",
   "type": "module",
   "scripts": {
     "bundle-check": "node scripts/bundle-check.mjs",
-    "dev": "celld dev --port 9876"
+    "dev": "celld dev --port 9876",
+    "smoke": "bash scripts/smoke.sh"
+  },
+  "dependencies": {
+    "clawql-core": "0.1.0",
+    "clawql-merkle": "0.1.0",
+    "effect": "^3.21.4"
   }
 }

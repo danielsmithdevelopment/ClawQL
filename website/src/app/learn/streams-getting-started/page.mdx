@@ -411,12 +411,19 @@ curl -s http://127.0.0.1:9876/admin/status | jq .
 
 Repeat the POST with the same `x-clawql-event-id` — `AgentSessionDO` should report **`idempotent: true`**.
 
-**3 — Bundle size gate**
+**3 — Bundle size gate + clawql-core**
+
+The skeleton embeds **`clawql-core/streams-slim`** (audit + cache + hash-chain). Build workspace packages first:
 
 ```bash
+npm run build -w clawql-merkle -w clawql-core
 clawql streams celld bundle-check
-# equivalent: node scripts/bundle-check.mjs
+# equivalent: node examples/streams-celld/scripts/bundle-check.mjs
 ```
+
+Expect ≈ **0.4 MiB** (~0.6% of the **64 MiB** Workers limit). The full `clawql-core` barrel is **not** used — it would pull `webmcp-draft` (`node:fs`).
+
+Webhook responses include `session.audit.clawqlCore` (hash-chained append) and `session.core.inProcess: ["audit","cache","hash-chain"]`. `search` / `execute` remain **deferred** to the MCP host.
 
 CI and local dev should fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
 
@@ -441,7 +448,7 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 
 The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0). Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld).
 
-**Success:** Webhook spawns a session with a WORM row stub; bundle-check passes; you can optional deploy to K8s with `streams.scalingBackend: celld`.
+**Success:** Webhook spawns a session with in-process **clawql-core** audit/cache; bundle-check stays under 64 MiB; optional Helm deploy with `streams.scalingBackend: celld`.
 
 ## K8s operator sketch
 
