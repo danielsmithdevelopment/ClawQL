@@ -31,7 +31,8 @@ const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
 export const ReleaseManifestServiceLive = Layer.succeed(
   ReleaseManifestService,
   ReleaseManifestService.of({
-    collect: (options) => fromPromise("collect release manifest failed", () => collectReleaseManifest(options)),
+    collect: (options) =>
+      fromPromise("collect release manifest failed", () => collectReleaseManifest(options)),
     verify: (manifestPath, bundleDir, options) =>
       fromPromise("verify release manifest failed", () =>
         verifyReleaseManifest(manifestPath, bundleDir, options)

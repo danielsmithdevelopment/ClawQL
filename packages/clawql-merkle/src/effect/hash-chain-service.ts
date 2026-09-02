@@ -36,7 +36,8 @@ export const HashChainServiceLive = Layer.succeed(
       Effect.sync(() => sealHashChainRecord(payload, seq, prevHash)),
     verify: (links) =>
       Effect.sync(() => verifyHashChain(links as Parameters<typeof verifyHashChain>[0])),
-    isHashChained: (value) => Effect.sync(() => isHashChained(value as Parameters<typeof isHashChained>[0])),
+    isHashChained: (value) =>
+      Effect.sync(() => isHashChained(value as Parameters<typeof isHashChained>[0])),
   })
 );
 

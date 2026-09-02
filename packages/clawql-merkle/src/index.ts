@@ -24,8 +24,4 @@ export {
   HashChainServiceLive,
   runHashChainEffect,
 } from "./effect/hash-chain-service.js";
-export {
-  MerkleService,
-  MerkleServiceLive,
-  runMerkleEffect,
-} from "./effect/merkle-service.js";
+export { MerkleService, MerkleServiceLive, runMerkleEffect } from "./effect/merkle-service.js";

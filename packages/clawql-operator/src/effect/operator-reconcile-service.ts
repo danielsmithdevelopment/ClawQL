@@ -46,15 +46,12 @@ export const OperatorReconcileServiceLive = Layer.succeed(
   OperatorReconcileService,
   OperatorReconcileService.of({
     reconcileInstance: (instance, core) =>
-      fromPromise("reconcile ClawQLInstance failed", () =>
-        reconcileClawqlInstance(instance, core)
-      ),
+      fromPromise("reconcile ClawQLInstance failed", () => reconcileClawqlInstance(instance, core)),
     buildTierSpecConfigMap: (instanceName, namespace, spec, providerSecretName) =>
       Effect.sync(() =>
         buildTierSpecConfigMapData(instanceName, namespace, spec, providerSecretName)
       ),
-    serializeTierSpecConfigMap: (data) =>
-      Effect.sync(() => serializeTierSpecConfigMap(data)),
+    serializeTierSpecConfigMap: (data) => Effect.sync(() => serializeTierSpecConfigMap(data)),
   })
 );
 

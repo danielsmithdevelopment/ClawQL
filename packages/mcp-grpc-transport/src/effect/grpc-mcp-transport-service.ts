@@ -20,7 +20,10 @@ export class GrpcMcpTransportService extends Context.Tag("clawql/GrpcMcpTranspor
     ) => Effect.Effect<Awaited<ReturnType<typeof maybeStartGrpcMcpServer>>, GrpcMcpTransportError>;
     readonly callToolStreaming: (
       options: CallToolGrpcClientOptions
-    ) => Effect.Effect<Awaited<ReturnType<typeof callToolServerStreamingGrpc>>, GrpcMcpTransportError>;
+    ) => Effect.Effect<
+      Awaited<ReturnType<typeof callToolServerStreamingGrpc>>,
+      GrpcMcpTransportError
+    >;
     readonly listTools: (
       options: ListToolsGrpcClientOptions
     ) => Effect.Effect<Awaited<ReturnType<typeof listToolsUnaryGrpc>>, GrpcMcpTransportError>;
