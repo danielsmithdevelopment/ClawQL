@@ -98,6 +98,7 @@ export const DOC_SITE_ROUTES = {
   'docs/specs/memory/memory-recall-structured-filter-v0.1.md':
     '/specs/memory/memory-recall-structured-filter',
   'docs/specs/ontology/legal-domain-v0.1.md': '/specs/ontology/legal-domain',
+  'docs/specs/network/clawql-network-v0.1.md': '/specs/network/clawql-network',
   'docs/architecture/zero-trust-agentic-fabric.md':
     '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':

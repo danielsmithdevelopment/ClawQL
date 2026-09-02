@@ -15,6 +15,8 @@ import { runReleaseDoctorCheck } from "./release-doctor-check.js";
 import { runOntologyDoctorChecks } from "./ontology-doctor-check.js";
 import { runMcpSmoke } from "./smoke.js";
 import { sandboxDoctorCheck } from "clawql-sandbox/init";
+import { networkDoctorCheck } from "clawql-network/init";
+import { Effect } from "effect";
 
 export type DoctorCheck = {
   level: "ok" | "warn" | "fail";
@@ -180,6 +182,7 @@ export async function runDoctor(
 
   checks.push({ level: "ok", message: `Spec mode: ${inferSpecModeFromEnv()}` });
   checks.push(...(await runOntologyDoctorChecks()));
+  checks.push(await Effect.runPromise(networkDoctorCheck(home)));
 
   if (options.smoke) {
     checks.push(await runReleaseDoctorCheck());

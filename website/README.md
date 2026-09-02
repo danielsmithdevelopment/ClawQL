@@ -41,6 +41,7 @@ Long pages under `src/generated/` are copied from repo `docs/` at **prebuild** /
 | `/architecture/token-efficiency` | `docs/architecture/clawql-token-efficiency.md` | `scripts/sync-clawql-token-efficiency-doc.mjs` |
 | `/architecture/enterprise-ontology` | `docs/architecture/enterprise-ontology.md` | `scripts/sync-enterprise-ontology-doc.mjs` |
 | `/specs/memory/memory-recall-structured-filter` | `docs/specs/memory/memory-recall-structured-filter-v0.1.md` | `scripts/sync-memory-ontology-specs-docs.mjs` |
+| `/specs/network/clawql-network` | `docs/specs/network/clawql-network-v0.1.md` | `scripts/sync-clawql-network-doc.mjs` |
 | `/specs/ontology/legal-domain` | `docs/specs/ontology/legal-domain-v0.1.md` | `scripts/sync-memory-ontology-specs-docs.mjs` |
 | `/specs/cq-extensions` (+ `/cqe` `/cqm` `/cqk` `/cqw`) | `docs/specs/cq-extensions/*` | `scripts/sync-cq-extensions-docs.mjs` |
 | `/architecture/agentic-fabric` | `docs/architecture/zero-trust-agentic-fabric.md` | `scripts/sync-zero-trust-agentic-fabric-doc.mjs` |

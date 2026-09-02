@@ -11,6 +11,7 @@
     "clawql-pageindex",
     "clawql-codegraph",
     "clawql-api",
+    "clawql-network",
     "clawql-memory",
     "clawql-ontology",
     "clawql-release",

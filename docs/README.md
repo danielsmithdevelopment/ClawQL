@@ -106,6 +106,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 - `grafana/README.md` + `grafana/clawql-core-observability.json` — bundled Grafana dashboard for ClawQL **`/metrics`**; **IDP bundle:** [`observability/README.md`](observability/README.md) + `clawql-idp-observability.json`; OpenClaw / embed follow-ups → [#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225), ecosystem [#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128) (shipped slice [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
 - `deployment/tailscale-and-headscale-for-clawql.md` (beginner guide: managed Tailscale + self-hosted Headscale, MagicDNS, ClawQL env — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#211](https://github.com/danielsmithdevelopment/ClawQL/issues/211), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213); website **`/tailscale`**)
 - `deployment/headscale-tailnet.md` + `deployment/headscale-acls-clawql.hujson` (Headscale runbook + least-privilege ACL starter — [#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206), [#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213))
+- **`specs/network/clawql-network-v0.1.md`** — **`clawql-network`** package: Headscale persistent mesh + governed Tailcat ephemeral transport, selector, ATR hook (`packages/clawql-network/`)
 - `providers/google-apis-lookup.md`
 - `providers/aws-apis-lookup.md`, `providers/aws-onboarding.md`
 

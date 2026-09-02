@@ -36,6 +36,7 @@ import {
   runSandboxStatusCmd,
   runSandboxVerifyCmd,
 } from "./sandbox-cli.js";
+import { runNetworkInitCmd, runNetworkStatusCmd, runNetworkVerifyCmd } from "./network-cli.js";
 import {
   runInferenceCacheStatusCmd,
   runInferenceFallbackShowCmd,
@@ -168,6 +169,7 @@ type Command =
   | "memory"
   | "sync"
   | "sandbox"
+  | "network"
   | "inference"
   | "gateway"
   | "payments"
@@ -195,6 +197,8 @@ function parse(argv: string[]): {
     else if (a === "--verbose" || a === "-v") flags.verbose = true;
     else if (a === "--smoke") flags.smoke = true;
     else if (a === "--push-vault") flags.pushVault = true;
+    else if (a === "--networking") flags.networking = true;
+    else if (a === "--offer-derp") flags.offerDerp = true;
     else if (a === "--http") flags.http = true;
     else if (a === "--json") flags.json = true;
     else if (a === "--from-env") flags.fromEnv = argv[++i] ?? ".env";
@@ -397,6 +401,7 @@ function parse(argv: string[]): {
     cmd === "memory" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
+    cmd === "network" ||
     cmd === "inference" ||
     cmd === "gateway" ||
     cmd === "payments"
@@ -408,6 +413,7 @@ function parse(argv: string[]): {
     cmd === "sources" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
+    cmd === "network" ||
     cmd === "inference" ||
     cmd === "gateway" ||
     cmd === "payments"
@@ -429,7 +435,7 @@ function printHelp(): void {
 
 Usage:
   clawql onboard [--yes] [--interactive] [--from-env .env] [--write-mcp=cursor] [--skip-smoke] [--skip-mcp-write]
-  clawql init [--yes] [--interactive] [--from-env .env] [--push-vault] [--write-mcp=cursor] [--home DIR]
+  clawql init [--yes] [--interactive] [--from-env .env] [--push-vault] [--write-mcp=cursor] [--home DIR] [--networking] [--offer-derp]
   clawql doctor [--verbose] [--smoke]
   clawql secrets list
   clawql secrets set <github|slack|linear|…> [value]
@@ -447,6 +453,7 @@ Usage:
   clawql memory query --filter 'type == decision' [--vault DIR]
   clawql sync init | ensure | push | pull | status [--dry-run] [--force]
   clawql sandbox init | verify | status | edit --harness claude [--path DIR] [--skip-verify]
+  clawql network init | verify | status [--home DIR] [--offer-derp]
   clawql inference serve [--port 8080] | complete --model <provider/model> --message <text>
   clawql inference logs [--model M] [--since 24h] [--limit 50] | trace --correlation-id <id> | spend [--group-by model]
   clawql inference export --output <path.jsonl|dir> [--verdict passed] [--format openai-jsonl|portal-bundle]
@@ -657,6 +664,8 @@ async function main(): Promise<void> {
       pushVault: Boolean(flags.pushVault),
       home: typeof flags.home === "string" && flags.home ? flags.home : undefined,
       writeMcp: parseWriteTarget(flags.writeMcp),
+      networking: Boolean(flags.networking),
+      offerDerp: Boolean(flags.offerDerp),
     });
     console.log("ClawQL init complete\n");
     console.log(`  Home:     ${result.home}`);
@@ -842,6 +851,29 @@ async function main(): Promise<void> {
       return;
     }
     console.error("Usage: clawql sandbox init | verify | status | edit --harness <name>");
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "network") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    if (subcmd === "init") {
+      process.exitCode = await runNetworkInitCmd({
+        home,
+        offerSelfHostedDerp: Boolean(flags.offerDerp),
+        yes: Boolean(flags.yes),
+      });
+      return;
+    }
+    if (subcmd === "verify") {
+      process.exitCode = await runNetworkVerifyCmd(home);
+      return;
+    }
+    if (subcmd === "status") {
+      process.exitCode = await runNetworkStatusCmd(home);
+      return;
+    }
+    console.error("Usage: clawql network init | verify | status");
     process.exitCode = 1;
     return;
   }

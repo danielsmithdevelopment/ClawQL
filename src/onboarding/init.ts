@@ -30,6 +30,8 @@ export type InitOptions = {
   fromEnv?: string;
   pushVault?: boolean;
   writeMcp?: McpWriteTarget;
+  networking?: boolean;
+  offerDerp?: boolean;
 };
 
 export type InitResult = {
@@ -185,6 +187,15 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
         (wr.backupPath ? ` (backup: ${wr.backupPath})` : "") +
         "\n"
     );
+  }
+
+  if (options.networking) {
+    const { runNetworkInitCmd } = await import("./network-cli.js");
+    await runNetworkInitCmd({
+      home,
+      offerSelfHostedDerp: Boolean(options.offerDerp),
+      yes: options.yes,
+    });
   }
 
   return {
