@@ -186,7 +186,6 @@ export function WebMcpAgentLab() {
           </Link>
         </section>
 
-
         <section>
           <h3 className="text-xs font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
             Act 2 · /mcp-ui view
@@ -207,14 +206,14 @@ export function WebMcpAgentLab() {
             </a>
           ) : (
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Run{" "}
+              Run{' '}
               <code className="font-mono">
                 node examples/mcp-api-adapter/docs-agent-lab-server.mjs
-              </code>{" "}
-              then open{" "}
-              <code className="font-mono">/mcp-ui/presets/agent-lab</code>. Set{" "}
-              <code className="font-mono">NEXT_PUBLIC_MCP_UI_ORIGIN</code> to deep-link
-              from this panel.
+              </code>{' '}
+              then open{' '}
+              <code className="font-mono">/mcp-ui/presets/agent-lab</code>. Set{' '}
+              <code className="font-mono">NEXT_PUBLIC_MCP_UI_ORIGIN</code> to
+              deep-link from this panel.
             </p>
           )}
         </section>
