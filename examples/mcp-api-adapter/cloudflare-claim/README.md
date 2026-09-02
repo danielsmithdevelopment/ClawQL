@@ -1,52 +1,60 @@
-# Click-to-claim · third-party page WebMCP → `/mcp-ui`
+# Click-to-claim · Cloudflare production WebMCP → `/mcp-ui`
 
-Protocol Fabric demo: a third-party site registers agent tools on
-`document.modelContext`. ClawQL opens that page over **Chrome CDP**, proxies
-those tools as MCP, and re-surfaces the claim as a human **Click to claim**
-button in `/mcp-ui`. Coupon logic lives **only on the page** — the MCP server
-does not mint codes.
+Wraps Cloudflare’s live WebMCP challenge page and turns the hidden tool into a
+human **Click to claim** button.
+
+**Production page:** https://webmcp-challenge.examples.workers.dev/
+
+That page registers `reveal_extra_credits_link` on `document.modelContext`. Calling
+it opens the dialog with the real **extra $10 Cloudflare credits** redeem URL.
+ClawQL opens the page over Chrome CDP, proxies the tool as MCP, and `/mcp-ui`
+re-surfaces it as a human button — coupon/credits logic stays on Cloudflare’s page.
 
 ```text
-[ site.html :8765 ]
-  document.modelContext.registerTool(cf_*)
-        ↑ CDP Runtime.evaluate (getTools / executeTool)
+[ webmcp-challenge.examples.workers.dev ]
+  document.modelContext.registerTool(reveal_extra_credits_link)
+        ↑ CDP (+ WebMCP polyfill if native API absent)
 [ Chrome --remote-debugging-port ]
         ↑
-[ cloudflare-claim-server.mjs ]  thin MCP proxy (no page logic)
+[ cloudflare-claim-server.mjs ]  thin MCP proxy
         ↑ gRPC
 [ mcp-api-adapter /mcp-ui ]
-  presets/cloudflare-claim → customHtml: claim-button
+  presets/cloudflare-claim → claim-button → redeem URL
 ```
 
-## Run
+## Run (production claim)
 
 ```bash
 npm run build -w mcp-grpc-transport -w mcp-api-adapter
 node examples/mcp-api-adapter/cloudflare-claim-server.mjs
 ```
 
-Requires Chrome/Chromium on `PATH` (or `CHROME_PATH`). The demo launches
-headless Chrome with CDP on `:9222` unless `WEBMCP_SKIP_CHROME_LAUNCH=1` and
-you already have a debugger at `CLAWQL_WEBMCP_CDP_URL`.
+Defaults:
 
-- Third-party page: http://127.0.0.1:8765/
-- Page audit probe: http://127.0.0.1:8765/__webmcp/page-state
+- `WEBMCP_PAGE_URL=https://webmcp-challenge.examples.workers.dev/`
 - Human UI: http://127.0.0.1:8093/mcp-ui/presets/cloudflare-claim
+- Probe: http://127.0.0.1:8765/__webmcp/page-state (shows `redeemUrl` after claim)
 
-Walk the preset: **Start** → reveal challenge → **Click to claim**. After claim,
-`/__webmcp/page-state` shows `calls` that prove execution hit the document.
+Walk the preset / press **Click to claim**. The tool result includes Cloudflare’s
+`redeemUrl` (cf-for-startups-redeem.pages.dev …) — that is the real $10 credits link.
 
-Smoke test:
+Smoke:
 
 ```bash
 node examples/mcp-api-adapter/cloudflare-claim/e2e-webmcp-bridge.mjs
 ```
 
-Optional Core indexing of the same page:
+## Local mirror (optional)
 
 ```bash
-clawql sources add http://127.0.0.1:8765 --kind webmcp --name "Challenge coupon"
+WEBMCP_PAGE_URL=http://127.0.0.1:8765/ node examples/mcp-api-adapter/cloudflare-claim-server.mjs
 ```
 
-This wraps a **local** third-party WebMCP page (polyfill when native WebMCP is
-absent). It is **not** Cloudflare production and does not issue redeemable coupons.
+Serves `site.html` with demo `cf_*` tools. Not needed for the recording.
+
+## Core index (optional)
+
+```bash
+clawql sources add https://webmcp-challenge.examples.workers.dev/ --kind webmcp \
+  --name "CF WebMCP challenge"
+```

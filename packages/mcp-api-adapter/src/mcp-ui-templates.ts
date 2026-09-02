@@ -140,6 +140,13 @@ const TEMPLATES: Record<string, McpUiTemplate> = {
     resultKind: "json",
     customHtml: "claim-button",
   },
+  reveal_extra_credits_link: {
+    id: "reveal_extra_credits_link",
+    primary: [],
+    hints: {},
+    resultKind: "json",
+    customHtml: "claim-button",
+  },
 };
 
 const SMART_UPLOAD_NAME = /^upload_(photo|image|file|picture)s?$/i;
@@ -160,8 +167,9 @@ export function isSmartUploadTool(tool: ListedMcpTool): boolean {
 }
 
 
-const CLAIM_BUTTON_NAME = /^(cf_)?claim_(coupon|offer|reward|starter_pack)$/i;
-const CLAIM_BUTTON_TEXT = /\bclaim\b/i;
+const CLAIM_BUTTON_NAME =
+  /^(cf_)?claim_(coupon|offer|reward|starter_pack)$|^reveal_extra_credits_link$/i;
+const CLAIM_BUTTON_TEXT = /\b(claim|credits|activation)\b/i;
 
 /** Match WebMCP-style claim tools for the click-to-claim HTMX template. */
 export function isClaimButtonTool(tool: ListedMcpTool): boolean {
@@ -169,7 +177,12 @@ export function isClaimButtonTool(tool: ListedMcpTool): boolean {
   if (explicit?.customHtml === "claim-button") return true;
   if (CLAIM_BUTTON_NAME.test(tool.name)) return true;
   const text = `${tool.name} ${tool.title ?? ""} ${tool.description ?? ""}`.toLowerCase();
-  if (CLAIM_BUTTON_TEXT.test(text) && /\b(coupon|offer|reward|pack)\b/i.test(text)) return true;
+  if (
+    CLAIM_BUTTON_TEXT.test(text) &&
+    /\b(coupon|offer|reward|pack|credits)\b/i.test(text)
+  ) {
+    return true;
+  }
   return false;
 }
 

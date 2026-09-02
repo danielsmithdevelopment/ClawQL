@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * E2E: prove /mcp-ui claim executes document.modelContext tools on the page
- * (not a Node-side mock coupon mint).
+ * E2E: /mcp-ui claim against Cloudflare production WebMCP page
+ * (webmcp-challenge.examples.workers.dev → reveal_extra_credits_link).
  *
  *   npm run build -w mcp-grpc-transport -w mcp-api-adapter
  *   node examples/mcp-api-adapter/cloudflare-claim/e2e-webmcp-bridge.mjs
@@ -21,9 +21,33 @@ const SITE_PORT = process.env.SITE_PORT || "18765";
 const OPENAPI_PORT = process.env.OPENAPI_PORT || "18093";
 const GRPC_PORT = process.env.GRPC_PORT || "15054";
 const CDP_PORT = process.env.CDP_PORT || "19222";
+const PAGE_URL =
+  process.env.WEBMCP_PAGE_URL ||
+  "https://webmcp-challenge.examples.workers.dev/";
+const TOOL = "reveal_extra_credits_link";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+async function waitForBridge(siteBase, { attempts = 90, delayMs = 500 } = {}) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(`${siteBase}/__webmcp/health`, {
+        signal: AbortSignal.timeout(3_000),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body.bridgeReady && body.tools?.includes(TOOL)) return body;
+        last = new Error("not ready: " + JSON.stringify(body));
+      } else last = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      last = err instanceof Error ? err : new Error(String(err));
+    }
+    await sleep(delayMs);
+  }
+  throw new Error(`Timeout waiting for bridge: ${last?.message}`);
 }
 
 async function waitForUi(url, { attempts = 80, delayMs = 400 } = {}) {
@@ -41,33 +65,6 @@ async function waitForUi(url, { attempts = 80, delayMs = 400 } = {}) {
   throw new Error(`Timeout waiting for ${url}: ${last?.message}`);
 }
 
-async function waitForBridgeReady(
-  siteBase,
-  { attempts = 90, delayMs = 500 } = {}
-) {
-  let last;
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const res = await fetch(`${siteBase}/__webmcp/health`, {
-        signal: AbortSignal.timeout(3_000),
-      });
-      if (res.ok) {
-        const body = await res.json();
-        if (body.bridgeReady && body.tools?.includes("cf_claim_coupon")) {
-          return body;
-        }
-        last = new Error("bridge not ready yet: " + JSON.stringify(body));
-      } else {
-        last = new Error(`HTTP ${res.status}`);
-      }
-    } catch (err) {
-      last = err instanceof Error ? err : new Error(String(err));
-    }
-    await sleep(delayMs);
-  }
-  throw new Error(`Timeout waiting for CDP bridge: ${last?.message}`);
-}
-
 async function main() {
   const env = {
     ...process.env,
@@ -75,6 +72,7 @@ async function main() {
     OPENAPI_PORT,
     GRPC_PORT,
     CDP_PORT,
+    WEBMCP_PAGE_URL: PAGE_URL,
     ENABLE_GRPC: "1",
     ENABLE_GRPC_REFLECTION: "1",
   };
@@ -84,7 +82,6 @@ async function main() {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
-
   child.stdout.on("data", (c) => process.stdout.write(c));
   child.stderr.on("data", (c) => process.stderr.write(c));
 
@@ -101,98 +98,50 @@ async function main() {
     const siteBase = `http://127.0.0.1:${SITE_PORT}`;
     const uiBase = `http://127.0.0.1:${OPENAPI_PORT}`;
 
-    await waitForBridgeReady(siteBase);
-    const health = await (await fetch(`${siteBase}/__webmcp/health`)).json();
-    if (!health.bridgeReady) {
-      throw new Error("bridge not ready: " + JSON.stringify(health));
-    }
-    if (!health.tools?.includes("cf_claim_coupon")) {
-      throw new Error("page tools missing claim: " + JSON.stringify(health));
-    }
-
+    await waitForBridge(siteBase);
     await waitForUi(`${uiBase}/mcp-ui`);
 
-    const before = await (
-      await fetch(`${siteBase}/__webmcp/page-state`)
-    ).json();
-    if (before.state?.calls?.length) {
-      throw new Error("expected empty page audit before claim");
+    const before = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
+    if (before.state?.dialogOpen) {
+      throw new Error("dialog already open before claim");
     }
 
-    const reveal = await fetch(
-      `${uiBase}/mcp-ui/execute/cf_reveal_challenge`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/x-www-form-urlencoded" },
-        body: "",
-        redirect: "manual",
-      }
-    );
-    if (![200, 201, 302, 303].includes(reveal.status)) {
-      throw new Error(
-        `reveal failed HTTP ${reveal.status}: ${(await reveal.text()).slice(0, 400)}`
-      );
-    }
-
-    const mid = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
-    if (!mid.state?.revealed) {
-      throw new Error(
-        "page state not revealed after MCP execute: " + JSON.stringify(mid)
-      );
-    }
-    if (!mid.state.calls?.some((c) => c.name === "cf_reveal_challenge")) {
-      throw new Error(
-        "page audit missing reveal call: " + JSON.stringify(mid)
-      );
-    }
-
-    const claim = await fetch(`${uiBase}/mcp-ui/execute/cf_claim_coupon`, {
+    const claim = await fetch(`${uiBase}/mcp-ui/execute/${TOOL}`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: "",
     });
     if (claim.status !== 200) {
       throw new Error(
-        `claim failed HTTP ${claim.status}: ${(await claim.text()).slice(0, 400)}`
+        `claim HTTP ${claim.status}: ${(await claim.text()).slice(0, 500)}`
       );
     }
     const claimHtml = await claim.text();
-    if (!claimHtml.includes("CF-PAGE-") && !claimHtml.includes("couponCode")) {
-      console.warn(
-        "claim HTML did not obviously include coupon; checking page state"
-      );
-    }
 
     const after = await (await fetch(`${siteBase}/__webmcp/page-state`)).json();
-    if (!after.state?.claimed || !after.state?.couponCode) {
-      throw new Error(
-        "page did not claim via WebMCP: " + JSON.stringify(after)
-      );
+    const redeem =
+      after.state?.redeemUrl ||
+      (claimHtml.match(/https:\/\/[a-z0-9.-]*redeem[a-z0-9.-]*\.pages\.dev\/[^\"\s]+/i) ||
+        [])[0];
+    if (!after.state?.dialogOpen) {
+      throw new Error("dialog not open after tool: " + JSON.stringify(after));
     }
-    if (!String(after.state.couponCode).startsWith("CF-PAGE-")) {
-      throw new Error(
-        "coupon must be minted on the page (CF-PAGE-*), got " +
-          after.state.couponCode
-      );
-    }
-    if (!after.state.calls?.some((c) => c.name === "cf_claim_coupon")) {
-      throw new Error(
-        "page audit missing claim call: " + JSON.stringify(after)
-      );
+    if (!redeem || !/redeem\.pages\.dev|credits|cloudflare/i.test(String(redeem))) {
+      throw new Error("missing production redeem URL: " + JSON.stringify(after));
     }
 
     const landing = await fetch(`${uiBase}/mcp-ui/presets/cloudflare-claim`);
-    if (!landing.ok) {
-      throw new Error(`preset landing HTTP ${landing.status}`);
+    if (!landing.ok) throw new Error(`preset HTTP ${landing.status}`);
+    const landingHtml = await landing.text();
+    if (!landingHtml.includes(TOOL) && !landingHtml.includes("Click")) {
+      console.warn("preset landing missing expected strings");
     }
 
-    console.log(
-      "\nE2E OK — mcp-ui execute hit document.modelContext on the page"
-    );
-    console.log(JSON.stringify(after.state, null, 2));
+    console.log("\nE2E OK — production WebMCP claim via /mcp-ui");
+    console.log(JSON.stringify({ pageUrl: PAGE_URL, tool: TOOL, redeemUrl: redeem }, null, 2));
   } finally {
     kill();
-    await sleep(500);
+    await sleep(800);
   }
 }
 

@@ -4,6 +4,11 @@
  *
  * Does NOT reimplement page tools. tools/list and tools/call go through
  * Chrome CDP → document.modelContext.getTools() / executeTool().
+ *
+ * For production pages (e.g. Cloudflare's webmcp-challenge) that call
+ * document.modelContext.registerTool when native WebMCP is absent, we inject
+ * a same-surface polyfill via Page.addScriptToEvaluateOnNewDocument before
+ * navigation so the page's tools actually register.
  */
 import { randomUUID } from "node:crypto";
 
@@ -81,6 +86,63 @@ export function connectCdp(wsUrl) {
   });
 }
 
+/**
+ * Polyfill injected before page JS. Mirrors enough of document.modelContext
+ * for Cloudflare's registerTool + our getTools/executeTool discovery path.
+ */
+export const WEBMCP_POLYFILL_SOURCE = `(() => {
+  const existing = document.modelContext || navigator.modelContext;
+  if (existing && typeof existing.registerTool === "function") {
+    if (typeof existing.getTools !== "function") {
+      // Native surface without list/execute helpers — wrap lightly.
+    } else {
+      return;
+    }
+  }
+  const tools = [];
+  const polyfill = {
+    registerTool(tool) {
+      if (!tool || !tool.name) throw new Error("registerTool requires name");
+      const idx = tools.findIndex((t) => t.name === tool.name);
+      if (idx >= 0) tools[idx] = tool;
+      else tools.push(tool);
+      return { name: tool.name };
+    },
+    async getTools() {
+      return tools.slice();
+    },
+    async executeTool(toolOrName, inputJson) {
+      const name =
+        typeof toolOrName === "string"
+          ? toolOrName
+          : toolOrName && toolOrName.name;
+      const tool = tools.find((t) => t.name === name);
+      if (!tool) throw new Error("Unknown WebMCP tool: " + name);
+      let args = {};
+      if (typeof inputJson === "string" && inputJson.trim()) {
+        args = JSON.parse(inputJson);
+      } else if (inputJson && typeof inputJson === "object") {
+        args = inputJson;
+      }
+      const execute = tool.execute || tool.handler;
+      if (typeof execute !== "function") {
+        throw new Error("Tool has no execute(): " + name);
+      }
+      return await execute(args);
+    },
+  };
+  try {
+    Object.defineProperty(document, "modelContext", {
+      value: polyfill,
+      configurable: true,
+      writable: true,
+    });
+  } catch {
+    document.modelContext = polyfill;
+  }
+  window.__clawqlWebmcpPolyfill = true;
+})();`;
+
 const DISCOVER_EXPR = `(async () => {
   const mc = document.modelContext || navigator.modelContext;
   if (!mc || typeof mc.getTools !== "function") {
@@ -98,16 +160,18 @@ const DISCOVER_EXPR = `(async () => {
 })()`;
 
 const PAGE_STATE_EXPR = `(async () => {
-  const s = window.__clawqlWebmcpPageState;
-  if (!s) return { ok: false, error: "window.__clawqlWebmcpPageState missing" };
+  const dialog = document.querySelector("dialog.credits-dialog");
+  const cta = dialog?.querySelector("a.credits-dialog-cta");
+  const audit = window.__clawqlWebmcpPageState || null;
   return {
     ok: true,
     state: {
-      revealed: s.revealed,
-      claimed: s.claimed,
-      challengeId: s.challengeId,
-      couponCode: s.couponCode,
-      calls: s.calls.slice(),
+      polyfill: Boolean(window.__clawqlWebmcpPolyfill),
+      dialogOpen: Boolean(dialog?.open),
+      redeemUrl: cta?.href || null,
+      redeemLabel: cta?.textContent?.trim() || null,
+      pageUrl: location.href,
+      audit,
     },
   };
 })()`;
@@ -124,19 +188,32 @@ function executeExpr(toolName, args) {
   const tool = tools.find((t) => t.name === ${nameJson});
   if (!tool) throw new Error("Tool not on page: " + ${nameJson});
   const result = await mc.executeTool(tool, JSON.stringify(${argsJson}));
-  const audit = window.__clawqlWebmcpPageState
-    ? {
-        revealed: window.__clawqlWebmcpPageState.revealed,
-        claimed: window.__clawqlWebmcpPageState.claimed,
-        couponCode: window.__clawqlWebmcpPageState.couponCode,
-        callCount: window.__clawqlWebmcpPageState.calls.length,
-      }
-    : null;
+  // Give the page a tick to open dialogs / mutate DOM
+  await new Promise((r) => setTimeout(r, 50));
+  const dialog = document.querySelector("dialog.credits-dialog");
+  const cta = dialog?.querySelector("a.credits-dialog-cta");
   let data = result;
   if (typeof result === "string") {
     try { data = JSON.parse(result); } catch { data = { raw: result }; }
   }
-  return { ok: true, data, pageAudit: audit };
+  // MCP CallToolResult shape from Cloudflare page
+  if (data && typeof data === "object" && Array.isArray(data.content)) {
+    data = {
+      ...data,
+      text: data.content.map((c) => c.text).filter(Boolean).join("\\n"),
+    };
+  }
+  return {
+    ok: true,
+    data,
+    pageAudit: {
+      dialogOpen: Boolean(dialog?.open),
+      redeemUrl: cta?.href || null,
+      redeemLabel: cta?.textContent?.trim() || null,
+      pageUrl: location.href,
+      polyfill: Boolean(window.__clawqlWebmcpPolyfill),
+    },
+  };
 })()`;
 }
 
@@ -146,9 +223,10 @@ function executeExpr(toolName, args) {
 export async function openWebmcpPageBridge({
   cdpHttpUrl,
   pageUrl,
-  readyMs = 500,
+  readyMs = 800,
   discoverAttempts = 40,
   discoverDelayMs = 250,
+  injectPolyfill = true,
 }) {
   const wsUrl = await resolveCdpWebSocketUrl(cdpHttpUrl);
   const browser = await connectCdp(wsUrl);
@@ -163,6 +241,11 @@ export async function openWebmcpPageBridge({
 
   await send("Page.enable");
   await send("Runtime.enable");
+  if (injectPolyfill) {
+    await send("Page.addScriptToEvaluateOnNewDocument", {
+      source: WEBMCP_POLYFILL_SOURCE,
+    });
+  }
   await send("Page.navigate", { url: pageUrl });
   if (readyMs > 0) {
     await new Promise((r) => setTimeout(r, readyMs));

@@ -102,10 +102,14 @@ function createPageWebmcpProxyServer(bridge) {
         typeof data === "object" &&
         "ok" in data &&
         data.ok === false;
+      const audit = result.pageAudit || {};
       const payload = {
         ...((data && typeof data === "object" ? data : { value: data }) || {}),
-        pageAudit: result.pageAudit,
+        redeemUrl: audit.redeemUrl || null,
+        redeemLabel: audit.redeemLabel || null,
+        pageAudit: audit,
         bridge: "cdp→document.modelContext",
+        pageUrl: bridge.pageUrl,
       };
       return {
         content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
@@ -118,11 +122,26 @@ function createPageWebmcpProxyServer(bridge) {
   return server;
 }
 
-function startThirdPartySite(port, getBridge) {
+function startThirdPartySite(port, getBridge, opts = {}) {
   const sitePath = path.join(SITE_DIR, "site.html");
+  const serveSiteHtml = opts.serveSiteHtml !== false;
+  const remotePageUrl = opts.remotePageUrl || `http://127.0.0.1:${port}/`;
   const server = http.createServer(async (req, res) => {
     const url = req.url?.split("?")[0] ?? "/";
     if (url === "/" || url === "/index.html" || url === "/site.html") {
+      if (!serveSiteHtml) {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({
+            ok: true,
+            message:
+              "Local mirror disabled — CDP is pointed at the remote WebMCP page.",
+            pageUrl: remotePageUrl,
+            probe: `http://127.0.0.1:${port}/__webmcp/page-state`,
+          })
+        );
+        return;
+      }
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(fs.readFileSync(sitePath));
       return;
@@ -155,7 +174,7 @@ function startThirdPartySite(port, getBridge) {
       res.end(
         JSON.stringify({
           ok: true,
-          pageUrl: `http://127.0.0.1:${port}/`,
+          pageUrl: remotePageUrl,
           bridgeReady: Boolean(bridge),
           tools: bridge?.tools?.map((t) => t.name) ?? [],
         })
@@ -186,11 +205,28 @@ async function main() {
   const cdpHttpUrl =
     process.env.CLAWQL_WEBMCP_CDP_URL?.trim() ||
     `http://127.0.0.1:${cdpPort}`;
-  const pageUrl = `http://127.0.0.1:${sitePort}/`;
+  // Default: Cloudflare's live WebMCP challenge (hidden $10 credits tool).
+  // Override with WEBMCP_PAGE_URL=http://127.0.0.1:8765/ for the local site.html demo.
+  const pageUrl =
+    process.env.WEBMCP_PAGE_URL?.trim() ||
+    "https://webmcp-challenge.examples.workers.dev/";
   const skipChromeLaunch = process.env.WEBMCP_SKIP_CHROME_LAUNCH === "1";
+  const serveLocalMirror = (() => {
+    try {
+      const u = new URL(pageUrl);
+      return u.hostname === "127.0.0.1" || u.hostname === "localhost";
+    } catch {
+      return false;
+    }
+  })();
 
   let bridge = null;
-  const siteServer = await startThirdPartySite(sitePort, () => bridge);
+  // Always serve a tiny local probe for /__webmcp/*; optionally also site.html
+  // when WEBMCP_PAGE_URL points at localhost.
+  const siteServer = await startThirdPartySite(sitePort, () => bridge, {
+    serveSiteHtml: serveLocalMirror,
+    remotePageUrl: pageUrl,
+  });
 
   let chromeProc = null;
   let userDataDir = null;
@@ -237,7 +273,7 @@ async function main() {
   console.log("");
   console.log("=== Protocol Fabric · third-party WebMCP → /mcp-ui ===");
   console.log(`Third-party WebMCP page:  ${pageUrl}`);
-  console.log(`Page state probe:         ${pageUrl}__webmcp/page-state`);
+  console.log(`Page state probe:         http://127.0.0.1:${sitePort}/__webmcp/page-state`);
   console.log(`CDP:                      ${cdpHttpUrl}`);
   console.log(`gRPC MCP (CDP proxy):     ${grpc.address}`);
   console.log(`OpenAPI /mcp-ui:          ${gateway.url}`);
@@ -252,10 +288,10 @@ async function main() {
   );
   console.log("");
   console.log(
-    "Story: page owns tools on document.modelContext → CDP bridge → MCP"
+    "Story: Cloudflare production page owns reveal_extra_credits_link → CDP → MCP"
   );
   console.log(
-    "       → /mcp-ui Click to claim still executes ON THE PAGE (see audit)."
+    "       → /mcp-ui Click to claim runs the live tool and surfaces the $10 redeem URL."
   );
   console.log("");
 

@@ -84,8 +84,10 @@ export const CLOUDFLARE_CLAIM_STEP_CANDIDATES: ReadonlyArray<{
       "cf_claim_coupon",
       "claim_coupon",
       "cloudflare_claim_coupon",
+      // Cloudflare production WebMCP challenge page
+      "reveal_extra_credits_link",
     ],
-    label: "Claim coupon",
+    label: "Claim coupon / credits",
   },
 ];
 
@@ -103,16 +105,18 @@ export const resolveCloudflareClaimPresetDefinition = (
         steps.push({ tool: hit, label: row.label });
       }
     }
-    if (steps.length < 2) {
+    // Production CF challenge exposes a single reveal/claim tool.
+    const minSteps = known.has("reveal_extra_credits_link") ? 1 : 2;
+    if (steps.length < minSteps) {
       return yield* new McpUiPresetError({
         reason:
-          "Cloudflare-claim preset needs reveal + claim tools. Point the adapter at examples/mcp-api-adapter/cloudflare-claim-server.mjs (cf_*).",
+          "Cloudflare-claim preset needs claim tools (reveal_extra_credits_link on production, or cf_* locally). Point WEBMCP_PAGE_URL at webmcp-challenge.examples.workers.dev or the local demo.",
       });
     }
     return {
-      title: "Cloudflare-style click-to-claim",
+      title: "Cloudflare click-to-claim",
       description:
-        "Third-party WebMCP coupon tools re-humanized through /mcp-ui — Protocol Fabric: agent interface → human click.",
+        "Third-party WebMCP credit/coupon tools re-humanized through /mcp-ui — Protocol Fabric: agent interface → human click.",
       slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
       steps,
     } satisfies GeneratedUiDefinition;
