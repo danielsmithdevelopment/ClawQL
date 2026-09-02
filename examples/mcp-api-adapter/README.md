@@ -59,15 +59,16 @@ node examples/mcp-api-adapter/demo-all.mjs   # parity check
 node examples/mcp-api-adapter/clawql-with-trace.mjs   # live /mcp-ui/trace + shared inference JSONL
 ```
 
-**Click-to-claim (third-party WebMCP → human UI):**
+**Click-to-claim (third-party page WebMCP → human UI):**
 
 ```bash
 node examples/mcp-api-adapter/cloudflare-claim-server.mjs
 open http://127.0.0.1:8093/mcp-ui/presets/cloudflare-claim
-open http://127.0.0.1:8765/   # third-party WebMCP page
+open http://127.0.0.1:8765/   # page owns document.modelContext tools
+open http://127.0.0.1:8765/__webmcp/page-state  # proves CDP hit the page
 ```
 
-See [`cloudflare-claim/README.md`](cloudflare-claim/README.md).
+Chrome CDP proxies page WebMCP into MCP — no Node-side coupon mint. See [`cloudflare-claim/README.md`](cloudflare-claim/README.md).
 
 **Docs Agent Lab /mcp-ui preset (Act 2):**
 

@@ -8,11 +8,11 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 ## Fallback policy (record after off-camera rehearsal)
 
-| Act           | Primary                                                                                                                                                 | Guaranteed fallback                                                                                                       |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`); optional `clawql sources add <url> --kind webmcp` when CDP WebMCP is available | Show browser `registerTool` in DevTools / agent host; or local mock `examples/mcp-api-adapter/cloudflare-claim/site.html` |
-| 2 Custom view | Live `/mcp-ui/presets/agent-lab` (docs_* demo) **or** `/mcp-ui/presets/cloudflare-claim` (click-to-claim)                                               | `POST /mcp-ui/generate` `{"preset":"agent-lab"}` / `{"preset":"cloudflare-claim"}` or catalog `search` + `memory_recall`  |
-| 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id                                                                                               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                               |
+| Act           | Primary                                                                                                                                                 | Guaranteed fallback                                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`); optional `clawql sources add <url> --kind webmcp` when CDP WebMCP is available | Show browser `registerTool` in DevTools / agent host; or local page `examples/mcp-api-adapter/cloudflare-claim/site.html` (tools on `document.modelContext`)                |
+| 2 Custom view | Live `/mcp-ui/presets/agent-lab` (docs_* demo) **or** `/mcp-ui/presets/cloudflare-claim` (click-to-claim)                                               | `POST /mcp-ui/generate` `{"preset":"agent-lab"}` / `{"preset":"cloudflare-claim"}` or catalog `search` + `memory_recall`                                                    |
+| 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id                                                                                               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                                                                                 |
 
 **Rule:** rehearse full sequence off-camera twice. Record with live Act 3 only after two clean runs. Otherwise close on **`/mcp-ui/trace/compare`**.
 
@@ -39,7 +39,7 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 **Pass:** navigate + page_context return sensible JSON (or mock `cf_*` tools appear in the adapter catalog).
 
-**Known gap:** CDP lifecycle for WebMCP is less rehearsed than the MCP mirror path; for a guaranteed Act 1→2 story use `node examples/mcp-api-adapter/cloudflare-claim-server.mjs` (site :8765 + `/mcp-ui/presets/cloudflare-claim`).
+**Demo path:** `node examples/mcp-api-adapter/cloudflare-claim-server.mjs` launches Chrome CDP, proxies the page’s `document.modelContext` tools as MCP, and serves `/mcp-ui/presets/cloudflare-claim` (prove with `http://127.0.0.1:8765/__webmcp/page-state`).
 
 ---
 

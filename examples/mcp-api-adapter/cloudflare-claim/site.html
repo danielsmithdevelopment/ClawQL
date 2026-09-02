@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Challenge coupon · third-party WebMCP demo</title>
+  <title>Challenge coupon · third-party WebMCP</title>
   <style>
     :root {
       --bg: #0b1020;
@@ -27,7 +27,7 @@
       padding: 1.5rem;
     }
     .card {
-      width: min(34rem, 100%);
+      width: min(36rem, 100%);
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -54,6 +54,7 @@
       border: 1px dashed rgba(246,130,31,.35);
       font-size: .86rem;
       color: var(--muted);
+      word-break: break-word;
     }
     code { color: var(--orange); }
   </style>
@@ -63,85 +64,172 @@
     <div class="eyebrow">Third-party site · WebMCP</div>
     <h1>Checking your browser… almost.</h1>
     <p>
-      This page stands in for a Cloudflare-style agent challenge. Instead of a
-      human CAPTCHA, it publishes <strong>WebMCP tools</strong> agents can call
-      to reveal and claim a coupon.
+      This page is the <strong>source of truth</strong>. It registers WebMCP tools on
+      <code>document.modelContext</code>. Agents (and ClawQL via CDP) call those tools —
+      there is no parallel fake API.
     </p>
     <p>
-      ClawQL’s Protocol Fabric indexes those tools, then <code>/mcp-ui</code>
-      turns the claim step back into a one-click human button.
+      ClawQL’s Protocol Fabric opens this page over CDP, lists
+      <code>document.modelContext.getTools()</code>, and
+      <code>/mcp-ui</code> turns the claim tool into a human button that still
+      executes <em>here</em>.
     </p>
     <ul class="tools">
-      <li>cf.challenge.reveal_coupon</li>
-      <li>cf.challenge.claim_coupon</li>
+      <li>cf_reveal_challenge</li>
+      <li>cf_claim_coupon</li>
     </ul>
-    <div class="status" id="status">
-      Waiting for WebMCP host… If your browser supports WebMCP, tools register
-      automatically. For the ClawQL demo, the MCP mirror on :8093 is enough.
-    </div>
+    <div class="status" id="status">Booting WebMCP…</div>
+    <div class="status" id="audit" hidden></div>
   </main>
   <script>
     (function () {
       const status = document.getElementById("status");
-      const tools = [
+      const audit = document.getElementById("audit");
+
+      /** Page-owned coupon state — only mutated by WebMCP tool handlers. */
+      const pageState = {
+        revealed: false,
+        claimed: false,
+        challengeId: null,
+        couponCode: null,
+        calls: [],
+      };
+
+      function logCall(name, result) {
+        pageState.calls.push({
+          at: new Date().toISOString(),
+          name,
+          result,
+        });
+        audit.hidden = false;
+        audit.textContent =
+          "Page tool audit (proves execution hit this document):\n" +
+          JSON.stringify(pageState.calls, null, 2);
+      }
+
+      /**
+       * Minimal WebMCP polyfill when Chrome's native modelContext is absent.
+       * Still uses the same document.modelContext surface ClawQL CDP discovers.
+       */
+      function ensureModelContext() {
+        const existing = document.modelContext || navigator.modelContext;
+        if (existing && typeof existing.registerTool === "function") {
+          return { mc: existing, polyfill: false };
+        }
+        const tools = [];
+        const polyfill = {
+          registerTool(tool) {
+            const name = tool.name;
+            tools.push(tool);
+            return { name };
+          },
+          async getTools() {
+            return tools.slice();
+          },
+          async executeTool(toolOrName, inputJson) {
+            const name =
+              typeof toolOrName === "string"
+                ? toolOrName
+                : toolOrName && toolOrName.name;
+            const tool = tools.find((t) => t.name === name);
+            if (!tool) throw new Error("Unknown WebMCP tool: " + name);
+            let args = {};
+            if (typeof inputJson === "string" && inputJson.trim()) {
+              args = JSON.parse(inputJson);
+            } else if (inputJson && typeof inputJson === "object") {
+              args = inputJson;
+            }
+            const execute = tool.execute || tool.handler;
+            if (typeof execute !== "function") {
+              throw new Error("Tool has no execute(): " + name);
+            }
+            return await execute(args);
+          },
+        };
+        Object.defineProperty(document, "modelContext", {
+          value: polyfill,
+          configurable: true,
+          writable: true,
+        });
+        return { mc: polyfill, polyfill: true };
+      }
+
+      const { mc, polyfill } = ensureModelContext();
+
+      const toolDefs = [
         {
-          name: "cf.challenge.reveal_coupon",
-          description: "Reveal a challenge coupon for agents (demo).",
+          name: "cf_reveal_challenge",
+          description:
+            "Reveal a challenge coupon for agents. Unlocks cf_claim_coupon. Runs in the page.",
           inputSchema: { type: "object", properties: {}, additionalProperties: false },
           async execute() {
-            return {
+            pageState.revealed = true;
+            pageState.challengeId =
+              "ch_" + Math.random().toString(16).slice(2, 10);
+            const result = {
               ok: true,
-              challengeId: "ch_site_" + Math.random().toString(16).slice(2, 8),
-              next: "cf.challenge.claim_coupon",
-              tip: "Mirrored as cf_reveal_challenge in the ClawQL /mcp-ui demo.",
+              source: location.href,
+              via: "document.modelContext",
+              challengeId: pageState.challengeId,
+              next: "cf_claim_coupon",
+              revealedAt: new Date().toISOString(),
             };
+            logCall("cf_reveal_challenge", result);
+            return result;
           },
         },
         {
-          name: "cf.challenge.claim_coupon",
-          description: "Claim the challenge coupon (demo).",
+          name: "cf_claim_coupon",
+          description:
+            "Claim the challenge coupon. Same tool agents call — ClawQL /mcp-ui wraps this for humans.",
           inputSchema: { type: "object", properties: {}, additionalProperties: false },
           async execute() {
-            return {
+            if (!pageState.revealed) {
+              const err = {
+                ok: false,
+                error: "Challenge not revealed. Call cf_reveal_challenge first.",
+              };
+              logCall("cf_claim_coupon", err);
+              return err;
+            }
+            if (!pageState.couponCode) {
+              pageState.couponCode =
+                "CF-PAGE-" + Math.random().toString(16).slice(2, 8).toUpperCase();
+            }
+            pageState.claimed = true;
+            const result = {
               ok: true,
-              couponCode: "CF-SITE-" + Math.random().toString(16).slice(2, 8).toUpperCase(),
-              reward: "Protocol Fabric sticker pack (metaphorical)",
+              source: location.href,
+              via: "document.modelContext",
+              challengeId: pageState.challengeId,
+              couponCode: pageState.couponCode,
+              claimedAt: new Date().toISOString(),
+              note: "Issued by this page's WebMCP tool — not a Cloudflare production coupon.",
             };
+            logCall("cf_claim_coupon", result);
+            return result;
           },
         },
       ];
 
-      function register(mc) {
-        for (const tool of tools) {
-          try {
-            void mc.registerTool(tool);
-          } catch (err) {
-            console.warn("WebMCP registerTool failed", tool.name, err);
-          }
+      for (const tool of toolDefs) {
+        try {
+          void mc.registerTool(tool);
+        } catch (err) {
+          console.warn("registerTool failed", tool.name, err);
         }
-        status.textContent =
-          "WebMCP tools registered: " + tools.map((t) => t.name).join(", ");
       }
 
-      const mc = navigator.modelContext || document.modelContext;
-      if (mc && typeof mc.registerTool === "function") {
-        register(mc);
-        return;
-      }
-      // Some hosts expose modelContext later
-      let tries = 0;
-      const timer = setInterval(() => {
-        tries += 1;
-        const late = navigator.modelContext || document.modelContext;
-        if (late && typeof late.registerTool === "function") {
-          clearInterval(timer);
-          register(late);
-        } else if (tries > 20) {
-          clearInterval(timer);
-          status.textContent =
-            "No WebMCP host detected — use the ClawQL MCP mirror at :8093 (/mcp-ui/presets/cloudflare-claim).";
-        }
-      }, 250);
+      status.textContent =
+        (polyfill
+          ? "WebMCP polyfill on document.modelContext (native API absent). "
+          : "Native document.modelContext. ") +
+        "Registered: " +
+        toolDefs.map((t) => t.name).join(", ") +
+        ". Calls must go through modelContext — page audit updates below.";
+
+      // Expose for CDP smoke probes
+      window.__clawqlWebmcpPageState = pageState;
     })();
   </script>
 </body>

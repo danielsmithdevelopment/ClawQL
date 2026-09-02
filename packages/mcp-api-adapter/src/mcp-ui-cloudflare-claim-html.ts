@@ -134,9 +134,10 @@ export const renderCloudflareClaimLandingPage = (
       <a class="btn btn--ghost" href="${escapeMcpUiHtml(base)}#tool-cf_claim_coupon">Claim tool card</a>
     </div>
     <p class="note">
-      Demo upstream: <code>node examples/mcp-api-adapter/cloudflare-claim-server.mjs</code>.
-      Third-party WebMCP page: <code>examples/mcp-api-adapter/cloudflare-claim/site.html</code>.
-      This is a local mock of the Cloudflare-style agent coupon pattern — not Cloudflare production.
+      Demo: <code>node examples/mcp-api-adapter/cloudflare-claim-server.mjs</code>
+      opens the page over CDP and proxies <code>document.modelContext</code> tools into MCP —
+      claim executes on the page (<code>/__webmcp/page-state</code>), not in Node.
+      Local WebMCP wrap only — not Cloudflare production.
     </p>
   </div>
 </body>
