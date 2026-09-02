@@ -109,8 +109,12 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Operations guide',
         href: '/deployment/operations-guide',
       },
+      { title: 'Platforms', href: '/deployment/platforms' },
       { title: 'Kubernetes & Helm', href: '/deployment/kubernetes' },
+      { title: 'Helm charts', href: '/helm' },
+      { title: 'NATS JetStream', href: '/nats-jetstream' },
       { title: 'OpenClaw', href: '/openclaw' },
+      { title: 'Tailscale', href: '/tailscale' },
     ],
   },
   {
@@ -147,6 +151,11 @@ export const docsNavigation: Array<NavGroup> = [
       {
         title: 'Enterprise Ontology',
         href: '/architecture/enterprise-ontology',
+      },
+      { title: 'IDP platform', href: '/vision/idp-platform' },
+      {
+        title: 'Operator target architecture',
+        href: '/design/operator-target-architecture',
       },
       {
         title: 'memory_recall structured filters',
@@ -211,6 +220,7 @@ export const docsNavigation: Array<NavGroup> = [
         tag: 'Draft',
       },
       { title: 'Ouroboros', href: '/ouroboros' },
+      { title: 'DAOS architecture', href: '/ouroboros/daos' },
     ],
   },
   {
