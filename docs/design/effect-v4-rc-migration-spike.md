@@ -21,17 +21,17 @@ ClawQL’s marketing claim **“Effect everywhere”** is satisfied on **v3** (e
 
 ## Current ClawQL Effect inventory (v3)
 
-| Area | Today |
-|------|--------|
-| **Core runtime** | `effect@3.22.1` (root overrides) |
-| **Workspace packages with `effect`** | 29 / 29 (`packages/*`) |
-| **`Context.Tag` services** | ~120+ files (payments, auth, api, core, …) |
-| **`@effect/*` in root `package.json`** | `@effect/opentelemetry@^0.64.0`, `@effect/platform@^0.97.0` |
-| **Direct TS imports from `@effect/*`** | `@effect/opentelemetry` only — `src/effect-otel-bridge.ts` |
-| **`@effect/platform`** | Transitive via opentelemetry; not directly imported in app TS |
-| **Schema** | `effect/Schema` in search/execute/cache/audit/memory/documents MCP boundaries (~6 modules); Zod remains at MCP plugin edges (~35 files) |
-| **Tagged errors** | Widespread `Data.TaggedError` across packages |
-| **CI guard** | `scripts/check-effect-every-package.mjs` |
+| Area                                   | Today                                                                                                                                   |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core runtime**                       | `effect@3.22.1` (root overrides)                                                                                                        |
+| **Workspace packages with `effect`**   | 29 / 29 (`packages/*`)                                                                                                                  |
+| **`Context.Tag` services**             | ~120+ files (payments, auth, api, core, …)                                                                                              |
+| **`@effect/*` in root `package.json`** | `@effect/opentelemetry@^0.64.0`, `@effect/platform@^0.97.0`                                                                             |
+| **Direct TS imports from `@effect/*`** | `@effect/opentelemetry` only — `src/effect-otel-bridge.ts`                                                                              |
+| **`@effect/platform`**                 | Transitive via opentelemetry; not directly imported in app TS                                                                           |
+| **Schema**                             | `effect/Schema` in search/execute/cache/audit/memory/documents MCP boundaries (~6 modules); Zod remains at MCP plugin edges (~35 files) |
+| **Tagged errors**                      | Widespread `Data.TaggedError` across packages                                                                                           |
+| **CI guard**                           | `scripts/check-effect-every-package.mjs`                                                                                                |
 
 ### v4 migration surface (high level)
 
@@ -57,14 +57,14 @@ flowchart LR
   S4 --> S5[Stage 5: RC soak / prod trial decision]
 ```
 
-| Stage | Scope | Exit criterion |
-|-------|--------|----------------|
-| **0** | Branch, `@effect/tsgo` / migration skill, CI job (non-blocking) | Tooling runs; inventory frozen |
-| **1** | `clawql-core`, `clawql-api`, root server OTEL bridge | `typecheck`, `test`, `check:effect-every-package` green on RC |
-| **2** | `clawql-auth`, `clawql-audit`, `clawql-observability` | Same + OTEL spans still nest under MCP |
-| **3** | `clawql-payments`, `clawql-inference` | Largest Tag surface; payment tests green |
-| **4** | All other `packages/*`, `website` | Full monorepo build + CI |
-| **5** | Soak | Team decision: stay v3 / adopt RC prod / wait for 4.0.0 GA |
+| Stage | Scope                                                           | Exit criterion                                                |
+| ----- | --------------------------------------------------------------- | ------------------------------------------------------------- |
+| **0** | Branch, `@effect/tsgo` / migration skill, CI job (non-blocking) | Tooling runs; inventory frozen                                |
+| **1** | `clawql-core`, `clawql-api`, root server OTEL bridge            | `typecheck`, `test`, `check:effect-every-package` green on RC |
+| **2** | `clawql-auth`, `clawql-audit`, `clawql-observability`           | Same + OTEL spans still nest under MCP                        |
+| **3** | `clawql-payments`, `clawql-inference`                           | Largest Tag surface; payment tests green                      |
+| **4** | All other `packages/*`, `website`                               | Full monorepo build + CI                                      |
+| **5** | Soak                                                            | Team decision: stay v3 / adopt RC prod / wait for 4.0.0 GA    |
 
 **Spike branch naming:** `cursor/effect-v4-rc-spike-611b` (this doc); implementation slices can use `cursor/effect-v4-stage-N-611b`.
 
@@ -142,14 +142,14 @@ flowchart LR
 
 ## Risk register
 
-| Risk | Mitigation |
-|------|------------|
-| RC breaking changes mid-spike | Pin exact RC version; read release notes before bump |
-| `effect/unstable/*` API drift | Avoid unstable imports unless required; document any use |
-| Service migration volume (~120 Tags) | Stage by package; codemod + tsgo LSP |
-| `@effect/opentelemetry` layer drift | Stage 1 focuses on OTEL bridge; compare span export |
-| Zod + Schema dual validation | Keep Zod at MCP edge until Standard Schema path clear; migrate Schema modules in Stage 1–2 |
-| Marketing claim overreach | Say **“Effect everywhere (v3)”** until GA; **“v4 RC trial”** only when true |
+| Risk                                 | Mitigation                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| RC breaking changes mid-spike        | Pin exact RC version; read release notes before bump                                       |
+| `effect/unstable/*` API drift        | Avoid unstable imports unless required; document any use                                   |
+| Service migration volume (~120 Tags) | Stage by package; codemod + tsgo LSP                                                       |
+| `@effect/opentelemetry` layer drift  | Stage 1 focuses on OTEL bridge; compare span export                                        |
+| Zod + Schema dual validation         | Keep Zod at MCP edge until Standard Schema path clear; migrate Schema modules in Stage 1–2 |
+| Marketing claim overreach            | Say **“Effect everywhere (v3)”** until GA; **“v4 RC trial”** only when true                |
 
 ---
 
@@ -183,6 +183,6 @@ npm run test -w clawql-core -w clawql-api
 
 ## Progress log
 
-| Date | Stage | Notes |
-|------|-------|-------|
-| 2026-09-02 | 0 | Tracking doc + issue created; spike branch opened |
+| Date       | Stage | Notes                                             |
+| ---------- | ----- | ------------------------------------------------- |
+| 2026-09-02 | 0     | Tracking doc + issue created; spike branch opened |
