@@ -31,13 +31,14 @@ celld = open(celld_path, "r", encoding="utf-8").read()
 off = open(off_path, "r", encoding="utf-8").read()
 
 assert "kind: StatefulSet" in celld
-assert "clawql-mcp-celld" in celld
+assert "streams-celld" in celld
 assert "path: /.well-known/celld/health" in celld
 assert "CLAWQL_ENABLE_STREAMS" in celld
 assert "CELLD_ADVERTISE" in celld
 assert "ghcr.io/denoland/celld:v0.4.0" in celld
 
-assert "kind: StatefulSet" not in off or "streams-celld" not in off
+assert "streams-celld" not in off
+assert "CELLD_ADVERTISE" not in off
 assert "CLAWQL_ENABLE_STREAMS" not in off
 
 print("helm celld templates OK")
