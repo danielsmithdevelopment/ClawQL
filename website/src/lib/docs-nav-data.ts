@@ -100,6 +100,7 @@ export const docsNavigation: Array<NavGroup> = [
     title: 'Security',
     links: [
       { title: 'Overview', href: '/security' },
+      { title: 'Security status', href: '/security/status', tag: 'Evidence' },
       {
         title: 'Defense in depth',
         href: '/security/defense-in-depth',
@@ -279,6 +280,7 @@ export const docsMobileShortcuts: Array<{ title: string; href: string }> = [
   { title: 'Home', href: '/' },
   { title: 'Quickstart', href: '/quickstart' },
   { title: 'Security', href: '/security' },
+  { title: 'Security status', href: '/security/status' },
   { title: 'Deploy', href: '/deployment' },
   { title: 'Learn', href: '/learn' },
   { title: 'Plugins', href: '/plugins' },

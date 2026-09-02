@@ -35,23 +35,25 @@ export const defaultNetworkState = (
 });
 
 export const loadNetworkState = (home?: string): Effect.Effect<NetworkState | null, never> =>
-  Effect.promise(async () => {
-    try {
+  Effect.tryPromise({
+    try: async () => {
       const path = networkStatePath(home);
       if (!existsSync(path)) return null;
       const raw = await readFile(path, "utf8");
       return JSON.parse(raw) as NetworkState;
-    } catch {
-      return null;
-    }
-  });
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  }).pipe(Effect.catchAll(() => Effect.succeed(null)));
 
 export const saveNetworkState = (state: NetworkState, home?: string): Effect.Effect<void, never> =>
-  Effect.promise(async () => {
-    const root = networkRoot(home);
-    await mkdir(root, { recursive: true, mode: 0o700 });
-    await writeFile(networkStatePath(home), `${JSON.stringify(state, null, 2)}\n`, {
-      encoding: "utf8",
-      mode: 0o600,
-    });
-  });
+  Effect.tryPromise({
+    try: async () => {
+      const root = networkRoot(home);
+      await mkdir(root, { recursive: true, mode: 0o700 });
+      await writeFile(networkStatePath(home), `${JSON.stringify(state, null, 2)}\n`, {
+        encoding: "utf8",
+        mode: 0o600,
+      });
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  }).pipe(Effect.catchAll(() => Effect.void));

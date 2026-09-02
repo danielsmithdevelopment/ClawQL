@@ -259,10 +259,20 @@ jobs:
 
       # Pin image digest moves with upstream; OSV DB is live at scan time.
       - name: OSV-Scanner (lockfiles + manifests)
-        run: docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:latest scan --recursive --config osv-scanner.toml .
+        id: osv
+        continue-on-error: true
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/google/osv-scanner:latest \
+            scan --recursive --config osv-scanner.toml --format json --output /repo/osv-results.json .
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
 
       # aquasecurity/trivy-action@v0.36.0 — vuln-only; filesystem mode skips vendored trees.
       - name: Trivy filesystem (HIGH / CRITICAL)
+        id: trivy
+        continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
@@ -270,6 +280,8 @@ jobs:
           scanners: vuln
           severity: HIGH,CRITICAL
           exit-code: "1"
+          format: json
+          output: trivy-results.json
           trivyignores: .trivyignore
           skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
@@ -279,6 +291,21 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo anchore/syft:v1.19.0 \
             scan . -o "cyclonedx-json=sbom-cyclonedx-repo.cdx.json"
 
+      - name: Write security scan run record
+        if: always()
+        env:
+          OSV_EXIT_CODE: ${{ steps.osv.outputs.exit_code }}
+          TRIVY_STEP_OUTCOME: ${{ steps.trivy.outcome }}
+        run: node scripts/ci/write-security-scan-run-record.mjs
+
+      - name: Upload security scan run record
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-scan-run-record
+          path: security-scan-run-record.json
+          if-no-files-found: error
+
       # actions/upload-artifact@v7 (full commit pin flaky on some runners; tag resolves)
       - name: Upload repository SBOM
         uses: actions/upload-artifact@v7
@@ -286,6 +313,12 @@ jobs:
           name: sbom-cyclonedx-repository
           path: sbom-cyclonedx-repo.cdx.json
           if-no-files-found: error
+
+      - name: Gate supply chain scanners
+        if: steps.osv.outputs.exit_code != '0' || steps.trivy.outcome != 'success'
+        run: |
+          echo "Supply chain gate failed — OSV exit=${{ steps.osv.outputs.exit_code }}, Trivy outcome=${{ steps.trivy.outcome }}"
+          exit 1
 
   website-docker-smoke:
     name: Website Docker smoke
