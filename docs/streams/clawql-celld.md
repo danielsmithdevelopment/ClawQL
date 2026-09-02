@@ -1,11 +1,32 @@
 # ClawQL Celld Integration — Spec v0.1
 
-**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§3** celld reading order; Labs 1–3 for schedule + NATS today.
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§3** celld reading order; **Lab 5** for celld **v0.4.0** local smoke; Labs 1–3 for schedule + NATS today.
 
-**Status:** Draft · August 2026 · v0.1  
+**Status:** Draft · September 2026 · v0.1  
+**celld baseline:** **[v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)** (2026-08-28) — pin with `CELLD_VERSION=v0.4.0` on install; do not mix v0.3.x and v0.4.x in one fleet  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-inference`](../inference/clawql-inference.md) · `clawql-core` · `mcp-api-adapter`  
 **Related:** [`clawql-cellrt.md`](./clawql-cellrt.md) (ClawQL-owned Rust runtime) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
+
+---
+
+## 0. Version baseline — celld v0.4.0
+
+ClawQL Streams docs and labs assume **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)** unless a page pins an older tag for a migration note.
+
+| v0.4.0 change                                                                                                  | ClawQL impact                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **`celld dev`** — local object store, no Docker/bucket                                                         | Default path for Lab 5 and bundle iteration before fleet deploy                                                                      |
+| **Workers KV, Queues, Workflows, R2 bindings** (initial)                                                       | Wrangler bindings deploy from config; prefer KV for small session metadata, keep vault/training on separate buckets (§6)             |
+| **Versioned peer tunnel** — fetch/RPC/WebSocket bodies stream to owner; **no retry after transmission starts** | AgentSessionDO sidecars must use stable operation IDs on ambiguous retries; do not assume idempotent replay of streaming POST bodies |
+| **DO output gate** — read-only output waits for prior writes                                                   | Audit WORM rows and inference `fetch` ordering match DO companion contract                                                           |
+| **Rolling deploy without node restart**                                                                        | `celld deploy` + in-place adoption; pair with `POST /reload` on internal listener for ops                                            |
+| **Health endpoint** moved to **`/.well-known/celld/health`**                                                   | Update load-balancer and K8s readiness probes (was `/__celld/health`)                                                                |
+| **Operator CLI** — `celld cell list`, `celld kv *`, `celld queue *`                                            | Fleet smoke: list cells after webhook traffic; inspect KV namespaces used by bindings                                                |
+| **Request body limit** — 1 GiB default; per-cell concurrency limit                                             | Large webhook payloads OK; tune `CELLD_MAX_CELL_REQUESTS` under burst                                                                |
+| **EKS Pod Identity** credentials                                                                               | Helm on EKS can use injected AWS creds without static keys                                                                           |
+
+**Upgrade from v0.3.0:** stop **every** v0.3.0 node before starting v0.4.0 — peer tunnel protocol and large KV epoch references are incompatible; no rolling update. See [celld docs — Shut down and roll out a node](https://celld.dev/docs/#shut-down-and-roll-out-a-node).
 
 ---
 
@@ -51,19 +72,19 @@ Source of truth: [Cloudflare compatibility](https://celld.dev/docs/cloudflare-co
 
 ### Unavailable or unsafe (avoid + workaround)
 
-| Gap                                              | Behavior on celld               | ClawQL workaround                                                     |
-| ------------------------------------------------ | ------------------------------- | --------------------------------------------------------------------- |
-| `setInterval`                                    | **Throws**                      | `setAlarm` + SQLite intent                                            |
-| `child_process` / `worker_threads`               | Inert stub / not implemented    | In-process MCP; `fetch(clawql-inference)`                             |
-| `node:http(s)`, `net`, `tls`, `dns`              | Inert stubs                     | `fetch` / WebSocket only                                              |
-| Cache API (`caches`)                             | No                              | Inference semantic cache stays on clawql-inference                    |
-| `deriveKey` / `deriveBits` / wrap-unwrap         | Missing                         | Pre-derive outside DO; or HMAC/AES-GCM only                           |
-| R2 / KV bindings                                 | Out of scope (R2 methods throw) | Fleet bucket via celld; app data via `fetch` to object APIs if needed |
-| Platform `scheduled` / cron                      | No handler                      | `setAlarm` chains for cron sources                                    |
-| TLS on peer protocol                             | Plain HTTP + HMAC               | WireGuard / Tailscale / private net; ingress TLS                      |
-| TCP sockets (`cloudflare:sockets`)               | **Silent** inert stub           | Do not use; prefer HTTP/WS                                            |
-| Facets / undeclared DO classes via `ctx.exports` | Absent                          | Declare all DO classes in wrangler.json(c)                            |
-| Multi-app fleet scheduler                        | One app per fleet               | Separate bucket/fleet per ClawQL deployment                           |
+| Gap                                              | Behavior on celld                                | ClawQL workaround                                                                 |
+| ------------------------------------------------ | ------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `setInterval`                                    | **Throws**                                       | `setAlarm` + SQLite intent                                                        |
+| `child_process` / `worker_threads`               | Inert stub / not implemented                     | In-process MCP; `fetch(clawql-inference)`                                         |
+| `node:http(s)`, `net`, `tls`, `dns`              | Inert stubs                                      | `fetch` / WebSocket only                                                          |
+| Cache API (`caches`)                             | No                                               | Inference semantic cache stays on clawql-inference                                |
+| `deriveKey` / `deriveBits` / wrap-unwrap         | Missing                                          | Pre-derive outside DO; or HMAC/AES-GCM only                                       |
+| R2 / KV / Queues / Workflows bindings            | **v0.4.0+ initial support** from Wrangler config | Fleet bucket remains authority; scope KV/R2 creds separately from vault sync (§6) |
+| Platform `scheduled` / cron                      | No handler                                       | `setAlarm` chains for cron sources                                                |
+| TLS on peer protocol                             | Plain HTTP + HMAC                                | WireGuard / Tailscale / private net; ingress TLS                                  |
+| TCP sockets (`cloudflare:sockets`)               | **Silent** inert stub                            | Do not use; prefer HTTP/WS                                                        |
+| Facets / undeclared DO classes via `ctx.exports` | Absent                                           | Declare all DO classes in wrangler.json(c)                                        |
+| Multi-app fleet scheduler                        | One app per fleet                                | Separate bucket/fleet per ClawQL deployment                                       |
 
 ---
 
@@ -229,15 +250,31 @@ Do not reuse fleet-bucket credentials for vault sync or public dataset upload. S
 
 ## 7. Deployment
 
-### 7.1 Install
+### 7.1 Install (pin v0.4.0)
 
 ```bash
-curl -fsSL https://celld.dev/install.sh | sh
-# Pin: CELLD_VERSION=vX.Y.Z curl -fsSL https://celld.dev/install.sh | sh
+CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
+celld --version   # expect v0.4.0
 gh attestation verify --repo denoland/celld   # build attestation
 ```
 
 Binary ~58 MB; replication is in-process (no external Litestream sidecar).
+
+### 7.1b Local development (`celld dev`, v0.4.0+)
+
+Before provisioning a fleet bucket, iterate with the upstream counter example:
+
+```bash
+git clone --depth 1 --branch v0.4.0 https://github.com/denoland/celld
+cd celld/examples/counter
+npm install   # if the example ships a package.json
+celld dev --port 9876
+# Worker default: http://127.0.0.1:9876
+```
+
+`celld dev` uses a persistent local object store under `.celld/dev` (add `.celld/` to `.gitignore`). It rebuilds on source changes without Docker or cloud credentials. The internal operator API stays on loopback only.
+
+Readiness during fleet rollout: probe **`GET /.well-known/celld/health`** (v0.4.0+), not `/__celld/health`.
 
 ### 7.2 Configure object storage
 
@@ -276,16 +313,23 @@ celld \
 
 Add nodes with the same bucket and distinct `--advertise` addresses. Discovery is via bucket leases — no join command.
 
-### 7.5 Diagnose
+### 7.5 Diagnose and inspect (v0.4.0+)
 
 ```bash
 celld diagnose \
   --bucket "$CELLD_BUCKET" \
   --endpoint "$S3_ENDPOINT" \
   --region "$AWS_REGION"
+
+# List Durable Object instances (after traffic creates ownership records)
+celld cell list --bucket "$CELLD_BUCKET" --json | head
+
+# KV / Queue ops when Wrangler bindings declare namespaces
+celld kv list MY_NAMESPACE --bucket "$CELLD_BUCKET"
+celld queue info MY_QUEUE --bucket "$CELLD_BUCKET"
 ```
 
-Reports expired leases, bad advertise addresses, unreachable peers, auth failures, protocol skew.
+Reports expired leases, bad advertise addresses, unreachable peers, auth failures, protocol skew. During rolling node updates, wait for `restoring=0` on every node before stopping the next peer ([celld docs](https://celld.dev/docs/#diagnose-a-fleet)).
 
 ### 7.6 Helm
 
@@ -321,19 +365,19 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 9. Cloudflare vs celld
 
-| Concern          | Cloudflare Durable Objects | celld                                                |
-| ---------------- | -------------------------- | ---------------------------------------------------- |
-| API              | Workers DO                 | Same core DO/Workers surface                         |
-| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)               |
-| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model) |
-| Pricing          | CF DO request/duration     | ~$0.05/resident cell-mo; inactive ≈ S3 only          |
-| Density          | Platform                   | ~1000 resident / 8 GB                                |
-| KV / R2 bindings | Available                  | **Not provided** as DO bindings                      |
-| Cron triggers    | `scheduled`                | Use `setAlarm`                                       |
-| Peer / mesh      | Cloudflare edge            | Operator mesh; peer HTTP plaintext+HMAC              |
-| Multi-tenant     | CF accounts                | One app per fleet (alpha)                            |
-| Local CI         | Miniflare / workerd        | Miniflare + `celld diagnose` smoke                   |
-| ClawQL inference | `fetch`                    | `fetch` (identical contract)                         |
+| Concern          | Cloudflare Durable Objects | celld                                                          |
+| ---------------- | -------------------------- | -------------------------------------------------------------- |
+| API              | Workers DO                 | Same core DO/Workers surface                                   |
+| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                         |
+| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)           |
+| Pricing          | CF DO request/duration     | ~$0.05/resident cell-mo; inactive ≈ S3 only                    |
+| Density          | Platform                   | ~1000 resident / 8 GB                                          |
+| KV / R2 bindings | Available                  | **Initial v0.4.0+** from Wrangler; fleet bucket still separate |
+| Cron triggers    | `scheduled`                | Use `setAlarm`                                                 |
+| Peer / mesh      | Cloudflare edge            | Operator mesh; versioned peer tunnel (v0.4.0+)                 |
+| Multi-tenant     | CF accounts                | One app per fleet (alpha)                                      |
+| Local dev        | Miniflare / workerd        | **`celld dev`** (v0.4.0+) + Miniflare unit tests               |
+| ClawQL inference | `fetch`                    | `fetch` (identical contract)                                   |
 
 ---
 
@@ -341,11 +385,12 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 | Layer           | Tooling                                     | Purpose                                                                                             |
 | --------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Local dev       | **`celld dev`** (v0.4.0+)                   | Counter/Streams fixture without bucket; `.celld/dev` persistence                                    |
 | Unit / DO logic | **Miniflare** (or workerd)                  | Alarm, storage, significance, idempotent names                                                      |
 | Bundle          | `clawql streams celld bundle-check`         | Enforce ≤64 MiB                                                                                     |
-| Fleet           | `celld diagnose`                            | Lease + peer health                                                                                 |
+| Fleet           | `celld diagnose` · `celld cell list`        | Lease + peer health; enumerate cells after traffic                                                  |
 | Smoke           | Deploy counter/example then Streams fixture | Webhook → SubscriptionDO → AgentSessionDO → `fetch` inference mock → WORM row present in SQLite/LTX |
-| Security        | Attestation verify in CI                    | Supply chain                                                                                        |
+| Security        | Attestation verify in CI                    | Supply chain; pin `CELLD_VERSION=v0.4.0`                                                            |
 
 Do not treat Miniflare alone as production parity for LTX, peer HMAC, or cross-node WebSocket behavior.
 
@@ -358,10 +403,12 @@ Track against upstream celld alpha:
 1. **TCP stub** — `cloudflare:sockets` `connect()` is a silent inert stub; Streams must not depend on raw TCP.
 2. **WebSocket cross-node** — thinner test coverage for close codes/reconnect across nodes; prefer owner-node ingress; always persist reconnect intent.
 3. **Pressure shedding** — off until safe defaults; tune `CELLD_MAX_RESIDENT_CELLS` / RSS manually.
-4. **Manual updates** — installer immutable releases + `current` pointer; no auto-update agent; pin `CELLD_VERSION`.
-5. **One application per fleet** — no multi-tenant scheduler; isolate ClawQL orgs with separate fleets/buckets.
-6. **Crypto gaps** — no `deriveKey`; design around digest/HMAC/AES-GCM/sign.
-7. **Silent Node stubs** — importing unimplemented `node:*` may not fail; lint/ban `child_process`, `http`, `net` in the DO package.
+4. **Manual updates** — installer immutable releases + `current` pointer; no auto-update agent; pin **`CELLD_VERSION=v0.4.0`** until the next qualified release.
+5. **v0.3 → v0.4 fleet cutover** — full stop required; no mixed-version fleet ([§0](#0-version-baseline--celld-v040)).
+6. **One application per fleet** — no multi-tenant scheduler; isolate ClawQL orgs with separate fleets/buckets.
+7. **Crypto gaps** — no `deriveKey`; design around digest/HMAC/AES-GCM/sign.
+8. **Silent Node stubs** — importing unimplemented `node:*` may not fail; lint/ban `child_process`, `http`, `net` in the DO package.
+9. **Streaming fetch retry** — v0.4.0 peer tunnel does not retry after body transmission starts; use stable operation IDs.
 
 ---
 
