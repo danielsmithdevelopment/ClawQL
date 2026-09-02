@@ -129,10 +129,30 @@ function parseSidebarHrefs(source) {
     hrefs.add(href)
   }
 
-  const learnBlock = source.match(/LEARN_MODULE_HREFS\s*=\s*\[([\s\S]*?)\]\s*as const/)
+  const learnBlock = source.match(
+    /LEARN_MODULE_HREFS\s*=\s*\[([\s\S]*?)\]\s*as const/,
+  )
   if (learnBlock) {
     for (const match of learnBlock[1].matchAll(/'(\/learn\/[^']+)'/g)) {
       hrefs.add(match[1])
+    }
+  }
+
+  const exampleBlock = source.match(
+    /EXAMPLE_STUDY_HREFS\s*=\s*exampleSiteCards\.map/,
+  )
+  if (exampleBlock) {
+    const hubFile = path.join(websiteRoot, 'src/lib/docs-hub-data.ts')
+    if (fs.existsSync(hubFile)) {
+      const hubSrc = fs.readFileSync(hubFile, 'utf8')
+      const cardsBlock = hubSrc.match(
+        /export const exampleSiteCards[\s\S]*?^\]/m,
+      )?.[0]
+      if (cardsBlock) {
+        for (const match of cardsBlock.matchAll(/href:\s*'(\/[^']*)'/g)) {
+          hrefs.add(match[1].split('#')[0])
+        }
+      }
     }
   }
 
