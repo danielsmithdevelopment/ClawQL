@@ -123,6 +123,12 @@ export type { UpstreamConnection } from "./upstream.js";
 export type { CreateMcpApiAdapterAppOptions } from "./server.js";
 export type { GenCliOptions } from "./gen-cli.js";
 export type { AttachMcpHttpOptions } from "./mcp-http.js";
+export {
+  McpApiAdapterService,
+  McpApiAdapterError,
+  McpApiAdapterServiceLive,
+  runMcpApiAdapterEffect,
+} from "./effect/mcp-api-adapter-service.js";
 export type { AttachMcpUiOptions } from "./mcp-ui-http.js";
 export type {
   AttachWebSocketSurfaceOptions,

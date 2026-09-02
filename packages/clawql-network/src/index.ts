@@ -34,3 +34,8 @@ export type {
   NetworkWORMEntryType,
   TailcatConnectionAuditPayload,
 } from "./types/worm.js";
+export {
+  NetworkTransportService,
+  NetworkTransportServiceLive,
+  runNetworkTransportEffect,
+} from "./effect/network-transport-service.js";

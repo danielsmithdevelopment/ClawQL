@@ -21,6 +21,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "effect": "^3.21.4",
     "express": "^5.2.1",
     "jose": "^6.2.10",
     "mcp-grpc-transport": "1.0.0"

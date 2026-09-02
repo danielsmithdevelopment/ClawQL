@@ -44,6 +44,7 @@
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@grpc/reflection": "^1.0.4",
+    "effect": "^3.21.4",
     "google-proto-files": "^6.0.0",
     "protobufjs": "^8.7.2"
   },
