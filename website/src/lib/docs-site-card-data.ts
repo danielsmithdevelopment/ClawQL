@@ -103,6 +103,20 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/learn/optional-mcp-tools',
+    name: 'Optional MCP tools',
+    description:
+      'When to enable cache, schedule, notify, audit, Onyx, and sandbox — flags, recipes, and deep-dive links.',
+    icon: ListIcon,
+    pattern: {
+      y: 8,
+      squares: [
+        [0, 1],
+        [1, 0],
+      ],
+    },
+  },
+  {
     href: '/learn/effect-ts',
     name: 'Effect-TS in ClawQL',
     description:
@@ -128,6 +142,20 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
       squares: [
         [0, 0],
         [2, 1],
+      ],
+    },
+  },
+  {
+    href: '/learn/streams-getting-started',
+    name: 'Streams getting started',
+    description:
+      'Read the Streams stack: event loop, DO/celld, cellrt, TEE, and air-gap audit — draft specs in order.',
+    icon: BoltIcon,
+    pattern: {
+      y: 28,
+      squares: [
+        [0, 1],
+        [2, 2],
       ],
     },
   },

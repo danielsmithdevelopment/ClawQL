@@ -1,5 +1,7 @@
 # ClawQL Streams — Specification v0.2
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — recommended reading order through DO, celld, cellrt, and TEE specs.
+
 **Status:** Draft · August 2026 · v0.2  
 **Package:** `clawql-streams` (planned)  
 **Depends on:** `clawql-core` · `mcp-api-adapter` · `clawql-inference` · `clawql-payments` · `clawql-ouroboros` · [celld](https://celld.dev/) (self-hosted DO) · [`clawql-cellrt`](./clawql-cellrt.md) (ClawQL-owned runtime, planned) · NATS JetStream (K8s path) · OpenBenchTrace / RTP (training emission)  

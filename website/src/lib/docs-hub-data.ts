@@ -485,6 +485,13 @@ export const resourcesHubCards: Array<ReferenceCard> = [
 
 export const optionalToolsHubCards: Array<ReferenceCard> = [
   card({
+    href: '/learn/optional-mcp-tools',
+    name: 'Optional tools walkthrough',
+    description:
+      'Master guide — enable flags, pick the right tool, and composed workflows before deep dives.',
+    icon: ListIcon,
+  }),
+  card({
     href: '/learn/cache-handoff-between-chats',
     name: 'Session cache',
     description: 'Core cache tool — ephemeral scratch state between chats.',
