@@ -31,7 +31,21 @@ export default function ClawqlCellrtPage() {
       <div className="not-prose mb-8">
         <Note>
           <strong>ClawQL-owned cell runtime — not yet shipped.</strong>{' '}
-          Companion to{' '}
+          Generated from{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-cellrt.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-cellrt.md
+          </a>
+          ,{' '}
+          <a
+            href="/learn/streams-getting-started"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>{' '}
+          (Labs 1–3 today; §4 cellrt reading order). Companion to{' '}
           <a
             href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
@@ -60,14 +74,7 @@ export default function ClawqlCellrtPage() {
             air-gap audit
           </a>
           . Lives in the ClawQL monorepo under{' '}
-          <code className="text-sm">crates/clawql-cellrt/</code>. Source:{' '}
-          <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-cellrt.md"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            docs/streams/clawql-cellrt.md
-          </a>
-          .
+          <code className="text-sm">crates/clawql-cellrt/</code>.
         </Note>
       </div>
 

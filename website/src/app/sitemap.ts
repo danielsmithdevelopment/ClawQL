@@ -270,6 +270,26 @@ const ENTRIES: Array<Entry> = [
     changeFrequency: 'monthly',
     priority: 0.87,
   },
+  {
+    path: '/learn/payments-and-entitlements',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/learn/panguard-mcp-enforcement',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
+    path: '/learn/streams-getting-started',
+    changeFrequency: 'monthly',
+    priority: 0.88,
+  },
+  {
+    path: '/learn/optional-mcp-tools',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
   { path: '/mcp-clients', changeFrequency: 'monthly', priority: 0.88 },
   { path: '/openclaw', changeFrequency: 'monthly', priority: 0.87 },
   { path: '/concepts', changeFrequency: 'monthly', priority: 0.88 },

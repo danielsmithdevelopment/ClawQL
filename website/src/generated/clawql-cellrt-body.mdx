@@ -1,5 +1,7 @@
 # clawql-cellrt — Specification v0.1
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — Labs 1–3 for schedule + NATS today; **§4** in the reading order for cellrt.
+
 **Status:** Draft · August 2026 · v0.1  
 **Language:** Rust (+ Wasmtime; Effect-TS tool surface via WASM component)  
 **Package:** `clawql-cellrt` (planned — `crates/clawql-cellrt`)  

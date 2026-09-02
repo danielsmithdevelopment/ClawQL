@@ -1,0 +1,263 @@
+import { Note } from '@/components/mdx'
+
+# Streams getting started
+
+**ClawQL Streams** is the event-driven layer: external events (webhooks, NATS, cron, WebSocket) trigger agent sessions without a human starting each chat. This guide gives you a **reading order** through the draft spec chain — Streams → runtime → hardware trust — and what you can wire today vs what is still specification. {{ className: 'lead' }}
+
+**Canonical specs:** [ClawQL Streams](/streams/clawql-streams) · [Protocol Fabric](/mcp/protocol-fabric) · [NATS JetStream](/nats-jetstream) (K8s backbone)
+
+## Mental model
+
+```
+Event source → Streams router → Agent cell (DO / celld / cellrt) → in-process MCP → fetch() → clawql-inference
+                                      ↓
+                                 WORM audit (LTX / JSONL / Postgres)
+```
+
+Streams extends the **`schedule`** pattern from time-based triggers to **arbitrary event sources**. Together with [search/execute](/learn/search-and-execute-mcp) and [mcp-api-adapter](/mcp/mcp-api-adapter), it completes the **Protocol Fabric**: MCP as the intermediate representation plus an autonomous event loop.
+
+## Before you start
+
+1. **Know Core vs Streams** — Core MCP (`search`, `execute`, `audit`, `cache`) runs in interactive sessions today. Streams is **draft** (`clawql-streams` package planned) — read specs before assuming production APIs.
+2. **Pick a runtime path** — three scaling backends, one conceptual cell:
+
+| Backend               | When                                         | Runtime doc                                        |
+| --------------------- | -------------------------------------------- | -------------------------------------------------- |
+| **Kubernetes + NATS** | Regulated / air-gapped, existing K8s ops     | [Streams](/streams/clawql-streams) § K8s           |
+| **celld**             | Self-hosted Workers/DO-compatible JS cells   | [celld integration](/streams/clawql-celld)         |
+| **clawql-cellrt**     | ClawQL-owned Rust + Wasmtime production path | [clawql-cellrt](/streams/clawql-cellrt)            |
+| **Cloudflare DO**     | Hosted, managed scale                        | [Durable Objects](/streams/clawql-durable-objects) |
+
+3. **Do not build Node `worker_threads` DO clones** — adopt **celld** or wait for **cellrt**; the specs call this out explicitly.
+
+## Recommended reading order
+
+Read top-to-bottom once, then dive into the runtime that matches your deployment:
+
+### 1. [ClawQL Streams](/streams/clawql-streams) (start here)
+
+- Problem statement (Stripe Minions / managed agents pattern as platform)
+- v0.2 embedded stack: `clawql-streams` + `clawql-core` + `mcp-api-adapter` in one cell
+- Event loop, significance filters, `stream_*` MCP tools (planned)
+- WORM replication: LTX → S3 on celld; Postgres/JSONL on K8s
+
+### 2. [Durable Objects runtime](/streams/clawql-durable-objects)
+
+- Session sidecars: Audit / Inference / Training
+- Virtual key lifecycle inside a cell
+- Cloudflare vs self-hosted DO mental model
+
+### 3. [celld integration](/streams/clawql-celld)
+
+- Workers API parity path (Apache 2.0, Deno celld)
+- Bundle constraints (64 MiB, no `child_process`, `setAlarm` not `setInterval`)
+- **LTX bucket = WORM trail** on the celld path
+
+### 4. [clawql-cellrt](/streams/clawql-cellrt)
+
+- ClawQL-owned Rust runtime (Wasmtime, embedded Vault/inference/OTel)
+- Bootstrap: HTTP → local `clawql-mcp` before `clawql-core.wasm` in-process
+- Fleet coordinator, cell leases, peer HMAC
+
+### 5. [clawql-tee](/streams/clawql-tee) → [TEE air-gap audit](/streams/clawql-tee-airgap-audit)
+
+- Hardware layer on top of cellrt: SEV-SNP / TDX attestation
+- Attestation-gated Vault secrets
+- **QR stream transport** for unidirectional audit to regulators ([QR transport spec](/streams/clawql-qr-stream-transport))
+
+### 6. Adjacent platform specs
+
+- [clawql-government](/government/clawql-government) — outcome accountability, FOIA vault
+- [clawql-network](/specs/network/clawql-network) — peer mesh between cells (when published)
+
+## What you can try today (while specs are draft)
+
+| Today                                                                | Streams analogue                      |
+| -------------------------------------------------------------------- | ------------------------------------- |
+| [`schedule`](/learn/schedule-notify-workflows) synthetic HTTP probes | Time-based autonomous checks          |
+| [NATS JetStream](/nats-jetstream) on K8s                             | Event backbone for coordination       |
+| [Ouroboros tools](/learn/ouroboros-tools)                            | Evolutionary loops with lineage       |
+| [Audit + Loki](/learn/audit-tool-and-observability)                  | Per-action breadcrumbs → durable logs |
+| [Payments WORM](/learn/payments-and-entitlements)                    | Hash-chained payment events           |
+
+Use these to rehearse **event → agent action → audit** before `stream_*` tools ship. The labs below walk through each row with copy-paste steps.
+
+## Hands-on labs
+
+These labs use **shipped** tools today. They mirror the Streams v0.2 loop — **event source → ClawQL processes → durable trail** — while `stream_subscribe` remains draft ([Streams spec §4](/streams/clawql-streams)).
+
+Deep dives: [Schedule & notify](/learn/schedule-notify-workflows) · [NATS JetStream](/nats-jetstream) · [Audit & observability](/learn/audit-tool-and-observability)
+
+### Lab 1 — Time-based events with `schedule` (local, ~15 min)
+
+**Goal:** Run an autonomous HTTP probe on an interval — the same cron fiber Streams will unify as `sourceType: "cron"`.
+
+**1 — Enable schedule and start MCP**
+
+```bash
+export CLAWQL_ENABLE_SCHEDULE=1
+export CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES=https://httpbin.org,https://status.example.com
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+```
+
+**2 — Create a synthetic job** (`schedule` tool, `operation: "create"`):
+
+```json
+{
+  "operation": "create",
+  "name": "streams-lab-status",
+  "schedule": {
+    "frequency": {
+      "type": "interval",
+      "seconds": 120
+    }
+  },
+  "action": {
+    "kind": "synthetic",
+    "synthetic_test": {
+      "request": {
+        "method": "GET",
+        "url": "https://httpbin.org/status/200"
+      },
+      "assertions": [{ "type": "status_code", "equals": 200 }]
+    }
+  }
+}
+```
+
+**3 — Validate before leaving enabled**
+
+```json
+{ "operation": "trigger", "job_id": "<id-from-create>", "dry_run": true }
+```
+
+**4 — Inspect run history**
+
+```json
+{ "operation": "get", "job_id": "<id>", "include_runs": true }
+```
+
+**Success:** Worker poll (default **`CLAWQL_SCHEDULE_POLL_MS=5000`**) records **pass/fail**, latency, and **`http_status`** in SQLite. Optional Slack bridge: [Schedule § built-in notify](/learn/schedule-notify-workflows#built-in-schedule-to-slack-notifications).
+
+### Lab 2 — NATS JetStream backbone on Kubernetes (~30 min)
+
+**Goal:** Stand up the in-cluster event bus the K8s Streams path uses for buffering, HPA lag signals, and cross-component pub/sub.
+
+**1 — Enable NATS in Helm**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true \
+  --set nats.persistence.enabled=true \
+  --set nats.jetStream.enabled=true \
+  --set nats.persistence.size=20Gi
+```
+
+**2 — Verify rollout**
+
+```bash
+kubectl -n clawql get deploy,svc | rg nats
+kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQL_NATS_JETSTREAM"
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222 &
+curl -s http://127.0.0.1:8222/healthz
+curl -s http://127.0.0.1:8222/jsz | head -c 400
+```
+
+**3 — Publish a test event** (requires [NATS CLI](https://github.com/nats-io/natscli)):
+
+```bash
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 4222:4222 &
+nats pub clawql.workflow.lab.hello '{"source":"streams-lab","ts":"'"$(date -Iseconds)"'"}' \
+  --server nats://127.0.0.1:4222
+```
+
+Use stable subject prefixes from the chart ([NATS JetStream § taxonomy](/nats-jetstream#subject-taxonomy-suggestion)): `clawql.workflow.*`, `clawql.agent.*`, `clawql.document.*`.
+
+**4 — Full IDP pipeline path (optional)**
+
+For a production-shaped document inbox → worker loop, apply [`values-nats-idp.example.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-nats-idp.example.yaml) and follow [NATS IDP E2E runbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/nats-idp-e2e.md).
+
+**Success:** NATS monitor **`/jsz`** shows JetStream enabled; **`clawql-mcp-http`** receives **`CLAWQL_NATS_URL`**. Streams cells on this path will subscribe to subjects the way Lab 3's bridge consumes **`pipeline.completed`**.
+
+### Lab 3 — NATS → MCP agent bridge (async follow-up, ~20 min)
+
+**Goal:** Close the loop **JetStream event → agent MCP tools** without waiting for `stream_*` — the pattern Hermes/Pi use for IDP follow-up ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)).
+
+**Prerequisites:** Lab 2 NATS reachable; MCP HTTP running (Lab 1 or in-cluster).
+
+```bash
+export CLAWQL_NATS_URL=nats://127.0.0.1:4222   # or in-cluster DNS
+export CLAWQL_NATS_JETSTREAM=1
+export CLAWQL_NATS_ENABLE_CONSUMER=1
+export CLAWQL_NATS_AGENT_BRIDGE=1
+export CLAWQL_MCP_HTTP_URL=http://127.0.0.1:8080/mcp
+# optional on pipeline.failed:
+# export CLAWQL_NATS_AGENT_BRIDGE_NOTIFY_CHANNEL=C01234567
+
+npm run nats:agent-bridge
+```
+
+The bridge durable consumer (**`clawql-idp-agent-bridge`**) calls **`memory_ingest`**, **`notify`**, and **`audit`** on pipeline completion events — the same tool trio Streams agents will use for significance filtering and human escalation.
+
+Sample pack: [deployment/samples/idp-nats-agent](https://github.com/danielsmithdevelopment/ClawQL/blob/main/deployment/samples/idp-nats-agent/README.md) (Hermes skill + Pi extension).
+
+### Lab 4 (optional) — Probes + audit breadcrumbs
+
+Pair Lab 1 with **`audit`** so scheduled runs leave MCP-visible breadcrumbs before Loki/Grafana:
+
+```bash
+export CLAWQL_ENABLE_AUDIT=1
+# optional: CLAWQL_AUDIT_LOKI_URL=…
+```
+
+After each synthetic run, agents (or the bridge in Lab 3) append **`audit`** entries with **`job_id`**, correlation ids, and runbook links. See [Audit tool & observability](/learn/audit-tool-and-observability).
+
+## K8s operator sketch
+
+```bash
+# Event backbone (Lab 2)
+helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+  --set nats.enabled=true --set nats.jetStream.enabled=true
+
+# MCP + inference (cells call inference over HTTP)
+export CLAWQL_ENABLE_SCHEDULE=1
+clawql inference serve --port 8080
+```
+
+When **`mcpProxy`** is enabled, north–south MCP hits the proxy before `clawql-mcp-http` — pair with [Panguard enforcement](/learn/panguard-mcp-enforcement) for JWT ATR at the chokepoint.
+
+Full deploy paths: [Kubernetes & Helm](/deployment/kubernetes) · [Operations guide](/deployment/operations-guide).
+
+## cellrt vs celld decision
+
+| Question                                             | Prefer                                |
+| ---------------------------------------------------- | ------------------------------------- |
+| Need Cloudflare Workers API parity?                  | **celld**                             |
+| Need embedded Vault + PAL + eBPF on sovereign metal? | **cellrt**                            |
+| Need hardware attestation + air-gap audit?           | **cellrt + tee**                      |
+| Alpha tolerance for multi-tenant hostile?            | Wait for **cellrt** production target |
+
+Streams v0.2 **adopts celld** for the JS/Workers path; **cellrt** is the long-run ClawQL-owned production runtime.
+
+## Troubleshooting orientation
+
+| Symptom                        | Check                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| “Where is `stream_subscribe`?” | Planned MCP surface — see Streams spec § tools                          |
+| Cell bundle too large          | 64 MiB Workers limit — tree-shake, keep inference out-of-process        |
+| Model calls fail in cell       | Must use `fetch()` to `clawql-inference`, not subprocess                |
+| WORM gaps on celld             | LTX → bucket path; verify bucket replication config                     |
+| Regulator needs offline proof  | TEE air-gap + [QR transport](/streams/clawql-qr-stream-transport) chain |
+
+## What to read next
+
+- [Protocol Fabric](/mcp/protocol-fabric) — proven multi-protocol loop
+- [Agentic Gateway](/inference/clawql-inference) — HTTP target for cells
+- [Defense in depth](/security/defense-in-depth) — Streams sits in the audit / WORM layer
+- [Benchmarks](/benchmarks) — OpenBenchTrace / RTP training emission (Streams § training)
+
+<Note>
+  All Streams-family pages are marked **Draft** in the sidebar. Treat them as
+  the architecture contract; verify shipped package versions in [Vision &
+  status](/vision/roadmap) before production commitments.
+</Note>

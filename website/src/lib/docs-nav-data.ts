@@ -41,12 +41,16 @@ const LEARN_MODULE_HREFS = [
   '/learn/external-ingest-knowledge',
   '/learn/knowledge-search-onyx',
   '/learn/document-pipeline',
+  '/learn/payments-and-entitlements',
   '/learn/sandbox-exec',
+  '/learn/optional-mcp-tools',
   '/learn/effect-ts',
   '/learn/ouroboros-tools',
+  '/learn/streams-getting-started',
   '/learn/schedule-notify-workflows',
   '/learn/cache-handoff-between-chats',
   '/learn/audit-tool-and-observability',
+  '/learn/panguard-mcp-enforcement',
 ] as const
 
 const learnModuleByHref = new Map(
@@ -243,6 +247,8 @@ export const docsNavigation: Array<NavGroup> = [
     links: [
       { title: 'Reference', href: '/reference' },
       { title: 'MCP tools', href: '/tools' },
+      { title: 'Protocol', href: '/reference/protocol' },
+      { title: 'Optional tools', href: '/reference/optional-tools' },
       { title: 'Authentication', href: '/auth' },
       { title: 'Audit Trail', href: '/audit' },
       { title: 'Observability', href: '/observability' },

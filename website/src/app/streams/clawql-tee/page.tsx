@@ -30,7 +30,21 @@ export default function ClawqlTeePage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Hardware TEE path — not yet shipped.</strong> Builds on{' '}
+          <strong>Hardware TEE path — not yet shipped.</strong> Generated from{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-tee.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-tee.md
+          </a>
+          ,{' '}
+          <a
+            href="/learn/streams-getting-started"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>{' '}
+          (§5 TEE + air-gap reading order). Builds on{' '}
           <a
             href="/streams/clawql-cellrt"
             className="font-medium text-inherit underline underline-offset-2"
@@ -43,13 +57,6 @@ export default function ClawqlTeePage() {
             className="font-medium text-inherit underline underline-offset-2"
           >
             QR transport
-          </a>
-          . Source:{' '}
-          <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-tee.md"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            docs/streams/clawql-tee.md
           </a>
           .
         </Note>

@@ -1,5 +1,7 @@
 # clawql-tee — Trusted Execution Environment Spec v0.1
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§5** TEE + [air-gap audit](./clawql-tee-airgap-audit.md) reading order; Labs 1–3 for event backbone today.
+
 **Status:** Draft · August 2026 · v0.1  
 **Builds on:** [`clawql-cellrt`](./clawql-cellrt.md) v0.1 (software security baseline)  
 **Companions:** [`clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) · [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-inference`](../inference/clawql-inference.md) · **correctness stack:** [`correctness-by-construction.md`](../design/correctness-by-construction.md) (NASA/SPARK → Rust + TLA+)

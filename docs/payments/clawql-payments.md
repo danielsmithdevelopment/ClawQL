@@ -1,5 +1,7 @@
 # clawql-payments
 
+**Hands-on walkthrough:** [Payments & entitlements (Learn)](https://docs.clawql.com/learn/payments-and-entitlements) — plan limits, Stripe/x402 paths, WORM audit, and inference checklist in one sequence.
+
 **Status:** Shipped foundation (July 2026)  
 **Package:** [`packages/clawql-payments`](../../packages/clawql-payments)  
 **CLI:** `clawql payments *`
