@@ -43,9 +43,10 @@ export default function SecurityStatusPage() {
         Security status
       </h1>
       <p className="mt-4 max-w-3xl text-lg text-zinc-600 dark:text-zinc-400">
-        This page shows raw, independently checkable supply-chain evidence — scan pass/fail history
-        (including caught failures), SBOM artifact links, and signature verification commands. It is
-        fed by CI exports and an append-only publish job, not hand-edited summaries. Spec:{' '}
+        This page shows raw, independently checkable supply-chain evidence —
+        scan pass/fail history (including caught failures), SBOM artifact links,
+        and signature verification commands. It is fed by CI exports and an
+        append-only publish job, not hand-edited summaries. Spec:{' '}
         <a
           href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/security-status-page-spec.md"
           className="font-medium text-claw-graph underline decoration-claw-graph/40 underline-offset-2 dark:text-claw-cyan"
@@ -57,7 +58,10 @@ export default function SecurityStatusPage() {
       </p>
 
       <p className="not-prose mt-4 text-sm text-zinc-600 dark:text-zinc-400">
-        <Link href="/security" className="font-medium underline-offset-2 hover:underline">
+        <Link
+          href="/security"
+          className="font-medium underline-offset-2 hover:underline"
+        >
           ← Security overview
         </Link>
         {' · '}
@@ -71,7 +75,9 @@ export default function SecurityStatusPage() {
       </p>
 
       <section className="not-prose mt-10 border-t border-zinc-900/10 pt-10 dark:border-white/10">
-        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">Latest release</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">
+          Latest release
+        </h2>
         <dl className="mt-4 space-y-2 font-mono text-sm text-zinc-700 dark:text-zinc-300">
           <div className="flex flex-wrap gap-x-2">
             <dt className="text-zinc-500 dark:text-zinc-400">Version</dt>
@@ -93,12 +99,17 @@ export default function SecurityStatusPage() {
             <dt className="text-zinc-500 dark:text-zinc-400">SBOM (Syft)</dt>
             <dd className="mt-1">
               CycloneDX JSON via CI artifact{' '}
-              <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">{rel.sbomArtifactName}</code>{' '}
-              on each green supply-chain run — download from the linked CI run artifacts.
+              <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">
+                {rel.sbomArtifactName}
+              </code>{' '}
+              on each green supply-chain run — download from the linked CI run
+              artifacts.
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500 dark:text-zinc-400">Verify signature</dt>
+            <dt className="text-zinc-500 dark:text-zinc-400">
+              Verify signature
+            </dt>
             <dd className="mt-1">
               <pre className="overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs dark:bg-white/10">
                 {rel.image.cosignVerifyCommand}
@@ -109,10 +120,13 @@ export default function SecurityStatusPage() {
       </section>
 
       <section className="not-prose mt-10 border-t border-zinc-900/10 pt-10 dark:border-white/10">
-        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">Scan history</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">
+          Scan history
+        </h2>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-          Last {data.runs.length || 0} published main-branch CI supply-chain runs. Failed rows are
-          never removed — a fail-then-fix pair is evidence the gate blocked a merge.
+          Last {data.runs.length || 0} published main-branch CI supply-chain
+          runs. Failed rows are never removed — a fail-then-fix pair is evidence
+          the gate blocked a merge.
         </p>
         {data.runs.length === 0 ? (
           <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
@@ -120,8 +134,8 @@ export default function SecurityStatusPage() {
             <code className="rounded bg-zinc-100 px-1 dark:bg-white/10">
               security-status-publish
             </code>{' '}
-            workflow will append records after CI exports land on <code className="font-mono">main</code>
-            .
+            workflow will append records after CI exports land on{' '}
+            <code className="font-mono">main</code>.
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
@@ -130,21 +144,34 @@ export default function SecurityStatusPage() {
                 <tr className="border-b border-zinc-200 dark:border-white/10">
                   <th className="py-2 pr-4 font-medium text-zinc-500">Run</th>
                   <th className="py-2 pr-4 font-medium text-zinc-500">Date</th>
-                  <th className="py-2 pr-4 font-medium text-zinc-500">Commit</th>
+                  <th className="py-2 pr-4 font-medium text-zinc-500">
+                    Commit
+                  </th>
                   <th className="py-2 pr-4 font-medium text-zinc-500">Trivy</th>
                   <th className="py-2 pr-4 font-medium text-zinc-500">OSV</th>
-                  <th className="py-2 pr-4 font-medium text-zinc-500">Result</th>
+                  <th className="py-2 pr-4 font-medium text-zinc-500">
+                    Result
+                  </th>
                   <th className="py-2 font-medium text-zinc-500">CI log</th>
                 </tr>
               </thead>
               <tbody>
                 {data.runs.map((row) => (
-                  <tr key={row.runId} className="border-b border-zinc-100 dark:border-white/5">
+                  <tr
+                    key={row.runId}
+                    className="border-b border-zinc-100 dark:border-white/5"
+                  >
                     <td className="py-2 pr-4 font-mono">#{row.runId}</td>
                     <td className="py-2 pr-4">{formatDate(row.timestamp)}</td>
-                    <td className="py-2 pr-4 font-mono">{row.commit.slice(0, 8)}</td>
-                    <td className="py-2 pr-4 font-mono">{formatScannerCell('trivy', row)}</td>
-                    <td className="py-2 pr-4 font-mono">{formatScannerCell('osv', row)}</td>
+                    <td className="py-2 pr-4 font-mono">
+                      {row.commit.slice(0, 8)}
+                    </td>
+                    <td className="py-2 pr-4 font-mono">
+                      {formatScannerCell('trivy', row)}
+                    </td>
+                    <td className="py-2 pr-4 font-mono">
+                      {formatScannerCell('osv', row)}
+                    </td>
                     <td className="py-2 pr-4">{row.overallResult}</td>
                     <td className="py-2">
                       <a
@@ -171,8 +198,9 @@ export default function SecurityStatusPage() {
           Independent verification
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-          Third-party, vendor-neutral security benchmarks (for example MCPSEC-style formal properties)
-          will be linked here when ClawQL completes a reproducible external evaluation — same
+          Third-party, vendor-neutral security benchmarks (for example
+          MCPSEC-style formal properties) will be linked here when ClawQL
+          completes a reproducible external evaluation — same
           independent-evidence principle as Harvey LAB and ExtractBench.
         </p>
       </section>

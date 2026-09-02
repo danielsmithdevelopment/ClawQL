@@ -6,6 +6,7 @@ page: "docs.clawql.com/security/status"
 ---
 
 # Security Status Page
+
 ## Specification v0.1
 
 **August 2026**
@@ -16,7 +17,7 @@ page: "docs.clawql.com/security/status"
 
 This page proves ClawQL's security process runs and holds, rather than asserting it in prose. Every element on the page is either raw, independently verifiable data (an SBOM, a signature, a CI log) or a real history of outcomes over time (scan pass/fail records) — never a summary, a badge claiming a snapshot state, or a paraphrase of what a tool found. The reader should never have to trust ClawQL's description of its own security posture; they should be able to check it themselves in the same way anyone can re-run the harness behind the Executor comparison benchmark.
 
-**This page is not a live vulnerability dashboard.** It never displays currently open, unpatched vulnerabilities — that would be a target list, and it would contradict the hard CI gate's own premise (a merge cannot land with unresolved scan failures, so there should be nothing current to display). What the page shows is evidence that the *gate* runs and works: a history of pass/fail outcomes, including failures that were caught and fixed, not a sanitized all-green record.
+**This page is not a live vulnerability dashboard.** It never displays currently open, unpatched vulnerabilities — that would be a target list, and it would contradict the hard CI gate's own premise (a merge cannot land with unresolved scan failures, so there should be nothing current to display). What the page shows is evidence that the _gate_ runs and works: a history of pass/fail outcomes, including failures that were caught and fixed, not a sanitized all-green record.
 
 ---
 
@@ -80,46 +81,46 @@ The page is only as honest as its data source. Every CI run that includes the sc
 // producing its own record.
 
 export interface SecurityScanRunRecord {
-  runId: string
-  timestamp: string
-  commit: string
-  branch: string
+  runId: string;
+  timestamp: string;
+  commit: string;
+  branch: string;
   scanners: {
-    trivy: { result: 'pass' | 'fail'; findings?: TrivyFinding[] }
-    osv:   { result: 'pass' | 'fail'; findings?: OsvFinding[] }
-  }
+    trivy: { result: "pass" | "fail"; findings?: TrivyFinding[] };
+    osv: { result: "pass" | "fail"; findings?: OsvFinding[] };
+  };
   sbom: {
-    generated: boolean
-    format: 'cyclonedx-json'
-    artifactUrl: string
-  }
+    generated: boolean;
+    format: "cyclonedx-json";
+    artifactUrl: string;
+  };
   signing: {
-    signed: boolean
-    imageDigest: string | null
-  }
-  overallResult: 'merged' | 'blocked'
-  ciRunUrl: string             // direct link to the actual CI run,
-                                // never a paraphrase
+    signed: boolean;
+    imageDigest: string | null;
+  };
+  overallResult: "merged" | "blocked";
+  ciRunUrl: string; // direct link to the actual CI run,
+  // never a paraphrase
 }
 ```
 
 ```typescript
 export interface TrivyFinding {
-  cveId: string
-  severity: 'critical' | 'high' | 'medium' | 'low'
-  package: string
-  fixedVersion: string | null
+  cveId: string;
+  severity: "critical" | "high" | "medium" | "low";
+  package: string;
+  fixedVersion: string | null;
 }
 
 export interface OsvFinding {
-  osvId: string
-  severity: string
-  package: string
-  fixedVersion: string | null
+  osvId: string;
+  severity: string;
+  package: string;
+  fixedVersion: string | null;
 }
 ```
 
-**A blocked run's `findings` array is retained in the export for the historical record shown on the page (§3.2's "FAIL (CVE-2026-xxxxx)" cell), but only for runs that are already historical by the time they're published** — this page shows what *was* wrong and got fixed, on a delay determined by the normal merge-and-fix cycle, never a currently-unresolved finding on an unmerged branch. The distinction that matters: by the time any failed run appears on this page, either the same commit was fixed in a subsequent run (§3.2's fail-then-fix pattern) or the branch was abandoned — there is no state where an actively-exploitable, currently-unpatched finding is sitting on this page waiting to be fixed.
+**A blocked run's `findings` array is retained in the export for the historical record shown on the page (§3.2's "FAIL (CVE-2026-xxxxx)" cell), but only for runs that are already historical by the time they're published** — this page shows what _was_ wrong and got fixed, on a delay determined by the normal merge-and-fix cycle, never a currently-unresolved finding on an unmerged branch. The distinction that matters: by the time any failed run appears on this page, either the same commit was fixed in a subsequent run (§3.2's fail-then-fix pattern) or the branch was abandoned — there is no state where an actively-exploitable, currently-unpatched finding is sitting on this page waiting to be fixed.
 
 ---
 
@@ -152,6 +153,6 @@ This page does not say "ClawQL is the most secure MCP gateway on the market" any
 
 ---
 
-*Security Status Page Specification · v0.1 · August 2026*
-*Location: docs.clawql.com/security/status*
-*Contact: daniel@clawql.com*
+_Security Status Page Specification · v0.1 · August 2026_
+_Location: docs.clawql.com/security/status_
+_Contact: daniel@clawql.com_

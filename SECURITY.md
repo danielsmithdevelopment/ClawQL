@@ -10,9 +10,9 @@ Please do **not** open public GitHub issues for undisclosed vulnerabilities.
 
 | Severity | Target first response |
 | -------- | --------------------- |
-| Critical | 48 hours |
-| High     | 5 business days |
-| Other    | 10 business days |
+| Critical | 48 hours              |
+| High     | 5 business days       |
+| Other    | 10 business days      |
 
 We will acknowledge receipt, assess impact, and coordinate disclosure when a fix is available.
 
