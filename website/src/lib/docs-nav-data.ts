@@ -1,11 +1,11 @@
 /**
  * Single source of truth for docs sidebar navigation.
- * Hub card grids (`docs-hub-data.ts`) surface long-tail pages not listed here.
- * Off-sidebar routes are also indexed on `/archive` (generated catalog).
+ * Hub cards (`docs-hub-data.ts`) complement the sidebar for curated discovery.
+ * `/archive` lists legacy redirect URLs only (generated catalog).
  */
 
 import { trainingModules } from '@/generated/security-training/registry'
-import { pluginsHubCards } from '@/lib/docs-hub-data'
+import { exampleSiteCards, pluginsHubCards } from '@/lib/docs-hub-data'
 import { learnModuleSiteCards } from '@/lib/docs-site-card-data'
 
 export type NavLink = {
@@ -69,6 +69,14 @@ const pluginDetailLinks: Array<NavLink> = pluginsHubCards.map((card) => ({
   href: card.href,
 }))
 
+/** Examples hub case studies — sidebar under More (titles shortened). */
+export const EXAMPLE_STUDY_HREFS = exampleSiteCards.map((card) => card.href)
+
+const exampleStudyLinks: Array<NavLink> = exampleSiteCards.map((card) => ({
+  title: card.name.replace(/^Example:\s*/, ''),
+  href: card.href,
+}))
+
 /** First-run sidebar — Security lists every /security/* page. */
 export const docsNavigation: Array<NavGroup> = [
   {
@@ -124,6 +132,14 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Kubernetes & Helm', href: '/deployment/kubernetes' },
       { title: 'Helm charts', href: '/helm' },
       { title: 'NATS JetStream', href: '/nats-jetstream' },
+      {
+        title: 'Docker Desktop observability',
+        href: '/docker-desktop-observability',
+      },
+      {
+        title: 'Dashboard on Kubernetes',
+        href: '/dashboard-kubernetes',
+      },
       { title: 'OpenClaw', href: '/openclaw' },
       { title: 'Tailscale', href: '/tailscale' },
     ],
@@ -189,6 +205,19 @@ export const docsNavigation: Array<NavGroup> = [
         tag: 'v0.1',
       },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
+      { title: '.cqe contracts', href: '/specs/cq-extensions/cqe', tag: 'Ext' },
+      { title: '.cqm memory', href: '/specs/cq-extensions/cqm', tag: 'Ext' },
+      { title: '.cqk knowledge', href: '/specs/cq-extensions/cqk', tag: 'Ext' },
+      { title: '.cqw workflows', href: '/specs/cq-extensions/cqw', tag: 'Ext' },
+      { title: 'Bundled specs', href: '/bundled-specs' },
+      { title: 'GraphQL layer', href: '/graphql-proxy' },
+      { title: 'HITL — Label Studio', href: '/hitl-label-studio' },
+      { title: 'Flink Onyx sync', href: '/flink-onyx-sync' },
+      {
+        title: 'Onyx knowledge (legacy)',
+        href: '/onyx-knowledge',
+        tag: 'Legacy',
+      },
       { title: 'clawql-inference', href: '/inference/clawql-inference' },
       { title: 'clawql-payments', href: '/payments/clawql-payments' },
       {
@@ -242,6 +271,8 @@ export const docsNavigation: Array<NavGroup> = [
       },
       { title: 'Ouroboros', href: '/ouroboros' },
       { title: 'DAOS architecture', href: '/ouroboros/daos' },
+      { title: 'DAOS specification', href: '/ouroboros/specification' },
+      { title: 'DAOS build plan', href: '/ouroboros/build-plan' },
     ],
   },
   {
@@ -251,6 +282,9 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'MCP tools', href: '/tools' },
       { title: 'Protocol', href: '/reference/protocol' },
       { title: 'Optional tools', href: '/reference/optional-tools' },
+      { title: 'HITL reference', href: '/reference/hitl' },
+      { title: 'Plugin contracts', href: '/reference/plugins' },
+      { title: 'Verticals reference', href: '/reference/verticals' },
       { title: 'Authentication', href: '/auth' },
       { title: 'Audit Trail', href: '/audit' },
       { title: 'Observability', href: '/observability' },
@@ -267,10 +301,17 @@ export const docsNavigation: Array<NavGroup> = [
   {
     title: 'More',
     links: [
+      { title: 'Resources', href: '/resources' },
       { title: 'Examples', href: '/examples' },
+      ...exampleStudyLinks,
       { title: 'Benchmarks', href: '/benchmarks' },
+      {
+        title: 'Executor comparison',
+        href: '/benchmarks/executor-comparison',
+      },
+      { title: 'Slide deck', href: '/vision/slide-deck' },
       { title: 'Changelog', href: '/resources/changelog' },
-      { title: 'Docs archive', href: '/archive' },
+      { title: 'Legacy URLs', href: '/archive' },
     ],
   },
 ]

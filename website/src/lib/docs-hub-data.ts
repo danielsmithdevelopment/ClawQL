@@ -432,9 +432,9 @@ export const referenceHubCards: Array<ReferenceCard> = [
 export const resourcesHubCards: Array<ReferenceCard> = [
   card({
     href: '/archive',
-    name: 'Docs archive',
+    name: 'Legacy URL redirects',
     description:
-      'Searchable index of every page kept off the first-run sidebar (case studies, specs, infra guides, legacy URLs).',
+      'Old paths (/schedule, /notify, /cache) that redirect into Learn modules.',
     icon: MagnifyingGlassIcon,
   }),
   card({
