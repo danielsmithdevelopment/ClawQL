@@ -98,6 +98,13 @@ spec:
             {{- if $infUrl }}
             - name: CLAWQL_STREAMS_INFERENCE_URL
               value: {{ $infUrl | quote }}
+            - name: INFERENCE_URL
+              value: {{ $infUrl | quote }}
+            {{- end }}
+            {{- $mcpUrl := include "clawql-mcp.celldMcpUrl" . }}
+            {{- if $mcpUrl }}
+            - name: CLAWQL_MCP_URL
+              value: {{ $mcpUrl | quote }}
             {{- end }}
             {{- with .Values.streams.celld.extraEnv }}
             {{- toYaml . | nindent 12 }}

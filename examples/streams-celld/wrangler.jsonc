@@ -5,7 +5,10 @@
   "compatibility_date": "2026-01-01",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "INFERENCE_URL": "http://127.0.0.1:8080"
+    "INFERENCE_URL": "http://127.0.0.1:8080",
+    // Out-of-process search/execute via Streamable HTTP (MCP 2026-07-28).
+    // Empty / omit → tools return deferred until CLAWQL_MCP_URL is set.
+    "CLAWQL_MCP_URL": ""
   },
   "durable_objects": {
     "bindings": [

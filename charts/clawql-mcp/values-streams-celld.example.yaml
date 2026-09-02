@@ -34,6 +34,8 @@ inference:
 
 enableMemory: true
 
-# MCP HTTP remains the operator control plane; cells call inference over HTTP.
+# Cells call inference over HTTP and search/execute via Streamable HTTP MCP
+# (CLAWQL_MCP_URL → in-cluster clawql-mcp /mcp, MCP 2026-07-28 preferred).
+# Prefer CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1 on MCP for simpler Worker parsing.
 nats:
   enabled: false

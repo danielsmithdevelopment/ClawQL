@@ -35,6 +35,6 @@ Workers-safe subset for Durable Object cells (no `webmcp-draft` / `node:fs`, no 
 import { runAuditOperation, runCacheOperation } from "clawql-core/streams-slim";
 ```
 
-Requires celld / Workers **`nodejs_compat`** for `node:crypto` + `Buffer` (hash-chain). Search / execute / memory stay on the MCP host or via `fetch` — they are not in this package. Example: [`examples/streams-celld`](../../examples/streams-celld/).
+Requires celld / Workers **`nodejs_compat`** for `node:crypto` + `Buffer` (hash-chain). Search / execute stay on the MCP host via cell `fetch(CLAWQL_MCP_URL)` (Streamable HTTP) — they are not in this package. Example: [`examples/streams-celld`](../../examples/streams-celld/).
 
 **8.0 hard break:** Phase-2 `Plugin` / `beforeCallTool` and any compatibility bridge are removed — rewrite against `ProviderPlugin`.

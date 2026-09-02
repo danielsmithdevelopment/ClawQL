@@ -2,10 +2,11 @@
   "name": "@clawql/example-streams-celld",
   "private": true,
   "version": "0.0.0",
-  "description": "ClawQL Streams celld DO skeleton with clawql-core/streams-slim (Lab 5b)",
+  "description": "ClawQL Streams celld DO skeleton with clawql-core/streams-slim + MCP fetch (Lab 5b)",
   "type": "module",
   "scripts": {
     "bundle-check": "node scripts/bundle-check.mjs",
+    "test:mcp-fetch": "node scripts/mcp-fetch.test.mjs",
     "dev": "celld dev --port 9876",
     "smoke": "bash scripts/smoke.sh"
   },

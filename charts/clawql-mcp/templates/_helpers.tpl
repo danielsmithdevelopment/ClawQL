@@ -435,6 +435,17 @@ app.kubernetes.io/component: streams-celld
 {{- end -}}
 {{- end }}
 
+{{/* In-cluster ClawQL MCP Streamable HTTP URL for celld Workers (CLAWQL_MCP_URL). */}}
+{{- define "clawql-mcp.celldMcpUrl" -}}
+{{- if .Values.streams.celld.mcpUrl -}}
+{{- .Values.streams.celld.mcpUrl -}}
+{{- else if .Values.mcpProxy.enabled -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.mcpProxyName" .) .Release.Namespace (.Values.mcpProxy.service.http.port | int) .Values.mcpPath -}}
+{{- else -}}
+{{- printf "http://%s.%s.svc.cluster.local:%v%s" (include "clawql-mcp.fullname" .) .Release.Namespace (.Values.service.http.port | int) .Values.mcpPath -}}
+{{- end -}}
+{{- end }}
+
 {{/* Optional Managed Edge Gateway nginx (one hostname for /mcp + /v1). */}}
 {{- define "clawql-mcp.managedGatewayName" -}}
 {{- printf "%s-managed-gateway" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}

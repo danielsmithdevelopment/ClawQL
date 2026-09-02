@@ -37,8 +37,10 @@ Learn walkthrough: [Streams getting started — Lab 5b](https://docs.clawql.com/
    curl -s -X POST http://127.0.0.1:8080/webhook/demo \
      -H 'content-type: application/json' \
      -H 'x-clawql-event-id: k8s-smoke-1' \
-     -d '{"source":"helm-smoke"}' | jq .
+     -d '{"source":"helm-smoke"}' | jq '.session.tools, .session.core'
    ```
+
+   Expect `core.mcpUrlConfigured: true` when Helm wired `CLAWQL_MCP_URL`, and `tools.search.transport: "streamable-http"` on success (MCP must be reachable in-cluster).
 
 5. **Diagnose fleet** — from a pod or local CLI with the same bucket env:
 

@@ -1,15 +1,29 @@
 /**
- * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim).
+ * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim)
+ * plus optional fetch(CLAWQL_MCP_URL) for search/execute.
  * Model calls use fetch(INFERENCE_URL) — never child_process.
- * Audit/cache run in-process; search/execute remain deferred (see streams-core-facade).
  */
 import {
   appendSessionCreatedAudit,
   cacheSessionMeta,
-  executeDeferred,
-  searchDeferred,
+  executeViaMcp,
+  searchViaMcp,
   verifyAuditChain,
 } from "./streams-core-facade.js";
+
+function resolveMcpConfig(env) {
+  const url =
+    (env.CLAWQL_MCP_URL || env.CLAWQL_MCP_HTTP_URL || "").trim() || undefined;
+  const bearer = (env.CLAWQL_MCP_BEARER_TOKEN || "").trim() || undefined;
+  return { url, bearer };
+}
+
+function resolveInferenceUrl(env) {
+  return (
+    (env.INFERENCE_URL || env.CLAWQL_STREAMS_INFERENCE_URL || "").trim() ||
+    undefined
+  );
+}
 
 export class AgentSessionDO {
   constructor(state, env) {
@@ -73,7 +87,7 @@ export class AgentSessionDO {
       }
 
       let inference = { skipped: true, reason: "no INFERENCE_URL" };
-      const inferenceUrl = this.env.INFERENCE_URL;
+      const inferenceUrl = resolveInferenceUrl(this.env);
       if (inferenceUrl) {
         try {
           const res = await fetch(`${inferenceUrl.replace(/\/$/, "")}/healthz`, {
@@ -95,10 +109,18 @@ export class AgentSessionDO {
         }
       }
 
+      const mcp = resolveMcpConfig(this.env);
       const tools = {
-        search: await searchDeferred(`subscription:${subscriptionId}`),
-        execute: await executeDeferred("streams.session.noop", { eventId }),
+        search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {
+          limit: 3,
+        }),
+        execute: await executeViaMcp(mcp, "streams.session.noop", { eventId }),
       };
+      await this.state.storage.put(`tool_calls:${startedAt}`, {
+        searchOk: tools.search?.ok === true,
+        executeOk: tools.execute?.ok === true,
+        deferred: !mcp.url,
+      });
 
       return Response.json({
         do: "AgentSessionDO",
@@ -114,7 +136,13 @@ export class AgentSessionDO {
         core: {
           package: "clawql-core/streams-slim",
           inProcess: ["audit", "cache", "hash-chain"],
-          deferred: ["search", "execute", "memory_*", "mcp-api-adapter"],
+          outOfProcess: mcp.url
+            ? ["search", "execute", "inference"]
+            : ["inference"],
+          deferred: mcp.url
+            ? ["memory_*", "mcp-api-adapter"]
+            : ["search", "execute", "memory_*", "mcp-api-adapter"],
+          mcpUrlConfigured: Boolean(mcp.url),
         },
       });
     }
