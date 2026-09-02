@@ -5,7 +5,7 @@
 
 **Audience:** Investors · Developers & architects · Operators
 
-**Related:** [IDP GTM strategy & landing brief](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) · [Go-to-market playbook (zero → shared tenancy)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](/learn/document-pipeline) · [Requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [OpenBench advanced specs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-advanced-specs.md) · [OpenBench results ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md) (live A/B evidence) · [Master enablement guide](/architecture) · [Deployment guide](/deployment/operations-guide)
+**Related:** [IDP GTM strategy & landing brief](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) · [Public IDP GTM playbook](https://clawql.com/idp/gtm) · [IDP pipeline hub](/learn/document-pipeline) · [Requirements matrix](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/roadmap/idp-master-requirements-matrix.md) · [OpenClaw IDP skill profile](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/openclaw-idp-skill-profile.md) · [Token efficiency (12 layers)](/architecture/token-efficiency) · [OpenBench advanced specs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-advanced-specs.md) · [Master enablement guide](/architecture) · [Deployment guide](/deployment/operations-guide)
 
 ---
 
@@ -74,7 +74,7 @@ ClawQL is available in configurations that run identical pipeline logic.
 
 The GPL-3.0 Paperless-ngx dependency is **removed from the hosted stack**. The ClawQL-native archive layer (Nextcloud + Postgres + Onyx) replaces it. Self-hosted operators who prefer Paperless-ngx can enable it via feature toggle. See [Licensing Summary](#licensing-summary).
 
-Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles), [IDP GTM](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md), and the [GTM playbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md).
+Plugin-bundle pricing detail (Developer/Teams/Starter/…): see [Hosted plan pricing](#hosted-plan-pricing-july-2026--plugin-bundles) and [IDP GTM](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md).
 
 ---
 
@@ -362,7 +362,7 @@ executor.sh is a **stateless tool router**. ClawQL is a **stateful agent operati
 | Enterprise              | from $3,500/mo | SLA, HITL, vertical adapters, multi-region                                                        |
 | Sovereign Security Pack | +$200/mo       | Kata, weight integrity, WORM Merkle, Panguard, YubiKey signing, Presidio pre-log, monthly posture |
 
-> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) for Starter/Business ladder variants and [clawql-gtm-playbook.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/gtm/clawql-gtm-playbook.md) for corrected bootstrap burn and shared-tenancy economics.
+> Indicative GTM numbers — validate against infrastructure cost modeling before launch. See also [clawql-idp-gtm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/vision/clawql-idp-gtm.md) for Starter/Business ladder variants.
 
 ### Full Stack Replacement Value
 
@@ -382,56 +382,6 @@ Representative: 25 users, 25k docs/mo, VDR + compliance.
 **Real estate / Keller Williams Command + Drive:** MCP + memory + Onyx at Teams price; Coneshare for disclosure packages; classify/extract for TC workflows.
 
 **Software / technology:** One gateway for GitHub/Linear/Jira/Sentry/Slack; vault for eng decisions; Onyx over Notion/Confluence; Panguard + audit for governed tool use. Competes with executor.sh Team while adding memory + security depth.
-
-### executor.sh vs ClawQL (depth)
-
-| Dimension            | executor.sh                                            | ClawQL                                                                                                                                                                                                                                                                                  |
-| -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Category             | Tool — routes MCP calls, injects secrets, meters usage | Foundational Platform — Agentic Gateway, memory, search, security, IDP, sovereign inference                                                                                                                                                                                             |
-| Developer adoption   | Head start on marketing and community mindshare        | Later entrant; deeper stack, open-source core, published case studies                                                                                                                                                                                                                   |
-| Token efficiency     | One layer: search-and-execute only                     | Twelve compounding layers on top of search/execute — search-first and vault-under-pressure **OpenBench-verified** ([ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md))                                                    |
-| Agent memory         | None — every session starts from zero                  | Obsidian vault (`memory_ingest` / `memory_recall`) — **live A/B WIN on frugal DeepSeek** (ingest→recall 1.0/0.0; seed-removal 1.0/0.333; token-pressure 1.0/0.0)                                                                                                                        |
-| Semantic search      | None                                                   | Onyx — 40+ connectors, citations; **OpenBench-verified** stubbed `knowledge_search_onyx` 1.0/0.0 ([30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189))                                                                                             |
-| Security             | Host-side secrets, basic audit log                     | Kata isolation, WORM Merkle logs, Panguard fail-closed (**policy-deny-execute** OpenBench 1.0/0.0 with tool evidence), documented defense-in-depth                                                                                                                                      |
-| Automation / sandbox | None                                                   | `notify` + `schedule` + Docker `sandbox_exec` — **OpenBench-verified** on frugal DeepSeek ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305); schedule [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)) |
-| Composed rollout     | Single-call routing                                    | Multi-tool safe rollout (search→dry_run execute→audit→ingest) **1.0/0.0** ([30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305))                                                                                                                    |
-| Document pipeline    | None                                                   | Tika → Gotenberg → Stirling → archive → Onyx                                                                                                                                                                                                                                            |
-| VDR                  | None                                                   | Coneshare included from IDP Starter                                                                                                                                                                                                                                                     |
-| Sovereign LLM        | None                                                   | Fine-tuned Qwen inside tenant boundary (IDP tiers) — vertical adapters early; maturity risk named openly                                                                                                                                                                                |
-| Execution pricing    | 250K cap + $0.20/1K overage on Team                    | Unlimited on every tier — no caps, no overage bills                                                                                                                                                                                                                                     |
-| Gateway pricing      | Team $150/org/mo — metered routing                     | Developer $29/mo · Teams $99/mo with memory + search · unlimited executions                                                                                                                                                                                                             |
-
-On infrastructure dimensions that matter — memory, security, token efficiency depth, document pipeline, sovereign inference — ClawQL delivers more at lower gateway pricing. executor.sh's advantage is awareness and adoption velocity, not platform depth. The memory row is no longer an architectural claim alone: the same cheap-model class executor.sh customers would use still wins vault A/B cells under seed removal and token pressure ([OpenBench ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md)).
-
-### Empirically verified platform claims (OpenBench A/B)
-
-Several properties previously stated only as architecture are now **live A/B-verified** on GitHub Actions with a frugal model (`openrouter/deepseek/deepseek-chat`), graders that require real `tool:clawql_*` evidence (not prompt guessing), and hard spend caps. Canonical scoreboard: [`docs/benchmarks/openbench-results-ledger.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md).
-
-| Platform claim                                                | What the cell proves                                                                                | Best on / off                                                          | Evidence run                                                                                                                                                                                                                                                                                 |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ouroboros stops strategy thrash**                           | On converges; off thrashs (latency/cost, not just “nice loop”)                                      | **1.0** (5 turns, ~78s) / **0.0** (~167s) — also with `doom_loop=deny` | [30863572642](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30863572642); deny [30866904277](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30866904277); replicated [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913519) |
-| **Vault memory under pressure**                               | ingest→recall; recall after seed removal; nested recipe under token budget                          | **1.0/0.0**, **1.0/0.333**, **1.0/0.0**                                | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516); token-pressure [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811)                                                                                            |
-| **Search-first discovery (efficiency Layer 1 behavior)**      | Agent must call `clawql_search`; instruction-only guesses fail the grader                           | **1.0 / 0.0**                                                          | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)                                                                                                                                                                                                     |
-| **Panguard fail-closed at runtime**                           | Denied execute surfaces policy block; on writes evidence trail                                      | **1.0 / 0.0**                                                          | [30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516)                                                                                                                                                                                                     |
-| **Cache scratch handoff**                                     | `clawql_cache` set/get assembles secret across turns                                                | **1.0 / 0.0**                                                          | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)                                                                                                                                                                                                     |
-| **PageIndex long-doc Q&A**                                    | build_tree + synthesize finds buried code without stuffing full text                                | **1.0 / 0.0**                                                          | [30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)                                                                                                                                                                                                     |
-| **Codegraph + schedule + external ingest + hybrid PageIndex** | Structural index, synthetic dry_run monitors, bulk MD ingest→recall, handbook via PageIndex         | **1.0 / 0.0** each                                                     | [30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377); ingest [30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038); hybrid [30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)   |
-| **Notify + sandbox + composed safe-rollout (P2)**             | Stubbed Slack `notify`; Docker `sandbox_exec` trusted token; search→dry_run×2→audit→ingest sequence | **1.0 / 0.0** each                                                     | [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305)                                                                                                                                                                                                     |
-| **Onyx knowledge + vault wikilink hop (P2.5)**                | Stubbed `knowledge_search_onyx` cite; `memory_recall` follows `[[wikilinks]]` to linked fact        | **1.0 / 0.0** each                                                     | [30893132189](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30893132189)                                                                                                                                                                                                     |
-
-**Still unproven / honest gaps** (do not overclaim): most headline cells are still **n=1–2** (expand to n=3–5 before statistical confidence language); live Onyx / live Slack / Argo / R2 sync remain ops-integration (not PR OpenBench); earlier OpenRouter **402 credit** hangs were infra, not claim regressions — see the [results ledger](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-results-ledger.md).
-
-### Shipped vs roadmap (honest scope)
-
-| Capability                                                | Status                                                                                                                                                                     |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ClawQL Core (search, execute, audit, cache)               | **Shipped** — open source, case studies                                                                                                                                    |
-| Vault memory, Onyx search, IDP pipeline                   | **Shipped** — self-host and early hosted tenants                                                                                                                           |
-| Ouroboros evolutionary loop library                       | **Shipped** — `clawql-ouroboros` package                                                                                                                                   |
-| DAOS swarm coordination (NSV, SGDOP, Diversity Dividends) | **Roadmap** — specified in [DAOS build plan](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/daos-build-plan-v2.7.1.md); not production-hardened |
-| Tenant-bound fine-tuned models (Qwen3.6 family)           | **Early** — deliberate bet; newer than incumbent cloud APIs; name maturity risk in regulated evaluations                                                                   |
-
-ClawQL's MCP-native architecture benefits from improvements in frontier model capabilities. Tenant-bound fine-tunes are a differentiation bet with explicit maturity risk — regulated buyers should weigh architecture against reference history.
 
 ### Where Competitors Have Genuine Advantages
 
@@ -537,29 +487,7 @@ Infrastructure timeouts (OpenCode hang, no tools) are noise, not claim failures.
 
 ### Reasoning Trace Protocol (RTP)
 
-OpenBenchTrace and RTP solve adjacent problems and compose rather than compete.
-
-| Layer              | Role                                                                                                                                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **OpenBenchTrace** | Collection / publish envelope — run_id, arm, task_id, grader verdict, spend caps, clawql_version, scrub provenance, Hugging Face–citable batch  |
-| **RTP**            | Domain-agnostic reasoning schema — Intent → Retrieval → Reasoning → Execution → Delta → Verdict, with consent provenance and turn hash chaining |
-
-Every passing OpenBench trial should also be a valid RTP session: OpenBenchTrace wraps RTP. Outer fields carry benchmark metadata RTP need not know about; inner agent behavior maps to RTP’s six-node sequence:
-
-| Agent step             | RTP node  | Notes                                                      |
-| ---------------------- | --------- | ---------------------------------------------------------- |
-| Task prompt            | Intent    | rawPrompt + parsedGoal                                     |
-| memory_recall / search | Retrieval | queries + sources                                          |
-| Pre-tool chain         | Reasoning | seedChain + selectedTool                                   |
-| Tool call              | Execution | toolName + payload                                         |
-| State change           | Delta     | stateBeforeHash / stateAfterHash                           |
-| OpenBench grader       | Verdict   | Tier 1 deterministic (e.g. policy-deny) or Tier 2 semantic |
-
-Practical design rule: serialize `messages` / `tool_calls` into an RTP-compatible `turnSequence`; map grader → RTP verdict; Merkle / content hashes ↔ RTP turn chaining. Publish as OpenBenchTrace (narrow, OpenBench-specific) and as RTP-compatible traces (broad, any fine-tune pipeline).
-
-**Consent:** RTP requires a consent token before the session. Writers mint (or accept) a gateway JWT with `community_model` + `dataset_licensing` scopes at collect time — set `CLAWQL_OPENBENCH_CONSENT_TOKEN` or `CLAWQL_RTP_CONSENT_SECRET`. See [openbench-trace-collection.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-trace-collection.md#rtp-alignment).
-
-NSV/SGDOP: same mathematics at two scales — RTP schema governance (coverage of reasoning concepts) and ClawQL ensemble coordination (coverage of embedding / J-space). Blind-spot vector → add a schema node or recruit a model.
+OpenBenchTrace (outer envelope) + RTP (inner reasoning structure) are complementary. NSV/SGDOP used for schema governance in RTP and runtime ensemble coordination in ClawQL — same math, two scales.
 
 ---
 
