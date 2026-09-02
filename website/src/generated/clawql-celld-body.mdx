@@ -218,7 +218,7 @@ celld deploy (esbuild)
   code ≤ 64 MiB
 ```
 
-**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`examples/streams-celld`](../../examples/streams-celld/).
+**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`examples/streams-celld`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/streams-celld).
 
 **Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /\{tool\}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 

@@ -43,9 +43,10 @@ interface MemoryRecallParams {
 }
 
 // Ontology schema identifiers
-type OntologySchema =
-  'legal.Matter' | 'legal.Client' | 'legal.Attorney' | 'legal.Document'
-// extensible — new domains add new schema identifiers
+type OntologySchema = string
+// Layer 1 legal: "legal.Matter" | "legal.Client" | "legal.Attorney" | "legal.Document"
+// Layer 2/3 dynamic: any scaffolded entity id (e.g. "invoice", "invoice__lineItems_record")
+// See meta-ontology-v0.1.md § memory_recall integration
 
 // Filter predicate types
 type FilterPredicate =
@@ -364,8 +365,10 @@ Supports two query modes:
 
 For institutional knowledge enumeration tasks (find all matters matching
 criteria), use structured predicate mode with schema: "legal.Matter" and
-numeric filters. This is more reliable than keyword search for exact field
-comparisons.`,
+numeric filters. For Layer 2/3 scaffolded entities (ExtractBench, ad-hoc JSON
+Schema), use the entity id as schema (e.g. "invoice") after syncing to
+ontology.db — see [meta-ontology-v0.1](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/ontology/meta-ontology-v0.1.md).
+This is more reliable than keyword search for exact field comparisons.`,
 
   inputSchema: {
     type: "object",
@@ -373,8 +376,9 @@ comparisons.`,
       query: { type: "string", description: "Natural language query (required for semantic; optional hint for structured)" },
       schema: {
         type: "string",
-        enum: ["legal.Matter", "legal.Client", "legal.Attorney", "legal.Document"],
-        description: "Ontology schema type. Required for structured predicate mode."
+        minLength: 1,
+        maxLength: 200,
+        description: "Ontology schema for structured predicate mode. legal.Matter (typed SQL) or any dynamic Layer 2/3 entity id (e.g. invoice). Required for structured mode."
       },
       filters: {
         type: "object",

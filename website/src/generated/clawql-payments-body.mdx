@@ -3,7 +3,7 @@
 **Hands-on walkthrough:** [Payments & entitlements (Learn)](https://docs.clawql.com/learn/payments-and-entitlements) — plan limits, Stripe/x402 paths, WORM audit, and inference checklist in one sequence.
 
 **Status:** Shipped foundation (July 2026)  
-**Package:** [`packages/clawql-payments`](../../packages/clawql-payments)  
+**Package:** [`packages/clawql-payments`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-payments)  
 **CLI:** `clawql payments *`
 
 `clawql-payments` is ClawQL's unified payments layer for **human fiat** and **agent micropayments**.
@@ -174,7 +174,7 @@ File modes are `0600`. Never commit secrets or webhook signing keys.
 
 ## Managed plan tiers
 
-Defined in [`packages/clawql-payments/src/plans/tiers.ts`](../../packages/clawql-payments/src/plans/tiers.ts):
+Defined in [`packages/clawql-payments/src/plans/tiers.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-payments/src/plans/tiers.ts):
 
 | Plan       | Inference calls/mo | Documents/mo | Memory (MB) | Seats     | x402 |
 | ---------- | ------------------ | ------------ | ----------- | --------- | ---- |
@@ -207,7 +207,7 @@ Over-limit tenants receive **402 `insufficient_quota`** (OpenAI-compatible error
 3. `payments.json` → `tenantId`
 4. `"default"`
 
-Implementation: [`packages/clawql-inference/src/entitlements/`](../../packages/clawql-inference/src/entitlements/).
+Implementation: [`packages/clawql-inference/src/entitlements/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/clawql-inference/src/entitlements).
 
 ---
 
@@ -283,7 +283,7 @@ clawql payments stripe webhook verify \
 
 Verified `invoice.paid` events append `STRIPE_INVOICE_PAID` to the payment WORM. Invoice creation alone does **not** write audit entries.
 
-Supported handlers: [`packages/clawql-payments/src/stripe/webhook.ts`](../../packages/clawql-payments/src/stripe/webhook.ts).
+Supported handlers: [`packages/clawql-payments/src/stripe/webhook.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-payments/src/stripe/webhook.ts).
 
 ---
 
@@ -539,7 +539,7 @@ import {
 } from 'clawql-payments/x402'
 ```
 
-Middleware mounts **before** auth in [`packages/clawql-inference/src/api/server.ts`](../../packages/clawql-inference/src/api/server.ts).
+Middleware mounts **before** auth in [`packages/clawql-inference/src/api/server.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-inference/src/api/server.ts).
 
 ---
 

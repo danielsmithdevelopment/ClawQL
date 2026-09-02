@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -21,8 +21,6 @@ const srcRelative = path.join(
   'daos-unified-architecture-specification-v2.7.md',
 )
 
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
-
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
@@ -32,61 +30,6 @@ function findRepoRootWithDocs() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteDaosLinks(body) {
-  return body
-    .replaceAll(
-      '](./daos-unified-architecture-specification-v2.7.md)',
-      '](/ouroboros/daos)',
-    )
-    .replaceAll(
-      '](./daos-coordination-layer-specification.md)',
-      '](/ouroboros/specification)',
-    )
-    .replaceAll('](./daos-build-plan-v2.7.1.md)', '](/ouroboros/build-plan)')
-    .replaceAll('](./clawql-ouroboros.md)', '](/ouroboros)')
-    .replaceAll(
-      '](../vision/clawql-master-enablement-guide.md)',
-      '](/architecture)',
-    )
-    .replaceAll('](../deployment/helm.md)', '](/helm')
-    .replaceAll(
-      '](../design/modularization-implementation-status.md)',
-      `](${GH_MAIN}/docs/design/modularization-implementation-status.md)`,
-    )
-    .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-    .replaceAll('](../docs/', `](${GH_MAIN}/docs/`)
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(rewriteDaosLinks(body)),
-  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -110,10 +53,16 @@ if (!src || !fs.existsSync(src)) {
 
 fs.writeFileSync(
   dst,
-  appendPassthroughWrapper(rewriteLinksForSite(fs.readFileSync(src, 'utf8'))),
+  prepareMdxBody(fs.readFileSync(src, 'utf8'), srcRelative.replace(/\\/g, '/')),
   'utf8',
 )
-execSync(
-  'npx prettier --write src/generated/daos-unified-architecture-spec-body.mdx',
-  { cwd: websiteRoot, stdio: 'inherit' },
-)
+try {
+  execSync(
+    'npx prettier --write src/generated/daos-unified-architecture-spec-body.mdx',
+    { cwd: websiteRoot, stdio: 'inherit' },
+  )
+} catch {
+  console.warn(
+    'sync-daos-unified-architecture-spec-doc: prettier unavailable; wrote unformatted MDX',
+  )
+}

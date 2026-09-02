@@ -2,28 +2,28 @@
 
 The npm package ships **`providers/`**—optional on-disk API descriptions so cold start avoids downloading multi‑MB specs. Most **native GraphQL / gRPC** upstreams are configured only via **`CLAWQL_GRAPHQL_SOURCES`** / **`CLAWQL_GRPC_SOURCES`** ([Spec configuration](/spec-configuration)). **Exception:** **Linear** is a **bundled GraphQL-only** vendor (`providers/linear/schema.graphql`).
 
-**Default install** (no spec env): **Cloudflare, GitHub, Slack, Linear, Notion, Onyx** — see [Bundled providers plugin](/plugins/bundled-providers). **`CLAWQL_PROVIDER=all-providers`** loads literally every bundled vendor plus Google top-50 and AWS top-50. Custom subsets: **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_SPEC_PATHS`**, or merged presets (`google`, `atlassian`, `default`, …). {{ className: 'lead' }}
+**8.0.0 — empty by default.** Fresh install with no provider selection loads **no** OpenAPI catalog. Opt in with **`CLAWQL_PROVIDER=default`** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx) — see [Bundled providers plugin](/plugins/bundled-providers) and [Migrate to 8.0](/getting-started/migrate-to-8.0). **`CLAWQL_PROVIDER=all-providers`** loads literally every bundled vendor plus Google top-50 and AWS top-50. Custom subsets: **`CLAWQL_BUNDLED_PROVIDERS`**, **`CLAWQL_SPEC_PATHS`**, or merged presets (`google`, `atlassian`, `default`, …). Helm chart default is **`providers.pack: none`**. {{ className: 'lead' }}
 
 **Learn walkthrough** (Nextcloud → anydoc/pdf-inspector → Docling → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare): [Document pipeline](/learn/document-pipeline) · [IDP pipeline hub (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/idp-pipeline.md).
 
 ## Canonical REST-forward matrix (document stack + SaaS defaults)
 
-Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflows. The table includes the **eight-vendor IDP stack** (plus in-process **anydoc** via MCP `convert_document` and **pdf-inspector** via `inspect_pdf`) and common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
+Use this as the **opt-in pack** reference for **REST / OpenAPI–heavy** workflows. The table includes the **eight-vendor IDP stack** (plus in-process **anydoc** via MCP `convert_document` and **pdf-inspector** via `inspect_pdf`) and common SaaS presets; **`google`** is a merged Discovery preset, not a single file.
 
 | Provider id (`CLAWQL_PROVIDER` / `CLAWQL_BUNDLED_PROVIDERS`) | Primary auth env(s)                                  | Typical use in workflows                                                                                      |
 | ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `cloudflare`                                                 | `CLAWQL_CLOUDFLARE_API_TOKEN`                        | Edge and DNS operations, Workers deploy/debug paths, docs-site operations                                     |
 | `github`                                                     | `CLAWQL_GITHUB_TOKEN`                                | Issues/PR/repo automation and release workflow actions                                                        |
-| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications; **default install**; powers optional `notify`                                             |
-| `notion`                                                     | `NOTION_API_TOKEN` (+ `Notion-Version`)              | Notion workspace automation; **default install**                                                              |
+| `slack`                                                      | `CLAWQL_SLACK_TOKEN` / `SLACK_BOT_TOKEN`             | Team notifications; in pack **`default`**; powers optional `notify`                                           |
+| `notion`                                                     | `NOTION_API_TOKEN` (+ `Notion-Version`)              | Notion workspace automation; in pack **`default`**                                                            |
 | `paperless`                                                  | `PAPERLESS_API_TOKEN` (+ `PAPERLESS_BASE_URL`)       | Document archive lookup and ingestion workflows                                                               |
 | `stirling`                                                   | `STIRLING_API_KEY` (+ `STIRLING_BASE_URL`)           | PDF conversion/splitting/merge operations                                                                     |
 | `tika`                                                       | `CLAWQL_BEARER_TOKEN` (+ `TIKA_BASE_URL`)            | Text/metadata extraction from many file types                                                                 |
 | `gotenberg`                                                  | `CLAWQL_BEARER_TOKEN` (+ `GOTENBERG_BASE_URL`)       | HTML/office/markdown to PDF conversion                                                                        |
-| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise search; **default install** spec; MCP `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`          |
+| `onyx`                                                       | `ONYX_API_TOKEN` (+ `ONYX_BASE_URL`)                 | Enterprise search; in pack **`default`**; MCP `knowledge_search_onyx` when `CLAWQL_ENABLE_ONYX=1`              |
 | `nextcloud`                                                  | `NEXTCLOUD_USERNAME`, `NEXTCLOUD_APP_PASSWORD`       | WebDAV intake/outbox, OCS shares for IDP                                                                      |
 | `coneshare`                                                  | `CONESHARE_API_TOKEN` (+ `CONESHARE_BASE_URL`)       | Secure share links, VDR; webhook `POST /idp/coneshare/webhook` when `CLAWQL_ENABLE_CONESHARE=1`               |
-| `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); part of default cross-provider search and execute flows |
+| `google`                                                     | `CLAWQL_GOOGLE_ACCESS_TOKEN` / `GOOGLE_ACCESS_TOKEN` | Bundled Google Cloud Discovery merge (multiple APIs); opt-in via pack / `CLAWQL_BUNDLED_PROVIDERS`            |
 
 ## Bundled GraphQL-only: `linear`
 
@@ -35,7 +35,8 @@ Use this as the default-bundle reference for **REST / OpenAPI–heavy** workflow
 
 | Selection                                      | Notes                                                                        |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| **`default`** / **`default-providers`**        | **No-config install** — Cloudflare, GitHub, Slack, Linear, Notion, Onyx      |
+| _(none)_                                       | **8.0.0 no-config default** — empty OpenAPI catalog                          |
+| **`default`** / **`default-providers`**        | Opt-in curated stack — Cloudflare, GitHub, Slack, Linear, Notion, Onyx       |
 | **`CLAWQL_BUNDLED_PROVIDERS=`** _a,b,…_        | Explicit custom merge by id (including optional `google` / `aws`)            |
 | `all-providers`                                | Literally every bundled vendor + Google top-50 + AWS top-50                  |
 | `atlassian`                                    | Merged Jira + Bitbucket                                                      |
@@ -53,4 +54,4 @@ Maintainers refresh specs with **`npm run fetch-provider-specs`** (see [`provide
 
 ## Default first run
 
-With **no** spec-related environment variables, ClawQL loads the **opinionated default stack** (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** for the full framework bundle.
+With **no** spec-related environment variables, ClawQL loads an **empty catalog** (core tools still register). Restore the curated six with **`CLAWQL_PROVIDER=default`**, or use **`CLAWQL_PROVIDER=all-providers`** for the full framework bundle. Migration: [Migrate to 8.0](/getting-started/migrate-to-8.0).

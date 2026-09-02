@@ -90,6 +90,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/verticals',
+        destination: '/plugins#verticals',
+        permanent: true,
+      },
+      {
         source: '/vision/master-enablement',
         destination: '/architecture',
         permanent: true,

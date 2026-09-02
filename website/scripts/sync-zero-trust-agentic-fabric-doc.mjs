@@ -10,15 +10,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
 const dstDir = path.join(websiteRoot, 'src/generated')
 const dst = path.join(dstDir, 'zero-trust-agentic-fabric-body.mdx')
 const srcRelative = path.join('docs', 'architecture', 'zero-trust-agentic-fabric.md')
-
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocs() {
   let dir = websiteRoot
@@ -29,48 +27,6 @@ function findRepoRootWithDocs() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll(
-          '](../vision/clawql-vision-roadmap.md)',
-          '](/vision/roadmap)',
-        )
-        .replaceAll(
-          '](../inference/clawql-inference.md)',
-          '](/inference/clawql-inference)',
-        )
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../docs/', `](${GH_MAIN}/docs/`),
-    ),
-  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -94,7 +50,7 @@ if (!src || !fs.existsSync(src)) {
 
 fs.writeFileSync(
   dst,
-  appendPassthroughWrapper(rewriteLinksForSite(fs.readFileSync(src, 'utf8'))),
+  prepareMdxBody(fs.readFileSync(src, 'utf8'), srcRelative.replace(/\\/g, '/')),
   'utf8',
 )
 try {

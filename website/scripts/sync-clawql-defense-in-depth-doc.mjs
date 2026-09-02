@@ -13,7 +13,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -24,8 +24,6 @@ const srcRelative = path.join(
   'security',
   'clawql-defense-in-depth-security-guide.md',
 )
-
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithDocsSecurity() {
   let dir = websiteRoot
@@ -41,50 +39,6 @@ function findRepoRootWithDocsSecurity() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll(
-          '](security-best-practices-series/)',
-          '](/security/best-practices)',
-        )
-        .replaceAll(
-          '](mcp-proxy-jwt-atr.md)',
-          `](${GH_MAIN}/docs/security/mcp-proxy-jwt-atr.md)`,
-        )
-        .replaceAll('](../../charts/', `](${GH_MAIN}/charts/`)
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../../docker/', `](${GH_MAIN}/docker/`)
-        .replaceAll('](../../AGENTS.md)', `](${GH_MAIN}/AGENTS.md)`),
-    ),
-  )
 }
 
 fs.mkdirSync(dstDir, { recursive: true })
@@ -108,11 +62,17 @@ if (!src || !fs.existsSync(src)) {
 
 fs.writeFileSync(
   dst,
-  appendPassthroughWrapper(rewriteLinksForSite(fs.readFileSync(src, 'utf8'))),
+  prepareMdxBody(fs.readFileSync(src, 'utf8'), srcRelative.replace(/\\/g, '/')),
   'utf8',
 )
 
-execSync('npx prettier --write src/generated/clawql-defense-in-depth-body.mdx', {
-  cwd: websiteRoot,
-  stdio: 'inherit',
-})
+try {
+  execSync('npx prettier --write src/generated/clawql-defense-in-depth-body.mdx', {
+    cwd: websiteRoot,
+    stdio: 'inherit',
+  })
+} catch {
+  console.warn(
+    'sync-clawql-defense-in-depth-doc: prettier unavailable; wrote unformatted MDX',
+  )
+}

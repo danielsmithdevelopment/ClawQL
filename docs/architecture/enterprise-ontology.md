@@ -78,7 +78,7 @@ Three properties distinguish the Enterprise Ontology from ordinary OOP:
 
 Typed objects agents operate on. Each entity declares properties, PII fields (Presidio), sources (Onyx indexing), and mutability / kinetic level for fields.
 
-Provisional shape (YAML or OKF frontmatter + body). Full example: [`examples/ontology/`](https://docs.clawql.com/examples/ontology/).
+Provisional shape (YAML or OKF frontmatter + body). Full example: [`examples/ontology/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/ontology/).
 
 ```yaml
 # .clawql/ontology/entities/Contract.cqe  (Git — schema)
@@ -119,7 +119,7 @@ spec:
       via: contract_parties
 ```
 
-JSON Schema for validation: [`schemas/ontology/entity.schema.json`](https://docs.clawql.com/schemas/ontology/entity.schema.json).
+JSON Schema for validation: [`schemas/ontology/entity.schema.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/schemas/ontology/entity.schema.json).
 
 ### Layer 2 — Relationship Graph
 
@@ -308,7 +308,7 @@ npm run ontology:generate
 CLAWQL_ENABLE_ONTOLOGY=1
 ```
 
-CLI reference: [`docs/ontology/cli.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md). Examples: [`examples/ontology/`](https://docs.clawql.com/examples/ontology/). SQL `sources:` are declarations / stubs in v1 — not a live query path.
+CLI reference: [`docs/ontology/cli.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/cli.md). Examples: [`examples/ontology/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/examples/ontology). SQL `sources:` are declarations / stubs in v1 — not a live query path.
 
 ---
 
@@ -352,9 +352,9 @@ Do not publish the property-type / relationship / source DSL as a frozen standar
 - [OKF decision rationale template](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md)
 - [Command Deck ontology builder UX](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/architecture/command-deck-ontology-builder-ux.md)
 - [Essay gap closure backlog](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ontology/essay-gap-closure.md)
-- Example entity: [`examples/ontology/entities/Contract.cqe`](https://docs.clawql.com/examples/ontology/entities/Contract.cqe)
+- Example entity: [`examples/ontology/entities/Contract.cqe`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/ontology/entities/Contract.cqe)
 - Example decision note: [`examples/ontology/okf/decision-rationale-template.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/ontology/okf/decision-rationale-template.md)
-- JSON Schema: [`schemas/ontology/entity.schema.json`](https://docs.clawql.com/schemas/ontology/entity.schema.json)
+- JSON Schema: [`schemas/ontology/entity.schema.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/schemas/ontology/entity.schema.json)
 - Ouroboros Seed ontology (task loop — different artifact): [ADR 0001](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0001-ouroboros-workflow-engine.md)
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

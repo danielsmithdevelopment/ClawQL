@@ -62,6 +62,22 @@
 
 ---
 
+## Docs site link audit (companion)
+
+**Root cause of many same-origin 404s:** pages render from `public/agent-markdown.json` (`AgentMarkdownDocBody`), but `prebuild` ran `generate-agent-markdown.mjs` **before** `sync-*-doc.mjs` rewrote relative `packages/` / `examples/` / `*.md` links. Live HTML kept repo-relative hrefs that 404 on docs.clawql.com.
+
+**Fixes applied:**
+
+1. Move `generate-agent-markdown.mjs` to **after** all sync scripts in `website/package.json` `prebuild` / `dev`.
+2. Extend `rewriteDocLinks` for repo trees + absolute `/packages|examples|…` paths; add ouroboros / defense site routes.
+3. Migrate defense-in-depth, agentic-fabric, and DAOS sync scripts to `prepareMdxBody` (custom rewriters missed many links; DAOS had a broken `](/helm` replace).
+4. Redirect `/verticals` → `/plugins#verticals`.
+5. Crawl tool: `website/scripts/docs-site-link-crawl.mjs`.
+
+**Verification (local `next start`):** sitemap + recursive crawl → **brokenCount: 0** (173 pages). Playwright smoke: 49 passed. Previously broken pages (mcp-api-adapter, payments, streams-celld, cqe, legal-domain, agentic-fabric, ouroboros, defense-in-depth, inference) all resolve GitHub or site routes — no `/packages/` or bare `*.md` same-origin hrefs.
+
+---
+
 ## Release notes refresh (companion)
 
 - `CHANGELOG.md` / `RELEASE_NOTES_v8.0.0.md` / announcement drafts / `v8.0.0-checklist.md` inventory through **#1047** (~1217 commits / ~197 merge PRs) + Streams celld Lab 5b bullets.
