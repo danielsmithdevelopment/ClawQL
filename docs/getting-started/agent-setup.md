@@ -4,12 +4,13 @@ Vault-first onboarding, Cursor iOS Cloud Agents, and the local agent sandbox (ma
 
 ## Pick your path
 
-| You are…                             | Jump to                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                                               |
-| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                         |
-| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                  |
-| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync) |
+| You are…                             | Jump to                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                                                                    |
+| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                                              |
+| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                                       |
+| Private mesh / ephemeral transport   | [Networking](#networking-optional) · [clawql-network spec](https://docs.clawql.com/specs/network/clawql-network) |
+| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync)                      |
 
 ---
 
@@ -36,6 +37,18 @@ Provider tokens live in **`~/.ClawQL/vault/providers.json`** (same KV shape as H
 Default install loads the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). Use **`CLAWQL_PROVIDER=all-providers`** only for every bundled vendor plus Google top-50 and AWS top-50.
 
 Restart Cursor or Claude Desktop after MCP config is written.
+
+### Networking (optional)
+
+For Headscale mesh + governed Tailcat ephemeral links (ATR-gated audit on tailcat connects), run:
+
+```bash
+npx -p clawql-mcp clawql init --networking
+# or: clawql network init
+clawql network verify
+```
+
+See [clawql-network](https://docs.clawql.com/specs/network/clawql-network) and the [Tailscale / Headscale guide](https://docs.clawql.com/tailscale).
 
 ### Copy-paste prompt (desktop)
 

@@ -1,0 +1,30 @@
+# Data
+
+**Plugin ID:** `clawql-data`  
+**Package:** `packages/clawql-data` — `DataPlugin`
+
+Structured SQL via **pluggable data engine plugins** (`CLAWQL_DATA_ENGINE`, default `duckdb`).
+
+**Effect-TS interior:** driver / inventory IO → `DataEnginePlugin` (`Effect.gen`) → `DataEngineService` Layer → `data_*Program` / `runDataEffect`. Promise facades remain only at MCP handlers and `ClawqlDataStore` (lab CLIs).
+
+## MCP tools
+
+| Tool              | Purpose                                                                      |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **`data_query`**  | Read-only SQL (`SELECT` / `WITH` / `DESCRIBE` / `SHOW` / `SUMMARIZE`)        |
+| **`data_ingest`** | Load `matters` / `matter_documents` / `open_facts`; optional filesystem walk |
+| **`data_status`** | Engine + database path                                                       |
+
+## Enable
+
+| Env                        | Default                                  | Effect                                             |
+| -------------------------- | ---------------------------------------- | -------------------------------------------------- |
+| **`CLAWQL_ENABLE_DATA=1`** | off                                      | Register `DataPlugin` and the `data_*` tools       |
+| **`CLAWQL_DATA_PATH`**     | vault `lab/matters.duckdb` or `:memory:` | Backend database path (engine-specific)            |
+| **`CLAWQL_DATA_ENGINE`**   | `duckdb`                                 | Registered engine plugin id (`registerDataEngine`) |
+
+Helm: `enableData: true`.
+
+export function wrapper({ children }) {
+  return children
+}

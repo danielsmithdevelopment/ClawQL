@@ -88,6 +88,11 @@ export const docsNavigation: Array<NavGroup> = [
         title: 'Immutable releases',
         href: '/getting-started/immutable-releases',
       },
+      {
+        title: 'Migrate to 8.0',
+        href: '/getting-started/migrate-to-8.0',
+        tag: 'Breaking',
+      },
     ],
   },
   {
@@ -164,16 +169,21 @@ export const docsNavigation: Array<NavGroup> = [
       {
         title: 'memory_recall structured filters',
         href: '/specs/memory/memory-recall-structured-filter',
-        tag: 'Draft',
+        tag: 'v0.1',
       },
       {
         title: 'Legal domain ontology',
         href: '/specs/ontology/legal-domain',
-        tag: 'Draft',
+        tag: 'v0.1',
       },
       {
         title: 'clawql-network',
         href: '/specs/network/clawql-network',
+        tag: 'v0.1',
+      },
+      {
+        title: 'clawql-agents',
+        href: '/agents/clawql-agents',
         tag: 'v0.1',
       },
       { title: '.cq* extensions', href: '/specs/cq-extensions' },
@@ -243,11 +253,7 @@ export const docsNavigation: Array<NavGroup> = [
       { title: 'Audit Trail', href: '/audit' },
       { title: 'Observability', href: '/observability' },
       { title: 'mcp-api-adapter', href: '/mcp/mcp-api-adapter' },
-      {
-        title: '/mcp-ui',
-        href: '/mcp/mcp-ui',
-        tag: 'Shipped',
-      },
+      { title: '/mcp-ui', href: '/mcp/mcp-ui' },
       { title: 'Protocol Fabric', href: '/mcp/protocol-fabric' },
       { title: 'Configuration', href: '/spec-configuration' },
       {

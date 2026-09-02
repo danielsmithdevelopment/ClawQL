@@ -34,6 +34,7 @@ export const DOC_SITE_ROUTES = {
   'docs/getting-started/agent-setup-prompt.md': '/agent-setup',
   'docs/getting-started/inference.md': '/getting-started/inference',
   'docs/getting-started/custom-sources.md': '/getting-started/custom-sources',
+  'docs/getting-started/migrate-to-8.0.md': '/getting-started/migrate-to-8.0',
   'docs/deployment/clawql-deployment-operations-guide.md':
     '/deployment/operations-guide',
   'docs/deployment/helm.md': '/helm',
@@ -99,6 +100,7 @@ export const DOC_SITE_ROUTES = {
     '/specs/memory/memory-recall-structured-filter',
   'docs/specs/ontology/legal-domain-v0.1.md': '/specs/ontology/legal-domain',
   'docs/specs/network/clawql-network-v0.1.md': '/specs/network/clawql-network',
+  'docs/agents/clawql-agents-spec-v0.1.md': '/agents/clawql-agents',
   'docs/architecture/zero-trust-agentic-fabric.md':
     '/architecture/agentic-fabric',
   'docs/security/clawql-security-defense-in-depth.md':

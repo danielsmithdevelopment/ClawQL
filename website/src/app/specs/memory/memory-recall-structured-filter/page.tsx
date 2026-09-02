@@ -27,7 +27,7 @@ export default function MemoryRecallStructuredFilterPage() {
           Ontology
         </Tag>
         <Tag color="amber" variant="medium">
-          Draft
+          v0.1 spec
         </Tag>
       </div>
 

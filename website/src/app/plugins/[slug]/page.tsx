@@ -21,7 +21,7 @@ const STATUS_TAG: Record<
   'opt-in': { label: 'Opt in', color: 'amber' },
   planned: { label: 'Planned', color: 'zinc' },
   roadmap: { label: 'Roadmap', color: 'zinc' },
-  shipped: { label: 'Shipped', color: 'sky' },
+  shipped: { label: 'Available', color: 'sky' },
 }
 
 export function generateStaticParams() {

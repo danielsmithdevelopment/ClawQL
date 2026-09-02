@@ -4,6 +4,24 @@
 
 ClawQL exposes **`search`**, **`execute`**, **`ingest_external_knowledge`**, in-process **`audit`** and **`cache`**, and vault **`memory_ingest`** / **`memory_recall`** by default. **`sandbox_exec`** appears when **`CLAWQL_ENABLE_SANDBOX=1`**. Set **`CLAWQL_ENABLE_MEMORY=0`** and/or **`CLAWQL_ENABLE_DOCUMENTS=0`** to hide memory tools or the document stack. Other tools appear when optional features are enabled (see table). The **data plane** for upstream APIs is **`search`** then **`execute`** (OpenAPI/Discovery plus optional **native GraphQL** / **gRPC** when configured). [Canonical reference with examples](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md). {{ className: 'lead' }}
 
+<div className="not-prose my-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+  <strong>Two different “audit” surfaces.</strong>{' '}
+  <code className="text-xs">audit</code> here is the{' '}
+  <strong>in-process MCP tool</strong> (RAM ring buffer, always on).{' '}
+  <a href="/audit" className="font-medium underline underline-offset-2">
+    clawql-audit
+  </a>{' '}
+  is the <strong>durable WORM trail</strong> package (disk, Merkle chain,
+  replication).{' '}
+  <a
+    href="/learn/audit-tool-and-observability"
+    className="font-medium underline underline-offset-2"
+  >
+    Learn: audit tool
+  </a>{' '}
+  covers Prometheus/Loki for the MCP tool only.
+</div>
+
 **`audit`** and **`cache`** are **ClawQL Core** (no opt-out). Vault memory is default-on (opt out with env). See [enterprise-mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/enterprise-mcp-tools.md), [Session cache](/cache), [cache-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/cache-tool.md). Optional **`schedule`** is available when **`CLAWQL_ENABLE_SCHEDULE`** is set — persisted jobs with typed actions; v1 action kind is synthetic HTTP checks ([#76](https://github.com/danielsmithdevelopment/ClawQL/issues/76)) — [Schedule synthetic checks](/schedule) (detailed example), [schedule-synthetic-checks.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/schedule-synthetic-checks.md), [mcp-tools.md § schedule](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#schedule-optional). Optional **`notify`** is available when **`CLAWQL_ENABLE_NOTIFY`** is set — Slack **`chat.postMessage`** when the Slack spec is loaded ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)) — [Slack notify](/notify) (quick examples), [notify-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/notify-tool.md) (full guide), [mcp-tools.md § notify](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#notify-optional). Optional **`hitl_enqueue_label_studio`** is available when **`CLAWQL_ENABLE_HITL_LABEL_STUDIO`** is set — Label Studio task import plus **`POST /hitl/label-studio/webhook`** ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)) — [HITL — Label Studio](/hitl-label-studio) (overview), [hitl-label-studio.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/hitl-label-studio.md) (full guide), [mcp-tools.md § hitl_enqueue_label_studio](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#hitl_enqueue_label_studio-optional). Optional **`knowledge_search_onyx`** is available when **`CLAWQL_ENABLE_ONYX`** is set and **documents** are enabled — Onyx semantic document search when the **`onyx`** bundled provider is in the merge ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)) — [Onyx knowledge search](/onyx-knowledge) (quick examples), [onyx-knowledge-tool.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/onyx-knowledge-tool.md) (full guide), [mcp-tools.md § knowledge_search_onyx](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#knowledge_search_onyx-optional).
 
 ## `search`
