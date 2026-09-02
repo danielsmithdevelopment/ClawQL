@@ -446,6 +446,15 @@ app.kubernetes.io/component: streams-celld
 {{- end -}}
 {{- end }}
 
+{{/* Optional mcp-api-adapter REST origin for celld Workers (CLAWQL_MCP_ADAPTER_URL). */}}
+{{- define "clawql-mcp.celldAdapterUrl" -}}
+{{- if .Values.streams.celld.adapterUrl -}}
+{{- .Values.streams.celld.adapterUrl -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end }}
+
 {{/* Optional Managed Edge Gateway nginx (one hostname for /mcp + /v1). */}}
 {{- define "clawql-mcp.managedGatewayName" -}}
 {{- printf "%s-managed-gateway" (include "clawql-mcp.fullname" .) | trunc 63 | trimSuffix "-" }}

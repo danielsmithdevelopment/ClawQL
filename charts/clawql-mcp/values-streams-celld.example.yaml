@@ -34,8 +34,8 @@ inference:
 
 enableMemory: true
 
-# Cells call inference over HTTP and search/execute/memory_* via Streamable HTTP MCP
-# (CLAWQL_MCP_URL → in-cluster clawql-mcp /mcp, MCP 2026-07-28 preferred).
+# Cells call inference over HTTP, search/execute/memory_* via Streamable HTTP MCP,
+# and optional mcp-api-adapter REST via streams.celld.adapterUrl → CLAWQL_MCP_ADAPTER_URL.
 # Prefer CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1 on MCP for simpler Worker parsing.
 # Host needs CLAWQL_OBSIDIAN_VAULT_PATH (writable) for real memory_ingest/recall.
 nats:

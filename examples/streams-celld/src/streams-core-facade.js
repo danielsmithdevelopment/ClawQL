@@ -6,18 +6,20 @@
  * - cache get / set / delete / list (session scratch)
  *
  * Out-of-process via fetch(CLAWQL_MCP_URL) Streamable HTTP:
- * - search / execute → clawql-mcp (clawql-api on the host)
- * - memory_ingest / memory_recall → clawql-mcp (clawql-memory + vault on host)
+ * - search / execute / memory_* → clawql-mcp
+ *
+ * Out-of-process via fetch(CLAWQL_MCP_ADAPTER_URL) REST:
+ * - POST /{tool} → mcp-api-adapter (protocol fan-out host; not embedded)
  *
  * Still deferred:
  * - inference completions → fetch(INFERENCE_URL)
- * - mcp-api-adapter protocol surfaces → Node Express/gRPC host
  */
 
 import {
   runAuditOperation,
   runCacheOperation,
 } from "clawql-core/streams-slim";
+import { callAdapterTool } from "./adapter-fetch.js";
 import { callMcpTool } from "./mcp-fetch.js";
 
 /**
@@ -105,6 +107,20 @@ export async function memoryRecallViaMcp(mcp, query, opts = {}) {
     { url: mcp.url ?? "", bearer: mcp.bearer },
     "memory_recall",
     { query, limit: opts.limit ?? 5 }
+  );
+}
+
+/**
+ * Protocol-fabric REST probe via mcp-api-adapter (POST /{tool}).
+ * @param {{ url?: string, bearer?: string }} adapter
+ * @param {string} name
+ * @param {Record<string, unknown>} [args]
+ */
+export async function toolViaAdapter(adapter, name, args = {}) {
+  return callAdapterTool(
+    { url: adapter.url ?? "", bearer: adapter.bearer },
+    name,
+    args
   );
 }
 

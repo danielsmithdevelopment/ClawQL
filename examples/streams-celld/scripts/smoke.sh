@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Smoke test for examples/streams-celld (Lab 5b + clawql-core + MCP fetch).
+# Smoke test for examples/streams-celld (Lab 5b + MCP + adapter fetch).
 # Requires celld v0.4.0 + esbuild on PATH; workspace clawql-core built.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT="${CELLD_DEV_PORT:-9880}"
 MCP_PORT="${MOCK_MCP_PORT:-9891}"
+ADAPTER_PORT="${MOCK_ADAPTER_PORT:-9892}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.smoke.jsonc"
 
@@ -16,21 +17,25 @@ fi
 
 node "$ROOT/scripts/bundle-check.mjs"
 node "$ROOT/scripts/mcp-fetch.test.mjs"
+node "$ROOT/scripts/adapter-fetch.test.mjs"
 
-# Mock MCP for search/execute/memory_* (stateless JSON tools/call).
+# Mock MCP + mcp-api-adapter REST.
 node "$ROOT/scripts/mock-mcp-server.mjs" "$MCP_PORT" &
 MCP_PID=$!
+node "$ROOT/scripts/mock-adapter-server.mjs" "$ADAPTER_PORT" &
+ADAPTER_PID=$!
 
-# Point Worker vars at mock MCP (celld accepts a Wrangler config path).
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" <<'PY'
+# Point Worker vars at mocks (celld accepts a Wrangler config path).
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" <<'PY'
 import json, re, sys
-src, dst, port = sys.argv[1], sys.argv[2], sys.argv[3]
+src, dst, mcp_port, adapter_port = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
 cfg = json.loads(text)
 cfg.setdefault("vars", {})
-cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{port}/mcp"
+cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
+cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
 cfg["vars"]["INFERENCE_URL"] = cfg["vars"].get("INFERENCE_URL") or "http://127.0.0.1:8080"
 open(dst, "w", encoding="utf-8").write(json.dumps(cfg, indent=2) + "\n")
 PY
@@ -41,8 +46,10 @@ PID=$!
 cleanup() {
   kill "$PID" 2>/dev/null || true
   kill "$MCP_PID" 2>/dev/null || true
+  kill "$ADAPTER_PID" 2>/dev/null || true
   wait "$PID" 2>/dev/null || true
   wait "$MCP_PID" 2>/dev/null || true
+  wait "$ADAPTER_PID" 2>/dev/null || true
   rm -f "$SMOKE_CFG"
 }
 trap cleanup EXIT
@@ -76,5 +83,8 @@ echo "$RESP" | grep -q '"mcpUrlConfigured":true' || fail "expected mcpUrlConfigu
 echo "$RESP" | grep -q 'memory_ingest' || fail "expected memory_ingest tool result"
 echo "$RESP" | grep -q 'memory_recall' || fail "expected memory_recall tool result"
 echo "$RESP" | grep -q 'memory_\*' || fail "expected memory_* in core surface list"
+echo "$RESP" | grep -q 'mcp-api-adapter-rest' || fail "expected adapter REST transport"
+echo "$RESP" | grep -q '"source":"mock-adapter"' || fail "expected mock-adapter search payload"
+echo "$RESP" | grep -q '"adapterUrlConfigured":true' || fail "expected adapterUrlConfigured true"
 
 echo "smoke: PASS"

@@ -6,9 +6,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "INFERENCE_URL": "http://127.0.0.1:8080",
-    // Out-of-process search/execute via Streamable HTTP (MCP 2026-07-28).
-    // Empty / omit → tools return deferred until CLAWQL_MCP_URL is set.
-    "CLAWQL_MCP_URL": ""
+    // Out-of-process search/execute/memory via Streamable HTTP (MCP 2026-07-28).
+    "CLAWQL_MCP_URL": "",
+    // Optional mcp-api-adapter REST origin (POST /{tool}); empty → deferred.
+    "CLAWQL_MCP_ADAPTER_URL": ""
   },
   "durable_objects": {
     "bindings": [

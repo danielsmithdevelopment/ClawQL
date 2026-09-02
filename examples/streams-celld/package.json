@@ -7,6 +7,7 @@
   "scripts": {
     "bundle-check": "node scripts/bundle-check.mjs",
     "test:mcp-fetch": "node scripts/mcp-fetch.test.mjs",
+    "test:adapter-fetch": "node scripts/adapter-fetch.test.mjs",
     "dev": "celld dev --port 9876",
     "smoke": "bash scripts/smoke.sh"
   },
