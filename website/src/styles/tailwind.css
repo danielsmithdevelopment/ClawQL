@@ -83,10 +83,6 @@
 
   @media (width < 40rem) {
     .docs-table-scroll {
-      margin-left: -1rem;
-      margin-right: -1rem;
-      padding-left: 1rem;
-      padding-right: 1rem;
       scrollbar-width: thin;
     }
   }
@@ -183,12 +179,4 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  @media (width < 40rem) {
-    .prose
-      :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
-      margin-left: -1rem;
-      margin-right: -1rem;
-      border-radius: 0;
-    }
-  }
 }

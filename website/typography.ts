@@ -138,12 +138,8 @@ export default {
             marginTop: theme('spacing.16'),
             marginBottom: theme('spacing.16'),
             maxWidth: 'none',
-            marginLeft: `calc(-1 * ${theme('spacing.4')})`,
-            marginRight: `calc(-1 * ${theme('spacing.4')})`,
-            [`@media (width >= ${theme('screens.sm')})`]: {
-              marginLeft: `calc(-1 * ${theme('spacing.6')})`,
-              marginRight: `calc(-1 * ${theme('spacing.6')})`,
-            },
+            marginLeft: `calc(-1 * ${theme('spacing.6')})`,
+            marginRight: `calc(-1 * ${theme('spacing.6')})`,
             [`@media (width >= ${theme('screens.lg')})`]: {
               marginLeft: `calc(-1 * ${theme('spacing.8')})`,
               marginRight: `calc(-1 * ${theme('spacing.8')})`,
