@@ -59,7 +59,8 @@ export function WebMcpRegister() {
           properties: {
             query: {
               type: 'string',
-              description: 'Search query (e.g. "memory_recall", "celld", "helm")',
+              description:
+                'Search query (e.g. "memory_recall", "celld", "helm")',
               minLength: 1,
               maxLength: 200,
             },
@@ -265,7 +266,8 @@ export function WebMcpRegister() {
           properties: {
             query: {
               type: 'string',
-              description: 'Optional text filter (name, package, tools, keywords)',
+              description:
+                'Optional text filter (name, package, tools, keywords)',
             },
             kind: {
               type: 'string',

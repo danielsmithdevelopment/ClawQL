@@ -109,12 +109,12 @@ Redirect-only hubs (`/cache`, `/notify`, `/schedule`, `/reference/plugins`, `/re
 
 Sitewide `document.modelContext ?? navigator.modelContext` tools in `website/src/components/WebMcpRegister.tsx`:
 
-| Tool | Role |
-|------|------|
-| `clawql.docs.search` | FlexSearch over `/search-index` |
-| `clawql.docs.list_routes` | Curated hub map |
-| `clawql.docs.list_sections` | TOC + live heading ids |
-| `clawql.docs.get_page_markdown` | `Accept: text/markdown` body (capped) |
-| `clawql.docs.navigate` / `page_context` / `scroll_to_section` | Existing navigation helpers |
+| Tool                                                          | Role                                  |
+| ------------------------------------------------------------- | ------------------------------------- |
+| `clawql.docs.search`                                          | FlexSearch over `/search-index`       |
+| `clawql.docs.list_routes`                                     | Curated hub map                       |
+| `clawql.docs.list_sections`                                   | TOC + live heading ids                |
+| `clawql.docs.get_page_markdown`                               | `Accept: text/markdown` body (capped) |
+| `clawql.docs.navigate` / `page_context` / `scroll_to_section` | Existing navigation helpers           |
 
 On `/plugins*`: `clawql.docs.filter_plugin_registry`, `clawql.docs.open_plugin`. Playwright: `website/tests/webmcp-docs-tools.spec.ts`.
