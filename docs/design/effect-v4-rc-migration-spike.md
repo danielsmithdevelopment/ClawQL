@@ -1,6 +1,6 @@
 # Effect v4 RC migration spike (ClawQL)
 
-**Status:** Tracking — spike not started  
+**Status:** Stage 0 — tooling in [#1037](https://github.com/danielsmithdevelopment/ClawQL/pull/1037)  
 **Created:** 2026-09-02  
 **Tracking issue:** [#1034](https://github.com/danielsmithdevelopment/ClawQL/issues/1034)  
 **Tracking PR (this doc):** [#1035](https://github.com/danielsmithdevelopment/ClawQL/pull/1035)  
@@ -200,13 +200,7 @@ Production pin remains `effect@3.22.1` in root `package.json` `overrides` until 
 
 ## Progress log
 
-<<<<<<< HEAD
-| Date       | Stage | Notes                                                                                     |
-| ---------- | ----- | ----------------------------------------------------------------------------------------- |
-| 2026-09-02 | 0     | Tracking doc + issue #1034; PR #1035 merged                                               |
-| 2026-09-02 | 0     | Stage 0 tooling: inventory/try-rc scripts, non-blocking CI, tsconfig.effect-v4-spike.json |
-=======
-| Date       | Stage | Notes                                             |
-| ---------- | ----- | ------------------------------------------------- |
-| 2026-09-02 | 0     | Tracking doc + issue created; spike branch opened |
->>>>>>> origin/main
+| Date       | Stage | Notes                                                                                             |
+| ---------- | ----- | ------------------------------------------------------------------------------------------------- |
+| 2026-09-02 | 0     | Tracking doc + issue #1034; PR #1035 merged                                                       |
+| 2026-09-02 | 0     | Stage 0 tooling: inventory/try-rc scripts, non-blocking CI, tsconfig.effect-v4-spike.json (#1037) |
