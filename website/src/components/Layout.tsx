@@ -41,7 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Navigation className="docs-desktop-nav hidden lg:mt-10 lg:block" />
             </div>
           </header>
-          <div className="relative flex h-full flex-col px-4 pt-14 sm:px-6 lg:px-8">
+          <div className="relative flex h-full flex-col px-6 pt-14 lg:px-8">
             <main id="main-content" className="flex-auto" tabIndex={-1}>
               {children}
             </main>
