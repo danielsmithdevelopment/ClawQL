@@ -104,3 +104,17 @@ Crawler now validates **all** unique external hrefs (not just same-origin). Soft
 | Axe               | Expand coverage                                                        | Include `/memory/okf`                                       |
 
 Redirect-only hubs (`/cache`, `/notify`, `/schedule`, `/reference/plugins`, `/reference/verticals`, `/kubernetes`) stay **out** of the sitemap (canonical targets only).
+
+## WebMCP docs tools (follow-up)
+
+Sitewide `document.modelContext ?? navigator.modelContext` tools in `website/src/components/WebMcpRegister.tsx`:
+
+| Tool | Role |
+|------|------|
+| `clawql.docs.search` | FlexSearch over `/search-index` |
+| `clawql.docs.list_routes` | Curated hub map |
+| `clawql.docs.list_sections` | TOC + live heading ids |
+| `clawql.docs.get_page_markdown` | `Accept: text/markdown` body (capped) |
+| `clawql.docs.navigate` / `page_context` / `scroll_to_section` | Existing navigation helpers |
+
+On `/plugins*`: `clawql.docs.filter_plugin_registry`, `clawql.docs.open_plugin`. Playwright: `website/tests/webmcp-docs-tools.spec.ts`.
