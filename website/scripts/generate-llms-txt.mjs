@@ -44,7 +44,22 @@ const SECTIONS = [
       [
         'mcp-api-adapter',
         '/mcp/mcp-api-adapter',
-        'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, and gen-cli',
+        'Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui',
+      ],
+      [
+        'mcp-ui',
+        '/mcp/mcp-ui',
+        'HTMX Swagger UI for MCP — seventh adapter surface, shipped',
+      ],
+      [
+        'clawql-network',
+        '/specs/network/clawql-network',
+        'Headscale mesh + Tailcat ephemeral transport, selector, ATR audit',
+      ],
+      [
+        'clawql-agents',
+        '/agents/clawql-agents',
+        'Seven open-source agent adapters with Panguard and WORM hooks',
       ],
       [
         'Zero-Trust Agentic Fabric',

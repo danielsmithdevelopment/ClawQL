@@ -4,9 +4,9 @@ import { Tag } from '@/components/Tag'
 import { docsPageMetadata } from '@/lib/seo'
 
 export const metadata = docsPageMetadata({
-  title: 'mcp-api-adapter — seven surfaces today, eight with QR planned',
+  title: 'mcp-api-adapter — seven surfaces shipped, QR eighth planned',
   description:
-    'Language-agnostic MCP → APIs adapter: wrap any MCP server and expose OpenAPI, GraphQL, /mcp, gRPC, WebSocket, gen-cli, and /mcp-ui today; QR stream planned. In-repo at 0.6.0; npm publish pending.',
+    'Language-agnostic MCP → APIs adapter: wrap any MCP server and expose OpenAPI, GraphQL, /mcp, gRPC, WebSocket, gen-cli, and /mcp-ui today; QR stream planned as eighth surface. In-repo; first npm publish with 8.0 workspace release.',
   path: '/mcp/mcp-api-adapter',
   ogType: 'article',
 })
@@ -33,10 +33,10 @@ export default function McpApiAdapterPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>MCP → APIs (inverse of ClawQL Core).</strong>{' '}
-          <code className="font-mono text-xs">mcp-api-adapter@0.5.1</code> is
-          shipped in the monorepo but <strong>not on npm yet</strong> — use the
-          from-source quick start until{' '}
+          <strong>MCP → APIs (inverse of ClawQL Core).</strong> Seven surfaces
+          ship in the monorepo (including <code className="text-sm">/mcp-ui</code>
+          ); <strong>npm publish is pending</strong> — use the from-source quick
+          start until{' '}
           <code className="font-mono text-xs">npm view mcp-api-adapter</code>{' '}
           succeeds. Source:{' '}
           <a

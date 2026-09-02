@@ -50,6 +50,7 @@ export const GENERATED_BODY_ROUTES = {
     '/specs/memory/memory-recall-structured-filter',
   'ontology-legal-domain-body.mdx': '/specs/ontology/legal-domain',
   'clawql-network-body.mdx': '/specs/network/clawql-network',
+  'clawql-agents-body.mdx': '/agents/clawql-agents',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',
   'getting-started-inference-body.mdx': '/getting-started/inference',
   'getting-started-custom-sources-body.mdx': '/getting-started/custom-sources',

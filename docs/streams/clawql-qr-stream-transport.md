@@ -1,7 +1,7 @@
 # ClawQL QR Stream Transport — Specification v0.1
 
 **Status:** Draft · August 2026 · v0.1  
-**Components:** `mcp-api-adapter` (planned **7th surface**; `/mcp-ui` is 8th) · `clawql-streams` (`qr` source type) · `clawql-tee` / `clawql-tee-verifier`  
+**Components:** `mcp-api-adapter` (planned **8th surface**; `/mcp-ui` is 7th, shipped) · `clawql-streams` (`qr` source type) · `clawql-tee` / `clawql-tee-verifier`  
 **Depends on:** [`clawql-tee-airgap-audit`](./clawql-tee-airgap-audit.md) v0.1 · [`clawql-streams`](./clawql-streams.md) v0.2 · [`mcp-api-adapter`](../mcp/mcp-api-adapter.md)  
 **Related:** [`clawql-tee`](./clawql-tee.md) · [`clawql-government`](../government/clawql-government.md) · [`clawql-surveillance`](../surveillance/clawql-surveillance.md)
 
@@ -11,7 +11,7 @@
 
 QR stream transport is the **seventh surface** in mcp-api-adapter and a new event source type in clawql-streams. It enables MCP communication and event streaming over a **physical optical channel** — QR codes on a screen, scanned by a camera — with no network connection required.
 
-The six shipped surfaces (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, gen-cli, WebSocket) and the planned [`/mcp-ui`](../mcp/mcp-ui.md) playground assume a network (or a browser on one). QR stream is for when there is no network, must not be one, or the channel must be physically verifiable and unidirectional.
+The seven shipped surfaces (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, gen-cli, WebSocket, **`/mcp-ui`**) assume a network (or a browser on one). QR stream is for when there is no network, must not be one, or the channel must be physically verifiable and unidirectional.
 
 | Property                         | Meaning                                                |
 | -------------------------------- | ------------------------------------------------------ |
@@ -88,7 +88,7 @@ Encoding matches air-gap audit: CBOR → zstd → ~2 KB chunks → QR v40 ECC M;
 
 ---
 
-## 4. mcp-api-adapter — 7th surface
+## 4. mcp-api-adapter — 8th surface (planned)
 
 ### 4.1 Provider interface
 
@@ -328,9 +328,10 @@ election:
 | gRPC                   | Yes     | Mesh / protobuf                                   |
 | gen-cli                | Build   | Shell / ops                                       |
 | WebSocket              | Yes     | Real-time / DO hibernation                        |
-| **QR stream**          | **No**  | **Air-gap, elections, regulated optical channel** |
+| `/mcp-ui`              | Yes     | Browser HTMX playground (7th surface)             |
+| **QR stream**          | **No**  | **Air-gap, elections, regulated optical channel (8th planned)** |
 
-First six connect anything over a network; `/mcp-ui` (8th, planned) makes that catalog human-navigable in a browser. The seventh connects air-gapped systems to the ClawQL agent surface over a physical channel with per-frame crypto and optional TEE binding.
+Seven surfaces connect over a network today (including [`/mcp-ui`](../mcp/mcp-ui.md)). QR stream connects air-gapped systems to the ClawQL agent surface over a physical channel with per-frame crypto and optional TEE binding.
 
 **Challenge the Footage / legal evidence:** browser platforms that fingerprint recordings still trust platform servers. QR + TEE makes capture/export integrity hardware-verifiable and operator-independent — same underlying problem as government outcome records and surveillance evidence ([clawql-surveillance](../surveillance/clawql-surveillance.md)).
 
@@ -341,8 +342,8 @@ First six connect anything over a network; `/mcp-ui` (8th, planned) makes that c
 - [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — frame crypto shared with TEE audit
 - [`docs/streams/clawql-tee.md`](./clawql-tee.md) — hardware attestation
 - [`docs/streams/clawql-streams.md`](./clawql-streams.md) — event loop / significance
-- [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — six surfaces today; QR 7th · `/mcp-ui` 8th planned
-- [`docs/mcp/mcp-ui.md`](../mcp/mcp-ui.md) — planned 8th surface (HTMX Swagger UI for MCP)
+- [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — seven surfaces shipped; QR 8th planned
+- [`docs/mcp/mcp-ui.md`](../mcp/mcp-ui.md) — 7th surface (HTMX Swagger UI for MCP, shipped)
 - [`docs/government/clawql-government.md`](../government/clawql-government.md) — auditor air-gap export consumer
 
 ---

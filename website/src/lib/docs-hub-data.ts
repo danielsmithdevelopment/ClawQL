@@ -124,6 +124,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: DocumentIcon,
   }),
   card({
+    href: '/agents/clawql-agents',
+    name: 'clawql-agents',
+    description:
+      'Seven open-source agent adapters — Panguard, WORM hooks, vault memory, Helm overlays.',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/specs/cq-extensions',
     name: '.cq* file extensions',
     description:
@@ -353,14 +360,14 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/mcp/mcp-api-adapter',
     name: 'mcp-api-adapter',
     description:
-      'Any MCP → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui; QR planned.',
+      'Any MCP → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui; QR 8th planned.',
     icon: PackageIcon,
   }),
   card({
     href: '/mcp/mcp-ui',
     name: '/mcp-ui',
     description:
-      'Swagger UI for MCP — HTMX forms from inputSchema (8th surface, shipped).',
+      'Swagger UI for MCP — HTMX forms from inputSchema (7th surface, shipped).',
     icon: DocumentIcon,
   }),
   card({

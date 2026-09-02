@@ -113,6 +113,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.9,
   },
   {
+    path: '/agents/clawql-agents',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/architecture/agentic-fabric',
     changeFrequency: 'monthly',
     priority: 0.92,

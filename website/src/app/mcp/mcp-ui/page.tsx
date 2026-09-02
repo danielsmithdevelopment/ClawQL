@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: '/mcp-ui — Swagger UI for MCP',
   description:
-    'Shipped 8th mcp-api-adapter surface: HTMX forms auto-scaffolded from MCP inputSchema — embedded, zero-config playground like Swagger at /docs, with ClawQL templates for search and memory.',
+    'Shipped 7th mcp-api-adapter surface: HTMX forms auto-scaffolded from MCP inputSchema — embedded, zero-config playground like Swagger at /docs, with ClawQL templates for search and memory.',
   path: '/mcp/mcp-ui',
   ogType: 'article',
 })
@@ -30,7 +30,7 @@ export default function McpUiPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>8th mcp-api-adapter surface — shipped in-repo.</strong>{' '}
+          <strong>7th mcp-api-adapter surface — shipped in-repo.</strong>{' '}
           Auto-scaffolded HTMX playground at{' '}
           <code className="text-sm">/mcp-ui</code> — forms from{' '}
           <code className="text-sm">inputSchema</code>, inline results, no

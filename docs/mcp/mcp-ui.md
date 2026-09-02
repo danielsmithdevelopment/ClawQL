@@ -1,6 +1,6 @@
 # `/mcp-ui` — Swagger UI for MCP (HTMX / HATEOAS)
 
-**Status:** v0 shipped · August 2026 · **8th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
+**Status:** v0 shipped · August 2026 · **7th surface** of [`mcp-api-adapter`](./mcp-api-adapter.md)  
 **Path:** `GET /mcp-ui` (adapter HTTP process)  
 **Depends on:** `ListTools` + tool `inputSchema` (same catalog as `/docs` and `/graphiql`)  
 **Implementation:** `packages/mcp-api-adapter/src/mcp-ui-*.ts` — catalog page + execute fragment, form UX (required/optional/defaults/Advanced), nested object fieldsets + array add/remove rows, templates for `search` / `memory_*` / `cache` / `audit` / `run_idp_pipeline`, ATR-scoped catalog when JWT edge auth is configured, multipart file upload (document-processing ATR), SSE progress for long tools, `POST /mcp-ui/generate` multi-step custom UIs, and `GET /mcp-ui/trace/:sessionId` context-accumulation flamegraphs.
@@ -263,8 +263,8 @@ await startMcpApiAdapter({ upstream, listTraceCalls /* … */ });
 - Design: [`../design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)
 - Essay draft: [`../gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md)
 - Protocol Fabric: [`protocol-fabric.md`](./protocol-fabric.md)
-- QR (7th surface): [`../streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
+- QR (8th surface, planned): [`../streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
 
 ---
 
-_/mcp-ui · Spec draft · August 2026 · mcp-api-adapter 8th surface_
+_/mcp-ui · August 2026 · mcp-api-adapter 7th surface_
