@@ -332,31 +332,31 @@ These vision items are **not** done by package extraction alone:
 
 **Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** on its own semver (npm workspaces) — **not** lockstep with `clawql-mcp`. **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
 
-| Package                      | npm name            | Version     |
-| ---------------------------- | ------------------- | ----------- |
-| `packages/clawql-merkle`     | `clawql-merkle`     | 0.1.0       |
-| `packages/clawql-core`       | `clawql-core`       | 0.1.0       |
-| `packages/clawql-audit`      | `clawql-audit`      | 0.1.0       |
-| `packages/clawql-agents`     | `clawql-agents`     | 0.1.0       |
-| `packages/clawql-auth`       | `clawql-auth`       | 0.1.0       |
-| `packages/clawql-pageindex`  | `clawql-pageindex`  | 0.1.0 (MIT) |
-| `packages/clawql-codegraph`  | `clawql-codegraph`  | 0.1.0       |
-| `packages/clawql-api`        | `clawql-api`        | 0.1.0       |
-| `packages/clawql-memory`     | `clawql-memory`     | 0.1.0       |
-| `packages/clawql-ontology`   | `clawql-ontology`   | 0.1.0       |
-| `packages/clawql-documents`  | `clawql-documents`  | 0.1.0       |
-| `packages/clawql-web`        | `clawql-web`        | 0.1.0       |
-| `packages/clawql-data`       | `clawql-data`       | 0.1.0       |
-| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0       |
-| `packages/clawql-tee`        | `clawql-tee`        | 0.1.0       |
-| `packages/clawql-automation` | `clawql-automation` | 0.1.0       |
-| `packages/clawql-sandbox`    | `clawql-sandbox`    | 0.1.0       |
-| `packages/clawql-inference`  | `clawql-inference`  | 0.1.0       |
-| `packages/clawql-payments`   | `clawql-payments`   | 0.1.0       |
+| Package                      | npm name            | Version                                           |
+| ---------------------------- | ------------------- | ------------------------------------------------- |
+| `packages/clawql-merkle`     | `clawql-merkle`     | 0.1.0                                             |
+| `packages/clawql-core`       | `clawql-core`       | 0.1.0                                             |
+| `packages/clawql-audit`      | `clawql-audit`      | 0.1.0                                             |
+| `packages/clawql-agents`     | `clawql-agents`     | 0.1.0                                             |
+| `packages/clawql-auth`       | `clawql-auth`       | 0.1.0                                             |
+| `packages/clawql-pageindex`  | `clawql-pageindex`  | 0.1.0 (MIT)                                       |
+| `packages/clawql-codegraph`  | `clawql-codegraph`  | 0.1.0                                             |
+| `packages/clawql-api`        | `clawql-api`        | 0.1.0                                             |
+| `packages/clawql-memory`     | `clawql-memory`     | 0.1.0                                             |
+| `packages/clawql-ontology`   | `clawql-ontology`   | 0.1.0                                             |
+| `packages/clawql-documents`  | `clawql-documents`  | 0.1.0                                             |
+| `packages/clawql-web`        | `clawql-web`        | 0.1.0                                             |
+| `packages/clawql-data`       | `clawql-data`       | 0.1.0                                             |
+| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0                                             |
+| `packages/clawql-tee`        | `clawql-tee`        | 0.1.0                                             |
+| `packages/clawql-automation` | `clawql-automation` | 0.1.0                                             |
+| `packages/clawql-sandbox`    | `clawql-sandbox`    | 0.1.0                                             |
+| `packages/clawql-inference`  | `clawql-inference`  | 0.1.0                                             |
+| `packages/clawql-payments`   | `clawql-payments`   | 0.1.0                                             |
 | `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 0.1.1 (already published — do not reset to 0.1.0) |
-| `packages/clawql-operator`   | `clawql-operator`   | 0.1.0       |
-| `packages/clawql-release`    | `clawql-release`    | 0.1.0       |
-| Root                         | `clawql-mcp`        | 8.0.0       |
+| `packages/clawql-operator`   | `clawql-operator`   | 0.1.0                                             |
+| `packages/clawql-release`    | `clawql-release`    | 0.1.0                                             |
+| Root                         | `clawql-mcp`        | 8.0.0                                             |
 
 **Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
 

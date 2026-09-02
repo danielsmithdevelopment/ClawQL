@@ -104,12 +104,12 @@ When Stage 1 is active:
 
 #### Provider connection pitfalls
 
-| Situation                                                                   | What happens                                                                               |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Want **Linear**                                                             | Set **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`** — no **`CLAWQL_GRAPHQL_*`** needed |
-| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for Linear         | Auto-routes to bundled **linear**; bad path ignored                                        |
-| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for an unknown API | Path ignored; HTTP introspection attempted                                                 |
-| Custom provider env set but provider unreachable                            | Clear startup error — does not silently load unrelated providers                           |
+| Situation                                                                   | What happens                                                                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Want **Linear**                                                             | Set **`CLAWQL_PROVIDER=linear`** + **`LINEAR_API_KEY`** — no **`CLAWQL_GRAPHQL_*`** needed                                                       |
+| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for Linear         | Auto-routes to bundled **linear**; bad path ignored                                                                                              |
+| **`CLAWQL_GRAPHQL_SOURCES`** with a bad **`schemaPath`** for an unknown API | Path ignored; HTTP introspection attempted                                                                                                       |
+| Custom provider env set but provider unreachable                            | Clear startup error — does not silently load unrelated providers                                                                                 |
 | No provider env set                                                         | Empty catalog (no bundled providers) — set `CLAWQL_PROVIDER=default` for the opinionated stack (Cloudflare, GitHub, Slack, Linear, Notion, Onyx) |
 
 ClawQL picks the best internal connection per provider (**gRPC → GraphQL → OpenAPI**). Users only need **`search`** and **`execute`**.
