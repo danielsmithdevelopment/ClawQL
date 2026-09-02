@@ -68,7 +68,10 @@ const rootTs = walkTs(join(root, "src"));
 const allTs = [...allPkgTs, ...rootTs];
 
 const contextTagFiles = countPattern(allTs, /Context\.Tag\s*\(/);
-const effectSchemaFiles = countPattern(allTs, /from ["']effect\/Schema["']|Schema\.(Struct|String|Number)/);
+const effectSchemaFiles = countPattern(
+  allTs,
+  /from ["']effect\/Schema["']|Schema\.(Struct|String|Number)/
+);
 const atEffectImports = countPattern(allTs, /from ["']@effect\//);
 
 const report = {
@@ -87,9 +90,7 @@ const report = {
 console.log("Effect v4 spike inventory\n");
 console.log(`  Installed effect:     ${report.installedEffect ?? "(not installed)"}`);
 console.log(`  Root effect deps:     ${JSON.stringify(report.rootEffectDeps)}`);
-console.log(
-  `  packages/* w/ effect: ${report.packagesWithEffect}/${report.workspacePackageCount}`
-);
+console.log(`  packages/* w/ effect: ${report.packagesWithEffect}/${report.workspacePackageCount}`);
 if (withoutEffect.length) {
   console.log(`  Missing effect:       ${withoutEffect.join(", ")}`);
 }
