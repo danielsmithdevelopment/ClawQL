@@ -14,7 +14,7 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 
 | Surface | Status |
 | ------- | ------ |
-| `audit` (hash-chained ring) | **In-process** — `clawql-core/streams-slim` |
+| `audit` (hash-chained ring) | **In-process** + **LTX flush** — streams-slim ring; snapshot `audit:ring` + `audit:seq:*` |
 | `cache` (session scratch) | **In-process** — `clawql-core/streams-slim` |
 | Hash-chain verify | **In-process** — via clawql-merkle (needs `nodejs_compat`) |
 | Inference | **Out-of-process** — `fetch(INFERENCE_URL)` |
@@ -58,5 +58,5 @@ Helm injects `CLAWQL_MCP_URL` + `INFERENCE_URL`. Set `streams.celld.adapterUrl` 
 
 ## Next steps
 
-- Persist isolate audit ring beyond process memory into DO LTX storage
 - Optional Workers-safe slim `clawql-api` for offline/in-cell search
+- Optional Helm chart Service for mcp-api-adapter (cells already accept `adapterUrl`)
