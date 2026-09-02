@@ -1183,13 +1183,10 @@ async function main(): Promise<void> {
       region: typeof flags.region === "string" ? flags.region : undefined,
       listen: typeof flags.listen === "string" ? flags.listen : undefined,
       advertise: typeof flags.advertise === "string" ? flags.advertise : undefined,
-      internalListen:
-        typeof flags.internalListen === "string" ? flags.internalListen : undefined,
+      internalListen: typeof flags.internalListen === "string" ? flags.internalListen : undefined,
       json: Boolean(flags.json),
       port:
-        typeof flags.port === "string" && flags.port
-          ? Number.parseInt(flags.port, 10)
-          : undefined,
+        typeof flags.port === "string" && flags.port ? Number.parseInt(flags.port, 10) : undefined,
     };
     if (subcmd === "celld") {
       const action = rest[0];
@@ -1218,7 +1215,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql streams celld install | dev | deploy | start | diagnose | bundle-check",
+        "Usage: clawql streams celld install | dev | deploy | start | diagnose | bundle-check"
       );
       process.exitCode = 1;
       return;

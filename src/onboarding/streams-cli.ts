@@ -54,7 +54,7 @@ function requireCelld(): string {
   const which = spawnSync("celld", ["--version"], { encoding: "utf8" });
   if (which.status !== 0) {
     console.error(
-      "celld not found. Run: clawql streams celld install (or CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh)",
+      "celld not found. Run: clawql streams celld install (or CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh)"
     );
     process.exitCode = 1;
     throw new Error("celld missing");
@@ -114,8 +114,7 @@ export async function runStreamsCelldDeploy(opts: StreamsCelldCliOptions): Promi
 export async function runStreamsCelldStart(opts: StreamsCelldCliOptions): Promise<number> {
   requireCelld();
   const listen = opts.listen ?? process.env.CELLD_ADDR ?? "0.0.0.0:8080";
-  const internal =
-    opts.internalListen ?? process.env.CELLD_INTERNAL_ADDR ?? "0.0.0.0:8081";
+  const internal = opts.internalListen ?? process.env.CELLD_INTERNAL_ADDR ?? "0.0.0.0:8081";
   const advertise = opts.advertise ?? process.env.CELLD_ADVERTISE;
   const args = [...bucketArgs(opts), "--listen", listen, "--internal-listen", internal];
   if (advertise) args.push("--advertise", advertise);
@@ -141,7 +140,9 @@ export async function runStreamsCelldBundleCheck(opts: StreamsCelldCliOptions): 
   return res.status ?? 1;
 }
 
-export async function runStreamsCelldDev(opts: StreamsCelldCliOptions & { port?: number }): Promise<number> {
+export async function runStreamsCelldDev(
+  opts: StreamsCelldCliOptions & { port?: number }
+): Promise<number> {
   requireCelld();
   const project = resolve(opts.project ?? defaultProjectDir());
   const port = opts.port ?? 9876;
