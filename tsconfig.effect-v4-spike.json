@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./packages/clawql-core/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnosticSeverity": {
+          "outdatedApi": "warning",
+          "serviceNotAsClass": "warning"
+        }
+      }
+    ]
+  },
+  "include": [
+    "packages/clawql-core/src/**/*.ts",
+    "packages/clawql-api/src/**/*.ts",
+    "src/effect-otel-bridge.ts"
+  ],
+  "exclude": ["**/*.test.ts", "**/dist/**"]
+}
