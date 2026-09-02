@@ -1,19 +1,34 @@
-# ClawQL Streams — celld skeleton (Lab 5b)
+# ClawQL Streams — celld skeleton + clawql-core (Lab 5b)
 
-Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams) on **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)**.
+Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams) on **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)**, with in-process **`clawql-core/streams-slim`**.
 
 | DO class | Role |
 | -------- | ---- |
 | `GatewayDO` | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions |
 | `SubscriptionDO` | Significance filter stub (`sub:{id}` naming) |
-| `AgentSessionDO` | Ephemeral session + WORM row + optional `fetch(INFERENCE_URL/healthz)` |
+| `AgentSessionDO` | Session + WORM row + **audit/cache** via streams-slim + optional `fetch(INFERENCE_URL)` |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)
+
+## In-process vs deferred
+
+| Surface | Status |
+| ------- | ------ |
+| `audit` (hash-chained ring) | **In-process** — `clawql-core/streams-slim` |
+| `cache` (session scratch) | **In-process** — `clawql-core/streams-slim` |
+| Hash-chain verify | **In-process** — via clawql-merkle (needs `nodejs_compat`) |
+| Inference | **Out-of-process** — `fetch(INFERENCE_URL)` |
+| `search` / `execute` | **Deferred** — clawql-api stays on MCP host |
+| `memory_*` | **Deferred** — clawql-memory + vault |
+| `mcp-api-adapter` | **Deferred** — Node Express/gRPC host |
+
+`streams-slim` **excludes** `webmcp-draft` (`node:fs`), cuckoo, Loki, and plugin dynamic loaders.
 
 ## Prerequisites
 
 - [celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0) on `PATH`
-- [esbuild](https://esbuild.github.io/) on `PATH` (required by `celld deploy` / `celld dev`)
+- [esbuild](https://esbuild.github.io/) on `PATH`
+- Workspace packages built: `npm run build -w clawql-merkle -w clawql-core`
 
 ## Local dev (`celld dev`)
 
@@ -29,44 +44,25 @@ curl -s http://127.0.0.1:9876/health | jq .
 curl -s -X POST http://127.0.0.1:9876/webhook/demo-lab \
   -H 'content-type: application/json' \
   -H 'x-clawql-event-id: lab-event-1' \
-  -d '{"hello":"streams"}' | jq .
-curl -s http://127.0.0.1:9876/admin/status | jq .
+  -d '{"hello":"streams"}' | jq '.session.audit, .session.core'
 ```
 
-Repeat the webhook with the same `x-clawql-event-id` to observe idempotent session wake.
+Expect `audit.clawqlCore.ok: true`, a hash-chain `verify.ok: true`, and `core.package: "clawql-core/streams-slim"`.
 
 ## Bundle size gate (64 MiB Workers limit)
 
 ```bash
 node scripts/bundle-check.mjs
-# or from repo root:
-clawql streams celld bundle-check --project examples/streams-celld
+# or: clawql streams celld bundle-check --project examples/streams-celld
 ```
 
-## Fleet deploy (optional)
+Typical size with Effect + streams-slim ≈ **0.4 MiB** (~0.6% of limit).
 
-After Lab 5 bucket credentials:
+## Fleet deploy / Helm
 
-```bash
-export CELLD_BUCKET=s3://clawql-streams-state
-export S3_ENDPOINT=https://ACCOUNT.r2.cloudflarestorage.com
-export AWS_REGION=auto
-
-celld deploy . \
-  --bucket "$CELLD_BUCKET" \
-  --endpoint "$S3_ENDPOINT" \
-  --region "$AWS_REGION"
-
-clawql streams celld start --bucket "$CELLD_BUCKET" --listen 127.0.0.1:8080
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/.well-known/celld/health
-```
-
-## Kubernetes (Helm)
-
-See [`charts/clawql-mcp/values-streams-celld.example.yaml`](../../charts/clawql-mcp/values-streams-celld.example.yaml) and [`deployment/samples/streams-celld/`](../../deployment/samples/streams-celld/README.md).
+Same as before — see [`deployment/samples/streams-celld/`](../../deployment/samples/streams-celld/README.md) and `clawql streams celld deploy`.
 
 ## Next steps
 
-- Replace stubs with `clawql-streams` + in-process `clawql-core` when the package ships
-- Wire real significance filters and `fetch()` to [`clawql-inference`](https://docs.clawql.com/inference/clawql-inference)
-- Run under Helm `streams.scalingBackend: celld` with LTX WORM on the fleet bucket
+- Slim `clawql-api` Workers surface for true in-cell `search`/`execute`, or `fetch` to in-cluster MCP
+- Persist audit beyond isolate memory (LTX WORM on fleet bucket already covers DO `storage.put` rows)

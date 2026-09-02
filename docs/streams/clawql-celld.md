@@ -208,12 +208,16 @@ Gateway still allocates `doInstanceId` / `virtualKeyId` before first spawn and w
 ```text
 celld deploy (esbuild)
   └─ Worker + DO classes
-        ├─ clawql-streams (router, filter, stream_* MCP)
-        ├─ clawql-core (search / execute / memory_*)
-        └─ mcp-api-adapter (protocol surfaces)
+        ├─ clawql-streams (router, filter, stream_* MCP) — planned package
+        ├─ clawql-core/streams-slim (audit, cache, hash-chain) — Workers-safe entry
+        └─ (deferred) clawql-api search/execute · mcp-api-adapter · clawql-memory
   env / vars ≤ 1 MiB
   code ≤ 64 MiB
 ```
+
+**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`examples/streams-celld`](../../examples/streams-celld/).
+
+**Still out-of-process / deferred:** `search` / `execute` (`clawql-api`), `memory_*` (`clawql-memory`), protocol fan-out (`mcp-api-adapter`), inference (`fetch` to clawql-inference). Do **not** embed the full `clawql-core` barrel — it pulls `webmcp-draft` (`node:fs`).
 
 **Provider specs:** ship a **slim default set** in the bundle; load additional OpenAPI/GraphQL specs via `fetch` into SQLite on first use or at subscription create — do not embed full enterprise catalogs in env.
 
@@ -221,16 +225,17 @@ celld deploy (esbuild)
 
 ```bash
 # clawql streams celld bundle-check
-celld deploy . --bucket "$CELLD_BUCKET" --dry-run   # or esbuild metafile
+clawql streams celld bundle-check --project examples/streams-celld
 # Fail the job if Worker/DO artifact size > 67108864 bytes
 ```
 
 CI must fail closed on oversize bundles. Prefer:
 
 - Externalize `clawql-inference` (always)
+- Import **`clawql-core/streams-slim`**, not `clawql-core` (full barrel)
 - Tree-shake unused providers
-- Avoid Node polyfills that pull `fs` / `http`
-- Optional Streams-slim build profile if full Core exceeds budget (open question in Streams §15)
+- Avoid Node polyfills that pull `fs` / `http` (keep `nodejs_compat` for `crypto` / `Buffer` only)
+- Optional further Streams-slim cuts if Effect + api ever approach budget (open question in Streams §15)
 
 ---
 

@@ -1,7 +1,16 @@
 /**
- * AgentSessionDO — ephemeral session stub (Streams spec §4).
+ * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim).
  * Model calls use fetch(INFERENCE_URL) — never child_process.
+ * Audit/cache run in-process; search/execute remain deferred (see streams-core-facade).
  */
+import {
+  appendSessionCreatedAudit,
+  cacheSessionMeta,
+  executeDeferred,
+  searchDeferred,
+  verifyAuditChain,
+} from "./streams-core-facade.js";
+
 export class AgentSessionDO {
   constructor(state, env) {
     this.state = state;
@@ -23,6 +32,7 @@ export class AgentSessionDO {
           do: "AgentSessionDO",
           idempotent: true,
           session: existing,
+          core: { clawqlCore: "streams-slim", note: "idempotent wake — no re-audit" },
         });
       }
 
@@ -42,6 +52,25 @@ export class AgentSessionDO {
         subscriptionId,
         eventId,
       });
+
+      let audit = { ok: false };
+      let cache = { ok: false };
+      let auditVerify = { ok: false };
+      try {
+        audit = await appendSessionCreatedAudit({
+          subscriptionId,
+          eventId,
+          doInstanceId,
+          virtualKeyId,
+        });
+        cache = await cacheSessionMeta(eventId, meta);
+        auditVerify = await verifyAuditChain();
+      } catch (err) {
+        audit = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
 
       let inference = { skipped: true, reason: "no INFERENCE_URL" };
       const inferenceUrl = this.env.INFERENCE_URL;
@@ -66,11 +95,27 @@ export class AgentSessionDO {
         }
       }
 
+      const tools = {
+        search: await searchDeferred(`subscription:${subscriptionId}`),
+        execute: await executeDeferred("streams.session.noop", { eventId }),
+      };
+
       return Response.json({
         do: "AgentSessionDO",
         session: meta,
         inference,
-        audit: { wormKey: `worm:${startedAt}` },
+        audit: {
+          wormKey: `worm:${startedAt}`,
+          clawqlCore: audit,
+          verify: auditVerify,
+        },
+        cache,
+        tools,
+        core: {
+          package: "clawql-core/streams-slim",
+          inProcess: ["audit", "cache", "hash-chain"],
+          deferred: ["search", "execute", "memory_*", "mcp-api-adapter"],
+        },
       });
     }
 

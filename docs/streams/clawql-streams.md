@@ -765,7 +765,7 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 ## 15. Open questions
 
-1. **Bundle size.** Can `clawql-core` + `mcp-api-adapter` + Streams fit under **64 MiB** with aggressive tree-shaking, or do we need a Streams-slim core profile?
+1. **Bundle size.** **Resolved for core:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`examples/streams-celld`](../../examples/streams-celld/) (well under 64 MiB). Remaining question: can a future Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
 2. **celld alpha vs cellrt.** When is celld production-stable enough to prefer over K8s HPA? When does Helm default self-hosted Streams to **`cellrt`** instead of (or alongside) celld?
 3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO/cell names — see celld / cellrt naming).
 4. **Kafka / Kinesis.** First-class `StreamSourceType` in v0.2 or defer to enterprise add-on?
