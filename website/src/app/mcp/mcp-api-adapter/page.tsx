@@ -34,7 +34,8 @@ export default function McpApiAdapterPage() {
       <div className="not-prose mb-8">
         <Note>
           <strong>MCP → APIs (inverse of ClawQL Core).</strong> Seven surfaces
-          ship in the monorepo (including <code className="text-sm">/mcp-ui</code>
+          ship in the monorepo (including{' '}
+          <code className="text-sm">/mcp-ui</code>
           ); <strong>npm publish is pending</strong> — use the from-source quick
           start until{' '}
           <code className="font-mono text-xs">npm view mcp-api-adapter</code>{' '}

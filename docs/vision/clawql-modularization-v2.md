@@ -87,9 +87,9 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | `clawql-operator`     | 🚧 Opt-in scaffold — CRD, tier-spec ConfigMaps, `composeHorizontalPluginLayersFromTierSpec`, auth key reconciliation (7.0) |
 | `clawql-release`      | 🚧 Layer 0 MVP — manifest collect/verify/publish, Merkle root, CI artifact (7.0)                                           |
 | `mcp-grpc-transport`  | ✅ gRPC MCP transport                                                                                                      |
-| `mcp-api-adapter`     | ✅ Seven surfaces in-repo — OpenAPI, GraphQL, `/mcp`, gRPC, `/ws`, gen-cli, `/mcp-ui`; QR 8th planned                   |
+| `mcp-api-adapter`     | ✅ Seven surfaces in-repo — OpenAPI, GraphQL, `/mcp`, gRPC, `/ws`, gen-cli, `/mcp-ui`; QR 8th planned                      |
 | `clawql-network`      | ✅ Headscale mesh + Tailcat ephemeral transport, selector, ATR audit (`clawql init --networking`)                          |
-| `clawql-agents`       | ✅ Seven agent adapters + ATR templates + Helm overlays + dry OpenBench runner                                           |
+| `clawql-agents`       | ✅ Seven agent adapters + ATR templates + Helm overlays + dry OpenBench runner                                             |
 | `clawql-audit`        | ✅ Durable WORM trail (SQLite/Postgres/S3); complements in-process MCP `audit` in core                                     |
 | `panguard-mcp-bridge` | ✅ Enterprise MCP proxy bridge                                                                                             |
 

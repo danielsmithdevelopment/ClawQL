@@ -11,9 +11,9 @@
 
 **Planned eighth surface:**
 
-| #   | Surface                                                         | Role                                                               |
-| --- | --------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 8   | [QR stream transport](../streams/clawql-qr-stream-transport.md) | Optical air-gap MCP + Streams event source                         |
+| #   | Surface                                                         | Role                                       |
+| --- | --------------------------------------------------------------- | ------------------------------------------ |
+| 8   | [QR stream transport](../streams/clawql-qr-stream-transport.md) | Optical air-gap MCP + Streams event source |
 
 **Language-agnostic.** The adapter process is TypeScript (`npx mcp-api-adapter`); the upstream may be Python, Go, Rust, or any language that speaks MCP. Users do not write TypeScript to use it — same Node baseline as `npx clawql-mcp`.
 
@@ -44,14 +44,14 @@ Point the adapter at one upstream. It calls `ListTools` at startup, builds the O
 
 MCP standardized how agents discover and call tools. Every other consumer still needs its own on-ramp.
 
-| Consumer                        | Wants                                  |
-| ------------------------------- | -------------------------------------- |
-| Cloudflare Worker               | `POST /memory_recall` with a JSON body |
-| OpenWebUI / model config panels | An OpenAPI URL                         |
-| Enterprise GraphQL stacks       | A typed mutation per tool              |
-| SREs / service mesh             | `grpcurl` on `:50051`                  |
-| Cursor / Claude Desktop         | Streamable HTTP `/mcp`                 |
-| Data / ops scripts              | A thin CLI                             |
+| Consumer                        | Wants                                      |
+| ------------------------------- | ------------------------------------------ |
+| Cloudflare Worker               | `POST /memory_recall` with a JSON body     |
+| OpenWebUI / model config panels | An OpenAPI URL                             |
+| Enterprise GraphQL stacks       | A typed mutation per tool                  |
+| SREs / service mesh             | `grpcurl` on `:50051`                      |
+| Cursor / Claude Desktop         | Streamable HTTP `/mcp`                     |
+| Data / ops scripts              | A thin CLI                                 |
 | Operators / non-technical users | Browser form UI at **`/mcp-ui`** (shipped) |
 
 The usual answer is a custom adapter per consumer — or Python **[mcpo](https://github.com/open-webui/mcpo)** (Open WebUI) for **OpenAPI/REST only**. **`mcp-api-adapter`** is the multi-surface option: OpenAPI + GraphQL + Streamable HTTP `/mcp` + gRPC + WebSocket + gen-cli + `/mcp-ui` from one MCP upstream (QR stream 8th planned). Prefer **mcpo** when Open WebUI users already expect that single REST surface; prefer the adapter when one REST facade is not enough.
@@ -236,24 +236,24 @@ A custom adapter makes more sense when you need a surface this package does not 
 
 ## CLI reference
 
-| Flag / env                                      | Meaning                                           |
-| ----------------------------------------------- | ------------------------------------------------- |
-| `--mcp-url`                                     | Streamable HTTP MCP URL                           |
-| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                              |
-| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                         |
-| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                     |
-| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)                |
-| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)      |
-| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)      |
-| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)             |
-| `--no-mcp`                                      | Disable `/mcp`                                    |
-| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                    |
-| `--no-ws`                                       | Disable WebSocket surface                         |
-| `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` | HTMX playground path (default `/mcp-ui`) |
-| `--no-mcp-ui`                                   | Disable `/mcp-ui`                        |
-| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer`    |
-| `--refresh-ms`                                  | Re-`ListTools` poll interval                      |
-| `--title`                                       | Swagger / GraphiQL / mcp-ui title                 |
+| Flag / env                                      | Meaning                                        |
+| ----------------------------------------------- | ---------------------------------------------- |
+| `--mcp-url`                                     | Streamable HTTP MCP URL                        |
+| `--stdio -- <cmd…>`                             | Spawn MCP over stdio                           |
+| `--grpc-address` / `CLAWQL_MCP_GRPC_ADDR`       | Upstream gRPC `host:port`                      |
+| `--grpc-host` / `--grpc-port`                   | Alternate gRPC address pieces                  |
+| `--listen` / `MCP_API_ADAPTER_LISTEN`           | HTTP bind (default `0.0.0.0:8090`)             |
+| `--grpc-listen` / `MCP_API_ADAPTER_GRPC_LISTEN` | Scaffolded gRPC bind (default `127.0.0.1:0`)   |
+| `--no-grpc`                                     | Do not scaffold local gRPC (stdio/HTTP only)   |
+| `--mcp-path` / `MCP_API_ADAPTER_MCP_PATH`       | Streamable HTTP path (default `/mcp`)          |
+| `--no-mcp`                                      | Disable `/mcp`                                 |
+| `--ws-path` / `MCP_API_ADAPTER_WS_PATH`         | WebSocket path (default `/ws`)                 |
+| `--no-ws`                                       | Disable WebSocket surface                      |
+| `--mcp-ui-path` / `MCP_API_ADAPTER_MCP_UI_PATH` | HTMX playground path (default `/mcp-ui`)       |
+| `--no-mcp-ui`                                   | Disable `/mcp-ui`                              |
+| `--api-key` / `MCP_API_ADAPTER_API_KEY`         | Require `X-API-Key` or `Authorization: Bearer` |
+| `--refresh-ms`                                  | Re-`ListTools` poll interval                   |
+| `--title`                                       | Swagger / GraphiQL / mcp-ui title              |
 
 Legacy env `MCP_OPENAPI_GATEWAY_*` is still accepted. Exactly one upstream mode is required (`--mcp-url`, `--stdio`, or `--grpc-address` / env default).
 

@@ -320,15 +320,15 @@ election:
 
 ## 9. Positioning
 
-| Surface                | Network | Role                                              |
-| ---------------------- | ------- | ------------------------------------------------- |
-| OpenAPI                | Yes     | REST / OpenAPI panels                             |
-| GraphQL                | Yes     | GraphQL stacks                                    |
-| Streamable HTTP `/mcp` | Yes     | IDE clients                                       |
-| gRPC                   | Yes     | Mesh / protobuf                                   |
-| gen-cli                | Build   | Shell / ops                                       |
-| WebSocket              | Yes     | Real-time / DO hibernation                        |
-| `/mcp-ui`              | Yes     | Browser HTMX playground (7th surface)             |
+| Surface                | Network | Role                                                            |
+| ---------------------- | ------- | --------------------------------------------------------------- |
+| OpenAPI                | Yes     | REST / OpenAPI panels                                           |
+| GraphQL                | Yes     | GraphQL stacks                                                  |
+| Streamable HTTP `/mcp` | Yes     | IDE clients                                                     |
+| gRPC                   | Yes     | Mesh / protobuf                                                 |
+| gen-cli                | Build   | Shell / ops                                                     |
+| WebSocket              | Yes     | Real-time / DO hibernation                                      |
+| `/mcp-ui`              | Yes     | Browser HTMX playground (7th surface)                           |
 | **QR stream**          | **No**  | **Air-gap, elections, regulated optical channel (8th planned)** |
 
 Seven surfaces connect over a network today (including [`/mcp-ui`](../mcp/mcp-ui.md)). QR stream connects air-gapped systems to the ClawQL agent surface over a physical channel with per-frame crypto and optional TEE binding.

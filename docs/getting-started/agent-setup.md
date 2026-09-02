@@ -4,13 +4,13 @@ Vault-first onboarding, Cursor iOS Cloud Agents, and the local agent sandbox (ma
 
 ## Pick your path
 
-| You are…                             | Jump to                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                                               |
-| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                         |
-| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                  |
+| You are…                             | Jump to                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Setting up Cursor or Claude Desktop  | [Desktop / stdio](#desktop-stdio-recommended)                                                                    |
+| On Cursor iOS / Cloud Agent          | [Cursor iOS + Cloud Agent](#cursor-ios-cloud-agent)                                                              |
+| Hardening local agent shell on macOS | [Local agent sandbox](#local-agent-sandbox-macos-seatbelt)                                                       |
 | Private mesh / ephemeral transport   | [Networking](#networking-optional) · [clawql-network spec](https://docs.clawql.com/specs/network/clawql-network) |
-| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync) |
+| Sharing vault notes with a team      | [For teams — vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync)                      |
 
 ---
 
