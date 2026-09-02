@@ -123,9 +123,9 @@ On `/plugins*`: `clawql.docs.filter_plugin_registry`, `clawql.docs.open_plugin`.
 
 Cloudflare-style hidden surface unlocked only via tool call:
 
-| Tool | Effect |
-|------|--------|
-| `clawql.docs.reveal_agent_lab` | Opens `#clawql-agent-lab` panel (tool map, prompts, Inspector tips); persists unlock in `localStorage` |
-| `clawql.docs.claim_starter_pack` | Downloads `clawql-starter-mcp.json` + README; returns contents (no secrets) |
+| Tool                             | Effect                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `clawql.docs.reveal_agent_lab`   | Opens `#clawql-agent-lab` panel (tool map, prompts, Inspector tips); persists unlock in `localStorage` |
+| `clawql.docs.claim_starter_pack` | Downloads `clawql-starter-mcp.json` + README; returns contents (no secrets)                            |
 
 UI: `website/src/components/WebMcpAgentLab.tsx`.

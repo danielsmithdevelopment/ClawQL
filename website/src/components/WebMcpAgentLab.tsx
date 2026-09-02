@@ -20,7 +20,10 @@ const TOOL_ROWS: Array<{ name: string; blurb: string }> = [
   { name: 'clawql.docs.get_page_markdown', blurb: 'Agent markdown body' },
   { name: 'clawql.docs.navigate', blurb: 'Same-origin navigation' },
   { name: 'clawql.docs.reveal_agent_lab', blurb: 'Unlock this panel' },
-  { name: 'clawql.docs.claim_starter_pack', blurb: 'Download mcp.json + README' },
+  {
+    name: 'clawql.docs.claim_starter_pack',
+    blurb: 'Download mcp.json + README',
+  },
 ]
 
 /**
@@ -93,7 +96,9 @@ export function WebMcpAgentLab() {
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
         <p>
           This panel stays hidden for normal browsing. An agent calling{' '}
-          <code className="font-mono text-[0.8em]">clawql.docs.reveal_agent_lab</code>{' '}
+          <code className="font-mono text-[0.8em]">
+            clawql.docs.reveal_agent_lab
+          </code>{' '}
           reveals it — same pattern as Cloudflare’s challenge coupon unlock.
         </p>
 

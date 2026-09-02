@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
+import { useAgentLabStore } from '@/lib/webmcp-agent-lab-store'
 import {
   fetchPageMarkdown,
   listDocsHubRoutes,
@@ -12,7 +13,6 @@ import {
   resolvePluginEntry,
   runDocsSearch,
 } from '@/lib/webmcp-docs-actions'
-import { useAgentLabStore } from '@/lib/webmcp-agent-lab-store'
 import { getModelContext } from '@/lib/webmcp-model-context'
 import { claimStarterPackDownloads } from '@/lib/webmcp-starter-pack'
 import { preloadSearchIndex } from '@/mdx/search-runtime'
