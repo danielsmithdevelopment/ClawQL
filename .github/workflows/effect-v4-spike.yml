@@ -1,0 +1,48 @@
+# Non-blocking Effect v4 RC spike signal (#1034). Does not gate merges to main.
+name: Effect v4 spike
+
+on:
+  push:
+    branches:
+      - "cursor/effect-v4-*-611b"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/design/effect-v4-rc-migration-spike.md"
+      - "scripts/effect-v4-spike-*.mjs"
+      - ".github/workflows/effect-v4-spike.yml"
+      - "tsconfig.effect-v4-spike.json"
+  workflow_dispatch:
+
+concurrency:
+  group: effect-v4-spike-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    name: v3 inventory + RC dry-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies (v3 baseline)
+        run: npm ci
+
+      - name: Effect v4 spike inventory (v3)
+        run: npm run effect-v4:inventory
+
+      - name: Effect every package (v3 guard)
+        run: npm run check:effect-every-package
+
+      - name: Try effect@rc on Stage 1 (informational)
+        run: node scripts/effect-v4-spike-try-rc.mjs

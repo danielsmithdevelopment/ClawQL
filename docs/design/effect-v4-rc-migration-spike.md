@@ -74,12 +74,12 @@ flowchart LR
 
 ### Stage 0 — Tooling & branch setup
 
-- [ ] Create long-lived spike branch from `main` (or rebase weekly)
-- [ ] Install RC in spike only: `npm install effect@rc` + `@effect/opentelemetry@rc` + `@effect/platform@rc` (if still required)
-- [ ] Add optional CI workflow `effect-v4-spike.yml` ( **`continue-on-error: true`** on `main` until ready)
-- [ ] Run `@effect/tsgo setup` on spike branch; enable `outdatedApi` + `serviceNotAsClass` warnings
+- [x] Create long-lived spike branch from `main` (or rebase weekly) — `cursor/effect-v4-rc-spike-611b`
+- [ ] Install RC in spike only: `npm run effect-v4:try-rc` (no lockfile commit until Stage 1)
+- [x] Add optional CI workflow `effect-v4-spike.yml` (`continue-on-error: true`; spike branches only)
+- [x] `@effect/language-service` + `tsconfig.effect-v4-spike.json` for Stage 1 scope (`outdatedApi`, `serviceNotAsClass` warnings)
 - [ ] Run [v3→v4 migration skill](https://skills.sh) on **one** package dry-run; capture diff size
-- [ ] Document rollback: revert spike merge / pin `effect@3.22.1` overrides
+- [x] Document rollback: revert spike merge / pin `effect@3.22.1` overrides (see **Rollback** below)
 
 ### Stage 1 — Core + API vertical
 
@@ -156,18 +156,35 @@ flowchart LR
 ## Commands (spike branch)
 
 ```bash
-# Install RC (spike only — do not run on main without team sign-off)
-npm install effect@rc @effect/opentelemetry@rc @effect/platform@rc
+# Baseline inventory (safe on main / v3)
+npm run effect-v4:inventory
 
-# Language service / migration hints
+# RC dry-run against Stage 1 (mutates node_modules only — do not commit lockfile)
+npm run effect-v4:try-rc
+
+# Migration LSP hints (Stage 1 scope)
+npx tsc -p tsconfig.effect-v4-spike.json --noEmit
+
+# Optional full tsgo setup (interactive)
 npx @effect/tsgo setup
 
 # Verify package guard
 npm run check:effect-every-package
 
-# Stage 1 tests
+# Stage 1 tests (after RC migration)
 npm run test -w clawql-core -w clawql-api
 ```
+
+## Rollback
+
+If an RC experiment pollutes `node_modules` or `package-lock.json`:
+
+```bash
+git checkout -- package-lock.json package.json
+npm ci
+```
+
+Production pin remains `effect@3.22.1` in root `package.json` `overrides` until Stage 5 sign-off.
 
 ---
 
@@ -185,4 +202,5 @@ npm run test -w clawql-core -w clawql-api
 
 | Date | Stage | Notes |
 |------|-------|-------|
-| 2026-09-02 | 0 | Tracking doc + issue created; spike branch opened |
+| 2026-09-02 | 0 | Tracking doc + issue #1034; PR #1035 merged |
+| 2026-09-02 | 0 | Stage 0 tooling: inventory/try-rc scripts, non-blocking CI, tsconfig.effect-v4-spike.json |
