@@ -160,6 +160,20 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/learn/nats-idp-pipeline',
+    name: 'NATS IDP pipeline',
+    description:
+      'Async document path: inbox webhooks, JetStream workers, KEDA scale, run_idp_pipeline, and agent bridge.',
+    icon: PackageIcon,
+    pattern: {
+      y: 18,
+      squares: [
+        [0, 2],
+        [1, 0],
+      ],
+    },
+  },
+  {
     href: '/openclaw',
     name: 'OpenClaw with ClawQL',
     description:

@@ -1,0 +1,240 @@
+import { Note } from '@/components/mdx'
+
+# NATS IDP pipeline
+
+**Document JetStream** is how ClawQL runs the IDP path asynchronously: a Nextcloud inbox webhook publishes to NATS, a **worker Deployment** calls **`run_idp_pipeline`**, and optional follow-up (Coneshare viewer, agent bridge, KEDA scale) happens without blocking MCP HTTP. This guide is the dedicated walkthrough — shorter [Streams Lab 2b](/learn/streams-getting-started#lab-2b--idp-document-pipeline-overlay-45-min) rehearses the same loop in the Streams context. {{ className: 'lead' }}
+
+**Canonical references:** [NATS IDP E2E runbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/nats-idp-e2e.md) · [NATS KEDA worker](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/nats-keda-worker.md) · [IDP pipeline runner](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/idp-pipeline-runner.md) · [Document pipeline (Learn)](/learn/document-pipeline) · [NATS JetStream (Helm)](/nats-jetstream)
+
+## Before you start
+
+1. **Know the vendor stack** — this path orchestrates the seven-vendor IDP chain ([Document pipeline](/learn/document-pipeline)); NATS is the **async bus**, not a replacement for Tika/Gotenberg/Stirling.
+2. **Pick your consumer model:**
+
+| Model                                                               | When                                                |
+| ------------------------------------------------------------------- | --------------------------------------------------- |
+| **Embedded consumer** (`nats.appIntegration.embeddedConsumer=true`) | Dev / single-replica MCP; worker runs in-process    |
+| **Dedicated worker** (`nats.worker.enabled=true`)                   | Production; scale workers independently of MCP HTTP |
+| **KEDA** (`nats.keda.enabled=true`)                                 | Burst inbox traffic; scale-to-zero when idle        |
+
+3. **Have a cluster or local NATS** — in-cluster JetStream from `charts/clawql-mcp` (`nats.enabled=true`) or external `nats.url`.
+
+## Architecture
+
+```text
+Nextcloud Flow / curl
+        │
+        ▼
+POST /idp/nextcloud/webhook  ──publish──►  clawql.document.inbox.arrived
+                                                    │
+                                                    ▼
+                              nats-worker (idpPipeline=true)
+                                                    │
+                              run_idp_pipeline (dry_run or live)
+                                                    │
+                              Stirling redact → processed upload → …
+                                                    │
+ConeShare automation ──► POST /idp/coneshare/webhook
+                                                    │
+                              clawql.document.coneshare.viewer
+                                                    │
+                              resume Argo + optional Slack notify
+                                                    │
+                              pipeline.completed / failed  ──►  agent bridge (Lab / Hermes)
+```
+
+- **MCP HTTP** publishes when `nats.appIntegration.publish=true` ([#254](https://github.com/danielsmithdevelopment/ClawQL/issues/254)).
+- **Worker** runs `clawql-automation` NATS CLI — no HTTP listener on the worker pod.
+- **Agent bridge** ([#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)) subscribes to completion events and calls MCP tools (`memory_ingest`, `notify`, `audit`).
+
+## Path A — Helm overlay (lean)
+
+Apply the bundled example values — enables NATS, document consumers, publish, and agent bridge:
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -f ./charts/clawql-mcp/values-nats-idp.example.yaml \
+  --set envFromSecret=clawql-provider-env \
+  -n clawql --create-namespace
+```
+
+| Values key                                 | Effect                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| `nats.enabled` + `nats.worker.idpPipeline` | JetStream + **`clawql-mcp-http-nats-worker`** on `clawql.document.*` |
+| `nats.appIntegration.publish`              | Webhooks publish to JetStream                                        |
+| `nats.agentBridge.enabled`                 | In-cluster MCP follow-up on `pipeline.completed`                     |
+| `enableDocuments` / `enableIdpPipeline`    | IDP routes + `run_idp_pipeline` on MCP HTTP                          |
+
+Full umbrella: `charts/clawql-idp/values-idp-full.yaml` per [clawql-idp-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-idp-helm.md).
+
+### Secret keys (minimum)
+
+| Key                              | Purpose                                         |
+| -------------------------------- | ----------------------------------------------- |
+| `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` | Auth for `POST /idp/nextcloud/webhook`          |
+| `CLAWQL_CONESHARE_WEBHOOK_TOKEN` | Auth for `POST /idp/coneshare/webhook`          |
+| `CLAWQL_IDP_PIPELINE_RUN_TOKEN`  | Worker → `POST /idp/pipeline/run` (recommended) |
+| `CLAWQL_IDP_REDACT_LIST`         | Stirling redaction patterns for live runs       |
+| `NEXTCLOUD_*` / `CONESHARE_*`    | Vendor URLs + credentials (production)          |
+
+## Path B — KEDA autoscaling
+
+When inbox volume spikes, scale **worker replicas** on JetStream consumer lag instead of sizing MCP HTTP for peak document load ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)).
+
+**Prerequisites:**
+
+1. [KEDA](https://keda.sh/docs/latest/deploy/) installed in the cluster.
+2. **In-cluster NATS** with JetStream — KEDA reads the NATS **monitoring** port (`8222`). External-only `nats.url` without a monitoring endpoint is not supported for KEDA today.
+3. At least one consumer purpose: `nats.worker.idpPipeline`, `nats.worker.coneshareFollowup`, and/or `enableWorkflow` (HITL resume).
+
+**Enable on top of Path A:**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -f ./charts/clawql-mcp/values-nats-idp.example.yaml \
+  --set envFromSecret=clawql-provider-env \
+  --set nats.keda.enabled=true \
+  --set nats.keda.bootstrapConsumer=true \
+  -n clawql --create-namespace
+```
+
+| Value                         | Default | Purpose                                                                        |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------ |
+| `nats.keda.enabled`           | `false` | Create KEDA `ScaledObject` on JetStream lag                                    |
+| `nats.keda.lagThreshold`      | `5`     | Target messages per replica                                                    |
+| `nats.keda.minReplicaCount`   | `0`     | Scale to zero when idle                                                        |
+| `nats.keda.maxReplicaCount`   | `10`    | Upper bound                                                                    |
+| `nats.keda.bootstrapConsumer` | `true`  | Helm hook Job pre-creates durables so KEDA can read lag before scale-from-zero |
+| `nats.keda.pollingInterval`   | chart   | How often KEDA checks lag                                                      |
+| `nats.keda.cooldownPeriod`    | chart   | Cooldown after scale events                                                    |
+
+When **`nats.worker.enabled=true`**, the MCP Deployment does **not** set `CLAWQL_NATS_ENABLE_CONSUMER` — only the worker Deployment consumes.
+
+**Verify KEDA:**
+
+```bash
+kubectl -n clawql get deploy,scaledobject | rg nats
+kubectl -n clawql describe scaledobject clawql-mcp-http-nats-worker   # name may match release
+kubectl -n clawql port-forward svc/clawql-mcp-http-nats 8222:8222 &
+curl -s http://127.0.0.1:8222/jsz | head -c 400
+```
+
+Post a dry-run inbox webhook (Path C), then watch worker replicas rise when lag exceeds `lagThreshold`. Add more durables via `nats.keda.extraConsumers` if you add custom subjects.
+
+Deep reference: [nats-keda-worker.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/nats-keda-worker.md).
+
+## Path C — Smoke tests
+
+### Offline (Helm render only)
+
+```bash
+SMOKE_HELM_ONLY=1 bash scripts/dev/smoke-nats-idp-webhooks.sh
+```
+
+Asserts rendered env for IDP + Coneshare consumers and KEDA `ScaledObject` triggers when `nats.keda.enabled=true`.
+
+### Live webhook smoke
+
+```bash
+kubectl -n clawql port-forward svc/clawql-mcp-http 8080:8080 &
+
+export CLAWQL_HTTP_BASE=http://127.0.0.1:8080
+export CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=…   # from Secret
+export CLAWQL_CONESHARE_WEBHOOK_TOKEN=…
+
+bash scripts/dev/smoke-nats-idp-webhooks.sh
+```
+
+```bash
+kubectl -n clawql logs deploy/clawql-mcp-http-nats-worker --tail=80
+```
+
+Inbox payloads use **`dry_run: true`** by default in the smoke script — worker plans hops without calling vendors. Expect **`clawql.document.inbox.arrived`** consumption and terminal **`pipeline.completed`** when publish is on.
+
+### Live pipeline (non-dry-run)
+
+1. Place a PDF at Nextcloud `IDP/inbox/…` (or use [lending W-2](https://github.com/danielsmithdevelopment/ClawQL/blob/main/deployment/samples/lending-w2/README.md) fixtures).
+2. POST webhook **without** `dry_run` (or `dry_run: false`) with `document_path` + `redact_list`.
+3. Confirm Stirling hop and processed file at `processed_path`.
+4. Optional: Coneshare viewer webhook → **`clawql.document.coneshare.viewer`** → resume + Slack.
+
+## Path D — Agent bridge (Hermes / Pi)
+
+Terminal agents should not invent a second queue — subscribe to JetStream completion events and call the same MCP HTTP surface:
+
+```bash
+export CLAWQL_NATS_URL=nats://127.0.0.1:4222
+export CLAWQL_NATS_JETSTREAM=1
+export CLAWQL_NATS_ENABLE_CONSUMER=1
+export CLAWQL_NATS_AGENT_BRIDGE=1
+export CLAWQL_MCP_HTTP_URL=http://127.0.0.1:8080/mcp
+
+npm run nats:agent-bridge
+```
+
+Durable consumer: **`clawql-idp-agent-bridge`** (override: `CLAWQL_NATS_AGENT_BRIDGE_DURABLE`). Helm: `nats.agentBridge.enabled=true` in the IDP overlay.
+
+Sample pack: [deployment/samples/idp-nats-agent](https://github.com/danielsmithdevelopment/ClawQL/blob/main/deployment/samples/idp-nats-agent/README.md) · Contract: [clawql-agent-idp-nats.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/clawql-agent-idp-nats.md).
+
+## Subjects and durables
+
+| Subject                              | Durable                         | Handler                             |
+| ------------------------------------ | ------------------------------- | ----------------------------------- |
+| `clawql.document.inbox.arrived`      | `clawql-idp-pipeline`           | `run_idp_pipeline`                  |
+| `clawql.document.pipeline.requested` | `clawql-idp-pipeline-requested` | `run_idp_pipeline`                  |
+| `clawql.document.coneshare.viewer`   | `clawql-coneshare-followup`     | resume + Slack                      |
+| `clawql.workflow.hitl.completed`     | `clawql-hitl-resume`            | Argo resume (when `enableWorkflow`) |
+
+Lifecycle (publish-only): `clawql.document.pipeline.hop|completed|failed`.
+
+## Local / non-Helm
+
+```bash
+# Terminal 1 — MCP with publish + webhooks
+export CLAWQL_NATS_URL=nats://localhost:4222
+export CLAWQL_NATS_JETSTREAM=1
+export CLAWQL_NATS_ENABLE_PUBLISH=1
+export CLAWQL_ENABLE_IDP_PIPELINE=1
+export CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=dev-token
+PORT=8080 npx -p clawql-mcp clawql-mcp-http
+
+# Terminal 2 — standalone worker
+export CLAWQL_NATS_ENABLE_CONSUMER=1
+export CLAWQL_NATS_CONSUMER_IDP_PIPELINE=1
+export CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP=1
+export CLAWQL_MCP_INTERNAL_URL=http://localhost:8080
+export CLAWQL_IDP_PIPELINE_RUN_TOKEN=dev-token
+npm run nats:worker
+```
+
+Bootstrap durables before KEDA or first consume:
+
+```bash
+export CLAWQL_NATS_CONSUMER_IDP_PIPELINE=1
+export CLAWQL_NATS_CONSUMER_CONESHARE_FOLLOWUP=1
+npm run nats:bootstrap-consumer
+```
+
+## Troubleshooting
+
+| Symptom                           | Check                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------- |
+| Webhook 401                       | `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` / Bearer header                                 |
+| Worker idle, no consume           | `nats.worker.enabled`; worker logs; subject spelling                             |
+| KEDA never scales                 | `nats.keda.enabled`; bootstrap Job completed; monitor `8222` reachable from KEDA |
+| KEDA scales but jobs fail         | `CLAWQL_MCP_INTERNAL_URL` / `CLAWQL_IDP_PIPELINE_RUN_TOKEN` on worker            |
+| `pipeline.completed` but no vault | Agent bridge env; `CLAWQL_MCP_HTTP_URL`; bridge logs                             |
+
+## What to read next
+
+- [Streams getting started](/learn/streams-getting-started) — Labs 1–4 in the broader Streams narrative
+- [Document pipeline](/learn/document-pipeline) — vendor composition inside `run_idp_pipeline`
+- [NATS JetStream](/nats-jetstream) — chart values, subject taxonomy, monitor port
+- [Schedule & notify](/learn/schedule-notify-workflows) — Slack on pipeline failure via `notify`
+
+<Note>
+  KEDA requires in-cluster NATS monitoring today. External shared clusters work
+  for publish/consume but not for lag-based autoscaling until
+  `nats.keda.monitoringEndpoint` override ships — see [nats-keda-worker.md §
+  Limits](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/nats-keda-worker.md#limits-v1).
+</Note>

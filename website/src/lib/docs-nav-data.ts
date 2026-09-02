@@ -47,6 +47,7 @@ const LEARN_MODULE_HREFS = [
   '/learn/effect-ts',
   '/learn/ouroboros-tools',
   '/learn/streams-getting-started',
+  '/learn/nats-idp-pipeline',
   '/learn/schedule-notify-workflows',
   '/learn/cache-handoff-between-chats',
   '/learn/audit-tool-and-observability',

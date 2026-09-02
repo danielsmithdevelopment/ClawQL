@@ -177,7 +177,7 @@ Use stable subject prefixes from the chart ([NATS JetStream § taxonomy](/nats-j
 
 #### Lab 2b — IDP document pipeline overlay (~45 min)
 
-**Goal:** Run the production-shaped **document JetStream** path — inbox webhook → NATS worker → `run_idp_pipeline` — the same event loop Streams generalizes beyond IDP. This overlay enables **`nats-worker`**, document consumers, and the in-cluster **agent bridge** (Lab 3) in one Helm apply.
+**Goal:** Run the production-shaped **document JetStream** path — inbox webhook → NATS worker → `run_idp_pipeline`. Full walkthrough (KEDA, secrets, agent bridge, troubleshooting): **[NATS IDP pipeline (Learn)](/learn/nats-idp-pipeline)**.
 
 **1 — Apply the NATS IDP values overlay**
 
@@ -253,6 +253,21 @@ POST /idp/nextcloud/webhook  →  clawql.document.inbox.arrived
 ```
 
 Optional Coneshare viewer follow-up publishes **`clawql.document.coneshare.viewer`** and can resume Argo + Slack notify. Sample pack: [lending W-2](https://github.com/danielsmithdevelopment/ClawQL/blob/main/deployment/samples/lending-w2/README.md).
+
+**6 — KEDA autoscaling (optional)**
+
+When inbox volume bursts, enable lag-based worker scale ([#257](https://github.com/danielsmithdevelopment/ClawQL/issues/257)):
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -f ./charts/clawql-mcp/values-nats-idp.example.yaml \
+  --set envFromSecret=clawql-provider-env \
+  --set nats.keda.enabled=true \
+  --set nats.keda.bootstrapConsumer=true \
+  -n clawql
+```
+
+Requires [KEDA](https://keda.sh/docs/latest/deploy/) and in-cluster NATS monitoring (`8222`). Verify: `kubectl -n clawql get scaledobject | rg nats`. Full tables and limits: [NATS IDP pipeline § KEDA](/learn/nats-idp-pipeline#path-b--keda-autoscaling).
 
 **Success:** Webhook POST → JetStream subject → worker log line → (dry-run) **`pipeline.completed`**. Continue to **Lab 3** for Hermes/Pi-style MCP follow-up on completion events.
 
