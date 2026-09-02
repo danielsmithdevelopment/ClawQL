@@ -19,3 +19,9 @@ export * from "./collaboration/index.js";
 export * from "./access/x402.js";
 export * from "./crypto/encrypt.js";
 export * from "./crypto/lit.js";
+export {
+  ReleaseManifestService,
+  ReleaseManifestError,
+  ReleaseManifestServiceLive,
+  runReleaseManifestEffect,
+} from "./effect/release-manifest-service.js";

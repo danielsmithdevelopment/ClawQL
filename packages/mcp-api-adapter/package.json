@@ -48,6 +48,7 @@
     "@grpc/grpc-js": "^1.14.4",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "busboy": "^1.6.0",
+    "effect": "^3.21.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "graphql": "^16.14.0",

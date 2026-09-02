@@ -49,3 +49,9 @@ export {
   MCP_CLIENT_INFO_METADATA_KEY,
   checkMcpProtocolVersion,
 } from "./grpc-mcp-metadata.js";
+export {
+  GrpcMcpTransportService,
+  GrpcMcpTransportError,
+  GrpcMcpTransportServiceLive,
+  runGrpcMcpTransportEffect,
+} from "./effect/grpc-mcp-transport-service.js";

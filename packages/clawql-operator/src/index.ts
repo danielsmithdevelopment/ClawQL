@@ -21,3 +21,9 @@ export {
   type AuthExpectationsPayload,
 } from "./reconcile/auth-expectations.js";
 export { runOperator, type RunOperatorOptions } from "./controller/run-operator.js";
+export {
+  OperatorReconcileService,
+  OperatorReconcileError,
+  OperatorReconcileServiceLive,
+  runOperatorReconcileEffect,
+} from "./effect/operator-reconcile-service.js";

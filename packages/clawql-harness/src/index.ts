@@ -37,3 +37,8 @@ export {
   type LoopState,
   type ModelConfig,
 } from "./types.js";
+export {
+  HarnessToolService,
+  HarnessToolServiceLive,
+  runHarnessToolEffect,
+} from "./effect/harness-tool-service.js";

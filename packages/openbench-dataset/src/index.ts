@@ -53,3 +53,9 @@ export type {
   RtpEvaluatorTier,
   ProjectToRtpInput,
 } from "./rtp/index.js";
+export {
+  OpenBenchDatasetService,
+  OpenBenchDatasetError,
+  OpenBenchDatasetServiceLive,
+  runOpenBenchDatasetEffect,
+} from "./effect/openbench-dataset-service.js";

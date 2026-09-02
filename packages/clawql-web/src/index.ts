@@ -45,3 +45,9 @@ export {
   type RawFetchResult,
 } from "./providers/browser/raw-fetch.js";
 export { createWebPlugin, makeWebLayer, WEB_PLUGIN_ID } from "./plugin/index.js";
+export {
+  WebAccessService,
+  WebAccessError,
+  WebAccessServiceLive,
+  runWebAccessEffect,
+} from "./effect/web-access-service.js";

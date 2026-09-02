@@ -2,6 +2,15 @@
 
 ClawQL production code that **can** be Effect-based **must** be Effect-based. There is no “pure sync is fine” exception and no standing exception for Promise domain APIs.
 
+## Every workspace package
+
+Every `packages/*` workspace **must**:
+
+- declare `effect` in `dependencies` or `peerDependencies`
+- ship at least one `Context.Tag` + `Layer` service under `src/`
+
+CI enforces this via `npm run check:effect-every-package`. New packages without Effect fail the build.
+
 ## Must be Effect
 
 - Domain IO (fs, net, DB, crypto that participates in workflows)

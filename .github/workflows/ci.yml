@@ -63,6 +63,9 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+      - name: Effect every package
+        run: npm run check:effect-every-package
+
   # Same-repo PRs only: applies Prettier and pushes one commit when the lint job failed.
   # Loop prevention: (1) runs only when `lint` failed; after a successful fix the next run passes lint.
   # (2) Skips if the PR head is already an autofix commit (`[prettier-autofix]`).

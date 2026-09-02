@@ -19,3 +19,9 @@ export {
   type HashChainVerifyIssue,
   type HashChainVerifyResult,
 } from "./hash-chain.js";
+export {
+  HashChainService,
+  HashChainServiceLive,
+  runHashChainEffect,
+} from "./effect/hash-chain-service.js";
+export { MerkleService, MerkleServiceLive, runMerkleEffect } from "./effect/merkle-service.js";

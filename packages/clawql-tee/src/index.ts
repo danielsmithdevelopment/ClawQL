@@ -21,3 +21,8 @@ export {
   createIdJagSignerFromPlatform,
   createSimulatedIdJagSigner,
 } from "./id-jag.js";
+export {
+  TeePlatformService,
+  TeePlatformServiceLive,
+  runTeePlatformEffect,
+} from "./effect/tee-platform-service.js";
