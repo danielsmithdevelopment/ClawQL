@@ -149,7 +149,7 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     href: '/learn/streams-getting-started',
     name: 'Streams getting started',
     description:
-      'Hands-on labs: schedule synthetics, NATS JetStream, agent bridge — plus reading order through DO, celld, cellrt, and TEE.',
+      'Hands-on labs: schedule, NATS JetStream, IDP pipeline overlay, agent bridge — plus DO/celld/cellrt/TEE reading order.',
     icon: BoltIcon,
     pattern: {
       y: 28,

@@ -173,11 +173,88 @@ nats pub clawql.workflow.lab.hello '{"source":"streams-lab","ts":"'"$(date -Isec
 
 Use stable subject prefixes from the chart ([NATS JetStream § taxonomy](/nats-jetstream#subject-taxonomy-suggestion)): `clawql.workflow.*`, `clawql.agent.*`, `clawql.document.*`.
 
-**4 — Full IDP pipeline path (optional)**
-
-For a production-shaped document inbox → worker loop, apply [`values-nats-idp.example.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-nats-idp.example.yaml) and follow [NATS IDP E2E runbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/nats-idp-e2e.md).
-
 **Success:** NATS monitor **`/jsz`** shows JetStream enabled; **`clawql-mcp-http`** receives **`CLAWQL_NATS_URL`**. Streams cells on this path will subscribe to subjects the way Lab 3's bridge consumes **`pipeline.completed`**.
+
+#### Lab 2b — IDP document pipeline overlay (~45 min)
+
+**Goal:** Run the production-shaped **document JetStream** path — inbox webhook → NATS worker → `run_idp_pipeline` — the same event loop Streams generalizes beyond IDP. This overlay enables **`nats-worker`**, document consumers, and the in-cluster **agent bridge** (Lab 3) in one Helm apply.
+
+**1 — Apply the NATS IDP values overlay**
+
+```bash
+helm upgrade --install clawql ./charts/clawql-mcp \
+  -f ./charts/clawql-mcp/values-nats-idp.example.yaml \
+  --set envFromSecret=clawql-provider-env \
+  -n clawql --create-namespace
+```
+
+The overlay turns on:
+
+| Values key                                 | Effect                                                                                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `nats.enabled` + `nats.worker.idpPipeline` | JetStream + **`clawql-mcp-http-nats-worker`** consumes `clawql.document.*`                                 |
+| `nats.appIntegration.publish`              | MCP HTTP publishes inbox/viewer events to NATS                                                             |
+| `nats.agentBridge.enabled`                 | In-cluster bridge to MCP tools (pairs with [Lab 3](#lab-3--nats--mcp-agent-bridge-async-follow-up-20-min)) |
+| `enableDocuments` / `enableIdpPipeline`    | Document pipeline + IDP webhook routes on MCP HTTP                                                         |
+
+Full file: [`values-nats-idp.example.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-nats-idp.example.yaml).
+
+**2 — Secret keys (minimum for webhook smoke)**
+
+Create **`clawql-provider-env`** (or extend your existing provider secret) with at least:
+
+| Key                              | Purpose                                         |
+| -------------------------------- | ----------------------------------------------- |
+| `CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN` | Auth for `POST /idp/nextcloud/webhook`          |
+| `CLAWQL_CONESHARE_WEBHOOK_TOKEN` | Auth for `POST /idp/coneshare/webhook`          |
+| `CLAWQL_IDP_PIPELINE_RUN_TOKEN`  | Worker → `POST /idp/pipeline/run` (recommended) |
+| `CLAWQL_IDP_REDACT_LIST`         | Stirling redaction patterns for live runs       |
+
+Production also needs `NEXTCLOUD_*` / `CONESHARE_*` vendor URLs and credentials — see [NATS IDP E2E runbook](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/runbooks/nats-idp-e2e.md).
+
+**3 — Offline Helm smoke (no live cluster HTTP)**
+
+```bash
+SMOKE_HELM_ONLY=1 bash scripts/dev/smoke-nats-idp-webhooks.sh
+```
+
+Asserts rendered env for IDP + Coneshare consumers and (when KEDA is enabled) scaled-object triggers.
+
+**4 — Live webhook smoke**
+
+```bash
+kubectl -n clawql port-forward svc/clawql-mcp-http 8080:8080 &
+
+export CLAWQL_HTTP_BASE=http://127.0.0.1:8080
+export CLAWQL_NEXTCLOUD_WEBHOOK_TOKEN=…   # from Secret
+export CLAWQL_CONESHARE_WEBHOOK_TOKEN=…
+
+bash scripts/dev/smoke-nats-idp-webhooks.sh
+```
+
+Check the worker consumed **`clawql.document.inbox.arrived`**:
+
+```bash
+kubectl -n clawql logs deploy/clawql-mcp-http-nats-worker --tail=80
+```
+
+Inbox payloads in the smoke script use **`dry_run: true`** — the worker plans hops without calling vendors. Expect a terminal **`pipeline.completed`** (or hop publish) when NATS publish is on.
+
+**5 — Architecture reference**
+
+```text
+POST /idp/nextcloud/webhook  →  clawql.document.inbox.arrived
+                                        ↓
+                         nats-worker (idpPipeline=true)
+                                        ↓
+                         run_idp_pipeline (dry_run or live)
+                                        ↓
+                         Stirling redact → processed upload → …
+```
+
+Optional Coneshare viewer follow-up publishes **`clawql.document.coneshare.viewer`** and can resume Argo + Slack notify. Sample pack: [lending W-2](https://github.com/danielsmithdevelopment/ClawQL/blob/main/deployment/samples/lending-w2/README.md).
+
+**Success:** Webhook POST → JetStream subject → worker log line → (dry-run) **`pipeline.completed`**. Continue to **Lab 3** for Hermes/Pi-style MCP follow-up on completion events.
 
 ### Lab 3 — NATS → MCP agent bridge (async follow-up, ~20 min)
 

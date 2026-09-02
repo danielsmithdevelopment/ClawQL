@@ -30,8 +30,23 @@ export default function ClawqlCelldPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Self-hosted DO runtime — not yet shipped.</strong> Companion
-          to{' '}
+          <strong>Self-hosted DO runtime — not yet shipped.</strong> Generated
+          from{' '}
+          <a
+            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            docs/streams/clawql-celld.md
+          </a>
+          ,{' '}
+          <a
+            href="/learn/streams-getting-started"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>{' '}
+          (§3 celld reading order; Labs 1–3 for schedule + NATS today).
+          Companion to{' '}
           <a
             href="/streams/clawql-streams"
             className="font-medium text-inherit underline underline-offset-2"
@@ -58,13 +73,6 @@ export default function ClawqlCelldPage() {
             className="font-medium text-inherit underline underline-offset-2"
           >
             celld.dev/docs
-          </a>
-          . Source:{' '}
-          <a
-            href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md"
-            className="font-medium text-inherit underline underline-offset-2"
-          >
-            docs/streams/clawql-celld.md
           </a>
           .
         </Note>

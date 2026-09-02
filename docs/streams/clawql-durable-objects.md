@@ -1,5 +1,7 @@
 # ClawQL Durable Objects — Implementation Spec v0.1.1
 
+**Hands-on walkthrough:** [Streams getting started (Learn)](https://docs.clawql.com/learn/streams-getting-started) — **§2** Durable Objects reading order; Labs 1–3 for event backbone today.
+
 **Status:** Draft · August 2026 · v0.1.1 (companion to [Streams v0.2](./clawql-streams.md))  
 **Package surface:** Cloudflare Durable Objects (hosted) · [celld](https://celld.dev/) (self-hosted Workers API) · [`clawql-cellrt`](./clawql-cellrt.md) (ClawQL-owned, planned) · Kubernetes HPA (regulated)  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) · [`clawql-celld.md`](./clawql-celld.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [`clawql-inference`](../inference/clawql-inference.md) · OpenBenchTrace / RTP  
