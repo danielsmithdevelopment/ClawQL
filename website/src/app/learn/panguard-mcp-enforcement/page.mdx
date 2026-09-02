@@ -1,0 +1,160 @@
+import { Note } from '@/components/mdx'
+
+# Panguard MCP enforcement
+
+Enterprise ClawQL deployments need a **single chokepoint** that validates **JWT ATR** (Access–Task–Resource) claims **before** any MCP tool runs. This guide walks three enforcement paths — local stdio, in-process hooks, and Kubernetes with the **clawql-panguard-mcp-bridge** — and how they connect to [Defense in depth](/security/defense-in-depth). {{ className: 'lead' }}
+
+**Reference:** [Panguard MCP proxy plugin](/plugins/panguard-proxy) · [MCP proxy JWT ATR (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md) · Issue [#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)
+
+## Mental model
+
+```
+Agent → (JWT with ATR claims) → chokepoint → ClawQL MCP → search/execute → upstream APIs
+```
+
+- The agent **cannot widen** its own scopes — only the IdP / gateway issues or refreshes tokens.
+- Denials should be **structured** (WORM escalation), not silent drops — see [security ontology loop](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/security-ontology-knowledge-loop.md).
+- **`cache`** is scratch state between chats; it is **not** a substitute for ATR enforcement.
+
+## Before you start
+
+1. **8.0+ default:** enforcement providers are **opt-in**. A bare `clawql-mcp` boot emits a **SECURITY WARNING** when no enforcement is active (silence only with `CLAWQL_ALLOW_NO_ENFORCEMENT=1` if intentional).
+2. **Pick transport:**
+   - **stdio** — Cursor / Claude Desktop local subprocess
+   - **Streamable HTTP `/mcp`** — remote agents, K8s ingress
+   - **gRPC MCP** — high-throughput mesh clients (`50051`)
+3. **Read the curriculum** — [MCP runtime enforcement (Part 3)](/security/best-practices/mcp-runtime-enforcement-panguard-atr) pairs with this walkthrough.
+
+## Path A — Local stdio (works today)
+
+Wrap ClawQL with upstream **Panguard** on the stdio path:
+
+```bash
+npx panguard-mcp-proxy -- npx clawql-mcp
+```
+
+Or point your MCP client at that command chain. Panguard spawns ClawQL as a subprocess and enforces ATR on every tool call over stdio.
+
+**When to use:** developer laptops, air-gapped evals, CI smoke where HTTP ingress is not in play.
+
+## Path B — In-process `PanguardProxyPlugin`
+
+Run enforcement **inside** `clawql-mcp` without an external proxy process:
+
+```bash
+export CLAWQL_PANGUARD_PROXY_PLUGIN=1
+export CLAWQL_PANGUARD_IN_PROCESS=1
+npx clawql-mcp
+```
+
+| Env                            | Default | Effect                                       |
+| ------------------------------ | ------- | -------------------------------------------- |
+| `CLAWQL_PANGUARD_PROXY_PLUGIN` | off     | Register hooks-only proxy plugin             |
+| `CLAWQL_PANGUARD_IN_PROCESS`   | off     | Active blocking `tool` / `pre-execute` path  |
+| `CLAWQL_ALLOW_NO_ENFORCEMENT`  | off     | Silence boot warning when nothing is enabled |
+
+The plugin **does not add MCP tools** — it gates existing ones via `McpProxyPipeline.fireHook` (ATR never-loosen).
+
+**Verify:** call a tool your policy should deny; expect a structured block **before** `execute` reaches upstream APIs. Check [Audit Trail](/audit) / WORM for escalation events if configured.
+
+## Path C — Kubernetes (Helm `mcpProxy`)
+
+North–south order on cluster:
+
+1. **Istio Gateway** — TLS, optional JWT forwarding
+2. **`mcpProxy` Service** — Panguard bridge or nginx stand-in
+3. **`clawql-mcp-http`** — Streamable HTTP `/mcp` (+ optional gRPC `50051`)
+
+### C1 — Topology smoke (no ATR on payloads)
+
+Prove **Gateway → proxy → ClawQL** ordering and HA:
+
+```yaml
+# charts/clawql-mcp values snippet
+mcpProxy:
+  enabled: true
+  mode: nginx
+  replicaCount: 2
+```
+
+Point Istio backends at **`clawql-mcp-http-proxy`** when applying the [Docker Desktop Istio helper](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/istio/docker-desktop/clawql-mcp-gateway-and-virtualservice.yaml).
+
+### C2 — Production bridge image
+
+Use the reference **`clawql-panguard-mcp-bridge`** image (HTTP + Session gRPC):
+
+```yaml
+mcpProxy:
+  enabled: true
+  mode: custom
+  replicaCount: 2
+  custom:
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge
+      tag: nightly
+    extraEnv:
+      - name: CLAWQL_BRIDGE_UPSTREAM_URL
+        value: 'http://clawql-mcp-http.clawql.svc.cluster.local:8080/mcp'
+      - name: ENABLE_GRPC
+        value: '1'
+```
+
+Copy the full overlay: [`values-mcp-proxy-panguard-bridge.example.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml). Details: [Panguard on Kubernetes (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/integrations/panguard-kubernetes.md).
+
+### C3 — JWT gate on the bridge (second line)
+
+When the mesh does not already validate every claim:
+
+| Variable                             | Purpose                                              |
+| ------------------------------------ | ---------------------------------------------------- |
+| `CLAWQL_MCP_JWT_ENABLED`             | `1` — verify Bearer on HTTP `/mcp` and gRPC MCP RPCs |
+| `CLAWQL_MCP_JWT_JWKS_URL`            | OIDC JWKS (RS256)                                    |
+| `CLAWQL_MCP_JWT_ATR_CLAIM`           | Claim holding ATR object/array (default `atr`)       |
+| `CLAWQL_MCP_JWT_ISSUER` / `AUDIENCE` | Optional hardening                                   |
+
+**HTTP denial:** `401` with JSON-RPC `-32001`. **gRPC denial:** `UNAUTHENTICATED`. `/healthz` and gRPC health remain exempt.
+
+Wire these via `mcpProxy.custom.extraEnv` alongside your IdP values.
+
+## Pair with payments and audit
+
+Defense-in-depth stacks usually order:
+
+1. **Ingress JWT / ATR** (this guide)
+2. **Panguard pre-execute** (tool allowlists, OWASP Agentic patterns)
+3. **x402 / plan entitlements** on inference ([Payments walkthrough](/learn/payments-and-entitlements))
+4. **WORM audit** on allow and deny ([Audit Trail](/audit))
+
+Paid or sensitive tools should fail **at the chokepoint** when scope is missing — not mid-flight inside `execute`.
+
+## Operations checklist
+
+- [ ] Scale `mcpProxy.replicaCount` ≥ 2 — losing all proxy pods **denies** MCP
+- [ ] Load-test stacked intercept layers — budget **&lt;50ms** per hop; latency **compounds**
+- [ ] Agents surface proxy errors to humans ([`AGENTS.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/AGENTS.md) behavior)
+- [ ] Enable `mcpProxy.slo.prometheusRule` when Istio metrics are available
+- [ ] Extend Kyverno `imageReferences` if you run unsigned custom gateway images
+
+## Troubleshooting
+
+| Symptom                         | Likely cause                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| Boot **SECURITY WARNING**       | No enforcement plugin — set Path B env or external proxy                            |
+| **401 / -32001** on HTTP MCP    | JWT missing, wrong `iss`/`aud`, or ATR claim not an object                          |
+| Tools run but should be blocked | nginx-only `mcpProxy` mode — no payload policy; switch to `custom` bridge or Path B |
+| gRPC works, HTTP fails          | Split backend hosts in Istio — align `CLAWQL_ISTIO_MCP_*` env                       |
+| High p99 latency                | Too many intercept layers — reduce hops or scale proxy                              |
+
+## What to read next
+
+- [Defense in depth](/security/defense-in-depth) — full stack narrative
+- [Security best practices](/security/best-practices) — 32-module curriculum
+- [Custom sources](/getting-started/custom-sources) — registering third-party MCP with Seatbelt / policy
+- [Payments & entitlements](/learn/payments-and-entitlements) — gate spend after authorization
+
+<Note>
+  Upstream **`@panguard-ai/panguard-mcp-proxy`** npm is **stdio ↔ stdio** only.
+  HTTP/gRPC termination requires the **ClawQL bridge** image or your own gateway
+  — see [HTTP/gRPC bridge
+  doc](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/integrations/panguard-http-grpc-bridge.md).
+</Note>

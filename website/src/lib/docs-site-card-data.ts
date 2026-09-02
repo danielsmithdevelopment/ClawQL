@@ -75,6 +75,20 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
     },
   },
   {
+    href: '/learn/payments-and-entitlements',
+    name: 'Payments & entitlements',
+    description:
+      'Plan tiers, Stripe + x402 gates, WORM payment audit, and inference quota enforcement end-to-end.',
+    icon: TagIcon,
+    pattern: {
+      y: 24,
+      squares: [
+        [0, 0],
+        [1, 1],
+      ],
+    },
+  },
+  {
     href: '/learn/sandbox-exec',
     name: 'Sandbox exec',
     description:
@@ -182,6 +196,20 @@ export const learnModuleSiteCards: Array<ReferenceCard> = [
       squares: [
         [0, 0],
         [1, 2],
+      ],
+    },
+  },
+  {
+    href: '/learn/panguard-mcp-enforcement',
+    name: 'Panguard MCP enforcement',
+    description:
+      'JWT ATR chokepoints: stdio wrap, in-process proxy plugin, Helm mcpProxy, and the MCP bridge image.',
+    icon: ShapesIcon,
+    pattern: {
+      y: 26,
+      squares: [
+        [0, 2],
+        [2, 0],
       ],
     },
   },

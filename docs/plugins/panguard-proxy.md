@@ -11,6 +11,8 @@ next: memory
 
 # Panguard MCP proxy
 
+**Hands-on walkthrough:** [Panguard MCP enforcement (Learn)](https://docs.clawql.com/learn/panguard-mcp-enforcement) — stdio wrap, in-process hooks, Helm `mcpProxy`, and JWT bridge env.
+
 **Plugin ID:** `panguard-mcp-proxy`  
 **Shape:** hooks-only `ProviderPlugin` (does not register MCP tools)  
 **Package:** `clawql-api` — `createPanguardProxyPlugin`
@@ -41,6 +43,7 @@ The Panguard proxy plugin registers a blocking **`tool` / `pre-execute`** hook f
 
 ## Learn more
 
+- [Panguard MCP enforcement (Learn)](https://docs.clawql.com/learn/panguard-mcp-enforcement)
 - [Defense in depth (site)](/security/defense-in-depth)
 - [MCP proxy JWT ATR (repo)](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md)
 - [Plugin registry](/plugins)

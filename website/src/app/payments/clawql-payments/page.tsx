@@ -47,6 +47,13 @@ export default function ClawqlPaymentsPage() {
           </a>
           ,{' '}
           <a
+            href="/learn/payments-and-entitlements"
+            className="font-medium text-inherit underline underline-offset-2"
+          >
+            Learn walkthrough
+          </a>
+          ,{' '}
+          <a
             href="/inference/clawql-inference"
             className="font-medium text-inherit underline underline-offset-2"
           >
