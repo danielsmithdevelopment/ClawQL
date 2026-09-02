@@ -200,7 +200,13 @@ Production pin remains `effect@3.22.1` in root `package.json` `overrides` until 
 
 ## Progress log
 
+<<<<<<< HEAD
 | Date       | Stage | Notes                                                                                     |
 | ---------- | ----- | ----------------------------------------------------------------------------------------- |
 | 2026-09-02 | 0     | Tracking doc + issue #1034; PR #1035 merged                                               |
 | 2026-09-02 | 0     | Stage 0 tooling: inventory/try-rc scripts, non-blocking CI, tsconfig.effect-v4-spike.json |
+=======
+| Date       | Stage | Notes                                             |
+| ---------- | ----- | ------------------------------------------------- |
+| 2026-09-02 | 0     | Tracking doc + issue created; spike branch opened |
+>>>>>>> origin/main
