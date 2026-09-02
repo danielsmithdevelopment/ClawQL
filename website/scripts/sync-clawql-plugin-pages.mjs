@@ -14,7 +14,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { appendPassthroughWrapper } from './lib/rewrite-doc-links.mjs'
+import { prepareMdxBody } from './lib/rewrite-doc-links.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const websiteRoot = path.resolve(__dirname, '..')
@@ -22,7 +22,6 @@ const dstRoot = path.join(websiteRoot, 'src/generated/clawql-plugins')
 const bodiesDir = path.join(dstRoot, 'bodies')
 const registryPath = path.join(dstRoot, 'registry.tsx')
 const pluginsRelative = path.join('docs', 'plugins')
-const GH_MAIN = 'https://github.com/danielsmithdevelopment/ClawQL/blob/main'
 
 function findRepoRootWithPlugins() {
   let dir = websiteRoot
@@ -36,46 +35,6 @@ function findRepoRootWithPlugins() {
     dir = parent
   }
   return null
-}
-
-function escapeLessThanBeforeDigit(body) {
-  return body.replace(/<(?=\d)/g, '&lt;')
-}
-
-function escapeMdxCurlyOutsideFences(body) {
-  const lines = body.split('\n')
-  let inFence = false
-  return lines
-    .map((line) => {
-      const fence = line.match(/^(`{3,}|~{3,})(.*)$/)
-      if (fence) {
-        if (!inFence) inFence = true
-        else if (!fence[2].trim()) inFence = false
-        return line
-      }
-      if (inFence) return line
-      return line
-        .replace(/\\/g, '\\\\')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-    })
-    .join('\n')
-}
-
-function rewriteLinksForSite(body) {
-  return escapeMdxCurlyOutsideFences(
-    escapeLessThanBeforeDigit(
-      body
-        .replaceAll('](../reference/clawql-plugin-registry.md)', '](/plugins#registry)')
-        .replaceAll('](../design/clawql-plugin-model.md)', '](/plugins#plugin-model)')
-        .replaceAll('](../mcp/mcp-tools.md)', '](/tools)')
-        .replaceAll('](../getting-started/', '](/getting-started/')
-        .replace(/]\(\/getting-started\/([^)#]+)\.md/g, '](/getting-started/$1')
-        .replace(/\]\(([a-z0-9-]+)\.md\)/g, '](/plugins/$1)')
-        .replaceAll('](../../docs/', `](${GH_MAIN}/docs/`)
-        .replaceAll('](../', `](${GH_MAIN}/docs/plugins/`),
-    ),
-  )
 }
 
 function splitFrontmatter(raw) {
@@ -102,6 +61,11 @@ function splitFrontmatter(raw) {
     fm[m[1]] = v
   }
   return { fm, body }
+}
+
+/** Sibling plugin pages: `foo.md` → `/plugins/foo` before prepareMdxBody. */
+function rewriteSiblingPluginLinks(body) {
+  return body.replace(/\]\(([a-z0-9-]+)\.md(#[^)]*)?\)/g, '](/plugins/$1$2)')
 }
 
 const repoRoot = findRepoRootWithPlugins()
@@ -140,10 +104,22 @@ for (const file of names) {
   const order = Number(fm.order) || 99
   const prev = fm.prev?.trim() || ''
   const next = fm.next?.trim() || ''
+  const srcRelative = path.join('docs', 'plugins', file).replace(/\\/g, '/')
   plugins.push({
     slug,
-    fm: { title, description, status, package: pkg, order: String(order), prev, next },
-    body: appendPassthroughWrapper(rewriteLinksForSite(body.trimStart())),
+    fm: {
+      title,
+      description,
+      status,
+      package: pkg,
+      order: String(order),
+      prev,
+      next,
+    },
+    body: prepareMdxBody(
+      rewriteSiblingPluginLinks(body.trimStart()),
+      srcRelative,
+    ),
   })
 }
 
@@ -216,15 +192,14 @@ export function getPluginMeta(slug: string): PluginPageMeta | undefined {
 `
 
 fs.writeFileSync(registryPath, registrySource, 'utf8')
+
 try {
-  execSync(`npx prettier --write "${path.relative(websiteRoot, registryPath)}"`, {
+  execSync('npx prettier --write src/generated/clawql-plugins/registry.tsx', {
     cwd: websiteRoot,
     stdio: 'inherit',
   })
-} catch (err) {
-  console.warn(
-    `sync-clawql-plugin-pages: prettier skipped for registry.tsx (${err instanceof Error ? err.message : err})`,
-  )
+} catch {
+  /* optional */
 }
 
 const sitemapPaths = [

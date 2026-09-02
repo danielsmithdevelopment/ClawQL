@@ -82,3 +82,13 @@
 
 - `CHANGELOG.md` / `RELEASE_NOTES_v8.0.0.md` / announcement drafts / `v8.0.0-checklist.md` inventory through **#1047** (~1217 commits / ~197 merge PRs) + Streams celld Lab 5b bullets.
 - Supersedes stale draft inventory on [#1038](https://github.com/danielsmithdevelopment/ClawQL/pull/1038) (through #1036 only).
+
+## External link crawl (follow-up)
+
+Crawler now validates **all** unique external hrefs (not just same-origin). Soft-404 parking (e.g. `https://okf.io` lander) fails the crawl.
+
+- OKF v0.2 links → Google `knowledge-catalog` SPEC (not parked `okf.io`)
+- New site page `/memory/okf` from `docs/memory/okf.md`
+- Plugin page sync uses `prepareMdxBody` (old `](../` → `docs/plugins/` rewrite was wrong)
+- Final crawl: ~173 pages, **544** external URLs, **brokenCount: 0** (5 flaky bot-blocked hosts recorded separately)
+

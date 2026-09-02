@@ -418,7 +418,7 @@ In-cluster MCP uses Helm `teamSync` (`autoPullOnStart`, `autoPull`) — same sem
 
 - **PR / main:** `scripts/packer/test-golden-host-scripts.sh` (ShellCheck + `packer validate`)
 - **PR / main:** `scripts/pulumi/test-provision-unit.sh` (tier/user-data unit tests + TS build)
-- **Release:** [`.github/workflows/packer-publish.yml`](https://docs.clawql.com/.github/workflows/packer-publish.yml) — matrix AWS/GCP on dispatch; docker validate on every run
+- **Release:** [`.github/workflows/packer-publish.yml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.github/workflows/packer-publish.yml) — matrix AWS/GCP on dispatch; docker validate on every run
 
 ---
 
@@ -517,7 +517,7 @@ clawql doctor
 # Teammate: clawql sync pull → memory_recall with the new note
 ```
 
-**Grafana:** import [`clawql-core-observability.json`](https://docs.clawql.com/grafana/clawql-core-observability.json) and [`clawql-idp-observability.json`](https://docs.clawql.com/grafana/clawql-idp-observability.json).
+**Grafana:** import [`clawql-core-observability.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/grafana/clawql-core-observability.json) and [`clawql-idp-observability.json`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/grafana/clawql-idp-observability.json).
 
 After pull, run `clawql doctor` or set `CLAWQL_MEMORY_DB_SYNC_ON_RECALL=1` so `memory.db` reflects new Markdown.
 

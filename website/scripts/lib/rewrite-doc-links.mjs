@@ -72,6 +72,7 @@ export const DOC_SITE_ROUTES = {
     '/docker-desktop-observability',
   'docs/grafana/README.md': '/learn/audit-tool-and-observability',
   'docs/memory/memory-obsidian.md': '/learn/memory',
+  'docs/memory/okf.md': '/memory/okf',
   'docs/ouroboros/clawql-ouroboros.md': '/ouroboros',
   'docs/ouroboros/daos-unified-architecture-specification-v2.7.md':
     '/ouroboros/daos',
@@ -175,6 +176,8 @@ const REPO_TREE_PREFIXES = [
   'verticals/',
   '.github/',
   'data/',
+  'docker/',
+  'grafana/',
 ]
 
 const GH_TREE = GH_MAIN.replace('/blob/main', '/tree/main')
@@ -192,6 +195,11 @@ const MISTAKEN_SITE_REPO_PATHS = [
   '/providers/',
   '/infra/',
   '/crates/',
+  '/docker/',
+  '/grafana/',
+  '/.github/',
+  '/data/',
+  '/verticals/',
 ]
 
 /**
@@ -231,8 +239,13 @@ function hrefForAbsoluteSitePath(pathname, hash = '') {
   const clean = pathname.replace(/^\//, '').replace(/\/$/, '')
   if (!clean) return null
   if (MISTAKEN_SITE_REPO_PATHS.some((p) => pathname.startsWith(p))) {
-    const isDir = !path.posix.extname(clean)
-    return `${isDir ? GH_TREE : GH_MAIN}/${clean}${hash}`
+    // Grafana dashboards live under docs/grafana/ in-repo (not repo-root grafana/)
+    let pathPart = clean
+    if (pathPart.startsWith('grafana/')) {
+      pathPart = `docs/${pathPart}`
+    }
+    const isDir = !path.posix.extname(pathPart)
+    return `${isDir ? GH_TREE : GH_MAIN}/${pathPart}${hash}`
   }
   // Mistaken absolute links to markdown that should be GitHub or site routes
   if (clean.endsWith('.md') || clean.endsWith('.mdx')) {
@@ -302,7 +315,7 @@ export function rewriteDocLinks(body, sourceDocPathFromRepoRoot) {
 
   // Bare absolute mistaken site→repo links outside markdown (rare)
   rewritten = rewritten.replace(
-    /https:\/\/docs\.clawql\.com(\/(?:packages|examples|scripts|schemas|charts|providers|infra|crates)\/[^\s)"']+)/g,
+    /https:\/\/docs\.clawql\.com(\/(?:packages|examples|scripts|schemas|charts|providers|infra|crates|docker|grafana|data|verticals|\.github)\/[^\s)"']+)/g,
     (_m, pathname) => {
       const pathPart = pathname.replace(/^\//, '').replace(/\/$/, '')
       const isDir = !path.posix.extname(pathPart)

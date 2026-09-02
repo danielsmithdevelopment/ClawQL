@@ -357,7 +357,7 @@ gRPC auth is not handled here — use mesh/mTLS / interceptors on `mcp-grpc-tran
 - ClawQL Streams (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)
 - QR stream transport (draft, 8th surface): [`docs/streams/clawql-qr-stream-transport.md`](../streams/clawql-qr-stream-transport.md)
 - `/mcp-ui` (7th surface, shipped): [`docs/mcp/mcp-ui.md`](./mcp-ui.md)
-- Earlier post: [MCP tools as APIs](https://pragmaticvectors.com/posts/mcp-tools-as-apis/)
+- Earlier post: [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/)
 - gRPC transport: [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/)
 - Local smoke: [`scripts/dev/smoke-mcp-api-adapter.sh`](../../scripts/dev/smoke-mcp-api-adapter.sh) · [`scripts/dev/smoke-protocol-fabric-loop.sh`](../../scripts/dev/smoke-protocol-fabric-loop.sh)
 - Protocol Fabric / event loop (draft): [`docs/streams/clawql-streams.md`](../streams/clawql-streams.md)

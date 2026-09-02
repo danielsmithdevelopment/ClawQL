@@ -2,61 +2,61 @@
 
 ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)–compatible Markdown: YAML frontmatter + body. Obsidian remains the human UI.
 
-**Decision:** [ADR 0009](../adr/0009-enterprise-ontology.md) · [Enterprise Ontology](../architecture/enterprise-ontology.md) · Convergence context: [PragmaticVectors — Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)
+**Decision:** [ADR 0009](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0009-enterprise-ontology.md) · [Enterprise Ontology](/architecture/enterprise-ontology) · Convergence context: [PragmaticVectors — Convergence Week](https://pragmaticvectors.com/posts/convergence-week/)
 
 ## What ships
 
 | Surface               | Behavior                                                                                                    |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **`memory_ingest`**   | Writes OKF v0.2 frontmatter (`type` required; defaults to `context`) plus trust signals + ClawQL extensions |
-| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                                       |
+| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_\{Provider\}.md`)                                                     |
 | **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                                             |
 | **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                            |
 | **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                                     |
-| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                          |
+| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\\\*                        |
 
 ## Frontmatter contract (OKF v0.2)
 
 ```yaml
 ---
-type: "decision" # OKF required (ClawQL taxonomy)
-title: "Authentication: JWT over sessions"
-description: "JWT chosen for stateless auth" # OKF recommended
+type: 'decision' # OKF required (ClawQL taxonomy)
+title: 'Authentication: JWT over sessions'
+description: 'JWT chosen for stateless auth' # OKF recommended
 resource: null # OKF recommended URI when applicable
-tags: ["clawql-ingest", "okf", "auth"]
-timestamp: "2026-07-28T14:32:00.000Z"
+tags: ['clawql-ingest', 'okf', 'auth']
+timestamp: '2026-07-28T14:32:00.000Z'
 
 # OKF v0.2 trust signals
 generated:
-  by: "agent-daniel-dev-01"
-  at: "2026-07-28T14:32:00.000Z"
-  tool: "memory_ingest"
-  model: "anthropic/claude-sonnet-4"
-  session: "sess-8821"
+  by: 'agent-daniel-dev-01'
+  at: '2026-07-28T14:32:00.000Z'
+  tool: 'memory_ingest'
+  model: 'anthropic/claude-sonnet-4'
+  session: 'sess-8821'
 verified:
-  by: "human" # human | evaluator | agent
-  at: "2026-07-28T15:10:00.000Z"
-  method: "pr-review" # pr-review | evaluator | auto
-  reviewer: "ops@example.com"
+  by: 'human' # human | evaluator | agent
+  at: '2026-07-28T15:10:00.000Z'
+  method: 'pr-review' # pr-review | evaluator | auto
+  reviewer: 'ops@example.com'
 sources:
-  - session_id: "sess-8821"
-    turn: "14"
-stale_after: "2026-10-28T00:00:00.000Z"
-status: "current" # current | stale | superseded | retracted
+  - session_id: 'sess-8821'
+    turn: '14'
+stale_after: '2026-10-28T00:00:00.000Z'
+status: 'current' # current | stale | superseded | retracted
 superseded_by: null
 
 # ClawQL extensions (alongside OKF, not replacing it)
-correlation_id: "sess-8821-tool-047"
-worm_ref: "sha256:…"
-agent_id: "agent-daniel-dev-01"
-verdict: "passed"
+correlation_id: 'sess-8821-tool-047'
+worm_ref: 'sha256:…'
+agent_id: 'agent-daniel-dev-01'
+verdict: 'passed'
 confidence_score: 0.94
 
 date: 2026-07-28T14:32:00.000Z # legacy Obsidian alias (= timestamp)
 clawql_ingest: true
-clawql_ingest_created: "…"
+clawql_ingest_created: '…'
 clawql_okf: true
-okf_version: "0.2"
+okf_version: '0.2'
 ---
 ```
 
@@ -77,7 +77,7 @@ okf_version: "0.2"
 
 OKF does not register types centrally — consumers must tolerate unknown values.
 
-For **`type: decision`**, prefer the AIF-inspired body sections in [**OKF decision rationale**](./okf-decision-rationale.md).
+For **`type: decision`**, prefer the AIF-inspired body sections in [**OKF decision rationale**](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md).
 
 ### MCP input fields
 
@@ -116,28 +116,31 @@ clawql memory query --filter 'verified.by != human AND type == decision'
 ```
 
 ```ts
-import { migrateOkfFrontmatterToV02, lintOkfMarkdown } from "clawql-memory/okf";
+import { migrateOkfFrontmatterToV02, lintOkfMarkdown } from 'clawql-memory/okf'
 
-const next = migrateOkfFrontmatterToV02(markdown, title);
-const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.endsWith(".cqk") });
+const next = migrateOkfFrontmatterToV02(markdown, title)
+const issues = lintOkfMarkdown(next, {
+  checkStale: true,
+  requireWormRef: path.endsWith('.cqk'),
+})
 ```
 
 ## Env knobs
 
-| Env                                          | Default | Effect                                                                |
-| -------------------------------------------- | ------- | --------------------------------------------------------------------- |
-| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                            |
-| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                       |
-| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                              |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)     |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates |
-| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
-| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`        |
-| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                  |
-| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off   |
-| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                        |
-| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off     | Also query codegraph / pageindex / onyx when those layers are enabled |
-| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`             |
+| Env                                          | Default  | Effect                                                                |
+| -------------------------------------------- | -------- | --------------------------------------------------------------------- | --------- | ---------------------------------------------- |
+| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on       | Disables `_INDEX_*` **and** OKF `index.md`                            |
+| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on       | Disables only OKF `index.md` (keeps `_INDEX_*`)                       |
+| `CLAWQL_MEMORY_OKF_LOG=0`                    | on       | Disables `log.md` append                                              |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on       | Disables index-first survey (`index.md` + `log.md` before bodies)     |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`     | Above this file count, load bodies only for catalog/vector candidates |
+| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`   | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
+| `CLAWQL_MEMORY_BACKEND=git`                  | fs       | Git-native vault: commit after each successful `memory_ingest`        |
+| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest\* | `off` disables commits; `*` default when backend=git                  |
+| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†   | `async` \\                                                            | `sync` \\ | `off` — †async when `GIT_REMOTE` set, else off |
+| `CLAWQL_MEMORY_GIT_REMOTE`                   | —        | Remote URL (adds `origin` on first `git init`)                        |
+| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off      | Also query codegraph / pageindex / onyx when those layers are enabled |
+| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on       | Disable reciprocal-rank fusion across multi-source `hits`             |
 
 ## Flywheel export filters (planned / next)
 
@@ -150,14 +153,14 @@ clawql inference export \
   --output ./adapters/clawql-legal-v1/
 ```
 
-See [PorTAL + Intelligence Flywheel](../inference/portal-flywheel.md).
+See [PorTAL + Intelligence Flywheel](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/portal-flywheel.md).
 
 ## Backward compatibility
 
 - Notes without `type` still recall normally (frontmatter stripped for search).
 - Digest and tooling prefer OKF `timestamp`, then `clawql_ingest_created`, then `date`.
-- `_INDEX_{Provider}.md` remains for [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38); `index.md` is the OKF-native catalog.
-- Custom extensions (`.cqk`, etc.) are **optional promotions** after OKF — see [ADR 0010](../adr/0010-cq-file-extensions.md).
+- `_INDEX_\{Provider\}.md` remains for [#38](https://github.com/danielsmithdevelopment/ClawQL/issues/38); `index.md` is the OKF-native catalog.
+- Custom extensions (`.cqk`, etc.) are **optional promotions** after OKF — see [ADR 0010](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0010-cq-file-extensions.md).
 
 ## Code
 
@@ -168,9 +171,13 @@ See [PorTAL + Intelligence Flywheel](../inference/portal-flywheel.md).
 
 ## See also
 
-- [memory-obsidian.md](./memory-obsidian.md)
-- [okf-decision-rationale.md](./okf-decision-rationale.md)
-- [mcp-tools.md](../mcp/mcp-tools.md) § `memory_ingest`
-- [ADR 0010 — `.cq*` extensions](../adr/0010-cq-file-extensions.md)
-- [`.cqk` draft spec](../specs/cq-extensions/cqk.md)
-- [PorTAL flywheel intentions](../inference/portal-flywheel.md)
+- [memory-obsidian.md](/learn/memory)
+- [okf-decision-rationale.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf-decision-rationale.md)
+- [mcp-tools.md](/tools) § `memory_ingest`
+- [ADR 0010 — `.cq*` extensions](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0010-cq-file-extensions.md)
+- [`.cqk` draft spec](/specs/cq-extensions/cqk)
+- [PorTAL flywheel intentions](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/portal-flywheel.md)
+
+export function wrapper({ children }) {
+  return children
+}

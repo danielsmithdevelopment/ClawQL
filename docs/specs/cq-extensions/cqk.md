@@ -2,7 +2,7 @@
 
 **Extension:** `.cqk`  
 **Media type (proposed):** `text/vnd.clawql.knowledge+markdown`  
-**Status:** Draft v0.2 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Base: [OKF v0.2](https://okf.io) · [memory/okf.md](../../memory/okf.md)
+**Status:** Draft v0.2 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Base: [OKF v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) · [memory/okf.md](../../memory/okf.md)
 
 ## Purpose
 

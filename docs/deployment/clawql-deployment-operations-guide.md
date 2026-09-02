@@ -115,11 +115,11 @@ Adjust `replicas` on the MCP Deployment in values, or `kubectl scale` for quick 
 ### Observability
 
 - `GET /metrics` on MCP HTTP — [Grafana dashboard](https://docs.clawql.com/learn/audit-tool-and-observability) ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210))
-- Docker Desktop stack: [docker-desktop-observability](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/docker/docker-desktop-observability.md)
+- Docker Desktop stack: [docker-desktop-observability](https://docs.clawql.com/docker-desktop-observability)
 
 ### Troubleshooting
 
-Start with [troubleshooting](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/readme/troubleshooting.md) and [helm.md](https://docs.clawql.com/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` — the chart placeholder secrets are a starting point, the actual token comes from Paperless itself.
+Start with [troubleshooting](https://docs.clawql.com/troubleshooting) and [helm.md](https://docs.clawql.com/helm). Common checks: provider auth env, bundled spec load (`CLAWQL_PROVIDER`), Ingress host DNS, and Paperless token from Profile / `POST /api/token/` — the chart placeholder secrets are a starting point, the actual token comes from Paperless itself.
 
 ---
 

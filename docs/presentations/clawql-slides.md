@@ -382,7 +382,7 @@ _Seven-vendor IDP stack plus security passes — collaboration storage, processi
 
 All layers feed **Obsidian** via **`memory_ingest`**; **memory_recall** surfaces Onyx, Merkle, and (if ingested) OSV summary in one ranked set.
 
-**Recipe:** **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [`idp-pipeline.md`](../../providers/idp-pipeline.md).
+**Recipe:** **`DEFAULT_IDP_PIPELINE`** in **`clawql-documents`** — see [`idp-pipeline.md`](../providers/idp-pipeline.md).
 
 ---
 

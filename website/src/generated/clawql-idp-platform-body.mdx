@@ -41,7 +41,7 @@ Enterprises manage documents across dozens of disconnected tools while their AI 
 
 - **Twelve-layer token efficiency** reducing input tokens by ~99.8% on average at Layer 1. The nearest MCP gateway competitor implements one layer. Canonical detail: [`clawql-token-efficiency.md`](/architecture/token-efficiency).
 - **End-to-end IDP pipeline:** ingest → convert → redact → archive → semantically index → share — one Helm chart.
-- **Durable cross-session agent memory** (Markdown, local, portable). OKF v0.2 trust signals (`generated`, `verified`, `stale_after`, `status`, `superseded_by`) in vault entries. `memory_ingest` / `memory_recall` tools. See [`okf.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/okf.md).
+- **Durable cross-session agent memory** (Markdown, local, portable). OKF v0.2 trust signals (`generated`, `verified`, `stale_after`, `status`, `superseded_by`) in vault entries. `memory_ingest` / `memory_recall` tools. See [`okf.md`](/memory/okf).
 - **PorTAL** (Ramp Labs, Apache 2.0): Portable Task-specific Adapter Learning via `--format portal-bundle` in the flywheel export pipeline. See [`portal-flywheel.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/portal-flywheel.md).
 - **Sovereign multi-model inference fleet:** fine-tuned Qwen3.6-27B + Ornith 35B MoE + Phi-4 14B. Istio-enforced egress block. No tokens leave the tenant boundary.
 - **Defense-in-depth security:** Kata container VM isolation, WORM Merkle audit logs, Panguard ATR fail-closed, model weight integrity verification. Documented at [defense-in-depth](https://docs.clawql.com/security/defense-in-depth).

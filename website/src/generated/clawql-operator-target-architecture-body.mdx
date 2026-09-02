@@ -47,13 +47,13 @@ Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** s
 
 ## 1. Tier 1: Local Developer Deployment (shipped)
 
-> **Shipped in 7.0.0.** Use `examples/clawql-local-docker-compose/bootstrap.sh` + `docker compose up`. For a local full stack on Kubernetes including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/helm.md).
+> **Shipped in 7.0.0.** Use `examples/clawql-local-docker-compose/bootstrap.sh` + `docker compose up`. For a local full stack on Kubernetes including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](/helm).
 
 ### 1.1 Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/clawql/clawql.git
+git clone https://github.com/danielsmithdevelopment/ClawQL.git
 cd clawql
 
 # Run the bootstrap script
@@ -306,7 +306,7 @@ If a migration fails, the API will not start. The failure message will indicate 
 
 ## 2. Tier 2: Standard Self-Hosted Deployment (Operator — planned)
 
-> **Shipped alternative:** use **[Helm `charts/clawql-mcp`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/helm.md)** today (`helm upgrade --install`, `values-docker-desktop.yaml`, `make local-k8s-up`). The **ClawQL Operator** and **`ClawQLInstance` CRD** described below are **not shipped** — design reference only ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
+> **Shipped alternative:** use **[Helm `charts/clawql-mcp`](/helm)** today (`helm upgrade --install`, `values-docker-desktop.yaml`, `make local-k8s-up`). The **ClawQL Operator** and **`ClawQLInstance` CRD** described below are **not shipped** — design reference only ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
 
 ### 2.1 Cluster Prerequisites Verification
 
@@ -526,7 +526,7 @@ kubectl -n clawql run test-psql --rm -it --image=postgres:15 -- \
 
 ## 3. Tier 3: Enterprise Production Deployment (Operator — planned)
 
-> **Shipped building blocks today:** Helm **`charts/clawql-mcp`**, optional **Istio** egress allowlist, **Kyverno** image verification, **Kata/gVisor** RuntimeClass toggles — see [helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/helm.md) and [image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md). The **Operator-managed Tier 3** flow below is **not shipped**.
+> **Shipped building blocks today:** Helm **`charts/clawql-mcp`**, optional **Istio** egress allowlist, **Kyverno** image verification, **Kata/gVisor** RuntimeClass toggles — see [helm.md](/helm) and [image-signature-enforcement.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/image-signature-enforcement.md). The **Operator-managed Tier 3** flow below is **not shipped**.
 
 > **Note:** Planned — not yet shipped. This section documents the intended deployment procedure.
 

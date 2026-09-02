@@ -1,8 +1,8 @@
 /**
  * Open Knowledge Format (OKF) v0.2 — ClawQL memory vault conventions.
  *
- * Spec: https://okf.io (v0.2 trust signals)
- * Prior: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md (v0.1)
+ * Spec: https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
+ * Also: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
  * ADR: docs/adr/0009-enterprise-ontology.md
  * Guide: docs/memory/okf.md
  */

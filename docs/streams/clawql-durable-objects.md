@@ -192,5 +192,5 @@ Optional: a long-lived DO wraps one MCP upstream and serves OpenAPI / GraphQL / 
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL, call store
 - [`docs/benchmarks/openbench-trace-collection.md`](../benchmarks/openbench-trace-collection.md) — OBT + RTP
 - [celld](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security)
-- Essay: [OpenBenchTrace and RTP](https://pragmaticvectors.com/posts/openbench-rtp-relationship/)
+- Essay: [Convergence Week](https://pragmaticvectors.com/posts/convergence-week/) (OpenBench / RTP context)
 - Essay: [What Convergence Week actually proved](https://pragmaticvectors.com/posts/openbench-convergence-week/)
