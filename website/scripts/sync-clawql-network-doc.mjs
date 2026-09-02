@@ -35,7 +35,7 @@ const src = repoRoot ? path.join(repoRoot, srcRelative) : null
 if (!src || !fs.existsSync(src)) {
   if (fs.existsSync(dst)) {
     console.warn(
-      'sync-clawql-network-doc: source not found; keeping existing generated MDX',
+      'sync-clawql-network-doc: source not found; keeping existing generated MDX (typical for Docker context ./website)',
     )
     process.exit(0)
   }

@@ -1,0 +1,336 @@
+---
+title: 'clawql-network — Specification'
+status: 'August 2026'
+version: '0.1'
+package: 'packages/clawql-network/'
+---
+
+# clawql-network
+
+## Specification v0.1
+
+**August 2026**
+
+---
+
+## 1. Purpose
+
+`clawql-network` gives anyone running ClawQL a private, secure network connecting their nodes with minimal setup — a self-hosted mesh for persistent, known machines, plus a governed mechanism for genuinely ephemeral, one-off connections, both wired into the same enforcement and audit machinery as everything else in the ClawQL stack.
+
+It composes two distinct, purpose-built technologies rather than inventing a third:
+
+**Headscale** — a self-hosted, open-source Tailscale control plane. Persistent identity, ACLs, and a standing mesh for nodes with an ongoing relationship: a customer's fleet, your own homelab.
+
+**Tailcat** — an open-source, control-plane-free transport (Go, from the Tailscale team, released August 2026) for genuinely ephemeral, one-off, point-to-point connections where standing up full mesh registration would be overkill for a link that might last thirty seconds.
+
+Neither replaces the other. `clawql-network`'s actual contribution is the decision layer that picks the right one per connection, and the governance layer that makes sure picking the ephemeral, ungoverned option is always an explicit, audited choice — never a silent default.
+
+---
+
+## 2. What Each Piece Is Actually For
+
+|                       | Headscale-managed mesh                           | Tailcat                                                          |
+| --------------------- | ------------------------------------------------ | ---------------------------------------------------------------- |
+| Relationship          | Persistent, known nodes                          | Ephemeral, one-off peers                                         |
+| Setup                 | Node registers with control plane, gets identity | Address string generated and shared out of band, no registration |
+| ACLs / access control | Yes, centrally managed                           | None built in beyond an optional public-key allowlist            |
+| Best fit              | A customer's fleet, your homelab's five machines | A serverless worker spun up for one task, then torn down         |
+| Wrong fit             | —                                                | Anything where standing governance matters (see §7)              |
+
+---
+
+## 3. Package Structure
+
+```
+clawql-network/
+  headscale/
+    bootstrap.ts             — stands up a self-hosted Headscale
+                                control plane
+    node-registration.ts      — joins a node to the persistent mesh,
+                                 issues its identity
+  tailcat/
+    bin/
+      tailcat-linux-amd64
+      tailcat-linux-arm64
+      tailcat-darwin-arm64    — for Apple Silicon hosts; no official
+                                 prebuilt binary yet as of this writing,
+                                 build via `go install` or run via the
+                                 official Docker image instead
+      tailcat-windows-amd64
+                                (prebuilt binaries pulled from
+                                 tailscale/tailcat's own Releases page —
+                                 tailcat is Go-only with no TypeScript/
+                                 Rust bindings; clawql-network shells
+                                 out to the compiled binary as a
+                                 subprocess, the same integration
+                                 pattern already used for CLI-based
+                                 provider sources elsewhere in
+                                 clawql-core)
+    tailcat-adapter.ts          — TypeScript wrapper: manages the
+                                   subprocess lifecycle, parses the
+                                   connection token from stdout
+    derp-relay/
+      self-hosted-derper.ts      — optional: run your own DERP fallback
+                                    relay (cmd/derper, open source)
+                                    instead of depending on Tailscale's
+                                    throttled public fallback
+  selector.ts                    — decides Headscale-mesh vs. tailcat
+                                    per connection request
+  enforcement/
+    tailcat-connect-hook.ts        — clawql-core LifecycleHook gating
+                                      tailcat use behind explicit ATR scope
+  init/
+    clawql-network-init.ts          — the `clawql init --networking`
+                                       bootstrap flow (§8)
+```
+
+---
+
+## 4. Headscale: Persistent Mesh
+
+Standard Headscale deployment, run on whichever always-on node makes sense for a given deployment (the homelab documentation already runs this on the Mac Mini as control plane). `clawql-network` provides the bootstrap and node-registration wrapper so joining a new node to the mesh is a single `clawql-network join` command rather than manual Headscale CLI operations.
+
+```typescript
+// packages/clawql-network/headscale/bootstrap.ts
+
+export interface HeadscaleBootstrapConfig {
+  controlPlaneHost: string // which node runs the Headscale server
+  derpMapPath?: string // optional: point at a self-hosted
+  // DERP map instead of Tailscale's
+  // default public one
+}
+
+export async function bootstrapHeadscale(
+  config: HeadscaleBootstrapConfig,
+): Promise<void> {
+  // Installs and starts headscale on controlPlaneHost, generates the
+  // initial namespace, and writes connection details for node-registration.ts.
+}
+```
+
+```typescript
+// packages/clawql-network/headscale/node-registration.ts
+
+export async function joinMesh(nodeId: string): Promise<MeshIdentity> {
+  // Registers this node with the Headscale control plane, returns
+  // its assigned mesh identity for use by clawql-core's provider
+  // adapters and clawql-cellrt's coordination layer.
+}
+```
+
+---
+
+## 5. Tailcat: Ephemeral Connections
+
+### 5.1 Subprocess Adapter
+
+Since tailcat has no TypeScript or Rust bindings, `clawql-network` shells out to the compiled Go binary rather than attempting FFI or a port — the same pattern already established elsewhere in the monorepo for CLI-based integrations.
+
+```typescript
+// packages/clawql-network/tailcat/tailcat-adapter.ts
+
+export interface TailcatListenerHandle {
+  address: string // the tc+base64(CBOR(...)) connection
+  // token, generated by the listener
+  process: ChildProcess
+  stop(): Promise<void>
+}
+
+export async function startTailcatListener(opts: {
+  derpServer?: string
+  allowedPublicKeys?: string[]
+}): Promise<TailcatListenerHandle> {
+  // Spawns the tailcat binary in server/listener mode, captures its
+  // stdout to extract the generated address string, returns a handle
+  // for lifecycle management.
+}
+
+export async function connectViaTailcat(
+  address: string,
+): Promise<TailcatConnection> {
+  // Spawns the tailcat binary in client mode against the given address.
+}
+```
+
+### 5.2 Optional Self-Hosted DERP Relay
+
+For any use case where the connection's trust path matters — not the low-stakes serverless-worker case, but anything closer to the boundary discussed in §7 — running your own DERP relay avoids introducing Tailscale's infrastructure as a fallback path.
+
+```typescript
+// packages/clawql-network/tailcat/derp-relay/self-hosted-derper.ts
+
+export async function startSelfHostedDerper(
+  region: string, // co-locate with your primary coordinating node's
+  // region to avoid a third cross-region egress leg
+  // if NAT traversal fails and DERP fallback triggers
+): Promise<DerperHandle> {
+  // Runs cmd/derper (open source, part of the tailscale.com repo)
+}
+```
+
+---
+
+## 6. The Selector: Deciding Which Transport to Use
+
+This is `clawql-network`'s actual contribution — not either networking technology individually, but the logic that picks the right one automatically, with a safe default under uncertainty.
+
+```typescript
+// packages/clawql-network/selector.ts
+
+export interface ConnectionRequest {
+  targetType: 'known-fleet-node' | 'ephemeral-peer' | 'unknown'
+  expectedDurationMs?: number
+}
+
+export function selectTransport(
+  req: ConnectionRequest,
+): 'headscale-mesh' | 'tailcat' {
+  if (req.targetType === 'known-fleet-node') return 'headscale-mesh'
+
+  if (
+    req.targetType === 'ephemeral-peer' ||
+    (req.expectedDurationMs !== undefined && req.expectedDurationMs < 60_000)
+  ) {
+    return 'tailcat'
+  }
+
+  // Default to the persistent, governed mesh under any ambiguity.
+  // Tailcat has no ACLs beyond an optional public-key allowlist, so an
+  // uncertain case should never default to the option with the least
+  // enforcement available.
+  return 'headscale-mesh'
+}
+```
+
+---
+
+## 7. Enforcement: Tailcat Requires Explicit Scope, Every Time
+
+Tailcat connections are gated as a `clawql-core` hook, per the plugin architecture spec — not a bare networking primitive available to any code that wants it. This composes with every other enforcement mechanism already in the system rather than introducing a side channel outside it.
+
+Implementation uses ClawQL 8.0 `HookResult` shape (`allow` / `denyReason`), not a custom action enum:
+
+```typescript
+// packages/clawql-network/enforcement/tailcat-connect-hook.ts
+
+export const TAILCAT_EPHEMERAL_ATR_SCOPE = 'network:tailcat_ephemeral'
+
+export const tailcatConnectHook: LifecycleHook = {
+  id: 'tailcat-ephemeral-connect-gate',
+  scope: 'tool',
+  event: 'pre-execute',
+  toolPattern: 'network\\.tailcat_connect',
+  blocking: true,
+
+  handler(ctx: HookContext): Effect.Effect<HookResult, ClawQLError> {
+    if (!ctx.session.atrScope.has(TAILCAT_EPHEMERAL_ATR_SCOPE)) {
+      return Effect.succeed({
+        allow: false,
+        denyReason:
+          'tailcat requires explicit scope grant (network:tailcat_ephemeral)',
+      })
+    }
+    return Effect.succeed({ allow: true })
+  },
+}
+```
+
+Because tailcat itself keeps no record of who connected to whom — it has no control plane to log anything — `clawql-core` / `clawql-audit` is the one place any audit trail for this transport can exist. Every established connection produces a WORM entry:
+
+```typescript
+export type NetworkWORMEntryType =
+  | 'TAILCAT_EPHEMERAL_CONNECTION_ESTABLISHED'
+  | 'TAILCAT_EPHEMERAL_CONNECTION_ENDED'
+  | 'MESH_NODE_JOINED'
+  | 'MESH_NODE_REMOVED'
+```
+
+```typescript
+await worm.append({
+  type: 'TAILCAT_EPHEMERAL_CONNECTION_ESTABLISHED',
+  sessionId: ctx.session.id,
+  localPublicKey: connection.localKey,
+  remotePublicKey: connection.remoteKey,
+  derpServer: connection.derpServer ?? null, // null if a direct
+  // NAT-traversed
+  // connection was
+  // established with
+  // no relay needed
+  timestamp: new Date().toISOString(),
+})
+```
+
+**Where tailcat should not be used at all, stated plainly:** any connection where standing governance matters — a cloud-hosted `clawql-tee` instance reaching into a secure on-prem network is the clearest example. Tailcat has no attestation mechanism; it proves you're talking to whoever holds a given key, not that they're running trustworthy, unmodified code inside a verified enclave. That connection type stays on the Headscale-managed mesh, with `clawql-tee`'s own attestation layered on top, and a self-hosted DERP relay (§5.2) if NAT traversal alone isn't sufficient — never tailcat, regardless of how convenient the zero-setup model is.
+
+---
+
+## 8. The `clawql-network` Init Flow
+
+The actual "minimal effort" deliverable: a single command that stands up sensible defaults.
+
+```typescript
+// packages/clawql-network/init/clawql-network-init.ts
+
+export async function initNetworking(): Promise<void> {
+  // 1. Check for an existing Headscale control plane; bootstrap one
+  //    locally if none exists.
+  // 2. Register this node with the mesh.
+  // 3. Configure the selector with safe defaults (Headscale for
+  //    anything named/registered, tailcat gated behind explicit scope
+  //    for anything ephemeral).
+  // 4. Optionally offer to stand up a self-hosted DERP relay, so there
+  //    is zero dependency on Tailscale's throttled public fallback —
+  //    matching the same self-hosted, no-third-party-dependency posture
+  //    already established for clawql-tee and the regulated-enterprise
+  //    thesis generally.
+}
+```
+
+```bash
+# The actual command an operator runs
+clawql init --networking
+```
+
+---
+
+## 9. Cross-Region Cost Awareness
+
+Tailcat is a transport layer only — it has no relationship to cloud billing. Traffic between nodes in different cloud regions (e.g., a coordinating node in `us-east-1` and a serverless worker in `eu-central-1`) incurs standard cross-region egress charges from the cloud provider regardless of what protocol carries it, encrypted or not. Two things worth knowing when planning a deployment that spans regions:
+
+**Direct (NAT-traversed) connections** cost exactly what a raw socket between the same two instances would cost — no markup from tailcat's encryption or protocol overhead beyond the bytes actually transferred.
+
+**DERP-relayed fallback connections** add a real routing consideration. If NAT traversal fails and Tailscale's public DERP servers are used, that's outside your own cloud bill entirely (Tailscale absorbs it, which is exactly why it's rate-limited). If a self-hosted relay (§5.2) is used instead, its region matters for cost: a relay sitting in a third region from both endpoints means paying cross-region egress on two legs instead of one. Co-locating a self-hosted relay with the primary coordinating node's region avoids this.
+
+`clawql-network` does not currently meter or report cross-region byte costs itself — the `TAILCAT_EPHEMERAL_CONNECTION_ESTABLISHED`/`ENDED` WORM entries capture connection metadata, and a future extension could add byte-transfer totals to those entries specifically to feed the spend-governance dashboard, so cross-region worker costs are visible there rather than only showing up as an unexplained line item on a cloud bill later.
+
+---
+
+## 10. Package Boundaries — Summary
+
+| Concern                               | Location                                                 | Why                                                                                                 |
+| ------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Persistent mesh, ACLs, node identity  | Headscale (self-hosted control plane)                    | The right tool for standing relationships                                                           |
+| Ephemeral, one-off connections        | Tailcat (subprocess, Go binary)                          | The right tool for genuinely transient links                                                        |
+| Deciding which to use                 | `clawql-network`'s `selector.ts`                         | The actual product — automatic, safe-by-default routing                                             |
+| Enforcement and audit for tailcat use | `clawql-core` hook + `clawql-audit`                      | Tailcat has no control plane of its own to log anything; this is the only place the record can live |
+| Cloud-TEE-to-on-prem connections      | Headscale mesh + `clawql-tee` attestation, never tailcat | Standing governance and hardware attestation both matter here; tailcat provides neither             |
+| One-time setup                        | `clawql init --networking`                               | Minimal-effort default, per the original goal                                                       |
+
+---
+
+## Related
+
+- Deployment: [`docs/deployment/tailscale-and-headscale-for-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/tailscale-and-headscale-for-clawql.md) · [`headscale-tailnet.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/headscale-tailnet.md)
+- Runtime coordination: [`docs/streams/clawql-cellrt.md`](/streams/clawql-cellrt)
+- Trust: [`docs/streams/clawql-tee.md`](/streams/clawql-tee)
+- Plugin hooks: [`docs/design/clawql-core-plugin-architecture.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/clawql-core-plugin-architecture.md)
+
+---
+
+_clawql-network Specification · v0.1 · August 2026_  
+_Location: packages/clawql-network/_  
+_Contact: daniel@clawql.com_
+
+export function wrapper({ children }) {
+  return children
+}
