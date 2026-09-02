@@ -32,7 +32,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | 3     | Memory & Documents                 | clawql-memory, clawql-documents, clawql-pageindex                | Persistent hybrid knowledge                                                   |
 | 4     | Strategic Coordination             | clawql-ouroboros                                                 | Diversity measurement, reputation, and recruitment                            |
 | 5     | Security & Compliance              | ATRClaims, WORM audit, Vault                                     | Uniform zero-trust and compliance controls                                    |
-| 6     | Observability & Runtime Protection | LGTM+ stack (Alloy, Langfuse, Beyla, Tetragon, Falco, Wazuh, k6) | Full visibility and enforcement                                               |
+| 6     | Observability & Runtime Protection | LGTMP stack (Alloy, Langfuse, Beyla, Tetragon, Falco, Wazuh, k6) | Full visibility and enforcement                                               |
 
 **Layer 0 today:** **`clawql-release`** ships manifest **v0.2** with Merkle root, SBOM/npm + GHCR digests, `immutable-volume` (git-worktree / rift), signed commits + Ed25519 artifact signatures, Radicle-primary + GitHub mirror metadata, IPFS staging, Lit/x402 access, and Arweave/ar.io permanence (live wallets optional; local dry-run by default). Kyverno admission from manifest policy remains a follow-on — see [Immutable releases](/vision/immutable-releases).
 
@@ -66,7 +66,7 @@ ClawQL is a modular, production-grade, self-healing, multi-tenant AI memory and 
 | clawql-operator      | Kubernetes `ClawQLInstance` CRD, tier-spec, layer composition | 🚧 Scaffold shipped (7.0) — full operator roadmap                              |
 | clawql-release       | Immutable release manifests (Layer 0)                         | ✅ Pipeline shipped (workspaces, IPFS, Lit/x402, Arweave dry-run + live hooks) |
 | clawql-telemetry     | OTEL/Langfuse emission package (never imported by others)     | 📋 Planned — OTEL at MCP transport today                                       |
-| clawql-data          | Structured data / Node DuckDB (`data_query`)                  | ✅ Shipped (opt-in `CLAWQL_ENABLE_DATA=1`)                                     |
+| clawql-data          | Structured data / DuckDB leg                                  | 📋 Planned                                                                     |
 | clawql-printingpress | Document generation                                           | 📋 Planned                                                                     |
 | clawql-goose         | Migrations                                                    | 📋 Planned                                                                     |
 
@@ -172,7 +172,7 @@ When a horizontal tier or vertical is disabled, its Effect Layer is not composed
 
 **Security**: Classification gating, external model routing, WORM Merkle audit, and runtime enforcement (Tetragon/Falco) are applied at the gateway. ATR/Panguard chokepoint, Vault-backed provider secrets, and opt-in Presidio gateway hooks ship in 7.0; full mandatory Presidio on every path and full WORM remain roadmap.
 
-**Observability**: OTEL wraps MCP tool handlers today. Full LGTM+ stack + `clawql-telemetry` package remain roadmap. Langfuse handles LLM/tool chains where configured.
+**Observability**: OTEL wraps MCP tool handlers today. Full LGTMP stack + `clawql-telemetry` package remain roadmap. Langfuse handles LLM/tool chains where configured.
 
 **Releases**: Every artifact consumed by the platform should verify against a ClawQL release manifest containing Merkle root, policy, and build provenance. **`clawql release verify`**, **`clawql doctor --smoke`**, and optional **`CLAWQL_RELEASE_MANIFEST`** at MCP startup ship in 7.0.
 

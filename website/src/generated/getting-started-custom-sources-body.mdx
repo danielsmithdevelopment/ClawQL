@@ -42,9 +42,6 @@ Related lockdown surfaces:
 # Streamable HTTP MCP endpoint
 clawql sources add https://remote.example/mcp --kind mcp --name "Other MCP"
 
-# WebMCP page source (Chrome preview + CDP required)
-clawql sources add https://docs.clawql.com --kind webmcp --name "ClawQL Docs"
-
 # Auto-detect OpenAPI, Discovery, GraphQL, gRPC proto, or MCP HTTP
 clawql sources add https://example.com/openapi.json --name "Example API"
 
@@ -65,32 +62,19 @@ What happens on startup for `kind: mcp`:
 
 Stdio MCP packages can be registered by editing `~/.ClawQL/sources.json` with `mcpCommand` / `mcpArgs` / optional `mcpEnv` (same shape as the types in `clawql-api`). Prefer HTTP when the upstream already exposes Streamable HTTP.
 
-### WebMCP page sources (preview)
-
-WebMCP is the **inverse** of `/mcp-ui`: websites register tools in the browser via [`navigator.modelContext`](https://webmachinelearning.github.io/webmcp/); ClawQL Core **ingests** those tools as searchable/executable operations (left side of Protocol Fabric).
-
-Requirements:
-
-1. **Chromium with WebMCP** (Chrome preview flag) listening on CDP — default `http://127.0.0.1:9222`, override with `CLAWQL_WEBMCP_CDP_URL` or per-source `webmcpCdpUrl`.
-2. **HTTPS page** that registers tools (e.g. [docs.clawql.com](https://docs.clawql.com) via `WebMcpRegister`).
-3. `clawql sources add https://docs.clawql.com --kind webmcp --name "ClawQL Docs"`
-
-On startup ClawQL opens the page in CDP, calls `document.modelContext.getTools()`, indexes each tool (`webmcp/<sourceId>/<toolName>`), and proxies `execute` back via `executeTool()`.
-
 ## Desktop / dashboard
 
 In **ClawQL Desktop** mode, the dashboard exposes **`GET/POST/DELETE /api/local/sources`** (same JSON shape as `sources.json`).
 
 ## Source kinds
 
-| Kind                | How it loads                                                                |
-| ------------------- | --------------------------------------------------------------------------- |
-| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`                                 |
-| GraphQL             | SDL or introspection file + `graphqlEndpoint`                               |
-| gRPC                | `.proto` on disk + `grpcEndpoint`                                           |
-| **MCP**             | Proxies `tools/list` / `tools/call` from the remote MCP server              |
-| **WebMCP**          | Discovers page tools via `navigator.modelContext` over CDP (Chrome preview) |
-| CLI                 | One `execute` op runs configured command + args                             |
+| Kind                | How it loads                                                   |
+| ------------------- | -------------------------------------------------------------- |
+| OpenAPI / Discovery | Cached spec under `~/.ClawQL/sources/<id>/`                    |
+| GraphQL             | SDL or introspection file + `graphqlEndpoint`                  |
+| gRPC                | `.proto` on disk + `grpcEndpoint`                              |
+| **MCP**             | Proxies `tools/list` / `tools/call` from the remote MCP server |
+| CLI                 | One `execute` op runs configured command + args                |
 
 Bundled providers and custom sources share the same **`search` / `execute`** index. Custom sources extend that index; they do not require a second MCP client entry in Cursor/Claude.
 

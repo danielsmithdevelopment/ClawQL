@@ -4,17 +4,15 @@ import Body6 from './bodies/automation.mdx'
 import Body5 from './bodies/bundled-providers.mdx'
 import Body3 from './bodies/codegraph.mdx'
 import Body0 from './bodies/core.mdx'
-import Body8 from './bodies/data.mdx'
 import Body4 from './bodies/documents.mdx'
-import Body12 from './bodies/hitl-label-studio.mdx'
-import Body9 from './bodies/inference-providers.mdx'
+import Body11 from './bodies/hitl-label-studio.mdx'
+import Body8 from './bodies/inference-providers.mdx'
 import Body2 from './bodies/memory.mdx'
-import Body10 from './bodies/ouroboros.mdx'
+import Body9 from './bodies/ouroboros.mdx'
 import Body1 from './bodies/panguard-proxy.mdx'
-import Body11 from './bodies/payments.mdx'
+import Body10 from './bodies/payments.mdx'
 import Body7 from './bodies/sandbox.mdx'
-import Body14 from './bodies/third-party.mdx'
-import Body13 from './bodies/web.mdx'
+import Body12 from './bodies/third-party.mdx'
 
 export type PluginPageMeta = {
   slug: string
@@ -41,8 +39,8 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'panguard-proxy',
     title: 'Panguard MCP proxy',
     description:
-      'Hooks-only ProviderPlugin — blocking tool/pre-execute policy for JWT ATR and enterprise MCP defense-in-depth. 8.0+ opt-in — set CLAWQL_PANGUARD_PROXY_PLUGIN=1.',
-    status: 'opt-in',
+      'In-process beforeCallTool policy chokepoint for JWT ATR and enterprise MCP defense-in-depth. Default on; disable with CLAWQL_PANGUARD_PROXY_PLUGIN=0.',
+    status: 'default-on',
     package: 'clawql-api (PanguardProxyPlugin)',
     prev: 'core',
     next: 'memory',
@@ -81,8 +79,8 @@ export const pluginPages: PluginPageMeta[] = [
     slug: 'bundled-providers',
     title: 'Bundled providers',
     description:
-      'Available on-disk API catalog; opt in via instance providers pack/enabled (or CLAWQL_PROVIDER). Spec merge — not an MCP plugin.',
-    status: 'default-available',
+      'Opinionated default API stack on install, all-providers for everything, and CLAWQL_ENABLE_* cloud add-ons. Spec merge — not an MCP plugin.',
+    status: 'default-on',
     package: 'providers/ (on-disk specs)',
     prev: 'documents',
     next: 'automation',
@@ -105,16 +103,6 @@ export const pluginPages: PluginPageMeta[] = [
     status: 'opt-in',
     package: 'clawql-sandbox',
     prev: 'automation',
-    next: 'data',
-  },
-  {
-    slug: 'data',
-    title: 'Data',
-    description:
-      'Node DuckDB structured SQL — data_query, data_ingest, data_status. CLAWQL_ENABLE_DATA=1.',
-    status: 'opt-in',
-    package: 'clawql-data',
-    prev: 'sandbox',
     next: 'ouroboros',
   },
   {
@@ -134,14 +122,14 @@ export const pluginPages: PluginPageMeta[] = [
       'Evolutionary loop MCP tools — seed documents, run loops, inspect lineage. CLAWQL_ENABLE_OUROBOROS=1.',
     status: 'opt-in',
     package: 'clawql-ouroboros',
-    prev: 'data',
+    prev: 'sandbox',
     next: 'payments',
   },
   {
     slug: 'payments',
     title: 'Payments',
     description:
-      'Native Stripe + x402 + MPP + AP2 + ACP + PayPal + Adyen rails, plan entitlements, WORM payment audit, accounting export and tax evidence.',
+      'Native Stripe + x402 + MPP + AP2 + ACP + PayPal + Adyen rails, plan entitlements, WORM payment audit.',
     status: 'shipped',
     package: 'clawql-payments',
     prev: 'ouroboros',
@@ -156,16 +144,6 @@ export const pluginPages: PluginPageMeta[] = [
     package: 'src/',
     prev: 'payments',
     next: 'third-party',
-  },
-  {
-    slug: 'web',
-    title: 'Web',
-    description:
-      'Pluggable web_search / web_fetch / web_screenshot / web_interact via clawql-web (Tavily, Brave, SearXNG, OpenSearch, Kitesurf, Chromium, Firecrawl).',
-    status: 'scaffold',
-    package: 'clawql-web',
-    prev: 'payments',
-    next: 'ouroboros',
   },
   {
     slug: 'third-party',
@@ -188,13 +166,11 @@ export const pluginBodies: Record<string, ComponentType> = {
   'bundled-providers': Body5,
   automation: Body6,
   sandbox: Body7,
-  data: Body8,
-  'inference-providers': Body9,
-  ouroboros: Body10,
-  payments: Body11,
-  'hitl-label-studio': Body12,
-  web: Body13,
-  'third-party': Body14,
+  'inference-providers': Body8,
+  ouroboros: Body9,
+  payments: Body10,
+  'hitl-label-studio': Body11,
+  'third-party': Body12,
 }
 
 export function getPluginMeta(slug: string): PluginPageMeta | undefined {

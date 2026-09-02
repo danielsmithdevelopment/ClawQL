@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-02T04:23:01.589Z",
-  "sidebarHrefCount": 128,
-  "entryCount": 29,
+  "generatedAt": "2026-09-02T00:31:09.798Z",
+  "sidebarHrefCount": 118,
+  "entryCount": 31,
   "groups": [
     {
       "name": "Platform",
@@ -60,9 +60,21 @@
           "group": "Reference"
         },
         {
+          "href": "/reference/optional-tools",
+          "title": "Optional tools hub",
+          "description": "Cache, schedule, notify, Onyx, sandbox walkthroughs.",
+          "group": "Reference"
+        },
+        {
           "href": "/reference/plugins",
           "title": "Plugins",
           "description": "",
+          "group": "Reference"
+        },
+        {
+          "href": "/reference/protocol",
+          "title": "Protocol reference",
+          "description": "Uniform envelope, approval flows, HATEOAS.",
           "group": "Reference"
         },
         {
