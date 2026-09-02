@@ -28,7 +28,9 @@
 4. **Skills-unified search** — operations and skills in one ranker; Agent Seer cold-start scenarios.
 5. **Gateway + web/data/MCP UI** — Managed Edge Gateway, `clawql-web`, DuckDB `data_*`, PixelDrop / HTMX playground.
 6. **Observability + audit** — `clawql-observability` LGTM+/Faro; merkle/audit WORM wedge; simulated TEE.
-7. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments.
+7. **Network + analytics** — `clawql-network` mesh CLI; `clawql-analytics` docs adapter; workspace **`0.1.0`** first-publish policy.
+8. **Learn / 8.0 docs** — migrate-to-8 guide, Streams/IDP labs, Security/OSV sidebar.
+9. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments.
 
 ### Why it matters
 
@@ -44,7 +46,7 @@ Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slac
 
 Shipped **clawql-mcp 8.0.0** (semver-**major**).
 
-Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · skills-unified search · LGTM+/Faro observability · Managed Edge Gateway.
+Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · skills-unified search · LGTM+/Faro observability · `clawql-network` + analytics · Learn/migrate-to-8 docs · Managed Edge Gateway.
 
 Pin `@8` · migrate: docs/getting-started/migrate-to-8.0.md · npm: clawql-mcp@8.0.0
 
@@ -64,7 +66,7 @@ We open-source an Agentic Gateway (MCP search/execute over OpenAPI + vault memor
 2. Legacy `Plugin` bridge removed — `ProviderPlugin` / `StandaloneSkillPlugin` only.
 3. Tool-scope enforcement default off (opt in Panguard proxy; boot warns if none).
 
-Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, audit/TEE wedge, OpenBench B-7.
+Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, clawql-network/analytics, audit/TEE wedge, Learn docs for 8.0 migration, OpenBench B-7.
 
 npm: `clawql-mcp@8.0.0`  
 Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v8.0.0.md  
