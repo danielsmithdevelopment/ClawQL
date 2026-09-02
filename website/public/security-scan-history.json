@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-01T00:00:00.000Z",
+  "latestRelease": {
+    "version": "8.0.0",
+    "published": null,
+    "commit": null,
+    "sbomFormat": "cyclonedx-json",
+    "sbomArtifactName": "sbom-cyclonedx-repository",
+    "image": {
+      "repository": "ghcr.io/danielsmithdevelopment/clawql-mcp",
+      "digest": null,
+      "cosignVerifyCommand": "cosign verify ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:<digest> \\\n  --certificate-identity-regexp 'https://github\\.com/danielsmithdevelopment/ClawQL/.*' \\\n  --certificate-oidc-issuer-regexp 'https://token\\.actions\\.githubusercontent\\.com.*'"
+    }
+  },
+  "runs": []
+}
