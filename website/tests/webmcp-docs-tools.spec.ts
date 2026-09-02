@@ -78,9 +78,39 @@ test.describe('WebMCP docs tools', () => {
         'clawql.docs.navigate',
         'clawql.docs.page_context',
         'clawql.docs.scroll_to_section',
+        'clawql.docs.reveal_agent_lab',
+        'clawql.docs.claim_starter_pack',
       ]),
     )
     expect(names).not.toContain('clawql.docs.filter_plugin_registry')
+
+    await expect(page.locator('#clawql-agent-lab')).toHaveCount(0)
+
+    const lab = await page.evaluate(async () => {
+      const stub = (window as unknown as {
+        __webmcpStub: {
+          executeTool: (name: string, input: object) => Promise<unknown>
+        }
+      }).__webmcpStub
+      return stub.executeTool('clawql.docs.reveal_agent_lab', {})
+    })
+    expect(lab).toMatchObject({ ok: true, unlocked: true })
+    await expect(page.locator('#clawql-agent-lab')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'ClawQL Agent Lab' })).toBeVisible()
+
+    const pack = await page.evaluate(async () => {
+      const stub = (window as unknown as {
+        __webmcpStub: {
+          executeTool: (name: string, input: object) => Promise<unknown>
+        }
+      }).__webmcpStub
+      return stub.executeTool('clawql.docs.claim_starter_pack', {})
+    })
+    expect(pack).toMatchObject({ ok: true })
+    expect(String((pack as { mcpJson?: string }).mcpJson ?? '')).toContain(
+      'clawql-mcp',
+    )
+    await expect(page.getByText(/Starter pack claimed/i)).toBeVisible()
 
     const search = await page.evaluate(async () => {
       const stub = (window as unknown as {

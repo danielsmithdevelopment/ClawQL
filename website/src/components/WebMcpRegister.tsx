@@ -12,7 +12,9 @@ import {
   resolvePluginEntry,
   runDocsSearch,
 } from '@/lib/webmcp-docs-actions'
+import { useAgentLabStore } from '@/lib/webmcp-agent-lab-store'
 import { getModelContext } from '@/lib/webmcp-model-context'
+import { claimStarterPackDownloads } from '@/lib/webmcp-starter-pack'
 import { preloadSearchIndex } from '@/mdx/search-runtime'
 
 type ToolDef = {
@@ -227,6 +229,61 @@ export function WebMcpRegister() {
           }
           el.scrollIntoView({ behavior: 'smooth', block: 'start' })
           return { ok: true, id }
+        },
+      },
+      {
+        name: 'clawql.docs.reveal_agent_lab',
+        title: 'Reveal Agent Lab',
+        description:
+          'Unlocks a hidden on-page Agent Lab panel (tool map, sample prompts, Chrome Inspector tips). Invisible to normal browsing until this tool is called — Cloudflare-style agent-only unlock.',
+        inputSchema: {
+          $schema: 'https://json-schema.org/draft/2020-12/schema',
+          type: 'object',
+          additionalProperties: false,
+          properties: {},
+        },
+        annotations: { readOnlyHint: false },
+        async execute() {
+          const result = useAgentLabStore.getState().reveal()
+          return {
+            ...result,
+            panelId: 'clawql-agent-lab',
+            tip: 'Panel is now visible. Call clawql.docs.claim_starter_pack for mcp.json + README downloads.',
+            samplePrompts: [
+              'Search docs for celld and summarize Lab 5b.',
+              'Claim the starter pack and explain where secrets belong.',
+              'Filter /plugins for memory and open the memory plugin.',
+            ],
+            related: [
+              '/quickstart',
+              '/agent-setup',
+              '/learn/memory',
+              '/mcp/mcp-ui',
+            ],
+          }
+        },
+      },
+      {
+        name: 'clawql.docs.claim_starter_pack',
+        title: 'Claim starter pack',
+        description:
+          'Claims the agent starter pack: downloads clawql-starter-mcp.json and CLAWQL-STARTER-README.md, opens the Agent Lab, and returns the file contents. No secrets included — only MCP wiring + vault path stubs.',
+        inputSchema: {
+          $schema: 'https://json-schema.org/draft/2020-12/schema',
+          type: 'object',
+          additionalProperties: false,
+          properties: {},
+        },
+        annotations: { readOnlyHint: false },
+        async execute() {
+          useAgentLabStore.getState().reveal()
+          const pack = claimStarterPackDownloads()
+          useAgentLabStore.getState().markClaimed()
+          return {
+            ...pack,
+            warning:
+              'Never put API tokens in mcp.json. Use ~/.ClawQL/vault/providers.json or Cursor Secrets.',
+          }
         },
       },
     ]
