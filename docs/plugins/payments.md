@@ -37,7 +37,7 @@ ClawQL’s Agentic Gateway includes native **Stripe + x402 + MPP + AP2 + ACP** s
 | **Compensation**       | Agent deposit / cash-out — `CLAWQL_COMPENSATION_ENABLED=1` (self-hosted)                                            |
 | **Accounting**         | Period subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack                                         |
 
-Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments` (includes [Accounting & tax](../payments/clawql-payments.md#accounting--tax)). Cloudflare prep: [cloudflare-wallets](../payments/cloudflare-wallets.md).
+Operator guide: [clawql-payments](../payments/clawql-payments.md) → `/payments/clawql-payments` (includes [Accounting & tax](../payments/clawql-payments.md#accounting--tax)). **Learn walkthrough:** [Payments & entitlements](https://docs.clawql.com/learn/payments-and-entitlements). Cloudflare prep: [cloudflare-wallets](../payments/cloudflare-wallets.md).
 
 ### Accounting & tax (operator quick start)
 

@@ -41,12 +41,14 @@ const LEARN_MODULE_HREFS = [
   '/learn/external-ingest-knowledge',
   '/learn/knowledge-search-onyx',
   '/learn/document-pipeline',
+  '/learn/payments-and-entitlements',
   '/learn/sandbox-exec',
   '/learn/effect-ts',
   '/learn/ouroboros-tools',
   '/learn/schedule-notify-workflows',
   '/learn/cache-handoff-between-chats',
   '/learn/audit-tool-and-observability',
+  '/learn/panguard-mcp-enforcement',
 ] as const
 
 const learnModuleByHref = new Map(

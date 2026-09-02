@@ -1,0 +1,164 @@
+import { Note } from '@/components/mdx'
+
+# Payments & entitlements
+
+**`clawql-payments`** is how ClawQL bills managed tiers, gates inference with **plan limits**, and optionally collects **Stripe**, **x402**, or **MPP** on the Agentic Gateway. This walkthrough gets you from a dry-run local setup to a verified WORM audit trail — without conflating the three different “usage” systems. {{ className: 'lead' }}
+
+**Deep reference:** [clawql-payments](/payments/clawql-payments) · **Plugin surface:** [Payments plugin](/plugins/payments) · **Compliance:** [Hosted vs self-hosted](/payments/clawql-payments#managed-plan-tiers) (see repo `hosted-vs-self-hosted-compliance.md`)
+
+## Before you start
+
+1. **Pick your posture** — On **managed** ClawQL, Stripe platform fees and **closed-loop org credits** are in scope; cross-tenant P2P and agent compensation are **self-hosted only** ([compliance framing](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/hosted-vs-self-hosted-compliance.md)).
+2. **Know the three usage layers** — they are independent:
+
+| Layer                    | Storage                            | Purpose                                             |
+| ------------------------ | ---------------------------------- | --------------------------------------------------- |
+| **Plan entitlements**    | `$CLAWQL_HOME/Payments/usage.json` | Monthly caps (`inference_calls`, documents, memory) |
+| **Inference call store** | `$CLAWQL_HOME/Inference/`          | Token/latency flywheel — not quota enforcement      |
+| **Virtual key budgets**  | `virtual-keys.json`                | Per-team USD caps at auth time                      |
+
+3. **Have inference ready** — payments enforcement hooks into **`clawql-inference`** ([Inference setup](/getting-started/inference), [Agentic Gateway](/inference/clawql-inference)).
+
+## Path A — Local plan limits (no Stripe)
+
+Best for homelab or CI: exercise tier caps and audit without live rails.
+
+```bash
+export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
+mkdir -p "$CLAWQL_HOME/Payments"
+
+# Dry-run tenant on the free tier
+clawql payments plan show
+clawql payments plan upgrade --tier team   # or edit payments.json
+
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+clawql inference serve --port 8080
+```
+
+**Verify entitlement behavior:**
+
+```bash
+clawql payments usage report --month "$(date +%Y-%m)"
+```
+
+Over-limit calls return **402 `insufficient_quota`** (OpenAI-compatible shape). Tenant resolution order: request `tenantId` → virtual-key `team` header → `payments.json` → `"default"`.
+
+## Path B — Stripe subscriptions + optional Billing Meters
+
+For operators billing humans in fiat:
+
+1. Create a Stripe account and configure a **Billing Meter** in the Dashboard (event name e.g. `clawql_inference_calls`).
+2. Wire secrets (never commit):
+
+```bash
+export STRIPE_SECRET_KEY=sk_live_...
+export STRIPE_METER_EVENT_NAME=clawql_inference_calls
+export CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1   # optional meter emit per inference
+clawql payments stripe setup                   # writes customer + webhook secret to payments.json
+```
+
+3. Process webhooks with signature verification:
+
+```bash
+clawql payments stripe webhook verify --body @raw-body.json --signature "t=...,v1=..."
+```
+
+Meter events and `invoice.paid` append to the **payment WORM** — see Path D.
+
+## Path C — x402 pay-per-call on MCP or HTTP
+
+**x402** gates individual inference or MCP tool calls with USDC micropayments (independent of plan `usage.json`).
+
+```bash
+clawql payments x402 wallet setup --address 0xYourWallet...
+export CLAWQL_X402_ENFORCE=1
+export CLAWQL_X402_FACILITATOR_URL=https://x402.org/facilitator
+export CLAWQL_X402_NETWORK=base-sepolia   # testnet example
+
+clawql payments x402 gate add --path "/v1/chat/completions" --price-usdc 0.001
+clawql payments x402 gate add --tool search --price-usdc 0.0001
+```
+
+**HTTP middleware order** on `clawql inference serve`:
+
+1. JSON body parser
+2. **x402 middleware** (`CLAWQL_X402_ENFORCE`)
+3. Virtual key auth
+4. OpenAI-compat router (plan entitlement check inside gateway)
+
+**MCP:** enable the [Payments plugin](/plugins/payments) (`PaymentsX402ProxyPlugin`) for tool-level x402 (+ optional AP2 mandate checks). Discovery: [`.well-known/payments.json`](https://docs.clawql.com/.well-known/payments.json) on MCP and inference HTTP.
+
+**Test a payload offline:**
+
+```bash
+clawql payments x402 verify --payload ./payment.json --resource http://localhost:8080/v1/chat/completions
+```
+
+## Path D — WORM audit (always do this in prod)
+
+Every payment rail should leave a **hash-chained** trail under `$CLAWQL_HOME/Payments/audit.jsonl`:
+
+```bash
+clawql payments audit verify
+clawql payments audit tail --limit 20
+```
+
+For multi-node fleets:
+
+```bash
+export CLAWQL_PAYMENTS_AUDIT_STORE=postgres
+```
+
+Optional SIEM push when `CLAWQL_LOKI_PUSH_URL` is set. Pair with [Audit Trail](/audit) for MCP tool events and [Observability](/observability) for LGTM dashboards.
+
+## Accounting close (operators)
+
+After you have WORM events:
+
+```bash
+clawql payments accounting export --from 2026-01-01 --to 2026-12-31 --format csv
+clawql payments accounting tax-evidence --tax-year 2026
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
+```
+
+Subledger export ≠ full GL — see [accounting-and-tax](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/payments/accounting-and-tax.md).
+
+## End-to-end checklist (self-hosted production)
+
+```bash
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+export CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1    # if using Stripe meters
+export CLAWQL_X402_ENFORCE=1                    # if using x402
+export CLAWQL_MPP_ENABLED=1                     # optional session micropayments
+export CLAWQL_PAYMENTS_MCP_TOOLS=1              # payout / compensation tools (self-hosted)
+
+clawql payments audit verify
+clawql inference serve --port 8080
+```
+
+Smoke: one inference call → `usage.json` increments → audit line appended → (optional) Stripe meter event.
+
+## Troubleshooting
+
+| Symptom                          | First checks                                                              |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| **402 `insufficient_quota`**     | `clawql payments plan show`; virtual-key `team` vs `payments.json` tenant |
+| **x402 `wallet not configured`** | `clawql payments x402 wallet setup`                                       |
+| **Facilitator verify fails**     | `CLAWQL_X402_FACILITATOR_URL` ends at host; CDP bearer env for mainnet    |
+| **Stripe meter silent**          | `CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1`; customer id in `payments.json`   |
+| **Webhook signature fail**       | Verify raw body, not re-serialized JSON                                   |
+
+Full matrix: [clawql-payments troubleshooting](/payments/clawql-payments#troubleshooting).
+
+## What to read next
+
+- [Agentic Gateway](/inference/clawql-inference) — where entitlements wrap `/v1` and MCP
+- [Authentication](/auth) — virtual keys and outbound token refresh
+- [Defense in depth](/security/defense-in-depth) — payments sit in the audit / WORM layer
+- [Panguard MCP enforcement](/learn/panguard-mcp-enforcement) — block tool calls **before** they spend quota or hit paid APIs
+
+<Note>
+  **Managed vs self-hosted:** do not enable `CLAWQL_CREDITS_P2P_ENABLED` or
+  `CLAWQL_COMPENSATION_ENABLED` on `CLAWQL_MANAGED_HOSTING=1` fleets — those
+  rails are operator opt-in under their own compliance program.
+</Note>
