@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /**
- * Minimal Streamable HTTP MCP stub for Lab 5b smoke (search + execute).
+ * Minimal Streamable HTTP MCP stub for Lab 5b smoke
+ * (search + execute + memory_ingest + memory_recall).
  * Speaks MCP 2026-07-28-style JSON JSON-RPC tools/call — no SDK.
  */
 import { createServer } from "node:http";
 
 const port = Number(process.env.MOCK_MCP_PORT || process.argv[2] || 9891);
 const path = "/mcp";
+
+/** @type {Map<string, { title: string, insights: string }>} */
+const vault = new Map();
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://127.0.0.1:${port}`);
@@ -74,6 +78,44 @@ const server = createServer(async (req, res) => {
         operationId: args.operationId,
         args: args.args ?? {},
         result: { status: "noop" },
+      };
+    } else if (name === "memory_ingest") {
+      const title = String(args.title || "untitled");
+      const insights = String(args.insights || "");
+      vault.set(title, { title, insights });
+      payload = {
+        ok: true,
+        source: "mock-mcp",
+        path: `Memory/${title.replace(/\s+/g, "-").toLowerCase()}.md`,
+        title,
+      };
+    } else if (name === "memory_recall") {
+      const query = String(args.query || "").toLowerCase();
+      const results = [...vault.values()]
+        .filter(
+          (n) =>
+            n.title.toLowerCase().includes(query) ||
+            n.insights.toLowerCase().includes(query) ||
+            query.includes("streams")
+        )
+        .slice(0, Number(args.limit) || 5)
+        .map((n) => ({
+          path: `Memory/${n.title.replace(/\s+/g, "-").toLowerCase()}.md`,
+          score: 1,
+          snippet: n.insights.slice(0, 120),
+        }));
+      if (results.length === 0) {
+        results.push({
+          path: "Memory/streams-celld-session.md",
+          score: 0.5,
+          snippet: "mock recall hit for streams-celld",
+        });
+      }
+      payload = {
+        ok: true,
+        source: "mock-mcp",
+        query: args.query,
+        results,
       };
     } else {
       res.writeHead(200, { "content-type": "application/json" });

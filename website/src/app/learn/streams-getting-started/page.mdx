@@ -423,7 +423,7 @@ clawql streams celld bundle-check
 
 Expect ≈ **0.4 MiB** (~0.6% of the **64 MiB** Workers limit). The full `clawql-core` barrel is **not** used — it would pull `webmcp-draft` (`node:fs`).
 
-Webhook responses include `session.audit.clawqlCore` (hash-chained append) and `session.core.inProcess: ["audit","cache","hash-chain"]`. With **`CLAWQL_MCP_URL`** set, `session.tools.search` / `session.tools.execute` call Streamable HTTP MCP (`tools/call`, prefer protocol **2026-07-28**). When unset, those tools return `{ deferred: true }`. Full `clawql-api` stays on the MCP host — not in the Worker bundle.
+Webhook responses include `session.audit.clawqlCore` (hash-chained append) and `session.core.inProcess: ["audit","cache","hash-chain"]`. With **`CLAWQL_MCP_URL`** set, `session.tools.search` / `execute` / `memory_ingest` / `memory_recall` call Streamable HTTP MCP (`tools/call`, prefer protocol **2026-07-28**). When unset, those tools return `{ deferred: true }`. Full `clawql-api` / vault IO stay on the MCP host — not in the Worker bundle.
 
 Smoke with a mock MCP: `bash examples/streams-celld/scripts/smoke.sh`.
 
