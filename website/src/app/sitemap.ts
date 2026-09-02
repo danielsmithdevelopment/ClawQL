@@ -286,6 +286,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.88,
   },
   {
+    path: '/learn/nats-idp-pipeline',
+    changeFrequency: 'monthly',
+    priority: 0.89,
+  },
+  {
     path: '/learn/optional-mcp-tools',
     changeFrequency: 'monthly',
     priority: 0.89,
