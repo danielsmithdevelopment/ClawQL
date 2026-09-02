@@ -54,7 +54,7 @@ const SECTIONS = [
       [
         'mcp-ui',
         '/mcp/mcp-ui',
-        'HTMX Swagger UI for MCP — seventh adapter surface, shipped',
+        'HTMX Swagger UI for MCP — seventh adapter surface',
       ],
       [
         'clawql-network',

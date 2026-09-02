@@ -11,7 +11,7 @@ This document is a specification of contracts, not a getting-started guide. It a
 
 If you want to run ClawQL locally before reading further, start with the [Deployment & Operations Guide](/deployment/operations-guide) ([Helm](/helm) or `npx clawql-mcp`). Come back here when you are ready to build something.
 
-**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](/reference/plugins) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
+**Package extraction (phases 1–9) is on `main`.** Vertical contributions still require a **stable Plugin Layer API** (`onRegister` tool registration, `requiredSpecs`, third-party contract) — see [Plugin model](/plugins#plugin-model) and [implementation status](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/modularization-implementation-status.md). You can write and test a vertical now using the in-memory test layers described in §3.4. Do not merge a vertical to `main` until the **Plugin interface exit criteria** in §1.1 are met for the surfaces your vertical depends on.
 
 ### Required Familiarity
 
@@ -62,7 +62,7 @@ These are the interfaces every contributor must understand. They live in `clawql
 
 Every vertical and every major horizontal package implements `Plugin`. It is the registration contract between a package and `clawql-api`.
 
-**Horizontal packages (memory, documents, automation):** see [ClawQL plugin model](/reference/plugins) for how these become plugins that register their MCP tools (`memory_ingest`, `ingest_external_knowledge`, `schedule`, etc.) and how that differs from the current `tools.ts` layout.
+**Horizontal packages (memory, documents, automation):** see [ClawQL plugin model](/plugins#plugin-model) for how these become plugins that register their MCP tools (`memory_ingest`, `ingest_external_knowledge`, `schedule`, etc.) and how that differs from the current `tools.ts` layout.
 
 ```typescript
 export interface Plugin {

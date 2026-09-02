@@ -24,9 +24,6 @@ export default function ClawqlPaymentsPage() {
         <Tag color="claw" variant="medium">
           Payments
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped
-        </Tag>
       </div>
 
       <div className="not-prose mb-8">

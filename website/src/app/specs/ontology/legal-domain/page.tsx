@@ -23,9 +23,6 @@ export default function OntologyLegalDomainPage() {
         <Tag color="claw" variant="medium">
           Ontology
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped (7.1)
-        </Tag>
         <Tag color="amber" variant="medium">
           v0.1 spec
         </Tag>

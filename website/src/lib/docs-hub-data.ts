@@ -175,7 +175,7 @@ export const architectureHubCards: Array<ReferenceCard> = [
     href: '/ouroboros',
     name: 'Ouroboros',
     description:
-      'Shipped evolutionary-loop library and optional ouroboros_* MCP tools.',
+      'Evolutionary-loop library and optional ouroboros_* MCP tools.',
     icon: SquaresPlusIcon,
   }),
   card({
@@ -367,7 +367,7 @@ export const referenceHubCards: Array<ReferenceCard> = [
     href: '/mcp/mcp-ui',
     name: '/mcp-ui',
     description:
-      'Swagger UI for MCP — HTMX forms from inputSchema (7th surface, shipped).',
+      'Swagger UI for MCP — HTMX forms from inputSchema (7th surface).',
     icon: DocumentIcon,
   }),
   card({

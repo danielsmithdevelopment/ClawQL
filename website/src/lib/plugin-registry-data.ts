@@ -41,7 +41,7 @@ export const PLUGIN_STATUS_LABELS: Record<PluginStatus, string> = {
   'always-on': 'Always on',
   'default-on': 'Default on',
   'opt-in': 'Opt-in',
-  shipped: 'Shipped',
+  shipped: 'Available',
   planned: 'Planned',
   roadmap: 'Roadmap',
 }

@@ -236,7 +236,7 @@ export const DOC_LAYOUT_SECTIONS_BY_PATH: Record<string, Array<Section>> = {
     { title: "Related docs", id: "related-docs" },
   ],
   "/deployment": [
-    { title: "Shipped paths (use today)", id: "shipped-paths-use-today" },
+    { title: "Install paths", id: "install-paths" },
     { title: "Platform operations", id: "platform-operations" },
     { title: "Planned (design only)", id: "planned-design-only" },
     { title: "All deployment topics", id: "all-deployment-topics" },

@@ -20,9 +20,6 @@ export default function ClawqlAgentsSpecPage() {
         <Tag color="claw" variant="medium">
           Agents
         </Tag>
-        <Tag color="sky" variant="medium">
-          Shipped
-        </Tag>
         <Tag color="amber" variant="medium">
           v0.1
         </Tag>

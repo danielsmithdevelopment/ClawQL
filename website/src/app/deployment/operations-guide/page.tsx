@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'Deployment & Operations Guide',
   description:
-    'ClawQL operations for shipped Helm installs: quick start, health checks, secrets, upgrades, and links to the seven-vendor IDP pipeline.',
+    'ClawQL operations for Helm installs: quick start, health checks, secrets, upgrades, and links to the seven-vendor IDP pipeline.',
   path: '/deployment/operations-guide',
   ogType: 'article',
 })
@@ -21,7 +21,7 @@ export default function DeploymentOperationsGuidePage() {
           Deployment
         </Tag>
         <Tag color="sky" variant="medium">
-          Helm · shipped
+          Helm
         </Tag>
       </div>
 
@@ -49,7 +49,7 @@ export default function DeploymentOperationsGuidePage() {
           >
             Vision & Roadmap
           </a>{' '}
-          for shipped vs planned status.
+          for current vs planned status.
         </Note>
       </div>
 

@@ -16,7 +16,7 @@ This file helps AI agents and crawlers find canonical documentation. For full-te
 ## Core reference
 - [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
 - [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter): Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui
-- [mcp-ui](https://docs.clawql.com/mcp/mcp-ui): HTMX Swagger UI for MCP — seventh adapter surface, shipped
+- [mcp-ui](https://docs.clawql.com/mcp/mcp-ui): HTMX Swagger UI for MCP — seventh adapter surface
 - [clawql-network](https://docs.clawql.com/specs/network/clawql-network): Headscale mesh + Tailcat ephemeral transport, selector, ATR audit
 - [clawql-agents](https://docs.clawql.com/agents/clawql-agents): Seven open-source agent adapters with Panguard and WORM hooks
 - [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs, Dedicated Virtual Gateways, Edge swarm
