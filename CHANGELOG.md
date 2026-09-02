@@ -7,9 +7,9 @@
 - **`mcp-api-adapter`** unpublished draft `0.6.0` → **`0.1.0`** first publish.
 - **`clawql-ouroboros`** in-tree aligned to published **`0.1.1`** (not reset to `0.1.0`).
 
-## [8.0.0] - 2026-08-31
+## [8.0.0] - 2026-09-02
 
-Semver-**major** on the Agentic Gateway line: **empty-by-default bundled provider catalog**, **`ProviderPlugin` hard break** (no legacy bridge), skills-unified search + Agent Seer scenarios, enforcement opt-in, Managed Edge Gateway / enterprise control plane, payments + Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, audit/TEE wedge, OpenBench B-7, and personal-agent / Protocol Fabric work since **`v7.2.0`**. Release notes: **[`RELEASE_NOTES_v8.0.0.md`](RELEASE_NOTES_v8.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)**. Checklist: **[`docs/release/v8.0.0-checklist.md`](docs/release/v8.0.0-checklist.md)**. Inventory (as of 2026-08-31): **~920 commits**, **~125 merge PRs** (~100 product) after `v7.2.0`.
+Semver-**major** on the Agentic Gateway line: **empty-by-default bundled provider catalog**, **`ProviderPlugin` hard break** (no legacy bridge), skills-unified search + Agent Seer scenarios, enforcement opt-in, Managed Edge Gateway / enterprise control plane, payments + Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, audit/TEE wedge, **`clawql-network`** / **`clawql-analytics`**, meta-ontology + ExtractBench, Learn/docs wave for 8.0, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and personal-agent / Protocol Fabric work since **`v7.2.0`**. Release notes: **[`RELEASE_NOTES_v8.0.0.md`](RELEASE_NOTES_v8.0.0.md)**. Announcement drafts: **[`docs/announcements/announcement-drafts-v8.0.0.md`](docs/announcements/announcement-drafts-v8.0.0.md)**. Checklist: **[`docs/release/v8.0.0-checklist.md`](docs/release/v8.0.0-checklist.md)**. Inventory (as of 2026-09-02): **~1174 commits**, **~174 merge PRs** after `v7.2.0`.
 
 ### Breaking
 
@@ -59,6 +59,24 @@ helm upgrade --install clawql ./charts/clawql-mcp \
 - **`clawql-tee` simulated TEE ([#986](https://github.com/danielsmithdevelopment/ClawQL/pull/986))** — simulated TEE signing path for ID-JAG / Layer C.
 - **Executor comparison harness ([#988](https://github.com/danielsmithdevelopment/ClawQL/pull/988))** — side-by-side executor bench harness.
 - **Auth docs page + blog methodology landing ([#990](https://github.com/danielsmithdevelopment/ClawQL/pull/990), [#989](https://github.com/danielsmithdevelopment/ClawQL/pull/989))** — public auth documentation + methodology landing.
+- **Auth audit for clawql.com ([#991](https://github.com/danielsmithdevelopment/ClawQL/pull/991))** — hosted auth surface audit + remediation notes.
+- **`clawql-analytics` ([#992](https://github.com/danielsmithdevelopment/ClawQL/pull/992))** — PostHog/docs pageview adapter package; first npm publish **`0.1.0`**.
+- **PixelDrop iPhone HEIC verified ([#998](https://github.com/danielsmithdevelopment/ClawQL/pull/998))** — HEIC smart-upload path verified on device; demo claims tightened.
+- **Audit phase 4 publish ([#1007](https://github.com/danielsmithdevelopment/ClawQL/pull/1007))** — audit wedge publish workflow + phase-4 packaging.
+- **Observability security dashboards (Phase 5) ([#1013](https://github.com/danielsmithdevelopment/ClawQL/pull/1013))** — security sensor dashboards, alerting, Langfuse/Panguard correlation docs.
+- **Observability `0.1.0` versioning ([#1017](https://github.com/danielsmithdevelopment/ClawQL/pull/1017))** — reset in-tree observability to first-publish **`0.1.0`** cadence.
+- **`clawql-harness` `0.1.0` ([#1019](https://github.com/danielsmithdevelopment/ClawQL/pull/1019))** — harness package version aligned to workspace first-publish policy.
+- **Legal entity structured recall ([#1020](https://github.com/danielsmithdevelopment/ClawQL/pull/1020))** — ontology-backed legal-entity recall for regulated verticals.
+- **Security sidebar + OSV supply chain docs ([#1021](https://github.com/danielsmithdevelopment/ClawQL/pull/1021), [#1026](https://github.com/danielsmithdevelopment/ClawQL/pull/1026))** — docs site Security section; OSV scanner / supply-chain posture.
+- **PV anything-to-MCP ([#911](https://github.com/danielsmithdevelopment/ClawQL/pull/911))** — persistent-volume / workspace artifact → MCP tool bridge for IDP labs.
+- **Meta-ontology three-layer ([#963](https://github.com/danielsmithdevelopment/ClawQL/pull/963))** — three-layer meta-ontology model + lint wiring.
+- **ExtractBench ontology wire + Arm A prep ([#1018](https://github.com/danielsmithdevelopment/ClawQL/pull/1018), [#1023](https://github.com/danielsmithdevelopment/ClawQL/pull/1023))** — ExtractBench harness ↔ ontology integration; Arm A benchmark prep.
+- **`clawql-agents` follow-on ([#967](https://github.com/danielsmithdevelopment/ClawQL/pull/967))** — agent adapter polish after initial `clawql-agents` package.
+- **`clawql-network` spec v0.1 ([#1024](https://github.com/danielsmithdevelopment/ClawQL/pull/1024))** — Headscale/Tailscale/DERP/init CLI; network state Effect service; first npm publish **`0.1.0`**.
+- **Effect service surface in every package ([#1031](https://github.com/danielsmithdevelopment/ClawQL/pull/1031))** — `*Live` / `*Layer` exports standardized across workspace packages.
+- **Effect v4 RC spike docs ([#1035](https://github.com/danielsmithdevelopment/ClawQL/pull/1035))** — forward-looking Effect 4 migration notes (no runtime bump in 8.0).
+- **8.0 Learn + docs discoverability ([#1025](https://github.com/danielsmithdevelopment/ClawQL/pull/1025), [#1027](https://github.com/danielsmithdevelopment/ClawQL/pull/1027)–[#1032](https://github.com/danielsmithdevelopment/ClawQL/pull/1032), [#1036](https://github.com/danielsmithdevelopment/ClawQL/pull/1036))** — Learn sidebar (Plugins, Streams, optional MCP tools, payments/Panguard, IDP labs); `/archive`; migrate-to-8 site audit ([#1028](https://github.com/danielsmithdevelopment/ClawQL/pull/1028)); NATS IDP + KEDA lab module ([#1036](https://github.com/danielsmithdevelopment/ClawQL/pull/1036)).
+- **Workspace `clawql-*` npm versions reset to `0.1.0`** — independent semver from `clawql-mcp@8`; policy [`docs/release/clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md); targets [`scripts/release/package-npm-version-targets.json`](scripts/release/package-npm-version-targets.json).
 - **`clawql-data` (Node DuckDB)** — workspace package `packages/clawql-data` registers MCP **`data_query`**, **`data_ingest`**, and **`data_status`** when **`CLAWQL_ENABLE_DATA=1`**. Engine is **Node DuckDB** (`@duckdb/node-api`). Python `duckdb` and chDB are not supported. Harvey LAB `clawql_sql` calls **`data_query`**. Docs: [`docs/plugins/data.md`](docs/plugins/data.md).
 
 - **Helm `managedGateway` hardening** — non-root nginx (uid 101), read-only root + emptyDir, stderr/stdout logs, tunable probes, default NetworkPolicy (DNS + MCP + inference egress). JWT ATR remains on MCP/proxy upstream.
