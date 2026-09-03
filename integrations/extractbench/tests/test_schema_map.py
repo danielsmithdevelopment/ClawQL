@@ -60,6 +60,11 @@ class SchemaMapTests(unittest.TestCase):
         text = 'Here you go:\n```json\n{"a": 1}\n```\n'
         self.assertEqual(parse_json_object(text), {"a": 1})
 
+    def test_parse_truncated_json_repairs(self) -> None:
+        # max_tokens often cuts mid-array on list-heavy ExtractBench docs.
+        truncated = '{"a":1,"b":[{"x":1},{"x":2},{"x":'
+        self.assertEqual(parse_json_object(truncated), {"a": 1, "b": [{"x": 1}, {"x": 2}]})
+
     def test_null_template(self) -> None:
         schema = {
             "type": "object",

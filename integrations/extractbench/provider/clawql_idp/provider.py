@@ -127,9 +127,12 @@ class ClawQLIDPProvider(Provider):
                 f"got {self._schema_map_mode!r}"
             )
 
+        # Env wins so Mac mini / MLX can override the pipeline default without
+        # re-editing extract.py (e.g. Ornith path when Qwen weights are absent).
         self._model = str(
-            self.base_config.get("model")
-            or os.environ.get("CLAWQL_EXTRACTBENCH_MODEL", "qwen3.6-35b-a3b-fp8")
+            os.environ.get("CLAWQL_EXTRACTBENCH_MODEL")
+            or self.base_config.get("model")
+            or "qwen3.6-35b-a3b-fp8"
         )
         self._endpoint_env_var = str(
             self.base_config.get("endpoint_env_var") or "QWEN35_SERVER_URL"
@@ -153,9 +156,24 @@ class ClawQLIDPProvider(Provider):
             or "dummy"
         )
         self._timeout_s = float(self.base_config.get("timeout_s", self.base_config.get("timeout", 1800)))
-        self._max_tokens = int(self.base_config.get("max_tokens", 65536))
+        # Env overrides pipeline defaults so Mac mini can shrink prompts without
+        # re-editing extract.py (chunk_chars/max_tokens are otherwise hardcoded).
+        self._max_tokens = int(
+            os.environ.get("CLAWQL_EXTRACTBENCH_MAX_TOKENS")
+            or self.base_config.get("max_tokens")
+            or 65536
+        )
         self._temperature = float(self.base_config.get("temperature", 0.0))
-        self._chunk_chars = int(self.base_config.get("chunk_chars", 120_000))
+        self._chunk_chars = int(
+            os.environ.get("CLAWQL_EXTRACTBENCH_CHUNK_CHARS")
+            or self.base_config.get("chunk_chars")
+            or 120_000
+        )
+        self._layout_json_chars = int(
+            os.environ.get("CLAWQL_EXTRACTBENCH_LAYOUT_JSON_CHARS")
+            or self.base_config.get("layout_json_chars")
+            or 200_000
+        )
         self._structured_output = bool(self.base_config.get("structured_output", True))
         self._additional_properties_false = bool(
             self.base_config.get("additional_properties_false", True)
@@ -290,7 +308,7 @@ class ClawQLIDPProvider(Provider):
                 "Extract every field according to the JSON schema. "
                 "For array/list fields, include every row present in THIS chunk "
                 "(other chunks are merged later). Use null for missing fields.\n\n"
-                f"JSON schema:\n{json.dumps(prepared, indent=2)}\n\n"
+                f"JSON schema:\n{json.dumps(prepared, separators=(',', ':'))}\n\n"
                 f"Extracted document content:\n{chunk}"
             )
             response_format: dict[str, Any]
@@ -412,10 +430,11 @@ class ClawQLIDPProvider(Provider):
             content_for_map = markdown
             if layout_json is not None and self._schema_map_mode == "llm":
                 # Append a compact JSON appendix so nested tables remain visible.
+                # Cap size for Mini Metal (default 200k chars OOMs Ornith KV).
                 content_for_map = (
                     markdown
                     + "\n\n<!-- docling_json -->\n"
-                    + json.dumps(layout_json)[:200_000]
+                    + json.dumps(layout_json, separators=(",", ":"))[: self._layout_json_chars]
                 )
 
             map_meta: dict[str, Any] = {}

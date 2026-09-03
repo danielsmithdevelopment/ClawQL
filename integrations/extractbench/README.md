@@ -52,6 +52,22 @@ CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp
 QWEN35_SERVER_URL=http://127.0.0.1:8000   # Arm A only — your vLLM / OpenAI-compatible host
 ```
 
+### Arm A env overrides (Mini / CI)
+
+Pipeline defaults hardcode large `chunk_chars` / `max_tokens`. These env vars **win** over config so Mac Mini MLX or GitHub Actions can tune without editing ExtractBench:
+
+| Env | Purpose | Mini-tested starting point |
+| --- | ------- | -------------------------- |
+| `CLAWQL_EXTRACTBENCH_MODEL` | Served model id (must match `/v1/models`) | path or HF id for Qwen3.6 35B A3B |
+| `CLAWQL_EXTRACTBENCH_CHUNK_CHARS` | Schema-map text chunk size | `50000` |
+| `CLAWQL_EXTRACTBENCH_MAX_TOKENS` | Completion budget (list-heavy docs need headroom) | `16384` |
+| `CLAWQL_EXTRACTBENCH_LAYOUT_JSON_CHARS` | Cap Docling JSON appendix (Metal OOM if uncapped) | `4000` |
+| `CLAWQL_EXTRACTBENCH_LLM_URL` | Alternate OpenAI-compatible base (else `QWEN35_SERVER_URL`) | — |
+
+For MLX: `mlx_lm.server --chat-template-args '{"enable_thinking":false}'` so JSON lands in `content`. Truncated completions are best-effort repaired in `schema_map.parse_json_object`.
+
+**Known Mini gap:** bianco / W14 schemas alone are ~45k–137k tokens — need field batching before full `--test`. See [`docs/benchmarks/extractbench-clawql-results.md`](../../docs/benchmarks/extractbench-clawql-results.md).
+
 ## Cost-safe run order
 
 ```bash
