@@ -49,34 +49,34 @@ The internal comparison that proves pipeline value: **ClawQL IDP + Qwen** vs **r
 
 **Mac Mini MLX (2026-09-02):** `mlx-community/Qwen3.6-35B-A3B-4bit` via `mlx_lm.server` on `:8000`, thinking off, Mini caps (`CHUNK_CHARS≈50k`, `LAYOUT_JSON_CHARS=4k`, `MAX_TOKENS` up to 16384) + truncated-JSON repair in the overlay.
 
-| Doc | Split | Value F1 (Arm A) | Value F1 (Arm B same doc) |
-| --- | ----- | ---------------: | ------------------------: |
-| Goshen | short | **0.779** | 0.000 |
-| pueblo | medium | **0.605** | 0.020 |
-| sm0801 | long | **0.557** | 0.017 |
-| veralto | medium | **0.406** | 0.000 |
-| **macro (4 docs)** | — | **0.587** | ~0.009 |
-| bianco | short | _skipped_ — schema alone ~137k tokens | 0.598 (structural) |
-| W14 | short | _skipped_ — schema alone ~45k tokens | 0.640 (structural) |
+| Doc                | Split  |                      Value F1 (Arm A) | Value F1 (Arm B same doc) |
+| ------------------ | ------ | ------------------------------------: | ------------------------: |
+| Goshen             | short  |                             **0.779** |                     0.000 |
+| pueblo             | medium |                             **0.605** |                     0.020 |
+| sm0801             | long   |                             **0.557** |                     0.017 |
+| veralto            | medium |                             **0.406** |                     0.000 |
+| **macro (4 docs)** | —      |                             **0.587** |                    ~0.009 |
+| bianco             | short  | _skipped_ — schema alone ~137k tokens |        0.598 (structural) |
+| W14                | short  |  _skipped_ — schema alone ~45k tokens |        0.640 (structural) |
 
-| Split   |  Value F1 | Precision |    Recall | Page grounding | Word grounding | Cost/page | Latency s/doc |
-| ------- | --------: | --------: | --------: | -------------: | -------------: | --------: | ------------: |
+| Split   |   Value F1 | Precision |    Recall | Page grounding | Word grounding | Cost/page | Latency s/doc |
+| ------- | ---------: | --------: | --------: | -------------: | -------------: | --------: | ------------: |
 | Overall | **~0.59*** |         — |         — |           0.00 |              — |    $0.000 |     ~15–20min |
 | Short   | **0.779†** | _pending_ | _pending_ |           0.00 |              — |    $0.000 |     _pending_ |
-| Medium  | **0.506** | _pending_ | _pending_ |           0.00 |              — |    $0.000 |     _pending_ |
-| Long    | **0.557** | _pending_ | _pending_ |           0.00 |              — |    $0.000 |     _pending_ |
+| Medium  |  **0.506** | _pending_ | _pending_ |           0.00 |              — |    $0.000 |     _pending_ |
+| Long    |  **0.557** | _pending_ | _pending_ |           0.00 |              — |    $0.000 |     _pending_ |
 
 \*4/6 `--test` docs (bianco/W14 blocked by schema size on Mini Metal).  
 †Short split here is Goshen only (bianco/W14 unscored on Arm A).
 
 ### Mini lessons (Arm A)
 
-| Finding | Implication |
-| ------- | ----------- |
-| Real Qwen MLX beats Ornith stand-in | Ornith returned empty/`reasoning`-only; Qwen emits JSON in `content` with `enable_thinking:false` |
-| Schema size blocks bianco/W14 | Need schema truncation / field batching before Mini can score tax/well forms |
-| `max_tokens` 2k–8k truncates large arrays | Use ≥16k + truncated-JSON repair for list-heavy docs |
-| Arm A ≫ Arm B on the 4 scoreable docs | 0.587 vs ~0.01 — schema map is doing real work; short-split success bar vs Arm B **34.4** still needs bianco/W14 or a larger short sample |
+| Finding                                   | Implication                                                                                                                               |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Real Qwen MLX beats Ornith stand-in       | Ornith returned empty/`reasoning`-only; Qwen emits JSON in `content` with `enable_thinking:false`                                         |
+| Schema size blocks bianco/W14             | Need schema truncation / field batching before Mini can score tax/well forms                                                              |
+| `max_tokens` 2k–8k truncates large arrays | Use ≥16k + truncated-JSON repair for list-heavy docs                                                                                      |
+| Arm A ≫ Arm B on the 4 scoreable docs     | 0.587 vs ~0.01 — schema map is doing real work; short-split success bar vs Arm B **34.4** still needs bianco/W14 or a larger short sample |
 
 ### Arm A next stage (prerequisites)
 
@@ -137,11 +137,11 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 
 ## Delta vs raw Qwen oneshot
 
-| Metric     | Raw Qwen | ClawQL IDP + Qwen (Mini 4-doc) | Arm B (structural) |     Δ (target) |
-| ---------- | -------: | -----------------------------: | -----------------: | -------------: |
-| Overall F1 |    87.33 |                    **~58.7*** |              34.43 |      _pending_ |
-| Long F1    |    26.75 |                    **55.69** |                n/a | **beat 26.75** ✓ (sm0801 only) |
-| Cost/page  |        — |                         $0.000 |             $0.000 |        ≤ $1.00 |
+| Metric     | Raw Qwen | ClawQL IDP + Qwen (Mini 4-doc) | Arm B (structural) |                     Δ (target) |
+| ---------- | -------: | -----------------------------: | -----------------: | -----------------------------: |
+| Overall F1 |    87.33 |                     **~58.7*** |              34.43 |                      _pending_ |
+| Long F1    |    26.75 |                      **55.69** |                n/a | **beat 26.75** ✓ (sm0801 only) |
+| Cost/page  |        — |                         $0.000 |             $0.000 |                        ≤ $1.00 |
 
 \*Not a full `--test` / leaderboard overall — bianco/W14 unscored on Mini.
 
@@ -158,14 +158,14 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 
 ## Run diary
 
-| Date       | Split          | Pipeline                   | Notes                                                                               |
-| ---------- | -------------- | -------------------------- | ----------------------------------------------------------------------------------- |
-| 2026-09-01 | test (6 doc)   | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args             |
-| 2026-09-01 | short (93/252) | clawql_idp_docling_extract | **Stopped** — final partial Value F1 **34.43**; ontology 93/93 `recallOk`; PR #1022 |
-| 2026-09-01 | short (44/252) | clawql_idp_docling_extract | Mid-run partial re-eval (Value F1 39.18)                                            |
-| 2026-09-02 | test (6 doc)   | clawql_idp_docling_extract | Mini Arm B re-run macro ~0.212; short avg ~0.413                                    |
-| 2026-09-02 | test (4/6)     | clawql_idp_qwen_extract    | Mini MLX Qwen3.6-35B-A3B-4bit; macro **0.587**; skip bianco/W14 (schema too large)  |
-| _next_     | short / schema-batch | clawql_idp_qwen_extract | Schema truncation for bianco/W14; then `--group short`                              |
+| Date       | Split                | Pipeline                   | Notes                                                                               |
+| ---------- | -------------------- | -------------------------- | ----------------------------------------------------------------------------------- |
+| 2026-09-01 | test (6 doc)         | clawql_idp_docling_extract | Ontology sync live (`t1.recallOk`); fixed v8 MCP + docling execute args             |
+| 2026-09-01 | short (93/252)       | clawql_idp_docling_extract | **Stopped** — final partial Value F1 **34.43**; ontology 93/93 `recallOk`; PR #1022 |
+| 2026-09-01 | short (44/252)       | clawql_idp_docling_extract | Mid-run partial re-eval (Value F1 39.18)                                            |
+| 2026-09-02 | test (6 doc)         | clawql_idp_docling_extract | Mini Arm B re-run macro ~0.212; short avg ~0.413                                    |
+| 2026-09-02 | test (4/6)           | clawql_idp_qwen_extract    | Mini MLX Qwen3.6-35B-A3B-4bit; macro **0.587**; skip bianco/W14 (schema too large)  |
+| _next_     | short / schema-batch | clawql_idp_qwen_extract    | Schema truncation for bianco/W14; then `--group short`                              |
 
 ## Implementation notes
 
