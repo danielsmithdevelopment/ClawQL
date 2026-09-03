@@ -74,6 +74,11 @@ ENV_SNIPPET = """
 CLAWQL_MCP_URL=http://127.0.0.1:8080/mcp
 # OpenAI-compatible base for schema mapping (Arm A). No default host.
 QWEN35_SERVER_URL=
+# Optional: override served model id / Mini Metal prompt caps (env wins over pipeline)
+# CLAWQL_EXTRACTBENCH_MODEL=qwen3.6-35b-a3b-fp8
+# CLAWQL_EXTRACTBENCH_CHUNK_CHARS=50000
+# CLAWQL_EXTRACTBENCH_MAX_TOKENS=16384
+# CLAWQL_EXTRACTBENCH_LAYOUT_JSON_CHARS=4000
 # Optional measured infra cost attribution (USD / page)
 # CLAWQL_EXTRACTBENCH_COST_PER_PAGE=0.10
 # Optional meta-ontology sync after schema map (requires built clawql-ontology)

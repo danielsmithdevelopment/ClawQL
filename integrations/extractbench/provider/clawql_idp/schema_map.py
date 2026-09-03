@@ -66,27 +66,111 @@ def prepare_schema(schema: dict[str, Any], *, close_objects: bool = True) -> dic
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)```", re.IGNORECASE)
 
 
+def _repair_truncated_json(text: str) -> dict[str, Any] | list[Any]:
+    """Best-effort close of truncated LLM JSON (common under max_tokens caps)."""
+    start_obj = text.find("{")
+    start_arr = text.find("[")
+    if start_obj < 0 and start_arr < 0:
+        raise ValueError("no JSON structure found")
+    if start_obj < 0:
+        start = start_arr
+    elif start_arr < 0:
+        start = start_obj
+    else:
+        start = min(start_obj, start_arr)
+    s = text[start:]
+
+    def _try_load(frag: str) -> dict[str, Any] | list[Any] | None:
+        frag = frag.rstrip()
+        while frag and frag[-1] in ",:":
+            frag = frag[:-1].rstrip()
+        in_str = False
+        esc = False
+        stack: list[str] = []
+        for ch in frag:
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+                continue
+            if ch == "{":
+                stack.append("}")
+            elif ch == "[":
+                stack.append("]")
+            elif ch in "}]":
+                if not stack or stack[-1] != ch:
+                    return None
+                stack.pop()
+        if in_str:
+            frag += '"'
+        frag += "".join(reversed(stack))
+        try:
+            parsed = json.loads(frag)
+        except json.JSONDecodeError:
+            return None
+        if isinstance(parsed, (dict, list)):
+            return parsed
+        return None
+
+    # Try closing at structural boundaries (not every char — O(n) parses).
+    cut_points = [i + 1 for i, ch in enumerate(s) if ch in ',}]"']
+    cut_points.append(len(s))
+    for end in reversed(cut_points):
+        parsed = _try_load(s[:end])
+        if parsed is not None:
+            return parsed
+    raise ValueError("could not repair truncated JSON")
+
+
 def parse_json_object(text: str) -> dict[str, Any] | list[Any]:
-    """Parse a model response that may be fenced or padded with prose."""
+    """Parse a model response that may be fenced, padded, or truncated."""
     raw = (text or "").strip()
     if not raw:
         raise ValueError("empty JSON response")
     try:
-        return json.loads(raw)
+        parsed = json.loads(raw)
+        if isinstance(parsed, (dict, list)):
+            return parsed
     except json.JSONDecodeError:
         pass
     fence = _JSON_FENCE_RE.search(raw)
     if fence:
-        return json.loads(fence.group(1).strip())
+        try:
+            parsed = json.loads(fence.group(1).strip())
+            if isinstance(parsed, (dict, list)):
+                return parsed
+        except json.JSONDecodeError:
+            raw = fence.group(1).strip()
     start = raw.find("{")
     end = raw.rfind("}")
     if start >= 0 and end > start:
-        return json.loads(raw[start : end + 1])
+        try:
+            parsed = json.loads(raw[start : end + 1])
+            if isinstance(parsed, (dict, list)):
+                return parsed
+        except json.JSONDecodeError:
+            pass
     start = raw.find("[")
     end = raw.rfind("]")
     if start >= 0 and end > start:
-        return json.loads(raw[start : end + 1])
-    raise ValueError(f"could not parse JSON from model output ({len(raw)} chars)")
+        try:
+            parsed = json.loads(raw[start : end + 1])
+            if isinstance(parsed, (dict, list)):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+    try:
+        return _repair_truncated_json(raw)
+    except Exception as exc:  # noqa: BLE001 — surface original parse failure
+        raise ValueError(
+            f"could not parse JSON from model output ({len(raw)} chars)"
+        ) from exc
 
 
 def null_template_from_schema(schema: dict[str, Any]) -> dict[str, Any]:
