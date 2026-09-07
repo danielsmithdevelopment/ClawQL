@@ -182,9 +182,9 @@ type ExecuteBatchPaymentFields = {
 2. ~~Counters (day/session/reserved) fail closed.~~ (`clawql-payments` `OutboundSpendCounterService`)
 3. ~~HITL binding to quote digest; first-enablement gate with no override.~~
 4. ~~WORM variant fields + tests (deny-by-default, allowlist miss, cap breach, HITL binding, quote-digest mismatch, `settle_unconfirmed` freeze, loader rejects `requireDocumentedJustification: false`).~~
-5. Host wiring of batch runner into execute-batching sandbox (follow-on).
-6. One e2e against a public x402 fixture (follow-on).
-7. Production EIP-3009 / viem signing behind SecretStore (follow-on; dry-run signer ships for CI).
+5. ~~Host wiring of batch runner into execute-batching sandbox~~ (`clawql-core` `ExecuteBatchRegistry` + payments `execute_batch` MCP tool / `outbound-x402-pay` script)
+6. ~~One e2e against a public-shape x402 fixture~~ (local HTTP fixture + named-batch WORM; happy + deny)
+7. ~~Production EIP-3009 / viem signing behind SecretStore~~ (`signEip3009Payment`; dry-run remains for CI)
 
 ## Related
 

@@ -6,6 +6,13 @@ export {
   type PaymentsX402ProxyPluginOptions,
 } from "./payments-x402-proxy-plugin.js";
 export {
+  createPaymentsOutboundX402Plugin,
+  maybeOutboundX402Plugin,
+  paymentsOutboundX402Enabled,
+  PAYMENTS_OUTBOUND_X402_PLUGIN_ID,
+  registerOutboundX402PayIntoRegistry,
+} from "../x402/outbound/outbound-plugin.js";
+export {
   createPaymentsToolsPlugin,
   PAYMENTS_TOOLS_PLUGIN_ID,
   paymentsMcpToolsEnabled,

@@ -146,11 +146,11 @@ Then one e2e against a public x402 fixture with caps set so the happy path and t
 ## Concrete implementation slice (payer)
 
 1. ~~Batch script `outbound-x402-pay` with hooks on every inner `execute`.~~ (`runOutboundX402PayBatchEffect` in `clawql-payments`)
-2. ~~`X402Signer` as a `SecretStore` service (`clawql-auth` / `clawql-payments`).~~ (dry-run + SecretStore modes)
+2. ~~`X402Signer` as a `SecretStore` service (`clawql-auth` / `clawql-payments`).~~ (dry-run + EIP-3009/viem SecretStore modes)
 3. ~~WORM payment fields on `EXECUTE_BATCH_COMPLETED` (see spend governance).~~
 4. ~~Tests: deny-by-default, allowlist miss, cap breach, HITL binding, quote-digest mismatch, `settle_unconfirmed` freeze.~~
-5. One e2e against a public x402 fixture (follow-on).
-6. Wire into sandboxed execute-batching runner when that host lands (follow-on).
+5. ~~One e2e against a public-shape x402 fixture~~ (`outbound-fixture.e2e.test.ts`)
+6. ~~Wire into execute-batching runner~~ (`clawql-core` registry + payments `execute_batch` tool / `registerOutboundX402PayIntoRegistry`)
 
 ## Related
 

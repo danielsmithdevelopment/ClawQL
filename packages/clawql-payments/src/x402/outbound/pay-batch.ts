@@ -44,7 +44,27 @@ function isOutboundEnabled(env: NodeJS.ProcessEnv): boolean {
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
-function parsePaymentRequired(body: string): OutboundX402QuoteTerms | null {
+function parsePaymentRequired(body: string, headers?: Headers): OutboundX402QuoteTerms | null {
+  const fromBody = parsePaymentRequiredJson(body);
+  if (fromBody) return fromBody;
+  const header =
+    headers?.get("PAYMENT-REQUIRED") ??
+    headers?.get("payment-required") ??
+    headers?.get("X-PAYMENT-REQUIRED");
+  if (!header?.trim()) return null;
+  try {
+    const decoded = Buffer.from(header.trim(), "base64").toString("utf8");
+    return parsePaymentRequiredJson(decoded);
+  } catch {
+    try {
+      return parsePaymentRequiredJson(header);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function parsePaymentRequiredJson(body: string): OutboundX402QuoteTerms | null {
   try {
     const json = JSON.parse(body) as {
       accepts?: Array<Record<string, unknown>>;
@@ -188,7 +208,7 @@ export function runOutboundX402PayBatchEffect(
       catch: () => new X402Error({ reason: "probe_body_read_failed" }),
     }).pipe(Effect.catchAll(() => Effect.succeed("")));
 
-    const terms = parsePaymentRequired(probeBody);
+    const terms = parsePaymentRequired(probeBody, probe.headers);
     if (!terms) {
       return failResult(
         mkBatch({ success: false }),

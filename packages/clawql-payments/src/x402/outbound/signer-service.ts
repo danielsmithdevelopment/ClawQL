@@ -1,6 +1,6 @@
 /**
  * X402Signer — SecretStore consumer (no second vault).
- * Dry-run mode for CI via CLAWQL_X402_OUTBOUND_SIGNER=dry-run.
+ * Modes: dry-run (CI) | secret-store → EIP-3009 via optional viem when key present.
  */
 
 import { createHash } from "node:crypto";
@@ -8,6 +8,7 @@ import type { SecretStore } from "clawql-auth";
 import { SecretStoreError } from "clawql-auth";
 import { Context, Effect, Layer, Ref } from "effect";
 import { X402Error } from "../../errors/payment-errors.js";
+import { parseSignerSecret, signEip3009Payment } from "./eip3009-sign.js";
 import type { OutboundX402QuoteTerms } from "./types.js";
 
 export type X402SignRequest = {
@@ -22,13 +23,13 @@ export type X402SignRequest = {
 export type X402SignResult = {
   readonly paymentHeader: string;
   readonly payerAddress: string;
-  readonly mode: "dry-run" | "secret-store";
+  readonly mode: "dry-run" | "eip3009";
 };
 
 const SECRET_PATH_PREFIX = "x402/outbound/signer";
 const FREEZE_PREFIX = "x402/outbound/freeze";
 
-function signerSecretPath(tenantId: string, agentId: string): string {
+export function signerSecretPath(tenantId: string, agentId: string): string {
   return `${SECRET_PATH_PREFIX}/${tenantId}/${agentId}`;
 }
 
@@ -42,7 +43,6 @@ export class X402SignerService extends Context.Tag("clawql/X402SignerService")<
     readonly sign: (
       req: X402SignRequest
     ) => Effect.Effect<X402SignResult, X402Error | SecretStoreError>;
-    /** After settle_unconfirmed — freeze until operator reconciles. No retry-sign. */
     readonly freezeForSession: (
       sessionId: string,
       tenantId: string,
@@ -61,7 +61,6 @@ export type X402SignerLayerOptions = {
   readonly secretStore?: SecretStore;
   readonly mode?: "dry-run" | "secret-store";
   readonly env?: NodeJS.ProcessEnv;
-  /** Fixed payer address for dry-run / when secret has no address field. */
   readonly dryRunPayerAddress?: string;
 };
 
@@ -88,7 +87,6 @@ export function createX402SignerLayer(
   return Layer.effect(
     X402SignerService,
     Effect.gen(function* () {
-      // In-memory freeze overlay (also mirrored to SecretStore when available).
       const freezeMem = yield* Ref.make(new Set<string>());
       const store = options.secretStore;
 
@@ -162,35 +160,37 @@ export function createX402SignerLayer(
               return yield* Effect.fail(new X402Error({ reason: `signer_secret_missing:${path}` }));
             }
 
-            // Material stays in SecretStore; we only emit a deterministic opaque header
-            // derived from digest + resource (real EIP-3009 signing is a later rail step).
-            let payerAddress = dryRunPayer;
-            try {
-              const parsed = JSON.parse(secret) as { address?: string };
-              if (parsed.address?.trim()) payerAddress = parsed.address.trim();
-            } catch {
-              // Opaque hex / raw secret — address from env override if set.
+            const parsed = parseSignerSecret(secret);
+            if (!parsed.privateKey) {
+              return yield* Effect.fail(
+                new X402Error({
+                  reason:
+                    "signer_secret_missing_privateKey — store JSON { address?, privateKey } at " +
+                    path,
+                })
+              );
             }
 
-            const payload = {
-              x402Version: 2,
-              mode: "secret-store",
-              quoteDigest: req.quoteDigest,
-              payTo: req.quote.payTo,
-              amount: req.quote.amountAtomic,
-              network: req.quote.network,
-              asset: req.quote.asset,
-              resource: req.resourceUrl,
-              // Binding proof without exporting the secret: HMAC-like digest over secret+quote.
-              sig: createHash("sha256")
-                .update(`${secret}|${req.quoteDigest}|${req.resourceUrl}`)
-                .digest("hex"),
+            // Ensure quote carries token name/version for EIP-712 domain.
+            const quote: OutboundX402QuoteTerms = {
+              ...req.quote,
+              extra: {
+                name: req.quote.extra?.name ?? "USDC",
+                version: req.quote.extra?.version ?? "2",
+                ...req.quote.extra,
+              },
             };
 
+            const signed = yield* signEip3009Payment({
+              privateKey: parsed.privateKey,
+              resourceUrl: req.resourceUrl,
+              quote,
+            });
+
             return {
-              paymentHeader: Buffer.from(JSON.stringify(payload)).toString("base64"),
-              payerAddress,
-              mode: "secret-store" as const,
+              paymentHeader: signed.paymentHeader,
+              payerAddress: parsed.address ?? signed.payerAddress,
+              mode: "eip3009" as const,
             };
           }),
       });
