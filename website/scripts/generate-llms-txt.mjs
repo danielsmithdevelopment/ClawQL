@@ -94,7 +94,17 @@ const SECTIONS = [
       [
         'ClawQL Streams',
         '/streams/clawql-streams',
-        'Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)',
+        'Event-driven autonomous agents — Lab 5b shipped slim+fetch; package TBD',
+      ],
+      [
+        'celld (DO-compatible runtime)',
+        '/streams/clawql-celld',
+        'Open-source Workers/DO runtime for Lab 5b cells — install, smoke, Helm',
+      ],
+      [
+        'Streams + celld evidence',
+        '/streams/streams-celld-evidence',
+        'Commands and CI jobs that prove Lab 5b docs match shipped behavior',
       ],
       [
         'Durable Objects runtime',
