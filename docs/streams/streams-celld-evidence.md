@@ -10,17 +10,17 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 
 ## Architecture under test (shipped)
 
-| Layer | In cell bundle? | How it is proven |
-| ----- | --------------- | ---------------- |
-| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes** | Unit tests + webhook smoke assertions |
-| Audit LTX flush (`audit:ring`, `audit:seq:*`) | **Yes** (DO storage) | Smoke response keys + unit coverage in core |
-| Streamable HTTP MCP (`CLAWQL_MCP_URL`) | **No** — `fetch` | `mcp-fetch.test.mjs` + smoke mock MCP |
-| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`) | **No** — `fetch` | `adapter-fetch.test.mjs` + smoke mock adapter |
-| Inference | **No** — `fetch` | Stub URL in smoke; real sidecar is manual |
-| Helm celld StatefulSet / probes | Chart only | `make helm-celld-template-tests` |
-| Fleet LTX / multi-node diagnose | Manual | `deployment/samples/streams-celld/README.md` |
-| `clawql-streams` package / `stream_*` tools | **Not shipped** | Spec-only — see Streams §15 |
-| cellrt / TEE / QR stream source | **Not shipped** | Spec drafts under `docs/streams/` |
+| Layer                                                   | In cell bundle?      | How it is proven                              |
+| ------------------------------------------------------- | -------------------- | --------------------------------------------- |
+| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions         |
+| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke response keys + unit coverage in core   |
+| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + smoke mock MCP         |
+| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + smoke mock adapter |
+| Inference                                               | **No** — `fetch`     | Stub URL in smoke; real sidecar is manual     |
+| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`              |
+| Fleet LTX / multi-node diagnose                         | Manual               | `deployment/samples/streams-celld/README.md`  |
+| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                   |
+| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`             |
 
 ---
 
@@ -59,11 +59,11 @@ Follow [`deployment/samples/streams-celld/README.md`](../../deployment/samples/s
 
 ## CI wiring
 
-| Check | Where |
-| ----- | ----- |
-| Helm celld templates | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
-| streams-slim + fetch tests + bundle-check | CI job **Streams celld evidence** |
-| Full `smoke.sh` with celld | CI job **Streams celld smoke (celld)** when celld install succeeds |
+| Check                                     | Where                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| Helm celld templates                      | `make lint-k8s-manifests` → CI `ShellCheck & actionlint`           |
+| streams-slim + fetch tests + bundle-check | CI job **Streams celld evidence**                                  |
+| Full `smoke.sh` with celld                | CI job **Streams celld smoke (celld)** when celld install succeeds |
 
 ---
 

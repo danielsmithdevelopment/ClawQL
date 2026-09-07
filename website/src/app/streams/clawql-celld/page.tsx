@@ -30,8 +30,9 @@ export default function ClawqlCelldPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Lab 5b skeleton ships</strong> in <code>examples/streams-celld</code>; full Streams coordination package remains draft. Generated
-          from{' '}
+          <strong>Lab 5b skeleton ships</strong> in{' '}
+          <code>examples/streams-celld</code>; full Streams coordination package
+          remains draft. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md"
             className="font-medium text-inherit underline underline-offset-2"
