@@ -109,13 +109,13 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ## What’s new since the Sep 2 refresh (through #1047)
 
-| Area | What landed | PRs |
-| ---- | ----------- | --- |
-| **Security status** | `/security/status` scan-history evidence page; CI publish; `SECURITY.md` | [#1033](https://github.com/danielsmithdevelopment/ClawQL/pull/1033) |
-| **Effect v4 Stage 0** | Spike inventory + try-RC CI workflow (no runtime bump) | [#1037](https://github.com/danielsmithdevelopment/ClawQL/pull/1037) |
-| **Docs polish** | Mobile content padding; live `/archive` pages | [#1039](https://github.com/danielsmithdevelopment/ClawQL/pull/1039), [#1040](https://github.com/danielsmithdevelopment/ClawQL/pull/1040) |
-| **Streams celld v0.4.0** | Lab 5 local smoke; Helm `celld` stack + example values; streams onboarding CLI | [#1041](https://github.com/danielsmithdevelopment/ClawQL/pull/1041), [#1042](https://github.com/danielsmithdevelopment/ClawQL/pull/1042) |
-| **celld AgentSessionDO** | Embed `streams-slim`; MCP search/execute + memory fetch; adapter REST fetch; audit → LTX | [#1043](https://github.com/danielsmithdevelopment/ClawQL/pull/1043)–[#1047](https://github.com/danielsmithdevelopment/ClawQL/pull/1047) |
+| Area                     | What landed                                                                              | PRs                                                                                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Security status**      | `/security/status` scan-history evidence page; CI publish; `SECURITY.md`                 | [#1033](https://github.com/danielsmithdevelopment/ClawQL/pull/1033)                                                                      |
+| **Effect v4 Stage 0**    | Spike inventory + try-RC CI workflow (no runtime bump)                                   | [#1037](https://github.com/danielsmithdevelopment/ClawQL/pull/1037)                                                                      |
+| **Docs polish**          | Mobile content padding; live `/archive` pages                                            | [#1039](https://github.com/danielsmithdevelopment/ClawQL/pull/1039), [#1040](https://github.com/danielsmithdevelopment/ClawQL/pull/1040) |
+| **Streams celld v0.4.0** | Lab 5 local smoke; Helm `celld` stack + example values; streams onboarding CLI           | [#1041](https://github.com/danielsmithdevelopment/ClawQL/pull/1041), [#1042](https://github.com/danielsmithdevelopment/ClawQL/pull/1042) |
+| **celld AgentSessionDO** | Embed `streams-slim`; MCP search/execute + memory fetch; adapter REST fetch; audit → LTX | [#1043](https://github.com/danielsmithdevelopment/ClawQL/pull/1043)–[#1047](https://github.com/danielsmithdevelopment/ClawQL/pull/1047)  |
 
 ---
 
