@@ -2,7 +2,7 @@
 /**
  * Minimal Streamable HTTP MCP stub for Lab 5b smoke
  * (search + execute + memory_ingest + memory_recall).
- * Speaks MCP 2026-07-28-style JSON JSON-RPC tools/call — no SDK.
+ * Speaks MCP Streamable HTTP JSON-RPC tools/call (2025-11-25) — no SDK.
  */
 import { createServer } from "node:http";
 
@@ -45,7 +45,7 @@ const server = createServer(async (req, res) => {
         jsonrpc: "2.0",
         id,
         result: {
-          protocolVersion: "2026-07-28",
+          protocolVersion: "2025-11-25",
           capabilities: { tools: {} },
           serverInfo: { name: "streams-celld-mock-mcp", version: "0.0.0" },
         },

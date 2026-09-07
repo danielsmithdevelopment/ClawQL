@@ -37,7 +37,7 @@ async function testCallMcpTool() {
     req.on("end", () => {
       const parsed = JSON.parse(body);
       assert.equal(parsed.method, "tools/call");
-      assert.equal(req.headers["mcp-protocol-version"], "2026-07-28");
+      assert.equal(req.headers["mcp-protocol-version"], "2025-11-25");
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
         JSON.stringify({
