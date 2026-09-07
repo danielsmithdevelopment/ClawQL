@@ -15,10 +15,7 @@ import {
 import { createX402SignerLayer } from "./signer-service.js";
 import { runOutboundX402PayBatchEffect } from "./pay-batch.js";
 import type { OutboundX402QuoteTerms } from "./types.js";
-import {
-  createOutboundX402PayBatchScript,
-  OUTBOUND_X402_PAY_BATCH_NAME,
-} from "./batch-script.js";
+import { createOutboundX402PayBatchScript, OUTBOUND_X402_PAY_BATCH_NAME } from "./batch-script.js";
 import {
   createMemoryExecuteBatchRegistryLayer,
   ExecuteBatchRegistry,
@@ -79,8 +76,7 @@ describe("outbound x402 fixture e2e", () => {
   beforeAll(async () => {
     server = createServer((req, res) => {
       const url = `http://127.0.0.1${req.url ?? "/"}`;
-      const paid =
-        Boolean(req.headers["payment-signature"]) || Boolean(req.headers["x-payment"]);
+      const paid = Boolean(req.headers["payment-signature"]) || Boolean(req.headers["x-payment"]);
       if (!paid) {
         const body = paymentRequiredJson(url);
         const encoded = Buffer.from(JSON.stringify(body)).toString("base64");

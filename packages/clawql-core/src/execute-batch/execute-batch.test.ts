@@ -46,10 +46,7 @@ describe("execute-batch registry + runner", () => {
     };
 
     const worm = wormTestLayer();
-    const layer = Layer.mergeAll(
-      createMemoryExecuteBatchRegistryLayer([script]),
-      worm.layer
-    );
+    const layer = Layer.mergeAll(createMemoryExecuteBatchRegistryLayer([script]), worm.layer);
 
     const result = await Effect.runPromise(
       runNamedExecuteBatch({
@@ -83,8 +80,7 @@ describe("execute-batch registry + runner", () => {
     const layer = createMemoryExecuteBatchRegistryLayer([
       {
         name: "outbound-x402-pay",
-        run: () =>
-          Effect.fail(new Error("not used")),
+        run: () => Effect.fail(new Error("not used")),
       },
     ]);
     const names = await Effect.runPromise(

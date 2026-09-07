@@ -60,9 +60,7 @@ export type ExecuteBatchResult = {
 export type ExecuteBatchScript = {
   readonly name: string;
   readonly description?: string;
-  readonly run: (
-    args: ExecuteBatchArgs
-  ) => Effect.Effect<ExecuteBatchResult, ClawQLError | Error>;
+  readonly run: (args: ExecuteBatchArgs) => Effect.Effect<ExecuteBatchResult, ClawQLError | Error>;
 };
 
 export class ExecuteBatchError extends Data.TaggedError("ExecuteBatchError")<{

@@ -123,9 +123,7 @@ export function signEip3009Payment(
       };
     },
     catch: (cause) =>
-      cause instanceof X402Error
-        ? cause
-        : new X402Error({ reason: "eip3009_sign_failed", cause }),
+      cause instanceof X402Error ? cause : new X402Error({ reason: "eip3009_sign_failed", cause }),
   });
 }
 
@@ -143,9 +141,7 @@ export function parseSignerSecret(raw: string): {
     const pk = (parsed.privateKey ?? parsed.pk)?.trim();
     return {
       address: parsed.address?.trim(),
-      privateKey: pk
-        ? ((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`)
-        : undefined,
+      privateKey: pk ? ((pk.startsWith("0x") ? pk : `0x${pk}`) as `0x${string}`) : undefined,
     };
   } catch {
     // Raw hex private key

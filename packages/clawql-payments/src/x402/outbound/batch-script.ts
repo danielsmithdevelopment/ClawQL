@@ -10,18 +10,12 @@ import {
   type OutboundPaymentHitlApproval,
 } from "clawql-core";
 import { Effect, Layer } from "effect";
-import {
-  createMemoryOutboundSpendCounterLayer,
-  OutboundSpendCounterService,
-} from "./counters.js";
+import { createMemoryOutboundSpendCounterLayer, OutboundSpendCounterService } from "./counters.js";
 import {
   createMemoryOutboundPolicyStoreLayer,
   OutboundPolicyStoreService,
 } from "./policy-store.js";
-import {
-  runOutboundX402PayBatchEffect,
-  type OutboundX402PayBatchInput,
-} from "./pay-batch.js";
+import { runOutboundX402PayBatchEffect, type OutboundX402PayBatchInput } from "./pay-batch.js";
 import { createX402SignerLayer, X402SignerService } from "./signer-service.js";
 
 export const OUTBOUND_X402_PAY_BATCH_NAME = "outbound-x402-pay";
@@ -36,9 +30,7 @@ export type OutboundX402BatchPayload = {
 };
 
 export type OutboundBatchLayerServices =
-  | OutboundPolicyStoreService
-  | OutboundSpendCounterService
-  | X402SignerService;
+  OutboundPolicyStoreService | OutboundSpendCounterService | X402SignerService;
 
 /**
  * Build the named batch script. The host provides the payments Layer when running.
@@ -54,8 +46,7 @@ export function createOutboundX402PayBatchScript(options: {
 }): ExecuteBatchScript {
   return {
     name: OUTBOUND_X402_PAY_BATCH_NAME,
-    description:
-      "Complete a third-party x402 Payment Required handshake under spend-cap policy",
+    description: "Complete a third-party x402 Payment Required handshake under spend-cap policy",
     run: (args: ExecuteBatchArgs): Effect.Effect<ExecuteBatchResult, ClawQLError | Error> => {
       const payload = (args.payload ?? {}) as OutboundX402BatchPayload;
       if (!payload.resourceUrl?.trim()) {
