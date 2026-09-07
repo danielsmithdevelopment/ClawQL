@@ -399,10 +399,14 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 | --------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Local dev       | **`celld dev`** (v0.4.0+)                   | Counter/Streams fixture without bucket; `.celld/dev` persistence                                    |
 | Unit / DO logic | **Miniflare** (or workerd)                  | Alarm, storage, significance, idempotent names                                                      |
-| Bundle          | `clawql streams celld bundle-check`         | Enforce ≤64 MiB                                                                                     |
+| Bundle          | `clawql streams celld bundle-check`         | Enforce ≤64 MiB (**CI fail-closed**)                                                                |
+| Fetch clients   | `mcp-fetch` / `adapter-fetch` unit scripts  | Streamable HTTP + adapter REST without celld                                                        |
 | Fleet           | `celld diagnose` · `celld cell list`        | Lease + peer health; enumerate cells after traffic                                                  |
-| Smoke           | Deploy counter/example then Streams fixture | Webhook → SubscriptionDO → AgentSessionDO → `fetch` inference mock → WORM row present in SQLite/LTX |
+| Smoke           | `STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/smoke.sh` | Webhook → spawn → slim + MCP + adapter + LTX keys |
+| Helm            | `make helm-celld-template-tests`            | StatefulSet / probes / env injection (CI)                                                           |
 | Security        | Attestation verify in CI                    | Supply chain; pin `CELLD_VERSION=v0.4.0`                                                            |
+
+**Evidence matrix (commands + honesty about gaps):** [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
 Do not treat Miniflare alone as production parity for LTX, peer HMAC, or cross-node WebSocket behavior.
 
@@ -432,5 +436,6 @@ Track against upstream celld alpha:
 - [`docs/streams/clawql-tee-airgap-audit.md`](./clawql-tee-airgap-audit.md) — QR air-gap audit transport
 - [`docs/streams/clawql-durable-objects.md`](./clawql-durable-objects.md) — session / sidecar / virtual key contract
 - [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md) — virtual keys, PAL
-- [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — embedded adapter surface
+- [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md) — MCP → APIs (**out-of-process** from cells today)
+- [`docs/streams/streams-celld-evidence.md`](./streams-celld-evidence.md) — evidence matrix + CI commands
 - [celld.dev](https://celld.dev/) · [docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [compat](https://celld.dev/docs/cloudflare-compat) · [GitHub](https://github.com/denoland/celld)

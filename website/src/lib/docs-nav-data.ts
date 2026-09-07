@@ -245,6 +245,11 @@ export const docsNavigation: Array<NavGroup> = [
         tag: 'Draft',
       },
       {
+        title: 'Streams + celld evidence',
+        href: '/streams/streams-celld-evidence',
+        tag: 'Evidence',
+      },
+      {
         title: 'clawql-cellrt',
         href: '/streams/clawql-cellrt',
         tag: 'Draft',

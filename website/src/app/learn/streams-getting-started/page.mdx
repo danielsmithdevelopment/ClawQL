@@ -425,9 +425,15 @@ Expect ≈ **0.4 MiB** (~0.6% of the **64 MiB** Workers limit). The full `clawql
 
 Webhook responses include `session.audit.clawqlCore` (hash-chained append), `session.audit.ltx.snapshotKey: "audit:ring"`, and `session.core.inProcess: ["audit","cache","hash-chain"]`. With **`CLAWQL_MCP_URL`** set, MCP tools call Streamable HTTP. With **`CLAWQL_MCP_ADAPTER_URL`** set, `adapter_search` probes mcp-api-adapter REST.
 
-Smoke with a mock MCP: `bash examples/streams-celld/scripts/smoke.sh`.
+Smoke with a mock MCP + mock adapter (requires celld):
 
-CI and local dev should fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
+```bash
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/smoke.sh
+```
+
+**Verified by (CI):** streams-slim unit tests, `mcp-fetch` / `adapter-fetch` units, `bundle-check`, Helm celld template tests, and (when celld installs) the smoke script above. Full matrix: [Streams + celld evidence](/streams/streams-celld-evidence).
+
+CI and local release gates fail closed when the bundled Worker exceeds **67108864** bytes ([celld integration §5](/streams/clawql-celld)).
 
 **4 — Optional: fleet deploy + Helm celld backend**
 
@@ -448,9 +454,9 @@ helm upgrade --install clawql ./charts/clawql-mcp \
   -n clawql --create-namespace
 ```
 
-The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0) and injects **`CLAWQL_MCP_URL`** + **`INFERENCE_URL`**. Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld).
+The celld StatefulSet probes **`/.well-known/celld/health`** (v0.4.0) and injects **`CLAWQL_MCP_URL`** + **`INFERENCE_URL`**. Full checklist: [deployment/samples/streams-celld](https://github.com/danielsmithdevelopment/ClawQL/tree/main/deployment/samples/streams-celld). **Note:** live cluster webhook→LTX is manual; CI asserts Helm templates only.
 
-**Success:** Webhook spawns a session with in-process **clawql-core** audit/cache; optional MCP fetch for search/execute; bundle-check stays under 64 MiB; optional Helm deploy with `streams.scalingBackend: celld`.
+**Success:** Webhook spawns a session with in-process **streams-slim** audit/cache + LTX keys; optional MCP/adapter fetch; `bundle-check` under 64 MiB; optional Helm deploy with `streams.scalingBackend: celld`.
 
 ## K8s operator sketch
 

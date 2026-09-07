@@ -8,7 +8,8 @@ Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.c
 | `SubscriptionDO` | Significance filter stub (`sub:{id}` naming) |
 | `AgentSessionDO` | Session + WORM + audit/cache + optional MCP / adapter / inference fetches |
 
-**Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)
+**Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
+**Evidence matrix:** [`docs/streams/streams-celld-evidence.md`](../../docs/streams/streams-celld-evidence.md)
 
 ## In-process vs out-of-process
 
@@ -29,9 +30,21 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 | `CLAWQL_MCP_ADAPTER_URL` | Adapter **origin** only (e.g. `http://127.0.0.1:8090`) |
 | `CLAWQL_MCP_BEARER_TOKEN` / `CLAWQL_MCP_ADAPTER_BEARER_TOKEN` | Optional Bearer |
 
+## Evidence — what proves it works
+
+| Check | Command | Automated in CI? |
+| ----- | ------- | ---------------- |
+| streams-slim unit | `npx vitest run packages/clawql-core/src/streams-slim.test.ts` | **Yes** |
+| MCP fetch unit | `npm run test:mcp-fetch` | **Yes** |
+| Adapter fetch unit | `npm run test:adapter-fetch` | **Yes** |
+| Bundle ≤ 64 MiB | `npm run bundle-check` | **Yes** |
+| Helm celld templates | `make helm-celld-template-tests` | **Yes** (via `lint-k8s-manifests`) |
+| Local E2E smoke | `STREAMS_CELLD_SMOKE_REQUIRED=1 npm run smoke` | **Yes** when celld installs |
+| Fleet / cluster webhook | sample pack README | **Manual** (templates only in CI) |
+
 ## Prerequisites
 
-- [celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0) on `PATH`
+- [celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0) on `PATH` (for smoke / `celld dev`)
 - [esbuild](https://esbuild.github.io/) on `PATH`
 - Workspace packages built: `npm run build -w clawql-merkle -w clawql-core`
 
@@ -40,9 +53,11 @@ Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gR
 ```bash
 cd examples/streams-celld
 celld dev --port 9876
-# smoke (mock MCP + mock adapter):
-bash scripts/smoke.sh
+# smoke (mock MCP + mock adapter; fail closed if celld missing):
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash scripts/smoke.sh
 ```
+
+Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, a missing `celld` binary **skips** with exit 0 (local convenience only).
 
 ## Bundle size gate (64 MiB Workers limit)
 
@@ -60,3 +75,4 @@ Helm injects `CLAWQL_MCP_URL` + `INFERENCE_URL`. Set `streams.celld.adapterUrl` 
 
 - Optional Workers-safe slim `clawql-api` for offline/in-cell search
 - Optional Helm chart Service for mcp-api-adapter (cells already accept `adapterUrl`)
+- Automated cluster webhook E2E (today: Helm template assertions only)

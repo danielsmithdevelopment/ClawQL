@@ -11,7 +11,12 @@ BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.smoke.jsonc"
 
 if ! command -v celld >/dev/null 2>&1; then
-  echo "smoke: celld not on PATH — skip (install CELLD_VERSION=v0.4.0)" >&2
+  if [[ "${STREAMS_CELLD_SMOKE_REQUIRED:-0}" == "1" ]]; then
+    echo "smoke: FAIL — celld not on PATH (STREAMS_CELLD_SMOKE_REQUIRED=1)" >&2
+    echo "smoke: install with: CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh" >&2
+    exit 1
+  fi
+  echo "smoke: celld not on PATH — skip (install CELLD_VERSION=v0.4.0; set STREAMS_CELLD_SMOKE_REQUIRED=1 to fail closed)" >&2
   exit 0
 fi
 
@@ -54,10 +59,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
+ready=0
 for _ in $(seq 1 40); do
-  if curl -sf "$BASE/health" >/dev/null 2>&1; then break; fi
+  if ! kill -0 "$PID" 2>/dev/null; then
+    echo "smoke: FAIL — celld process exited before becoming healthy" >&2
+    exit 1
+  fi
+  if curl -sf "$BASE/health" >/dev/null 2>&1; then
+    ready=1
+    break
+  fi
   sleep 1
 done
+
+if [[ "$ready" != "1" ]]; then
+  echo "smoke: FAIL — celld health never became ready on $BASE" >&2
+  exit 1
+fi
 
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
