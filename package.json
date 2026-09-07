@@ -159,6 +159,7 @@
     "clawql-inference": "0.1.0",
     "clawql-memory": "0.1.0",
     "clawql-merkle": "0.1.0",
+    "clawql-network": "0.1.0",
     "clawql-observability": "0.1.0",
     "clawql-ontology": "0.1.0",
     "clawql-operator": "0.1.0",
@@ -167,7 +168,6 @@
     "clawql-payments": "0.1.0",
     "clawql-release": "0.1.0",
     "clawql-sandbox": "0.1.0",
-    "clawql-network": "0.1.0",
     "clawql-tee": "0.1.0",
     "clawql-web": "0.1.0",
     "dotenv": "^17.4.2",
@@ -239,6 +239,7 @@
     "brace-expansion": "5.0.9",
     "browserslist": "4.28.7",
     "effect": "3.22.1",
-    "@aws-sdk/credential-provider-login": "3.972.73"
+    "@aws-sdk/credential-provider-login": "3.972.73",
+    "@toon-format/toon": "2.3.1"
   }
 }
