@@ -178,10 +178,13 @@ type ExecuteBatchPaymentFields = {
 
 ## Concrete implementation slice
 
-1. Policy type + loader checks + `spend-cap-enforce` `outbound_payment` matcher in `clawql-core`.
-2. Counters (day/session/reserved) fail closed.
-3. HITL binding to quote digest; first-enablement gate with no override.
-4. WORM variant fields + tests (deny-by-default, allowlist miss, cap breach, HITL binding, quote-digest mismatch, `settle_unconfirmed` freeze, loader rejects `requireDocumentedJustification: false`).
+1. ~~Policy type + loader checks + `spend-cap-enforce` `outbound_payment` matcher in `clawql-core`.~~ (`packages/clawql-core/src/spend/`)
+2. ~~Counters (day/session/reserved) fail closed.~~ (`clawql-payments` `OutboundSpendCounterService`)
+3. ~~HITL binding to quote digest; first-enablement gate with no override.~~
+4. ~~WORM variant fields + tests (deny-by-default, allowlist miss, cap breach, HITL binding, quote-digest mismatch, `settle_unconfirmed` freeze, loader rejects `requireDocumentedJustification: false`).~~
+5. Host wiring of batch runner into execute-batching sandbox (follow-on).
+6. One e2e against a public x402 fixture (follow-on).
+7. Production EIP-3009 / viem signing behind SecretStore (follow-on; dry-run signer ships for CI).
 
 ## Related
 
