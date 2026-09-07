@@ -44,6 +44,8 @@ export type SecurityStatusHistory = {
     commit: string | null
     sbomFormat: string
     sbomArtifactName: string
+    /** Direct CI artifacts anchor for the newest published run's SBOM zip. */
+    sbomArtifactUrl?: string | null
     image: {
       repository: string
       digest: string | null
