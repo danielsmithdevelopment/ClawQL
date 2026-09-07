@@ -23,7 +23,7 @@ export default function StreamsCelldEvidencePage() {
         <Tag color="claw" variant="medium">
           celld
         </Tag>
-        <Tag color="emerald" variant="medium">
+        <Tag color="sky" variant="medium">
           Evidence
         </Tag>
       </div>
