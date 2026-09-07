@@ -2,7 +2,7 @@
 
 ### Added
 
-- **Streams + celld evidence matrix** — [`docs/streams/streams-celld-evidence.md`](docs/streams/streams-celld-evidence.md) (`/streams/streams-celld-evidence`) maps Lab 5b shipped vs draft layers to commands; CI jobs **Streams celld evidence** (streams-slim + fetch tests + bundle-check + Helm templates) and **Streams celld smoke (celld)** (fail-closed `smoke.sh` with celld v0.4.0). Specs aligned to in-process `streams-slim` + out-of-process MCP/adapter `fetch` (not embedded full core).
+- **Streams + celld evidence matrix** — [`docs/streams/streams-celld-evidence.md`](docs/streams/streams-celld-evidence.md) (`/streams/streams-celld-evidence`) maps Lab 5b shipped vs draft layers to commands; CI jobs **Streams celld evidence**, **Streams celld smoke (celld)** (mock), and **Streams celld full-stack** (real `clawql-mcp-http` + `mcp-api-adapter`). Specs explain why full core stays out-of-process (Workers APIs, not size) and how to demo the entire product via sidecars (`scripts/full-stack-smoke.sh`, `docker-compose.full.yml`). Cell MCP client speaks protocol **`2025-11-25`**.
 
 ### Changed
 

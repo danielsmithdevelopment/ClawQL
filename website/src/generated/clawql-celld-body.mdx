@@ -222,6 +222,24 @@ celld deploy (esbuild)
 
 **Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /\{tool\}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 
+#### Why not “full core” inside the cell?
+
+| Concern             | Reality                                                                                                                                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bundle **size**     | Full `clawql-core` barrel is still ≪ 64 MiB — size alone is **not** the blocker.                                                                                                               |
+| **Runtime APIs**    | celld/Workers make `node:fs`, Express/`node:http`, gRPC, and stdio **inert or unavailable**. `clawql-api`, vault `clawql-memory`, and Express `mcp-api-adapter` cannot run inside the isolate. |
+| **Release cadence** | MCP catalogs, adapter surfaces, and model SDKs change independently of the cell — `fetch` sidecars keep them deployable without redeploying every DO.                                          |
+
+**Demo the entire product** by running the sidecars for real — not by stuffing Express into the Worker:
+
+```bash
+# Process smoke (CI + local): celld + clawql-mcp-http + mcp-api-adapter + inference stub
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/full-stack-smoke.sh
+
+# Optional containers for MCP + adapter (celld still on the host):
+docker compose -f examples/streams-celld/docker-compose.full.yml up --build
+```
+
 **Durable audit:** after each spawn, the isolate hash-chain is flushed to DO storage (`audit:ring` snapshot + `audit:seq:\{n\}` WORM rows) so LTX survives isolate restarts (alongside existing `worm:*` DO_CREATED rows).
 
 **Still deferred:** offline Workers-safe `clawql-api` slim.

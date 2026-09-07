@@ -305,6 +305,43 @@ jobs:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
         run: bash examples/streams-celld/scripts/smoke.sh
 
+  streams-celld-full-stack:
+    name: Streams celld full-stack
+    needs: [lint, workflow-scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build MCP host + adapter + streams packages
+        run: |
+          npm run build
+          npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter
+
+      - name: Install esbuild + celld v0.4.0
+        run: |
+          npm install -g esbuild
+          curl -fsSL https://celld.dev/install.sh | CELLD_VERSION=v0.4.0 sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+          command -v esbuild
+          command -v celld
+          celld --version | tee /dev/stderr | grep -E '0\.4\.0'
+
+      - name: Fail-closed full-stack smoke (real MCP + adapter)
+        env:
+          STREAMS_CELLD_SMOKE_REQUIRED: "1"
+        run: bash examples/streams-celld/scripts/full-stack-smoke.sh
+
   # OSS Gitleaks CLI (Docker) — avoids org licensing on gitleaks-action. No npm install / node_modules on disk.
   secret-scan:
     name: Secret scan (Gitleaks)
