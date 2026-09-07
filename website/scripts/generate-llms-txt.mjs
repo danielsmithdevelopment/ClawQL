@@ -114,6 +114,11 @@ const SECTIONS = [
     heading: 'Deployment & security',
     links: [
       ['Deployment', '/deployment', 'Docker, Kubernetes, and operations'],
+      [
+        'Security status',
+        '/security/status',
+        'Append-only Trivy/OSV scan history, SBOM, Cosign verify',
+      ],
       ['Defense in depth', '/security/defense-in-depth', 'Layered MCP security model'],
       [
         'Security best practices',
