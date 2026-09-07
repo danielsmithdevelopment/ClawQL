@@ -127,17 +127,17 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages (attempt 1)
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
         continue-on-error: true
       - name: Deploy to GitHub Pages (attempt 2)
         id: deployment_retry_2
         if: steps.deployment.outcome == 'failure'
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
         continue-on-error: true
       - name: Deploy to GitHub Pages (attempt 3)
         id: deployment_retry_3
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
       - name: Verify deploy succeeded
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure' && steps.deployment_retry_3.outcome == 'failure'
         run: |
