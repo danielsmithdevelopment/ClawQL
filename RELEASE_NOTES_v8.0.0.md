@@ -1,9 +1,9 @@
 ## clawql-mcp 8.0.0
 
 **npm:** [`clawql-mcp@8.0.0`](https://www.npmjs.com/package/clawql-mcp/v/8.0.0) (publish on tag `v8.0.0`)  
-**Full changelog:** [CHANGELOG.md#800---2026-09-02](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-09-02)  
-**Release date:** 2026-09-02 (prep; tag when checklist clears)  
-**Since:** `v7.2.0` (2026-08-04) — **~1174 commits**, **~174 merge PRs**
+**Full changelog:** [CHANGELOG.md#800---2026-09-07](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-09-07)  
+**Release date:** 2026-09-07 (prep; tag when checklist clears)  
+**Since:** `v7.2.0` (2026-08-04) — **~1220 commits**, **~185 merge PRs**
 
 ---
 
@@ -15,7 +15,7 @@
 2. **`ProviderPlugin` only** — legacy `Plugin` bridge removed ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))
 3. **Tool-scope enforcement default off** — Panguard proxy is opt-in; boot warns if none active
 
-On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, a Learn/docs wave for 8.0 migration, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
+On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld v0.4.0** (Lab 5 + Helm + AgentSessionDO MCP path), security status page, a Learn/docs wave for 8.0 migration, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
@@ -107,6 +107,18 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ---
 
+## What’s new since the Sep 2 refresh (through #1047)
+
+| Area | What landed | PRs |
+| ---- | ----------- | --- |
+| **Security status** | `/security/status` scan-history evidence page; CI publish; `SECURITY.md` | [#1033](https://github.com/danielsmithdevelopment/ClawQL/pull/1033) |
+| **Effect v4 Stage 0** | Spike inventory + try-RC CI workflow (no runtime bump) | [#1037](https://github.com/danielsmithdevelopment/ClawQL/pull/1037) |
+| **Docs polish** | Mobile content padding; live `/archive` pages | [#1039](https://github.com/danielsmithdevelopment/ClawQL/pull/1039), [#1040](https://github.com/danielsmithdevelopment/ClawQL/pull/1040) |
+| **Streams celld v0.4.0** | Lab 5 local smoke; Helm `celld` stack + example values; streams onboarding CLI | [#1041](https://github.com/danielsmithdevelopment/ClawQL/pull/1041), [#1042](https://github.com/danielsmithdevelopment/ClawQL/pull/1042) |
+| **celld AgentSessionDO** | Embed `streams-slim`; MCP search/execute + memory fetch; adapter REST fetch; audit → LTX | [#1043](https://github.com/danielsmithdevelopment/ClawQL/pull/1043)–[#1047](https://github.com/danielsmithdevelopment/ClawQL/pull/1047) |
+
+---
+
 ## What’s new (full 7.2.0 → 8.0.0 operator truths)
 
 ### Gateway / edge / enterprise
@@ -153,6 +165,7 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 - Personal agent / Harvey Lab / `clawql-agents` (#967)
 - PV anything-to-MCP (#911)
 - Streams + Protocol Fabric site (#962, #966)
+- **Streams celld v0.4.0** — Lab 5 + Helm stack; AgentSessionDO MCP/adapter/audit-LTX path (#1041–#1047)
 - IDP NATS agent bridge; WebMCP provenance
 - Learn wave for 8.0 migration (#1025–#1032, #1036); site audit (#1028)
 
@@ -160,6 +173,7 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 - Learn sidebar: Plugins, Streams, optional MCP tools, payments/Panguard, IDP labs
 - Security section + OSV supply-chain docs (#1021, #1026)
+- **Security status page** — `/security/status` scan-history evidence (#1033)
 - [`docs/getting-started/migrate-to-8.0.md`](docs/getting-started/migrate-to-8.0.md) linked from site audit (#1028)
 
 ### Standalone npm (this tag)
