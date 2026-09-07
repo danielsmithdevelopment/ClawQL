@@ -36,13 +36,14 @@ Latest release: v8.0.0
 Published: 2026-08-28
 Commit: a518ef32
 
-SBOM (Syft):        [Download SBOM — SPDX JSON]
+SBOM (Syft):        [Download SBOM — CycloneDX JSON]
 Signed image digest: sha256:4f8a2b...
-Verify signature:    cosign verify --key cosign.pub \
-                        ghcr.io/danielsmithdevelopment/clawql:8.0.0
+Verify signature:    cosign verify ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:<digest> \
+                        --certificate-identity-regexp 'https://github\.com/danielsmithdevelopment/ClawQL/.*' \
+                        --certificate-oidc-issuer-regexp 'https://token\.actions\.githubusercontent\.com.*'
 ```
 
-Every field here is either a direct download link to the real artifact or a copy-pasteable command a reader can run themselves against the actual published image — nothing on this page is a description of the SBOM or the signature, it is the SBOM and a way to check the signature directly.
+Every field here is either a direct download link to the real artifact or a copy-pasteable command a reader can run themselves against the actual published image — nothing on this page is a description of the SBOM or the signature, it is the SBOM and a way to check the signature directly. (Implementation note: CI emits **CycloneDX** via Syft, and images are signed **keyless** with Cosign OIDC — not a static `cosign.pub`.)
 
 ### 3.2 Scan History
 
