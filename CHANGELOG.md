@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Added
+
+- **Streams + celld evidence matrix** — [`docs/streams/streams-celld-evidence.md`](docs/streams/streams-celld-evidence.md) (`/streams/streams-celld-evidence`) maps Lab 5b shipped vs draft layers to commands; CI jobs **Streams celld evidence** (streams-slim + fetch tests + bundle-check + Helm templates) and **Streams celld smoke (celld)** (fail-closed `smoke.sh` with celld v0.4.0). Specs aligned to in-process `streams-slim` + out-of-process MCP/adapter `fetch` (not embedded full core).
+
 ### Changed
 
 - **Workspace `clawql-*` npm versions reset to `0.1.0`** for first publish — replaces in-tree `8.0.0` lockstep with `clawql-mcp` major (nothing was on npm except `clawql-mcp@7.2.0`, `clawql-ouroboros@0.1.1`, `mcp-grpc-transport@0.2.0`). Policy: [`docs/release/clawql-workspace-package-versioning.md`](docs/release/clawql-workspace-package-versioning.md). Targets: [`scripts/release/package-npm-version-targets.json`](scripts/release/package-npm-version-targets.json). Checklist: [`docs/release/workspace-packages-0.1.0-checklist.md`](docs/release/workspace-packages-0.1.0-checklist.md).
