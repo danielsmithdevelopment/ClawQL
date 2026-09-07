@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./streams-slim": {
+      "types": "./dist/streams-slim.d.ts",
+      "import": "./dist/streams-slim.js",
+      "require": "./dist/streams-slim.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

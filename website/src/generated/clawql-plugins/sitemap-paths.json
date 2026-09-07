@@ -8,11 +8,9 @@
   "/plugins/bundled-providers",
   "/plugins/automation",
   "/plugins/sandbox",
-  "/plugins/data",
   "/plugins/inference-providers",
   "/plugins/ouroboros",
   "/plugins/payments",
   "/plugins/hitl-label-studio",
-  "/plugins/web",
   "/plugins/third-party"
 ]

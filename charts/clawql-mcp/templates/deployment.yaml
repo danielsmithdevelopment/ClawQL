@@ -128,6 +128,12 @@ spec:
             - name: ENABLE_GRPC_REFLECTION
               value: "1"
             {{- end }}
+            {{- if .Values.streams.enabled }}
+            - name: CLAWQL_ENABLE_STREAMS
+              value: "1"
+            - name: CLAWQL_STREAMS_SCALING_BACKEND
+              value: {{ .Values.streams.scalingBackend | default "kubernetes" | quote }}
+            {{- end }}
             {{/* Horizontal plugins: CLAWQL_INSTANCE_SPEC only — do not dual-write CLAWQL_ENABLE_*. */}}
             {{- if .Values.enablePrivacyFilter }}
             - name: CLAWQL_ENABLE_PRIVACY_FILTER
