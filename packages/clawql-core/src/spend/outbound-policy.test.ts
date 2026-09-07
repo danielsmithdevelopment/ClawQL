@@ -130,10 +130,7 @@ describe("evaluateOutboundPayment", () => {
 
   it("denies by default when host not allowlisted", async () => {
     const d = await Effect.runPromise(
-      evaluateOutboundPayment(
-        policy,
-        action({ resourceUrl: "https://evil.example/x" })
-      )
+      evaluateOutboundPayment(policy, action({ resourceUrl: "https://evil.example/x" }))
     );
     expect(d).toEqual({ decision: "deny", reason: "host_not_allowlisted" });
   });

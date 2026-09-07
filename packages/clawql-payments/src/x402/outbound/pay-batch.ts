@@ -4,18 +4,11 @@
  */
 
 import { randomUUID } from "node:crypto";
-import {
-  type OutboundPaymentHitlApproval,
-  OutboundPolicyError,
-} from "clawql-core";
+import { type OutboundPaymentHitlApproval, OutboundPolicyError } from "clawql-core";
 import { Effect, Layer } from "effect";
 import { X402Error } from "../../errors/payment-errors.js";
 import { resolveFacilitatorEndpoint } from "../x402-runtime-config-service.js";
-import {
-  OutboundSpendCounterService,
-  utcDayKey,
-  type SpendCounterKey,
-} from "./counters.js";
+import { OutboundSpendCounterService, utcDayKey, type SpendCounterKey } from "./counters.js";
 import { OutboundPolicyStoreService } from "./policy-store.js";
 import { computeQuoteDigest, quoteFromTerms } from "./quote.js";
 import { X402SignerService } from "./signer-service.js";
@@ -44,9 +37,7 @@ export type OutboundX402PayBatchInput = {
 };
 
 type OutboundBatchServices =
-  | OutboundPolicyStoreService
-  | OutboundSpendCounterService
-  | X402SignerService;
+  OutboundPolicyStoreService | OutboundSpendCounterService | X402SignerService;
 
 function isOutboundEnabled(env: NodeJS.ProcessEnv): boolean {
   const raw = env.CLAWQL_PAYMENTS_OUTBOUND?.trim().toLowerCase();
@@ -208,11 +199,7 @@ export function runOutboundX402PayBatchEffect(
 
     const digest = computeQuoteDigest(terms);
     if (input.expectedQuoteDigest && input.expectedQuoteDigest !== digest) {
-      return failResult(
-        mkBatch({ success: false }),
-        "quote_mismatch",
-        "expected_digest_mismatch"
-      );
+      return failResult(mkBatch({ success: false }), "quote_mismatch", "expected_digest_mismatch");
     }
 
     const quoteOrErr = yield* quoteFromTerms(terms).pipe(
@@ -325,10 +312,7 @@ export function runOutboundX402PayBatchEffect(
       yield* counters
         .releaseReserved(counterKey, quote.amountUsdc)
         .pipe(Effect.catchAll(() => Effect.void));
-      return failResult(
-        mkBatch({ success: false, payment: paymentStub() }),
-        "signer_frozen"
-      );
+      return failResult(mkBatch({ success: false, payment: paymentStub() }), "signer_frozen");
     }
 
     const signedOrFail = yield* signer
@@ -381,12 +365,7 @@ export function runOutboundX402PayBatchEffect(
 
     if (!paid) {
       yield* signer
-        .freezeForSession(
-          input.sessionId,
-          input.tenantId,
-          input.agentId,
-          "timeout_after_sign"
-        )
+        .freezeForSession(input.sessionId, input.tenantId, input.agentId, "timeout_after_sign")
         .pipe(Effect.catchAll(() => Effect.void));
       return failResult(
         mkBatch({
@@ -446,8 +425,7 @@ export function runOutboundX402PayBatchEffect(
       }
 
       const verifyJson = yield* Effect.tryPromise({
-        try: () =>
-          verifyRes.json() as Promise<{ isValid?: boolean; invalidReason?: string }>,
+        try: () => verifyRes.json() as Promise<{ isValid?: boolean; invalidReason?: string }>,
         catch: () => new X402Error({ reason: "facilitator_json_failed" }),
       }).pipe(Effect.catchAll(() => Effect.succeed({ isValid: false as boolean })));
 
@@ -528,7 +506,5 @@ export function runOutboundX402PayBatch(
   input: OutboundX402PayBatchInput,
   layer: Layer.Layer<OutboundBatchServices>
 ): Promise<OutboundX402PayResult> {
-  return Effect.runPromise(
-    runOutboundX402PayBatchEffect(input).pipe(Effect.provide(layer))
-  );
+  return Effect.runPromise(runOutboundX402PayBatchEffect(input).pipe(Effect.provide(layer)));
 }

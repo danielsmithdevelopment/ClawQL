@@ -6,7 +6,10 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect, it } from "vitest";
 import { computeQuoteDigest } from "./quote.js";
 import { createMemoryOutboundSpendCounterLayer } from "./counters.js";
-import { createMemoryOutboundPolicyStoreLayer, OutboundPolicyStoreService } from "./policy-store.js";
+import {
+  createMemoryOutboundPolicyStoreLayer,
+  OutboundPolicyStoreService,
+} from "./policy-store.js";
 import { createX402SignerLayer, X402SignerService } from "./signer-service.js";
 import { runOutboundX402PayBatchEffect } from "./pay-batch.js";
 import type { OutboundX402QuoteTerms } from "./types.js";
@@ -61,7 +64,9 @@ function makeRuntime() {
 
 async function withSeededTenant(
   runtime: ManagedRuntime.ManagedRuntime<
-    OutboundPolicyStoreService | import("./counters.js").OutboundSpendCounterService | X402SignerService,
+    | OutboundPolicyStoreService
+    | import("./counters.js").OutboundSpendCounterService
+    | X402SignerService,
     never
   >,
   tenantId: string,
@@ -155,8 +160,7 @@ describe("outbound-x402-pay batch", () => {
         sessionId: "s1",
         resourceUrl: "https://api.example.com/r",
         env: { CLAWQL_PAYMENTS_OUTBOUND: "1" },
-        fetchImpl: async () =>
-          new Response(paymentRequiredBody(badTerms), { status: 402 }),
+        fetchImpl: async () => new Response(paymentRequiredBody(badTerms), { status: 402 }),
       })
     );
     expect(result.ok).toBe(false);
@@ -180,8 +184,7 @@ describe("outbound-x402-pay batch", () => {
           quoteDigest: computeQuoteDigest(expensive),
           approvedAt: new Date().toISOString(),
         },
-        fetchImpl: async () =>
-          new Response(paymentRequiredBody(expensive), { status: 402 }),
+        fetchImpl: async () => new Response(paymentRequiredBody(expensive), { status: 402 }),
       })
     );
     expect(result.ok).toBe(false);

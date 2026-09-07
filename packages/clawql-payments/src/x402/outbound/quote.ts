@@ -4,11 +4,7 @@
 
 import { createHash } from "node:crypto";
 import { Effect } from "effect";
-import {
-  OutboundPolicyError,
-  parseUsdcToAtomic,
-  type OutboundPaymentQuote,
-} from "clawql-core";
+import { OutboundPolicyError, parseUsdcToAtomic, type OutboundPaymentQuote } from "clawql-core";
 import type { OutboundX402QuoteTerms } from "./types.js";
 
 const USDC_SCALE = 1_000_000n;

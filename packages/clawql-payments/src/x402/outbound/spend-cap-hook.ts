@@ -11,10 +11,7 @@ import type {
   OutboundPaymentPolicyAccepted,
   OutboundSpendDecision,
 } from "clawql-core";
-import {
-  evaluateOutboundPayment,
-  OutboundPolicyError,
-} from "clawql-core";
+import { evaluateOutboundPayment, OutboundPolicyError } from "clawql-core";
 import { Effect } from "effect";
 import { OutboundSpendCounterService, utcDayKey, type SpendCounterKey } from "./counters.js";
 import { OutboundPolicyStoreService } from "./policy-store.js";
@@ -43,9 +40,7 @@ export type SpendCapEvaluateInput = {
   readonly action: OutboundPaymentAction;
 };
 
-export function spendCapDecisionToHookResult(
-  decision: OutboundSpendDecision
-): HookResult {
+export function spendCapDecisionToHookResult(decision: OutboundSpendDecision): HookResult {
   if (decision.decision === "allow") {
     return { allow: true, meta: { hookDecision: "allow", reason: decision.reason } };
   }
@@ -147,23 +142,21 @@ export function createSpendCapEnforceOutboundHook(): LifecycleHook {
       const args = ctx.args;
       // Services are provided by the payments host Layer when firing hooks.
       // Cast through unknown: LifecycleHook R is WormAuditSink-only in core.
-      return (
-        evaluateSpendCapOutboundEffect({
-          tenantId: args.tenantId,
-          agentId: args.agentId,
-          sessionId: ctx.session.id,
-          args,
-        }).pipe(
-          Effect.map((evaluated) => evaluated.result),
-          Effect.catchAll((err: OutboundPolicyError) =>
-            Effect.succeed({
-              allow: false,
-              denyReason: err.reason,
-              meta: { hookDecision: "deny" },
-            } satisfies HookResult)
-          )
-        ) as unknown as Effect.Effect<HookResult, Error>
-      );
+      return evaluateSpendCapOutboundEffect({
+        tenantId: args.tenantId,
+        agentId: args.agentId,
+        sessionId: ctx.session.id,
+        args,
+      }).pipe(
+        Effect.map((evaluated) => evaluated.result),
+        Effect.catchAll((err: OutboundPolicyError) =>
+          Effect.succeed({
+            allow: false,
+            denyReason: err.reason,
+            meta: { hookDecision: "deny" },
+          } satisfies HookResult)
+        )
+      ) as unknown as Effect.Effect<HookResult, Error>;
     },
   };
 }

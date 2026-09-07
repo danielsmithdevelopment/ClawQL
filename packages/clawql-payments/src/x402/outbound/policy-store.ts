@@ -21,13 +21,8 @@ export class OutboundPolicyStoreService extends Context.Tag("clawql/OutboundPoli
     readonly acceptPolicy: (
       tenantId: string,
       raw: unknown
-    ) => Effect.Effect<
-      OutboundPaymentPolicyAccepted,
-      OutboundPolicyError | ConfigError
-    >;
-    readonly getTenantState: (
-      tenantId: string
-    ) => Effect.Effect<OutboundTenantState, never>;
+    ) => Effect.Effect<OutboundPaymentPolicyAccepted, OutboundPolicyError | ConfigError>;
+    readonly getTenantState: (tenantId: string) => Effect.Effect<OutboundTenantState, never>;
     readonly markOutboundEnabled: (
       tenantId: string,
       policyVersionId: string
@@ -55,8 +50,7 @@ export function createMemoryOutboundPolicyStoreLayer(
         acceptPolicy: (tenantId, raw) =>
           Effect.gen(function* () {
             const map = yield* Ref.get(policies);
-            const previous: OutboundPaymentPolicy | null =
-              map.get(tenantId)?.policy ?? null;
+            const previous: OutboundPaymentPolicy | null = map.get(tenantId)?.policy ?? null;
             const accepted = yield* loadOutboundPaymentPolicy(raw, previous);
             yield* Ref.update(policies, (m) => {
               const copy = new Map(m);

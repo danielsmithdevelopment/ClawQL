@@ -65,7 +65,10 @@ export type X402SignerLayerOptions = {
   readonly dryRunPayerAddress?: string;
 };
 
-function resolveMode(env: NodeJS.ProcessEnv, explicit?: "dry-run" | "secret-store"): "dry-run" | "secret-store" {
+function resolveMode(
+  env: NodeJS.ProcessEnv,
+  explicit?: "dry-run" | "secret-store"
+): "dry-run" | "secret-store" {
   if (explicit) return explicit;
   const raw = env.CLAWQL_X402_OUTBOUND_SIGNER?.trim().toLowerCase();
   if (raw === "dry-run" || raw === "dryrun") return "dry-run";
@@ -156,9 +159,7 @@ export function createX402SignerLayer(
             const path = signerSecretPath(req.tenantId, req.agentId);
             const secret = yield* store.getSecret(path);
             if (!secret?.trim()) {
-              return yield* Effect.fail(
-                new X402Error({ reason: `signer_secret_missing:${path}` })
-              );
+              return yield* Effect.fail(new X402Error({ reason: `signer_secret_missing:${path}` }));
             }
 
             // Material stays in SecretStore; we only emit a deterministic opaque header

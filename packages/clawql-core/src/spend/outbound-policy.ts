@@ -80,7 +80,9 @@ export function parseUsdcToAtomic(value: string): Effect.Effect<bigint, Outbound
   return Effect.gen(function* () {
     const trimmed = value.trim();
     if (!/^\d+(\.\d+)?$/.test(trimmed)) {
-      return yield* Effect.fail(new OutboundPolicyError({ reason: `invalid_usdc_amount:${value}` }));
+      return yield* Effect.fail(
+        new OutboundPolicyError({ reason: `invalid_usdc_amount:${value}` })
+      );
     }
     const [whole, frac = ""] = trimmed.split(".");
     if (frac.length > 6) {
@@ -106,10 +108,7 @@ export function compareUsdcDecimal(
   });
 }
 
-export function addUsdcDecimal(
-  a: string,
-  b: string
-): Effect.Effect<string, OutboundPolicyError> {
+export function addUsdcDecimal(a: string, b: string): Effect.Effect<string, OutboundPolicyError> {
   return Effect.gen(function* () {
     const sum = (yield* parseUsdcToAtomic(a)) + (yield* parseUsdcToAtomic(b));
     const whole = sum / USDC_SCALE;
@@ -201,9 +200,7 @@ export function loadOutboundPaymentPolicy(
     }
 
     const justification =
-      typeof obj.documentedJustificationId === "string"
-        ? obj.documentedJustificationId.trim()
-        : "";
+      typeof obj.documentedJustificationId === "string" ? obj.documentedJustificationId.trim() : "";
     if (!justification) {
       return yield* Effect.fail(
         new OutboundPolicyError({ reason: "documentedJustificationId_required" })
@@ -273,11 +270,15 @@ export function loadOutboundPaymentPolicy(
 
       const callCmp = yield* compareUsdcDecimal(policy.maxUsdcPerCall, previous.maxUsdcPerCall);
       if (callCmp > 0) {
-        return yield* Effect.fail(new OutboundPolicyError({ reason: "maxUsdcPerCall_raise_rejected" }));
+        return yield* Effect.fail(
+          new OutboundPolicyError({ reason: "maxUsdcPerCall_raise_rejected" })
+        );
       }
       const dayCmp = yield* compareUsdcDecimal(policy.maxUsdcPerDay, previous.maxUsdcPerDay);
       if (dayCmp > 0) {
-        return yield* Effect.fail(new OutboundPolicyError({ reason: "maxUsdcPerDay_raise_rejected" }));
+        return yield* Effect.fail(
+          new OutboundPolicyError({ reason: "maxUsdcPerDay_raise_rejected" })
+        );
       }
       const sessionCmp = yield* compareUsdcDecimal(
         policy.maxUsdcPerSession,
@@ -386,8 +387,7 @@ export function evaluateOutboundPayment(
       return { decision: "allow" as const, reason: "first_enablement_hitl_bound" };
     }
 
-    const needsHitl =
-      (yield* compareUsdcDecimal(amount, policy.humanApprovalAboveUsdc)) >= 0;
+    const needsHitl = (yield* compareUsdcDecimal(amount, policy.humanApprovalAboveUsdc)) >= 0;
     if (needsHitl) {
       if (!action.hitlApproval) {
         return { decision: "hitl" as const, reason: "amount_requires_hitl" };

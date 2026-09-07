@@ -3,11 +3,7 @@
  */
 
 import { Context, Effect, Layer, Ref } from "effect";
-import {
-  OutboundPolicyError,
-  addUsdcDecimal,
-  parseUsdcToAtomic,
-} from "clawql-core";
+import { OutboundPolicyError, addUsdcDecimal, parseUsdcToAtomic } from "clawql-core";
 import type { OutboundSpendCounters } from "./types.js";
 
 export type SpendCounterKey = {
@@ -35,10 +31,7 @@ const zeroCounters = (): OutboundSpendCounters => ({
 
 const USDC_SCALE = 1_000_000n;
 
-function subtractUsdc(
-  from: string,
-  amount: string
-): Effect.Effect<string, OutboundPolicyError> {
+function subtractUsdc(from: string, amount: string): Effect.Effect<string, OutboundPolicyError> {
   return Effect.gen(function* () {
     const a = yield* parseUsdcToAtomic(from);
     const b = yield* parseUsdcToAtomic(amount);
@@ -54,9 +47,7 @@ function subtractUsdc(
   });
 }
 
-export class OutboundSpendCounterService extends Context.Tag(
-  "clawql/OutboundSpendCounterService"
-)<
+export class OutboundSpendCounterService extends Context.Tag("clawql/OutboundSpendCounterService")<
   OutboundSpendCounterService,
   {
     readonly get: (
