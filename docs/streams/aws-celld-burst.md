@@ -91,7 +91,7 @@ Worth grounding the architecture in something already implied by Streams + Lab 5
 
 **Why this is the ideal pitch, not just an example:** a lender's compliance team actually cares that every document touch is on a tip-continuous host WORM chain, that audit-endpoint access is independently enforced, and that a delayed document in a real closing has legal/financial cost — so every governance piece in this spec is load-bearing, not theoretical.
 
-**Before any customer-facing claim:** run §12 using *this tenant's expected closing-season arrival shape* as the load model — so the claim is "we tested your pattern," not "we tested a generic pattern and assume it generalizes."
+**Before any customer-facing claim:** run §12 using _this tenant's expected closing-season arrival shape_ as the load model — so the claim is "we tested your pattern," not "we tested a generic pattern and assume it generalizes."
 
 ---
 
