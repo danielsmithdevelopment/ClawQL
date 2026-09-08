@@ -271,12 +271,12 @@ CI must fail closed on oversize bundles. Prefer:
 
 celld uses **one fleet bucket** as administrative authority (deployments, SQLite/LTX, ownership leases, peer secret). ClawQL still separates **concerns**:
 
-| Bucket / prefix                                    | Purpose                                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------------ |
+| Bucket / prefix                                    | Purpose                                                                                                              |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `s3://clawql-streams-state` (fleet `CELLD_BUCKET`) | celld deployments, cell SQLite + **LTX (platform durability)**, ownership, node leases — **not** host `clawql-audit` |
 
-| Team vault sync bucket (existing ClawQL R2/S3)     | Obsidian vault / `memory_sync` — **not** the celld fleet bucket          |
-| Training export (optional)                         | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
+| Team vault sync bucket (existing ClawQL R2/S3) | Obsidian vault / `memory_sync` — **not** the celld fleet bucket |
+| Training export (optional) | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
 
 Do not reuse fleet-bucket credentials for vault sync or public dataset upload. Scope each credential to one role ([security](https://celld.dev/docs/security)).
 
@@ -399,19 +399,19 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 9. Cloudflare vs celld
 
-| Concern          | Cloudflare Durable Objects | celld                                                          |
-| ---------------- | -------------------------- | -------------------------------------------------------------- |
-| API              | Workers DO                 | Same core DO/Workers surface                                   |
-| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                         |
-| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)           |
+| Concern          | Cloudflare Durable Objects | celld                                                                   |
+| ---------------- | -------------------------- | ----------------------------------------------------------------------- |
+| API              | Workers DO                 | Same core DO/Workers surface                                            |
+| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                                  |
+| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)                    |
 | Pricing          | CF DO request/duration     | No ClawQL $/mo yet — cite hibernation **structure** only (Streams §9.1) |
-| Density          | Platform                   | Vendor hint ~1000 resident / 8 GB (re-measure)                         |
-| KV / R2 bindings | Available                  | **Initial v0.4.0+** from Wrangler; fleet bucket still separate |
-| Cron triggers    | `scheduled`                | Use `setAlarm`                                                 |
-| Peer / mesh      | Cloudflare edge            | Operator mesh; versioned peer tunnel (v0.4.0+)                 |
-| Multi-tenant     | CF accounts                | One app per fleet (alpha)                                      |
-| Local dev        | Miniflare / workerd        | **`celld dev`** (v0.4.0+) + Miniflare unit tests               |
-| ClawQL inference | `fetch`                    | `fetch` (identical contract)                                   |
+| Density          | Platform                   | Vendor hint ~1000 resident / 8 GB (re-measure)                          |
+| KV / R2 bindings | Available                  | **Initial v0.4.0+** from Wrangler; fleet bucket still separate          |
+| Cron triggers    | `scheduled`                | Use `setAlarm`                                                          |
+| Peer / mesh      | Cloudflare edge            | Operator mesh; versioned peer tunnel (v0.4.0+)                          |
+| Multi-tenant     | CF accounts                | One app per fleet (alpha)                                               |
+| Local dev        | Miniflare / workerd        | **`celld dev`** (v0.4.0+) + Miniflare unit tests                        |
+| ClawQL inference | `fetch`                    | `fetch` (identical contract)                                            |
 
 ---
 

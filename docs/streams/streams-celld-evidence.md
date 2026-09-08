@@ -10,18 +10,18 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 
 ## Architecture under test (shipped)
 
-| Layer                                                   | In cell bundle?      | How it is proven                                                              |
-| ------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
-| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                                         |
-| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below)    |
-| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`          |
-| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                   |
-| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                   |
-| Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose                 |
-| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                              |
-| Fleet LTX / multi-node diagnose                         | Manual               | `deployment/samples/streams-celld/README.md`                                  |
-| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                   |
-| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                             |
+| Layer                                                   | In cell bundle?      | How it is proven                                                           |
+| ------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                                      |
+| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below) |
+| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
+| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
+| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
+| Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose              |
+| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
+| Fleet LTX / multi-node diagnose                         | Manual               | `deployment/samples/streams-celld/README.md`                               |
+| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
+| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
 ### Why full product is out-of-process (not “missing”)
 
@@ -83,12 +83,12 @@ Follow [`deployment/samples/streams-celld/README.md`](../../deployment/samples/s
 
 ## CI wiring
 
-| Check                                    | Where                                                    |
-| ---------------------------------------- | -------------------------------------------------------- |
-| Helm celld templates                     | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
+| Check                                     | Where                                                    |
+| ----------------------------------------- | -------------------------------------------------------- |
+| Helm celld templates                      | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
 | streams-slim + fetch tests + bundle-check | CI job **Streams celld evidence**                        |
-| Mock `smoke.sh` with celld               | CI job **Streams celld smoke (celld)**                   |
-| Real MCP + adapter + host WORM           | CI job **Streams celld full-stack** (permanent)          |
+| Mock `smoke.sh` with celld                | CI job **Streams celld smoke (celld)**                   |
+| Real MCP + adapter + host WORM            | CI job **Streams celld full-stack** (permanent)          |
 
 ---
 
@@ -122,21 +122,21 @@ node website/scripts/sync-streams-celld-evidence-doc.mjs
 
 **Lab 5b does not weaken ClawQL’s compliance story when configured correctly:** consequential cell events dual-write to host `clawql-audit`; MCP tool hops land on the same tip-loaded trail when `CLAWQL_WORM_ENABLED=1`. The cell ring/LTX path is **not** the sole audit mechanism.
 
-| Event | Where it lands | Continuity |
-| ----- | -------------- | ---------- |
-| Cell session bookkeeping (ring flush) | DO `audit:ring` / `audit:seq:*` → celld LTX | Snapshot only — **ring resets to genesis** on new isolate |
-| **Consequential session start** | Host **`clawql-audit`** via `POST {CLAWQL_AUDIT_WORM_URL}/entries` | Tip-loaded `WORMAuditTrail` (no fork on host restart) |
-| MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap) | Same tip-loaded trail |
+| Event                                                                                  | Where it lands                                                     | Continuity                                                |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| Cell session bookkeeping (ring flush)                                                  | DO `audit:ring` / `audit:seq:*` → celld LTX                        | Snapshot only — **ring resets to genesis** on new isolate |
+| **Consequential session start**                                                        | Host **`clawql-audit`** via `POST {CLAWQL_AUDIT_WORM_URL}/entries` | Tip-loaded `WORMAuditTrail` (no fork on host restart)     |
+| MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap)                    | Same tip-loaded trail                                     |
 
 **Operational consequence:** an operator who relies on the cell’s `audit:ring` / LTX **alone**, without `CLAWQL_AUDIT_WORM_URL` (and host `CLAWQL_WORM_ENABLED` for tool hops), has a compliance story that can **silently lose hash-chain continuity across a cell restart** — exactly the fork-on-restart failure mode `WORMAuditTrail.create()` / `loadTip` exists to prevent. Set the host WORM URL for anything you need to prove later.
 
 **Ring buffer’s job after dual-write:** DO session-resumption bookkeeping only. Do not “upgrade” it into a second compliance system — extend host `clawql-audit` instead (same rule as execute-batching / spend-governance).
 
-| Property | Lab 5b ring → DO/LTX | Host `clawql-audit` `WORMAuditTrail` |
-| -------- | -------------------- | ------------------------------------ |
-| Tip load on restart | **No** | **Yes** |
-| Dual-ack | No | Yes (not LTX) |
-| Merkle batches | No | Yes |
+| Property            | Lab 5b ring → DO/LTX | Host `clawql-audit` `WORMAuditTrail` |
+| ------------------- | -------------------- | ------------------------------------ |
+| Tip load on restart | **No**               | **Yes**                              |
+| Dual-ack            | No                   | Yes (not LTX)                        |
+| Merkle batches      | No                   | Yes                                  |
 
 Spec lines that say “LTX bucket = WORM trail” mean **operator-owned durable DO SQLite replication** for cell state — **not** “this replaces `clawql-audit`.”
 

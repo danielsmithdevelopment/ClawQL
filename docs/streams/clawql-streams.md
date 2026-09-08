@@ -21,13 +21,13 @@ Marketing landing: [clawql.com/streams](https://clawql.com/streams). **WebMCP** 
 
 ### v0.2 changes (from v0.1.x)
 
-| Decision               | v0.1.x                                                 | v0.2                                                                                                                                                  |
-| ---------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))                                                     |
-| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **In-process `clawql-core/streams-slim` (audit/cache/hash-chain); MCP + mcp-api-adapter via `fetch()`** (full `clawql-streams` package still planned) |
-| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`                                                     |
+| Decision               | v0.1.x                                                 | v0.2                                                                                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))                                                                                                                                                    |
+| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **In-process `clawql-core/streams-slim` (audit/cache/hash-chain); MCP + mcp-api-adapter via `fetch()`** (full `clawql-streams` package still planned)                                                                                                |
+| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`                                                                                                                                                    |
 | WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3 replicates DO SQLite (RPO=0 platform durability)** for cell state; **compliance WORM remains host [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md)** (tip-load / dual-ack) — Lab 5b dual-writes via `CLAWQL_AUDIT_WORM_URL` |
-| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                                                                  |
+| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                                                                                                                                                                 |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use **[celld](https://celld.dev/)** for Workers/DO-compatible self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped until a DO runtime is production-stable. **[`clawql-cellrt`](./clawql-cellrt.md)** is the ClawQL-owned Rust + Wasmtime production runtime (security-first, embedded Vault/inference/observability) — not a Node rewrite.
 
@@ -552,11 +552,11 @@ Partial Web Crypto: `digest`, HMAC sign/verify, AES-GCM, RSA-OAEP decrypt, Ed255
 
 ## 9. Scaling
 
-| Backend            | When                                    | Mechanism                                                                                           |
-| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Backend            | When                                    | Mechanism                                                                                                                         |
+| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **celld**          | Self-hosted DO parity                   | Cells = DOs; LTX to operator bucket; 1:1 object + hibernation (density: vendor ~1000 resident / 8 GB — **re-measure before GTM**) |
-| **Cloudflare**     | Hosted / SaaS                           | Native Durable Objects + hibernation                                                                |
-| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM                                                              |
+| **Cloudflare**     | Hosted / SaaS                           | Native Durable Objects + hibernation                                                                                              |
+| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM                                                                                            |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** celld (Apache 2.0, ~58 MB binary) is the self-hosted DO runtime; Cloudflare remains the hosted DO path; K8s HPA remains the regulated path.
 
