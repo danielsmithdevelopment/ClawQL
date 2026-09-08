@@ -26,11 +26,11 @@ export type X402SignResult = {
   readonly mode: "dry-run" | "eip3009";
 };
 
-const SECRET_PATH_PREFIX = "x402/outbound/signer";
+const SIGNER_KV_PATH_PREFIX = "x402/outbound/signer";
 const FREEZE_PREFIX = "x402/outbound/freeze";
 
 export function signerSecretPath(tenantId: string, agentId: string): string {
-  return `${SECRET_PATH_PREFIX}/${tenantId}/${agentId}`;
+  return `${SIGNER_KV_PATH_PREFIX}/${tenantId}/${agentId}`;
 }
 
 function freezePath(sessionId: string, tenantId: string, agentId: string): string {
