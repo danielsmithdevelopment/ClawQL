@@ -235,6 +235,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: SquaresPlusIcon,
   }),
   card({
+    href: '/streams/aws-celld-burst',
+    name: 'Bursty Streams on AWS (draft)',
+    description:
+      'celld + Karpenter + Istio ambient under hard-zero bursts; Mechanism B; clawql-k8s-operator — unverified until §12.',
+    icon: BoltIcon,
+  }),
+  card({
     href: '/streams/clawql-cellrt',
     name: 'clawql-cellrt (draft)',
     description:

@@ -52,7 +52,13 @@ Read top-to-bottom once, then dive into the runtime that matches your deployment
 - Workers API parity path (Apache 2.0, Deno celld)
 - **Baseline: celld v0.4.0** — `celld dev`, KV/Queues/R2 bindings, versioned peer tunnel
 - Bundle constraints (64 MiB, no `child_process`, `setAlarm` not `setInterval`)
-- **LTX bucket = WORM trail** on the celld path
+- **LTX bucket = durable DO SQLite** (platform RPO=0) — not a substitute for host `clawql-audit`
+
+### 3b. [Bursty Streams on AWS](/streams/aws-celld-burst) (draft)
+
+- Hard-zero burst pattern (1M → quiet → 2M): **Mechanism B** (provisioning-latency) vs Karpenter
+- Filler PriorityClasses + Istio ambient as independently-failing mesh layer
+- `clawql-k8s-operator` (drift detection, not mesh-policy generation) — §12 unverified
 
 ### 4. [clawql-cellrt](/streams/clawql-cellrt)
 

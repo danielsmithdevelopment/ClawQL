@@ -6,7 +6,7 @@
 **celld baseline:** **[v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)** (2026-08-28) — pin with `CELLD_VERSION=v0.4.0` on install; do not mix v0.3.x and v0.4.x in one fleet  
 **Package surface:** [celld](https://celld.dev/) (self-hosted Durable Objects) for ClawQL Streams  
 **Depends on:** [`clawql-streams`](./clawql-streams.md) v0.2 · [`clawql-durable-objects.md`](./clawql-durable-objects.md) · [`clawql-inference`](../inference/clawql-inference.md) · `clawql-core` · `mcp-api-adapter`  
-**Related:** [`clawql-cellrt.md`](./clawql-cellrt.md) (ClawQL-owned Rust runtime) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
+**Related:** [`clawql-cellrt.md`](./clawql-cellrt.md) (ClawQL-owned Rust runtime) · [`aws-celld-burst.md`](./aws-celld-burst.md) (AWS burst / Karpenter / Istio ambient — draft) · [celld docs](https://celld.dev/docs/) · [limitations](https://celld.dev/docs/limitations) · [security](https://celld.dev/docs/security) · [Cloudflare compat](https://celld.dev/docs/cloudflare-compat) · [denoland/celld](https://github.com/denoland/celld) (Apache 2.0)
 
 ---
 

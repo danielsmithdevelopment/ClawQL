@@ -250,6 +250,11 @@ export const docsNavigation: Array<NavGroup> = [
         tag: 'Evidence',
       },
       {
+        title: 'Bursty Streams on AWS',
+        href: '/streams/aws-celld-burst',
+        tag: 'Draft',
+      },
+      {
         title: 'clawql-cellrt',
         href: '/streams/clawql-cellrt',
         tag: 'Draft',
