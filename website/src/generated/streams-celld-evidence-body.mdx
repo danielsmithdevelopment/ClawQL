@@ -104,6 +104,37 @@ node website/scripts/sync-clawql-durable-objects-doc.mjs
 - Automated multi-node LTX / `celld diagnose` fleet proof in GitHub Actions
 - Comparative “faster than X” marketing claims
 - That empty-catalog `execute(streams.session.noop)` succeeds (OpenAPI ops need a provider pack)
+- That Lab 5b `audit:ring` / `audit:seq:*` / celld LTX is the same trail as **`clawql-audit` `WORMAuditTrail`** (see below)
+
+---
+
+## Audit honesty: cell LTX vs `clawql-audit`
+
+Lab 5b flush is a **parallel, weaker** mechanism — not the host compliance trail.
+
+| Property                       | Lab 5b streams-slim → DO/`audit:seq:*` → celld LTX                | `packages/clawql-audit` `WORMAuditTrail`          |
+| ------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------- |
+| Package path                   | `clawql-core/streams-slim` ring only                              | `WORMAuditTrail.create` + Effect trail            |
+| Hash-chain dialect             | `seq` / `prev_hash` via `clawql-merkle`                           | `chainIndex` / `prevHash` seal                    |
+| Tip load on restart (no fork)  | **No** — isolate ring resets to genesis; LTX holds a **snapshot** | **Yes** — `loadTip` / `latestEntry` before append |
+| Dual-ack outbox + remote drain | No                                                                | Yes (explicitly **not** LTX)                      |
+| Merkle batch roots             | No                                                                | Yes                                               |
+
+celld LTX still gives **platform RPO=0 durability** for whatever keys the DO `storage.put`s. That is valuable. It is **not** identity with `clawql-audit` hash-chain continuity, dual-ack, or Merkle verification. Spec lines that say “LTX bucket = WORM trail” mean **operator-owned durable DO SQLite replication**, not “this is `clawql-audit`.”
+
+Follow-up (not required for Lab 5b evidence): hydrate the in-cell ring from `audit:ring` on wake, and/or dual-write session events into host `clawql-audit` over MCP.
+
+---
+
+## Hibernation economics (vendor figure, not ClawQL-measured)
+
+celld docs ≈ **1000 resident cells / 8 GB node** → ~**$0.05 / resident-cell-month** if the node is ~$49/mo. ClawQL Streams tables repeat that as a **planning sketch** (“re-benchmark before GTM”).
+
+Back-of-envelope before treating it as settled:
+
+- Fair compare is **not** “1 Deployment per subscription.” K8s Streams uses a **worker pool + queue**; idle cost is min replicas, not N subscriptions.
+- celld wins when you need **per-subscription durable state / affinity** (filter config, hibernatable WS) with most objects idle — density × idle ratio matters.
+- Until ClawQL measures resident RAM and idle ratio on a real subscription mix, cite hibernation as a **structural** advantage (1:1 object + hibernate API), not a proven $/mo claim.
 
 export function wrapper({ children }) {
   return children
