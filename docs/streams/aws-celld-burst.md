@@ -117,7 +117,7 @@ Two distinct, non-overlapping mechanisms matter more than the raw per-request/du
 
 **These two mechanisms are not interchangeable, and conflating them is the exact mistake this spec exists to avoid repeating.** Mechanism A's savings are real but marginal in a uniform-load, well-packed regime (Karpenter's own documentation admits this — "the difference was maybe 2%" against a well-utilized baseline). Mechanism B's advantage is decisive and does not require uniform load or good packing to matter — it specifically shows up in exactly the hard-zero-gap traffic shape this spec is designed around, and no amount of Karpenter/Spot optimization on the EC2 side removes the provisioning-delay penalty, because that penalty is inherent to provisioning a machine rather than resuming an isolate.
 
-**The one sentence worth keeping as the permanent, defensible summary of this whole section:** *for bursty traffic with hard zeros between spikes, celld's Durable-Object model wins decisively on availability/latency (Mechanism B), independent of and in addition to whatever raw compute cost delta exists (3.2) — Karpenter/Spot can match or beat celld on cost when load is uniform, but cannot match it on burst-absorption latency when load has hard zero-gaps, because no EC2-based autoscaler can provision a machine as fast as a V8 isolate resumes.*
+**The one sentence worth keeping as the permanent, defensible summary of this whole section:** _for bursty traffic with hard zeros between spikes, celld's Durable-Object model wins decisively on availability/latency (Mechanism B), independent of and in addition to whatever raw compute cost delta exists (3.2) — Karpenter/Spot can match or beat celld on cost when load is uniform, but cannot match it on burst-absorption latency when load has hard zero-gaps, because no EC2-based autoscaler can provision a machine as fast as a V8 isolate resumes._
 
 ---
 
@@ -150,7 +150,7 @@ See also [`clawql-celld.md`](./clawql-celld.md) § fleet / bucket layout.
 
 **This is not 1M pods, or anything close to it.** A "node" is one running celld process, one per machine — you provision a small, fixed number of these (2–5 to start, sized for peak concurrent-resident-cell memory, not per-request throughput). A "cell" is an individual Durable Object — thousands of cells share a small number of already-running celld processes. Per celld's own v0.2 release, shared isolates bring a resident cell down to ~471KB, supporting up to ~2,500 resident cells per node at ~1.2GB.
 
-A burst of 1M events spins up (up to) 1M short-lived cells across your existing few nodes — an in-memory, sub-millisecond operation *inside already-running processes* — not 1M new processes, pods, or EC2 instances. Most complete their work in milliseconds and are immediately eligible for hibernation/eviction, freeing memory for the next wave.
+A burst of 1M events spins up (up to) 1M short-lived cells across your existing few nodes — an in-memory, sub-millisecond operation _inside already-running processes_ — not 1M new processes, pods, or EC2 instances. Most complete their work in milliseconds and are immediately eligible for hibernation/eviction, freeing memory for the next wave.
 
 **What you are actually provisioning: a small number of large, memory-optimized EC2 instances** (e.g., r6g.2xlarge or larger — memory-headroom matters more than CPU count here, since resident-cell-count × per-cell-memory is the binding constraint), each running one celld process, always on, sized in advance for your expected peak concurrent-resident-cell footprint. You add more nodes only if peak concurrent memory exceeds what your current fleet can hold — a capacity-planning decision made ahead of time, not a per-burst autoscaling event for the celld layer itself.
 
@@ -247,7 +247,7 @@ Layer 3 - clawql-core hooks (application-level, ATR-scope-aware,
 
 ### 6.3 ztunnel's known L7 limitation, and why it matters here
 
-ztunnel explicitly cannot enforce HTTP-attribute rules (path, method) — Istio's own status output states this plainly: *"ztunnel does not support HTTP attributes (found: methods, paths). In ambient mode you must use a waypoint proxy to enforce HTTP rules."* Critically, when ztunnel encounters a policy rule it cannot enforce at L4, it fails toward being *more* restrictive, not less — the documented behavior is "this will be more restrictive than requested." This is the correct fail-closed behavior and should not be worked around; any HTTP-path/method-level policy that matters must be pushed to an explicit waypoint deployment for the relevant namespace, not assumed to be covered by ztunnel alone.
+ztunnel explicitly cannot enforce HTTP-attribute rules (path, method) — Istio's own status output states this plainly: _"ztunnel does not support HTTP attributes (found: methods, paths). In ambient mode you must use a waypoint proxy to enforce HTTP rules."_ Critically, when ztunnel encounters a policy rule it cannot enforce at L4, it fails toward being _more_ restrictive, not less — the documented behavior is "this will be more restrictive than requested." This is the correct fail-closed behavior and should not be worked around; any HTTP-path/method-level policy that matters must be pushed to an explicit waypoint deployment for the relevant namespace, not assumed to be covered by ztunnel alone.
 
 ### 6.4 celld's peer protocol and the mesh boundary
 
@@ -257,24 +257,24 @@ celld's own peer-to-peer protocol (node discovery and write-replication through 
 
 ## 7. clawql-network (Headscale/tailcat) Interaction
 
-Istio's ambient mesh and Karpenter's node provisioning both operate *within* the AWS Kubernetes cluster. clawql-network's Headscale-managed mesh and tailcat's ephemeral-connection path operate one layer up, for connections that cross *outside* the cluster entirely — to the homelab, to a different cloud region, to a genuinely one-off external peer. Nothing about running on AWS with Istio changes the existing selector logic or its safe-under-ambiguity default (see [`clawql-network-v0.1.md`](../specs/network/clawql-network-v0.1.md)):
+Istio's ambient mesh and Karpenter's node provisioning both operate _within_ the AWS Kubernetes cluster. clawql-network's Headscale-managed mesh and tailcat's ephemeral-connection path operate one layer up, for connections that cross _outside_ the cluster entirely — to the homelab, to a different cloud region, to a genuinely one-off external peer. Nothing about running on AWS with Istio changes the existing selector logic or its safe-under-ambiguity default (see [`clawql-network-v0.1.md`](../specs/network/clawql-network-v0.1.md)):
 
 ```typescript
 // unchanged from the clawql-network specification
-export function selectTransport(
-  req: ConnectionRequest,
-): 'headscale-mesh' | 'tailcat' {
-  if (req.targetType === 'known-fleet-node') return 'headscale-mesh'
-  if (req.targetType === 'ephemeral-peer' ||
-      (req.expectedDurationMs !== undefined && req.expectedDurationMs < 60_000)) {
-    return 'tailcat'
+export function selectTransport(req: ConnectionRequest): "headscale-mesh" | "tailcat" {
+  if (req.targetType === "known-fleet-node") return "headscale-mesh";
+  if (
+    req.targetType === "ephemeral-peer" ||
+    (req.expectedDurationMs !== undefined && req.expectedDurationMs < 60_000)
+  ) {
+    return "tailcat";
   }
-  return 'headscale-mesh'  // default under ambiguity - never the
-                             // ungoverned option
+  return "headscale-mesh"; // default under ambiguity - never the
+  // ungoverned option
 }
 ```
 
-**A real architectural constraint worth stating explicitly:** tailcat's own compiled Go binary cannot run *inside* a celld cell, for the same reason full clawql-core, Express, and child_process-based stdio MCP cannot run inside a cell — the isolate sandbox has no child_process capability. If cell-hosted agent logic ever needs a tailcat ephemeral connection, that request must be proxied to an out-of-process sidecar capable of spawning the tailcat binary, following the exact same "cell fetches, sidecar does the real work" pattern already established for clawql-mcp-http and mcp-api-adapter (Lab 5b). Tailcat is never called in-cell; it is always a sidecar operation the cell fetches out to.
+**A real architectural constraint worth stating explicitly:** tailcat's own compiled Go binary cannot run _inside_ a celld cell, for the same reason full clawql-core, Express, and child_process-based stdio MCP cannot run inside a cell — the isolate sandbox has no child_process capability. If cell-hosted agent logic ever needs a tailcat ephemeral connection, that request must be proxied to an out-of-process sidecar capable of spawning the tailcat binary, following the exact same "cell fetches, sidecar does the real work" pattern already established for clawql-mcp-http and mcp-api-adapter (Lab 5b). Tailcat is never called in-cell; it is always a sidecar operation the cell fetches out to.
 
 ---
 
@@ -294,18 +294,16 @@ A Kubernetes operator whose job is making "fail closed throughout, WORM-audit ev
 
 ```typescript
 export type MeshWORMEntryType =
-  | 'MESH_POLICY_DENIED'        // ztunnel or waypoint blocked a request
-  | 'MESH_POLICY_DRIFT_DETECTED' // hand-authored mesh policy and ATR
-                                  // scope have diverged
+  | "MESH_POLICY_DENIED" // ztunnel or waypoint blocked a request
+  | "MESH_POLICY_DRIFT_DETECTED"; // hand-authored mesh policy and ATR
+// scope have diverged
 ```
 
 **Node/burst lifecycle coordination.** Owns the PriorityClass/filler-eviction logic from Section 5 as a deliberate controller action — not generic Kubernetes scheduler pressure alone, but an explicit decision the operator makes ("celld needs N more GB of headroom, evict these specific filler pods, this triggers Karpenter to provision replacement capacity for them") — logged the same way as any other consequential action.
 
 ```typescript
 export type OperatorLifecycleWORMEntryType =
-  | 'FILLER_WORKLOAD_EVICTED'
-  | 'CELLD_CAPACITY_HEADROOM_REQUESTED'
-  | 'KARPENTER_NODE_REQUESTED'
+  "FILLER_WORKLOAD_EVICTED" | "CELLD_CAPACITY_HEADROOM_REQUESTED" | "KARPENTER_NODE_REQUESTED";
 ```
 
 **celld fleet health.** Verifies celld nodes remain correctly part of the shared S3-backed fleet (bucket lease records current, peer discovery functioning) and alerts/remediates if a node silently drops out without anyone noticing — this is an availability concern, not primarily a security one, but it belongs in the same operator since it's the same class of "is the infrastructure actually behaving as specified" watch function.
@@ -322,12 +320,12 @@ Every operator action that changes cluster state — evicting a filler pod, flag
 
 ```typescript
 export type BurstArchitectureWORMEntryType =
-  | 'MESH_POLICY_DENIED'
-  | 'MESH_POLICY_DRIFT_DETECTED'
-  | 'FILLER_WORKLOAD_EVICTED'
-  | 'CELLD_CAPACITY_HEADROOM_REQUESTED'
-  | 'KARPENTER_NODE_REQUESTED'
-  | 'CELLD_FLEET_NODE_DROPPED'      // fleet health remediation event
+  | "MESH_POLICY_DENIED"
+  | "MESH_POLICY_DRIFT_DETECTED"
+  | "FILLER_WORKLOAD_EVICTED"
+  | "CELLD_CAPACITY_HEADROOM_REQUESTED"
+  | "KARPENTER_NODE_REQUESTED"
+  | "CELLD_FLEET_NODE_DROPPED"; // fleet health remediation event
 ```
 
 All of these append to the same clawql-audit `WORMAuditTrail` already used by every other subsystem in this project (hooks, plugin lifecycle, spend governance, execute batching, payments). There is no separate audit mechanism for cluster/mesh-level events — the entire point of this section is that the WORM trail remains the single, complete, correlatable record regardless of which layer (application hook, mesh policy, or cluster operator) produced the event.
@@ -347,18 +345,18 @@ Types live in `packages/clawql-k8s-operator` (draft).
 
 ## 11. Package Boundaries — Summary
 
-| Concern | Owner | Why |
-| --- | --- | --- |
-| Cell hosting, in-memory burst absorption | celld (forked as clawql-cellrt eventually) | V8 isolate model, sub-ms cell startup |
-| Node-level compute provisioning | Karpenter + EC2 | Handles filler-workload replacement capacity, not celld's own burst absorption |
-| Filler-workload preemption policy | Kubernetes PriorityClass, driven by clawql-k8s-operator | Deliberate, audited eviction — not generic scheduler pressure |
-| L4 mesh security (mTLS, coarse network identity) | Istio ztunnel | Always-on, per-node, no HTTP awareness |
-| L7 mesh security (HTTP path/method policy) | Istio waypoint, opt-in per namespace | Independently-authored from ATR scope, for genuine defense-in-depth |
-| Fine-grained, business-logic enforcement | clawql-core hooks | Restrict-only invariant, ATR-scope-aware, already specified |
-| Cross-cluster / external ephemeral connections | clawql-network selector (Headscale/tailcat) | Unchanged by anything in this spec; tailcat never runs in-cell |
-| Mesh-policy drift detection, denial bridging, node lifecycle, fleet health | clawql-k8s-operator | Ties the above together under one fail-closed, WORM-audited posture |
-| ClawQLInstance / tier ConfigMaps | clawql-operator (existing) | Separate CRD scaffold — do not conflate |
-| Every consequential event above | clawql-audit WORM trail | Single, complete, correlatable record — no parallel audit mechanism |
+| Concern                                                                    | Owner                                                   | Why                                                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Cell hosting, in-memory burst absorption                                   | celld (forked as clawql-cellrt eventually)              | V8 isolate model, sub-ms cell startup                                          |
+| Node-level compute provisioning                                            | Karpenter + EC2                                         | Handles filler-workload replacement capacity, not celld's own burst absorption |
+| Filler-workload preemption policy                                          | Kubernetes PriorityClass, driven by clawql-k8s-operator | Deliberate, audited eviction — not generic scheduler pressure                  |
+| L4 mesh security (mTLS, coarse network identity)                           | Istio ztunnel                                           | Always-on, per-node, no HTTP awareness                                         |
+| L7 mesh security (HTTP path/method policy)                                 | Istio waypoint, opt-in per namespace                    | Independently-authored from ATR scope, for genuine defense-in-depth            |
+| Fine-grained, business-logic enforcement                                   | clawql-core hooks                                       | Restrict-only invariant, ATR-scope-aware, already specified                    |
+| Cross-cluster / external ephemeral connections                             | clawql-network selector (Headscale/tailcat)             | Unchanged by anything in this spec; tailcat never runs in-cell                 |
+| Mesh-policy drift detection, denial bridging, node lifecycle, fleet health | clawql-k8s-operator                                     | Ties the above together under one fail-closed, WORM-audited posture            |
+| ClawQLInstance / tier ConfigMaps                                           | clawql-operator (existing)                              | Separate CRD scaffold — do not conflate                                        |
+| Every consequential event above                                            | clawql-audit WORM trail                                 | Single, complete, correlatable record — no parallel audit mechanism            |
 
 ---
 
@@ -404,6 +402,6 @@ Types live in `packages/clawql-k8s-operator` (draft).
 
 ---
 
-*Bursty Streams on AWS — celld, Karpenter, Istio Ambient Mesh, and the clawql-k8s-operator — Specification v0.1 — September 2026*  
-*Location: `infra/aws-celld-burst/`, `packages/clawql-k8s-operator/`, `docs/streams/aws-celld-burst.md`*  
-*Contact: daniel@clawql.com*
+_Bursty Streams on AWS — celld, Karpenter, Istio Ambient Mesh, and the clawql-k8s-operator — Specification v0.1 — September 2026_  
+_Location: `infra/aws-celld-burst/`, `packages/clawql-k8s-operator/`, `docs/streams/aws-celld-burst.md`_  
+_Contact: daniel@clawql.com_
