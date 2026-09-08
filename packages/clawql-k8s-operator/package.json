@@ -1,0 +1,56 @@
+{
+  "name": "clawql-k8s-operator",
+  "version": "0.1.0",
+  "description": "Draft Effect scaffold for burst/mesh/fleet Kubernetes operator (aws-celld-burst spec) — distinct from clawql-operator ClawQLInstance CRD",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsup",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "effect": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielsmithdevelopment/ClawQL.git",
+    "directory": "packages/clawql-k8s-operator"
+  },
+  "keywords": [
+    "clawql",
+    "kubernetes",
+    "celld",
+    "istio",
+    "karpenter"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
