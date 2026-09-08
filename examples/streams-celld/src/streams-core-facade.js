@@ -11,6 +11,9 @@
  * Out-of-process via fetch(CLAWQL_MCP_ADAPTER_URL) REST:
  * - POST /{tool} → mcp-api-adapter (protocol fan-out host; not embedded)
  *
+ * Out-of-process via fetch(CLAWQL_AUDIT_WORM_URL) clawql-audit HTTP:
+ * - SESSION_START / consequential events → host WORMAuditTrail (tip-load, dual-ack)
+ *
  * Still deferred:
  * - inference completions → fetch(INFERENCE_URL)
  */
@@ -21,6 +24,7 @@ import {
 } from "clawql-core/streams-slim";
 import { callAdapterTool } from "./adapter-fetch.js";
 import { callMcpTool } from "./mcp-fetch.js";
+import { appendWormEntry } from "./worm-fetch.js";
 
 /**
  * @param {{ subscriptionId: string, eventId: string, doInstanceId: string, virtualKeyId: string }} ctx
@@ -121,6 +125,25 @@ export async function toolViaAdapter(adapter, name, args = {}) {
     { url: adapter.url ?? "", bearer: adapter.bearer },
     name,
     args
+  );
+}
+
+/**
+ * Compliance-grade WORM append on the clawql-audit host (not the in-cell ring).
+ * @param {{ url?: string, apiKey?: string }} worm
+ * @param {{
+ *   type: string,
+ *   sessionId: string,
+ *   agentName?: string,
+ *   virtualKeyId?: string,
+ *   cellId?: string,
+ *   metadata?: Record<string, unknown>,
+ * }} entry
+ */
+export async function appendComplianceWorm(worm, entry) {
+  return appendWormEntry(
+    { url: worm.url ?? "", apiKey: worm.apiKey },
+    entry
   );
 }
 

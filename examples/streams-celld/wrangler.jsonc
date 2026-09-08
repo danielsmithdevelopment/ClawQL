@@ -6,10 +6,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "INFERENCE_URL": "http://127.0.0.1:8080",
-    // Out-of-process search/execute/memory via Streamable HTTP (MCP 2026-07-28).
+    // Out-of-process search/execute/memory via Streamable HTTP.
     "CLAWQL_MCP_URL": "",
     // Optional mcp-api-adapter REST origin (POST /{tool}); empty → deferred.
-    "CLAWQL_MCP_ADAPTER_URL": ""
+    "CLAWQL_MCP_ADAPTER_URL": "",
+    // Optional clawql-audit HTTP origin (POST /entries); empty → deferred compliance WORM.
+    "CLAWQL_AUDIT_WORM_URL": "",
+    "CLAWQL_AUDIT_API_KEY": ""
   },
   "durable_objects": {
     "bindings": [

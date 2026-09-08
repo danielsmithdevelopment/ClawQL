@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL Streams — event-driven autonomous agents',
   description:
-    'ClawQL Streams v0.2: event-triggered agent sessions with clawql-core + mcp-api-adapter embedded in Durable Objects, celld or Cloudflare scale, LTX WORM trail, and Kubernetes HPA for regulated deployments.',
+    'ClawQL Streams v0.2: event-triggered agent sessions on celld or Cloudflare DOs, host clawql-audit WORM for compliance, LTX for durable cell state, and Kubernetes HPA for regulated deployments.',
   path: '/streams/clawql-streams',
   ogType: 'article',
 })

@@ -50,11 +50,11 @@ AgentSessionDO
   └─ TrainingDataSidecar   → RTP turnSequence → OBT envelope → export
 ```
 
-Sidecars remain **logical concerns** (in-process modules). Under **celld**, `AuditSidecar` maps to **`storage.put` on the cell SQLite**, which celld replicates as **LTX** to the fleet bucket — that LTX stream is the operator-owned WORM trail (auditor: `sqlite3` on bucket artifacts). Under **Cloudflare**, the same `storage.put` API writes to platform DO storage. Under **Kubernetes**, AuditSidecar may write Postgres/JSONL instead; the logical event schema is unchanged.
+Sidecars remain **logical concerns** (in-process modules or HTTP). Under **celld**, session bookkeeping maps to **`storage.put` on the cell SQLite**, which celld replicates as **LTX** to the fleet bucket (platform RPO=0). That LTX stream is **durable cell state**, not the compliance `clawql-audit` trail — AuditSidecar / Lab 5b dual-write consequential events to host [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md) (HTTP or process WORM). Under **Cloudflare**, the same `storage.put` API writes to platform DO storage. Under **Kubernetes**, bookkeeping may use Postgres/JSONL; the logical event schema is unchanged.
 
 ### 3.1 AuditSidecar
 
-Append-only WORM writer. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §6). On celld this is LTX-backed SQLite; see [`clawql-celld.md`](./clawql-celld.md) §6.
+Append-only forensic writer for **compliance** events. Threads **virtual key ID** through every entry (§5). Does not store PII event bodies — payload hashes only (Streams §6). On celld, **do not equate LTX-backed SQLite with this trail** — dual-write to host `clawql-audit`; see [`streams-celld-evidence.md`](./streams-celld-evidence.md) and [`clawql-celld.md`](./clawql-celld.md) §5 / §6.
 
 ### 3.2 InferenceSidecar
 

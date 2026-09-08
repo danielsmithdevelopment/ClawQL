@@ -255,10 +255,11 @@ jobs:
       - name: streams-slim unit tests
         run: npx vitest run packages/clawql-core/src/streams-slim.test.ts
 
-      - name: MCP + adapter fetch unit tests
+      - name: MCP + adapter + worm fetch unit tests
         run: |
           node examples/streams-celld/scripts/mcp-fetch.test.mjs
           node examples/streams-celld/scripts/adapter-fetch.test.mjs
+          node examples/streams-celld/scripts/worm-fetch.test.mjs
 
       - name: Bundle size gate (≤64 MiB)
         run: node examples/streams-celld/scripts/bundle-check.mjs
@@ -324,7 +325,7 @@ jobs:
       - name: Build MCP host + adapter + streams packages
         run: |
           npm run build
-          npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter
+          npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter -w clawql-audit
 
       - name: Install esbuild + celld v0.4.0
         run: |
