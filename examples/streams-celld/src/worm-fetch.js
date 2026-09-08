@@ -4,9 +4,40 @@
  *
  * Ring buffer (streams-slim) stays for session-resumption bookkeeping only.
  * Consequential agent events must land here (host WORMAuditTrail with tip-load).
+ *
+ * Fail-closed: when CLAWQL_AUDIT_WORM_URL is set, append failure must halt spawn —
+ * never silently continue with ring-only logging.
  */
 
 /** @typedef {{ url: string, apiKey?: string, timeoutMs?: number }} WormFetchConfig */
+
+/**
+ * When a host WORM URL is configured, require a successful append.
+ * Unset URL → deferred (lab / mock without compliance sidecar).
+ * @param {{ url?: string }} config
+ * @param {{ ok?: boolean, deferred?: boolean, error?: string, reason?: string }} result
+ */
+export function requireComplianceWorm(config, result) {
+  const url = String(config?.url || "").trim();
+  if (!url) {
+    return {
+      ok: true,
+      deferred: true,
+      reason: result?.reason || "CLAWQL_AUDIT_WORM_URL unset",
+    };
+  }
+  if (result?.ok === true) {
+    return { ok: true, result };
+  }
+  return {
+    ok: false,
+    error:
+      result?.error ||
+      result?.reason ||
+      "compliance WORM append failed — refusing ring-only continue",
+    result,
+  };
+}
 
 /**
  * @param {WormFetchConfig} config

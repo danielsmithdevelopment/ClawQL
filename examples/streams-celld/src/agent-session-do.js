@@ -2,6 +2,9 @@
  * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim)
  * plus optional fetch(CLAWQL_MCP_URL) and fetch(CLAWQL_MCP_ADAPTER_URL).
  * Model calls use fetch(INFERENCE_URL) — never child_process.
+ *
+ * Compliance: when CLAWQL_AUDIT_WORM_URL is set, SESSION_START must land on host
+ * clawql-audit or spawn fails closed (no silent ring-only degrade).
  */
 import {
   appendComplianceWorm,
@@ -15,6 +18,7 @@ import {
   toolViaAdapter,
   verifyAuditChain,
 } from "./streams-core-facade.js";
+import { requireComplianceWorm } from "./worm-fetch.js";
 
 function resolveMcpConfig(env) {
   const url =
@@ -120,6 +124,9 @@ export class AgentSessionDO {
         startedAt,
         exitReason: null,
       };
+
+      // All durable DO writes before outbound fetch() — avoids celld NodeFenced
+      // when storage mutates after a network hop (output / durability gate).
       await this.state.storage.put("session_meta", meta);
       await this.state.storage.put(`worm:${startedAt}`, {
         kind: "DO_CREATED",
@@ -134,6 +141,8 @@ export class AgentSessionDO {
       let auditVerify = { ok: false };
       let auditPersisted = { ok: false };
       let complianceWorm = { deferred: true };
+      const wormCfg = resolveWormConfig(this.env);
+
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -148,8 +157,16 @@ export class AgentSessionDO {
           eventId,
           startedAt,
         });
+      } catch (err) {
+        audit = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+
+      try {
         // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
-        complianceWorm = await appendComplianceWorm(resolveWormConfig(this.env), {
+        complianceWorm = await appendComplianceWorm(wormCfg, {
           type: "SESSION_START",
           sessionId: eventId,
           agentName: "streams-celld-AgentSessionDO",
@@ -163,10 +180,40 @@ export class AgentSessionDO {
           },
         });
       } catch (err) {
-        audit = {
+        complianceWorm = {
           ok: false,
           error: err instanceof Error ? err.message : String(err),
         };
+      }
+
+      const complianceGate = requireComplianceWorm(wormCfg, complianceWorm);
+      if (!complianceGate.ok) {
+        // Fail closed: clear session_meta so a retry can re-attempt compliance.
+        // Do not continue tools as if the session were audited.
+        await this.state.storage.delete("session_meta");
+        return Response.json(
+          {
+            do: "AgentSessionDO",
+            ok: false,
+            error: "compliance_worm_required",
+            message:
+              complianceGate.error ||
+              "host clawql-audit unreachable — refusing ring-only SESSION_START",
+            session: { eventId, subscriptionId, doInstanceId, virtualKeyId },
+            audit: {
+              clawqlCore: audit,
+              verify: auditVerify,
+              ltx: auditPersisted,
+              compliance: complianceWorm,
+            },
+            core: {
+              package: "clawql-core/streams-slim",
+              wormUrlConfigured: Boolean(wormCfg.url),
+              failClosed: true,
+            },
+          },
+          { status: 503 }
+        );
       }
 
       let inference = { skipped: true, reason: "no INFERENCE_URL" };
@@ -194,7 +241,6 @@ export class AgentSessionDO {
 
       const mcp = resolveMcpConfig(this.env);
       const adapter = resolveAdapterConfig(this.env);
-      const wormCfg = resolveWormConfig(this.env);
       const memoryTitle = `streams-celld session ${eventId.slice(0, 8)}`;
       const tools = {
         search: await searchViaMcp(mcp, `subscription:${subscriptionId}`, {

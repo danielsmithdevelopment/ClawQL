@@ -128,6 +128,10 @@ node website/scripts/sync-streams-celld-evidence-doc.mjs
 | **Consequential session start**                                                        | Host **`clawql-audit`** via `POST {CLAWQL_AUDIT_WORM_URL}/entries` | Tip-loaded `WORMAuditTrail` (no fork on host restart)     |
 | MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap)                    | Same tip-loaded trail                                     |
 
+**Fail-closed:** when `CLAWQL_AUDIT_WORM_URL` is set, a failed / timed-out `fetch` to host WORM **halts spawn** (`503`, gateway `spawn_failed`) — it does **not** silently continue with ring-only logging. Unset URL remains deferred (mock smoke without a compliance sidecar).
+
+**Continuity proof (full-stack smoke):** seeds a prior tip on the host trail, then asserts cell `SESSION_START.prevHash === tip.hash` and `chainIndex === tip.chainIndex + 1`, plus full-chain `/chain/verify` with `entriesChecked >= 2` — not merely “an entry exists.”
+
 **Operational consequence:** an operator who relies on the cell’s `audit:ring` / LTX **alone**, without `CLAWQL_AUDIT_WORM_URL` (and host `CLAWQL_WORM_ENABLED` for tool hops), has a compliance story that can **silently lose hash-chain continuity across a cell restart** — exactly the fork-on-restart failure mode `WORMAuditTrail.create()` / `loadTip` exists to prevent. Set the host WORM URL for anything you need to prove later.
 
 **Ring buffer’s job after dual-write:** DO session-resumption bookkeeping only. Do not “upgrade” it into a second compliance system — extend host `clawql-audit` instead (same rule as execute-batching / spend-governance).

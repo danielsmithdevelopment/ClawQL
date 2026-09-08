@@ -138,6 +138,17 @@ if [[ "$worm_ready" != "1" ]]; then
   exit 1
 fi
 
+# Seed a prior tip on the *same* host WORM singleton the cell will append to.
+# Continuity assertion: SESSION_START.prevHash must equal this tip's hash
+# (proves tip-extend via create()/loadTip — not a fresh disconnected genesis chain).
+SEED_JSON=$(curl -sf -X POST "http://127.0.0.1:${WORM_PORT}/entries" \
+  -H "Authorization: ApiKey ${WORM_API_KEY}" \
+  -H "content-type: application/json" \
+  -d "{\"type\":\"AGENT_ACTION\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"sessionId\":\"full-stack-seed-tip\",\"agentName\":\"full-stack-smoke\",\"metadata\":{\"kind\":\"tip_seed\"}}")
+TIP_HASH=$(echo "$SEED_JSON" | python3 -c 'import json,sys; e=json.load(sys.stdin); print(e["hash"]); assert "chainIndex" in e')
+TIP_INDEX=$(echo "$SEED_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["chainIndex"])')
+echo "full-stack-smoke: seeded host tip chainIndex=${TIP_INDEX} hash=${TIP_HASH:0:16}…"
+
 # Real mcp-api-adapter wrapping that MCP (REST + OpenAPI; skip gRPC/UI for speed).
 (
   cd "$REPO"
@@ -188,10 +199,15 @@ open(dst, "w", encoding="utf-8").write(json.dumps(cfg, indent=2) + "\n")
 PY
 
 cd "$ROOT"
+# Fresh DO SQLite avoids stale spawn_count / NodeFenced leftovers across smokes.
+rm -rf "$ROOT/.celld/dev"
+# Config must live under the project (celld resolves worker entry relative to it).
 celld dev "$SMOKE_CFG" --port "$PORT" &
 CELLD_PID=$!
 
 wait_http "$BASE/health" "celld" "$CELLD_PID" 80
+# Settle after first build so a watcher rebuild does not fence the webhook.
+sleep 1
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 EVENT_ID="full-stack-$(date +%s)-$$"
@@ -266,27 +282,47 @@ print(f"event_id={event_id}")
 EVENT_ID=$(echo "$RESP" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r.get("eventId") or "")')
 WORM_JSON=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
   "http://127.0.0.1:${WORM_PORT}/entries?sessionId=${EVENT_ID}")
-echo "$WORM_JSON" | python3 -c '
-import json,sys
+echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" python3 -c '
+import json,os,sys
 data=json.load(sys.stdin)
+tip_hash=os.environ["TIP_HASH"]
+tip_index=int(os.environ["TIP_INDEX"])
 entries=data.get("entries") or []
 starts=[e for e in entries if e.get("type")=="SESSION_START"]
 if not starts:
-  raise SystemExit(f"no SESSION_START in host clawql-audit for session: {data!r}"[:800])
+  raise SystemExit(("no SESSION_START in host clawql-audit for session: %r" % (data,))[:800])
 e=starts[-1]
 if "hash" not in e or "chainIndex" not in e or "prevHash" not in e:
-  raise SystemExit(f"SESSION_START missing chain fields: {e!r}"[:800])
-print("host WORM verify: SESSION_START chainIndex=%s hash=%s…" % (e.get("chainIndex"), str(e.get("hash"))[:16]))
-' || fail "host clawql-audit query failed"
+  raise SystemExit(("SESSION_START missing chain fields: %r" % (e,))[:800])
+# Exact continuity: cell dual-write must extend the pre-seeded host tip, not genesis.
+if e.get("prevHash") != tip_hash:
+  raise SystemExit(
+    "SESSION_START prevHash discontinuity: got %r expected tip %r (fork / fresh chain, not tip-extend)"
+    % (e.get("prevHash"), tip_hash)
+  )
+expected_index = tip_index + 1
+if e.get("chainIndex") != expected_index:
+  raise SystemExit(
+    "SESSION_START chainIndex=%s expected %s (tip was %s)"
+    % (e.get("chainIndex"), expected_index, tip_index)
+  )
+print(
+  "host WORM verify: SESSION_START extends tip chainIndex=%s prevHash=%s… hash=%s…"
+  % (e.get("chainIndex"), str(e.get("prevHash"))[:16], str(e.get("hash"))[:16])
+)
+' || fail "host clawql-audit continuity assertion failed"
 
 VERIFY=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
-  "http://127.0.0.1:${WORM_PORT}/chain/verify?sessionId=${EVENT_ID}")
+  "http://127.0.0.1:${WORM_PORT}/chain/verify")
 echo "$VERIFY" | python3 -c '
 import json,sys
 v=json.load(sys.stdin)
 if v.get("valid") is not True:
-  raise SystemExit(f"chain/verify failed: {v!r}"[:800])
-print("host WORM chain/verify: valid")
+  raise SystemExit(f"full-chain /chain/verify failed: {v!r}"[:800])
+checked=v.get("entriesChecked")
+if not isinstance(checked, int) or checked < 2:
+  raise SystemExit(f"expected full chain entriesChecked>=2 got {v!r}"[:400])
+print("host WORM chain/verify: valid entriesChecked=%s" % checked)
 ' || fail "chain/verify failed"
 
 echo "full-stack-smoke: PASS"
