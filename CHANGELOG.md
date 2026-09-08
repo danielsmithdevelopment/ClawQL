@@ -2,7 +2,7 @@
 
 ### Added
 
-- **Bursty Streams on AWS** (draft) — [`docs/streams/aws-celld-burst.md`](docs/streams/aws-celld-burst.md) (`/streams/aws-celld-burst`): celld + Karpenter + Istio ambient under hard-zero bursts; Mechanism A vs B; filler PriorityClasses; `clawql-k8s-operator` Effect scaffold (distinct from `clawql-operator`); rate-card projections only until §12 measured. Manifests: [`infra/aws-celld-burst/`](infra/aws-celld-burst/).
+- **Bursty Streams on AWS** (draft) — [`docs/streams/aws-celld-burst.md`](docs/streams/aws-celld-burst.md) (`/streams/aws-celld-burst`): celld + Karpenter + Istio ambient under hard-zero bursts; Mechanism A vs B; §2.1 regulated IDP scenario; §13 three-arm load-test design (celld vs Karpenter scale-to-zero vs warm-pool); filler PriorityClasses; `clawql-k8s-operator` Effect scaffold (distinct from `clawql-operator`); rate-card projections only until §12/§13 measured. Manifests + k6 scaffold: [`infra/aws-celld-burst/`](infra/aws-celld-burst/).
 - **Streams + celld evidence matrix** — [`docs/streams/streams-celld-evidence.md`](docs/streams/streams-celld-evidence.md) (`/streams/streams-celld-evidence`) maps Lab 5b shipped vs draft layers to commands; CI jobs **Streams celld evidence**, **Streams celld smoke (celld)** (mock), and **Streams celld full-stack** (real `clawql-mcp-http` + `mcp-api-adapter`). Specs explain why full core stays out-of-process (Workers APIs, not size) and how to demo the entire product via sidecars (`scripts/full-stack-smoke.sh`, `docker-compose.full.yml`). Cell MCP client speaks protocol **`2025-11-25`**.
 
 ### Changed

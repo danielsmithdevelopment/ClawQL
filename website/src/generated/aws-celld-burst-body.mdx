@@ -400,10 +400,11 @@ Types live in `packages/clawql-k8s-operator` (draft).
 
 ## 10. What This Spec Deliberately Does Not Claim
 
-- No dollar figure in Section 3 should be read as ClawQL's own measured production cost — every figure there is derived from current, real, publicly documented rate cards, applied to a hypothetical load model. Real costs depend on your actual subscription distribution, actual cell memory footprint, and actual burst frequency.
-- celld's cold-start latency inherits from V8 isolate architecture in principle; it has not yet been measured on ClawQL's own AWS deployment specifically (see Section 12).
-- Istio ambient mesh's own ztunnel startup time on a freshly-provisioned node has not yet been measured as part of an end-to-end burst test (see Section 12).
+- No dollar figure in Section 3 should be read as ClawQL's own measured production cost — every figure there is derived from current, real, publicly documented rate cards, applied to a hypothetical load model. Real costs depend on your actual subscription distribution, actual cell memory footprint, and actual burst frequency. **§13 is the designed fix:** Cost Explorer numbers from the three-arm run replace projections.
+- celld's cold-start latency inherits from V8 isolate architecture in principle; it has not yet been measured on ClawQL's own AWS deployment specifically (see Section 12 / §13).
+- Istio ambient mesh's own ztunnel startup time on a freshly-provisioned node has not yet been measured as part of an end-to-end burst test (see Section 12 / §13).
 - The `clawql-k8s-operator` as described here is a specification plus Effect type/service scaffold, not yet a shipped controller.
+- The three-arm load test (§13) is a **demo design**, not a completed experiment — no arm's latency/cost numbers exist yet.
 
 ---
 
@@ -431,16 +432,17 @@ Types live in `packages/clawql-k8s-operator` (draft).
     pointed at a real S3 bucket. Confirm fleet formation via bucket
     lease records.
 
-[ ] Run the synthetic burst test: zero traffic for 10 minutes with
-    filler workloads occupying spare node capacity, then a sudden
-    spike to 1M events, then zero again, then 2M events. Prefer a
-    second run shaped like §2.1 (closing-season / data-room webhook
-    arrival), not only a flat 100 events/sec model. Measure:
-      - celld's own cell spin-up latency under real AWS conditions
-        (not assumed to equal Cloudflare's managed-platform number)
-      - end-to-end time from "celld needs memory" to "filler pods
-        evicted, Karpenter node request fired, celld has headroom"
-      - ztunnel startup time on a freshly Karpenter-provisioned node
+[ ] Run the **three-arm load test** (§13): identical 1M / 10-min zero / 2M
+    stream against Arm A (celld), Arm B (Karpenter scale-to-zero), and
+    Arm C (Karpenter warm-pool). Prefer a second run shaped like §2.1
+    (closing-season / data-room webhook arrival). Measure per §13.3:
+      - p50/p95/p99 latency overlay (Mechanism B spike after the gap)
+      - dropped / timed-out requests in the post-gap window
+      - real Cost Explorer spend for the tagged test window (not rate cards)
+      - resource utilization / node count over time
+      - time-to-first-successful-response after the gap (headline number)
+      - celld cell spin-up latency; filler eviction → Karpenter headroom path
+      - ztunnel startup on a freshly Karpenter-provisioned node (Arms B/C)
 
 [ ] Confirm celld's peer protocol completes its handshake correctly
     with ztunnel's L4 tunnel present, with the peer port explicitly
@@ -458,13 +460,146 @@ Types live in `packages/clawql-k8s-operator` (draft).
 [ ] Confirm MESH_POLICY_DENIED, FILLER_WORKLOAD_EVICTED, and
     CELLD_CAPACITY_HEADROOM_REQUESTED entries land in the same
     real WORM chain as every other subsystem's entries, with
-    correct tip continuity.
+    correct tip continuity — and that Arm A's operator WORM
+    timestamps correlate with the Grafana timeline (§13.4).
 
 [ ] Only after every item above has a real, measured result:
-    update Section 3 and Section 12 with actual figures, and only
-    then is this architecture's burst-handling claim ready to cite
-    externally.
+    publish using the §13.5 result template (all three arms, real
+    Cost Explorer $, no omitted unfavorable numbers); update
+    Section 3 and Section 12 with actual figures; only then is
+    this architecture's burst-handling claim ready to cite externally.
 ```
+
+---
+
+## 13. The Three-Arm Load Test — Concrete Demo Design
+
+This section specifies the actual test that produces the real numbers §12 requires, and the demo artifact that makes the whole spec's central claim (§3.3) checkable rather than argued. The test is designed so that an unfavorable result for any arm is reported exactly as found — this is a real comparison, not a demonstration built to reach a predetermined conclusion.
+
+Scaffold: [`infra/aws-celld-burst/loadtest/`](../../infra/aws-celld-burst/loadtest/).
+
+### 13.1 The three arms
+
+Two arms is not enough, because a pure "Karpenter scales to zero" configuration is a strawman if a real team would never run it that way in production. Three arms give an honest, complete picture:
+
+```
+Arm A — celld / clawql-cellrt fleet
+  Provisioned per Section 4.1: sized in advance for peak
+  concurrent-resident-cell memory, filler workloads occupying
+  spare capacity per Section 5, PriorityClass preemption active,
+  clawql-k8s-operator running and logging.
+
+Arm B — Kubernetes + Karpenter, scale-to-zero
+  Realistic minimum baseline capacity, full autoscaling enabled,
+  genuinely scales down during the 10-minute zero-traffic gap.
+  This is Karpenter run as its own documentation recommends for
+  cost optimization — not artificially held at peak size.
+
+Arm C — Kubernetes + Karpenter, warm-pool hybrid
+  A small number of always-on nodes (sized for a "reasonable
+  floor," not full peak) plus Karpenter autoscaling for anything
+  above that floor. This is the configuration a real team is
+  most likely to actually choose in production, and it is the
+  fairest comparison point — neither the pure-serverless extreme
+  nor the pure-always-on extreme.
+```
+
+Running Arm C is the specific fix for the risk of testing only Arm A against a scale-to-zero Arm B (which can read as strawmanning Karpenter's realistic best practice). Arm C removes that risk by including the configuration Karpenter's own advocates would actually recommend.
+
+### 13.2 The event stream, identical across all three arms
+
+```
+Minute 0-1:    1,000,000 events arrive
+Minute 1-11:   0 events (hard zero, 10 minutes)
+Minute 11-12:  2,000,000 events arrive
+Minute 12+:    0 events — observe recovery and drain
+
+Generated once, replayed identically against all three arms'
+ingest endpoints, via k6 (already part of the clawql-observability
+synthetic-monitoring toolset — no new load-generation tooling
+introduced for this test).
+```
+
+Optional second shape (§2.1): replace the flat 1M/2M spikes with a closing-season / data-room webhook arrival curve for the same gap structure.
+
+### 13.3 What gets measured, and why each metric maps to a specific claim already made in this spec
+
+```
+1. Per-event latency (p50 / p95 / p99), continuous throughout
+   the test, all three arms overlaid on one timeline.
+   -> Directly tests the Section 3.3 Mechanism B claim: does
+      Arm B show a latency spike in the ~45-60 second window
+      immediately following the gap, correlating with Karpenter's
+      documented provisioning time? Does Arm C show a smaller
+      but non-zero spike (if the burst exceeds its warm-pool
+      floor)? Does Arm A show no spike at all?
+
+2. Dropped or timed-out requests, specifically during the
+   post-gap burst window.
+   -> The concrete, visceral version of "provisioning delay" —
+      maps to the real production incident cited in Section 3.1
+      ("cost them thousands in dropped checkouts"). A latency
+      percentile can rise without any requests actually failing;
+      this metric is the harder, more decisive one.
+
+3. Real infrastructure cost for the full test window, pulled
+   from actual AWS Cost Explorer billing data for each arm's
+   tagged resources — NOT estimated from rate cards.
+   -> Closes the Section 10 honesty gap directly: no dollar
+      figure in this spec should be a projection once this test
+      has run. If Arm B or Arm C is cheaper because it genuinely
+      scaled down during the gap, that is reported plainly — this
+      is the real, measured version of the Mechanism A / Mechanism
+      B tradeoff, not a weakness in the argument for celld.
+
+4. Resource utilization (memory, CPU) over time, all three arms.
+   -> Shows the actual idle-capacity story: Arm A's nodes holding
+      steady utilization through the gap (paying for headroom
+      the whole time), Arm B's node count visibly dropping,
+      Arm C's floor holding steady while its burst capacity
+      scales.
+
+5. Time-to-first-successful-response after the gap ends, for
+   each arm, as the single headline number for a reader skimming
+   the eventual writeup.
+```
+
+### 13.4 Infrastructure for running and observing the test
+
+```
+Load generation:    k6, one script, run identically against all
+                     three arms' ingest endpoints
+                     (scaffold: infra/aws-celld-burst/loadtest/)
+Metrics pipeline:    Same LGTM+ stack (Loki / Grafana / Tempo /
+                     Mimir / Pyroscope) already specified in
+                     clawql-observability — one Grafana dashboard
+                     with all three arms' latency, cost-proxy, and
+                     utilization curves on the same timeline, not
+                     three separate reports a reader has to
+                     mentally align
+Cost data:           Real AWS Cost Explorer, filtered by resource
+                     tags per arm, for the exact test window
+Audit correlation:   clawql-k8s-operator's own WORM entries
+                     (CELLD_CAPACITY_HEADROOM_REQUESTED,
+                     KARPENTER_NODE_REQUESTED,
+                     FILLER_WORKLOAD_EVICTED) fire naturally
+                     during the test if the operator is running
+                     against Arm A — meaning the audit trail
+                     itself becomes demo evidence, showing exactly
+                     when each system made which decision,
+                     timestamped and independently correlatable
+                     against the Grafana timeline
+```
+
+### 13.5 The publishable result template
+
+Following the same discipline as the frozen Harvey LAB protocol's closing sentence — nothing shorter than this should be published as the result of this test:
+
+> "Identical 1M/0/2M event stream, same day, run against three configurations: [celld config], [Karpenter scale-to-zero config], [Karpenter warm-pool config]. celld: p99 latency [X]ms flat throughout the test, [N] dropped requests, $[Y] real AWS cost for the test window. Karpenter scale-to-zero: p99 latency [X]ms baseline, spiking to [Z]ms for [S] seconds immediately after the gap, [N'] requests dropped/timed out, $[Y'] real AWS cost (lower than celld because it scaled to zero during the gap). Karpenter warm-pool: p99 latency [X]ms baseline, spiking to [Z'']ms for [S'] seconds (smaller than scale-to-zero's spike, larger than celld's), $[Y''] real AWS cost (between the other two). Full k6 script, Grafana dashboard, and Cost Explorer export: [link]."
+
+### 13.6 What this test does not attempt to settle
+
+This test measures exactly one traffic shape — a single 1M/gap/2M cycle. It does not establish behavior under sustained, repeated bursts (celld nodes' memory pressure across many consecutive cycles without a chance to fully drain), under a genuinely uniform load (where Section 3.3's Mechanism A dominates instead of Mechanism B, and Karpenter/Spot may be more competitive on cost than this specific test would suggest), or under multi-day/multi-week real production variance. Those remain open, separate questions, worth their own dedicated test designs rather than being implied by this one.
 
 ---
 
