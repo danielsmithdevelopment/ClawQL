@@ -31,8 +31,8 @@ export default function AwsCelldBurstPage() {
       <div className="not-prose mb-8">
         <Note>
           <strong>Unverified until §12 / §13</strong> have ClawQL-measured
-          results (three-arm k6 + Cost Explorer). Rate-card arithmetic in §3
-          is projection only — not production cost. Generated from{' '}
+          results (three-arm k6 + Cost Explorer). Rate-card arithmetic in §3 is
+          projection only — not production cost. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/aws-celld-burst.md"
             className="font-medium text-inherit underline underline-offset-2"
