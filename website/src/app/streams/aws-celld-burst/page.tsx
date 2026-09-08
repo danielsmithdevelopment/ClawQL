@@ -57,7 +57,10 @@ export default function AwsCelldBurstPage() {
         </Note>
       </div>
 
-      <AgentMarkdownDocBody src="aws-celld-burst-body.mdx" />
+      <AgentMarkdownDocBody
+        path="/streams/aws-celld-burst"
+        className="flex-auto"
+      />
     </article>
   )
 }
