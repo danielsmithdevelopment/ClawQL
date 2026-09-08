@@ -33,6 +33,66 @@ Every cost figure, latency figure, and platform behavior cited here was checked 
 
 The 1M-then-zero-then-2M pattern is not an arbitrary stress test. It is the shape that most sharply distinguishes celld's architecture from a conventional Kubernetes-autoscaled EC2 fleet, because it exercises the exact failure mode that node-provisioning-based autoscaling structurally cannot avoid: **any autoscaler that correctly scales down during the zero-traffic gap (to avoid paying for idle capacity) will necessarily incur a provisioning delay when traffic returns**, because provisioning new compute — whether a Karpenter-launched EC2 node, a Lambda cold start, or a Fargate task — is an inherently slower operation than resuming an already-running process. The only way to avoid this tradeoff entirely is to keep something warm through the gap that can absorb the burst without provisioning anything new — which is precisely what a V8-isolate-based Durable Object model provides at the individual-object level, and precisely what filler workloads plus priority-based eviction provide at the node level.
 
+### 2.1 Canonical production scenario — regulated document-intake burst
+
+Worth grounding the architecture in something already implied by Streams + Lab 5b + IDP, not a generic load-test.
+
+**Customer shape:** a webhook-driven agent fleet for a regulated document-processing tenant — e.g. a mortgage lender (SeeTheGreens-class) or a legal team running ClawQL's IDP pipeline for real-time deal-document / data-room intake.
+
+**Why the traffic is genuinely hard-zero bursty:** closings and data-room dumps cluster (end-of-month / end-of-quarter). Hundreds of thousands of `document.uploaded` webhooks can arrive within minutes; then the pipeline sits near-idle until the next batch. That is the 1M-then-zero-then-2M pattern with real events, not a synthetic generator.
+
+**Why each event needs an `AgentSessionDO` (not a stateless function):** one document triggers classify (`inspect_pdf`) → extract (`run_idp_pipeline`) → ontology check against the matter/loan file → optional human page on anomaly. That session needs durable state (already processed?, running extraction confidence) that survives mid-flight infrastructure hiccups — exactly the cell contract Lab 5b exercises.
+
+**Ideal end-to-end handling (mapped to this spec):**
+
+```
+1. Data-room dump: ~800K webhook events in under ~5 minutes (closing-season pattern).
+
+2. Tenant SubscriptionDO is already resident or hibernating cheaply
+   (§3.3 Mechanism A — many subscriptions, most idle most of the time).
+
+3. Each webhook spawns an AgentSessionDO cell (§4.1) — sub-ms–sub-5ms
+   V8 isolate startup inside already-running celld nodes sized in advance
+   for this tenant's known closing-season peak (capacity planning, not
+   per-burst Karpenter for the celld layer itself).
+
+4. If concurrent-resident memory exceeds headroom: Tier-3 filler
+   (§5) — e.g. background ExtractBench / non-urgent ontology consolidation —
+   is preempted via PriorityClass, freeing memory immediately instead of
+   waiting on Karpenter's 45–60s node provision (Mechanism B).
+
+5. Cell business logic fetch()es clawql-mcp-http / mcp-api-adapter /
+   IDP sidecars for real pipeline work (Lab 5b full-stack pattern) —
+   the cell orchestrates; it does not run Express / node:fs / child_process.
+
+6. Every consequential action (classified, extracted, low-confidence
+   human review, PII redacted) dual-writes to host clawql-audit
+   (Lab 5b / tip-loaded WORMAuditTrail) — not only the cell's LTX ring.
+
+7. Istio ztunnel (§6) enforces coarse tenant isolation (cells may only
+   reach that tenant's IDP sidecar namespace). A waypoint on the audit-WORM
+   namespace independently allows POST /entries only from recognized cell
+   identities — separately authored from ATR hook scopes so one misconfig
+   cannot silently disable both layers.
+
+8. clawql-k8s-operator (§8) records FILLER_WORKLOAD_EVICTED /
+   CELLD_CAPACITY_HEADROOM_REQUESTED during the burst, and flags
+   MESH_POLICY_DRIFT_DETECTED if the audit-WORM waypoint ever loosens
+   without a deliberate ATR-side counterpart — load-bearing for a
+   regulated lender's compliance story.
+
+9. ~10 minutes later: zero new documents. Cells hibernate (zero duration
+   cost where the billing model allows). Filler resumes on freed capacity.
+
+10. Next closing season: same baseline celld nodes; only the transient
+    cell population changes — no re-provisioning of the celld fleet for
+    the burst itself.
+```
+
+**Why this is the ideal pitch, not just an example:** a lender's compliance team actually cares that every document touch is on a tip-continuous host WORM chain, that audit-endpoint access is independently enforced, and that a delayed document in a real closing has legal/financial cost — so every governance piece in this spec is load-bearing, not theoretical.
+
+**Before any customer-facing claim:** run §12 using *this tenant's expected closing-season arrival shape* as the load model — so the claim is "we tested your pattern," not "we tested a generic pattern and assume it generalizes."
+
 ---
 
 ## 3. Cost Model — AWS EC2/Karpenter vs. Cloudflare-style Durable Object Billing
@@ -369,7 +429,9 @@ Types live in `packages/clawql-k8s-operator` (draft).
 
 [ ] Run the synthetic burst test: zero traffic for 10 minutes with
     filler workloads occupying spare node capacity, then a sudden
-    spike to 1M events, then zero again, then 2M events. Measure:
+    spike to 1M events, then zero again, then 2M events. Prefer a
+    second run shaped like §2.1 (closing-season / data-room webhook
+    arrival), not only a flat 100 events/sec model. Measure:
       - celld's own cell spin-up latency under real AWS conditions
         (not assumed to equal Cloudflare's managed-platform number)
       - end-to-end time from "celld needs memory" to "filler pods
