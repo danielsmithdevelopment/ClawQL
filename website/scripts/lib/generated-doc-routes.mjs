@@ -9,6 +9,7 @@ export const GENERATED_BODY_ROUTES = {
   'clawql-streams-body.mdx': '/streams/clawql-streams',
   'clawql-durable-objects-body.mdx': '/streams/clawql-durable-objects',
   'clawql-celld-body.mdx': '/streams/clawql-celld',
+  'streams-celld-evidence-body.mdx': '/streams/streams-celld-evidence',
   'clawql-cellrt-body.mdx': '/streams/clawql-cellrt',
   'clawql-tee-body.mdx': '/streams/clawql-tee',
   'clawql-tee-airgap-audit-body.mdx': '/streams/clawql-tee-airgap-audit',

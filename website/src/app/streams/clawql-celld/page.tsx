@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL Celld Integration — self-hosted Durable Objects',
   description:
-    'How ClawQL Streams runs on celld: Workers/DO API constraints, embedded clawql-core + mcp-api-adapter bundle, LTX WORM trail, fleet deploy, and security hardening.',
+    'How ClawQL Streams runs on celld: Workers/DO API constraints, streams-slim in-process + MCP/adapter fetch out-of-process, LTX WORM trail, fleet deploy, and security hardening.',
   path: '/streams/clawql-celld',
   ogType: 'article',
 })
@@ -30,8 +30,9 @@ export default function ClawqlCelldPage() {
 
       <div className="not-prose mb-8">
         <Note>
-          <strong>Self-hosted DO runtime — not yet shipped.</strong> Generated
-          from{' '}
+          <strong>Lab 5b skeleton ships</strong> in{' '}
+          <code>examples/streams-celld</code>; full Streams coordination package
+          remains draft. Generated from{' '}
           <a
             href="https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/streams/clawql-celld.md"
             className="font-medium text-inherit underline underline-offset-2"

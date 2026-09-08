@@ -2,10 +2,15 @@
  * Tiny Streamable HTTP MCP client for celld / Workers.
  * No @modelcontextprotocol/sdk — keeps the DO bundle ≪ 64 MiB.
  *
- * Prefers MCP 2026-07-28 (stateless tools/call, no session affinity).
+ * Speaks MCP Streamable HTTP with protocol version **2025-11-25** (current
+ * clawql-mcp / SDK supported set). Stateless tools/call; no session affinity.
  * Parses JSON or SSE `data:` bodies (server may default to SSE unless
  * CLAWQL_STREAMABLE_HTTP_JSON_RESPONSE=1 on clawql-mcp).
  */
+
+/** Protocol version header sent to clawql-mcp (must be in server allow-list). */
+export const MCP_PROTOCOL_VERSION = "2025-11-25";
+
 
 /** @typedef {{ url: string, bearer?: string, timeoutMs?: number }} McpFetchConfig */
 
@@ -89,7 +94,7 @@ export async function callMcpTool(config, name, args = {}) {
   const headers = {
     "content-type": "application/json",
     accept: "application/json, text/event-stream",
-    "mcp-protocol-version": "2026-07-28",
+    "mcp-protocol-version": MCP_PROTOCOL_VERSION,
   };
   if (config.bearer) {
     headers.authorization = `Bearer ${config.bearer}`;
@@ -151,6 +156,6 @@ export async function callMcpTool(config, name, args = {}) {
     tool: name,
     transport: "streamable-http",
     url,
-    protocolVersion: "2026-07-28",
+    protocolVersion: MCP_PROTOCOL_VERSION,
   };
 }

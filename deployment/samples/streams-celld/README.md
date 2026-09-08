@@ -6,6 +6,15 @@ Worker skeleton: [`examples/streams-celld/`](../../examples/streams-celld/)
 
 Learn walkthrough: [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)
 
+
+## Evidence vs manual
+
+| Layer | Status |
+| ----- | ------ |
+| Helm chart templates (StatefulSet, probes, env) | **CI** — `make helm-celld-template-tests` |
+| Worker unit / bundle / local smoke | **CI** — see [`docs/streams/streams-celld-evidence.md`](../../docs/streams/streams-celld-evidence.md) |
+| Live cluster webhook → LTX on fleet bucket | **Manual** — steps below; not automated in GitHub Actions yet |
+
 ## Checklist
 
 1. **Bucket credentials** — Kubernetes Secret with `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`. Scope to the celld fleet bucket only.

@@ -80,6 +80,7 @@ export const DOC_SITE_ROUTES = {
   'docs/streams/clawql-streams.md': '/streams/clawql-streams',
   'docs/streams/clawql-durable-objects.md': '/streams/clawql-durable-objects',
   'docs/streams/clawql-celld.md': '/streams/clawql-celld',
+  'docs/streams/streams-celld-evidence.md': '/streams/streams-celld-evidence',
   'docs/streams/clawql-cellrt.md': '/streams/clawql-cellrt',
   'docs/streams/clawql-tee.md': '/streams/clawql-tee',
   'docs/streams/clawql-tee-airgap-audit.md':
