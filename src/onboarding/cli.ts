@@ -85,6 +85,8 @@ import {
   runPaymentsStripeWebhookListenCmd,
   runPaymentsStripeWebhookVerifyCmd,
   runPaymentsStripeMeterReportCmd,
+  runPaymentsStripeCatalogEnsureCmd,
+  runPaymentsStripeCatalogValidateCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -245,6 +247,8 @@ function parse(argv: string[]): {
     else if (a === "--strict") flags.strict = true;
     else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--dry-run") flags.dryRun = true;
+    else if (a === "--no-topups") flags.noTopUps = true;
+    else if (a === "--no-meter") flags.noMeter = true;
     else if (a === "--force") flags.force = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
@@ -489,7 +493,7 @@ Usage:
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
-  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -1426,6 +1430,9 @@ async function main(): Promise<void> {
       label: typeof flags.label === "string" ? flags.label : undefined,
       sendEmail: Boolean(flags.sendEmail),
       emailDryRun: Boolean(flags.emailDryRun),
+      dryRun: Boolean(flags.dryRun),
+      noTopUps: Boolean(flags.noTopUps),
+      noMeter: Boolean(flags.noMeter),
     };
 
     if (subcmd === "plan") {
@@ -1511,8 +1518,16 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeMeterReportCmd(paymentsOpts);
         return;
       }
+      if (stripeAction === "catalog" && (rest[1] === "ensure" || rest[1] === undefined)) {
+        process.exitCode = await runPaymentsStripeCatalogEnsureCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "catalog" && rest[1] === "validate") {
+        process.exitCode = await runPaymentsStripeCatalogValidateCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | webhook listen | webhook verify"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;
