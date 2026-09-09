@@ -45,7 +45,30 @@ export const sortKeysDeep = (value: unknown): unknown => {
   return out;
 };
 
-export const canonicalJSONSync = (value: unknown): string => JSON.stringify(sortKeysDeep(value));
+/**
+ * Drop `undefined` so the hash dialect matches `JSON.stringify` persistence
+ * round-trips (SQLite/Postgres/S3). CBOR otherwise encodes JS `undefined` as 0xf7.
+ */
+export const stripUndefinedDeep = (value: unknown): unknown => {
+  if (value === undefined) return undefined;
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => {
+      const next = stripUndefinedDeep(item);
+      return next === undefined ? null : next;
+    });
+  }
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj)) {
+    const next = stripUndefinedDeep(obj[key]);
+    if (next !== undefined) out[key] = next;
+  }
+  return out;
+};
+
+export const canonicalJSONSync = (value: unknown): string =>
+  JSON.stringify(sortKeysDeep(stripUndefinedDeep(value)));
 
 /**
  * Format in effect at `chainIndex` given one switch point.
@@ -79,10 +102,11 @@ export const serializeWormEntry = (
   version: WormSerializationVersion = "cbor"
 ): Effect.Effect<Uint8Array> =>
   Effect.sync(() => {
+    const normalized = stripUndefinedDeep(entry) as WORMEntryPayload;
     if (version === "cbor") {
-      return new Uint8Array(cbor.encodeCanonical(entry));
+      return new Uint8Array(cbor.encodeCanonical(normalized));
     }
-    return new TextEncoder().encode(canonicalJSONSync(entry));
+    return new TextEncoder().encode(canonicalJSONSync(normalized));
   });
 
 export const deserializeWormEntry = (

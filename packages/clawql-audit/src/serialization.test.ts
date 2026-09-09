@@ -148,4 +148,28 @@ describe("WormSerialization", () => {
     expect(await Effect.runPromise(recomputeEntryHash(rows[2]!, "cbor"))).toBe(rows[2]!.hash);
     await migrated.stop();
   });
+
+  it("CBOR hash matches after JSON persistence strips undefined fields", async () => {
+    const sealed = await Effect.runPromise(
+      sealHashChainRecord({
+        prev: null,
+        body: {
+          id: "00000000-0000-7000-8000-000000000099",
+          writtenAt: "2026-01-01T00:00:00.000Z",
+          type: "PANGUARD_DENY",
+          timestamp: "2026-01-01T00:00:00.000Z",
+          sessionId: "s-undef",
+          agentName: "cline",
+          virtualKeyId: undefined,
+          cellId: undefined,
+          metadata: { toolName: "sandbox_exec", extra: undefined },
+        },
+        serializationVersion: "cbor",
+      })
+    );
+    const persisted = JSON.parse(
+      JSON.stringify({ ...sealed, backendAcks: [] })
+    ) as typeof sealed & { backendAcks: string[] };
+    expect(await Effect.runPromise(recomputeEntryHash(persisted, "cbor"))).toBe(sealed.hash);
+  });
 });

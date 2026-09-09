@@ -17,7 +17,7 @@ package: "packages/clawql-audit/"
 
 **Does not change:** the hash chain algorithm (SHA-256 over sealed content that already includes `prevHash` + `chainIndex`), the `HashChain`/`MerkleBatchLayer` split, `DualAckReplicator`, tip-loading on startup, or any entry's field structure. Every WORM entry type keeps its exact field shape. Only the serialization format underneath changes.
 
-Storage backends may still persist entries as JSON for query convenience; that persistence encoding is **not** the hash dialect.
+Storage backends may still persist entries as JSON for query convenience; that persistence encoding is **not** the hash dialect. Before hashing, entries are normalized by dropping `undefined` fields so CBOR bytes match a JSON persistence round-trip (`JSON.stringify` also omits `undefined`).
 
 ---
 

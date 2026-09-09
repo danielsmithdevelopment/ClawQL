@@ -27,6 +27,7 @@ export {
   serializeWormEntry,
   sha256HexBytes,
   sortKeysDeep,
+  stripUndefinedDeep,
   type ChainMetadata,
   type WORMEntryPayload,
   type WormSerializationVersion,
