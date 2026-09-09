@@ -881,12 +881,12 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item                         | Tracking     |
-| ---------------------------- | ------------ |
-| Hosted webhook HTTP endpoint | Node CPC routes + CF forward — [customer-provisioning-core.md](./customer-provisioning-core.md) |
+| Item                                                  | Tracking                                                                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Hosted webhook HTTP endpoint                          | Node CPC routes + CF forward — [customer-provisioning-core.md](./customer-provisioning-core.md)                                |
 | Customer provisioning core (`provisionOrg`, org-of-1) | [customer-provisioning-core.md](./customer-provisioning-core.md) · [spec](../specs/billing/customer-provisioning-core-v0.1.md) |
-| Hybrid subscription + prepaid credits | [stripe-products-ops.md](./stripe-products-ops.md) · [hybrid-billing](../specs/billing/hybrid-billing-v0.1.md) |
-| Self-serve billing dashboard UI | CPC piece 6 — open |
+| Hybrid subscription + prepaid credits                 | [stripe-products-ops.md](./stripe-products-ops.md) · [hybrid-billing](../specs/billing/hybrid-billing-v0.1.md)                 |
+| Self-serve billing dashboard UI                       | CPC piece 6 — open                                                                                                             |
 
 ## Related
 

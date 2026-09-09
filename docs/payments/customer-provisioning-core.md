@@ -16,28 +16,28 @@ Spend-governance (outbound USDC) is **out of scope** here — see [spend-governa
 
 ## Modules
 
-| Path | Role |
-| ---- | ---- |
-| `provisioning/types.ts` | `ProvisionOrgInput` / `ProvisionOrgResult` / usage report types |
-| `provisioning/helpers.ts` | org id slug, owner tenant id, plan → API key scopes |
+| Path                                    | Role                                                                                |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| `provisioning/types.ts`                 | `ProvisionOrgInput` / `ProvisionOrgResult` / usage report types                     |
+| `provisioning/helpers.ts`               | org id slug, owner tenant id, plan → API key scopes                                 |
 | `provisioning/provision-org-service.ts` | Effect Tag + Layer; create/patch org, ledger ensure, invite extras, issue key, WORM |
-| `provisioning/report-usage.ts` | `reportUsageToStripe` — overage-only Stripe meter |
-| `provisioning/checkout-handoff.ts` | Stripe Checkout Session → `ProvisionOrgInput` |
-| `provisioning/http.ts` | Express routes for internal provision + usage report (gateway converge) |
-| `credits/org.ts` | `OrgBillingFields`, `createOrg`, `patchOrgBilling` |
-| `stripe/stripe-webhook-service.ts` | `checkout.session.completed` → `provisionOrg` when CPC metadata present |
+| `provisioning/report-usage.ts`          | `reportUsageToStripe` — overage-only Stripe meter                                   |
+| `provisioning/checkout-handoff.ts`      | Stripe Checkout Session → `ProvisionOrgInput`                                       |
+| `provisioning/http.ts`                  | Express routes for internal provision + usage report (gateway converge)             |
+| `credits/org.ts`                        | `OrgBillingFields`, `createOrg`, `patchOrgBilling`                                  |
+| `stripe/stripe-webhook-service.ts`      | `checkout.session.completed` → `provisionOrg` when CPC metadata present             |
 
 ---
 
 ## Data model (additive on `OrgRecord`)
 
-| Field | Values | Notes |
-| ----- | ------ | ----- |
-| `createdVia` | `self_serve` \| `enterprise_sales` | How the org was first created |
-| `billingMode` | `stripe_checkout` \| `stripe_invoice` \| `hybrid` \| `credits_only` | Stripe settlement mode |
-| `planId` | `free` \| `pro` \| `team` \| `enterprise` | Required after provision |
-| `stripeCustomerId` | optional | Linked Stripe Customer |
-| `stripeSubscriptionId` | optional | Linked Subscription |
+| Field                  | Values                                                              | Notes                         |
+| ---------------------- | ------------------------------------------------------------------- | ----------------------------- |
+| `createdVia`           | `self_serve` \| `enterprise_sales`                                  | How the org was first created |
+| `billingMode`          | `stripe_checkout` \| `stripe_invoice` \| `hybrid` \| `credits_only` | Stripe settlement mode        |
+| `planId`               | `free` \| `pro` \| `team` \| `enterprise`                           | Required after provision      |
+| `stripeCustomerId`     | optional                                                            | Linked Stripe Customer        |
+| `stripeSubscriptionId` | optional                                                            | Linked Subscription           |
 
 Membership stays `OrgMemberRole`: `billing_admin` \| `manager` \| `member`. Solo owner = sole `billing_admin`.
 
@@ -45,10 +45,10 @@ Membership stays `OrgMemberRole`: `billing_admin` \| `manager` \| `member`. Solo
 
 ## Dual triggers
 
-| Trigger | Who | Typical `billingMode` | Entry point |
-| ------- | --- | --------------------- | ----------- |
+| Trigger    | Who                                 | Typical `billingMode`                         | Entry point                                   |
+| ---------- | ----------------------------------- | --------------------------------------------- | --------------------------------------------- |
 | Self-serve | Stripe `checkout.session.completed` | `stripe_checkout` / `hybrid` / `credits_only` | Node webhook **or** CF gateway → HTTP handoff |
-| Enterprise | Admin after deal close | `stripe_invoice` / `hybrid` | CLI `payments org provision` |
+| Enterprise | Admin after deal close              | `stripe_invoice` / `hybrid`                   | CLI `payments org provision`                  |
 
 Nothing else forks provision logic.
 
@@ -56,16 +56,16 @@ Nothing else forks provision logic.
 
 Set on the Stripe Checkout Session so Node/gateway can call CPC:
 
-| Metadata key | Required | Meaning |
-| ------------ | -------- | ------- |
-| `clawql_provision_org` | or use `clawql_org_name` | `1` / `true` enables CPC |
-| `clawql_org_name` | preferred | Display name → org id slug |
-| `clawql_org_id` | optional | Explicit org id |
-| `clawql_owner_email` | or session email | Owner / billing admin email |
-| `clawql_plan` / `clawql_tier` | optional | Maps to `ClawqlPlanId` (default `pro`) |
-| `clawql_billing_mode` | optional | Override; `mode=payment` ⇒ `credits_only` |
-| `clawql_created_via` | optional | `enterprise_sales` or default `self_serve` |
-| `clawql_member_emails` | optional | Comma-separated extra seats |
+| Metadata key                  | Required                 | Meaning                                    |
+| ----------------------------- | ------------------------ | ------------------------------------------ |
+| `clawql_provision_org`        | or use `clawql_org_name` | `1` / `true` enables CPC                   |
+| `clawql_org_name`             | preferred                | Display name → org id slug                 |
+| `clawql_org_id`               | optional                 | Explicit org id                            |
+| `clawql_owner_email`          | or session email         | Owner / billing admin email                |
+| `clawql_plan` / `clawql_tier` | optional                 | Maps to `ClawqlPlanId` (default `pro`)     |
+| `clawql_billing_mode`         | optional                 | Override; `mode=payment` ⇒ `credits_only`  |
+| `clawql_created_via`          | optional                 | `enterprise_sales` or default `self_serve` |
+| `clawql_member_emails`        | optional                 | Comma-separated extra seats                |
 
 Parser: `provisionOrgInputFromCheckoutSession(session)`.
 
@@ -81,10 +81,10 @@ Today the Worker still upserts a **D1 tenant** + edge API token on Checkout (hos
 
 Env (Worker):
 
-| Binding / secret | Meaning |
-| ---------------- | ------- |
-| `CLAWQL_CPC_PROVISION_URL` | e.g. `https://payments.internal/payments/provision-org-from-checkout` |
-| `CLAWQL_CPC_PROVISION_TOKEN` | Shared bearer; must match Node `CLAWQL_CPC_PROVISION_TOKEN` |
+| Binding / secret             | Meaning                                                               |
+| ---------------------------- | --------------------------------------------------------------------- |
+| `CLAWQL_CPC_PROVISION_URL`   | e.g. `https://payments.internal/payments/provision-org-from-checkout` |
+| `CLAWQL_CPC_PROVISION_TOKEN` | Shared bearer; must match Node `CLAWQL_CPC_PROVISION_TOKEN`           |
 
 Node still processes Checkout when Stripe webhooks are forwarded to payments (`clawql payments stripe webhook verify --process`) with the same metadata — either edge is enough if only one receives the event; **do not double-provision without idempotent re-entry** (CPC patches billing fields when the org already exists; a second API key is issued unless you set `skipApiKey`).
 
@@ -94,11 +94,7 @@ Node still processes Checkout when Stripe webhooks are forwarded to payments (`c
 
 ```ts
 import { Effect } from "effect";
-import {
-  ProvisionOrgService,
-  ReportUsageService,
-  runPaymentsEffect,
-} from "clawql-payments";
+import { ProvisionOrgService, ReportUsageService, runPaymentsEffect } from "clawql-payments";
 
 await runPaymentsEffect(
   Effect.gen(function* () {
@@ -140,11 +136,11 @@ app.use(express.json());
 attachProvisioningRoutes(app); // or attachProvisioningRoutes(app, { basePath: "/payments" })
 ```
 
-| Method | Path | Auth | Body |
-| ------ | ---- | ---- | ---- |
-| `POST` | `/payments/provision-org` | Bearer `CLAWQL_CPC_PROVISION_TOKEN` | `ProvisionOrgInput` JSON |
-| `POST` | `/payments/provision-org-from-checkout` | same | Stripe Checkout Session object (or `{ session }`) |
-| `POST` | `/payments/report-usage` | same | `{ orgId, month?, overageUnits? }` |
+| Method | Path                                    | Auth                                | Body                                              |
+| ------ | --------------------------------------- | ----------------------------------- | ------------------------------------------------- |
+| `POST` | `/payments/provision-org`               | Bearer `CLAWQL_CPC_PROVISION_TOKEN` | `ProvisionOrgInput` JSON                          |
+| `POST` | `/payments/provision-org-from-checkout` | same                                | Stripe Checkout Session object (or `{ session }`) |
+| `POST` | `/payments/report-usage`                | same                                | `{ orgId, month?, overageUnits? }`                |
 
 If `CLAWQL_CPC_PROVISION_TOKEN` is unset, routes return **503** (disabled). Do not expose these without a network boundary + token.
 
@@ -180,11 +176,11 @@ Raw API key is printed **once** on provision — never written to WORM.
 
 ## WORM events
 
-| Action | When |
-| ------ | ---- |
-| `ORG_PROVISIONED` | First create (not idempotent patch) |
-| `ORG_MEMBER_ADDED` | Owner + each additional invite |
-| `ORG_PLAN_CHANGED` | Reserved builder (plan change flows) |
+| Action                      | When                                   |
+| --------------------------- | -------------------------------------- |
+| `ORG_PROVISIONED`           | First create (not idempotent patch)    |
+| `ORG_MEMBER_ADDED`          | Owner + each additional invite         |
+| `ORG_PLAN_CHANGED`          | Reserved builder (plan change flows)   |
 | `USAGE_REPORTED_TO_BILLING` | Successful Stripe meter overage report |
 
 Provider on org events: `billing`. Raw API secrets never appear in audit payloads.
@@ -193,28 +189,28 @@ Provider on org events: `billing`. Raw API secrets never appear in audit payload
 
 ## Env cheat sheet
 
-| Env | Role |
-| --- | ---- |
-| `CLAWQL_CREDITS_ENABLED` | Required for provision |
-| `CLAWQL_API_KEYS_PATH` | Override issued-key store path |
-| `CLAWQL_CPC_PROVISION_TOKEN` | Shared secret for HTTP provision routes |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Enable meter reporting |
-| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`) |
-| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID` | Live Checkout Prices ([ops runbook](./stripe-products-ops.md)) |
+| Env                                              | Role                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                         |
+| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                 |
+| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                        |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                         |
+| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)          |
+| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md)) |
 
 ---
 
 ## Build status vs six pieces
 
-| # | Piece | Status |
-| - | ----- | ------ |
-| 0 | Stripe Products / Prices / meters | Ops — [stripe-products-ops.md](./stripe-products-ops.md) |
-| 1 | Org billing fields | ✅ |
-| 2 | `provisionOrg` Effect | ✅ |
-| 3 | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set |
-| 4 | Enterprise admin trigger | ✅ CLI |
-| 5 | `reportUsageToStripe` | ✅ |
-| 6 | Self-serve dashboard UI | Not started |
+| #   | Piece                                | Status                                                   |
+| --- | ------------------------------------ | -------------------------------------------------------- |
+| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](./stripe-products-ops.md) |
+| 1   | Org billing fields                   | ✅                                                       |
+| 2   | `provisionOrg` Effect                | ✅                                                       |
+| 3   | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set                   |
+| 4   | Enterprise admin trigger             | ✅ CLI                                                   |
+| 5   | `reportUsageToStripe`                | ✅                                                       |
+| 6   | Self-serve dashboard UI              | Not started                                              |
 
 ---
 

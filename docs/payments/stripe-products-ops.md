@@ -12,12 +12,12 @@ This is a **live-billing blocker**, not a schema blocker. CPC `provisionOrg` and
 
 Create Stripe **Products** with **recurring Prices** (monthly / optional annual):
 
-| Plan (`ClawqlPlanId`) | Product (suggested name) | Env mapping |
-| --------------------- | ------------------------ | ----------- |
-| `free` | — | No Price |
-| `pro` | ClawQL Pro | `STRIPE_PRO_PRICE_ID` |
-| `team` | ClawQL Team | `STRIPE_TEAM_PRICE_ID` |
-| `enterprise` | Negotiated / invoice | Usually no public Checkout Price |
+| Plan (`ClawqlPlanId`) | Product (suggested name) | Env mapping                      |
+| --------------------- | ------------------------ | -------------------------------- |
+| `free`                | —                        | No Price                         |
+| `pro`                 | ClawQL Pro               | `STRIPE_PRO_PRICE_ID`            |
+| `team`                | ClawQL Team              | `STRIPE_TEAM_PRICE_ID`           |
+| `enterprise`          | Negotiated / invoice     | Usually no public Checkout Price |
 
 Prefer **Billing Subscriptions** (Checkout `mode=subscription` or Customer Portal), not one-time Checkout as the long-term source of truth for the tier.
 
@@ -64,10 +64,10 @@ See [customer-provisioning-core.md](./customer-provisioning-core.md) for the ful
 
 ## 5. Webhook endpoints
 
-| Endpoint | Events | Responsibility |
-| -------- | ------ | -------------- |
-| Cloudflare gateway `POST /webhooks/stripe` | `checkout.session.completed`, `invoice.paid`, … | D1 tenant + edge token; optional POST to Node CPC URL |
-| Node payments webhook / CLI verify `--process` | same + credit top-up PIs | `provisionOrg` when CPC metadata present; ledger settle |
+| Endpoint                                       | Events                                          | Responsibility                                          |
+| ---------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------- |
+| Cloudflare gateway `POST /webhooks/stripe`     | `checkout.session.completed`, `invoice.paid`, … | D1 tenant + edge token; optional POST to Node CPC URL   |
+| Node payments webhook / CLI verify `--process` | same + credit top-up PIs                        | `provisionOrg` when CPC metadata present; ledger settle |
 
 Signing secrets: `STRIPE_WEBHOOK_SECRET` (Worker) and `clawql payments stripe setup --webhook-secret` (Node `payments.json`). Prefer **raw body** verification.
 

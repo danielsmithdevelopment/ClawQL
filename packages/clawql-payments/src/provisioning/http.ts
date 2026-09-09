@@ -52,10 +52,7 @@ function requireProvisionToken(
 
 function isBillingMode(v: unknown): v is OrgBillingMode {
   return (
-    v === "stripe_checkout" ||
-    v === "stripe_invoice" ||
-    v === "hybrid" ||
-    v === "credits_only"
+    v === "stripe_checkout" || v === "stripe_invoice" || v === "hybrid" || v === "credits_only"
   );
 }
 
@@ -100,8 +97,7 @@ function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string 
     orgId: typeof b.orgId === "string" ? b.orgId : undefined,
     ownerMemberTenantId:
       typeof b.ownerMemberTenantId === "string" ? b.ownerMemberTenantId : undefined,
-    stripeCustomerId:
-      typeof b.stripeCustomerId === "string" ? b.stripeCustomerId : undefined,
+    stripeCustomerId: typeof b.stripeCustomerId === "string" ? b.stripeCustomerId : undefined,
     stripeSubscriptionId:
       typeof b.stripeSubscriptionId === "string" ? b.stripeSubscriptionId : undefined,
     additionalMemberEmails: additional,
