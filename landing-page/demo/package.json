@@ -46,7 +46,7 @@
     "brace-expansion": "5.0.9",
     "browserslist": "4.28.7",
     "fast-uri": "3.1.7",
-    "hono": "4.12.34",
+    "hono": "4.13.5",
     "js-yaml": "4.3.2",
     "body-parser": "2.3.0",
     "sharp": "0.35.4",
