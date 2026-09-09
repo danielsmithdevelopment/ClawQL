@@ -15,7 +15,7 @@ Cloudflare gateway for Developer / Teams / trial / demo tenants, with Phase 2 ID
 | `CLAWQL_GATEWAY_PROFILE`  | Pulumi sets `edge` (plain_text)                                |
 | `CLAWQL_IDP_PROXY_ORIGIN` | Optional Shared+/IDP upstream (Pulumi `clawql:idpProxyOrigin`) |
 
-**Secrets / vars:** `CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`, optional `CLAWQL_IDP_PROXY_ORIGIN`.
+**Secrets / vars:** `CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBHOOK_SECRET`, optional `CLAWQL_IDP_PROXY_ORIGIN`, optional CPC converge `CLAWQL_CPC_PROVISION_URL` + `CLAWQL_CPC_PROVISION_TOKEN` (forward Checkout to Node `provisionOrg` — [customer-provisioning-core.md](../../docs/payments/customer-provisioning-core.md)).
 
 Per-tenant override: D1 `feature_flags.idp_proxy_origin` (wins over the Worker env binding).
 
@@ -29,6 +29,8 @@ Per-tenant override: D1 `feature_flags.idp_proxy_origin` (wins over the Worker e
 | POST   | `/mcp`                                                              | Bearer for `tools/call`  |
 | POST   | `/webhooks/stripe`                                                  | Stripe-Signature         |
 | POST   | `/demo/session`, `/demo/pipeline`                                   | none (5‑min TTL sandbox) |
+
+On `checkout.session.completed`, the Worker upserts the D1 tenant, then optionally `POST`s the session to Node CPC when `CLAWQL_CPC_PROVISION_URL` is set.
 
 **Policy:** unlimited MCP executions — no Worker-side execution meter.
 

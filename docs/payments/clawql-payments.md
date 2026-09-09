@@ -803,6 +803,11 @@ clawql payments credits directory claim --handle bob --tenant-id other-tenant
 clawql payments credits pay --to @bob --amount 10
 clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
 clawql payments credits step-up enroll|show
+
+# Customer Provisioning Core (org-of-1 / enterprise)
+clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]
+clawql payments org report-usage --org-id acme [--month YYYY-MM] [--overage N]
+clawql payments org create|show|sso|invite|members|spend|allocate|distribute|suspend|remove --org-id …
 ```
 
 ---
@@ -876,16 +881,27 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
+<<<<<<< HEAD
 | Item                                                  | Tracking                                                                                                |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Hosted webhook HTTP endpoint                          | not CLI-only                                                                                            |
 | Customer provisioning core (`provisionOrg`, org-of-1) | [specs/billing/customer-provisioning-core-v0.1.md](../specs/billing/customer-provisioning-core-v0.1.md) |
 | Hybrid subscription + prepaid credits                 | [specs/billing/hybrid-billing-v0.1.md](../specs/billing/hybrid-billing-v0.1.md)                         |
+=======
+| Item                         | Tracking     |
+| ---------------------------- | ------------ |
+| Hosted webhook HTTP endpoint | Node CPC routes + CF forward — [customer-provisioning-core.md](./customer-provisioning-core.md) |
+| Customer provisioning core (`provisionOrg`, org-of-1) | [customer-provisioning-core.md](./customer-provisioning-core.md) · [spec](../specs/billing/customer-provisioning-core-v0.1.md) |
+| Hybrid subscription + prepaid credits | [stripe-products-ops.md](./stripe-products-ops.md) · [hybrid-billing](../specs/billing/hybrid-billing-v0.1.md) |
+| Self-serve billing dashboard UI | CPC piece 6 — open |
+>>>>>>> 919a3ebd (docs(payments): CPC operator guide + Stripe ops; CF→Node handoff)
 
 ## Related
 
 - Accounting & tax: [`docs/payments/accounting-and-tax.md`](./accounting-and-tax.md)
 - Org credits: [`docs/payments/org-credits.md`](./org-credits.md)
+- CPC: [`docs/payments/customer-provisioning-core.md`](./customer-provisioning-core.md)
+- Stripe ops: [`docs/payments/stripe-products-ops.md`](./stripe-products-ops.md)
 - Billing specs: [`docs/specs/billing/README.md`](../specs/billing/README.md)
 - Package README: [`packages/clawql-payments/README.md`](../../packages/clawql-payments/README.md)
 - Inference doc: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)

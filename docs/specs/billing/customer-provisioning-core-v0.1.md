@@ -1,6 +1,6 @@
 # Customer Provisioning Core
 
-**Status:** Spec v0.1 + implementation slice in progress (`ProvisionOrgService`, org billing fields, checkout handoff, CLI)  
+**Status:** Spec v0.1 — implementation slice shipped (pieces 1–5); dashboard UI open  
 **Primary package:** `clawql-payments` (org store, billing, ledger)  
 **Auth edge:** `clawql-auth` API-key issue only (`IssuedApiKeyStore`)  
 **Optional path note:** A thin `packages/clawql-auth/src/provisioning/` façade may re-export `provisionOrg` for hosts that already compose auth first — **storage and Stripe stay in payments**.  
@@ -182,17 +182,31 @@ Same payments / clawql-audit trail. No separate billing audit schema.
 
 ---
 
+| # | Piece | Status |
+| - | ----- | ------ |
+| 0 | Stripe Products / Prices / meters | Ops — [stripe-products-ops.md](../../payments/stripe-products-ops.md) |
+| 1 | Org billing fields | ✅ shipped |
+| 2 | `provisionOrg` Effect | ✅ shipped |
+| 3 | Webhook converge (Node + CF handoff) | ✅ Node webhook + HTTP routes; CF optional forward |
+| 4 | Enterprise admin trigger | ✅ CLI |
+| 5 | `reportUsageToStripe` | ✅ shipped |
+| 6 | Self-serve dashboard UI | Open |
+
+**Operator guide:** [`docs/payments/customer-provisioning-core.md`](../../payments/customer-provisioning-core.md)
+
 ## Concrete implementation slice
 
 1. Additive `OrgBillingFields` on org-credits store + loader tests. ✅
 2. `ProvisionOrgService` Effect Tag; unit test: org-of-1 → one `billing_admin` member + key metadata `orgId`. ✅
-3. Map CF gateway `checkout.session.completed` onto `provisionOrg` (or documented handoff). ✅ (Node webhook + CF comment; full gateway RPC converge still open)
+3. Map CF gateway `checkout.session.completed` onto `provisionOrg` (or documented handoff). ✅ Node + CF `CLAWQL_CPC_PROVISION_URL` forward
 4. WORM `ORG_PROVISIONED` / `ORG_MEMBER_ADDED`. ✅
-5. Cross-link hybrid-billing for subscription vs credits vs hybrid. ✅ (specs)
+5. Cross-link hybrid-billing for subscription vs credits vs hybrid. ✅
 
 ## Related
 
 - [Hybrid billing v0.1](./hybrid-billing-v0.1.md)
+- [Operator guide](../../payments/customer-provisioning-core.md)
+- [Stripe ops](../../payments/stripe-products-ops.md)
 - [org-credits](../../payments/org-credits.md)
 - [clawql-payments](../../payments/clawql-payments.md)
 - [deduction-service](../../payments/deduction-service.md)

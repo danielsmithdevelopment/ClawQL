@@ -28,3 +28,4 @@ export {
   provisionOrgInputFromCheckoutSession,
   type CheckoutProvisionHandoff,
 } from "./checkout-handoff.js";
+export { attachProvisioningRoutes, type AttachProvisioningRoutesOptions } from "./http.js";

@@ -68,7 +68,7 @@ import {
   type McpOAuthRuntime,
 } from "clawql-auth";
 import { Effect } from "effect";
-import { attachCreditsHateoasRoutes } from "clawql-payments";
+import { attachCreditsHateoasRoutes, attachProvisioningRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
 import {
@@ -320,6 +320,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
+  // CPC internal provision / usage (Bearer CLAWQL_CPC_PROVISION_TOKEN; 503 if unset)
+  attachProvisioningRoutes(app);
   if (isMppOpenApiEnabled(process.env)) {
     attachMppOpenApiRoutes(app, { serverName: "ClawQL MCP" });
   }

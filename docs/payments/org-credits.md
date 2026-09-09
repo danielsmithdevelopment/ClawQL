@@ -73,7 +73,9 @@ Flags:
 
 - [`credits-ach.md`](./credits-ach.md) — funding the pool via Stripe FC/ACH
 - [`deduction-service.md`](./deduction-service.md) — spend path
+- [`customer-provisioning-core.md`](./customer-provisioning-core.md) — `provisionOrg`, billing fields, dual triggers, CLI / HTTP
+- [`stripe-products-ops.md`](./stripe-products-ops.md) — live Checkout / meter dashboard checklist
 - [`../enterprise/control-plane.md`](../enterprise/control-plane.md) — SSO domains, user admin, unified spend
 - [`p2p-consumer-roadmap.md`](./p2p-consumer-roadmap.md) — cross-tenant P2P (self-hosted only)
-- [`../specs/billing/customer-provisioning-core-v0.1.md`](../specs/billing/customer-provisioning-core-v0.1.md) — org-of-1 provisioning + dual triggers
+- [`../specs/billing/customer-provisioning-core-v0.1.md`](../specs/billing/customer-provisioning-core-v0.1.md) — normative CPC spec
 - [`../specs/billing/hybrid-billing-v0.1.md`](../specs/billing/hybrid-billing-v0.1.md) — subscription + prepaid credits coexistence

@@ -101,15 +101,17 @@ Reuse CPC types plus existing payment audit categories for top-ups and meter rep
 
 ## 7. Concrete implementation slice
 
-1. Document Stripe Product/Price/meter checklist (this §2) in runbook or ops doc link from CPC.
-2. `billingMode` + `planId` required on provision; hybrid waterfall unit tests (credits first vs meter).
-3. Wire `reportUsageToStripe` to `StripeMeterService` for overage-only.
-4. Keep `DeductionService` as sole per-call debit; tests that credit path never calls meter API.
-5. Dashboard: show plan, subscription status, credit balance, top-up CTA, upgrade via Portal.
+1. Document Stripe Product/Price/meter checklist (this §2) in runbook or ops doc link from CPC. ✅ [`stripe-products-ops.md`](../../payments/stripe-products-ops.md)
+2. `billingMode` + `planId` required on provision; hybrid waterfall unit tests (credits first vs meter). ✅ (`credits_only` never meters)
+3. Wire `reportUsageToStripe` to `StripeMeterService` for overage-only. ✅
+4. Keep `DeductionService` as sole per-call debit; tests that credit path never calls meter API. ✅
+5. Dashboard: show plan, subscription status, credit balance, top-up CTA, upgrade via Portal. Open
 
 ## Related
 
 - [Customer provisioning core](./customer-provisioning-core-v0.1.md)
+- [Operator guide](../../payments/customer-provisioning-core.md)
+- [Stripe products ops](../../payments/stripe-products-ops.md)
 - [org-credits](../../payments/org-credits.md)
 - [deduction-service](../../payments/deduction-service.md)
 - [credits-ACH](../../payments/credits-ach.md)
