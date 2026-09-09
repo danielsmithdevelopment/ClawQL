@@ -74,6 +74,24 @@ describe("org closed-loop credits", () => {
     expect(Effect.runSync(isCreditsOrgTransferEnabled(process.env))).toBe(true);
   });
 
+it("creates org with billing fields when provided", async () => {
+    const org = await createOrg(
+      {
+        orgId: "billme",
+        billingAdminTenantId: "cfo",
+        planId: "pro",
+        createdVia: "self_serve",
+        billingMode: "hybrid",
+        stripeCustomerId: "cus_abc",
+      },
+      process.env
+    );
+    expect(org.createdVia).toBe("self_serve");
+    expect(org.billingMode).toBe("hybrid");
+    expect(org.stripeCustomerId).toBe("cus_abc");
+    expect(org.planId).toBe("pro");
+  });
+
   it("creates org, allocates from pool, and peer-transfers within company only", async () => {
     const org = await createOrg(
       { orgId: "acme", billingAdminTenantId: "cfo", displayName: "Acme" },

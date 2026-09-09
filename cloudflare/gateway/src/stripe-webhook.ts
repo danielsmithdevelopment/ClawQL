@@ -164,6 +164,11 @@ export async function processStripeEventForTenants(
       };
     }
     case "checkout.session.completed": {
+      // Hosted edge: D1 tenant upsert (auth token). Customer Provisioning Core
+      // (`provisionOrg` in clawql-payments) owns org-credits + default API key.
+      // Converge by posting CPC metadata (`clawql_provision_org` / `clawql_org_name`)
+      // into Node payments webhook or sharing the Effect — see
+      // docs/specs/billing/customer-provisioning-core-v0.1.md §4.
       const customerId = String(obj.customer ?? "");
       const tenantId =
         metadata.tenant_id?.trim() ||

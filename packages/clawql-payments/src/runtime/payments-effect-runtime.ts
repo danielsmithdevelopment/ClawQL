@@ -48,6 +48,11 @@ import { x402EnforcementLiveLayer } from "../x402/x402-enforcement-service.js";
 import { x402FacilitatorLiveLayer } from "../x402/x402-facilitator-service.js";
 import { x402GateLiveLayer } from "../x402/x402-gate-service.js";
 import { x402RuntimeConfigLiveLayer } from "../x402/x402-runtime-config-service.js";
+import {
+  issuedApiKeyStoreLiveLayer,
+  provisionOrgLiveLayer,
+  reportUsageLiveLayer,
+} from "../provisioning/index.js";
 
 export type PaymentsServices =
   | import("../config/payments-config-service.js").PaymentsConfigService
@@ -97,7 +102,10 @@ export type PaymentsServices =
   | import("../compensation/accounts.js").CompensationAccountsService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
   | import("../credits/deduction-service.js").DeductionService
-  | import("../credits/deduction-event-bus.js").DeductionEventBus;
+  | import("../credits/deduction-event-bus.js").DeductionEventBus
+  | import("../provisioning/provision-org-service.js").ProvisionOrgService
+  | import("../provisioning/report-usage.js").ReportUsageService
+  | import("clawql-auth").IssuedApiKeyStoreService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -177,14 +185,21 @@ export function paymentsServicesLiveLayer(
   const discovery = paymentsDiscoveryLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(config, runtimeConfig, gate))
   );
-  const stripeWebhook = stripeWebhookLiveLayer().pipe(
-    Layer.provide(Layer.mergeAll(config, audit, ledger))
-  );
   const stripeMeter = stripeMeterLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config, audit))
   );
   const stripeBilling = stripeBillingLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config))
+  );
+  const issuedApiKeys = issuedApiKeyStoreLiveLayer(env);
+  const provisioning = provisionOrgLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger))
+  );
+  const reportUsage = reportUsageLiveLayer(env).pipe(
+    Layer.provide(Layer.mergeAll(stripeMeter, usage, audit))
+  );
+  const stripeWebhook = stripeWebhookLiveLayer().pipe(
+    Layer.provide(Layer.mergeAll(config, audit, ledger, provisioning))
   );
 
   const layer = Layer.mergeAll(
@@ -204,6 +219,9 @@ export function paymentsServicesLiveLayer(
     stripeWebhook,
     stripeMeter,
     stripeBilling,
+    issuedApiKeys,
+    provisioning,
+    reportUsage,
     ap2,
     acp,
     paypal,

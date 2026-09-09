@@ -42,6 +42,16 @@ export function resolveOrgCreditsPath(env: NodeJS.ProcessEnv = process.env): str
   return join(resolvePaymentsDir(env), "org-credits.json");
 }
 
+/**
+ * Issued API keys for gateway / CPC default keys.
+ * Override with `CLAWQL_API_KEYS_PATH`; default `$CLAWQL_HOME/Auth/api-keys.json`.
+ */
+export function resolveIssuedApiKeysPath(env: NodeJS.ProcessEnv = process.env): string {
+  const override = env.CLAWQL_API_KEYS_PATH?.trim();
+  if (override) return override;
+  return join(resolveClawqlHome(env), "Auth", "api-keys.json");
+}
+
 /** Agent compensation ledger (credits + funds balances). */
 export function resolveAgentAccountsPath(env: NodeJS.ProcessEnv = process.env): string {
   return join(resolvePaymentsDir(env), "agent-accounts.json");

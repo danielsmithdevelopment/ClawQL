@@ -31,6 +31,22 @@ export type OrgCliOptions = {
   json?: boolean;
   prometheus?: boolean;
   includeWorm?: boolean;
+  /** CPC provision: plan id. */
+  planId?: string;
+  /** CPC: billing mode. */
+  billingMode?: string;
+  /** CPC: created via. */
+  createdVia?: string;
+  /** CPC: Stripe customer id. */
+  stripeCustomerId?: string;
+  /** CPC: Stripe subscription id. */
+  stripeSubscriptionId?: string;
+  /** CPC: additional member emails (comma-separated). */
+  memberEmails?: string;
+  /** CPC: report usage month YYYY-MM. */
+  month?: string;
+  /** CPC: explicit overage units for report-usage. */
+  overageUnits?: number;
 };
 
 export async function runPaymentsOrgCreate(options: OrgCliOptions): Promise<number> {
@@ -236,4 +252,108 @@ export async function runPaymentsOrgSpend(options: OrgCliOptions): Promise<numbe
   }
   console.log(JSON.stringify(summary, null, 2));
   return 0;
+}
+
+export async function runPaymentsOrgProvision(options: OrgCliOptions): Promise<number> {
+  requireCredits();
+  const email = options.email?.trim();
+  const orgName = options.displayName?.trim() || options.orgId?.trim();
+  const planId = (options.planId?.trim() || "team") as
+    | "free"
+    | "pro"
+    | "team"
+    | "enterprise";
+  if (!email || !orgName) {
+    console.error(
+      "Usage: clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]"
+    );
+    return 1;
+  }
+  const billingMode = (options.billingMode?.trim() ||
+    (options.createdVia === "self_serve" ? "stripe_checkout" : "stripe_invoice")) as
+    | "stripe_checkout"
+    | "stripe_invoice"
+    | "hybrid"
+    | "credits_only";
+  const createdVia =
+    options.createdVia?.trim() === "self_serve" ? "self_serve" : "enterprise_sales";
+  const memberEmails = options.memberEmails
+    ?.split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const domains = options.domains
+    ?.split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const { Effect } = await import("effect");
+  const { ProvisionOrgService } = await import("../provisioning/index.js");
+  const { runPaymentsEffect } = await import("../runtime/payments-effect-runtime.js");
+
+  const result = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const svc = yield* ProvisionOrgService;
+      return yield* svc.provisionOrg({
+        orgName,
+        orgId: options.orgId?.trim(),
+        ownerEmail: email,
+        planId,
+        createdVia,
+        billingMode,
+        stripeCustomerId: options.stripeCustomerId,
+        stripeSubscriptionId: options.stripeSubscriptionId,
+        additionalMemberEmails: memberEmails,
+        allowedEmailDomains: domains,
+        ownerMemberTenantId: options.actorTenantId?.trim(),
+      });
+    })
+  );
+
+  if (options.json) {
+    console.log(
+      JSON.stringify(
+        {
+          ...result,
+          apiKey: result.apiKey,
+        },
+        null,
+        2
+      )
+    );
+  } else {
+    console.log(
+      `Provisioned org ${result.orgId} owner=${result.ownerMemberTenantId} plan=${result.planId} mode=${result.billingMode}`
+    );
+    if (result.apiKey) {
+      console.log(`API key (shown once): ${result.apiKey}`);
+    }
+  }
+  return 0;
+}
+
+export async function runPaymentsOrgReportUsage(options: OrgCliOptions): Promise<number> {
+  requireCredits();
+  const orgId = options.orgId?.trim();
+  if (!orgId) {
+    console.error(
+      "Usage: clawql payments org report-usage --org-id acme [--month YYYY-MM] [--overage N]"
+    );
+    return 1;
+  }
+  const { Effect } = await import("effect");
+  const { ReportUsageService } = await import("../provisioning/index.js");
+  const { runPaymentsEffect } = await import("../runtime/payments-effect-runtime.js");
+
+  const result = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const svc = yield* ReportUsageService;
+      return yield* svc.reportUsageToStripe({
+        orgId,
+        month: options.month,
+        overageUnits: options.overageUnits,
+      });
+    })
+  );
+  console.log(JSON.stringify(result, null, 2));
+  return result.reported ? 0 : 0;
 }

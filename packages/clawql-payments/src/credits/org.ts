@@ -62,6 +62,30 @@ export type OrgSsoPolicy = {
 
 export type OrgCreditPeriodPolicy = "expire_to_pool" | "rollover";
 
+/** How the org was first created (CPC). */
+export type OrgCreatedVia = "self_serve" | "enterprise_sales";
+
+/**
+ * How money settles with Stripe (CPC hybrid billing).
+ * - stripe_checkout: self-serve Billing subscription (Checkout → Subscription)
+ * - stripe_invoice: enterprise NET terms / manual invoice
+ * - hybrid: subscription included quota + prepaid credits beyond / beside it
+ * - credits_only: no recurring subscription; prepaid top-ups only
+ */
+export type OrgBillingMode =
+  | "stripe_checkout"
+  | "stripe_invoice"
+  | "hybrid"
+  | "credits_only";
+
+/** Additive CPC billing fields on {@link OrgRecord}. */
+export type OrgBillingFields = {
+  createdVia?: OrgCreatedVia;
+  billingMode?: OrgBillingMode;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+};
+
 export type OrgRecord = {
   orgId: string;
   displayName?: string;
@@ -74,13 +98,21 @@ export type OrgRecord = {
   sso?: OrgSsoPolicy;
   /**
    * Plan tier for seat entitlements (`free`/`pro`/`team`/`enterprise`).
-   * Defaults to `team` when unset.
+   * Defaults to `team` when unset; required after CPC `provisionOrg`.
    */
   planId?: "free" | "pro" | "team" | "enterprise";
   /** Optional hard seat cap override (takes precedence over plan seats when set). */
   seatLimit?: number;
   /** What happens to unused member credits at period redistribute. Default expire_to_pool. */
   periodEndPolicy: OrgCreditPeriodPolicy;
+  /** CPC: self-serve vs enterprise sales. */
+  createdVia?: OrgCreatedVia;
+  /** CPC: Stripe settlement mode. */
+  billingMode?: OrgBillingMode;
+  /** Stripe Customer id when linked. */
+  stripeCustomerId?: string;
+  /** Stripe Subscription id when linked. */
+  stripeSubscriptionId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -149,6 +181,11 @@ export type CreateOrgInput = {
   billingAdminEmail?: string;
   planId?: OrgRecord["planId"];
   seatLimit?: number;
+  /** CPC billing fields (optional on legacy create; set by provisionOrg). */
+  createdVia?: OrgCreatedVia;
+  billingMode?: OrgBillingMode;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
 };
 
 export async function createOrg(
@@ -199,10 +236,55 @@ export async function createOrg(
     periodEndPolicy: input.periodEndPolicy ?? "expire_to_pool",
     planId: input.planId ?? "team",
     seatLimit: input.seatLimit,
+    ...(input.createdVia ? { createdVia: input.createdVia } : {}),
+    ...(input.billingMode ? { billingMode: input.billingMode } : {}),
+    ...(input.stripeCustomerId?.trim()
+      ? { stripeCustomerId: input.stripeCustomerId.trim() }
+      : {}),
+    ...(input.stripeSubscriptionId?.trim()
+      ? { stripeSubscriptionId: input.stripeSubscriptionId.trim() }
+      : {}),
     createdAt: now,
     updatedAt: now,
   };
   file.orgs[orgId] = org;
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+export type PatchOrgBillingInput = {
+  orgId: string;
+  planId?: OrgRecord["planId"];
+  billingMode?: OrgBillingMode;
+  createdVia?: OrgCreatedVia;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  seatLimit?: number;
+};
+
+/** Patch CPC billing fields on an existing org (plan change / Stripe id link). */
+export async function patchOrgBilling(
+  input: PatchOrgBillingInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  const file = await loadOrgCreditsFile(env);
+  const key = input.orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) throw new Error(`Unknown org: ${input.orgId}`);
+  if (input.planId) org.planId = input.planId;
+  if (input.billingMode) org.billingMode = input.billingMode;
+  if (input.createdVia) org.createdVia = input.createdVia;
+  if (input.seatLimit !== undefined) org.seatLimit = input.seatLimit;
+  if (input.stripeCustomerId === null) delete org.stripeCustomerId;
+  else if (input.stripeCustomerId !== undefined) {
+    org.stripeCustomerId = input.stripeCustomerId.trim() || undefined;
+  }
+  if (input.stripeSubscriptionId === null) delete org.stripeSubscriptionId;
+  else if (input.stripeSubscriptionId !== undefined) {
+    org.stripeSubscriptionId = input.stripeSubscriptionId.trim() || undefined;
+  }
+  org.updatedAt = new Date().toISOString();
+  file.orgs[key] = org;
   await saveOrgCreditsFile(file, env);
   return org;
 }

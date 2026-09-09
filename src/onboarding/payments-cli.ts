@@ -72,7 +72,9 @@ import {
   runPaymentsOrgDistribute,
   runPaymentsOrgInvite,
   runPaymentsOrgMembers,
+  runPaymentsOrgProvision,
   runPaymentsOrgRemove,
+  runPaymentsOrgReportUsage,
   runPaymentsOrgShow,
   runPaymentsOrgSpend,
   runPaymentsOrgSso,
@@ -199,6 +201,18 @@ export type PaymentsCliOptions = {
   allocationRoleId?: string;
   prometheus?: boolean;
   includeWorm?: boolean;
+  /** CPC: billing mode for org provision. */
+  billingMode?: string;
+  /** CPC: createdVia for org provision. */
+  createdVia?: string;
+  /** CPC: additional member emails. */
+  memberEmails?: string;
+  /** CPC: Stripe customer id. */
+  stripeCustomerId?: string;
+  /** CPC: Stripe subscription id. */
+  stripeSubscriptionId?: string;
+  /** CPC: explicit overage units for report-usage. */
+  overageUnits?: number;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -982,11 +996,31 @@ function orgCliOpts(options: PaymentsCliOptions) {
     json: options.json,
     prometheus: options.prometheus,
     includeWorm: options.includeWorm,
+    planId: options.plan ?? options.tier,
+    billingMode: options.billingMode,
+    createdVia: options.createdVia,
+    stripeCustomerId: options.stripeCustomerId ?? options.customer,
+    stripeSubscriptionId: options.stripeSubscriptionId,
+    memberEmails: options.memberEmails,
+    month: options.month,
+    overageUnits: options.overageUnits,
   };
 }
 
 export async function runPaymentsOrgCreateCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsOrgCreate(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgProvisionCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOrgProvision(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgReportUsageCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOrgReportUsage(orgCliOpts(options));
 }
 
 export async function runPaymentsOrgShowCmd(options: PaymentsCliOptions = {}): Promise<number> {

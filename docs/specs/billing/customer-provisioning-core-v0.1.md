@@ -1,6 +1,6 @@
 # Customer Provisioning Core
 
-**Status:** Spec v0.1 (design — not fully shipped)  
+**Status:** Spec v0.1 + implementation slice in progress (`ProvisionOrgService`, org billing fields, checkout handoff, CLI)  
 **Primary package:** `clawql-payments` (org store, billing, ledger)  
 **Auth edge:** `clawql-auth` API-key issue only (`IssuedApiKeyStore`)  
 **Optional path note:** A thin `packages/clawql-auth/src/provisioning/` façade may re-export `provisionOrg` for hosts that already compose auth first — **storage and Stripe stay in payments**.  
@@ -187,11 +187,11 @@ Same payments / clawql-audit trail. No separate billing audit schema.
 
 ## Concrete implementation slice
 
-1. Additive `OrgBillingFields` on org-credits store + loader tests.
-2. `ProvisionOrgService` Effect Tag; unit test: org-of-1 → one `billing_admin` member + key metadata `orgId`.
-3. Map CF gateway `checkout.session.completed` onto `provisionOrg` (or documented handoff).
-4. WORM `ORG_PROVISIONED` / `ORG_MEMBER_ADDED`.
-5. Cross-link hybrid-billing for subscription vs credits vs hybrid.
+1. Additive `OrgBillingFields` on org-credits store + loader tests. ✅
+2. `ProvisionOrgService` Effect Tag; unit test: org-of-1 → one `billing_admin` member + key metadata `orgId`. ✅
+3. Map CF gateway `checkout.session.completed` onto `provisionOrg` (or documented handoff). ✅ (Node webhook + CF comment; full gateway RPC converge still open)
+4. WORM `ORG_PROVISIONED` / `ORG_MEMBER_ADDED`. ✅
+5. Cross-link hybrid-billing for subscription vs credits vs hybrid. ✅ (specs)
 
 ## Related
 
