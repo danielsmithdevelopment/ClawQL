@@ -29,11 +29,11 @@ Competitors ship **recurring subscription tiers** alongside **prepaid credits**.
 
 ### Coexistence (`hybrid`)
 
-| Usage | Where it settles |
-| ----- | ---------------- |
-| Within subscription included quota | Count against plan entitlements; no credit debit (or soft-count only) |
-| Beyond included quota (overage) | Stripe metered Price on the subscription **or** debit prepaid credits — product picks one waterfall; default recommendation: **credits first, then metered overage** if credits empty |
-| Credits-only SKUs / extra pack | Ledger only |
+| Usage                              | Where it settles                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Within subscription included quota | Count against plan entitlements; no credit debit (or soft-count only)                                                                                                                 |
+| Beyond included quota (overage)    | Stripe metered Price on the subscription **or** debit prepaid credits — product picks one waterfall; default recommendation: **credits first, then metered overage** if credits empty |
+| Credits-only SKUs / extra pack     | Ledger only                                                                                                                                                                           |
 
 `reportUsageToStripe` only emits meter events for the overage rail. Credit debits never call Stripe metering.
 
@@ -46,8 +46,8 @@ Do this **before** enabling live self-serve Checkout / meters:
 1. **Products + recurring Prices:** `Pro`, `Team` (and optional annual). Map Price ids → env (`STRIPE_PRO_PRICE_ID`, `STRIPE_TEAM_PRICE_ID`).
 2. **Metered overage Price:** one metered Price (or per-tier); attach as add-on to subscription items. Configure Billing Meter + `STRIPE_METER_EVENT_NAME`.
 3. **Credit top-up Prices:** one-time Prices for denominations (e.g. $20 / $100 / $500) — Checkout `mode=payment` with metadata `clawql_credit_topup` / amount cents (align with existing PI top-up metadata).
-4. **Webhook endpoints:**  
-   - Gateway (or converged Node): `checkout.session.completed`, `customer.subscription.*`, `invoice.paid` → `provisionOrg` / plan sync.  
+4. **Webhook endpoints:**
+   - Gateway (or converged Node): `checkout.session.completed`, `customer.subscription.*`, `invoice.paid` → `provisionOrg` / plan sync.
    - Payments: existing top-up settle (`payment_intent.succeeded` + credit metadata).
 5. **Customer Portal** for upgrade / cancel (already wrapped by `StripeBillingService` patterns).
 
@@ -59,12 +59,12 @@ Ledger truth remains `$CLAWQL_HOME/Payments/credits-ledger.json` (or configured 
 
 **Yes — include ledger + debit-on-inference in the provisioning story**, as **reuse**:
 
-| Concern | Existing surface |
-| ------- | ---------------- |
+| Concern                   | Existing surface                                                |
+| ------------------------- | --------------------------------------------------------------- |
 | Ledger entries / accounts | `CreditsLedgerService`, `CreditLedgerEntry`, `CreditLedgerKind` |
-| Debit path | `DeductionService` hold / capture / release |
-| Org pool | `org:{orgId}:pool` + allocate to members |
-| Funding | Stripe top-up / ACH → settle into ledger |
+| Debit path                | `DeductionService` hold / capture / release                     |
+| Org pool                  | `org:{orgId}:pool` + allocate to members                        |
+| Funding                   | Stripe top-up / ACH → settle into ledger                        |
 
 **Do not** introduce a parallel type named `CreditLedger`. Specs and APIs say `CreditsLedgerService` / credits ledger.
 
@@ -74,12 +74,12 @@ Debit-on-inference is already the entitlement path when credits enforcement is o
 
 ## 4. `billingMode` matrix
 
-| Mode | Subscription | Prepaid credits | Meter overage |
-| ---- | ------------ | --------------- | ------------- |
-| `stripe_checkout` | Required | Optional packs | Yes |
-| `stripe_invoice` | Enterprise invoice / custom | Optional | Optional |
-| `hybrid` | Required | Required for overage-or-packs | Yes if credits exhausted (configurable) |
-| `credits_only` | None | Required | No |
+| Mode              | Subscription                | Prepaid credits               | Meter overage                           |
+| ----------------- | --------------------------- | ----------------------------- | --------------------------------------- |
+| `stripe_checkout` | Required                    | Optional packs                | Yes                                     |
+| `stripe_invoice`  | Enterprise invoice / custom | Optional                      | Optional                                |
+| `hybrid`          | Required                    | Required for overage-or-packs | Yes if credits exhausted (configurable) |
+| `credits_only`    | None                        | Required                      | No                                      |
 
 ---
 

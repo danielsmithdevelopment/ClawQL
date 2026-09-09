@@ -77,4 +77,3 @@ Flags:
 - [`p2p-consumer-roadmap.md`](./p2p-consumer-roadmap.md) — cross-tenant P2P (self-hosted only)
 - [`../specs/billing/customer-provisioning-core-v0.1.md`](../specs/billing/customer-provisioning-core-v0.1.md) — org-of-1 provisioning + dual triggers
 - [`../specs/billing/hybrid-billing-v0.1.md`](../specs/billing/hybrid-billing-v0.1.md) — subscription + prepaid credits coexistence
-
