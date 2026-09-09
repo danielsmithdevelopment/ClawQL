@@ -2,42 +2,44 @@
 
 Adapter overlay for [`harveyai/harvey-labs`](https://github.com/harveyai/harvey-labs) so ClawQL vault memory + MCP tools can be evaluated on the **`firm-knowledge`** task family (250 tasks, shared Calderwood & Harkness DMS).
 
+> **Frozen protocol (2026-09-03):**  
+> [`docs/benchmarks/harvey-lab-frozen-protocol.md`](../../docs/benchmarks/harvey-lab-frozen-protocol.md)  
+> Matched **Lightning ± ClawQL** arms, live IDP ingest, Sonnet 4.6 judge, OpenRouter **paid** only for citable hosted runs. Older “three arms / free OpenRouter / local-vs-8.3%” framings are **superseded**.
+
 **Stack:** `ts-clawql-data-v2` — Node pre-ingest + MCP `data_query`/`data_ingest` via [`packages/clawql-data`](../../packages/clawql-data). **No Python DuckDB.** See [`stack-version.json`](stack-version.json) and [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchmarks/harvey-lab-stack-lineage.md).
 
 **Harvey:** Read [`HARVEY.md`](HARVEY.md) first. We never touch `agent_loop.py`. Default `apply_clawql_adapter.py` copies our adapters + minimal `run.py` hooks only.
 
-## Three arms → Nemotron pair first
+## Matched Nemotron arms (publishable path)
 
 | Arm | Model flag | Meaning | Needs Anthropic? |
 | --- | ---------- | ------- | ---------------- |
-| `nemotron` | `openrouter/<nemotron>` | Nemotron, no ClawQL | **No** |
-| `nemotron-clawql` | `clawql-cc/<nemotron>` | Nemotron + ClawQL | **No** |
-| `baseline` / `clawql` | Claude | Opus/Sonnet A/B | Yes |
+| `nemotron` (protocol **Arm A**) | `openrouter/<nemotron>` or local MLX | Lightning **alone**, no ClawQL | **No** |
+| `nemotron-clawql` (protocol **Arm B**) | `clawql-cc/<nemotron>` or local MLX + ClawQL | Lightning **+ ClawQL** | **No** |
+| `baseline` / `clawql` | Claude | Opus/Sonnet (deferred; not Step 1–2 under frozen protocol) | Yes |
 
-Publishable Claude A/B is Opus vs Opus (later). Nemotron pair compounds Harvey/Trajectory’s LAB post-train work (model-only, stock harness) with/without ClawQL retrieval as an **agent-stack** delta.
+**Judges:** Engineering debug may use OpenRouter mini judges. **Publishable / Step 2 cite** scores must use **`claude-sonnet-4-6`**. See frozen protocol §5 and [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
 
-**Judges:** GHA debug default is `openai/gpt-5.4-mini` (OpenRouter). **Harvey-facing / publishable** scores must use **`claude-sonnet-4-6`** (upstream default) or `--dual`. See [`docs/benchmarks/harvey-lab-rules-compliance.md`](../../docs/benchmarks/harvey-lab-rules-compliance.md).
+## Run path: GitHub Actions (preferred for Step 2)
 
-## Run path: GitHub Actions (preferred)
-
-Same as OpenBench: use repo secret **`OPENROUTER_API_KEY`**. Do not depend on Cursor Cloud Agent env secrets.
+Same as OpenBench: use repo secret **`OPENROUTER_API_KEY`** (**paid** tier — free models are disqualified under the frozen protocol). Do not depend on Cursor Cloud Agent env secrets.
 
 Matrix sweeps are paused while `.skip-lab-matrix` exists (ts-v2 baseline validation). PR smoke (task 001) and `workflow_dispatch` still run.
 
 ```bash
+# Example — replace free model id with a paid Lightning OpenRouter id before Step 2
 gh workflow run harvey-lab-firm-knowledge.yml \
   -f task=firm-knowledge/tasks/001 \
   -f arms=nemotron,nemotron-clawql \
-  -f nemotron_model=nvidia/nemotron-3.5-lightning:free \
-  -f judge_model=openai/gpt-5.4-mini \
+  -f nemotron_model=<PAID_OPENROUTER_NEMOTRON_ID> \
+  -f judge_model=anthropic/claude-sonnet-4-6 \
   -f max_turns=15 \
   -f max_matters=0
 ```
 
-Workflow defaults: **`nemotron,nemotron-clawql`** + **`openai/gpt-5.4-mini`** judge.
-
 Pause / resume: [`docs/benchmarks/harvey-lab-pause-handoff.md`](../../docs/benchmarks/harvey-lab-pause-handoff.md)  
-Stack lineage: [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchmarks/harvey-lab-stack-lineage.md)
+Stack lineage: [`docs/benchmarks/harvey-lab-stack-lineage.md`](../../docs/benchmarks/harvey-lab-stack-lineage.md)  
+**Frozen protocol:** [`docs/benchmarks/harvey-lab-frozen-protocol.md`](../../docs/benchmarks/harvey-lab-frozen-protocol.md)
 
 ## What this provides
 

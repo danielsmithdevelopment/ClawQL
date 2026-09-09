@@ -46,7 +46,30 @@ export CLAWQL_OBSIDIAN_VAULT_PATH="${VAULT_PATH}"
 export CLAWQL_ENABLE_MEMORY="${CLAWQL_ENABLE_MEMORY:-1}"
 export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
 export CLAWQL_HARVEY_LAB="${CLAWQL_HARVEY_LAB:-1}"
-export CLAWQL_DATA_PATH="${CLAWQL_DATA_PATH:-${VAULT_PATH}/lab/matters.duckdb}"
+# ClawQL 8.x: bare CLAWQL_ENABLE_* is ignored without composition.
+# Enterprise tier still defaults data.enabled=false — force data + ontology on for LAB.
+#
+# IMPORTANT: do NOT use ${VAR:-{..."memory":{"enabled":true},...}} — bash closes the
+# ${} at the first `}`, which nests data/ontology/documents under memory and leaves
+# data_query unregistered ("Tool data_query not found").
+export CLAWQL_TIER="${CLAWQL_TIER:-enterprise}"
+if [[ -z "${CLAWQL_INSTANCE_SPEC:-}" ]]; then
+  CLAWQL_INSTANCE_SPEC="$(cat <<'EOF'
+{"tier":"enterprise","memory":{"enabled":true},"data":{"enabled":true},"ontology":{"enabled":true,"writes":{"enabled":true}},"documents":{"enabled":true,"pdfInspector":{"enabled":true},"langextract":{"enabled":true}}}
+EOF
+)"
+  export CLAWQL_INSTANCE_SPEC
+fi
+# Guard: top-level data.enabled must be true for Harvey LAB DuckDB tools.
+if ! python3 -c 'import json,os,sys; s=json.loads(os.environ["CLAWQL_INSTANCE_SPEC"]); sys.exit(0 if (s.get("data") or {}).get("enabled") is True else 1)' 2>/dev/null; then
+  echo "ERROR: CLAWQL_INSTANCE_SPEC must have top-level data.enabled=true for LAB (got nested or false)." >&2
+  echo "  Unset CLAWQL_INSTANCE_SPEC or fix nesting — data must be sibling of memory, not under it." >&2
+  exit 1
+fi
+# Always bind DuckDB to this task vault. Honoring a stale CLAWQL_DATA_PATH from a
+# prior LAB task (e.g. …/tasks__002/…) silently cross-wires pre-ingest + MCP.
+export CLAWQL_DATA_PATH="${VAULT_PATH}/lab/matters.duckdb"
+mkdir -p "${VAULT_PATH}/lab"
 export CLAWQL_DATA_INGEST_ROOTS="${CLAWQL_DATA_INGEST_ROOTS:-/workspace:/tmp:${HOME}}"
 export CLAWQL_ONTOLOGY_DB="${CLAWQL_ONTOLOGY_DB:-1}"
 export CLAWQL_ONTOLOGY_LLM_EXTRACTION="${CLAWQL_ONTOLOGY_LLM_EXTRACTION:-0}"
@@ -96,6 +119,7 @@ for i in $(seq 1 60); do
     echo "ClawQL ready at http://${HOST}:${PORT}/mcp"
     echo "export CLAWQL_MCP_URL=http://${HOST}:${PORT}/mcp"
     echo "export CLAWQL_OBSIDIAN_VAULT_PATH=${VAULT_PATH}"
+    echo "export CLAWQL_DATA_PATH=${VAULT_PATH}/lab/matters.duckdb"
     exit 0
   fi
   sleep 1

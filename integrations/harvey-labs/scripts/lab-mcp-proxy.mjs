@@ -6,10 +6,64 @@
  *   echo '{"sql":"SELECT 1"}' | node lab-mcp-proxy.mjs clawql_sql
  *   node lab-mcp-proxy.mjs --audit-start   # LAB_RUN_START audit line
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { LabMcpClient, mcpToolText } from "./lab-mcp-client.mjs";
+import { LabMcpClient, mcpToolText, unwrapMcpToolPayload } from "./lab-mcp-client.mjs";
+
+const WRITE_NUDGE =
+  "\n\n[ClawQL LAB] NEXT REQUIRED ACTION: call harness `write` with path `/workspace/output/response.md` using these results. If frequency/rate/share: state **k of N (~p%)** and list every id in N. Do not explore with ls/find until that file exists.";
+
+const MISSING_FILE_NUDGE =
+  "\n\n[ClawQL LAB] `/workspace/output/response.md` is still missing. Write it NOW from the best evidence you have.";
+
+function responseMdMissing() {
+  const out = (process.env.CLAWQL_LAB_OUTPUT_DIR || "").trim();
+  if (out) return !existsSync(join(out, "response.md"));
+  return !existsSync("/workspace/output/response.md");
+}
+
+/** Compact memory_recall: matterIds + labGuidance first; drop nested MCP envelope. */
+function compactRecallText(rawText) {
+  let payload;
+  try {
+    payload = JSON.parse(rawText);
+  } catch {
+    return rawText;
+  }
+  // Nested MCP { content: [{ text: "{...}" }] }
+  if (payload && typeof payload === "object" && Array.isArray(payload.content)) {
+    payload = unwrapMcpToolPayload(payload);
+  }
+  if (!payload || typeof payload !== "object") return rawText;
+  const compact = {
+    ok: payload.ok,
+    query: payload.query,
+    matterIdCount: payload.matterIdCount,
+    matterIds: payload.matterIds,
+    filteredEntities: payload.filteredEntities,
+    queryType: payload.queryType,
+    schema: payload.schema,
+    filters: payload.filters,
+    labGuidance: payload.labGuidance,
+    // Keep at most 8 hit snippets — enough for ids/evidence, not vault dumps
+    hits: Array.isArray(payload.hits) ? payload.hits.slice(0, 8) : undefined,
+  };
+  return JSON.stringify(compact, null, 2);
+}
+
+function sqlLooksSuccessful(text) {
+  try {
+    const data = JSON.parse(text);
+    if (!data || data.ok !== true) return false;
+    if (Array.isArray(data.rows) && data.rows.length > 0) return true;
+    if (typeof data.rowCount === "number" && data.rowCount > 0) return true;
+    if (Array.isArray(data.result) && data.result.length > 0) return true;
+    return false;
+  } catch {
+    return /"ok"\s*:\s*true/.test(text);
+  }
+}
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const toolsJsonPath =
@@ -68,12 +122,23 @@ async function runTool(toolName, rawArgs) {
     args = { sql: String(args.sql ?? "") };
   }
   const result = await client.callTool(mcpName, args);
-  let text =
-    mcpName === "data_query" || toolName === "clawql_sql" || toolName === "clawql_duckdb_query"
-      ? mcpToolText(result)
-      : JSON.stringify(result, null, 2);
+  // Always unwrap MCP content[] — nested envelopes blow Nemotron context and hide labGuidance.
+  let text = mcpToolText(result);
+  if (mcpName === "memory_recall" || toolName === "clawql_memory_recall") {
+    text = compactRecallText(text);
+  }
   if (text.length > MAX_JSON_CHARS) {
     text = `${text.slice(0, MAX_JSON_CHARS)}\n…[ClawQL tool JSON truncated]`;
+  }
+  const missing = responseMdMissing();
+  if (
+    missing &&
+    (toolName === "clawql_sql" || toolName === "clawql_duckdb_query" || mcpName === "data_query") &&
+    sqlLooksSuccessful(text)
+  ) {
+    text += WRITE_NUDGE;
+  } else if (missing && (mcpName === "memory_recall" || toolName.startsWith("clawql_"))) {
+    text += MISSING_FILE_NUDGE;
   }
   process.stdout.write(text);
 }

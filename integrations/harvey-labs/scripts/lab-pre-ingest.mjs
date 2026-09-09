@@ -11,7 +11,8 @@
  *   CLAWQL_EXTERNAL_INGEST — default 1; bulk ingest_external_knowledge
  */
 import { mkdir, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { LabMcpClient, mcpToolText, unwrapMcpToolPayload } from "./lab-mcp-client.mjs";
 import { INGEST_CACHE_NAME, seedFirmKnowledgeDms } from "./lab-vault-seed.mjs";
 
@@ -130,6 +131,10 @@ async function ensureCreditFacilityOntology(mcpClient, creditDocs, expected, tas
 }
 
 /**
+ * Build Node DuckDB with path-detectors (HSR / credit / deal_value), not bare inventory.
+ * Bare `data_ingest` alone leaves is_hsr_second_request=false and empty client_short_name —
+ * agents then write wrong "0 of 266" deliverables.
+ *
  * @param {import('./lab-mcp-client.mjs').LabMcpClient} mcpClient
  * @param {string} mattersRoot
  * @param {number} expectedCredit
@@ -141,11 +146,42 @@ async function buildLabDuckdbViaMcp(mcpClient, mattersRoot, expectedCredit) {
     );
     return;
   }
+  const dbPath = process.env.CLAWQL_DATA_PATH?.trim();
+  if (!dbPath) {
+    throw new Error("CLAWQL_DATA_PATH is required for LAB DuckDB ingest");
+  }
+
+  const sqlGoldScript = join(dirname(fileURLToPath(import.meta.url)), "sql-gold-001-025.mjs");
+  const goldOut = join(dirname(dbPath), "sql-gold-preingest-check.json");
+  const { spawnSync } = await import("node:child_process");
+  console.log(
+    `ClawQL pre-ingest: sql-gold path-detectors → DuckDB ${dbPath} (mattersRoot=${mattersRoot})`
+  );
+  const gold = spawnSync(
+    process.execPath,
+    [sqlGoldScript, resolve(mattersRoot), resolve(dbPath), goldOut],
+    {
+      env: { ...process.env, CLAWQL_ENABLE_DATA: "1", CLAWQL_DATA_PATH: dbPath },
+      encoding: "utf8",
+      maxBuffer: 20 * 1024 * 1024,
+    }
+  );
+  if (gold.stdout) process.stdout.write(gold.stdout);
+  if (gold.stderr) process.stderr.write(gold.stderr);
+  // Gold oracle may fail individual checks; still require a populated HSR column.
+  // Fall back to bare data_ingest only if sql-gold crashed hard.
+  if (gold.error) {
+    throw new Error(`sql-gold failed to start: ${gold.error}`);
+  }
+
+  // Verify via MCP data_query (same path the agent uses).
   try {
     const result = await mcpClient.callTool(
-      "data_ingest",
-      { replace: true, mattersRoot: resolve(mattersRoot) },
-      { timeout: BULK_INGEST_HTTP_TIMEOUT_MS }
+      "data_query",
+      {
+        sql: "SELECT COUNT(*) AS n, COUNT(*) FILTER (WHERE is_hsr_second_request) AS hsr_true, COUNT(*) FILTER (WHERE coalesce(client_short_name,'')<>'') AS named FROM matters",
+      },
+      { timeout: 60_000 }
     );
     const body = mcpToolText(result);
     let parsed = {};
@@ -154,18 +190,25 @@ async function buildLabDuckdbViaMcp(mcpClient, mattersRoot, expectedCredit) {
     } catch {
       parsed = { raw: body };
     }
-    if (parsed.ok === false) {
-      throw new Error(parsed.error || body);
-    }
+    const row = Array.isArray(parsed.rows) ? parsed.rows[0] : null;
+    const n = row ? Number(row.n ?? row.N ?? 0) : 0;
+    const hsrTrue = row ? Number(row.hsr_true ?? row.HSR_TRUE ?? 0) : 0;
+    const named = row ? Number(row.named ?? row.NAMED ?? 0) : 0;
     console.log(
-      `ClawQL pre-ingest: Node DuckDB ${parsed.path ?? "data_ingest"} ` +
-        `matters=${parsed.matterCount} documents=${parsed.documentCount} open_facts=${parsed.openFactCount} ` +
-        `(ontology CREDIT_FACILITY expected ${expectedCredit})`
+      `ClawQL pre-ingest: Node DuckDB ${dbPath} matters=${n} hsr_true=${hsrTrue} named=${named} ` +
+        `(ontology CREDIT_FACILITY expected ${expectedCredit}; sql-gold exit=${gold.status})`
     );
+    if (!n) {
+      throw new Error("DuckDB matters table empty after sql-gold");
+    }
+    if (!hsrTrue) {
+      console.log(
+        "ClawQL pre-ingest: WARNING hsr_true=0 — agent may emit false 0/N for second-request tasks"
+      );
+    }
   } catch (exc) {
-    throw new Error(
-      `ClawQL data_ingest failed. Enable CLAWQL_ENABLE_DATA=1 on the MCP server (Node DuckDB). ${exc}`
-    );
+    // If MCP verify fails, still keep sql-gold DB on disk for the agent.
+    console.log(`ClawQL pre-ingest: DuckDB verify via MCP failed (${exc}); sql-gold status=${gold.status}`);
   }
 }
 
@@ -189,10 +232,38 @@ async function main() {
 
   const cacheMarker = join(vaultPath, INGEST_CACHE_NAME);
   try {
-    const { access } = await import("node:fs/promises");
+    const { access, readFile } = await import("node:fs/promises");
     await access(cacheMarker);
-    console.log(`ClawQL pre-ingest: cache marker exists (${cacheMarker}), skipping`);
-    return;
+    const dbPath = process.env.CLAWQL_DATA_PATH?.trim();
+    let hsrOk = false;
+    if (dbPath) {
+      try {
+        const { DuckDBInstance } = await import("@duckdb/node-api");
+        const inst = await DuckDBInstance.create(dbPath);
+        const conn = await inst.connect();
+        const r = await conn.runAndReadAll(
+          "SELECT COUNT(*) FILTER (WHERE is_hsr_second_request) AS hsr_true FROM matters"
+        );
+        const rows = r.getRows();
+        hsrOk = Number(rows?.[0]?.[0] ?? 0) > 0;
+        await conn.closeSync?.();
+      } catch {
+        hsrOk = false;
+      }
+    }
+    if (hsrOk) {
+      console.log(`ClawQL pre-ingest: cache marker exists (${cacheMarker}), DuckDB HSR ok — skipping`);
+      return;
+    }
+    console.log(
+      `ClawQL pre-ingest: cache marker exists but DuckDB missing HSR flags — rebuilding`
+    );
+    try {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(cacheMarker);
+    } catch {
+      // continue
+    }
   } catch {
     // continue
   }

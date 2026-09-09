@@ -173,6 +173,7 @@ ensure_clawql_mcp() {
   # start-clawql-for-lab.sh sets vault for the MCP child only — re-export for pre-ingest.
   SAFE_TASK_ID="${TASK//\//__}"
   export CLAWQL_OBSIDIAN_VAULT_PATH="${CLAWQL_LAB_VAULT_ROOT:-$HOME/.ClawQL/HarveyLABVault}/${SAFE_TASK_ID}"
+  export CLAWQL_DATA_PATH="${CLAWQL_OBSIDIAN_VAULT_PATH}/lab/matters.duckdb"
   export CLAWQL_LAB_PREINGEST_SCRIPT="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs"
   export CLAWQL_LAB_MCP_PROXY="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
   CLAWQL_MCP_STARTED=1

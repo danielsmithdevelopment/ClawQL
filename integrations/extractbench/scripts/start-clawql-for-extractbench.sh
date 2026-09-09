@@ -15,7 +15,14 @@ export CLAWQL_TIER="${CLAWQL_TIER:-enterprise}"
 export CLAWQL_PROVIDER="${CLAWQL_PROVIDER:-default}"
 export CLAWQL_BUNDLED_PROVIDERS="${CLAWQL_BUNDLED_PROVIDERS:-docling}"
 # Enterprise tier enables idpPipeline; turn on pdf-inspector explicitly for inspect_pdf routing.
-export CLAWQL_INSTANCE_SPEC="${CLAWQL_INSTANCE_SPEC:-{\"tier\":\"enterprise\",\"documents\":{\"pdfInspector\":{\"enabled\":true}}}}"
+# Avoid ${VAR:-{…}} — bash closes ${} at the first `}` (see start-clawql-for-lab.sh).
+if [[ -z "${CLAWQL_INSTANCE_SPEC:-}" ]]; then
+  CLAWQL_INSTANCE_SPEC="$(cat <<'EOF'
+{"tier":"enterprise","documents":{"pdfInspector":{"enabled":true}}}
+EOF
+)"
+  export CLAWQL_INSTANCE_SPEC
+fi
 
 export CLAWQL_OBSIDIAN_VAULT_PATH="$VAULT"
 # Optional: scaffold → ontology.db → memory_recall after each EXTRACT (T1 completeness telemetry)

@@ -8,10 +8,10 @@ import type { DataError } from "../../effect/data-errors.js";
 import type { DataQueryOk } from "../types.js";
 
 export const DUCKDB_QUERY_HINT =
+  "After rows return, write /workspace/output/response.md immediately (do not keep exploring). " +
+  "Match WHERE predicates to the user prompt only — do not add unstated filters. " +
   "NULL semantic bools mean UNKNOWN, not absence. Do not conclude 0/N from WHERE col=false when many rows are NULL — query open_facts and/or read docs. " +
-  "Pattern G: filter practice_area first, then JOIN matter_documents (doc_type / key_terms). " +
-  "Examples: SELECT matter_id FROM matters WHERE is_hsr_second_request; " +
-  "SELECT json_extract_string(d.key_terms, '$.lock_up_period_days') FROM matter_documents d WHERE d.doc_type = 'lock-up-agreement';";
+  "Use DESCRIBE matters for real column names (is_* vs has_* differ). Every matter_id is distinct; list every id in the result set.";
 
 export function resolveDuckDbPath(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env.CLAWQL_DATA_PATH?.trim();

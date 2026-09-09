@@ -1,0 +1,22 @@
+{
+  "model": "clawql-cc/openai/mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+  "task": "firm-knowledge/tasks/005",
+  "run_id": "firm-knowledge/tasks/005/NVIDIA-Nemotron-3-5-Lightning-30B-A3B-4bit/20260908-195425",
+  "turn_count": 9,
+  "input_tokens": 130978,
+  "output_tokens": 2821,
+  "total_tokens": 133799,
+  "wall_clock_seconds": 141.33,
+  "finished_cleanly": true,
+  "completed_at": "2026-09-09T02:56:47.679625+00:00",
+  "documents_read": 1,
+  "documents_skipped": 9288,
+  "total_documents": 9288,
+  "bash_commands": 0,
+  "files_written": 1,
+  "files_edited": 0,
+  "glob_searches": 0,
+  "grep_searches": 0,
+  "clawql_calls": 6,
+  "clawql_sql_successes": 6
+}
