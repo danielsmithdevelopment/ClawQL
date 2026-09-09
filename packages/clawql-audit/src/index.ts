@@ -14,11 +14,7 @@ export {
   sealHashChainRecord,
   sha256Hex,
 } from "./seal.js";
-export {
-  HashChain,
-  HashChainLive,
-  makeHashChainLayer,
-} from "./chain.js";
+export { HashChain, HashChainLive, makeHashChainLayer } from "./chain.js";
 export {
   DEFAULT_CBOR_CHAIN_METADATA,
   LEGACY_JSON_CHAIN_METADATA,

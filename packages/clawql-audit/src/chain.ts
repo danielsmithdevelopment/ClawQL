@@ -3,11 +3,7 @@ import type { ChainVerifyResult, WORMEntry } from "./entry.js";
 import { WORM_GENESIS_PREV_HASH } from "./entry.js";
 import { AuditError } from "./errors.js";
 import { recomputeEntryHash } from "./seal.js";
-import {
-  DEFAULT_CBOR_CHAIN_METADATA,
-  formatAtIndex,
-  type ChainMetadata,
-} from "./serialization.js";
+import { DEFAULT_CBOR_CHAIN_METADATA, formatAtIndex, type ChainMetadata } from "./serialization.js";
 import type { LocalStorageBackend } from "./storage/types.js";
 
 export class HashChain extends Context.Tag("clawql-audit/HashChain")<

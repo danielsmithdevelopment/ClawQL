@@ -54,10 +54,7 @@ This is not the same class of change as adopting gRPC/protobuf elsewhere — no 
 
 import { encodeCanonical, decode } from "cbor"; // package: cbor (canonical)
 
-export type WORMEntryPayload = Omit<
-  WORMEntry,
-  "hash" | "backendAcks" | "teeSignature"
->;
+export type WORMEntryPayload = Omit<WORMEntry, "hash" | "backendAcks" | "teeSignature">;
 
 export const serializeWormEntry = (
   entry: WORMEntryPayload,

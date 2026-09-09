@@ -78,14 +78,10 @@ describe("WormSerialization", () => {
     );
     expect(sealedCbor.hash).not.toBe(sealedJson.hash);
     expect(
-      await Effect.runPromise(
-        recomputeEntryHash({ ...sealedCbor, backendAcks: [] }, "cbor")
-      )
+      await Effect.runPromise(recomputeEntryHash({ ...sealedCbor, backendAcks: [] }, "cbor"))
     ).toBe(sealedCbor.hash);
     expect(
-      await Effect.runPromise(
-        recomputeEntryHash({ ...sealedJson, backendAcks: [] }, "json")
-      )
+      await Effect.runPromise(recomputeEntryHash({ ...sealedJson, backendAcks: [] }, "json"))
     ).toBe(sealedJson.hash);
   });
 

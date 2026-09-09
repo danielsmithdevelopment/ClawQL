@@ -45,8 +45,7 @@ export const sortKeysDeep = (value: unknown): unknown => {
   return out;
 };
 
-export const canonicalJSONSync = (value: unknown): string =>
-  JSON.stringify(sortKeysDeep(value));
+export const canonicalJSONSync = (value: unknown): string => JSON.stringify(sortKeysDeep(value));
 
 /**
  * Format in effect at `chainIndex` given one switch point.
