@@ -23,8 +23,8 @@
     "@radix-ui/react-progress": "^1.1.7",
     "@shadcn/react": "^0.1.0",
     "@tailwindcss/postcss": "^4.2.2",
-    "clawql-api": "file:../packages/clawql-api",
     "class-variance-authority": "^0.7.1",
+    "clawql-api": "file:../packages/clawql-api",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
     "next": "16.3.3",
@@ -45,7 +45,7 @@
     "@types/react-dom": "19.2.3",
     "eslint": "^9.39.0",
     "eslint-config-next": "16.3.3",
-    "vitest": "^4.1.9"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "@babel/core": "7.29.6",
@@ -57,7 +57,7 @@
     "browserslist": "4.28.7",
     "fast-uri": "3.1.7",
     "qs": "6.16.0",
-    "hono": "4.12.34",
+    "hono": "4.13.5",
     "ip-address": "10.3.1",
     "body-parser": "2.3.0",
     "sharp": "0.35.4",
