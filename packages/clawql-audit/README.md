@@ -7,6 +7,7 @@ Tamper-evident **WORM** audit trail for AI agent deployments. Standalone — no 
 ## Capabilities
 
 - Hash-chained append (`sealHashChainRecord`) — **CBOR** hash dialect by default (RFC 8949 canonical); legacy JSON via `chainMetadata`
+- Spec addition: [`docs/audit/clawql-audit-cbor-serialization-v0.1.md`](../../docs/audit/clawql-audit-cbor-serialization-v0.1.md)
 - Dual-ack local + remote (SQLite/`node:sqlite`, Postgres, or memory + S3/R2)
 - Outbox drain on startup + optional background reconciler
 - Periodic Merkle batch roots (handoff for multi-chain anchoring)
