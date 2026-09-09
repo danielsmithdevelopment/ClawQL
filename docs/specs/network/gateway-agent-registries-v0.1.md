@@ -68,7 +68,7 @@ listAgentInstances(orgId: string): Effect<AgentInstanceRecord[]>
 
 **Wiring:** `AgentAdapter.start()` calls `registerAgentInstance` when config includes `orgId` + `parentGatewayId` and `agentType` is one of the four persistent types. `health()` feeds `heartbeat`; if heartbeat finds no record and `parentGatewayId` is present, it **registers (reconnect / backfill)** so processes that started before Gap B (or without registry env) become visible without a full restart. Compensation ledger untouched.
 
-**Orphan case without reconnect:** if `health()` runs with `orgId` but **no** `parentGatewayId`, heartbeat is a no-op for unknown agents — still invisible until config includes a parent gateway (or `start()` runs with both).
+**Missing `parentGatewayId` is a config gap**, not a supported topology state (every `AgentNode` hangs under a `GatewayNode`). If `orgId` is set without `parentGatewayId`, adapters log a loud `CONFIG WARNING` (same pattern as MCP OAuth audit-off / shared-key warnings). Leaving **both** unset remains silent registry opt-out.
 
 **Persistence:** `$CLAWQL_HOME/agents/registry/orgs/<orgId>/instances.json`.
 

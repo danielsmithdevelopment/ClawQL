@@ -9,6 +9,7 @@ import {
   AgentInstanceRegistryService,
   agentInstanceRegistryLiveLayer,
 } from "./agent-instance-registry-service.js";
+import { warnIfAgentRegistryMissingParentGateway } from "./registry-startup-warnings.js";
 import { isPersistentAgentType, type PersistentAgentType } from "./types.js";
 
 export type RegistrySessionHints = {
@@ -35,6 +36,11 @@ export const registerAgentInstanceOnStart = (
   if (!isPersistentAgentType(hints.agentName)) return Effect.void;
   const orgId = resolveOrgId(config);
   const parentGatewayId = resolveParentGatewayId(config);
+  if (orgId && !parentGatewayId) {
+    return warnIfAgentRegistryMissingParentGateway(config, hints.agentName, {
+      agentId: hints.agentId,
+    });
+  }
   if (!orgId || !parentGatewayId) return Effect.void;
 
   const agentId =
@@ -81,7 +87,12 @@ export const heartbeatAgentInstanceOnHealth = (
     const beat = yield* reg.heartbeat(agentId, orgId);
     if (beat) return;
     // Unknown to registry — reconnect only when we can form a full record.
-    if (!parentGatewayId) return;
+    if (!parentGatewayId) {
+      yield* warnIfAgentRegistryMissingParentGateway(config, hints.agentName, {
+        agentId,
+      });
+      return;
+    }
     yield* reg.registerAgentInstance({
       agentId,
       agentType: hints.agentName as PersistentAgentType,

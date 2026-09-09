@@ -24,3 +24,8 @@ export {
   heartbeatAgentInstanceOnHealth,
   type RegistrySessionHints,
 } from "./adapter-hooks.js";
+export {
+  AGENT_REGISTRY_MISSING_PARENT_GATEWAY_WARNING,
+  warnIfAgentRegistryMissingParentGateway,
+  resetAgentRegistryParentWarningsForTests,
+} from "./registry-startup-warnings.js";
