@@ -15,6 +15,10 @@ export type InitNetworkingOptions = {
   readonly offerSelfHostedDerp?: boolean;
   readonly derpRegion?: string;
   readonly loginServerUrl?: string;
+  /** Org-scoped gateway registry enrollment (Gap A). */
+  readonly orgId?: string;
+  readonly gatewayKind?: "regional" | "edge";
+  readonly ownerDeveloper?: string;
 };
 
 export type InitNetworkingResult = {
@@ -57,6 +61,10 @@ export const initNetworking = (
     const meshIdentity = yield* joinMesh(nodeId, {
       namespace,
       loginServerUrl: bootstrap.loginServerUrl,
+      home,
+      orgId: options.orgId,
+      kind: options.gatewayKind,
+      ownerDeveloper: options.ownerDeveloper,
     });
 
     let derpRelay: InitNetworkingResult["derpRelay"];

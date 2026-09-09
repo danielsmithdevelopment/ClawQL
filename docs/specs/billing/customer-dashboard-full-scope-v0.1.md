@@ -55,19 +55,22 @@ interface AgentNode {
 ## 3. Data sources — everything reused, nothing new invented
 
 ```
-GatewayNode (regional) <- clawql-network Headscale mesh registry
-                          (+ ManagedGateway state when present)
-GatewayNode (edge)     <- clawql-network Headscale mesh registry,
-                           filtered by node type / hostname heuristics
-AgentNode (persistent) <- clawql-agents catalog labels ∪ compensation ledger
-AgentNode (cell)       <- celld fleet API (bucket lease records / cell list)
-traceLink              <- existing /mcp-ui/trace/compare (+ session deep-link),
-                           embedded in Traces — not rebuilt
+GatewayNode (regional|edge) <- clawql-network GatewayRegistryService
+                               (Gap A — org-scoped register + heartbeat + listMeshPeers)
+AgentNode (persistent)      <- clawql-agents AgentInstanceRegistryService
+                               (Gap B — register + heartbeat + listAgentInstances)
+AgentNode (cell)            <- celld fleet API (bucket lease records / cell list)
+traceLink                   <- existing /mcp-ui/trace/compare (+ session deep-link),
+                               embedded in Traces — not rebuilt
 ```
 
-No new "topology service" _backend product_ — this is a read/aggregation view over data sources that already exist. Implementation: Effect `TopologyService` Tag in `clawql-payments` (`src/dashboard/topology-service.ts`).
+No Tailscale/Headscale CLI scrape. No compensation-ledger stand-in for fleet liveness.
+No new "topology service" _backend product_ — this is a pure read/aggregation view over Gap A + Gap B + celld.
+Implementation: Effect `TopologyService` Tag + `aggregateTopologyFromRegistries` in `clawql-payments`
+(`src/dashboard/topology-service.ts`). Spec for the registries:
+[gateway-agent-registries-v0.1.md](../network/gateway-agent-registries-v0.1.md).
 
-Optional ops override: `CLAWQL_TOPOLOGY_SNAPSHOT` = path to a JSON `{ gateways: GatewayNode[] }` (tests + air-gapped demos).
+Tests use `topologyFixedLayer` / empty `$CLAWQL_HOME` registries — not a production snapshot override.
 
 ---
 

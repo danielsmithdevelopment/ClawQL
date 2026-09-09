@@ -16,6 +16,7 @@ import { ProvisionOrgService } from "./provision-org-service.js";
 import { attachCpcDashboardRoutes } from "./dashboard-http.js";
 import { renderCpcDashboardHtml } from "./dashboard-html.js";
 import type { CpcDashboardModel } from "./dashboard-html.js";
+import { aggregateTopologyFromRegistries } from "../dashboard/topology-service.js";
 
 async function withApp(
   env: NodeJS.ProcessEnv,
@@ -123,6 +124,10 @@ describe("CPC dashboard", () => {
     expect(html).toContain('id="traces"');
     expect(html).not.toContain('id="agents"');
     expect(html).toContain("Connect your first gateway");
+    expect(html).toContain("gateway registry");
+    expect(html).toContain("agent-instance registry");
+    expect(html).not.toContain("compensation agents");
+    expect(html).not.toContain("compensation-accounts");
     expect(html).toContain("trace-embed");
     expect(html).toContain("/mcp-ui/trace/compare");
     expect(html).toContain("getOrgUnifiedSpendSummary");
@@ -160,7 +165,7 @@ describe("CPC dashboard", () => {
       keys: [],
       topology: {
         empty: false,
-        sources: ["snapshot"],
+        sources: ["gateway-registry", "agent-instance-registry"],
         gateways: [
           {
             gatewayId: "gw1",
@@ -220,6 +225,67 @@ describe("CPC dashboard", () => {
       expect(html).toContain("API keys");
       expect(html).toContain("dashco");
       expect(html).toContain("pro");
+      // §5 empty state against real (empty) registries — not ledger/heuristic stand-in
+      expect(html).toContain("Connect your first gateway");
+      expect(html).toContain("gateway registry");
+      expect(html).not.toContain("compensation agents");
+      expect(html).not.toContain("coming soon");
     });
+  });
+
+  it("empty-state HTML matches aggregateTopologyFromRegistries for a new org", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-dash-empty-topo-"));
+    try {
+      const tree = await Effect.runPromise(
+        aggregateTopologyFromRegistries(
+          { orgId: "brand-new", mcpUiTraceBase: "/mcp-ui/trace" },
+          { CLAWQL_HOME: home }
+        )
+      );
+      expect(tree.empty).toBe(true);
+      expect(tree.sources).toEqual([]);
+      const html = Effect.runSync(
+        renderCpcDashboardHtml({
+          org: {
+            orgId: "brand-new",
+            displayName: "Brand New",
+            poolTenantId: "org:brand-new:pool",
+            billingAdminTenantIds: ["brand-new:owner"],
+            rolePolicies: [],
+            members: [],
+            periodEndPolicy: "expire_to_pool",
+            planId: "free",
+            billingMode: "prepaid_credits",
+            createdVia: "self_serve",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          actorTenantId: "brand-new:owner",
+          spend: {
+            orgId: "brand-new",
+            poolTenantId: "org:brand-new:pool",
+            poolBalanceCents: 0,
+            poolSpendableCents: 0,
+            memberBalanceCents: 0,
+            totalCreditsCents: 0,
+            members: [],
+            generatedAt: new Date().toISOString(),
+          },
+          keys: [],
+          topology: tree,
+          wormEntries: [],
+          portalAvailable: false,
+          mcpUiTraceBase: "/mcp-ui/trace",
+          creditsTopupHref: "/credits/topup?tenant=brand-new:owner",
+          returnPath: "/credits/org?orgId=brand-new",
+        })
+      );
+      expect(html).toContain("Connect your first gateway");
+      expect(html).toContain('class="empty-topo"');
+      expect(html).not.toContain("compensation");
+      expect(html).not.toContain("coming soon");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
   });
 });

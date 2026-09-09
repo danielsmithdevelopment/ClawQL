@@ -7,7 +7,6 @@ import type { Express, Request, Response } from "express";
 import { Effect } from "effect";
 import { IssuedApiKeyStoreService } from "clawql-auth";
 import { listPaymentAuditEntries } from "../audit/worm.js";
-import { CompensationAccountsService } from "../compensation/accounts.js";
 import { findOrgsForTenant, getOrg } from "../credits/org.js";
 import { getOrgUnifiedSpendSummary } from "../credits/org-spend.js";
 import { TopologyService } from "../dashboard/topology-service.js";
@@ -83,23 +82,13 @@ async function buildDashboardModel(
     env
   );
 
-  const agents = await runPaymentsEffect(
-    Effect.gen(function* () {
-      const accounts = yield* CompensationAccountsService;
-      return yield* accounts.list({ tenantId: actorTenantId });
-    }),
-    env
-  );
-
   const traceBase = mcpUiTraceBase(env);
   const topology = await runPaymentsEffect(
     Effect.gen(function* () {
       const topo = yield* TopologyService;
       return yield* topo.aggregate({
         orgId,
-        actorTenantId,
         mcpUiTraceBase: traceBase,
-        agents,
       });
     }),
     env

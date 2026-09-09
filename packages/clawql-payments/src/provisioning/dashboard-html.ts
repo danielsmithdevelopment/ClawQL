@@ -381,9 +381,9 @@ function renderTopology(tree: TopologyTree): string {
   if (tree.empty || !tree.gateways.length) {
     return `<div class="empty-topo" role="status">
       <h3>Connect your first gateway</h3>
-      <p class="sub" style="margin:0">No mesh or managed gateways are visible for this host yet.
-      Run <code>clawql init --networking</code> or create a managed gateway, then refresh.
-      Topology is a read view over Headscale mesh, ManagedGateway, compensation agents, and celld — nothing is invented.</p>
+      <p class="sub" style="margin:0">No gateways are registered for this org yet.
+      Join the mesh with an org-scoped gateway (<code>orgId</code> + heartbeat) or register via the gateway registry, then refresh.
+      Topology is a pure read over the gateway registry, agent-instance registry, and celld — nothing is invented.</p>
     </div>`;
   }
 
