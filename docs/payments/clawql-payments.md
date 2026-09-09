@@ -881,20 +881,12 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-<<<<<<< HEAD
-| Item                                                  | Tracking                                                                                                |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Hosted webhook HTTP endpoint                          | not CLI-only                                                                                            |
-| Customer provisioning core (`provisionOrg`, org-of-1) | [specs/billing/customer-provisioning-core-v0.1.md](../specs/billing/customer-provisioning-core-v0.1.md) |
-| Hybrid subscription + prepaid credits                 | [specs/billing/hybrid-billing-v0.1.md](../specs/billing/hybrid-billing-v0.1.md)                         |
-=======
 | Item                         | Tracking     |
 | ---------------------------- | ------------ |
 | Hosted webhook HTTP endpoint | Node CPC routes + CF forward — [customer-provisioning-core.md](./customer-provisioning-core.md) |
 | Customer provisioning core (`provisionOrg`, org-of-1) | [customer-provisioning-core.md](./customer-provisioning-core.md) · [spec](../specs/billing/customer-provisioning-core-v0.1.md) |
 | Hybrid subscription + prepaid credits | [stripe-products-ops.md](./stripe-products-ops.md) · [hybrid-billing](../specs/billing/hybrid-billing-v0.1.md) |
 | Self-serve billing dashboard UI | CPC piece 6 — open |
->>>>>>> 919a3ebd (docs(payments): CPC operator guide + Stripe ops; CF→Node handoff)
 
 ## Related
 
