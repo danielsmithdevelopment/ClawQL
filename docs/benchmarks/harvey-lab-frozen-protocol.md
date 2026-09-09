@@ -9,12 +9,12 @@ This document assembles the agreed standard from the operator, Cursor, and Grok 
 
 ## 1. Fixed facts (log before anything runs)
 
-| Field | Value |
-| ----- | ----- |
-| Model ID | `NVIDIA-Nemotron-3.5-Lightning-30B-A3B` |
-| Published baseline to beat | **0%** base / **8.3%** post-trained — Harvey's own held-out LAB, their harness, their judge |
-| Local arm | Mac Mini, MLX, **quant PINNED and logged** before start |
-| Hosted arm | OpenRouter **PAID** tier only — free tier is **disqualified** (200 req/day ⇒ multi-day ⇒ not contiguous) |
+| Field                      | Value                                                                                                    |
+| -------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Model ID                   | `NVIDIA-Nemotron-3.5-Lightning-30B-A3B`                                                                  |
+| Published baseline to beat | **0%** base / **8.3%** post-trained — Harvey's own held-out LAB, their harness, their judge              |
+| Local arm                  | Mac Mini, MLX, **quant PINNED and logged** before start                                                  |
+| Hosted arm                 | OpenRouter **PAID** tier only — free tier is **disqualified** (200 req/day ⇒ multi-day ⇒ not contiguous) |
 
 ### Quant pin (must be determined before start)
 
@@ -34,10 +34,10 @@ There is **no** valid claim from “Lightning+ClawQL vs Harvey’s published 8.3
 
 **Only valid comparison:**
 
-| Arm | Machine | Quant | Stack |
-| --- | ------- | ----- | ----- |
+| Arm   | Machine       | Quant             | Stack                           |
+| ----- | ------------- | ----------------- | ------------------------------- |
 | **A** | same Mac Mini | same pinned quant | Lightning **alone** (no ClawQL) |
-| **B** | same Mac Mini | same pinned quant | Lightning **+ ClawQL** |
+| **B** | same Mac Mini | same pinned quant | Lightning **+ ClawQL**          |
 
 Same tasks · same judge · same seeds · back to back · same day · same machine · nothing else changed.
 
@@ -112,14 +112,14 @@ Nothing publishes until every blank can be filled with something true.
 
 ## 8. Permanently unciteable (regardless of numbers)
 
-| Artifact | Status |
-| -------- | ------ |
-| 5/5 synthetic mini-firm demo | Mechanism proof only |
-| Quarantined 11/25 (old architecture) | Dead — stays dead |
-| 25/25 SQL ground-truth check | Pipeline correctness only |
-| Any local-only vs Harvey’s published number | **Invalid by construction** |
+| Artifact                                                                  | Status                       |
+| ------------------------------------------------------------------------- | ---------------------------- |
+| 5/5 synthetic mini-firm demo                                              | Mechanism proof only         |
+| Quarantined 11/25 (old architecture)                                      | Dead — stays dead            |
+| 25/25 SQL ground-truth check                                              | Pipeline correctness only    |
+| Any local-only vs Harvey’s published number                               | **Invalid by construction**  |
 | Legacy `python-duckdb-v1` scorecards / composed 001–010 all-pass handoffs | Quarantined — not this stack |
-| OpenRouter **free** tier multi-day “contiguous” slices | Disqualified |
+| OpenRouter **free** tier multi-day “contiguous” slices                    | Disqualified                 |
 
 ---
 
@@ -133,14 +133,14 @@ If Arm A or B is interrupted, retried, or partially completes, that fact is in t
 
 ## 10. Explicit supersessions (gaps that would otherwise cause claim failure)
 
-| Prior source | Said | This protocol |
-| ------------ | ---- | ------------- |
-| `harvey-lab-action-plan.md` / README “Three arms” | A=Opus, B=Opus+ClawQL, C=Nemotron; OpenRouter-first | **Matched Lightning±ClawQL** on Mini (and paid hosted for cite); Opus arms deferred |
-| GHA defaults / `harvey-lab-firm-knowledge.yml` | `nvidia/nemotron-3.5-lightning:free`, judge `gpt-5.4-mini` | Free **disqualified**; publishable judge **Sonnet 4.6** |
-| `phase-a-single-task.sh` | Sonnet±ClawQL smoke | Wrong model family for this protocol’s Step 1 |
-| ExtractBench Arm A/B | Qwen schema map vs Docling structural | **Unrelated** product — do not mix ledgers |
-| Implied “local Mini F1 vs 8.3%” | Tempting narrative | **Forbidden** (§2, §6, §8) |
-| Ingest | Older planted-ontology / perfect composed runs | Live IDP only (§4) or claim is demoted |
+| Prior source                                      | Said                                                       | This protocol                                                                       |
+| ------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `harvey-lab-action-plan.md` / README “Three arms” | A=Opus, B=Opus+ClawQL, C=Nemotron; OpenRouter-first        | **Matched Lightning±ClawQL** on Mini (and paid hosted for cite); Opus arms deferred |
+| GHA defaults / `harvey-lab-firm-knowledge.yml`    | `nvidia/nemotron-3.5-lightning:free`, judge `gpt-5.4-mini` | Free **disqualified**; publishable judge **Sonnet 4.6**                             |
+| `phase-a-single-task.sh`                          | Sonnet±ClawQL smoke                                        | Wrong model family for this protocol’s Step 1                                       |
+| ExtractBench Arm A/B                              | Qwen schema map vs Docling structural                      | **Unrelated** product — do not mix ledgers                                          |
+| Implied “local Mini F1 vs 8.3%”                   | Tempting narrative                                         | **Forbidden** (§2, §6, §8)                                                          |
+| Ingest                                            | Older planted-ontology / perfect composed runs             | Live IDP only (§4) or claim is demoted                                              |
 
 ---
 
