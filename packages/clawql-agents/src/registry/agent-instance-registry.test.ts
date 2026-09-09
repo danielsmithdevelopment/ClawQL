@@ -7,6 +7,7 @@ import {
   AgentInstanceRegistryService,
   agentInstanceRegistryLiveLayer,
   agentInstanceRegistryMemoryLayer,
+  heartbeatAgentInstanceOnHealth,
   registerAgentInstanceOnStart,
   statusFromLastActive,
   AGENT_HEARTBEAT_INTERVAL_MS,
@@ -96,6 +97,73 @@ describe("registerAgentInstanceOnStart", () => {
         }).pipe(Effect.provide(agentInstanceRegistryLiveLayer(home)))
       );
       expect(listed.some((a) => a.agentId === "hermes-live-1")).toBe(true);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("heartbeatAgentInstanceOnHealth reconnect", () => {
+  it("backfills register when heartbeat misses a pre-registry instance", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-agent-reconnect-"));
+    try {
+      // Simulate already-running agent: never called start()/register, only health.
+      await Effect.runPromise(
+        heartbeatAgentInstanceOnHealth(
+          {
+            mcpEndpoint: "http://localhost/mcp",
+            wormDbPath: join(home, "worm.db"),
+            inferenceEndpoint: "http://localhost/inf",
+            virtualKeyId: "vk",
+            teeEnabled: false,
+            orgId: "acme",
+            parentGatewayId: "gw-east",
+            agentInstanceId: "hermes-preexisting",
+            registryHome: home,
+          },
+          { agentId: "hermes-preexisting", agentName: "hermes" }
+        )
+      );
+      const listed = await Effect.runPromise(
+        Effect.gen(function* () {
+          const reg = yield* AgentInstanceRegistryService;
+          return yield* reg.listAgentInstances("acme");
+        }).pipe(Effect.provide(agentInstanceRegistryLiveLayer(home)))
+      );
+      expect(listed).toHaveLength(1);
+      expect(listed[0]!.agentId).toBe("hermes-preexisting");
+      expect(listed[0]!.parentGatewayId).toBe("gw-east");
+      expect(listed[0]!.status).toBe("active");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+
+  it("does not invent a record without parentGatewayId", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-agent-orphan-"));
+    try {
+      await Effect.runPromise(
+        heartbeatAgentInstanceOnHealth(
+          {
+            mcpEndpoint: "http://localhost/mcp",
+            wormDbPath: join(home, "worm.db"),
+            inferenceEndpoint: "http://localhost/inf",
+            virtualKeyId: "vk",
+            teeEnabled: false,
+            orgId: "acme",
+            agentInstanceId: "hermes-orphan",
+            registryHome: home,
+          },
+          { agentId: "hermes-orphan", agentName: "hermes" }
+        )
+      );
+      const listed = await Effect.runPromise(
+        Effect.gen(function* () {
+          const reg = yield* AgentInstanceRegistryService;
+          return yield* reg.listAgentInstances("acme");
+        }).pipe(Effect.provide(agentInstanceRegistryLiveLayer(home)))
+      );
+      expect(listed).toEqual([]);
     } finally {
       await rm(home, { recursive: true, force: true });
     }

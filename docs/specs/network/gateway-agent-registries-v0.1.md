@@ -66,7 +66,9 @@ heartbeat(agentId: string, orgId: string): Effect<AgentInstanceRecord | null>
 listAgentInstances(orgId: string): Effect<AgentInstanceRecord[]>
 ```
 
-**Wiring:** `AgentAdapter.start()` calls `registerAgentInstance` when config includes `orgId` + `parentGatewayId` and `agentType` is one of the four persistent types. `health()` feeds `heartbeat`. Compensation ledger untouched.
+**Wiring:** `AgentAdapter.start()` calls `registerAgentInstance` when config includes `orgId` + `parentGatewayId` and `agentType` is one of the four persistent types. `health()` feeds `heartbeat`; if heartbeat finds no record and `parentGatewayId` is present, it **registers (reconnect / backfill)** so processes that started before Gap B (or without registry env) become visible without a full restart. Compensation ledger untouched.
+
+**Orphan case without reconnect:** if `health()` runs with `orgId` but **no** `parentGatewayId`, heartbeat is a no-op for unknown agents — still invisible until config includes a parent gateway (or `start()` runs with both).
 
 **Persistence:** `$CLAWQL_HOME/agents/registry/orgs/<orgId>/instances.json`.
 

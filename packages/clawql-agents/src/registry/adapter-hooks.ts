@@ -59,6 +59,11 @@ export const registerAgentInstanceOnStart = (
 
 /**
  * From health(): heartbeat when registry + identity configured.
+ *
+ * Reconnect / backfill: if the instance was never registered (process started
+ * before Gap B, or start() ran without org/gateway), and `parentGatewayId` is
+ * now available, upsert via `registerAgentInstance` so topology sees it without
+ * requiring a full adapter restart.
  */
 export const heartbeatAgentInstanceOnHealth = (
   config: ClawQLAgentConfig | null,
@@ -69,10 +74,20 @@ export const heartbeatAgentInstanceOnHealth = (
   if (!orgId) return Effect.void;
   const agentId = config.agentInstanceId?.trim() || hints.agentId || "";
   if (!agentId) return Effect.void;
+  const parentGatewayId = resolveParentGatewayId(config);
 
   return Effect.gen(function* () {
     const reg = yield* AgentInstanceRegistryService;
-    yield* reg.heartbeat(agentId, orgId);
+    const beat = yield* reg.heartbeat(agentId, orgId);
+    if (beat) return;
+    // Unknown to registry — reconnect only when we can form a full record.
+    if (!parentGatewayId) return;
+    yield* reg.registerAgentInstance({
+      agentId,
+      agentType: hints.agentName as PersistentAgentType,
+      parentGatewayId,
+      orgId,
+    });
   }).pipe(
     Effect.provide(agentInstanceRegistryLiveLayer(resolveHome(config))),
     Effect.catchAll(() => Effect.void),
