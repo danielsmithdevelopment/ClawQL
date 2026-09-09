@@ -49,7 +49,7 @@ describe("aggregateTopologyFromRegistries", () => {
     }
   });
 
-  it("empty when no gateways registered", async () => {
+  it("empty when no gateways registered (new org / zero gateways)", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-topo-empty-"));
     try {
       const tree = await Effect.runPromise(
@@ -60,6 +60,9 @@ describe("aggregateTopologyFromRegistries", () => {
       );
       expect(tree.empty).toBe(true);
       expect(tree.gateways).toEqual([]);
+      expect(tree.sources).not.toContain("compensation-accounts");
+      expect(tree.sources).not.toContain("tailscale-status");
+      expect(tree.sources).not.toContain("headscale-nodes");
     } finally {
       await rm(home, { recursive: true, force: true });
     }

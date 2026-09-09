@@ -14,6 +14,7 @@ export {
   debitAgentAccount,
   ensureAgentAccount,
   getAgentAccount,
+  listAgentAccounts,
   setAgentAccountPreference,
   type AgentAccount,
   type CompensationHoldMethod,

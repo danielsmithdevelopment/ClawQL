@@ -1,6 +1,7 @@
 import { generateApiToken } from "./auth.js";
 import type { GatewayEnv } from "./env.js";
 import { appendAudit } from "./audit.js";
+import { forwardCheckoutSessionToCpc } from "./cpc-provision-forward.js";
 import { tierFromStripePlan, upsertTenant, getTenantByStripeCustomer } from "./tenants.js";
 
 export type StripeEventLike = {
@@ -86,6 +87,10 @@ export type ProvisionResult = {
   apiToken?: string;
   eventType: string;
   eventId: string;
+  /** Present when CLAWQL_CPC_PROVISION_URL was used. */
+  cpcForwarded?: boolean;
+  cpcForwardOk?: boolean;
+  cpcForwardStatus?: number;
 };
 
 /**
@@ -164,6 +169,9 @@ export async function processStripeEventForTenants(
       };
     }
     case "checkout.session.completed": {
+      // Hosted edge: D1 tenant upsert (auth token). CPC org-credits + cqk_ key
+      // live in Node — forward session when CLAWQL_CPC_PROVISION_URL is set.
+      // Docs: docs/payments/customer-provisioning-core.md
       const customerId = String(obj.customer ?? "");
       const tenantId =
         metadata.tenant_id?.trim() ||
@@ -180,29 +188,55 @@ export async function processStripeEventForTenants(
         : null;
       const mintToken = !existing?.api_token_hash;
       const apiToken = mintToken ? generateApiToken() : undefined;
+      const resolvedTenantId = existing?.tenant_id ?? tenantId;
 
       await upsertTenant(env.CLAWQL_TENANTS, {
-        tenantId: existing?.tenant_id ?? tenantId,
+        tenantId: resolvedTenantId,
         tier,
         apiToken,
         stripeCustomerId: customerId || null,
         featureFlags: { stripe: true, unlimited_mcp_executions: true },
       });
 
+      const cpc = await forwardCheckoutSessionToCpc(env, obj, { correlationId });
+      if (cpc.forwarded && !cpc.ok) {
+        await appendAudit(env.CLAWQL_TENANTS, {
+          correlationId,
+          tenantId: resolvedTenantId,
+          eventKind: "STRIPE_CHECKOUT_CPC_FORWARD_FAILED",
+          summary: `CPC provision forward failed status=${cpc.status}`,
+          payload: { status: cpc.status, body: cpc.bodyText.slice(0, 500) },
+        });
+      } else if (cpc.forwarded) {
+        await appendAudit(env.CLAWQL_TENANTS, {
+          correlationId,
+          tenantId: resolvedTenantId,
+          eventKind: "STRIPE_CHECKOUT_CPC_FORWARDED",
+          summary: `CPC provision forward ok status=${cpc.status}`,
+          payload: { status: cpc.status },
+        });
+      }
+
       await appendAudit(env.CLAWQL_TENANTS, {
         correlationId,
-        tenantId: existing?.tenant_id ?? tenantId,
+        tenantId: resolvedTenantId,
         eventKind: "STRIPE_CHECKOUT_PROVISIONED",
         summary: `checkout.session.completed → tier=${tier}`,
-        payload: { stripe_customer_id: customerId },
+        payload: {
+          stripe_customer_id: customerId,
+          cpc_forwarded: cpc.forwarded,
+        },
       });
 
       return {
         handled: true,
-        tenantId: existing?.tenant_id ?? tenantId,
+        tenantId: resolvedTenantId,
         apiToken,
         eventType: event.type,
         eventId: event.id,
+        cpcForwarded: cpc.forwarded,
+        cpcForwardOk: cpc.forwarded ? cpc.ok : undefined,
+        cpcForwardStatus: cpc.forwarded ? cpc.status : undefined,
       };
     }
     case "invoice.paid": {

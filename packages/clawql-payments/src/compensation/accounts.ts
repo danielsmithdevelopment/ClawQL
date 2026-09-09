@@ -59,6 +59,20 @@ function emptyAccount(agentId: string, tenantId?: string): AgentAccount {
   };
 }
 
+/** @deprecated Prefer CompensationAccountsService.list — Promise façade retained for legacy callers. */
+export async function listAgentAccounts(
+  env: NodeJS.ProcessEnv = process.env,
+  filter?: { tenantId?: string }
+): Promise<AgentAccount[]> {
+  const file = await loadFile(env);
+  const all = Object.values(file.agents);
+  const tenant = filter?.tenantId?.trim();
+  if (!tenant) return all.sort((a, b) => a.agentId.localeCompare(b.agentId));
+  return all
+    .filter((a) => !a.tenantId || a.tenantId === tenant)
+    .sort((a, b) => a.agentId.localeCompare(b.agentId));
+}
+
 /** @deprecated Prefer CompensationAccountsService.get — Promise façade retained for legacy callers. */
 export async function getAgentAccount(
   agentId: string,
@@ -195,6 +209,9 @@ export class CompensationAccountsService extends Context.Tag("clawql/Compensatio
     readonly get: (
       agentId: string
     ) => Effect.Effect<AgentAccount | undefined, CompensationAccountsError>;
+    readonly list: (filter?: {
+      tenantId?: string;
+    }) => Effect.Effect<AgentAccount[], CompensationAccountsError>;
     readonly ensure: (
       agentId: string,
       tenantId?: string
@@ -230,6 +247,7 @@ export function compensationAccountsLiveLayer(
     CompensationAccountsService,
     CompensationAccountsService.of({
       get: (agentId) => run("Failed to load agent account", () => getAgentAccount(agentId, env)),
+      list: (filter) => run("Failed to list agent accounts", () => listAgentAccounts(env, filter)),
       ensure: (agentId, tenantId) =>
         run("Failed to ensure agent account", () => ensureAgentAccount(agentId, env, tenantId)),
       setPreference: (input) =>

@@ -3,7 +3,7 @@
  * Spec: docs/specs/network/gateway-agent-registries-v0.1.md
  *
  * No heuristic Tailscale scrape. No compensation ledger stand-in.
- * UI (step 4) must not ship before this read path is wired.
+ * Dashboard UI wires here only (step 4).
  */
 
 import { execFile } from "node:child_process";
@@ -19,38 +19,16 @@ import {
   gatewayRegistryLiveLayer,
   type GatewayRecord,
 } from "clawql-network";
+import type { AgentNode, GatewayNode, GatewayStatus, TopologyTree } from "./topology-types.js";
 
 const execFileAsync = promisify(execFile);
 
-export type TopologyAgentKind = "persistent" | "cell";
-export type TopologyNodeStatus = "healthy" | "degraded" | "offline";
+export type TopologyAgentNode = AgentNode;
+export type TopologyGatewayNode = GatewayNode;
+export type TopologyNodeStatus = GatewayStatus;
+export type TopologyAgentKind = AgentNode["kind"];
 
-export type TopologyAgentNode = {
-  readonly agentId: string;
-  readonly kind: TopologyAgentKind;
-  readonly agentType?: AgentInstanceRecord["agentType"];
-  readonly cellStatus?: "resident" | "hibernating";
-  readonly parentGatewayId: string;
-  readonly lastActive: string;
-  readonly traceLink: string;
-  readonly status: TopologyNodeStatus;
-};
-
-export type TopologyGatewayNode = {
-  readonly gatewayId: string;
-  readonly kind: GatewayRecord["kind"];
-  readonly meshIdentity: string;
-  readonly ownerDeveloper?: string;
-  readonly lastSeen: string;
-  readonly status: TopologyNodeStatus;
-  readonly children: readonly TopologyAgentNode[];
-};
-
-export type TopologyTree = {
-  readonly gateways: readonly TopologyGatewayNode[];
-  readonly sources: readonly string[];
-  readonly empty: boolean;
-};
+export type { TopologyTree } from "./topology-types.js";
 
 export type AggregateTopologyInput = {
   readonly orgId: string;
@@ -70,11 +48,11 @@ function mcpTraceCompareLink(base: string, agentId: string): string {
   return `${compare}?focus=${encodeURIComponent(agentId)}`;
 }
 
-function mapGatewayStatus(s: GatewayRecord["status"]): TopologyNodeStatus {
+function mapGatewayStatus(s: GatewayRecord["status"]): GatewayStatus {
   return s;
 }
 
-function mapAgentStatus(s: AgentInstanceRecord["status"]): TopologyNodeStatus {
+function mapAgentStatus(s: AgentInstanceRecord["status"]): GatewayStatus {
   if (s === "active") return "healthy";
   if (s === "idle") return "degraded";
   return "offline";
@@ -84,7 +62,7 @@ type CellDraft = {
   agentId: string;
   cellStatus: "resident" | "hibernating";
   lastActive: string;
-  status: TopologyNodeStatus;
+  status: GatewayStatus;
   parentHint?: string;
 };
 
@@ -167,8 +145,8 @@ export const aggregateTopologyFromRegistries = (
           ownerDeveloper: g.ownerDeveloper,
           lastSeen: g.lastSeen,
           status: mapGatewayStatus(g.status),
-          children: [] as TopologyAgentNode[],
-        },
+          children: [] as AgentNode[],
+        } satisfies GatewayNode & { children: AgentNode[] },
       ])
     );
     const defaultParent =
@@ -220,3 +198,6 @@ export const topologyFixedLayer = (tree: TopologyTree): Layer.Layer<TopologyServ
   Layer.succeed(TopologyService, {
     aggregate: () => Effect.succeed(tree),
   });
+
+/** Alias used by earlier CPC snapshots — same as topologyFixedLayer. */
+export const topologySnapshotLayer = topologyFixedLayer;

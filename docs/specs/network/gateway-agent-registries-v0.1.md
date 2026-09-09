@@ -92,7 +92,7 @@ Four real sources, zero heuristic scraping, zero ledger-as-stand-in.
 1. Gap A — this package slice
 2. Gap B — this package slice
 3. Rebuild `TopologyService` against A + B + celld (aggregation only)
-4. Topology tree UI — **only after** 1–3 (do not repeat the premature-UI mistake)
+4. Topology tree UI — wire dashboard to `aggregateTopologyFromRegistries`; retire any ledger/scrape stand-in (step 4 PR)
 
 ---
 

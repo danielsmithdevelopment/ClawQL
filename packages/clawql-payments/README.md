@@ -4,7 +4,7 @@ Unified payments layer for ClawQL — **Stripe** billing + **Connect payouts**, 
 
 **Managed vs self-hosted:** On ClawQL managed hosting, use Stripe for **platform fees** plus optional **closed-loop company credits** (role budgets, within-org transfers — [`org-credits.md`](../../docs/payments/org-credits.md)). Cross-tenant **P2P** and **agent compensation** default **off** and stay off when `CLAWQL_MANAGED_HOSTING=1`. Details: [`docs/payments/hosted-vs-self-hosted-compliance.md`](../../docs/payments/hosted-vs-self-hosted-compliance.md).
 
-**Docs:** [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
+**Docs:** [`docs/payments/clawql-payments.md`](../../docs/payments/clawql-payments.md), [`docs/payments/customer-provisioning-core.md`](../../docs/payments/customer-provisioning-core.md), [`docs/payments/payouts-ramp.md`](../../docs/payments/payouts-ramp.md), [`docs/payments/credits-ach.md`](../../docs/payments/credits-ach.md), [`docs/payments/agent-compensation.md`](../../docs/payments/agent-compensation.md).
 
 ClawQL's own managed tiers run on this package for **Stripe-mediated subscriptions**. The same package is available to self-hosted operators to bill their customers, pay creators via Connect, issue Ramp agent cards, gate MCP tools via x402/MPP/AP2, and (when explicitly enabled) run peer credit transfer or agent compensation under the operator's compliance framework.
 
@@ -23,11 +23,37 @@ clawql-payments
 ├── ramp/       # Ramp funds + virtual / agent cards
 ├── offramp/    # Consumer USDC → fiat (Moonpay / Transak)
 ├── credits/    # Prepaid grants, DeductionService (sync hold/capture), FC/ACH top-up
+├── provisioning/ # Customer Provisioning Core (`provisionOrg`, reportUsage, Checkout handoff)
 ├── compensation/ # Agent credits/funds ledger + DAOS-aligned 2PC staging
 ├── plans/      # ClawQL tier definitions, entitlements, usage tracking, limit enforcement
 ├── audit/      # Payment events → hash-chained WORM (jsonl, postgres, or memory) + optional Loki export
 └── cli/        # `clawql payments *` command implementations
 ```
+
+## Customer Provisioning Core
+
+Every customer is an org. See [`docs/payments/customer-provisioning-core.md`](../../docs/payments/customer-provisioning-core.md).
+
+```bash
+export CLAWQL_CREDITS_ENABLED=1
+clawql payments org provision --email owner@acme.com --name Acme --plan team --billing-mode stripe_invoice
+clawql payments org report-usage --org-id acme
+```
+
+Mount internal HTTP (shared bearer `CLAWQL_CPC_PROVISION_TOKEN`):
+
+```ts
+import express from "express";
+import { attachProvisioningRoutes } from "clawql-payments";
+
+const app = express();
+app.use(express.json());
+attachProvisioningRoutes(app);
+```
+
+Self-serve org dashboard (mounted with credits HATEOAS): `GET /credits/org?orgId=…&tenant=…` — plan/billing, API keys, usage, agents, traces. See [`docs/payments/customer-provisioning-core.md`](../../docs/payments/customer-provisioning-core.md).
+
+Stripe ops checklist for live Checkout / meters: [`docs/payments/stripe-products-ops.md`](../../docs/payments/stripe-products-ops.md).
 
 ## CLI
 

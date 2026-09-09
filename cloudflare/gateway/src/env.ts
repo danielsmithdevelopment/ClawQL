@@ -9,6 +9,13 @@ export type GatewayEnv = {
   /** Stripe webhook signing secret (`whsec_...`). */
   STRIPE_WEBHOOK_SECRET?: string;
   /**
+   * Node CPC provision URL (e.g. https://host/payments/provision-org-from-checkout).
+   * When set, checkout.session.completed forwards the session after D1 upsert.
+   */
+  CLAWQL_CPC_PROVISION_URL?: string;
+  /** Bearer token matching Node `CLAWQL_CPC_PROVISION_TOKEN`. */
+  CLAWQL_CPC_PROVISION_TOKEN?: string;
+  /**
    * Default origin for Shared+ IDP proxy (K3s/EKS ingress).
    * Per-tenant override: D1 `feature_flags.idp_proxy_origin`.
    */
