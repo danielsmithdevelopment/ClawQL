@@ -30,7 +30,9 @@ describe("warnIfAgentRegistryMissingParentGateway", () => {
       )
     );
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]?.[0])).toContain(AGENT_REGISTRY_MISSING_PARENT_GATEWAY_WARNING);
+    expect(String(warn.mock.calls[0]?.[0])).toContain(
+      AGENT_REGISTRY_MISSING_PARENT_GATEWAY_WARNING
+    );
     expect(String(warn.mock.calls[0]?.[0])).toContain("orgId=acme");
   });
 
