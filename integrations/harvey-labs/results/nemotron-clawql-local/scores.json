@@ -1,0 +1,46 @@
+{
+  "score": 1.0,
+  "max_score": 1.0,
+  "summary": "6/6 criteria passed.  ALL-PASS.",
+  "all_pass": true,
+  "n_criteria": 6,
+  "n_passed": 6,
+  "criteria_results": [
+    {
+      "id": "C-001",
+      "title": "Second-request deal \u2014 Cascade Retail 1038-00001",
+      "verdict": "pass",
+      "reasoning": "The agent's output explicitly lists matter 1038-00001 for Cascade Retail with a deal value of $4,700,000,000 in the table categorized under 'Deals That Drew an HSR Second Request' among its billion-dollar-plus M&A deals. This directly matches the criterion's requirement."
+    },
+    {
+      "id": "C-002",
+      "title": "Second-request deal \u2014 Harrowgate PE 1003-00003",
+      "verdict": "pass",
+      "reasoning": "The agent's output explicitly lists matter 1003-00003 (Harrowgate PE) under the 'Deals That Drew an HSR Second Request' table with a deal value of $1.9B, directly satisfying the criterion."
+    },
+    {
+      "id": "C-003",
+      "title": "Second-request deal \u2014 Solara Digital 1041-00001",
+      "verdict": "pass",
+      "reasoning": "The agent's output explicitly lists matter 1041-00001 (Solara Digital, $1.63B) in the 'Deals That Drew an HSR Second Request' table, directly satisfying the criterion that this specific deal drew a second request."
+    },
+    {
+      "id": "C-004",
+      "title": "Second-request deal \u2014 Cascade Retail 1038-00009",
+      "verdict": "pass",
+      "reasoning": "The agent's output explicitly lists matter 1038-00009 (Cascade Retail) with a deal value of $1,200,000,000 in the section for deals that drew an HSR second request, including the relevant date and proof document. This directly satisfies the criterion."
+    },
+    {
+      "id": "C-005",
+      "title": "Second-request rate",
+      "verdict": "pass",
+      "reasoning": "The agent's output explicitly states that 4 out of 7 billion-dollar-plus M&A deals drew a second request, yielding a rate of ~57%, which directly satisfies the criterion."
+    },
+    {
+      "id": "C-006",
+      "title": "Population \u2014 precision",
+      "verdict": "pass",
+      "reasoning": "The agent lists exactly seven deals in its output, all of which are contained within the eight allowed population members specified in the criterion. It does not assert or include any matter_id outside the provided list, thereby satisfying the precision constraint. Omitting one valid member (1032-00001) relates to recall/completeness but does not violate the stated negative constraint."
+    }
+  ]
+}

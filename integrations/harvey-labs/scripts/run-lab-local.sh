@@ -43,6 +43,9 @@ unset OPENROUTER_API_KEY || true
 export CLAWQL_LAB_NEMOTRON_MODEL="${NEMOTRON_MODEL}"
 export CLAWQL_LAB_JUDGE_VIA_OPENROUTER=1
 export CLAWQL_LAB_CORRELATION_PREFIX="${CLAWQL_LAB_CORRELATION_PREFIX:-harvey-lab/run/${LAB_RUN_ID}}"
+# Pre-ingest client checks this env before calling data_ingest (must match MCP).
+export CLAWQL_ENABLE_DATA="${CLAWQL_ENABLE_DATA:-1}"
+export CLAWQL_HARVEY_LAB="${CLAWQL_HARVEY_LAB:-1}"
 
 echo "::notice::LOCAL via clawql-inference — agent=${AGENT_BASE} model=${NEMOTRON_MODEL}"
 echo "::notice::LOCAL via clawql-inference — judge=${JUDGE_BASE} model=${JUDGE}"
@@ -214,6 +217,8 @@ ensure_clawql_mcp() {
   export CLAWQL_MCP_URL="http://127.0.0.1:${mcp_port}/mcp"
   SAFE_TASK_ID="${TASK//\//__}"
   export CLAWQL_OBSIDIAN_VAULT_PATH="${CLAWQL_LAB_VAULT_ROOT:-$HOME/.ClawQL/HarveyLABVault}/${SAFE_TASK_ID}"
+  # Must match start-clawql-for-lab.sh — do not keep a prior task's CLAWQL_DATA_PATH.
+  export CLAWQL_DATA_PATH="${CLAWQL_OBSIDIAN_VAULT_PATH}/lab/matters.duckdb"
   export CLAWQL_LAB_PREINGEST_SCRIPT="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-pre-ingest.mjs"
   export CLAWQL_LAB_MCP_PROXY="${CLAWQL_ROOT}/integrations/harvey-labs/scripts/lab-mcp-proxy.mjs"
   CLAWQL_MCP_STARTED=1

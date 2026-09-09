@@ -1,8 +1,17 @@
 {
   "tools": [
     {
+      "name": "clawql_sql",
+      "description": "PRIMARY firm-knowledge tool. Read-only DuckDB SQL (MCP data_query). Tables: matters, matter_documents, open_facts; plus any pre-defined views. Match WHERE to every prompt conjunct (size AND deal-type AND …) — do not drop a noun because it is missing from practice_area enums; map via DESCRIBE / SHOW TABLES to is_*/has_* or a view. For frequency/rate questions: first return the full population N (every id), then the k subset — never k alone. Do not add unstated filters. After rows return, IMMEDIATELY write /workspace/output/response.md from them.",
+      "parameters": {
+        "type": "object",
+        "properties": { "sql": { "type": "string" } },
+        "required": ["sql"]
+      }
+    },
+    {
       "name": "clawql_memory_recall",
-      "description": "Retrieve matter context from the ClawQL vault/ontology. Use schema='legal.Matter' + filters title contains HSR_SECOND_REQUEST ONLY when the task explicitly asks about second requests.",
+      "description": "Optional AFTER a SQL draft exists. Vault/ontology recall. For second-request tasks only: schema=legal.Matter + filters title contains HSR_SECOND_REQUEST. Do not use as turn-1 exploration instead of clawql_sql.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -16,7 +25,7 @@
     },
     {
       "name": "clawql_memory_ingest",
-      "description": "Persist a finding into the ClawQL vault.",
+      "description": "Persist a finding into the ClawQL vault (optional; never instead of response.md).",
       "parameters": {
         "type": "object",
         "properties": {
@@ -31,7 +40,7 @@
     },
     {
       "name": "clawql_search",
-      "description": "Discover operations across indexed APIs.",
+      "description": "Do NOT use for firm-knowledge LAB tasks. API operation discovery only.",
       "parameters": {
         "type": "object",
         "properties": { "query": { "type": "string" }, "limit": { "type": "integer" } },
@@ -40,7 +49,7 @@
     },
     {
       "name": "clawql_execute",
-      "description": "Execute a discovered API operation.",
+      "description": "Do NOT use for firm-knowledge LAB tasks. API execution only.",
       "parameters": {
         "type": "object",
         "properties": { "operationId": { "type": "string" }, "arguments": { "type": "object" } },
@@ -49,20 +58,11 @@
     },
     {
       "name": "clawql_audit",
-      "description": "Append an audit / RTP lineage entry.",
+      "description": "Do NOT use for firm-knowledge LAB tasks during the agent loop.",
       "parameters": {
         "type": "object",
         "properties": { "type": { "type": "string" }, "payload": { "type": "object" } },
         "required": ["type"]
-      }
-    },
-    {
-      "name": "clawql_sql",
-      "description": "Read-only SQL via ClawQL MCP data_query (clawql-data engine plugin). Tables: matters, matter_documents, open_facts.",
-      "parameters": {
-        "type": "object",
-        "properties": { "sql": { "type": "string" } },
-        "required": ["sql"]
       }
     }
   ],

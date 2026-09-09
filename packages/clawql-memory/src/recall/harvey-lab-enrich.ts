@@ -452,22 +452,31 @@ export async function enrichLabMemoryRecall(
     payload.hits = compactHits as MemoryRecallResult["hits"];
   }
 
+  const structuredCohort = Boolean(payload.schema && payload.filters);
   const guidance: Record<string, unknown> = {
     sandboxDocumentRoots: sortedIds.map((mid) => `/workspace/documents/matters/${mid}`),
     vaultPathsNotReadableViaHarnessRead: true,
-    cohortRule:
-      "For frequency/survey tasks, treat matterIds (and matterIdCount) as the authoritative denominator N. List every id. Do not drop ids when writing k of N.",
+    sqlFirst:
+      "Prefer clawql_sql with WHERE predicates taken only from the user prompt (no unstated extra filters). After SQL rows, write /workspace/output/response.md by turn ≤3.",
+    writeByTurn: 3,
     requiredDeliverable:
-      "Before finishing, call the harness `write` tool to create a file under /workspace/output/ (e.g. matters-enumeration.md or response.md). Attempt every rubric criterion with the best evidence you have — partial credit beats empty output. Verify distinctive terms against cited document text (guilty until proven). For frequency/survey tasks: define N as the prompt's filtered matter set (list every matter id), then write k of N (or 0 of N) — do not use folder counts or whole-vault counts as N. For HSR tasks use clientShortName (Cascade Retail, Harrowgate PE, Solara Digital, Halcyon Semi), state that each listed matter qualifies, and cite preferredEvidence — not engagement letters. Chat-only answers are not graded.",
+      "MUST write exactly /workspace/output/response.md via harness `write` (no alternate filenames). Attempt every rubric criterion — partial credit beats empty output. Frequency: k of N with every N id listed. HSR: full clientShortName + preferredEvidence / hsr_second_request_proof_doc — not engagement letters. Chat-only answers are not graded.",
     matterIds: sortedIds,
     evidenceRule:
       "Cite Second Request evidence docs (joint-status-report, case-assessment-memo, letter-ftc-meet-and-confer, second-request-strategy-memo, hsr-withdrawal-letter, substantial-compliance-certification, custodian-identification-collection-protocol). Do not cite engagement letters as Second Request evidence.",
     contextDiscipline:
       "Never ls -R / find the entire /workspace/documents tree. Use narrow paths. Do not invent ontology title flags beyond seeded tokens such as HSR_SECOND_REQUEST. memory_recall limit must be ≤50.",
   };
+  if (structuredCohort) {
+    guidance.cohortRule =
+      "Structured schema+filters recall: matterIds (and matterIdCount) are authoritative N for frequency/survey. List every id. Do not drop ids when writing k of N.";
+  } else {
+    guidance.cohortRule =
+      "Unstructured recall matterIds are NOT authoritative N. Define N via clawql_sql with the prompt filter, then write k of N.";
+  }
   if (!sortedIds.length) {
     guidance.fallback =
-      "Structured recall returned no matter hits. Do not repeat the same filter more than once more. Fall back to targeted grep/glob/read under /workspace/documents/matters/, then write /workspace/output/ attempting all criteria.";
+      "Structured recall returned no matter hits. Do not repeat the same filter more than once more. Prefer clawql_sql; else targeted grep under /workspace/documents/matters/, then write /workspace/output/response.md.";
   }
   payload.labGuidance = guidance;
 

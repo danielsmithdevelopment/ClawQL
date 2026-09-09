@@ -133,8 +133,9 @@ export const CREATE_LAB_VIEW_SQL: readonly string[] = [
      SELECT * FROM matters WHERE is_hsr_second_request AND has_hsr_clearance`,
   `CREATE VIEW billion_dollar_antitrust_ma AS
      SELECT * FROM matters
-     WHERE deal_value_usd IS NOT NULL AND deal_value_usd >= 1200000000
-       AND (is_hsr_second_request OR has_ma_execution_agreement)`,
+     WHERE is_antitrust_matter
+       AND deal_value_usd IS NOT NULL
+       AND deal_value_usd >= 1000000000`,
   `CREATE VIEW secured_credit_facilities AS
      SELECT * FROM matters WHERE is_credit_facility AND is_secured`,
   `CREATE VIEW live_maintenance_financings AS

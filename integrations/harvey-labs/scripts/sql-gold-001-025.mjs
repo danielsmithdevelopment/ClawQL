@@ -563,20 +563,11 @@ async function runChecks(store) {
   detail["004_top"] = top004;
 
   const pop005 = await idSet(
-    `SELECT matter_id FROM matters
-     WHERE matter_id IN (${inList(popList)})
-       AND is_antitrust_matter
-       AND deal_value_usd IS NOT NULL
-       AND deal_value_usd >= 1000000000
-     ORDER BY matter_id`
+    `SELECT matter_id FROM billion_dollar_antitrust_ma ORDER BY matter_id`
   );
   const sr005 = await idSet(
-    `SELECT matter_id FROM matters
-     WHERE matter_id IN (${inList(popList)})
-       AND is_antitrust_matter
-       AND deal_value_usd IS NOT NULL
-       AND deal_value_usd >= 1000000000
-       AND is_hsr_second_request
+    `SELECT matter_id FROM billion_dollar_antitrust_ma
+     WHERE is_hsr_second_request
      ORDER BY matter_id`
   );
   const rate005 = [sr005.size, pop005.size];
