@@ -182,15 +182,15 @@ Same payments / clawql-audit trail. No separate billing audit schema.
 
 ---
 
-| #   | Piece                                | Status                                                                |
-| --- | ------------------------------------ | --------------------------------------------------------------------- |
-| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](../../payments/stripe-products-ops.md) |
-| 1   | Org billing fields                   | ✅ shipped                                                            |
-| 2   | `provisionOrg` Effect                | ✅ shipped                                                            |
-| 3   | Webhook converge (Node + CF handoff) | ✅ Node webhook + HTTP routes; CF optional forward                    |
-| 4   | Enterprise admin trigger             | ✅ CLI                                                                |
-| 5   | `reportUsageToStripe`                | ✅ shipped                                                            |
-| 6   | Self-serve dashboard UI              | Open                                                                  |
+| # | Piece | Status |
+| - | ----- | ------ |
+| 0 | Stripe Products / Prices / meters | Ops — [stripe-products-ops.md](../../payments/stripe-products-ops.md) |
+| 1 | Org billing fields | ✅ shipped |
+| 2 | `provisionOrg` Effect | ✅ shipped |
+| 3 | Webhook converge (Node + CF handoff) | ✅ Node webhook + HTTP routes; CF optional forward |
+| 4 | Enterprise admin trigger | ✅ CLI |
+| 5 | `reportUsageToStripe` | ✅ shipped |
+| 6 | Self-serve dashboard UI | ✅ `/credits/org` |
 
 **Operator guide:** [`docs/payments/customer-provisioning-core.md`](../../payments/customer-provisioning-core.md)
 

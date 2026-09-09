@@ -105,7 +105,7 @@ Reuse CPC types plus existing payment audit categories for top-ups and meter rep
 2. `billingMode` + `planId` required on provision; hybrid waterfall unit tests (credits first vs meter). ✅ (`credits_only` never meters)
 3. Wire `reportUsageToStripe` to `StripeMeterService` for overage-only. ✅
 4. Keep `DeductionService` as sole per-call debit; tests that credit path never calls meter API. ✅
-5. Dashboard: show plan, subscription status, credit balance, top-up CTA, upgrade via Portal. Open
+5. Dashboard: show plan, subscription status, credit balance, top-up CTA, upgrade via Portal. ✅ `/credits/org`
 
 ## Related
 

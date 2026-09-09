@@ -291,6 +291,21 @@ export async function getOrg(
   return file.orgs[orgId.trim().toLowerCase()];
 }
 
+/** Orgs where the tenant is an active member or billing admin. */
+export async function findOrgsForTenant(
+  tenantId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord[]> {
+  const id = tenantId.trim();
+  if (!id) return [];
+  const file = await loadOrgCreditsFile(env);
+  return Object.values(file.orgs).filter(
+    (org) =>
+      org.billingAdminTenantIds.includes(id) ||
+      org.members.some((m) => m.memberTenantId === id && m.status === "active")
+  );
+}
+
 export async function setOrgRolePolicies(
   orgId: string,
   policies: OrgRolePolicy[],

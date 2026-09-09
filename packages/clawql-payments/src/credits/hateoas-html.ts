@@ -450,6 +450,10 @@ function renderCreditsMiniHomeDoc(input: MiniHomeInput): string {
       <a class="verb" href="/credits/request/new?${esc(q)}">${ICON_REQUEST}<span>Request</span></a>
       <a class="verb" href="/credits/activity?${esc(q)}">${ICON_ACTIVITY}<span>Activity</span></a>
     </nav>
+    <p class="note" style="margin-top:0.85rem">
+      <a href="/credits/org?${esc(q)}" style="color:var(--accent);font-weight:600;text-decoration:none">Org dashboard</a>
+      · plan, API keys, usage, agents, traces
+    </p>
     <section class="section" aria-label="Recent activity">
       <div class="section-head">
         <h2>Activity</h2>

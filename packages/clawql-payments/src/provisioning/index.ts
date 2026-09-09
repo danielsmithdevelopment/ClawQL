@@ -29,3 +29,9 @@ export {
   type CheckoutProvisionHandoff,
 } from "./checkout-handoff.js";
 export { attachProvisioningRoutes, type AttachProvisioningRoutesOptions } from "./http.js";
+export { attachCpcDashboardRoutes } from "./dashboard-http.js";
+export {
+  renderCpcDashboardHtml,
+  renderCpcDashboardErrorHtml,
+  type CpcDashboardModel,
+} from "./dashboard-html.js";

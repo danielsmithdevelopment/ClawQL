@@ -1,0 +1,155 @@
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import express from "express";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Effect } from "effect";
+import { resetDefaultAuditRingBufferForTests } from "clawql-core";
+import { resetPaymentAuditStoreForTests } from "../audit/worm.js";
+import { CreditsLedgerService } from "../credits/ledger.js";
+import { resetOrgCreditsForTests } from "../credits/org.js";
+import {
+  resetPaymentsEffectRuntimeForTests,
+  runPaymentsEffect,
+} from "../runtime/payments-effect-runtime.js";
+import { ProvisionOrgService } from "./provision-org-service.js";
+import { attachCpcDashboardRoutes } from "./dashboard-http.js";
+import { renderCpcDashboardHtml } from "./dashboard-html.js";
+import type { CpcDashboardModel } from "./dashboard-html.js";
+
+async function withApp(
+  env: NodeJS.ProcessEnv,
+  run: (base: string) => Promise<void>
+): Promise<void> {
+  const app = express();
+  app.use(express.urlencoded({ extended: false }));
+  app.use(express.json());
+  attachCpcDashboardRoutes(app, { env });
+  const server = await new Promise<import("node:http").Server>((resolve) => {
+    const s = app.listen(0, "127.0.0.1", () => resolve(s));
+  });
+  const addr = server.address();
+  if (!addr || typeof addr === "string") throw new Error("no listen address");
+  const base = `http://127.0.0.1:${addr.port}`;
+  try {
+    await run(base);
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      server.close((err) => (err ? reject(err) : resolve()))
+    );
+  }
+}
+
+describe("CPC dashboard", () => {
+  let home: string;
+
+  beforeEach(async () => {
+    home = await mkdtemp(join(tmpdir(), "clawql-cpc-dash-"));
+    process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_CREDITS_ENABLED = "1";
+    process.env.CLAWQL_MANAGED_HOSTING = "1";
+    process.env.CLAWQL_PAYMENTS_AUDIT_STORE = "memory";
+    process.env.CLAWQL_CREDITS_HATEOAS_PUBLIC = "1";
+    resetDefaultAuditRingBufferForTests();
+    resetPaymentsEffectRuntimeForTests();
+    await resetPaymentAuditStoreForTests(process.env);
+    await resetOrgCreditsForTests(process.env);
+    await runPaymentsEffect(
+      Effect.gen(function* () {
+        const ledger = yield* CreditsLedgerService;
+        yield* ledger.reset();
+      })
+    );
+  });
+
+  afterEach(async () => {
+    resetPaymentsEffectRuntimeForTests();
+    delete process.env.CLAWQL_HOME;
+    delete process.env.CLAWQL_CREDITS_ENABLED;
+    delete process.env.CLAWQL_MANAGED_HOSTING;
+    delete process.env.CLAWQL_PAYMENTS_AUDIT_STORE;
+    delete process.env.CLAWQL_CREDITS_HATEOAS_PUBLIC;
+    await rm(home, { recursive: true, force: true });
+  });
+
+  it("renders five section anchors", () => {
+    const model: CpcDashboardModel = {
+      org: {
+        orgId: "acme",
+        displayName: "Acme",
+        poolTenantId: "org:acme:pool",
+        billingAdminTenantIds: ["acme:owner"],
+        rolePolicies: [],
+        members: [
+          {
+            memberTenantId: "acme:owner",
+            allocationRoleId: "staff",
+            orgRole: "billing_admin",
+            status: "active",
+            joinedAt: new Date().toISOString(),
+          },
+        ],
+        periodEndPolicy: "expire_to_pool",
+        planId: "team",
+        billingMode: "hybrid",
+        createdVia: "self_serve",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      actorTenantId: "acme:owner",
+      spend: {
+        orgId: "acme",
+        poolTenantId: "org:acme:pool",
+        poolBalanceCents: 0,
+        poolSpendableCents: 0,
+        memberBalanceCents: 0,
+        totalCreditsCents: 0,
+        members: [],
+        generatedAt: new Date().toISOString(),
+      },
+      keys: [],
+      agents: [],
+      wormEntries: [],
+      portalAvailable: false,
+      mcpUiTraceBase: "/mcp-ui/trace",
+      creditsTopupHref: "/credits/topup?tenant=acme:owner",
+      returnPath: "/credits/org?orgId=acme",
+    };
+    const html = Effect.runSync(renderCpcDashboardHtml(model));
+    expect(html).toContain('id="billing"');
+    expect(html).toContain('id="keys"');
+    expect(html).toContain('id="usage"');
+    expect(html).toContain('id="agents"');
+    expect(html).toContain('id="traces"');
+    expect(html).toContain("getOrgUnifiedSpendSummary");
+    expect(html).toContain("Claw<span>QL</span>");
+  });
+
+  it("serves dashboard after provision", async () => {
+    const provisioned = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const svc = yield* ProvisionOrgService;
+        return yield* svc.provisionOrg({
+          orgName: "Dash Co",
+          orgId: "dashco",
+          ownerEmail: "owner@dash.co",
+          planId: "pro",
+          createdVia: "enterprise_sales",
+          billingMode: "stripe_invoice",
+        });
+      })
+    );
+
+    await withApp(process.env, async (base) => {
+      const res = await fetch(
+        `${base}/credits/org?orgId=dashco&tenant=${encodeURIComponent(provisioned.ownerMemberTenantId)}`
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).toContain("Plan / billing");
+      expect(html).toContain("API keys");
+      expect(html).toContain("dashco");
+      expect(html).toContain("pro");
+    });
+  });
+});
