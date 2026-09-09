@@ -14,7 +14,27 @@ export {
   sealHashChainRecord,
   sha256Hex,
 } from "./seal.js";
-export { HashChain, HashChainLive } from "./chain.js";
+export {
+  HashChain,
+  HashChainLive,
+  makeHashChainLayer,
+} from "./chain.js";
+export {
+  DEFAULT_CBOR_CHAIN_METADATA,
+  LEGACY_JSON_CHAIN_METADATA,
+  WormSerialization,
+  canonicalJSONSync,
+  deserializeWormEntry,
+  formatAtIndex,
+  makeWormSerializationLayer,
+  resolveChainMetadata,
+  serializeWormEntry,
+  sha256HexBytes,
+  sortKeysDeep,
+  type ChainMetadata,
+  type WORMEntryPayload,
+  type WormSerializationVersion,
+} from "./serialization.js";
 export { MerkleBatchLayer, type MerkleInclusionProof, type MerkleRoot } from "./merkle.js";
 export { DualAckReplicator } from "./replication/dual-ack.js";
 export { defaultRetryConfig, withRetry, type RetryConfig } from "./replication/retry.js";
