@@ -111,9 +111,7 @@ const loadCelldCells = (env: NodeJS.ProcessEnv): Effect.Effect<CellDraft[]> =>
           const r = raw as Record<string, unknown>;
           const agentId = String(r.id ?? r.cellId ?? r.name ?? "cell-unknown");
           const hib =
-            r.hibernating === true ||
-            r.status === "hibernating" ||
-            r.state === "hibernating";
+            r.hibernating === true || r.status === "hibernating" || r.state === "hibernating";
           const lastActive = String(
             r.lastActive ?? r.last_active ?? r.updatedAt ?? new Date().toISOString()
           );

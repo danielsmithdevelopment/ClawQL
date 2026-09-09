@@ -17,12 +17,12 @@ describe("statusFromLastSeen", () => {
     const now = 1_000_000;
     const interval = GATEWAY_HEARTBEAT_INTERVAL_MS;
     expect(statusFromLastSeen(new Date(now).toISOString(), now, interval)).toBe("healthy");
-    expect(
-      statusFromLastSeen(new Date(now - interval * 1.5).toISOString(), now, interval)
-    ).toBe("degraded");
-    expect(
-      statusFromLastSeen(new Date(now - interval * 3).toISOString(), now, interval)
-    ).toBe("offline");
+    expect(statusFromLastSeen(new Date(now - interval * 1.5).toISOString(), now, interval)).toBe(
+      "degraded"
+    );
+    expect(statusFromLastSeen(new Date(now - interval * 3).toISOString(), now, interval)).toBe(
+      "offline"
+    );
   });
 });
 

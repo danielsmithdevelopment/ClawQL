@@ -1,9 +1,4 @@
-export type {
-  GatewayKind,
-  GatewayRecord,
-  GatewayStatus,
-  RegisterGatewayInput,
-} from "./types.js";
+export type { GatewayKind, GatewayRecord, GatewayStatus, RegisterGatewayInput } from "./types.js";
 export {
   GATEWAY_DEGRADED_AFTER_MISSED,
   GATEWAY_HEARTBEAT_INTERVAL_MS,

@@ -24,13 +24,8 @@ export type GatewayRegistryFile = {
 export class GatewayRegistryService extends Context.Tag("clawql-network/GatewayRegistryService")<
   GatewayRegistryService,
   {
-    readonly registerGateway: (
-      input: RegisterGatewayInput
-    ) => Effect.Effect<GatewayRecord>;
-    readonly heartbeat: (
-      gatewayId: string,
-      orgId: string
-    ) => Effect.Effect<GatewayRecord | null>;
+    readonly registerGateway: (input: RegisterGatewayInput) => Effect.Effect<GatewayRecord>;
+    readonly heartbeat: (gatewayId: string, orgId: string) => Effect.Effect<GatewayRecord | null>;
     readonly listMeshPeers: (orgId: string) => Effect.Effect<readonly GatewayRecord[]>;
   }
 >() {}
@@ -84,9 +79,7 @@ const refreshStatuses = (file: GatewayRegistryFile, nowMs: number): GatewayRegis
   return { version: 1, gateways };
 };
 
-export const gatewayRegistryLiveLayer = (
-  home?: string
-): Layer.Layer<GatewayRegistryService> =>
+export const gatewayRegistryLiveLayer = (home?: string): Layer.Layer<GatewayRegistryService> =>
   Layer.succeed(GatewayRegistryService, {
     registerGateway: (input) =>
       Effect.gen(function* () {

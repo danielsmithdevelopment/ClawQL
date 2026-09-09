@@ -3,10 +3,7 @@
  */
 
 import { Effect } from "effect";
-import {
-  GatewayRegistryService,
-  gatewayRegistryLiveLayer,
-} from "./gateway-registry-service.js";
+import { GatewayRegistryService, gatewayRegistryLiveLayer } from "./gateway-registry-service.js";
 import { GATEWAY_HEARTBEAT_INTERVAL_MS } from "./types.js";
 
 export type GatewayHeartbeatHandle = {

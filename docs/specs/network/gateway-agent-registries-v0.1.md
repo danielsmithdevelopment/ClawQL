@@ -99,4 +99,4 @@ Four real sources, zero heuristic scraping, zero ledger-as-stand-in.
 - [customer-dashboard-full-scope-v0.1](../billing/customer-dashboard-full-scope-v0.1.md)
 - [clawql-network-v0.1](./clawql-network-v0.1.md)
 
-*Gateway & Agent Registries · v0.1 · September 2026*
+_Gateway & Agent Registries · v0.1 · September 2026_

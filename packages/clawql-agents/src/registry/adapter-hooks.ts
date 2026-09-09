@@ -67,8 +67,7 @@ export const heartbeatAgentInstanceOnHealth = (
   if (!config || !isPersistentAgentType(hints.agentName)) return Effect.void;
   const orgId = resolveOrgId(config);
   if (!orgId) return Effect.void;
-  const agentId =
-    config.agentInstanceId?.trim() || hints.agentId || "";
+  const agentId = config.agentInstanceId?.trim() || hints.agentId || "";
   if (!agentId) return Effect.void;
 
   return Effect.gen(function* () {

@@ -4,10 +4,7 @@
 
 import { Effect } from "effect";
 import type { ToolDefinition } from "clawql-core";
-import {
-  GatewayRegistryService,
-  gatewayRegistryLiveLayer,
-} from "./gateway-registry-service.js";
+import { GatewayRegistryService, gatewayRegistryLiveLayer } from "./gateway-registry-service.js";
 import type { GatewayKind } from "./types.js";
 
 const run = <A>(program: Effect.Effect<A, never, GatewayRegistryService>, home?: string) =>

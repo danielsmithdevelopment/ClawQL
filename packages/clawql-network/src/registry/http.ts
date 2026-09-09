@@ -6,10 +6,7 @@
  */
 
 import { Effect } from "effect";
-import {
-  GatewayRegistryService,
-  gatewayRegistryLiveLayer,
-} from "./gateway-registry-service.js";
+import { GatewayRegistryService, gatewayRegistryLiveLayer } from "./gateway-registry-service.js";
 import type { GatewayKind, RegisterGatewayInput } from "./types.js";
 
 type Req = {

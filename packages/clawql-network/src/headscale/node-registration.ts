@@ -123,9 +123,7 @@ export const joinMesh = (
       const gatewayId = (options.gatewayId?.trim() || identity.nodeId).trim();
       const ownerDeveloper =
         kind === "edge"
-          ? options.ownerDeveloper?.trim() ||
-            process.env.CLAWQL_GATEWAY_OWNER?.trim() ||
-            undefined
+          ? options.ownerDeveloper?.trim() || process.env.CLAWQL_GATEWAY_OWNER?.trim() || undefined
           : undefined;
       yield* Effect.gen(function* () {
         const reg = yield* GatewayRegistryService;

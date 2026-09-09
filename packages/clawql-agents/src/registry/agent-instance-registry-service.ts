@@ -33,9 +33,7 @@ export class AgentInstanceRegistryService extends Context.Tag(
       agentId: string,
       orgId: string
     ) => Effect.Effect<AgentInstanceRecord | null>;
-    readonly listAgentInstances: (
-      orgId: string
-    ) => Effect.Effect<readonly AgentInstanceRecord[]>;
+    readonly listAgentInstances: (orgId: string) => Effect.Effect<readonly AgentInstanceRecord[]>;
   }
 >() {}
 

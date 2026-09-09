@@ -3,14 +3,8 @@ import { Effect } from "effect";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  GatewayRegistryService,
-  gatewayRegistryLiveLayer,
-} from "clawql-network";
-import {
-  AgentInstanceRegistryService,
-  agentInstanceRegistryLiveLayer,
-} from "clawql-agents";
+import { GatewayRegistryService, gatewayRegistryLiveLayer } from "clawql-network";
+import { AgentInstanceRegistryService, agentInstanceRegistryLiveLayer } from "clawql-agents";
 import { aggregateTopologyFromRegistries } from "./topology-service.js";
 
 describe("aggregateTopologyFromRegistries", () => {
@@ -42,10 +36,7 @@ describe("aggregateTopologyFromRegistries", () => {
       );
 
       const tree = await Effect.runPromise(
-        aggregateTopologyFromRegistries(
-          { orgId: "acme", mcpUiTraceBase: "/mcp-ui/trace" },
-          env
-        )
+        aggregateTopologyFromRegistries({ orgId: "acme", mcpUiTraceBase: "/mcp-ui/trace" }, env)
       );
       expect(tree.empty).toBe(false);
       expect(tree.sources).toContain("gateway-registry");
