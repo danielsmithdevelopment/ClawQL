@@ -42,10 +42,15 @@ export class TopologyService extends Context.Tag("clawql-payments/TopologyServic
   }
 >() {}
 
-function mcpTraceCompareLink(base: string, agentId: string): string {
+/**
+ * Compare demo URL (compressed vs fat). Do **not** append `?focus=<agentId>`:
+ * `/mcp-ui/trace/compare` only honors `focus=input|all`; any other value is
+ * silently coerced and serves the same generic demo (#1082). Prefer an honest
+ * bare compare link until per-agent/session scoping exists.
+ */
+function mcpTraceCompareDemoLink(base: string): string {
   const root = base.replace(/\/$/, "");
-  const compare = root.endsWith("/trace") ? `${root}/compare` : `${root}/trace/compare`;
-  return `${compare}?focus=${encodeURIComponent(agentId)}`;
+  return root.endsWith("/trace") ? `${root}/compare` : `${root}/trace/compare`;
 }
 
 function mapGatewayStatus(s: GatewayRecord["status"]): GatewayStatus {
@@ -162,7 +167,7 @@ export const aggregateTopologyFromRegistries = (
         agentType: a.agentType,
         parentGatewayId: parent.gatewayId,
         lastActive: a.lastActive,
-        traceLink: mcpTraceCompareLink(input.mcpUiTraceBase, a.agentId),
+        traceLink: mcpTraceCompareDemoLink(input.mcpUiTraceBase),
         status: mapAgentStatus(a.status),
       });
     }
@@ -175,7 +180,7 @@ export const aggregateTopologyFromRegistries = (
         cellStatus: c.cellStatus,
         parentGatewayId: parent.gatewayId,
         lastActive: c.lastActive,
-        traceLink: mcpTraceCompareLink(input.mcpUiTraceBase, c.agentId),
+        traceLink: mcpTraceCompareDemoLink(input.mcpUiTraceBase),
         status: c.status,
       });
     }

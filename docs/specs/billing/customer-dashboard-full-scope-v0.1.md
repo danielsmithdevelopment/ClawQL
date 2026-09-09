@@ -83,14 +83,14 @@ Dashboard
 ├── Usage
 ├── Topology
 │   ├── [Regional Gateway: us-east-1]  ● healthy
-│   │   ├── Hermes agent-042           active, 2m ago    [trace]
-│   │   └── celld cell a8f2...         hibernating       [trace]
+│   │   ├── Hermes agent-042           active, 2m ago    [demo]
+│   │   └── celld cell a8f2...         hibernating       [demo]
 │   ├── [Regional Gateway: eu-central-1] ● healthy
-│   │   └── celld cell 91bc...         resident, 4s ago  [trace]
+│   │   └── celld cell 91bc...         resident, 4s ago  [demo]
 │   └── [Edge: daniel@Mac-Mini]        ● healthy
-│       ├── Cline agent-017            active, 12s ago   [trace]
-│       └── Pi agent-003               offline, 3d ago   [trace]
-└── Traces (deep-linkable from any [trace] above)
+│       ├── Cline agent-017            active, 12s ago   [demo]
+│       └── Pi agent-003               offline, 3d ago   [demo]
+└── Traces (demo compare until #1082; deep-linkable from any [demo] above)
 ```
 
 Collapsed by default per gateway; expand to see children. Status dot on every node, gateway and agent both, so health is visible without expanding.
@@ -101,7 +101,7 @@ Collapsed by default per gateway; expand to see children. Status dot on every no
 
 - Every node in the tree shows real status, not a placeholder
 - Empty states handled (new org, zero gateways yet) — not a blank page, a clear "connect your first gateway" prompt
-- Trace links work from every agent node, both kinds, no dead links (`/mcp-ui/trace/compare?focus=…` always resolves)
+- Topology agent links into Traces **must not lie**: until per-agent/session scoping exists ([#1082](https://github.com/danielsmithdevelopment/ClawQL/issues/1082)), label them as the compressed-vs-fat **demo** (`/mcp-ui/trace/compare` without a fake `?focus=<agentId>`). Real fix: agent/session-scoped compare (or explicit unavailable) — not silent demo swap
 - No section links to a "coming soon" page
 - Traces panel **embeds** the existing mcp-ui flamegraph (iframe), with WORM rows as secondary audit context
 
