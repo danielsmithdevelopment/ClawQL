@@ -28,23 +28,23 @@ Surface: `GET /credits/org` (same auth as credits HATEOAS). Module home: [`packa
 
 ```typescript
 interface GatewayNode {
-  gatewayId: string
-  kind: 'regional' | 'edge'
-  meshIdentity: string        // Headscale identity, existing clawql-network
-  ownerDeveloper?: string     // set for 'edge' kind only
-  lastSeen: string
-  status: 'healthy' | 'degraded' | 'offline'
-  children: AgentNode[]
+  gatewayId: string;
+  kind: "regional" | "edge";
+  meshIdentity: string; // Headscale identity, existing clawql-network
+  ownerDeveloper?: string; // set for 'edge' kind only
+  lastSeen: string;
+  status: "healthy" | "degraded" | "offline";
+  children: AgentNode[];
 }
 
 interface AgentNode {
-  agentId: string
-  kind: 'persistent' | 'cell'
-  agentType?: 'hermes' | 'cline' | 'openclaw' | 'pi'  // persistent only
-  cellStatus?: 'resident' | 'hibernating'              // cell only
-  parentGatewayId: string
-  lastActive: string
-  traceLink: string           // deep-links to section 5 / mcp-ui
+  agentId: string;
+  kind: "persistent" | "cell";
+  agentType?: "hermes" | "cline" | "openclaw" | "pi"; // persistent only
+  cellStatus?: "resident" | "hibernating"; // cell only
+  parentGatewayId: string;
+  lastActive: string;
+  traceLink: string; // deep-links to section 5 / mcp-ui
 }
 ```
 
@@ -65,7 +65,7 @@ traceLink              <- existing /mcp-ui/trace/compare (+ session deep-link),
                            embedded in Traces — not rebuilt
 ```
 
-No new "topology service" *backend product* — this is a read/aggregation view over data sources that already exist. Implementation: Effect `TopologyService` Tag in `clawql-payments` (`src/dashboard/topology-service.ts`).
+No new "topology service" _backend product_ — this is a read/aggregation view over data sources that already exist. Implementation: Effect `TopologyService` Tag in `clawql-payments` (`src/dashboard/topology-service.ts`).
 
 Optional ops override: `CLAWQL_TOPOLOGY_SNAPSHOT` = path to a JSON `{ gateways: GatewayNode[] }` (tests + air-gapped demos).
 
@@ -111,4 +111,4 @@ Collapsed by default per gateway; expand to see children. Status dot on every no
 - Mesh: [clawql-network-v0.1](../network/clawql-network-v0.1.md)
 - Cells: [clawql-celld](../../streams/clawql-celld.md) · [aws-celld-burst §8](../../streams/aws-celld-burst.md)
 
-*Customer Dashboard Full Scope · v0.1 · September 2026*
+_Customer Dashboard Full Scope · v0.1 · September 2026_

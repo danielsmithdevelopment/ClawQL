@@ -191,32 +191,32 @@ Provider on org events: `billing`. Raw API secrets never appear in audit payload
 
 ## Env cheat sheet
 
-| Env                                              | Role                                                                               |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                                             |
-| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                                     |
-| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                                            |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                                             |
-| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)                              |
-| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))                     |
-| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                                 |
-| `CLAWQL_TOPOLOGY_SNAPSHOT`                       | Optional JSON path `{ gateways: GatewayNode[] }` for topology override             |
-| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                                  |
-| `CELLD_BUCKET`                                   | When set, topology tries `celld cell list --json` for cell agents                  |
+| Env                                              | Role                                                                   |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                                 |
+| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                         |
+| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                                |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                                 |
+| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)                  |
+| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))         |
+| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                     |
+| `CLAWQL_TOPOLOGY_SNAPSHOT`                       | Optional JSON path `{ gateways: GatewayNode[] }` for topology override |
+| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                      |
+| `CELLD_BUCKET`                                   | When set, topology tries `celld cell list --json` for cell agents      |
 
 ---
 
 ## Build status vs six pieces
 
-| #   | Piece                                | Status                                                                              |
-| --- | ------------------------------------ | ----------------------------------------------------------------------------------- |
-| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](./stripe-products-ops.md)                            |
-| 1   | Org billing fields                   | ✅                                                                                  |
-| 2   | `provisionOrg` Effect                | ✅                                                                                  |
-| 3   | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set                                              |
-| 4   | Enterprise admin trigger             | ✅ CLI                                                                              |
-| 5   | `reportUsageToStripe`                | ✅                                                                                  |
-| 6   | Self-serve dashboard UI              | ✅ `/credits/org` — full scope (plan, keys, usage, topology, embedded traces)       |
+| #   | Piece                                | Status                                                                        |
+| --- | ------------------------------------ | ----------------------------------------------------------------------------- |
+| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](./stripe-products-ops.md)                      |
+| 1   | Org billing fields                   | ✅                                                                            |
+| 2   | `provisionOrg` Effect                | ✅                                                                            |
+| 3   | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set                                        |
+| 4   | Enterprise admin trigger             | ✅ CLI                                                                        |
+| 5   | `reportUsageToStripe`                | ✅                                                                            |
+| 6   | Self-serve dashboard UI              | ✅ `/credits/org` — full scope (plan, keys, usage, topology, embedded traces) |
 
 ---
 

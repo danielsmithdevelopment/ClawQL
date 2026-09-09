@@ -49,7 +49,10 @@ function mcpTraceCompareLink(base: string, agentId: string): string {
   return `${compare}?focus=${encodeURIComponent(agentId)}`;
 }
 
-function statusFromSeen(online: boolean | undefined, lastSeenIso: string | undefined): GatewayStatus {
+function statusFromSeen(
+  online: boolean | undefined,
+  lastSeenIso: string | undefined
+): GatewayStatus {
   if (online === true) return "healthy";
   if (!lastSeenIso) return online === false ? "offline" : "degraded";
   const ageMs = Date.now() - Date.parse(lastSeenIso);
@@ -107,11 +110,7 @@ async function readJsonFile<T>(path: string): Promise<T | null> {
   }
 }
 
-async function tryExec(
-  cmd: string,
-  args: string[],
-  timeoutMs = 8_000
-): Promise<string | null> {
+async function tryExec(cmd: string, args: string[], timeoutMs = 8_000): Promise<string | null> {
   try {
     const { stdout } = await execFileAsync(cmd, args, {
       timeout: timeoutMs,
@@ -177,9 +176,7 @@ async function loadTailscalePeers(): Promise<{ peers: MeshPeerDraft[]; source?: 
       const tags = Array.isArray(n.Tags) ? n.Tags : [];
       const kind = classifyGatewayKind(hostname, tags);
       const lastSeen =
-        typeof n.LastSeen === "string" && n.LastSeen
-          ? n.LastSeen
-          : new Date().toISOString();
+        typeof n.LastSeen === "string" && n.LastSeen ? n.LastSeen : new Date().toISOString();
       peers.push({
         gatewayId,
         kind,
@@ -336,7 +333,7 @@ async function loadCelldCells(env: NodeJS.ProcessEnv): Promise<{
     const rows = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as { cells?: unknown }).cells)
-        ? ((parsed as { cells: unknown[] }).cells)
+        ? (parsed as { cells: unknown[] }).cells
         : [];
     const cells: CellDraft[] = rows.map((raw) => {
       const r = raw as Record<string, unknown>;
@@ -408,8 +405,7 @@ function attachChildren(
   }
 
   for (const c of cells) {
-    const parent =
-      (c.parentHint && byId.get(c.parentHint)) || defaultParent;
+    const parent = (c.parentHint && byId.get(c.parentHint)) || defaultParent;
     parent.children.push({
       agentId: c.agentId,
       kind: "cell",
@@ -501,11 +497,7 @@ export const aggregateTopologyEffect = (
     if (input.agents.length) sources.push("compensation-accounts");
 
     const defaultParentId = drafts[0]!.gatewayId;
-    const persistent = persistentFromAccounts(
-      input.agents,
-      defaultParentId,
-      input.mcpUiTraceBase
-    );
+    const persistent = persistentFromAccounts(input.agents, defaultParentId, input.mcpUiTraceBase);
 
     const gateways = attachChildren(drafts, persistent, cellLoad.cells, input.mcpUiTraceBase);
     return {
