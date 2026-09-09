@@ -879,10 +879,14 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 | Item                         | Tracking     |
 | ---------------------------- | ------------ |
 | Hosted webhook HTTP endpoint | not CLI-only |
+| Customer provisioning core (`provisionOrg`, org-of-1) | [specs/billing/customer-provisioning-core-v0.1.md](../specs/billing/customer-provisioning-core-v0.1.md) |
+| Hybrid subscription + prepaid credits | [specs/billing/hybrid-billing-v0.1.md](../specs/billing/hybrid-billing-v0.1.md) |
 
 ## Related
 
 - Accounting & tax: [`docs/payments/accounting-and-tax.md`](./accounting-and-tax.md)
+- Org credits: [`docs/payments/org-credits.md`](./org-credits.md)
+- Billing specs: [`docs/specs/billing/README.md`](../specs/billing/README.md)
 - Package README: [`packages/clawql-payments/README.md`](../../packages/clawql-payments/README.md)
 - Inference doc: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
 - x402 protocol: [x402.org](https://www.x402.org/)
