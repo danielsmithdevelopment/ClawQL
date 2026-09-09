@@ -11,8 +11,13 @@ export type {
 } from "./topology-types.js";
 export {
   TopologyService,
-  aggregateTopologyEffect,
+  aggregateTopologyFromRegistries,
   topologyLiveLayer,
+  topologyFixedLayer,
   topologySnapshotLayer,
   type AggregateTopologyInput,
+  type TopologyAgentNode,
+  type TopologyGatewayNode,
+  type TopologyNodeStatus,
+  type TopologyAgentKind,
 } from "./topology-service.js";

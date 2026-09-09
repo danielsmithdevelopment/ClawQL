@@ -1,5 +1,9 @@
 import { WORMAuditTrailService } from "clawql-audit";
 import { Effect, Layer, Ref } from "effect";
+import {
+  heartbeatAgentInstanceOnHealth,
+  registerAgentInstanceOnStart,
+} from "../../registry/adapter-hooks.js";
 import { createAgentSession } from "../../shared/session.js";
 import type { AgentHealth, AgentSession, ClawQLAgentConfig } from "../../shared/types.js";
 import { AgentAdapter } from "../../shared/types.js";
@@ -34,6 +38,10 @@ export const makePiAdapterLayer = () =>
             }
             const session = yield* createAgentSession("pi");
             yield* Ref.update(stateRef, (s) => ({ ...s, session }));
+            yield* registerAgentInstanceOnStart(state.config, {
+              agentId: state.config.agentInstanceId ?? session.sessionId,
+              agentName: "pi",
+            });
             const worm = yield* WORMAuditTrailService;
             yield* worm.append({
               type: "SESSION_START",
@@ -79,6 +87,10 @@ export const makePiAdapterLayer = () =>
             }
             const worm = yield* WORMAuditTrailService;
             const verified = yield* worm.verify();
+            yield* heartbeatAgentInstanceOnHealth(state.config, {
+              agentId: state.config.agentInstanceId ?? state.session?.sessionId,
+              agentName: "pi",
+            });
             return {
               status: verified.valid ? "healthy" : "degraded",
               details: verified.valid
