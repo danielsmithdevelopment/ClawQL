@@ -23,11 +23,11 @@ reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/next; top-level p
 id = "GHSA-jmr9-qjv8-65gv"
 reason = "extract-zip@2.0.1 (symlink path traversal) is transitive via website lighthouse → puppeteer-core → @puppeteer/browsers; OSV lists no fixed version beyond 2.0.1. Dev-only browser download path, not production runtime. Remove when upstream ships a patched extract-zip or puppeteer drops it."
 
-# Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; now on 16.2.11.
+# Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; now on 16.3.4.
 # Keep this stanza only if an older lock still appears in a long-lived branch scan.
 [[PackageOverrides]]
 name = "next"
 ecosystem = "npm"
 version = "16.1.7"
 vulnerability.ignore = true
-reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.2.11 — safe to delete once no branch locks reference 16.1.7."
+reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.3.4 — safe to delete once no branch locks reference 16.1.7."
