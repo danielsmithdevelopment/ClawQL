@@ -72,7 +72,7 @@ describe("CPC dashboard", () => {
     await rm(home, { recursive: true, force: true });
   });
 
-  it("renders five section anchors", () => {
+  it("renders full-scope section anchors including topology", () => {
     const model: CpcDashboardModel = {
       org: {
         orgId: "acme",
@@ -108,7 +108,7 @@ describe("CPC dashboard", () => {
         generatedAt: new Date().toISOString(),
       },
       keys: [],
-      agents: [],
+      topology: { empty: true, gateways: [], sources: [] },
       wormEntries: [],
       portalAvailable: false,
       mcpUiTraceBase: "/mcp-ui/trace",
@@ -119,10 +119,80 @@ describe("CPC dashboard", () => {
     expect(html).toContain('id="billing"');
     expect(html).toContain('id="keys"');
     expect(html).toContain('id="usage"');
-    expect(html).toContain('id="agents"');
+    expect(html).toContain('id="topology"');
     expect(html).toContain('id="traces"');
+    expect(html).not.toContain('id="agents"');
+    expect(html).toContain("Connect your first gateway");
+    expect(html).toContain("trace-embed");
+    expect(html).toContain("/mcp-ui/trace/compare");
     expect(html).toContain("getOrgUnifiedSpendSummary");
     expect(html).toContain("Claw<span>QL</span>");
+    expect(html).not.toContain("coming soon");
+  });
+
+  it("renders topology tree with status dots and trace links", () => {
+    const model: CpcDashboardModel = {
+      org: {
+        orgId: "acme",
+        displayName: "Acme",
+        poolTenantId: "org:acme:pool",
+        billingAdminTenantIds: ["acme:owner"],
+        rolePolicies: [],
+        members: [],
+        periodEndPolicy: "expire_to_pool",
+        planId: "team",
+        billingMode: "hybrid",
+        createdVia: "self_serve",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      actorTenantId: "acme:owner",
+      spend: {
+        orgId: "acme",
+        poolTenantId: "org:acme:pool",
+        poolBalanceCents: 0,
+        poolSpendableCents: 0,
+        memberBalanceCents: 0,
+        totalCreditsCents: 0,
+        members: [],
+        generatedAt: new Date().toISOString(),
+      },
+      keys: [],
+      topology: {
+        empty: false,
+        sources: ["snapshot"],
+        gateways: [
+          {
+            gatewayId: "gw1",
+            kind: "regional",
+            meshIdentity: "us-east-1",
+            lastSeen: new Date().toISOString(),
+            status: "healthy",
+            children: [
+              {
+                agentId: "hermes-042",
+                kind: "persistent",
+                agentType: "hermes",
+                parentGatewayId: "gw1",
+                lastActive: new Date().toISOString(),
+                traceLink: "/mcp-ui/trace/compare?focus=hermes-042",
+                status: "healthy",
+              },
+            ],
+          },
+        ],
+      },
+      wormEntries: [],
+      portalAvailable: false,
+      mcpUiTraceBase: "/mcp-ui/trace",
+      creditsTopupHref: "/credits/topup?tenant=acme:owner",
+      returnPath: "/credits/org?orgId=acme",
+    };
+    const html = Effect.runSync(renderCpcDashboardHtml(model));
+    expect(html).toContain("dot-healthy");
+    expect(html).toContain("Hermes hermes-042");
+    expect(html).toContain("/mcp-ui/trace/compare?focus=hermes-042");
+    expect(html).toContain("<details>");
   });
 
   it("serves dashboard after provision", async () => {

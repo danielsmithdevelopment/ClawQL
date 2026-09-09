@@ -1,6 +1,6 @@
 # Customer Provisioning Core
 
-**Status:** Spec v0.1 — implementation slice shipped (pieces 1–5); dashboard UI open  
+**Status:** Spec v0.1 — implementation slice shipped (pieces 1–6); dashboard full scope (topology + embedded traces)  
 **Primary package:** `clawql-payments` (org store, billing, ledger)  
 **Auth edge:** `clawql-auth` API-key issue only (`IssuedApiKeyStore`)  
 **Optional path note:** A thin `packages/clawql-auth/src/provisioning/` façade may re-export `provisionOrg` for hosts that already compose auth first — **storage and Stripe stay in payments**.  
@@ -182,15 +182,15 @@ Same payments / clawql-audit trail. No separate billing audit schema.
 
 ---
 
-| #   | Piece                                | Status                                                                |
-| --- | ------------------------------------ | --------------------------------------------------------------------- |
-| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](../../payments/stripe-products-ops.md) |
-| 1   | Org billing fields                   | ✅ shipped                                                            |
-| 2   | `provisionOrg` Effect                | ✅ shipped                                                            |
-| 3   | Webhook converge (Node + CF handoff) | ✅ Node webhook + HTTP routes; CF optional forward                    |
-| 4   | Enterprise admin trigger             | ✅ CLI                                                                |
-| 5   | `reportUsageToStripe`                | ✅ shipped                                                            |
-| 6   | Self-serve dashboard UI              | ✅ `/credits/org`                                                     |
+| #   | Piece                                | Status                                                                            |
+| --- | ------------------------------------ | --------------------------------------------------------------------------------- |
+| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](../../payments/stripe-products-ops.md)             |
+| 1   | Org billing fields                   | ✅ shipped                                                                        |
+| 2   | `provisionOrg` Effect                | ✅ shipped                                                                        |
+| 3   | Webhook converge (Node + CF handoff) | ✅ Node webhook + HTTP routes; CF optional forward                                |
+| 4   | Enterprise admin trigger             | ✅ CLI                                                                            |
+| 5   | `reportUsageToStripe`                | ✅ shipped                                                                        |
+| 6   | Self-serve dashboard UI              | ✅ `/credits/org` — [full scope](./customer-dashboard-full-scope-v0.1.md)          |
 
 **Operator guide:** [`docs/payments/customer-provisioning-core.md`](../../payments/customer-provisioning-core.md)
 

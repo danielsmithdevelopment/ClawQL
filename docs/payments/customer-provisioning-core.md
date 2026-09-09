@@ -24,6 +24,8 @@ Spend-governance (outbound USDC) is **out of scope** here — see [spend-governa
 | `provisioning/report-usage.ts`          | `reportUsageToStripe` — overage-only Stripe meter                                   |
 | `provisioning/checkout-handoff.ts`      | Stripe Checkout Session → `ProvisionOrgInput`                                       |
 | `provisioning/http.ts`                  | Express routes for internal provision + usage report (gateway converge)             |
+| `provisioning/dashboard-*.ts`           | Self-serve `/credits/org` HTML + HTTP                                               |
+| `dashboard/topology-*.ts`               | Topology types + `TopologyService` aggregator (mesh / agents / celld)               |
 | `credits/org.ts`                        | `OrgBillingFields`, `createOrg`, `patchOrgBilling`                                  |
 | `stripe/stripe-webhook-service.ts`      | `checkout.session.completed` → `provisionOrg` when CPC metadata present             |
 
@@ -189,44 +191,48 @@ Provider on org events: `billing`. Raw API secrets never appear in audit payload
 
 ## Env cheat sheet
 
-| Env                                              | Role                                                           |
-| ------------------------------------------------ | -------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                         |
-| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                 |
-| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                        |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                         |
-| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)          |
-| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md)) |
-| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)             |
-| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                              |
+| Env                                              | Role                                                                               |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                                             |
+| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                                     |
+| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                                            |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                                             |
+| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)                              |
+| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))                     |
+| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                                 |
+| `CLAWQL_TOPOLOGY_SNAPSHOT`                       | Optional JSON path `{ gateways: GatewayNode[] }` for topology override             |
+| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                                  |
+| `CELLD_BUCKET`                                   | When set, topology tries `celld cell list --json` for cell agents                  |
 
 ---
 
 ## Build status vs six pieces
 
-| #   | Piece                                | Status                                                   |
-| --- | ------------------------------------ | -------------------------------------------------------- |
-| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](./stripe-products-ops.md) |
-| 1   | Org billing fields                   | ✅                                                       |
-| 2   | `provisionOrg` Effect                | ✅                                                       |
-| 3   | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set                   |
-| 4   | Enterprise admin trigger             | ✅ CLI                                                   |
-| 5   | `reportUsageToStripe`                | ✅                                                       |
-| 6   | Self-serve dashboard UI              | ✅ `/credits/org` (plan, keys, usage, agents, traces)    |
+| #   | Piece                                | Status                                                                              |
+| --- | ------------------------------------ | ----------------------------------------------------------------------------------- |
+| 0   | Stripe Products / Prices / meters    | Ops — [stripe-products-ops.md](./stripe-products-ops.md)                            |
+| 1   | Org billing fields                   | ✅                                                                                  |
+| 2   | `provisionOrg` Effect                | ✅                                                                                  |
+| 3   | Webhook converge (Node + CF handoff) | ✅ Node; CF optional POST when URL set                                              |
+| 4   | Enterprise admin trigger             | ✅ CLI                                                                              |
+| 5   | `reportUsageToStripe`                | ✅                                                                                  |
+| 6   | Self-serve dashboard UI              | ✅ `/credits/org` — full scope (plan, keys, usage, topology, embedded traces)       |
 
 ---
 
 ## Self-serve dashboard (`/credits/org`)
 
-Five sections (final scope):
+Full-scope command center ([customer-dashboard-full-scope-v0.1](../specs/billing/customer-dashboard-full-scope-v0.1.md)):
 
-| #   | Section                | Behavior                                                                               |
-| --- | ---------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Plan / billing         | Plan, `billingMode`, Stripe Customer Portal (upgrade/downgrade), link to credit top-up |
-| 2   | API keys               | List active org keys; issue / rotate (revoke + issue); secret shown once               |
-| 3   | Usage                  | **`getOrgUnifiedSpendSummary`** (+ optional WORM spend) — not `computeCurrentSpend`    |
-| 4   | Agent / bot management | List compensation ledger agents with status (funded / linked / idle)                   |
-| 5   | Trace visibility       | Recent payment WORM rows + deep-link to `/mcp-ui/trace/:sessionId` flamegraph          |
+| #   | Section        | Behavior                                                                                                                                                |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Plan / billing | Plan, `billingMode`, Stripe Customer Portal (upgrade/downgrade), link to credit top-up                                                                  |
+| 2   | API keys       | List active org keys; issue / rotate (revoke + issue); secret shown once                                                                                |
+| 3   | Usage          | **`getOrgUnifiedSpendSummary`** (+ optional WORM spend) — not `computeCurrentSpend`                                                                     |
+| 4   | Topology       | Hierarchical gateways (`regional` \| `edge`) + agents (`persistent` \| `cell`); status dots; collapsed by default; empty → “connect your first gateway” |
+| 5   | Traces         | Embedded iframe of existing `/mcp-ui/trace/compare` + WORM rows; topology `trace` links focus the embed                                                 |
+
+Topology is a read aggregation (`TopologyService`) over Headscale/Tailscale mesh, ManagedGateway, compensation accounts, and `celld cell list` when `CELLD_BUCKET` is set. Optional override: `CLAWQL_TOPOLOGY_SNAPSHOT`.
 
 ```bash
 # After provision
@@ -244,4 +250,4 @@ Auth: same gate as `/credits/*` HATEOAS. Mutations (portal, key issue/rotate) re
 - [credits-ach.md](./credits-ach.md)
 - [clawql-payments.md](./clawql-payments.md)
 - [stripe-products-ops.md](./stripe-products-ops.md)
-- Specs: [billing README](../specs/billing/README.md)
+- Specs: [billing README](../specs/billing/README.md) · [dashboard full scope](../specs/billing/customer-dashboard-full-scope-v0.1.md)

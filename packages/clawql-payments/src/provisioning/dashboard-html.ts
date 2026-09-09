@@ -1,15 +1,16 @@
 /**
- * CPC self-serve dashboard HTML — five sections:
- * plan/billing, API keys, usage, agents, traces.
+ * CPC self-serve dashboard HTML — full-scope sections:
+ * plan/billing, API keys, usage, topology, traces (embedded).
  * Extends credits HATEOAS visual language (wider shell).
+ * Spec: docs/specs/billing/customer-dashboard-full-scope-v0.1.md
  */
 
 import { Effect } from "effect";
 import type { IssuedApiKeyRecord } from "clawql-auth";
 import type { OrgRecord } from "../credits/org.js";
 import type { OrgUnifiedSpendSummary } from "../credits/org-spend.js";
-import type { AgentAccount } from "../compensation/accounts.js";
 import type { PaymentWormEntry } from "../audit/events.js";
+import type { AgentNode, GatewayNode, TopologyTree } from "../dashboard/topology-types.js";
 
 function esc(s: string): string {
   return s
@@ -52,7 +53,7 @@ const DASH_STYLES = `
   }
   .shell {
     position: relative;
-    max-width: 56rem;
+    max-width: 64rem;
     margin: 0 auto;
     padding: 1.5rem 1.25rem 3rem;
   }
@@ -208,12 +209,93 @@ const DASH_STYLES = `
     color: var(--muted);
   }
   .foot a { color: var(--accent); }
+  .topo { list-style: none; margin: 0; padding: 0; }
+  .topo > li { margin: 0.35rem 0; }
+  .topo details {
+    border: 1px solid var(--line);
+    border-radius: 0.55rem;
+    background: rgba(255,255,255,0.45);
+    padding: 0.35rem 0.55rem 0.45rem;
+  }
+  .topo summary {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-weight: 600;
+    list-style: none;
+  }
+  .topo summary::-webkit-details-marker { display: none; }
+  .topo .children {
+    list-style: none;
+    margin: 0.45rem 0 0.15rem 1.15rem;
+    padding: 0;
+    border-left: 2px solid var(--line);
+  }
+  .topo .children li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding: 0.35rem 0 0.35rem 0.7rem;
+    font-size: 0.92rem;
+  }
+  .dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+  .dot-healthy { background: #0d6e62; box-shadow: 0 0 0 2px rgba(13,110,98,0.2); }
+  .dot-degraded { background: #b7791f; box-shadow: 0 0 0 2px rgba(183,121,31,0.2); }
+  .dot-offline { background: #9b2c2c; box-shadow: 0 0 0 2px rgba(155,44,44,0.15); }
+  .topo .kind {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .topo .meta-inline { color: var(--muted); font-size: 0.85rem; }
+  .topo a.trace {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent-deep);
+    text-decoration: none;
+    border: 1px solid var(--line);
+    border-radius: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    background: var(--tile);
+  }
+  .topo a.trace:hover { border-color: var(--accent); }
+  .empty-topo {
+    padding: 1rem 1.1rem;
+    border: 1px dashed var(--line);
+    border-radius: 0.65rem;
+    background: rgba(255,255,255,0.4);
+  }
+  .empty-topo h3 {
+    margin: 0 0 0.35rem;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 1.15rem;
+  }
+  .trace-embed {
+    width: 100%;
+    min-height: 28rem;
+    border: 1px solid var(--line);
+    border-radius: 0.65rem;
+    background: #fff;
+    margin-top: 0.75rem;
+  }
   @keyframes rise {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @media (max-width: 640px) {
     .shell { padding: 1.15rem 0.9rem 2.5rem; }
+    .trace-embed { min-height: 20rem; }
   }
 `;
 
@@ -222,7 +304,7 @@ export type CpcDashboardModel = {
   actorTenantId: string;
   spend: OrgUnifiedSpendSummary;
   keys: IssuedApiKeyRecord[];
-  agents: AgentAccount[];
+  topology: TopologyTree;
   wormEntries: PaymentWormEntry[];
   flashSecret?: string;
   flashMessage?: string;
@@ -266,27 +348,84 @@ function renderKeysTable(keys: IssuedApiKeyRecord[], orgId: string, actor: strin
   </table>`;
 }
 
-function renderAgents(agents: AgentAccount[]): string {
-  if (!agents.length) {
-    return `<p class="empty">No agent/bot accounts on this host yet. Running agents appear here from the compensation ledger (and OpenClaw when configured).</p>`;
+function relativeAgo(iso: string): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return iso;
+  const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 48) return `${hr}h ago`;
+  const days = Math.round(hr / 24);
+  return `${days}d ago`;
+}
+
+function agentLabel(a: AgentNode): string {
+  if (a.kind === "cell") {
+    return `celld cell ${a.agentId}`;
   }
-  const rows = agents
-    .map((a) => {
-      const status = a.fundsUsd > 0 || a.creditsUsd > 0 ? "funded" : a.tenantId ? "linked" : "idle";
-      return `<tr>
-        <td class="mono">${esc(a.agentId)}</td>
-        <td><span class="status-pill">${esc(status)}</span></td>
-        <td>${dollars(Math.round(a.creditsUsd * 100))}</td>
-        <td>${dollars(Math.round(a.fundsUsd * 100))}</td>
-        <td class="mono">${esc(a.tenantId ?? "—")}</td>
-        <td>${esc(a.updatedAt.slice(0, 16).replace("T", " "))}</td>
-      </tr>`;
+  const type = a.agentType ? a.agentType[0]!.toUpperCase() + a.agentType.slice(1) : "Agent";
+  return `${type} ${a.agentId}`;
+}
+
+function agentMeta(a: AgentNode): string {
+  if (a.kind === "cell") {
+    const st = a.cellStatus ?? "resident";
+    return `${st}, ${relativeAgo(a.lastActive)}`;
+  }
+  return `${a.status === "healthy" ? "active" : a.status}, ${relativeAgo(a.lastActive)}`;
+}
+
+function renderTopology(tree: TopologyTree): string {
+  if (tree.empty || !tree.gateways.length) {
+    return `<div class="empty-topo" role="status">
+      <h3>Connect your first gateway</h3>
+      <p class="sub" style="margin:0">No mesh or managed gateways are visible for this host yet.
+      Run <code>clawql init --networking</code> or create a managed gateway, then refresh.
+      Topology is a read view over Headscale mesh, ManagedGateway, compensation agents, and celld — nothing is invented.</p>
+    </div>`;
+  }
+
+  const items = tree.gateways
+    .map((g: GatewayNode) => {
+      const kindLabel = g.kind === "edge" ? "Edge" : "Regional Gateway";
+      const title =
+        g.kind === "edge"
+          ? `${kindLabel}: ${g.ownerDeveloper ? `${g.ownerDeveloper}@` : ""}${g.meshIdentity}`
+          : `${kindLabel}: ${g.meshIdentity}`;
+      const kids =
+        g.children.length === 0
+          ? `<li class="meta-inline">No agents or cells attached</li>`
+          : g.children
+              .map(
+                (a) => `<li>
+            <span class="dot dot-${esc(a.status)}" title="${esc(a.status)}" aria-hidden="true"></span>
+            <span class="kind">${esc(a.kind)}</span>
+            <span>${esc(agentLabel(a))}</span>
+            <span class="meta-inline">${esc(agentMeta(a))}</span>
+            <a class="trace" href="${esc(a.traceLink)}" data-trace-src="${esc(a.traceLink)}">trace</a>
+          </li>`
+              )
+              .join("");
+      return `<li>
+        <details>
+          <summary>
+            <span class="dot dot-${esc(g.status)}" title="${esc(g.status)}" aria-hidden="true"></span>
+            <span>[${esc(title)}]</span>
+            <span class="meta-inline">${esc(g.status)} · seen ${esc(relativeAgo(g.lastSeen))}</span>
+          </summary>
+          <ul class="children">${kids}</ul>
+        </details>
+      </li>`;
     })
     .join("");
-  return `<table>
-    <thead><tr><th>Agent</th><th>Status</th><th>Credits</th><th>Funds</th><th>Tenant</th><th>Updated</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+
+  const srcNote = tree.sources.length
+    ? `<p class="sub" style="margin-top:0.75rem">Sources: ${esc(tree.sources.join(", "))}</p>`
+    : "";
+
+  return `<ul class="topo">${items}</ul>${srcNote}`;
 }
 
 function renderCpcDashboardDoc(model: CpcDashboardModel): string {
@@ -331,7 +470,11 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
     ? `<p class="sub">WORM payment spend groups: <strong>${spend.wormSpend.rows.length}</strong></p>`
     : "";
 
-  // Trace panel (WORM + flamegraph deep-link)
+  const compareHref = (() => {
+    const base = model.mcpUiTraceBase.replace(/\/$/, "");
+    return base.endsWith("/trace") ? `${base}/compare` : `${base}/trace/compare`;
+  })();
+
   const tracesHtml = (() => {
     const entries = model.wormEntries;
     const rows = entries
@@ -352,12 +495,15 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
         <tbody>${rows}</tbody>
       </table>`
       : `<p class="empty">No recent payment WORM entries.</p>`;
-    return `${table}
+    return `
+    <iframe class="trace-embed" id="trace-embed" title="Context flamegraph" src="${esc(compareHref)}" loading="lazy"></iframe>
     <div class="cta-row">
-      <a class="btn ghost" href="${esc(model.mcpUiTraceBase)}/demo-compressed">Open context flamegraph</a>
+      <a class="btn ghost" href="${esc(compareHref)}" target="_blank" rel="noopener">Open flamegraph</a>
+      <a class="btn ghost" href="${esc(model.mcpUiTraceBase)}/demo-compressed" target="_blank" rel="noopener">Demo compressed</a>
       <a class="btn ghost" href="/credits/activity?tenant=${encodeURIComponent(actorTenantId)}">Credits activity</a>
     </div>
-    <p class="sub" style="margin-top:0.75rem">Flamegraph: existing <code>/mcp-ui/trace/:sessionId</code>. WORM rows: payments audit trail (not a second schema).</p>`;
+    ${table}
+    <p class="sub" style="margin-top:0.75rem">Embedded existing <code>/mcp-ui/trace/compare</code> (not rebuilt). Topology <code>trace</code> links set the iframe source. WORM rows: payments audit trail.</p>`;
   })();
 
   return `<!doctype html>
@@ -377,12 +523,12 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
       <h1 class="brand">Claw<span>QL</span></h1>
       <div class="meta">${esc(org.displayName || org.orgId)} · <code>${esc(org.orgId)}</code></div>
     </header>
-    <p class="lede">Billing, keys, usage, agents, and traces for your org — one place, same stores as CLI and CPC.</p>
+    <p class="lede">Command center for your org — plan, keys, usage, topology, and traces. Same stores as CLI and CPC.</p>
     <nav class="nav" aria-label="Sections">
       <a href="#billing">Plan / billing</a>
       <a href="#keys">API keys</a>
       <a href="#usage">Usage</a>
-      <a href="#agents">Agents</a>
+      <a href="#topology">Topology</a>
       <a href="#traces">Traces</a>
       <a href="/credits?tenant=${encodeURIComponent(actorTenantId)}">Credits mini-UI</a>
     </nav>
@@ -437,23 +583,39 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
       <p class="sub" style="margin-top:0.75rem">Generated ${esc(spend.generatedAt)}</p>
     </section>
 
-    <section class="panel" id="agents">
-      <h2>Agent / bot management</h2>
-      <p class="sub">Running agent accounts from the compensation ledger (status = funded / linked / idle).</p>
-      ${renderAgents(model.agents)}
+    <section class="panel" id="topology">
+      <h2>Topology</h2>
+      <p class="sub">One tree: regional and edge gateways share <code>GatewayNode</code>; persistent agents and celld cells share <code>AgentNode</code>. Collapsed by default — status dots stay visible.</p>
+      ${renderTopology(model.topology)}
     </section>
 
     <section class="panel" id="traces">
-      <h2>Trace visibility</h2>
-      <p class="sub">Surfaces existing payment WORM rows and the mcp-ui context flamegraph.</p>
+      <h2>Traces</h2>
+      <p class="sub">Embedded mcp-ui context flamegraph (existing surface). Topology <strong>trace</strong> links focus here.</p>
       ${tracesHtml}
     </section>
 
     <p class="foot">
-      Org dashboard · <a href="/credits/org?${esc(q)}">Refresh</a>
-      · Spec: customer provisioning core piece 6
+      Org command center · <a href="/credits/org?${esc(q)}">Refresh</a>
+      · Spec: customer-dashboard-full-scope-v0.1
     </p>
   </div>
+  <script>
+    (function () {
+      var iframe = document.getElementById("trace-embed");
+      if (!iframe) return;
+      document.querySelectorAll("a.trace[data-trace-src]").forEach(function (a) {
+        a.addEventListener("click", function (ev) {
+          var src = a.getAttribute("data-trace-src");
+          if (!src) return;
+          ev.preventDefault();
+          iframe.setAttribute("src", src);
+          var traces = document.getElementById("traces");
+          if (traces) traces.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+    })();
+  </script>
 </body>
 </html>`;
 }

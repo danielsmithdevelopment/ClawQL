@@ -53,6 +53,7 @@ import {
   provisionOrgLiveLayer,
   reportUsageLiveLayer,
 } from "../provisioning/index.js";
+import { topologyLiveLayer } from "../dashboard/topology-service.js";
 
 export type PaymentsServices =
   | import("../config/payments-config-service.js").PaymentsConfigService
@@ -105,6 +106,7 @@ export type PaymentsServices =
   | import("../credits/deduction-event-bus.js").DeductionEventBus
   | import("../provisioning/provision-org-service.js").ProvisionOrgService
   | import("../provisioning/report-usage.js").ReportUsageService
+  | import("../dashboard/topology-service.js").TopologyService
   | import("clawql-auth").IssuedApiKeyStoreService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
@@ -201,6 +203,7 @@ export function paymentsServicesLiveLayer(
   const stripeWebhook = stripeWebhookLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(config, audit, ledger, provisioning))
   );
+  const topology = topologyLiveLayer(env);
 
   const layer = Layer.mergeAll(
     config,
@@ -222,6 +225,7 @@ export function paymentsServicesLiveLayer(
     issuedApiKeys,
     provisioning,
     reportUsage,
+    topology,
     ap2,
     acp,
     paypal,

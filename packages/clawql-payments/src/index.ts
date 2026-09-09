@@ -16,6 +16,7 @@ export * from "./credits/index.js";
 export * from "./compensation/index.js";
 export * from "./accounting/index.js";
 export * from "./provisioning/index.js";
+export * from "./dashboard/index.js";
 export * from "./cli/index.js";
 export { loadPaymentsConfig, mergePaymentsConfig, savePaymentsConfig } from "./config/store.js";
 export type { PaymentsConfig } from "./config/store.js";

@@ -10,6 +10,7 @@ import { listPaymentAuditEntries } from "../audit/worm.js";
 import { CompensationAccountsService } from "../compensation/accounts.js";
 import { findOrgsForTenant, getOrg } from "../credits/org.js";
 import { getOrgUnifiedSpendSummary } from "../credits/org-spend.js";
+import { TopologyService } from "../dashboard/topology-service.js";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { createCustomerPortalSession } from "../stripe/portal.js";
 import { apiKeyScopesForPlan } from "./helpers.js";
@@ -90,6 +91,20 @@ async function buildDashboardModel(
     env
   );
 
+  const traceBase = mcpUiTraceBase(env);
+  const topology = await runPaymentsEffect(
+    Effect.gen(function* () {
+      const topo = yield* TopologyService;
+      return yield* topo.aggregate({
+        orgId,
+        actorTenantId,
+        mcpUiTraceBase: traceBase,
+        agents,
+      });
+    }),
+    env
+  );
+
   const wormEntries = await listPaymentAuditEntries(40, env);
   const orgWorm = wormEntries.filter(
     (e) =>
@@ -104,12 +119,12 @@ async function buildDashboardModel(
     actorTenantId,
     spend,
     keys,
-    agents,
+    topology,
     wormEntries: orgWorm.length ? orgWorm : wormEntries.slice(0, 12),
     flashSecret: flash?.secret,
     flashMessage: flash?.message,
     portalAvailable: Boolean(org.stripeCustomerId?.trim()),
-    mcpUiTraceBase: mcpUiTraceBase(env),
+    mcpUiTraceBase: traceBase,
     creditsTopupHref: `/credits/topup?${topup}`,
     returnPath: `/credits/org?orgId=${encodeURIComponent(orgId)}&tenant=${encodeURIComponent(actorTenantId)}`,
   };
