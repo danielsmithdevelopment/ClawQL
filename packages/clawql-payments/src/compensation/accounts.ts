@@ -247,8 +247,7 @@ export function compensationAccountsLiveLayer(
     CompensationAccountsService,
     CompensationAccountsService.of({
       get: (agentId) => run("Failed to load agent account", () => getAgentAccount(agentId, env)),
-      list: (filter) =>
-        run("Failed to list agent accounts", () => listAgentAccounts(env, filter)),
+      list: (filter) => run("Failed to list agent accounts", () => listAgentAccounts(env, filter)),
       ensure: (agentId, tenantId) =>
         run("Failed to ensure agent account", () => ensureAgentAccount(agentId, env, tenantId)),
       setPreference: (input) =>

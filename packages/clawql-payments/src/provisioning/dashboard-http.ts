@@ -33,7 +33,10 @@ function mcpUiTraceBase(env: NodeJS.ProcessEnv): string {
   return "/mcp-ui/trace";
 }
 
-async function resolveOrgId(req: Request, env: NodeJS.ProcessEnv): Promise<{
+async function resolveOrgId(
+  req: Request,
+  env: NodeJS.ProcessEnv
+): Promise<{
   orgId: string;
   actorTenantId: string;
 } | null> {
@@ -64,9 +67,7 @@ async function buildDashboardModel(
   const spend = await getOrgUnifiedSpendSummary(
     {
       orgId,
-      actorTenantId: org.billingAdminTenantIds.includes(actorTenantId)
-        ? actorTenantId
-        : undefined,
+      actorTenantId: org.billingAdminTenantIds.includes(actorTenantId) ? actorTenantId : undefined,
       includeWormSpend: true,
       wormLimit: 500,
     },

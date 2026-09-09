@@ -272,8 +272,7 @@ function renderAgents(agents: AgentAccount[]): string {
   }
   const rows = agents
     .map((a) => {
-      const status =
-        a.fundsUsd > 0 || a.creditsUsd > 0 ? "funded" : a.tenantId ? "linked" : "idle";
+      const status = a.fundsUsd > 0 || a.creditsUsd > 0 ? "funded" : a.tenantId ? "linked" : "idle";
       return `<tr>
         <td class="mono">${esc(a.agentId)}</td>
         <td><span class="status-pill">${esc(status)}</span></td>
@@ -459,9 +458,8 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
 </html>`;
 }
 
-export const renderCpcDashboardHtml = (
-  model: CpcDashboardModel
-): Effect.Effect<string> => Effect.sync(() => renderCpcDashboardDoc(model));
+export const renderCpcDashboardHtml = (model: CpcDashboardModel): Effect.Effect<string> =>
+  Effect.sync(() => renderCpcDashboardDoc(model));
 
 export const renderCpcDashboardErrorHtml = (input: {
   title: string;
