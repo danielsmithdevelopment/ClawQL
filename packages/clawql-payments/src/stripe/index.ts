@@ -42,3 +42,14 @@ export {
   type StripeWebhookVerifyResult,
 } from "./webhook.js";
 export { StripeNotConfiguredError, StripeWebhookVerificationError } from "./errors.js";
+export {
+  StripeCatalogService,
+  DEFAULT_STRIPE_CATALOG,
+  ensureStripeCatalog,
+  validateStripeCatalogEnv,
+  validateStripeCatalogEnvEffect,
+  stripeCatalogLiveLayer,
+  type EnsureStripeCatalogInput,
+  type StripeCatalogEnsureResult,
+  type StripeCatalogValidateResult,
+} from "./stripe-catalog-service.js";
