@@ -155,9 +155,7 @@ describe("§5 live topology smoke", () => {
     expect(tree.gateways[0]!.children[0]!.agentId).toBe("hermes-042");
     expect(tree.gateways[0]!.children[0]!.agentType).toBe("hermes");
     expect(tree.gateways[0]!.children[0]!.parentGatewayId).toBe("gw-east");
-    expect(tree.gateways[0]!.children[0]!.traceLink).toBe(
-      "/mcp-ui/trace/compare?focus=hermes-042"
-    );
+    expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/compare?focus=hermes-042");
 
     await withDashAndMcpUi(process.env, async (base) => {
       const dashRes = await fetch(
