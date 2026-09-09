@@ -51,6 +51,8 @@ app.use(express.json());
 attachProvisioningRoutes(app);
 ```
 
+Self-serve org dashboard (mounted with credits HATEOAS): `GET /credits/org?orgId=…&tenant=…` — plan/billing, API keys, usage, agents, traces. See [`docs/payments/customer-provisioning-core.md`](../../docs/payments/customer-provisioning-core.md).
+
 Stripe ops checklist for live Checkout / meters: [`docs/payments/stripe-products-ops.md`](../../docs/payments/stripe-products-ops.md).
 
 ## CLI
