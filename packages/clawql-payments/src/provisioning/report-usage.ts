@@ -62,8 +62,7 @@ export function reportUsageLiveLayer(
           const runEnv = input.env ?? env;
           const org = yield* Effect.tryPromise({
             try: () => getOrg(input.orgId, runEnv),
-            catch: (cause) =>
-              new ProvisionOrgError({ reason: "Failed to load org", cause }),
+            catch: (cause) => new ProvisionOrgError({ reason: "Failed to load org", cause }),
           });
           if (!org) {
             return yield* Effect.fail(
@@ -75,10 +74,7 @@ export function reportUsageLiveLayer(
           const includedQuota = includedInferenceQuota(planId);
           const month = input.month?.trim() || currentMonthUtc();
 
-          const tenantIds = [
-            org.poolTenantId,
-            ...org.members.map((m) => m.memberTenantId),
-          ];
+          const tenantIds = [org.poolTenantId, ...org.members.map((m) => m.memberTenantId)];
           let totalUsage = 0;
           for (const tenantId of tenantIds) {
             const row = yield* usage.getUsage(tenantId, month);
@@ -141,8 +137,7 @@ export function reportUsageLiveLayer(
           }
 
           const identifier =
-            input.identifier ??
-            `org-overage:${org.orgId}:${month}:${overageUnits}`;
+            input.identifier ?? `org-overage:${org.orgId}:${month}:${overageUnits}`;
 
           const result = yield* meter.reportMeteredUsage({
             eventName: meterConfig.eventName,

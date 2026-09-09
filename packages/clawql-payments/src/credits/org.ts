@@ -72,11 +72,7 @@ export type OrgCreatedVia = "self_serve" | "enterprise_sales";
  * - hybrid: subscription included quota + prepaid credits beyond / beside it
  * - credits_only: no recurring subscription; prepaid top-ups only
  */
-export type OrgBillingMode =
-  | "stripe_checkout"
-  | "stripe_invoice"
-  | "hybrid"
-  | "credits_only";
+export type OrgBillingMode = "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only";
 
 /** Additive CPC billing fields on {@link OrgRecord}. */
 export type OrgBillingFields = {
@@ -238,9 +234,7 @@ export async function createOrg(
     seatLimit: input.seatLimit,
     ...(input.createdVia ? { createdVia: input.createdVia } : {}),
     ...(input.billingMode ? { billingMode: input.billingMode } : {}),
-    ...(input.stripeCustomerId?.trim()
-      ? { stripeCustomerId: input.stripeCustomerId.trim() }
-      : {}),
+    ...(input.stripeCustomerId?.trim() ? { stripeCustomerId: input.stripeCustomerId.trim() } : {}),
     ...(input.stripeSubscriptionId?.trim()
       ? { stripeSubscriptionId: input.stripeSubscriptionId.trim() }
       : {}),

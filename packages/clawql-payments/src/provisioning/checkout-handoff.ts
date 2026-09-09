@@ -16,13 +16,9 @@ import type { OrgBillingMode, OrgCreatedVia } from "../credits/org.js";
 import type { ProvisionOrgInput } from "./types.js";
 
 export type CheckoutProvisionHandoff =
-  | { ok: true; input: ProvisionOrgInput }
-  | { ok: false; reason: string };
+  { ok: true; input: ProvisionOrgInput } | { ok: false; reason: string };
 
-function metaString(
-  metadata: Stripe.Metadata | null | undefined,
-  key: string
-): string | undefined {
+function metaString(metadata: Stripe.Metadata | null | undefined, key: string): string | undefined {
   const v = metadata?.[key];
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
@@ -35,10 +31,7 @@ function mapPlan(raw: string | undefined): ClawqlPlanId {
   return "pro";
 }
 
-function mapBillingMode(
-  mode: string | undefined,
-  explicit: string | undefined
-): OrgBillingMode {
+function mapBillingMode(mode: string | undefined, explicit: string | undefined): OrgBillingMode {
   if (
     explicit === "stripe_checkout" ||
     explicit === "stripe_invoice" ||
@@ -65,10 +58,8 @@ export function provisionOrgInputFromCheckoutSession(
 ): CheckoutProvisionHandoff {
   const metadata = session.metadata;
   const flag = metaString(metadata, "clawql_provision_org");
-  const orgName =
-    metaString(metadata, "clawql_org_name") || metaString(metadata, "org_name");
-  const wantsProvision =
-    flag === "1" || flag === "true" || Boolean(orgName);
+  const orgName = metaString(metadata, "clawql_org_name") || metaString(metadata, "org_name");
+  const wantsProvision = flag === "1" || flag === "true" || Boolean(orgName);
 
   if (!wantsProvision) {
     return {

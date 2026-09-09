@@ -10,10 +10,7 @@ import {
   type ApiKeyStoreError,
 } from "clawql-auth";
 import { Context, Data, Effect, Layer } from "effect";
-import {
-  buildOrgMemberAddedEntry,
-  buildOrgProvisionedEntry,
-} from "../audit/events.js";
+import { buildOrgMemberAddedEntry, buildOrgProvisionedEntry } from "../audit/events.js";
 import { resolveIssuedApiKeysPath } from "../config/paths.js";
 import { isCreditsEnabled } from "../credits/config.js";
 import {
@@ -118,8 +115,7 @@ export function provisionOrgLiveLayer(
           const parsed = yield* parseProvisionInput(input);
           const existing = yield* Effect.tryPromise({
             try: () => getOrg(parsed.orgId, runEnv),
-            catch: (cause) =>
-              new ProvisionOrgError({ reason: "Failed to load org store", cause }),
+            catch: (cause) => new ProvisionOrgError({ reason: "Failed to load org store", cause }),
           });
 
           let org: OrgRecord;
@@ -196,9 +192,7 @@ export function provisionOrgLiveLayer(
               catch: (cause) =>
                 new ProvisionOrgError({
                   reason:
-                    cause instanceof Error
-                      ? cause.message
-                      : `inviteOrgMember failed for ${email}`,
+                    cause instanceof Error ? cause.message : `inviteOrgMember failed for ${email}`,
                   cause,
                 }),
             });
@@ -278,9 +272,7 @@ export function issuedApiKeyStoreLiveLayer(
 }
 
 /** Test helper: isolated API key store under a temp CLAWQL_HOME. */
-export function issuedApiKeyStoreForHomeLayer(
-  home: string
-): Layer.Layer<IssuedApiKeyStoreService> {
+export function issuedApiKeyStoreForHomeLayer(home: string): Layer.Layer<IssuedApiKeyStoreService> {
   return createIssuedApiKeyStoreLayer({
     path: join(home, "Auth", "api-keys.json"),
   });

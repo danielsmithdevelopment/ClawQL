@@ -258,11 +258,7 @@ export async function runPaymentsOrgProvision(options: OrgCliOptions): Promise<n
   requireCredits();
   const email = options.email?.trim();
   const orgName = options.displayName?.trim() || options.orgId?.trim();
-  const planId = (options.planId?.trim() || "team") as
-    | "free"
-    | "pro"
-    | "team"
-    | "enterprise";
+  const planId = (options.planId?.trim() || "team") as "free" | "pro" | "team" | "enterprise";
   if (!email || !orgName) {
     console.error(
       "Usage: clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]"
@@ -271,10 +267,7 @@ export async function runPaymentsOrgProvision(options: OrgCliOptions): Promise<n
   }
   const billingMode = (options.billingMode?.trim() ||
     (options.createdVia === "self_serve" ? "stripe_checkout" : "stripe_invoice")) as
-    | "stripe_checkout"
-    | "stripe_invoice"
-    | "hybrid"
-    | "credits_only";
+    "stripe_checkout" | "stripe_invoice" | "hybrid" | "credits_only";
   const createdVia =
     options.createdVia?.trim() === "self_serve" ? "self_serve" : "enterprise_sales";
   const memberEmails = options.memberEmails

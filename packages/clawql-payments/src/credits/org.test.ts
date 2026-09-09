@@ -74,7 +74,7 @@ describe("org closed-loop credits", () => {
     expect(Effect.runSync(isCreditsOrgTransferEnabled(process.env))).toBe(true);
   });
 
-it("creates org with billing fields when provided", async () => {
+  it("creates org with billing fields when provided", async () => {
     const org = await createOrg(
       {
         orgId: "billme",
