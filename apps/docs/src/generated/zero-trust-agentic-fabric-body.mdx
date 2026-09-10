@@ -74,7 +74,7 @@ Primary enterprise entry point. Customer owns the infrastructure; ClawQL provide
 | Policy             | EnterpriseGovernance + PEP   | Manifest resolution, PII, kinetic guardrails               |
 | Diversity (target) | NSV/SGDOP engine             | Swarm coverage / blind-spot directives                     |
 | Secrets            | Vault (sidecar / customer)   | Short-lived credentials                                    |
-| Transport          | mTLS (+ SPIFFE/SPIRE target) | VG↔Regional, VG↔Edge, VG↔VG                             |
+| Transport          | mTLS (+ SPIFFE/SPIRE target) | VG↔Regional, VG↔Edge, VG↔VG                                |
 
 ### Sovereign handshake — VG ↔ Regional Hub
 
@@ -177,14 +177,14 @@ At the VG, NSV/SGDOP measure whether Edge workers covering a problem are explori
 
 ## Sovereign execution environment
 
-| Concern           | Primitive                           | Role                                 |
-| ----------------- | ----------------------------------- | ------------------------------------ |
-| Identity          | mTLS / SPIFFE                       | Authenticate nodes                   |
-| Sandbox           | Kata / gVisor / Seatbelt            | Isolate agent execution              |
-| Kernel enforce    | Tetragon (eBPF)                     | Synchronous block of forbidden exec  |
-| Behavioral audit  | Falco                               | Unexpected process / egress patterns |
+| Concern          | Primitive                           | Role                                 |
+| ---------------- | ----------------------------------- | ------------------------------------ |
+| Identity         | mTLS / SPIFFE                       | Authenticate nodes                   |
+| Sandbox          | Kata / gVisor / Seatbelt            | Isolate agent execution              |
+| Kernel enforce   | Tetragon (eBPF)                     | Synchronous block of forbidden exec  |
+| Behavioral audit | Falco                               | Unexpected process / egress patterns |
 | Intent↔execution | TraceID correlation                 | Prompt → tool → syscall in one view  |
-| Supply chain      | Cosign / Kyverno / Layer 0 manifest | Only verified software runs          |
+| Supply chain     | Cosign / Kyverno / Layer 0 manifest | Only verified software runs          |
 
 Essay map (proof of competence): [PragmaticVectors Hardened Agentic Stack](https://pragmaticvectors.com/series/hardened-agentic-stack) · GTM dossier: [Inference GTM — Hardened Security Dossier](https://clawql.com/inference/gtm/#security-dossier).
 
@@ -196,7 +196,7 @@ Essay map (proof of competence): [PragmaticVectors Hardened Agentic Stack](https
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Infrastructure optimization | [Twelve Layers of LLM Cost](https://pragmaticvectors.com/posts/twelve-layers-llm-cost/)                                                                                                           |
 | Memory / IDP residency      | [Local Data Residency](https://pragmaticvectors.com/posts/hardened-agentic-13-memory-residency/)                                                                                                  |
-| Intent ↔ execution         | [Observability Loop](https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/)                                                                                                  |
+| Intent ↔ execution          | [Observability Loop](https://pragmaticvectors.com/posts/hardened-agentic-08-observability-loop/)                                                                                                  |
 | Edge containment            | [The Kernel Said No](https://pragmaticvectors.com/posts/macos-seatbelt-agent-sandbox/)                                                                                                            |
 | Supply chain / CISO         | [Mini Shai-Hulud](https://pragmaticvectors.com/posts/mini-shai-hulud-supply-chain/)                                                                                                               |
 | Kata + Tetragon             | [Building the Sandbox](https://pragmaticvectors.com/posts/hardened-agentic-07-tool-sandbox/) · [Process Containment](https://pragmaticvectors.com/posts/hardened-agentic-04-process-containment/) |

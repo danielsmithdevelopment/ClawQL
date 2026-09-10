@@ -6,20 +6,10 @@
  */
 
 export type PluginCategory =
-  | 'core'
-  | 'horizontal'
-  | 'vertical'
-  | 'proxy'
-  | 'providers'
-  | 'third-party'
+  'core' | 'horizontal' | 'vertical' | 'proxy' | 'providers' | 'third-party'
 
 export type PluginStatus =
-  | 'always-on'
-  | 'default-on'
-  | 'opt-in'
-  | 'shipped'
-  | 'planned'
-  | 'roadmap'
+  'always-on' | 'default-on' | 'opt-in' | 'shipped' | 'planned' | 'roadmap'
 
 export type PluginRegistryEntry = {
   id: string
