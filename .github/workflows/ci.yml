@@ -433,6 +433,16 @@ jobs:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
+      - name: Preflight — apps/docs lockfile is in the Docker context
+        run: |
+          set -euo pipefail
+          test -f apps/docs/package.json
+          test -f apps/docs/package-lock.json
+          if grep -qE '^docs$' .dockerignore; then
+            echo ".dockerignore must not use bare 'docs' (it also excludes apps/docs)" >&2
+            exit 1
+          fi
+
       - name: Read package metadata
         id: pkg
         run: |
