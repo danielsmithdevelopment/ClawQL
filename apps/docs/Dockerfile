@@ -2,6 +2,7 @@
 #   docker build -f apps/docs/Dockerfile -t clawql-website .
 #
 # App-only context cannot see monorepo packages (docs API imports clawql-analytics).
+# Deps/builder use /src/apps/docs so file:../../packages/clawql-analytics matches the git tree.
 
 FROM node:25-alpine AS analytics-builder
 WORKDIR /repo
@@ -17,32 +18,30 @@ RUN npm run build -w clawql-merkle \
   && npm run build -w clawql-analytics
 
 FROM node:25-alpine AS deps
-WORKDIR /app
+# Keep the same two-level layout as the git tree so `file:../../packages/clawql-analytics`
+# stays under a project root. npm ci on Node 25 walks that relative path and otherwise
+# looks for a lockfile at `/` (WORKDIR /app → ../..).
+WORKDIR /src/apps/docs
 RUN apk upgrade --no-cache
-COPY apps/docs/package.json /app/package.json
-COPY apps/docs/package-lock.json /app/package-lock.json
-# From /app, file:../../packages/clawql-analytics → /packages/clawql-analytics
-COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
-RUN test -f /app/package-lock.json \
-  && ls -la /app/package.json /app/package-lock.json \
-  && npm ci \
-  && mkdir -p /packages/clawql-analytics/node_modules \
-  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
-  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
+COPY apps/docs/package.json apps/docs/package-lock.json ./
+COPY --from=analytics-builder /repo/packages/clawql-analytics /src/packages/clawql-analytics
+RUN npm ci \
+  && mkdir -p /src/packages/clawql-analytics/node_modules \
+  && ln -sfn /src/apps/docs/node_modules/effect /src/packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /src/apps/docs/node_modules/posthog-node /src/packages/clawql-analytics/node_modules/posthog-node
 
 FROM node:25-alpine AS builder
-WORKDIR /app
+WORKDIR /src/apps/docs
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG CLAWQL_PACKAGE_VERSION=0.0.0
 ARG CLAWQL_PACKAGE_DESCRIPTION="ClawQL MCP server"
 ENV CLAWQL_PACKAGE_VERSION=${CLAWQL_PACKAGE_VERSION}
 ENV CLAWQL_PACKAGE_DESCRIPTION=${CLAWQL_PACKAGE_DESCRIPTION}
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
-# Same resolution for webpack walking from /packages/.../dist
-RUN mkdir -p /packages/clawql-analytics/node_modules \
-  && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
-  && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
+COPY --from=deps /src/apps/docs/node_modules ./node_modules
+COPY --from=analytics-builder /repo/packages/clawql-analytics /src/packages/clawql-analytics
+RUN mkdir -p /src/packages/clawql-analytics/node_modules \
+  && ln -sfn /src/apps/docs/node_modules/effect /src/packages/clawql-analytics/node_modules/effect \
+  && ln -sfn /src/apps/docs/node_modules/posthog-node /src/packages/clawql-analytics/node_modules/posthog-node
 COPY apps/docs/ .
 RUN npm run build
 
@@ -61,9 +60,9 @@ ENV CLAWQL_PACKAGE_VERSION=${CLAWQL_PACKAGE_VERSION}
 ENV CLAWQL_PACKAGE_DESCRIPTION=${CLAWQL_PACKAGE_DESCRIPTION}
 
 # `output: 'standalone'` — traced production deps only (not full npm ci tree).
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /src/apps/docs/public ./public
+COPY --from=builder /src/apps/docs/.next/standalone ./
+COPY --from=builder /src/apps/docs/.next/static ./.next/static
 
 EXPOSE 3000
 CMD ["node", "server.js"]
