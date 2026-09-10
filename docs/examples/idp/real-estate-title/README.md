@@ -8,12 +8,12 @@ ClawQL sits as the **intelligent document layer** alongside KW Command (CRM/pipe
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`workflow-template.yaml`](workflow-template.yaml) | Argo `WorkflowTemplate` — classify → suspend → finalize |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio UI for Schedule B exception review |
-| [`openclaw-prompt.md`](openclaw-prompt.md) | OpenClaw system prompt addendum + KW Command positioning |
-| [`fixtures/synthetic-title-commitment.txt`](fixtures/synthetic-title-commitment.txt) | Demo title commitment (Schedule A + B) |
+| File                                                                                 | Purpose                                                  |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| [`workflow-template.yaml`](workflow-template.yaml)                                   | Argo `WorkflowTemplate` — classify → suspend → finalize  |
+| [`label-studio-config.xml`](label-studio-config.xml)                                 | Label Studio UI for Schedule B exception review          |
+| [`openclaw-prompt.md`](openclaw-prompt.md)                                           | OpenClaw system prompt addendum + KW Command positioning |
+| [`fixtures/synthetic-title-commitment.txt`](fixtures/synthetic-title-commitment.txt) | Demo title commitment (Schedule A + B)                   |
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ kubectl apply -f docs/examples/idp/real-estate-title/workflow-template.yaml -n c
   "tool": "classify_document",
   "arguments": {
     "docling_md": "<docling markdown from title commitment>",
-    "min_confidence": 0.90
+    "min_confidence": 0.9
   }
 }
 ```

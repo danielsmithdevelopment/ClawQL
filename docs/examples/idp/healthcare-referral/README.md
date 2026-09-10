@@ -4,11 +4,11 @@ Synthetic **clinical intake / referral** review pack for local Compose. **Not me
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio labeling UI |
-| [`sample-tasks.json`](sample-tasks.json) | Example `hitl_enqueue_label_studio` body with **predictions** |
-| [`fixtures/synthetic-referral.txt`](fixtures/synthetic-referral.txt) | Demo referral text |
+| File                                                                 | Purpose                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [`label-studio-config.xml`](label-studio-config.xml)                 | Label Studio labeling UI                                      |
+| [`sample-tasks.json`](sample-tasks.json)                             | Example `hitl_enqueue_label_studio` body with **predictions** |
+| [`fixtures/synthetic-referral.txt`](fixtures/synthetic-referral.txt) | Demo referral text                                            |
 
 ## Compose
 

@@ -4,9 +4,9 @@ Minimal **heuristic** classifier for local IDP demos. **Do not** use in producti
 
 ## API
 
-| Method | Path | Body | Response |
-| ------ | ---- | ---- | -------- |
-| `GET` | `/health` | — | `{ "ok": true, "model_version": "…" }` |
+| Method | Path        | Body                                                                        | Response                                                   |
+| ------ | ----------- | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `GET`  | `/health`   | —                                                                           | `{ "ok": true, "model_version": "…" }`                     |
 | `POST` | `/classify` | `{ "docling_md"?, "docling_json"?, "text"?, "doc_id"?, "min_confidence"? }` | `{ "label", "confidence", "model_version", "needs_hitl" }` |
 
 ## Run locally

@@ -2,11 +2,11 @@
 
 Shipped reference packs for ClawQL as the **intelligent document layer** in residential real estate — for brokerages on any CRM (Command, BoldTrail/kvCORE, Follow Up Boss, Compass, etc.) plus cloud storage and transaction tools, **and** for FSBO sellers comparing buyer offers alongside Houzeo or Beycome — who need classify, extract, HITL, semantic search, and vault memory without replacing their stack.
 
-| Pack | WorkflowTemplate | Primary document | HITL focus |
-| ---- | ---------------- | ---------------- | ---------- |
-| [real-estate-title](real-estate-title/README.md) | `clawql-realestate-title-ingest` | Title commitment | Schedule B exception classification |
-| [real-estate-psa](real-estate-psa/README.md) | `clawql-realestate-psa-ingest` | Purchase agreement | Contract field confirmation |
-| [real-estate-fsbo](real-estate-fsbo/README.md) | — (agent-driven) | Buyer offer | Offer field / contingency confirmation |
+| Pack                                             | WorkflowTemplate                 | Primary document   | HITL focus                             |
+| ------------------------------------------------ | -------------------------------- | ------------------ | -------------------------------------- |
+| [real-estate-title](real-estate-title/README.md) | `clawql-realestate-title-ingest` | Title commitment   | Schedule B exception classification    |
+| [real-estate-psa](real-estate-psa/README.md)     | `clawql-realestate-psa-ingest`   | Purchase agreement | Contract field confirmation            |
+| [real-estate-fsbo](real-estate-fsbo/README.md)   | — (agent-driven)                 | Buyer offer        | Offer field / contingency confirmation |
 
 ## Architecture placement
 

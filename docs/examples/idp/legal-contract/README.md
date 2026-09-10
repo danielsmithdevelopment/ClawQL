@@ -4,11 +4,11 @@ Synthetic **contract clause / privilege review** pack for local Compose. **Not l
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio labeling UI |
-| [`sample-tasks.json`](sample-tasks.json) | Example enqueue body with **predictions** |
-| [`fixtures/synthetic-nda-excerpt.txt`](fixtures/synthetic-nda-excerpt.txt) | Demo NDA excerpt |
+| File                                                                       | Purpose                                   |
+| -------------------------------------------------------------------------- | ----------------------------------------- |
+| [`label-studio-config.xml`](label-studio-config.xml)                       | Label Studio labeling UI                  |
+| [`sample-tasks.json`](sample-tasks.json)                                   | Example enqueue body with **predictions** |
+| [`fixtures/synthetic-nda-excerpt.txt`](fixtures/synthetic-nda-excerpt.txt) | Demo NDA excerpt                          |
 
 ## Compose
 

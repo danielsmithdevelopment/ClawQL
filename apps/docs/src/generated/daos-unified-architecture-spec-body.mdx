@@ -630,7 +630,12 @@ interface WORMEntry {
   session_id: string
   agent_id: string
   source:
-    'PEP' | 'WATCHDOG' | 'MEMORY' | 'OUROBOROS' | 'BREAKOUT' | 'COMMAND_DECK'
+    | 'PEP'
+    | 'WATCHDOG'
+    | 'MEMORY'
+    | 'OUROBOROS'
+    | 'BREAKOUT'
+    | 'COMMAND_DECK'
   correlation_id: string // links all entries for one action's lifecycle
   event_kind: string
   payload: WORMPayload // typed union discriminated by event_kind

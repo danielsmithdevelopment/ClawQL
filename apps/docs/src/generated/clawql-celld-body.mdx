@@ -413,16 +413,16 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 10. Testing
 
-| Layer           | Tooling                                                                       | Purpose                                                          |
-| --------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Local dev       | **`celld dev`** (v0.4.0+)                                                     | Counter/Streams fixture without bucket; `.celld/dev` persistence |
-| Unit / DO logic | **Miniflare** (or workerd)                                                    | Alarm, storage, significance, idempotent names                   |
-| Bundle          | `clawql streams celld bundle-check`                                           | Enforce ≤64 MiB (**CI fail-closed**)                             |
-| Fetch clients   | `mcp-fetch` / `adapter-fetch` unit scripts                                    | Streamable HTTP + adapter REST without celld                     |
-| Fleet           | `celld diagnose` · `celld cell list`                                          | Lease + peer health; enumerate cells after traffic               |
+| Layer           | Tooling                                                                            | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Local dev       | **`celld dev`** (v0.4.0+)                                                          | Counter/Streams fixture without bucket; `.celld/dev` persistence |
+| Unit / DO logic | **Miniflare** (or workerd)                                                         | Alarm, storage, significance, idempotent names                   |
+| Bundle          | `clawql streams celld bundle-check`                                                | Enforce ≤64 MiB (**CI fail-closed**)                             |
+| Fetch clients   | `mcp-fetch` / `adapter-fetch` unit scripts                                         | Streamable HTTP + adapter REST without celld                     |
+| Fleet           | `celld diagnose` · `celld cell list`                                               | Lease + peer health; enumerate cells after traffic               |
 | Smoke           | `STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh` | Webhook → spawn → slim + MCP + adapter + LTX keys                |
-| Helm            | `make helm-celld-template-tests`                                              | StatefulSet / probes / env injection (CI)                        |
-| Security        | Attestation verify in CI                                                      | Supply chain; pin `CELLD_VERSION=v0.4.0`                         |
+| Helm            | `make helm-celld-template-tests`                                                   | StatefulSet / probes / env injection (CI)                        |
+| Security        | Attestation verify in CI                                                           | Supply chain; pin `CELLD_VERSION=v0.4.0`                         |
 
 **Evidence matrix (commands + honesty about gaps):** [`streams-celld-evidence.md`](/streams/streams-celld-evidence).
 

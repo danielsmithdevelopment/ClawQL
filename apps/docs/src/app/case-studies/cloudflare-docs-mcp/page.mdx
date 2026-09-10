@@ -68,11 +68,11 @@ When `execute` fails, the fix is often not "change Next.js" — it's token scope
 
 ## 5. Wrangler deploy vs REST `execute`
 
-| Path                                                                  | When to use it                                                                                                   | Caveat                                                                                       |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Path                                                                    | When to use it                                                                                                   | Caveat                                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `npm run deploy` in `apps/docs/` (opennextjs-cloudflare build + deploy) | Iterating on the app — HTML, MDX, Worker bundle                                                                  | Uses Wrangler auth; may succeed even when a narrow API token fails `execute` for domain APIs |
-| ClawQL `search` + `execute`                                           | Discovering Cloudflare operations, attaching custom domains, auditing what hostname maps to which Worker         | Token needs explicit scopes for Workers + routes/domains + zone read as required             |
-| Both                                                                  | Healthy ops: deploy artifact with Wrangler; verify and repair routing with REST when automation or audit matters | Treat Wrangler success and REST success as independent until proven                          |
+| ClawQL `search` + `execute`                                             | Discovering Cloudflare operations, attaching custom domains, auditing what hostname maps to which Worker         | Token needs explicit scopes for Workers + routes/domains + zone read as required             |
+| Both                                                                    | Healthy ops: deploy artifact with Wrangler; verify and repair routing with REST when automation or audit matters | Treat Wrangler success and REST success as independent until proven                          |
 
 The worst confusion in this case study was "I can deploy, but `execute` says 403" — almost always a scope problem or the wrong account.
 

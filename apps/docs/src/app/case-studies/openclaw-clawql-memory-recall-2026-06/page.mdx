@@ -44,13 +44,13 @@ OpenClaw routes agent tool calls to the configured `clawql` MCP endpoint (Stream
 
 ## 3. What was wired (local stack, June 2026)
 
-| Component               | Purpose                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| **ClawQL HTTP MCP**     | `PORT=8080 npm run start:http` → `http://127.0.0.1:8080/mcp` (Streamable HTTP)                   |
-| **OpenClaw MCP config** | `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'`    |
+| Component               | Purpose                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| **ClawQL HTTP MCP**     | `PORT=8080 npm run start:http` → `http://127.0.0.1:8080/mcp` (Streamable HTTP)                        |
+| **OpenClaw MCP config** | `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'`         |
 | **Chat bridge**         | `apps/dashboard/scripts/openclaw-chat-bridge.mjs` on :8787 — `POST /v1/chat` for dashboard Agent Chat |
-| **LLM**                 | OpenRouter (e.g. `openrouter/qwen/qwen3.6-plus`) via `openclaw models set`                       |
-| **Vault**               | Prior session notes under `Memory/` (ingested during K8s/OpenClaw setup work)                    |
+| **LLM**                 | OpenRouter (e.g. `openrouter/qwen/qwen3.6-plus`) via `openclaw models set`                            |
+| **Vault**               | Prior session notes under `Memory/` (ingested during K8s/OpenClaw setup work)                         |
 
 **Build prerequisite:** `npm run build` must produce `dist/server-http.js` (after `npm install` for workspace deps such as `effect`).
 

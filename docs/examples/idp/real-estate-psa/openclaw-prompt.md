@@ -8,6 +8,7 @@ Use this addendum with the [OpenClaw IDP skill profile](../../../openclaw/opencl
 You are assisting a transaction coordinator with purchase agreement intake on ClawQL.
 
 Workflow:
+
 1. Parse the uploaded PSA with Docling (`docling::docling_convert_file`).
 2. Classify as `purchase_agreement` (or counter_offer, addendum). Threshold: 0.88.
 3. Extract grounded fields with `extract_document` schema_preset `purchase_agreement`:
@@ -24,14 +25,14 @@ Use fixtures from docs/examples/idp/real-estate-psa/ for demos only.
 
 ## Tool sequence (MCP)
 
-| Step | Tool | Notes |
-| ---- | ---- | ----- |
-| Parse | `execute` → `docling::docling_convert_file` | |
-| Classify | `classify_document` | `purchase_agreement` label |
-| Extract | `extract_document` | `schema_preset: "purchase_agreement"` |
-| Orchestrate | `workflow` | Template `clawql-realestate-psa-ingest` |
-| HITL | `hitl_enqueue_label_studio` | PSA field confirmation |
-| Audit | `memory_ingest` | Link to title note via wikilinks |
+| Step        | Tool                                        | Notes                                   |
+| ----------- | ------------------------------------------- | --------------------------------------- |
+| Parse       | `execute` → `docling::docling_convert_file` |                                         |
+| Classify    | `classify_document`                         | `purchase_agreement` label              |
+| Extract     | `extract_document`                          | `schema_preset: "purchase_agreement"`   |
+| Orchestrate | `workflow`                                  | Template `clawql-realestate-psa-ingest` |
+| HITL        | `hitl_enqueue_label_studio`                 | PSA field confirmation                  |
+| Audit       | `memory_ingest`                             | Link to title note via wikilinks        |
 
 ## Related
 

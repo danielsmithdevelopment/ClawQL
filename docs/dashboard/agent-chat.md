@@ -65,8 +65,8 @@ flowchart LR
 
 **Source files**
 
-| Area                       | Path                                                                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Area                       | Path                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | UI container               | [`apps/dashboard/src/components/dashboard/AgentChatPanel.tsx`](../../apps/dashboard/src/components/dashboard/AgentChatPanel.tsx)           |
 | Conversation + scroll      | [`apps/dashboard/src/components/agent-chat/AgentConversation.tsx`](../../apps/dashboard/src/components/agent-chat/AgentConversation.tsx)   |
 | IDP attachment cards       | [`apps/dashboard/src/components/agent-chat/IdpAttachmentCards.tsx`](../../apps/dashboard/src/components/agent-chat/IdpAttachmentCards.tsx) |

@@ -40,7 +40,7 @@ OpenAPI/GraphQL vendors under `providers/` stay **available** in the image/packa
 | 1     | `HarnessPlugin`, `HarnessContext`, registry, tool/WORM bridges, `ClawQLHarness.create` | **Shipped**             |
 | 2     | `OuroborosPlugin` (`clawql_think` + full `ouroboros_*`)                                | **Shipped**             |
 | 3     | `OpenCode2Plugin` (`createOpencode` + session.create/prompt)                           | **Shipped**             |
-| 4     | `compareHarnesses` + `benchmarks/harness-bench/`                                     | **Shipped dry compare** |
+| 4     | `compareHarnesses` + `benchmarks/harness-bench/`                                       | **Shipped dry compare** |
 | MCP   | `makeHarnessLayer` bridges harness tools; composition from instance/tier config        | **Shipped**             |
 
 ## Distinction from clawql-agents

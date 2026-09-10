@@ -312,16 +312,16 @@ Full keys table: [`docs/deployment/helm.md`](../deployment/helm.md).
 
 ## 12. Related documentation
 
-| Doc                                                                                        | Topic                                                                                                  |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| [`docs/mcp/mcp-tools.md`](mcp-tools.md)                                                    | **`hitl_enqueue_label_studio`** in tools matrix                                                        |
-| [`docs/mcp/notify-tool.md`](notify-tool.md)                                                | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77))                 |
-| [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md)                        | OpenClaw MCP registration                                                                              |
-| [`docs/deployment/helm.md`](../deployment/helm.md)                                         | **`enableHitlLabelStudio`**                                                                            |
-| [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)                              | Feature-flag table                                                                                     |
+| Doc                                                                                      | Topic                                                                                                  |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [`docs/mcp/mcp-tools.md`](mcp-tools.md)                                                  | **`hitl_enqueue_label_studio`** in tools matrix                                                        |
+| [`docs/mcp/notify-tool.md`](notify-tool.md)                                              | Slack **`notify`** ([#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77))                 |
+| [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md)                      | OpenClaw MCP registration                                                                              |
+| [`docs/deployment/helm.md`](../deployment/helm.md)                                       | **`enableHitlLabelStudio`**                                                                            |
+| [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)                            | Feature-flag table                                                                                     |
 | [`docs/examples/idp/lending-w2/README.md`](../../docs/examples/idp/lending-w2/README.md) | W-2 HITL + suspend/resume sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) |
-| [Label Studio docs](https://labelstud.io/guide/)                                           | Import API, webhooks, projects                                                                         |
-| [Label Studio CE vs Enterprise](https://labelstud.io/guide/label_studio_compare)           | RBAC capability matrix (upstream)                                                                      |
+| [Label Studio docs](https://labelstud.io/guide/)                                         | Import API, webhooks, projects                                                                         |
+| [Label Studio CE vs Enterprise](https://labelstud.io/guide/label_studio_compare)         | RBAC capability matrix (upstream)                                                                      |
 
 ---
 
@@ -401,7 +401,7 @@ sequenceDiagram
 
 | Step | Detail                                                                                                                                                                                                                                                                        |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Create **two** Label Studio projects (same labeling config XML — see [`docs/examples/idp/lending-w2/label-studio-config.xml`](../../docs/examples/idp/lending-w2/label-studio-config.xml)).                                                                                 |
+| 1    | Create **two** Label Studio projects (same labeling config XML — see [`docs/examples/idp/lending-w2/label-studio-config.xml`](../../docs/examples/idp/lending-w2/label-studio-config.xml)).                                                                                   |
 | 2    | **Reviewer A** — access only to **primary** project. **Reviewer B** — access only to **secondary** (on CE: separate logins + discipline; on Enterprise: project-level Annotator/Reviewer roles).                                                                              |
 | 3    | Primary enqueue sets **`provenance.review_stage`: `"primary"`** and **`correlation_id`** (workflow id).                                                                                                                                                                       |
 | 4    | Webhook handler or agent policy: on primary completion, call **`hitl_enqueue_label_studio`** again with **`project_id`** = secondary, same **`correlation_id`**, **`provenance.review_stage`: `"secondary"`**, and **`provenance.primary_task_id`** from the webhook payload. |

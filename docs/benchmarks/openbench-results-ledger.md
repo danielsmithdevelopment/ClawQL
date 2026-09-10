@@ -129,7 +129,7 @@ document is the **scoreboard + run diary**.
 | Harness            | OpenCode → clawql-inference                                                                                                                      |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0                                                                    |
 | Last ledger update | 2026-08-04T16:40Z                                                                                                                                |
-| CI matrix control  | [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push                                          |
+| CI matrix control  | [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push                    |
 | Task explanations  | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell                                          |
 
 ---

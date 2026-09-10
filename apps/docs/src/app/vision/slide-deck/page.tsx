@@ -40,8 +40,8 @@ export default function VisionSlideDeckPage() {
           <code className="font-mono text-xs">
             node scripts/sync-clawql-slides-doc.mjs
           </code>{' '}
-          from <code className="font-mono text-xs">apps/docs/</code> (also runs on{' '}
-          <code className="font-mono text-xs">prebuild</code> /{' '}
+          from <code className="font-mono text-xs">apps/docs/</code> (also runs
+          on <code className="font-mono text-xs">prebuild</code> /{' '}
           <code className="font-mono text-xs">dev</code>). The deck body is
           included in the{' '}
           <strong>static HTML for this URL at build time</strong> (no

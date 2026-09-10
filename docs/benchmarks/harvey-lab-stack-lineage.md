@@ -8,9 +8,9 @@ Harvey LAB × ClawQL has two distinct measurement stacks. Mixing them invalidate
 
 | Component      | Implementation                                                                      |
 | -------------- | ----------------------------------------------------------------------------------- |
-| Pre-ingest     | `benchmarks/harvey-labs/scripts/lab-pre-ingest.mjs`                               |
-| Vault seed     | `benchmarks/harvey-labs/scripts/lab-vault-seed.mjs`                               |
-| MCP I/O        | `benchmarks/harvey-labs/scripts/lab-mcp-proxy.mjs`                                |
+| Pre-ingest     | `benchmarks/harvey-labs/scripts/lab-pre-ingest.mjs`                                 |
+| Vault seed     | `benchmarks/harvey-labs/scripts/lab-vault-seed.mjs`                                 |
+| MCP I/O        | `benchmarks/harvey-labs/scripts/lab-mcp-proxy.mjs`                                  |
 | Structured SQL | MCP `data_query` / `data_ingest` via `packages/clawql-data` (Node DuckDB)           |
 | Memory enrich  | `packages/clawql-memory/src/recall/harvey-lab-enrich.ts` when `CLAWQL_HARVEY_LAB=1` |
 | Harness glue   | Python adapter subclasses + `run.py` marker blocks only                             |
@@ -26,11 +26,11 @@ Canonical metadata: [`benchmarks/harvey-labs/stack-version.json`](../../benchmar
 
 ## Legacy — `python-duckdb-v1` (quarantined)
 
-| Component  | Implementation                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Pre-ingest | Python `_build_lab_duckdb` (removed)                                                                                           |
-| SQL path   | Local Python DuckDB file under task vault                                                                                      |
-| Harness    | Optional `clawql_agent_loop.py` patch (removed)                                                                                |
+| Component  | Implementation                                                                                                             |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Pre-ingest | Python `_build_lab_duckdb` (removed)                                                                                       |
+| SQL path   | Local Python DuckDB file under task vault                                                                                  |
+| Harness    | Optional `clawql_agent_loop.py` patch (removed)                                                                            |
 | Artifacts  | [`benchmarks/harvey-labs/results/legacy/python-duckdb-v1/`](../../benchmarks/harvey-labs/results/legacy/python-duckdb-v1/) |
 
 Pre-ingest fingerprint:

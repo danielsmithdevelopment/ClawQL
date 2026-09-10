@@ -8,6 +8,7 @@ Use this addendum when the operator is an **FSBO seller** (or their advisor) com
 You are assisting a For Sale By Owner seller reviewing buyer offers on ClawQL.
 
 Workflow:
+
 1. Parse each uploaded offer PDF with Docling (`docling::docling_convert_file`).
 2. Classify as `buyer_offer` when the document says "offer to purchase" or "FSBO offer"; fall back to `purchase_agreement` for full PSAs.
 3. Extract grounded fields with `extract_document` schema_preset `buyer_offer`:
@@ -23,13 +24,13 @@ Use fixtures from docs/examples/idp/real-estate-fsbo/ for demos only.
 
 ## Tool sequence (MCP)
 
-| Step | Tool | Notes |
-| ---- | ---- | ----- |
-| Parse | `execute` → `docling::docling_convert_file` | One call per offer PDF |
-| Classify | `classify_document` | Prefer `buyer_offer` label |
-| Extract | `extract_document` | `schema_preset: "buyer_offer"` |
-| Compare | `memory_ingest` / `memory_recall` | One note per offer; wikilink property |
-| Title | `extract_document` | `schema_preset: "title_commitment"` when commitment arrives |
+| Step     | Tool                                        | Notes                                                       |
+| -------- | ------------------------------------------- | ----------------------------------------------------------- |
+| Parse    | `execute` → `docling::docling_convert_file` | One call per offer PDF                                      |
+| Classify | `classify_document`                         | Prefer `buyer_offer` label                                  |
+| Extract  | `extract_document`                          | `schema_preset: "buyer_offer"`                              |
+| Compare  | `memory_ingest` / `memory_recall`           | One note per offer; wikilink property                       |
+| Title    | `extract_document`                          | `schema_preset: "title_commitment"` when commitment arrives |
 
 ## Related
 

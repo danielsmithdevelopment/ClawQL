@@ -6,14 +6,13 @@ Worker skeleton: [`docs/examples/streams-celld/`](../../streams-celld/)
 
 Learn walkthrough: [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)
 
-
 ## Evidence vs manual
 
-| Layer | Status |
-| ----- | ------ |
-| Helm chart templates (StatefulSet, probes, env) | **CI** — `make helm-celld-template-tests` |
-| Worker unit / bundle / local smoke | **CI** — see [`docs/streams/streams-celld-evidence.md`](../../../streams/streams-celld-evidence.md) |
-| Live cluster webhook → LTX on fleet bucket | **Manual** — steps below; not automated in GitHub Actions yet |
+| Layer                                           | Status                                                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Helm chart templates (StatefulSet, probes, env) | **CI** — `make helm-celld-template-tests`                                                           |
+| Worker unit / bundle / local smoke              | **CI** — see [`docs/streams/streams-celld-evidence.md`](../../../streams/streams-celld-evidence.md) |
+| Live cluster webhook → LTX on fleet bucket      | **Manual** — steps below; not automated in GitHub Actions yet                                       |
 
 ## Checklist
 

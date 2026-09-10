@@ -6,16 +6,16 @@ Product branding may say “OpenAI Privacy Filter”; the publisher is OpenAI, t
 
 ## Modes
 
-| Mode | Env | Behavior |
-| ---- | --- | -------- |
-| **demo** (default) | `PRIVACY_FILTER_MODE=demo` | Regex heuristics for the 8 Privacy Filter categories — **no model download**, safe for CI smoke |
-| **live** | `PRIVACY_FILTER_MODE=live` | Loads [`openai/privacy-filter`](https://huggingface.co/openai/privacy-filter) via `transformers` on CPU/GPU locally |
+| Mode               | Env                        | Behavior                                                                                                            |
+| ------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **demo** (default) | `PRIVACY_FILTER_MODE=demo` | Regex heuristics for the 8 Privacy Filter categories — **no model download**, safe for CI smoke                     |
+| **live**           | `PRIVACY_FILTER_MODE=live` | Loads [`openai/privacy-filter`](https://huggingface.co/openai/privacy-filter) via `transformers` on CPU/GPU locally |
 
 ## API
 
-| Method | Path | Body | Response |
-| ------ | ---- | ---- | -------- |
-| `GET` | `/health` | — | `{ "ok": true, "mode": "demo", "local": true }` |
+| Method | Path      | Body                | Response                                             |
+| ------ | --------- | ------------------- | ---------------------------------------------------- |
+| `GET`  | `/health` | —                   | `{ "ok": true, "mode": "demo", "local": true }`      |
 | `POST` | `/redact` | `{ "text": "..." }` | `{ "ok", "text", "spans"[], "mode", "local": true }` |
 
 Masked tokens use `[CATEGORY]` placeholders (e.g. `[PRIVATE_EMAIL]`).

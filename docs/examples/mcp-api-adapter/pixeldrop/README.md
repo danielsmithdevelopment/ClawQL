@@ -6,12 +6,12 @@ Inspired by the OpenRouter/HEIC upload failure class (Wes Bos tweet, Aug 2026). 
 
 ## What is verified vs unproven
 
-| Claim | Status |
-| --- | --- |
+| Claim                                              | Status                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
 | HEIC from iPhone camera roll (Safari + iOS Chrome) | **Verified** — `IMG_6432.HEIC` → `up_7vjocs3`, native decode, no polyfill |
-| Large image resize/compress (desktop + iPhone) | **Verified** — 18MB PNG; 3.7MB JPEG on iPhone |
-| Same backend path as broken frontend (`up_…` IDs) | **Verified** |
-| WebMCP discovery → execute (bolt-on path) | **Open** — Priority 2; desktop Chrome preview only |
+| Large image resize/compress (desktop + iPhone)     | **Verified** — 18MB PNG; 3.7MB JPEG on iPhone                             |
+| Same backend path as broken frontend (`up_…` IDs)  | **Verified**                                                              |
+| WebMCP discovery → execute (bolt-on path)          | **Open** — Priority 2; desktop Chrome preview only                        |
 
 **Safe public lead:** "We fixed the iPhone HEIC upload problem — tested on Safari and iOS Chrome with real camera-roll files, client-side conversion, same backend."
 
@@ -19,11 +19,11 @@ Inspired by the OpenRouter/HEIC upload failure class (Wes Bos tweet, Aug 2026). 
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `pixeldrop-broken-demo.html` | Fictional "PixelDrop" gallery with intentional frontend bugs + WebMCP `upload_photo` tool |
-| `file-upload-smart.htmx.html` | `/mcp-ui` HTMX template fragment (`{{toolName}}` placeholder) — convert/resize/drag before submit |
-| `smart-upload-test-harness.html` | Left/right comparison harness (broken iframe vs injected smart template) |
+| File                             | Role                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `pixeldrop-broken-demo.html`     | Fictional "PixelDrop" gallery with intentional frontend bugs + WebMCP `upload_photo` tool         |
+| `file-upload-smart.htmx.html`    | `/mcp-ui` HTMX template fragment (`{{toolName}}` placeholder) — convert/resize/drag before submit |
+| `smart-upload-test-harness.html` | Left/right comparison harness (broken iframe vs injected smart template)                          |
 
 ## Run locally
 
@@ -68,11 +68,11 @@ The harness **bypasses WebMCP discovery** and calls `uploadToBackend()` in the i
 
 ## Mobile — honest caveats
 
-| Fix | Desktop | Mobile |
-| --- | --- | --- |
-| Resize / canvas / JPEG encode | **Verified** (desktop + iPhone Safari) | **Verified** — 3.7MB JPEG + HEIC on clawql.com |
-| Drag-and-drop anywhere | Works in template scope | **N/A** — no drag gesture; use file picker |
-| HEIC conversion (`createImageBitmap`) | Untested on desktop Chrome | **Verified** — Safari + iOS Chrome, same device, `IMG_6432.HEIC` (2026-08-28) |
+| Fix                                   | Desktop                                | Mobile                                                                        |
+| ------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
+| Resize / canvas / JPEG encode         | **Verified** (desktop + iPhone Safari) | **Verified** — 3.7MB JPEG + HEIC on clawql.com                                |
+| Drag-and-drop anywhere                | Works in template scope                | **N/A** — no drag gesture; use file picker                                    |
+| HEIC conversion (`createImageBitmap`) | Untested on desktop Chrome             | **Verified** — Safari + iOS Chrome, same device, `IMG_6432.HEIC` (2026-08-28) |
 
 **iPhone HEIC claim is verified on both mobile browsers.** WebMCP CDP (Priority 2) is the only open item — see [`VERIFICATION.md`](VERIFICATION.md).
 

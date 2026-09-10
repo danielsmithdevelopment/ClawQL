@@ -119,10 +119,10 @@ The long-form monolith export (historical) lives at [`../archive/security-guide-
 
 ## Maintenance
 
-| Path                                                                                                          | Role                                      |
-| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Path                                                                                           | Role                                      |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | [`../security-curriculum-v30/manifest.json`](../security-curriculum-v30/manifest.json)         | Titles, slugs, tags, descriptions         |
 | [`../security-curriculum-v30/bodies/`](../security-curriculum-v30/bodies/)                     | Module bodies (edit here, then run build) |
 | [`../security-curriculum-v30/build-modules.mjs`](../security-curriculum-v30/build-modules.mjs) | Regenerate `NN-slug.md` files             |
-| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py)                                  | Bulk heading/frontmatter passes           |
-| [`_training_transform.py`](_training_transform.py)                                                            | Legacy bulk transform — not idempotent    |
+| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py)                   | Bulk heading/frontmatter passes           |
+| [`_training_transform.py`](_training_transform.py)                                             | Legacy bulk transform — not idempotent    |

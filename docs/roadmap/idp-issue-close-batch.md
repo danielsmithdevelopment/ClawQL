@@ -16,9 +16,9 @@ The Cloud Agent `gh` token cannot mutate issues (`403 Resource not accessible by
 | #248  | Docling + `classify_document` + classifier sample (tenant train BYO remains follow-up)                               |
 | #249  | [`hitl-label-studio.md` §14](../mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise)                    |
 | #252  | [`docs/observability/README.md`](../observability/README.md)                                                         |
-| #253  | [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/)                                             |
+| #253  | [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/)                                               |
 | #254  | Argo suspend/resume + HITL webhook + NATS JetStream                                                                  |
-| #255  | [`manifests/charts/clawql-idp`](../../manifests/charts/clawql-idp)                                                                       |
+| #255  | [`manifests/charts/clawql-idp`](../../manifests/charts/clawql-idp)                                                   |
 | #256  | [`slack-first-idp-runbook.md`](../openclaw/slack-first-idp-runbook.md)                                               |
 | #257  | [`nats-keda-worker.md`](../deployment/nats-keda-worker.md)                                                           |
 | #258  | [`agent-pr-argocd-pipeline.md`](../gitops/agent-pr-argocd-pipeline.md) (in-repo contract; ClawQL-Agent via #128)     |

@@ -209,8 +209,8 @@ Docling, LangExtract, IDP pipeline runner, NATS/KEDA worker, Langfuse→Ouroboro
 
 ## Helm charts
 
-| Chart                    | Chart.version | appVersion |
-| ------------------------ | ------------- | ---------- |
+| Chart                              | Chart.version | appVersion |
+| ---------------------------------- | ------------- | ---------- |
 | `manifests/charts/clawql-mcp`      | `0.7.0`       | `7.0.0`    |
 | `manifests/charts/clawql-operator` | `0.2.0`       | `7.0.0`    |
 | `manifests/charts/clawql-idp`      | `0.1.0`       | `7.0.0`    |

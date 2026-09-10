@@ -53,12 +53,12 @@ clawql gateway create --profile local-docker --team demo
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `docker-compose.yml` | nginx gateway + MCP + inference |
-| `nginx.conf` | `/mcp` → MCP, `/v1` → inference, `/healthz` |
-| `gateway-proxy.mjs` | same routing for process profile |
-| `policy.yaml` | inference policy with `keys.enabled: true` |
+| Path                 | Role                                        |
+| -------------------- | ------------------------------------------- |
+| `docker-compose.yml` | nginx gateway + MCP + inference             |
+| `nginx.conf`         | `/mcp` → MCP, `/v1` → inference, `/healthz` |
+| `gateway-proxy.mjs`  | same routing for process profile            |
+| `policy.yaml`        | inference policy with `keys.enabled: true`  |
 
 ## Security checklist
 

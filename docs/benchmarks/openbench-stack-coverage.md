@@ -17,10 +17,10 @@ This is the **platform** backlog. Ouroboros-only detail lives in
 
 ## Two measurement tracks (keep them separate)
 
-| Track                 | Measures                                                             | Artifacts today                                                     |
-| --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **Planning-context**  | Spec / response compression via `search` → GraphQL-shaped outputs    | [`latest.md`](./latest.md), multi-provider / GCP experiment folders |
-| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`benchmarks/openbench/`](../../benchmarks/openbench/), [`openbench.md`](./openbench.md)  |
+| Track                 | Measures                                                             | Artifacts today                                                                          |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Planning-context**  | Spec / response compression via `search` → GraphQL-shaped outputs    | [`latest.md`](./latest.md), multi-provider / GCP experiment folders                      |
+| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`benchmarks/openbench/`](../../benchmarks/openbench/), [`openbench.md`](./openbench.md) |
 
 Unit/integration tests prove APIs exist. **OpenBench proves agents use them and win.**
 

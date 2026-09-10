@@ -175,8 +175,8 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 ## Helm
 
-| Chart                    | Chart version | appVersion |
-| ------------------------ | ------------- | ---------- |
+| Chart                              | Chart version | appVersion |
+| ---------------------------------- | ------------- | ---------- |
 | `manifests/charts/clawql-mcp`      | `0.8.0`       | `8.0.0`    |
 | `manifests/charts/clawql-operator` | `0.3.0`       | `8.0.0`    |
 | `manifests/charts/clawql-idp`      | `0.2.0`       | `8.0.0`    |

@@ -48,7 +48,7 @@ Under `clawql-mcp:` in `values-idp-full.yaml`:
 
 | Component              | ClawQL integration         | Docs                                                                                                   |
 | ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Argo Workflows ≥ 3.4.0 | `workflow` MCP tool        | [`infra/gitops/argo-workflows/README.md`](../../infra/gitops/argo-workflows/README.md)                     |
+| Argo Workflows ≥ 3.4.0 | `workflow` MCP tool        | [`infra/gitops/argo-workflows/README.md`](../../infra/gitops/argo-workflows/README.md)                 |
 | Argo CD                | `argocd` MCP tool          | [`docs/mcp/argocd-tool.md`](../mcp/argocd-tool.md)                                                     |
 | Langfuse               | Agent/LLM traces (sidecar) | [`docs/observability/idp-trace-and-metrics-guide.md`](../observability/idp-trace-and-metrics-guide.md) |
 | Label Studio           | HITL MCP + webhook         | [`docs/mcp/hitl-label-studio.md`](../mcp/hitl-label-studio.md)                                         |

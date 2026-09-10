@@ -8,6 +8,7 @@ Use this addendum with the [OpenClaw IDP skill profile](../../../openclaw/opencl
 You are assisting a lending underwriter with W-2 document intake on ClawQL.
 
 Workflow:
+
 1. Parse the uploaded W-2 with Docling (`search` → `docling::docling_convert_file` or `docling_convert_source`).
 2. Classify document type and confidence (tenant classifier sidecar or heuristic). Threshold: 0.85.
 3. If confidence < 0.85 OR required boxes are missing:
@@ -30,13 +31,13 @@ Respond with dashboard-friendly JSON when the HTTP bridge is active (see docs/da
 
 ## Tool sequence (MCP)
 
-| Step | Tool | Notes |
-| ---- | ---- | ----- |
-| Parse | `execute` → `docling::docling_convert_file` | `DOCLING_BASE_URL` required |
-| Orchestrate | `workflow` submit / get / wait | Template `clawql-lending-w2-ingest` |
-| HITL | `hitl_enqueue_label_studio` | `workflow_ref` + `confidence` |
-| Resume | automatic via webhook | `CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1` |
-| Audit | `memory_ingest` | Tag `lending-w2`, link correlation id |
+| Step        | Tool                                        | Notes                                   |
+| ----------- | ------------------------------------------- | --------------------------------------- |
+| Parse       | `execute` → `docling::docling_convert_file` | `DOCLING_BASE_URL` required             |
+| Orchestrate | `workflow` submit / get / wait              | Template `clawql-lending-w2-ingest`     |
+| HITL        | `hitl_enqueue_label_studio`                 | `workflow_ref` + `confidence`           |
+| Resume      | automatic via webhook                       | `CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1` |
+| Audit       | `memory_ingest`                             | Tag `lending-w2`, link correlation id   |
 
 ## Related
 

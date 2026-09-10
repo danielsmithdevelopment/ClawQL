@@ -18,7 +18,7 @@ package: 'packages/clawql-agents/'
 | Name in this document                                 | In this repository today                                                                                                                                                                                                                                                  |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/clawql-agents/`                             | **Phases 1–4 + follow-on** — all seven adapters + ATR templates + shared Panguard; personal install, OpenClaw live MCP plans, outbound credentials, Helm overlays, dry OpenBench runner. Live A/B still gated.                                                            |
-| `bench/` in this package                              | Dry runner at `src/bench/dry-runner.ts`; live harness entry is **`benchmarks/agents-bench/`** (gated)                                                                                                                                                                   |
+| `bench/` in this package                              | Dry runner at `src/bench/dry-runner.ts`; live harness entry is **`benchmarks/agents-bench/`** (gated)                                                                                                                                                                     |
 | npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM ships in **`clawql-audit@8.0.0`**: [`../audit/clawql-audit-spec-v0.1.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/audit/clawql-audit-spec-v0.1.md). |
 | Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                                                                                                          |
 | OpenClaw MCP wiring                                   | Adapter live MCP plans + `scripts/dev/openclaw-register-clawql.sh`; operator docs in [`docs/openclaw/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md)                                                           |
@@ -200,7 +200,13 @@ export interface AgentAdapter {
 }
 
 export type AgentName =
-  'openclaw' | 'hermes' | 'pi' | 'goose' | 'deepseek' | 'openhands' | 'cline'
+  | 'openclaw'
+  | 'hermes'
+  | 'pi'
+  | 'goose'
+  | 'deepseek'
+  | 'openhands'
+  | 'cline'
 
 export interface ClawQLAgentConfig {
   mcpEndpoint: string // ClawQL MCP server URL

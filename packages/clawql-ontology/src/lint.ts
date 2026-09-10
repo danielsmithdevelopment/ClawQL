@@ -50,9 +50,7 @@ export function defaultEntitySchemaPath(rootDir?: string): string {
   for (const path of candidates) {
     if (existsSync(path)) return path;
   }
-  return pkg
-    ? join(pkg, "schemas", "ontology", "entity.schema.json")
-    : candidates[0]!;
+  return pkg ? join(pkg, "schemas", "ontology", "entity.schema.json") : candidates[0]!;
 }
 
 async function loadSchema(schemaPath: string): Promise<object> {

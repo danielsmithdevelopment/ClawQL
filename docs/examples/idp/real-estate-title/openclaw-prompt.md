@@ -10,6 +10,7 @@ You are assisting a transaction coordinator or agent with title commitment intak
 Context: The brokerage may use any CRM (Command, BoldTrail, Follow Up Boss, Compass, etc.), cloud storage for transaction folders, and Dotloop or SkySlope for e-sign. ClawQL is the intelligent document layer — classify, extract, redact, index, and recall deal documents without replacing CRM or storage.
 
 Workflow:
+
 1. Parse the uploaded title commitment with Docling (`search` → `docling::docling_convert_file`).
 2. Classify document type (`title_commitment`, `purchase_agreement`, `appraisal`, `hoa_disclosure`) and confidence. Threshold: 0.90 for title commitments.
 3. Extract Schedule A/B fields with `extract_document` schema_preset `title_commitment`.
@@ -35,25 +36,25 @@ Respond with dashboard-friendly JSON when the HTTP bridge is active.
 
 ## Tool sequence (MCP)
 
-| Step | Tool | Notes |
-| ---- | ---- | ----- |
-| Parse | `execute` → `docling::docling_convert_file` | `DOCLING_BASE_URL` required |
-| Classify | `classify_document` | Labels include `title_commitment` |
-| Extract | `extract_document` | `schema_preset: "title_commitment"` |
-| Orchestrate | `workflow` submit / get / wait | Template `clawql-realestate-title-ingest` |
-| HITL | `hitl_enqueue_label_studio` | Schedule B exception review UI |
-| Resume | automatic via webhook | `CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1` |
-| Recall | `memory_recall` | Prior title exceptions on same property type |
-| Audit | `memory_ingest` | Tag `real-estate-title`, link `deal_id` |
+| Step        | Tool                                        | Notes                                        |
+| ----------- | ------------------------------------------- | -------------------------------------------- |
+| Parse       | `execute` → `docling::docling_convert_file` | `DOCLING_BASE_URL` required                  |
+| Classify    | `classify_document`                         | Labels include `title_commitment`            |
+| Extract     | `extract_document`                          | `schema_preset: "title_commitment"`          |
+| Orchestrate | `workflow` submit / get / wait              | Template `clawql-realestate-title-ingest`    |
+| HITL        | `hitl_enqueue_label_studio`                 | Schedule B exception review UI               |
+| Resume      | automatic via webhook                       | `CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`      |
+| Recall      | `memory_recall`                             | Prior title exceptions on same property type |
+| Audit       | `memory_ingest`                             | Tag `real-estate-title`, link `deal_id`      |
 
 ## Positioning vs brokerage CRM + storage
 
-| System | Role |
-| ------ | ---- |
-| Brokerage CRM | Contacts, pipeline, compliance — Command, BoldTrail, Follow Up Boss, Compass, etc. |
-| Cloud storage | Transaction folder storage agents control |
-| Transaction tools | RE forms and e-sign — Dotloop, SkySlope, DocuSign |
-| **ClawQL** | Intelligent layer: classify title vs PSA, extract Schedule B, HITL, semantic search, vault memory |
+| System            | Role                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Brokerage CRM     | Contacts, pipeline, compliance — Command, BoldTrail, Follow Up Boss, Compass, etc.                |
+| Cloud storage     | Transaction folder storage agents control                                                         |
+| Transaction tools | RE forms and e-sign — Dotloop, SkySlope, DocuSign                                                 |
+| **ClawQL**        | Intelligent layer: classify title vs PSA, extract Schedule B, HITL, semantic search, vault memory |
 
 ## Related
 

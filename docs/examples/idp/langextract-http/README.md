@@ -6,27 +6,27 @@ Schema-guided, **character-grounded** extraction via [google/langextract](https:
 
 ## Modes
 
-| Mode | Env | Behavior |
-| ---- | --- | -------- |
-| **demo** (default) | `LANGEXTRACT_MODE=demo` | Regex grounding for W-2 demo fields — **no cloud LLM** |
-| **live** | `LANGEXTRACT_MODE=live` + backend credentials | Calls upstream `langextract` (operator-installed; see below) |
+| Mode               | Env                                           | Behavior                                                     |
+| ------------------ | --------------------------------------------- | ------------------------------------------------------------ |
+| **demo** (default) | `LANGEXTRACT_MODE=demo`                       | Regex grounding for W-2 demo fields — **no cloud LLM**       |
+| **live**           | `LANGEXTRACT_MODE=live` + backend credentials | Calls upstream `langextract` (operator-installed; see below) |
 
 ## Live backends (no direct Gemini dependency)
 
-| Backend | Env | Credentials |
-| ------- | --- | ----------- |
-| **openrouter** (default) | `LANGEXTRACT_BACKEND=openrouter` | `OPENROUTER_API_KEY` — model id e.g. `deepseek/deepseek-chat` |
-| **ollama** | `LANGEXTRACT_BACKEND=ollama` | `OLLAMA_BASE_URL` (default `http://localhost:11434`) — model id e.g. `gemma2:2b` |
-| **openai_compatible** | `LANGEXTRACT_BACKEND=openai_compatible` | `OPENAI_API_KEY` + `OPENAI_API_BASE_URL` |
+| Backend                  | Env                                     | Credentials                                                                      |
+| ------------------------ | --------------------------------------- | -------------------------------------------------------------------------------- |
+| **openrouter** (default) | `LANGEXTRACT_BACKEND=openrouter`        | `OPENROUTER_API_KEY` — model id e.g. `deepseek/deepseek-chat`                    |
+| **ollama**               | `LANGEXTRACT_BACKEND=ollama`            | `OLLAMA_BASE_URL` (default `http://localhost:11434`) — model id e.g. `gemma2:2b` |
+| **openai_compatible**    | `LANGEXTRACT_BACKEND=openai_compatible` | `OPENAI_API_KEY` + `OPENAI_API_BASE_URL`                                         |
 
 ClawQL operators typically use **OpenRouter** (same key as OpenClaw) or **local Ollama** — not a standalone Gemini API key.
 
 ## API
 
-| Method | Path | Body | Response |
-| ------ | ---- | ---- | -------- |
-| `GET` | `/health` | — | `{ "ok": true, "mode": "demo", "backend": "openrouter" }` |
-| `POST` | `/extract` | `{ "text", "prompt_description"?, "examples"?, "model_id"?, "backend"?, "write_html"?, "doc_id"? }` | `{ "ok", "extractions"[], "artifact_paths"? }` |
+| Method | Path       | Body                                                                                                | Response                                                  |
+| ------ | ---------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `GET`  | `/health`  | —                                                                                                   | `{ "ok": true, "mode": "demo", "backend": "openrouter" }` |
+| `POST` | `/extract` | `{ "text", "prompt_description"?, "examples"?, "model_id"?, "backend"?, "write_html"?, "doc_id"? }` | `{ "ok", "extractions"[], "artifact_paths"? }`            |
 
 Each extraction includes `char_interval: { start, end }` when grounded. Extractions with `char_interval: null` should be dropped before promote (per upstream guidance).
 
@@ -95,11 +95,11 @@ LANGEXTRACT_BASE_URL=http://localhost:8090
 
 ## Boundary: parse vs extract
 
-| Stage | Tool / service | Output |
-| ----- | -------------- | ------ |
-| Layout parse | **Docling** (`DOCLING_BASE_URL`) or **Tika** | Markdown / plain text |
-| Classification | **`classify_document`** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) | Label + confidence |
-| Structured extract | **`extract_document`** + LangExtract | Grounded fields + optional HTML viz |
+| Stage              | Tool / service                                                                                | Output                              |
+| ------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Layout parse       | **Docling** (`DOCLING_BASE_URL`) or **Tika**                                                  | Markdown / plain text               |
+| Classification     | **`classify_document`** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)) | Label + confidence                  |
+| Structured extract | **`extract_document`** + LangExtract                                                          | Grounded fields + optional HTML viz |
 
 ## Security
 

@@ -8,7 +8,7 @@ These files are **schema definitions** (Git). Populated instances belong in obje
 
 ## OKF examples
 
-| File | Role |
-| ---- | ---- |
+| File                                                                         | Role                                                                                                                                         |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`okf/decision-rationale-template.md`](./okf/decision-rationale-template.md) | `type: decision` with AIF-inspired Claim / Grounds / Supports / Attacks / Decision sections — [docs](../../memory/okf-decision-rationale.md) |
-| [`okf/decision-ontology-adr-0009.md`](./okf/decision-ontology-adr-0009.md) | Shorter decision note for ADR 0009 |
+| [`okf/decision-ontology-adr-0009.md`](./okf/decision-ontology-adr-0009.md)   | Shorter decision note for ADR 0009                                                                                                           |

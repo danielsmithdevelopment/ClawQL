@@ -8,11 +8,11 @@ Pairs with the [title commitment](../real-estate-title/README.md) and [PSA](../r
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`openclaw-prompt.md`](openclaw-prompt.md) | OpenClaw addendum — offer intake and comparison |
-| [`fixtures/synthetic-buyer-offer.txt`](fixtures/synthetic-buyer-offer.txt) | Primary demo offer (financed, sale-of-home contingency) |
-| [`fixtures/synthetic-buyer-offer-alt.txt`](fixtures/synthetic-buyer-offer-alt.txt) | Second offer for comparison (cash, higher price) |
+| File                                                                               | Purpose                                                 |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`openclaw-prompt.md`](openclaw-prompt.md)                                         | OpenClaw addendum — offer intake and comparison         |
+| [`fixtures/synthetic-buyer-offer.txt`](fixtures/synthetic-buyer-offer.txt)         | Primary demo offer (financed, sale-of-home contingency) |
+| [`fixtures/synthetic-buyer-offer-alt.txt`](fixtures/synthetic-buyer-offer-alt.txt) | Second offer for comparison (cash, higher price)        |
 
 ## Extract grounded fields
 
@@ -39,11 +39,11 @@ Expected extraction classes: `purchase_price`, `earnest_money`, `closing_date`, 
 
 ## Positioning
 
-| System | Role |
-| ------ | ---- |
-| Houzeo / Beycome / flat-fee MLS | Listing, forms, optional coordination |
-| Title / escrow | Commitment, closing |
-| ClawQL | Understand offers and title PDFs; compare contingencies; vault recall |
+| System                          | Role                                                                  |
+| ------------------------------- | --------------------------------------------------------------------- |
+| Houzeo / Beycome / flat-fee MLS | Listing, forms, optional coordination                                 |
+| Title / escrow                  | Commitment, closing                                                   |
+| ClawQL                          | Understand offers and title PDFs; compare contingencies; vault recall |
 
 ClawQL does **not** replace MLS listing platforms or e-sign. Per-transaction or low-volume pricing fits FSBO better than a $299/mo coordinator seat.
 

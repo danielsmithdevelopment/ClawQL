@@ -58,13 +58,13 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 
 Eval adapters live in repo-root [`benchmarks/`](../../benchmarks/), not in this docs tree:
 
-| Overlay | Role |
-| ------- | ---- |
-| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/) | Agents OpenBench dry harness |
-| [`benchmarks/extractbench/`](../../benchmarks/extractbench/) | ExtractBench IDP provider |
+| Overlay                                                        | Role                                   |
+| -------------------------------------------------------------- | -------------------------------------- |
+| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/)   | Agents OpenBench dry harness           |
+| [`benchmarks/extractbench/`](../../benchmarks/extractbench/)   | ExtractBench IDP provider              |
 | [`benchmarks/harness-bench/`](../../benchmarks/harness-bench/) | Harness plugin compare + MCP UI traces |
-| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/) | Harvey LAB firm-knowledge overlay |
-| [`benchmarks/openbench/`](../../benchmarks/openbench/) | MCP OpenBench tasks (Track A/B) |
+| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/)     | Harvey LAB firm-knowledge overlay      |
+| [`benchmarks/openbench/`](../../benchmarks/openbench/)         | MCP OpenBench tasks (Track A/B)        |
 
 ## Parent indexes
 

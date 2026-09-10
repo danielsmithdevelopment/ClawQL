@@ -60,8 +60,8 @@ Live runner (future) replaces stub arms with model+tool execution while keeping 
 
 ## 7. Relationship to MCP OpenBench
 
-|          | MCP `benchmarks/openbench/`                     | Agents OpenBench                          |
+|          | MCP `benchmarks/openbench/`          | Agents OpenBench                          |
 | -------- | ------------------------------------ | ----------------------------------------- |
 | Subject  | ClawQL as coding harness / MCP tools | Catalog agents wrapped by `clawql-agents` |
 | CI today | `openbench-ab.yml`                   | Dry-run only                              |
-| Location | `benchmarks/openbench/`              | `benchmarks/agents-bench/`              |
+| Location | `benchmarks/openbench/`              | `benchmarks/agents-bench/`                |

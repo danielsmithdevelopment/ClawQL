@@ -6,7 +6,7 @@ This directory is organized by purpose so operational guides, product docs, and 
 
 | Doc type                   | Examples                                                                                                                                                 | Status language                      |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, [release notes](release/)                                      | ✅ / 🚧 / 📋 only                    |
+| **Ground truth**           | [modularization-implementation-status.md](design/modularization-implementation-status.md), CHANGELOG, [release notes](release/)                          | ✅ / 🚧 / 📋 only                    |
 | **Getting started**        | [docs.clawql.com/getting-started](https://docs.clawql.com/getting-started), [getting-started-for-teams.md](getting-started/getting-started-for-teams.md) | What to run today                    |
 | **Public roadmap**         | [clawql-vision-roadmap.md](vision/clawql-vision-roadmap.md)                                                                                              | Phases + honest table                |
 | **Reference architecture** | [clawql-modularization-v2.md](vision/clawql-modularization-v2.md), [operator-target-architecture.md](design/operator-target-architecture.md)             | 📋 target; inline 🚧 where partial   |

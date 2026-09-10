@@ -4,11 +4,11 @@ Synthetic **transcript / enrollment verification** pack for local Compose. **Not
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio labeling UI |
-| [`sample-tasks.json`](sample-tasks.json) | Example enqueue body with **predictions** |
-| [`fixtures/synthetic-transcript.txt`](fixtures/synthetic-transcript.txt) | Demo transcript excerpt |
+| File                                                                     | Purpose                                   |
+| ------------------------------------------------------------------------ | ----------------------------------------- |
+| [`label-studio-config.xml`](label-studio-config.xml)                     | Label Studio labeling UI                  |
+| [`sample-tasks.json`](sample-tasks.json)                                 | Example enqueue body with **predictions** |
+| [`fixtures/synthetic-transcript.txt`](fixtures/synthetic-transcript.txt) | Demo transcript excerpt                   |
 
 ## Compose
 

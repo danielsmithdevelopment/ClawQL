@@ -19,7 +19,7 @@
 | **Persistence**       | Backward-compatible `messages.jsonl` in vault                                                 |
 | **Deploy**            | `CLAWQL_DASHBOARD_CHAT_STREAM`, Helm `dashboard.chatStream`                                   |
 | **Bridge enrichment** | `openclaw-chat-enrich.mjs` — session audit → `steps` / `attachments` / `citations`            |
-| **Tests**             | `apps/dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich`                                |
+| **Tests**             | `apps/dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich`                           |
 
 ---
 

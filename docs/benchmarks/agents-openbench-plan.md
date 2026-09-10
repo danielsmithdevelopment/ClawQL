@@ -24,7 +24,7 @@ This is **not** the MCP Track A/B harness under [`benchmarks/openbench/`](../../
 | Harvey LAB publish   | Contiguous firm-knowledge results ledger published                         | **Pending**                |
 | ExtractBench publish | ExtractBench action plan results usable as Family M seed                   | **Pending**                |
 | Stub-tool catalog    | Family S tools (`email_*`, …) defined as harness stubs, not fake MCP names | **Shipped** (this PR)      |
-| Dry runner           | `runAgentBenchmarkDry` + `benchmarks/agents-bench`                       | **Shipped**                |
+| Dry runner           | `runAgentBenchmarkDry` + `benchmarks/agents-bench`                         | **Shipped**                |
 | Live A/B CI          | Matrix jobs with spend caps                                                | **Blocked on gates above** |
 
 ## Layout

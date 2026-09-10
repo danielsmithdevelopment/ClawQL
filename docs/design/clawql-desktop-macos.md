@@ -23,7 +23,7 @@ flowchart LR
 | Layer       | Technology                                         |
 | ----------- | -------------------------------------------------- |
 | Shell       | Electron 35                                        |
-| UI          | `apps/dashboard/` Next.js 16 (standalone bundle)  |
+| UI          | `apps/dashboard/` Next.js 16 (standalone bundle)   |
 | Secrets     | `CLAWQL_DESKTOP_MODE=1` → `/api/local/providers`   |
 | Chat        | `openclaw-chat-bridge.mjs` → `openclaw agent`      |
 | Persistence | `CLAWQL_OBSIDIAN_VAULT_PATH` (default `~/.ClawQL`) |

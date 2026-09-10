@@ -8,12 +8,12 @@ Pairs with the [title commitment pack](../real-estate-title/README.md) — coord
 
 ## Contents
 
-| File | Purpose |
-| ---- | ------- |
-| [`workflow-template.yaml`](workflow-template.yaml) | Argo `WorkflowTemplate` — classify → suspend → finalize |
-| [`label-studio-config.xml`](label-studio-config.xml) | Label Studio UI for PSA field confirmation |
-| [`openclaw-prompt.md`](openclaw-prompt.md) | OpenClaw system prompt addendum |
-| [`fixtures/synthetic-psa.txt`](fixtures/synthetic-psa.txt) | Demo purchase agreement |
+| File                                                       | Purpose                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------- |
+| [`workflow-template.yaml`](workflow-template.yaml)         | Argo `WorkflowTemplate` — classify → suspend → finalize |
+| [`label-studio-config.xml`](label-studio-config.xml)       | Label Studio UI for PSA field confirmation              |
+| [`openclaw-prompt.md`](openclaw-prompt.md)                 | OpenClaw system prompt addendum                         |
+| [`fixtures/synthetic-psa.txt`](fixtures/synthetic-psa.txt) | Demo purchase agreement                                 |
 
 ## Apply and submit
 

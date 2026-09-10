@@ -30,8 +30,8 @@
 
 ### 2. Payments wave
 
-| Surface                                       | Doc                                                            |
-| --------------------------------------------- | -------------------------------------------------------------- |
+| Surface                                       | Doc                                                          |
+| --------------------------------------------- | ------------------------------------------------------------ |
 | Prepaid credits + Stripe FC/ACH               | [`credits-ach.md`](../payments/credits-ach.md)               |
 | Connect payouts + Base USDC + Ramp + off-ramp | [`payouts-ramp.md`](../payments/payouts-ramp.md)             |
 | Agent compensation (2PC stage/confirm)        | [`agent-compensation.md`](../payments/agent-compensation.md) |
@@ -73,8 +73,8 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 ## Helm
 
-| Chart                    | Chart version | appVersion |
-| ------------------------ | ------------- | ---------- |
+| Chart                              | Chart version | appVersion |
+| ---------------------------------- | ------------- | ---------- |
 | `manifests/charts/clawql-mcp`      | `0.7.1`       | `7.1.0`    |
 | `manifests/charts/clawql-operator` | `0.2.1`       | `7.1.0`    |
 | `manifests/charts/clawql-idp`      | `0.1.1`       | `7.1.0`    |
