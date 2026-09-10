@@ -21,7 +21,7 @@ services:
 
   clawql-mcp-http:
     build:
-      context: ../..
+      context: ../../..
       dockerfile: docker/Dockerfile
       target: runtime
     image: clawql-mcp:managed-gateway
@@ -46,7 +46,7 @@ services:
 
   clawql-inference:
     build:
-      context: ../..
+      context: ../../..
       dockerfile: docker/Dockerfile
       target: runtime
     image: clawql-mcp:managed-gateway

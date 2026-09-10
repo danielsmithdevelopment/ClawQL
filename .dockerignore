@@ -12,7 +12,10 @@ dist
 !.env.example
 *.log
 .DS_Store
-docs
+# Markdown library at repo root only — do not ignore apps/docs (docs.clawql.com).
+/docs
+!apps/docs
+!apps/docs/**
 # Exclude scripts, but keep the single catalog re-export the dashboard image needs.
 # (Bare `scripts` blocks negation of children — use `scripts/**` + `!` exceptions.)
 scripts/**

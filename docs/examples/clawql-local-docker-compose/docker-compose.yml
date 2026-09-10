@@ -3,7 +3,7 @@
 services:
   clawql-mcp-http:
     build:
-      context: ../..
+      context: ../../..
       dockerfile: docker/Dockerfile
       target: runtime
     image: clawql-mcp:local-tier1

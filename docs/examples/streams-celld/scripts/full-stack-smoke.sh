@@ -10,7 +10,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REPO="$(cd "$ROOT/../.." && pwd)"
+REPO="$(cd "$ROOT/../../.." && pwd)"
 PORT="${CELLD_DEV_PORT:-9883}"
 MCP_PORT="${FULL_STACK_MCP_PORT:-9881}"
 ADAPTER_PORT="${FULL_STACK_ADAPTER_PORT:-9882}"

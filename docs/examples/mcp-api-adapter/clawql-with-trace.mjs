@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(__dirname, "../..");
+const repoRoot = join(__dirname, "../../..");
 const adapterBin = join(repoRoot, "packages/mcp-api-adapter/bin/mcp-api-adapter.mjs");
 
 const traceDir = join(tmpdir(), "clawql-trace-demo");
