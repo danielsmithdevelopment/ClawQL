@@ -12,9 +12,8 @@ dist
 !.env.example
 *.log
 .DS_Store
-# Markdown library at repository root only (`/docs/**` is anchored; `docs` would also
-# exclude apps/docs, which is the docs.clawql.com Next app).
-/docs/**
+# Do not ignore `docs` or `/docs/**` here. A basename `docs` pattern also excludes
+# `apps/docs` (docs.clawql.com), which the website image COPYs from the repo-root context.
 # Exclude scripts, but keep the single catalog re-export the dashboard image needs.
 # (Bare `scripts` blocks negation of children — use `scripts/**` + `!` exceptions.)
 scripts/**

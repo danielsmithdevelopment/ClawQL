@@ -438,8 +438,8 @@ jobs:
           set -euo pipefail
           test -f apps/docs/package.json
           test -f apps/docs/package-lock.json
-          if grep -qE '^docs$' .dockerignore; then
-            echo ".dockerignore must not use bare 'docs' (it also excludes apps/docs)" >&2
+          if grep -qE '^/?docs(\*|/\*\*)?$' .dockerignore; then
+            echo ".dockerignore must not ignore a docs path (basename docs also excludes apps/docs)" >&2
             exit 1
           fi
 
