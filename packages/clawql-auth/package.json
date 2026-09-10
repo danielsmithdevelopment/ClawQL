@@ -33,7 +33,7 @@
     "viem": "^2.55.4"
   },
   "peerDependencies": {
-    "@simplewebauthn/server": "^13.3.3",
+    "@simplewebauthn/server": "^14.0.1",
     "express": ">=4.18.0"
   },
   "peerDependenciesMeta": {
@@ -45,7 +45,7 @@
     }
   },
   "devDependencies": {
-    "@simplewebauthn/server": "^13.3.3",
+    "@simplewebauthn/server": "^14.0.1",
     "@types/node": "^26.1.1",
     "clawql-audit": "0.1.0",
     "tsup": "^8.3.0",
