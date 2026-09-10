@@ -19,10 +19,13 @@ RUN npm run build -w clawql-merkle \
 FROM node:25-alpine AS deps
 WORKDIR /app
 RUN apk upgrade --no-cache
-COPY apps/docs/package.json apps/docs/package-lock.json ./
+COPY apps/docs/package.json /app/package.json
+COPY apps/docs/package-lock.json /app/package-lock.json
 # From /app, file:../../packages/clawql-analytics → /packages/clawql-analytics
 COPY --from=analytics-builder /repo/packages/clawql-analytics /packages/clawql-analytics
-RUN npm ci \
+RUN test -f /app/package-lock.json \
+  && ls -la /app/package.json /app/package-lock.json \
+  && npm ci \
   && mkdir -p /packages/clawql-analytics/node_modules \
   && ln -sfn /app/node_modules/effect /packages/clawql-analytics/node_modules/effect \
   && ln -sfn /app/node_modules/posthog-node /packages/clawql-analytics/node_modules/posthog-node
