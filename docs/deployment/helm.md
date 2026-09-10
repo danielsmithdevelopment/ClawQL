@@ -1,25 +1,25 @@
-# Helm chart (`charts/clawql-mcp`)
+# Helm chart (`manifests/charts/clawql-mcp`)
 
 The repository ships a **Helm 3** chart that deploys the same workload as Kustomize (**`clawql-mcp-http`**): Streamable HTTP MCP (and optional gRPC) behind a Kubernetes **Service**. The chart can also deploy a UI workload and expose it through a host-based Ingress.
 
-**Optional Falco alerting:** a separate chart **[`charts/clawql-falco`](../../charts/clawql-falco)** ships **`PrometheusRule`** resources (**`ClawQLFalco*`** names) for upstream **`falcosecurity/falco`** metrics; install Falco first, then the rules chart — see **[`charts/clawql-falco/README.md`](../../charts/clawql-falco/README.md)** ([#209](https://github.com/danielsmithdevelopment/ClawQL/issues/209)).
+**Optional Falco alerting:** a separate chart **[`manifests/charts/clawql-falco`](../../manifests/charts/clawql-falco)** ships **`PrometheusRule`** resources (**`ClawQLFalco*`** names) for upstream **`falcosecurity/falco`** metrics; install Falco first, then the rules chart — see **[`manifests/charts/clawql-falco/README.md`](../../manifests/charts/clawql-falco/README.md)** ([#209](https://github.com/danielsmithdevelopment/ClawQL/issues/209)).
 
 Use this when you prefer **`helm install` / `helm upgrade`** over **`kubectl apply -k`** (see also [`deploy-k8s.md`](deploy-k8s.md) for Kustomize).
 
-## Umbrella chart: full IDP profile (`charts/clawql-idp`)
+## Umbrella chart: full IDP profile (`manifests/charts/clawql-idp`)
 
 For a **single install** that wraps **`clawql-mcp`** with the document pipeline, collaboration (Nextcloud / Coneshare), optional Docling, observability hooks, and related values presets, use the umbrella chart:
 
 ```bash
-helm upgrade --install clawql-idp ./charts/clawql-idp \
+helm upgrade --install clawql-idp ./manifests/charts/clawql-idp \
   --namespace clawql \
   --create-namespace \
-  -f charts/clawql-idp/values-idp-full.yaml
+  -f manifests/charts/clawql-idp/values-idp-full.yaml
 ```
 
-**Operator guide:** [`clawql-idp-helm.md`](clawql-idp-helm.md) · **Chart README:** [`charts/clawql-idp/README.md`](../../charts/clawql-idp/README.md) · **Observability import:** [`observability/README.md`](../observability/README.md)
+**Operator guide:** [`clawql-idp-helm.md`](clawql-idp-helm.md) · **Chart README:** [`manifests/charts/clawql-idp/README.md`](../../manifests/charts/clawql-idp/README.md) · **Observability import:** [`observability/README.md`](../observability/README.md)
 
-The umbrella chart is the recommended path for **full-stack IDP** labs and production overlays; **`charts/clawql-mcp`** remains the base chart for minimal or custom compositions.
+The umbrella chart is the recommended path for **full-stack IDP** labs and production overlays; **`manifests/charts/clawql-mcp`** remains the base chart for minimal or custom compositions.
 
 **Feature tiers** (Core vs default-on opt-out vs opt-in): **[`docs/readme/configuration.md` § Feature tiers](../readme/configuration.md#feature-tiers-architecture-diagram)**. **ClawQL Core** (`search`, `execute`, `audit`, `cache`) has **no** chart toggles. Keys **`enableMemory`** and **`enableDocuments`** inject **`CLAWQL_ENABLE_MEMORY=0`** or **`CLAWQL_ENABLE_DOCUMENTS=0`** when **`false`**. **`enableSandbox`** (default **`false`**) injects **`CLAWQL_ENABLE_SANDBOX=1`** when **`true`** (MCP **`sandbox_exec`**); configure bridge URL + token and/or **`CLAWQL_SANDBOX_BACKEND`** via **`extraEnv`** / Secret.
 
@@ -29,7 +29,7 @@ The chart key **`vault`** (and **`vault.hostPath`**) mounts **Obsidian** Markdow
 
 ## HashiCorp Vault is bundled (mandatory dependency)
 
-`charts/clawql-mcp/Chart.yaml` always includes the official **`hashicorp/vault`** chart (alias **`hashicorpvault`**). There is **no** Helm dependency **`condition`** to skip it under defense-in-depth. Setting **`hashicorpvault.enabled: false`** in values is **unsupported** — render fails (**`templates/zzz-defense-in-depth-secrets-policies.yaml`**).
+`manifests/charts/clawql-mcp/Chart.yaml` always includes the official **`hashicorp/vault`** chart (alias **`hashicorpvault`**). There is **no** Helm dependency **`condition`** to skip it under defense-in-depth. Setting **`hashicorpvault.enabled: false`** in values is **unsupported** — render fails (**`templates/zzz-defense-in-depth-secrets-policies.yaml`**).
 
 For **cluster secrets** (tokens for Slack, Onyx, GitHub, cloud APIs, and so on), use the same paths ClawQL already supports: Kubernetes **`Secret`** objects referenced from **`envFromSecret`** or **`extraEnv`**, optionally populated by **External Secrets Operator**, **Vault Agent Injector**, **Secrets Store CSI**, or GitOps-sealed patterns. A future chart **major** version may rename **`vault`** to avoid operator confusion — tracked in [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161).
 
@@ -83,14 +83,14 @@ Current UX: the bundled ClawQL dashboard (`dashboard.*` values) can read/write V
 - **[Kyverno](https://kyverno.io/)** installed in the cluster (CRDs + controller) if you use the chart default **`kyverno.imageSignaturePolicy.enabled: true`** — otherwise **`helm install`** applies a **`ClusterPolicy`** the API server cannot store until Kyverno is present. Clusters without Kyverno: **`--set kyverno.imageSignaturePolicy.enabled=false`**. Context: **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)** and **[`docs/security/image-signature-enforcement.md`](../security/image-signature-enforcement.md)**.
 - An image your cluster can pull (default: **`ghcr.io/danielsmithdevelopment/clawql-mcp`**, multi-arch **amd64** / **arm64** when published from CI)
 
-Private GHCR: create a pull secret and set **`imagePullSecrets`** (see [values](../charts/clawql-mcp/values.yaml)).
+Private GHCR: create a pull secret and set **`imagePullSecrets`** (see [values](../../manifests/charts/clawql-mcp/values.yaml)).
 
 ### Kyverno image signatures (default on)
 
-The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
+The chart **renders a `ClusterPolicy`** (**`verifyImages`**, Cosign keyless) for default **`ghcr.io/.../clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** when **`kyverno.imageSignaturePolicy.enabled`** is **`true`** (the **default** in [`values.yaml`](../../manifests/charts/clawql-mcp/values.yaml)). Install **Kyverno** before upgrading ClawQL, or opt out:
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set kyverno.imageSignaturePolicy.enabled=false
 ```
 
@@ -109,14 +109,14 @@ Both default **off**. Enabling them without installing matching [**`RuntimeClass
 
 When Istio is on the cluster ([#155](https://github.com/danielsmithdevelopment/ClawQL/issues/155)), you can force **HTTPS provider** traffic through **`istio-egressgateway`** and lock destinations with **`ServiceEntry`** resources aligned to the APIs you enable (GraphQL/OpenAPI/Discovery hosts — same idea as **`.env.example`** / bundled vendors).
 
-**Helm chart (`charts/clawql-mcp`):**
+**Helm chart (`manifests/charts/clawql-mcp`):**
 
 - **`istio.egressAllowlist.enabled: true`** — renders the same allowlist **ServiceEntry** objects into the **release namespace**.
 - **`istio.egressAllowlist.throughEgressGateway: true`** (default when enabled) — also renders **Gateway** + **VirtualService** objects (TLS passthrough) in **`istio.egressAllowlist.egressGatewayNamespace`** (default **`istio-system`**). Install **`istio/gateway`** as **`istio-egressgateway`** with selector **`istio: egressgateway`** first (see **`docker/istio/docker-desktop/istio-clawql-egress-gateway-values-*.yaml`**).
 - **`istio.egressAllowlist.throughEgressGateway: false`** — **ServiceEntry** only (good **REGISTRY_ONLY** baseline with **ambient** mesh when you are not routing via a gateway).
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set istio.egressAllowlist.enabled=true \
  --set istio.egressAllowlist.throughEgressGateway=true
 ```
@@ -145,7 +145,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 From the **repository root**:
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp \
  --namespace clawql \
  --create-namespace \
  --set envFromSecret=clawql-provider-env \
@@ -161,7 +161,7 @@ Defaults use **`fullnameOverride: clawql-mcp-http`** so resource names match the
 **ClusterIP** (in-cluster only, no cloud LoadBalancer cost):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set service.type=ClusterIP \
  --set service.http.port=8080 \
  --set envFromSecret=clawql-provider-env
@@ -170,7 +170,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Enable gRPC** (port **50051** on the Service; HTTP unchanged):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set enableGrpc=true \
  --set envFromSecret=clawql-provider-env
 ```
@@ -178,7 +178,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Image tag** (pin a digest or release tag):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set image.tag=sha-abc1234 \
  --set envFromSecret=clawql-provider-env
 ```
@@ -187,7 +187,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 
 ```bash
 kubectl -n clawql create secret generic clawql-provider-env --from-literal=CLAWQL_GITHUB_TOKEN='set-from-vault-sync'
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql \
  --set envFromSecret=clawql-provider-env
 ```
 
@@ -205,7 +205,7 @@ kubectl -n clawql get externalsecret clawql-provider-env
 kubectl -n clawql get secret clawql-provider-env
 kubectl rollout restart deployment/clawql-mcp-http -n clawql || true
 
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set envFromSecret=clawql-provider-env \
  --wait
 ```
@@ -273,23 +273,23 @@ Optional: `CLAWQL_VAULT_POLICY_NS=my-ns make verify-vault-policy`
 When **`openclaw.clawqlMcp.enabled`** is **`true`** (default), the chart renders **`mcp.servers.clawql`** in **`openclaw.json`** pointing at in-cluster Streamable HTTP MCP (`http://<mcp-service>.<ns>.svc.cluster.local:<port>/mcp`; uses **`mcpProxy`** Service when **`mcpProxy.enabled`**). Override with **`openclaw.clawqlMcp.url`**. For JWT-gated MCP, set **`openclaw.clawqlMcp.bearerToken`** or **`openclaw.clawqlMcp.bearerTokenSecret`** (injected as **`CLAWQL_MCP_BEARER_TOKEN`** for OpenClaw header interpolation).
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
   --set openclaw.enabled=true \
   --set-string openclaw.gatewayToken="$(openssl rand -hex 24)"
 ```
 
 Docker Desktop **`make local-k8s-up`** opt-in: **`CLAWQL_ENABLE_OPENCLAW=1`** and **`OPENCLAW_GATEWAY_TOKEN=...`** (see **`scripts/kubernetes/local-k8s-docker-desktop.sh`**).
 
-**Dashboard Agent Chat → OpenClaw:** when **`openclaw.chatBridge.enabled`** (default **`true`**) and **`dashboard.openclawChatUrl`** is empty, the chart injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** pointing at the in-pod chat-bridge sidecar (`POST /v1/chat` and **`/v1/chat/stream`** on port **8787**). The bridge runs **`openclaw agent`** per request and enriches responses from session tool audit ([`openclaw-chat-enrich.mjs`](../../dashboard/scripts/openclaw-chat-enrich.mjs); chart copy under **`charts/clawql-mcp/files/`**). **`dashboard.chatStream`** (default **`true`**) sets **`CLAWQL_DASHBOARD_CHAT_STREAM=1`** for SSE in the UI. Full reference: **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**. Disable bridge with **`openclaw.chatBridge.enabled=false`** or override **`dashboard.openclawChatUrl`**.
+**Dashboard Agent Chat → OpenClaw:** when **`openclaw.chatBridge.enabled`** (default **`true`**) and **`dashboard.openclawChatUrl`** is empty, the chart injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** pointing at the in-pod chat-bridge sidecar (`POST /v1/chat` and **`/v1/chat/stream`** on port **8787**). The bridge runs **`openclaw agent`** per request and enriches responses from session tool audit ([`openclaw-chat-enrich.mjs`](../../apps/dashboard/scripts/openclaw-chat-enrich.mjs); chart copy under **`manifests/charts/clawql-mcp/files/`**). **`dashboard.chatStream`** (default **`true`**) sets **`CLAWQL_DASHBOARD_CHAT_STREAM=1`** for SSE in the UI. Full reference: **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**. Disable bridge with **`openclaw.chatBridge.enabled=false`** or override **`dashboard.openclawChatUrl`**.
 
-**Dashboard chat history on the Obsidian vault:** when **`dashboard.enabled=true`**, the Deployment sets **`CLAWQL_OBSIDIAN_VAULT_PATH`** (same as MCP **`obsidianVaultPath`**, default **`/vault`**) and mounts the **obsidian-vault** volume (PVC, **`vault.hostPath`**, or **`emptyDir`** — same precedence as the MCP pod). Agent Chat threads persist under **`Dashboard/chats/`** (`index.json`, per-thread **`meta.json`**, **`messages.jsonl`**, **`activity.jsonl`**); API logs append to **`Dashboard/logs/agent-chat.jsonl`**. Local dev default without env: **`~/.ClawQL`**. See **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**, **[`dashboard/README.md`](../../dashboard/README.md)**, and **[memory-obsidian.md](../memory/memory-obsidian.md)** § Dashboard data.
+**Dashboard chat history on the Obsidian vault:** when **`dashboard.enabled=true`**, the Deployment sets **`CLAWQL_OBSIDIAN_VAULT_PATH`** (same as MCP **`obsidianVaultPath`**, default **`/vault`**) and mounts the **obsidian-vault** volume (PVC, **`vault.hostPath`**, or **`emptyDir`** — same precedence as the MCP pod). Agent Chat threads persist under **`Dashboard/chats/`** (`index.json`, per-thread **`meta.json`**, **`messages.jsonl`**, **`activity.jsonl`**); API logs append to **`Dashboard/logs/agent-chat.jsonl`**. Local dev default without env: **`~/.ClawQL`**. See **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)**, **[`dashboard/README.md`](../../apps/dashboard/README.md)**, and **[memory-obsidian.md](../memory/memory-obsidian.md)** § Dashboard data.
 
 **Optional Goose agent pool** ([`block/goose`](https://github.com/block/goose)): **`goose.enabled=true`**, set **`goose.replicaCount`** (start at **0**, scale on demand), provider keys via **`goose.*ApiKey`** or **`goose.existingSecret`**. Injects **`CLAWQL_MCP_URL`** when **`goose.clawqlMcp.enabled`**. Stateful PVC at **`goose.persistence.mountPath`** (default **`/opt/clawql/goose`**). Idle **`sleep infinity`** until AgentRuntime task API ships.
 
 **Hermes (NL ops):** **`hermes.enabled=true`** sets **`CLAWQL_DASHBOARD_HERMES_OPS=1`** on the dashboard Deployment (reserved for **`@hermes`** routing — see deployment ops guide). No separate container.
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
   --set openclaw.enabled=true \
   --set dashboard.enabled=true \
   --set-string openclaw.gatewayToken="$(openssl rand -hex 24)"
@@ -298,7 +298,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Persistent Obsidian memory** (`memory_ingest` / `memory_recall` survive pod restarts; PVC at **`/vault`**, not secrets manager):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set persistence.enabled=true \
  --set persistence.size=20Gi
 ```
@@ -306,7 +306,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Enable Ouroboros with in-cluster Postgres** (deployed alongside ClawQL):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set enableOuroboros=true \
  --set ouroborosPostgres.enabled=true \
  --set ouroborosPostgres.auth.password='replace-me'
@@ -315,7 +315,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Disable document pipeline + backing stores** (if you want a minimal ClawQL-only install):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set documentPipeline.enabled=false \
  --set stores.postgres.enabled=false \
  --set stores.dragonfly.enabled=false
@@ -327,7 +327,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 kubectl -n clawql create secret generic onyx-connector-env \
  --from-literal=ONYX_API_TOKEN='replace-me'
 
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set flink.enabled=true \
  --set flink.connectorSecret=onyx-connector-env
 ```
@@ -335,7 +335,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **Enable in-cluster NATS JetStream event backbone** (Ouroboros + agent + edge sync):
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set nats.enabled=true \
  --set nats.persistence.enabled=true \
  --set nats.persistence.size=20Gi
@@ -374,14 +374,14 @@ This means you can switch between in-cluster and external NATS by value changes 
 **Local/smoke profile:**
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set nats.enabled=true
 ```
 
 **Durable baseline profile:**
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set nats.enabled=true \
  --set nats.persistence.enabled=true \
  --set nats.persistence.size=50Gi \
@@ -392,7 +392,7 @@ helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
 **External managed NATS profile:**
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
  --set nats.enabled=false \
  --set-string nats.url='nats://nats.shared.svc.cluster.local:4222'
 ```
@@ -433,7 +433,7 @@ Defaults live in chart **`values.yaml`** as **`nats.subjectConvention`** (`workf
 Template check:
 
 ```bash
-helm template test charts/clawql-mcp -n clawql --set nats.enabled=true | rg "nats|jetstream"
+helm template test manifests/charts/clawql-mcp -n clawql --set nats.enabled=true | rg "nats|jetstream"
 ```
 
 Post-deploy checks:
@@ -499,13 +499,13 @@ Operational notes:
 
 ### Rancher / in-cluster OpenClaw (Agent Chat)
 
-For **SUSE Rancher**, **RKE2**, or other Helm-driven clusters, use the checked-in overlay **[`values-rancher.example.yaml`](../../charts/clawql-mcp/values-rancher.example.yaml)**: **`dashboard.enabled`**, **`dashboard.openclawChatUrl`**, **`dashboard.ingress`** (editable host + TLS stubs), **`imagePullSecrets`** notes, and a commented **`envFromSecret`** line for **`secretSourcing.requireVaultBackedSecrets`**.
+For **SUSE Rancher**, **RKE2**, or other Helm-driven clusters, use the checked-in overlay **[`values-rancher.example.yaml`](../../manifests/charts/clawql-mcp/values-rancher.example.yaml)**: **`dashboard.enabled`**, **`dashboard.openclawChatUrl`**, **`dashboard.ingress`** (editable host + TLS stubs), **`imagePullSecrets`** notes, and a commented **`envFromSecret`** line for **`secretSourcing.requireVaultBackedSecrets`**.
 
 Install:
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace --wait \
-  -f charts/clawql-mcp/values-rancher.example.yaml
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace --wait \
+  -f manifests/charts/clawql-mcp/values-rancher.example.yaml
 ```
 
 Point **`openclawChatUrl`** at the workload that exposes **`POST /v1/chat`** (`{ reply }` JSON) and optionally **`POST /v1/chat/stream`** (SSE). See **`docs/openclaw/using-openclaw-with-clawql.md`** and **`docs/dashboard/agent-chat.md`** for OpenClaw, streaming, and the agent JSON contract.
@@ -590,12 +590,12 @@ Expected responses include **`{"status":"ok"}`**.
 
 - **Beginner-oriented guide** (what each tool is, first session, port-forwards, OTLP env for MCP): **[`docker-desktop-istio-observability.md`](docker-desktop-istio-observability.md)**
 - **Env toggles and MCP URLs:** [`docker/README.md`](../../docker/README.md)
-- **OTLP from `clawql-mcp-http`:** set **`extraEnv`** (see commented example in **`charts/clawql-mcp/values-docker-desktop.yaml`**) for **`CLAWQL_ENABLE_OTEL_TRACING`** and **`OTEL_EXPORTER_OTLP_ENDPOINT`**.
-- **MCP `/metrics` in Istio’s Prometheus:** the chart defaults **`metrics.prometheusScrapeAnnotations.enabled: true`**, which annotates **`svc/clawql-mcp-http`** so **Istio sample addons** (job **`kubernetes-service-endpoints`**) scrape **`GET /metrics`** automatically. Set **`metrics.prometheusScrapeAnnotations.enabled: false`** to opt out. For **Prometheus Operator**, set **`metrics.serviceMonitor.enabled: true`** (requires **`monitoring.coreos.com/v1`** **ServiceMonitor** CRD) — see **[`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+- **OTLP from `clawql-mcp-http`:** set **`extraEnv`** (see commented example in **`manifests/charts/clawql-mcp/values-docker-desktop.yaml`**) for **`CLAWQL_ENABLE_OTEL_TRACING`** and **`OTEL_EXPORTER_OTLP_ENDPOINT`**.
+- **MCP `/metrics` in Istio’s Prometheus:** the chart defaults **`metrics.prometheusScrapeAnnotations.enabled: true`**, which annotates **`svc/clawql-mcp-http`** so **Istio sample addons** (job **`kubernetes-service-endpoints`**) scrape **`GET /metrics`** automatically. Set **`metrics.prometheusScrapeAnnotations.enabled: false`** to opt out. For **Prometheus Operator**, set **`metrics.serviceMonitor.enabled: true`** (requires **`monitoring.coreos.com/v1`** **ServiceMonitor** CRD) — see **[`manifests/charts/clawql-mcp/README.md`](../../manifests/charts/clawql-mcp/README.md)** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
 
 ## Values
 
-See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Common keys:
+See **[`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml)**. Common keys:
 
 | Key                                                               | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -629,7 +629,7 @@ See **[`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml)**. Com
 | `ingress`                                                         | Optional HTTP(S) Ingress                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `ui`                                                              | Optional docs UI (`website`) Deployment/Service/Ingress (defaults for Docker Desktop use `docs.localhost`)                                                                                                                                                                                                                                                                                                                                                                         |
 | `dashboard`                                                       | Optional Vault-first dashboard Deployment/Service/Ingress (`clawql-dashboard` image; defaults for Docker Desktop use `clawql.localhost`)                                                                                                                                                                                                                                                                                                                                           |
-| `dashboard.openclawChatUrl`                                       | When non-empty, injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** (Agent Chat → in-cluster **`POST /v1/chat`**). Rancher-focused overlay with ingress: **[`charts/clawql-mcp/values-rancher.example.yaml`](../charts/clawql-mcp/values-rancher.example.yaml)**.                                                                                                                                                                                                                     |
+| `dashboard.openclawChatUrl`                                       | When non-empty, injects **`CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL`** (Agent Chat → in-cluster **`POST /v1/chat`**). Rancher-focused overlay with ingress: **[`manifests/charts/clawql-mcp/values-rancher.example.yaml`](../../manifests/charts/clawql-mcp/values-rancher.example.yaml)**.                                                                                                                                                                                                                     |
 | `metrics.prometheusScrapeAnnotations`                             | When **`enabled: true`** (default), adds **`prometheus.io/*`** on the MCP **Service** for Prometheus stacks that honor Service annotations (including **Istio** sample Prometheus). Set **`path`** / **`port`** if your HTTP listen port differs from **`service.http.targetPort`**.                                                                                                                                                                                               |
 | `metrics.serviceMonitor`                                          | When **`enabled: true`**, renders a **`ServiceMonitor`** (**`monitoring.coreos.com/v1`**) scraping **`/metrics`** on **`port: http`**. Default **`false`**. Optional **`namespace`**, **`labels`**, **`interval`**, **`scrapeTimeout`**. Import dashboards from [`observability/README.md`](../observability/README.md) for IDP-focused panels.                                                                                                                                    |
 
@@ -644,8 +644,8 @@ make helm-lint
 Or:
 
 ```bash
-helm lint charts/clawql-mcp
-helm template test charts/clawql-mcp --namespace clawql
+helm lint manifests/charts/clawql-mcp
+helm template test manifests/charts/clawql-mcp --namespace clawql
 ```
 
 ## Uninstall
@@ -658,7 +658,7 @@ If you used persistence with a chart-managed PVC, remove the PVC separately if y
 
 ## Relationship to Kustomize
 
-|                    | Kustomize (`docker/kustomize/`)                 | Helm (`charts/clawql-mcp`)                                                 |
+|                    | Kustomize (`manifests/kustomize/`)                 | Helm (`manifests/charts/clawql-mcp`)                                                 |
 | ------------------ | ----------------------------------------------- | -------------------------------------------------------------------------- |
 | **Naming**         | Overlays **`dev`**, **`prod`**, **`base`**      | **`values.yaml`** + **`--set`**                                            |
 | **Image**          | Rewritten by **`scripts/deploy/deploy-k8s.sh`** | **`image.repository`** / **`image.tag`**                                   |

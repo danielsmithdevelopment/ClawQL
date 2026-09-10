@@ -20,7 +20,7 @@ This is the **platform** backlog. Ouroboros-only detail lives in
 | Track                 | Measures                                                             | Artifacts today                                                     |
 | --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Planning-context**  | Spec / response compression via `search` → GraphQL-shaped outputs    | [`latest.md`](./latest.md), multi-provider / GCP experiment folders |
-| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`openbench/`](../../openbench/), [`openbench.md`](./openbench.md)  |
+| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`benchmarks/openbench/`](../../benchmarks/openbench/), [`openbench.md`](./openbench.md)  |
 
 Unit/integration tests prove APIs exist. **OpenBench proves agents use them and win.**
 
@@ -57,7 +57,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`** except recently retired **`idp-pipeline-resilience` (B-2.2)**. B-4.2 remains parked offline. Live vendor IDP = scheduled **B2.3** (not PR).
+**CI spend control:** only [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`** except recently retired **`idp-pipeline-resilience` (B-2.2)**. B-4.2 remains parked offline. Live vendor IDP = scheduled **B2.3** (not PR).
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 

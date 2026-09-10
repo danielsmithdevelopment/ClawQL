@@ -10,7 +10,7 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 | Act           | Primary                                                                 | Guaranteed fallback                                                                                                                   |
 | ------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `landing-page/demo`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
+| 1 WebMCP      | Live `clawql.site.*` tools on clawql.com (or local `apps/www`) | Skip CLI `sources add --kind webmcp` — **not implemented**; show browser `registerTool` in DevTools / agent host that supports WebMCP |
 | 2 Custom view | Live `/mcp-ui` industry fit form (when built)                           | `POST /mcp-ui/generate` preset or catalog `search` + `memory_recall`                                                                  |
 | 3 Flamegraph  | Live `/mcp-ui/trace/:sessionId` from Act 2 correlation id               | **`/mcp-ui/trace/compare`** (built-in compressed vs fat) — always works, no inference store                                           |
 
@@ -24,7 +24,7 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 
 1. Open clawql.com (prod) or local marketing site:
    ```bash
-   cd landing-page/demo && npm install && npm run dev
+   cd apps/www && npm install && npm run dev
    ```
 2. In a WebMCP-capable browser / agent host, confirm tools registered:
    - `clawql.site.navigate` → `/pricing`, `/industries/lending`
@@ -44,14 +44,14 @@ One demo that stitches the thread: wrap a site (WebMCP) → render a view that d
 **Target UX (to build):** `/mcp-ui/custom/industry-fit` or template `industry_fit`:
 
 - Input: industry slug (e.g. `lending`)
-- Steps: `search` (ops) or static pulls from `landing-page/demo/src/lib/{pricing,industries,competitive-pricing}.ts`
+- Steps: `search` (ops) or static pulls from `apps/www/src/lib/{pricing,industries,competitive-pricing}.ts`
 - Output card: recommended gateway tier, IDP bundle, domain tools, agent skills links
 
 **Interim (smoke today):**
 
 ```bash
 npm run build -w mcp-grpc-transport -w mcp-api-adapter
-node examples/mcp-api-adapter/server.mjs
+node docs/examples/mcp-api-adapter/server.mjs
 # POST /mcp-ui/generate with search + memory_recall steps
 ```
 
@@ -80,7 +80,7 @@ Run the same task twice (or two correlation ids): compressed tool projection vs 
 /mcp-ui/trace/compare?left=<compressedCorrId>&right=<fatCorrId>
 ```
 
-Requires `listTraceCalls` wired to `clawql-inference` (`MCP_API_ADAPTER_INFERENCE_TRACE=1` + shared store). See [`mcp-ui.md`](./mcp-ui.md) §5b, `examples/mcp-api-adapter/clawql-with-trace.mjs`, and `scripts/live-trace-compare-demo.mjs`.
+Requires `listTraceCalls` wired to `clawql-inference` (`MCP_API_ADAPTER_INFERENCE_TRACE=1` + shared store). See [`mcp-ui.md`](./mcp-ui.md) §5b, `docs/examples/mcp-api-adapter/clawql-with-trace.mjs`, and `scripts/live-trace-compare-demo.mjs`.
 
 Single-session deep link (optional, not the closer): `/mcp-ui/trace/<correlationId>`.
 
@@ -109,12 +109,12 @@ Flamegraph JSON is the token instrumentation `harness-bench` lacks today:
 ```bash
 # Adapter running on 8090
 npm run build -w mcp-api-adapter
-node examples/mcp-api-adapter/server.mjs &
+node docs/examples/mcp-api-adapter/server.mjs &
 
-node integrations/harness-bench/scripts/fetch-trace.mjs --compare
+node benchmarks/harness-bench/scripts/fetch-trace.mjs --compare
 # exits 0 when fat tool_result ≥80% and ratio ≥5×
 
-node integrations/harness-bench/scripts/fetch-trace.mjs demo-compressed
+node benchmarks/harness-bench/scripts/fetch-trace.mjs demo-compressed
 ```
 
 Wire into CI after adapter smoke job. Next: pass `correlationId` from harness runs when inference store records real model calls (stub bench today produces no traces).
@@ -140,5 +140,5 @@ Two consecutive full passes off-camera → schedule recording.
 ## Related
 
 - Flamegraph feature: [`mcp-ui.md`](./mcp-ui.md) §5b
-- WebMCP client: `landing-page/demo/src/components/WebMcpRegister.tsx`
-- Harness compare (structural, no tokens yet): `integrations/harness-bench/scripts/compare.mjs`
+- WebMCP client: `apps/www/src/components/WebMcpRegister.tsx`
+- Harness compare (structural, no tokens yet): `benchmarks/harness-bench/scripts/compare.mjs`

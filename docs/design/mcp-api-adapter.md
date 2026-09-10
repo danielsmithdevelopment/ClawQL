@@ -5,7 +5,7 @@
 **Package:** `mcp-api-adapter` (workspace `packages/mcp-api-adapter`; not yet on npmjs)  
 **Depends on:** [`mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md) **1.0.0+**, `@modelcontextprotocol/sdk`  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
-**Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
+**Example:** [`docs/examples/mcp-api-adapter/`](../../docs/examples/mcp-api-adapter/)  
 **Related:** Vision & Roadmap · Managed Edge Gateway · Worker / OpenWebUI-style OpenAPI consumers · PrintingPress (planned CLI packaging)
 
 ---
@@ -287,7 +287,7 @@ npx mcp-api-adapter \
 4. [x] `POST /{toolName}` → `CallTool` (unary collapse)
 5. [x] `/openapi.json`, `/docs`, `/tools`, `/healthz`
 6. [x] `x-clawql-grpc` extensions
-7. [x] Example server + REST/gRPC demos (`examples/mcp-api-adapter/`)
+7. [x] Example server + REST/gRPC demos (`docs/examples/mcp-api-adapter/`)
 8. [x] GraphQL on-ramp (`/graphql`, GraphiQL, per-tool mutations) + triple-surface demos
 9. [x] Any-MCP upstreams (stdio / Streamable HTTP / gRPC) + local gRPC scaffold + user guide
 

@@ -92,7 +92,7 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - **Hyperledger Fabric (roadmap)** — consortium-grade permissioned provenance ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187))
 - OSV-Scanner (Google) — layer-aware container + dependency vulnerability detection and SBOM support, wired into the Golden Image Pipeline alongside Trivy
 - Optional Istio service mesh: mTLS, AuthorizationPolicy, traffic management, Kiali topology — Ambient or sidecar
-- Unified Helm chart **`charts/clawql-mcp`** (optional stacks: document pipeline, Onyx, Flink, NATS, UI, … — see chart `values.yaml`; advanced items like **Fabric** are roadmap)
+- Unified Helm chart **`manifests/charts/clawql-mcp`** (optional stacks: document pipeline, Onyx, Flink, NATS, UI, … — see chart `values.yaml`; advanced items like **Fabric** are roadmap)
 - ClawQL-Agent (LangGraph) + OpenClaw + NATS JetStream + Edge Worker mode
 
 ---
@@ -115,7 +115,7 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - Onyx indexes your entire company knowledge base (Slack, Confluence, Drive, Jira, GitHub, email) and makes it queryable inside any Ouroboros workflow — permission-aware and citation-backed
 - Flink pipelines keep Onyx’s index continuously up to date — no stale retrieval
 - Audit trails via Merkle trees prove every processing step — including knowledge retrieval — valuable for compliance
-- **Hyperledger Fabric (roadmap)** for multi-org consortia — not deployed by `charts/clawql-mcp` today
+- **Hyperledger Fabric (roadmap)** for multi-org consortia — not deployed by `manifests/charts/clawql-mcp` today
 - One Helm chart manages everything: MCP, documents, Onyx, Flink, OSV-Scanner jobs, optional Istio + Kiali, Vault — not a patchwork of install guides
 
 ### Investors & Partners
@@ -174,7 +174,7 @@ ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mc
 | `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                       |
 | `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory/memory-obsidian.md)).                                                                |
 | `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)).                                      |
-| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)). |
+| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`infra/cloudflare/sandbox-bridge/README.md`](../infra/cloudflare/sandbox-bridge/README.md)). |
 | `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](mcp/external-ingest.md)).                                                                                                          |
 | `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)).                                                                      |
 | `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](mcp/notify-tool.md)).                                                                                              |
@@ -514,10 +514,10 @@ npm run fetch-provider-specs
 Primary chart in this repository:
 
 ```bash
-helm install clawql charts/clawql-mcp --namespace clawql
+helm install clawql manifests/charts/clawql-mcp --namespace clawql
 ```
 
-- **`charts/clawql-mcp`** — see [`charts/clawql-mcp/README.md`](../charts/clawql-mcp/README.md) and `values.yaml` for optional document pipeline, Onyx, Flink, NATS, UI ingress, etc.
+- **`manifests/charts/clawql-mcp`** — see [`manifests/charts/clawql-mcp/README.md`](../manifests/charts/clawql-mcp/README.md) and `values.yaml` for optional document pipeline, Onyx, Flink, NATS, UI ingress, etc.
 - `CLAWQL_BUNDLED_OFFLINE=1` — typical production stance so MCP does not fetch specs at runtime (see README / deployment docs)
 - **Onyx stack** — gated by chart values (`onyx.enabled` pattern); MCP **`CLAWQL_ENABLE_ONYX`** aligns with [`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)
 - **Fabric** — not present as a sub-chart here; see **Roadmap** / [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)
@@ -536,7 +536,7 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 | Service                               | Internal DNS                                   | Ingress                  | Role                                                                                                  |
 | ------------------------------------- | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| ClawQL MCP                            | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml) |
+| ClawQL MCP                            | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`manifests/charts/clawql-mcp/values.yaml`](../manifests/charts/clawql-mcp/values.yaml) |
 | Stirling-PDF                          | `stirling-pdf:8080`                            | `pdf.clawql.local`       | PDF merge/OCR/redact                                                                                  |
 | Paperless NGX                         | `paperless:8000`                               | `paperless.clawql.local` | Archive, consume, API                                                                                 |
 | Apache Tika                           | `tika:9998`                                    | internal                 | Extraction, MIME detection, routing                                                                   |

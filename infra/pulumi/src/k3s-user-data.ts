@@ -38,7 +38,7 @@ cat >/etc/clawql/bootstrap.env <<EOF
 CLAWQL_PROFILE=idp-k3s
 CLAWQL_R2_BUCKET=${r2Bucket}
 CLAWQL_GITOPS_REPO=${gitopsRepo}
-CLAWQL_GITOPS_PATH=deployment/gitops
+CLAWQL_GITOPS_PATH=infra/gitops
 EOF
 
 apt-get update -y
@@ -65,8 +65,8 @@ kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml -n kube-system create configmap c
 cat >/etc/clawql/NEXT_STEPS.txt <<'EOF'
 1. Copy kubeconfig: sudo cat /etc/rancher/k3s/k3s.yaml
 2. Install Argo CD (Helm) into argocd namespace
-3. Apply deployment/gitops/projects/clawql.yaml
-4. Apply deployment/gitops/applications/root.yaml (app-of-apps)
+3. Apply infra/gitops/projects/clawql.yaml
+4. Apply infra/gitops/applications/root.yaml (app-of-apps)
 5. Sync clawql-idp + clawql-workflows Applications
 6. Enable MCP: CLAWQL_ENABLE_WORKFLOW=1 CLAWQL_ENABLE_ARGO_CD=1
 See docs/deployment/hosted-live-bootstrap.md

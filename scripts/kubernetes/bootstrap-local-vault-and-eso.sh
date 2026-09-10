@@ -204,7 +204,7 @@ else
 fi
 
 echo "==> Apply ClusterSecretStore + ExternalSecret (Helm template)"
-helm_ctx template "${REL}" "${ROOT}/charts/clawql-mcp" -n "${NS}" \
+helm_ctx template "${REL}" "${ROOT}/manifests/charts/clawql-mcp" -n "${NS}" \
   --set envFromSecret=clawql-provider-env \
   --set secretSourcing.externalSecrets.enabled=true \
   --set kyverno.imageSignaturePolicy.enabled=false \

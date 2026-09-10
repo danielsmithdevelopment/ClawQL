@@ -11,7 +11,7 @@ trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}" "${TMP_IDP}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   --set nats.enabled=true \
@@ -21,14 +21,14 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set enableWorkflow=true \
   --set 'workflow.namespaceAllowlist={clawql}' >"${TMP_ENABLED}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false >"${TMP_DISABLED}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
-  -f charts/clawql-mcp/values-nats-idp.example.yaml \
+  -f manifests/charts/clawql-mcp/values-nats-idp.example.yaml \
   --set nats.keda.enabled=true >"${TMP_IDP}"
 
 python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" "${TMP_IDP}" <<'PY'

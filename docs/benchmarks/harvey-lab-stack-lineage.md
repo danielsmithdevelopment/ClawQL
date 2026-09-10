@@ -8,9 +8,9 @@ Harvey LAB × ClawQL has two distinct measurement stacks. Mixing them invalidate
 
 | Component      | Implementation                                                                      |
 | -------------- | ----------------------------------------------------------------------------------- |
-| Pre-ingest     | `integrations/harvey-labs/scripts/lab-pre-ingest.mjs`                               |
-| Vault seed     | `integrations/harvey-labs/scripts/lab-vault-seed.mjs`                               |
-| MCP I/O        | `integrations/harvey-labs/scripts/lab-mcp-proxy.mjs`                                |
+| Pre-ingest     | `benchmarks/harvey-labs/scripts/lab-pre-ingest.mjs`                               |
+| Vault seed     | `benchmarks/harvey-labs/scripts/lab-vault-seed.mjs`                               |
+| MCP I/O        | `benchmarks/harvey-labs/scripts/lab-mcp-proxy.mjs`                                |
 | Structured SQL | MCP `data_query` / `data_ingest` via `packages/clawql-data` (Node DuckDB)           |
 | Memory enrich  | `packages/clawql-memory/src/recall/harvey-lab-enrich.ts` when `CLAWQL_HARVEY_LAB=1` |
 | Harness glue   | Python adapter subclasses + `run.py` marker blocks only                             |
@@ -22,7 +22,7 @@ Pre-ingest fingerprint:
 ClawQL pre-ingest: Node DuckDB … matters=… documents=… open_facts=…
 ```
 
-Canonical metadata: [`integrations/harvey-labs/stack-version.json`](../../integrations/harvey-labs/stack-version.json).
+Canonical metadata: [`benchmarks/harvey-labs/stack-version.json`](../../benchmarks/harvey-labs/stack-version.json).
 
 ## Legacy — `python-duckdb-v1` (quarantined)
 
@@ -31,7 +31,7 @@ Canonical metadata: [`integrations/harvey-labs/stack-version.json`](../../integr
 | Pre-ingest | Python `_build_lab_duckdb` (removed)                                                                                           |
 | SQL path   | Local Python DuckDB file under task vault                                                                                      |
 | Harness    | Optional `clawql_agent_loop.py` patch (removed)                                                                                |
-| Artifacts  | [`integrations/harvey-labs/results/legacy/python-duckdb-v1/`](../../integrations/harvey-labs/results/legacy/python-duckdb-v1/) |
+| Artifacts  | [`benchmarks/harvey-labs/results/legacy/python-duckdb-v1/`](../../benchmarks/harvey-labs/results/legacy/python-duckdb-v1/) |
 
 Pre-ingest fingerprint:
 
@@ -55,8 +55,8 @@ ClawQL pre-ingest: DuckDB /path/…/matters.duckdb rows=266 …
 
 **Canonical operator path:** [`harvey-lab-ts-v2-smoke-gate.md`](harvey-lab-ts-v2-smoke-gate.md) (quarantine → `npm run build` → task 001 fingerprint + `clawql_sql` → contiguous 001–025).
 
-1. Remove [`integrations/harvey-labs/.skip-lab-matrix`](../../integrations/harvey-labs/.skip-lab-matrix) after clean baseline passes.
-2. Re-run contiguous 001–025: `bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh`
+1. Remove [`benchmarks/harvey-labs/.skip-lab-matrix`](../../benchmarks/harvey-labs/.skip-lab-matrix) after clean baseline passes.
+2. Re-run contiguous 001–025: `bash benchmarks/harvey-labs/scripts/run-contiguous-001-025.sh`
 3. Tag all new artifacts with `"stack_version": "ts-clawql-data-v2"`.
 4. Keep legacy files in `results/legacy/` for archaeology only.
 

@@ -31,7 +31,7 @@ Operators who require **local-only** processing should use **demo mode** or **`L
 
 ## Versioning
 
-Pin the reference sidecar image digest or rebuild from `deployment/samples/langextract-http/Dockerfile`. Live-mode Python deps are operator-installed with pinned versions documented in the sample README (not a committed `requirements.txt`).
+Pin the reference sidecar image digest or rebuild from `docs/examples/idp/langextract-http/Dockerfile`. Live-mode Python deps are operator-installed with pinned versions documented in the sample README (not a committed `requirements.txt`).
 
 ## Reviewer workflow
 
@@ -42,4 +42,4 @@ Pin the reference sidecar image digest or rebuild from `deployment/samples/lange
 ## Related
 
 - [fine-tuned-classifier.md](../runbooks/fine-tuned-classifier.md) — classify before extract
-- [langextract-http README](../../deployment/samples/langextract-http/README.md)
+- [langextract-http README](../../docs/examples/idp/langextract-http/README.md)

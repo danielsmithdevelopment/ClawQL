@@ -1,6 +1,6 @@
 # Streams + celld — evidence matrix
 
-**Status:** living checklist for Lab 5b (`examples/streams-celld`)  
+**Status:** living checklist for Lab 5b (`docs/examples/streams-celld`)  
 **Audience:** operators and reviewers who need proof the docs match shipped behavior  
 **Related:** [`clawql-celld.md`](./clawql-celld.md) · [`clawql-streams.md`](./clawql-streams.md) · [Learn Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)
 
@@ -18,7 +18,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real   |
 | Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                              |
-| Fleet LTX / multi-node diagnose                         | Manual               | `deployment/samples/streams-celld/README.md`                  |
+| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                  |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                   |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                             |
 
@@ -35,9 +35,9 @@ Embedding Express `mcp-api-adapter` / vault `clawql-memory` / full `clawql-api` 
 ```bash
 npm run build -w clawql-merkle -w clawql-core
 npx vitest run packages/clawql-core/src/streams-slim.test.ts
-node examples/streams-celld/scripts/mcp-fetch.test.mjs
-node examples/streams-celld/scripts/adapter-fetch.test.mjs
-node examples/streams-celld/scripts/bundle-check.mjs
+node docs/examples/streams-celld/scripts/mcp-fetch.test.mjs
+node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
+node docs/examples/streams-celld/scripts/bundle-check.mjs
 make helm-celld-template-tests
 ```
 
@@ -48,7 +48,7 @@ Expected: all exit **0**; bundle size printed ≈ **0.4 MiB** (must be &lt; **64
 ```bash
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build -w clawql-merkle -w clawql-core
-STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/smoke.sh
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
 ```
 
 Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, missing `celld` **exits 0 with a skip message** (developer convenience). CI and release gates must set the env var (or install celld and require the smoke).
@@ -61,16 +61,16 @@ Smoke covers: bundle-check → unit fetch tests → mock MCP + mock adapter → 
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build
 npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter
-STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/full-stack-smoke.sh
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-stack-smoke.sh
 ```
 
 This boots **real** `clawql-mcp-http` (vault memory + skills; empty OpenAPI catalog is OK) and **real** `mcp-api-adapter` (`--mcp-url` → that MCP), points celld at both, and asserts search / memory_* / adapter REST / inference health — while refusing mock `source` markers. `execute` of `streams.session.noop` may error on an empty catalog; the smoke still requires a Streamable HTTP hop.
 
-Optional containers: [`examples/streams-celld/docker-compose.full.yml`](../../examples/streams-celld/docker-compose.full.yml).
+Optional containers: [`docs/examples/streams-celld/docker-compose.full.yml`](../../docs/examples/streams-celld/docker-compose.full.yml).
 
 ### Cluster (manual — template-tested only in CI)
 
-Follow [`deployment/samples/streams-celld/README.md`](../../deployment/samples/streams-celld/README.md). Helm templates are asserted in CI; live webhook→fleet→LTX is **not** automated yet.
+Follow [`docs/examples/idp/streams-celld/README.md`](../../docs/examples/idp/streams-celld/README.md). Helm templates are asserted in CI; live webhook→fleet→LTX is **not** automated yet.
 
 ---
 
@@ -90,9 +90,9 @@ Follow [`deployment/samples/streams-celld/README.md`](../../deployment/samples/s
 After editing `docs/streams/clawql-*.md`, regenerate site pages:
 
 ```bash
-node website/scripts/sync-clawql-streams-doc.mjs
-node website/scripts/sync-clawql-celld-doc.mjs
-node website/scripts/sync-clawql-durable-objects-doc.mjs
+node apps/docs/scripts/sync-clawql-streams-doc.mjs
+node apps/docs/scripts/sync-clawql-celld-doc.mjs
+node apps/docs/scripts/sync-clawql-durable-objects-doc.mjs
 ```
 
 ---

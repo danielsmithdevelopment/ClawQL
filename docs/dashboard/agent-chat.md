@@ -3,13 +3,13 @@
 **Status:** Shipped (June 2026)  
 **Audience:** Operators, OpenClaw integrators, and agents that drive the [IDP Platform](../vision/clawql-idp-platform.md) from the dashboard UI.
 
-**Related:** [Dashboard README](../../dashboard/README.md) · [OpenClaw + ClawQL](../openclaw/using-openclaw-with-clawql.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Design notes (implementation history)](../design/dashboard-shadcn-chat-integration.md)
+**Related:** [Dashboard README](../../apps/dashboard/README.md) · [OpenClaw + ClawQL](../openclaw/using-openclaw-with-clawql.md) · [OpenClaw IDP skill profile](../openclaw/openclaw-idp-skill-profile.md) · [Design notes (implementation history)](../design/dashboard-shadcn-chat-integration.md)
 
 ---
 
 ## 1. Role in the platform
 
-The **Agent Chat** panel (`dashboard/` Next.js app, route `/`) is the human-facing control plane for ClawQL IDP workflows. Operators and agents converse in natural language; the dashboard:
+The **Agent Chat** panel (`apps/dashboard/` Next.js app, route `/`) is the human-facing control plane for ClawQL IDP workflows. Operators and agents converse in natural language; the dashboard:
 
 1. Persists threads in the **Obsidian vault** (same root as `memory_ingest` / `memory_recall`).
 2. Proxies messages to **OpenClaw** via an HTTP **chat bridge** (`openclaw agent --local` per request).
@@ -67,14 +67,14 @@ flowchart LR
 
 | Area                       | Path                                                                                                                             |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| UI container               | [`dashboard/src/components/dashboard/AgentChatPanel.tsx`](../../dashboard/src/components/dashboard/AgentChatPanel.tsx)           |
-| Conversation + scroll      | [`dashboard/src/components/agent-chat/AgentConversation.tsx`](../../dashboard/src/components/agent-chat/AgentConversation.tsx)   |
-| IDP attachment cards       | [`dashboard/src/components/agent-chat/IdpAttachmentCards.tsx`](../../dashboard/src/components/agent-chat/IdpAttachmentCards.tsx) |
-| Types                      | [`dashboard/src/components/dashboard/types.ts`](../../dashboard/src/components/dashboard/types.ts)                               |
-| JSON proxy                 | [`dashboard/src/app/api/agent/chat/route.ts`](../../dashboard/src/app/api/agent/chat/route.ts)                                   |
-| SSE proxy                  | [`dashboard/src/app/api/agent/chat/stream/route.ts`](../../dashboard/src/app/api/agent/chat/stream/route.ts)                     |
-| Vault store                | [`dashboard/src/lib/chat-vault-store.server.ts`](../../dashboard/src/lib/chat-vault-store.server.ts)                             |
-| Bridge (local + Helm copy) | [`dashboard/scripts/openclaw-chat-bridge.mjs`](../../dashboard/scripts/openclaw-chat-bridge.mjs)                                 |
+| UI container               | [`apps/dashboard/src/components/dashboard/AgentChatPanel.tsx`](../../apps/dashboard/src/components/dashboard/AgentChatPanel.tsx)           |
+| Conversation + scroll      | [`apps/dashboard/src/components/agent-chat/AgentConversation.tsx`](../../apps/dashboard/src/components/agent-chat/AgentConversation.tsx)   |
+| IDP attachment cards       | [`apps/dashboard/src/components/agent-chat/IdpAttachmentCards.tsx`](../../apps/dashboard/src/components/agent-chat/IdpAttachmentCards.tsx) |
+| Types                      | [`apps/dashboard/src/components/dashboard/types.ts`](../../apps/dashboard/src/components/dashboard/types.ts)                               |
+| JSON proxy                 | [`apps/dashboard/src/app/api/agent/chat/route.ts`](../../apps/dashboard/src/app/api/agent/chat/route.ts)                                   |
+| SSE proxy                  | [`apps/dashboard/src/app/api/agent/chat/stream/route.ts`](../../apps/dashboard/src/app/api/agent/chat/stream/route.ts)                     |
+| Vault store                | [`apps/dashboard/src/lib/chat-vault-store.server.ts`](../../apps/dashboard/src/lib/chat-vault-store.server.ts)                             |
+| Bridge (local + Helm copy) | [`apps/dashboard/scripts/openclaw-chat-bridge.mjs`](../../apps/dashboard/scripts/openclaw-chat-bridge.mjs)                                 |
 
 ---
 
@@ -89,9 +89,9 @@ The chat panel uses [shadcn/ui June 2026 chat components](https://ui.shadcn.com/
 | **Attachment**           | IDP document/citation/share cards                                          |
 | **Marker**               | Streaming shimmer (“Generating response…”)                                 |
 
-Initialized via `npx shadcn@latest init` in `dashboard/`; headless scroll logic from `@shadcn/react/message-scroller`.
+Initialized via `npx shadcn@latest init` in `apps/dashboard/`; headless scroll logic from `@shadcn/react/message-scroller`.
 
-**Theme:** zinc/orange dashboard palette; shadcn `--primary` overridden to orange in `.dark` ([`dashboard/src/styles/tailwind.css`](../../dashboard/src/styles/tailwind.css)).
+**Theme:** zinc/orange dashboard palette; shadcn `--primary` overridden to orange in `.dark` ([`apps/dashboard/src/styles/tailwind.css`](../../apps/dashboard/src/styles/tailwind.css)).
 
 ---
 
@@ -198,7 +198,7 @@ Request body (both):
 **Run locally:**
 
 ```bash
-cd dashboard && npm run openclaw:chat-bridge
+cd apps/dashboard && npm run openclaw:chat-bridge
 # → http://127.0.0.1:8787/v1/chat
 ```
 
@@ -280,7 +280,7 @@ Each line in `messages.jsonl` is a **`ChatMessage`**:
 
 ## 7. Agent response contract (rich IDP UI)
 
-Canonical TypeScript: [`dashboard/src/components/dashboard/types.ts`](../../dashboard/src/components/dashboard/types.ts) (`AgentChatApiResponse`).
+Canonical TypeScript: [`apps/dashboard/src/components/dashboard/types.ts`](../../apps/dashboard/src/components/dashboard/types.ts) (`AgentChatApiResponse`).
 
 ### 7.1 Top-level fields
 
@@ -431,7 +431,7 @@ The chat bridge **automatically enriches** responses after each `openclaw agent 
 
 Disable enrichment with `CLAWQL_DASHBOARD_CHAT_ENRICH=0` on the bridge process.
 
-Implementation: [`dashboard/scripts/openclaw-chat-enrich.mjs`](../../dashboard/scripts/openclaw-chat-enrich.mjs) (Helm chart copy under `charts/clawql-mcp/files/`).
+Implementation: [`apps/dashboard/scripts/openclaw-chat-enrich.mjs`](../../apps/dashboard/scripts/openclaw-chat-enrich.mjs) (Helm chart copy under `manifests/charts/clawql-mcp/files/`).
 
 **Mapped tool patterns:**
 
@@ -506,10 +506,10 @@ dashboard:
 
 ```bash
 # Terminal 1 — bridge
-cd dashboard && npm run openclaw:chat-bridge
+cd apps/dashboard && npm run openclaw:chat-bridge
 
 # Terminal 2 — dashboard
-cd dashboard
+cd apps/dashboard
 CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat npm run dev
 ```
 
@@ -522,7 +522,7 @@ Open [http://localhost:3040](http://localhost:3040) → **Agent Chat** → **New
 ## 11. Testing
 
 ```bash
-cd dashboard
+cd apps/dashboard
 npm run build
 npx playwright install chromium   # once
 npm run test:e2e -- e2e/agent-chat.spec.ts

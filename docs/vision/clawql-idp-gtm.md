@@ -67,7 +67,7 @@ A sovereign, modular IDP that closes the full document lifecycle in one system: 
 3. Native MCP from any AI assistant — full pipeline via natural language.
 4. Merkle audit trail per step — independently verifiable for regulated industries.
 5. Self-hosted / air-gapped / data-sovereign — no document data must leave the environment.
-6. Deploy in hours, not months — `helm install clawql charts/clawql-full-stack --namespace clawql`.
+6. Deploy in hours, not months — `helm install clawql manifests/charts/clawql-full-stack --namespace clawql`.
 
 7. **Persistent vault memory on frugal models (OpenBench A/B).** Live cells on `openrouter/deepseek/deepseek-chat` show clawql-on **1.0** vs off **0.0** for ingest→recall, **1.0** vs **0.333** after seed removal, and **1.0** vs **0.0** under token-budget pressure ([30872913516](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872913516), [30872437811](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30872437811); [results ledger](../benchmarks/openbench-results-ledger.md)).
 

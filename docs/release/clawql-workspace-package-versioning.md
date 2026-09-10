@@ -100,7 +100,7 @@ Some packages (notably **`clawql-observability`**) used internal **Phase 1–5**
 1. Edit [`package-npm-version-targets.json`](../../scripts/release/package-npm-version-targets.json) when a package publishes (bump its `inTreeTargets` entry).
 2. Run `node scripts/release/apply-package-npm-versions.mjs`.
 3. Run `npm install` to refresh `package-lock.json`.
-4. Update [`RELEASE_NOTES_v8.0.0.md`](../../RELEASE_NOTES_v8.0.0.md) standalone npm table and package changelogs as needed.
+4. Update [`RELEASE_NOTES_v8.0.0.md`](RELEASE_NOTES_v8.0.0.md) standalone npm table and package changelogs as needed.
 
 **Verify npm state:**
 

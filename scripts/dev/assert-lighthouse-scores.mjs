@@ -3,7 +3,7 @@
  * Fail CI when Lighthouse category scores fall below configured minimums.
  *
  * Usage:
- *   node scripts/dev/assert-lighthouse-scores.mjs website/lighthouse-ci.json
+ *   node scripts/dev/assert-lighthouse-scores.mjs apps/docs/lighthouse-ci.json
  *
  * Optional env (0–1 floats, defaults shown):
  *   LH_MIN_PERF=0.70 LH_MIN_A11Y=1 LH_MIN_SEO=0.9 LH_MIN_BP=0.85

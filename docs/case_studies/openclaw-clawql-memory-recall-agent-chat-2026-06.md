@@ -34,7 +34,7 @@ OpenClaw routes agent tool calls to the configured `clawql` MCP endpoint (Stream
 | ----------------------- | ------------------------------------------------------------------------------------------------ |
 | **ClawQL HTTP MCP**     | `PORT=8080 npm run start:http` → `http://127.0.0.1:8080/mcp` (Streamable HTTP)                   |
 | **OpenClaw MCP config** | `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'`    |
-| **Chat bridge**         | `dashboard/scripts/openclaw-chat-bridge.mjs` on :8787 — `POST /v1/chat` for dashboard Agent Chat |
+| **Chat bridge**         | `apps/dashboard/scripts/openclaw-chat-bridge.mjs` on :8787 — `POST /v1/chat` for dashboard Agent Chat |
 | **LLM**                 | OpenRouter (e.g. `openrouter/qwen/qwen3.6-plus`) via `openclaw models set`                       |
 | **Vault**               | Prior session notes under `Memory/` (ingested during K8s/OpenClaw setup work)                    |
 
@@ -168,7 +168,7 @@ Return paths and snippets from the tool JSON only.
 
 ## 9. Kubernetes and Helm (production-shaped path)
 
-Optional `openclaw.enabled` in `charts/clawql-mcp`:
+Optional `openclaw.enabled` in `manifests/charts/clawql-mcp`:
 
 - Auto-wires `mcp.servers.clawql` in OpenClaw ConfigMap → in-cluster Streamable HTTP URL.
 - Chat bridge sidecar on :8787 for dashboard Agent Chat.
@@ -183,7 +183,7 @@ Local validation in this case study precedes cluster deploy; the Helm templates 
 1. **Build ClawQL:** `npm install && npm run build`
 2. **Start MCP:** `export CLAWQL_OBSIDIAN_VAULT_PATH="$HOME/.ClawQL"` (or your vault); `PORT=8080 npm run start:http`
 3. **Register OpenClaw:** `openclaw mcp set clawql '{"url":"http://127.0.0.1:8080/mcp","transport":"streamable-http"}'`
-4. **Start bridge:** `npm run openclaw:chat-bridge --prefix dashboard`
+4. **Start bridge:** `npm run openclaw:chat-bridge --prefix apps/dashboard`
 5. **Ingest at least one note** (if vault empty): `memory_ingest` with stable title under `Memory/`
 6. **New thread:** send the explicit `memory_recall` prompt via bridge `POST /v1/chat` or dashboard Agent Chat
 7. **Confirm:** response cites `clawql__memory_recall` and vault `path` values

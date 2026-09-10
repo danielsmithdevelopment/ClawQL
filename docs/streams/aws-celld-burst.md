@@ -11,7 +11,7 @@ package: "infra/aws-celld-burst/ + packages/clawql-k8s-operator/"
 
 **September 2026** · **Status:** Draft / unverified until §12 checklist has measured results
 
-**Hands-on today:** [Streams getting started](https://docs.clawql.com/learn/streams-getting-started) · Lab 5b [`examples/streams-celld`](../../examples/streams-celld/) · evidence [`streams-celld-evidence.md`](./streams-celld-evidence.md)
+**Hands-on today:** [Streams getting started](https://docs.clawql.com/learn/streams-getting-started) · Lab 5b [`docs/examples/streams-celld`](../../docs/examples/streams-celld/) · evidence [`streams-celld-evidence.md`](./streams-celld-evidence.md)
 
 **Related:** [`clawql-celld.md`](./clawql-celld.md) · [`clawql-streams.md`](./clawql-streams.md) · [`clawql-cellrt.md`](./clawql-cellrt.md) · [`clawql-network-v0.1.md`](../specs/network/clawql-network-v0.1.md) · [`clawql-operator` (Instance CRD)](../deployment/clawql-operator-helm.md) · [defense-in-depth](../security/clawql-security-defense-in-depth.md)
 

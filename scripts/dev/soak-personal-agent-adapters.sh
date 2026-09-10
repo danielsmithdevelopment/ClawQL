@@ -18,6 +18,6 @@ HERMES_EXTENSIONS_DIR="$TMP/hermes" CLINE_CONFIG_PATH="$TMP/cline/config.json" \
 test -f "$TMP/hermes/worm_agent.py"
 test -f "$TMP/cline/config.json"
 node "$ROOT/scripts/dev/openclaw-register-clawql.mjs" http | grep -q "openclaw mcp set clawql"
-node "$ROOT/integrations/agents-bench/scripts/dry-run.mjs" cline S >/dev/null
+node "$ROOT/benchmarks/agents-bench/scripts/dry-run.mjs" cline S >/dev/null
 
 echo "OK personal-agent + OpenClaw + dry OpenBench soak (offline)"

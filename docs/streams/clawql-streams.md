@@ -53,7 +53,7 @@ ClawQL Streams is that pattern as a platform: any event source, any trigger type
 
 On the **celld / Cloudflare** path, each agent cell is a **Workers-safe slim core** plus **out-of-process** MCP/adapter/inference — not a sidecar fleet of containers, and **not** a full Express `mcp-api-adapter` embed (that would blow the 64 MiB budget and pull Node APIs).
 
-**Shipped today** ([`examples/streams-celld`](../../examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, optional `fetch(CLAWQL_MCP_URL)` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, LTX audit flush. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
+**Shipped today** ([`docs/examples/streams-celld`](../../docs/examples/streams-celld/)): Gateway / Subscription / AgentSession DOs, in-process `clawql-core/streams-slim`, optional `fetch(CLAWQL_MCP_URL)` + `fetch(CLAWQL_MCP_ADAPTER_URL)`, LTX audit flush. Evidence matrix: [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 
 **Still planned:** the `clawql-streams` coordination package (`stream_*` MCP tools) and a future optional Workers-safe `clawql-api` slim for offline search.
 
@@ -770,7 +770,7 @@ Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: 
 
 ## 15. Open questions
 
-1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`examples/streams-celld`](../../examples/streams-celld/); `search` / `execute` use thin `fetch(CLAWQL_MCP_URL)` (no `clawql-api` in the Worker). Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
+1. **Bundle size.** **Resolved for core + MCP tools path:** `clawql-core/streams-slim` + Effect ≈ **0.4 MiB** in [`docs/examples/streams-celld`](../../docs/examples/streams-celld/); `search` / `execute` use thin `fetch(CLAWQL_MCP_URL)` (no `clawql-api` in the Worker). Remaining question: can a future offline Workers-safe `clawql-api` slim + Streams router still fit with aggressive tree-shaking?
 2. **celld alpha vs cellrt.** When is celld production-stable enough to prefer over K8s HPA? When does Helm default self-hosted Streams to **`cellrt`** instead of (or alongside) celld?
 3. **Replay and idempotency.** On buffer replay, significance may re-fire. Idempotency keys: `eventId + subscriptionId` (and stable DO/cell names — see celld / cellrt naming).
 4. **Kafka / Kinesis.** First-class `StreamSourceType` in v0.2 or defer to enterprise add-on?

@@ -113,7 +113,7 @@ When Helm deploys NATS (`nats.enabled=true`), ClawQL can **publish** and **consu
 
 **Dual path:** keep **`CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW=1`** for synchronous resume in the webhook handler; enable the NATS consumer for async / multi-pod deployments. If both run, duplicate resume attempts on an already-resumed workflow are treated as success.
 
-Deep dive: [`docs/deployment/helm.md`](../deployment/helm.md#nats-jetstream-deep-dive) · lending W-2 sample: [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
+Deep dive: [`docs/deployment/helm.md`](../deployment/helm.md#nats-jetstream-deep-dive) · lending W-2 sample: [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/README.md).
 
 ---
 
@@ -148,10 +148,10 @@ Each task may include optional **`predictions`**: an array of Label Studio predi
 
 **Reference packs** (config + `sample-tasks.json`):
 
-- [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/)
-- [`deployment/samples/healthcare-referral/`](../../deployment/samples/healthcare-referral/)
-- [`deployment/samples/legal-contract/`](../../deployment/samples/legal-contract/)
-- [`deployment/samples/education-transcript/`](../../deployment/samples/education-transcript/)
+- [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/)
+- [`docs/examples/idp/healthcare-referral/`](../../docs/examples/idp/healthcare-referral/)
+- [`docs/examples/idp/legal-contract/`](../../docs/examples/idp/legal-contract/)
+- [`docs/examples/idp/education-transcript/`](../../docs/examples/idp/education-transcript/)
 
 Align **`from_name` / `to_name`** with the pack’s `label-studio-config.xml`.
 
@@ -205,7 +205,7 @@ Align **`from_name` / `to_name`** with the pack’s `label-studio-config.xml`.
 }
 ```
 
-Full checked-in examples: pack **`sample-tasks.json`** files under **`deployment/samples/`**.
+Full checked-in examples: pack **`sample-tasks.json`** files under **`docs/examples/idp/`**.
 
 ### 5.3 Errors
 
@@ -257,7 +257,7 @@ OpenClaw or your orchestrator decides thresholds; ClawQL only **stores** the num
 
 ## 9. Helm / Kubernetes
 
-In **`charts/clawql-mcp`**:
+In **`manifests/charts/clawql-mcp`**:
 
 - Set **`enableHitlLabelStudio: true`** to inject **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`**.
 - Supply **`CLAWQL_LABEL_STUDIO_URL`**, **`CLAWQL_LABEL_STUDIO_API_TOKEN`**, **`CLAWQL_HITL_WEBHOOK_TOKEN`** via **`extraEnv`** or **`envFromSecret`** (recommended for tokens).
@@ -319,7 +319,7 @@ Full keys table: [`docs/deployment/helm.md`](../deployment/helm.md).
 | [`docs/openclaw/clawql-bootstrap.md`](openclaw/clawql-bootstrap.md)                        | OpenClaw MCP registration                                                                              |
 | [`docs/deployment/helm.md`](../deployment/helm.md)                                         | **`enableHitlLabelStudio`**                                                                            |
 | [`docs/mcp/enterprise-mcp-tools.md`](enterprise-mcp-tools.md)                              | Feature-flag table                                                                                     |
-| [`deployment/samples/lending-w2/README.md`](../../deployment/samples/lending-w2/README.md) | W-2 HITL + suspend/resume sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) |
+| [`docs/examples/idp/lending-w2/README.md`](../../docs/examples/idp/lending-w2/README.md) | W-2 HITL + suspend/resume sample ([#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253)) |
 | [Label Studio docs](https://labelstud.io/guide/)                                           | Import API, webhooks, projects                                                                         |
 | [Label Studio CE vs Enterprise](https://labelstud.io/guide/label_studio_compare)           | RBAC capability matrix (upstream)                                                                      |
 
@@ -401,7 +401,7 @@ sequenceDiagram
 
 | Step | Detail                                                                                                                                                                                                                                                                        |
 | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Create **two** Label Studio projects (same labeling config XML — see [`deployment/samples/lending-w2/label-studio-config.xml`](../../deployment/samples/lending-w2/label-studio-config.xml)).                                                                                 |
+| 1    | Create **two** Label Studio projects (same labeling config XML — see [`docs/examples/idp/lending-w2/label-studio-config.xml`](../../docs/examples/idp/lending-w2/label-studio-config.xml)).                                                                                 |
 | 2    | **Reviewer A** — access only to **primary** project. **Reviewer B** — access only to **secondary** (on CE: separate logins + discipline; on Enterprise: project-level Annotator/Reviewer roles).                                                                              |
 | 3    | Primary enqueue sets **`provenance.review_stage`: `"primary"`** and **`correlation_id`** (workflow id).                                                                                                                                                                       |
 | 4    | Webhook handler or agent policy: on primary completion, call **`hitl_enqueue_label_studio`** again with **`project_id`** = secondary, same **`correlation_id`**, **`provenance.review_stage`: `"secondary"`**, and **`provenance.primary_task_id`** from the webhook payload. |
@@ -445,7 +445,7 @@ When native RBAC, SAML, and reviewer assignment are required:
 1. Deploy **Label Studio Enterprise** per [HumanSignal documentation](https://docs.humansignal.com/guide/install) — **ClawQL does not redistribute** enterprise images or licenses.
 2. Map IdP groups → **Annotator** / **Reviewer** / **Manager** per [role matrix](https://labelstud.io/guide/manage_users.html).
 3. Point **`CLAWQL_LABEL_STUDIO_URL`** at the enterprise instance; use a **Manager** or **service** token with import permission for **`CLAWQL_LABEL_STUDIO_API_TOKEN`**.
-4. Enable **`enableHitlLabelStudio`** on **`charts/clawql-mcp`**; store tokens in Vault / ESO ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
+4. Enable **`enableHitlLabelStudio`** on **`manifests/charts/clawql-mcp`**; store tokens in Vault / ESO ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
 5. Optional: single-project **review workflow** with Enterprise assign-reviewers — ClawQL enqueue + webhook unchanged ([#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)).
 
 Vertical Compose stacks and pre-annotation packs: [`docker/compose/README.md`](../../docker/compose/README.md) ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251), [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247)).

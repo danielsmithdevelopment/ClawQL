@@ -4,8 +4,8 @@ Proves **real IDP vendors in order** via Docker Compose (and optional external s
 
 OpenBench stub [`idp-safe-pipeline-lite`](../benchmarks/openbench-task-explanations.md#idp-safe-pipeline-lite) is only agent-tool sequencing — **not** this smoke.
 
-**Compose file:** [`docker-compose.idp-smoke.yml`](../../examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml)  
-**ConeShare env:** [`coneshare-smoke.env`](../../examples/clawql-local-docker-compose/coneshare-smoke.env)  
+**Compose file:** [`docker-compose.idp-smoke.yml`](../../docs/examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml)  
+**ConeShare env:** [`coneshare-smoke.env`](../../docs/examples/clawql-local-docker-compose/coneshare-smoke.env)  
 **Ordered hops:** [`scripts/dev/smoke-idp-ordered-compose.sh`](../../scripts/dev/smoke-idp-ordered-compose.sh)  
 **Wrapper:** [`scripts/dev/smoke-idp-pipeline-b23.sh`](../../scripts/dev/smoke-idp-pipeline-b23.sh)  
 **Workflow:** [`.github/workflows/idp-pipeline-smoke.yml`](../../.github/workflows/idp-pipeline-smoke.yml)

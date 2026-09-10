@@ -9,7 +9,7 @@ package: "packages/clawql-agents/"
 
 **August 2026 · v0.1**
 
-> **Status (repo, 2026-08-25):** Phases 1–4 adapters shipped. Follow-on: personal-agent install hooks, OpenClaw live MCP plans, `getOutboundCredential`, Helm overlays, Agents OpenBench **dry** runner (`integrations/agents-bench/`). Live OpenBench A/B remains gated (Harvey / ExtractBench). Durable WORM: `packages/clawql-audit`.
+> **Status (repo, 2026-08-25):** Phases 1–4 adapters shipped. Follow-on: personal-agent install hooks, OpenClaw live MCP plans, `getOutboundCredential`, Helm overlays, Agents OpenBench **dry** runner (`benchmarks/agents-bench/`). Live OpenBench A/B remains gated (Harvey / ExtractBench). Durable WORM: `packages/clawql-audit`.
 >
 > **Related:** [Agents index](README.md) · [Personal Hermes/Cline setup](../homelab/personal-agent-hermes-cline.md) · [Agents OpenBench spec](../benchmarks/agents-openbench-spec-v0.1.md) · [OpenBench plan](../benchmarks/agents-openbench-plan.md) · [Modularization status](../design/modularization-implementation-status.md) · [clawql-tee](../streams/clawql-tee.md) (draft) · [MCP tools](../mcp/mcp-tools.md)
 
@@ -18,7 +18,7 @@ package: "packages/clawql-agents/"
 | Name in this document                                 | In this repository today                                                                                                                                                                                       |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/clawql-agents/`                             | **Phases 1–4 + follow-on** — all seven adapters + ATR templates + shared Panguard; personal install, OpenClaw live MCP plans, outbound credentials, Helm overlays, dry OpenBench runner. Live A/B still gated. |
-| `bench/` in this package                              | Dry runner at `src/bench/dry-runner.ts`; live harness entry is **`integrations/agents-bench/`** (gated)                                                                                                        |
+| `bench/` in this package                              | Dry runner at `src/bench/dry-runner.ts`; live harness entry is **`benchmarks/agents-bench/`** (gated)                                                                                                        |
 | npm `@clawql/agents`, `@clawql/core`, `@clawql/audit` | Packages are **unscoped** `clawql-*`. MCP audit ring lives in **`clawql-core`**. Durable WORM ships in **`clawql-audit@8.0.0`**: [`../audit/clawql-audit-spec-v0.1.md`](../audit/clawql-audit-spec-v0.1.md).   |
 | Adapter `initialize` / `start` as `Promise`           | Production domain APIs **must** be Effect (`Context.Tag` + `Layer`). Sketches below are contracts, not the implementation shape.                                                                               |
 | OpenClaw MCP wiring                                   | Adapter live MCP plans + `scripts/dev/openclaw-register-clawql.sh`; operator docs in [`docs/openclaw/`](../openclaw/using-openclaw-with-clawql.md)                                                             |
@@ -144,7 +144,7 @@ packages/clawql-agents/
     cline/
       values-clawql.yaml
   bench/
-    openclaw/                 — Prefer integrations/agents-bench/ per OpenBench plan
+    openclaw/                 — Prefer benchmarks/agents-bench/ per OpenBench plan
     hermes/
     pi/
     goose/
@@ -164,7 +164,7 @@ packages/clawql-agents/
   tsconfig.json
 ```
 
-**Harness location:** keep a **single** runner. Until OpenBench gates clear, that is `integrations/agents-bench/` (planned). `packages/clawql-agents/bench/` should re-export or thin-wrap it, not fork task definitions.
+**Harness location:** keep a **single** runner. Until OpenBench gates clear, that is `benchmarks/agents-bench/` (planned). `packages/clawql-agents/bench/` should re-export or thin-wrap it, not fork task definitions.
 
 ---
 
@@ -678,7 +678,7 @@ This package does not modify agent weights or fine-tune agent models. The adapte
 2. **`clawql-audit` first** ([spec](../audit/clawql-audit-spec-v0.1.md)) — adapters must not invent a second WORM client.
 3. Cline: MCP server registration + WORM hooks against **verified** `@cline/sdk` surfaces.
 4. Effect `AgentAdapter` Tag; no seven empty adapter folders.
-5. OpenBench stub tools stay in `integrations/agents-bench/` when that gate opens.
+5. OpenBench stub tools stay in `benchmarks/agents-bench/` when that gate opens.
 
 ---
 

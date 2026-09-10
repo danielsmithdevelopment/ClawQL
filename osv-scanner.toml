@@ -9,7 +9,7 @@ reason = "Next.js currently vendors postcss@8.4.31 under next/node_modules; dash
 
 [[IgnoredVulns]]
 id = "GHSA-6g55-p6wh-862q"
-reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/node_modules/next; top-level postcss is patched to 8.5.23 across root/website/dashboard/landing. Remove when Next ships a nested postcss >= 8.5.12."
+reason = "Same Next.js-vendored postcss@8.4.31 under dashboard/node_modules/next; top-level postcss is patched to 8.5.23 across root/apps/docs/dashboard/landing. Remove when Next ships a nested postcss >= 8.5.12."
 
 [[IgnoredVulns]]
 id = "GHSA-r28c-9q8g-f849"

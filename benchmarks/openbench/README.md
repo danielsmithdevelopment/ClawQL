@@ -1,0 +1,178 @@
+# OpenBench × ClawQL
+
+Adopt [OpenBench](https://github.com/minghinmatthewlam/openbench) to benchmark
+ClawQL as a coding-agent harness layer (Track A) and to ship ClawQL-specific
+tasks that exercise memory, token efficiency, and multi-provider API scaffolding
+(Track B).
+
+OpenBench answers: _same model, same task — how much does the harness matter?_
+ClawQL answers: _how much does a governed MCP gateway (search/execute/memory)
+change correctness, tokens, and turns?_
+
+Live CI A/B (`openbench-ab.yml`) runs **clawql-on vs clawql-off** on the cheap
+OpenRouter default; vault seeds + tool passthrough are what make clawql-on win
+or tie each task fairly.
+
+**Ouroboros A/B** (`openbench-ouroboros-ab.yml`) runs **ouroboros-on vs
+ouroboros-off** on `ouroboros-oscillation-escape` with hard spend caps (180s /
+50 turns / 8000 tokens / maxGenerations≤4) and a **doom_loop allow|deny**
+matrix. See
+[`docs/benchmarks/openbench-ouroboros-oscillation.md`](../../docs/benchmarks/openbench-ouroboros-oscillation.md).
+
+Stack coverage map: [`docs/benchmarks/openbench-stack-coverage.md`](../../docs/benchmarks/openbench-stack-coverage.md).
+
+## Layout
+
+```
+benchmarks/openbench/
+  adapters/clawql.py          # Python adapter (OpenBench contract)
+  candidates/clawql-claude.toml
+  tasks/                      # ClawQL-specific tasks (OpenBench directory contract)
+    memory-dependent-continuation/
+    token-budget-constrained/
+    multi-provider-api-workflow/
+    search-first-discovery/
+    execute-verify-loop/
+    memory-roundtrip-ingest-recall/
+    ouroboros-oscillation-escape/
+    codegraph-impact-edit/           # B-3.1 lite (live WIN)
+    codegraph-feature-api-surface/   # B-3.1 Phase 1 offline pack
+    memory-conflict-pricing/         # B-4.1 (live WIN)
+    memory-stale-after-update/       # B-4.2 offline pack (live parked)
+    memory-injection-attempt/        # B-4.3 Panguard×memory_ingest (live)
+    …                                # see docs/benchmarks/openbench-stack-coverage.md
+  validate_tasks.py           # fail-on-workspace / pass-on-solution
+  scripts/run-with-openbench.sh
+  README.md
+```
+
+Advanced suites B-1…B-6 (specs + Phase 1 packs):
+[`docs/benchmarks/openbench-advanced-specs.md`](../../docs/benchmarks/openbench-advanced-specs.md).
+CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
+
+## Prerequisites
+
+1. ClawQL CLI on `PATH` (`npm i -g clawql-mcp` or repo `bin/clawql.mjs`).
+2. **clawql-inference** with an inference key. **OpenRouter-first:** set
+   `OPENROUTER_API_KEY` and use `openrouter/*` models (default CI path). Direct
+   BYOK (`DEEPSEEK_API_KEY`, …) is optional when you have vendor keys.
+3. OpenCode CLI for the coding-agent harness (`opencode`).
+4. Optional: clone OpenBench for matrix runs against stock harnesses.
+
+```bash
+git clone https://github.com/minghinmatthewlam/openbench.git
+```
+
+## Track A — ClawQL as a harness
+
+Headless launch through clawql-inference (OpenRouter-first):
+
+```bash
+# terminal 1
+OPENROUTER_API_KEY=sk-or-… clawql inference serve --port 8080
+
+# terminal 2
+CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
+  --model clawql/openrouter/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
+  --task-file /path/to/instruction.md \
+  --workdir /path/to/disposable/workspace \
+  --timeout 300
+```
+
+Machine-readable summary lines:
+
+```
+CLAWQL_TOKENS: 12345
+CLAWQL_TURNS: 8
+CLAWQL_BENCH_JSON: {"completed":true,"tokens":12345,...}
+```
+
+Copy the adapter into an OpenBench tree:
+
+```bash
+cp benchmarks/openbench/adapters/clawql.py /path/to/openbench/obench/adapters/clawql.py
+```
+
+Then run (from the OpenBench repo):
+
+```bash
+CLAWQL_OPENBENCH_HARNESS=codex \
+python -m bench.run --harness clawql --model gpt-5.5 --task build-a-cli --trials 3
+```
+
+Or use the BYO manifest without a Python adapter:
+
+```bash
+python -m bench.run --candidate /path/to/ClawQL/benchmarks/openbench/candidates/clawql-opencode-deepseek.toml ...
+```
+
+Prefer the Python adapter: it writes the instruction file, parses
+`CLAWQL_BENCH_JSON`, and seeds/removes memory for memory-dependent tasks.
+
+## Track B — ClawQL-specific tasks
+
+| Task                            | What it measures                                                                                                                                |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory-dependent-continuation` | Prior argon2id + 900s TTL decisions live only in vault memory after seed removal; raw harnesses that follow the misleading bcrypt comment fail. |
+| `token-budget-constrained`      | Correct YAML `parse_config` under a 5k-token budget; exploration-heavy agents overspend.                                                        |
+| `multi-provider-api-workflow`   | Offline Cloudflare Worker + GitHub releases scaffold; rewards structured API discovery over dumping specs.                                      |
+| `executor-github-pr-filter`     | Offline gate for `executor-cmp-001` harness JSON (Layer 1 tool defs vs Layer 2 GitHub PR projection); run `npm run benchmark:executor-comparison`. |
+| `institutional-knowledge-enumerate` | B-7.1 mini Calderwood & Harkness fixture (120 nested notes / 5 matches) — exhaustive escrow≥10 ∧ NC>18 via vault `memory_recall`.            |
+| `institutional-knowledge-enumerate-ontology` | B-7.1-ontology — same fixture; structured `schema`+`filters` under 5-turn / 4k-token caps (efficiency claim). |
+| `institutional-knowledge-enumerate-blind` | B-7.1-blind — same fixture; no taught filter JSON (model must invent structured recall). |
+| `institutional-client-preference` | B-7.2 — Meridian Capital preference reconstruction from institutional prose (top-1 grader). |
+| `institutional-amortized-session` | B-7.3 — five related prompts; Q1 builds match set, Q2–5 reuse under tight caps; persistent vault on clawql-on. |
+
+Validate checkers offline (no model, no network):
+
+```bash
+python3 benchmarks/openbench/validate_tasks.py
+```
+
+To contribute these upstream, copy `tasks/<name>/` into OpenBench's `tasks/`
+(or a contributed tier) and follow their `CONTRIBUTING-TASKS.md`.
+
+## Environment
+
+| Variable                                           | Purpose                                                |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| `CLAWQL_OPENBENCH=1`                               | Allow unsandboxed harness on Linux CI; mark bench mode |
+| `CLAWQL_HARNESS_ALLOW_UNSANDBOXED=1`               | Same soft-fail for Seatbelt gate                       |
+| `CLAWQL_OPENBENCH_HARNESS`                         | Underlying CLI (`opencode` for A/B)                    |
+| `CLAWQL_INFERENCE_URL` / `OPENBENCH_INFERENCE_URL` | clawql-inference OpenAI-compat base                    |
+| `OPENROUTER_API_KEY` (preferred start)             | Aggregator key for default `openrouter/*` models       |
+| `DEEPSEEK_API_KEY` (etc.)                          | Direct BYOK when you skip OpenRouter                   |
+
+## One-off GitHub Actions A/B
+
+Manual workflow **OpenBench A/B (clawql on vs off)** — starts
+**clawql-inference**, runs OpenCode on/off. Preferred secret:
+`OPENROUTER_API_KEY` with default model `openrouter/deepseek/deepseek-chat`.
+CI matrix runs **`pr_active`** tasks only (see
+[`ci-matrix.json`](./ci-matrix.json)). Move thoroughly verified tasks to
+`retired` so they stop spending tokens. Docs:
+[`docs/benchmarks/openbench-github-actions.md`](../../docs/benchmarks/openbench-github-actions.md).
+
+```bash
+gh workflow run openbench-ab.yml \
+  -f task=all \
+  -f model=openrouter/deepseek/deepseek-chat \
+  -f trials=1
+# Re-run proven cells intentionally:
+#   -f task=all-including-retired
+#   -f task=search-first-discovery
+```
+
+Local dry path (same script):
+
+```bash
+python3 benchmarks/openbench/scripts/run-ab-compare.py --help
+```
+
+## Related
+
+- Planning-context token benchmarks (existing): [`docs/benchmarks/`](../../docs/benchmarks/)
+- Adoption narrative: [`docs/benchmarks/openbench.md`](../../docs/benchmarks/openbench.md)
+- Upstream OpenBench: https://github.com/minghinmatthewlam/openbench
+- Announcement context: https://x.com/mattlam_/status/2079606933007352037

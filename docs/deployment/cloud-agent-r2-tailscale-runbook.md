@@ -253,7 +253,7 @@ Enroll the MCP host with `--advertise-tags=tag:clawql-mcp` (see [headscale ACL s
 | Service                                         | Use                                                | Public?                                                |
 | ----------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
 | **R2**                                          | Durable vault + Pulumi state                       | **No** — S3 API with private keys only                 |
-| **Cloudflare Worker** (`cloudflare/mcp-proxy/`) | Optional CORS edge in front of a **remote** origin | Only if you deploy it; **not** needed for tailnet-only |
+| **Cloudflare Worker** (`infra/cloudflare/mcp-proxy/`) | Optional CORS edge in front of a **remote** origin | Only if you deploy it; **not** needed for tailnet-only |
 | **Tailscale Serve**                             | Private HTTPS MCP                                  | **Tailnet only**                                       |
 
 Do **not** expose `clawql-mcp-http` on a public Cloudflare Worker without **Cloudflare Access** or equivalent — Tailscale is the simpler “only me” path.

@@ -106,7 +106,7 @@ See [`modularization-implementation-status.md`](../design/modularization-impleme
 
 Each layer in the platform stack depends on one or more layers below it: **ClawQL Core** at the foundation; **Memory, API, Auth, and Telemetry** services on Core; **service plugins** on their parent service; **Documents** (Memory + API plugins) and **Sandbox** (Auth + Telemetry plugins); **Automation** on Documents and Sandbox; **industry verticals** on Automation; and **vertical plugins** spanning the verticals. The diagram is a compact view of that direction; the ASCII graph that follows encodes the same acyclic package edges enforced in CI.
 
-![ClawQL modularization dependency stack: seven layers from ClawQL Core through core services, service plugins, Documents and Sandbox, Automation, industry verticals, to vertical plugins](../../website/public/vision/clawql-dependency-stack.png)
+![ClawQL modularization dependency stack: seven layers from ClawQL Core through core services, service plugins, Documents and Sandbox, Automation, industry verticals, to vertical plugins](../../apps/docs/public/vision/clawql-dependency-stack.png)
 
 ```
 @clawql/merkle  @clawql/cuckoo  @clawql/utils
@@ -955,7 +955,8 @@ clawql/
 │   ├── clawql-lending/
 │   └── clawql-operator/
 ├── operator/                   ← Kubernetes Operator (Go or TypeScript)
-├── dashboard/                  ← OpenClaw UI
+├── apps/dashboard/             ← operator UI (Agent Chat)
+├── apps/desktop/                ← Electron wrapper
 └── docs/
     ├── memory-2.0-checklist.md
     └── multi-protocol-guide.md

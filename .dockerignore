@@ -1,4 +1,4 @@
-# Build context for `docker build -f docker/Dockerfile .` and `dashboard/Dockerfile` (repo root).
+# Build context for `docker build -f docker/Dockerfile .` and `apps/dashboard/Dockerfile` (repo root).
 node_modules
 # Workspace installs under packages/* conflict with `COPY packages ./packages` in the Dockerfile.
 packages/**/node_modules
@@ -8,7 +8,7 @@ dist
 .cursor
 .env
 .env.*
-# dashboard/Dockerfile COPYs `.env.example` for env-catalog generation at build time.
+# apps/dashboard/Dockerfile COPYs `.env.example` for env-catalog generation at build time.
 !.env.example
 *.log
 .DS_Store

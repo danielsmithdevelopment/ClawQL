@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "website/**"
+      - "apps/docs/**"
       - "packages/clawql-analytics/**"
       - "packages/clawql-auth/**"
       - "packages/clawql-audit/**"
@@ -37,7 +37,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            website/package-lock.json
+            apps/docs/package-lock.json
 
       - name: Build clawql-analytics (docs API route dependency)
         run: |
@@ -48,10 +48,10 @@ jobs:
           npm run build -w clawql-analytics
 
       - name: Install website dependencies
-        run: npm ci --prefix website
+        run: npm ci --prefix apps/docs
 
       - name: Verify analytics deploy config
-        working-directory: website
+        working-directory: apps/docs
         env:
           NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
           CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
@@ -60,18 +60,18 @@ jobs:
         run: node scripts/verify-analytics-deploy-config.mjs
 
       - name: OpenNext build
-        working-directory: website
+        working-directory: apps/docs
         env:
           NEXT_PUBLIC_SITE_URL: https://docs.clawql.com
           NEXT_PUBLIC_CLAWQL_ANALYTICS_ENABLED: ${{ vars.CLAWQL_ANALYTICS_ENABLED || '0' }}
         run: npx opennextjs-cloudflare build
 
       - name: Fail if Worker gzip ≥ 3 MiB (free-plan limit)
-        working-directory: website
+        working-directory: apps/docs
         run: node scripts/check-worker-gzip-limit.mjs
 
       - name: wrangler deploy
-        working-directory: website
+        working-directory: apps/docs
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

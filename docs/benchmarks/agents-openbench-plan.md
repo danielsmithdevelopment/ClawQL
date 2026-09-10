@@ -14,7 +14,7 @@ Companion to [`agents-openbench-spec-v0.1.md`](agents-openbench-spec-v0.1.md) an
 
 Measure **infrastructure lift** (Panguard, vault memory, WORM completeness, PAL routing) across RockYourLobster catalog agents — same model weights, baseline vs ClawQL-augmented arms.
 
-This is **not** the MCP Track A/B harness under [`openbench/`](../../openbench/) (opencode / ClawQL-as-harness). Agents OpenBench wraps the seven catalog agents via `clawql-agents`.
+This is **not** the MCP Track A/B harness under [`benchmarks/openbench/`](../../benchmarks/openbench/) (opencode / ClawQL-as-harness). Agents OpenBench wraps the seven catalog agents via `clawql-agents`.
 
 ## Gates (do not skip)
 
@@ -24,13 +24,13 @@ This is **not** the MCP Track A/B harness under [`openbench/`](../../openbench/)
 | Harvey LAB publish   | Contiguous firm-knowledge results ledger published                         | **Pending**                |
 | ExtractBench publish | ExtractBench action plan results usable as Family M seed                   | **Pending**                |
 | Stub-tool catalog    | Family S tools (`email_*`, …) defined as harness stubs, not fake MCP names | **Shipped** (this PR)      |
-| Dry runner           | `runAgentBenchmarkDry` + `integrations/agents-bench`                       | **Shipped**                |
+| Dry runner           | `runAgentBenchmarkDry` + `benchmarks/agents-bench`                       | **Shipped**                |
 | Live A/B CI          | Matrix jobs with spend caps                                                | **Blocked on gates above** |
 
 ## Layout
 
 ```
-integrations/agents-bench/     — harness entry, fixtures, dry-run script
+benchmarks/agents-bench/     — harness entry, fixtures, dry-run script
 packages/clawql-agents/
   src/bench/dry-runner.ts      — Effect dry scorecard (session + stub arms)
   helm/<agent>/values-clawql.yaml

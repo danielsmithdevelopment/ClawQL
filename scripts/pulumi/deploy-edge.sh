@@ -16,7 +16,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo "::group::Build clawql-gateway Worker bundle"
 (
-  cd "${ROOT}/cloudflare/gateway"
+  cd "${ROOT}/infra/cloudflare/gateway"
   if [[ ! -d node_modules ]]; then
     npm install --legacy-peer-deps
   fi

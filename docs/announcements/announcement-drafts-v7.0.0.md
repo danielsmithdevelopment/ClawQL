@@ -4,7 +4,7 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v7.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.0.0) · [npm: clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference-first GTM](https://clawql.com/inference/gtm/) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.0.0.md](../../RELEASE_NOTES_v7.0.0.md)
+**Links:** [GitHub release v7.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.0.0) · [npm: clawql-mcp@7.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [Inference-first GTM](https://clawql.com/inference/gtm/) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.0.0.md](../release/RELEASE_NOTES_v7.0.0.md)
 
 ---
 
@@ -69,7 +69,7 @@ Land with inference and MCP. Expand product-led into infrastructure optimization
 
 Generic MCP routers stop at tool calling. **7.0.0** ships the Agentic Gateway with persistent memory, WORM-ready audit, document intelligence, and a clear path to Auditable Production AI — the outcome CISOs and CTOs actually buy.
 
-**CTA:** **`npm install clawql-mcp@7.0.0`**, run **`npx clawql onboard --interactive`**, read **[RELEASE_NOTES_v7.0.0.md](../../RELEASE_NOTES_v7.0.0.md)** and the fabric architecture doc, then land on Regional Hubs or self-host Edge Gateways today.
+**CTA:** **`npm install clawql-mcp@7.0.0`**, run **`npx clawql onboard --interactive`**, read **[RELEASE_NOTES_v7.0.0.md](../release/RELEASE_NOTES_v7.0.0.md)** and the fabric architecture doc, then land on Regional Hubs or self-host Edge Gateways today.
 
 ---
 
@@ -115,7 +115,7 @@ Highlights:
 - Enterprise topology: Regional Hubs, Dedicated Virtual Gateways (WORM / NATS / Valkey), Edge Gateways on laptops — [docs.clawql.com/architecture/agentic-fabric](https://docs.clawql.com/architecture/agentic-fabric)
 
 CHANGELOG: `https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md`  
-Release notes: `https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v7.0.0.md`
+Release notes: `https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/release/RELEASE_NOTES_v7.0.0.md`
 
 **Reddit title (r/MachineLearning, r/selfhosted, r/kubernetes — pick one):**
 
@@ -169,7 +169,7 @@ npx clawql onboard --interactive
 ```
 ````
 
-Full notes: RELEASE_NOTES_v7.0.0.md · CHANGELOG [7.0.0]
+Full notes: docs/release/RELEASE_NOTES_v7.0.0.md · CHANGELOG [7.0.0]
 
 ```
 

@@ -179,7 +179,7 @@ MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyTo
 | 8     | [#429](https://github.com/danielsmithdevelopment/ClawQL/pull/429) | `clawql-documents` package                                             |
 | 9     | [#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430) | `clawql-automation` (schedule + notify)                                |
 
-**Operator scaffold (opt-in, 7.0):** `packages/clawql-operator` + `charts/clawql-operator` — CRD validation, tier-spec ConfigMaps, `composeHorizontalPluginLayersFromTierSpec()`, optional MCP overlay via `instanceSpec.enabled` ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)). Does **not** replace Helm/env defaults. See [`clawql-operator-helm.md`](../deployment/clawql-operator-helm.md).
+**Operator scaffold (opt-in, 7.0):** `packages/clawql-operator` + `manifests/charts/clawql-operator` — CRD validation, tier-spec ConfigMaps, `composeHorizontalPluginLayersFromTierSpec()`, optional MCP overlay via `instanceSpec.enabled` ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)). Does **not** replace Helm/env defaults. See [`clawql-operator-helm.md`](../deployment/clawql-operator-helm.md).
 
 **Layer 0 MVP (7.0):** `packages/clawql-release` — `init` / `collect` / `manifest` / `verify` / `publish`; wired as `clawql release *`. See [Immutable releases](https://docs.clawql.com/vision/immutable-releases).
 
@@ -287,7 +287,7 @@ These vision items are **not** done by package extraction alone:
 | Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                                                                                                                                |
 | Release manifest verification at gateway      | ✅ `clawql doctor --smoke` + optional `CLAWQL_RELEASE_MANIFEST` at MCP startup                                                                                                                         |
 | Kubernetes Operator Layer composition         | 🚧 Phase 1 scaffold (CRD + ConfigMap + tier layers; no NL dashboard)                                                                                                                                   |
-| Tier 1 Docker Compose                         | ✅ `examples/clawql-local-docker-compose` + `make compose-tier1-config-test`                                                                                                                           |
+| Tier 1 Docker Compose                         | ✅ `docs/examples/clawql-local-docker-compose` + `make compose-tier1-config-test`                                                                                                                           |
 | Transport-only `clawql-mcp` npm package split | 📋 `src/` slimmed; shims removed; transport glue remains                                                                                                                                               |
 | Presidio gateway hooks                        | ✅ Execute + memory ingest + external ingest redaction when `CLAWQL_ENABLE_PRESIDIO=1`                                                                                                                 |
 | All vertical packages                         | 📋 Not started                                                                                                                                                                                         |
@@ -356,6 +356,6 @@ These vision items are **not** done by package extraction alone:
 
 **Not in this wave:** `clawql-telemetry` ([#313](https://github.com/danielsmithdevelopment/ClawQL/issues/313)); `mcp-grpc-transport` and `panguard-mcp-bridge` keep independent cadence.
 
-**Adjacent package:** `mcp-api-adapter` (`0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
+**Adjacent package:** `mcp-api-adapter` (`0.4.0`) — any MCP upstream (stdio / Streamable HTTP / gRPC) → OpenAPI + GraphQL + gRPC scaffold (funnel onto `mcp-grpc-transport`). User guide: [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md). Design: [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md). Example: [`docs/examples/mcp-api-adapter/`](../../docs/examples/mcp-api-adapter/). Independent npm cadence; does **not** depend on `clawql-api`.
 
 **npm publish:** workflow [`.github/workflows/npm-publish.yml`](../../.github/workflows/npm-publish.yml) + [`scripts/release/npm-publish-workspace.mjs`](../../scripts/release/npm-publish-workspace.mjs). Tag **`v8.0.0`** when ready — see [`docs/release/v8.0.0-checklist.md`](../release/v8.0.0-checklist.md).
