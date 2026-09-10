@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="${ROOT}/examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
+COMPOSE_FILE="${ROOT}/docs/examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
 WORK="${IDP_SMOKE_WORK_DIR:-${ROOT}/artifacts/idp-b23-smoke/work}"
 OUT_DIR="${IDP_SMOKE_OUT_DIR:-${ROOT}/artifacts/idp-b23-smoke}"
 CORR="${IDP_SMOKE_CORR:-idp-b23-$(date -u +%Y%m%d%H%M%S)}"

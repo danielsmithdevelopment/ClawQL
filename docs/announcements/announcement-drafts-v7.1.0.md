@@ -4,7 +4,7 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v7.1.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.1.0) · [npm: clawql-mcp@7.1.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Enterprise Ontology](https://docs.clawql.com/architecture/enterprise-ontology) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.1.0.md](../../RELEASE_NOTES_v7.1.0.md)
+**Links:** [GitHub release v7.1.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.1.0) · [npm: clawql-mcp@7.1.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Enterprise Ontology](https://docs.clawql.com/architecture/enterprise-ontology) · [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.1.0.md](../release/RELEASE_NOTES_v7.1.0.md)
 
 **Note:** 7.0.0 announcement drafts remain at [`announcement-drafts-v7.0.0.md`](announcement-drafts-v7.0.0.md) for the major story; **7.1** is the “what we shipped next” minor.
 
@@ -48,7 +48,7 @@
 
 If 7.0 was “one gateway, one default stack, vault-first,” **7.1** is “now bill agents, schema your domain, and keep the vault honest.” Pin **`@7.1`** when you move images and Helm `appVersion`.
 
-**CTA:** `npm install clawql-mcp@7.1.0` · read [CHANGELOG 7.1.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.1.0.md](../../RELEASE_NOTES_v7.1.0.md)
+**CTA:** `npm install clawql-mcp@7.1.0` · read [CHANGELOG 7.1.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.1.0.md](../release/RELEASE_NOTES_v7.1.0.md)
 
 ---
 
@@ -123,7 +123,7 @@ npm install clawql-mcp@7.1.0
 
 ### Notes
 
-- Full notes: RELEASE_NOTES_v7.1.0.md
+- Full notes: docs/release/RELEASE_NOTES_v7.1.0.md
 - CHANGELOG: [7.1.0]
 - Prior major: v7.0.0
 

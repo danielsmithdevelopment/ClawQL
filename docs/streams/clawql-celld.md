@@ -218,7 +218,7 @@ celld deploy (esbuild)
   code ≤ 64 MiB
 ```
 
-**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`examples/streams-celld`](../../examples/streams-celld/).
+**In-process today:** `AgentSessionDO` imports [`clawql-core/streams-slim`](../../packages/clawql-core/README.md) for hash-chained `audit` + session `cache`. Example: [`docs/examples/streams-celld`](../../docs/examples/streams-celld/).
 
 **Out-of-process today:** `search` / `execute` / `memory_*` via Streamable HTTP MCP (`CLAWQL_MCP_URL`). Optional protocol-fabric REST via `CLAWQL_MCP_ADAPTER_URL` (`POST /{tool}` on mcp-api-adapter). Inference via `fetch(INFERENCE_URL)`. Do **not** embed full `clawql-api`, `clawql-memory`, `mcp-api-adapter`, or the full `clawql-core` barrel (`webmcp-draft` / `node:fs`).
 
@@ -234,10 +234,10 @@ celld deploy (esbuild)
 
 ```bash
 # Process smoke (CI + local): celld + clawql-mcp-http + mcp-api-adapter + inference stub
-STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/full-stack-smoke.sh
+STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-stack-smoke.sh
 
 # Optional containers for MCP + adapter (celld still on the host):
-docker compose -f examples/streams-celld/docker-compose.full.yml up --build
+docker compose -f docs/examples/streams-celld/docker-compose.full.yml up --build
 ```
 
 **Durable audit:** after each spawn, the isolate hash-chain is flushed to DO storage (`audit:ring` snapshot + `audit:seq:{n}` WORM rows) so LTX survives isolate restarts (alongside existing `worm:*` DO_CREATED rows).
@@ -250,7 +250,7 @@ docker compose -f examples/streams-celld/docker-compose.full.yml up --build
 
 ```bash
 # clawql streams celld bundle-check
-clawql streams celld bundle-check --project examples/streams-celld
+clawql streams celld bundle-check --project docs/examples/streams-celld
 # Fail the job if Worker/DO artifact size > 67108864 bytes
 ```
 
@@ -413,16 +413,16 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 10. Testing
 
-| Layer           | Tooling                                                                       | Purpose                                                          |
-| --------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Local dev       | **`celld dev`** (v0.4.0+)                                                     | Counter/Streams fixture without bucket; `.celld/dev` persistence |
-| Unit / DO logic | **Miniflare** (or workerd)                                                    | Alarm, storage, significance, idempotent names                   |
-| Bundle          | `clawql streams celld bundle-check`                                           | Enforce ≤64 MiB (**CI fail-closed**)                             |
-| Fetch clients   | `mcp-fetch` / `adapter-fetch` unit scripts                                    | Streamable HTTP + adapter REST without celld                     |
-| Fleet           | `celld diagnose` · `celld cell list`                                          | Lease + peer health; enumerate cells after traffic               |
-| Smoke           | `STREAMS_CELLD_SMOKE_REQUIRED=1 bash examples/streams-celld/scripts/smoke.sh` | Webhook → spawn → slim + MCP + adapter + LTX keys                |
-| Helm            | `make helm-celld-template-tests`                                              | StatefulSet / probes / env injection (CI)                        |
-| Security        | Attestation verify in CI                                                      | Supply chain; pin `CELLD_VERSION=v0.4.0`                         |
+| Layer           | Tooling                                                                            | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Local dev       | **`celld dev`** (v0.4.0+)                                                          | Counter/Streams fixture without bucket; `.celld/dev` persistence |
+| Unit / DO logic | **Miniflare** (or workerd)                                                         | Alarm, storage, significance, idempotent names                   |
+| Bundle          | `clawql streams celld bundle-check`                                                | Enforce ≤64 MiB (**CI fail-closed**)                             |
+| Fetch clients   | `mcp-fetch` / `adapter-fetch` unit scripts                                         | Streamable HTTP + adapter REST without celld                     |
+| Fleet           | `celld diagnose` · `celld cell list`                                               | Lease + peer health; enumerate cells after traffic               |
+| Smoke           | `STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh` | Webhook → spawn → slim + MCP + adapter + LTX keys                |
+| Helm            | `make helm-celld-template-tests`                                                   | StatefulSet / probes / env injection (CI)                        |
+| Security        | Attestation verify in CI                                                           | Supply chain; pin `CELLD_VERSION=v0.4.0`                         |
 
 **Evidence matrix (commands + honesty about gaps):** [`streams-celld-evidence.md`](./streams-celld-evidence.md).
 

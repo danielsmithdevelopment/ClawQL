@@ -2,7 +2,7 @@
 
 **August 2026** · Status: overlay scaffolding landed; live scores pending.
 
-Canonical integration: [`integrations/extractbench/`](../../integrations/extractbench/)  
+Canonical integration: [`benchmarks/extractbench/`](../../benchmarks/extractbench/)  
 Results ledger: [`extractbench-clawql-results.md`](extractbench-clawql-results.md)  
 Essay draft: [`../gtm/pragmaticvectors/extractbench-long-documents.md`](../gtm/pragmaticvectors/extractbench-long-documents.md)
 

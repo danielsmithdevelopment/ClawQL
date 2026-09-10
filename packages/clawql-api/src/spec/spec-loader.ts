@@ -864,7 +864,7 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
       `[spec-loader] BREAKING (8.0.0): No providers configured — native protocols only (${loaded.operations.length} operation(s)). ` +
         `ClawQL 7.x auto-loaded pack "default" (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). ` +
         `Restore with CLAWQL_PROVIDER=default or CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}. ` +
-        `See RELEASE_NOTES_v8.0.0.md / docs/plugins/bundled-providers.md.`
+        `See docs/release/RELEASE_NOTES_v8.0.0.md / docs/plugins/bundled-providers.md.`
     );
     return loaded;
   }

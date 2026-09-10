@@ -46,12 +46,12 @@ From a repo clone:
 make local-k8s-up
 ```
 
-Uses `charts/clawql-mcp/values-docker-desktop.yaml`: MCP at `http://clawql-mcp.localhost/mcp`, dashboard at `http://clawql.localhost`, document pipeline + optional Onyx + Nextcloud enabled by default.
+Uses `manifests/charts/clawql-mcp/values-docker-desktop.yaml`: MCP at `http://clawql-mcp.localhost/mcp`, dashboard at `http://clawql.localhost`, document pipeline + optional Onyx + Nextcloud enabled by default.
 
 Production-style install:
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp \
   --namespace clawql \
   --create-namespace \
   --wait
@@ -96,7 +96,7 @@ Base URLs for document vendors are injected by the chart when subcharts are enab
 ### Upgrade
 
 ```bash
-helm upgrade clawql ./charts/clawql-mcp -n clawql -f your-values.yaml --wait
+helm upgrade clawql ./manifests/charts/clawql-mcp -n clawql -f your-values.yaml --wait
 ```
 
 Image tags: set `image.tag` (MCP), `documentPipeline.*.image.tag`, `onyx.*.image.tag` as needed. Prefer rolling upgrades with `--wait` and watch `kubectl -n clawql get pods`.
@@ -142,7 +142,7 @@ When no spec env is set, the opinionated default stack loads (Cloudflare, GitHub
 The operator scaffold reconciles `ClawQLInstance` CRs to tier-spec ConfigMaps and optionally rolls MCP when `spec.mcp.rolloutOnTierSpecChange` is set. Helm `CLAWQL_ENABLE_*` workflows remain the default when the operator is not installed.
 
 1. Install CRD + reconcile: [clawql-operator-helm.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/clawql-operator-helm.md)
-2. Apply a `ClawQLInstance` (`examples/operator/clawqlinstance-minimal.yaml`)
+2. Apply a `ClawQLInstance` (`docs/examples/operator/clawqlinstance-minimal.yaml`)
 3. Mount the published tier-spec ConfigMap on MCP (`instanceSpec.enabled: true`)
 
 Full tier/vertical/auth reconciliation and NL ops are in **[Operator target architecture](https://docs.clawql.com/design/operator-target-architecture)** (roadmap).

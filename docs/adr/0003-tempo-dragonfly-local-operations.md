@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-05-02
 - Related: [#155](https://github.com/danielsmithdevelopment/ClawQL/issues/155) (Istio / mesh), [#160](https://github.com/danielsmithdevelopment/ClawQL/issues/160) (OTLP traces), [#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113) (document pipeline), [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118) (Onyx), [#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210) (Grafana)
-- Docs / scripts: [`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md), [`docker/README.md`](../../docker/README.md), [`scripts/kubernetes/install-istio-docker-desktop.sh`](../../scripts/kubernetes/install-istio-docker-desktop.sh), [`charts/clawql-mcp`](../../charts/clawql-mcp/README.md)
+- Docs / scripts: [`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md), [`docker/README.md`](../../docker/README.md), [`scripts/kubernetes/install-istio-docker-desktop.sh`](../../scripts/kubernetes/install-istio-docker-desktop.sh), [`manifests/charts/clawql-mcp`](../../manifests/charts/clawql-mcp/README.md)
 
 ## Context
 
@@ -24,7 +24,7 @@ Separately, **Redis Ltd** has moved **Redis OSS** under a **source-available** l
 ### Compatibility and naming (brokers)
 
 - **Naming:** Keeping **`redis://`**, **`PAPERLESS_REDIS`**, **`REDIS_HOST`**, and **`CELERY_BROKER_BACKEND=redis`** is **desirable and expected**—they describe the **RESP** client path and Celery/Kombu conventions, not “run Redis Ltd’s server binary.”
-- **Compatibility bar for this repo:** Dragonfly must satisfy **full wire-protocol needs of the broker surfaces the chart actually wires** today (**Paperless** Celery, **Onyx** Celery / cache as configured in [`charts/clawql-mcp/templates`](../../charts/clawql-mcp/templates)). That is standard list/stream/set usage for queues—not Redis modules or exotic server features.
+- **Compatibility bar for this repo:** Dragonfly must satisfy **full wire-protocol needs of the broker surfaces the chart actually wires** today (**Paperless** Celery, **Onyx** Celery / cache as configured in [`manifests/charts/clawql-mcp/templates`](../../manifests/charts/clawql-mcp/templates)). That is standard list/stream/set usage for queues—not Redis modules or exotic server features.
 - **Not a goal:** renaming every substring `redis` in third-party env vars; **is** a goal: **no Redis OSS container** in chart defaults, **Apache-2.0** broker, **performance** headroom for local/full-stack installs.
 
 ## Decision
@@ -39,7 +39,7 @@ Separately, **Redis Ltd** has moved **Redis OSS** under a **source-available** l
 ### 2) Brokers: DragonflyDB only in `clawql-mcp` (no Redis OSS image in chart defaults)
 
 - Chart values use **`stores.dragonfly`** and **`onyx.dragonfly`** (not `stores.redis` / `onyx.redis`); Kubernetes Services/Deployments use **`*-dragonfly`** / **`*-onyx-dragonfly`** naming.
-- Default container image: **`docker.dragonflydb.io/dragonflydb/dragonfly`** (pinned tag in [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml)).
+- Default container image: **`docker.dragonflydb.io/dragonflydb/dragonfly`** (pinned tag in [`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml)).
 - **Paperless** / **Onyx** env vars that say **`redis://`** or **`CELERY_BROKER_BACKEND=redis`** stay as-is (**RESP** / Kombu naming); Dragonfly is the process behind those endpoints.
 - This ADR does **not** change **ADR 0002**’s backlog item **[#183](https://github.com/danielsmithdevelopment/ClawQL/issues/183) “Redis source”** — that issue is about a **GraphQL Mesh / data source** integration, not the Helm broker Deployment.
 
@@ -49,7 +49,7 @@ Separately, **Redis Ltd** has moved **Redis OSS** under a **source-available** l
 
 - **Traces:** one backend, less duplication, clearer story with **Grafana + Loki + Tempo**.
 - **Brokers:** **Apache 2.0** default for bundled infra; avoids shipping **Redis OSS** as the in-chart broker; **Dragonfly** targets **full RESP compatibility** for the chart’s **Paperless / Onyx** Celery paths, with **better performance** than Redis OSS in typical broker workloads.
-- **Operations:** fewer moving parts to explain in [`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md) and [`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md).
+- **Operations:** fewer moving parts to explain in [`docs/deployment/docker-desktop-istio-observability.md`](../deployment/docker-desktop-istio-observability.md) and [`manifests/charts/clawql-mcp/README.md`](../../manifests/charts/clawql-mcp/README.md).
 
 ### Trade-offs
 

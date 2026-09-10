@@ -1,7 +1,7 @@
 # ClawQL Desktop (macOS)
 
 **Status:** Shipped scaffold in **7.0.0** · **July 2026**  
-**Package:** `desktop/` (Electron + dashboard standalone)
+**Package:** `apps/desktop/` (Electron + dashboard standalone)
 
 ClawQL Desktop is a downloadable macOS app that wraps the existing **dashboard** with local-first provider secrets and **Agent Chat** — the primary solo-dev differentiator vs browser-only or CLI-only flows.
 
@@ -23,7 +23,7 @@ flowchart LR
 | Layer       | Technology                                         |
 | ----------- | -------------------------------------------------- |
 | Shell       | Electron 35                                        |
-| UI          | `dashboard/` Next.js 16 (standalone bundle)        |
+| UI          | `apps/dashboard/` Next.js 16 (standalone bundle)   |
 | Secrets     | `CLAWQL_DESKTOP_MODE=1` → `/api/local/providers`   |
 | Chat        | `openclaw-chat-bridge.mjs` → `openclaw agent`      |
 | Persistence | `CLAWQL_OBSIDIAN_VAULT_PATH` (default `~/.ClawQL`) |
@@ -39,10 +39,10 @@ flowchart LR
 ## Build & release
 
 ```bash
-cd desktop && npm install && npm run dist:mac
+cd apps/desktop && npm install && npm run dist:mac
 ```
 
-Artifacts land in `desktop/dist/`. Site distribution requires **Apple code signing + notarization** (not automated in CI yet).
+Artifacts land in `apps/desktop/dist/`. Site distribution requires **Apple code signing + notarization** (not automated in CI yet).
 
 ## Security notes
 
@@ -60,7 +60,7 @@ Artifacts land in `desktop/dist/`. Site distribution requires **Apple code signi
 
 ## Related
 
-- [dashboard/README.md](../../dashboard/README.md)
+- [dashboard/README.md](../../apps/dashboard/README.md)
 - [local-provider-vault.md](../getting-started/local-provider-vault.md)
 - [Getting started](https://docs.clawql.com/getting-started) · [ClawQL Desktop](https://docs.clawql.com/getting-started/clawql-desktop)
-- [desktop/README.md](../../desktop/README.md)
+- [desktop/README.md](../../apps/desktop/README.md)

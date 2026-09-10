@@ -112,7 +112,7 @@ clawql-mcp:
 ```
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp \
+helm upgrade --install clawql manifests/charts/clawql-mcp \
   -f values.yaml \
   -f values-observability-external.yaml \
   --namespace clawql

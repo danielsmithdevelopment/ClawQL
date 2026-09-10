@@ -1,10 +1,10 @@
 # OpenBench advanced benchmark specifications (B-1 … B-7)
 
-**Status:** Spec only (August 2026). Extends the OpenBench ledger from [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) and the in-repo pack under [`openbench/`](../../openbench/).
+**Status:** Spec only (August 2026). Extends the OpenBench ledger from [#759](https://github.com/danielsmithdevelopment/ClawQL/pull/759) and the in-repo pack under [`benchmarks/openbench/`](../../benchmarks/openbench/).
 
 **These are specifications, not results** except where a suite row links a live run ID (e.g. B-7.1). Update suite status when cells land. Every live cell must link a GitHub Actions run ID; use **n≥3** before statistical claim confidence.
 
-Related: [`openbench.md`](openbench.md) · [`openbench/README.md`](../../openbench/README.md) · [`openbench-github-actions.md`](openbench-github-actions.md) · [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)
+Related: [`openbench.md`](openbench.md) · [`benchmarks/openbench/README.md`](../../benchmarks/openbench/README.md) · [`openbench-github-actions.md`](openbench-github-actions.md) · [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)
 
 ---
 
@@ -124,7 +124,7 @@ Native TypeScript tree-sitter codegraph ([#793](https://github.com/danielsmithde
 | Spend cap       | 100 turns / 360s / 16,000 tokens                                                                               |
 | Expected        | codegraph 1.0; bare fails criterion 4 (and often 2)                                                            |
 
-**In-repo offline pack:** [`openbench/tasks/codegraph-feature-api-surface/`](../../openbench/tasks/codegraph-feature-api-surface/)
+**In-repo offline pack:** [`benchmarks/openbench/tasks/codegraph-feature-api-surface/`](../../benchmarks/openbench/tasks/codegraph-feature-api-surface/)
 
 ### B-3.2 — Language coverage (30+ languages)
 
@@ -145,19 +145,19 @@ Recall alone is insufficient. B-4 tests **calibration**: conflicting or stale va
 | Score 1.0     | Retrieves both entries, flags conflict, requests clarification or returns both with timestamps |
 | Score 0.0     | Single non-ground-truth answer (hallucinated synthesis)                                        |
 
-**In-repo offline pack:** [`openbench/tasks/memory-conflict-pricing/`](../../openbench/tasks/memory-conflict-pricing/)
+**In-repo offline pack:** [`benchmarks/openbench/tasks/memory-conflict-pricing/`](../../benchmarks/openbench/tasks/memory-conflict-pricing/)
 
 ### B-4.2 — Stale cache invalidation
 
 After a write, related reads must not return stale cached state.
 
-**In-repo offline pack:** [`openbench/tasks/memory-stale-after-update/`](../../openbench/tasks/memory-stale-after-update/)
+**In-repo offline pack:** [`benchmarks/openbench/tasks/memory-stale-after-update/`](../../benchmarks/openbench/tasks/memory-stale-after-update/)
 
 ### B-4.3 — Vault memory under adversarial injection
 
 Panguard ATR should block fabricated `memory_ingest` that contradicts vault policy/state; denial must be evidenced.
 
-**In-repo offline pack:** [`openbench/tasks/memory-injection-attempt/`](../../openbench/tasks/memory-injection-attempt/)
+**In-repo offline pack:** [`benchmarks/openbench/tasks/memory-injection-attempt/`](../../benchmarks/openbench/tasks/memory-injection-attempt/)
 
 ---
 
@@ -209,7 +209,7 @@ Harvey + EngramLab open-sourced **Calderwood & Harkness (C&H)** — a ~100M+ tok
 | Expected      | on mean matters_found ≫ off / no-memory; headline copy uses `k/5` not only mean score                                                                                                         |
 | Status        | **Redesign live** — 120 nested notes + Sonnet 4.6 n=3 (prior Qwen [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868) / DeepSeek FAIL; ClawQL recall OK) |
 
-**In-repo offline pack:** [`openbench/tasks/institutional-knowledge-enumerate/`](../../openbench/tasks/institutional-knowledge-enumerate/)
+**In-repo offline pack:** [`benchmarks/openbench/tasks/institutional-knowledge-enumerate/`](../../benchmarks/openbench/tasks/institutional-knowledge-enumerate/)
 
 ### B-7.2 — Client preference reconstruction
 
@@ -217,7 +217,7 @@ Synthesize Client X governing-law / dispute-resolution preferences across multip
 
 ### B-7.3 — Amortized multi-question session
 
-Five related questions on the mini-firm corpus; measure mean step score + cumulative wall/tokens with persistent vault vs wiped/bare. **WIN** ([31274484721](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31274484721): on mean 0.933 / off 0.0). Pack: [`institutional-amortized-session`](../../openbench/tasks/institutional-amortized-session/).
+Five related questions on the mini-firm corpus; measure mean step score + cumulative wall/tokens with persistent vault vs wiped/bare. **WIN** ([31274484721](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31274484721): on mean 0.933 / off 0.0). Pack: [`institutional-amortized-session`](../../benchmarks/openbench/tasks/institutional-amortized-session/).
 
 ### B-7.4 — Full C&H mount
 
@@ -246,5 +246,5 @@ Fine-tuned ~27B + ClawQL tools beating frontier bare on ClawQL-specific classes 
 ## Maintenance
 
 1. Keep this page as the **canonical advanced ledger** (B-1…B-7); suite rows update status when packs or live cells land.
-2. Offline checkers must keep `python3 openbench/validate_tasks.py` green.
+2. Offline checkers must keep `python3 benchmarks/openbench/validate_tasks.py` green.
 3. Live cells: prefer [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) with DeepSeek via OpenRouter; link run IDs in a future results table (do not invent IDs).

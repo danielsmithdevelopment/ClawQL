@@ -206,7 +206,7 @@ describe("agents OpenBench dry runner", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const jsonPath = join(
       here,
-      "../../../integrations/agents-bench/catalog/family-s-stub-tools.json"
+      "../../../benchmarks/agents-bench/catalog/family-s-stub-tools.json"
     );
     const catalog = JSON.parse(await readFile(jsonPath, "utf8")) as {
       tools: { name: string; mutating: boolean }[];

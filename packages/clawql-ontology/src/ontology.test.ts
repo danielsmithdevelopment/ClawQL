@@ -1,13 +1,14 @@
 import { readFileSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, it, afterEach } from "vitest";
 import { generateOntologyReadTools } from "./generate.js";
 import { defaultEntitySchemaPath, lintOntology } from "./lint.js";
 
 const REPO_ROOT = join(import.meta.dirname, "..", "..", "..");
 const PKG_ROOT = join(import.meta.dirname, "..");
+const ENTITY_SCHEMA = join(PKG_ROOT, "schemas", "ontology", "entity.schema.json");
 
 describe("defaultEntitySchemaPath", () => {
   it("resolves the schema shipped inside clawql-ontology", () => {
@@ -17,25 +18,19 @@ describe("defaultEntitySchemaPath", () => {
     expect(body).toContain("clawql.dev/ontology/v1alpha1");
   });
 
-  it("packaged schema matches monorepo canonical", () => {
-    const packaged = readFileSync(
-      join(PKG_ROOT, "schemas", "ontology", "entity.schema.json"),
-      "utf8"
-    );
-    const canonical = readFileSync(
-      join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
-      "utf8"
-    );
-    expect(packaged).toBe(canonical);
+  it("falls back to the packaged schema when rootDir has no copy", () => {
+    const path = defaultEntitySchemaPath(REPO_ROOT);
+    expect(resolve(path)).toBe(resolve(ENTITY_SCHEMA));
+    expect(readFileSync(path, "utf8")).toContain("clawql.dev/ontology/v1alpha1");
   });
 });
 
 describe("lintOntology", () => {
-  it("accepts examples/ontology/entities", async () => {
+  it("accepts docs/examples/ontology/entities", async () => {
     const result = await lintOntology({
       rootDir: REPO_ROOT,
-      paths: [join(REPO_ROOT, "examples", "ontology", "entities")],
-      schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      paths: [join(REPO_ROOT, "docs", "examples", "ontology", "entities")],
+      schemaPath: ENTITY_SCHEMA,
     });
     expect(result.ok).toBe(true);
     expect(result.entities).toEqual(expect.arrayContaining(["Contract", "Organization"]));
@@ -47,14 +42,14 @@ describe("lintOntology", () => {
     try {
       await mkdir(join(dir, "entities"), { recursive: true });
       const body = await readFile(
-        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.cqe"),
+        join(REPO_ROOT, "docs", "examples", "ontology", "entities", "Organization.cqe"),
         "utf8"
       );
       await writeFile(join(dir, "entities", "Organization.cqe"), body, "utf8");
       const result = await lintOntology({
         rootDir: dir,
         paths: [join(dir, "entities")],
-        schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+        schemaPath: ENTITY_SCHEMA,
       });
       expect(result.ok).toBe(true);
       expect(result.entities).toContain("Organization");
@@ -89,7 +84,7 @@ describe("lintOntology", () => {
       const result = await lintOntology({
         rootDir: dir,
         paths: [join(dir, "entities")],
-        schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+        schemaPath: ENTITY_SCHEMA,
       });
       expect(result.ok).toBe(false);
       expect(result.issues.some((i) => i.message.includes("kinetic: true"))).toBe(true);
@@ -110,8 +105,8 @@ describe("generateOntologyReadTools", () => {
     outDir = await mkdtemp(join(tmpdir(), "clawql-ont-gen-"));
     const { result, written, lint } = await generateOntologyReadTools({
       rootDir: REPO_ROOT,
-      paths: [join(REPO_ROOT, "examples", "ontology", "entities")],
-      schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      paths: [join(REPO_ROOT, "docs", "examples", "ontology", "entities")],
+      schemaPath: ENTITY_SCHEMA,
       outDir,
     });
     expect(lint?.ok).toBe(true);
@@ -154,10 +149,10 @@ describe("examples .cqe dual-accept", () => {
     const result = await lintOntology({
       rootDir: REPO_ROOT,
       paths: [
-        join(REPO_ROOT, "examples", "ontology", "entities", "Contract.cqe"),
-        join(REPO_ROOT, "examples", "ontology", "entities", "Organization.cqe"),
+        join(REPO_ROOT, "docs", "examples", "ontology", "entities", "Contract.cqe"),
+        join(REPO_ROOT, "docs", "examples", "ontology", "entities", "Organization.cqe"),
       ],
-      schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+      schemaPath: ENTITY_SCHEMA,
     });
     expect(result.ok).toBe(true);
     expect(result.entities).toEqual(expect.arrayContaining(["Contract", "Organization"]));
@@ -180,7 +175,7 @@ describe("scaffold + fixtures + pii", () => {
       const lint = await lintOntology({
         rootDir: dir,
         paths: [join(dir, ".clawql", "ontology", "entities")],
-        schemaPath: join(REPO_ROOT, "schemas", "ontology", "entity.schema.json"),
+        schemaPath: ENTITY_SCHEMA,
       });
       expect(lint.ok).toBe(true);
     } finally {

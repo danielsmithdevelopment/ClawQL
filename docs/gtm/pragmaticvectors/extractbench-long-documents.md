@@ -98,7 +98,7 @@ When the ledger has real numbers:
 - Head-to-head delta vs the raw Qwen oneshot pipeline
 - Grounding F1 if Docling/page markers produce usable citations (most systems score 0.00 on word grounding)
 
-Until then: the integration lives at [`integrations/extractbench/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/integrations/extractbench). The benchmark is public. The failure mode is public. The remaining work is to run it honestly — short split first, full corpus only when the cost curve still makes sense.
+Until then: the integration lives at [`benchmarks/extractbench/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/benchmarks/extractbench). The benchmark is public. The failure mode is public. The remaining work is to run it honestly — short split first, full corpus only when the cost curve still makes sense.
 
 ---
 

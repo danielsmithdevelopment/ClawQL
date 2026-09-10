@@ -15,4 +15,4 @@ export CLAWQL_DATA_ENGINE=duckdb   # optional; default duckdb
 export CLAWQL_DATA_PATH=/tmp/lab.duckdb
 ```
 
-Harvey LAB vault pre-ingest: `integrations/harvey-labs/scripts/lab-pre-ingest.mjs` (Node, not Python).
+Harvey LAB vault pre-ingest: `benchmarks/harvey-labs/scripts/lab-pre-ingest.mjs` (Node, not Python).

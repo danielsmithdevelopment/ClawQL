@@ -7,22 +7,22 @@ import { extractDocument } from "./extract-document.js";
 
 const w2FixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../deployment/samples/lending-w2/fixtures/synthetic-w2.txt"
+  "../../../../docs/examples/idp/lending-w2/fixtures/synthetic-w2.txt"
 );
 
 const titleFixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../deployment/samples/real-estate-title/fixtures/synthetic-title-commitment.txt"
+  "../../../../docs/examples/idp/real-estate-title/fixtures/synthetic-title-commitment.txt"
 );
 
 const psaFixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../deployment/samples/real-estate-psa/fixtures/synthetic-psa.txt"
+  "../../../../docs/examples/idp/real-estate-psa/fixtures/synthetic-psa.txt"
 );
 
 const fsboOfferFixturePath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../deployment/samples/real-estate-fsbo/fixtures/synthetic-buyer-offer.txt"
+  "../../../../docs/examples/idp/real-estate-fsbo/fixtures/synthetic-buyer-offer.txt"
 );
 
 describe("extractDocument", () => {

@@ -7,13 +7,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "packer/**"
+      - "infra/packer/**"
       - "scripts/packer/**"
       - "src/home-sync/**"
       - ".github/workflows/packer-publish.yml"
   pull_request:
     paths:
-      - "packer/**"
+      - "infra/packer/**"
       - "scripts/packer/**"
       - "src/home-sync/**"
       - ".github/workflows/packer-publish.yml"
@@ -101,7 +101,7 @@ jobs:
           aws-region: ${{ inputs.aws_region }}
 
       - name: Packer build AWS
-        working-directory: packer
+        working-directory: infra/packer
         run: |
           packer init .
           packer build -only=amazon-ebs.clawql \
@@ -132,7 +132,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
 
       - name: Packer build GCP
-        working-directory: packer
+        working-directory: infra/packer
         run: |
           packer init .
           packer build -only=googlecompute.clawql \

@@ -2,7 +2,7 @@
 
 Thirty-two **vendor-neutral** Markdown modules for security architects, platform engineers, and teams shipping **LLM agents, tool calling, and MCP-style integrations**. Each file is standalone with YAML frontmatter for the static site, internal wiki, or docs generator.
 
-**Build from sources:** `node tools/security-curriculum-v30/build-modules.mjs` (reads `tools/security-curriculum-v30/manifest.json` + `bodies/NN.md`).
+**Build from sources:** `node docs/security/security-curriculum-v30/build-modules.mjs` (reads `docs/security/security-curriculum-v30/manifest.json` + `bodies/NN.md`).
 
 ## Table of contents
 
@@ -115,14 +115,14 @@ Thirty-two **vendor-neutral** Markdown modules for security architects, platform
 
 ## Source monolith
 
-The long-form monolith export (historical) lives at [`../archive/security-guide-series.md`](../archive/security-guide-series.md). **Prefer this 32-module series** for all new edits; regenerate site MDX with `website/scripts/sync-security-training-modules.mjs` (do not hand-edit `website/src/generated/security-training/`).
+The long-form monolith export (historical) lives at [`../archive/security-guide-series.md`](../archive/security-guide-series.md). **Prefer this 32-module series** for all new edits; regenerate site MDX with `apps/docs/scripts/sync-security-training-modules.mjs` (do not hand-edit `apps/docs/src/generated/security-training/`).
 
 ## Maintenance
 
-| Path                                                                                                          | Role                                      |
-| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [`tools/security-curriculum-v30/manifest.json`](../../../tools/security-curriculum-v30/manifest.json)         | Titles, slugs, tags, descriptions         |
-| [`tools/security-curriculum-v30/bodies/`](../../../tools/security-curriculum-v30/bodies/)                     | Module bodies (edit here, then run build) |
-| [`tools/security-curriculum-v30/build-modules.mjs`](../../../tools/security-curriculum-v30/build-modules.mjs) | Regenerate `NN-slug.md` files             |
-| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py)                                  | Bulk heading/frontmatter passes           |
-| [`_training_transform.py`](_training_transform.py)                                                            | Legacy bulk transform — not idempotent    |
+| Path                                                                                           | Role                                      |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [`../security-curriculum-v30/manifest.json`](../security-curriculum-v30/manifest.json)         | Titles, slugs, tags, descriptions         |
+| [`../security-curriculum-v30/bodies/`](../security-curriculum-v30/bodies/)                     | Module bodies (edit here, then run build) |
+| [`../security-curriculum-v30/build-modules.mjs`](../security-curriculum-v30/build-modules.mjs) | Regenerate `NN-slug.md` files             |
+| [`_polish_headings_and_frontmatter.py`](_polish_headings_and_frontmatter.py)                   | Bulk heading/frontmatter passes           |
+| [`_training_transform.py`](_training_transform.py)                                             | Legacy bulk transform — not idempotent    |

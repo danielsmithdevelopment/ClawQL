@@ -24,7 +24,7 @@ By the end of this module, you should be able to:
 
 **ClawQL note:** The platform’s **MCP server**, **Helm** stack, **Istio**, **Trivy/OSV-Scanner**, **Vault**, **Merkle** audit, and **optional Fabric** are designed to **plug into** this model—not replace organizational controls such as **SSO**, **YubiKey** policy, or **SIEM**.
 
-**Helm naming ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):** In **`charts/clawql-mcp`**, the values key **`vault`** configures **Obsidian memory** storage (host path or PVC for Markdown), not **HashiCorp Vault**. Cluster secrets still land in Kubernetes **`Secret`** objects (for example via **`envFromSecret`** in the chart) or upstream tooling that writes those objects.
+**Helm naming ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):** In **`manifests/charts/clawql-mcp`**, the values key **`vault`** configures **Obsidian memory** storage (host path or PVC for Markdown), not **HashiCorp Vault**. Cluster secrets still land in Kubernetes **`Secret`** objects (for example via **`envFromSecret`** in the chart) or upstream tooling that writes those objects.
 
 ---
 
@@ -146,7 +146,7 @@ Transform stealthy, persistent access into **loud, short-lived, observable event
 - Every change can pass automated validation, tests, and review.
 - Roll back to a prior state in minutes.
 
-**ClawQL:** Single **`charts/clawql-full-stack`** (or equivalent) **`values.yaml`**; **`CLAWQL_BUNDLED_OFFLINE`**, provider URLs, **Istio** and **Flink** toggles in Git.
+**ClawQL:** Single **`manifests/charts/clawql-full-stack`** (or equivalent) **`values.yaml`**; **`CLAWQL_BUNDLED_OFFLINE`**, provider URLs, **Istio** and **Flink** toggles in Git.
 
 ---
 

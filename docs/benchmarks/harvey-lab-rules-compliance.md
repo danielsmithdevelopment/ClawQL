@@ -78,7 +78,7 @@ Harvey’s blog explicitly wants tracking of improvements on **any part of the a
 
 ## Related
 
-- [`integrations/harvey-labs/HARVEY.md`](../../integrations/harvey-labs/HARVEY.md)
+- [`benchmarks/harvey-labs/HARVEY.md`](../../benchmarks/harvey-labs/HARVEY.md)
 - [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md)
 - [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)
 - [`../design/harvey-lab-duckdb-retrieval.md`](../design/harvey-lab-duckdb-retrieval.md)

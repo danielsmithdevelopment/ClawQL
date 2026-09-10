@@ -7,4 +7,4 @@
 | —                                                                      | —                                  | [clawql-cellrt](../../streams/clawql-cellrt.md) (coordination over mesh)                                                                                    |
 | —                                                                      | —                                  | Parallel “documented justification” bar: [spend governance — outbound payment](../spend/spend-governance-v0.1.md#outbound-payment-hook)                     |
 
-**Site:** `docs.clawql.com/specs/network/clawql-network` (synced via `website/scripts/sync-clawql-network-doc.mjs`)
+**Site:** `docs.clawql.com/specs/network/clawql-network` (synced via `apps/docs/scripts/sync-clawql-network-doc.mjs`)

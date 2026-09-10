@@ -7,7 +7,7 @@ Spins up **clawql-inference**, runs the same model with and without ClawQL MCP
 
 **OpenRouter-first + cheap default:** set **`OPENROUTER_API_KEY`** and keep the
 default model `openrouter/deepseek/deepseek-chat`. CI runs only tasks listed in
-[`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → **`pr_active`**
+[`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) → **`pr_active`**
 (retired / thoroughly proven tasks skip PR spend). Direct BYOK remains fully
 supported.
 
@@ -22,22 +22,22 @@ Artifacts include `agent-logs/` for each trial/arm.
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **`workflow_dispatch`**                               | Manual knobs. `task=all` = `pr_active` only; `all-including-retired` re-runs proven cells. **Fails** without secret                |
 | **`pull_request` / `push` to `main`** (path-filtered) | Matrix = `pr_active` only (`max-parallel: 1`). Trials from `pr_trials` (default 1; clamp 1–3). Skips live A/B when secrets missing |
-| Main **CI** workflow                                  | Always runs `python3 openbench/validate_tasks.py` (offline checkers only)                                                          |
+| Main **CI** workflow                                  | Always runs `python3 benchmarks/openbench/validate_tasks.py` (offline checkers only)                                               |
 
-Path filters include `openbench/**`, harness/inference code, and the workflow file.
+Path filters include `benchmarks/openbench/**`, harness/inference code, and the workflow file.
 **Docs-only changes do not trigger live A/B** (update the ledger freely).
 
 **Phase 0 n≥3:** prefer `workflow_dispatch` with `trials=3`. If dispatch is unavailable (e.g. cloud-agent token), set `"pr_trials": 3` and put one cell in `pr_active`, then clear both after the run.
 
 **Retire a finished task:** move it from `pr_active` → `retired` in
-`openbench/ci-matrix.json` after a thorough WIN so it stops burning tokens. Reset `pr_trials` to `1` (or omit) when not replicating.
+`benchmarks/openbench/ci-matrix.json` after a thorough WIN so it stops burning tokens. Reset `pr_trials` to `1` (or omit) when not replicating.
 
 ## Prerequisites (live A/B)
 
 1. Repository secret **`OPENROUTER_API_KEY`** (recommended start — default model
    is `openrouter/deepseek/deepseek-chat`), **or** a direct vendor BYOK secret
    when you choose a non-`openrouter/*` model
-2. Branch containing `openbench/` + `.github/workflows/openbench-ab.yml`
+2. Branch containing `benchmarks/openbench/` + `.github/workflows/openbench-ab.yml`
 
 Fork PRs cannot read these secrets — live A/B is skipped; offline validation still runs.
 
@@ -106,7 +106,7 @@ node bin/clawql.mjs inference serve --port 8080
 
 # terminal 2 — A/B
 export CLAWQL_BIN="$PWD/bin/clawql.mjs"
-python3 openbench/scripts/run-ab-compare.py \
+python3 benchmarks/openbench/scripts/run-ab-compare.py \
   --task memory-dependent-continuation \
   --model openrouter/deepseek/deepseek-chat \
   --inference-url http://127.0.0.1:8080/v1 \
@@ -118,6 +118,6 @@ python3 openbench/scripts/run-ab-compare.py \
 ## Files
 
 - Workflow: [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml)
-- Runner: [`openbench/scripts/run-ab-compare.py`](../../openbench/scripts/run-ab-compare.py)
-- Offline validate: [`openbench/validate_tasks.py`](../../openbench/validate_tasks.py) (`npm run openbench:validate`)
+- Runner: [`benchmarks/openbench/scripts/run-ab-compare.py`](../../benchmarks/openbench/scripts/run-ab-compare.py)
+- Offline validate: [`benchmarks/openbench/validate_tasks.py`](../../benchmarks/openbench/validate_tasks.py) (`npm run openbench:validate`)
 - Providers / catalog: `packages/clawql-inference` (BYOK builtins + `openrouter`)

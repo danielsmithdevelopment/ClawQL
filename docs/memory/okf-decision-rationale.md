@@ -88,7 +88,7 @@ The durable outcome (mirrors frontmatter `verdict` in prose).
 
 ## Minimal example
 
-See [`examples/ontology/okf/decision-rationale-template.md`](../../examples/ontology/okf/decision-rationale-template.md).
+See [`docs/examples/ontology/okf/decision-rationale-template.md`](../../docs/examples/ontology/okf/decision-rationale-template.md).
 
 ## Mapping to token-efficiency layers
 

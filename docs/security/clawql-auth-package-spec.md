@@ -253,7 +253,7 @@ ID-JAG exchange verifies the IdP assertion (JWKS / HS256 dev), maps groups → A
 
 **Boot SECURITY WARNINGs (same convention):** audit store `off`; ID-JAG issuer sharing the MCP AS signing key; **HS256-only AS signing** (`CLAWQL_MCP_OAUTH_SIGNING_SECRET` without RS256 PEM) — JWKS cannot be published and every verifier must share the secret (prefer `CLAWQL_MCP_OAUTH_SIGNING_PRIVATE_KEY_PEM(_PATH)`); **missing `CLAWQL_API_KEY`** while MCP OAuth / ID-JAG issuer is enabled — EMA admin and `/oauth/id-jag/issue` return 503 unless ATR admin claims (`cqk_` via `CLAWQL_API_KEYS_PATH` / MCP JWT with `role=admin` or scope `ema:admin`) succeed; **invalid `CLAWQL_EMA_ORGS_*` / `CLAWQL_MCP_OAUTH_CLIENTS_*` bootstrap** — warn + empty registry by default, or fail boot when `CLAWQL_MCP_OAUTH_BOOTSTRAP_STRICT=1`.
 
-Discovery metadata already advertises ID-JAG in `website/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
+Discovery metadata already advertises ID-JAG in `apps/docs/src/lib/oauth-discovery-metadata.ts` (`assertion_types_supported: id-jag`).
 
 #### 4.1.2 ClawQL as EMA IdP (ID-JAG issuer)
 

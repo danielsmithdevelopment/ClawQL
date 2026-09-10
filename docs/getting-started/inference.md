@@ -89,7 +89,7 @@ npm ci && npm run build
 ```bash
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
 mkdir -p "$CLAWQL_HOME/Inference"
-cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+cp docs/examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
 # From outside the repo, download the example or set:
 # export CLAWQL_INFERENCE_POLICY_MANIFEST=/path/to/policy.yaml
 ```
@@ -229,9 +229,9 @@ clawql gateway create --profile process --team demo
 ```
 
 Docker variant: `clawql gateway create --profile local-docker --team demo`  
-Example compose: [`examples/managed-gateway/`](../../examples/managed-gateway/).
+Example compose: [`docs/examples/managed-gateway/`](../../docs/examples/managed-gateway/).
 
-Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
+Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `manifests/charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
 
 3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
    **Alpha now:** Packer golden host + Pulumi dedicated tier boots team vault, then Managed Edge Gateway (`/mcp` + `/v1`) via `bootstrap-dedicated-gateway.sh`. Full WORM/NATS/Valkey + JWT ATR remain follow-ups.

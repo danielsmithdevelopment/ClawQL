@@ -131,7 +131,7 @@ When 001 clawql job completes: log contains `ClawQL require-recall`; deliverable
 - Expected: Path filter skips harvey-lab when only `.cursor/` + `docs/` change.
 - Observed: Push `7ce9f686` re-fired LAB; [31764087476](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764087476) **cancelled**; [31764224376](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31764224376) restarted 001 smoke.
 - Assumptions died: path filter protects mid-smoke “unrelated” pushes on this PR.
-- True root cause: **GHA lifecycle** — `pull_request` path filters use the **full PR diff vs base**; once the PR touches `integrations/harvey-labs/**`, every synchronize re-runs LAB + `cancel-in-progress`.
+- True root cause: **GHA lifecycle** — `pull_request` path filters use the **full PR diff vs base**; once the PR touches `benchmarks/harvey-labs/**`, every synchronize re-runs LAB + `cancel-in-progress`.
 - Sticky takeaway: **On a harvey-labs PR, never push while a LAB matrix is in progress — even docs/skills.**
 - Process change: before any `git push`, `gh run list --workflow=harvey-lab-firm-knowledge.yml` must show no `in_progress` on this branch.
 

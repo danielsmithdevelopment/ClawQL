@@ -7,8 +7,8 @@ MCP_NAMESPACE="${CLAWQL_TARGET_NAMESPACE:-clawql}"
 KUBE_CONTEXT="${CLAWQL_LOCAL_K8S_CONTEXT:-}"
 OPERATOR_RELEASE="${CLAWQL_OPERATOR_RELEASE:-clawql-operator}"
 MCP_RELEASE="${CLAWQL_HELM_RELEASE:-clawql-mcp}"
-CHART="${ROOT}/charts/clawql-operator"
-MCP_CHART="${ROOT}/charts/clawql-mcp"
+CHART="${ROOT}/manifests/charts/clawql-operator"
+MCP_CHART="${ROOT}/manifests/charts/clawql-mcp"
 
 kubectl_ctx() {
   if [[ -n "${KUBE_CONTEXT}" ]]; then
@@ -35,7 +35,7 @@ helm_ctx upgrade --install "${OPERATOR_RELEASE}" "${CHART}" \
   --wait --timeout 5m
 
 echo "==> Applying ClawQLInstance in ${MCP_NAMESPACE}"
-kubectl_ctx apply -f "${ROOT}/examples/operator/clawqlinstance-minimal.yaml" -n "${MCP_NAMESPACE}"
+kubectl_ctx apply -f "${ROOT}/docs/examples/operator/clawqlinstance-minimal.yaml" -n "${MCP_NAMESPACE}"
 
 echo "==> Enabling MCP instanceSpec overlay on ${MCP_RELEASE}"
 helm_ctx upgrade "${MCP_RELEASE}" "${MCP_CHART}" \

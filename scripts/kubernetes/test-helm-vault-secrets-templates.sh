@@ -9,7 +9,7 @@ trap 'rm -f "${TMP}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   --set secretSourcing.externalSecrets.enabled=true >"${TMP}"

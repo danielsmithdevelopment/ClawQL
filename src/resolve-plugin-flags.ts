@@ -50,7 +50,7 @@ export function resolvePluginCompositionFlags(
       `[clawql] BREAKING (8.0.0): ${legacySet.join(", ")} ignored without CLAWQL_INSTANCE_SPEC — ` +
         `composition uses CLAWQL_TIER=${env.CLAWQL_TIER?.trim() || "standard"}. ` +
         `Put toggles in CLAWQL_INSTANCE_SPEC (Helm enable* → instance JSON) or set CLAWQL_TIER. ` +
-        `See RELEASE_NOTES_v8.0.0.md.`
+        `See docs/release/RELEASE_NOTES_v8.0.0.md.`
     );
   }
 

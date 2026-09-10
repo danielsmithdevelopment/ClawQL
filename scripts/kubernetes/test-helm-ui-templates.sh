@@ -11,7 +11,7 @@ trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}"' EXIT
 # satisfy secretSourcing.requireVaultBackedSecrets (same lint stub name as Makefile helm-lint)
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set ui.enabled=true \
   --set ui.ingress.enabled=true \
@@ -19,7 +19,7 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set dashboard.ingress.enabled=true \
   --set dashboard.openclawChatUrl=http://openclaw.clawql.svc.cluster.local:8787/v1/chat >"${TMP_ENABLED}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" >"${TMP_DISABLED}"
 
 python3 - "${TMP_ENABLED}" "${TMP_DISABLED}" <<'PY'

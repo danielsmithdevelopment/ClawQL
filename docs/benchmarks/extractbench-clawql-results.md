@@ -3,7 +3,7 @@
 Date: 2026-09-01 (Arm B partial complete)  
 Pipelines: `clawql_idp_qwen_extract` · `clawql_idp_docling_extract`  
 Benchmark: [run-llama/ExtractBench](https://github.com/run-llama/ExtractBench)  
-Overlay: [`integrations/extractbench/`](../../integrations/extractbench/)
+Overlay: [`benchmarks/extractbench/`](../../benchmarks/extractbench/)
 
 ## Status
 
@@ -66,8 +66,8 @@ export DOCLING_BASE_URL=http://127.0.0.1:5001
 export CLAWQL_REPO_ROOT=/path/to/ClawQL
 export CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1   # optional telemetry
 
-# Start services (see integrations/extractbench/README.md)
-integrations/extractbench/scripts/start-clawql-for-extractbench.sh 8080
+# Start services (see benchmarks/extractbench/README.md)
+benchmarks/extractbench/scripts/start-clawql-for-extractbench.sh 8080
 
 cd vendor/ExtractBench
 uv run extract-bench run clawql_idp_qwen_extract --test
@@ -126,7 +126,7 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 - [ ] Cost/page ≤ $1.00
 - [ ] Two independent full runs agree
 - [x] Arm B ablation complete (93-doc partial)
-- [ ] Leaderboard CSV filled from `integrations/extractbench/leaderboard-entry.template.csv`
+- [ ] Leaderboard CSV filled from `benchmarks/extractbench/leaderboard-entry.template.csv`
 - [ ] Essay draft updated with real numbers: [`../gtm/pragmaticvectors/extractbench-long-documents.md`](../gtm/pragmaticvectors/extractbench-long-documents.md)
 
 ## Run diary
@@ -144,7 +144,7 @@ uv run extract-bench run clawql_idp_docling_extract --group short --skip_inferen
 - Long-list completeness: chunked text mapping with array merge (no page-image VLM oneshot)
 - Missing fields must stay `null` (no invention) — T3 dense-doc failure mode (13F ~0% F1 on Arm B)
 - Env: `CLAWQL_MCP_URL`, `QWEN35_SERVER_URL` (Arm A), `DOCLING_BASE_URL`, `CLAWQL_REPO_ROOT`, `CLAWQL_EXTRACTBENCH_ONTOLOGY_SYNC=1`
-- Startup: `integrations/extractbench/scripts/start-clawql-for-extractbench.sh` (ClawQL 8.x tier + docling provider)
+- Startup: `benchmarks/extractbench/scripts/start-clawql-for-extractbench.sh` (ClawQL 8.x tier + docling provider)
 
 ## Related
 
