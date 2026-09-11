@@ -67,7 +67,7 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_ONTOLOGY_WRITES: z.string().optional(),
   /**
    * Override entity search root for `clawql ontology lint|generate` (relative to cwd or absolute).
-   * Default: `.clawql/ontology/entities` then `examples/ontology/entities`.
+   * Default: `.clawql/ontology/entities` then `docs/examples/ontology/entities`.
    */
   CLAWQL_ONTOLOGY_DIR: z.string().optional(),
   /** Optional JSON fixture path for ontology demo tools (`CLAWQL_ENABLE_ONTOLOGY`). */

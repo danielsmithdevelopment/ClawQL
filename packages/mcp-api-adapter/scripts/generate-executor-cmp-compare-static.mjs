@@ -27,8 +27,8 @@ const DOCS_CATALOG = "https://docs.clawql.com/mcp/mcp-ui";
 const METHODOLOGY = "https://clawql.com/benchmarks/executor-comparison";
 
 const OUT_DIRS = [
-  join(ROOT, "website", "public", "mcp-ui", "trace", "compare", "executor"),
-  join(ROOT, "landing-page", "demo", "public", "mcp-ui", "trace", "compare", "executor"),
+  join(ROOT, "apps", "docs", "public", "mcp-ui", "trace", "compare", "executor"),
+  join(ROOT, "apps", "www", "public", "mcp-ui", "trace", "compare", "executor"),
 ];
 
 function patchStaticHtml(html) {

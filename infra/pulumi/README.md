@@ -31,6 +31,7 @@ If `clawql:profile` is omitted: `cloudflare` → `team-vault`, `aws`/`gcp` → `
 | --------------------------- | --------------------------------------------------- |
 | `src/index.ts`              | Stack entry — routes by profile                     |
 | `src/cloudflare-edge.ts`    | Edge launch stack (R2/KV/D1/Queue + gateway Worker) |
+| [`../cloudflare/`](../cloudflare/) | Hosted-edge Workers (gateway, sandbox-bridge, mcp-proxy) — **lags ClawQL 8.0.0** |
 | `src/cloudflare.ts`         | R2 team-vault only                                  |
 | `src/aws-idp-k3s.ts`        | K3s bootstrap EC2                                   |
 | `src/aws-eks.ts`            | EKS + Karpenter roles                               |
@@ -64,7 +65,7 @@ cp Pulumi.idp-k3s.example.yaml Pulumi.idp-k3s.yaml
 pulumi stack init idp-k3s-bootstrap
 pulumi config set aws:region us-east-1
 pulumi preview && pulumi up
-# Then Argo CD → deployment/gitops (see hosted-live-bootstrap.md)
+# Then Argo CD → infra/gitops (see hosted-live-bootstrap.md)
 # On the edge stack, after ingress exists:
 #   pulumi config set clawql:idpProxyOrigin 'https://<k3s-ingress-host>'
 #   pulumi up
@@ -79,9 +80,9 @@ pulumi preview && pulumi up
 ## GitOps after Pulumi
 
 1. Install Argo CD on the cluster
-2. Apply `deployment/gitops/projects/clawql.yaml`
-3. Apply `deployment/gitops/applications/root.yaml`
-4. Sync IDP Helm + `deployment/workflows/*.cqw`
+2. Apply `infra/gitops/projects/clawql.yaml`
+3. Apply `infra/gitops/applications/root.yaml`
+4. Sync IDP Helm + `infra/gitops/workflows/*.cqw`
 
 Deterministic pipelines are **`.cqw` → WorkflowTemplate → Argo Workflows**; agents submit via MCP `workflow` (template-ref only).
 
@@ -112,7 +113,7 @@ await upProvisionStack({
 ## Related
 
 - [Hosted live bootstrap](../../docs/deployment/hosted-live-bootstrap.md)
-- [GitOps README](../../deployment/gitops/README.md)
+- [GitOps README](../../infra/gitops/README.md)
 - [GTM playbook](../../docs/gtm/clawql-gtm-playbook.md)
 - [ADR 0006: Packer](../../docs/adr/0006-golden-host-images-packer.md)
 - [ADR 0007: Pulumi](../../docs/adr/0007-pulumi-provisioning-managed-tiers.md)

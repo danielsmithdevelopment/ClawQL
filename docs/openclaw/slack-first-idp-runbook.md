@@ -39,7 +39,7 @@ clawql-mcp  ── search / execute ──► Docling (layout) → Tika → Stir
 | Workflow (optional)      | `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist         | Durable Argo run                                                                                                       |
 | HITL (optional)          | `CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`                     | Human review gate                                                                                                      |
 
-Helm full profile: [`charts/clawql-idp/values-idp-full.yaml`](../../charts/clawql-idp/values-idp-full.yaml) with `enableNotify: true`.
+Helm full profile: [`manifests/charts/clawql-idp/values-idp-full.yaml`](../../manifests/charts/clawql-idp/values-idp-full.yaml) with `enableNotify: true`.
 
 ## OpenClaw system prompt block (copy-paste)
 
@@ -50,7 +50,7 @@ When the user @mentions you with a document request (e.g. "process this W-2.pdf 
 
 1. **Discover** — `search` with a tight query for the right vendor `operationId` (Docling layout parse for forms/W-2, Tika for plain text, Stirling redact, Paperless archive, Onyx index).
 2. **Convert / route (optional)** — when `CLAWQL_ENABLE_ANYDOC=1`: `convert_document` for Office/PDF/CSV → GFM; when `CLAWQL_ENABLE_PDF_INSPECTOR=1`: `inspect_pdf` for PDF-type routing — see [`anydoc-onboarding.md`](../providers/anydoc-onboarding.md) and [`pdf-inspector-onboarding.md`](../providers/pdf-inspector-onboarding.md).
-3. **Layout parse** — for structured forms (W-2, tax, lending) or when convert/inspect returns `docling_ocr` / `hybrid_docling`, prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md).
+3. **Layout parse** — for structured forms (W-2, tax, lending) or when convert/inspect returns `docling_ocr` / `hybrid_docling`, prefer `execute` on **`docling`** (`docling_convert_file` / `docling_convert_source`) before or instead of Tika — see [`docling-onboarding.md`](../providers/docling-onboarding.md) and [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/README.md).
 4. **Classify / extract (optional)** — when enabled: `classify_document` for doc-type routing; `extract_document` for schema-grounded fields (W-2 boxes, etc.) — see [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
 5. **Execute** — call `execute` with minimal `fields`; never paste full OpenAPI responses into Slack.
 6. **Vault** — `memory_ingest` a summary note with Paperless id, Merkle root, and correlation id when vault is configured.
@@ -132,7 +132,7 @@ Agent-authored pipeline promotion: [`docs/gitops/agent-pr-argocd-pipeline.md`](.
 
 ## Related
 
-- [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) — W-2 sample pack: [`deployment/samples/lending-w2/`](../../deployment/samples/lending-w2/README.md)
+- [#253](https://github.com/danielsmithdevelopment/ClawQL/issues/253) — W-2 sample pack: [`docs/examples/idp/lending-w2/`](../../docs/examples/idp/lending-w2/README.md)
 - [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246) — LangExtract: [`langextract-onboarding.md`](../providers/langextract-onboarding.md)
 - [#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248) — Docling + classifier: [`docling-onboarding.md`](../providers/docling-onboarding.md), [`fine-tuned-classifier.md`](../runbooks/fine-tuned-classifier.md)
 - [ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent) — Slack mention driver (external)

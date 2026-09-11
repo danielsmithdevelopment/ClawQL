@@ -26,7 +26,7 @@ export default defineConfig({
       "packages/clawql-observability/src/**/*.test.ts",
       "packages/clawql-analytics/src/**/*.test.ts",
       "packages/clawql-observability/worker/src/**/*.test.ts",
-      "website/src/lib/**/*.test.ts",
+      "apps/docs/src/lib/**/*.test.ts",
       "packages/clawql-agents/src/**/*.test.ts",
       "packages/clawql-core/src/**/*.test.ts",
       "packages/clawql-api/src/**/*.test.ts",

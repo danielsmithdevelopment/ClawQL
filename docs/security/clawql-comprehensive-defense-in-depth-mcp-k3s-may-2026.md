@@ -118,7 +118,7 @@ Three principles govern every layer:
 
 ### Key implementation details
 
-**Kata Containers as default for MCP workloads**: When an LLM agent has access to a filesystem or shell, container namespaces are insufficient isolation. Kata provides a hardware VM boundary — a compromised sandbox cannot escape to the host kernel. Enforce via Kyverno `RuntimeClass` policy: pods in the `openclaw` namespace must use Kata runtime unless explicitly exempted. **Helm:** [`security.kata`](../../charts/clawql-mcp/values.yaml) (MCP pod `runtimeClassName`) and [`kyverno.runtimeClassPolicy`](../../charts/clawql-mcp/values.yaml) — see **[`docs/security/runtime-class-containment.md`](runtime-class-containment.md)** ([#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)).
+**Kata Containers as default for MCP workloads**: When an LLM agent has access to a filesystem or shell, container namespaces are insufficient isolation. Kata provides a hardware VM boundary — a compromised sandbox cannot escape to the host kernel. Enforce via Kyverno `RuntimeClass` policy: pods in the `openclaw` namespace must use Kata runtime unless explicitly exempted. **Helm:** [`security.kata`](../../manifests/charts/clawql-mcp/values.yaml) (MCP pod `runtimeClassName`) and [`kyverno.runtimeClassPolicy`](../../manifests/charts/clawql-mcp/values.yaml) — see **[`docs/security/runtime-class-containment.md`](runtime-class-containment.md)** ([#274](https://github.com/danielsmithdevelopment/ClawQL/issues/274)).
 
 **Kata vs gVisor**: These are not interchangeable defaults. Kata = full VM per pod, stronger isolation, higher overhead. gVisor = userspace kernel emulation, lower overhead, some syscall gaps. Kata is correct for MCP/sandbox workloads. gVisor is acceptable for non-execution workloads. The Kyverno policy should be explicit about which namespaces get which runtime.
 
@@ -126,7 +126,7 @@ Three principles govern every layer:
 
 **ServiceEntries as FQDN egress control**: Lock each ServiceEntry to the specific endpoints defined in the ClawQL GraphQL schema. This achieves FQDN egress filtering without a separate WAF layer. Review ServiceEntries alongside STRIDE on the quarterly cadence.
 
-**Concrete manifests & Helm**: Example **ServiceEntry** allowlists and optional **EgressGateway** TLS passthrough routing ship as **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`** (full chain) and **`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`** (registry baseline); the **`clawql-mcp`** Helm chart exposes the same policy via **`istio.egressAllowlist`** in **[`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)). Deploy guide: **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)**.
+**Concrete manifests & Helm**: Example **ServiceEntry** allowlists and optional **EgressGateway** TLS passthrough routing ship as **`docker/istio/docker-desktop/clawql-mcp-egress-allowlist.yaml`** (full chain) and **`docker/istio/docker-desktop/clawql-mcp-egress-serviceentries-only.yaml`** (registry baseline); the **`clawql-mcp`** Helm chart exposes the same policy via **`istio.egressAllowlist`** in **[`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml)** ([#275](https://github.com/danielsmithdevelopment/ClawQL/issues/275)). Deploy guide: **[`docs/deployment/helm.md`](../../docs/deployment/helm.md)**.
 
 ---
 

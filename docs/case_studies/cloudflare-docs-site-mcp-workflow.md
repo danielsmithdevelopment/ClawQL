@@ -4,7 +4,7 @@
 
 An end-to-end narrative of shipping the ClawQL documentation site to Cloudflare Workers while using the same MCP server that powers day-to-day API work: `search`, `execute`, `memory_recall`, and `memory_ingest`. It records failures, fixes, mental models, and insights for future agents and humans.
 
-**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`website/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/website) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy/deploy-docs-to-cloudflare.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/deploy/deploy-docs-to-cloudflare.sh).
+**Related:** GitHub tracking issue ([#87](https://github.com/danielsmithdevelopment/ClawQL/issues/87)), repo [`apps/docs/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/website) (Next.js + OpenNext + Wrangler), deploy script [`scripts/deploy/deploy-docs-to-cloudflare.sh`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/scripts/deploy/deploy-docs-to-cloudflare.sh).
 
 ---
 
@@ -33,7 +33,7 @@ When `execute` fails, the fix is often not "change Next.js" — it's token scope
 ## 3. Goals
 
 1. Authenticate to Cloudflare and wire tokens for local Kubernetes MCP, Cursor (HTTP MCP), and CLI (`wrangler`).
-2. Deploy the docs app (`website/`) to a custom domain on a practical Cloudflare setup (Workers + OpenNext).
+2. Deploy the docs app (`apps/docs/`) to a custom domain on a practical Cloudflare setup (Workers + OpenNext).
 3. Operate Cloudflare (Workers, domains, routes) via ClawQL where it beats ad-hoc `curl` — especially for discovering operation ids and building consistent request bodies.
 4. Persist setup, mistakes, and lessons in the Obsidian vault (and optional `memory.db`) so later sessions don't repeat the same failures.
 
@@ -54,11 +54,11 @@ When `execute` fails, the fix is often not "change Next.js" — it's token scope
 
 ## 5. Wrangler deploy vs REST `execute`
 
-| Path                                                                  | When to use it                                                                                                   | Caveat                                                                                       |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `npm run deploy` in `website/` (opennextjs-cloudflare build + deploy) | Iterating on the app — HTML, MDX, Worker bundle                                                                  | Uses Wrangler auth; may succeed even when a narrow API token fails `execute` for domain APIs |
-| ClawQL `search` + `execute`                                           | Discovering Cloudflare operations, attaching custom domains, auditing what hostname maps to which Worker         | Token needs explicit scopes for Workers + routes/domains + zone read as required             |
-| Both                                                                  | Healthy ops: deploy artifact with Wrangler; verify and repair routing with REST when automation or audit matters | Treat Wrangler success and REST success as independent until proven                          |
+| Path                                                                    | When to use it                                                                                                   | Caveat                                                                                       |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run deploy` in `apps/docs/` (opennextjs-cloudflare build + deploy) | Iterating on the app — HTML, MDX, Worker bundle                                                                  | Uses Wrangler auth; may succeed even when a narrow API token fails `execute` for domain APIs |
+| ClawQL `search` + `execute`                                             | Discovering Cloudflare operations, attaching custom domains, auditing what hostname maps to which Worker         | Token needs explicit scopes for Workers + routes/domains + zone read as required             |
+| Both                                                                    | Healthy ops: deploy artifact with Wrangler; verify and repair routing with REST when automation or audit matters | Treat Wrangler success and REST success as independent until proven                          |
 
 The worst confusion in this case study was "I can deploy, but `execute` says 403" — almost always a scope problem or the wrong account.
 
@@ -70,7 +70,7 @@ The worst confusion in this case study was "I can deploy, but `execute` says 403
 
 1. Resolve `account_id` (or use `CLAWQL_CLOUDFLARE_ACCOUNT_ID`).
 2. Resolve `zone_id` for `CLAWQL_DOCS_APEX_DOMAIN` (default `clawql.com`).
-3. `cd website && npm run deploy` — OpenNext build + Wrangler upload.
+3. `cd apps/docs && npm run deploy` — OpenNext build + Wrangler upload.
 4. PUT `/accounts/{account_id}/workers/domains` to attach `CLAWQL_DOCS_HOSTNAME` (default `docs.clawql.com`) to `clawql-docs`.
 
 Equivalent `execute` operations for interactive agents: `zones` list/get by name, `workers.domains.update`. The script comments map intent to API.
@@ -104,7 +104,7 @@ Equivalent `execute` operations for interactive agents: `zones` list/get by name
 1. `memory_recall` — pull prior vault notes on Cloudflare + docs + MCP auth to avoid repeating dead ends.
 2. Configure `CLAWQL_CLOUDFLARE_API_TOKEN` on the MCP server process (k8s Secret or HTTP MCP env) — verify with a trivial `execute` if unsure.
 3. `search` Cloudflare operations; `execute` domain/Worker updates as needed.
-4. Deploy from `website/` (`opennextjs-cloudflare` build + deploy), with `NEXT_PUBLIC_SITE_URL=https://docs.clawql.com`.
+4. Deploy from `apps/docs/` (`opennextjs-cloudflare` build + deploy), with `NEXT_PUBLIC_SITE_URL=https://docs.clawql.com`.
 5. Verify `https://docs.clawql.com` and `wrangler tail clawql-docs` for runtime errors.
 6. Fix app code if the Worker throws (see failures below).
 7. `memory_ingest` session summary (`append: true`) into a stable note title (e.g. "Cloudflare docs site — deploy runbook").
@@ -130,7 +130,7 @@ Equivalent `execute` operations for interactive agents: `zones` list/get by name
 
 `src/app/layout.tsx` used `fast-glob` at request time to discover `**/*.mdx` and build the sidebar map. `fast-glob` uses `fs.readdir`, which `unenv` does not implement on Cloudflare Workers.
 
-The fix was to remove runtime globbing and predefine section metadata for routes that need it via build-time codegen ([`website/scripts/generate-doc-layout-sections.mjs`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/scripts/generate-doc-layout-sections.mjs) → `src/generated/doc-layout-sections.generated.ts`), then import from `Layout.tsx` through [`doc-layout-sections.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/src/lib/doc-layout-sections.ts).
+The fix was to remove runtime globbing and predefine section metadata for routes that need it via build-time codegen ([`apps/docs/scripts/generate-doc-layout-sections.mjs`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/apps/docs/scripts/generate-doc-layout-sections.mjs) → `src/generated/doc-layout-sections.generated.ts`), then import from `Layout.tsx` through [`doc-layout-sections.ts`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/apps/docs/src/lib/doc-layout-sections.ts).
 
 The general pattern: anything that needs `fs` at runtime must move to build time, a static map, or an edge-safe data source.
 

@@ -2,7 +2,7 @@
 # Smoke-test OpenClaw chat bridge + optional dashboard proxy.
 #
 # Local (default):
-#   Terminal 1: cd dashboard && npm run openclaw:chat-bridge
+#   Terminal 1: cd apps/dashboard && npm run openclaw:chat-bridge
 #   Terminal 2: ./scripts/kubernetes/smoke-openclaw-chat-bridge.sh
 #
 # In-cluster (OpenClaw Helm sub-chart with chatBridge enabled):
@@ -10,7 +10,7 @@
 #   OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat ./scripts/kubernetes/smoke-openclaw-chat-bridge.sh
 #
 # Dashboard proxy (local dev server):
-#   CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat npm run dev --prefix dashboard
+#   CLAWQL_DASHBOARD_OPENCLAW_CHAT_URL=http://127.0.0.1:8787/v1/chat npm run dev --prefix apps/dashboard
 #   TEST_DASHBOARD=1 ./scripts/kubernetes/smoke-openclaw-chat-bridge.sh
 set -euo pipefail
 

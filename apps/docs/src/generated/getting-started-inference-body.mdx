@@ -1,0 +1,266 @@
+# Get started with clawql-inference
+
+Spin up ClawQL’s **Agentic Gateway** inference control plane in minutes: OpenAI-compatible `/v1`, bring-your-OpenRouter **or** direct BYOK providers, and a clear path to pair MCP + vault memory.
+
+**Website:** [docs.clawql.com/getting-started/inference](https://docs.clawql.com/getting-started/inference)
+
+**Deep reference:** [clawql-inference](/inference/clawql-inference) · **Providers:** [Inference providers](/plugins/inference-providers) · **Fabric:** [Zero-Trust Agentic Fabric](/architecture/agentic-fabric)
+
+## Already on OpenRouter?
+
+If you already pay OpenRouter and **do not** have Anthropic/OpenAI/DeepSeek keys in ClawQL yet, start with the key you have:
+
+1. Set `OPENROUTER_API_KEY` (local `.env`, GitHub Actions secret, or Vault).
+2. Use catalog models such as `openrouter/deepseek/deepseek-chat` or `openrouter/qwen/qwen3.6-plus`.
+3. Point clients at clawql-inference (`OPENAI_BASE_URL` / gateway `/v1`) — same OpenAI-compatible API, with ClawQL memory and policy in front.
+
+That path is intentional: **bring your aggregator key first**, then add direct BYOK (`deepseek/*`, `anthropic/*`, `openai/*`, …) when you want to disintermediate OpenRouter for cost, latency, or residency.
+
+OpenBench CI defaults to this OpenRouter-first model so live benchmarks work with a single secret. See [OpenBench GitHub Actions](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-github-actions.md).
+
+## What you get
+
+| Surface                    | Role                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                    |
+| **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                            |
+| **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                       |
+| **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama |
+| **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend               |
+
+On a laptop this is your **Edge Agentic Gateway**. Later you can grow into a Managed Gateway or Dedicated Virtual Gateway without changing the client contract (`OPENAI_BASE_URL` + key).
+
+## How it works
+
+```text
+  OpenAI SDK / OpenCode / Cursor / curl
+              │  OPENAI_BASE_URL=…/v1
+              ▼
+     clawql inference serve
+              │
+     ┌────────┴────────┐
+     │  catalog + tiers │  virtual keys / entitlements
+     │  cache + fallback│  call store / WORM lineage
+     └────────┬────────┘
+              │
+     ┌────────┼────────────────────────────┐
+     ▼        ▼                            ▼
+  openrouter/*                 DeepSeek / Groq / OpenAI / …
+  (existing aggregator key)    (direct BYOK when ready)
+```
+
+**Day-one posture for OpenRouter customers:** bring the aggregator key you already have. Add direct vendor keys later when you want to skip OpenRouter for production traffic. ClawQL routes `provider/model` the same either way.
+
+Pair with MCP when you want agents to **search / execute / remember** against your APIs and vault:
+
+```text
+  Agent ──► /v1  (models)     clawql-inference
+       └──► /mcp (tools)      clawql-mcp-http  +  Memory/ vault
+```
+
+Today those are often two local processes; the **product** is one Agentic Gateway. Managed offerings co-host them behind one hostname.
+
+## Pick your path
+
+| You want…                                    | Jump to                                            |
+| -------------------------------------------- | -------------------------------------------------- |
+| Keep using your existing OpenRouter key      | [Already on OpenRouter?](#already-on-openrouter)   |
+| First completion in under 5 minutes          | [Five-minute start](#five-minute-start)            |
+| Managed Edge Gateway (`/mcp` + `/v1`)        | [Managed Edge Gateway](#what-good-looks-like-next) |
+| Point OpenCode / OpenAI SDK at the gateway   | [Point a client](#point-a-client)                  |
+| MCP tools + vault memory alongside inference | [Add MCP and memory](#add-mcp-and-memory)          |
+| Understand auth / keys / security defaults   | [Security defaults](#security-defaults)            |
+| Full knobs, flywheel, policy schema          | [Reference](/inference/clawql-inference)           |
+
+---
+
+## Five-minute start
+
+### 1. Install CLI
+
+```bash
+# From a ClawQL checkout
+npm ci && npm run build
+# or: npm i -g clawql-mcp
+```
+
+### 2. Policy + home
+
+```bash
+export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
+mkdir -p "$CLAWQL_HOME/Inference"
+cp docs/examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+# From outside the repo, download the example or set:
+# export CLAWQL_INFERENCE_POLICY_MANIFEST=/path/to/policy.yaml
+```
+
+### 3. Bring a provider key
+
+**Already on OpenRouter?** Use that key only:
+
+```bash
+export OPENROUTER_API_KEY=sk-or-…     # recommended if you already have OpenRouter
+```
+
+Direct BYOK (when you have per-provider keys and want to skip the aggregator):
+
+```bash
+# export DEEPSEEK_API_KEY=sk-…        # direct DeepSeek
+# export GROQ_API_KEY=…               # or another BYOK provider
+# export OPENAI_API_KEY=…             # OpenAI / embeddings
+# export ANTHROPIC_API_KEY=…          # Anthropic
+```
+
+Never commit keys. Local secrets belong in your shell / secret manager — not in git or MCP JSON.
+
+### 4. Serve
+
+```bash
+clawql inference policy show     # policy_source: manifest+env
+clawql inference serve --port 8080
+# or: npx clawql-inference
+```
+
+### 5. Smoke test
+
+```bash
+curl -s http://127.0.0.1:8080/healthz
+
+curl -s http://127.0.0.1:8080/v1/models | head
+
+# OpenRouter-first (when OPENROUTER_API_KEY is set)
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"openrouter/deepseek/deepseek-chat","messages":[{"role":"user","content":"Say hi in one sentence."}]}'
+
+# Direct BYOK example (when DEEPSEEK_API_KEY is set)
+# curl -s http://127.0.0.1:8080/v1/chat/completions \
+#   -H 'Content-Type: application/json' \
+#   -d '{"model":"deepseek/deepseek-chat","messages":[{"role":"user","content":"Say hi in one sentence."}]}'
+```
+
+One-shot without HTTP:
+
+```bash
+clawql inference complete --model openrouter/deepseek/deepseek-chat --message "hello"
+```
+
+---
+
+## Point a client
+
+### OpenAI SDK / any OpenAI-compatible tool
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
+export OPENAI_API_KEY=sk-…   # vendor key, or a ClawQL virtual key when keys are enabled
+```
+
+Model ids use `provider/model` (e.g. `deepseek/deepseek-chat`, `groq/llama-3.3-70b-versatile`) or aliases (`clawql/cheap-chat`). OpenRouter ids keep the prefix: `openrouter/qwen/…`.
+
+### OpenCode (headless / OpenBench)
+
+```bash
+# terminal 1
+OPENROUTER_API_KEY=sk-or-… clawql inference serve --port 8080
+
+# terminal 2
+CLAWQL_OPENBENCH=1 clawql opencode --non-interactive \
+  --model clawql/openrouter/deepseek/deepseek-chat \
+  --inference-url http://127.0.0.1:8080/v1 \
+  --message "Say hello" \
+  --workdir /tmp/demo
+```
+
+A/B harness notes: [Benchmarks](/benchmarks) · [OpenBench Actions guide](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/benchmarks/openbench-github-actions.md)
+
+---
+
+## Add MCP and memory
+
+Inference answers **models**. MCP answers **tools + memory**.
+
+```bash
+# Vault-first MCP (desktop / stdio)
+npx -p clawql-mcp clawql onboard --interactive
+
+# Or HTTP MCP for local agents
+PORT=8090 npx -p clawql-mcp clawql-mcp-http
+# MCP endpoint: http://127.0.0.1:8090/mcp
+```
+
+| Concern                                  | Where it lives                                          |
+| ---------------------------------------- | ------------------------------------------------------- |
+| Model calls                              | `clawql inference serve` → `/v1`                        |
+| `search` / `execute` / `audit` / `cache` | MCP `/mcp`                                              |
+| Durable notes                            | Vault `Memory/` via `memory_ingest` / `memory_recall`   |
+| Provider API tokens for tools            | `~/.ClawQL/vault/providers.json` (local) or Vault (K8s) |
+
+Full agent wiring: [Agent setup](/agent-setup) · Teams sync: [For teams](/getting-started/for-teams)
+
+---
+
+## Security defaults
+
+Start local; harden before sharing a URL:
+
+| Practice                              | Why                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| **Your keys**                         | OpenRouter aggregator key and/or direct vendor BYOK — you own them  |
+| **Virtual keys for shared gateways**  | Per-team budgets / rate limits; secrets stored hashed               |
+| **No `noAuth` on anything networked** | Require Bearer / virtual key on `/v1/*`                             |
+| **Tenant from the token**             | Do not trust client-supplied tenant headers on shared hosts         |
+| **MCP behind a chokepoint**           | JWT ATR / policy proxy in front of `/mcp` for multi-user            |
+| **Secrets out of images and git**     | Vault / SSM / local vault file — never bake keys into Packer images |
+
+Defense-in-depth narrative: [MCP proxy JWT ATR](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/mcp-proxy-jwt-atr.md) · [Defense in depth](/security/defense-in-depth)
+
+---
+
+## What “good” looks like next
+
+1. **Local Edge** — `clawql inference serve` alone (models only).
+2. **Managed Edge Gateway (go-live)** — one hostname for `/v1` + `/mcp` + memory:
+
+```bash
+export OPENROUTER_API_KEY=sk-or-…   # or DEEPSEEK_API_KEY / other BYOK
+clawql gateway create --profile process --team demo
+# → MCP URL, Inference URL, virtual key (shown once)
+```
+
+Docker variant: `clawql gateway create --profile local-docker --team demo`  
+Example compose: [`docs/examples/managed-gateway/`](../../docs/examples/managed-gateway/).
+
+Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `manifests/charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
+
+3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
+   **Alpha now:** Packer golden host + Pulumi dedicated tier boots team vault, then Managed Edge Gateway (`/mcp` + `/v1`) via `bootstrap-dedicated-gateway.sh`. Full WORM/NATS/Valkey + JWT ATR remain follow-ups.
+4. **Regional Hub** — ClawQL-managed metering / routing pipe only — never holds your sovereign vault.
+
+GTM narrative: [Inference-first GTM](https://clawql.com/inference/gtm) · Architecture: [Agentic Fabric](/architecture/agentic-fabric)
+
+---
+
+## Troubleshooting
+
+| Symptom                          | Fix                                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| Empty `/v1/models`               | Set `OPENROUTER_API_KEY` and/or a vendor BYOK key; catalog lists **credentialed** providers |
+| OpenRouter model 401 / missing   | Export `OPENROUTER_API_KEY` in the **same shell** as `inference serve`                      |
+| Want direct BYOK later           | Set `DEEPSEEK_API_KEY` (etc.) and use `deepseek/…` / `anthropic/…` model ids                |
+| Client still hits api.openai.com | Set `OPENAI_BASE_URL=http://127.0.0.1:8080/v1` (include `/v1`)                              |
+| Policy looks wrong               | `clawql inference policy show --json` — env overrides YAML                                  |
+
+---
+
+## Next reading
+
+- [clawql-inference reference](/inference/clawql-inference) — policy schema, cache, flywheel, entitlements
+- [Inference providers](/plugins/inference-providers) — OpenRouter + BYOK builtins
+- [Agent setup](/agent-setup) — MCP + memory onboarding
+- [Token efficiency](/architecture/token-efficiency) — twelve compounding layers
+- [Getting started overview](/getting-started)
+
+export function wrapper({ children }) {
+  return children
+}

@@ -12,7 +12,11 @@ import {
 import { PaymentAuditService } from "../plugin/payment-audit-service.js";
 import { CreditsLedgerService, TOPUP_META_KEY } from "../credits/index.js";
 import type { ConfigError } from "../errors/payment-errors.js";
-import type { PaymentError } from "../errors/payment-errors.js";
+import { PaymentError } from "../errors/payment-errors.js";
+import {
+  ProvisionOrgService,
+  provisionOrgInputFromCheckoutSession,
+} from "../provisioning/index.js";
 import { StripeSignatureError } from "./stripe-errors.js";
 
 export type StripeWebhookVerifyResult =
@@ -28,6 +32,8 @@ export type ProcessStripeWebhookResult = {
   handled: boolean;
   eventType: string;
   eventId: string;
+  /** Set when checkout.session.completed ran CPC provisionOrg. */
+  provisionedOrgId?: string;
 };
 
 function tenantFromEvent(event: Stripe.Event, fallbackTenantId: string): string {
@@ -86,7 +92,7 @@ export class StripeWebhookService extends Context.Tag("clawql/StripeWebhookServi
 export function stripeWebhookLiveLayer(): Layer.Layer<
   StripeWebhookService,
   never,
-  PaymentsConfigService | PaymentAuditService | CreditsLedgerService
+  PaymentsConfigService | PaymentAuditService | CreditsLedgerService | ProvisionOrgService
 > {
   return Layer.effect(
     StripeWebhookService,
@@ -94,6 +100,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
       const configService = yield* PaymentsConfigService;
       const audit = yield* PaymentAuditService;
       const ledger = yield* CreditsLedgerService;
+      const provisioning = yield* ProvisionOrgService;
 
       const verifySignature = (payload: string | Buffer, signature: string, secret: string) =>
         Effect.sync(() => verifyStripeWebhookSignature(payload, signature, secret)).pipe(
@@ -140,8 +147,55 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
               );
               break;
             }
+            case "checkout.session.completed": {
+              // Converge with CF gateway: shared provisionOrg when CPC metadata present.
+              // Gateway still owns D1 tenant upsert; Node owns org-credits + API key.
+              const session = event.data.object as Stripe.Checkout.Session;
+              const handoff = provisionOrgInputFromCheckoutSession(session, {
+                correlationId: options.correlationId ?? event.id,
+                env: options.env,
+              });
+              if (!handoff.ok) {
+                yield* audit.appendEntry(
+                  buildPaymentWormEntry({
+                    eventKind: "STRIPE_SUBSCRIPTION_CREATED",
+                    summary: `checkout.session.completed (no CPC metadata): ${handoff.reason}`,
+                    correlationId: options.correlationId ?? event.id,
+                    payload: {
+                      provider: "stripe",
+                      tenant_id: tenantFromEvent(event, tenantId),
+                      plan: config.plan,
+                      resource: session.id,
+                    },
+                  })
+                );
+                break;
+              }
+              const provisioned = yield* provisioning
+                .provisionOrg({
+                  ...handoff.input,
+                })
+                .pipe(
+                  Effect.mapError(
+                    (err) =>
+                      new PaymentError({
+                        reason:
+                          err && typeof err === "object" && "reason" in err
+                            ? String((err as { reason: string }).reason)
+                            : "provisionOrg failed",
+                        cause: err,
+                      })
+                  )
+                );
+              return {
+                handled: true,
+                eventType: event.type,
+                eventId: event.id,
+                provisionedOrgId: provisioned.orgId,
+              };
+            }
             case "customer.subscription.created": {
-              // Hosted edge tenants are provisioned by cloudflare/gateway
+              // Hosted edge tenants are provisioned by infra/cloudflare/gateway
               // POST /webhooks/stripe → D1. This path keeps WORM audit for Node/CLI.
               const subscription = event.data.object as Stripe.Subscription;
               yield* audit.appendEntry(

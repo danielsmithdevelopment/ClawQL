@@ -12,7 +12,7 @@ export default tseslint.config(
       "dist/**",
       "node_modules/**",
       "providers/**",
-      "website/**",
+      "apps/docs/**",
       "coverage/**",
       "scripts/**",
       "*.mjs",

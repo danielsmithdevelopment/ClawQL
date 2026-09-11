@@ -71,7 +71,7 @@ Operator guides: [`workflow-tool.md`](../mcp/workflow-tool.md), [`argocd-tool.md
 
 ## Sample GitOps layout
 
-See [`deployment/gitops/README.md`](../../deployment/gitops/README.md) and [`deployment/gitops/applications/clawql-idp-dev.yaml`](../../deployment/gitops/applications/clawql-idp-dev.yaml).
+See [`infra/gitops/README.md`](../../infra/gitops/README.md) and [`infra/gitops/applications/clawql-idp-dev.yaml`](../../infra/gitops/applications/clawql-idp-dev.yaml).
 
 ## ClawQL-Agent child work
 

@@ -12,6 +12,14 @@ export type ClawQLAgentConfig = {
   readonly inferenceEndpoint: string;
   readonly virtualKeyId: string;
   readonly teeEnabled: boolean;
+  /** Org for Gap B agent instance registry (optional). */
+  readonly orgId?: string;
+  /** Parent gateway id from Gap A registry (optional). */
+  readonly parentGatewayId?: string;
+  /** Stable instance id; defaults to session id on start. */
+  readonly agentInstanceId?: string;
+  /** Override CLAWQL_HOME for agent registry persistence. */
+  readonly registryHome?: string;
 };
 
 export type ATRScope = {

@@ -55,7 +55,7 @@ jobs:
         run: npm ci
 
       - name: Install website dependencies (Prettier plugins for format:check)
-        run: npm ci --prefix website
+        run: npm ci --prefix apps/docs
 
       - name: ESLint
         run: npm run lint
@@ -112,7 +112,7 @@ jobs:
         run: npm ci
 
       - name: Install website dependencies (Prettier plugins)
-        run: npm ci --prefix website
+        run: npm ci --prefix apps/docs
 
       - name: Guard — stop if HEAD is already a Prettier autofix commit
         id: guard
@@ -176,7 +176,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Validate OpenBench task checkers
-        run: python3 openbench/validate_tasks.py
+        run: python3 benchmarks/openbench/validate_tasks.py
 
   ontology-lint:
     name: Ontology lint (examples)
@@ -203,11 +203,6 @@ jobs:
 
       - name: Lint example ontology entities
         run: npm run ontology:lint
-
-      - name: Packaged schema matches monorepo canonical
-        run: |
-          diff -u schemas/ontology/entity.schema.json \
-            packages/clawql-ontology/schemas/ontology/entity.schema.json
 
   clawql-audit-standalone:
     name: clawql-audit standalone deps
@@ -257,12 +252,12 @@ jobs:
 
       - name: MCP + adapter + worm fetch unit tests
         run: |
-          node examples/streams-celld/scripts/mcp-fetch.test.mjs
-          node examples/streams-celld/scripts/adapter-fetch.test.mjs
-          node examples/streams-celld/scripts/worm-fetch.test.mjs
+          node docs/examples/streams-celld/scripts/mcp-fetch.test.mjs
+          node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
+          node docs/examples/streams-celld/scripts/worm-fetch.test.mjs
 
       - name: Bundle size gate (≤64 MiB)
-        run: node examples/streams-celld/scripts/bundle-check.mjs
+        run: node docs/examples/streams-celld/scripts/bundle-check.mjs
 
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310
         with:
@@ -304,7 +299,7 @@ jobs:
       - name: Fail-closed local E2E smoke
         env:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
-        run: bash examples/streams-celld/scripts/smoke.sh
+        run: bash docs/examples/streams-celld/scripts/smoke.sh
 
   streams-celld-full-stack:
     name: Streams celld full-stack
@@ -341,7 +336,7 @@ jobs:
       - name: Fail-closed full-stack smoke (real MCP + adapter)
         env:
           STREAMS_CELLD_SMOKE_REQUIRED: "1"
-        run: bash examples/streams-celld/scripts/full-stack-smoke.sh
+        run: bash docs/examples/streams-celld/scripts/full-stack-smoke.sh
 
   # OSS Gitleaks CLI (Docker) — avoids org licensing on gitleaks-action. No npm install / node_modules on disk.
   secret-scan:
@@ -393,7 +388,7 @@ jobs:
           format: json
           output: trivy-results.json
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
+          skip-dirs: node_modules,apps/docs/node_modules,apps/dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       # CycloneDX JSON for the repository (lockfiles + vendored sources Syft detects). Artifact for audits / #156.
       - name: CycloneDX SBOM (Syft)
@@ -439,16 +434,26 @@ jobs:
       # actions/checkout@v7.0.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
+      - name: Preflight — apps/docs lockfile is in the Docker context
+        run: |
+          set -euo pipefail
+          test -f apps/docs/package.json
+          test -f apps/docs/package-lock.json
+          if grep -qE '^/?docs(\*|/\*\*)?$' .dockerignore; then
+            echo ".dockerignore must not ignore a docs path (basename docs also excludes apps/docs)" >&2
+            exit 1
+          fi
+
       - name: Read package metadata
         id: pkg
         run: |
-          echo "version=$(node -e 'console.log(require(\"./website/package.json\").version)')" >> "$GITHUB_OUTPUT"
-          echo "description=$(node -e 'console.log(require(\"./website/package.json\").description)')" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -e 'console.log(require(\"./apps/docs/package.json\").version)')" >> "$GITHUB_OUTPUT"
+          echo "description=$(node -e 'console.log(require(\"./apps/docs/package.json\").description)')" >> "$GITHUB_OUTPUT"
 
       - name: Build website image
         run: |
           docker build \
-            -f website/Dockerfile \
+            -f apps/docs/Dockerfile \
             -t clawql-website:ci-smoke \
             --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
             --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
@@ -507,7 +512,7 @@ jobs:
       - name: Docker build (dashboard image, linux/amd64)
         run: |
           docker build \
-            -f dashboard/Dockerfile \
+            -f apps/dashboard/Dockerfile \
             --platform linux/amd64 \
             -t clawql-dashboard:ci-smoke \
             .
@@ -558,7 +563,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            website/package-lock.json
+            apps/docs/package-lock.json
 
       - name: Build clawql-analytics (docs API route dependency)
         run: |
@@ -569,13 +574,13 @@ jobs:
           npm run build -w clawql-analytics
 
       - name: Install website dependencies
-        run: npm ci --prefix website
+        run: npm ci --prefix apps/docs
 
       - name: Install Playwright browser
-        run: npx --prefix website playwright install --with-deps chromium
+        run: npx --prefix apps/docs playwright install --with-deps chromium
 
       - name: Run Playwright smoke tests
-        run: npm --prefix website run test:smoke
+        run: npm --prefix apps/docs run test:smoke
 
   # Wave 2 — only if fast gates pass (fail early: no matrix work when lint/scripts fail)
   test:
@@ -622,7 +627,7 @@ jobs:
         run: npx vitest run --coverage
 
       - name: Dashboard unit tests
-        run: npm run test --prefix dashboard
+        run: npm run test --prefix apps/dashboard
 
   ouroboros-postgres-optional:
     name: Ouroboros Postgres integration (optional)

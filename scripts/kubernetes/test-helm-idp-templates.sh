@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
 
-helm dependency update charts/clawql-idp >/dev/null
+helm dependency update manifests/charts/clawql-idp >/dev/null
 
 TMP_LEAN="$(mktemp)"
 TMP_FULL="$(mktemp)"
@@ -12,13 +12,13 @@ trap 'rm -f "${TMP_LEAN}" "${TMP_FULL}"' EXIT
 
 _LINT_SECRET=(--set clawql-mcp.envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-idp --namespace clawql \
+helm template test manifests/charts/clawql-idp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set clawql-mcp.kyverno.imageSignaturePolicy.enabled=false \
   >"${TMP_LEAN}"
 
-helm template test charts/clawql-idp --namespace clawql \
-  -f charts/clawql-idp/values-idp-full.yaml \
+helm template test manifests/charts/clawql-idp --namespace clawql \
+  -f manifests/charts/clawql-idp/values-idp-full.yaml \
   "${_LINT_SECRET[@]}" \
   --set clawql-mcp.kyverno.imageSignaturePolicy.enabled=false \
   --set-string clawql-mcp.openclaw.gatewayToken=helm-idp-test-token \

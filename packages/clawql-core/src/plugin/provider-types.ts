@@ -181,6 +181,48 @@ export type WormAuditEvent =
       readonly pluginId: string;
       readonly version: string;
       readonly timestamp: string;
+    }
+  | {
+      readonly type: "EXECUTE_BATCH_STARTED";
+      readonly batchId: string;
+      readonly batchName: string;
+      readonly tenantId: string;
+      readonly agentId: string;
+      readonly sessionId: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "EXECUTE_BATCH_COMPLETED" | "EXECUTE_BATCH_ABORTED";
+      readonly batchId: string;
+      readonly batchName: string;
+      readonly tenantId: string;
+      readonly agentId: string;
+      readonly sessionId: string;
+      readonly innerCallCount: number;
+      readonly success: boolean;
+      readonly failureReason?: string;
+      readonly startedAt: string;
+      readonly completedAt: string;
+      readonly payment?: {
+        readonly kind: "outbound_payment";
+        readonly protocol: "x402" | "mpp";
+        readonly resourceUrl: string;
+        readonly method: string;
+        readonly quoteDigest: string;
+        readonly amount: string;
+        readonly asset: string;
+        readonly network: string;
+        readonly payer: string;
+        readonly payee: string;
+        readonly txHash?: string;
+        readonly facilitator: string;
+        readonly hookDecision: "allow" | "deny" | "hitl";
+        readonly hookPolicyVersion: string;
+        readonly tenantId: string;
+        readonly agentId: string;
+        readonly sessionId: string;
+      };
+      readonly timestamp: string;
     };
 
 export class WormAuditSink extends Context.Tag("clawql/WormAuditSink")<

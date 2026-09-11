@@ -154,7 +154,7 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 
 **Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` at IO edges ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
 
-**Tier 1:** `examples/clawql-local-docker-compose` — runnable today.
+**Tier 1:** `docs/examples/clawql-local-docker-compose` — runnable today.
 
 **Next:** Operator dynamic composition → community verticals → Layer 0 permanence (Arweave/Rift).
 

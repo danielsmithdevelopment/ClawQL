@@ -18,7 +18,7 @@ export type AwsEksOutputs = {
  *
  * Creates the control plane, a small on-demand reserved node group, and IAM roles
  * for Karpenter. NodePool / EC2NodeClass CRs and Karpenter Helm live under
- * `deployment/gitops/karpenter/` and sync via Argo CD.
+ * `infra/gitops/karpenter/` and sync via Argo CD.
  */
 export function createAwsEks(inputs: ProvisionInputs): AwsEksOutputs {
   const clusterName = inputs.eksClusterName ?? `clawql-${inputs.tenantId ?? "prod"}`;
@@ -218,7 +218,7 @@ export function createAwsEks(inputs: ProvisionInputs): AwsEksOutputs {
     nodeGroupName: nodeGroup.nodeGroupName,
     karpenterControllerRoleArn: karpenterControllerRole.arn,
     karpenterNodeRoleArn: karpenterNodeRole.arn,
-    karpenterGitopsPath: "deployment/gitops/karpenter",
+    karpenterGitopsPath: "infra/gitops/karpenter",
   };
 }
 

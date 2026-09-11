@@ -48,7 +48,7 @@ docker compose -f docker/compose/docling-classifier.compose.yml up -d
 curl -s http://localhost:8090/health
 ```
 
-See [`deployment/samples/langextract-http/README.md`](../../deployment/samples/langextract-http/README.md).
+See [`docs/examples/idp/langextract-http/README.md`](../../docs/examples/idp/langextract-http/README.md).
 
 ## Environment
 

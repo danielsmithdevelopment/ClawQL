@@ -1,0 +1,1665 @@
+# Default resource names match Kustomize (`clawql-mcp-http`) so kubectl snippets in docs stay familiar.
+#
+# Naming — Helm key **`vault`** vs **HashiCorp Vault** ([#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161)):
+# the **`vault`** block under this file configures Obsidian *memory* storage (Markdown on disk). It does not
+# deploy HashiCorp Vault. Use **`hashicorpvault`** for the bundled Vault chart and **`envFromSecret`** /
+# **`envFromSecrets`** (or External Secrets) for provider tokens.
+fullnameOverride: clawql-mcp-http
+nameOverride: ""
+
+replicaCount: 1
+
+# Optional Deployment strategy (e.g. `{ type: Recreate }` on single-node clusters to avoid two pods during rollout).
+deploymentStrategy: {}
+
+image:
+  repository: ghcr.io/danielsmithdevelopment/clawql-mcp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+# Extra labels on the MCP pod template (e.g. Istio: sidecar.istio.io/inject).
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+# VM-level containment for MCP + sandbox workloads (#274). When enabled, the MCP Deployment pod sets
+# spec.runtimeClassName — you must install a matching cluster RuntimeClass (e.g. kata-deploy → kata-qemu).
+# Kyverno admission is separate: kyverno.runtimeClassPolicy (namespace-scoped). Independent of MCP proxy / JWT.
+security:
+  kata:
+    enabled: false
+    runtimeClassName: kata-qemu
+
+service:
+  type: LoadBalancer
+  # Service port for HTTP (MCP + health + GraphQL). Base Kustomize uses 80 → container 8080.
+  http:
+    port: 80
+    targetPort: 8080
+  grpc:
+    port: 50051
+    targetPort: 50051
+  # Extra annotations on the MCP Service (merged after prometheus scrape annotations when enabled).
+  annotations: {}
+
+# GET /metrics (OpenMetrics). Prometheus scrape integration — see manifests/charts/clawql-mcp/README.md.
+metrics:
+  # When true, annotate the MCP Service with prometheus.io/* so Prometheus deployments that honor
+  # Service annotations pick up ClawQL (notably Istio samples/addons/prometheus.yaml — job
+  # kubernetes-service-endpoints). Port must match the HTTP container listen port (service.http.targetPort).
+  prometheusScrapeAnnotations:
+    enabled: true
+    path: /metrics
+    port: ""
+  # monitoring.coreos.com/v1 ServiceMonitor for Prometheus Operator (kube-prometheus-stack, etc.).
+  # Requires the ServiceMonitor CRD; rendered only when enabled and API is available.
+  serviceMonitor:
+    enabled: false
+    # If empty, ServiceMonitor is created in the release namespace.
+    namespace: ""
+    labels: {}
+    interval: 30s
+    scrapeTimeout: 10s
+
+# Bundled OpenAPI/GraphQL catalog is **available** in the image but **not loaded** by default.
+# Opt in via `providers.pack` (`default` | `all-providers` | `google` | `aws` | `atlassian` | `none`)
+# and/or `providers.enabled: [github, linear, …]` — injected into CLAWQL_INSTANCE_SPEC.
+# Legacy escape hatch: set `provider` to a pack/vendor id to inject CLAWQL_PROVIDER (omit / empty = none).
+provider: ""
+providers:
+  pack: none
+  # enabled: []
+bundledOffline: "1"
+
+# MCP protobuf gRPC listener (port service.grpc.port). Alias for Convergence Week blog:
+# `clawql-mcp-grpc.enabled` — prefer `enableGrpc` in new values; both are honored in templates.
+enableGrpc: true
+enableGrpcReflection: false
+clawql-mcp-grpc:
+  enabled: true
+obsidianVaultPath: /vault
+port: "8080"
+mcpPath: /mcp
+nodeOptions: "--max-old-space-size=1536"
+
+# Max protobuf send/receive per frame for MCP gRPC (`GRPC_MAX_MESSAGE_LENGTH`). Large `execute` bodies
+# (e.g. base64 PDF → Tika) should use **`model_context_protocol.Mcp/CallTool`** on the gRPC port, not Streamable HTTP JSON.
+grpcMaxMessageLength: 67108864
+
+# Optional MCP chokepoint (**Deployment** + **Service**) in front of **`clawql-mcp-http`** — Istio ordering,
+# JWT/ATR gateway, or **nginx** TCP/HTTP passthrough. Defaults **off**.
+# See **docs/security/mcp-proxy-jwt-atr.md** and **docs/integrations/panguard-kubernetes.md**.
+mcpProxy:
+  enabled: false
+  mode: nginx
+  replicaCount: 2
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  custom:
+    image:
+      repository: ""
+      tag: latest
+      pullPolicy: IfNotPresent
+    command: []
+    args: []
+    extraEnv: []
+    resources: {}
+    securityContext: {}
+    readinessProbe: {}
+    livenessProbe: {}
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 80
+      targetPort: 8080
+    grpc:
+      port: 50051
+      targetPort: 50051
+  slo:
+    prometheusRule:
+      enabled: false
+      httpP99LatencyThresholdMs: 50
+      forDuration: 15m
+      labels: {}
+      annotations: {}
+
+# Optional clawql-inference sidecar Deployment (OpenAI-compatible /v1). Defaults **off**.
+# Pair with managedGateway for one-hostname /mcp + /v1 (Managed Edge Gateway).
+# See docs/getting-started/inference.md and docs/examples/managed-gateway/.
+inference:
+  enabled: false
+  replicaCount: 1
+  # Reuses the MCP image by default; override command runs clawql-inference.
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  command:
+    - packages/clawql-inference/bin/clawql-inference.mjs
+  args: []
+  extraEnv: []
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 1Gi
+  securityContext: {}
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 8080
+      targetPort: 8080
+  # Mount shared CLAWQL_HOME (virtual keys + policy) when set.
+  home:
+    enabled: false
+    existingClaim: ""
+    mountPath: /clawql-home
+  # Inject CLAWQL_AUTH_MODE / keys flags for managed deployments.
+  authMode: apiKey
+  keysEnabled: true
+  policyManifestPath: /clawql-home/Inference/policy.yaml
+
+# Optional nginx edge in front of MCP + inference (Managed Edge Gateway). Defaults **off**.
+# Requires inference.enabled=true for /v1 routes. Routes mirror docs/examples/managed-gateway/nginx.conf.
+# JWT ATR stays on the MCP/proxy upstream — see docs/security/mcp-proxy-jwt-atr.md.
+managedGateway:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: "1"
+      memory: 256Mi
+  # nginx alpine runs as uid/gid 101; read-only root + emptyDir for /tmp and cache.
+  podSecurityContext:
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  podAnnotations: {}
+  podLabels: {}
+  probes:
+    readiness:
+      initialDelaySeconds: 2
+      periodSeconds: 5
+      timeoutSeconds: 3
+    liveness:
+      initialDelaySeconds: 5
+      periodSeconds: 20
+      timeoutSeconds: 3
+  networkPolicy:
+    # When managedGateway.enabled, default to least-privilege egress (DNS + MCP + inference).
+    enabled: true
+  service:
+    type: ClusterIP
+    annotations: {}
+    http:
+      port: 80
+      targetPort: 8080
+  # Upstream service names default to chart helpers when empty.
+  mcpUpstreamHost: ""
+  mcpUpstreamPort: ""
+  inferenceUpstreamHost: ""
+  inferenceUpstreamPort: ""
+
+# memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
+enableMemory: true
+# Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
+enableDocuments: true
+# IDP specialist MCP tools (documents tier). Default off — set true to inject CLAWQL_ENABLE_*=1.
+enableIdpClassifier: false
+enableLangextract: false
+# Local Privacy Filter gateway backup ([#245]). Default off — set true to inject CLAWQL_ENABLE_PRIVACY_FILTER=1.
+enablePrivacyFilter: false
+# In-process Firecrawl pdf-inspector (`inspect_pdf`). No sidecar; ships in clawql-documents.
+enablePdfInspector: false
+# In-process Firecrawl anydoc (`convert_document`). No sidecar; ships in clawql-documents.
+enableAnydoc: false
+enableIdpPipeline: false
+
+# Optional ClawQLInstance tier-spec overlay (#255). Chart always injects CLAWQL_INSTANCE_SPEC from
+# Helm enable* values via clawql-mcp.instanceSpecJson. This mount is for operator-managed ConfigMaps.
+instanceSpec:
+  enabled: false
+  configMapName: ""
+  mountPath: /etc/clawql/instance
+
+# Default tier when building CLAWQL_INSTANCE_SPEC from Helm enable* values.
+pluginTier:
+  tier: standard
+
+# Deprecated: use `providers.pack` / `providers.enabled` (or CLAWQL_PROVIDER) instead of these flags.
+# Kept for chart compatibility; they no longer gate the provider stack.
+enableGoogle: false
+enableCloudflare: true
+enableAws: false
+
+# MCP sandbox_exec — isolated snippets (Kata default in-cluster, Docker, Seatbelt, bridge; #207). Default off.
+enableSandbox: false
+
+# MCP data_query / data_ingest — Node DuckDB (clawql-data). Default off.
+enableData: false
+
+# sandbox_exec **Kata Containers** backend (recommended production): ephemeral Jobs with runtimeClassName.
+# Requires enableSandbox: true, cluster RuntimeClass (e.g. kata-qemu), and RBAC for Jobs/ConfigMaps/Pods/logs.
+# When security.kata.enabled is true and sandboxDocker.enabled is false, chart sets CLAWQL_SANDBOX_BACKEND=kata.
+sandboxKata:
+  enabled: false
+  runtimeClassName: kata-qemu
+  namespace: ""
+  serviceAccount: ""
+  rbac: true
+
+# sandbox_exec **docker** backend on Kubernetes: mount host Docker socket + static `docker` CLI (initContainer).
+# Requires enableSandbox: true. Local single-node clusters only (Docker Desktop / Rancher Desktop). See manifests/charts/clawql-mcp/README.md.
+sandboxDocker:
+  enabled: false
+  hostSocketPath: /var/run/docker.sock
+  # When true, docker-sock hostPath uses type: Socket (kubelet rejects if the path is not a socket). Docker Desktop
+  # Kubernetes sometimes fails this check even with a valid socket — set false in values-docker-desktop.yaml.
+  enforceHostPathSocketType: true
+  # https://download.docker.com/linux/static/stable/<arch>/docker-<version>.tgz
+  staticCliVersion: "27.4.1"
+  initImage: curlimages/curl:8.11.1
+  # Host sockets are often root:docker 660; run MCP container as root so docker CLI can connect (local dev only).
+  runAsRootForDockerSocket: false
+
+# MCP notify tool — Slack chat.postMessage (#77). Requires Slack in provider merge + CLAWQL_SLACK_TOKEN (via extraEnv / secret).
+enableNotify: false
+
+# MCP workflow tool — Argo Workflows submit/observe (#243, ADR 0004). Requires Argo Workflows ≥ 3.4.0 in cluster.
+enableWorkflow: false
+
+# When enableWorkflow: true — namespace allowlist, RBAC Role/RoleBinding, and workflow env vars.
+workflow:
+  rbac: true
+  # Empty = release namespace only. Each entry gets a Role + RoleBinding for the MCP ServiceAccount.
+  namespaceAllowlist: []
+  defaultNamespace: ""
+  templateAllowlist: ""
+  argoUiBaseUrl: ""
+  allowDelete: false
+  logTailMax: 200
+  waitTimeoutSeconds: 600
+  waitPollSeconds: 5
+  generateNamePrefix: clawql-
+  # Grant get/list on ClusterWorkflowTemplate (cluster-scoped read).
+  clusterTemplates: true
+  # Optional Slack when `wait` completes (requires CLAWQL_SLACK_TOKEN; does not require enableNotify).
+  notifyOnTerminal: false
+  notifyChannel: ""
+
+# MCP argocd tool — Argo CD Application observe/sync (#244). Requires Argo CD in cluster.
+enableArgoCd: false
+argocd:
+  rbac: true
+  # Namespaces where Application CRs are managed (often `argocd`).
+  namespaceAllowlist: []
+  defaultNamespace: ""
+  allowSync: false
+
+# MCP hitl_enqueue_label_studio — Label Studio HITL bridge (#228). Requires CLAWQL_LABEL_STUDIO_* via extraEnv / secret.
+# Label Studio itself is BYO (not bundled). RBAC: docs/mcp/hitl-label-studio.md#14-multi-reviewer-rbac-ce-vs-enterprise (#249).
+#   CE: heartexlabs/label-studio or pip install label-studio — no native multi-reviewer RBAC.
+#   Enterprise: https://docs.humansignal.com/guide/install — SAML/RBAC; license required; not redistributed in this chart.
+enableHitlLabelStudio: false
+
+# clawql-web — pluggable web_search / web_fetch (docs/web/clawql-web.md).
+# enableWeb auto-on when a provider/key is set; set false to force off in regulated clusters
+# (search disabled, no external SaaS; self-host Chromium only if policy allows).
+# webSearch.searxng.bundled / webBrowser.chromium.bundled deploy in-chart Deployments
+# (templates/web-stack.yaml) — not external Helm subchart deps. OpenSearch for web: BYO or reuse Onyx.
+enableWeb: false
+webSearch:
+  provider: none # tavily|brave|searxng|opensearch|none
+  searxng:
+    enabled: false
+    bundled: false # when true (+ enabled), deploy SearXNG and inject CLAWQL_SEARXNG_URL
+    replicas: 1
+    port: 8080
+    image:
+      repository: searxng/searxng
+      tag: latest
+      pullPolicy: IfNotPresent
+    resources: {}
+  opensearch:
+    enabled: false
+    bundled: false # not wired as a chart Deployment — BYO URL or advanced reuse of Onyx OS
+    # Non-secret URL/index injected when enabled + url set. Auth via envFromSecret / extraEnv.
+    url: "" # e.g. https://opensearch:9200 or http://{{ release }}-onyx-opensearch:9200
+    index: clawql-web # dedicated index; do not share Onyx document indexes
+    # Prefer Vault/ESO secrets for:
+    #   CLAWQL_OPENSEARCH_USERNAME / CLAWQL_OPENSEARCH_PASSWORD
+    #   CLAWQL_OPENSEARCH_API_KEY
+    #   CLAWQL_OPENSEARCH_AUTHORIZATION (full header override)
+webBrowser:
+  provider: kitesurf # kitesurf|chromium|playwright|puppeteer|firecrawl|none
+  chromium:
+    enabled: false
+    bundled: false # when true (+ enabled), deploy headless Chromium and inject CLAWQL_CHROMIUM_CDP_URL
+    replicas: 1
+    port: 9222
+    image:
+      repository: chromedp/headless-shell
+      tag: latest
+      pullPolicy: IfNotPresent
+    # Omit or set null to use template defaults (--remote-debugging-port=9222, headless, etc.)
+    args: null
+    resources: {}
+# Durable web audit: memory (default) | jsonl (when CLAWQL_HOME set) | off
+webAuditStore: ""
+
+# MCP knowledge_search_onyx — Onyx POST /search/send-search-message (#118). Requires onyx in provider merge + ONYX_BASE_URL + Bearer token (extraEnv / secret).
+enableOnyx: false
+# When set, injects ONYX_BASE_URL (non-secret). Prefer extraEnv / envFromSecret for ONYX_API_TOKEN.
+onyxBaseUrl: ""
+onyx:
+  enabled: false
+  # When true (default), deploy Vespa + OpenSearch + Dragonfly + MinIO + model servers + background worker
+  # (matches upstream docker-compose). When false, deploy a minimal postgres-backed API (vector search disabled).
+  fullVectorStack: true
+  # Merged into every Onyx stack Pod template (Deployments + Vespa StatefulSet), e.g. sidecar.istio.io/inject=false for Istio ambient.
+  podAnnotations: {}
+  api:
+    image:
+      repository: onyxdotapp/onyx-backend
+      tag: latest
+      pullPolicy: IfNotPresent
+    # Extra env for onyx-api (Deployment). Example: NUM_RETRIES_ON_STARTUP for slow Vespa/OpenSearch on cold local clusters.
+    extraEnv: []
+  web:
+    image:
+      repository: onyxdotapp/onyx-web-server
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 3000
+  service:
+    port: 8080
+  authType: basic
+  userAuthSecret: "change-me-onyx-user-auth-secret"
+  # S3 / MinIO object store (full stack).
+  s3:
+    fileStoreBucketName: onyx-file-store-bucket
+  dragonfly:
+    # DragonflyDB only (Redis OSS is not a supported in-chart broker). Celery/Paperless still use redis:// URLs (wire protocol).
+    image:
+      repository: docker.dragonflydb.io/dragonflydb/dragonfly
+      tag: v1.37.2
+      pullPolicy: IfNotPresent
+    # Passed to the dragonfly binary; empty uses image defaults (--port defaults to 6379).
+    args:
+      - --logtostderr
+    service:
+      port: 6379
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  opensearch:
+    image:
+      repository: opensearchproject/opensearch
+      tag: "3.4.0"
+      pullPolicy: IfNotPresent
+    service:
+      port: 9200
+    # JVM heap for OpenSearch (raise for production).
+    javaOpts: "-Xms512m -Xmx512m"
+    # Do not set DISABLE_INSTALL_DEMO_CONFIG=true with OPENSEARCH_INITIAL_ADMIN_PASSWORD:
+    # the security plugin then loads without demo TLS and fails ("No SSL configuration found").
+    auth:
+      adminPassword: "StrongPassword123!"
+      existingSecret: ""
+      existingSecretPasswordKey: password
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1536Mi
+      limits:
+        cpu: "2"
+        memory: 3Gi
+  vespa:
+    image:
+      repository: vespaengine/vespa
+      tag: "8.609.39"
+      pullPolicy: IfNotPresent
+    skipUpgradeCheck: "true"
+    # Vespa container startup guard; keep false by default for safety.
+    ignoreNotEnoughMemory: false
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 6Gi
+  minio:
+    image:
+      repository: minio/minio
+      tag: RELEASE.2025-07-23T15-54-02Z-cpuv1
+      pullPolicy: IfNotPresent
+    service:
+      apiPort: 9000
+      consolePort: 9001
+    auth:
+      rootUser: minioadmin
+      rootPassword: minioadmin
+      existingSecret: ""
+      existingSecretUserKey: root-user
+      existingSecretPasswordKey: root-password
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 20Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  modelServer:
+    image:
+      repository: onyxdotapp/onyx-model-server
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 9000
+    resources:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 8Gi
+  background:
+    enabled: true
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 3Gi
+  postgres:
+    image:
+      repository: postgres
+      tag: "16-alpine"
+      pullPolicy: IfNotPresent
+    service:
+      port: 5432
+    auth:
+      database: onyx
+      username: onyx
+      password: "change-me"
+      existingSecret: ""
+    persistence:
+      enabled: false
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+# MCP ouroboros_* tools — clawql-ouroboros evolutionary loop (#141). Optional Postgres for durable events (#142).
+# Deprecated: Ouroboros tools always load via clawql-harness (no CLAWQL_ENABLE_OUROBOROS).
+# Kept so older values files do not break; ignored for tool registration.
+enableOuroboros: false
+# Langfuse eval webhook + ouroboros_propose_seed_revision_from_eval (#250).
+enableLangfuseEval: false
+# When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
+ouroborosDatabaseUrl: ""
+# Optional in-cluster Postgres for Ouroboros event lineage (#142), deployed alongside clawql-mcp.
+# When enabled, the chart injects CLAWQL_OUROBOROS_DB_* env vars into clawql-mcp.
+ouroborosPostgres:
+  enabled: false
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  auth:
+    database: clawql_ouroboros
+    username: clawql
+    # Used only when existingSecret is empty. Set via values file / --set-file / secret management, not plaintext in git.
+    password: ""
+    # Existing secret with key `password`.
+    existingSecret: ""
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    existingClaim: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# Optional full-stack document pipeline topology (#113).
+# When enabled, this chart can co-deploy intake/conversion/archive services
+# plus their minimal backing stores for integrated local/self-hosted workflows.
+documentPipeline:
+  enabled: true
+  docling:
+    # Layout-aware parse ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)). Large CPU image (~4 GiB); opt-in.
+    enabled: false
+    image:
+      repository: quay.io/docling-project/docling-serve-cpu
+      tag: v1.14.3
+      pullPolicy: IfNotPresent
+    service:
+      port: 5001
+    resources:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: "2"
+        memory: 6Gi
+    auth:
+      apiKey: ""
+      existingSecret: ""
+  # Reference classifier HTTP ([#248]) — Compose sample image; opt-in.
+  # Pin contract: image.tag (+ env.modelVersion). Optional modelPath / PVC for BYO weights.
+  classifier:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-classifier-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    # When empty, chart builds from docs/examples/idp/classifier-http via values override / local image.
+    service:
+      port: 8080
+    env:
+      modelVersion: ""
+      minConfidence: "0.85"
+      # Optional filesystem pin for BYO weights (sidecar must load MODEL_PATH).
+      modelPath: ""
+    model:
+      # Optional PVC mount for exported weights (joblib/ONNX). Empty = bake into image.
+      existingClaim: ""
+      mountPath: /models/current
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+  # LangExtract sidecar ([#246]) — reference sample image; opt-in.
+  langextract:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-langextract-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 8090
+    env:
+      mode: demo
+      backend: openrouter
+      modelId: deepseek/deepseek-chat
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  # Local Privacy Filter sidecar ([#245]) — backup after Presidio; demo by default.
+  privacyFilter:
+    enabled: false
+    image:
+      repository: ghcr.io/danielsmithdevelopment/clawql-privacy-filter-http
+      tag: latest
+      pullPolicy: IfNotPresent
+    service:
+      port: 8091
+    env:
+      mode: demo
+      device: cpu
+      modelId: openai/privacy-filter
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 4Gi
+  tika:
+    image:
+      repository: apache/tika
+      tag: "2.9.2.1"
+      pullPolicy: IfNotPresent
+    service:
+      port: 9998
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+  gotenberg:
+    image:
+      repository: gotenberg/gotenberg
+      tag: "8.8"
+      pullPolicy: IfNotPresent
+    service:
+      port: 3000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  stirling:
+    image:
+      repository: frooodle/s-pdf
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8080
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi
+    auth:
+      apiKey: ""
+      existingSecret: ""
+    security:
+      # Enables Stirling user auth/admin features.
+      enableLogin: false
+      # Keep extra enterprise/admin features available when login is enabled.
+      disableAdditionalFeatures: false
+  paperless:
+    enabled: true
+    image:
+      repository: ghcr.io/paperless-ngx/paperless-ngx
+      # OpenAPI `/api/schema/` (drf-spectacular) exists from v2.15 onward; older tags return SPA login (302).
+      tag: "2.15.0"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8000
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    auth:
+      apiToken: ""
+      secretKey: ""
+      # Optional admin bootstrap for paperless-ngx. On startup, the container creates
+      # the admin user when it does not already exist.
+      adminUser: ""
+      adminPassword: ""
+      adminMail: ""
+      existingSecret: ""
+    persistence:
+      mediaSize: 20Gi
+      dataSize: 10Gi
+      consumeSize: 10Gi
+      storageClass: ""
+      existingMediaClaim: ""
+      existingDataClaim: ""
+      existingConsumeClaim: ""
+
+# Nextcloud + ConeShare collaboration layer (IDP storage + secure sharing).
+# Enable with `idpCollaboration.enabled=true`. Nextcloud uses SQLite in-pod for lab installs;
+# point `coneshare.externalUrl` at an existing ConeShare instance or co-deploy `coneshare.enabled`.
+idpCollaboration:
+  enabled: false
+  nextcloud:
+    enabled: true
+    image:
+      repository: nextcloud
+      tag: "29-apache"
+      pullPolicy: IfNotPresent
+    service:
+      port: 8080
+    auth:
+      adminUser: admin
+      adminPassword: ""
+      existingSecret: ""
+    persistence:
+      size: 20Gi
+      storageClass: ""
+      existingClaim: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+  coneshare:
+    enabled: false
+    externalUrl: ""
+    image:
+      repository: conesharedev/coneshare
+      tag: rolling
+      pullPolicy: IfNotPresent
+    service:
+      port: 80
+    auth:
+      apiToken: ""
+      existingSecret: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+
+stores:
+  postgres:
+    enabled: true
+    image:
+      repository: postgres
+      tag: "16-alpine"
+      pullPolicy: IfNotPresent
+    service:
+      port: 5432
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+    auth:
+      database: paperless
+      username: paperless
+      password: "change-me"
+      existingSecret: ""
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      existingClaim: ""
+  dragonfly:
+    enabled: true
+    image:
+      repository: docker.dragonflydb.io/dragonflydb/dragonfly
+      tag: v1.37.2
+      pullPolicy: IfNotPresent
+    args:
+      - --logtostderr
+    service:
+      port: 6379
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# Optional Apache Flink cluster for in-cluster Onyx connector jobs (#119).
+# Default is internal-only networking (ClusterIP), no ingress.
+flink:
+  enabled: false
+  image:
+    repository: flink
+    tag: "1.19.1-scala_2.12-java17"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    restPort: 8081
+    rpcPort: 6123
+    blobPort: 6124
+    queryPort: 6125
+  jobManager:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+  taskManager:
+    replicas: 2
+    taskSlots: 2
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+  # Secret with connector credentials (e.g. Slack/Confluence/Jira/Drive tokens).
+  # Keys in this secret are injected only into Flink pods, not clawql-mcp.
+  connectorSecret: ""
+  # Optional explicit Flink process memory sizing (required by some Flink images).
+  jobManagerMemoryProcessSize: ""
+  taskManagerMemoryProcessSize: ""
+  # Additional env entries for both JobManager and TaskManager containers.
+  extraEnv: []
+
+# Optional NATS JetStream event backbone for Ouroboros/agents/edge sync (#127).
+# Deploys a lightweight single-node NATS with JetStream enabled in-cluster.
+nats:
+  enabled: false
+  # Optional external NATS URL override (for managed/shared clusters).
+  # When set, this URL is injected into clawql-mcp as CLAWQL_NATS_URL.
+  url: ""
+  image:
+    repository: nats
+    tag: "2.10.17-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    clientPort: 4222
+    clusterPort: 6222
+    monitorPort: 8222
+  jetStream:
+    enabled: true
+    # NATS size format, examples: 512Mi, 2Gi.
+    maxMemoryStore: 256Mi
+    maxFileStore: 10Gi
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 20Gi
+    existingClaim: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  # Deck-aligned subject roots for JetStream publishers/consumers ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).
+  # Helm deploys NATS only — streams/consumers are created by application workers (Ouroboros, agents, edge), not by templates.
+  subjectConvention:
+    workflow: clawql.workflow
+    agent: clawql.agent
+    document: clawql.document
+    edge: clawql.edge
+  # MCP publish + optional embedded consumer ([#254]). Standalone worker + KEDA ([#257]).
+  appIntegration:
+    publish: false
+    # When true and nats.worker.enabled=false, run consumer inside clawql-mcp-http.
+    embeddedConsumer: true
+  worker:
+    enabled: false
+    replicas: 1
+    # Document JetStream consumers (Nextcloud inbox → run_idp_pipeline; Coneshare analytics follow-up).
+    idpPipeline: false
+    coneshareFollowup: false
+    # When idpPipeline=true, worker calls MCP internal URL if documents deps are not in-process.
+    mcpInternalUrl: ""
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: "1"
+        memory: 512Mi
+  # IDP agent bridge (#128): terminal/viewer document events → MCP memory_ingest / notify.
+  # Pair with Hermes or Pi as the interactive MCP client — see docs/examples/idp/idp-nats-agent/.
+  agentBridge:
+    enabled: false
+    replicas: 1
+    durable: clawql-idp-agent-bridge
+    # Streamable HTTP MCP (defaults to in-cluster clawql-mcp Service /mcp).
+    mcpHttpUrl: ""
+    # Optional Slack channel on pipeline.failed.
+    notifyChannel: ""
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: "500m"
+        memory: 256Mi
+  keda:
+    enabled: false
+    # Requires KEDA (https://keda.sh) installed in the cluster.
+    minReplicaCount: 0
+    maxReplicaCount: 10
+    lagThreshold: "5"
+    activationLagThreshold: "1"
+    pollingInterval: 15
+    cooldownPeriod: 300
+    account: "$G"
+    # Defaults match clawql-automation env (CLAWQL_WORKFLOW / clawql-hitl-resume).
+    stream: ""
+    consumer: ""
+    # Extra JetStream durables for KEDA lag (beyond HITL / idpPipeline / coneshareFollowup auto-triggers).
+    extraConsumers: []
+    # Pre-create JetStream consumer so KEDA can read lag before first worker pod.
+    bootstrapConsumer: true
+
+# ClawQL Streams — event-driven agent cells (draft). See docs/streams/clawql-streams.md.
+streams:
+  enabled: false
+  # kubernetes | celld | cloudflare
+  scalingBackend: kubernetes
+  celld:
+    enabled: false
+    # Pin celld v0.4.0 — do not mix v0.3.x and v0.4.x in one fleet.
+    version: v0.4.0
+    image:
+      repository: ghcr.io/denoland/celld
+      tag: v0.4.0
+      pullPolicy: IfNotPresent
+    # Fleet bucket (required when enabled). Example: s3://clawql-streams-state
+    bucket: ""
+    endpoint: ""
+    region: auto
+    # Secret with AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (and optional AWS_SESSION_TOKEN).
+    # Defaults to envFromSecret when empty.
+    credentialsSecret: ""
+    replicaCount: 1
+    # v0.4.0 health probe path (not /__celld/health).
+    healthPath: /.well-known/celld/health
+    # Worker INFERENCE_URL for deployed bundle — auto when inference.enabled and empty.
+    inferenceUrl: ""
+    # Worker CLAWQL_MCP_URL for search/execute (Streamable HTTP). Empty → in-cluster MCP
+    # (or mcpProxy when enabled). Set to "" only via extraEnv override if cells must not call MCP.
+    mcpUrl: ""
+    # Optional mcp-api-adapter REST origin (POST /{tool}). Empty → not injected (no chart Service yet).
+    # Example: http://mcp-api-adapter.clawql.svc.cluster.local:8090
+    adapterUrl: ""
+    service:
+      type: ClusterIP
+      workerPort: 8080
+      internalPort: 8081
+    terminationGracePeriodSeconds: 120
+    probes:
+      readiness:
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+      liveness:
+        initialDelaySeconds: 15
+        periodSeconds: 20
+        timeoutSeconds: 3
+        failureThreshold: 3
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 2Gi
+    podAnnotations: {}
+    podSecurityContext: {}
+    securityContext: {}
+    extraEnv: []
+  ambientDelivery: true
+  auditLevel: WORM
+  subscriptionStore: postgres
+
+# Extra env (e.g. tokens from literal — prefer existing secrets for production).
+extraEnv: []
+
+# Optional: load env vars from an existing Secret (keys become env var names).
+# Default name matches External Secrets + `make bootstrap-vault-eso` ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
+envFromSecret: clawql-provider-env
+
+# Optional: multiple Secrets merged into envFrom (listed order). Use with External Secrets / VSO → Kubernetes Secrets.
+envFromSecrets: []
+
+# Vault-backed provider credentials — production default ([#241](https://github.com/danielsmithdevelopment/ClawQL/issues/241)).
+# `requireVaultBackedSecrets: true` (default) fails render without `envFromSecret` / `envFromSecrets`.
+# Set `false` only in lab overlays that accept non-Vault env sourcing (not recommended for production).
+secretSourcing:
+  requireVaultBackedSecrets: true
+  externalSecrets:
+    # Render ClusterSecretStore + ExternalSecret (requires External Secrets Operator CRDs in cluster).
+    enabled: false
+    secretName: clawql-provider-env
+    clusterSecretStoreName: ""
+    vaultServer: ""
+    vaultMount: secret
+    vaultKvPath: clawql/providers
+    vaultAuthRole: clawql-eso-read
+    kubernetesAuthMount: kubernetes
+    refreshInterval: 5m
+    esoServiceAccount:
+      name: external-secrets
+      namespace: external-secrets
+  # Vault KV `secret/clawql/providers` property → Kubernetes Secret key (becomes container env var).
+  providerEnvMapping:
+    - { property: githubToken, envKey: CLAWQL_GITHUB_TOKEN }
+    - { property: slackToken, envKey: CLAWQL_SLACK_TOKEN }
+    - { property: onyxApiToken, envKey: ONYX_API_TOKEN }
+    - { property: paperlessApiToken, envKey: PAPERLESS_API_TOKEN }
+    - { property: stirlingApiKey, envKey: STIRLING_API_KEY }
+    - { property: doclingApiKey, envKey: DOCLING_API_KEY }
+    - { property: nextcloudUsername, envKey: NEXTCLOUD_USERNAME }
+    - { property: nextcloudAppPassword, envKey: NEXTCLOUD_APP_PASSWORD }
+    - { property: coneshareApiToken, envKey: CONESHARE_API_TOKEN }
+    - { property: cloudflareApiToken, envKey: CLAWQL_CLOUDFLARE_API_TOKEN }
+    - { property: googleAccessToken, envKey: CLAWQL_GOOGLE_ACCESS_TOKEN }
+    - { property: atlassianApiToken, envKey: CLAWQL_ATLASSIAN_TOKEN }
+    - { property: labelStudioApiToken, envKey: CLAWQL_LABEL_STUDIO_API_TOKEN }
+    - { property: hitlWebhookToken, envKey: CLAWQL_HITL_WEBHOOK_TOKEN }
+    - { property: coneshareWebhookToken, envKey: CLAWQL_CONESHARE_WEBHOOK_TOKEN }
+
+# Bundled HashiCorp Vault Helm chart (**always** installed — see **Chart.yaml** dependencies). Do not set
+# **`hashicorpvault.enabled`** to **`false`**; template validation fails (`templates/zzz-defense-in-depth-secrets-policies.yaml`).
+hashicorpvault:
+  injector:
+    enabled: true
+  server:
+    enabled: true
+    dev:
+      enabled: false
+    # Persist Vault data on a PVC (file backend). Required for KV to survive pod reschedules.
+    dataStorage:
+      enabled: true
+      size: 10Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 10
+  failureThreshold: 36
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+persistence:
+  enabled: false
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  existingClaim: ""
+
+# Team shared memory — sync Obsidian vault notes to object storage for multi-user recall.
+# Default provider: Cloudflare R2 (bundled default stack). Credentials belong in Vault KV /
+# envFromSecret — never in values:
+#   r2: r2AccessKeyId, r2SecretAccessKey, cloudflareAccountId
+#   s3: awsAccessKeyId, awsSecretAccessKey (+ CLAWQL_AWS_REGION via extraEnv if needed)
+#   gcs: gcsHmacAccessId, gcsHmacSecret (S3-compatible HMAC interop; endpoint auto-set when provider=gcs)
+# Docs: docs/getting-started/team-vault-sync.md
+teamSync:
+  enabled: false
+  provider: r2 # r2 | s3 | gcs (S3-compatible API)
+  bucket: ""
+  prefix: "" # shared key prefix, e.g. teams/engineering/
+  region: auto
+  endpoint: "" # optional override (gcs defaults to https://storage.googleapis.com in template)
+  autoPush: false # CLAWQL_SYNC_AUTO=1 — quiet debounce + min-interval push after memory_ingest; shutdown flush if dirty
+  autoPushDebounceMs: 2000
+  autoPushMinMs: 30000 # CLAWQL_SYNC_AUTO_PUSH_MIN_MS — min gap between pushes; shutdown flush bypasses
+  autoPull: false # CLAWQL_SYNC_AUTO_PULL=1 — throttled pull before memory_recall
+  autoPullMinMs: 60000
+  autoPullOnStart: false # CLAWQL_SYNC_AUTO_PULL_ON_START=1 — pull once at MCP startup
+  r2:
+    # Non-secret account id (alternative: cloudflareAccountId in provider secret).
+    accountId: ""
+
+# Obsidian memory Markdown on disk (`memory_ingest` / `memory_recall`). Not HashiCorp Vault — #161.
+# Mutually exclusive with persistence.enabled (PVC wins if both are set).
+vault:
+  hostPath:
+    enabled: false
+    path: ""
+    type: DirectoryOrCreate
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: clawql.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+ui:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: ghcr.io/danielsmithdevelopment/clawql-website
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 3000
+    targetPort: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  startupProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  ingress:
+    enabled: false
+    className: nginx
+    annotations: {}
+    hosts:
+      - host: docs.localhost
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+dashboard:
+  enabled: false
+  replicaCount: 1
+  allowSync: true
+  # Optional in-cluster OpenClaw chat HTTP endpoint for Agent Chat.
+  # Empty: auto-wires to OpenClaw chat-bridge when openclaw.enabled && openclaw.chatBridge.enabled.
+  # Example override: http://<release>-openclaw.<ns>.svc.cluster.local:8787/v1/chat
+  openclawChatUrl: ""
+  # Agent Chat SSE streaming (dashboard simulates or proxies bridge /v1/chat/stream).
+  chatStream: true
+  image:
+    repository: ghcr.io/danielsmithdevelopment/clawql-dashboard
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    port: 3040
+    targetPort: 3040
+  k8s:
+    namespace: clawql
+    secretName: clawql-provider-env
+    deploymentName: clawql-mcp-http
+  vault:
+    namespace: clawql
+    pod: clawql-vault-0
+    addr: http://127.0.0.1:8200
+    mount: secret
+    path: clawql/providers
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+  startupProbe:
+    httpGet:
+      path: /api/k8s/health
+      port: http
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /api/k8s/health
+      port: http
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  livenessProbe:
+    httpGet:
+      path: /api/k8s/health
+      port: http
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  ingress:
+    enabled: false
+    className: nginx
+    annotations: {}
+    hosts:
+      - host: clawql.localhost
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+# Optional per-service ingresses for HTTP-capable provider stacks.
+# Useful for local Docker Desktop hostnames like *.localhost.
+providerIngress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  tls: []
+  paperless:
+    enabled: true
+    host: paperless.localhost
+    path: /
+    pathType: Prefix
+  stirling:
+    enabled: true
+    host: stirling.localhost
+    path: /
+    pathType: Prefix
+  tika:
+    enabled: true
+    host: tika.localhost
+    path: /
+    pathType: Prefix
+  docling:
+    enabled: true
+    host: docling.localhost
+    path: /
+    pathType: Prefix
+  gotenberg:
+    enabled: true
+    host: gotenberg.localhost
+    path: /
+    pathType: Prefix
+  flink:
+    enabled: true
+    host: flink.localhost
+    path: /
+    pathType: Prefix
+  natsMonitor:
+    enabled: true
+    host: nats.localhost
+    path: /
+    pathType: Prefix
+  onyx:
+    enabled: true
+    host: onyx.localhost
+    path: /
+    pathType: Prefix
+  nextcloud:
+    enabled: true
+    host: nextcloud.localhost
+    path: /
+    pathType: Prefix
+  coneshare:
+    enabled: true
+    host: coneshare.localhost
+    path: /
+    pathType: Prefix
+
+# Optional Istio ServiceEntry
+# Requires cluster Istio CRDs. Install **istio-egressgateway** (chart **istio/gateway**) with selector
+# **istio: egressgateway** when **throughEgressGateway** is true. See **docs/deployment/helm.md**.
+istio:
+  egressAllowlist:
+    enabled: false
+    # Gateway + mesh/egress VirtualServices (TLS passthrough). If false, only **ServiceEntry** resources
+    # are created in the release namespace (REGISTRY_ONLY baseline; works with ambient without a gateway).
+    throughEgressGateway: true
+    egressGatewayNamespace: istio-system
+    egressGatewayServiceName: istio-egressgateway
+    gatewayName: clawql-provider-egress-gateway
+
+# OpenClaw gateway (optional) — upstream Kubernetes layout: https://docs.openclaw.ai/install/kubernetes
+# Default image is the GHCR vendor mirror (`openclaw-vendor`, not npm CLI). Binds loopback in-pod; access via
+# `kubectl port-forward svc/<release>-openclaw 18789:18789`. Opt-in: `openclaw.enabled=true` and set
+# `openclaw.gatewayToken` (unless `openclaw.existingSecret`). Docker Desktop: `CLAWQL_ENABLE_OPENCLAW=1`
+# and `OPENCLAW_GATEWAY_TOKEN=...` with `make local-k8s-up` (see scripts/kubernetes/local-k8s-docker-desktop.sh).
+openclaw:
+  enabled: false
+  replicaCount: 1
+  gateway:
+    port: 18789
+  # Default: GHCR mirror published by `.github/workflows/container-mirror.yml` (scan → push → Cosign).
+  # Until the first successful mirror run, override with upstream: `--set openclaw.image.repository=ghcr.io/openclaw/openclaw`.
+  image:
+    repository: ghcr.io/danielsmithdevelopment/openclaw-vendor
+    tag: slim
+    pullPolicy: IfNotPresent
+  initImage:
+    repository: busybox
+    tag: "1.37"
+    pullPolicy: IfNotPresent
+  initResources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  initSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+  podSecurityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  probes:
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readiness:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      timeoutSeconds: 5
+  service:
+    type: ClusterIP
+    port: 18789
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    existingClaim: ""
+  # Required when enabled unless existingSecret is set (openssl rand -hex 24).
+  gatewayToken: ""
+  # Use an existing Secret with OPENCLAW_GATEWAY_TOKEN (and optional provider keys) instead of chart-created Secret.
+  existingSecret: ""
+  anthropicApiKey: ""
+  openaiApiKey: ""
+  geminiApiKey: ""
+  openrouterApiKey: ""
+  # Full JSON for openclaw.json; empty uses chart default (loopback gateway + token auth).
+  openclawJson: ""
+  agentsMd: |
+    # OpenClaw Assistant
+
+    You are a helpful AI assistant running in Kubernetes (deployed by the ClawQL Helm chart).
+    ClawQL MCP is pre-registered under `mcp.servers` — use `search` then `execute` for API operations.
+  # Auto-register in-cluster ClawQL Streamable HTTP MCP in default openclaw.json (`mcp.servers`).
+  clawqlMcp:
+    enabled: true
+    serverName: clawql
+    # Override full URL (e.g. Tailscale / Ingress). Empty: chart computes cluster DNS
+    # (MCP Service, or mcpProxy Service when mcpProxy.enabled).
+    url: ""
+    # Optional Bearer for MCP chokepoint / JWT (OpenClaw resolves ${CLAWQL_MCP_BEARER_TOKEN} in headers).
+    bearerToken: ""
+    bearerTokenSecret:
+      name: ""
+      key: CLAWQL_MCP_BEARER_TOKEN
+  # HTTP shim for dashboard Agent Chat (`POST /v1/chat` → `openclaw agent`). Sidecar in the OpenClaw pod.
+  chatBridge:
+    enabled: true
+    port: 8787
+    host: "0.0.0.0"
+    agentId: main
+    openclawBin: node
+    openclawCliEntry: /app/dist/index.js
+    timeoutSec: 120
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+    extraEnv: []
+  podAnnotations: {}
+  extraEnv: []
+
+# Goose agent runtime (optional) — Block Goose CLI pool; implements AgentRuntime target (see contributor spec §1.5).
+# Default image is upstream `ghcr.io/aaif-goose/goose` (not yet mirrored). Scale `replicaCount` on demand;
+# full task API / checkpoint resume is Operator-era — this chart ships a stateful idle pool + ClawQL MCP URL.
+goose:
+  enabled: false
+  replicaCount: 0
+  maxReplicas: 50
+  image:
+    repository: ghcr.io/aaif-goose/goose
+    tag: latest
+    pullPolicy: IfNotPresent
+  provider: openai
+  model: gpt-4o
+  existingSecret: ""
+  openaiApiKey: ""
+  anthropicApiKey: ""
+  clawqlMcp:
+    enabled: true
+    url: ""
+  persistence:
+    enabled: true
+    mountPath: /opt/clawql/goose
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 50Gi
+    existingClaim: ""
+  podSecurityContext:
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+  # Placeholder until AgentRuntime HTTP/task API lands — keeps pods alive for PVC + env wiring checks.
+  idleCommand:
+    - sleep
+    - infinity
+  podAnnotations: {}
+  extraEnv: []
+
+# Hermes — natural-language platform ops (`@hermes …` in dashboard). No separate container; enables dashboard flag.
+hermes:
+  enabled: false
+
+# Kyverno ClusterPolicy: require Cosign (keyless / GitHub Actions) for ClawQL GHCR images (default on).
+# Prerequisite: Kyverno installed in the cluster (CRD kyverno.io/v1 ClusterPolicy). For clusters without
+# Kyverno, set kyverno.imageSignaturePolicy.enabled=false before install, or install Kyverno first.
+kyverno:
+  imageSignaturePolicy:
+    enabled: true
+    # When true, only Pods in the Helm release namespace are matched (useful on shared dev clusters).
+    matchReleaseNamespaceOnly: false
+    policyName: ""
+    policyTitle: "ClawQL GHCR — require Cosign (keyless / GitHub Actions)"
+    validationFailureAction: Enforce
+    background: false
+    failurePolicy: Fail
+    webhookTimeoutSeconds: 30
+    verifyDigest: false
+    mutateDigest: false
+    excludeNamespaces:
+      - kube-system
+      - kyverno
+      - kube-public
+    imageReferences:
+      - "ghcr.io/danielsmithdevelopment/clawql-mcp*"
+      - "ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge*"
+      - "ghcr.io/danielsmithdevelopment/clawql-website*"
+      - "ghcr.io/danielsmithdevelopment/clawql-dashboard*"
+      # OpenClaw vendor mirror (same Cosign identity as clawql-* — see container-mirror workflow).
+      - "ghcr.io/danielsmithdevelopment/openclaw-vendor*"
+    # Optional: docker-registry Secrets in namespace **kyverno** for verifyImages when GHCR packages are private.
+    # Upstream images are public; `make local-k8s-up` only creates **clawql-kyverno-ghcr-pull** when
+    # `CLAWQL_KYVERNO_GHCR_PULL_TOKEN` or `GITHUB_TOKEN` / `GH_TOKEN` / `CLAWQL_GITHUB_TOKEN` is set (set
+    # `CLAWQL_GHCR_PULL_USERNAME` if not using `GITHUB_ACTOR`).
+    imageRegistrySecretNames: []
+    cosign:
+      subjectRegExp: "^https://github\\.com/danielsmithdevelopment/ClawQL/.*"
+      issuerRegExp: "^https://token\\.actions\\.githubusercontent\\.com.*"
+      rekorUrl: "https://rekor.sigstore.dev"
+  # Optional ClusterPolicy: require spec.runtimeClassName per namespace lists (Kata vs gVisor tiers).
+  # Prerequisite: Kyverno + matching RuntimeClass CRs on nodes. Default off — enabling without Kata/gVisor breaks scheduling.
+  # Keep kataNamespaces and gvisorNamespaces disjoint. See docs/security/runtime-class-containment.md.
+  runtimeClassPolicy:
+    enabled: false
+    policyName: ""
+    policyTitle: "ClawQL — require RuntimeClass (Kata / gVisor namespaces)"
+    validationFailureAction: Enforce
+    background: false
+    failurePolicy: Fail
+    webhookTimeoutSeconds: 30
+    # Pods in these namespaces must set spec.runtimeClassName to kataRuntimeClassName.
+    kataNamespaces: []
+    kataRuntimeClassName: kata-qemu
+    # Pods in these namespaces must set spec.runtimeClassName to gvisorRuntimeClassName (lighter isolation tier).
+    gvisorNamespaces: []
+    gvisorRuntimeClassName: gvisor
+    # When non-empty, Pods with this label (any namespace matched above) are excluded from validation.
+    exemptPodLabelKey: ""
+    exemptPodLabelValue: exempt
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

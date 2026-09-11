@@ -1,0 +1,28 @@
+# EXAMPLE — Karpenter NodePool disruption budget for filler capacity.
+# Bound proactive consolidation so it does not add churn during bursts.
+# Spec: docs/streams/aws-celld-burst.md §5.3
+#
+# Apply only after adapting names/AMI family to your cluster.
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: clawql-filler
+spec:
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 5m
+    budgets:
+      - nodes: "10%"
+  template:
+    metadata:
+      labels:
+        clawql.io/workload: filler
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: clawql-filler

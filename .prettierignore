@@ -3,10 +3,10 @@ dist/
 coverage/
 providers/
 package-lock.json
-website/.next/
-website/node_modules/
-website/out/
-website/build/
+apps/docs/.next/
+apps/docs/node_modules/
+apps/docs/out/
+apps/docs/build/
 .nyc_output/
 *.local.md
 providers/google/discovery-cache/

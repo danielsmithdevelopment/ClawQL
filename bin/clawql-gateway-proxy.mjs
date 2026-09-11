@@ -7,7 +7,7 @@
  *   /healthz → local JSON
  *
  * Canonical copy for npm installs (`clawql-gateway-proxy`) and Packer/process profile.
- * examples/managed-gateway/gateway-proxy.mjs stays in sync for local checkout demos.
+ * docs/examples/managed-gateway/gateway-proxy.mjs stays in sync for local checkout demos.
  */
 import http from "node:http";
 import { URL } from "node:url";

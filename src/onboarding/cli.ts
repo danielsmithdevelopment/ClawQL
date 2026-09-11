@@ -133,6 +133,8 @@ import {
   runPaymentsCreditsStepUpShowCmd,
   runPaymentsOrgAllocateCmd,
   runPaymentsOrgCreateCmd,
+  runPaymentsOrgProvisionCmd,
+  runPaymentsOrgReportUsageCmd,
   runPaymentsOrgDistributeCmd,
   runPaymentsOrgInviteCmd,
   runPaymentsOrgMembersCmd,
@@ -334,6 +336,12 @@ function parse(argv: string[]): {
     else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
     else if (a === "--org-id") flags.orgId = argv[++i] ?? "";
     else if (a === "--actor-tenant") flags.actorTenantId = argv[++i] ?? "";
+    else if (a === "--billing-mode") flags.billingMode = argv[++i] ?? "";
+    else if (a === "--created-via") flags.createdVia = argv[++i] ?? "";
+    else if (a === "--member-emails") flags.memberEmails = argv[++i] ?? "";
+    else if (a === "--stripe-customer") flags.stripeCustomerId = argv[++i] ?? "";
+    else if (a === "--stripe-subscription") flags.stripeSubscriptionId = argv[++i] ?? "";
+    else if (a === "--overage") flags.overageUnits = argv[++i] ?? "";
     else if (a === "--member-tenant") flags.memberTenantId = argv[++i] ?? "";
     else if (a === "--domains") flags.domains = argv[++i] ?? "";
     else if (a === "--allocation-role") flags.allocationRoleId = argv[++i] ?? "";
@@ -511,6 +519,8 @@ Usage:
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
   clawql payments org create --org-id acme --actor-tenant cfo [--domains acme.com]
+  clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]
+  clawql payments org report-usage --org-id acme [--month YYYY-MM] [--overage N]
   clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
   clawql payments org invite --org-id acme --actor-tenant cfo --email intern@acme.com [--role intern]
   clawql payments org members|spend|allocate|distribute|suspend|remove --org-id acme …
@@ -536,7 +546,7 @@ release (Layer 0 — immutable releases):
   verify <target> Verify bundle, manifest.json, or Arweave tx id
 
 ontology (ADR 0009 — enterprise Ontology + meta-ontology v0.1):
-  lint            Validate entity YAML against schemas/ontology/entity.schema.json
+  lint            Validate entity YAML against packages/clawql-ontology/schemas/ontology/entity.schema.json
   generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
   scaffold        Layer 2: scaffold CQE entity from JSON Schema
   meta            Layer 3: status | patterns | promote
@@ -627,7 +637,7 @@ gateway (Managed Edge Gateway — /mcp + /v1 + memory):
 
 streams (ClawQL Streams — celld v0.4.0):
   celld install [--version v0.4.0]   Pin-install celld (CELLD_VERSION)
-  celld dev [--project DIR] [--port N]   Local dev (default: examples/streams-celld)
+  celld dev [--project DIR] [--port N]   Local dev (default: docs/examples/streams-celld)
   celld deploy [--project DIR] --bucket s3://… [--endpoint URL] [--region auto]
   celld start --bucket s3://… [--listen HOST:PORT] [--advertise HOST:PORT]
   celld diagnose --bucket s3://…     Fleet lease + peer probes
@@ -1392,6 +1402,17 @@ async function main(): Promise<void> {
       domains: typeof flags.domains === "string" ? flags.domains : undefined,
       prometheus: Boolean(flags.prometheus),
       includeWorm: Boolean(flags.includeWorm),
+      billingMode: typeof flags.billingMode === "string" ? flags.billingMode : undefined,
+      createdVia: typeof flags.createdVia === "string" ? flags.createdVia : undefined,
+      memberEmails: typeof flags.memberEmails === "string" ? flags.memberEmails : undefined,
+      stripeCustomerId:
+        typeof flags.stripeCustomerId === "string" ? flags.stripeCustomerId : undefined,
+      stripeSubscriptionId:
+        typeof flags.stripeSubscriptionId === "string" ? flags.stripeSubscriptionId : undefined,
+      overageUnits:
+        typeof flags.overageUnits === "string" && flags.overageUnits
+          ? Number.parseFloat(flags.overageUnits)
+          : undefined,
       requestStatus: typeof flags.requestStatus === "string" ? flags.requestStatus : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
@@ -1739,6 +1760,14 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsOrgCreateCmd(paymentsOpts);
         return;
       }
+      if (action === "provision") {
+        process.exitCode = await runPaymentsOrgProvisionCmd(paymentsOpts);
+        return;
+      }
+      if (action === "report-usage") {
+        process.exitCode = await runPaymentsOrgReportUsageCmd(paymentsOpts);
+        return;
+      }
       if (action === "show") {
         process.exitCode = await runPaymentsOrgShowCmd(paymentsOpts);
         return;
@@ -1776,7 +1805,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments org create|show|sso|invite|members|spend|allocate|distribute|suspend|remove"
+        "Usage: clawql payments org create|provision|report-usage|show|sso|invite|members|spend|allocate|distribute|suspend|remove"
       );
       process.exitCode = 1;
       return;

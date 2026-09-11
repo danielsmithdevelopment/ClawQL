@@ -4,7 +4,7 @@ Lint entity YAML/`.cqe`, scaffold trees/packs, generate MCP read tools (stubs + 
 
 ```bash
 # Validate examples (or .clawql/ontology/entities)
-clawql ontology lint --dir examples/ontology/entities
+clawql ontology lint --dir docs/examples/ontology/entities
 
 # Day-1 scaffold (Layer 1)
 clawql ontology init
@@ -21,7 +21,7 @@ clawql ontology meta promote --check
 clawql ontology meta promote --document-type invoice --output packs/invoice/
 
 # Generate tools.json + OKF index + Onyx stubs + TypeScript catalog
-clawql ontology generate --dir examples/ontology/entities --out generated/ontology
+clawql ontology generate --dir docs/examples/ontology/entities --out generated/ontology
 
 # Live fixture tools in the gateway (v1 read backend — demo Contract/Organization store)
 CLAWQL_ENABLE_ONTOLOGY=1 npx clawql-mcp
@@ -71,7 +71,7 @@ HIGH+/canary/HITL/GraphQL `@kinetic` remain roadmap ([ADR 0009 §10](../adr/0009
 
 ## What lint checks
 
-1. JSON Schema (`schemas/ontology/entity.schema.json`, Draft 2020-12)
+1. JSON Schema (`packages/clawql-ontology/schemas/ontology/entity.schema.json`, Draft 2020-12)
 2. Semantic rules:
    - unique `metadata.name`
    - enum properties must have `values`
@@ -107,7 +107,7 @@ See [essay gap closure](./essay-gap-closure.md) **7.3** and [Command Deck UX not
 ## Release / doctor
 
 - `clawql-release collect` pins `ontologySchema` when entity trees exist
-- `clawql-release lint examples/ontology/governance/demo.cqm` validates `.cqm`
+- `clawql-release lint docs/examples/ontology/governance/demo.cqm` validates `.cqm`
 - `clawql doctor` reports ontology entity dir presence **and warns** if schema is missing from Git or marked object-storage-only (ADR 0009 §6 / essay **4.4**)
 - Vertical packs: **legal** shipped; healthcare / financial / real-estate are roadmap READMEs only
 

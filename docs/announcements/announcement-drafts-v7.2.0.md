@@ -4,7 +4,7 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v7.2.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.2.0) · [npm: clawql-mcp@7.2.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [OKF memory](https://docs.clawql.com/memory/okf) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.2.0.md](../../RELEASE_NOTES_v7.2.0.md)
+**Links:** [GitHub release v7.2.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v7.2.0) · [npm: clawql-mcp@7.2.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [OKF memory](https://docs.clawql.com/memory/okf) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.2.0.md](../release/RELEASE_NOTES_v7.2.0.md)
 
 **Note:** 7.1.0 announcement drafts remain at [`announcement-drafts-v7.1.0.md`](announcement-drafts-v7.1.0.md); **7.2** is the Memory Stack minor.
 
@@ -36,7 +36,7 @@ Also in the box: MCP **2026-07-28**, OKF v0.2, PorTAL flywheel, native multi-lan
 
 If 7.1 was “schema the world and pay the agents,” **7.2** is “make the shared vault the source of truth agents can actually find.” Pin **`@7.2`** when you move images and Helm `appVersion`.
 
-**CTA:** `npm install clawql-mcp@7.2.0` · read [CHANGELOG 7.2.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.2.0.md](../../RELEASE_NOTES_v7.2.0.md)
+**CTA:** `npm install clawql-mcp@7.2.0` · read [CHANGELOG 7.2.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v7.2.0.md](../release/RELEASE_NOTES_v7.2.0.md)
 
 ---
 
@@ -50,7 +50,7 @@ Headline: **Memory Stack 2.0** — IDF ranking, local MiniLM vectors (mandatory)
 
 Also: MCP 2026-07-28, OKF v0.2, native CodeGraph, deeper IDP docs pipeline.
 
-Pin `@7.2` · notes: RELEASE_NOTES_v7.2.0.md · npm: clawql-mcp@7.2.0
+Pin `@7.2` · notes: docs/release/RELEASE_NOTES_v7.2.0.md · npm: clawql-mcp@7.2.0
 
 #MCP #AgenticAI #Obsidian #DevTools
 
@@ -65,7 +65,7 @@ Pin `@7.2` · notes: RELEASE_NOTES_v7.2.0.md · npm: clawql-mcp@7.2.0
 We open-source an Agentic Gateway (MCP search/execute over OpenAPI + vault memory). In 7.1 we shipped Ontology + payments. For 7.2 we closed measured memory gaps vs `rg` on a 116-note corpus: IDF keyword ranking, in-process MiniLM (no API egress), index-first survey, optional git commit-on-ingest, hybrid RRF, auto worm_ref, and CodeGraph impact → vault notes.
 
 npm: `clawql-mcp@7.2.0`  
-Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v7.2.0.md
+Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/release/RELEASE_NOTES_v7.2.0.md
 
 Happy to answer questions about the bakeoff methodology or the break-glass keyword-only flag.
 

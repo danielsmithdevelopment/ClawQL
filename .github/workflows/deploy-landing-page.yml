@@ -1,4 +1,4 @@
-# Static export of landing-page/demo → GitHub Pages (https://clawql.com) by default.
+# Static export of apps/www → GitHub Pages (https://clawql.com) by default.
 # When CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID are set, also deploy to Cloudflare
 # Pages (Link headers + Markdown negotiation via functions/) and configure agent edge.
 # Set LANDING_PAGE_CLOUDFLARE_DEPLOY=false to skip Cloudflare Pages even if secrets exist.
@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "landing-page/**"
+      - "apps/www/**"
       - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
       - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
       - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
@@ -38,14 +38,14 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: landing-page/demo/package-lock.json
+          cache-dependency-path: apps/www/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: landing-page/demo
+        working-directory: apps/www
 
       - name: Build (static export)
-        working-directory: landing-page/demo
+        working-directory: apps/www
         env:
           # Custom domain at repo root. For project Pages only, set to /ClawQL in repo vars.
           NEXT_PUBLIC_BASE_PATH: ${{ vars.LANDING_PAGE_BASE_PATH || '' }}
@@ -54,7 +54,7 @@ jobs:
         run: npm run build
 
       - name: Verify SEO/agent static assets
-        working-directory: landing-page/demo
+        working-directory: apps/www
         run: |
           set -euo pipefail
           test -f out/.well-known/api-catalog
@@ -104,7 +104,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
-          path: landing-page/demo/out
+          path: apps/www/out
           # Required: default false drops .well-known and .nojekyll from the Pages deploy.
           include-hidden-files: true
 
@@ -112,7 +112,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: landing-page-out
-          path: landing-page/demo/out
+          path: apps/www/out
           retention-days: 1
           include-hidden-files: true
 
@@ -174,7 +174,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: landing-page-out
-          path: landing-page/demo/out
+          path: apps/www/out
 
       - name: Ensure Cloudflare Pages project exists
         if: steps.cf.outputs.enabled == 'true'
@@ -189,8 +189,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Run from landing-page/demo so sibling functions/ is bundled with out/.
-          workingDirectory: landing-page/demo
+          # Run from apps/www so sibling functions/ is bundled with out/.
+          workingDirectory: apps/www
           command: pages deploy out --project-name=clawql-website --branch=main
 
   configure-agent-edge:
