@@ -19,7 +19,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
 | Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose              |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
-| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                               |
+| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
@@ -68,7 +68,7 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-sta
 
 Boots **real** `clawql-mcp-http` with **`CLAWQL_WORM_ENABLED=1`** + `CLAWQL_WORM_HTTP_PORT` (host `WORMAuditTrail` HTTP), **real** `mcp-api-adapter`, points celld at MCP + adapter + **`CLAWQL_AUDIT_WORM_URL`**, and asserts:
 
-- search / memory_* / adapter REST / inference health
+- search / memory\_\* / adapter REST / inference health
 - spawn writes **`SESSION_START`** via `audit.compliance` (`clawql-audit-http`)
 - `GET /entries?sessionId=…` returns that entry with `hash` / `prevHash` / `chainIndex`
 - `GET /chain/verify?sessionId=…` returns **`valid: true`**
@@ -122,11 +122,11 @@ node apps/docs/scripts/sync-streams-celld-evidence-doc.mjs
 
 **Lab 5b does not weaken ClawQL’s compliance story when configured correctly:** consequential cell events dual-write to host `clawql-audit`; MCP tool hops land on the same tip-loaded trail when `CLAWQL_WORM_ENABLED=1`. The cell ring/LTX path is **not** the sole audit mechanism.
 
-| Event                                                                                  | Where it lands                                                     | Continuity                                                |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
-| Cell session bookkeeping (ring flush)                                                  | DO `audit:ring` / `audit:seq:*` → celld LTX                        | Snapshot only — **ring resets to genesis** on new isolate |
+| Event                                                                                  | Where it lands                                                       | Continuity                                                |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| Cell session bookkeeping (ring flush)                                                  | DO `audit:ring` / `audit:seq:*` → celld LTX                          | Snapshot only — **ring resets to genesis** on new isolate |
 | **Consequential session start**                                                        | Host **`clawql-audit`** via `POST \{CLAWQL_AUDIT_WORM_URL\}/entries` | Tip-loaded `WORMAuditTrail` (no fork on host restart)     |
-| MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap)                    | Same tip-loaded trail                                     |
+| MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap)                      | Same tip-loaded trail                                     |
 
 **Fail-closed:** when `CLAWQL_AUDIT_WORM_URL` is set, a failed / timed-out `fetch` to host WORM **halts spawn** (`503`, gateway `spawn_failed`) — it does **not** silently continue with ring-only logging. Unset URL remains deferred (mock smoke without a compliance sidecar).
 

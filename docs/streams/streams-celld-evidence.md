@@ -19,7 +19,7 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 | mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
 | Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose              |
 | Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
-| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                               |
+| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
 | `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
 | cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 

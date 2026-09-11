@@ -2,10 +2,10 @@
 
 Minimal **Workers / Durable Objects** bundle for [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams) on **[celld v0.4.0](https://github.com/denoland/celld/releases/tag/v0.4.0)**, with in-process **`clawql-core/streams-slim`**, optional **`fetch(CLAWQL_MCP_URL)`**, and optional **`fetch(CLAWQL_MCP_ADAPTER_URL)`**.
 
-| DO class         | Role                                                                      |
-| ---------------- | ------------------------------------------------------------------------- |
-| `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions        |
-| `SubscriptionDO` | Significance filter stub (`sub:{id}` naming)                              |
+| DO class         | Role                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `GatewayDO`      | Webhook ingress (`POST /webhook/{subscriptionId}`), spawn sessions                      |
+| `SubscriptionDO` | Significance filter stub (`sub:{id}` naming)                                            |
 | `AgentSessionDO` | Session + ring/LTX bookkeeping + optional MCP / adapter / inference / host WORM fetches |
 
 **Learn walkthrough:** [Streams getting started — Lab 5b](https://docs.clawql.com/learn/streams-getting-started#lab-5b--clawql-streams-wrangler-skeleton--bundle-check-30-min)  
@@ -25,15 +25,15 @@ The right demo is the **production shape**: slim cell + real sidecars.
 
 ## In-process vs out-of-process
 
-| Surface                           | Status                                                                                    |
-| --------------------------------- | ----------------------------------------------------------------------------------------- |
+| Surface                            | Status                                                                                 |
+| ---------------------------------- | -------------------------------------------------------------------------------------- |
 | `audit` ring (session bookkeeping) | **In-process** + **LTX flush** — not compliance; snapshot `audit:ring` + `audit:seq:*` |
-| Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`       |
-| `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                             |
-| Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                              |
-| Inference                          | **Out-of-process** — `fetch(INFERENCE_URL)`                                             |
-| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP                            |
-| `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`                |
+| Host `clawql-audit` (compliance)   | **Out-of-process** — `fetch(CLAWQL_AUDIT_WORM_URL)` → tip-loaded `WORMAuditTrail`      |
+| `cache` (session scratch)          | **In-process** — `clawql-core/streams-slim`                                            |
+| Hash-chain verify                  | **In-process** — via clawql-merkle (needs `nodejs_compat`)                             |
+| Inference                          | **Out-of-process** — `fetch(INFERENCE_URL)`                                            |
+| `search` / `execute` / `memory_*`  | **Out-of-process** — `fetch(CLAWQL_MCP_URL)` Streamable HTTP                           |
+| `mcp-api-adapter`                  | **Out-of-process** — `fetch(CLAWQL_MCP_ADAPTER_URL)` REST `POST /{tool}`               |
 
 Do **not** embed `clawql-api`, `clawql-memory`, or `mcp-api-adapter` (Express/gRPC/`node:fs`).
 
