@@ -15,6 +15,8 @@ PORT="${CELLD_DEV_PORT:-9883}"
 MCP_PORT="${FULL_STACK_MCP_PORT:-9881}"
 ADAPTER_PORT="${FULL_STACK_ADAPTER_PORT:-9882}"
 INFER_PORT="${FULL_STACK_INFER_PORT:-9884}"
+WORM_PORT="${FULL_STACK_WORM_PORT:-9885}"
+WORM_API_KEY="${FULL_STACK_WORM_API_KEY:-streams-celld-smoke-worm-key}"
 BASE="http://127.0.0.1:${PORT}"
 SMOKE_CFG="$ROOT/wrangler.full-stack.jsonc"
 VAULT_DIR="${FULL_STACK_VAULT_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/streams-celld-vault.XXXXXX")}"
@@ -43,8 +45,10 @@ mkdir -p "$VAULT_DIR"
 node "$ROOT/scripts/bundle-check.mjs"
 node "$ROOT/scripts/mcp-fetch.test.mjs"
 node "$ROOT/scripts/adapter-fetch.test.mjs"
+node "$ROOT/scripts/worm-fetch.test.mjs"
 
 # Real clawql-mcp (empty OpenAPI catalog is fine — skills + memory still register).
+# Process WORM (clawql-audit) exposes HTTP /entries for the cell dual-write.
 (
   cd "$REPO"
   export PORT="$MCP_PORT"
@@ -56,6 +60,13 @@ node "$ROOT/scripts/adapter-fetch.test.mjs"
   # Cells have no session affinity — use clawql-mcp's 2026-07-28-compatible
   # stateless path while the thin client speaks SDK-supported 2025-11-25.
   export CLAWQL_MCP_STATELESS=1
+  export CLAWQL_WORM_ENABLED=1
+  export CLAWQL_WORM_LOCAL=memory
+  export CLAWQL_WORM_REMOTE=memory
+  export CLAWQL_WORM_RECONCILE_MS=0
+  export CLAWQL_WORM_HTTP_PORT="$WORM_PORT"
+  export CLAWQL_AUDIT_API_KEY="$WORM_API_KEY"
+  export CLAWQL_WORM_DEBUG=1
   # Prefer empty catalog unless the operator set a pack.
   export CLAWQL_PROVIDER="${CLAWQL_PROVIDER:-}"
   unset CLAWQL_BUNDLED_PROVIDERS || true
@@ -104,6 +115,40 @@ trap cleanup EXIT
 
 wait_http "http://127.0.0.1:${MCP_PORT}/healthz" "clawql-mcp-http" "$MCP_PID" 80
 
+# Host clawql-audit HTTP must be up before cell spawn (SESSION_START dual-write).
+worm_ready=0
+for _ in $(seq 1 80); do
+  if ! kill -0 "$MCP_PID" 2>/dev/null; then
+    echo "full-stack-smoke: FAIL — clawql-mcp exited before WORM HTTP ready" >&2
+    tail -40 "$MCP_LOG" >&2 || true
+    exit 1
+  fi
+  code=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: ApiKey ${WORM_API_KEY}" \
+    "http://127.0.0.1:${WORM_PORT}/entries" || true)
+  if [[ "$code" == "200" ]]; then
+    worm_ready=1
+    break
+  fi
+  sleep 0.5
+done
+if [[ "$worm_ready" != "1" ]]; then
+  echo "full-stack-smoke: FAIL — clawql-audit HTTP never ready on :${WORM_PORT}" >&2
+  tail -50 "$MCP_LOG" >&2 || true
+  exit 1
+fi
+
+# Seed a prior tip on the *same* host WORM singleton the cell will append to.
+# Continuity assertion: SESSION_START.prevHash must equal this tip's hash
+# (proves tip-extend via create()/loadTip — not a fresh disconnected genesis chain).
+SEED_JSON=$(curl -sf -X POST "http://127.0.0.1:${WORM_PORT}/entries" \
+  -H "Authorization: ApiKey ${WORM_API_KEY}" \
+  -H "content-type: application/json" \
+  -d "{\"type\":\"AGENT_ACTION\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"sessionId\":\"full-stack-seed-tip\",\"agentName\":\"full-stack-smoke\",\"metadata\":{\"kind\":\"tip_seed\"}}")
+TIP_HASH=$(echo "$SEED_JSON" | python3 -c 'import json,sys; e=json.load(sys.stdin); print(e["hash"]); assert "chainIndex" in e')
+TIP_INDEX=$(echo "$SEED_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["chainIndex"])')
+echo "full-stack-smoke: seeded host tip chainIndex=${TIP_INDEX} hash=${TIP_HASH:0:16}…"
+
 # Real mcp-api-adapter wrapping that MCP (REST + OpenAPI; skip gRPC/UI for speed).
 (
   cd "$REPO"
@@ -137,9 +182,9 @@ if [[ "$ready_adapter" != "1" ]]; then
   exit 1
 fi
 
-python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" <<'PY'
+python3 - "$ROOT/wrangler.jsonc" "$SMOKE_CFG" "$MCP_PORT" "$ADAPTER_PORT" "$INFER_PORT" "$WORM_PORT" "$WORM_API_KEY" <<'PY'
 import json, re, sys
-src, dst, mcp_port, adapter_port, infer_port = sys.argv[1:6]
+src, dst, mcp_port, adapter_port, infer_port, worm_port, worm_key = sys.argv[1:8]
 text = open(src, encoding="utf-8").read()
 text = re.sub(r"/\*[\s\S]*?\*/", "", text)
 text = re.sub(r"^\s*//.*$", "", text, flags=re.M)
@@ -148,14 +193,21 @@ cfg.setdefault("vars", {})
 cfg["vars"]["CLAWQL_MCP_URL"] = f"http://127.0.0.1:{mcp_port}/mcp"
 cfg["vars"]["CLAWQL_MCP_ADAPTER_URL"] = f"http://127.0.0.1:{adapter_port}"
 cfg["vars"]["INFERENCE_URL"] = f"http://127.0.0.1:{infer_port}"
+cfg["vars"]["CLAWQL_AUDIT_WORM_URL"] = f"http://127.0.0.1:{worm_port}"
+cfg["vars"]["CLAWQL_AUDIT_API_KEY"] = worm_key
 open(dst, "w", encoding="utf-8").write(json.dumps(cfg, indent=2) + "\n")
 PY
 
 cd "$ROOT"
+# Fresh DO SQLite avoids stale spawn_count / NodeFenced leftovers across smokes.
+rm -rf "$ROOT/.celld/dev"
+# Config must live under the project (celld resolves worker entry relative to it).
 celld dev "$SMOKE_CFG" --port "$PORT" &
 CELLD_PID=$!
 
 wait_http "$BASE/health" "celld" "$CELLD_PID" 80
+# Settle after first build so a watcher rebuild does not fence the webhook.
+sleep 1
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 EVENT_ID="full-stack-$(date +%s)-$$"
@@ -190,11 +242,10 @@ echo "$RESP" | grep -q '"durable"' || fail "expected core.durable surfaces"
 echo "$RESP" | grep -q '"source":"mock-mcp"' && fail "unexpected mock-mcp (expected real clawql-mcp)"
 echo "$RESP" | grep -q '"source":"mock-adapter"' && fail "unexpected mock-adapter (expected real mcp-api-adapter)"
 
-# Real MCP search / memory (empty catalog still returns ok + skills ranking).
+# Real MCP search / memory + host clawql-audit SESSION_START (not just cell ring).
 echo "$RESP" | python3 -c '
-import json,sys
+import json,sys,urllib.request
 r=json.load(sys.stdin)
-# Gateway wraps AgentSessionDO body under session
 body=r.get("session") if isinstance(r.get("session"), dict) and "tools" in (r.get("session") or {}) else r
 tools=body.get("tools") or {}
 search=tools.get("search") or {}
@@ -213,11 +264,66 @@ inf=body.get("inference") or {}
 if inf.get("ok") is not True:
   raise SystemExit(f"inference health probe not ok: {inf!r}"[:400])
 ex=tools.get("execute") or {}
-# Empty catalog: streams.session.noop may fail — still prove the MCP hop ran.
 if ex.get("deferred") is True or ex.get("transport") != "streamable-http":
   raise SystemExit(f"execute did not hit streamable-http: {ex!r}"[:800])
-print("full-stack assertions: search/memory/adapter/inference OK; execute transport OK")
+cw=(body.get("audit") or {}).get("compliance") or {}
+if cw.get("ok") is not True:
+  raise SystemExit(f"compliance WORM SESSION_START not ok: {cw!r}"[:800])
+if cw.get("transport") != "clawql-audit-http":
+  raise SystemExit(f"compliance WORM wrong transport: {cw!r}"[:400])
+core=body.get("core") or {}
+if core.get("wormUrlConfigured") is not True:
+  raise SystemExit("wormUrlConfigured expected true")
+event_id=r.get("eventId") or (body.get("session") or {}).get("eventId")
+print("full-stack assertions: search/memory/adapter/inference/compliance-WORM OK")
+print(f"event_id={event_id}")
 ' || fail "python assertions failed"
+
+EVENT_ID=$(echo "$RESP" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r.get("eventId") or "")')
+WORM_JSON=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
+  "http://127.0.0.1:${WORM_PORT}/entries?sessionId=${EVENT_ID}")
+echo "$WORM_JSON" | TIP_HASH="$TIP_HASH" TIP_INDEX="$TIP_INDEX" python3 -c '
+import json,os,sys
+data=json.load(sys.stdin)
+tip_hash=os.environ["TIP_HASH"]
+tip_index=int(os.environ["TIP_INDEX"])
+entries=data.get("entries") or []
+starts=[e for e in entries if e.get("type")=="SESSION_START"]
+if not starts:
+  raise SystemExit(("no SESSION_START in host clawql-audit for session: %r" % (data,))[:800])
+e=starts[-1]
+if "hash" not in e or "chainIndex" not in e or "prevHash" not in e:
+  raise SystemExit(("SESSION_START missing chain fields: %r" % (e,))[:800])
+# Exact continuity: cell dual-write must extend the pre-seeded host tip, not genesis.
+if e.get("prevHash") != tip_hash:
+  raise SystemExit(
+    "SESSION_START prevHash discontinuity: got %r expected tip %r (fork / fresh chain, not tip-extend)"
+    % (e.get("prevHash"), tip_hash)
+  )
+expected_index = tip_index + 1
+if e.get("chainIndex") != expected_index:
+  raise SystemExit(
+    "SESSION_START chainIndex=%s expected %s (tip was %s)"
+    % (e.get("chainIndex"), expected_index, tip_index)
+  )
+print(
+  "host WORM verify: SESSION_START extends tip chainIndex=%s prevHash=%s… hash=%s…"
+  % (e.get("chainIndex"), str(e.get("prevHash"))[:16], str(e.get("hash"))[:16])
+)
+' || fail "host clawql-audit continuity assertion failed"
+
+VERIFY=$(curl -sf -H "Authorization: ApiKey ${WORM_API_KEY}" \
+  "http://127.0.0.1:${WORM_PORT}/chain/verify")
+echo "$VERIFY" | python3 -c '
+import json,sys
+v=json.load(sys.stdin)
+if v.get("valid") is not True:
+  raise SystemExit(f"full-chain /chain/verify failed: {v!r}"[:800])
+checked=v.get("entriesChecked")
+if not isinstance(checked, int) or checked < 2:
+  raise SystemExit(f"expected full chain entriesChecked>=2 got {v!r}"[:400])
+print("host WORM chain/verify: valid entriesChecked=%s" % checked)
+' || fail "chain/verify failed"
 
 echo "full-stack-smoke: PASS"
 echo "full-stack-smoke: vault=$VAULT_DIR mcp_log=$MCP_LOG adapter_log=$ADAPTER_LOG"

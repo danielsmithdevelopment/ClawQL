@@ -46,7 +46,7 @@ ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `wo
 | Cloudflare only                       | Low for SaaS                               | Native                    | Platform                     | Vendor tenancy / pricing                       | **Hosted path**              |
 | K8s HPA only                          | Medium                                     | Different model           | Postgres / NATS              | Familiar regulated ops                         | **Regulated until celld GA** |
 
-**Facts of record:** Apache 2.0 · ~58 MB binary · ~$0.05 / resident cell-month · ~1000 resident cells / 8 GB node · RPO=0 LTX · one application per fleet (alpha).
+**Facts of record:** Apache 2.0 · ~58 MB binary · hibernation model (resident / idle / hibernated / inactive) · vendor density hint ~1000 resident / 8 GB (re-measure before GTM) · RPO=0 LTX · one application per fleet (alpha). **No ClawQL-owned $/cell-month figure** — see Streams §9.1.
 
 ---
 
@@ -240,7 +240,10 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-sta
 docker compose -f docs/examples/streams-celld/docker-compose.full.yml up --build
 ```
 
-**Durable audit:** after each spawn, the isolate hash-chain is flushed to DO storage (`audit:ring` snapshot + `audit:seq:\{n\}` WORM rows) so LTX survives isolate restarts (alongside existing `worm:*` DO_CREATED rows).
+**Durable audit (two layers):**
+
+1. **DO bookkeeping** — after each spawn, the isolate hash-chain is flushed to DO storage (`audit:ring` snapshot + `audit:seq:\{n\}`) so LTX can retain a snapshot across isolate restarts. The in-process ring **does not** `loadTip` from LTX — a new isolate starts at genesis. Treat this as session-resumption state, not compliance.
+2. **Host compliance** — consequential events (`SESSION_START`, …) `fetch` **`CLAWQL_AUDIT_WORM_URL`** → host [`clawql-audit`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/audit/clawql-audit-spec-v0.1.md) `WORMAuditTrail` (tip-load / dual-ack). See [`streams-celld-evidence.md`](/streams/streams-celld-evidence).
 
 **Still deferred:** offline Workers-safe `clawql-api` slim.
 
@@ -268,11 +271,12 @@ CI must fail closed on oversize bundles. Prefer:
 
 celld uses **one fleet bucket** as administrative authority (deployments, SQLite/LTX, ownership leases, peer secret). ClawQL still separates **concerns**:
 
-| Bucket / prefix                                    | Purpose                                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------------ |
-| `s3://clawql-streams-state` (fleet `CELLD_BUCKET`) | celld deployments, cell SQLite + **LTX WORM**, ownership, node leases    |
-| Team vault sync bucket (existing ClawQL R2/S3)     | Obsidian vault / `memory_sync` — **not** the celld fleet bucket          |
-| Training export (optional)                         | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
+| Bucket / prefix                                    | Purpose                                                                                                              |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `s3://clawql-streams-state` (fleet `CELLD_BUCKET`) | celld deployments, cell SQLite + **LTX (platform durability)**, ownership, node leases — **not** host `clawql-audit` |
+
+| Team vault sync bucket (existing ClawQL R2/S3) | Obsidian vault / `memory_sync` — **not** the celld fleet bucket |
+| Training export (optional) | RTP/OBT datasets (HF / dedicated prefix) — distinct from fleet authority |
 
 Do not reuse fleet-bucket credentials for vault sync or public dataset upload. Scope each credential to one role ([security](https://celld.dev/docs/security)).
 
@@ -387,7 +391,7 @@ CLI wrappers: `clawql streams celld install|deploy|start|diagnose|bundle-check` 
 | Alpha caveat      | **Not safe for hostile multi-tenant**; fixes on latest release only                       |
 | Build attestation | `gh attestation verify --repo denoland/celld` on install                                  |
 | App auth          | celld does not authenticate end users — ClawQL ATR / OIDC / virtual keys remain mandatory |
-| WORM              | LTX on operator bucket; auditors use `sqlite3` locally                                    |
+| Cell state / LTX  | Operator bucket; `sqlite3` for DO SQLite — **compliance WORM is host `clawql-audit`**     |
 
 Regulated tenants that need hostile multi-tenant isolation or certified controls should use **`scalingBackend: kubernetes`** until celld exits alpha.
 
@@ -395,19 +399,19 @@ Regulated tenants that need hostile multi-tenant isolation or certified controls
 
 ## 9. Cloudflare vs celld
 
-| Concern          | Cloudflare Durable Objects | celld                                                          |
-| ---------------- | -------------------------- | -------------------------------------------------------------- |
-| API              | Workers DO                 | Same core DO/Workers surface                                   |
-| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                         |
-| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)           |
-| Pricing          | CF DO request/duration     | ~$0.05/resident cell-mo; inactive ≈ S3 only                    |
-| Density          | Platform                   | ~1000 resident / 8 GB                                          |
-| KV / R2 bindings | Available                  | **Initial v0.4.0+** from Wrangler; fleet bucket still separate |
-| Cron triggers    | `scheduled`                | Use `setAlarm`                                                 |
-| Peer / mesh      | Cloudflare edge            | Operator mesh; versioned peer tunnel (v0.4.0+)                 |
-| Multi-tenant     | CF accounts                | One app per fleet (alpha)                                      |
-| Local dev        | Miniflare / workerd        | **`celld dev`** (v0.4.0+) + Miniflare unit tests               |
-| ClawQL inference | `fetch`                    | `fetch` (identical contract)                                   |
+| Concern          | Cloudflare Durable Objects | celld                                                                   |
+| ---------------- | -------------------------- | ----------------------------------------------------------------------- |
+| API              | Workers DO                 | Same core DO/Workers surface                                            |
+| State            | Platform SQLite            | SQLite + **LTX → your bucket** (RPO=0)                                  |
+| Hibernation      | Native                     | Resident / idle / hibernated / inactive (same model)                    |
+| Pricing          | CF DO request/duration     | No ClawQL $/mo yet — cite hibernation **structure** only (Streams §9.1) |
+| Density          | Platform                   | Vendor hint ~1000 resident / 8 GB (re-measure)                          |
+| KV / R2 bindings | Available                  | **Initial v0.4.0+** from Wrangler; fleet bucket still separate          |
+| Cron triggers    | `scheduled`                | Use `setAlarm`                                                          |
+| Peer / mesh      | Cloudflare edge            | Operator mesh; versioned peer tunnel (v0.4.0+)                          |
+| Multi-tenant     | CF accounts                | One app per fleet (alpha)                                               |
+| Local dev        | Miniflare / workerd        | **`celld dev`** (v0.4.0+) + Miniflare unit tests                        |
+| ClawQL inference | `fetch`                    | `fetch` (identical contract)                                            |
 
 ---
 

@@ -10,21 +10,22 @@ This page is the honest map of **what is automated**, **what is local-only**, an
 
 ## Architecture under test (shipped)
 
-| Layer                                                   | In cell bundle?      | How it is proven                                              |
-| ------------------------------------------------------- | -------------------- | ------------------------------------------------------------- |
-| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                         |
-| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke response keys + unit coverage in core                   |
-| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP   |
-| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real   |
-| Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose |
-| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                              |
-| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                   |
-| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                   |
-| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                             |
+| Layer                                                   | In cell bundle?      | How it is proven                                                           |
+| ------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- |
+| `clawql-core/streams-slim` (audit / cache / hash-chain) | **Yes**              | Unit tests + webhook smoke assertions                                      |
+| Audit LTX flush (`audit:ring`, `audit:seq:*`)           | **Yes** (DO storage) | Smoke keys — **session bookkeeping only**, not compliance WORM (see below) |
+| Host `clawql-audit` via `CLAWQL_AUDIT_WORM_URL`         | **No** — `fetch`     | `worm-fetch.test.mjs` + full-stack `SESSION_START` + `/chain/verify`       |
+| Streamable HTTP MCP (`CLAWQL_MCP_URL`)                  | **No** — `fetch`     | `mcp-fetch.test.mjs` + mock smoke + **full-stack** real MCP                |
+| mcp-api-adapter REST (`CLAWQL_MCP_ADAPTER_URL`)         | **No** — `fetch`     | `adapter-fetch.test.mjs` + mock smoke + **full-stack** real                |
+| Inference                                               | **No** — `fetch`     | Full-stack `/healthz` stub; real sidecar optional via compose              |
+| Helm celld StatefulSet / probes                         | Chart only           | `make helm-celld-template-tests`                                           |
+| Fleet LTX / multi-node diagnose                         | Manual               | `docs/examples/idp/streams-celld/README.md`                                |
+| `clawql-streams` package / `stream_*` tools             | **Not shipped**      | Spec-only — see Streams §15                                                |
+| cellrt / TEE / QR stream source                         | **Not shipped**      | Spec drafts under `docs/streams/`                                          |
 
 ### Why full product is out-of-process (not “missing”)
 
-Embedding Express `mcp-api-adapter` / vault `clawql-memory` / full `clawql-api` **inside** the Worker is incompatible with celld (no usable `node:fs` / Express / gRPC / stdio). Lab 5b demos the **entire** stack by running those hosts as sidecars and proving the cell `fetch`es them — see **Full-stack smoke** below.
+Embedding Express `mcp-api-adapter` / vault `clawql-memory` / full `clawql-api` / disk-backed `clawql-audit` **inside** the Worker is incompatible with celld (no usable `node:fs` / Express / gRPC / stdio). Lab 5b demos the **entire** stack by running those hosts as sidecars and proving the cell `fetch`es them — including **compliance WORM** on the host trail.
 
 ---
 
@@ -37,6 +38,7 @@ npm run build -w clawql-merkle -w clawql-core
 npx vitest run packages/clawql-core/src/streams-slim.test.ts
 node docs/examples/streams-celld/scripts/mcp-fetch.test.mjs
 node docs/examples/streams-celld/scripts/adapter-fetch.test.mjs
+node docs/examples/streams-celld/scripts/worm-fetch.test.mjs
 node docs/examples/streams-celld/scripts/bundle-check.mjs
 make helm-celld-template-tests
 ```
@@ -53,18 +55,23 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/smoke.sh
 
 Without `STREAMS_CELLD_SMOKE_REQUIRED=1`, missing `celld` **exits 0 with a skip message** (developer convenience). CI and release gates must set the env var (or install celld and require the smoke).
 
-Smoke covers: bundle-check → unit fetch tests → mock MCP + mock adapter → `celld dev` → webhook spawn → assertions on streams-slim, hash, MCP transport, adapter probe, LTX keys.
+Smoke covers: bundle-check → unit fetch tests → mock MCP + mock adapter → `celld dev` → webhook spawn → assertions on streams-slim, hash, MCP transport, adapter probe, LTX keys. Compliance WORM is **deferred** unless `CLAWQL_AUDIT_WORM_URL` is set (full-stack smoke sets it).
 
-### Full-stack E2E — real clawql-mcp + real mcp-api-adapter (CI job **Streams celld full-stack**)
+### Full-stack E2E — real clawql-mcp + adapter + host clawql-audit (CI **Streams celld full-stack**)
 
 ```bash
 CELLD_VERSION=v0.4.0 curl -fsSL https://celld.dev/install.sh | sh
 npm run build
-npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter
+npm run build -w clawql-merkle -w clawql-core -w mcp-api-adapter -w clawql-audit
 STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-stack-smoke.sh
 ```
 
-This boots **real** `clawql-mcp-http` (vault memory + skills; empty OpenAPI catalog is OK) and **real** `mcp-api-adapter` (`--mcp-url` → that MCP), points celld at both, and asserts search / memory\_\* / adapter REST / inference health — while refusing mock `source` markers. `execute` of `streams.session.noop` may error on an empty catalog; the smoke still requires a Streamable HTTP hop.
+Boots **real** `clawql-mcp-http` with **`CLAWQL_WORM_ENABLED=1`** + `CLAWQL_WORM_HTTP_PORT` (host `WORMAuditTrail` HTTP), **real** `mcp-api-adapter`, points celld at MCP + adapter + **`CLAWQL_AUDIT_WORM_URL`**, and asserts:
+
+- search / memory\_\* / adapter REST / inference health
+- spawn writes **`SESSION_START`** via `audit.compliance` (`clawql-audit-http`)
+- `GET /entries?sessionId=…` returns that entry with `hash` / `prevHash` / `chainIndex`
+- `GET /chain/verify?sessionId=…` returns **`valid: true`**
 
 Optional containers: [`docs/examples/streams-celld/docker-compose.full.yml`](../../docs/examples/streams-celld/docker-compose.full.yml).
 
@@ -81,7 +88,7 @@ Follow [`docs/examples/idp/streams-celld/README.md`](https://github.com/danielsm
 | Helm celld templates                      | `make lint-k8s-manifests` → CI `ShellCheck & actionlint` |
 | streams-slim + fetch tests + bundle-check | CI job **Streams celld evidence**                        |
 | Mock `smoke.sh` with celld                | CI job **Streams celld smoke (celld)**                   |
-| Real MCP + adapter `full-stack-smoke.sh`  | CI job **Streams celld full-stack**                      |
+| Real MCP + adapter + host WORM            | CI job **Streams celld full-stack** (permanent)          |
 
 ---
 
@@ -93,6 +100,7 @@ After editing `docs/streams/clawql-*.md`, regenerate site pages:
 node apps/docs/scripts/sync-clawql-streams-doc.mjs
 node apps/docs/scripts/sync-clawql-celld-doc.mjs
 node apps/docs/scripts/sync-clawql-durable-objects-doc.mjs
+node apps/docs/scripts/sync-streams-celld-evidence-doc.mjs
 ```
 
 ---
@@ -100,10 +108,51 @@ node apps/docs/scripts/sync-clawql-durable-objects-doc.mjs
 ## What this deliberately does not claim
 
 - Full production `stream_subscribe` / Protocol Fabric event loop package
-- In-cell Express mcp-api-adapter (**use full-stack smoke / compose sidecars instead**)
+- In-cell Express mcp-api-adapter / in-cell disk `clawql-audit` (**use sidecars**)
 - Automated multi-node LTX / `celld diagnose` fleet proof in GitHub Actions
 - Comparative “faster than X” marketing claims
-- That empty-catalog `execute(streams.session.noop)` succeeds (OpenAPI ops need a provider pack)
+- That empty-catalog `execute(streams.session.noop)` succeeds (OpenAPI pack needed)
+- That DO `audit:ring` / celld LTX alone is a compliance audit trail (see below)
+
+---
+
+## Audit honesty: what Lab 5b actually records
+
+### As shipped (after dual-write) — which situation is true?
+
+**Lab 5b does not weaken ClawQL’s compliance story when configured correctly:** consequential cell events dual-write to host `clawql-audit`; MCP tool hops land on the same tip-loaded trail when `CLAWQL_WORM_ENABLED=1`. The cell ring/LTX path is **not** the sole audit mechanism.
+
+| Event                                                                                  | Where it lands                                                       | Continuity                                                |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| Cell session bookkeeping (ring flush)                                                  | DO `audit:ring` / `audit:seq:*` → celld LTX                          | Snapshot only — **ring resets to genesis** on new isolate |
+| **Consequential session start**                                                        | Host **`clawql-audit`** via `POST \{CLAWQL_AUDIT_WORM_URL\}/entries` | Tip-loaded `WORMAuditTrail` (no fork on host restart)     |
+| MCP tool hops (`search` / `execute` / `memory_*`) when `CLAWQL_WORM_ENABLED=1` on host | Same host process WORM (dual-write in MCP wrap)                      | Same tip-loaded trail                                     |
+
+**Fail-closed:** when `CLAWQL_AUDIT_WORM_URL` is set, a failed / timed-out `fetch` to host WORM **halts spawn** (`503`, gateway `spawn_failed`) — it does **not** silently continue with ring-only logging. Unset URL remains deferred (mock smoke without a compliance sidecar).
+
+**Continuity proof (full-stack smoke):** seeds a prior tip on the host trail, then asserts cell `SESSION_START.prevHash === tip.hash` and `chainIndex === tip.chainIndex + 1`, plus full-chain `/chain/verify` with `entriesChecked >= 2` — not merely “an entry exists.”
+
+**Operational consequence:** an operator who relies on the cell’s `audit:ring` / LTX **alone**, without `CLAWQL_AUDIT_WORM_URL` (and host `CLAWQL_WORM_ENABLED` for tool hops), has a compliance story that can **silently lose hash-chain continuity across a cell restart** — exactly the fork-on-restart failure mode `WORMAuditTrail.create()` / `loadTip` exists to prevent. Set the host WORM URL for anything you need to prove later.
+
+**Ring buffer’s job after dual-write:** DO session-resumption bookkeeping only. Do not “upgrade” it into a second compliance system — extend host `clawql-audit` instead (same rule as execute-batching / spend-governance).
+
+| Property            | Lab 5b ring → DO/LTX | Host `clawql-audit` `WORMAuditTrail` |
+| ------------------- | -------------------- | ------------------------------------ |
+| Tip load on restart | **No**               | **Yes**                              |
+| Dual-ack            | No                   | Yes (not LTX)                        |
+| Merkle batches      | No                   | Yes                                  |
+
+Spec lines that say “LTX bucket = WORM trail” mean **operator-owned durable DO SQLite replication** for cell state — **not** “this replaces `clawql-audit`.”
+
+**cellrt:** may harden native storage later for bookkeeping performance. Fixing compliance for cell-hosted agents is **dual-write to host `clawql-audit` now**, not waiting on a fork.
+
+---
+
+## Hibernation economics (structural only — no dollar figures)
+
+Do **not** cite vendor $/cell-month numbers in specs or GTM until ClawQL measures idle ratio and resident RAM on a real subscription mix.
+
+**Defensible today without a dollar claim:** celld’s model is **1:1 durable object + hibernate API** for per-subscription affinity (filter config, hibernatable WS). That is a different architecture from a K8s **worker pool + queue**, whose idle floor is min replicas — not “one Deployment per subscription.” Lead with that structural argument until measured costs exist.
 
 export function wrapper({ children }) {
   return children

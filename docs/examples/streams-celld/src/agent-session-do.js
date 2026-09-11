@@ -2,8 +2,12 @@
  * AgentSessionDO — ephemeral session with in-cell clawql-core (streams-slim)
  * plus optional fetch(CLAWQL_MCP_URL) and fetch(CLAWQL_MCP_ADAPTER_URL).
  * Model calls use fetch(INFERENCE_URL) — never child_process.
+ *
+ * Compliance: when CLAWQL_AUDIT_WORM_URL is set, SESSION_START must land on host
+ * clawql-audit or spawn fails closed (no silent ring-only degrade).
  */
 import {
+  appendComplianceWorm,
   appendSessionCreatedAudit,
   cacheSessionMeta,
   executeViaMcp,
@@ -14,6 +18,7 @@ import {
   toolViaAdapter,
   verifyAuditChain,
 } from "./streams-core-facade.js";
+import { requireComplianceWorm } from "./worm-fetch.js";
 
 function resolveMcpConfig(env) {
   const url =
@@ -35,6 +40,14 @@ function resolveInferenceUrl(env) {
     (env.INFERENCE_URL || env.CLAWQL_STREAMS_INFERENCE_URL || "").trim() ||
     undefined
   );
+}
+
+function resolveWormConfig(env) {
+  const url = (env.CLAWQL_AUDIT_WORM_URL || "").trim() || undefined;
+  const apiKey =
+    (env.CLAWQL_AUDIT_API_KEY || env.CLAWQL_WORM_API_KEY || "").trim() ||
+    undefined;
+  return { url, apiKey };
 }
 
 /**
@@ -111,6 +124,9 @@ export class AgentSessionDO {
         startedAt,
         exitReason: null,
       };
+
+      // All durable DO writes before outbound fetch() — avoids celld NodeFenced
+      // when storage mutates after a network hop (output / durability gate).
       await this.state.storage.put("session_meta", meta);
       await this.state.storage.put(`worm:${startedAt}`, {
         kind: "DO_CREATED",
@@ -124,6 +140,9 @@ export class AgentSessionDO {
       let cache = { ok: false };
       let auditVerify = { ok: false };
       let auditPersisted = { ok: false };
+      let complianceWorm = { deferred: true };
+      const wormCfg = resolveWormConfig(this.env);
+
       try {
         audit = await appendSessionCreatedAudit({
           subscriptionId,
@@ -143,6 +162,58 @@ export class AgentSessionDO {
           ok: false,
           error: err instanceof Error ? err.message : String(err),
         };
+      }
+
+      try {
+        // Compliance trail: host clawql-audit (tip-load). Ring/LTX is bookkeeping only.
+        complianceWorm = await appendComplianceWorm(wormCfg, {
+          type: "SESSION_START",
+          sessionId: eventId,
+          agentName: "streams-celld-AgentSessionDO",
+          virtualKeyId,
+          cellId: doInstanceId,
+          metadata: {
+            subscriptionId,
+            eventId,
+            kind: "DO_CREATED",
+            source: "streams-celld",
+          },
+        });
+      } catch (err) {
+        complianceWorm = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+
+      const complianceGate = requireComplianceWorm(wormCfg, complianceWorm);
+      if (!complianceGate.ok) {
+        // Fail closed: clear session_meta so a retry can re-attempt compliance.
+        // Do not continue tools as if the session were audited.
+        await this.state.storage.delete("session_meta");
+        return Response.json(
+          {
+            do: "AgentSessionDO",
+            ok: false,
+            error: "compliance_worm_required",
+            message:
+              complianceGate.error ||
+              "host clawql-audit unreachable — refusing ring-only SESSION_START",
+            session: { eventId, subscriptionId, doInstanceId, virtualKeyId },
+            audit: {
+              clawqlCore: audit,
+              verify: auditVerify,
+              ltx: auditPersisted,
+              compliance: complianceWorm,
+            },
+            core: {
+              package: "clawql-core/streams-slim",
+              wormUrlConfigured: Boolean(wormCfg.url),
+              failClosed: true,
+            },
+          },
+          { status: 503 }
+        );
       }
 
       let inference = { skipped: true, reason: "no INFERENCE_URL" };
@@ -197,10 +268,12 @@ export class AgentSessionDO {
       const outOfProcess = ["inference"];
       if (mcp.url) outOfProcess.unshift("search", "execute", "memory_*");
       if (adapter.url) outOfProcess.push("mcp-api-adapter");
+      if (wormCfg.url) outOfProcess.push("clawql-audit-worm");
 
       const deferred = [];
       if (!mcp.url) deferred.push("search", "execute", "memory_*");
       if (!adapter.url) deferred.push("mcp-api-adapter");
+      if (!wormCfg.url) deferred.push("clawql-audit-worm");
 
       await this.state.storage.put(`tool_calls:${startedAt}`, {
         searchOk: tools.search?.ok === true,
@@ -208,8 +281,10 @@ export class AgentSessionDO {
         memoryIngestOk: tools.memory_ingest?.ok === true,
         memoryRecallOk: tools.memory_recall?.ok === true,
         adapterSearchOk: tools.adapter_search?.ok === true,
+        complianceWormOk: complianceWorm?.ok === true,
         mcpDeferred: !mcp.url,
         adapterDeferred: !adapter.url,
+        wormDeferred: !wormCfg.url,
       });
 
       return Response.json({
@@ -221,6 +296,8 @@ export class AgentSessionDO {
           clawqlCore: audit,
           verify: auditVerify,
           ltx: auditPersisted,
+          /** Host clawql-audit (compliance). Ring/LTX above is DO bookkeeping only. */
+          compliance: complianceWorm,
         },
         cache,
         tools,
@@ -232,6 +309,7 @@ export class AgentSessionDO {
           deferred,
           mcpUrlConfigured: Boolean(mcp.url),
           adapterUrlConfigured: Boolean(adapter.url),
+          wormUrlConfigured: Boolean(wormCfg.url),
         },
       });
     }

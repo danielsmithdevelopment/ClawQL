@@ -21,13 +21,13 @@ Marketing landing: [clawql.com/streams](https://clawql.com/streams). **WebMCP** 
 
 ### v0.2 changes (from v0.1.x)
 
-| Decision               | v0.1.x                                                 | v0.2                                                                                                                                                  |
-| ---------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))                                                     |
-| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **In-process `clawql-core/streams-slim` (audit/cache/hash-chain); MCP + mcp-api-adapter via `fetch()`** (full `clawql-streams` package still planned) |
-| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`                                                     |
-| WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3-compatible bucket is the WORM trail** (RPO=0); auditor uses `sqlite3` on the bucket                                              |
-| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                                                                  |
+| Decision               | v0.1.x                                                 | v0.2                                                                                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Self-hosted DO runtime | Custom Node `worker_threads` / Miniflare approximation | **[celld](https://celld.dev/)** (Apache 2.0, [denoland/celld](https://github.com/denoland/celld))                                                                                                                                                    |
+| Bundle contents        | Ambiguous; subprocess spawn to Claude / local tools    | **In-process `clawql-core/streams-slim` (audit/cache/hash-chain); MCP + mcp-api-adapter via `fetch()`** (full `clawql-streams` package still planned)                                                                                                |
+| Model calls            | Subprocess (`claude -p`) or mixed                      | **`fetch()` to [`clawql-inference`](../inference/clawql-inference.md)** only — no `child_process`                                                                                                                                                    |
+| WORM replication       | Postgres / JSONL (K8s) or DO storage                   | On celld: **LTX → S3 replicates DO SQLite (RPO=0 platform durability)** for cell state; **compliance WORM remains host [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md)** (tip-load / dual-ack) — Lab 5b dual-writes via `CLAWQL_AUDIT_WORM_URL` |
+| Scaling backends       | `kubernetes` \| `durable-objects`                      | **`kubernetes` \| `celld` \| `cloudflare`** (+ planned **`cellrt`**)                                                                                                                                                                                 |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** Use **[celld](https://celld.dev/)** for Workers/DO-compatible self-hosted Durable Objects; Cloudflare Workers/DOs for hosted; Kubernetes HPA for regulated / air-gapped until a DO runtime is production-stable. **[`clawql-cellrt`](./clawql-cellrt.md)** is the ClawQL-owned Rust + Wasmtime production runtime (security-first, embedded Vault/inference/observability) — not a Node rewrite.
 
@@ -431,9 +431,13 @@ The agent decides whether to call `stream_read` for the full events or continue 
 
 ---
 
-## 6. WORM via LTX
+## 6. Durable cell state via LTX (and host WORM)
 
-On **celld**, every acknowledged `storage.put` is replicated as **LTX** (Litestream replica format) to the operator-owned S3-compatible bucket with **RPO=0** — celld does not acknowledge a write before the data is in the bucket. That replication stream **is** the Streams forensic WORM trail for the self-hosted DO path.
+On **celld**, every acknowledged `storage.put` is replicated as **LTX** (Litestream replica format) to the operator-owned S3-compatible bucket with **RPO=0** — celld does not acknowledge a write before the data is in the bucket. That replication stream is the **platform durability** for DO SQLite (session meta, ring snapshots, subscription config).
+
+It is **not** a substitute for [`clawql-audit`](../audit/clawql-audit-spec-v0.1.md) `WORMAuditTrail` (tip-load on restart, dual-ack, Merkle). Compliance-grade forensic events for Streams sessions must append to the host trail (Lab 5b: `fetch(CLAWQL_AUDIT_WORM_URL)` → `POST /entries`). An operator reading only LTX `audit:ring` rows does **not** get no-fork-on-restart guarantees.
+
+Auditor note: you can still use `sqlite3` on bucket LTX artifacts to inspect **cell state**; use `clawql-audit` query / `/chain/verify` for the **compliance** chain.
 
 | Property         | Behavior                                                                                                                     |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -548,26 +552,19 @@ Partial Web Crypto: `digest`, HMAC sign/verify, AES-GCM, RSA-OAEP decrypt, Ed255
 
 ## 9. Scaling
 
-| Backend            | When                                    | Mechanism                                                                                           |
-| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| **celld**          | Self-hosted DO parity                   | Cells = DOs; LTX to operator bucket; ~1000 resident cells / 8 GB node; ~$0.05 / resident cell-month |
-| **Cloudflare**     | Hosted / SaaS                           | Native Durable Objects + hibernation                                                                |
-| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM                                                              |
+| Backend            | When                                    | Mechanism                                                                                                                         |
+| ------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **celld**          | Self-hosted DO parity                   | Cells = DOs; LTX to operator bucket; 1:1 object + hibernation (density: vendor ~1000 resident / 8 GB — **re-measure before GTM**) |
+| **Cloudflare**     | Hosted / SaaS                           | Native Durable Objects + hibernation                                                                                              |
+| **Kubernetes HPA** | Regulated / air-gapped / until celld GA | NATS consumer lag → HPA; Postgres WORM                                                                                            |
 
 **Do not build a custom ClawQL DO runtime on Node `worker_threads`.** celld (Apache 2.0, ~58 MB binary) is the self-hosted DO runtime; Cloudflare remains the hosted DO path; K8s HPA remains the regulated path.
 
-### 9.1 Cost sketch (illustrative)
+### 9.1 Hibernation economics (structural — no dollar table)
 
-Assumes ~$49/mo for one 8 GB celld node (1000 resident cells capacity) vs Cloudflare DO request/duration pricing at moderate chatty workloads:
+Do **not** publish $/cell-month or CF-vs-celld dollar tables until ClawQL measures idle ratio and resident RAM on a real subscription mix. Vendor density (~1000 resident / 8 GB) is a **capacity hint**, not a ClawQL cost claim.
 
-| Concurrent resident sessions | Cloudflare DO (est. / mo) | celld (one 8 GB node) |
-| ---------------------------- | ------------------------- | --------------------- |
-| 100                          | ~$415                     | ~$49                  |
-| 1,000                        | ~$4,150                   | ~$49                  |
-| 5,000                        | ~$20,750                  | ~$245 (5 nodes)       |
-| 10,000                       | ~$41,500                  | ~$490 (10 nodes)      |
-
-Inactive cells cost near zero on celld (S3 object only). Numbers are planning guides — re-benchmark before GTM claims.
+**Cite today:** celld’s **1:1 durable object + hibernate API** for per-subscription affinity vs a K8s **worker pool + queue** (idle floor = min replicas). That architecture difference is defensible without inventing a price.
 
 ### 9.2 docker-compose fleet example
 
@@ -748,7 +745,7 @@ clawql-streams coordination (planned package; Lab 5b skeleton today)
 | -------------------- | --------------------------- | ------------------------ | ----------------- | -------------------------------------------------------------------------------- |
 | **Trigger**          | Slack reaction              | Cron / API call          | API call          | WebSocket · NATS · webhook · cron · poll · gRPC · SSE · **QR**                   |
 | **Tool catalog**     | Custom (Toolshed, internal) | Built-in + custom        | Built-in + custom | Any MCP server via mcp-api-adapter                                               |
-| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | WORM / LTX on operator bucket, or Postgres                                       |
+| **Audit trail**      | Internal                    | Provider-managed         | Provider-managed  | Host `clawql-audit` WORM (+ LTX for cell state on celld; Postgres/JSONL on K8s)  |
 | **Sovereignty**      | Internal only               | Provider servers         | Provider servers  | celld · cellrt · air-gapped K8s · Cloudflare                                     |
 | **Scale**            | Internal K8s                | Provider-managed         | Provider-managed  | celld/cellrt cells · CF DOs · K8s HPA                                            |
 | **Protocol surface** | Internal                    | API only                 | API only          | Any protocol both directions                                                     |
@@ -762,7 +759,7 @@ clawql-streams coordination (planned package; Lab 5b skeleton today)
 
 ## 14. Positioning
 
-ClawQL Streams is the self-sovereign alternative to Anthropic Managed Agents, with Stripe Minions-level tool integration and Agents SDK-level orchestration — triggered by any event source, audited to WORM (LTX on celld/cellrt), deployable on **celld**, **cellrt**, **Cloudflare**, or **Kubernetes**.
+ClawQL Streams is the self-sovereign alternative to Anthropic Managed Agents, with Stripe Minions-level tool integration and Agents SDK-level orchestration — triggered by any event source, audited to host **`clawql-audit`** WORM (celld LTX holds durable cell state, not a substitute compliance trail), deployable on **celld**, **cellrt**, **Cloudflare**, or **Kubernetes**.
 
 Streams + Core + mcp-api-adapter is the **Protocol Fabric with an event loop**: world events enter, agents act under ATR and virtual keys, results leave on any protocol surface — without a human at the console and without building a custom Durable Object runtime on Node.
 

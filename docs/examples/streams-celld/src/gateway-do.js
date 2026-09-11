@@ -76,12 +76,27 @@ export class GatewayDO {
         }),
       );
 
+      const sessionBody = await sessionRes.json();
+      // Propagate fail-closed compliance / session errors (do not mask as 200 spawn).
+      if (!sessionRes.ok) {
+        return Response.json(
+          {
+            ok: false,
+            action: "spawn_failed",
+            subscriptionId,
+            eventId,
+            session: sessionBody,
+            status: sessionRes.status,
+          },
+          { status: sessionRes.status || 503 }
+        );
+      }
+
       const spawned = ((await this.state.storage.get("spawn_count")) ?? 0) + 1;
       await this.state.storage.put("spawn_count", spawned);
 
-      const sessionBody = await sessionRes.json();
       return Response.json({
-        ok: sessionRes.ok,
+        ok: true,
         action: "spawn",
         subscriptionId,
         eventId,

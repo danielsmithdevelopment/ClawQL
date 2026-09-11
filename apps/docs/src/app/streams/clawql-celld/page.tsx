@@ -6,7 +6,7 @@ import { docsPageMetadata } from '@/lib/seo'
 export const metadata = docsPageMetadata({
   title: 'ClawQL Celld Integration — self-hosted Durable Objects',
   description:
-    'How ClawQL Streams runs on celld: Workers/DO API constraints, streams-slim in-process + MCP/adapter fetch out-of-process, LTX WORM trail, fleet deploy, and security hardening.',
+    'How ClawQL Streams runs on celld: Workers/DO API constraints, streams-slim in-process + MCP/adapter/clawql-audit fetch out-of-process, LTX cell state, fleet deploy, and security hardening.',
   path: '/streams/clawql-celld',
   ogType: 'article',
 })

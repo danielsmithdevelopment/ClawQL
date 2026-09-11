@@ -9,9 +9,9 @@ import { Note } from '@/components/mdx'
 ## Mental model
 
 ```
-Event source → Streams router → Agent cell (DO / celld / cellrt) → in-process MCP → fetch() → clawql-inference
-                                      ↓
-                                 WORM audit (LTX / JSONL / Postgres)
+Event source → Streams router → Agent cell (DO / celld / cellrt) → slim core + fetch() → clawql-mcp / inference
+                                      ↓                                    ↓
+                         LTX cell state (bookkeeping)         host clawql-audit WORM (compliance)
 ```
 
 Streams extends the **`schedule`** pattern from time-based triggers to **arbitrary event sources**. Together with [search/execute](/learn/search-and-execute-mcp) and [mcp-api-adapter](/mcp/mcp-api-adapter), it completes the **Protocol Fabric**: MCP as the intermediate representation plus an autonomous event loop.
@@ -39,7 +39,7 @@ Read top-to-bottom once, then dive into the runtime that matches your deployment
 - Problem statement (Stripe Minions / managed agents pattern as platform)
 - v0.2 embedded stack: `clawql-streams` + `clawql-core` + `mcp-api-adapter` in one cell
 - Event loop, significance filters, `stream_*` MCP tools (planned)
-- WORM replication: LTX → S3 on celld; Postgres/JSONL on K8s
+- Cell-state durability: LTX → S3 on celld; compliance WORM stays host `clawql-audit` (Lab 5b dual-writes)
 
 ### 2. [Durable Objects runtime](/streams/clawql-durable-objects)
 
@@ -52,7 +52,7 @@ Read top-to-bottom once, then dive into the runtime that matches your deployment
 - Workers API parity path (Apache 2.0, Deno celld)
 - **Baseline: celld v0.4.0** — `celld dev`, KV/Queues/R2 bindings, versioned peer tunnel
 - Bundle constraints (64 MiB, no `child_process`, `setAlarm` not `setInterval`)
-- **LTX bucket = durable DO SQLite** (platform RPO=0) — not a substitute for host `clawql-audit`
+- **LTX bucket = durable DO SQLite** on the celld path (platform RPO=0) — **not** a substitute for host [`clawql-audit`](https://docs.clawql.com) `WORMAuditTrail`; Lab 5b dual-writes compliance events via `CLAWQL_AUDIT_WORM_URL`
 
 ### 3b. [Bursty Streams on AWS](/streams/aws-celld-burst) (draft)
 
@@ -429,7 +429,7 @@ clawql streams celld bundle-check
 
 Expect ≈ **0.4 MiB** (~0.6% of the **64 MiB** Workers limit). The full `clawql-core` barrel is **not** used — it would pull `webmcp-draft` (`node:fs`).
 
-Webhook responses include `session.audit.clawqlCore` (hash-chained append), `session.audit.ltx.snapshotKey: "audit:ring"`, and `session.core.inProcess: ["audit","cache","hash-chain"]`. With **`CLAWQL_MCP_URL`** set, MCP tools call Streamable HTTP. With **`CLAWQL_MCP_ADAPTER_URL`** set, `adapter_search` probes mcp-api-adapter REST.
+Webhook responses include `session.audit.clawqlCore` (hash-chained append), `session.audit.ltx.snapshotKey: "audit:ring"` (bookkeeping only), and — when `CLAWQL_AUDIT_WORM_URL` is set — `session.audit.compliance` pointing at host `clawql-audit`. With **`CLAWQL_MCP_URL`** set, MCP tools call Streamable HTTP. With **`CLAWQL_MCP_ADAPTER_URL`** set, `adapter_search` probes mcp-api-adapter REST.
 
 Smoke with a mock MCP + mock adapter (requires celld):
 
@@ -498,15 +498,15 @@ Streams v0.2 **adopts celld** for the JS/Workers path; **cellrt** is the long-ru
 
 ## Troubleshooting orientation
 
-| Symptom                        | Check                                                                   |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| “Where is `stream_subscribe`?” | Planned MCP surface — see Streams spec § tools                          |
-| Cell bundle too large          | 64 MiB Workers limit — tree-shake, keep inference out-of-process        |
-| Model calls fail in cell       | Must use `fetch()` to `clawql-inference`, not subprocess                |
-| WORM gaps on celld             | LTX → bucket path; verify bucket replication config                     |
-| Upgrading celld fleet          | v0.3 → v0.4 requires **full stop** — no rolling update                  |
-| Health probe 404 after upgrade | Use `/.well-known/celld/health` (v0.4.0+), not `/__celld/health`        |
-| Regulator needs offline proof  | TEE air-gap + [QR transport](/streams/clawql-qr-stream-transport) chain |
+| Symptom                          | Check                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| “Where is `stream_subscribe`?”   | Planned MCP surface — see Streams spec § tools                                              |
+| Cell bundle too large            | 64 MiB Workers limit — tree-shake, keep inference out-of-process                            |
+| Model calls fail in cell         | Must use `fetch()` to `clawql-inference`, not subprocess                                    |
+| Compliance WORM missing on celld | Set `CLAWQL_AUDIT_WORM_URL` + host `CLAWQL_WORM_ENABLED=1`; do not treat LTX alone as audit |
+| Upgrading celld fleet            | v0.3 → v0.4 requires **full stop** — no rolling update                                      |
+| Health probe 404 after upgrade   | Use `/.well-known/celld/health` (v0.4.0+), not `/__celld/health`                            |
+| Regulator needs offline proof    | TEE air-gap + [QR transport](/streams/clawql-qr-stream-transport) chain                     |
 
 ## What to read next
 
