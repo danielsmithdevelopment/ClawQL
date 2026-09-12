@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1116.0",
-    "cbor": "^9.0.2",
+    "cbor": "^10.0.12",
     "clawql-merkle": "0.1.0",
     "effect": "^3.21.4",
     "qrcode": "^1.5.4",
