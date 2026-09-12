@@ -154,7 +154,9 @@ describe("§5 live topology smoke", () => {
     expect(tree.gateways[0]!.children[0]!.agentId).toBe("hermes-042");
     expect(tree.gateways[0]!.children[0]!.agentType).toBe("hermes");
     expect(tree.gateways[0]!.children[0]!.parentGatewayId).toBe("gw-east");
-    expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/compare?focus=hermes-042");
+    // #1082 honesty: bare compare demo URL — not a fake per-agent ?focus=
+    expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/compare");
+    expect(tree.gateways[0]!.children[0]!.traceLink).not.toMatch(/focus=/);
 
     await withDashAndMcpUi(process.env, async (base) => {
       const dashRes = await fetch(
@@ -175,12 +177,15 @@ describe("§5 live topology smoke", () => {
       expect(html).toContain("[Regional Gateway: us-east-1]");
       expect(html).toContain("Hermes hermes-042");
       expect(html).toContain("Sources: gateway-registry, agent-instance-registry");
-      expect(html).toContain("/mcp-ui/trace/compare?focus=hermes-042");
-      expect(html).toContain('data-trace-src="/mcp-ui/trace/compare?focus=hermes-042"');
+      expect(html).toContain("/mcp-ui/trace/compare");
+      expect(html).not.toContain("compare?focus=hermes-042");
+      expect(html).toContain('data-trace-src="/mcp-ui/trace/compare"');
+      expect(html).toContain(">demo</a>");
+      expect(html).toContain("not this agent's session");
       expect(html).toContain('id="trace-embed"');
       expect(html).toMatch(/dot-healthy/);
 
-      const traceHref = "/mcp-ui/trace/compare?focus=hermes-042";
+      const traceHref = "/mcp-ui/trace/compare";
       const traceRes = await fetch(`${base}${traceHref}`);
       const traceHtml = await traceRes.text();
 
@@ -190,14 +195,13 @@ describe("§5 live topology smoke", () => {
       console.log("title/body markers:", {
         hasFlamegraph: /flame|compare|trace/i.test(traceHtml),
         hasSvgOrBars: /svg|fg-|flamegraph|bar/i.test(traceHtml),
-        focusQueryEcho: traceHtml.includes("focus"),
         snippet: traceHtml.slice(0, 600).replace(/\s+/g, " "),
       });
       console.log("=== END TRACE ===\n");
 
       expect(traceRes.status).toBe(200);
       expect(traceRes.headers.get("content-type") ?? "").toMatch(/html/);
-      // Demo compare page must render (not 404 / "No trace")
+      // Honest demo compare must render (not 404 / "No trace")
       expect(traceHtml).not.toMatch(/No trace for session/i);
       expect(traceHtml).toMatch(/compare|flame|compression/i);
     });
