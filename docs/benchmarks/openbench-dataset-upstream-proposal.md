@@ -2,7 +2,7 @@
 
 **Status:** draft for OpenBench maintainers / community  
 **Author context:** ClawQL reference implementation  
-**Schema:** [`openbench/schema/openbench-trace.v1.json`](../../openbench/schema/openbench-trace.v1.json)
+**Schema:** [`benchmarks/openbench/schema/openbench-trace.v1.json`](../../benchmarks/openbench/schema/openbench-trace.v1.json)
 
 ---
 

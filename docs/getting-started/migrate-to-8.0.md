@@ -100,9 +100,16 @@ export CLAWQL_PANGUARD_IN_PROCESS=1
 # export CLAWQL_ALLOW_NO_ENFORCEMENT=1
 ```
 
+## Hosted-edge Workers (not migrated)
+
+The Cloudflare Workers under [`infra/cloudflare/`](../../infra/cloudflare/README.md) are a **pre-8.0 parallel MCP** (hardcoded catalog, D1 audit, no `ProviderPlugin`). They **must** be updated to ClawQL **8.0.0** and the current plugin / empty-catalog / skills design before they are treated as a product surface.
+
+Canonical MCP remains Node `clawql-mcp` / Helm `manifests/charts/clawql-mcp`. Status and layout: [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md).
+
 ## Docs
 
 - Spec: [`docs/design/clawql-core-plugin-architecture.md`](../design/clawql-core-plugin-architecture.md)
 - Action items: [`docs/design/clawql-8.0-plugin-architecture-action-items.md`](../design/clawql-8.0-plugin-architecture-action-items.md)
 - Panguard: [`docs/plugins/panguard-proxy.md`](../plugins/panguard-proxy.md)
 - Empty catalog / packs: [`docs/plugins/bundled-providers.md`](../plugins/bundled-providers.md)
+- Hosted-edge Workers (8.0 lag): [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md)

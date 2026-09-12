@@ -176,12 +176,12 @@ Use `X-Clawql-Tool` to gate MCP tool names over HTTP (`tool:knowledge_search`).
 
 ## Quick start
 
-**Operator policy example:** [`examples/inference/`](../../examples/inference/) — copy `policy.yaml` to `$CLAWQL_HOME/Inference/` and run `clawql inference serve`.
+**Operator policy example:** [`docs/examples/inference/`](../../docs/examples/inference/) — copy `policy.yaml` to `$CLAWQL_HOME/Inference/` and run `clawql inference serve`.
 
 ```bash
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
 mkdir -p "$CLAWQL_HOME/Inference"
-cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+cp docs/examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
 
 export OPENAI_API_KEY=sk-...
 clawql inference policy show

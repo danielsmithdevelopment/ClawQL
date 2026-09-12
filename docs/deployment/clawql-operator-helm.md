@@ -2,7 +2,7 @@
 
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)
 
-The operator is an **additive** deployment path. Helm `charts/clawql-mcp`, `make local-k8s-up`, and env-based `CLAWQL_ENABLE_*` flags remain the default when the operator is not installed.
+The operator is an **additive** deployment path. Helm `manifests/charts/clawql-mcp`, `make local-k8s-up`, and env-based `CLAWQL_ENABLE_*` flags remain the default when the operator is not installed.
 
 ## Architecture (7.0 scaffold)
 
@@ -19,7 +19,7 @@ flowchart LR
   ENV --> MCP
 ```
 
-1. Platform engineer applies a `ClawQLInstance` (see `examples/operator/clawqlinstance-minimal.yaml`).
+1. Platform engineer applies a `ClawQLInstance` (see `docs/examples/operator/clawqlinstance-minimal.yaml`).
 2. Operator validates `spec`, applies **tier presets** (`local` / `standard` / `enterprise`), and writes `{name}-tier-spec` ConfigMap (with owner reference).
 3. Optional **`spec.mcp.rolloutOnTierSpecChange`** triggers MCP Deployment restart when tier spec changes.
 4. When `instanceSpec.enabled: true` on the MCP chart, the pod mounts the ConfigMap and `resolvePluginCompositionFlags()` overlays tier toggles on env defaults.
@@ -27,16 +27,14 @@ flowchart LR
 ## Install
 
 ```bash
-# CRD (once per cluster) — or use chart crd.install: true
-kubectl apply -f deploy/crd/clawqlinstances.clawql.io.yaml
-
-# Operator (continuous reconcile — default mode: deployment)
-helm upgrade --install clawql-operator ./charts/clawql-operator \
+# Operator (continuous reconcile — default mode: deployment).
+# The chart installs the ClawQLInstance CRD when crd.install is true (default).
+helm upgrade --install clawql-operator ./manifests/charts/clawql-operator \
   --namespace clawql-system \
   --create-namespace
 
 # Example instance
-kubectl apply -f examples/operator/clawqlinstance-minimal.yaml -n clawql
+kubectl apply -f docs/examples/operator/clawqlinstance-minimal.yaml -n clawql
 ```
 
 ### Local desktop (full stack)
@@ -51,7 +49,7 @@ npx -p clawql-mcp clawql operator status
 ## MCP integration (explicit opt-in)
 
 ```yaml
-# values overlay for charts/clawql-mcp — default is enabled: false
+# values overlay for manifests/charts/clawql-mcp — default is enabled: false
 instanceSpec:
   enabled: true
   configMapName: clawql-tier-spec

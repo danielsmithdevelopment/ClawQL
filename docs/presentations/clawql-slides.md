@@ -897,7 +897,7 @@ Bundled or CI-generated **OpenAPI** (or a thin `providers/osv-*.json`) that wrap
 _One `helm install` command deploys the entire platform — **all 12+** services (MCP, documents, Onyx, Flink, **OSV** jobs, optional **HashiCorp Vault**/ for secrets — not Helm **`vault`** = Obsidian memory [#161](https://github.com/danielsmithdevelopment/ClawQL/issues/161), optional **Istio** control plane, **Kiali**), all secrets wiring, all ingress rules._
 
 ```bash
-helm install clawql charts/clawql-full-stack --namespace clawql
+helm install clawql manifests/charts/clawql-full-stack --namespace clawql
 ```
 
 - Single `values.yaml` controls every service — env vars, secrets, resource limits, ingress rules
@@ -1215,7 +1215,7 @@ All of the above inherits the shared core (MCP, Ouroboros, Obsidian, Onyx, docum
 
 ### Hyperledger Fabric — Target Permissioned Ledger Layer (roadmap)
 
-> **Not in the open-source repo today:** no `CLAWQL_ENABLE_FABRIC`, no `fabric.enabled` in `charts/clawql-mcp`, no `providers/fabric/openapi.yaml`. Track [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187). Illustrative Helm below is **vision**, not current chart values.
+> **Not in the open-source repo today:** no `CLAWQL_ENABLE_FABRIC`, no `fabric.enabled` in `manifests/charts/clawql-mcp`, no `providers/fabric/openapi.yaml`. Track [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187). Illustrative Helm below is **vision**, not current chart values.
 
 **Target toggle (roadmap):** env/chart flag (name TBD). When shipped, deploy as a **Helm sub-chart** (peers, orderers, CouchDB, CA, chaincode).
 
@@ -1490,7 +1490,7 @@ Same **Interview → Seed → Execute → Evaluate → Evolve** spine as the inv
 ### Helm & Fabric / Web3 — **`values.yaml` touchpoints (illustrative)**
 
 ```yaml
-# Illustrative vision excerpt — NOT current charts/clawql-mcp/values.yaml.
+# Illustrative vision excerpt — NOT current manifests/charts/clawql-mcp/values.yaml.
 # Verify shipped keys in docs/deployment/helm.md and clawql-security-defense-deliverables.md.
 clawql:
   web3:
@@ -1676,7 +1676,7 @@ Per-step hashing in Ouroboros — including Onyx retrieval steps as leaves. Root
 SQLite + sqlite-vec vector sidecar alongside Obsidian vault. Works alongside Onyx — vault covers session-level runbooks and decisions, Onyx covers live enterprise index queries. Tracked in GitHub issues #68–#72.
 
 **PLANNED — Unified Helm Chart Finalization**
-`charts/clawql-full-stack` with all **12+** services including Onyx, Flink, **OSV-Scanner** jobs, optional **Istio**/**Kiali**, `values.yaml`, `CLAWQL_BUNDLED_OFFLINE=1`, `CLAWQL_ENABLE_ONYX=true`, resource limits, init jobs.
+`manifests/charts/clawql-full-stack` with all **12+** services including Onyx, Flink, **OSV-Scanner** jobs, optional **Istio**/**Kiali**, `values.yaml`, `CLAWQL_BUNDLED_OFFLINE=1`, `CLAWQL_ENABLE_ONYX=true`, resource limits, init jobs.
 
 **PLANNED — Docker Image Rebuild + K8s Rollout**
 Include new providers, Ouroboros TS port, Onyx + Flink configs, Cuckoo + Merkle integrations. Roll out to `clawql` namespace. Zero new pods for Ouroboros.

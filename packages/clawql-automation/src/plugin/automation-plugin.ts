@@ -29,7 +29,7 @@ export const AUTOMATION_PLUGIN_ID = "clawql-automation";
 
 /**
  * Argo Workflows `workflow` MCP tool — template-ref submit only in v1.
- * Vault digest WorkflowTemplate: deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml
+ * Vault digest WorkflowTemplate: infra/gitops/argo-workflows/templates/clawql-vault-daily-digest.yaml
  */
 export const notifyToolSchema = {
   channel: z

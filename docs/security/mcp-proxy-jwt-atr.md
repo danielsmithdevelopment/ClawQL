@@ -19,7 +19,7 @@ North–south order (conceptual):
 2. **MCP policy proxy** (e.g. **Panguard** or equivalent) — validates JWT signature + ATR claims **per request**, enforces tool allowlists / OWASP Agentic patterns, synchronous allow/deny.
 3. **`Service/clawql-mcp-http`** — Streamable HTTP MCP on **`/mcp`** (and optional gRPC on **50051**).
 
-## Helm (`charts/clawql-mcp`)
+## Helm (`manifests/charts/clawql-mcp`)
 
 Enable **`mcpProxy.enabled`** to deploy **`Deployment`/`Service` `…-proxy`** (default **`replicaCount: 2`**) in the release namespace.
 
@@ -28,7 +28,7 @@ Enable **`mcpProxy.enabled`** to deploy **`Deployment`/`Service` `…-proxy`** (
 
 Panguard + K8s roadmap and example **`extraEnv`**: **[`docs/integrations/panguard-kubernetes.md`](../integrations/panguard-kubernetes.md)**.
 
-Values reference: [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) (`mcpProxy`).
+Values reference: [`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml) (`mcpProxy`).
 
 Optional **`mcpProxy.slo.prometheusRule.enabled`** renders a **`PrometheusRule`** (`monitoring.coreos.com/v1`) that alerts when Istio **HTTP** p99 latency to the proxy Service exceeds **`httpP99LatencyThresholdMs`** (default **50**) for **`forDuration`** (default **15m**). Tune the **`destination_service_name`** regex if your mesh labels differ.
 

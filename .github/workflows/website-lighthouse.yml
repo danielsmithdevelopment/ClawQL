@@ -1,5 +1,5 @@
 # Lab Lighthouse against a production `next build` + standalone `node server.js` (not Cloudflare Workers).
-# Next 16+ rejects `next start` when `output: 'standalone'` is set (same layout as website/Dockerfile).
+# Next 16+ rejects `next start` when `output: 'standalone'` is set (same layout as apps/docs/Dockerfile).
 # Catches client-side / HTML regressions, WCAG-ish accessibility, SEO metadata, and best-practices headers.
 # See docs/website/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
 
@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "website/**"
+      - "apps/docs/**"
       - "packages/clawql-analytics/**"
       - "packages/clawql-auth/**"
       - "packages/clawql-audit/**"
@@ -19,7 +19,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "website/**"
+      - "apps/docs/**"
       - "packages/clawql-analytics/**"
       - "packages/clawql-auth/**"
       - "packages/clawql-audit/**"
@@ -49,7 +49,7 @@ jobs:
           cache: npm
           cache-dependency-path: |
             package-lock.json
-            website/package-lock.json
+            apps/docs/package-lock.json
 
       - name: Build clawql-analytics (docs API route dependency)
         run: |
@@ -60,14 +60,14 @@ jobs:
           npm run build -w clawql-analytics
 
       - name: Install website dependencies
-        run: npm ci --prefix website
+        run: npm ci --prefix apps/docs
 
       - name: Build docs site
         env:
           # Must match the URL Lighthouse uses below; otherwise canonical / OG
           # metadata use localhost while the page is served on 127.0.0.1 and SEO drops.
           NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3000
-        run: npm run build --prefix website
+        run: npm run build --prefix apps/docs
 
       - name: Start server, run Lighthouse, assert scores
         env:
@@ -78,7 +78,7 @@ jobs:
           LH_MIN_PERF: "0.70"
         run: |
           set -euo pipefail
-          cd website
+          cd apps/docs
           # Mirror Dockerfile runner layout for `output: 'standalone'`.
           cp -R public .next/standalone/public
           mkdir -p .next/standalone/.next
@@ -127,7 +127,7 @@ jobs:
               --output-path="${out}" \
               --quiet \
               "$@"
-            node ../scripts/dev/assert-lighthouse-scores.mjs "${out}"
+            node ../../scripts/dev/assert-lighthouse-scores.mjs "${out}"
           }
 
           idx=0
@@ -148,4 +148,4 @@ jobs:
             --output-path=lighthouse-ci-mobile.json \
             --quiet
 
-          LH_MIN_PERF=0.52 node ../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci-mobile.json
+          LH_MIN_PERF=0.52 node ../../scripts/dev/assert-lighthouse-scores.mjs lighthouse-ci-mobile.json

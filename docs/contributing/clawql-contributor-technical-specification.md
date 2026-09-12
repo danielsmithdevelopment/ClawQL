@@ -671,7 +671,7 @@ For integration tests, provide fixture documents in `test/fixtures/`. The CI int
 
 **Step 8: Add an end-to-end test in Tier 1 Docker Compose**
 
-Add your vertical’s toggle to `examples/clawql-local-docker-compose/docker-compose.yml` and add an end-to-end test in `examples/clawql-local-docker-compose/tests/`. The E2E test must:
+Add your vertical’s toggle to `docs/examples/clawql-local-docker-compose/docker-compose.yml` and add an end-to-end test in `docs/examples/clawql-local-docker-compose/tests/`. The E2E test must:
 
 1. Enable your vertical via CRD (or environment variable in Tier 1)
 2. Ingest at least one fixture document through the full pipeline
@@ -684,8 +684,8 @@ Add your vertical’s toggle to `examples/clawql-local-docker-compose/docker-com
 Add your vertical’s toggle to:
 
 - `operator/config/crd/clawqlinstance_types.go` — add the field to the spec struct
-- `charts/clawql-full-stack/values.yaml` — add the default (disabled) toggle
-- `charts/clawql-full-stack/templates/` — add the conditional include
+- `manifests/charts/clawql-full-stack/values.yaml` — add the default (disabled) toggle
+- `manifests/charts/clawql-full-stack/templates/` — add the conditional include
 
 **Step 10: Provide documentation**
 

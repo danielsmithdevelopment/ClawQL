@@ -66,7 +66,7 @@ Before the on-arm write nudge, both scored 0.0 under the same caps: on looped Ou
 OPENROUTER_API_KEY=… clawql inference serve --port 8080
 
 CLAWQL_OPENBENCH_DOOM_LOOP=allow \
-python3 openbench/scripts/run-ab-compare.py \
+python3 benchmarks/openbench/scripts/run-ab-compare.py \
   --task ouroboros-oscillation-escape \
   --arms ouroboros-on,ouroboros-off \
   --timeout 180 --trials 1 \

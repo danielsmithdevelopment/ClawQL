@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy website/ (OpenNext + Wrangler) and attach docs.<zone> to Worker clawql-docs.
+# Deploy apps/docs/ (OpenNext + Wrangler) and attach docs.<zone> to Worker clawql-docs.
 #
 # Uses the same auth env as ClawQL MCP (see src/auth-headers.ts):
 #   CLAWQL_CLOUDFLARE_API_TOKEN  or  CLOUDFLARE_API_TOKEN
@@ -17,7 +17,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-WEB="$ROOT/website"
+WEB="$ROOT/apps/docs"
 TOKEN="${CLAWQL_CLOUDFLARE_API_TOKEN:-${CLOUDFLARE_API_TOKEN:-}}"
 APEX="${CLAWQL_DOCS_APEX_DOMAIN:-clawql.com}"
 HOSTNAME="${CLAWQL_DOCS_HOSTNAME:-docs.${APEX}}"
@@ -64,7 +64,7 @@ if [[ -z "$ZONE_ID" || "$ZONE_ID" == "null" ]]; then
 fi
 echo "    zone_id=$ZONE_ID"
 
-echo "==> Building and deploying Worker ($WORKER_NAME) from website/"
+echo "==> Building and deploying Worker ($WORKER_NAME) from apps/docs/"
 export CLOUDFLARE_API_TOKEN="$TOKEN"
 export NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL:-https://${HOSTNAME}}"
 (

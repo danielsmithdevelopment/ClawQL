@@ -42,7 +42,7 @@ The ClawQL **dashboard** (local **`npm run dev`** or Helm **`dashboard.enabled`*
 | **`Dashboard/chats/threads/<id>/activity.jsonl`** | Per-thread chat API events                     |
 | **`Dashboard/logs/agent-chat.jsonl`**             | Cross-thread Agent Chat API log                |
 
-Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as **`threadId`** so you can reopen a sidebar chat and continue. **`memory_recall`** does not scan **`Dashboard/`** by default (recall subtree is **`Memory/`**); vault notes from **`memory_ingest`** remain separate from dashboard chat files. See **[dashboard/README.md](../../dashboard/README.md)** and the **[OpenClaw memory_recall case study](../case_studies/openclaw-clawql-memory-recall-agent-chat-2026-06.md)**.
+Thread **`id`** values (e.g. **`thread-<epoch-ms>`**) are passed to OpenClaw as **`threadId`** so you can reopen a sidebar chat and continue. **`memory_recall`** does not scan **`Dashboard/`** by default (recall subtree is **`Memory/`**); vault notes from **`memory_ingest`** remain separate from dashboard chat files. See **[dashboard/README.md](../../apps/dashboard/README.md)** and the **[OpenClaw memory_recall case study](../case_studies/openclaw-clawql-memory-recall-agent-chat-2026-06.md)**.
 
 ## Wikilinks and semantics
 

@@ -14,11 +14,11 @@ paths = [
   '''(^|/)providers/''',
   '''(^|/)node_modules/''',
   '''\.open-next/''',
-  '''(^|/)website/\.next/''',
+  '''(^|/)apps/docs/\.next/''',
   '''(^|/)dist/''',
   '''(^|/)packages/[^/]+/dist/''',
   '''(^|/)coverage/''',
   '''(^|/)packages/mcp-grpc-transport/test-fixtures/''',
-  '''(^|/)openbench/tasks/''',
+  '''(^|/)benchmarks/openbench/tasks/''',
   '''\.test\.ts$''',
 ]

@@ -72,7 +72,7 @@ Explicit **`CLAWQL_BUNDLED_PROVIDERS=paperless,tika,...`** can still list IDP ve
 
 ## Helm / Compose
 
-- **Helm (`charts/clawql-mcp`):** `enableAnydoc`, `enablePdfInspector`, `enableIdpClassifier`, `enableLangextract`, `enableIdpPipeline`; opt-in **`documentPipeline.docling|classifier|langextract`**.
+- **Helm (`manifests/charts/clawql-mcp`):** `enableAnydoc`, `enablePdfInspector`, `enableIdpClassifier`, `enableLangextract`, `enableIdpPipeline`; opt-in **`documentPipeline.docling|classifier|langextract`**.
 - **Compose:** [`docker/compose/lending.compose.yml`](../../docker/compose/lending.compose.yml) and [`docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml).
 
 ## Onyx note

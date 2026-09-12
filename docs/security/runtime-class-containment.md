@@ -13,7 +13,7 @@ This document describes optional **Kata** and **gVisor** **`RuntimeClass`** cont
 
 They are **not** drop-in substitutes: pick **Kata** where a compromised container must not reach the host kernel; use **gVisor** only where you accept userspace-kernel semantics and have validated syscall coverage for your images.
 
-## Helm values (`charts/clawql-mcp`)
+## Helm values (`manifests/charts/clawql-mcp`)
 
 ### MCP Deployment (`security.kata`)
 
@@ -40,7 +40,7 @@ Optional **`ClusterPolicy`** with two rule groups:
 ## Example (illustrative)
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n openclaw --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n openclaw --create-namespace \
   --set security.kata.enabled=true \
   --set security.kata.runtimeClassName=kata-qemu \
   --set kyverno.runtimeClassPolicy.enabled=true \

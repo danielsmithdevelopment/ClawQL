@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Append new SecurityScanRunRecord artifacts from CI into website/public/security-scan-history.json.
+ * Append new SecurityScanRunRecord artifacts from CI into apps/docs/public/security-scan-history.json.
  * Invoked by .github/workflows/security-status-publish.yml (scheduled, separate from scan job).
  *
  * API calls must use api.github.com (or GITHUB_API_URL). GITHUB_SERVER_URL is github.com and is
@@ -13,7 +13,7 @@ import { tmpdir } from 'node:os'
 import { randomBytes } from 'node:crypto'
 
 const root = resolve(process.cwd())
-const historyPath = resolve(root, 'website/public/security-scan-history.json')
+const historyPath = resolve(root, 'apps/docs/public/security-scan-history.json')
 const repo = process.env.GITHUB_REPOSITORY ?? 'danielsmithdevelopment/ClawQL'
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
 const maxRuns = Number(process.env.SECURITY_STATUS_MAX_RUNS ?? '30')

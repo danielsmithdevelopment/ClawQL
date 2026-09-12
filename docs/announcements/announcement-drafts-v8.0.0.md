@@ -4,7 +4,7 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../../RELEASE_NOTES_v8.0.0.md)
+**Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md)
 
 **Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
 
@@ -34,7 +34,7 @@
 
 Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slack already in the merge — or with a silent ungated tool surface. Greenfield demos still get a one-liner. Pin **`@8`** when you move images and Helm `appVersion`.
 
-**CTA:** `npm install clawql-mcp@8.0.0` · migration in [RELEASE_NOTES_v8.0.0.md](../../RELEASE_NOTES_v8.0.0.md) · [CHANGELOG 8.0.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
+**CTA:** `npm install clawql-mcp@8.0.0` · migration in [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md) · [CHANGELOG 8.0.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
 
 ---
 
@@ -67,7 +67,7 @@ We open-source an Agentic Gateway (MCP search/execute over OpenAPI + vault memor
 Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, audit/TEE wedge, OpenBench B-7.
 
 npm: `clawql-mcp@8.0.0`  
-Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v8.0.0.md  
+Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/release/RELEASE_NOTES_v8.0.0.md  
 Migrate: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/migrate-to-8.0.md
 
 Happy to answer questions about the opt-in defaults vs the old opinionated stack.

@@ -45,7 +45,7 @@ kubectl create clusterrolebinding clawql-workflow-test-admin \
   --serviceaccount="${NS}:clawql-workflow-test" 2>/dev/null || \
   kubectl create rolebinding clawql-workflow-test --clusterrole=edit --serviceaccount="${NS}:clawql-workflow-test" -n "${NS}"
 
-kubectl apply -n "${NS}" -f deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml
+kubectl apply -n "${NS}" -f infra/gitops/argo-workflows/templates/clawql-vault-daily-digest.yaml
 
 export CLAWQL_ENABLE_WORKFLOW=1
 export CLAWQL_WORKFLOW_NAMESPACE_ALLOWLIST="${NS}"

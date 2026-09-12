@@ -1,0 +1,29 @@
+# App-of-apps root — syncs child Applications under infra/gitops/applications/
+# Apply after AppProject:
+#   kubectl apply -f infra/gitops/projects/clawql.yaml -n argocd
+#   kubectl apply -f infra/gitops/applications/root.yaml -n argocd
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clawql-root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: clawql
+  source:
+    repoURL: https://github.com/danielsmithdevelopment/ClawQL.git
+    targetRevision: main
+    path: infra/gitops/applications
+    directory:
+      recurse: false
+      exclude: "{root.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true

@@ -195,7 +195,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
               };
             }
             case "customer.subscription.created": {
-              // Hosted edge tenants are provisioned by cloudflare/gateway
+              // Hosted edge tenants are provisioned by infra/cloudflare/gateway
               // POST /webhooks/stripe → D1. This path keeps WORM audit for Node/CLI.
               const subscription = event.data.object as Stripe.Subscription;
               yield* audit.appendEntry(

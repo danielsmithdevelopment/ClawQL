@@ -72,7 +72,7 @@ Non-MCP clients that want **tool-name REST/GraphQL** (`POST /echo`, `/graphql`) 
 
 - Package: [`packages/mcp-api-adapter`](../mcp-api-adapter/README.md)
 - Design: [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md)
-- Demo (both surfaces at once): [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)
+- Demo (both surfaces at once): [`docs/examples/mcp-api-adapter`](../../docs/examples/mcp-api-adapter/README.md)
 
 ### Generality (what “any MCP server” means here)
 
@@ -286,7 +286,7 @@ Set **`GRPC_HOST`** / **`GRPC_PORT`** to match the running process. The script a
 
 ### Kubernetes
 
-Use native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes) on port **50051** when gRPC is enabled. Example overlay: [ClawQL `docker/kustomize/overlays/grpc-enabled`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docker/kustomize/overlays/grpc-enabled).
+Use native [`grpc` probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes) on port **50051** when gRPC is enabled. Example overlay: [ClawQL `manifests/kustomize/overlays/grpc-enabled`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/manifests/kustomize/overlays/grpc-enabled).
 
 The ClawQL **`clawql-mcp-http`** Service publishes **port 50051** (name **`grpc`**) in **base** and **dev** / **local** / **prod** overlays, so clients can call **`model_context_protocol.Mcp`** at the Service IP without **`kubectl port-forward`**, once **`ENABLE_GRPC=1`** on the Pod. See [ClawQL `docs/deployment/deploy-k8s.md` — Service ports](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/deploy-k8s.md#service-ports-http-and-grpc).
 

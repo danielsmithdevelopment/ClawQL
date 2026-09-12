@@ -48,7 +48,7 @@ clawql-mcp-http  --publish-->  JetStream (CLAWQL_WORKFLOW)
 ### HITL + KEDA (original)
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp -n clawql \
+helm upgrade --install clawql manifests/charts/clawql-mcp -n clawql \
   --set envFromSecret=clawql-provider-env \
   --set nats.enabled=true \
   --set nats.appIntegration.publish=true \
@@ -61,7 +61,7 @@ helm upgrade --install clawql charts/clawql-mcp -n clawql \
 ### Document consumers (IDP + Coneshare)
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp -n clawql \
+helm upgrade --install clawql manifests/charts/clawql-mcp -n clawql \
   --set envFromSecret=clawql-provider-env \
   --set nats.enabled=true \
   --set nats.appIntegration.publish=true \

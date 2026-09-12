@@ -51,7 +51,7 @@ Add Langfuse (bundled profile or BYO): [`bundled-observability.md`](./bundled-ob
 
 ## Umbrella chart wiring
 
-`charts/clawql-idp/values-idp-full.yaml` enables `metrics.serviceMonitor` for kube-prometheus-stack. Langfuse remains a separate Helm install.
+`manifests/charts/clawql-idp/values-idp-full.yaml` enables `metrics.serviceMonitor` for kube-prometheus-stack. Langfuse remains a separate Helm install.
 
 ## Related issues
 

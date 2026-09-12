@@ -17,9 +17,9 @@ on:
       - ".github/workflows/idp-pipeline-smoke.yml"
       - "scripts/dev/smoke-idp-pipeline-b23.sh"
       - "scripts/dev/smoke-idp-ordered-compose.sh"
-      - "examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
-      - "examples/clawql-local-docker-compose/coneshare-smoke.env"
-      - "examples/clawql-local-docker-compose/docker-compose.yml"
+      - "docs/examples/clawql-local-docker-compose/docker-compose.idp-smoke.yml"
+      - "docs/examples/clawql-local-docker-compose/coneshare-smoke.env"
+      - "docs/examples/clawql-local-docker-compose/docker-compose.yml"
       - "packages/clawql-documents/**"
       - "docs/runbooks/idp-pipeline-b23-smoke.md"
   schedule:

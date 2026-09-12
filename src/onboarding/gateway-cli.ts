@@ -72,12 +72,12 @@ function secretEnvPath(home: string): string {
 function findRepoRoot(): string | null {
   let dir = dirname(fileURLToPath(import.meta.url));
   for (let i = 0; i < 12; i++) {
-    if (existsSync(join(dir, "examples", "managed-gateway", "docker-compose.yml"))) {
+    if (existsSync(join(dir, "docs", "examples", "managed-gateway", "docker-compose.yml"))) {
       return dir;
     }
-    if (existsSync(join(dir, "package.json")) && existsSync(join(dir, "examples"))) {
+    if (existsSync(join(dir, "package.json")) && existsSync(join(dir, "docs", "examples"))) {
       // Prefer repo with managed-gateway example when present
-      if (existsSync(join(dir, "examples", "managed-gateway"))) return dir;
+      if (existsSync(join(dir, "docs", "examples", "managed-gateway"))) return dir;
     }
     const parent = dirname(dir);
     if (parent === dir) break;
@@ -135,7 +135,7 @@ function resolveProxyBin(repoRoot: string | null, packageRoot: string | null): s
   const candidates = [
     packageRoot ? join(packageRoot, "bin", "clawql-gateway-proxy.mjs") : null,
     repoRoot ? join(repoRoot, "bin", "clawql-gateway-proxy.mjs") : null,
-    repoRoot ? join(repoRoot, "examples", "managed-gateway", "gateway-proxy.mjs") : null,
+    repoRoot ? join(repoRoot, "docs", "examples", "managed-gateway", "gateway-proxy.mjs") : null,
   ];
   for (const c of candidates) {
     if (c && existsSync(c)) return c;
@@ -169,7 +169,7 @@ export function resolveProcessRuntimePaths(
 }
 
 function managedExampleDir(repoRoot: string): string {
-  return join(repoRoot, "examples", "managed-gateway");
+  return join(repoRoot, "docs", "examples", "managed-gateway");
 }
 
 async function waitForPortFree(port: number, host = "127.0.0.1"): Promise<boolean> {
@@ -547,7 +547,7 @@ export async function runGatewayCreate(options: GatewayCliOptions = {}): Promise
         }
       }
       if (!repoRoot) {
-        console.error("Could not locate examples/managed-gateway for Docker profile.");
+        console.error("Could not locate docs/examples/managed-gateway for Docker profile.");
         printCreateResult(state, secret, Boolean(options.json));
         return 1;
       }

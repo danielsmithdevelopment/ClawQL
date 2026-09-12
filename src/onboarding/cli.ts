@@ -546,7 +546,7 @@ release (Layer 0 — immutable releases):
   verify <target> Verify bundle, manifest.json, or Arweave tx id
 
 ontology (ADR 0009 — enterprise Ontology + meta-ontology v0.1):
-  lint            Validate entity YAML against schemas/ontology/entity.schema.json
+  lint            Validate entity YAML against packages/clawql-ontology/schemas/ontology/entity.schema.json
   generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
   scaffold        Layer 2: scaffold CQE entity from JSON Schema
   meta            Layer 3: status | patterns | promote
@@ -637,7 +637,7 @@ gateway (Managed Edge Gateway — /mcp + /v1 + memory):
 
 streams (ClawQL Streams — celld v0.4.0):
   celld install [--version v0.4.0]   Pin-install celld (CELLD_VERSION)
-  celld dev [--project DIR] [--port N]   Local dev (default: examples/streams-celld)
+  celld dev [--project DIR] [--port N]   Local dev (default: docs/examples/streams-celld)
   celld deploy [--project DIR] --bucket s3://… [--endpoint URL] [--region auto]
   celld start --bucket s3://… [--listen HOST:PORT] [--advertise HOST:PORT]
   celld diagnose --bucket s3://…     Fleet lease + peer probes
