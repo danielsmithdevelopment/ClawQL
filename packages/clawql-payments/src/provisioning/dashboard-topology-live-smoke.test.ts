@@ -138,7 +138,6 @@ describe("§5 live topology smoke", () => {
     );
 
     // --- report artifacts via console for the operator ---
-    // eslint-disable-next-line no-console
     console.log(
       "\n=== AGGREGATED TREE ===\n" + JSON.stringify(tree, null, 2) + "\n=======================\n"
     );
@@ -164,12 +163,9 @@ describe("§5 live topology smoke", () => {
       expect(dashRes.status).toBe(200);
       const html = await dashRes.text();
 
-      // eslint-disable-next-line no-console
       console.log("\n=== DASHBOARD TOPOLOGY SNIPPET ===");
       const topoIdx = html.indexOf('id="topology"');
-      // eslint-disable-next-line no-console
       console.log(html.slice(topoIdx, topoIdx + 1800));
-      // eslint-disable-next-line no-console
       console.log("=== END SNIPPET ===\n");
 
       expect(html).not.toContain("Connect your first gateway");
@@ -188,20 +184,15 @@ describe("§5 live topology smoke", () => {
       const traceRes = await fetch(`${base}${traceHref}`);
       const traceHtml = await traceRes.text();
 
-      // eslint-disable-next-line no-console
       console.log("\n=== TRACE LINK RESPONSE ===");
-      // eslint-disable-next-line no-console
       console.log("status:", traceRes.status);
-      // eslint-disable-next-line no-console
       console.log("content-type:", traceRes.headers.get("content-type"));
-      // eslint-disable-next-line no-console
       console.log("title/body markers:", {
         hasFlamegraph: /flame|compare|trace/i.test(traceHtml),
         hasSvgOrBars: /svg|fg-|flamegraph|bar/i.test(traceHtml),
         focusQueryEcho: traceHtml.includes("focus"),
         snippet: traceHtml.slice(0, 600).replace(/\s+/g, " "),
       });
-      // eslint-disable-next-line no-console
       console.log("=== END TRACE ===\n");
 
       expect(traceRes.status).toBe(200);
