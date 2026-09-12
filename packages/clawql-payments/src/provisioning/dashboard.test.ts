@@ -180,7 +180,7 @@ describe("CPC dashboard", () => {
                 agentType: "hermes",
                 parentGatewayId: "gw1",
                 lastActive: new Date().toISOString(),
-                traceLink: "/mcp-ui/trace/compare?focus=hermes-042",
+                traceLink: "/mcp-ui/trace/compare",
                 status: "healthy",
               },
             ],
@@ -196,7 +196,10 @@ describe("CPC dashboard", () => {
     const html = Effect.runSync(renderCpcDashboardHtml(model));
     expect(html).toContain("dot-healthy");
     expect(html).toContain("Hermes hermes-042");
-    expect(html).toContain("/mcp-ui/trace/compare?focus=hermes-042");
+    expect(html).toContain("/mcp-ui/trace/compare");
+    expect(html).not.toContain("compare?focus=hermes-042");
+    expect(html).toContain(">demo</a>");
+    expect(html).toContain("not this agent's session");
     expect(html).toContain("<details>");
   });
 
