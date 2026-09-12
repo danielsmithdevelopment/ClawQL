@@ -16,7 +16,10 @@ export type AgentNode = {
   readonly cellStatus?: CellStatus;
   readonly parentGatewayId: string;
   readonly lastActive: string;
-  /** Deep-link into Traces / mcp-ui (must resolve — prefer compare?focus=). */
+  /**
+   * Link into Traces / mcp-ui (must resolve). Until #1082, this is the shared
+   * compressed-vs-fat **demo** compare URL — not a per-agent session deep-link.
+   */
   readonly traceLink: string;
   /** Derived UI status for the tree status dot. */
   readonly status: GatewayStatus;

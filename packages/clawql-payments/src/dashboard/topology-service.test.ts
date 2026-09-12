@@ -43,7 +43,8 @@ describe("aggregateTopologyFromRegistries", () => {
       expect(tree.sources).toContain("agent-instance-registry");
       expect(tree.sources).not.toContain("compensation-accounts");
       expect(tree.gateways[0]!.children[0]!.agentId).toBe("hermes-042");
-      expect(tree.gateways[0]!.children[0]!.traceLink).toContain("compare?focus=");
+      expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/compare");
+      expect(tree.gateways[0]!.children[0]!.traceLink).not.toMatch(/focus=/);
     } finally {
       await rm(home, { recursive: true, force: true });
     }
