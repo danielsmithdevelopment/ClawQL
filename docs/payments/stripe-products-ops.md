@@ -6,6 +6,33 @@
 
 This is a **live-billing blocker**, not a schema blocker. CPC `provisionOrg` and unit tests work with fake Stripe ids; Checkout and meter reporting cannot go live until this checklist is done.
 
+### Fast path (CLI)
+
+With `STRIPE_SECRET_KEY` set (test mode first):
+
+```bash
+# Preview Products / Prices / Meter (no Stripe API calls)
+clawql payments stripe catalog ensure --dry-run
+
+# Create or reuse catalog objects; print export STRIPE_*_PRICE_ID=...
+clawql payments stripe catalog ensure
+
+# Confirm subscription-rail env is complete
+clawql payments stripe catalog validate
+```
+
+Defaults (override by editing env after ensure, or recreate in Dashboard):
+
+| Object                | Default                             |
+| --------------------- | ----------------------------------- |
+| Pro recurring Price   | $29/mo USD → `STRIPE_PRO_PRICE_ID`  |
+| Team recurring Price  | $99/mo USD → `STRIPE_TEAM_PRICE_ID` |
+| Credit top-ups        | $20 / $100 / $500 one-time Prices   |
+| Billing Meter event   | `clawql_inference_overage`          |
+| Metered overage Price | → `STRIPE_OVERAGE_PRICE_ID`         |
+
+Idempotent: objects are tagged with metadata `clawql_catalog=1` and reused on re-run.
+
 ---
 
 ## 1. Products + recurring Prices (subscription rail)
