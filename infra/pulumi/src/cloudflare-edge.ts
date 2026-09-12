@@ -24,7 +24,7 @@ export type CloudflareEdgeOutputs = {
 };
 
 const FALLBACK_WORKER_STUB = `/**
- * Fallback only — prefer cloudflare/gateway/dist/index.js (full Phase 1 gateway).
+ * Fallback only — prefer infra/cloudflare/gateway/dist/index.js (full Phase 1 gateway).
  */
 export default {
   async fetch(request, env) {
@@ -34,7 +34,7 @@ export default {
     }
     return Response.json({
       error: "gateway_bundle_missing",
-      message: "Build cloudflare/gateway (npm run build) before pulumi up.",
+      message: "Build infra/cloudflare/gateway (npm run build) before pulumi up.",
       docs: "docs/deployment/hosted-live-bootstrap.md",
     }, { status: 501 });
   },
@@ -44,8 +44,8 @@ export default {
 function loadGatewayWorkerModule(): { content: string; source: string } {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const candidates = [
-    path.resolve(here, "../../../cloudflare/gateway/dist/index.js"),
-    path.resolve(process.cwd(), "../../cloudflare/gateway/dist/index.js"),
+    path.resolve(here, "../../cloudflare/gateway/dist/index.js"),
+    path.resolve(process.cwd(), "infra/cloudflare/gateway/dist/index.js"),
     path.resolve(process.cwd(), "cloudflare/gateway/dist/index.js"),
     path.resolve(process.cwd(), "../cloudflare/gateway/dist/index.js"),
   ];

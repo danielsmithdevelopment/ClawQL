@@ -3,9 +3,9 @@
 **Status:** Shipped (June 2026)  
 **Canonical operator reference:** **[`docs/dashboard/agent-chat.md`](../dashboard/agent-chat.md)** — API, SSE, vault schema, agent JSON contract, deployment, troubleshooting.
 
-**Scope:** Agent Chat panel in `dashboard/` using shadcn/ui **MessageScroller**, **Message**, **Bubble**, **Attachment**, and **Marker** ([June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components)).
+**Scope:** Agent Chat panel in `apps/dashboard/` using shadcn/ui **MessageScroller**, **Message**, **Bubble**, **Attachment**, and **Marker** ([June 2026 chat components](https://ui.shadcn.com/docs/changelog/2026-06-chat-components)).
 
-**Related:** [IDP Platform](../vision/clawql-idp-platform.md) · [Dashboard README](../../dashboard/README.md) · [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)
+**Related:** [IDP Platform](../vision/clawql-idp-platform.md) · [Dashboard README](../../apps/dashboard/README.md) · [OpenClaw IDP profile](../openclaw/openclaw-idp-skill-profile.md)
 
 ---
 
@@ -19,13 +19,13 @@
 | **Persistence**       | Backward-compatible `messages.jsonl` in vault                                                 |
 | **Deploy**            | `CLAWQL_DASHBOARD_CHAT_STREAM`, Helm `dashboard.chatStream`                                   |
 | **Bridge enrichment** | `openclaw-chat-enrich.mjs` — session audit → `steps` / `attachments` / `citations`            |
-| **Tests**             | `dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich`                                |
+| **Tests**             | `apps/dashboard/e2e/agent-chat.spec.ts`, `npm run test:chat-enrich`                           |
 
 ---
 
 ## Implementation checklist
 
-- [x] `npx shadcn@latest init` in `dashboard/`
+- [x] `npx shadcn@latest init` in `apps/dashboard/`
 - [x] Add message-scroller, message, bubble, attachment, marker
 - [x] Create `src/components/agent-chat/` module
 - [x] Refactor `AgentChatPanel` to use `AgentConversation`

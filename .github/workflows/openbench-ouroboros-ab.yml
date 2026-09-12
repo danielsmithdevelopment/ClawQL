@@ -2,7 +2,7 @@
 #
 # RETIRED from PR/push auto-runs (claim verified + replicated). Re-enable only via
 # workflow_dispatch when you intentionally want another cell. See
-# openbench/ci-matrix.json → retired.ouroboros-oscillation-escape /
+# benchmarks/openbench/ci-matrix.json → retired.ouroboros-oscillation-escape /
 # ouroboros_pr_enabled=false.
 #
 # Matrix over OpenCode doom_loop:
@@ -181,7 +181,7 @@ jobs:
           fi
 
       - name: Validate task checkers (offline)
-        run: python3 openbench/validate_tasks.py
+        run: python3 benchmarks/openbench/validate_tasks.py
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.preflight.outputs.run_benchmark == 'true'
@@ -258,7 +258,7 @@ jobs:
           ART="artifacts/openbench-ouroboros-ab/${OPENBENCH_TASK}-${{ matrix.doom_loop }}"
           OUT="$ART/results.json"
           SUM="$ART/summary.md"
-          python3 openbench/scripts/run-ab-compare.py \
+          python3 benchmarks/openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
             --inference-url "http://127.0.0.1:${CLAWQL_INFERENCE_PORT}/v1" \

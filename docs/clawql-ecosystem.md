@@ -92,7 +92,7 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - **Hyperledger Fabric (roadmap)** — consortium-grade permissioned provenance ([#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187))
 - OSV-Scanner (Google) — layer-aware container + dependency vulnerability detection and SBOM support, wired into the Golden Image Pipeline alongside Trivy
 - Optional Istio service mesh: mTLS, AuthorizationPolicy, traffic management, Kiali topology — Ambient or sidecar
-- Unified Helm chart **`charts/clawql-mcp`** (optional stacks: document pipeline, Onyx, Flink, NATS, UI, … — see chart `values.yaml`; advanced items like **Fabric** are roadmap)
+- Unified Helm chart **`manifests/charts/clawql-mcp`** (optional stacks: document pipeline, Onyx, Flink, NATS, UI, … — see chart `values.yaml`; advanced items like **Fabric** are roadmap)
 - ClawQL-Agent (LangGraph) + OpenClaw + NATS JetStream + Edge Worker mode
 
 ---
@@ -115,7 +115,7 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - Onyx indexes your entire company knowledge base (Slack, Confluence, Drive, Jira, GitHub, email) and makes it queryable inside any Ouroboros workflow — permission-aware and citation-backed
 - Flink pipelines keep Onyx’s index continuously up to date — no stale retrieval
 - Audit trails via Merkle trees prove every processing step — including knowledge retrieval — valuable for compliance
-- **Hyperledger Fabric (roadmap)** for multi-org consortia — not deployed by `charts/clawql-mcp` today
+- **Hyperledger Fabric (roadmap)** for multi-org consortia — not deployed by `manifests/charts/clawql-mcp` today
 - One Helm chart manages everything: MCP, documents, Onyx, Flink, OSV-Scanner jobs, optional Istio + Kiali, Vault — not a patchwork of install guides
 
 ### Investors & Partners
@@ -167,20 +167,20 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 
 ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mcp-tools.md`](mcp/mcp-tools.md) and [`readme/configuration.md`](readme/configuration.md). Core pair: **`search`** + **`execute`**.
 
-| Tool                        | Type              | Purpose                                                                                                                                                                                                           |
-| --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                                 |
-| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                                |
-| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                       |
-| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory/memory-obsidian.md)).                                                                |
-| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)).                                      |
-| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`cloudflare/sandbox-bridge/README.md`](../cloudflare/sandbox-bridge/README.md)). |
-| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](mcp/external-ingest.md)).                                                                                                          |
-| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)).                                                                      |
-| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](mcp/notify-tool.md)).                                                                                              |
-| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)).                                                                           |
-| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](mcp/cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                              |
-| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                  |
+| Tool                        | Type              | Purpose                                                                                                                                                                                                                       |
+| --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                                             |
+| `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                                            |
+| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                                   |
+| `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory/memory-obsidian.md)).                                                                            |
+| `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)).                                                  |
+| `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`infra/cloudflare/sandbox-bridge/README.md`](../infra/cloudflare/sandbox-bridge/README.md)). |
+| `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](mcp/external-ingest.md)).                                                                                                                      |
+| `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)).                                                                                  |
+| `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](mcp/notify-tool.md)).                                                                                                          |
+| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)).                                                                                       |
+| `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](mcp/cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                                          |
+| `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                              |
 
 ---
 
@@ -514,10 +514,10 @@ npm run fetch-provider-specs
 Primary chart in this repository:
 
 ```bash
-helm install clawql charts/clawql-mcp --namespace clawql
+helm install clawql manifests/charts/clawql-mcp --namespace clawql
 ```
 
-- **`charts/clawql-mcp`** — see [`charts/clawql-mcp/README.md`](../charts/clawql-mcp/README.md) and `values.yaml` for optional document pipeline, Onyx, Flink, NATS, UI ingress, etc.
+- **`manifests/charts/clawql-mcp`** — see [`manifests/charts/clawql-mcp/README.md`](../manifests/charts/clawql-mcp/README.md) and `values.yaml` for optional document pipeline, Onyx, Flink, NATS, UI ingress, etc.
 - `CLAWQL_BUNDLED_OFFLINE=1` — typical production stance so MCP does not fetch specs at runtime (see README / deployment docs)
 - **Onyx stack** — gated by chart values (`onyx.enabled` pattern); MCP **`CLAWQL_ENABLE_ONYX`** aligns with [`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)
 - **Fabric** — not present as a sub-chart here; see **Roadmap** / [#187](https://github.com/danielsmithdevelopment/ClawQL/issues/187)
@@ -534,27 +534,27 @@ helm install clawql charts/clawql-mcp --namespace clawql
 
 **Headscale tailnet:** the **`*.clawql.local`** pattern also appears when MagicDNS is served to **enrolled Tailscale nodes**; those names resolve on the **mesh**, not via in-cluster DNS — beginner overview **[`docs/deployment/tailscale-and-headscale-for-clawql.md`](deployment/tailscale-and-headscale-for-clawql.md)**; Headscale runbook **[`docs/deployment/headscale-tailnet.md`](deployment/headscale-tailnet.md)** ([#206](https://github.com/danielsmithdevelopment/ClawQL/issues/206)); least-privilege starter ACL **[`docs/deployment/headscale-acls-clawql.hujson`](deployment/headscale-acls-clawql.hujson)** ([#213](https://github.com/danielsmithdevelopment/ClawQL/issues/213)).
 
-| Service                               | Internal DNS                                   | Ingress                  | Role                                                                                                  |
-| ------------------------------------- | ---------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| ClawQL MCP                            | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`charts/clawql-mcp/values.yaml`](../charts/clawql-mcp/values.yaml) |
-| Stirling-PDF                          | `stirling-pdf:8080`                            | `pdf.clawql.local`       | PDF merge/OCR/redact                                                                                  |
-| Paperless NGX                         | `paperless:8000`                               | `paperless.clawql.local` | Archive, consume, API                                                                                 |
-| Apache Tika                           | `tika:9998`                                    | internal                 | Extraction, MIME detection, routing                                                                   |
-| Gotenberg                             | `gotenberg:3000`                               | internal                 | Document conversion to PDF                                                                            |
-| Onyx                                  | `onyx:8080`                                    | `onyx.clawql.local`      | Enterprise knowledge, 40+ connectors                                                                  |
-| Flink (JM/TM)                         | `flink-jobmanager:8081`                        | internal                 | Onyx index sync                                                                                       |
-| OSV-Scanner                           | CronJob / Job                                  | internal                 | Vuln + SBOM scans on image refs / lockfiles                                                           |
-| Istio control plane                   | `istiod:15012`                                 | internal                 | mTLS, xDS to Envoys / ztunnel                                                                         |
-| Istio ingress/egw                     | `istio-ingressgateway`                         | `*.clawql.local`         | North-south, VirtualService + Gateway                                                                 |
-| Kiali                                 | `kiali:20001`                                  | `kiali.clawql.local`     | Mesh graph, health, config validation                                                                 |
-| Vault / OpenBao                       | `vault:8200`                                   | internal (mesh-only)     | Secrets, injectors, dynamic creds                                                                     |
-| Dragonfly (shared, RESP / `redis://`) | in-cluster `*-dragonfly:6379`                  | internal                 | Paperless / queues — **DragonflyDB** only in Helm                                                     |
-| Postgres (shared)                     | `postgres:5432`                                | internal                 | App/Ouroboros data when deployed — not the primary Merkle store (see `memory.db`)                     |
-| Paperless Postgres                    | isolated                                       | internal                 | Isolated Postgres; broker uses shared Dragonfly (`redis://…`)                                         |
-| MinIO (optional)                      | —                                              | internal                 | S3 API for big artifacts, SBOM storage                                                                |
-| Uptime Kuma                           | `uptime-kuma:3001`                             | `status.clawql.local`    | Synthetic monitoring, status pages                                                                    |
-| Grafana                               | —                                              | `grafana.clawql.local`   | Unified dashboards, OTel traces, Prometheus                                                           |
-| NATS JetStream                        | —                                              | internal                 | Event bus, agent coordination, checkpointing                                                          |
+| Service                               | Internal DNS                                   | Ingress                  | Role                                                                                                                      |
+| ------------------------------------- | ---------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| ClawQL MCP                            | `clawql:8080` (container; see chart `service`) | `clawql.local` (example) | HTTP MCP + health + GraphQL — see [`manifests/charts/clawql-mcp/values.yaml`](../manifests/charts/clawql-mcp/values.yaml) |
+| Stirling-PDF                          | `stirling-pdf:8080`                            | `pdf.clawql.local`       | PDF merge/OCR/redact                                                                                                      |
+| Paperless NGX                         | `paperless:8000`                               | `paperless.clawql.local` | Archive, consume, API                                                                                                     |
+| Apache Tika                           | `tika:9998`                                    | internal                 | Extraction, MIME detection, routing                                                                                       |
+| Gotenberg                             | `gotenberg:3000`                               | internal                 | Document conversion to PDF                                                                                                |
+| Onyx                                  | `onyx:8080`                                    | `onyx.clawql.local`      | Enterprise knowledge, 40+ connectors                                                                                      |
+| Flink (JM/TM)                         | `flink-jobmanager:8081`                        | internal                 | Onyx index sync                                                                                                           |
+| OSV-Scanner                           | CronJob / Job                                  | internal                 | Vuln + SBOM scans on image refs / lockfiles                                                                               |
+| Istio control plane                   | `istiod:15012`                                 | internal                 | mTLS, xDS to Envoys / ztunnel                                                                                             |
+| Istio ingress/egw                     | `istio-ingressgateway`                         | `*.clawql.local`         | North-south, VirtualService + Gateway                                                                                     |
+| Kiali                                 | `kiali:20001`                                  | `kiali.clawql.local`     | Mesh graph, health, config validation                                                                                     |
+| Vault / OpenBao                       | `vault:8200`                                   | internal (mesh-only)     | Secrets, injectors, dynamic creds                                                                                         |
+| Dragonfly (shared, RESP / `redis://`) | in-cluster `*-dragonfly:6379`                  | internal                 | Paperless / queues — **DragonflyDB** only in Helm                                                                         |
+| Postgres (shared)                     | `postgres:5432`                                | internal                 | App/Ouroboros data when deployed — not the primary Merkle store (see `memory.db`)                                         |
+| Paperless Postgres                    | isolated                                       | internal                 | Isolated Postgres; broker uses shared Dragonfly (`redis://…`)                                                             |
+| MinIO (optional)                      | —                                              | internal                 | S3 API for big artifacts, SBOM storage                                                                                    |
+| Uptime Kuma                           | `uptime-kuma:3001`                             | `status.clawql.local`    | Synthetic monitoring, status pages                                                                                        |
+| Grafana                               | —                                              | `grafana.clawql.local`   | Unified dashboards, OTel traces, Prometheus                                                                               |
+| NATS JetStream                        | —                                              | internal                 | Event bus, agent coordination, checkpointing                                                                              |
 
 ---
 

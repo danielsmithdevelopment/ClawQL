@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
 
-PACKER_DIR="${ROOT}/packer"
+PACKER_DIR="${ROOT}/infra/packer"
 
 echo "==> ShellCheck packer scripts"
 shellcheck scripts/packer/*.sh

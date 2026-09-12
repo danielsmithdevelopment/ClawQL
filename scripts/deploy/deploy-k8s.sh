@@ -35,7 +35,7 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 1
 fi
 
-OVERLAY="docker/kustomize/overlays/${ENVIRONMENT}"
+OVERLAY="manifests/kustomize/overlays/${ENVIRONMENT}"
 if [[ ! -d "${OVERLAY}" ]]; then
   echo "ERROR: overlay not found: ${OVERLAY}"
   exit 1

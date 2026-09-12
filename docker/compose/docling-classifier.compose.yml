@@ -29,7 +29,7 @@ services:
 
   classifier:
     build:
-      context: ../../deployment/samples/classifier-http
+      context: ../../docs/examples/idp/classifier-http
     ports:
       - "8080:8080"
     environment:
@@ -43,7 +43,7 @@ services:
 
   langextract:
     build:
-      context: ../../deployment/samples/langextract-http
+      context: ../../docs/examples/idp/langextract-http
     ports:
       - "8090:8090"
     environment:

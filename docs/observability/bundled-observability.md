@@ -28,7 +28,7 @@ Set automatically in Tier 1 Compose when using the `observability` profile.
 ## Quick start (planned — Tier 1 Compose)
 
 ```bash
-cd examples/clawql-local-docker-compose
+cd docs/examples/clawql-local-docker-compose
 ./bootstrap.sh
 docker compose --profile observability up -d
 ```

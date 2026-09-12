@@ -42,7 +42,7 @@ Works with Istio sample Prometheus `kubernetes-service-endpoints` job.
 ### ServiceMonitor (kube-prometheus-stack)
 
 ```yaml
-# charts/clawql-mcp/values.yaml or clawql-idp values-idp-full.yaml
+# manifests/charts/clawql-mcp/values.yaml or clawql-idp values-idp-full.yaml
 metrics:
   serviceMonitor:
     enabled: true
@@ -97,8 +97,8 @@ Pair with Kubernetes `livenessProbe` / `readinessProbe` on port 8080 (configured
 **Prometheus + Grafana only (no Langfuse):**
 
 ```bash
-helm upgrade --install clawql-idp charts/clawql-idp \
-  -f charts/clawql-idp/values-idp-full.yaml \
+helm upgrade --install clawql-idp manifests/charts/clawql-idp \
+  -f manifests/charts/clawql-idp/values-idp-full.yaml \
   --namespace clawql --create-namespace
 # + install kube-prometheus-stack in monitoring namespace
 ```

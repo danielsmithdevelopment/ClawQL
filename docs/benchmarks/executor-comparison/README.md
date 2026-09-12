@@ -117,4 +117,4 @@ Report flags: `publishableAsLive: true`, `executorSdkWired: true`, `source: live
 
 ## OpenBench
 
-Task: [`../../openbench/tasks/executor-github-pr-filter/`](../../openbench/tasks/executor-github-pr-filter/)
+Task: [`../../benchmarks/openbench/tasks/executor-github-pr-filter/`](../../benchmarks/openbench/tasks/executor-github-pr-filter/)

@@ -1,40 +1,40 @@
 .PHONY: deploy-cloud-run deploy-k8s deploy-docs local-k8s-up operator-install operator-status desktop-dev desktop-dist-mac desktop-dist-win desktop-dist-linux bootstrap-vault-eso local-k8s-mcp-delete local-docker-up helm-lint helm-ui-template-tests helm-workflow-template-tests helm-argocd-template-tests helm-nats-keda-template-tests helm-celld-template-tests helm-vault-secrets-template-tests helm-team-sync-template-tests helm-docling-template-tests helm-idp-template-tests helm-operator-template-tests helm-managed-gateway-template-tests compose-lending-config-test compose-vertical-config-test compose-tier1-config-test distribution-npm-pack-test mcp-docker-workspace-test kustomize-local-lint lint-k8s-manifests smoke-grpcurl-istio-gateway-mcp smoke-mcp-http-istio-gateway smoke-localhost-uis smoke-nats-idp-webhooks verify-vault-policy verify-mcp-core-tools-local
 
-# Validate charts/clawql-mcp (requires helm on PATH)
+# Validate manifests/charts/clawql-mcp (requires helm on PATH)
 helm-lint:
-	@helm lint charts/clawql-mcp -f charts/clawql-mcp/values-lint.yaml
-	@helm lint charts/clawql-falco
-	@helm dependency update charts/clawql-idp >/dev/null
-	@helm lint charts/clawql-idp
-	@helm template test charts/clawql-falco --namespace monitoring >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql --set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
-		-f charts/clawql-mcp/values-docker-desktop.yaml \
+	@helm lint manifests/charts/clawql-mcp -f manifests/charts/clawql-mcp/values-lint.yaml
+	@helm lint manifests/charts/clawql-falco
+	@helm dependency update manifests/charts/clawql-idp >/dev/null
+	@helm lint manifests/charts/clawql-idp
+	@helm template test manifests/charts/clawql-falco --namespace monitoring >/dev/null
+	@helm template test manifests/charts/clawql-mcp --namespace clawql --set envFromSecret=clawql-lint-provider-env >/dev/null
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-docker-desktop.yaml \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		--set documentPipeline.enabled=true \
 		--set stores.postgres.enabled=true \
 		--set stores.dragonfly.enabled=true \
 		--set stores.postgres.auth.password=devpass \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		--set kyverno.imageSignaturePolicy.enabled=false \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
-		-f charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml \
 		--set kyverno.imageSignaturePolicy.enabled=false \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
-		-f charts/clawql-mcp/test-values-mcp-proxy-custom.yaml \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
+		-f manifests/charts/clawql-mcp/test-values-mcp-proxy-custom.yaml \
 		--set kyverno.imageSignaturePolicy.enabled=false \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		--set openclaw.enabled=true \
 		--set dashboard.enabled=true \
 		--set-string openclaw.gatewayToken=helm-lint-test-token \
 		--set kyverno.imageSignaturePolicy.enabled=false \
 		--set envFromSecret=clawql-lint-provider-env >/dev/null
-	@helm template test charts/clawql-mcp --namespace clawql \
+	@helm template test manifests/charts/clawql-mcp --namespace clawql \
 		--set goose.enabled=true \
 		--set goose.replicaCount=1 \
 		--set-string goose.openaiApiKey=helm-lint-test \
@@ -46,13 +46,13 @@ helm-lint:
 verify-vault-policy:
 	@bash scripts/kubernetes/verify-vault-policy.sh
 
-# Validate docker/kustomize/overlays/local (requires kubectl; temporary patch for hostPath)
+# Validate manifests/kustomize/overlays/local (requires kubectl; temporary patch for hostPath)
 kustomize-local-lint:
 	@export VAULT_HOST_PATH=/tmp/clawql-kustomize-test && \
 		python3 -c 'import json,os; p=os.environ["VAULT_HOST_PATH"]; print(json.dumps([{"op":"replace","path":"/spec/template/spec/volumes/0","value":{"name":"obsidian-vault","hostPath":{"path":p,"type":"DirectoryOrCreate"}}}]))' \
-		> docker/kustomize/overlays/local/patch-mcp-vault-hostpath.json
-	@kubectl kustomize docker/kustomize/overlays/local >/dev/null
-	@rm -f docker/kustomize/overlays/local/patch-mcp-vault-hostpath.json
+		> manifests/kustomize/overlays/local/patch-mcp-vault-hostpath.json
+	@kubectl kustomize manifests/kustomize/overlays/local >/dev/null
+	@rm -f manifests/kustomize/overlays/local/patch-mcp-vault-hostpath.json
 	@echo "kustomize-local-lint OK"
 
 helm-ui-template-tests:
@@ -99,7 +99,7 @@ compose-vertical-config-test:
 	@bash scripts/dev/test-compose-vertical-config.sh
 
 compose-tier1-config-test:
-	@bash examples/clawql-local-docker-compose/tests/compose-config-test.sh
+	@bash docs/examples/clawql-local-docker-compose/tests/compose-config-test.sh
 
 distribution-npm-pack-test:
 	@bash scripts/dev/test-npm-pack-install.sh
@@ -129,17 +129,17 @@ operator-status:
 
 # ClawQL Desktop (macOS) — Electron dev shell (dashboard + OpenClaw bridge)
 desktop-dev:
-	@cd desktop && npm install && npm run dev
+	@cd apps/desktop && npm install && npm run dev
 
 # Build macOS .dmg (runs dashboard standalone prepare + electron-builder)
 desktop-dist-mac:
-	@cd desktop && npm install && npm run dist:mac
+	@cd apps/desktop && npm install && npm run dist:mac
 
 desktop-dist-win:
-	@cd desktop && npm install && npm run dist:win
+	@cd apps/desktop && npm install && npm run dist:win
 
 desktop-dist-linux:
-	@cd desktop && npm install && npm run dist:linux
+	@cd apps/desktop && npm install && npm run dist:linux
 
 # Verify ClawQL GHCR container packages are **public**
 ghcr-packages-public:
@@ -183,7 +183,7 @@ deploy-k8s:
 	@if [ -z "$$IMAGE" ] || [ -z "$$TAG" ]; then echo "IMAGE and TAG are required"; echo "Example: ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=abc123 make deploy-k8s"; exit 1; fi
 	@ENV="$${ENV:-dev}" DRY_RUN="$${DRY_RUN:-false}" IMAGE="$$IMAGE" TAG="$$TAG" bash scripts/deploy/deploy-k8s.sh
 
-# Docs site (website/) → Cloudflare Worker clawql-docs, docs.clawql.com — requires jq and
+# Docs site (apps/docs/) → Cloudflare Worker clawql-docs, docs.clawql.com — requires jq and
 # CLAWQL_CLOUDFLARE_API_TOKEN or CLOUDFLARE_API_TOKEN. Loads ./.env when present (same pattern as local dev).
 deploy-docs:
 	@bash -c 'set -a; [ -f .env ] && . ./.env; set +a; exec bash scripts/deploy/deploy-docs-to-cloudflare.sh'

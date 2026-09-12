@@ -436,7 +436,7 @@ steps:
     action: delegate
     agent: cline
     task: |
-      Run bash integrations/harvey-labs/scripts/preflight-ts-v2-smoke.sh
+      Run bash benchmarks/harvey-labs/scripts/preflight-ts-v2-smoke.sh
       Confirm dist/server-http.js exists (npm run build if missing)
       Confirm MLX Ornith at :8082 and clawql-inference at :8091
       (Nemotron :8081 only if Ornith smoke failed — §10.1)
@@ -444,26 +444,26 @@ steps:
   - id: quarantine
     action: delegate
     agent: cline
-    task: bash integrations/harvey-labs/scripts/quarantine-legacy-call-store.sh
+    task: bash benchmarks/harvey-labs/scripts/quarantine-legacy-call-store.sh
 
   - id: smoke-001
     action: delegate
     agent: cline
     task: |
       LAB_TASK=firm-knowledge/tasks/001 LAB_ARMS=ornith-clawql \
-      bash integrations/harvey-labs/scripts/run-lab-local.sh
+      bash benchmarks/harvey-labs/scripts/run-lab-local.sh
     gate: must pass before contiguous
 
   - id: contiguous
     action: delegate
     agent: cline
-    task: bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
+    task: bash benchmarks/harvey-labs/scripts/run-contiguous-001-025.sh
     depends_on: smoke-001
 
   - id: report
     action: direct
     task: |
-      Read integrations/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json
+      Read benchmarks/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json
       Send Telegram message with full per-task pass/fail table
       memory_ingest outcome to vault with wikilink [[Harvey LAB ts-v2]]
 
@@ -1416,7 +1416,7 @@ for task in "${TASKS[@]}"; do
   LAB_ARMS=ornith-clawql \
   CLAWQL_INFERENCE_URL="http://localhost:${INFERENCE_PORT}/v1" \
   MLX_MODEL_PORT="${ORINTH_PORT}" \
-  bash integrations/harvey-labs/scripts/run-lab-local.sh
+  bash benchmarks/harvey-labs/scripts/run-lab-local.sh
 done
 
 echo "=== Ornith smoke complete — keep Cline on Ornith, or fall back to Nemotron ==="
@@ -1607,7 +1607,7 @@ After one to two weeks of live use, also run OpenBench **Family M** (cross-sessi
 
 - Homelab overview: [`README.md`](README.md)
 - Start scripts: [`../../scripts/dev/start-clawql-for-personal-agent.sh`](../../scripts/dev/start-clawql-for-personal-agent.sh), [`../../scripts/dev/start-clawql-inference-for-personal-agent.sh`](../../scripts/dev/start-clawql-inference-for-personal-agent.sh)
-- Cline MCP snippet: [`../../examples/personal-agent/README.md`](../../examples/personal-agent/README.md)
+- Cline MCP snippet: [`../../docs/examples/personal-agent/README.md`](../../docs/examples/personal-agent/README.md)
 - Inference ports: [`inference-stack.md`](inference-stack.md)
 - MCP on Mac Mini: [`mcp-mac-mini.md`](mcp-mac-mini.md)
 - Harvey LAB smoke gate (Ornith decision): [`harvey-lab-ts-v2-smoke-gate.md`](../benchmarks/harvey-lab-ts-v2-smoke-gate.md)

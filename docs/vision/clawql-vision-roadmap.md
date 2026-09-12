@@ -179,7 +179,7 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 **What:** `clawql-core`, `clawql-api`, `clawql-auth`, `clawql-documents`, `clawql-memory`, `clawql-pageindex`, Tier 1 Compose, Presidio gateway hooks.
 
-**Exit criteria:** ✅ Shipped — semver-stable horizontal packages, in-memory test layers, `examples/clawql-local-docker-compose`, gateway auth, PageIndex MCP tools, Presidio redaction hooks.
+**Exit criteria:** ✅ Shipped — semver-stable horizontal packages, in-memory test layers, `docs/examples/clawql-local-docker-compose`, gateway auth, PageIndex MCP tools, Presidio redaction hooks.
 
 ### Phase 1.1: Platform depth — complete (7.1.0)
 
@@ -193,7 +193,7 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 **What:** `mcp-api-adapter` — wrap any MCP (stdio / Streamable HTTP / gRPC), generate OpenAPI + GraphQL from `ListTools`, serve `POST /{toolName}` + `/graphql` + Swagger/GraphiQL, and expose (or scaffold) **`mcp-grpc-transport` `CallTool`**.
 
-**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/mcp-api-adapter/README.md).
+**Why:** Non-MCP clients (Workers, OpenWebUI OpenAPI tools, GraphQL clients) need tool-name HTTP. Building the facade ourselves — gRPC-first, TypeScript-native — drives adoption of the production gRPC transport rather than ceding the on-ramp to Python/stdio-only proxies. Design: [`docs/design/mcp-api-adapter.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/design/mcp-api-adapter.md). Example: [`docs/examples/mcp-api-adapter/`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/examples/mcp-api-adapter/README.md).
 
 **Exit criteria:** ✅ In-repo MVP — package + e2e + triple-surface example demos (REST / GraphQL / gRPC). Remaining: independent npm publish; optional Compose/Helm sidecar.
 
@@ -235,7 +235,7 @@ That is a fair question and it deserves a direct answer.
 
 **Demand-driven means the community sets priorities.** There are no fixed dates — that is an acknowledgment that a small team building open infrastructure should respond to what people actually need rather than committing to a schedule that serves no one. The RFC process, GitHub Discussions, and the phased roadmap above give the community direct influence over what gets prioritised.
 
-**Evaluate today.** Start with [Tier 1 Docker Compose](https://github.com/danielsmithdevelopment/ClawQL/blob/main/examples/clawql-local-docker-compose/README.md) or Helm; see [Getting started](https://docs.clawql.com/getting-started). If you need production verticals or the full Operator before contributing, track Phase 2–4 in §5 above.
+**Evaluate today.** Start with [Tier 1 Docker Compose](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/examples/clawql-local-docker-compose/README.md) or Helm; see [Getting started](https://docs.clawql.com/getting-started). If you need production verticals or the full Operator before contributing, track Phase 2–4 in §5 above.
 
 ---
 
@@ -243,11 +243,11 @@ That is a fair question and it deserves a direct answer.
 
 ### Try it
 
-The fastest path to the full IDP stack on Kubernetes is `make local-k8s-up` (Helm + Docker Desktop) or `helm upgrade --install` per [helm.md](https://docs.clawql.com/helm). For Docker Compose on localhost, use `examples/clawql-local-docker-compose`.
+The fastest path to the full IDP stack on Kubernetes is `make local-k8s-up` (Helm + Docker Desktop) or `helm upgrade --install` per [helm.md](https://docs.clawql.com/helm). For Docker Compose on localhost, use `docs/examples/clawql-local-docker-compose`.
 
 ```bash
 git clone https://github.com/danielsmithdevelopment/ClawQL.git
-cd ClawQL/examples/clawql-local-docker-compose
+cd ClawQL/docs/examples/clawql-local-docker-compose
 ./bootstrap.sh
 docker compose up -d
 # Dashboard: http://localhost:8080

@@ -6,7 +6,7 @@
  * Family S tasks may mix real MCP tools (`memory_recall`, `execute`, …) with
  * these stubs for scope/safety scoring.
  *
- * Canonical JSON mirror: `integrations/agents-bench/catalog/family-s-stub-tools.json`
+ * Canonical JSON mirror: `benchmarks/agents-bench/catalog/family-s-stub-tools.json`
  */
 
 export type FamilySStubToolKind =

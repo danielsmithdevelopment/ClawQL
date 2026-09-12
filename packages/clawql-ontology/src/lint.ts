@@ -34,24 +34,23 @@ function packageRoot(): string | null {
 
 /**
  * Resolve default entity.schema.json.
- * Prefer the copy shipped inside `clawql-ontology` (npm install), then the
- * monorepo path (`schemas/ontology/`), then cwd.
+ * Prefer a project-local override (`<rootDir>/schemas/ontology/`), then the
+ * copy shipped inside `clawql-ontology`, then cwd.
  */
 export function defaultEntitySchemaPath(rootDir?: string): string {
-  if (rootDir) {
-    return join(resolve(rootDir), "schemas", "ontology", "entity.schema.json");
-  }
   const pkg = packageRoot();
   const candidates: string[] = [];
+  if (rootDir) {
+    candidates.push(join(resolve(rootDir), "schemas", "ontology", "entity.schema.json"));
+  }
   if (pkg) {
     candidates.push(join(pkg, "schemas", "ontology", "entity.schema.json"));
-    candidates.push(join(pkg, "..", "..", "schemas", "ontology", "entity.schema.json"));
   }
   candidates.push(join(process.cwd(), "schemas", "ontology", "entity.schema.json"));
   for (const path of candidates) {
     if (existsSync(path)) return path;
   }
-  return candidates[0]!;
+  return pkg ? join(pkg, "schemas", "ontology", "entity.schema.json") : candidates[0]!;
 }
 
 async function loadSchema(schemaPath: string): Promise<object> {
@@ -167,7 +166,7 @@ export type LintOntologyOptions = {
 
 /**
  * Validate ontology entity YAML/JSON files.
- * If `paths` is empty, searches `.clawql/ontology/entities` then `examples/ontology/entities`.
+ * If `paths` is empty, searches `.clawql/ontology/entities` then `docs/examples/ontology/entities`.
  */
 export async function lintOntology(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
   const rootDir = resolve(opts.rootDir ?? process.cwd());

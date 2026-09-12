@@ -10,7 +10,7 @@ trap 'rm -f "${TMP_ENABLED}" "${TMP_DISABLED}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   --set documentPipeline.enabled=true \
@@ -18,7 +18,7 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set providerIngress.enabled=true \
   --set providerIngress.docling.enabled=true >"${TMP_ENABLED}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   --set documentPipeline.enabled=true \

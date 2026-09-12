@@ -42,9 +42,9 @@ $CLAWQL_R2_TRACES_BUCKET/
 
 ## Schema (v1.0)
 
-- JSON Schema: [`openbench/schema/openbench-trace.v1.json`](../../openbench/schema/openbench-trace.v1.json)
-- TypeScript: [`openbench/schema/openbench-trace.v1.ts`](../../openbench/schema/openbench-trace.v1.ts)
-- Changelog: [`openbench/schema/CHANGELOG.md`](../../openbench/schema/CHANGELOG.md)
+- JSON Schema: [`benchmarks/openbench/schema/openbench-trace.v1.json`](../../benchmarks/openbench/schema/openbench-trace.v1.json)
+- TypeScript: [`benchmarks/openbench/schema/openbench-trace.v1.ts`](../../benchmarks/openbench/schema/openbench-trace.v1.ts)
+- Changelog: [`benchmarks/openbench/schema/CHANGELOG.md`](../../benchmarks/openbench/schema/CHANGELOG.md)
 
 Stable enough that August 2026 traces remain usable for an October fine-tune and
 a later public release. Bump the schema version (and changelog) for breaking
@@ -138,12 +138,12 @@ schema version, and what `suitable_for_training` removes.
 
 ```bash
 pip install jsonschema
-python3 openbench/scripts/build-openbench-dataset.py \
+python3 benchmarks/openbench/scripts/build-openbench-dataset.py \
   --artifact-dir artifacts/openbench-ab/<task> \
   --run-id local --task <task> --require-nonempty
 
 CLAWQL_OPENBENCH_REQUIRE_DURABLE_TRACES=0 \
-  openbench/scripts/sync-openbench-traces-durable.sh \
+  benchmarks/openbench/scripts/sync-openbench-traces-durable.sh \
   --artifact-dir artifacts/openbench-ab/<task> \
   --run-id local --task <task>
 ```

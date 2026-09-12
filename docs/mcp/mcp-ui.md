@@ -194,7 +194,7 @@ export CLAWQL_INFERENCE_STORE=jsonl
 export CLAWQL_INFERENCE_STORE_PATH=/tmp/clawql-inference/calls.jsonl   # shared with inference gateway
 
 npm run build -w clawql-inference -w mcp-api-adapter
-node examples/mcp-api-adapter/clawql-with-trace.mjs
+node docs/examples/mcp-api-adapter/clawql-with-trace.mjs
 # or: node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --mcp-url http://127.0.0.1:8080/mcp
 ```
 

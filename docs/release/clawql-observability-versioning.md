@@ -65,7 +65,7 @@ See the monorepo-wide policy: [`clawql-workspace-package-versioning.md`](./clawq
 | Root `package.json` / `package-lock.json`    | Workspace dependency pin                                      |
 | `packages/clawql-observability/CHANGELOG.md` | Package-level release notes                                   |
 | Root `CHANGELOG.md`                          | Monorepo narrative (links here for cadence)                   |
-| `RELEASE_NOTES_v8.0.0.md`                    | Gateway major release; observability row must match **0.1.0** |
+| `docs/release/RELEASE_NOTES_v8.0.0.md`       | Gateway major release; observability row must match **0.1.0** |
 
 ---
 

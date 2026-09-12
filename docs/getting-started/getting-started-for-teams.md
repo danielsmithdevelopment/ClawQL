@@ -38,7 +38,7 @@ Secrets (`vault/providers.json`, API tokens) stay local or in Vault — the sync
 ### Helm (recommended for teams)
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp \
   --namespace clawql \
   --create-namespace \
   --set envFromSecret=clawql-provider-env \
@@ -291,7 +291,7 @@ teamSync:
 Store `gcsHmacAccessId` and `gcsHmacSecret` in the provider secret. The chart sets `CLAWQL_SYNC_ENDPOINT=https://storage.googleapis.com` automatically.
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp \
   --set envFromSecret=clawql-provider-env \
   --set teamSync.enabled=true \
   --set teamSync.bucket=acme-clawql-team \
@@ -333,12 +333,12 @@ Security constraints (credentials never baked; SHA-256 verify of pulled vault fi
 #### 1. Build or promote a golden image
 
 ```bash
-cd packer
+cd infra/packer
 packer init .
 packer build -only=aws-ami.amazon-ebs.clawql -var 'clawql_version=7.2.0' .
 ```
 
-See [`packer/README.md`](../../packer/README.md) for GCP and CI validate targets. Use a **clawql-mcp** version that includes `clawql gateway` (Managed Edge Gateway).
+See [`infra/packer/README.md`](../../infra/packer/README.md) for GCP and CI validate targets. Use a **clawql-mcp** version that includes `clawql gateway` (Managed Edge Gateway).
 
 #### 2. Provision infrastructure (Pulumi)
 

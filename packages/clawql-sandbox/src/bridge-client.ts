@@ -1,6 +1,6 @@
 /**
  * Calls a Cloudflare Worker that runs @cloudflare/sandbox (SDK is Workers-only).
- * Deploy: cloudflare/sandbox-bridge/
+ * Deploy: infra/cloudflare/sandbox-bridge/
  *
  * **Unset `CLAWQL_SANDBOX_BACKEND`:** Cloudflare bridge only (legacy). **`CLAWQL_SANDBOX_BACKEND=auto`:** Seatbelt → Docker → bridge.
  * Or pin **`bridge`**, **`macos-seatbelt`**, **`docker`**, etc.
@@ -29,7 +29,7 @@ export async function callSandboxBridge(
       exitCode: -1,
       success: false,
       error:
-        "CLAWQL_SANDBOX_BRIDGE_URL is not set. Deploy the Worker in cloudflare/sandbox-bridge/ and set this to its origin (e.g. https://clawql-sandbox.your-subdomain.workers.dev).",
+        "CLAWQL_SANDBOX_BRIDGE_URL is not set. Deploy the Worker in infra/cloudflare/sandbox-bridge/ and set this to its origin (e.g. https://clawql-sandbox.your-subdomain.workers.dev).",
     };
   }
   if (!token) {

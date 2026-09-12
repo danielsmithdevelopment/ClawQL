@@ -1,0 +1,27 @@
+import { Button } from '@/components/Button'
+import { Note } from '@/components/mdx'
+import { ExamplesHubGrid } from '@/components/DocsHubSections'
+
+# Examples & walkthroughs
+
+Session notes, incident postmortems, and homelab deep dives — practical narratives until production **vertical case studies** (e.g. lending in production) are published. {{ className: 'lead' }}
+
+<Note>
+  These pages document real engineering sessions, not marketing case studies.
+  They remain valuable as workflow examples for MCP, vault memory, and
+  deployment patterns. Clone-and-run stacks (Compose, IDP sidecars, ontology
+  `.cqe`, Streams celld) live in the repo at
+  [docs/examples/](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/examples),
+  not on this hub.
+</Note>
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/learn" variant="outline" arrow="right">
+    <>Prefer structured lessons? Start with ClawQL Learn</>
+  </Button>
+  <Button href="/mcp/protocol-fabric" variant="outline" arrow="right">
+    <>Protocol Fabric loop (WS → CLI → vault)</>
+  </Button>
+</div>
+
+<ExamplesHubGrid />

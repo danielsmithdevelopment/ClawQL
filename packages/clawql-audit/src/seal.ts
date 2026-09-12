@@ -1,6 +1,12 @@
 import { createHash, randomBytes } from "node:crypto";
 import { Effect } from "effect";
 import { WORM_GENESIS_PREV_HASH, type WORMEntry } from "./entry.js";
+import {
+  serializeWormEntry,
+  sha256HexBytes,
+  sortKeysDeep,
+  type WormSerializationVersion,
+} from "./serialization.js";
 
 /** UUID v7 (time-ordered). Primary API is Effect; sync helper for seal path. */
 export const generateUUIDv7 = (): Effect.Effect<string> =>
@@ -22,20 +28,9 @@ export const generateUUIDv7 = (): Effect.Effect<string> =>
     return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   });
 
-function sortKeys(value: unknown): unknown {
-  if (value === null || typeof value !== "object") return value;
-  if (Array.isArray(value)) return value.map(sortKeys);
-  const obj = value as Record<string, unknown>;
-  const out: Record<string, unknown> = {};
-  for (const key of Object.keys(obj).sort()) {
-    out[key] = sortKeys(obj[key]);
-  }
-  return out;
-}
-
-/** Canonical JSON bytes for hashing (deterministic key order). */
+/** Canonical JSON bytes for hashing (deterministic key order). Legacy dialect. */
 export const canonicalJSON = (value: unknown): Effect.Effect<string> =>
-  Effect.sync(() => JSON.stringify(sortKeys(value)));
+  Effect.sync(() => JSON.stringify(sortKeysDeep(value)));
 
 export const sha256Hex = (input: string): Effect.Effect<string> =>
   Effect.sync(() => createHash("sha256").update(input, "utf8").digest("hex"));
@@ -47,10 +42,12 @@ export type SealBody = Omit<WORMEntry, "hash" | "prevHash" | "chainIndex" | "bac
 /**
  * Canonical hash-chain seal — one dialect for all callers.
  * Do not reimplement prevHash / chainIndex / hash elsewhere.
+ * Default serialization is CBOR; pass `serializationVersion: "json"` for legacy chains.
  */
 export const sealHashChainRecord = (input: {
   prev: SealPrev;
   body: SealBody;
+  serializationVersion?: WormSerializationVersion;
 }): Effect.Effect<Omit<WORMEntry, "backendAcks">> =>
   Effect.gen(function* () {
     const chainIndex = input.prev ? input.prev.seq + 1 : 0;
@@ -60,15 +57,22 @@ export const sealHashChainRecord = (input: {
       prevHash,
       chainIndex,
     };
-    const json = yield* canonicalJSON(content);
-    const hash = yield* sha256Hex(json);
+    const version = input.serializationVersion ?? "cbor";
+    const serialized = yield* serializeWormEntry(content, version);
+    const hash = yield* sha256HexBytes(serialized);
     return { ...content, hash };
   });
 
-/** Recompute content hash for verify (excludes hash, backendAcks; teeSignature excluded from hash body). */
-export const recomputeEntryHash = (entry: WORMEntry): Effect.Effect<string> =>
+/**
+ * Recompute content hash for verify (excludes hash, backendAcks, teeSignature).
+ * Must use the same serialization version that sealed the entry.
+ */
+export const recomputeEntryHash = (
+  entry: WORMEntry,
+  serializationVersion: WormSerializationVersion = "cbor"
+): Effect.Effect<string> =>
   Effect.gen(function* () {
     const { hash: _h, backendAcks: _a, teeSignature: _t, ...content } = entry;
-    const json = yield* canonicalJSON(content);
-    return yield* sha256Hex(json);
+    const serialized = yield* serializeWormEntry(content, serializationVersion);
+    return yield* sha256HexBytes(serialized);
   });

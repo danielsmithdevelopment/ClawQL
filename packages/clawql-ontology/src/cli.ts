@@ -35,14 +35,14 @@ Usage:
   clawql-ontology meta promote --document-type TYPE --output DIR [--json]
 
 Defaults:
-  Entity search: CLAWQL_ONTOLOGY_DIR or .clawql/ontology/entities then examples/ontology/entities
-  Schema: schemas/ontology/entity.schema.json
+  Entity search: CLAWQL_ONTOLOGY_DIR or .clawql/ontology/entities then docs/examples/ontology/entities
+  Schema: packages/clawql-ontology/schemas/ontology/entity.schema.json (or --schema PATH)
   Packs: ${listOntologyPacks().join(", ") || "(none)"}
   Meta DB: CLAWQL_ONTOLOGY_META_DB_PATH or ~/.ClawQL/meta-ontology.db
 
 Examples:
-  clawql-ontology lint examples/ontology/entities
-  clawql-ontology generate --dir examples/ontology/entities --out generated/ontology
+  clawql-ontology lint docs/examples/ontology/entities
+  clawql-ontology generate --dir docs/examples/ontology/entities --out generated/ontology
   clawql-ontology init && clawql-ontology import --pack legal
   clawql-ontology scaffold --schema invoice-schema.json --document-type invoice --ttl permanent
   clawql-ontology meta promote --check

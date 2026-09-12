@@ -30,12 +30,12 @@
 
 ## Quick Start
 
-**Example policy + walkthrough:** [`examples/inference/`](https://docs.clawql.com/examples/inference/) (`policy.yaml` + README).
+**Example policy + walkthrough:** [`docs/examples/inference/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/docs/examples/inference) (`policy.yaml` + README).
 
 ```bash
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
 mkdir -p "$CLAWQL_HOME/Inference"
-cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+cp docs/examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
 
 export OPENAI_API_KEY=sk-...
 export OLLAMA_BASE_URL=http://127.0.0.1:11434
@@ -399,7 +399,7 @@ clawql inference policy show [--json]
 
 `resolveInferencePolicy()` aggregates the effective view from manifest YAML (`$CLAWQL_HOME/Inference/policy.yaml` or `CLAWQL_INFERENCE_POLICY_MANIFEST`) merged with environment variables — env wins on conflicts. Source is `manifest+env` when a manifest is loaded, otherwise `env`.
 
-Example manifest (full copy: [`examples/inference/policy.yaml`](https://docs.clawql.com/examples/inference/policy.yaml)):
+Example manifest (full copy: [`docs/examples/inference/policy.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/examples/inference/policy.yaml)):
 
 ```yaml
 policyVersion: "2026.07.01"

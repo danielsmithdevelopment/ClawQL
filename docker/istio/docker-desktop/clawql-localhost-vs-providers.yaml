@@ -1,5 +1,5 @@
-# Placeholder __TARGET_NAMESPACE__ — full desktop stack only (aligned with charts/clawql-mcp values-docker-desktop when all subcharts enabled).
-# Service names assume Helm fullnameOverride: clawql-mcp-http (charts/clawql-mcp defaults for local-k8s-up).
+# Placeholder __TARGET_NAMESPACE__ — full desktop stack only (aligned with manifests/charts/clawql-mcp values-docker-desktop when all subcharts enabled).
+# Service names assume Helm fullnameOverride: clawql-mcp-http (manifests/charts/clawql-mcp defaults for local-k8s-up).
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
