@@ -115,8 +115,8 @@ Host files under `src/mcp/`, `src/composition/`, `src/http/`, `src/observability
 
 ### 4.2 `clawql-api`
 
-| In package                                                                                                                                    | Host composition                                                                                          |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| In package                                                                                                                                    | Host composition                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `spec-loader`, `spec-search`, `provider-registry`, REST/GraphQL/gRPC execute, auth headers, optional flags, `createClawQLApi`, proxy pipeline | `src/composition/clawql-api-adapters.ts` (`getClawqlApi()`, Layer merge). Import `clawql-api` subpaths. |
 
 **Bundled specs:** `providers/` stays at repo root; `clawql-api` resolves paths via `package-root`.
