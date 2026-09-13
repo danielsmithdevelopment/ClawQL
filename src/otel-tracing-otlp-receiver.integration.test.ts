@@ -5,7 +5,7 @@
 
 import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { maybeInitOtelTracing, wrapMcpToolHandler } from "./otel-tracing.js";
+import { maybeInitOtelTracing, wrapMcpToolHandler } from "./observability/otel-tracing.js";
 
 function startOtlpTraceReceiver(): Promise<{
   endpointBase: string;

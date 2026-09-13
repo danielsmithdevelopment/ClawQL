@@ -4,7 +4,7 @@ Scheduling, notifications, and Argo Workflows extracted from `clawql-mcp` (modul
 
 ## Plugin entry
 
-When `CLAWQL_ENABLE_SCHEDULE=1`, `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_ENABLE_WORKFLOW=1`, and/or `CLAWQL_ENABLE_ARGO_CD=1`, **`AutomationPlugin`** (`createAutomationPlugin` from `clawql-automation/plugin`) registers MCP tools via `onRegister`, starts the schedule worker when schedule is enabled, and stops it on `onTeardown`. Composed from `buildMcpPlugins()` in `src/clawql-api-adapters.ts`.
+When `CLAWQL_ENABLE_SCHEDULE=1`, `CLAWQL_ENABLE_NOTIFY=1`, `CLAWQL_ENABLE_WORKFLOW=1`, and/or `CLAWQL_ENABLE_ARGO_CD=1`, **`AutomationPlugin`** (`createAutomationPlugin` from `clawql-automation/plugin`) registers MCP tools via `onRegister`, starts the schedule worker when schedule is enabled, and stops it on `onTeardown`. Composed from `buildMcpPlugins()` in `src/composition/clawql-api-adapters.ts`.
 
 Call `configureAutomationPluginDeps({ execute })` from the MCP transport layer before notify/schedule handlers invoke `execute` (e.g. Slack `chat.postMessage`).
 

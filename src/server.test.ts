@@ -11,8 +11,8 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetSpecCache } from "clawql-api";
-import { isolatedStdioChildEnv, instanceSpecWith } from "./server-stdio-env.js";
-import { resetSchemaFieldCache } from "./tools.js";
+import { isolatedStdioChildEnv, instanceSpecWith } from "./host/server-stdio-env.js";
+import { resetSchemaFieldCache } from "./mcp/tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");

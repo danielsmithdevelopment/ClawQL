@@ -266,7 +266,7 @@ Constants **`MCP_PROTOCOL_VERSION_METADATA_KEY`** and **`LATEST_PROTOCOL_VERSION
 
 #### ClawQL (`clawql-mcp-http`)
 
-With **`ENABLE_GRPC=1`**, **`npm run start:http`** runs Streamable HTTP and gRPC in the **same process**. Tools are registered via **`createRegisteredMcpServer()`** (see ClawQL **`src/mcp-server-factory.ts`**). Use the same **grpcurl** / **grpc-js** patterns as above; gRPC listens on **`GRPC_PORT`** (default **50051**) while HTTP uses **`PORT`** / **`MCP_PORT`** (default **8080**).
+With **`ENABLE_GRPC=1`**, **`npm run start:http`** runs Streamable HTTP and gRPC in the **same process**. Tools are registered via **`createRegisteredMcpServer()`** (see ClawQL **`src/mcp/mcp-server-factory.ts`**). Use the same **grpcurl** / **grpc-js** patterns as above; gRPC listens on **`GRPC_PORT`** (default **50051**) while HTTP uses **`PORT`** / **`MCP_PORT`** (default **8080**).
 
 #### `memory_recall` via `CallTool` (`google.protobuf.Struct`)
 

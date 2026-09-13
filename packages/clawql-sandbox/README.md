@@ -16,7 +16,7 @@ See [Agent setup — local sandbox](../../docs/getting-started/agent-setup.md#lo
 
 ## Plugin entry
 
-When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` from `clawql-sandbox/plugin`) registers `sandbox_exec` via `onRegister`. Composed from `buildMcpPlugins()` in `src/clawql-api-adapters.ts`.
+When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` from `clawql-sandbox/plugin`) registers `sandbox_exec` via `onRegister`. Composed from `buildMcpPlugins()` in `src/composition/clawql-api-adapters.ts`.
 
 ## Backends (priority in `auto`)
 

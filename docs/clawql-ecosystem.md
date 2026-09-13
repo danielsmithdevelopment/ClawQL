@@ -171,7 +171,7 @@ ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mc
 | --------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `search`                    | Core              | Discovers operations and parameters from the loaded index (OpenAPI/Discovery; native GraphQL/gRPC when configured). Returns a relevant slice — not the full spec.                                                             |
 | `execute`                   | Core              | Runs one discovered operation with auth from `auth-headers` / env; multi-spec REST or native protocols per config.                                                                                                            |
-| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`memory-recall.ts`](../src/memory-recall.ts)).                                                                                   |
+| `memory_recall`             | Memory            | Vault keyword scoring, optional vector KNN, wikilink hops — ranked Markdown paths/snippets ([`recall.ts`](../packages/clawql-memory/src/recall/recall.ts)).                                                                   |
 | `memory_ingest`             | Memory            | Writes durable Markdown under the vault; insights, receipts, `enterpriseCitations`, wikilinks ([`memory-obsidian.md`](memory/memory-obsidian.md)).                                                                            |
 | `knowledge_search_onyx`     | Knowledge         | Optional when **`CLAWQL_ENABLE_ONYX=1`** and documents stack is on — wraps Onyx `POST /search/send-search-message` ([`onyx-knowledge-tool.md`](mcp/onyx-knowledge-tool.md)).                                                  |
 | `sandbox_exec`              | Execution         | Optional — **`CLAWQL_ENABLE_SANDBOX=1`** — bridge / Seatbelt / Docker ([`mcp-tools.md`](mcp/mcp-tools.md) § **`sandbox_exec`**, [`infra/cloudflare/sandbox-bridge/README.md`](../infra/cloudflare/sandbox-bridge/README.md)). |
@@ -214,7 +214,7 @@ Agents combine **`memory_recall`** / **`memory_ingest`** with **`search`/`execut
 
 ## Hybrid Memory Recall
 
-Implementation today (**[`src/memory-recall.ts`](../src/memory-recall.ts)**) combines:
+Implementation today (**[`packages/clawql-memory/src/recall/recall.ts`](../packages/clawql-memory/src/recall/recall.ts)**) combines:
 
 1. **Keyword relevance** — scans Markdown under the vault (bounded by `CLAWQL_MEMORY_RECALL_*` limits), scores notes by term overlap.
 2. **Optional vector KNN** — when embeddings exist (`CLAWQL_VECTOR_BACKEND` **`sqlite`** uses chunk rows in **`memory.db`**; **`postgres`** uses **pgvector** with `CLAWQL_VECTOR_DATABASE_URL`), cosine-ranked chunks seed recall.
@@ -405,7 +405,7 @@ If any criterion fails, the loop adjusts and retries (behavior depends on orches
 
 Cuckoo predicates can be loaded from **`memory.db`** when **`CLAWQL_CUCKOO_*`** / sync paths are enabled ([`memory-db-schema.md`](memory/memory-db-schema.md)).
 
-**Implemented / wired in MCP paths:** optional **vector chunk dedup** during **`memory_recall`** when a Cuckoo predicate is present — see [`memory-recall.ts`](../src/memory-recall.ts).
+**Implemented / wired in MCP paths:** optional **vector chunk dedup** during **`memory_recall`** when a Cuckoo predicate is present — see [`recall.ts`](../packages/clawql-memory/src/recall/recall.ts).
 
 **Roadmap / orchestration (not automatic in core today):** Stirling→Paperless dedup, Ouroboros seed memoization, Tika/Gotenberg artifact dedup, Onyx query memoization, MCP `search` memoization, OSV duplicate suppression — these belong to higher-level workflows or future hooks, not universal defaults.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CLAWQL_NONNEGOTIABLE_MCP_TOOL_NAMES } from "./mcp-nonnegotiable-tools.js";
-import { createRegisteredMcpServer } from "./mcp-server-factory.js";
+import { CLAWQL_NONNEGOTIABLE_MCP_TOOL_NAMES } from "./mcp/mcp-nonnegotiable-tools.js";
+import { createRegisteredMcpServer } from "./mcp/mcp-server-factory.js";
 
 describe("createRegisteredMcpServer", () => {
   it("registers every non-negotiable MCP tool (cache + audit cannot be skipped)", () => {

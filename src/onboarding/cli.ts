@@ -2,7 +2,7 @@
 /**
  * ClawQL onboarding CLI: init, doctor, mcp-config, secrets.
  */
-import "../load-env.js";
+import "../host/load-env.js";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";

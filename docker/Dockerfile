@@ -42,8 +42,8 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY packages ./packages
 RUN npm run build \
-  && grep -qF 'server.tool("cache"' dist/tools.js \
-  && grep -qF 'server.tool("audit"' dist/tools.js \
+  && grep -qF 'server.tool("cache"' dist/mcp/tools.js \
+  && grep -qF 'server.tool("audit"' dist/mcp/tools.js \
   && npm prune --omit=dev
 
 COPY providers ./providers

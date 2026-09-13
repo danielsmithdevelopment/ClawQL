@@ -5,7 +5,7 @@ import {
   shouldUseStatelessHttpTransport,
   resolveHttpMcpProtocolVersion,
   MCP_PROTOCOL_VERSION_2026_07_28,
-} from "./mcp-http-protocol.js";
+} from "./mcp/mcp-http-protocol.js";
 
 describe("mcp-http-protocol", () => {
   it("defaults to sessionful SDK latest; opts into 2026-07-28 via header/env", () => {

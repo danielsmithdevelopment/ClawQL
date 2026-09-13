@@ -97,7 +97,7 @@ createClawQLApi({
 });
 ```
 
-Today **`PanguardProxyPlugin`**, **`MemoryPlugin`**, **`DocumentsPlugin`**, **`AutomationPlugin`**, **`SandboxPlugin`**, and **`OuroborosPlugin`** are composed at startup (`buildMcpPlugins` in `clawql-api-adapters.ts`). Remaining optional tools (HITL) register from `AutomationPlugin` when enabled or from `src/tools.ts` for legacy paths.
+Today **`PanguardProxyPlugin`**, **`MemoryPlugin`**, **`DocumentsPlugin`**, **`AutomationPlugin`**, **`SandboxPlugin`**, and **`OuroborosPlugin`** are composed at startup (`buildMcpPlugins` in `src/composition/clawql-api-adapters.ts`). Remaining optional tools (HITL) register from `AutomationPlugin` when enabled or from `src/mcp/tools.ts` for legacy paths.
 
 ---
 

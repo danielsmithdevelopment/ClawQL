@@ -10,7 +10,7 @@ Companion: [`effect-ts-modularization-rearchitecture-plan.md`](./effect-ts-modul
 
 ## 1. Executive summary
 
-ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` package into workspace packages under `packages/`. The MCP server (`src/server.ts`, `src/tools.ts`) remains the **transport adapter**; business logic moves into publishable units with **thin `src/` shims** for backward-compatible imports.
+ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` package into workspace packages under `packages/`. The MCP server (`src/server.ts`, `src/mcp/tools.ts`) remains the **transport adapter**; business logic lives in publishable units. Host files are grouped under `src/mcp/`, `src/composition/`, `src/http/`, `src/observability/`, and `src/host/`.
 
 **What landed (extraction phases 1–9, PRs [#401](https://github.com/danielsmithdevelopment/ClawQL/pull/401)–[#430](https://github.com/danielsmithdevelopment/ClawQL/pull/430)):**
 
@@ -32,7 +32,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 **What is still mostly in `src/`:** MCP tool registration for core tools (`search`/`execute`/`cache`/`audit`), GraphQL proxy entrypoints, server lifecycle, and transport glue (audit/cache MCP wrappers, OTEL, webhooks). **~35 deprecated shims removed** (July 2026); imports now target workspace packages directly.
 
-**Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; all horizontal tiers register via **`pluginLayers`** (`makeMemoryLayer`, `makeDocumentsLayer`, `makeAutomationLayer`, `makeSandboxLayer`, `makeOuroborosLayer`) composed by `composeHorizontalPluginLayers()` in `src/compose-horizontal-plugin-layers.ts`. Domain packages remain largely **`async`/`await`** at IO edges.
+**Effect-TS:** **Partial.** `search` / `execute` run through `createClawQLApi()` + `SearchService` / `ExecuteService` Effect Layers; all horizontal tiers register via **`pluginLayers`** (`makeMemoryLayer`, `makeDocumentsLayer`, `makeAutomationLayer`, `makeSandboxLayer`, `makeOuroborosLayer`) composed by `composeHorizontalPluginLayers()` in `src/composition/compose-horizontal-plugin-layers.ts`. Domain packages remain largely **`async`/`await`** at IO edges.
 
 **Plugin ecosystem:** **Phase 2 shipped.** `MemoryPlugin`, `DocumentsPlugin`, **`AutomationPlugin`** (includes **`hitl_enqueue_label_studio`** when enabled), **`SandboxPlugin`**, and **`OuroborosPlugin`** register MCP tools via `onRegister`. Argo Workflows **`workflow`** and Argo CD **`argocd`** ship in `AutomationPlugin` when enabled ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244), [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md), [workflow design](workflow-tool-argo.md)).
 
@@ -42,12 +42,13 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 
 ```
 ClawQL/
-├── src/                          # clawql-mcp transport + shims + MCP handlers
-│   ├── server.ts, server-http.ts
-│   ├── tools.ts                  # registerTools(), search/execute → clawql-api
-│   ├── mcp-server-factory.ts
-│   ├── clawql-api-adapters.ts    # getClawqlApi(), makeSearchLive / makeExecuteLive
-│   └── *.ts shims                # re-export packages (see §4)
+├── src/                          # clawql-mcp transport + Layer composition host
+│   ├── server.ts, server-http.ts, graphql-proxy.ts   # published entries
+│   ├── mcp/                      # MCP SDK factory, tools, wrap, cache/audit façades
+│   ├── composition/              # Layer merge, plugin flags, gateway auth
+│   ├── http/                     # Express attach (GraphQL, OAuth, webhooks)
+│   ├── observability/            # OTEL + Loki/Prometheus glue
+│   └── host/                     # env, startup summary, vault path validation
 ├── packages/
 │   ├── clawql-core/
 │   ├── clawql-auth/
@@ -78,7 +79,7 @@ Agent (stdio / HTTP / gRPC)
   src/server*.ts  ──►  createRegisteredMcpServer()
         │
         ▼
-  src/tools.ts    ──►  registerTools()
+  src/mcp/tools.ts    ──►  registerTools()
         │
         ├── search / execute ──► getClawqlApi().run(Effect … SearchService / ExecuteService)
         │                              │
@@ -87,7 +88,7 @@ Agent (stdio / HTTP / gRPC)
         │
         ├── memory_ingest / memory_recall / pageindex_* ──► clawql-memory (+ clawql-pageindex)
         ├── ingest_external_knowledge ──► clawql-documents
-        ├── schedule / notify ──► clawql-automation (+ configureNotifyDeps from tools.ts)
+        ├── schedule / notify ──► clawql-automation (+ configureNotifyDeps from mcp/tools.ts)
         └── cache / audit ──► clawql-core (via shims)
 ```
 
@@ -100,11 +101,13 @@ Agent (stdio / HTTP / gRPC)
 
 ---
 
-## 4. Package contents vs `src/` shims
+## 4. Package contents vs host composition
+
+Host files under `src/mcp/`, `src/composition/`, `src/http/`, `src/observability/`, and `src/host/` **compose** packages at the MCP/HTTP boundary. They are not re-export shims.
 
 ### 4.1 `clawql-core`
 
-| In package                                                                                                                     | Still shimmed in `src/`              |
+| In package                                                                                                                     | Host façade (`src/mcp/`)             |
 | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------ |
 | `audit/`, `cache` helpers, Merkle, Cuckoo, **ProviderPlugin / fireHook / skill registry (8.0)**, legacy `Plugin` types, errors | `clawql-audit.ts`, `clawql-cache.ts` |
 
@@ -112,9 +115,9 @@ Agent (stdio / HTTP / gRPC)
 
 ### 4.2 `clawql-api`
 
-| In package                                                                                                                                    | Still shimmed in `src/`                                                                                          |
-| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `spec-loader`, `spec-search`, `provider-registry`, REST/GraphQL/gRPC execute, auth headers, optional flags, `createClawQLApi`, proxy pipeline | `spec-loader.ts`, `provider-registry.ts`, `auth-headers.ts`, `rest-operation.ts`, native GraphQL/gRPC loaders, … |
+| In package                                                                                                                                    | Host composition                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `spec-loader`, `spec-search`, `provider-registry`, REST/GraphQL/gRPC execute, auth headers, optional flags, `createClawQLApi`, proxy pipeline | `src/composition/clawql-api-adapters.ts` (`getClawqlApi()`, Layer merge). Import `clawql-api` subpaths. |
 
 **Bundled specs:** `providers/` stays at repo root; `clawql-api` resolves paths via `package-root`.
 
@@ -135,7 +138,7 @@ Use **subpath imports** at server hot paths (avoid the barrel — loads sql.js +
 | `clawql-memory/embedding/embedding`  | OpenAI-compatible embeddings                          |
 | `clawql-memory/vector/pgvector`      | Postgres pgvector leg                                 |
 
-MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `logMcpToolShape`).
+MCP handlers: `clawql-memory/plugin` (`handleMemoryIngestToolInput` / `handleMemoryRecallToolInput`). Host `src/` does not re-export these.
 
 ### 4.4 `clawql-documents`
 
@@ -149,7 +152,7 @@ MCP handlers: `src/memory-ingest.ts`, `src/memory-recall.ts` (thin wrappers + `l
 
 **Not yet extracted to automated orchestration:** retries, Merkle per hop across the full IDP pipeline (vision in [`clawql-modularization-v2.md`](../vision/clawql-modularization-v2.md) §3.2). **Presidio gateway hooks** (execute + memory ingest + external ingest) ship in `clawql-api` when `CLAWQL_ENABLE_PRESIDIO=1` — see [MCP clients — Presidio](https://docs.clawql.com/mcp-clients#presidio-redaction).
 
-MCP handler: `src/external-ingest.ts`.
+MCP handler: `clawql-documents/plugin` (`handleIngestExternalKnowledgeToolInput`). Host `src/` does not re-export this.
 
 ### 4.5 `clawql-automation`
 
@@ -159,9 +162,9 @@ MCP handler: `src/external-ingest.ts`.
 | `clawql-automation/notify/notify`     | `runNotifySlack` via injected `execute`           |
 | `clawql-automation/workflow/workflow` | Argo Workflows submit/get/wait/list/logs (opt-in) |
 
-`tools.ts` calls `configureNotifyDeps({ execute: handleClawqlExecuteToolInput })` so the schedule worker can notify without importing `tools.ts` (breaks the old circular import).
+`src/mcp/tools.ts` calls `configureAutomationPluginDeps({ execute: handleClawqlExecuteToolInput })` so the schedule worker can notify without importing `tools.ts` (breaks the old circular import).
 
-MCP: `handleScheduleToolInput` shim in `src/clawql-schedule.ts`; `handleNotifyToolInput` remains exported from `tools.ts` as a one-liner delegate. **`workflow`** registers via **`AutomationPlugin.onRegister`** when `CLAWQL_ENABLE_WORKFLOW=1` — see [workflow-tool-argo.md](workflow-tool-argo.md).
+MCP: `handleScheduleToolInput` from `clawql-automation/plugin`; `handleNotifyToolInput` remains exported from `src/mcp/tools.ts` as a one-liner delegate. **`workflow`** registers via **`AutomationPlugin.onRegister`** when `CLAWQL_ENABLE_WORKFLOW=1` — see [workflow-tool-argo.md](workflow-tool-argo.md).
 
 ---
 
@@ -212,7 +215,7 @@ interface Plugin {
 - **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
 - **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` and `pageindex_*` tools via `makeMemoryLayer()` when `CLAWQL_ENABLE_MEMORY` is on (default); hide PageIndex only with `CLAWQL_ENABLE_PAGEINDEX=0`.
-- **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/clawql-api-adapters.ts`.
+- **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/composition/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
 - **`AutomationPlugin`** (`createAutomationPlugin` in `clawql-automation`) — registers `schedule` / `notify` / `workflow` when enabled; starts schedule worker in `onRegister`. Argo **`workflow`** is opt-in (`CLAWQL_ENABLE_WORKFLOW=1`) ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243), [workflow-tool-argo.md](workflow-tool-argo.md)).

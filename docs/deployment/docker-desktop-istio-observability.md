@@ -210,12 +210,12 @@ You do **not** need a browser UI for the collector; **Grafana Explore (Tempo)** 
 
 ## ClawQL MCP metrics vs mesh observability
 
-| Signal                                                       | Where                                                                      | Beginner note                                                                                                                                   |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Application metrics** (merge counts, execute totals, etc.) | **`GET http://<mcp-host>:8080/metrics`** on the MCP Service / port-forward | OpenMetrics text for **Prometheus-style** scraping of the **MCP process**; see [`docs/readme/deployment.md`](../readme/deployment.md).          |
-| **Mesh / Istio metrics**                                     | Prometheus in **`istio-system`**                                           | Scraped from Envoy, Istio components, addons — **different** scrape config from the MCP `/metrics` path.                                        |
-| **Distributed traces (MCP tool spans)**                      | **Grafana Tempo** (Explore) after OTLP export                              | Opt-in: **`CLAWQL_ENABLE_OTEL_TRACING`**, OTLP env — see [`.env.example`](../../.env.example) and **`src/otel-tracing.ts`**. Collector → Tempo. |
-| **Audit / agent logs (JSON lines)**                          | **Loki** (optional **`CLAWQL_LOKI_PUSH_URL`**)                             | MCP **`audit.append`** can push to Loki; explore in Grafana **Explore**.                                                                        |
+| Signal                                                       | Where                                                                      | Beginner note                                                                                                                                                 |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Application metrics** (merge counts, execute totals, etc.) | **`GET http://<mcp-host>:8080/metrics`** on the MCP Service / port-forward | OpenMetrics text for **Prometheus-style** scraping of the **MCP process**; see [`docs/readme/deployment.md`](../readme/deployment.md).                        |
+| **Mesh / Istio metrics**                                     | Prometheus in **`istio-system`**                                           | Scraped from Envoy, Istio components, addons — **different** scrape config from the MCP `/metrics` path.                                                      |
+| **Distributed traces (MCP tool spans)**                      | **Grafana Tempo** (Explore) after OTLP export                              | Opt-in: **`CLAWQL_ENABLE_OTEL_TRACING`**, OTLP env — see [`.env.example`](../../.env.example) and **`src/observability/otel-tracing.ts`**. Collector → Tempo. |
+| **Audit / agent logs (JSON lines)**                          | **Loki** (optional **`CLAWQL_LOKI_PUSH_URL`**)                             | MCP **`audit.append`** can push to Loki; explore in Grafana **Explore**.                                                                                      |
 
 ---
 
