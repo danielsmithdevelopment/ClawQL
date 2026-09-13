@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   resetLegacyPluginEnableWarningForTests,
   resolvePluginCompositionFlags,
-} from "./resolve-plugin-flags.js";
+} from "./composition/resolve-plugin-flags.js";
 
 describe("resolvePluginCompositionFlags", () => {
   afterEach(() => {

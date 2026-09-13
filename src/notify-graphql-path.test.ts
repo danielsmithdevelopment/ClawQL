@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { executeOperationGraphQL } from "clawql-api";
 import * as restOperation from "clawql-api";
 import { loadSpec, resetSpecCache } from "clawql-api";
-import { executeOutputFields, handleNotifyToolInput, resetSchemaFieldCache } from "./tools.js";
+import { executeOutputFields, handleNotifyToolInput, resetSchemaFieldCache } from "./mcp/tools.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSlackChatPostMessage = join(

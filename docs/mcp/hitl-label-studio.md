@@ -454,7 +454,7 @@ Vertical Compose stacks and pre-annotation packs: [`docker/compose/README.md`](.
 
 ## 15. Implementation reference (maintainers)
 
-- **`src/hitl-label-studio.ts`** — import client, webhook handler, **`memory_ingest`** / **`audit`** branching.
-- **`src/tools.ts`** — MCP registration.
-- **`src/server-http.ts`** — webhook route when flag enabled.
+- **`src/http/hitl-transport.ts`** — webhook transport deps.
+- **`src/mcp/tools.ts`** — MCP registration.
+- **`src/http/mcp-http-server.ts`** — webhook route when flag enabled.
 - Tests: **`src/hitl-label-studio.test.ts`**, **`src/server-http.test.ts`**, **`src/grpc-hitl-parity.test.ts`**.

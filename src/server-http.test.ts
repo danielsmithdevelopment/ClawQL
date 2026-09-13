@@ -9,12 +9,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { recordNativeGraphqlExecute, resetNativeProtocolMetricsForTests } from "clawql-api";
 import { resetMemoryDbArtifactCachesForTests } from "clawql-memory";
 import { syncMemoryDbFromDocuments } from "clawql-memory/db/memory-db";
-import { resetClawqlApiForTests } from "./clawql-api-adapters.js";
-import { resetClawqlGatewayAuthForTests } from "./gateway-auth.js";
+import { resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
+import { resetClawqlGatewayAuthForTests } from "./composition/gateway-auth.js";
 import { getClawqlOptionalToolFlags, resetSpecCache } from "clawql-api";
 import { createMcpHttpApp, type CreateMcpHttpAppOptions } from "./server-http.js";
-import { resetSchemaFieldCache } from "./tools.js";
-import { instanceSpecWith } from "./server-stdio-env.js";
+import { resetSchemaFieldCache } from "./mcp/tools.js";
+import { instanceSpecWith } from "./host/server-stdio-env.js";
 
 /** Optional-flag / webhook HTTP tests — cold `loadSpec()` is unnecessary and flaky on CI. */
 const FAST_HTTP_APP_OPTS: CreateMcpHttpAppOptions = {

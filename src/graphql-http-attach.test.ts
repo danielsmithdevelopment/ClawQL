@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetSpecCache } from "clawql-api";
-import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
+import { attachGraphqlHttpToMcpApp } from "./http/graphql-http-attach.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const minimalSpec = join(here, "test-utils/fixtures/minimal-petstore.json");

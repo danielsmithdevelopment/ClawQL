@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { __testUtils } from "./tools.js";
+import { __testUtils } from "./mcp/tools.js";
 import type { Operation } from "clawql-api";
 
 const op = {

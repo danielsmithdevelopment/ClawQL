@@ -8,7 +8,7 @@ import {
   composeHorizontalPluginLayers,
   composeHorizontalPluginLayersFromTierSpec,
   optionalFlagsFromHorizontalTierSpec,
-} from "./compose-horizontal-plugin-layers.js";
+} from "./composition/compose-horizontal-plugin-layers.js";
 
 const baseFlags = {
   enableMemory: false,

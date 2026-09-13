@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { handleCacheToolInput, resetClawqlCacheForTests } from "./clawql-cache.js";
+import { handleCacheToolInput, resetClawqlCacheForTests } from "./mcp/clawql-cache.js";
 
 /**
  * MCP façade only — LRU / size / schema adversarial coverage lives in

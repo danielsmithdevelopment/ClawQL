@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { X402McpPaymentRequiredError } from "clawql-payments/x402";
-import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./clawql-audit.js";
-import { runMcpProxyBeforeCallTool } from "./clawql-api-adapters.js";
-import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
+import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./mcp/clawql-audit.js";
+import { runMcpProxyBeforeCallTool } from "./composition/clawql-api-adapters.js";
+import { wrapRegisteredMcpToolHandler } from "./mcp/mcp-tool-wrap.js";
 
-vi.mock("./clawql-api-adapters.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./clawql-api-adapters.js")>();
+vi.mock("./composition/clawql-api-adapters.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./composition/clawql-api-adapters.js")>();
   return {
     ...actual,
     runMcpProxyBeforeCallTool: vi.fn(async () => undefined),

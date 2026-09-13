@@ -35,13 +35,12 @@ Vitest is used for tests; coverage output is written under `coverage/`.
 
 Core registration entrypoint:
 
-- `src/tools.ts`
+- `src/mcp/tools.ts`
 
-Related modules (MCP transport + shims — **canonical logic in packages**):
+Related modules (MCP transport — **canonical logic in packages**):
 
-- `src/memory-ingest.ts` → `clawql-memory/ingest/*`
-- `src/memory-recall.ts` → `clawql-memory/recall/*`
-- `src/vault-config.ts`, `src/vault-utils.ts` → `clawql-memory/vault/*`
+- `clawql-memory/plugin` + `clawql-memory/ingest/*` / `recall/*`
+- `src/host/vault-config.ts` (startup validation) → path resolution in `clawql-memory/vault/*`
 - Sandbox: **`packages/clawql-sandbox/`** (`bridge-client.ts`, `container.ts`, `macos-seatbelt.ts`, plugin layer) — opt-in via `CLAWQL_ENABLE_SANDBOX=1`
 - Ouroboros: **`packages/clawql-ouroboros/`** — Effect services + thin MCP plugin glue
 
@@ -49,7 +48,7 @@ Related modules (MCP transport + shims — **canonical logic in packages**):
 
 Single-spec `execute` can use an internal OpenAPI-to-GraphQL path for response minimization for **OpenAPI/Discovery** operations.
 In multi-spec mode, `execute` uses REST against the owning spec for those operations.
-Native GraphQL / gRPC ops (see `src/native-protocol-merge.ts`, `src/tools.ts`) route to HTTP GraphQL or grpc-js instead.
+Native GraphQL / gRPC ops (see `packages/clawql-api/src/spec/native-protocol-merge.ts`, `src/mcp/tools.ts`) route to HTTP GraphQL or grpc-js instead.
 
 Compatibility caveats:
 

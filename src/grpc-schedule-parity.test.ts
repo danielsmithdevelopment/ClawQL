@@ -12,11 +12,11 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { maybeStartGrpcMcpServer } from "mcp-grpc-transport";
-import { createRegisteredMcpServer } from "./mcp-server-factory.js";
+import { createRegisteredMcpServer } from "./mcp/mcp-server-factory.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { resetSpecCache } from "clawql-api";
-import { resetSchemaFieldCache } from "./tools.js";
-import { instanceSpecWith } from "./server-stdio-env.js";
+import { resetSchemaFieldCache } from "./mcp/tools.js";
+import { instanceSpecWith } from "./host/server-stdio-env.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");

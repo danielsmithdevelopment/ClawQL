@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { logMcpToolShape } from "./mcp-tool-log.js";
+import { logMcpToolShape } from "./mcp/mcp-tool-log.js";
 
 describe("mcp-tool-log", () => {
   const saved = process.env.CLAWQL_MCP_LOG_TOOLS;

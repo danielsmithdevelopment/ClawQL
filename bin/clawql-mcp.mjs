@@ -7,4 +7,5 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const dir = dirname(fileURLToPath(import.meta.url));
-await import(join(dir, "../dist/server.js"));
+const { startStdioMcpServer } = await import(join(dir, "../dist/server.js"));
+await startStdioMcpServer();
