@@ -1,7 +1,7 @@
 {
   "name": "panguard-mcp-bridge",
   "version": "0.1.0",
-  "description": "Streamable HTTP MCP gateway + stdio shim: mesh/clients → Panguard (@panguard-ai/panguard-mcp-proxy) → remote clawql-mcp-http",
+  "description": "Streamable HTTP MCP gateway + stdio shim: mesh/clients \u2192 Panguard (@panguard-ai/panguard-mcp-proxy) \u2192 remote clawql-mcp-http",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/gateway-main.js",
@@ -23,7 +23,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "effect": "^3.21.4",
     "express": "^5.2.1",
-    "jose": "^6.2.10",
+    "jose": "^6.2.12",
     "mcp-grpc-transport": "1.0.0"
   },
   "repository": {
