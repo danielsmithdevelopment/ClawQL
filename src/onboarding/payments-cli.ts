@@ -15,6 +15,8 @@ import {
   runPaymentsStripeWebhookListen,
   runPaymentsStripeWebhookVerify,
   runPaymentsStripeMeterReport,
+  runPaymentsStripeCatalogEnsure,
+  runPaymentsStripeCatalogValidate,
   runPaymentsUsageReport,
   runPaymentsX402Gate,
   runPaymentsX402GateList,
@@ -189,6 +191,12 @@ export type PaymentsCliOptions = {
   sendEmail?: boolean;
   /** Force invite email dry-run preview. */
   emailDryRun?: boolean;
+  /** Stripe catalog ensure dry-run (no API). */
+  dryRun?: boolean;
+  /** Skip credit top-up Prices when ensuring Stripe catalog. */
+  noTopUps?: boolean;
+  /** Skip Billing Meter + metered Price when ensuring Stripe catalog. */
+  noMeter?: boolean;
   /** Enterprise org id (`clawql payments org …`). */
   orgId?: string;
   /** Billing admin / actor tenant for org admin commands. */
@@ -314,6 +322,25 @@ export async function runPaymentsStripeMeterReportCmd(
     identifier: options.identifier,
     tenantId: options.tenantId,
     correlationId: options.correlationId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCatalogEnsureCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCatalogEnsure({
+    dryRun: options.dryRun,
+    includeTopUps: options.noTopUps ? false : undefined,
+    includeMeter: options.noMeter ? false : undefined,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCatalogValidateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCatalogValidate({
     json: options.json,
   });
 }
