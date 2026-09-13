@@ -76,5 +76,5 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 | --------------------------------------------- | ----------------------------------- |
 | `.cursor/rules/clawql-vault-memory.mdc`       | Cursor rule (always apply)          |
 | `.cursor/skills/clawql-vault-memory/SKILL.md` | Cursor skill (deep ingest + recall) |
-| `packages/clawql-memory/src/ingest/`              | `memory_ingest` implementation      |
-| `packages/clawql-memory/src/recall/`              | `memory_recall` implementation      |
+| `packages/clawql-memory/src/ingest/`          | `memory_ingest` implementation      |
+| `packages/clawql-memory/src/recall/`          | `memory_recall` implementation      |
