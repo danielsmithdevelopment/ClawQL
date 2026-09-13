@@ -112,3 +112,13 @@ export function listGeneratedUis(): GeneratedUiForm[] {
   sweep();
   return [...forms.values()];
 }
+
+export function deleteGeneratedUiBySlug(slug: string): boolean {
+  const id = bySlug.get(slug);
+  if (!id) return false;
+  const form = forms.get(id);
+  forms.delete(id);
+  bySlug.delete(slug);
+  return Boolean(form);
+}
+

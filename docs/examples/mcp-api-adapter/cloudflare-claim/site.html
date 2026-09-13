@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Challenge coupon · third-party WebMCP</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151b2d;
+      --ink: #e8eef9;
+      --muted: #93a0b8;
+      --orange: #f6821f;
+      --line: #2a344c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(800px 360px at 100% 0%, rgba(246,130,31,.25), transparent 55%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+    }
+    .card {
+      width: min(36rem, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.5rem 1.4rem 1.35rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
+    }
+    .eyebrow {
+      color: var(--orange);
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: .55rem;
+    }
+    h1 { margin: 0 0 .45rem; font-size: 1.45rem; letter-spacing: -.02em; }
+    p { color: var(--muted); line-height: 1.5; margin: 0 0 .85rem; }
+    .tools { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; color: var(--ink); }
+    .tools li { margin: .25rem 0; }
+    .status {
+      margin-top: 1rem;
+      padding: .75rem .85rem;
+      border-radius: 10px;
+      background: rgba(246,130,31,.08);
+      border: 1px dashed rgba(246,130,31,.35);
+      font-size: .86rem;
+      color: var(--muted);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    code { color: var(--orange); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">Third-party site · WebMCP</div>
+    <h1>Checking your browser… almost.</h1>
+    <p>
+      This page is the <strong>source of truth</strong>. It registers WebMCP tools on
+      <code>document.modelContext</code>. Agents (and ClawQL via CDP) call those tools —
+      there is no parallel fake API in Node.
+    </p>
+    <p>
+      ClawQL opens this page over CDP, lists <code>getTools()</code>, and
+      <code>/mcp-ui</code> turns the claim tool into a human button that still
+      executes <em>here</em>.
+    </p>
+    <ul class="tools">
+      <li>cf_reveal_challenge</li>
+      <li>cf_claim_coupon</li>
+    </ul>
+    <div class="status" id="status">Booting WebMCP…</div>
+    <div class="status" id="audit" hidden></div>
+  </main>
+  <script>
+    (function () {
+      const status = document.getElementById("status");
+      const audit = document.getElementById("audit");
+
+      const pageState = {
+        revealed: false,
+        claimed: false,
+        challengeId: null,
+        couponCode: null,
+        calls: [],
+      };
+
+      function logCall(name, result) {
+        pageState.calls.push({
+          at: new Date().toISOString(),
+          name,
+          result,
+        });
+        audit.hidden = false;
+        audit.textContent =
+          "Page tool audit (proves execution hit this document):\n" +
+          JSON.stringify(pageState.calls, null, 2);
+      }
+
+      /**
+       * Minimal WebMCP polyfill when native modelContext is absent.
+       * Same document.modelContext surface ClawQL CDP discovers.
+       */
+      function ensureModelContext() {
+        const existing = document.modelContext || navigator.modelContext;
+        if (existing && typeof existing.registerTool === "function") {
+          return { mc: existing, polyfill: false };
+        }
+        const tools = [];
+        const polyfill = {
+          registerTool(tool) {
+            tools.push(tool);
+            return { name: tool.name };
+          },
+          async getTools() {
+            return tools.slice();
+          },
+          async executeTool(toolOrName, inputJson) {
+            const name =
+              typeof toolOrName === "string"
+                ? toolOrName
+                : toolOrName && toolOrName.name;
+            const tool = tools.find((t) => t.name === name);
+            if (!tool) throw new Error("Unknown WebMCP tool: " + name);
+            let args = {};
+            if (typeof inputJson === "string" && inputJson.trim()) {
+              args = JSON.parse(inputJson);
+            } else if (inputJson && typeof inputJson === "object") {
+              args = inputJson;
+            }
+            const execute = tool.execute || tool.handler;
+            if (typeof execute !== "function") {
+              throw new Error("Tool has no execute(): " + name);
+            }
+            return await execute(args);
+          },
+        };
+        Object.defineProperty(document, "modelContext", {
+          value: polyfill,
+          configurable: true,
+          writable: true,
+        });
+        return { mc: polyfill, polyfill: true };
+      }
+
+      const { mc, polyfill } = ensureModelContext();
+
+      const toolDefs = [
+        {
+          name: "cf_reveal_challenge",
+          description:
+            "Reveal a challenge coupon for agents. Unlocks cf_claim_coupon. Runs in the page.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
+          async execute() {
+            pageState.revealed = true;
+            pageState.challengeId =
+              "ch_" + Math.random().toString(16).slice(2, 10);
+            const result = {
+              ok: true,
+              source: location.href,
+              via: "document.modelContext",
+              challengeId: pageState.challengeId,
+              next: "cf_claim_coupon",
+              revealedAt: new Date().toISOString(),
+            };
+            logCall("cf_reveal_challenge", result);
+            return result;
+          },
+        },
+        {
+          name: "cf_claim_coupon",
+          description:
+            "Claim the challenge coupon. Same tool agents call — ClawQL /mcp-ui wraps this for humans.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
+          async execute() {
+            if (!pageState.revealed) {
+              const err = {
+                ok: false,
+                error: "Challenge not revealed. Call cf_reveal_challenge first.",
+              };
+              logCall("cf_claim_coupon", err);
+              return err;
+            }
+            if (!pageState.couponCode) {
+              pageState.couponCode =
+                "CF-PAGE-" +
+                Math.random().toString(16).slice(2, 8).toUpperCase();
+            }
+            pageState.claimed = true;
+            const result = {
+              ok: true,
+              source: location.href,
+              via: "document.modelContext",
+              challengeId: pageState.challengeId,
+              couponCode: pageState.couponCode,
+              claimedAt: new Date().toISOString(),
+              note: "Issued by this page's WebMCP tool — not a Cloudflare production coupon.",
+            };
+            logCall("cf_claim_coupon", result);
+            return result;
+          },
+        },
+      ];
+
+      for (const tool of toolDefs) {
+        try {
+          void mc.registerTool(tool);
+        } catch (err) {
+          console.warn("registerTool failed", tool.name, err);
+        }
+      }
+
+      status.textContent =
+        (polyfill
+          ? "WebMCP polyfill on document.modelContext (native API absent). "
+          : "Native document.modelContext. ") +
+        "Registered: " +
+        toolDefs.map((t) => t.name).join(", ") +
+        ". Calls must go through modelContext — page audit updates below.";
+
+      window.__clawqlWebmcpPageState = pageState;
+    })();
+  </script>
+</body>
+</html>

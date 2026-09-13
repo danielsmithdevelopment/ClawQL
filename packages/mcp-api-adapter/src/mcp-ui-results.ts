@@ -16,29 +16,77 @@ function jsonFallback(body: unknown): string {
   return `<pre><code>${escapeMcpUiHtml(JSON.stringify(body, null, 2))}</code></pre>`;
 }
 
+function pickHitArray(record: Record<string, unknown> | undefined): unknown[] {
+  if (!record) return [];
+  for (const key of ["hits", "results", "operations", "items"] as const) {
+    const value = record[key];
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+  return [];
+}
+
+function normalizeSearchHit(row: unknown, index: number): {
+  title: string;
+  path: string;
+  method: string;
+  description: string;
+  score: string;
+  badge: string;
+} {
+  const r = asRecord(row) ?? {};
+  const title = String(
+    r.title ?? r.id ?? r.operationId ?? r.name ?? `Result ${index + 1}`
+  );
+  const path = String(r.path ?? r.url ?? r.href ?? "");
+  const method = String(r.method ?? "");
+  const description = String(r.snippet ?? r.description ?? r.summary ?? "");
+  const score =
+    r.score != null ? String(r.score) : r.rank != null ? String(r.rank) : "";
+  const badge = String(r.specLabel ?? r.label ?? r.kind ?? r.source ?? "");
+  return { title, path, method, description, score, badge };
+}
+
+/**
+ * Card-grid search surface — intentionally not a docs-site layout.
+ * Used for Core `search` and Agent Lab `docs_search` hits alike.
+ */
 function renderSearchResults(body: unknown): string {
   const record = asRecord(body);
-  const results = asArray(record?.results);
-  if (results.length === 0) {
-    return `<p class="result-empty">No matching operations.</p>${jsonFallback(body)}`;
+  const rows = pickHitArray(record);
+  if (rows.length === 0) {
+    return `<p class="result-empty">No matching results.</p>
+<details class="result-raw"><summary>Raw JSON</summary>${jsonFallback(body)}</details>`;
   }
-  const items = results
-    .map((row) => {
-      const r = asRecord(row) ?? {};
-      const id = String(r.id ?? r.operationId ?? "operation");
-      const method = r.method != null ? String(r.method) : "";
-      const path = r.path != null ? String(r.path) : "";
-      const description = r.description != null ? String(r.description) : "";
-      const score = r.score != null ? String(r.score) : "";
-      const label = r.specLabel != null ? String(r.specLabel) : "";
-      return `<li class="result-item">
-  <div class="result-item__title"><code>${escapeMcpUiHtml(id)}</code>${label ? ` <span class="pill">${escapeMcpUiHtml(label)}</span>` : ""}</div>
-  <div class="result-item__meta">${escapeMcpUiHtml([method, path].filter(Boolean).join(" "))} ${score ? `· score ${escapeMcpUiHtml(score)}` : ""}</div>
-  ${description ? `<p class="result-item__desc">${escapeMcpUiHtml(description)}</p>` : ""}
-</li>`;
+
+  const query =
+    record?.query != null ? String(record.query) : record?.q != null ? String(record.q) : "";
+  const header = query
+    ? `<p class="result-summary">Showing <strong>${rows.length}</strong> result${rows.length === 1 ? "" : "s"} for <code>${escapeMcpUiHtml(query)}</code></p>`
+    : `<p class="result-summary"><strong>${rows.length}</strong> result${rows.length === 1 ? "" : "s"}</p>`;
+
+  const cards = rows
+    .map((row, index) => {
+      const hit = normalizeSearchHit(row, index);
+      const pills = [
+        hit.method ? `<span class="pill pill--method">${escapeMcpUiHtml(hit.method)}</span>` : "",
+        hit.badge ? `<span class="pill">${escapeMcpUiHtml(hit.badge)}</span>` : "",
+        hit.score ? `<span class="pill pill--score">${escapeMcpUiHtml(hit.score)}</span>` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      return `<article class="result-card">
+  <header class="result-card__header">
+    <h3 class="result-card__title">${escapeMcpUiHtml(hit.title)}</h3>
+    ${pills ? `<div class="result-card__pills">${pills}</div>` : ""}
+  </header>
+  ${hit.path ? `<p class="result-card__path"><code>${escapeMcpUiHtml(hit.path)}</code></p>` : ""}
+  ${hit.description ? `<p class="result-card__snippet">${escapeMcpUiHtml(hit.description.slice(0, 220))}${hit.description.length > 220 ? "…" : ""}</p>` : ""}
+</article>`;
     })
     .join("\n");
-  return `<ol class="result-list">${items}</ol>
+
+  return `${header}
+<div class="result-grid" role="list">${cards}</div>
 <details class="result-raw"><summary>Raw JSON</summary>${jsonFallback(body)}</details>`;
 }
 

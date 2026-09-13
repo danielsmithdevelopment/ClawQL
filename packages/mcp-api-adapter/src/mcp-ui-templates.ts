@@ -3,7 +3,7 @@ import type { FormRenderHints } from "./mcp-ui-form.js";
 
 export type McpUiResultKind = "json" | "search" | "memory" | "cache" | "audit" | "idp";
 
-export type McpUiCustomHtml = "smart-upload";
+export type McpUiCustomHtml = "smart-upload" | "claim-button";
 
 export type McpUiTemplate = {
   /** Tool name or tag match. */
@@ -25,6 +25,15 @@ const TEMPLATES: Record<string, McpUiTemplate> = {
     defaults: { limit: 5 },
     hints: {
       query: "Describe the operation in plain language — e.g. list github repositories.",
+    },
+    resultKind: "search",
+  },
+  docs_search: {
+    id: "docs_search",
+    primary: ["query", "limit"],
+    defaults: { limit: 6 },
+    hints: {
+      query: "Keywords across curated docs snippets — e.g. mcp-ui, celld, memory.",
     },
     resultKind: "search",
   },
@@ -116,6 +125,28 @@ const TEMPLATES: Record<string, McpUiTemplate> = {
     resultKind: "json",
     customHtml: "smart-upload",
   },
+
+  cf_claim_coupon: {
+    id: "cf_claim_coupon",
+    primary: [],
+    hints: {},
+    resultKind: "json",
+    customHtml: "claim-button",
+  },
+  claim_coupon: {
+    id: "claim_coupon",
+    primary: [],
+    hints: {},
+    resultKind: "json",
+    customHtml: "claim-button",
+  },
+  reveal_extra_credits_link: {
+    id: "reveal_extra_credits_link",
+    primary: [],
+    hints: {},
+    resultKind: "json",
+    customHtml: "claim-button",
+  },
 };
 
 const SMART_UPLOAD_NAME = /^upload_(photo|image|file|picture)s?$/i;
@@ -135,6 +166,26 @@ export function isSmartUploadTool(tool: ListedMcpTool): boolean {
   return false;
 }
 
+
+const CLAIM_BUTTON_NAME =
+  /^(cf_)?claim_(coupon|offer|reward|starter_pack)$|^reveal_extra_credits_link$/i;
+const CLAIM_BUTTON_TEXT = /\b(claim|credits|activation)\b/i;
+
+/** Match WebMCP-style claim tools for the click-to-claim HTMX template. */
+export function isClaimButtonTool(tool: ListedMcpTool): boolean {
+  const explicit = TEMPLATES[tool.name];
+  if (explicit?.customHtml === "claim-button") return true;
+  if (CLAIM_BUTTON_NAME.test(tool.name)) return true;
+  const text = `${tool.name} ${tool.title ?? ""} ${tool.description ?? ""}`.toLowerCase();
+  if (
+    CLAIM_BUTTON_TEXT.test(text) &&
+    /\b(coupon|offer|reward|pack|credits)\b/i.test(text)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function resolveMcpUiTemplate(tool: ListedMcpTool): McpUiTemplate | undefined {
   if (TEMPLATES[tool.name]) return TEMPLATES[tool.name];
   if (isSmartUploadTool(tool)) {
@@ -143,6 +194,14 @@ export function resolveMcpUiTemplate(tool: ListedMcpTool): McpUiTemplate | undef
       primary: ["file", "filename", "caption"],
       resultKind: "json",
       customHtml: "smart-upload",
+    };
+  }
+  if (isClaimButtonTool(tool)) {
+    return {
+      id: "claim-button",
+      primary: [],
+      resultKind: "json",
+      customHtml: "claim-button",
     };
   }
   return undefined;
@@ -167,7 +226,10 @@ export function formHintsForTool(
 }
 
 export function resultKindForTool(toolName: string): McpUiResultKind {
-  return TEMPLATES[toolName]?.resultKind ?? "json";
+  const explicit = TEMPLATES[toolName]?.resultKind;
+  if (explicit) return explicit;
+  if (/(^|_)search$/i.test(toolName) || /search_/i.test(toolName)) return "search";
+  return "json";
 }
 
 export function listMcpUiTemplates(): McpUiTemplate[] {
