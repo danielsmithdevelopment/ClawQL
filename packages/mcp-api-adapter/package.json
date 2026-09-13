@@ -50,9 +50,9 @@
     "busboy": "^1.6.0",
     "effect": "^3.21.4",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
+    "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.0",
-    "jose": "^6.2.10",
+    "jose": "^6.2.12",
     "mcp-grpc-transport": "1.0.0",
     "ws": "^8.21.3"
   },
@@ -64,7 +64,7 @@
     "clawql-inference": "0.1.0",
     "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1",
+    "vitest": "^5.0.0",
     "zod": "^3.24.0"
   },
   "peerDependencies": {

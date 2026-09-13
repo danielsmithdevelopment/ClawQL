@@ -1,7 +1,7 @@
 {
   "name": "clawql-inference",
   "version": "0.1.0",
-  "description": "ClawQL inference gateway: model tier escalation, provider adapters, semantic cache, and WORM-auditable observability (foundation — epic #556 / #560)",
+  "description": "ClawQL inference gateway: model tier escalation, provider adapters, semantic cache, and WORM-auditable observability (foundation \u2014 epic #556 / #560)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -48,9 +48,9 @@
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.221.0",
-    "@opentelemetry/resources": "^2.9.0",
-    "@opentelemetry/sdk-trace-base": "^2.9.0",
-    "@opentelemetry/sdk-trace-node": "^2.9.0",
+    "@opentelemetry/resources": "^2.11.0",
+    "@opentelemetry/sdk-trace-base": "^2.11.0",
+    "@opentelemetry/sdk-trace-node": "^2.11.0",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-payments": "0.1.0",
@@ -67,7 +67,7 @@
     "@types/pg": "^8.20.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.0"
   },
   "files": [
     "dist",

@@ -1,7 +1,7 @@
 {
   "name": "clawql-harness",
   "version": "0.1.0",
-  "description": "ClawQL execution-loop harness — plugin registry, tool/WORM bridges, Ouroboros and OpenCode2 plugins",
+  "description": "ClawQL execution-loop harness \u2014 plugin registry, tool/WORM bridges, Ouroboros and OpenCode2 plugins",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -75,7 +75,7 @@
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.0"
   },
   "files": [
     "dist",
@@ -101,6 +101,5 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "version": "0.1.0"
+  }
 }

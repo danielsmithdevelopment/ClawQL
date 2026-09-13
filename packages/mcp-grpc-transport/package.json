@@ -1,7 +1,7 @@
 {
   "name": "mcp-grpc-transport",
   "version": "1.0.0",
-  "description": "Production TypeScript gRPC transport for Model Context Protocol (MCP) — MCP 2026-07-28 stateless core, Discover RPC, health probes, TLS/mTLS. Built on @modelcontextprotocol/sdk.",
+  "description": "Production TypeScript gRPC transport for Model Context Protocol (MCP) \u2014 MCP 2026-07-28 stateless core, Discover RPC, health probes, TLS/mTLS. Built on @modelcontextprotocol/sdk.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -45,14 +45,14 @@
     "@grpc/proto-loader": "^0.8.1",
     "@grpc/reflection": "^1.0.4",
     "effect": "^3.21.4",
-    "google-proto-files": "^6.0.0",
+    "google-proto-files": "^6.0.1",
     "protobufjs": "^8.7.2"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1",
+    "vitest": "^5.0.0",
     "zod": "^3.24.0"
   },
   "overrides": {

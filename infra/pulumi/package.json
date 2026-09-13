@@ -2,7 +2,7 @@
   "name": "clawql-provision",
   "version": "7.0.0",
   "private": true,
-  "description": "Pulumi programs for ClawQL hosted infra (edge / idp-k3s / eks / golden-host) — pairs with Argo CD GitOps and Packer AMIs",
+  "description": "Pulumi programs for ClawQL hosted infra (edge / idp-k3s / eks / golden-host) \u2014 pairs with Argo CD GitOps and Packer AMIs",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,16 +35,16 @@
     "destroy": "pulumi destroy"
   },
   "dependencies": {
-    "@pulumi/aws": "^7.43.0",
+    "@pulumi/aws": "^7.44.0",
     "@pulumi/cloudflare": "^6.19.0",
-    "@pulumi/gcp": "^9.35.1",
+    "@pulumi/gcp": "^9.36.1",
     "@pulumi/pulumi": "^3.259.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=22"
