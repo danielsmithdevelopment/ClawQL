@@ -9,7 +9,7 @@ import {
   resolveCloudflareClaimPresetDefinition,
   runResolveAgentLabPreset,
   runResolveCloudflareClaimPreset,
-} from "./mcp-ui-presets.js";
+} from "./presets.js";
 
 function tool(name: string): ListedMcpTool {
   return {

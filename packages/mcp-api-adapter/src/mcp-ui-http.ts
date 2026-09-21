@@ -43,7 +43,7 @@ import {
   pushProgressEvent,
   subscribeProgress,
 } from "./mcp-ui-progress.js";
-import { formHintsForTool } from "./mcp-ui-templates.js";
+import { runFormHintsForTool } from "./mcp-ui-templates/index.js";
 import {
   buildContextFlamegraph,
   DEMO_TRACE_SESSION_COMPRESSED,
@@ -762,7 +762,7 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         );
       return;
     }
-    const hints = formHintsForTool(tool);
+    const hints = runFormHintsForTool(tool);
     const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
     res.type("html").send(
       renderMcpUiCustomFormPage({

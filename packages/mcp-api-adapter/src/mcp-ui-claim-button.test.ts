@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runRenderClaimButtonFragment } from "./mcp-ui-claim-html.js";
 import { renderMcpUiCatalogPage } from "./mcp-ui-html.js";
-import { isClaimButtonTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { isClaimButtonTool, runResolveMcpUiTemplate } from "./mcp-ui-templates/index.js";
 
 describe("mcp-ui claim-button template", () => {
   it("matches cf_claim_coupon and claim_* coupon tools", () => {
@@ -29,7 +29,7 @@ describe("mcp-ui claim-button template", () => {
   });
 
   it("resolves claim-button customHtml", () => {
-    const t = resolveMcpUiTemplate({
+    const t = runResolveMcpUiTemplate({
       name: "cf_claim_coupon",
       description: "Claim coupon",
       inputSchema: {},
@@ -59,7 +59,7 @@ describe("mcp-ui claim-button template", () => {
       fetchedAt: new Date().toISOString(),
       upstream: "test",
     });
-    expect(page).toContain("Template · cf_claim_coupon");
+    expect(page).toContain("Pattern · cf_claim_coupon");
     expect(page).toContain("mcp-ui-claim");
     expect(page).toContain('hx-post="/mcp-ui/execute/cf_claim_coupon"');
     expect(page).toContain("Click to claim");

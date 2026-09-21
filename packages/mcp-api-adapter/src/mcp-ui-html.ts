@@ -7,7 +7,13 @@ import {
 } from "./mcp-ui-form.js";
 import type { GeneratedUiForm } from "./mcp-ui-generate.js";
 import { renderResultContent } from "./mcp-ui-results.js";
-import { formHintsForTool, resultKindForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { runRenderCatalogStarterStrip } from "./mcp-ui-examples/catalog-strip.js";
+import {
+  runFormHintsForTool,
+  runResolveMcpUiTemplate,
+  runResultKindForTool,
+  type McpUiTemplate,
+} from "./mcp-ui-templates/index.js";
 import { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
 import { runRenderClaimButtonFragment } from "./mcp-ui-claim-html.js";
 
@@ -37,7 +43,7 @@ const MCP_UI_STYLES = `
     line-height: 1.45;
   }
   .page {
-    max-width: 72rem;
+    max-width: 90rem;
     margin: 0 auto;
     padding: 1.5rem 1.25rem 3rem;
   }
@@ -76,6 +82,50 @@ const MCP_UI_STYLES = `
     font-size: 0.92rem;
   }
   .nav-links a:hover { text-decoration: underline; }
+  .starter-strip {
+    margin: 0 0 1.25rem;
+    display: grid;
+    gap: 0.65rem;
+  }
+  .starter-relevant {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 0.65rem;
+  }
+  .starter-card {
+    display: block;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    text-decoration: none;
+    color: inherit;
+  }
+  .starter-card:hover { border-color: var(--accent); }
+  .starter-card strong {
+    display: block;
+    color: var(--accent);
+    font-size: 0.88rem;
+  }
+  .starter-card span {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .starter-demos {
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .starter-demos summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .starter-demos ul {
+    margin: 0.45rem 0 0;
+    padding-left: 1.15rem;
+  }
   .tool-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
@@ -90,6 +140,10 @@ const MCP_UI_STYLES = `
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
+  }
+  .tool-card:has(.result-grid--meals),
+  .tool-card:has(.result-group) {
+    grid-column: 1 / -1;
   }
   .tool-card h2 {
     margin: 0;
@@ -378,6 +432,47 @@ const MCP_UI_STYLES = `
     color: var(--ink);
     overflow-wrap: anywhere;
   }
+  .result-card__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.06);
+  }
+  .result-card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: auto;
+  }
+  .result-card__action button {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .result-card__status { font-size: 0.78rem; color: var(--muted); }
+  .result-group { margin: 1rem 0 1.25rem; }
+  .result-group:first-of-type { margin-top: 0.5rem; }
+  .result-group__title { margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 650; letter-spacing: -0.02em; }
+  .result-grid--meals {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+  @media (max-width: 72rem) {
+    .result-grid--meals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 48rem) {
+    .result-grid--meals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 32rem) {
+    .result-grid--meals { grid-template-columns: minmax(0, 1fr); }
+  }
   .pill--method {
     background: rgba(61, 214, 198, 0.18);
     color: var(--accent, #3dd6c6);
@@ -443,19 +538,25 @@ const MCP_UI_STYLES = `
   }
 `;
 
+function templatePillLabel(template: McpUiTemplate): string {
+  const kindLabel =
+    template.kind === "core" ? "Starter" : template.kind === "pattern" ? "Pattern" : "Example";
+  return `${kindLabel} · ${template.id}`;
+}
+
 function renderToolCard(
   tool: ListedMcpTool,
   basePath: string,
   fieldErrors?: Record<string, string>
 ): string {
-  const template = resolveMcpUiTemplate(tool);
+  const template = runResolveMcpUiTemplate(tool);
   const title = tool.title?.trim() || tool.description?.trim() || tool.name;
   const description =
     tool.description && tool.description !== title
       ? `<p class="tool-desc">${escapeMcpUiHtml(tool.description)}</p>`
       : "";
   const templatePill = template
-    ? `<span class="template-pill">Template · ${escapeMcpUiHtml(template.id)}</span>`
+    ? `<span class="template-pill">${escapeMcpUiHtml(templatePillLabel(template))}</span>`
     : "";
 
   if (template?.customHtml === "smart-upload") {
@@ -478,7 +579,7 @@ function renderToolCard(
 </article>`;
   }
 
-  const hints = formHintsForTool(tool, fieldErrors);
+  const hints = runFormHintsForTool(tool, fieldErrors);
   const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
   const multipartAttrs = hasFileFields
     ? ` enctype="multipart/form-data" hx-encoding="multipart/form-data"`
@@ -546,11 +647,8 @@ export function renderMcpUiCatalogPage(options: {
       <a href="/docs">OpenAPI /docs</a>
       <a href="/graphiql">GraphiQL</a>
       <a href="/tools">Tool catalog JSON</a>
-      <a href="${escapeMcpUiHtml(basePath)}/trace/compare">Context flamegraph (compare)</a>
-      · <a href="${escapeMcpUiHtml(basePath)}/trace/compare/executor">Executor vs ClawQL</a>
-      <a href="${escapeMcpUiHtml(basePath)}/presets/agent-lab">Agent Lab (generated)</a>
-      <a href="${escapeMcpUiHtml(basePath)}/presets/cloudflare-claim">Click-to-claim (WebMCP)</a>
     </nav>
+    ${runRenderCatalogStarterStrip(options.tools, basePath)}
     <main class="tool-grid">${cards}</main>
   </div>
   <script>${MCP_UI_ARRAY_SCRIPT}</script>
@@ -563,7 +661,7 @@ export function renderMcpUiSuccessResult(options: {
   executionMs: number;
   body: unknown;
 }): string {
-  const content = renderResultContent(resultKindForTool(options.toolName), options.body);
+  const content = renderResultContent(runResultKindForTool(options.toolName), options.body);
   return `<div class="result result--success">
   <header class="result__header">
     <span class="result__tool">${escapeMcpUiHtml(options.toolName)}</span>
@@ -695,7 +793,7 @@ export function renderMcpUiCustomFormPage(options: {
 <pre>${escapeMcpUiHtml(JSON.stringify(form.stepOutputs, null, 2))}</pre></div>`;
   } else {
     const stepPost = `${basePath}/custom/${form.slug}/step`;
-    const template = resolveMcpUiTemplate(options.tool);
+    const template = runResolveMcpUiTemplate(options.tool);
     if (template?.customHtml === "claim-button") {
       body = `<article class="tool-card">
   <h2>${escapeMcpUiHtml(options.tool.title?.trim() || options.tool.name)}</h2>
