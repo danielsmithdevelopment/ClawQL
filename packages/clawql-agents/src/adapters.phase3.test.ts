@@ -113,15 +113,18 @@ describe("OpenHands budget enforcer", () => {
 });
 
 describe("getAdapterBundle resolves AgentAdapter.name (goose / openhands)", () => {
-  it.each(["goose", "openhands"] as const)("resolves %s with matching adapter name", async (agent) => {
-    const { wormLayer, adapterLayer } = await Effect.runPromise(
-      getAdapterBundle(agent, `/tmp/${agent}.db`)
-    );
-    const name = await Effect.runPromise(
-      Effect.gen(function* () {
-        return (yield* AgentAdapter).name;
-      }).pipe(Effect.provide(Layer.merge(wormLayer, adapterLayer)))
-    );
-    expect(name).toBe(agent);
-  });
+  it.each(["goose", "openhands"] as const)(
+    "resolves %s with matching adapter name",
+    async (agent) => {
+      const { wormLayer, adapterLayer } = await Effect.runPromise(
+        getAdapterBundle(agent, `/tmp/${agent}.db`)
+      );
+      const name = await Effect.runPromise(
+        Effect.gen(function* () {
+          return (yield* AgentAdapter).name;
+        }).pipe(Effect.provide(Layer.merge(wormLayer, adapterLayer)))
+      );
+      expect(name).toBe(agent);
+    }
+  );
 });

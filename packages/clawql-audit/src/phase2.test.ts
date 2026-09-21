@@ -139,7 +139,7 @@ describe("Audit HTTP ApiKey routes (handleAuditHttpRequest)", () => {
         headers: { authorization: "ApiKey live-key" },
       });
       expect(res.status).toBe(200);
-      expect((await res.json() as { valid: boolean }).valid).toBe(true);
+      expect(((await res.json()) as { valid: boolean }).valid).toBe(true);
     } finally {
       await worm.stop();
     }

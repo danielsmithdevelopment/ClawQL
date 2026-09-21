@@ -2,10 +2,7 @@ import * as clawqlApi from "clawql-api";
 import type { Operation } from "clawql-api";
 import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  configureDocumentsPluginDeps,
-  resetDocumentsPluginDepsForTests,
-} from "../plugin/deps.js";
+import { configureDocumentsPluginDeps, resetDocumentsPluginDepsForTests } from "../plugin/deps.js";
 import { ONYX_SEND_SEARCH_OPERATION_ID } from "../plugin/knowledge-search-onyx.js";
 import { executeKnowledgeSearchOnyxEffect } from "./knowledge-search-onyx-effect.js";
 
