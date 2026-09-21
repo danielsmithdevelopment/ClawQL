@@ -4,10 +4,7 @@ import {
   createRegisteredMcpServer,
   createRegisteredMcpServerAsync,
 } from "./mcp/mcp-server-factory.js";
-import {
-  ensureClawqlApi,
-  resetClawqlApiForTests,
-} from "./composition/clawql-api-adapters.js";
+import { ensureClawqlApi, resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
 
 describe("createRegisteredMcpServer", () => {
   it("registers every non-negotiable MCP tool (cache + audit cannot be skipped)", () => {
@@ -41,7 +38,12 @@ describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
     resetClawqlApiForTests();
     const rebuilt = await ensureClawqlApi();
     expect(rebuilt).not.toBe(first);
-    expect(rebuilt.listMcpTools().map((t) => t.name).sort()).toEqual([...names].sort());
+    expect(
+      rebuilt
+        .listMcpTools()
+        .map((t) => t.name)
+        .sort()
+    ).toEqual([...names].sort());
   });
 
   it("createRegisteredMcpServerAsync boots ensureClawqlApi then registers tools", async () => {
