@@ -46,12 +46,20 @@ describe("sandbox-capabilities", () => {
     expect(bridgeCredentialsConfigured()).toBe(true);
   });
 
-  it("seatbeltBinaryPresent is false off darwin", () => {
+  it("seatbeltBinaryPresent is false off darwin and matches sandbox-exec on darwin", async () => {
     if (process.platform !== "darwin") {
       expect(seatbeltBinaryPresent()).toBe(false);
-    } else {
-      expect(typeof seatbeltBinaryPresent()).toBe("boolean");
+      return;
     }
+    const { accessSync, constants } = await import("node:fs");
+    let expected = false;
+    try {
+      accessSync("/usr/bin/sandbox-exec", constants.X_OK);
+      expected = true;
+    } catch {
+      expected = false;
+    }
+    expect(seatbeltBinaryPresent()).toBe(expected);
   });
 
   it("dockerCliReachable caches probe result", async () => {

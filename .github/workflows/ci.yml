@@ -679,6 +679,56 @@ jobs:
       - name: Run Ouroboros Postgres integration tests
         run: npx vitest run packages/clawql-ouroboros/src/glue/postgres-event-store.integration.test.ts
 
+  inference-postgres-optional:
+    name: Inference Postgres integration (optional)
+    needs:
+      [
+        lint,
+        workflow-scripts,
+        website-docker-smoke,
+        panguard-bridge-docker-smoke,
+        dashboard-docker-smoke,
+        distribution-npm-pack-smoke,
+        mcp-docker-workspace-smoke,
+        website-playwright-smoke,
+        supply-chain,
+        secret-scan,
+      ]
+    if: vars.CLAWQL_ENABLE_INFERENCE_POSTGRES_CI == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: clawql
+          POSTGRES_PASSWORD: clawql
+          POSTGRES_DB: clawql_inference
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U clawql -d clawql_inference"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CLAWQL_INFERENCE_DATABASE_URL: postgres://clawql:clawql@127.0.0.1:5432/clawql_inference
+    steps:
+      # actions/checkout@v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      # actions/setup-node@v6.3.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "25"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Inference Postgres integration tests
+        run: npx vitest run packages/clawql-inference/src/store/postgres.integration.test.ts
+
   argo-workflows-integration-optional:
     name: Argo Workflows integration (optional)
     needs:

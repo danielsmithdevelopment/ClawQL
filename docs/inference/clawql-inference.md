@@ -480,7 +480,7 @@ clawql inference <subcommand>
 | `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                             | Fallback chains                         |
 | `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                             | Require virtual keys                    |
 | `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME`        | `memory` / `jsonl` / `postgres` / `off` |
-| `CLAWQL_INFERENCE_DATABASE_URL`               | —                               | Postgres URL                            |
+| `CLAWQL_INFERENCE_DATABASE_URL`               | —                               | Postgres URL. Integration test: `packages/clawql-inference/src/store/postgres.integration.test.ts` (skips unless set). Optional CI: repo var `CLAWQL_ENABLE_INFERENCE_POSTGRES_CI=1`. |
 | `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                             | Cron worker with serve                  |
 | `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                             | Agent coordination                      |
 | `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                             | Plan entitlement gate                   |

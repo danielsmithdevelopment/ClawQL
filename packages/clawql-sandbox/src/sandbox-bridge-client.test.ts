@@ -88,9 +88,18 @@ describe("sandbox-bridge-client", () => {
       success: boolean;
       error?: string;
       backend?: string;
+      exitCode?: number;
     };
     expect(parsed.backend).toBe("macos-seatbelt");
-    if (process.platform !== "darwin") {
+    if (process.platform === "darwin") {
+      expect(parsed).toEqual(
+        expect.objectContaining({
+          backend: "macos-seatbelt",
+          success: expect.any(Boolean),
+          exitCode: expect.any(Number),
+        })
+      );
+    } else {
       expect(parsed.success).toBe(false);
       expect(parsed.error).toMatch(/macOS/);
     }
