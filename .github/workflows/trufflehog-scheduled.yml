@@ -24,7 +24,7 @@ jobs:
 
       # trufflesecurity/trufflehog@v3.97.4 (tag → commit pin for supply chain)
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@363923b901c911a9164f50b6c423f47c15372b1c
+        uses: trufflesecurity/trufflehog@f714bf454f350590f4a24c3ddb1aef02c35bf5b6
         with:
           path: ./
           extra_args: --exclude-paths=.github/trufflehog-exclude-paths.txt --only-verified
