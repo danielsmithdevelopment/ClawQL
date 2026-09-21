@@ -45,7 +45,8 @@ describe("MemoryVaultSeedLive", () => {
     }
     await access(target);
     const text = await readFile(target, "utf8");
-    expect(text).toContain("Session handoff");
+    expect(text).toContain("Handoff skill pack");
+    expect(text).toMatch(/session-handoff/);
     expect(text).toMatch(/clawql-plugin:handoff/);
   });
 });
