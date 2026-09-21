@@ -6,7 +6,8 @@ import {
   parseFormArgs,
   renderToolFormFields,
 } from "./mcp-ui-form.js";
-import { formHintsForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { runFormHintsForTool, runListMcpUiTemplates, runResolveMcpUiTemplate } from "./mcp-ui-templates/index.js";
+import { renderMcpUiCatalogPage } from "./mcp-ui-html.js";
 import { renderResultContent } from "./mcp-ui-results.js";
 
 describe("mcp-ui-form", () => {
@@ -69,7 +70,7 @@ describe("mcp-ui-form", () => {
       },
     };
 
-    const { html } = renderToolFormFields(tool, formHintsForTool(tool));
+    const { html } = renderToolFormFields(tool, runFormHintsForTool(tool));
     expect(html).toContain('name="query"');
     expect(html).toContain('name="limit"');
     expect(html).toContain("value=\"10\"");
@@ -237,12 +238,21 @@ describe("mcp-ui-form", () => {
 
 describe("mcp-ui-templates", () => {
   it("resolves templates for common ClawQL tools", () => {
-    expect(resolveMcpUiTemplate({ name: "search", inputSchema: {} })?.id).toBe("search");
-    expect(resolveMcpUiTemplate({ name: "cache", inputSchema: {} })?.resultKind).toBe("cache");
-    expect(resolveMcpUiTemplate({ name: "upload_photo", inputSchema: {} })?.customHtml).toBe(
+    expect(runResolveMcpUiTemplate({ name: "search", inputSchema: {} })?.id).toBe("search");
+    expect(runResolveMcpUiTemplate({ name: "cache", inputSchema: {} })?.resultKind).toBe("cache");
+    expect(runResolveMcpUiTemplate({ name: "upload_photo", inputSchema: {} })?.customHtml).toBe(
       "smart-upload"
     );
-    expect(resolveMcpUiTemplate({ name: "unknown_tool", inputSchema: {} })).toBeUndefined();
+    expect(runResolveMcpUiTemplate({ name: "unknown_tool", inputSchema: {} })).toBeUndefined();
+  });
+
+  it("separates core starters from one-off examples", () => {
+    const coreIds = runListMcpUiTemplates({ kind: "core" }).map((t) => t.id);
+    const exampleIds = runListMcpUiTemplates({ kind: "example" }).map((t) => t.id);
+    expect(coreIds).toContain("search");
+    expect(coreIds).toContain("memory_recall");
+    expect(coreIds).not.toContain("list_ranked_meals");
+    expect(exampleIds).toEqual(["list_ranked_meals"]);
   });
 });
 
@@ -290,6 +300,58 @@ describe("mcp-ui-results", () => {
     expect(html).toContain("/mcp-ui — Swagger UI for MCP");
     expect(html).toContain("Three-act demo");
     expect(html).toContain("guide");
+  });
+
+  it("renders CookUnity mcpUi cards with add-to-cart actions", () => {
+    const html = renderResultContent("json", {
+      mcpUi: "cards",
+      summary: "2 meals in 1 protein groups",
+      groups: [
+        {
+          title: "Chicken",
+          items: [
+            {
+              title: "Herb Chicken",
+              subtitle: "Chef Ada",
+              href: "https://www.cookunity.com/meals/sku-1",
+              linkLabel: "View on CookUnity",
+              image: "https://cu-media.imgix.net/x.jpg",
+              pills: ["4.50 stars", "8.0 g / 100 kcal"],
+              body: "High-protein chicken.",
+              actions: [
+                {
+                  label: "Add to CookUnity cart",
+                  tool: "add_to_cart",
+                  fields: { date: "2026-09-16", inventory_id: "inv-1", quantity: "1" },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(html).toContain("result-grid--meals");
+    expect(html).toContain("Herb Chicken");
+    expect(html).toContain("Chicken");
+    expect(html).toContain("Add to CookUnity cart");
+    expect(html).toContain("/mcp-ui/execute/add_to_cart");
+    expect(html).toContain('name="inventory_id"');
+    expect(html).not.toContain("javascript:");
+  });
+
+  it("defaults meal results to a 4-column grid spanning the catalog", () => {
+    const page = renderMcpUiCatalogPage({
+      title: "CookUnity",
+      tools: [{ name: "list_ranked_meals", inputSchema: {} }],
+      fetchedAt: "2026-09-15T00:00:00.000Z",
+      upstream: "stdio",
+    });
+    expect(page).toContain(".tool-card:has(.result-grid--meals)");
+    expect(page).toContain("grid-column: 1 / -1");
+    expect(page).toContain("repeat(4, minmax(0, 1fr))");
+    expect(page).toContain("Example · list_ranked_meals");
+    expect(page).not.toContain("Agent Lab (generated)");
+    expect(page).toContain("Adapter demos");
   });
 
   it("renders memory recall hits", () => {

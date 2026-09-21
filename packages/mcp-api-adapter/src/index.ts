@@ -15,7 +15,27 @@ export { buildGraphqlSchemaFromCatalog, toolArgsFromInputSchema } from "./graphq
 export { attachGraphqlRoutes } from "./graphql-http.js";
 export { attachMcpHttpRoutes } from "./mcp-http.js";
 export { attachMcpUiRoutes, DEFAULT_MCP_UI_PATH } from "./mcp-ui-http.js";
-export { formHintsForTool, isClaimButtonTool, isSmartUploadTool, listMcpUiTemplates, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+export {
+  CORE_TEMPLATES,
+  EXAMPLE_TEMPLATES,
+  PATTERN_TEMPLATES,
+  formHintsForTool,
+  isClaimButtonTool,
+  isSmartUploadTool,
+  listMcpUiTemplates,
+  resolveMcpUiTemplate,
+  resultKindForTool,
+  runFormHintsForTool,
+  runListMcpUiTemplates,
+  runResolveMcpUiTemplate,
+  runResultKindForTool,
+} from "./mcp-ui-templates/index.js";
+export type {
+  McpUiCustomHtml,
+  McpUiResultKind,
+  McpUiTemplate,
+  McpUiTemplateKind,
+} from "./mcp-ui-templates/index.js";
 export { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
 export {
   attachWebSocketSurface,

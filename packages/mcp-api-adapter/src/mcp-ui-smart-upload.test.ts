@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderMcpUiCatalogPage } from "./mcp-ui-html.js";
 import { renderSmartUploadFragment } from "./mcp-ui-smart-upload-html.js";
-import { isSmartUploadTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { isSmartUploadTool, runResolveMcpUiTemplate } from "./mcp-ui-templates/index.js";
 
 describe("mcp-ui smart-upload template", () => {
   it("matches upload_photo and upload-image style tools", () => {
@@ -18,7 +18,7 @@ describe("mcp-ui smart-upload template", () => {
   });
 
   it("resolves smart-upload template with customHtml", () => {
-    const t = resolveMcpUiTemplate({ name: "upload_photo", inputSchema: {} });
+    const t = runResolveMcpUiTemplate({ name: "upload_photo", inputSchema: {} });
     expect(t?.id).toBe("upload_photo");
     expect(t?.customHtml).toBe("smart-upload");
   });
@@ -50,7 +50,7 @@ describe("mcp-ui smart-upload template", () => {
       fetchedAt: new Date().toISOString(),
       upstream: "test",
     });
-    expect(page).toContain("Template · upload_photo");
+    expect(page).toContain("Pattern · upload_photo");
     expect(page).toContain("mcp-ui-smart-upload");
     expect(page).toContain('hx-post="/mcp-ui/execute/upload_photo"');
   });
