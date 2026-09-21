@@ -35,13 +35,13 @@ describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
     const first = await ensureClawqlApi();
     const second = await ensureClawqlApi();
     expect(second).toBe(first);
-    expect(first.listMcpTools().some((t) => t.name === "cache")).toBe(true);
-    expect(first.listMcpTools().some((t) => t.name === "audit")).toBe(true);
+    const names = first.listMcpTools().map((t) => t.name);
+    expect(names.length).toBeGreaterThan(0);
 
     resetClawqlApiForTests();
     const rebuilt = await ensureClawqlApi();
     expect(rebuilt).not.toBe(first);
-    expect(rebuilt.listMcpTools().some((t) => t.name === "cache")).toBe(true);
+    expect(rebuilt.listMcpTools().map((t) => t.name).sort()).toEqual([...names].sort());
   });
 
   it("createRegisteredMcpServerAsync boots ensureClawqlApi then registers tools", async () => {

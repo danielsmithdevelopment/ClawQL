@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import {
   MemoryBackend,
   WORMAuditTrail,
@@ -149,14 +149,19 @@ describe("Audit HTTP ApiKey routes (handleAuditHttpRequest)", () => {
     const prev = process.env.CLAWQL_AUDIT_API_KEY;
     delete process.env.CLAWQL_AUDIT_API_KEY;
     try {
-      await expect(
-        WORMAuditTrail.create({
+      const exit = await Effect.runPromiseExit(
+        createWORMAuditTrailEffect({
           local: new MemoryBackend(),
           remote: new MemoryBackend(),
           ...trailDefaults,
           httpPort: 19_111,
         })
-      ).rejects.toThrow(/apiKey|unauthenticated/i);
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) {
+        const squashed = Cause.squash(exit.cause) as { reason?: string };
+        expect(squashed.reason).toMatch(/apiKey|unauthenticated/i);
+      }
     } finally {
       if (prev === undefined) delete process.env.CLAWQL_AUDIT_API_KEY;
       else process.env.CLAWQL_AUDIT_API_KEY = prev;

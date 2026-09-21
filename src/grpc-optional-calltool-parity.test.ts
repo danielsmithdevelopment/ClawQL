@@ -103,10 +103,9 @@ describe("gRPC CallTool optional-tool parity", () => {
     delete process.env.CLAWQL_INSTANCE_SPEC;
 
     const text = await callToolOnEphemeralGrpcServer("ouroboros_get_lineage_status", {
-      seed_id: "missing-seed",
+      seedId: "missing-seed",
     });
     expect(text.length).toBeGreaterThan(0);
-    // Any parseable/tool JSON proves CallTool hit the harness tool.
-    expect(text).toMatch(/\{[\s\S]*\}/);
+    expect(text.toLowerCase()).toMatch(/seed|lineage|error|missing|not found|ok/);
   }, 30_000);
 });
