@@ -185,8 +185,8 @@ export function buildExecutorCmpComparePageOpts(
 
 export function executorCmpJsonEnvelope(
   focus: "input" | "all",
-  clawql: import("./mcp-ui-trace.js").ContextFlamegraph,
-  executor: import("./mcp-ui-trace.js").ContextFlamegraph
+  clawql: import("../mcp-ui-trace.js").ContextFlamegraph,
+  executor: import("../mcp-ui-trace.js").ContextFlamegraph
 ) {
   const m = EXECUTOR_CMP_MEASUREMENTS;
   const stats = executorCmpDerivedStats();
