@@ -43,6 +43,40 @@ describe("executeKnowledgeSearchOnyxEffect", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
+  it("delegates to execute with search_query args", async () => {
+    vi.spyOn(clawqlApi, "loadSpec").mockResolvedValue({
+      operations: [{ id: `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}` } as Operation],
+      openapi: {
+        openapi: "3.0.0",
+        info: { title: "x", version: "1" },
+        paths: {},
+        components: { schemas: {} },
+      },
+      rawSource: {},
+    });
+
+    const execute = vi.fn().mockResolvedValue({
+      content: [{ type: "text", text: JSON.stringify({ hits: [] }) }],
+    });
+    configureDocumentsPluginDeps({ execute });
+
+    const out = await Effect.runPromise(
+      executeKnowledgeSearchOnyxEffect({ query: "pricing policy", num_hits: 5 })
+    );
+    expect(execute).toHaveBeenCalledWith({
+      operationId: `onyx::${ONYX_SEND_SEARCH_OPERATION_ID}`,
+      args: {
+        search_query: "pricing policy",
+        num_hits: 5,
+        include_content: true,
+        stream: false,
+        run_query_expansion: false,
+      },
+      fields: undefined,
+    });
+    expect(JSON.parse(out.content[0]!.text)).toEqual({ hits: [] });
+  });
+
   it("returns JSON error when Onyx operation is missing from the index", async () => {
     vi.spyOn(clawqlApi, "loadSpec").mockResolvedValue({
       operations: [{ id: "pets.list" } as Operation],

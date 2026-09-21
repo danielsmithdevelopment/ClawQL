@@ -144,6 +144,24 @@ describe("Audit HTTP ApiKey routes (handleAuditHttpRequest)", () => {
       await worm.stop();
     }
   });
+
+  it("fails create when httpPort is set without apiKey", async () => {
+    const prev = process.env.CLAWQL_AUDIT_API_KEY;
+    delete process.env.CLAWQL_AUDIT_API_KEY;
+    try {
+      await expect(
+        WORMAuditTrail.create({
+          local: new MemoryBackend(),
+          remote: new MemoryBackend(),
+          ...trailDefaults,
+          httpPort: 19_111,
+        })
+      ).rejects.toThrow(/apiKey|unauthenticated/i);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_AUDIT_API_KEY;
+      else process.env.CLAWQL_AUDIT_API_KEY = prev;
+    }
+  });
 });
 
 describe("QR export (exportToQR + HTTP /export/qr)", () => {

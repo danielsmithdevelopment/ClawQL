@@ -48,7 +48,18 @@ export default defineConfig({
       "packages/clawql-release/src/**/*.test.ts",
       "packages/clawql-pageindex/src/**/*.test.ts",
       "packages/panguard-mcp-bridge/src/**/*.test.ts",
+      "packages/clawql-harness/src/**/*.test.ts",
+      "packages/clawql-web/src/**/*.test.ts",
+      "packages/clawql-tee/src/**/*.test.ts",
+      "packages/mcp-api-adapter/src/**/*.test.ts",
+      "packages/clawql-k8s-operator/src/**/*.test.ts",
       "scripts/kubernetes/**/*.test.ts",
+    ],
+    exclude: [
+      "**/node_modules/**",
+      "**/*.e2e.test.ts",
+      "**/*.live.test.ts",
+      "packages/mcp-api-adapter/node_modules/**",
     ],
     /** Avoid worker RPC teardown races when HTTP servers + fetch leave sockets pending. */
     teardownTimeout: 30_000,

@@ -5,6 +5,7 @@ import {
   natsConsumerIdpPipelineEnabled,
   natsConsumerResumeWorkflowEnabled,
   natsDocumentConsumerConfigured,
+  natsHitlConsumerConfigured,
   natsIdpPipelineConsumerDurable,
 } from "./env.js";
 
@@ -26,8 +27,10 @@ describe("nats env", () => {
     vi.stubEnv("CLAWQL_NATS_JETSTREAM", "1");
     vi.stubEnv("CLAWQL_NATS_ENABLE_CONSUMER", "1");
     expect(natsConfiguredForConsumer()).toBe(false);
+    expect(natsHitlConsumerConfigured()).toBe(false);
     vi.stubEnv("CLAWQL_NATS_CONSUMER_RESUME_WORKFLOW", "1");
     expect(natsConfiguredForConsumer()).toBe(true);
+    expect(natsHitlConsumerConfigured()).toBe(true);
     expect(natsConsumerResumeWorkflowEnabled()).toBe(true);
   });
 
