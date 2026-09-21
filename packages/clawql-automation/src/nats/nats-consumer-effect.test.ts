@@ -8,9 +8,8 @@ describe("natsHitlConsumerScopedEffect", () => {
     resetNatsClientForTests();
     delete process.env.CLAWQL_NATS_URL;
     delete process.env.CLAWQL_NATS_JETSTREAM;
-    await Effect.runPromise(
-      Effect.scoped(natsHitlConsumerScopedEffect(async () => ({ ok: true })))
-    );
-    expect(true).toBe(true);
+    await expect(
+      Effect.runPromise(Effect.scoped(natsHitlConsumerScopedEffect(async () => ({ ok: true }))))
+    ).resolves.toBeUndefined();
   });
 });

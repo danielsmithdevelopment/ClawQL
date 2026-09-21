@@ -84,10 +84,13 @@ describe("sandbox-bridge-client", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     const out = await handleClawqlCodeToolInput({ code: "print(1)", language: "python" });
     expect(fetchMock).not.toHaveBeenCalled();
-    const parsed = JSON.parse(out.content[0].text) as { success: boolean; error?: string };
-    if (process.platform === "darwin") {
-      expect(parsed.success === true || parsed.success === false).toBe(true);
-    } else {
+    const parsed = JSON.parse(out.content[0].text) as {
+      success: boolean;
+      error?: string;
+      backend?: string;
+    };
+    expect(parsed.backend).toBe("macos-seatbelt");
+    if (process.platform !== "darwin") {
       expect(parsed.success).toBe(false);
       expect(parsed.error).toMatch(/macOS/);
     }
