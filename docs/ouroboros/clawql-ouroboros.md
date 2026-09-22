@@ -45,11 +45,11 @@ npm install clawql-ouroboros
 
 ## Package entrypoints
 
-| Import path                  | Purpose                                                                                                  |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `clawql-ouroboros`           | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, interfaces         |
+| Import path                  | Purpose                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `clawql-ouroboros`           | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, interfaces                                                                   |
 | `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — Zod schemas + handlers for **embedding** in your own MCP host (not the `clawql-mcp` registration path; production MCP uses `clawql-harness`) |
-| `clawql-ouroboros/poller`    | `startSeedsPoller` — interval worker; you supply `fetchPending` / `markFailed` (e.g. Drizzle + Postgres) |
+| `clawql-ouroboros/poller`    | `startSeedsPoller` — interval worker; you supply `fetchPending` / `markFailed` (e.g. Drizzle + Postgres)                                                           |
 
 ---
 

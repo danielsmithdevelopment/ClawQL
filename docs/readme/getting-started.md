@@ -85,6 +85,7 @@ CLAWQL_BUNDLED_PROVIDERS=google,aws npx -p clawql-mcp clawql-mcp
 ```
 
 (`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` are deprecated for stack selection in 8.0.)
+
 ### Local OpenAPI file
 
 ```bash
