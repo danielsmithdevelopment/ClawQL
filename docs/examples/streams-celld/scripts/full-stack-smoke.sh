@@ -206,8 +206,25 @@ celld dev "$SMOKE_CFG" --port "$PORT" &
 CELLD_PID=$!
 
 wait_http "$BASE/health" "celld" "$CELLD_PID" 80
-# Settle after first build so a watcher rebuild does not fence the webhook.
-sleep 1
+# After first ready, celld's watcher often does one rebuild/restart. Wait until
+# /health stays OK across several polls so webhook MCP writes are not NodeFenced.
+stable=0
+deadline=$((SECONDS + 45))
+while ((SECONDS < deadline)); do
+  if curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton; then
+    stable=$((stable + 1))
+    if ((stable >= 8)); then
+      break
+    fi
+  else
+    stable=0
+  fi
+  sleep 0.5
+done
+if ((stable < 8)); then
+  echo "full-stack-smoke: FAIL — celld /health never stayed ready after startup rebuild" >&2
+  exit 1
+fi
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
 EVENT_ID="full-stack-$(date +%s)-$$"
