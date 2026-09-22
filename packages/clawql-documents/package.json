@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@firecrawl/anydoc": "^0.1.2",
-    "@firecrawl/pdf-inspector": "1.12.0",
+    "@firecrawl/pdf-inspector": "1.19.0",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-memory": "0.1.0",
