@@ -4,14 +4,14 @@ export const site = {
   description:
     'ClawQL is agentic infrastructure for production work in regulated industries. Autonomous event-driven agents, structured institutional knowledge recall, hardware-verified trusted execution, and a WORM audit trail on every action. Apache 2.0.',
   earlyAccess: {
-    badge: '14-day free trial — no credit card required',
+    badge: 'Early access waitlist — self-host free today',
     summary:
-      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and TEE-ready audit. Self-host free on Apache 2.0, or start a 14-day Developer trial.',
+      'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric, Streams, structured memory, and TEE-ready audit. Self-host free on Apache 2.0, or request early access for managed hosting.',
     pricingNote:
-      'Self-host free forever on Apache 2.0, or start a 14-day Developer trial. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
+      'Self-host free forever on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier — same URL when you upgrade. Gateway tiers include vault memory; Teams adds Onyx; IDP tiers (Starter $299+) activate document processing on a dedicated tenant.',
   },
   waitlistPromise:
-    'Start your 14-day trial or self-host free with npm or Helm — full Apache 2.0 stack, no license fee.',
+    'Request early access or self-host free with npx or Helm — full Apache 2.0 stack, no license fee.',
   urls: {
     home: '/',
     docs: 'https://docs.clawql.com',
@@ -44,8 +44,11 @@ export const site = {
     privacy: '/privacy-policy',
     contact: 'mailto:hello@clawql.com',
   },
-  installCommand: 'npm install -g clawql-mcp',
+  installCommand: 'npx clawql-mcp',
+  /** Example providers — catalog is empty by default; opt in via CLAWQL_PROVIDER / providers.pack / CLAWQL_TIER. */
   providers: ['Cloudflare', 'GitHub', 'Slack', 'Linear', 'Notion', 'Onyx'],
+  providersNote:
+    'Provider catalog is empty by default in 8.0 — opt in with CLAWQL_PROVIDER=default, Helm providers.pack, or CLAWQL_TIER.',
 } as const
 
 /** Edge gateway origin — override with NEXT_PUBLIC_CLAWQL_GATEWAY_URL at build time. */

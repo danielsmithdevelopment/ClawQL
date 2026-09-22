@@ -17,12 +17,12 @@ export type PricingPlanName = (typeof pricingPlanNames)[number]
 export const unlimitedExecutionsTagline =
   'Unlimited MCP executions on every hosted tier — no caps, no overage, no meter.'
 
-/** Hosted entry point — full Developer tier evaluation, no perpetual free hosted plan. */
+/** Hosted entry point — waitlist / early access (FormSubmit), not an instant self-serve trial. */
 export const hostedFreeTrial = {
   durationDays: 14,
-  headline: '14-day free trial',
+  headline: 'Request early access',
   subheadline:
-    'Full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required.',
+    'Join the managed hosting waitlist for Developer-tier evaluation — persistent vault memory, unlimited executions, global edge endpoint. Self-host free today while slots open.',
   noCreditCard: true,
 } as const
 
@@ -46,7 +46,7 @@ export const pluginBundles = {
   gateway: {
     name: 'MCP Gateway',
     description:
-      'search, execute, audit, cache — always-on Core. Global edge hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
+      'search, execute, audit, cache, skills_list, skills_get — always-on Core. Global edge hosting on gateway tiers. Unlimited integrations and executions. Vault-backed memory with no per-recall egress penalties.',
     tiers: ['Developer', 'Teams'] as const,
   },
   memory: {
@@ -85,9 +85,9 @@ export const pricing = {
     price: '$0',
     period: '',
     subheadline:
-      'The full Apache 2.0 stack runs on your hardware — Helm chart, GHCR images, no license fee, no feature restrictions. Enable only the plugins you need via CLAWQL_ENABLE_* flags.',
+      'The full Apache 2.0 stack runs on your hardware — Helm chart, GHCR images, no license fee, no feature restrictions. Compose plugins via CLAWQL_INSTANCE_SPEC / CLAWQL_TIER (and CLAWQL_ENABLE_* when the instance allows). Provider catalog is empty by default.',
     features: [
-      'search, execute, audit, cache (Core — always on)',
+      'search, execute, audit, cache, skills_* (Core — always on)',
       'memory_ingest & memory_recall (default on)',
       'Full IDP pipeline when you opt in (8 vendors)',
       'Apache 2.0 — you pay infra costs only',
@@ -100,12 +100,12 @@ export const pricing = {
     monthlyPrice: '$29',
     annualPricePerMonth: '$24',
     period: '/mo',
-    badge: 'Gateway + memory · 14-day trial',
+    badge: 'Gateway + memory · early access',
     pluginBundle: 'gateway' as const,
     valueAnchor:
       'Unlimited executions + vault memory + twelve efficiency layers — executor.sh caps usage and charges overage.',
     subheadline:
-      'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Start with a 14-day free trial, no credit card needed.',
+      'MCP gateway + agent memory vault for developers connecting Claude Code, Cursor, or Codex to your APIs. Request early access for managed hosting, or self-host free today.',
     features: [
       'Unlimited MCP executions',
       gatewayEdgeHostingFeature,

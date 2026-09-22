@@ -27,7 +27,7 @@ export default function DemoPage() {
         }
         cta={
           <ButtonLink href={site.urls.signup} size="lg">
-            Start your free trial
+            Request access
           </ButtonLink>
         }
       />

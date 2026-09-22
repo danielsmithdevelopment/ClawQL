@@ -70,15 +70,15 @@ export function ProtocolFabricLanding() {
             <p className="fabric-hero__headline">Any protocol in. Any protocol out. MCP in the middle.</p>
             <p className="fabric-hero__lede">
               Core turns APIs into MCP tools. mcp-api-adapter turns MCP back into OpenAPI, GraphQL, gRPC, CLI,
-              WebSocket, QR, or <code className="font-mono text-[0.9em]">/mcp-ui</code>. One common IR — both
-              directions.
+              WebSocket, or <code className="font-mono text-[0.9em]">/mcp-ui</code> — seven surfaces shipped; QR is
+              planned. One common IR — both directions.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={FABRIC_DOCS} size="lg" color="light">
                 Read the Fabric docs
               </ButtonLink>
               <PlainButtonLink href={site.urls.signup} size="lg" color="light">
-                Start free trial <ArrowNarrowRightIcon />
+                Request access <ArrowNarrowRightIcon />
               </PlainButtonLink>
             </div>
           </div>
@@ -205,14 +205,14 @@ export function ProtocolFabricLanding() {
         headline="Put MCP between your protocols"
         subheadline={
           <p>
-            Self-host free on Apache 2.0, or start a 14-day Developer trial. One MCP endpoint on every tier — same URL
-            when you upgrade.
+            Self-host free on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier —
+            same URL when you upgrade.
           </p>
         }
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={FABRIC_DOCS} size="lg">
               Read the Fabric docs <ArrowNarrowRightIcon />

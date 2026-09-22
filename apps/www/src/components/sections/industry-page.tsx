@@ -370,7 +370,9 @@ export function IndustryPage({ industry }: { industry: Industry }) {
               <>
                 Planned or shipping MCP tools from{' '}
                 <Link href="https://docs.clawql.com/vision/modularization">modularization v2.1</Link> — registered when
-                the vertical package is enabled via <code className="text-sm">CLAWQL_ENABLE_*</code> or Operator flags.
+                the vertical package is enabled via <code className="text-sm">CLAWQL_INSTANCE_SPEC</code> /{' '}
+                <code className="text-sm">CLAWQL_TIER</code> composition (with <code className="text-sm">CLAWQL_ENABLE_*</code>{' '}
+                or Operator flags where the instance allows).
               </>
             )}
           </p>

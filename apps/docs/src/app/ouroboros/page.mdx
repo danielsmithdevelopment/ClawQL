@@ -2,7 +2,7 @@
 
 ClawQL ships a TypeScript workspace package **`clawql-ouroboros`** for **specification-first** multi-generation workflows: validated **Seeds**, **Wonder / Reflect** hooks, pluggable **Executor** and **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), an **`EvolutionaryLoop`**, and helpers for **MCP-style tool registration** and a **background seed poller**. {{ className: 'lead' }}
 
-It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, set **`CLAWQL_ENABLE_OUROBOROS=1`** to register the three optional **`ouroboros_*`** MCP tools backed by this package. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars).
+It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, Ouroboros MCP tools **always register** via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`): **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`**. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars). **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate (ignored for tool load). Langfuse eval remains opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`**.
 
 **Learn walkthrough** (three tools together, benefits, full MCP example): [Ouroboros tools (seed, loop, lineage)](/learn/ouroboros-tools).
 
@@ -35,7 +35,7 @@ npm run build -w clawql-ouroboros
 | Path                         | Contents                                                                                           |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
 | `clawql-ouroboros`           | `SeedSchema`, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, types               |
-| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — schemas + handlers for crystallize / run / lineage (wire to your MCP server) |
+| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — schemas + handlers for **embedding** in your own MCP host (not `clawql-mcp` registration; production uses `clawql-harness`) |
 | `clawql-ouroboros/poller`    | `startSeedsPoller` — interval loop with your DB `fetchPending` / `markFailed`                      |
 
 ## Minimal usage (conceptual)
@@ -46,22 +46,19 @@ npm run build -w clawql-ouroboros
 
 ## Using Ouroboros from `clawql-mcp` (production guide)
 
-When **`CLAWQL_ENABLE_OUROBOROS=1`**, ClawQL registers:
+**`clawql-mcp`** always composes **`makeHarnessLayer(createOuroborosHarnessPlugin)`**, so **`listTools`** includes:
 
+- **`clawql_think`**
 - **`ouroboros_create_seed_from_document`**
 - **`ouroboros_run_evolutionary_loop`**
 - **`ouroboros_get_lineage_status`**
+- **`ouroboros_measure_drift`**
 
-These are standard MCP tools exposed over stdio, Streamable HTTP, and optional gRPC, so your agent can use the same route regardless of transport.
+These are standard MCP tools exposed over stdio, Streamable HTTP, and optional gRPC. Do **not** use **`clawql-ouroboros/mcp-hooks`** as the registration path for **`clawql-mcp`** (that export is for embedding the library in your own server).
 
-### 1) Turn it on
+### 1) Durable lineage (optional)
 
-Set:
-
-- **`CLAWQL_ENABLE_OUROBOROS=1`** to register tools
-- Optional: **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split `CLAWQL_OUROBOROS_DB_*`) for durable events in Postgres
-
-Without database config, lineages are in-memory (process-local, cleared on restart).
+Set **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split `CLAWQL_OUROBOROS_DB_*`) for durable events in Postgres. Without database config, lineages are in-memory (process-local, cleared on restart).
 
 ### 2) Understand the default loop behavior
 
@@ -192,7 +189,7 @@ For route-hinted runs, `execution_output` contains route metadata (for example `
 ### 7) Troubleshooting
 
 - **Tools missing from ListTools**
-  - Check `CLAWQL_ENABLE_OUROBOROS=1`
+  - Confirm you are on **clawql-mcp 8.0+** (harness always registers Ouroboros tools). Older docs that required `CLAWQL_ENABLE_OUROBOROS=1` are obsolete for registration.
 
 - **Lineage lost after restart**
   - Configure `CLAWQL_OUROBOROS_DATABASE_URL` (or split DB vars)

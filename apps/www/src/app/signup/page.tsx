@@ -15,7 +15,7 @@ import { site } from '@/lib/site'
 export const metadata = pageMetadata({
   title: 'Sign up for managed ClawQL',
   description:
-    'Start a 14-day ClawQL Developer trial or book a demo — edge-hosted MCP with vault memory, or self-host free on Apache 2.0.',
+    'Request early access to managed ClawQL or book a demo — edge-hosted MCP with vault memory, or self-host free on Apache 2.0.',
   path: '/signup',
 })
 
@@ -24,19 +24,19 @@ export default function Page() {
     <>
       <HeroSimpleCentered
         id="signup-hero"
-        headline="Start your 14-day trial or book a demo"
+        headline="Request early access or book a demo"
         subheadline={
           <p>
             ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI. Land with
             OpenAI-compatible inference and MCP; expand into memory, Dedicated Virtual Gateway governance, and Edge
-            Gateways on every laptop. Self-host free on Apache 2.0, or start a 14-day Developer trial. Real estate teams:
-            see the{' '}
+            Gateways on every laptop. Self-host free on Apache 2.0, or join the managed waitlist for early access. Real
+            estate teams: see the{' '}
             <a href="/industries/real-estate#demo-pitch" className="underline">
               one-paragraph pitch
             </a>{' '}
-            to forward before your demo. Developer trial is {hostedFreeTrial.durationDays} days, no credit card. Gateway
-            from {pricing.developer.monthlyPrice}/mo, Teams {pricing.teams.monthlyPrice}/mo, IDP bundle from{' '}
-            {pricing.starter.monthlyPrice}/mo.
+            to forward before your demo. Hosted evaluation targets the Developer experience ({hostedFreeTrial.durationDays}
+            -day window once provisioned). Gateway from {pricing.developer.monthlyPrice}/mo, Teams{' '}
+            {pricing.teams.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={<WaitlistSignupForm className="mx-auto" />}

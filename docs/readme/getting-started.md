@@ -10,7 +10,14 @@
 npx -p clawql-mcp clawql-mcp
 ```
 
-With no spec-related environment variables, ClawQL loads the **opinionated default stack**: **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**.
+With no provider-related environment variables, ClawQL starts with an **empty catalog**. Opt in to the curated pack:
+
+```bash
+CLAWQL_PROVIDER=default npx -p clawql-mcp clawql-mcp
+# or: CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'
+```
+
+Pack **`default`** = **Cloudflare, GitHub, Slack, Linear, Notion, Onyx**. Helm chart default is **`providers.pack: none`**.
 
 2. Configure your MCP client (Cursor / Claude Desktop) for stdio — see [deployment.md](./deployment.md) and [Agent setup](../getting-started/agent-setup.md).
 
@@ -68,13 +75,16 @@ CLAWQL_PROVIDER=all-providers npx -p clawql-mcp clawql-mcp
 
 Literally every bundled vendor plus Google top-50 and AWS top-50. Helm **`clawql-mcp`** chart defaults here for full IDP/K8s stacks.
 
-### Add Google or AWS to the default stack only
+### Curated pack add-ons (after `CLAWQL_PROVIDER=default`)
+
+Prefer explicit merges over deprecated stack-selection flags:
 
 ```bash
-CLAWQL_ENABLE_GOOGLE=1 npx -p clawql-mcp clawql-mcp
-CLAWQL_ENABLE_AWS=1 npx -p clawql-mcp clawql-mcp
+CLAWQL_BUNDLED_PROVIDERS=google,aws npx -p clawql-mcp clawql-mcp
+# or include them in CLAWQL_PROVIDER / instance pack selection
 ```
 
+(`CLAWQL_ENABLE_GOOGLE` / `CLAWQL_ENABLE_AWS` are deprecated for stack selection in 8.0.)
 ### Local OpenAPI file
 
 ```bash

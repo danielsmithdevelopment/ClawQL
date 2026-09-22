@@ -48,7 +48,7 @@ function gatewayPlans(billing: BillingPeriod) {
             features={[...plan.features]}
             cta={
               <ButtonLink href={site.urls.signup} size="lg">
-                {isDeveloper ? 'Start free trial' : 'Join early access'}
+                {isDeveloper ? 'Request access' : 'Request early access'}
               </ButtonLink>
             }
           />
@@ -95,7 +95,7 @@ function idpPlans(billing: BillingPeriod) {
 export const metadata = pageMetadata({
   title: 'Pricing',
   description:
-    'ClawQL pricing for self-host, Developer trial, Teams gateway, and IDP tiers — unlimited MCP executions with vault memory on one endpoint.',
+    'ClawQL pricing for self-host, managed early access, Teams gateway, and IDP tiers — unlimited MCP executions with vault memory on one endpoint.',
   path: '/pricing',
 })
 
@@ -174,16 +174,16 @@ export default function Page() {
       <Section
         id="free-trial"
         eyebrow="Hosted entry"
-        headline={`${hostedFreeTrial.headline} — no credit card required`}
+        headline={`${hostedFreeTrial.headline} — waitlist, not instant self-serve`}
       >
         <p className="max-w-3xl text-sm/7 text-mist-700 dark:text-mist-400">{hostedFreeTrial.subheadline}</p>
         <p className="mt-4 max-w-3xl text-sm/7 text-mist-600 dark:text-mist-600">
-          Evaluate the full Developer tier — not a crippled sandbox. When the trial ends, continue at{' '}
-          {pricing.developer.monthlyPrice}/mo or upgrade to Teams. Prefer zero cost? Self-host the full Apache 2.0 stack
-          with no feature restrictions.
+          Managed hosting uses a FormSubmit waitlist with founder-led onboarding. When provisioned, evaluate the full
+          Developer tier — not a crippled sandbox — then continue at {pricing.developer.monthlyPrice}/mo or upgrade to
+          Teams. Prefer zero cost? Self-host the full Apache 2.0 stack with no feature restrictions.
         </p>
         <ButtonLink href={site.urls.signup} size="lg" className="mt-6">
-          Start free trial
+          Request access
         </ButtonLink>
       </Section>
 
@@ -433,12 +433,12 @@ export default function Page() {
         <Faq
           id="faq-1"
           question="Is self-hosted really free?"
-          answer="Yes — that is your free tier. ClawQL is Apache 2.0 open source. Run the full stack on your hardware with no license fee and no feature restrictions. You pay only for compute and storage. Enable plugins via CLAWQL_ENABLE_* flags — Core is always on; IDP vendors activate when you need document processing."
+          answer="Yes — that is your free tier. ClawQL is Apache 2.0 open source. Run the full stack on your hardware with no license fee and no feature restrictions. You pay only for compute and storage. In 8.0, compose plugins via CLAWQL_INSTANCE_SPEC / CLAWQL_TIER (CLAWQL_ENABLE_* alone is not enough without instance composition). Core is always on; IDP vendors activate when you need document processing. Provider catalog is empty by default."
         />
         <Faq
           id="faq-1b"
-          question="Do I need a credit card to start the free trial?"
-          answer={`No. The ${hostedFreeTrial.durationDays}-day trial gives you the full Developer tier — persistent vault memory, unlimited executions, global edge endpoint. No credit card required. When the trial ends, continue at ${pricing.developer.monthlyPrice}/mo or upgrade to Teams.`}
+          question="Is there an instant self-serve free trial?"
+          answer={`Not today — /signup is an early-access waitlist (FormSubmit). When a managed slot is provisioned, you get a full Developer-tier evaluation window (target ${hostedFreeTrial.durationDays} days) with persistent vault memory, unlimited executions, and a global edge endpoint. Self-host free anytime with npx clawql-mcp.`}
         />
         <Faq
           id="faq-2"
@@ -468,7 +468,7 @@ export default function Page() {
         <Faq
           id="faq-4b"
           question="Why are gateway and IDP tiers priced differently?"
-          answer="Gateway tiers (Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in. No perpetual free hosted plan — self-host free forever or start a 14-day Developer trial."
+          answer="Gateway tiers (Developer, Teams) need only MCP routing, vault memory, cache, and audit — lightweight workloads that run at the global edge. IDP tiers (Starter+) activate document processing, Onyx at scale, Coneshare VDR, and sovereign inference on dedicated tenant infrastructure. You only pay for the heavy stack when you opt in. No perpetual free hosted plan — self-host free forever or request early access for managed hosting."
         />
         <Faq
           id="faq-5"
@@ -494,18 +494,18 @@ export default function Page() {
 
       <CallToActionSimpleCentered
         id="call-to-action"
-        headline="Self-host free or start your 14-day trial"
+        headline="Self-host free or request early access"
         subheadline={
           <p>
-            Install clawql-mcp on your hardware — Apache 2.0, no license fee — or try hosted Developer free for{' '}
-            {hostedFreeTrial.durationDays} days. Gateway from {pricing.developer.monthlyPrice}/mo, IDP bundle from{' '}
-            {pricing.starter.monthlyPrice}/mo.
+            Install with <code className="text-sm">npx clawql-mcp</code> on your hardware — Apache 2.0, no license fee —
+            or join the managed waitlist for Developer evaluation. Gateway from {pricing.developer.monthlyPrice}/mo, IDP
+            bundle from {pricing.starter.monthlyPrice}/mo.
           </p>
         }
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={site.urls.docs} size="lg">
               Self-host guide <ChevronIcon />

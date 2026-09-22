@@ -1,6 +1,6 @@
 ---
 title: Gateway core
-description: Always-on ClawQL Core — search, execute, audit, and cache. Not optional plugins; composed in clawql-api on every install.
+description: Always-on ClawQL Core — search, execute, audit, cache, skills_list, and skills_get. Not optional plugins; composed in clawql-api on every install.
 slug: core
 status: always-on
 package: clawql-api
@@ -15,16 +15,18 @@ next: panguard-proxy
 
 ## MCP tools
 
-| Tool          | Role                                                                                         |
-| ------------- | -------------------------------------------------------------------------------------------- |
-| **`search`**  | Rank operations from the active merged spec index by natural-language intent                 |
-| **`execute`** | Call a discovered operation by `operationId` (REST, Discovery, native GraphQL/gRPC)          |
-| **`audit`**   | In-process ring buffer of tool events (not durable — use vault memory for compliance trails) |
-| **`cache`**   | Ephemeral in-process LRU key/value scratch state between tool calls                          |
+| Tool             | Role                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **`search`**     | Rank operations **and skills** from the active index by natural-language intent                                   |
+| **`execute`**    | Call a discovered operation by `operationId` (REST, Discovery, native GraphQL/gRPC)                               |
+| **`audit`**      | In-process ring buffer of tool events (not durable — use vault memory for compliance trails)                      |
+| **`cache`**      | Ephemeral in-process LRU key/value scratch state between tool calls                                               |
+| **`skills_list`**| Lightweight skill index (`SkillIndexEntry`)                                                                       |
+| **`skills_get`** | Full skill body by `skillId`                                                                                      |
 
 ## How it fits the plugin model
 
-Optional **horizontal plugins** (`clawql-memory`, `clawql-documents`, …) register additional tools via `Plugin.onRegister`. Core tools are registered directly by the gateway and are never omitted from a standard `clawql-mcp` process.
+Optional **horizontal plugins** (`clawql-memory`, `clawql-documents`, …) register additional tools via **`ProviderPlugin`** / **`StandaloneSkillPlugin`** (`tools`, `hooks`, or `defineRegisteringProviderPlugin`). Core tools are registered directly by the gateway and are never omitted from a standard `clawql-mcp` process.
 
 ## Configuration
 

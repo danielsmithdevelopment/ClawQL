@@ -778,7 +778,7 @@ export function EnterpriseGtmPlaybook() {
           <h3>Suggested next steps</h3>
           <ul>
             <li>
-              <strong>Option A:</strong> 14-day Developer trial — <code>npx clawql-inference</code> + base URL swap
+              <strong>Option A:</strong> Request early access — <code>npx clawql-inference</code> + base URL swap
             </li>
             <li>
               <strong>Option B:</strong> 2-hour technical workshop with platform engineering

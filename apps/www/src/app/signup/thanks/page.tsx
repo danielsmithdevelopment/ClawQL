@@ -5,7 +5,7 @@ import { site } from '@/lib/site'
 
 export const metadata = pageMetadata({
   title: 'You’re on the list',
-  description: 'Thanks for signing up for managed ClawQL. Self-host today while we open hosted slots.',
+  description: 'Thanks for requesting early access to managed ClawQL. Self-host today while we open hosted slots.',
   path: '/signup/thanks',
 })
 
@@ -13,11 +13,12 @@ export default function Page() {
   return (
     <HeroSimpleCentered
       id="signup-thanks"
-      headline="Thanks — we got your signup."
+      headline="Thanks — you’re on the early access waitlist."
       subheadline={
         <p>
-          We’ll review your request and reach out from hello@clawql.com when managed hosting slots open. In the
-          meantime, you can self-host ClawQL today with the open-source MCP server.
+          We’ll review your request and reach out from hello@clawql.com when managed hosting slots open. This is a
+          waitlist, not an instant self-serve trial. In the meantime, you can self-host ClawQL today with{' '}
+          <code className="text-sm">npx clawql-mcp</code>.
         </p>
       }
       cta={

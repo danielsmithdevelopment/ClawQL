@@ -30,7 +30,7 @@ export default function StatusPage() {
         subheadline={
           <p>
             Product links: <a href={site.urls.demo}>interactive demo</a> ·{' '}
-            <a href={site.urls.signup}>start trial</a> ·{' '}
+            <a href={site.urls.signup}>request access</a> ·{' '}
             <a href={site.urls.docs}>docs</a>
           </p>
         }

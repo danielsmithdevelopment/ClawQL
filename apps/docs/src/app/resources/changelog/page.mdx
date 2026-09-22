@@ -2,7 +2,15 @@ import { Button } from '@/components/Button'
 
 # Changelog & releases
 
-ClawQL ships from the **`main`** branch with tagged releases on GitHub and npm publishes for **`clawql-mcp`**. **8.0.0** is the next major — provider opt-in empty catalog, **ProviderPlugin** hard break, and the last horizontal packages (`clawql-network`, `clawql-agents`, `clawql-audit`). {{ className: 'lead' }}
+ClawQL ships from the **`main`** branch with tagged releases on GitHub and npm publishes for **`clawql-mcp`**. **8.0.0 is released** — empty provider catalog by default, **ProviderPlugin** hard break (Phase-2 `Plugin.onRegister` removed), enforcement default-off, and the last horizontal packages (`clawql-network`, `clawql-agents`, `clawql-audit`). {{ className: 'lead' }}
+
+## 8.0.0 breaking summary
+
+- **Empty catalog** until you opt in (`CLAWQL_PROVIDER=default`, instance pack, or Helm `providers.pack=default`; chart default `none`)
+- **ProviderPlugin / StandaloneSkillPlugin only** — no Phase-2 `Plugin` / `onRegister` / `beforeCallTool` bridge
+- **Panguard / tool-scope enforcement opt-in** (boot warns if none active)
+- Bare `CLAWQL_ENABLE_*` ignored for composition without `CLAWQL_INSTANCE_SPEC` / `CLAWQL_TIER` (Helm still injects instance JSON from chart values)
+- Migration: [Migrate to 8.0](/getting-started/migrate-to-8.0)
 
 ## Where to look
 

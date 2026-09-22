@@ -57,10 +57,10 @@ export default function Page() {
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
             <h3 className="font-semibold text-mist-950 dark:text-white">Current state</h3>
             <p className="mt-2">
-              The open-source MCP server is production-ready and self-hostable today — npm, Helm, published case
-              studies, and a v7 operator for Kubernetes. Managed gateway hosting is in early access (14-day Developer
-              trial, then paid tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on
-              managed hosting; the core product is shipping and in use.
+              The open-source MCP server is production-ready and self-hostable today — npx, Helm, published case
+              studies, and a v7 operator for Kubernetes. Managed gateway hosting is early access (waitlist, then paid
+              tiers). IDP hosted tenants are onboarding with founder-led setup. We are pre-revenue on managed hosting;
+              the core product is shipping and in use.
             </p>
           </div>
           <div className="rounded-xl bg-mist-950/2.5 p-6 dark:bg-white/5">
@@ -135,6 +135,7 @@ export default function Page() {
         <div className="flex flex-col gap-10">
           <ToolTierSection {...mcpToolTiers.core} />
           <ToolTierSection {...mcpToolTiers.memory} />
+          <ToolTierSection {...mcpToolTiers.automation} />
           <ToolTierSection {...mcpToolTiers.idp} />
         </div>
       </Section>
@@ -159,7 +160,7 @@ export default function Page() {
         headline="Read the case studies. Run the tools."
         subheadline={
           <p>
-            Self-host today or start a 14-day Developer trial. For the default product-led motion, see the{' '}
+            Self-host today or request early access for managed hosting. For the default product-led motion, see the{' '}
             <Link href={site.urls.inferenceGtm}>inference-first GTM playbook</Link>; for regulated / Palantir-facing
             positioning, see the <Link href={site.urls.enterpriseGtm}>enterprise GTM playbook</Link>. Full Apache 2.0
             stack, no license fee.
@@ -168,7 +169,7 @@ export default function Page() {
         cta={
           <div className="flex items-center gap-4">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/case-studies`} size="lg">
               All case studies <ChevronIcon />

@@ -88,6 +88,15 @@ For a platform whose value proposition is **verifiability, governance, and resil
 
 **Bottom line:** Effect-TS is not merely “the library we use for effects.” It is the **enforcement mechanism** for modularity, verifiable architecture, and reliable failure modes. Without it, the 7-layer model in the spec would be much harder to preserve in practice. With it, the compiler helps protect the design.
 
+## Contributor non-negotiables (Effect everywhere)
+
+Production code that **can** be Effect-based **must** be — there is no “pure sync is fine” carve-out. Mirror [AGENTS.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/AGENTS.md) and [`.cursor/rules/effect-ts-everywhere.mdc`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/rules/effect-ts-everywhere.mdc):
+
+- Every `packages/*` workspace declares **`effect`** and ships a **`Context.Tag` + `Layer`**.
+- Prefer **`Effect.sync`** (and Effect composition) for sync helpers (URL/HTML builders, sync crypto, env flag readers) — not bare return values when a Tag/Layer is possible.
+- Domain IO, orchestration, and policy stay Effect-based; forced Promise edges (Express / MCP SDK) stay **thin façades** over `run*Effect`. Use **`Effect.runSync`** only at those absolute host boundaries.
+- Types-only modules are exempt. Enforce with **`npm run check:effect-every-package`**.
+
 ## Related guides and references
 
 - [Contributor Technical Specification](/contributing/technical-specification) — §2 architectural constraints, §3 Effect patterns, Layer checklists

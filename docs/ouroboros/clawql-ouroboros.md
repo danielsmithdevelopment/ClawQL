@@ -8,8 +8,8 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 
 **This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
 
-**Status:** The **`clawql-mcp`** server can register Ouroboros MCP tools when **`CLAWQL_ENABLE_OUROBOROS=1`**:
-**`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557) — 3-component goal/constraint/ontology drift vs root Seed). For durable lineage, configure Postgres with
+**Status:** The **`clawql-mcp`** server **always** registers Ouroboros MCP tools via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`):
+**`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557) — 3-component goal/constraint/ontology drift vs root Seed). **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate. For durable lineage, configure Postgres with
 **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** env vars. Published npm name:
 **`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
 
@@ -48,7 +48,7 @@ npm install clawql-ouroboros
 | Import path                  | Purpose                                                                                                  |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `clawql-ouroboros`           | `SeedSchema`, types, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, interfaces         |
-| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — Zod schemas + handlers; wire to your MCP server with a typed `OuroborosContext`    |
+| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — Zod schemas + handlers for **embedding** in your own MCP host (not the `clawql-mcp` registration path; production MCP uses `clawql-harness`) |
 | `clawql-ouroboros/poller`    | `startSeedsPoller` — interval worker; you supply `fetchPending` / `markFailed` (e.g. Drizzle + Postgres) |
 
 ---
@@ -170,9 +170,9 @@ const signal = criteria.evaluate(
 
 ---
 
-## Example 3 — MCP-style helpers (`mcp-hooks`)
+## Example 3 — MCP-style helpers (`mcp-hooks`, embedding only)
 
-`ouroborosMcpTools` exposes **`createSeedFromDocument`**, **`runEvolutionaryLoop`**, **`getLineageStatus`** with Zod input schemas. You pass an **`OuroborosContext`** (`{ ouroborosLoop, eventStore }`) when registering handlers on your MCP server (same pattern as other tools: map `name` → handler + schema).
+`ouroborosMcpTools` exposes **`createSeedFromDocument`**, **`runEvolutionaryLoop`**, **`getLineageStatus`** with Zod input schemas for **custom hosts**. You pass an **`OuroborosContext`** (`{ ouroborosLoop, eventStore }`) when registering handlers on **your** MCP server. **`clawql-mcp` does not use this path** — it registers tools through **`clawql-harness`** instead.
 
 ```typescript
 import { ouroborosMcpTools } from "clawql-ouroboros/mcp-hooks";

@@ -1,27 +1,30 @@
 # Ouroboros
 
-**Plugin ID:** `clawql-ouroboros`  
-**Package:** `packages/clawql-ouroboros` — `OuroborosPlugin`
+**Plugin ID:** `clawql-harness` (Ouroboros harness)  
+**Packages:** `packages/clawql-harness` — `createOuroborosHarnessPlugin` / `makeHarnessLayer`; library `packages/clawql-ouroboros`
 
-Specification-first evolutionary loops with optional Postgres lineage storage.
+Specification-first evolutionary loops with optional Postgres lineage storage. In **`clawql-mcp`**, tools **always register** through the harness — **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate.
 
 ## MCP tools
 
 | Tool                                      | Purpose                                        |
 | ----------------------------------------- | ---------------------------------------------- |
+| **`clawql_think`**                        | Structured planning / reflection helper        |
 | **`ouroboros_create_seed_from_document`** | Create a Seed from an input document           |
 | **`ouroboros_run_evolutionary_loop`**     | Run Wonder/Reflect → Executor/Evaluator cycles |
 | **`ouroboros_get_lineage_status`**        | Inspect lineage and convergence state          |
+| **`ouroboros_measure_drift`**             | 3-component drift vs root Seed ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)) |
 
-## Enable
+## Registration and lineage
 
-| Env                             | Default | Effect                                         |
-| ------------------------------- | ------- | ---------------------------------------------- |
-| **`CLAWQL_ENABLE_OUROBOROS=1`** | off     | Register `OuroborosPlugin` and all three tools |
+| Env / Helm | Default | Effect |
+| ---------- | ------- | ------ |
+| _(always on)_ | — | `makeHarnessLayer(createOuroborosHarnessPlugin)` registers the tools above |
+| **`CLAWQL_ENABLE_OUROBOROS`** | _(deprecated)_ | No longer gates MCP registration; ignore for tool load |
+| **`CLAWQL_OUROBOROS_DATABASE_URL`** or **`CLAWQL_OUROBOROS_DB_*`** | unset = in-memory | Durable Postgres events (`clawql_ouroboros_events`) |
+| **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** | off | Langfuse eval → `ouroboros_propose_seed_revision_from_eval` |
 
-Optional Postgres lineage: **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** vars.
-
-Eval webhook integration: **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`** (requires Ouroboros on).
+Do **not** teach **`clawql-ouroboros/mcp-hooks`** as the **`clawql-mcp`** registration path (OK for embedding the library in your own MCP host).
 
 ## Learn more
 

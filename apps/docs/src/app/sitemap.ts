@@ -173,6 +173,16 @@ const ENTRIES: Array<Entry> = [
     priority: 0.87,
   },
   {
+    path: '/streams/aws-celld-burst',
+    changeFrequency: 'monthly',
+    priority: 0.87,
+  },
+  {
+    path: '/streams/streams-celld-evidence',
+    changeFrequency: 'monthly',
+    priority: 0.87,
+  },
+  {
     path: '/streams/clawql-qr-stream-transport',
     changeFrequency: 'monthly',
     priority: 0.87,

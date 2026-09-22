@@ -77,9 +77,13 @@ export default function PluginsHubPage() {
             Domain vertical
           </strong>{' '}
           — industry presets on the same{' '}
-          <code className="font-mono text-[0.9em]">Plugin.onRegister</code>{' '}
-          model. Each row lists what it <em>composes</em> and the domain{' '}
-          <em>boilerplate</em> it ships — not a fork of Memory or Documents.
+          <code className="font-mono text-[0.9em]">ProviderPlugin</code> /{' '}
+          <code className="font-mono text-[0.9em]">StandaloneSkillPlugin</code>{' '}
+          model (Phase-2{' '}
+          <code className="font-mono text-[0.9em]">Plugin.onRegister</code> is
+          removed in 8.0). Each row lists what it <em>composes</em> and the
+          domain <em>boilerplate</em> it ships — not a fork of Memory or
+          Documents.
         </p>
         <p>
           <strong className="font-semibold text-zinc-800 dark:text-zinc-200">

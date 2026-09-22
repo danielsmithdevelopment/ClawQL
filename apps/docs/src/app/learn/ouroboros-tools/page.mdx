@@ -1,20 +1,22 @@
-# Using the three **`ouroboros_*`** tools
+# Using the **`ouroboros_*`** harness tools
 
-**`clawql-ouroboros`** is a **specification-first** TypeScript library: validated **Seeds**, **Wonder / Reflect** hooks, an **EvolutionaryLoop** (**execute** → **evaluate** per generation, then optional ontology-driven evolution), and an **EventStore** for **lineage**. When you set **`CLAWQL_ENABLE_OUROBOROS=1`**, **`clawql-mcp`** registers **three MCP tools** from **`clawql-ouroboros/mcp-hooks`**: **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, and **`ouroboros_get_lineage_status`**. This page explains how they **chain together**, **why** that helps agents, and gives a **full worked example** (including optional **route hints** into **`search`** / **`execute`**). {{ className: 'lead' }}
+**`clawql-ouroboros`** is a **specification-first** TypeScript library: validated **Seeds**, **Wonder / Reflect** hooks, an **EvolutionaryLoop** (**execute** → **evaluate** per generation, then optional ontology-driven evolution), and an **EventStore** for **lineage**. In **`clawql-mcp`**, those tools **always register** via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`) — not behind **`CLAWQL_ENABLE_OUROBOROS`** (deprecated as a registration gate) and not via **`clawql-ouroboros/mcp-hooks`** (embedding-only). Tools: **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, **`ouroboros_measure_drift`**. This page explains how they **chain together**, **why** that helps agents, and gives a **full worked example** (including optional **route hints** into **`search`** / **`execute`**). {{ className: 'lead' }}
 
-**Deep dive (library, in-process loop, poller, Zod hooks):** [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md). **ADR:** [0001-ouroboros-workflow-engine.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0001-ouroboros-workflow-engine.md). **MCP matrix:** [mcp-tools.md § ouroboros\_\*](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#ouroboros_-optional). Agent skill: [clawql-ouroboros-workflows](https://docs.clawql.com/.well-known/agent-skills/clawql-ouroboros-workflows/SKILL.md).
+**Deep dive (library, in-process loop, poller, Zod hooks):** [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md). **ADR:** [0001-ouroboros-workflow-engine.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0001-ouroboros-workflow-engine.md). **MCP matrix:** [mcp-tools.md § ouroboros\_\*](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#ouroboros_-always-on-via-clawql-harness). Agent skill: [clawql-ouroboros-workflows](https://docs.clawql.com/.well-known/agent-skills/clawql-ouroboros-workflows/SKILL.md).
 
-## What clawql-ouroboros and the three MCP tools are
+## What clawql-ouroboros and the harness MCP tools are
 
 | Tool                                      | Role                                                                                                                                                                                                                                                                                                                    |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`clawql_think`**                        | Structured planning / reflection helper exposed by the harness plugin alongside the evolutionary tools.                                                                                                                                                                                                                  |
 | **`ouroboros_create_seed_from_document`** | Turn **raw document text** (plus **`documentId`**, optional **`metadata`**, **`goalHint`**, **`taskType`**) into a **validated `Seed`**: goal, brownfield context, constraints, acceptance criteria, ontology schema (lightweight field inference), evaluation principles, exit conditions, and **`metadata.seed_id`**. |
 | **`ouroboros_run_evolutionary_loop`**     | Run **`EvolutionaryLoop.run`** on that **Seed** with **`maxGenerations`** (1–50) and **`convergenceThreshold`**; returns **`converged`**, **`generations`**, **`lineageId`**, **`status`**, **`summary`**, **`finalSeed`**.                                                                                             |
 | **`ouroboros_get_lineage_status`**        | Read **`eventStore.getLineage(seedId)`** — rebuild **per-generation** records (seeds, execution output, evaluation summaries, phases) for **audit** or debugging. Use **`seedId`** = **`lineageId`** from the run response.                                                                                             |
+| **`ouroboros_measure_drift`**             | **3-component drift** (goal / constraint / ontology) vs the root Seed — ad-hoc checks or per-generation **`drift_measured`** events ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)).                                                                                                              |
 
 The shipped **Wonder / Reflect / Executor / Evaluator** defaults are **conservative and stubby** (no external LLM) so the loop is **runnable out of the box**; replace engines when embedding the library in your own service ([clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md) § package entrypoints).
 
-## How the three tools fit together
+## How the tools fit together
 
 Typical **agent** flow:
 
@@ -32,11 +34,12 @@ That is **spec-first iteration with a paper trail**: not only the final answer, 
 - **Separation from raw kubectl / Helm** — Use Ouroboros for **spec-level** acceptance and **document-grounded** evolution; keep **infra blast-radius** changes in normal change management ([clawql-ouroboros-workflows](https://docs.clawql.com/.well-known/agent-skills/clawql-ouroboros-workflows/SKILL.md) guardrails).
 - **Composable with ClawQL Core** — Route hints let one loop **reuse** the same **`search`** / **`execute`** graph the rest of the agent uses ([Using search and execute](/learn/search-and-execute-mcp)).
 
-## Enable Ouroboros on clawql-mcp
+## Always on via `clawql-harness`
 
-1. Set **`CLAWQL_ENABLE_OUROBOROS=1`** and restart **`clawql-mcp`** so **`listTools`** lists all three **`ouroboros_*`** tools ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)).
+1. On **clawql-mcp 8.0+**, restart is enough — **`listTools`** already lists **`clawql_think`** and the **`ouroboros_*`** tools ([#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)). **`CLAWQL_ENABLE_OUROBOROS`** and Helm **`enableOuroboros`** are **deprecated** as registration gates (may still appear in charts as unused/legacy).
 2. Optional **durable lineage:** **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** → Postgres table **`clawql_ouroboros_events`**. Without it, **`InMemoryEventStore`** resets on process exit ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)).
-3. Helm: **`enableOuroboros`** / **`ouroborosDatabaseUrl`** — [Helm deployment docs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
+3. Helm: prefer **`ouroborosDatabaseUrl`** / **`ouroborosPostgres.*`** for Postgres — [Helm deployment docs](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/deployment/helm.md).
+4. Langfuse eval → seed revision remains **opt-in**: **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`**.
 
 ## Route hints with search and execute
 

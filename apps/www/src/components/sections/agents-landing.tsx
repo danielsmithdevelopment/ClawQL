@@ -136,7 +136,7 @@ const securityItems = [
   },
   {
     title: 'ATR scoping',
-    body: 'Agents can only call tools declared in their scope. Panguard enforces at tool-call time. Fail-closed.',
+    body: 'Agents can only call tools declared in their scope. Panguard ATR fail-closed enforcement is opt-in in 8.0 (CLAWQL_PANGUARD_PROXY_PLUGIN=1).',
   },
   {
     title: 'Cosign-signed images',
@@ -191,7 +191,7 @@ export function AgentsLanding() {
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg" color="light">
-                Start free trial
+                Request access
               </ButtonLink>
               <PlainButtonLink href={K8S} size="lg" color="light">
                 Deploy self-hosted <ArrowNarrowRightIcon />
@@ -330,12 +330,13 @@ export function AgentsLanding() {
         subheadline={
           <p>
             ClawQL Core turns any API into an MCP tool. <Link href={ADAPTER}>mcp-api-adapter</Link> exposes any MCP
-            server on eight surfaces — including <Link href={MCP_UI}>/mcp-ui</Link>.
+            server on seven shipped surfaces — including <Link href={MCP_UI}>/mcp-ui</Link>. QR optical transport is
+            planned as the eighth surface.
           </p>
         }
       >
         <div className="agents-chip-row max-w-4xl">
-          {['OpenAPI', 'GraphQL', 'gRPC', 'WebSocket', 'CLI', 'MCP', 'QR', '/mcp-ui'].map((chip) => (
+          {['OpenAPI', 'GraphQL', 'gRPC', 'WebSocket', 'CLI', 'MCP', '/mcp-ui', 'QR (planned)'].map((chip) => (
             <span key={chip} className="agents-chip">
               {chip}
             </span>
@@ -343,10 +344,11 @@ export function AgentsLanding() {
         </div>
         <p className="mt-8 max-w-3xl text-[1.05rem] leading-relaxed">
           A gRPC service talks to a GraphQL consumer. A blockchain node becomes agent-callable. A government audit
-          system streams records through a QR optical channel — no network path, air gap structurally preserved.
+          system can stream records through a planned QR optical channel — no network path, air gap structurally
+          preserved.
         </p>
         <div className="agents-diff__panel agents-diff__panel--win mt-10 max-w-3xl">
-          <p className="agents-diff__label">Eighth surface</p>
+          <p className="agents-diff__label">Seventh shipped surface</p>
           <h3 className="agents-diff__title">/mcp-ui — Swagger UI for MCP</h3>
           <p className="mt-3 leading-relaxed">
             Auto-generated HTMX browser interface from the tool catalog. Every tool becomes a form. Results render
@@ -531,14 +533,14 @@ export function AgentsLanding() {
         headline="$29/month to start. $3,500/month for enterprise TEE."
         subheadline={
           <p>
-            Self-host free on Apache 2.0, or start a 14-day Developer trial. One MCP endpoint on every tier — same URL
-            when you upgrade.
+            Self-host free on Apache 2.0, or request early access for managed hosting. One MCP endpoint on every tier —
+            same URL when you upgrade.
           </p>
         }
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <ButtonLink href={site.urls.signup} size="lg">
-            Start free trial
+            Request access
           </ButtonLink>
           <PlainButtonLink href={site.urls.pricing} size="lg">
             Compare all plans <ArrowNarrowRightIcon />
@@ -570,7 +572,7 @@ export function AgentsLanding() {
         cta={
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start 14-day trial
+              Request early access
             </ButtonLink>
             <PlainButtonLink href={K8S} size="lg">
               Deploy self-hosted <ArrowNarrowRightIcon />

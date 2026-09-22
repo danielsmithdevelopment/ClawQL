@@ -183,7 +183,7 @@ export function IdpLanding() {
           <div className="flex w-full flex-col items-center gap-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
               <ButtonLink href={site.urls.signup} size="lg">
-                Start free trial
+                Request access
               </ButtonLink>
               <PlainButtonLink href={`${site.urls.docs}/deployment/kubernetes`} size="lg">
                 Deploy self-hosted <ArrowNarrowRightIcon />
@@ -321,8 +321,8 @@ export function IdpLanding() {
         headline="From zero to pipeline in one afternoon"
         subheadline={
           <p>
-            Self-host with Helm, or start a 14-day hosted trial — no credit card. Agents drive the stack over MCP; you
-            do not write a custom integration layer first.
+            Self-host with Helm, or request early access for managed hosting. Agents drive the stack over MCP; you do
+            not write a custom integration layer first.
           </p>
         }
       >
@@ -354,7 +354,7 @@ export function IdpLanding() {
               <Link href={`${site.urls.docs}/vision/idp-platform`}>IDP platform docs</Link>.
             </p>
             <div>
-              <ButtonLink href={site.urls.signup}>Start 14-day trial</ButtonLink>
+              <ButtonLink href={site.urls.signup}>Request access</ButtonLink>
             </div>
           </div>
         </div>
@@ -460,7 +460,7 @@ export function IdpLanding() {
             'MCP-native agent orchestration',
             'Merkle audit trail per pipeline step',
             'Onyx semantic search over the archive',
-            '14-day trial · no credit card',
+            'Early access waitlist · self-host free',
           ].map((line) => (
             <li key={line} className="flex gap-2">
               <CheckmarkIcon aria-hidden className="mt-0.5 size-5 shrink-0 stroke-mist-950 dark:stroke-white" />
@@ -470,7 +470,7 @@ export function IdpLanding() {
         </ul>
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
           <ButtonLink href={site.urls.signup} size="lg">
-            Start free trial
+            Request access
           </ButtonLink>
           <PlainButtonLink href={site.urls.pricing} size="lg">
             Compare all plans <ArrowNarrowRightIcon />
@@ -491,7 +491,7 @@ export function IdpLanding() {
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start 14-day trial
+              Request early access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/deployment/kubernetes`} size="lg">
               Deploy self-hosted <ArrowNarrowRightIcon />

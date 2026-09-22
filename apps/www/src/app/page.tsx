@@ -59,7 +59,7 @@ export default function Page() {
     <>
       <HeroTwoColumnWithPhoto
         id="hero"
-        eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Start trial" />}
+        eyebrow={<AnnouncementBadge href={site.urls.signup} text={site.earlyAccess.badge} cta="Request access" />}
         headline="Anything to MCP. MCP to anything."
         subheadline={
           <p>
@@ -72,7 +72,7 @@ export default function Page() {
           <div className="flex w-full max-w-xl flex-col gap-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <ButtonLink href={site.urls.signup} size="lg">
-                Start free trial
+                Request access
               </ButtonLink>
               <PlainButtonLink href={`${site.urls.docs}/readme/getting-started`} size="lg">
                 Self-host free <ArrowNarrowRightIcon />
@@ -93,8 +93,8 @@ export default function Page() {
         subheadline={
           <p>
             ClawQL Core turns API surfaces into MCP tools — {protocolFabricSurfaces.inbound}. mcp-api-adapter exposes
-            any MCP server outward — {protocolFabricSurfaces.outbound}. A gRPC service talks to a GraphQL consumer. A QR
-            stream from an air-gapped system becomes agent-callable without a network path across the boundary.
+            any MCP server outward — {protocolFabricSurfaces.outbound} ({protocolFabricSurfaces.shippedCount} surfaces
+            shipped). A gRPC service talks to a GraphQL consumer. {protocolFabricSurfaces.plannedNote}
           </p>
         }
         cta={
@@ -211,13 +211,14 @@ export default function Page() {
         headline="Core discovery and execution — always on."
         subheadline={
           <p>
-            Memory, documents, automation, and the IDP pipeline opt in when you need them — same surface in Cursor,
-            OpenClaw, or your Kubernetes cluster. Document workflows (Nextcloud → OCR → redaction → Onyx → VDR) live on
-            the{' '}
+            Core discovery and execution — plus skills_list / skills_get — are always on. Memory and documents are
+            default on (opt out). Schedule, notify, workflow, Onyx, sandbox, and IDP tools opt in when you need them —
+            compose with CLAWQL_INSTANCE_SPEC / CLAWQL_TIER in 8.0. Same surface in Cursor, OpenClaw, or your Kubernetes
+            cluster. Document workflows (Nextcloud → OCR → redaction → Onyx → VDR) live on the{' '}
             <Link href={site.urls.idp} className="font-medium underline underline-offset-2">
               IDP page
             </Link>
-            .
+            . {site.providersNote}
           </p>
         }
         cta={
@@ -236,8 +237,8 @@ export default function Page() {
         subheadline={
           <p>
             ClawQL documents how container images are scanned, signed, and enforced from CI through Kubernetes admission
-            — plus a 32-module curriculum for agentic AI deployments. ATR scoping limits what each agent can call;
-            Panguard fails closed when scope is unclear.
+            — plus a 32-module curriculum for agentic AI deployments. ATR scoping limits what each agent can call.
+            Panguard fail-closed enforcement is opt-in in 8.0 (set CLAWQL_PANGUARD_PROXY_PLUGIN=1) — not default-on.
           </p>
         }
         cta={
@@ -298,7 +299,7 @@ export default function Page() {
         <Faq
           id="faq-5"
           question="Is managed hosting available today?"
-          answer="The open-source MCP core is production-ready today — npm, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or start a 14-day Developer trial. Managed IDP hosting is early access with founder-led onboarding."
+          answer="The open-source MCP core is production-ready today — npx, Helm, case studies, and a Kubernetes operator. Self-host free on Apache 2.0, or request early access for managed hosting. Managed IDP hosting is early access with founder-led onboarding."
         />
         <Faq
           id="faq-6"
@@ -336,7 +337,7 @@ export default function Page() {
               features={pricing.developer.features.slice(0, 4)}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
-                  Start free trial
+                  Request access
                 </ButtonLink>
               }
             />
@@ -349,7 +350,7 @@ export default function Page() {
               features={pricing.teams.features.slice(0, 4)}
               cta={
                 <ButtonLink href={site.urls.signup} size="lg">
-                  Join early access
+                  Request early access
                 </ButtonLink>
               }
             />
@@ -382,7 +383,7 @@ export default function Page() {
       />
       <CallToActionSimple
         id="call-to-action"
-        headline="Start your 14-day trial or self-host free"
+        headline="Request early access or self-host free"
         subheadline={
           <p>
             Gateway from {pricing.developer.monthlyPrice}/mo, IDP bundle from {pricing.starter.monthlyPrice}/mo. Full
@@ -392,7 +393,7 @@ export default function Page() {
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={site.urls.docs} size="lg">
               Self-host guide <ArrowNarrowRightIcon />
