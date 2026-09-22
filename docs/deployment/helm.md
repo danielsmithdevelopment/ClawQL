@@ -303,15 +303,15 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-n
  --set persistence.size=20Gi
 ```
 
-**Enable Ouroboros with in-cluster Postgres** (deployed alongside ClawQL):
+**Durable Ouroboros lineage with in-cluster Postgres** (tools always load; Postgres is optional):
 
 ```bash
 helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
- --set enableOuroboros=true \
  --set ouroborosPostgres.enabled=true \
  --set ouroborosPostgres.auth.password='replace-me'
 ```
 
+(`enableOuroboros` is **deprecated** as a registration gate — harness tools always register.)
 **Disable document pipeline + backing stores** (if you want a minimal ClawQL-only install):
 
 ```bash
@@ -611,7 +611,7 @@ See **[`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-
 | `enableNotify`                                                    | **`CLAWQL_ENABLE_NOTIFY=1`** — MCP **`notify`** (Slack **`chat.postMessage`**; default **false**; [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77)); set **`CLAWQL_SLACK_TOKEN`** via **`extraEnv`** / Secret — **[notify-tool.md](../mcp/notify-tool.md)**                                                                                                                                                                                                       |
 | `enableHitlLabelStudio`                                           | **`CLAWQL_ENABLE_HITL_LABEL_STUDIO=1`** — MCP **`hitl_enqueue_label_studio`** + **`POST /hitl/label-studio/webhook`** (default **false**; [#228](https://github.com/danielsmithdevelopment/ClawQL/issues/228)); set **`CLAWQL_LABEL_STUDIO_*`** / **`CLAWQL_HITL_WEBHOOK_TOKEN`** via **`extraEnv`** / Secret — **[hitl-label-studio.md](../mcp/hitl-label-studio.md)** (RBAC matrix + CE two-person pattern: [#249](https://github.com/danielsmithdevelopment/ClawQL/issues/249)) |
 | `enableOnyx` / `onyxBaseUrl`                                      | **`CLAWQL_ENABLE_ONYX=1`** — MCP **`knowledge_search_onyx`** (default **false**; [#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)); **`onyxBaseUrl`** sets **`ONYX_BASE_URL`**. Supply **`ONYX_API_TOKEN`** (Bearer) via **`extraEnv`** / Secret — **[onyx-knowledge-tool.md](../mcp/onyx-knowledge-tool.md)**                                                                                                                                                  |
-| `enableOuroboros` / `ouroborosDatabaseUrl`                        | **`CLAWQL_ENABLE_OUROBOROS=1`** — MCP **`ouroboros_*`** (default **false**; [#141](https://github.com/danielsmithdevelopment/ClawQL/issues/141)); **`ouroborosDatabaseUrl`** sets **`CLAWQL_OUROBOROS_DATABASE_URL`** for Postgres-backed events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Prefer Secret-backed env when the URL contains credentials — **[mcp-tools.md](../mcp/mcp-tools.md)**                                                       |
+| `enableOuroboros` / `ouroborosDatabaseUrl`                        | **`enableOuroboros`** is **deprecated** (Ouroboros MCP tools always load via **`clawql-harness`**; the flag does not gate registration). **`ouroborosDatabaseUrl`** sets **`CLAWQL_OUROBOROS_DATABASE_URL`** for Postgres-backed events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). Prefer Secret-backed env when the URL contains credentials — **[mcp-tools.md](../mcp/mcp-tools.md)**                                                                |
 | `ouroborosPostgres.*`                                             | Optional Postgres workload in the same release for durable Ouroboros events ([#142](https://github.com/danielsmithdevelopment/ClawQL/issues/142)). When enabled, chart wires **`CLAWQL_OUROBOROS_DB_*`** env vars from Service + Secret into `clawql-mcp` (no credential-in-URL required).                                                                                                                                                                                         |
 | `documentPipeline.*`                                              | Full-stack document pipeline workloads (**Docling** / **classifier** / **LangExtract** opt-in via **`documentPipeline.docling`**, **`.classifier`**, **`.langextract`**; **Tika**, **Gotenberg**, **Stirling**, **Paperless**) with in-cluster base URLs injected into ClawQL. Enabled by default; disable explicitly for minimal installs ([#113](https://github.com/danielsmithdevelopment/ClawQL/issues/113)).                                                                  |
 | `enableWorkflow` / `workflow.*`                                   | **`CLAWQL_ENABLE_WORKFLOW=1`** — Argo Workflows MCP tool + RBAC ([#243](https://github.com/danielsmithdevelopment/ClawQL/issues/243))                                                                                                                                                                                                                                                                                                                                              |

@@ -57,7 +57,7 @@ export const lendingIndustry: Industry = {
     },
     {
       title: 'Multi-product LOS coverage',
-      body: 'Mortgage, auto, BNPL, payday, and commercial modules share compliance plugins but register distinct MCP tools — enable only the products you originate via CLAWQL_ENABLE_* and Operator vertical flags.',
+      body: 'Mortgage, auto, BNPL, payday, and commercial modules share compliance plugins but register distinct MCP tools — enable only the products you originate via CLAWQL_INSTANCE_SPEC / CLAWQL_TIER composition (and CLAWQL_ENABLE_* / Operator vertical flags when the instance allows).',
     },
     {
       title: 'Compliance-aware automation',

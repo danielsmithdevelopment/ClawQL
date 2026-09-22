@@ -392,7 +392,7 @@ export function IdpGtmPlaybook() {
           </ul>
           <p>
             Subhead: full lifecycle (ingest → distribute) in one system, AI-agent orchestrated, price incumbents cannot
-            match. CTAs: Start free trial · Deploy self-hosted. Trust: Apache 2.0 · 1,000+ formats · hours not months ·
+            match. CTAs: Request access · Deploy self-hosted. Trust: Apache 2.0 · 1,000+ formats · hours not months ·
             Merkle per step.
           </p>
 

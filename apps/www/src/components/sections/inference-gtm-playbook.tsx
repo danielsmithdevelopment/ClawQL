@@ -1049,8 +1049,8 @@ clawql sources add https://your-nextcloud-instance/api
             </li>
           </ul>
           <p>
-            <strong>Metrics:</strong> GitHub stars · npm downloads for <code>clawql-inference</code> · 14-day trial
-            starts · Week-1 retention (first value moment reached)
+            <strong>Metrics:</strong> GitHub stars · npm downloads for <code>clawql-inference</code> · early-access
+            waitlist signups · Week-1 retention (first value moment reached)
           </p>
 
           <h3>Phase 2: Expansion revenue (months 6–12)</h3>

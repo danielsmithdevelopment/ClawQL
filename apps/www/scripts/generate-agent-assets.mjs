@@ -86,7 +86,7 @@ Software agents connecting to ClawQL MCP tools.
 
 ## Agent registration
 
-Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm install -g clawql-mcp\` — see [${docs}/getting-started](${docs}/getting-started).
+Hosted accounts: [${origin}/signup/](${origin}/signup/) (early access waitlist). Self-hosted: \`npx clawql-mcp\` — see [${docs}/getting-started](${docs}/getting-started).
 
 \`\`\`json
 {
@@ -115,7 +115,7 @@ Hosted accounts: [${origin}/signup/](${origin}/signup/). Self-hosted: \`npm inst
 
 function getAgentMarkdownMap() {
   const description =
-    'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or start a trial.'
+    'ClawQL is agentic infrastructure for production work in regulated industries — Protocol Fabric (anything to MCP to anything), Streams, structured memory, and TEE-ready WORM audit. Self-host free on Apache 2.0 or request early access.'
 
   return {
     '/': `# ClawQL — Agentic Infrastructure for Regulated Industries
@@ -125,7 +125,7 @@ ${description}
 ## Install
 
 \`\`\`bash
-npm install -g clawql-mcp
+npx clawql-mcp
 \`\`\`
 
 ## Links
@@ -203,12 +203,13 @@ writeJson(path.join(publicDir, 'agent-markdown.json'), getAgentMarkdownMap())
 writeJson(path.join(publicDir, '.well-known/mcp/server-card.json'), {
   $schema: 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
   name: 'io.github.danielsmithdevelopment/clawql-mcp',
-  version: '6.0.0',
-  description: 'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
+  version: '8.0.0',
+  description:
+    'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog',
   title: 'ClawQL',
   websiteUrl: origin,
   repository: { type: 'git', url: 'https://github.com/danielsmithdevelopment/ClawQL.git' },
-  serverInfo: { name: 'clawql-mcp', version: '6.0.0' },
+  serverInfo: { name: 'clawql-mcp', version: '8.0.0' },
   capabilities: { tools: { listChanged: true }, resources: {}, prompts: {} },
   remotes: [
     {
@@ -223,7 +224,7 @@ writeJson(path.join(publicDir, '.well-known/agent-card.json'), {
   name: 'ClawQL',
   description:
     'Agentic Gateway for Auditable Production AI — MCP search, execute, vault memory, optional IDP, and agentic commerce discovery (Stripe + x402 + MPP + AP2 + ACP).',
-  version: '6.0.0',
+  version: '8.0.0',
   url: `${docs}/mcp`,
   provider: { organization: 'ClawQL', url: origin },
   capabilities: {

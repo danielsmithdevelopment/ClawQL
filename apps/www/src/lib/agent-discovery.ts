@@ -128,8 +128,9 @@ export function getMcpServerCard(origin = getSiteOriginString()): Record<string,
   return {
     $schema: SERVER_CARD_SCHEMA,
     name: 'io.github.danielsmithdevelopment/clawql-mcp',
-    version: '6.0.0',
-    description: 'MCP server: search + execute any OpenAPI 3 API with an internal GraphQL optimization layer',
+    version: '8.0.0',
+    description:
+      'Agentic Gateway / Protocol Fabric MCP server — search, execute, skills, vault memory, and optional automation/IDP over an empty-by-default provider catalog',
     title: 'ClawQL',
     websiteUrl: origin,
     repository: {
@@ -138,7 +139,7 @@ export function getMcpServerCard(origin = getSiteOriginString()): Record<string,
     },
     serverInfo: {
       name: 'clawql-mcp',
-      version: '6.0.0',
+      version: '8.0.0',
     },
     capabilities: {
       tools: { listChanged: true },
@@ -197,7 +198,7 @@ export function getA2aAgentCard(origin = getSiteOriginString()): Record<string, 
     name: 'ClawQL',
     description:
       'ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Regional Hubs, Dedicated Virtual Gateways, Edge swarm, and agentic commerce discovery.',
-    version: '6.0.0',
+    version: '8.0.0',
     url: `${docs}/mcp`,
     provider: {
       organization: 'ClawQL',
@@ -303,7 +304,7 @@ ClawQL is an MCP platform. Production MCP Streamable HTTP is hosted at **${docs}
 
 ## Agent registration
 
-Hosted ClawQL accounts: start at [${origin}/signup/](${origin}/signup/) (14-day Developer trial). Self-hosted operators install via \`npm install -g clawql-mcp\` and configure MCP in Cursor, Claude, or other MCP clients — see [${docs}/getting-started](${docs}/getting-started).
+Hosted ClawQL accounts: request early access at [${origin}/signup/](${origin}/signup/) (managed waitlist). Self-hosted operators run \`npx clawql-mcp\` (or a local install) and configure MCP in Cursor, Claude, or other MCP clients — see [${docs}/getting-started](${docs}/getting-started).
 
 \`\`\`json
 {
@@ -381,13 +382,13 @@ export function getAgentMarkdownMap(origin = getSiteOriginString()): Record<stri
 
   return {
     '/': buildHomeMarkdown(origin),
-    '/pricing': `# Pricing\n\nClawQL pricing — self-host free on Apache 2.0 or start a 14-day Developer trial.\n\nSee ${origin}/pricing/ for tier details.`,
+    '/pricing': `# Pricing\n\nClawQL pricing — self-host free on Apache 2.0 or request early access for managed hosting.\n\nSee ${origin}/pricing/ for tier details.`,
     '/about': `# About ClawQL\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.\n\nSee ${origin}/about/ for mission and ecosystem overview.`,
-    '/signup': `# Sign up\n\nStart a 14-day Developer trial or join the waitlist.\n\n${origin}/signup/`,
+    '/signup': `# Sign up\n\nRequest early access (managed waitlist) or self-host free.\n\n${origin}/signup/`,
     '/privacy-policy': `# Privacy Policy\n\nSee ${origin}/privacy-policy/ for the full policy.`,
     '/industries': `# Industries\n\nVertical workflows for lending, real estate, surveillance, government, healthcare, legal, insurance, and education.\n\n${origin}/industries/`,
     '/inference/gtm': `# Inference-first GTM playbook\n\nClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — Zero-Trust Agentic Fabric.\n\nSee ${origin}/inference/gtm/.`,
-    '/idp': `# Intelligent Document Processing\n\nClawQL IDP — full document lifecycle (ingest → VDR), flat Starter pricing vs ABBYY / Hyperscience / Intralinks, Helm deploy or 14-day trial.\n\nSee ${origin}/idp/.`,
+    '/idp': `# Intelligent Document Processing\n\nClawQL IDP — full document lifecycle (ingest → VDR), flat Starter pricing vs ABBYY / Hyperscience / Intralinks, Helm deploy or request early access.\n\nSee ${origin}/idp/.`,
     '/idp/gtm': `# IDP-first GTM playbook\n\nStandalone ClawQL Intelligent Document Processing go-to-market — market reality, honest positioning, sales motion, and landing-page brief vs ABBYY, Hyperscience, and Intralinks.\n\nSee ${origin}/idp/gtm/.`,
     '/agents': `# Agentic Platform\n\nClawQL agents decide when to act, enumerate institutional knowledge exactly, scaffold their own browser interfaces via /mcp-ui, and prove everything on a WORM trail. Streams + ontology structured recall + clawql-tee.\n\nSee ${origin}/agents/.\n\nSpecs: ${docs}/streams/clawql-streams · ${docs}/mcp/mcp-ui · ${docs}/streams/clawql-tee`,
     '/protocol-fabric': `# ClawQL Protocol Fabric\n\nAny protocol to any protocol via MCP — ClawQL Core inbound, mcp-api-adapter outbound. Proven end-to-end fabric loop.\n\nSee ${origin}/protocol-fabric/.\n\nDocs: ${docs}/mcp/protocol-fabric · ${docs}/mcp/mcp-api-adapter`,

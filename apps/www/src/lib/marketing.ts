@@ -56,7 +56,7 @@ export const mcpToolTiers = {
     tools: [
       {
         name: 'search',
-        help: 'Rank thousands of API operations by natural-language intent. Specs stay server-side; agents get operation IDs and parameter hints.',
+        help: 'Rank thousands of API operations by natural-language intent. Specs stay server-side; agents get operation IDs and parameter hints. Provider catalog is empty by default — opt in with CLAWQL_PROVIDER / providers.pack / CLAWQL_TIER.',
       },
       {
         name: 'execute',
@@ -70,11 +70,19 @@ export const mcpToolTiers = {
         name: 'cache',
         help: 'Ephemeral LRU scratch space for the active session. Use memory_* when data must survive restarts.',
       },
+      {
+        name: 'skills_list',
+        help: 'Discover shipped Agent Skills (SKILL.md packs) registered on the server — including handoff and workflow recipes.',
+      },
+      {
+        name: 'skills_get',
+        help: 'Fetch a skill body by name so agents can follow vetted SOPs instead of improvising every workflow.',
+      },
     ],
   },
   memory: {
-    label: 'Memory & knowledge',
-    tagline: 'Default on — opt out with CLAWQL_ENABLE_MEMORY=0',
+    label: 'Memory & documents',
+    tagline: 'Default on — opt out with CLAWQL_ENABLE_MEMORY=0 (documents follow the same default-on pattern)',
     tools: [
       {
         name: 'memory_ingest',
@@ -88,15 +96,11 @@ export const mcpToolTiers = {
         name: 'ingest_external_knowledge',
         help: 'Bulk Markdown or HTTPS URLs into the vault — ideal for importing docs, threads, and vendor analyses.',
       },
-      {
-        name: 'knowledge_search_onyx',
-        help: 'Hybrid enterprise search over your Onyx index. Ground agent answers in indexed documents.',
-      },
     ],
   },
   automation: {
     label: 'Automation & ops',
-    tagline: 'Opt in via CLAWQL_ENABLE_* flags',
+    tagline: 'Opt in via CLAWQL_ENABLE_* (with CLAWQL_INSTANCE_SPEC / CLAWQL_TIER composition in 8.0)',
     tools: [
       {
         name: 'schedule',
@@ -114,11 +118,15 @@ export const mcpToolTiers = {
         name: 'workflow / argocd',
         help: 'Submit Argo Workflows and observe Argo CD Applications from the same MCP surface your agents already use.',
       },
+      {
+        name: 'knowledge_search_onyx',
+        help: 'Hybrid enterprise search over your Onyx index. Opt in with CLAWQL_ENABLE_ONYX (plus instance/tier composition).',
+      },
     ],
   },
   idp: {
     label: 'IDP document pipeline',
-    tagline: 'pdf-inspector route, eight vendors, grounded extract',
+    tagline: 'Opt in — pdf-inspector route, eight vendors, grounded extract',
     tools: [
       {
         name: 'inspect_pdf',
@@ -227,8 +235,11 @@ export const openBenchMiniFirm = {
 
 /** Protocol Fabric surface lists — shipped + planned, kept honest for homepage. */
 export const protocolFabricSurfaces = {
-  inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · QR stream · WebMCP (preview)',
-  outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · QR · /mcp-ui',
+  /** mcp-api-adapter: 7 surfaces shipped; QR is planned (8th), not equal to shipped. */
+  inbound: 'REST · GraphQL · gRPC · WebSocket · MCP · generated CLI · WebMCP (preview) · QR stream (planned)',
+  outbound: 'OpenAPI · GraphQL · Streamable HTTP · gRPC · gen-cli · WebSocket · /mcp-ui · QR (planned)',
+  shippedCount: 7,
+  plannedNote: 'QR optical channel is planned as the 8th mcp-api-adapter surface — not shipped yet.',
   /** Dedicated marketing landing on clawql.com. */
   pageHref: '/protocol-fabric',
   docsHref: 'https://docs.clawql.com/mcp/protocol-fabric',

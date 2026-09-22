@@ -4,15 +4,16 @@ This page summarizes how ClawQL selects specs, loads auth, and enables optional 
 
 ## Feature tiers (architecture diagram)
 
-![ClawQL Feature Tiers — Core, Memory/Documents (default-on, opt-out), Sandbox/Ouroboros/Automation (default-off, opt-in)](images/clawql-feature-tiers.png)
+![ClawQL Feature Tiers — Core, Memory/Documents (default-on, opt-out), Sandbox/Automation (default-off, opt-in); Ouroboros always via clawql-harness](images/clawql-feature-tiers.png)
 
-ClawQL groups capabilities into three bands. This matches the **layer diagram** above (**ClawQL Core** vs default-on opt-out vs default-off opt-in). The diagram is revised when new modules ship (for example future **`clawql-web3`**); the sections below remain authoritative for env and registration behavior.
+ClawQL groups capabilities into three bands. This matches the **layer diagram** above (**ClawQL Core** vs default-on opt-out vs default-off opt-in). **Ouroboros** tools are always registered via **`clawql-harness`** (not the default-off band). The diagram is revised when new modules ship (for example future **`clawql-web3`**); the sections below remain authoritative for env and registration behavior.
 
 ### ClawQL Core (always on — no opt-out)
 
-**There is no env or Helm toggle for Core.** The diagram places **`search`**, **`execute`**, **`audit`**, and **`cache`** in this band together:
+**There is no env or Helm toggle for Core.** The diagram places **`search`**, **`execute`**, **`audit`**, **`cache`**, **`skills_list`**, and **`skills_get`** in this band together:
 
-- **`search`**, **`execute`** — OpenAPI / Discovery discovery and execution; optional **native GraphQL** / **gRPC** merged into the same index from env (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) and/or the **bundled GraphQL-only** provider **`linear`** ([ADR 0002](../adr/0002-multi-protocol-supergraph.md), **`providers/README.md`**).
+- **`search`**, **`execute`** — OpenAPI / Discovery discovery and execution; optional **native GraphQL** / **gRPC** merged into the same index from env (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) and/or the **bundled GraphQL-only** provider **`linear`** ([ADR 0002](../adr/0002-multi-protocol-supergraph.md), **`providers/README.md`**). **`search`** also ranks installed **skills** alongside operations.
+- **`skills_list`**, **`skills_get`** — lightweight skill index and full skill body by `skillId` (ProviderPlugin / StandaloneSkillPlugin; handoff skill pack default-on).
 - **`audit`** — in-process event ring buffer ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)); tune **`CLAWQL_AUDIT_MAX_ENTRIES`** only. **Prometheus:** **`clawql_audit_*`** aggregates on **`GET /metrics`** (default on; **`CLAWQL_ENABLE_HTTP_METRICS=0`** omits the route). **Loki:** optional **`CLAWQL_LOKI_PUSH_URL`** (+ **`CLAWQL_LOKI_BEARER_TOKEN`** / **`CLAWQL_LOKI_TENANT_ID`**) pushes each **`append`** as JSON. Not durable — use **`memory_ingest`** for persisted trails.
 - **`cache`** — in-process LRU key/value ([#75](https://github.com/danielsmithdevelopment/ClawQL/issues/75)); tune **`CLAWQL_CACHE_MAX_*`** only. Not persisted — use **`memory_ingest`** / **`memory_recall`** for vault-backed state.
 
@@ -45,8 +46,9 @@ Set **`1`** / **`true`** / **`yes`** where noted:
 | --------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ClawQL Sandbox**    | **`sandbox_exec`**                                         | **`CLAWQL_ENABLE_SANDBOX=1`** registers the tool. Then **`CLAWQL_SANDBOX_BACKEND`**: omit = bridge; **`auto`** = Seatbelt → Docker → bridge; or pin **`bridge`** \| **`macos-seatbelt`** \| **`docker`** ([#207](https://github.com/danielsmithdevelopment/ClawQL/issues/207)). |
 | **Code graph**        | **`codegraph_*`** (seven tools)                            | **`CLAWQL_ENABLE_CODEGRAPH=1`** — registered by **`MemoryPlugin`**; requires memory tier on. See [`plugins/codegraph.md`](../plugins/codegraph.md). Hybrid **`memory_recall`**: **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**.                                                  |
-| **ClawQL Ouroboros**  | **`ouroboros_*`** (three tools)                            | **`CLAWQL_ENABLE_OUROBOROS=1`**                                                                                                                                                                                                                                                 |
 | **ClawQL Automation** | **`schedule`**, **`notify`**, **`workflow`**, **`argocd`** | **`CLAWQL_ENABLE_SCHEDULE=1`**, **`CLAWQL_ENABLE_NOTIFY=1`**, **`CLAWQL_ENABLE_WORKFLOW=1`**, **`CLAWQL_ENABLE_ARGO_CD=1`** (Argo Workflows ≥ 3.4.0 / Argo CD CRDs; namespace allowlists required)                                                                              |
+
+**ClawQL Ouroboros (always on):** **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, **`ouroboros_measure_drift`** register via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`). Optional Postgres: **`CLAWQL_OUROBOROS_DATABASE_URL`**. Langfuse eval: **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`**. **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate (may still appear in Helm as unused/legacy).
 
 **`workflow`** — durable **Argo Workflows** pipelines (template-ref **`submit`**, **`wait`**, **`get`**, **`logs`**, suspend/resume, cron, artifacts). Implemented in **`clawql-automation`** / **`AutomationPlugin`**. Helm: **`enableWorkflow: true`** + **`workflow.namespaceAllowlist`**. Operator guide: [`docs/mcp/workflow-tool.md`](../mcp/workflow-tool.md).
 
@@ -136,7 +138,8 @@ ClawQL picks the best internal connection per provider (**gRPC → GraphQL → O
 See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
-- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_OUROBOROS`.
+- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_LANGFUSE_EVAL`.
+- **Deprecated (not a registration gate):** `CLAWQL_ENABLE_OUROBOROS` — Ouroboros tools always load via `clawql-harness`.
 
 ## `.env` loading and canonical `CLAWQL_*` names
 

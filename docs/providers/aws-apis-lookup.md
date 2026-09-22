@@ -32,7 +32,7 @@ clawql-mcp
 export CLAWQL_BUNDLED_PROVIDERS=google,aws,cloudflare
 ```
 
-**Default `all-providers`:** always includes every bundled vendor plus Google top-50 and AWS top-50 (only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP stack). Fresh install with no spec env loads the **opinionated default stack**: Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+**Default `all-providers`:** always includes every bundled vendor plus Google top-50 and AWS top-50 (only **`CLAWQL_ENABLE_DOCUMENTS=0`** trims the document/IDP stack). Fresh install with no provider env starts with an **empty catalog** — set **`CLAWQL_PROVIDER=default`** (or Helm **`providers.pack=default`**) for Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
 
 ## Authentication
 

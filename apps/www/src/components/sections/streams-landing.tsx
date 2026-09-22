@@ -116,7 +116,7 @@ export function StreamsLanding() {
                 Read the Streams spec
               </ButtonLink>
               <PlainButtonLink href={site.urls.signup} size="lg" color="light">
-                Start free trial <ArrowNarrowRightIcon />
+                Request access <ArrowNarrowRightIcon />
               </PlainButtonLink>
             </div>
           </div>
@@ -293,14 +293,14 @@ export function StreamsLanding() {
         headline="Put an event loop under your agents"
         subheadline={
           <p>
-            Start a trial on the Agentic Gateway today. When Streams lands, the same MCP endpoint, vault, and WORM trail
-            become the autonomous runtime — not a second product.
+            Request early access on the Agentic Gateway today. When Streams lands, the same MCP endpoint, vault, and
+            WORM trail become the autonomous runtime — not a second product.
           </p>
         }
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={STREAMS_SPEC} size="lg">
               Read the Streams spec <ArrowNarrowRightIcon />

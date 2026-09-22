@@ -33,7 +33,7 @@ export default function Page() {
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start free trial
+              Request access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/getting-started/inference`} size="lg">
               Get started <ArrowNarrowRightIcon />
@@ -60,7 +60,7 @@ export default function Page() {
         cta={
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
             <ButtonLink href={site.urls.signup} size="lg">
-              Start 14-day trial
+              Request early access
             </ButtonLink>
             <PlainButtonLink href={`${site.urls.docs}/getting-started/inference`} size="lg">
               Inference setup <ArrowNarrowRightIcon />

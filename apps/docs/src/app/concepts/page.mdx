@@ -31,9 +31,9 @@ Aligned with the layer diagram and [configuration § Feature tiers](https://gith
 
 **Single index.** OpenAPI/Discovery plus optional native sources contribute to one `search` result set ([spec configuration](https://docs.clawql.com/spec-configuration)).
 
-## Ouroboros (library + optional MCP tools)
+## Ouroboros (library + always-on MCP tools)
 
-For multi-step workflows that iterate on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL's repo includes the TypeScript `clawql-ouroboros` package — see [Ouroboros library](https://docs.clawql.com/ouroboros) and [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md). It complements the `search` → `execute` pattern: executors inside the loop can still call the same APIs through your integration layer. With `CLAWQL_ENABLE_OUROBOROS=1`, `clawql-mcp` registers three `ouroboros_*` MCP tools; without the flag, use the library from your own process.
+For multi-step workflows that iterate on a structured spec (acceptance criteria, ontology fields) until convergence, ClawQL's repo includes the TypeScript `clawql-ouroboros` package — see [Ouroboros library](https://docs.clawql.com/ouroboros) and [clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md). It complements the `search` → `execute` pattern: executors inside the loop can still call the same APIs through your integration layer. In `clawql-mcp`, harness tools (`clawql_think`, `ouroboros_*` including `ouroboros_measure_drift`) always register via `clawql-harness`; embed the library in your own process when you are not running `clawql-mcp`.
 
 ## How the two phases save tokens
 
