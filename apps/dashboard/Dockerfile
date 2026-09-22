@@ -62,7 +62,12 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-RUN apk upgrade --no-cache
+# Stock node:22-alpine ships npm 10.x with HIGH/CRITICAL node-tar / pacote / sigstore /
+# brace-expansion / ip-address (Trivy docker-publish gate). Match apps/docs: refresh npm
+# before copying the app tree so the final image only keeps patched toolchain packages.
+RUN apk upgrade --no-cache \
+  && npm install -g npm@11 \
+  && npm cache clean --force
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
