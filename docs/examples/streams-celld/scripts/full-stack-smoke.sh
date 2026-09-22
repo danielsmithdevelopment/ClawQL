@@ -205,16 +205,68 @@ rm -rf "$ROOT/.celld/dev"
 celld dev "$SMOKE_CFG" --port "$PORT" &
 CELLD_PID=$!
 
+cd "$ROOT"
+# Fresh DO SQLite avoids stale spawn_count / NodeFenced leftovers across smokes.
+rm -rf "$ROOT/.celld/dev"
+# Config must live under the project (celld resolves worker entry relative to it).
+CELLD_LOG="${FULL_STACK_CELLD_LOG:-$(mktemp "${TMPDIR:-/tmp}/streams-celld.XXXXXX.log")}"
+celld dev "$SMOKE_CFG" --port "$PORT" >"$CELLD_LOG" 2>&1 &
+CELLD_PID=$!
+
 wait_http "$BASE/health" "celld" "$CELLD_PID" 80
-# Settle after first build so a watcher rebuild does not fence the webhook.
-sleep 1
+echo "full-stack-smoke: celld /health up — waiting out startup watcher rebuild" >&2
+
+# celld often prints ready → change detected → restarting → ready. Health can stay
+# 200 across that window while DO SQLite fences in-flight MCP writes. Wait for the
+# restart to finish (second ready in logs) or a hard settle timeout, then re-check.
+rebuild_deadline=$((SECONDS + 60))
+saw_restart=0
+saw_second_ready=0
+while ((SECONDS < rebuild_deadline)); do
+  if grep -Fq 'restarting the application' "$CELLD_LOG" 2>/dev/null; then
+    saw_restart=1
+  fi
+  ready_count="$(grep -c 'ready  http://' "$CELLD_LOG" 2>/dev/null || true)"
+  if ((saw_restart == 1 && ready_count >= 2)); then
+    saw_second_ready=1
+    break
+  fi
+  # No rebuild observed after several seconds — proceed (some runners skip the blip).
+  if ((saw_restart == 0 && SECONDS > rebuild_deadline - 50)); then
+    break
+  fi
+  sleep 0.25
+done
+if ((saw_second_ready == 1)); then
+  echo "full-stack-smoke: observed celld restart + second ready" >&2
+elif ((saw_restart == 1)); then
+  echo "full-stack-smoke: saw restart; waiting for /health again" >&2
+else
+  echo "full-stack-smoke: no restart observed; settling before webhook" >&2
+fi
+sleep 2
+wait_http "$BASE/health" "celld-after-rebuild" "$CELLD_PID" 80
+sleep 2
 curl -sf "$BASE/health" | grep -q clawql-streams-celld-skeleton
 
+post_webhook() {
+  local event_id="$1"
+  curl -sf -X POST "$BASE/webhook/full-stack" \
+    -H 'content-type: application/json' \
+    -H "x-clawql-event-id: ${event_id}" \
+    -d '{"probe":true,"mode":"full-stack"}'
+}
+
 EVENT_ID="full-stack-$(date +%s)-$$"
-RESP=$(curl -sf -X POST "$BASE/webhook/full-stack" \
-  -H 'content-type: application/json' \
-  -H "x-clawql-event-id: ${EVENT_ID}" \
-  -d '{"probe":true,"mode":"full-stack"}')
+RESP="$(post_webhook "$EVENT_ID")"
+# One retry if the startup rebuild still fenced Durable Object writes mid-flight.
+if printf '%s' "$RESP" | grep -Fq 'NodeFenced'; then
+  echo "full-stack-smoke: NodeFenced on first webhook — retrying after settle" >&2
+  sleep 3
+  wait_http "$BASE/health" "celld-before-retry" "$CELLD_PID" 40
+  EVENT_ID="full-stack-$(date +%s)-$$"
+  RESP="$(post_webhook "$EVENT_ID")"
+fi
 
 fail() {
   echo "full-stack-smoke: FAIL - $1" >&2
