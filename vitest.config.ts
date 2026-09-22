@@ -78,6 +78,8 @@ export default defineConfig({
         "packages/clawql-automation/src/**/*.ts",
         "packages/clawql-ouroboros/src/**/*.ts",
         "packages/panguard-mcp-bridge/src/**/*.ts",
+        "packages/clawql-audit/src/**/*.ts",
+        "packages/mcp-api-adapter/src/**/*.ts",
       ],
       exclude: [
         "src/**/*.test.ts",
@@ -87,6 +89,9 @@ export default defineConfig({
         "packages/clawql-automation/src/**/*.test.ts",
         "packages/clawql-ouroboros/src/**/*.test.ts",
         "packages/panguard-mcp-bridge/src/**/*.test.ts",
+        "packages/clawql-audit/src/**/*.test.ts",
+        "packages/mcp-api-adapter/src/**/*.test.ts",
+        "packages/mcp-api-adapter/src/**/*.e2e.test.ts",
         "src/test-utils/**",
         "src/swagger2openapi.d.ts",
       ],

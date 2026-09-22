@@ -52,7 +52,7 @@ describe("sandbox-capabilities", () => {
       return;
     }
     const { accessSync, constants } = await import("node:fs");
-    let expected = false;
+    let expected: boolean;
     try {
       accessSync("/usr/bin/sandbox-exec", constants.X_OK);
       expected = true;

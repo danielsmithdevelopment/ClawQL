@@ -6,6 +6,7 @@ import { OBSERVABILITY_PLUGIN_ID } from "clawql-observability/plugin";
 import { createClawQLApi } from "clawql-api";
 import {
   composeHorizontalPluginLayers,
+  composeHorizontalPluginLayersDynamic,
   composeHorizontalPluginLayersFromTierSpec,
   optionalFlagsFromHorizontalTierSpec,
 } from "./composition/compose-horizontal-plugin-layers.js";
@@ -86,5 +87,27 @@ describe("composeHorizontalPluginLayers", () => {
     expect(api.registry.list().some((p) => p.id === OBSERVABILITY_PLUGIN_ID)).toBe(true);
     expect(api.listMcpTools().some((t) => t.name === "observability_health")).toBe(true);
     expect(api.listMcpTools().some((t) => t.name === "observability_alerts")).toBe(true);
+  });
+});
+
+describe("composeHorizontalPluginLayersDynamic", () => {
+  it("still loads harness when all optional flags are off", async () => {
+    const layers = await composeHorizontalPluginLayersDynamic(
+      { ...baseFlags },
+      { includeNatsWorker: false }
+    );
+    const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
+    expect(layers.length).toBe(1);
+  });
+
+  it("dynamically loads memory when enableMemory is true", async () => {
+    const layers = await composeHorizontalPluginLayersDynamic(
+      { ...baseFlags, enableMemory: true },
+      { includeNatsWorker: false }
+    );
+    const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
+    expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
   });
 });
