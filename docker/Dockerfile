@@ -55,7 +55,8 @@ RUN mkdir -p /vault && chown 65532:65532 /vault
 # Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
 # Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
 # Pin digest — bump when rebuilding images (Trivy gate + Debian base refreshes).
-FROM gcr.io/distroless/nodejs24-debian13@sha256:ef5f3caf80da1630edd1a4df7b307a8f7d4553f8eec1dd29852b76e793593903 AS runtime
+# Digest bump: libssl3t64 3.5.7-1~deb13u2 (CVE-2026-14456). Prior pin had 3.5.6.
+FROM gcr.io/distroless/nodejs24-debian13@sha256:b1fc33242cc74151f50c62b4a03d48afd759dccf81279b5f8e401db4546479c1 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
