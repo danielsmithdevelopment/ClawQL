@@ -48,8 +48,20 @@ if project_exists; then
 fi
 
 echo "Creating Cloudflare Pages project: ${PROJECT_NAME} (production branch: ${PRODUCTION_BRANCH})"
-if $WRANGLER pages project create "$PROJECT_NAME" --production-branch "$PRODUCTION_BRANCH"; then
+set +e
+create_output="$($WRANGLER pages project create "$PROJECT_NAME" --production-branch "$PRODUCTION_BRANCH" 2>&1)"
+create_rc=$?
+set -e
+printf '%s\n' "$create_output"
+
+if [[ "$create_rc" -eq 0 ]]; then
   echo "Created Cloudflare Pages project: ${PROJECT_NAME}"
+  exit 0
+fi
+
+# Race / stale list: create fails because the project is already present.
+if printf '%s' "$create_output" | grep -Eiq 'already exists|code: 8000002'; then
+  echo "Cloudflare Pages project already exists (create returned already-exists): ${PROJECT_NAME}"
   exit 0
 fi
 
