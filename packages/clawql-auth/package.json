@@ -29,8 +29,7 @@
     "@types/express": "^5.0.6",
     "effect": "^3.21.4",
     "express-rate-limit": "^8.7.0",
-    "jose": "^6.2.12",
-    "viem": "^2.55.4"
+    "jose": "^6.2.12"
   },
   "peerDependencies": {
     "@simplewebauthn/server": "^14.0.1",
@@ -72,5 +71,8 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "optionalDependencies": {
+    "viem": "^2.56.8"
   }
 }
