@@ -158,9 +158,16 @@ describe("Hermes adapter", () => {
   });
 });
 
-describe("getAdapterBundle", () => {
-  it("resolves cline", async () => {
-    const cline = await Effect.runPromise(getAdapterBundle("cline", "/tmp/x.db"));
-    expect(cline.adapterLayer).toBeDefined();
+describe("getAdapterBundle resolves AgentAdapter.name", () => {
+  it("resolves cline with matching adapter name", async () => {
+    const { wormLayer, adapterLayer } = await Effect.runPromise(
+      getAdapterBundle("cline", "/tmp/x.db")
+    );
+    const name = await Effect.runPromise(
+      Effect.gen(function* () {
+        return (yield* AgentAdapter).name;
+      }).pipe(Effect.provide(Layer.merge(wormLayer, adapterLayer)))
+    );
+    expect(name).toBe("cline");
   });
 });

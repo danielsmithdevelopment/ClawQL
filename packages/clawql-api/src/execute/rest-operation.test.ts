@@ -1,13 +1,13 @@
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { executeRestOperation, mergedAuthHeadersEffect, renderPath } from "clawql-api";
-import type { OpenAPIDoc } from "clawql-api";
+import { mergedAuthHeadersEffect } from "../auth/auth-headers.js";
+import { INLINE_OPENAPI_REQUEST_BODY, type Operation } from "../spec/operation-types.js";
+import type { OpenAPIDoc } from "../spec/spec-loader.js";
+import { executeRestOperation, renderPath } from "./rest-operation.js";
+import { withFetchServer } from "./with-fetch-server.js";
 
 const mergedAuthHeaders = (specLabel?: string): Record<string, string> =>
   Effect.runSync(mergedAuthHeadersEffect(specLabel));
-import type { Operation } from "clawql-api";
-import { INLINE_OPENAPI_REQUEST_BODY } from "clawql-api";
-import { withFetchServer } from "./with-fetch-server.js";
 
 function makeOpenApi(serverUrl: string): OpenAPIDoc {
   return {

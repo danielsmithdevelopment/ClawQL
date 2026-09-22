@@ -455,37 +455,37 @@ clawql inference <subcommand>
 
 ## Environment Variables
 
-| Variable                                      | Default                         | Purpose                                 |
-| --------------------------------------------- | ------------------------------- | --------------------------------------- |
-| `OPENAI_API_KEY`                              | —                               | OpenAI provider                         |
-| `ANTHROPIC_API_KEY`                           | —                               | Anthropic provider                      |
-| `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`        | Ollama runtime                          |
-| `CLAWQL_INFERENCE_PORT`                       | `8080`                          | HTTP listen port                        |
-| `CLAWQL_INFERENCE_ROUTING_ENABLED`            | off                             | Tier escalation                         |
-| `CLAWQL_INFERENCE_MODEL_FRUGAL`               | `ollama/phi4`                   | Frugal tier model                       |
-| `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`            | Standard tier model                     |
-| `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`     | Frontier tier model                     |
-| `CLAWQL_INFERENCE_MODEL_PIN`                  | —                               | Pin single model                        |
-| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | auto when embeddings configured | Semantic cache (Layer 5)                |
-| `CLAWQL_INFERENCE_TERSE`                      | on                              | Terse output post-processor (Layer 3)   |
-| `CLAWQL_INFERENCE_PROMPT_CACHE`               | on                              | Provider prompt-cache markers (Layer 4) |
-| `CLAWQL_INFERENCE_HISTORY_COMPRESS`           | off                             | History distillation (Layer 6)          |
-| `CLAWQL_INFERENCE_PROMPT_COMPRESS`            | off                             | Final prompt compression (Layer 7)      |
-| `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`            | on when routing enabled         | HTTP `clawql/auto` aliases (Layer 8)    |
-| `CLAWQL_INFERENCE_STRUCTURED_OUTPUT`          | on                              | Structured output hints (Layer 9)       |
-| `CLAWQL_INFERENCE_TOKEN_BUDGET`               | on                              | Token budget signaling (Layer 10)       |
-| `CLAWQL_INFERENCE_PREFILL`                    | off                             | Assistant prefill opener (Layer 11)     |
-| `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                          | Cache similarity floor                  |
-| `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                           | Cache TTL                               |
-| `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                             | Fallback chains                         |
-| `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                             | Require virtual keys                    |
-| `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME`        | `memory` / `jsonl` / `postgres` / `off` |
-| `CLAWQL_INFERENCE_DATABASE_URL`               | —                               | Postgres URL                            |
-| `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                             | Cron worker with serve                  |
-| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                             | Agent coordination                      |
-| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                             | Plan entitlement gate                   |
-| `CLAWQL_ENABLE_OTEL_TRACING`                  | off                             | Infra OTLP spans                        |
-| `CLAWQL_ENABLE_LANGFUSE`                      | on when keys set                | Langfuse work-trace OTLP                |
+| Variable                                      | Default                         | Purpose                                                                                                                                                                               |
+| --------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`                              | —                               | OpenAI provider                                                                                                                                                                       |
+| `ANTHROPIC_API_KEY`                           | —                               | Anthropic provider                                                                                                                                                                    |
+| `OLLAMA_BASE_URL`                             | `http://127.0.0.1:11434`        | Ollama runtime                                                                                                                                                                        |
+| `CLAWQL_INFERENCE_PORT`                       | `8080`                          | HTTP listen port                                                                                                                                                                      |
+| `CLAWQL_INFERENCE_ROUTING_ENABLED`            | off                             | Tier escalation                                                                                                                                                                       |
+| `CLAWQL_INFERENCE_MODEL_FRUGAL`               | `ollama/phi4`                   | Frugal tier model                                                                                                                                                                     |
+| `CLAWQL_INFERENCE_MODEL_STANDARD`             | `groq/llama-3.3-70b`            | Standard tier model                                                                                                                                                                   |
+| `CLAWQL_INFERENCE_MODEL_FRONTIER`             | `anthropic/claude-sonnet-4`     | Frontier tier model                                                                                                                                                                   |
+| `CLAWQL_INFERENCE_MODEL_PIN`                  | —                               | Pin single model                                                                                                                                                                      |
+| `CLAWQL_INFERENCE_SEMANTIC_CACHE`             | auto when embeddings configured | Semantic cache (Layer 5)                                                                                                                                                              |
+| `CLAWQL_INFERENCE_TERSE`                      | on                              | Terse output post-processor (Layer 3)                                                                                                                                                 |
+| `CLAWQL_INFERENCE_PROMPT_CACHE`               | on                              | Provider prompt-cache markers (Layer 4)                                                                                                                                               |
+| `CLAWQL_INFERENCE_HISTORY_COMPRESS`           | off                             | History distillation (Layer 6)                                                                                                                                                        |
+| `CLAWQL_INFERENCE_PROMPT_COMPRESS`            | off                             | Final prompt compression (Layer 7)                                                                                                                                                    |
+| `CLAWQL_INFERENCE_HTTP_AUTO_ROUTE`            | on when routing enabled         | HTTP `clawql/auto` aliases (Layer 8)                                                                                                                                                  |
+| `CLAWQL_INFERENCE_STRUCTURED_OUTPUT`          | on                              | Structured output hints (Layer 9)                                                                                                                                                     |
+| `CLAWQL_INFERENCE_TOKEN_BUDGET`               | on                              | Token budget signaling (Layer 10)                                                                                                                                                     |
+| `CLAWQL_INFERENCE_PREFILL`                    | off                             | Assistant prefill opener (Layer 11)                                                                                                                                                   |
+| `CLAWQL_INFERENCE_CACHE_THRESHOLD`            | `0.92`                          | Cache similarity floor                                                                                                                                                                |
+| `CLAWQL_INFERENCE_CACHE_TTL`                  | `24h`                           | Cache TTL                                                                                                                                                                             |
+| `CLAWQL_INFERENCE_FALLBACK_ENABLED`           | off                             | Fallback chains                                                                                                                                                                       |
+| `CLAWQL_INFERENCE_KEYS_ENABLED`               | off                             | Require virtual keys                                                                                                                                                                  |
+| `CLAWQL_INFERENCE_STORE`                      | jsonl when `CLAWQL_HOME`        | `memory` / `jsonl` / `postgres` / `off`                                                                                                                                               |
+| `CLAWQL_INFERENCE_DATABASE_URL`               | —                               | Postgres URL. Integration test: `packages/clawql-inference/src/store/postgres.integration.test.ts` (skips unless set). Optional CI: repo var `CLAWQL_ENABLE_INFERENCE_POSTGRES_CI=1`. |
+| `CLAWQL_INFERENCE_PIPELINE_WORKER`            | off                             | Cron worker with serve                                                                                                                                                                |
+| `CLAWQL_INFERENCE_AGENT_COORDINATION_ENABLED` | off                             | Agent coordination                                                                                                                                                                    |
+| `CLAWQL_PAYMENTS_ENFORCE_INFERENCE`           | off                             | Plan entitlement gate                                                                                                                                                                 |
+| `CLAWQL_ENABLE_OTEL_TRACING`                  | off                             | Infra OTLP spans                                                                                                                                                                      |
+| `CLAWQL_ENABLE_LANGFUSE`                      | on when keys set                | Langfuse work-trace OTLP                                                                                                                                                              |
 
 Full env table: [`clawql-inference.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/inference/clawql-inference.md).
 

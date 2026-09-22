@@ -1,5 +1,8 @@
 import { createClawQLApi, ExecuteService } from "clawql-api";
 import { Effect, Layer } from "effect";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AUTOMATION_PLUGIN_ID } from "./automation-plugin.js";
 import { makeAutomationLayer } from "./automation-layer.js";
@@ -16,5 +19,20 @@ describe("makeAutomationLayer", () => {
     });
     expect(api.registry.list().some((p) => p.id === AUTOMATION_PLUGIN_ID)).toBe(true);
     expect(api.listMcpTools().map((t) => t.name)).toContain("notify");
+  });
+
+  it("registers schedule when enableSchedule is set", () => {
+    const vault = mkdtempSync(join(tmpdir(), "clawql-automation-layer-"));
+    process.env.CLAWQL_SCHEDULE_DB_PATH = join(vault, "schedule.db");
+    const executeLayer = Layer.succeed(ExecuteService, {
+      execute: () => Effect.succeed({ content: [{ type: "text" as const, text: "{}" }] }),
+    });
+    const api = createClawQLApi({
+      plugins: [],
+      executeLayer,
+      pluginLayers: [makeAutomationLayer({ enableSchedule: true })],
+    });
+    expect(api.registry.list().some((p) => p.id === AUTOMATION_PLUGIN_ID)).toBe(true);
+    expect(api.listMcpTools().map((t) => t.name)).toContain("schedule");
   });
 });

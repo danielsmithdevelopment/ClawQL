@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import {
   MemoryBackend,
   WORMAuditTrail,
@@ -20,7 +20,7 @@ const qrKeys = {
   hmacKeyHex: "22".repeat(32),
 };
 
-describe("Phase 2 — Merkle root persistence", () => {
+describe("WORMAuditTrail Merkle batch sealing", () => {
   it("auto-seals roots every N appends and lists them", async () => {
     const worm = await WORMAuditTrail.create({
       local: new MemoryBackend(),
@@ -46,7 +46,7 @@ describe("Phase 2 — Merkle root persistence", () => {
   });
 });
 
-describe("Phase 2 — HTTP ApiKey routes", () => {
+describe("Audit HTTP ApiKey routes (handleAuditHttpRequest)", () => {
   it("rejects missing key and serves append/query/verify", async () => {
     const service = await Effect.runPromise(
       createWORMAuditTrailEffect({
@@ -110,24 +110,66 @@ describe("Phase 2 — HTTP ApiKey routes", () => {
     await Effect.runPromise(service.stop());
   });
 
-  it("starts HTTP when httpPort is set", async () => {
+  it("listens and serves /chain/verify when httpPort + apiKey are set", async () => {
+    const { createServer } = await import("node:net");
+    const port = await new Promise<number>((resolve, reject) => {
+      const s = createServer();
+      s.listen(0, "127.0.0.1", () => {
+        const addr = s.address();
+        const p = typeof addr === "object" && addr ? addr.port : 0;
+        s.close((err) => (err ? reject(err) : resolve(p)));
+      });
+      s.once("error", reject);
+    });
+
     const worm = await WORMAuditTrail.create({
       local: new MemoryBackend(),
       remote: new MemoryBackend(),
       ...trailDefaults,
-      httpPort: 0,
+      httpPort: port,
       apiKey: "live-key",
     });
-    await worm.append({
-      type: "SESSION_START",
-      timestamp: "2026-08-01T12:00:00.000Z",
-      sessionId: "live_http",
-    });
-    await worm.stop();
+    try {
+      await worm.append({
+        type: "SESSION_START",
+        timestamp: "2026-08-01T12:00:00.000Z",
+        sessionId: "live_http",
+      });
+      const res = await fetch(`http://127.0.0.1:${port}/chain/verify`, {
+        headers: { authorization: "ApiKey live-key" },
+      });
+      expect(res.status).toBe(200);
+      expect(((await res.json()) as { valid: boolean }).valid).toBe(true);
+    } finally {
+      await worm.stop();
+    }
+  });
+
+  it("fails create when httpPort is set without apiKey", async () => {
+    const prev = process.env.CLAWQL_AUDIT_API_KEY;
+    delete process.env.CLAWQL_AUDIT_API_KEY;
+    try {
+      const exit = await Effect.runPromiseExit(
+        createWORMAuditTrailEffect({
+          local: new MemoryBackend(),
+          remote: new MemoryBackend(),
+          ...trailDefaults,
+          httpPort: 19_111,
+        })
+      );
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isFailure(exit)) {
+        const squashed = Cause.squash(exit.cause) as { reason?: string };
+        expect(squashed.reason).toMatch(/apiKey|unauthenticated/i);
+      }
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_AUDIT_API_KEY;
+      else process.env.CLAWQL_AUDIT_API_KEY = prev;
+    }
   });
 });
 
-describe("Phase 2 — QR export", () => {
+describe("QR export (exportToQR + HTTP /export/qr)", () => {
   it("exports CBOR/RaptorQ/ChaCha20/HMAC QR chunks when keys are set", async () => {
     const worm = await WORMAuditTrail.create({
       local: new MemoryBackend(),

@@ -246,13 +246,37 @@ describe("clawql-auth Effect services", () => {
   });
 
   it("AwsAuthHelpers service resolves region and errors on empty servers", async () => {
-    const region = await Effect.runPromise(
-      Effect.gen(function* () {
-        const helpers = yield* AwsAuthHelpers;
-        return yield* helpers.resolveRegion();
-      }).pipe(Effect.provide(AwsAuthHelpersLive))
-    );
-    expect(typeof region).toBe("string");
+    const prevRegion = process.env.AWS_REGION;
+    const prevClawql = process.env.CLAWQL_AWS_REGION;
+    const prevDefault = process.env.AWS_DEFAULT_REGION;
+    delete process.env.AWS_REGION;
+    delete process.env.CLAWQL_AWS_REGION;
+    delete process.env.AWS_DEFAULT_REGION;
+    try {
+      const region = await Effect.runPromise(
+        Effect.gen(function* () {
+          const helpers = yield* AwsAuthHelpers;
+          return yield* helpers.resolveRegion();
+        }).pipe(Effect.provide(AwsAuthHelpersLive))
+      );
+      expect(region).toBe("us-east-1");
+
+      process.env.AWS_REGION = "eu-west-1";
+      const overridden = await Effect.runPromise(
+        Effect.gen(function* () {
+          const helpers = yield* AwsAuthHelpers;
+          return yield* helpers.resolveRegion();
+        }).pipe(Effect.provide(AwsAuthHelpersLive))
+      );
+      expect(overridden).toBe("eu-west-1");
+    } finally {
+      if (prevRegion === undefined) delete process.env.AWS_REGION;
+      else process.env.AWS_REGION = prevRegion;
+      if (prevClawql === undefined) delete process.env.CLAWQL_AWS_REGION;
+      else process.env.CLAWQL_AWS_REGION = prevClawql;
+      if (prevDefault === undefined) delete process.env.AWS_DEFAULT_REGION;
+      else process.env.AWS_DEFAULT_REGION = prevDefault;
+    }
 
     const exit = await Effect.runPromiseExit(
       resolveAwsApiBaseUrlEffect({ openapi: "3.0.0", paths: {} } as OpenAPIDoc)
@@ -262,16 +286,35 @@ describe("clawql-auth Effect services", () => {
     await Effect.runPromise(resolveAwsRegionEffect());
   });
 
-  it("ProviderAuthHeadersService.mergedAuthHeaders yields a headers object", async () => {
-    const headers = await Effect.runPromise(
-      Effect.gen(function* () {
-        const svc = yield* ProviderAuthHeadersService;
-        return yield* svc.mergedAuthHeaders("github");
-      }).pipe(Effect.provide(ProviderAuthHeadersServiceLive))
-    );
-    expect(typeof headers).toBe("object");
-    const direct = await Effect.runPromise(mergedAuthHeadersEffect());
-    expect(typeof direct).toBe("object");
+  it("ProviderAuthHeadersService.mergedAuthHeaders yields string header map", async () => {
+    const prevHeaders = process.env.CLAWQL_HTTP_HEADERS;
+    const prevMap = process.env.CLAWQL_PROVIDER_AUTH_JSON;
+    delete process.env.CLAWQL_PROVIDER_AUTH_JSON;
+    process.env.CLAWQL_HTTP_HEADERS = JSON.stringify({
+      Authorization: "Bearer test-token",
+      "X-Trace": "1",
+    });
+    try {
+      const headers = await Effect.runPromise(
+        Effect.gen(function* () {
+          const svc = yield* ProviderAuthHeadersService;
+          return yield* svc.mergedAuthHeaders("github");
+        }).pipe(Effect.provide(ProviderAuthHeadersServiceLive))
+      );
+      expect(headers).toEqual(
+        expect.objectContaining({
+          Authorization: "Bearer test-token",
+          "X-Trace": "1",
+        })
+      );
+      const direct = await Effect.runPromise(mergedAuthHeadersEffect("github"));
+      expect(direct.Authorization).toBe("Bearer test-token");
+    } finally {
+      if (prevHeaders === undefined) delete process.env.CLAWQL_HTTP_HEADERS;
+      else process.env.CLAWQL_HTTP_HEADERS = prevHeaders;
+      if (prevMap === undefined) delete process.env.CLAWQL_PROVIDER_AUTH_JSON;
+      else process.env.CLAWQL_PROVIDER_AUTH_JSON = prevMap;
+    }
   });
 
   it("requireWebAuthnStepUpEffect fails with WebAuthnStepUpError for unimplemented verifier", async () => {

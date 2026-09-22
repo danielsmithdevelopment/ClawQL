@@ -1,3 +1,8 @@
+/**
+ * PostgresInferenceStore integration. Skips unless CLAWQL_INFERENCE_DATABASE_URL is set (local CI / dev).
+ * Optional CI: enable repository variable CLAWQL_ENABLE_INFERENCE_POSTGRES_CI=1 (mirrors ouroboros-postgres-optional).
+ */
+
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { PostgresInferenceStore } from "./postgres.js";

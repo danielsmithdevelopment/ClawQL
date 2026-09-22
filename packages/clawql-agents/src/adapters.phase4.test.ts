@@ -82,12 +82,21 @@ describe("DeepSeek adapter", () => {
   });
 });
 
-describe("getAdapterBundle all seven", () => {
-  it("implements the full catalog", async () => {
-    expect(IMPLEMENTED_AGENTS).toHaveLength(7);
-    for (const name of IMPLEMENTED_AGENTS) {
-      const bundle = await Effect.runPromise(getAdapterBundle(name, `/tmp/${name}.db`));
-      expect(bundle.adapterLayer).toBeDefined();
+describe("getAdapterBundle catalog (IMPLEMENTED_AGENTS)", () => {
+  it("implements the full catalog with matching AgentAdapter.name", async () => {
+    expect([...IMPLEMENTED_AGENTS].sort()).toEqual(
+      ["cline", "deepseek", "goose", "hermes", "openclaw", "openhands", "pi"].sort()
+    );
+    for (const agent of IMPLEMENTED_AGENTS) {
+      const { wormLayer, adapterLayer } = await Effect.runPromise(
+        getAdapterBundle(agent, `/tmp/${agent}.db`)
+      );
+      const name = await Effect.runPromise(
+        Effect.gen(function* () {
+          return (yield* AgentAdapter).name;
+        }).pipe(Effect.provide(Layer.merge(wormLayer, adapterLayer)))
+      );
+      expect(name).toBe(agent);
     }
   });
 });

@@ -1,5 +1,5 @@
 import { loadMcpOAuthSigningMaterialEffect } from "clawql-auth";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import { exportPKCS8, generateKeyPair } from "jose";
 import { describe, expect, it } from "vitest";
 
@@ -61,9 +61,14 @@ describe("clawql-tee platform adapter", () => {
       sign: () => Effect.succeed("a.b.c"),
       env: { CLAWQL_TEE_STRICT: "1" } as NodeJS.ProcessEnv,
     });
-    await expect(
-      Effect.runPromise(signer.sign({ claims: { sub: "x" }, header: { alg: "RS256" } }))
-    ).rejects.toThrow(/CLAWQL_TEE_STRICT/);
+    const exit = await Effect.runPromiseExit(
+      signer.sign({ claims: { sub: "x" }, header: { alg: "RS256" } })
+    );
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (Exit.isFailure(exit)) {
+      const squashed = Cause.squash(exit.cause) as { reason?: string };
+      expect(squashed.reason).toMatch(/CLAWQL_TEE_STRICT/);
+    }
     expect(teeStrictFromEnv({ CLAWQL_TEE_STRICT: "1" } as NodeJS.ProcessEnv)).toBe(true);
   });
 });

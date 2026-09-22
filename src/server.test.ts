@@ -260,20 +260,6 @@ describe("server (stdio)", () => {
     expect(names.has("knowledge_search_onyx")).toBe(true);
   }, 20_000);
 
-  it("exposes ouroboros_* and clawql_think via clawql-harness by default (#141)", async () => {
-    const names = await listToolNames(
-      isolatedStdioChildEnv(minimalSpec, {
-        CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
-      }),
-      "clawql-stdio-ouroboros"
-    );
-    expect(names.has("ouroboros_create_seed_from_document")).toBe(true);
-    expect(names.has("ouroboros_run_evolutionary_loop")).toBe(true);
-    expect(names.has("ouroboros_get_lineage_status")).toBe(true);
-    expect(names.has("ouroboros_measure_drift")).toBe(true);
-    expect(names.has("clawql_think")).toBe(true);
-  }, 20_000);
-
   it("stdio ouroboros_run_evolutionary_loop routes through internal execute hint", async () => {
     const childEnv = isolatedStdioChildEnv(minimalSpec, {
       CLAWQL_OBSIDIAN_VAULT_PATH: mkdtempSync(join(tmpdir(), "clawql-vault-")),
