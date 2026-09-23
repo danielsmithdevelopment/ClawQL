@@ -14,9 +14,19 @@ export type AgentInstanceRecord = {
   readonly orgId: string;
   readonly lastActive: string;
   readonly status: AgentInstanceStatus;
+  /**
+   * Latest inference correlation / session id for dashboard topology → mcp-ui
+   * `/trace/agent/…` deep-links (#1082). When unset, topology falls back to `agentId`
+   * (live flamegraph if the store keyed that id; otherwise explicit not-found).
+   */
+  readonly lastCorrelationId?: string;
 };
 
 export type RegisterAgentInstanceInput = Omit<AgentInstanceRecord, "lastActive" | "status">;
+
+export type AgentHeartbeatOptions = {
+  readonly lastCorrelationId?: string;
+};
 
 export const AGENT_HEARTBEAT_INTERVAL_MS = 30_000;
 export const AGENT_IDLE_AFTER_MISSED = 1;

@@ -17,8 +17,10 @@ export type AgentNode = {
   readonly parentGatewayId: string;
   readonly lastActive: string;
   /**
-   * Link into Traces / mcp-ui (must resolve). Until #1082, this is the shared
-   * compressed-vs-fat **demo** compare URL — not a per-agent session deep-link.
+   * Deep-link into Traces / mcp-ui for this agent or cell.
+   * Resolves to `/mcp-ui/trace/agent/<sessionKey>` (live flamegraph when the
+   * inference store has that correlation id; otherwise explicit not-found —
+   * never a silent demo swap). See #1082.
    */
   readonly traceLink: string;
   /** Derived UI status for the tree status dot. */

@@ -1,4 +1,5 @@
 export type {
+  AgentHeartbeatOptions,
   AgentInstanceRecord,
   AgentInstanceStatus,
   PersistentAgentType,

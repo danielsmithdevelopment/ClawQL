@@ -18,6 +18,8 @@ export type ClawQLAgentConfig = {
   readonly parentGatewayId?: string;
   /** Stable instance id; defaults to session id on start. */
   readonly agentInstanceId?: string;
+  /** Latest inference correlation id for topology → mcp-ui agent traces (#1082). */
+  readonly lastCorrelationId?: string;
   /** Override CLAWQL_HOME for agent registry persistence. */
   readonly registryHome?: string;
 };

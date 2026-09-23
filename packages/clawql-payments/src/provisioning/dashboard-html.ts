@@ -404,7 +404,7 @@ function renderTopology(tree: TopologyTree): string {
             <span class="kind">${esc(a.kind)}</span>
             <span>${esc(agentLabel(a))}</span>
             <span class="meta-inline">${esc(agentMeta(a))}</span>
-            <a class="trace" href="${esc(a.traceLink)}" data-trace-src="${esc(a.traceLink)}" title="Compressed vs fat compare demo — not this agent's session (see #1082)">demo</a>
+            <a class="trace" href="${esc(a.traceLink)}" data-trace-src="${esc(a.traceLink)}" title="Open this agent/cell session in Traces (live flamegraph or explicit not-found)">trace</a>
           </li>`
               )
               .join("");
@@ -503,7 +503,7 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
       <a class="btn ghost" href="/credits/activity?tenant=${encodeURIComponent(actorTenantId)}">Credits activity</a>
     </div>
     ${table}
-    <p class="sub" style="margin-top:0.75rem">Embedded existing <code>/mcp-ui/trace/compare</code> compressed-vs-fat <strong>demo</strong> (not rebuilt; not per-agent — #1082). Topology <code>demo</code> links set the iframe source. WORM rows: payments audit trail.</p>`;
+    <p class="sub" style="margin-top:0.75rem">Default embed is the existing <code>/mcp-ui/trace/compare</code> compressed-vs-fat demo (not rebuilt). Topology <code>trace</code> links open <code>/mcp-ui/trace/agent/&lt;session&gt;</code> — live when the inference store has that correlation id, otherwise an explicit not-found page (never a silent demo swap). WORM rows: payments audit trail.</p>`;
   })();
 
   return `<!doctype html>
@@ -591,7 +591,7 @@ function renderCpcDashboardDoc(model: CpcDashboardModel): string {
 
     <section class="panel" id="traces">
       <h2>Traces</h2>
-      <p class="sub">Embedded mcp-ui compressed-vs-fat <strong>demo</strong> flamegraph (existing surface — not per-agent session data; #1082). Topology <strong>demo</strong> links open it here.</p>
+      <p class="sub">Topology <strong>trace</strong> links open per-agent/cell sessions here (<code>/mcp-ui/trace/agent/…</code>). Default iframe is the shared compressed-vs-fat compare demo until you click a node.</p>
       ${tracesHtml}
     </section>
 

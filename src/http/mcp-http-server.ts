@@ -69,6 +69,7 @@ import { Effect } from "effect";
 import { attachCreditsHateoasRoutes, attachProvisioningRoutes } from "clawql-payments";
 import { attachPaymentsWellKnownRoutes } from "clawql-payments/discovery";
 import { attachMppOpenApiRoutes, isMppOpenApiEnabled } from "clawql-payments/mpp";
+import { attachGatewayRegistryRoutes } from "clawql-network";
 import {
   headersFromExpressRequest,
   registerMcpX402TransportHooks,
@@ -321,6 +322,11 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   // HTMX forms on /credits/* (invite claim / accept / decline)
   app.use("/credits", express.urlencoded({ extended: false }));
   attachCreditsHateoasRoutes(app, { authConfig: gatewayAuthConfig });
+  // Gap A gateway registry HTTP (Bearer CLAWQL_NETWORK_REGISTRY_TOKEN or PUBLIC=1)
+  attachGatewayRegistryRoutes(app, {
+    env: process.env,
+    home: process.env.CLAWQL_HOME?.trim(),
+  });
   // CPC internal provision / usage (Bearer CLAWQL_CPC_PROVISION_TOKEN; 503 if unset)
   attachProvisioningRoutes(app);
   if (isMppOpenApiEnabled(process.env)) {

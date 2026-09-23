@@ -36,9 +36,9 @@ heartbeat(gatewayId: string, orgId: string): Effect<GatewayRecord | null>
 listMeshPeers(orgId: string): Effect<GatewayRecord[]>
 ```
 
-**Persistence:** org-scoped store under `$CLAWQL_HOME/network/registry/orgs/<orgId>/gateways.json` (control-plane / shared home — not the per-node `network.json` enrollment file). `joinMesh` calls `registerGateway` when `orgId` is provided (options or `CLAWQL_ORG_ID`). Each gateway calls `heartbeat` on an interval; `status` derives from heartbeat recency (`degraded` after 1 missed interval window, `offline` after 2).
+**Persistence:** org-scoped store under `$CLAWQL_HOME/network/registry/orgs/<orgId>/gateways.json` (control-plane / shared home — not the per-node `network.json` enrollment file). `joinMesh` calls `registerGateway` when `orgId` is provided (options or `CLAWQL_ORG_ID`). `initNetworking` starts `startGatewayHeartbeatLoop` after enrollment when `orgId` is set; `status` derives from heartbeat recency (`degraded` after 1 missed interval window, `offline` after 2).
 
-**Read surface:** `listMeshPeers` via Effect API + HTTP (`attachGatewayRegistryRoutes`) + MCP tool `network_list_mesh_peers`. Org-scoped; bearer `CLAWQL_NETWORK_REGISTRY_TOKEN` or existing credits-style public gate for local demos — not a new auth product.
+**Read surface:** `listMeshPeers` via Effect API + HTTP (`attachGatewayRegistryRoutes`, mounted on the clawql-mcp HTTP gateway at `/network/…`) + MCP tool `network_list_mesh_peers`. Org-scoped; bearer `CLAWQL_NETWORK_REGISTRY_TOKEN` or existing credits-style public gate for local demos — not a new auth product.
 
 ---
 
@@ -82,7 +82,8 @@ Once A and B exist:
 GatewayNode (regional|edge) <- listMeshPeers(orgId)      [Gap A, real]
 AgentNode (persistent)      <- listAgentInstances(orgId)  [Gap B, real]
 AgentNode (cell)            <- celld fleet API             [already real]
-traceLink                   <- /mcp-ui/trace/compare        [already real]
+traceLink                   <- /mcp-ui/trace/agent/<sessionKey>
+                               (lastCorrelationId ?? agentId; live-or-404)
 ```
 
 Four real sources, zero heuristic scraping, zero ledger-as-stand-in.

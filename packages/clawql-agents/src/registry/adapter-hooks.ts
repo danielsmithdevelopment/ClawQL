@@ -50,11 +50,14 @@ export const registerAgentInstanceOnStart = (
 
   return Effect.gen(function* () {
     const reg = yield* AgentInstanceRegistryService;
+    const lastCorrelationId =
+      config.lastCorrelationId?.trim() || process.env.CLAWQL_AGENT_CORRELATION_ID?.trim() || "";
     yield* reg.registerAgentInstance({
       agentId,
       agentType: hints.agentName as PersistentAgentType,
       parentGatewayId,
       orgId,
+      ...(lastCorrelationId ? { lastCorrelationId } : {}),
     });
   }).pipe(
     Effect.provide(agentInstanceRegistryLiveLayer(resolveHome(config))),
@@ -73,7 +76,11 @@ export const registerAgentInstanceOnStart = (
  */
 export const heartbeatAgentInstanceOnHealth = (
   config: ClawQLAgentConfig | null,
-  hints: { readonly agentId?: string; readonly agentName: AgentName }
+  hints: {
+    readonly agentId?: string;
+    readonly agentName: AgentName;
+    readonly lastCorrelationId?: string;
+  }
 ): Effect.Effect<void> => {
   if (!config || !isPersistentAgentType(hints.agentName)) return Effect.void;
   const orgId = resolveOrgId(config);
@@ -81,10 +88,19 @@ export const heartbeatAgentInstanceOnHealth = (
   const agentId = config.agentInstanceId?.trim() || hints.agentId || "";
   if (!agentId) return Effect.void;
   const parentGatewayId = resolveParentGatewayId(config);
+  const lastCorrelationId =
+    hints.lastCorrelationId?.trim() ||
+    config.lastCorrelationId?.trim() ||
+    process.env.CLAWQL_AGENT_CORRELATION_ID?.trim() ||
+    "";
 
   return Effect.gen(function* () {
     const reg = yield* AgentInstanceRegistryService;
-    const beat = yield* reg.heartbeat(agentId, orgId);
+    const beat = yield* reg.heartbeat(
+      agentId,
+      orgId,
+      lastCorrelationId ? { lastCorrelationId } : undefined
+    );
     if (beat) return;
     // Unknown to registry — reconnect only when we can form a full record.
     if (!parentGatewayId) {
@@ -98,6 +114,7 @@ export const heartbeatAgentInstanceOnHealth = (
       agentType: hints.agentName as PersistentAgentType,
       parentGatewayId,
       orgId,
+      ...(lastCorrelationId ? { lastCorrelationId } : {}),
     });
   }).pipe(
     Effect.provide(agentInstanceRegistryLiveLayer(resolveHome(config))),

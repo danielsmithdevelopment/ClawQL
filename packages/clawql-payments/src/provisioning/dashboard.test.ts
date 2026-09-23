@@ -180,7 +180,16 @@ describe("CPC dashboard", () => {
                 agentType: "hermes",
                 parentGatewayId: "gw1",
                 lastActive: new Date().toISOString(),
-                traceLink: "/mcp-ui/trace/compare",
+                traceLink: "/mcp-ui/trace/agent/hermes-042",
+                status: "healthy",
+              },
+              {
+                agentId: "cline-017",
+                kind: "persistent",
+                agentType: "cline",
+                parentGatewayId: "gw1",
+                lastActive: new Date().toISOString(),
+                traceLink: "/mcp-ui/trace/agent/cline-017",
                 status: "healthy",
               },
             ],
@@ -196,10 +205,12 @@ describe("CPC dashboard", () => {
     const html = Effect.runSync(renderCpcDashboardHtml(model));
     expect(html).toContain("dot-healthy");
     expect(html).toContain("Hermes hermes-042");
-    expect(html).toContain("/mcp-ui/trace/compare");
+    expect(html).toContain("/mcp-ui/trace/compare"); // default Traces embed still demo compare
+    expect(html).toContain("/mcp-ui/trace/agent/hermes-042");
+    expect(html).toContain("/mcp-ui/trace/agent/cline-017");
     expect(html).not.toContain("compare?focus=hermes-042");
-    expect(html).toContain(">demo</a>");
-    expect(html).toContain("not this agent's session");
+    expect(html).toContain(">trace</a>");
+    expect(html).not.toContain(">demo</a>");
     expect(html).toContain("<details>");
   });
 

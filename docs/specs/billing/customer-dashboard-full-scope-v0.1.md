@@ -60,8 +60,10 @@ GatewayNode (regional|edge) <- clawql-network GatewayRegistryService
 AgentNode (persistent)      <- clawql-agents AgentInstanceRegistryService
                                (Gap B — register + heartbeat + listAgentInstances)
 AgentNode (cell)            <- celld fleet API (bucket lease records / cell list)
-traceLink                   <- existing /mcp-ui/trace/compare (+ session deep-link),
-                               embedded in Traces — not rebuilt
+traceLink                   <- /mcp-ui/trace/agent/<sessionKey>
+                               (Gap B lastCorrelationId ?? agentId / cell id;
+                                live flamegraph or explicit not-found — never
+                                silent demo swap; compare demo stays in Traces panel)
 ```
 
 No Tailscale/Headscale CLI scrape. No compensation-ledger stand-in for fleet liveness.
@@ -83,14 +85,14 @@ Dashboard
 ├── Usage
 ├── Topology
 │   ├── [Regional Gateway: us-east-1]  ● healthy
-│   │   ├── Hermes agent-042           active, 2m ago    [demo]
-│   │   └── celld cell a8f2...         hibernating       [demo]
+│   │   ├── Hermes agent-042           active, 2m ago    [trace]
+│   │   └── celld cell a8f2...         hibernating       [trace]
 │   ├── [Regional Gateway: eu-central-1] ● healthy
-│   │   └── celld cell 91bc...         resident, 4s ago  [demo]
+│   │   └── celld cell 91bc...         resident, 4s ago  [trace]
 │   └── [Edge: daniel@Mac-Mini]        ● healthy
-│       ├── Cline agent-017            active, 12s ago   [demo]
-│       └── Pi agent-003               offline, 3d ago   [demo]
-└── Traces (demo compare until #1082; deep-linkable from any [demo] above)
+│       ├── Cline agent-017            active, 12s ago   [trace]
+│       └── Pi agent-003               offline, 3d ago   [trace]
+└── Traces (deep-linkable from any [trace] above; default embed = compare demo)
 ```
 
 Collapsed by default per gateway; expand to see children. Status dot on every node, gateway and agent both, so health is visible without expanding.
@@ -101,9 +103,10 @@ Collapsed by default per gateway; expand to see children. Status dot on every no
 
 - Every node in the tree shows real status, not a placeholder
 - Empty states handled (new org, zero gateways yet) — not a blank page, a clear "connect your first gateway" prompt
-- Topology agent links into Traces **must not lie**: until per-agent/session scoping exists ([#1082](https://github.com/danielsmithdevelopment/ClawQL/issues/1082)), label them as the compressed-vs-fat **demo** (`/mcp-ui/trace/compare` without a fake `?focus=<agentId>`). Real fix: agent/session-scoped compare (or explicit unavailable) — not silent demo swap
+- Topology agent/cell **trace** links open `/mcp-ui/trace/agent/<sessionKey>` — live when the inference store has that correlation id, otherwise an **explicit not-found** page. Never a silent compressed-vs-fat demo swap ([#1082](https://github.com/danielsmithdevelopment/ClawQL/issues/1082))
+- Two different agents get two different URLs (and different HTML when one is live and one is missing)
 - No section links to a "coming soon" page
-- Traces panel **embeds** the existing mcp-ui flamegraph (iframe), with WORM rows as secondary audit context
+- Traces panel **embeds** the existing mcp-ui flamegraph (iframe); default view may still be the compare demo until a topology link is clicked; WORM rows are secondary audit context
 
 ---
 

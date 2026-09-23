@@ -211,6 +211,30 @@ describe("GET /mcp-ui/trace/:sessionId", () => {
     }
   });
 
+  it("GET /mcp-ui/trace/agent/:id is live-or-404 (never silent demo)", async () => {
+    const { compressed } = demoCompressedVsFatRecords("hermes-042");
+    const { base, close } = await listen((id) => (id === "hermes-042" ? compressed : []));
+    try {
+      const live = await fetch(`${base}/mcp-ui/trace/agent/hermes-042?format=json`);
+      expect(live.status).toBe(200);
+      const graph = (await live.json()) as { sessionId: string; calls: number };
+      expect(graph.sessionId).toBe("hermes-042");
+      expect(graph.calls).toBeGreaterThan(0);
+
+      const missing = await fetch(`${base}/mcp-ui/trace/agent/missing-agent`);
+      expect(missing.status).toBe(404);
+      const missingHtml = await missing.text();
+      expect(missingHtml).toContain("No trace for session");
+      expect(missingHtml).toMatch(/agent\/session|explicit empty|intentional/i);
+
+      const demo = await fetch(`${base}/mcp-ui/trace/compare`);
+      expect(demo.status).toBe(200);
+      expect(await demo.text()).not.toBe(missingHtml);
+    } finally {
+      await close();
+    }
+  });
+
   it("GET /mcp-ui/trace/compare side-by-side JSON", async () => {
     const { compressed } = demoCompressedVsFatRecords("left-live");
     const { fat } = demoCompressedVsFatRecords("right-live");

@@ -18,10 +18,35 @@ describe("initNetworking", () => {
       expect(result.transportDefault).toBe("headscale-mesh");
       expect(result.tailcatScopeRequired).toBe("network:tailcat_ephemeral");
       expect(result.meshIdentity?.nodeId).toBeTruthy();
+      expect(result.gatewayHeartbeat).toBeUndefined();
 
       const state = await Effect.runPromise(loadNetworkState(home));
       expect(state?.transportDefault).toBe("headscale-mesh");
       expect(state?.meshIdentity?.meshAddress).toContain("clawql");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+
+  it("enrolls Gap A and starts heartbeat when orgId is set", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-network-init-hb-"));
+    try {
+      const result = await Effect.runPromise(
+        initNetworking({
+          home,
+          controlPlaneHost: "localhost",
+          nodeId: "gw-init",
+          orgId: "acme",
+          gatewayKind: "regional",
+          heartbeatIntervalMs: 60_000,
+        })
+      );
+      expect(result.gatewayRegistry).toEqual({
+        orgId: "acme",
+        gatewayId: result.meshIdentity!.nodeId,
+      });
+      expect(result.gatewayHeartbeat).toBeTruthy();
+      result.gatewayHeartbeat!.stop();
     } finally {
       await rm(home, { recursive: true, force: true });
     }
