@@ -44,8 +44,8 @@ Effect-primary API (Promise façades only at host boundaries):
 
 ## Implementation notes
 
-- **Open weights only** — Needle 3 primary (Apache 2.0 model; verify Cactus Engine runtime license before adoption). No TypeSafe Jev dependency.
-- **Scorers** — `HeuristicFastDecisionScorerLive` (tests), `NeedleFastDecisionScorerLive` (stub until local engine wired).
+- **Open weights only** — **GLiNER2 / GLiNER2.5** is the primary production scorer (Apache 2.0; NAACL 2024 / EMNLP 2025 lineage; CPU-first classification + extraction). No TypeSafe Jev. Needle 3 remains an optional secondary Layer for edge/tiny deployments; Laya is not the default (independent zero-shot benches lag Jev).
+- **Scorers** — `GlinerFastDecisionScorerLive` (primary; HTTP sidecar via `CLAWQL_FAST_DECISION_GLINER_URL`, else honest `gliner2-stub`), `HeuristicFastDecisionScorerLive` (tests), `NeedleFastDecisionScorerLive` (optional stub).
 - **Skill fast path (§4)** — live `SkillValidityStore` check every invocation; stale/rolled_back never executes deterministically.
 - **Streams (§5)** — `streams_event_dispatch` threshold policy with `hardFallbackRequired: true`.
 - **Pre-compaction (§6)** — blocking `pre-compaction` hook; ontology/cache/audit-enriched features; append-only stable cache block never pruned.
@@ -59,7 +59,7 @@ Effect-primary API (Promise façades only at host boundaries):
 
 ## Deliberate non-claims (§12)
 
-See full non-claims in the product specification: no Jev reliance; Section 7 validation not yet run on production task shapes; SGDOP prefilter is not exact geometry; legal-domain vocabulary unresolved; Needle engine license verification pending; reasoning opacity on closed frontier APIs is a permanent structural limit.
+See full non-claims in the product specification: no Jev reliance; Section 7 validation not yet run on production task shapes; SGDOP prefilter is not exact geometry; legal-domain vocabulary unresolved; GLiNER sidecar must be deployed for live `gliner2` (without URL the stack is an honest stub); reasoning opacity on closed frontier APIs is a permanent structural limit.
 
 ## Related
 

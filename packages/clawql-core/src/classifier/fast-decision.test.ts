@@ -264,3 +264,62 @@ describe("§7 correctness + calibration gate", () => {
     expect(report.rawAccuracy).toBe(0);
   });
 });
+
+describe("GLiNER2 primary scorer", () => {
+  it("defaults to gliner2-stub without sidecar URL", async () => {
+    const prev = process.env.CLAWQL_FAST_DECISION_GLINER_URL;
+    delete process.env.CLAWQL_FAST_DECISION_GLINER_URL;
+    const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
+    const layer = createGlinerFastDecisionScorerLayer();
+    const id = await Effect.runPromise(
+      Effect.gen(function* () {
+        const scorer = yield* FastDecisionScorer;
+        return scorer.backendId();
+      }).pipe(Effect.provide(layer))
+    );
+    expect(id).toBe("gliner2-stub");
+    if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_URL = prev;
+  });
+
+  it("uses live HTTP classify when endpoint configured", async () => {
+    const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({
+          scores: [
+            { id: "tool.a", confidence: 0.91 },
+            { id: "tool.b", confidence: 0.12 },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )) as unknown as typeof fetch;
+
+    const layer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.test",
+        modelId: "fastino/gliner2.5-base-v1",
+        timeoutMs: 1000,
+      },
+      fetchImpl,
+    });
+
+    const { backendId, scores } = await Effect.runPromise(
+      Effect.gen(function* () {
+        const scorer = yield* FastDecisionScorer;
+        const scored = yield* scorer.score({
+          useSiteId: "search_provider_tool_routing",
+          ctx: { sessionId: "s1", query: "read a file" },
+          candidates: [
+            { candidateId: "tool.a", features: { description: "read files" } },
+            { candidateId: "tool.b", features: { description: "send email" } },
+          ],
+        });
+        return { backendId: scorer.backendId(), scores: scored };
+      }).pipe(Effect.provide(layer))
+    );
+
+    expect(backendId).toBe("gliner2");
+    expect(scores[0]?.candidateId).toBe("tool.a");
+    expect(scores[0]?.confidence).toBeCloseTo(0.91);
+  });
+});

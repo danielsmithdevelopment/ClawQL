@@ -4,6 +4,7 @@
 
 export * from "./types.js";
 export * from "./registry.js";
+export * from "./gliner-config.js";
 export * from "./scorer.js";
 export * from "./threshold-policy.js";
 export * from "./run.js";
