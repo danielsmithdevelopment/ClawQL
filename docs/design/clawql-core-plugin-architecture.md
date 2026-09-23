@@ -140,6 +140,7 @@ export type LifecycleEvent =
   | "on-deny" // tool scope: when a tool call is blocked
   | "pre-model" // model scope: before prompt is sent to the LLM
   | "post-model" // model scope: after response, before re-entering context
+  | "pre-compaction" // model scope: blocking gate before volatile history prune (Fast Decision)
   | "session-start"
   | "session-end";
 
