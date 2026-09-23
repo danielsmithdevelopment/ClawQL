@@ -29,9 +29,7 @@ export type CapabilityCatalogLayer = Layer.Layer<
 export type CapabilityLifecyclePluginHandle = {
   readonly plugin: ProviderPlugin;
   readonly catalogLayer: CapabilityCatalogLayer;
-  readonly bindSessionCatalog: (
-    catalog: SessionCatalog
-  ) => Effect.Effect<SessionCatalog, Error>;
+  readonly bindSessionCatalog: (catalog: SessionCatalog) => Effect.Effect<SessionCatalog, Error>;
 };
 
 export function capabilityLifecyclePluginEnabled(): boolean {
@@ -83,7 +81,5 @@ export function createCapabilityLifecyclePlugin(): CapabilityLifecyclePluginHand
 
 /** Sync plugins for composeDefaultPlugins when env enabled. */
 export function capabilityLifecycleDefaultPlugins(): readonly ProviderPlugin[] {
-  return capabilityLifecyclePluginEnabled()
-    ? [getCapabilityLifecycleRuntime().plugin]
-    : [];
+  return capabilityLifecyclePluginEnabled() ? [getCapabilityLifecycleRuntime().plugin] : [];
 }

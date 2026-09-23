@@ -22,13 +22,15 @@ describe("capability lifecycle MCP wiring", () => {
     const handle = createCapabilityLifecyclePlugin();
     const layer = mcpProxyPipelineLayer(registry);
 
-    await Effect.runPromise(handle.bindSessionCatalog({
-      sessionId: "s1",
-      atrScope: new Set(["fs.read"]),
-      tools: new Set(["fs.read"]),
-      boundAt: new Date().toISOString(),
-      rebindGeneration: 0,
-    }));
+    await Effect.runPromise(
+      handle.bindSessionCatalog({
+        sessionId: "s1",
+        atrScope: new Set(["fs.read"]),
+        tools: new Set(["fs.read"]),
+        boundAt: new Date().toISOString(),
+        rebindGeneration: 0,
+      })
+    );
 
     await Effect.runPromise(
       Effect.gen(function* () {

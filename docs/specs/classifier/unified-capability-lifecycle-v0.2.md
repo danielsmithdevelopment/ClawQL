@@ -47,13 +47,13 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 
 ## Implementation status (honest)
 
-| Claim | Status |
-|---|---|
-| Pure allow-rule + WORM shapes | Implemented |
-| Accept-time promotion ⊆ S | Implemented |
-| Harness cannot set disposition / sandbox fork | Implemented (core policy) |
-| Default MCP execute gate | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
-| Register-side step 5 | Open |
+| Claim                                         | Status                                        |
+| --------------------------------------------- | --------------------------------------------- |
+| Pure allow-rule + WORM shapes                 | Implemented                                   |
+| Accept-time promotion ⊆ S                     | Implemented                                   |
+| Harness cannot set disposition / sandbox fork | Implemented (core policy)                     |
+| Default MCP execute gate                      | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
+| Register-side step 5                          | Open                                          |
 
 ## Related
 

@@ -72,5 +72,7 @@ export function makeCapabilityRegisterIntercept(): Context.Tag.Service<
  * Default: register-side NOT implemented. Reports still evaluate the three-bucket
  * rule so invoke-equivalent denials are auditable, but step 5 remains open.
  */
-export const CapabilityRegisterInterceptLive: Layer.Layer<CapabilityRegisterIntercept> =
-  Layer.sync(CapabilityRegisterIntercept, makeCapabilityRegisterIntercept);
+export const CapabilityRegisterInterceptLive: Layer.Layer<CapabilityRegisterIntercept> = Layer.sync(
+  CapabilityRegisterIntercept,
+  makeCapabilityRegisterIntercept
+);

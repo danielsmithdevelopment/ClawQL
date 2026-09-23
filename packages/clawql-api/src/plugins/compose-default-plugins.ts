@@ -20,10 +20,7 @@ import {
  * Horizontal tiers still register via `pluginLayers`.
  */
 export function composeDefaultPlugins(): readonly AnyPlugin[] {
-  const plugins: AnyPlugin[] = [
-    ...defaultPlugins(),
-    ...capabilityLifecycleDefaultPlugins(),
-  ];
+  const plugins: AnyPlugin[] = [...defaultPlugins(), ...capabilityLifecycleDefaultPlugins()];
   if (handoffSkillPluginEnabled()) {
     plugins.push(createHandoffSkillPlugin());
   }
