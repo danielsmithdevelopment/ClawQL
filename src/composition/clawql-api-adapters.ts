@@ -175,12 +175,21 @@ export function registerClawqlApiShutdownHooks(): void {
   process.once("SIGTERM", once);
 }
 
-/** Run HookRegistry pre-execute hooks (Panguard policy, x402 payment gates, …). */
-export async function runMcpProxyBeforeCallTool(toolName: string, args: unknown): Promise<void> {
+/** Run HookRegistry pre-execute hooks (Panguard, capability lifecycle, x402, …). */
+export async function runMcpProxyBeforeCallTool(
+  toolName: string,
+  args: unknown,
+  opts?: { readonly sessionId?: string; readonly atrScopeTokens?: readonly string[] }
+): Promise<void> {
   await getClawqlApi().run(
     Effect.gen(function* () {
       const pipeline = yield* McpProxyPipeline;
-      yield* pipeline.runBeforeCallTool({ toolName, args });
+      yield* pipeline.runBeforeCallTool({
+        toolName,
+        args,
+        sessionId: opts?.sessionId,
+        atrScopeTokens: opts?.atrScopeTokens,
+      });
     })
   );
 }

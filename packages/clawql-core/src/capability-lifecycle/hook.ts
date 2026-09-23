@@ -53,7 +53,11 @@ export function createCapabilityReachabilityHook(
       Effect.gen(function* () {
         const toolName = resolveTarget(ctx);
         if (!toolName) {
-          return { allow: true } satisfies HookResult;
+          // Fail closed: cannot evaluate three-bucket rule without a target tool.
+          return {
+            allow: false,
+            denyReason: "CAPABILITY_WRITE_INTERCEPTED: missing tool name for reachability check",
+          } satisfies HookResult;
         }
         const sessionId = resolveSessionId(ctx);
         const decision = yield* evaluateExecuteReachability({

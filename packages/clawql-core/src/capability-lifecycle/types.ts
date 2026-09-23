@@ -16,7 +16,8 @@ export type SessionCatalog = {
   readonly rebindGeneration: number;
 };
 
-export type CapabilityBucket = "session_catalog" | "sandboxed_novel" | "gated_skill";
+/** Execute allow buckets only — sandbox is not an execute() identity (§3.5). */
+export type CapabilityBucket = "session_catalog" | "gated_skill";
 
 export type CapabilityInterceptKind = "register" | "invoke";
 

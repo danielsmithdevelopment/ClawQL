@@ -1,4 +1,5 @@
 import type { AnyPlugin } from "clawql-core";
+import { capabilityLifecycleDefaultPlugins } from "./capability-lifecycle-plugin.js";
 import { defaultPlugins } from "./panguard-proxy-plugin.js";
 import { createPresidioGatewayPlugin, presidioPluginEnabled } from "./presidio-gateway-plugin.js";
 import {
@@ -13,13 +14,16 @@ import {
 
 /**
  * Default sync plugins for `createClawQLApi()` — 8.0+:
- * - Panguard / Presidio / Privacy Filter: opt-in
+ * - Panguard / Presidio / Privacy Filter / Capability Lifecycle: opt-in
  * - Handoff standalone skill: **default on** (skills approach for 8.0)
  * - WebMCP draft provider: opt-in (`CLAWQL_ENABLE_WEBMCP_DRAFT=1`)
  * Horizontal tiers still register via `pluginLayers`.
  */
 export function composeDefaultPlugins(): readonly AnyPlugin[] {
-  const plugins: AnyPlugin[] = [...defaultPlugins()];
+  const plugins: AnyPlugin[] = [
+    ...defaultPlugins(),
+    ...capabilityLifecycleDefaultPlugins(),
+  ];
   if (handoffSkillPluginEnabled()) {
     plugins.push(createHandoffSkillPlugin());
   }

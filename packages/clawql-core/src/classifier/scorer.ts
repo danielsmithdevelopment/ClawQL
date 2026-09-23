@@ -80,15 +80,19 @@ export type NeedleScorerConfig = {
 export function createNeedleFastDecisionScorerLayer(
   config: NeedleScorerConfig = {}
 ): Layer.Layer<FastDecisionScorer> {
-  const hasEngine = Boolean(config.enginePath?.trim());
-  const modelId = config.modelId ?? (hasEngine ? "needle3" : "needle3-stub");
+  // Honest labeling: until cactus-needle inference is actually wired, never
+  // claim backendId "needle3" merely because enginePath is set.
+  const wired = false; // flip when real .cact inference replaces heuristicScores
+  const modelId =
+    config.modelId ?? (wired && config.enginePath?.trim() ? "needle3" : "needle3-stub");
 
   return Layer.succeed(FastDecisionScorer, {
     backendId: () => modelId,
     score: (request) =>
       Effect.sync(() => {
-        // When a real engine path is configured, replace this body with
-        // cactus-needle / local .cact inference (no network at runtime).
+        // When a real engine path is configured AND wired===true, replace this
+        // body with cactus-needle / local .cact inference (no network at runtime).
+        void config.enginePath;
         void config.layers;
         return heuristicScores(request);
       }),

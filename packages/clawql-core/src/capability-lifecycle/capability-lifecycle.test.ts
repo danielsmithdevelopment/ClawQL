@@ -11,10 +11,9 @@ import {
   CapabilityLifecycleCatalogStackLive,
   CapabilityRegisterIntercept,
   createCapabilityReachabilityHook,
+  createSharedCapabilityCatalogLayer,
   decideExecuteReachability,
   evaluateExecuteReachability,
-  InMemoryPromotionStoreLive,
-  InMemorySessionCatalogLive,
   PromotionStore,
   recordSlowPathCompletedNoNewCapability,
   SessionCatalogService,
@@ -41,7 +40,6 @@ describe("decideExecuteReachability (pure)", () => {
   });
 
   it("denies tool not in catalog even if atrScope contains it", () => {
-    // Membership is catalog ∩ S — atr alone is not enough for hot-loaded tools
     const d = decideExecuteReachability({
       toolName: "hot.plugin",
       sessionId: "s1",
@@ -51,7 +49,7 @@ describe("decideExecuteReachability (pure)", () => {
     expect(d.allow).toBe(false);
   });
 
-  it("allows bucket 3 promoted skill when validatedScope ⊆ S", () => {
+  it("allows bucket 3 promoted skill when skillId matches and validatedScope ⊆ S", () => {
     const d = decideExecuteReachability({
       toolName: "skill.extract",
       sessionId: "s1",
@@ -64,6 +62,20 @@ describe("decideExecuteReachability (pure)", () => {
     });
     expect(d.allow).toBe(true);
     if (d.allow) expect(d.bucket).toBe("gated_skill");
+  });
+
+  it("denies invoking a validatedScope token that is not the skillId (no scope backdoor)", () => {
+    const d = decideExecuteReachability({
+      toolName: "fs.write",
+      sessionId: "s1",
+      catalogTools: new Set(["fs.read"]),
+      atrScope: new Set(["fs.read", "fs.write", "skill.extract"]),
+      promoted: {
+        skillId: "skill.extract",
+        validatedScope: ["fs.read", "fs.write"],
+      },
+    });
+    expect(d.allow).toBe(false);
   });
 
   it("denies promotion whose validatedScope is not ⊆ S (cannot widen S)", () => {
@@ -118,7 +130,6 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
           boundAt: new Date().toISOString(),
           rebindGeneration: 0,
         });
-        // Step 2: harness "writes" a new tool — not in catalog
         return yield* evaluateExecuteReachability({
           sessionId: "sess-1",
           toolName: "opencode2.hot.plugin",
@@ -141,9 +152,9 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
     }
   });
 
-  it("step 4a: promotion cannot widen S", async () => {
+  it("step 4a: promotion accept refuses validatedScope that widens S", async () => {
     const { layer } = stack();
-    const decision = await Effect.runPromise(
+    const result = await Effect.runPromise(
       Effect.gen(function* () {
         const catalogs = yield* SessionCatalogService;
         const promotions = yield* PromotionStore;
@@ -154,28 +165,27 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
           boundAt: new Date().toISOString(),
           rebindGeneration: 0,
         });
-        yield* promotions.accept(
-          {
-            skillId: "skill.sneaky",
-            validatedScope: ["fs.read", "admin.widen"],
-            acceptedAt: new Date().toISOString(),
-          },
-          "sess-1"
-        );
-        return yield* evaluateExecuteReachability({
-          sessionId: "sess-1",
-          toolName: "skill.sneaky",
-        });
+        return yield* promotions
+          .accept(
+            {
+              skillId: "skill.sneaky",
+              validatedScope: ["fs.read", "admin.widen"],
+              acceptedAt: new Date().toISOString(),
+            },
+            "sess-1"
+          )
+          .pipe(Effect.either);
       }).pipe(Effect.provide(layer))
     );
-    expect(decision.allow).toBe(false);
+    expect(result._tag).toBe("Left");
   });
 
-  it("step 4b: sandbox routing disposition is distinct from deny", async () => {
+  it("step 4b: register disposition is clawql-core routed_to_sandbox (not harness claim)", async () => {
     const { layer, capture } = stack();
     await Effect.runPromise(
       Effect.gen(function* () {
         const catalogs = yield* SessionCatalogService;
+        const reg = yield* CapabilityRegisterIntercept;
         yield* catalogs.bind({
           sessionId: "sess-1",
           atrScope: new Set(["fs.read"]),
@@ -183,11 +193,11 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
           boundAt: new Date().toISOString(),
           rebindGeneration: 0,
         });
-        return yield* evaluateExecuteReachability({
+        return yield* reg.reportRegistration({
           sessionId: "sess-1",
           toolName: "novel.code",
-          interceptKind: "register",
-          dispositionIfDenied: "routed_to_sandbox",
+          harnessId: "opencode2",
+          mechanism: "unspecified",
         });
       }).pipe(Effect.provide(layer))
     );
@@ -207,6 +217,27 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
       }).pipe(Effect.provide(layer))
     );
     expect(implemented).toBe(false);
+  });
+
+  it("step 5 honesty: marking harness A does not claim harness B implemented", async () => {
+    const { layer } = stack();
+    const [a, b] = await Effect.runPromise(
+      Effect.gen(function* () {
+        const reg = yield* CapabilityRegisterIntercept;
+        yield* reg.markImplemented("harness-a");
+        const forA = yield* reg.isRegisterSideImplemented("harness-a");
+        const forB = yield* reg.isRegisterSideImplemented("harness-b");
+        const outcome = yield* reg.reportRegistration({
+          sessionId: "sess-x",
+          toolName: "t",
+          harnessId: "harness-b",
+          mechanism: "unspecified",
+        });
+        return [forA, forB && outcome.registerSideImplemented] as const;
+      }).pipe(Effect.provide(layer))
+    );
+    expect(a).toBe(true);
+    expect(b).toBe(false);
   });
 });
 
@@ -272,15 +303,16 @@ describe("slow path WORM + hook enforcement", () => {
     expect(events.some((e) => e.type === "SLOW_PATH_COMPLETED_NO_NEW_CAPABILITY")).toBe(true);
   });
 
-  it("blocking hook denies hot tool via fireHook", async () => {
+  it("blocking hook denies hot tool via fireHook with shared catalog layer", async () => {
     const capture = makeCapturingWormLayer();
-    const catalogLayer = Layer.mergeAll(InMemorySessionCatalogLive, InMemoryPromotionStoreLive);
+    const catalogLayer = createSharedCapabilityCatalogLayer();
     const hook = {
       ...createCapabilityReachabilityHook({ catalogLayer }),
       pluginId: "capability-lifecycle",
     };
     const full = Layer.mergeAll(catalogLayer, capture.layer);
 
+    // Separate runPromise calls must share state (process-stable Layer.succeed)
     await Effect.runPromise(
       Effect.gen(function* () {
         const catalogs = yield* SessionCatalogService;
@@ -300,8 +332,17 @@ describe("slow path WORM + hook enforcement", () => {
       args: {},
     };
 
-    const result = await Effect.runPromise(fireHook(hook, ctx).pipe(Effect.provide(full)));
-    expect(result.allow).toBe(false);
-    expect(result.denyReason).toMatch(/CAPABILITY_WRITE_INTERCEPTED/);
+    const denied = await Effect.runPromise(fireHook(hook, ctx).pipe(Effect.provide(full)));
+    expect(denied.allow).toBe(false);
+    expect(denied.denyReason).toMatch(/CAPABILITY_WRITE_INTERCEPTED/);
+
+    const allowed = await Effect.runPromise(
+      fireHook(hook, {
+        session: { id: "mcp", atrScope: atrScopeFromTokens(["fs.read"]) },
+        toolName: "fs.read",
+        args: {},
+      }).pipe(Effect.provide(full))
+    );
+    expect(allowed.allow).toBe(true);
   });
 });

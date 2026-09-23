@@ -16,7 +16,9 @@ package: "packages/clawql-sandbox/ (Agent Substrate adoption) + celld / clawql-c
 
 ## 1. The Decision
 
-`clawql-sandbox` adopts Google's open-source **Agent Substrate** (Cloud Hypervisor microVM or gVisor, operator's choice) as its isolation backend, replacing the originally-planned bespoke Kata Containers/Docker/Seatbelt build as the _primary_ production path for untrusted arbitrary-code execution. Legacy backends (Kata, Docker, Cloudflare bridge, Seatbelt) remain available as fallbacks and for local/dev.
+`clawql-sandbox` **targets** Google's open-source **Agent Substrate** (Cloud Hypervisor microVM or gVisor, operator's choice) as its isolation backend for untrusted arbitrary-code execution, replacing the originally-planned bespoke Kata Containers/Docker/Seatbelt build as the *intended* primary production path. Legacy backends (Kata, Docker, Cloudflare bridge, Seatbelt) remain available as fallbacks and for local/dev.
+
+**Implementation honesty (as of this ADR's first code drop):** the tree ships a ClawQL-owned **control-plane adapter** (in-process mock + optional HTTP client to an operator-provided URL). It does **not** yet vendor or depend on Google's Agent Substrate packages/CRDs. Until that integration lands, treat “adopts Agent Substrate” as the architectural decision + selection/WORM scaffolding, not as a claim that Substrate microVMs are running in this repo.
 
 `clawql-cellrt` / **celld** continues to use celld's V8-isolate model, unchanged. **These are not competing choices for the same problem** — they are the correct backend for two genuinely different problems. This ADR exists so that distinction is never silently re-litigated by treating "Agent Substrate is newer/denser/Google-backed" as a reason to also apply it to celld's workload.
 

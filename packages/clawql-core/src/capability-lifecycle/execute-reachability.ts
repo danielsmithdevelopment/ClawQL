@@ -3,11 +3,15 @@
  *
  * ALLOW iff:
  *   tool ∈ session_catalog ∩ S                          (bucket 1)
- *   OR tool has PROMOTION_ACCEPTED AND validatedScope ⊆ S (bucket 3)
+ *   OR (tool === skillId with PROMOTION_ACCEPTED ∧ validatedScope ⊆ S) (bucket 3)
  *
  * Bucket 2 (sandbox) grants permission to *run* contained code; it is NOT a
  * third execute() identity. Nested execute() from sandboxed code still hits
  * bucket 1 or 3 only.
+ *
+ * Disposition on deny is decided by clawql-core policy — never by harness claim:
+ *   invoke  → denied
+ *   register → routed_to_sandbox (exploration path) by default
  */
 
 import { Effect } from "effect";
@@ -25,12 +29,14 @@ export type EvaluateExecuteInput = {
   readonly toolName: string;
   /** invoke (default) or register — register side still needs §3.5.1 harness adapter. */
   readonly interceptKind?: CapabilityInterceptKind;
-  /**
-   * When a register attempt is legitimately routed to clawql-sandbox by clawql-core
-   * (not by the harness's own claim), set disposition routed_to_sandbox.
-   */
-  readonly dispositionIfDenied?: CapabilityInterceptDisposition;
 };
+
+/** ClawQL-owned disposition — harness cannot override. */
+export function dispositionForIntercept(
+  kind: CapabilityInterceptKind
+): CapabilityInterceptDisposition {
+  return kind === "register" ? "routed_to_sandbox" : "denied";
+}
 
 /**
  * Pure evaluators for tests — Effect API wraps these with catalog/promotion stores.
@@ -40,12 +46,12 @@ export function decideExecuteReachability(args: {
   readonly sessionId: string;
   readonly catalogTools: ReadonlySet<string>;
   readonly atrScope: ReadonlySet<string>;
+  /** Promoted skill whose skillId equals toolName (bucket 3). */
   readonly promoted?: { readonly skillId: string; readonly validatedScope: readonly string[] };
   readonly interceptKind?: CapabilityInterceptKind;
-  readonly dispositionIfDenied?: CapabilityInterceptDisposition;
 }): ExecuteReachabilityDecision {
   const interceptKind = args.interceptKind ?? "invoke";
-  const disposition = args.dispositionIfDenied ?? "denied";
+  const disposition = dispositionForIntercept(interceptKind);
 
   // Bucket 1: membership in S inherited from session catalog — never from tool's claims
   if (args.catalogTools.has(args.toolName) && args.atrScope.has(args.toolName)) {
@@ -57,20 +63,21 @@ export function decideExecuteReachability(args: {
     };
   }
 
-  // Bucket 3: PROMOTION_ACCEPTED with validatedScope ⊆ S
-  // Tool name may equal skillId or be listed in validatedScope
-  if (args.promoted) {
-    const inScope =
-      args.promoted.skillId === args.toolName ||
-      args.promoted.validatedScope.includes(args.toolName);
-    if (inScope && validatedScopeSubsetOfS(args.promoted.validatedScope, args.atrScope)) {
-      return {
-        allow: true,
-        bucket: "gated_skill",
-        toolName: args.toolName,
-        sessionId: args.sessionId,
-      };
-    }
+  // Bucket 3: only the promoted skillId itself is execute-reachable.
+  // validatedScope tokens are permissions the skill may use via nested execute()
+  // (those nested calls must still pass bucket 1 or another bucket-3 skillId) —
+  // they are NOT a backdoor to invoke arbitrary tools outside the catalog.
+  if (
+    args.promoted &&
+    args.promoted.skillId === args.toolName &&
+    validatedScopeSubsetOfS(args.promoted.validatedScope, args.atrScope)
+  ) {
+    return {
+      allow: true,
+      bucket: "gated_skill",
+      toolName: args.toolName,
+      sessionId: args.sessionId,
+    };
   }
 
   return {
@@ -80,7 +87,7 @@ export function decideExecuteReachability(args: {
     interceptKind,
     disposition,
     reason:
-      "tool outside three-bucket catalog (not in session_catalog∩S and no PROMOTION_ACCEPTED with scope ⊆ S)",
+      "tool outside three-bucket catalog (not in session_catalog∩S and no PROMOTION_ACCEPTED skillId with scope ⊆ S)",
   };
 }
 
@@ -104,18 +111,14 @@ export function evaluateExecuteReachability(
         catalogTools: new Set(),
         atrScope: new Set(),
         interceptKind: input.interceptKind,
-        dispositionIfDenied: input.dispositionIfDenied,
       });
-      // Still audit
       if (!deny.allow) {
         yield* appendCapabilityWriteIntercepted(worm, deny);
       }
       return deny;
     }
 
-    const promoted =
-      (yield* promotions.get(input.toolName)) ??
-      (yield* findPromotionCoveringTool(() => promotions.list(), input.toolName));
+    const promoted = yield* promotions.get(input.toolName);
 
     const decision = decideExecuteReachability({
       toolName: input.toolName,
@@ -126,7 +129,6 @@ export function evaluateExecuteReachability(
         ? { skillId: promoted.skillId, validatedScope: promoted.validatedScope }
         : undefined,
       interceptKind: input.interceptKind,
-      dispositionIfDenied: input.dispositionIfDenied,
     });
 
     if (!decision.allow) {
@@ -134,16 +136,6 @@ export function evaluateExecuteReachability(
     }
 
     return decision;
-  });
-}
-
-function findPromotionCoveringTool(
-  list: () => Effect.Effect<readonly import("./types.js").PromotedSkillRecord[]>,
-  toolName: string
-): Effect.Effect<import("./types.js").PromotedSkillRecord | undefined> {
-  return Effect.gen(function* () {
-    const all = yield* list();
-    return all.find((p) => p.skillId === toolName || p.validatedScope.includes(toolName));
   });
 }
 

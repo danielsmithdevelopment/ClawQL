@@ -41,8 +41,19 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 
 ## Five-step test honesty
 
-- Steps 1–4: implemented and covered by `capability-lifecycle.test.ts`.
+- Steps 1–4 (invoke): covered by `capability-lifecycle.test.ts`.
+- MCP path: opt-in `CLAWQL_CAPABILITY_LIFECYCLE=1` installs a blocking `pre-execute` plugin on `McpProxyPipeline` (`capability-lifecycle-plugin.test.ts`). Catalog must be bound per session (`bindSessionCatalog`) or calls fail closed. Default install without the env flag does **not** enforce §3.5.
 - Step 5 (register-side before harness treats tool as live): **not runnable** until a harness adapter implements `CapabilityRegisterIntercept.markImplemented` + report path (§3.5.1 options: tool-registry mutation hook, plugin-load callback, or filesystem watch).
+
+## Implementation status (honest)
+
+| Claim | Status |
+|---|---|
+| Pure allow-rule + WORM shapes | Implemented |
+| Accept-time promotion ⊆ S | Implemented |
+| Harness cannot set disposition / sandbox fork | Implemented (core policy) |
+| Default MCP execute gate | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
+| Register-side step 5 | Open |
 
 ## Related
 
