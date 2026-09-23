@@ -5,6 +5,7 @@
  */
 
 import { Effect } from "effect";
+import { callAgentSubstrateSandbox } from "../agent-substrate/index.js";
 import {
   parseExplicitSandboxBackendEnv,
   resolveSandboxBackendChoice,
@@ -40,6 +41,7 @@ export async function runSandboxBackend(
   backend: SandboxExecBackendKind,
   input: SandboxCodeToolInput
 ): Promise<SandboxBridgeResponse> {
+  if (backend === "agent-substrate") return callAgentSubstrateSandbox(input);
   if (backend === "kata") return callKataSandbox(input);
   if (backend === "macos-seatbelt") return callMacosSeatbeltSandbox(input);
   if (backend === "docker") return callDockerSandbox(input);

@@ -36,6 +36,10 @@ This document specifies how ClawQL Streams runs on **[celld](https://celld.dev/)
 
 ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `worker_threads`.** Adopt celld for **Workers/DO API–compatible** self-hosted Durable Objects; keep Cloudflare for hosted; keep Kubernetes HPA for regulated until a DO runtime is production-stable. The ClawQL-owned production runtime is **[`clawql-cellrt`](./clawql-cellrt.md)** (Rust + Wasmtime) — complementary to celld, not a Node rewrite.
 
+### Isolation architecture (ADR 0011) — celld is not Agent Substrate
+
+**Decided September 2026:** [`clawql-sandbox`](../../packages/clawql-sandbox/) adopts Google **Agent Substrate** for *untrusted / arbitrary* code. **celld stays on V8 isolates** for fixed-shape orchestration. These are different threat models — do not move cells onto Agent Substrate because of density or Google backing. Permanent rule: [`docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`](../adr/0011-isolation-agent-substrate-sandbox-celld.md).
+
 ### Why celld vs build-own
 
 | Option                                | Effort                                     | API parity with CF DOs    | Replication / WORM           | Ops burden                                     | Verdict                      |

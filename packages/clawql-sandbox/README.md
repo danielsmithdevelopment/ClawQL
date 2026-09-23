@@ -20,16 +20,30 @@ When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` f
 
 ## Backends (priority in `auto`)
 
-| Backend                                  | When                                | Env                                                          |
-| ---------------------------------------- | ----------------------------------- | ------------------------------------------------------------ |
-| **Kata Containers** (default in-cluster) | Kubernetes Job + `runtimeClassName` | Unset `CLAWQL_SANDBOX_BACKEND` in-cluster → auto; pin `kata` |
-| **Docker / Podman**                      | Local CLI `docker run`              | `docker`, `CLAWQL_SANDBOX_DOCKER_*`                          |
-| **Cloudflare bridge**                    | Workers `@cloudflare/sandbox`       | `CLAWQL_SANDBOX_BRIDGE_URL` + token                          |
-| **macOS Seatbelt**                       | Dev macOS only                      | `macos-seatbelt`                                             |
+| Backend | When | Env |
+| --- | --- | --- |
+| **Agent Substrate** (primary, ADR 0011) | Cloud Hypervisor microVM or gVisor | `CLAWQL_SANDBOX_AGENT_SUBSTRATE_*` / pin `agent-substrate` |
+| **Kata Containers** | Kubernetes Job + `runtimeClassName` (fallback) | `CLAWQL_SANDBOX_KATA_*` / pin `kata` |
+| **Docker / Podman** | Local CLI `docker run` | `docker`, `CLAWQL_SANDBOX_DOCKER_*` |
+| **Cloudflare bridge** | Workers `@cloudflare/sandbox` | `CLAWQL_SANDBOX_BRIDGE_URL` + token |
+| **macOS Seatbelt** | Dev macOS only | `macos-seatbelt` |
 
-### Kata (recommended for production Kubernetes)
+### Agent Substrate (recommended for untrusted / arbitrary code)
 
-- **`CLAWQL_SANDBOX_BACKEND=kata`** or unset in-cluster (auto prefers Kata when RuntimeClass exists)
+See [ADR 0011](../../docs/adr/0011-isolation-agent-substrate-sandbox-celld.md).
+
+- **`CLAWQL_SANDBOX_BACKEND=agent-substrate`** (or aliases `substrate`, `gvisor`, `cloud-hypervisor`)
+- **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_ENABLED=1`** — include in auto cascade (mock mode without URL)
+- **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_RUNTIME`** — `cloud-hypervisor` (default) or `gvisor`
+- **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_URL`** + **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_API_TOKEN`** — live control plane
+- **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_MODE`** — `mock` \| `live`
+- **`CLAWQL_SANDBOX_AGENT_SUBSTRATE_ALLOW_PRODUCTION=1`** — required for customer-facing production after allowlist GA reconfirmation (§5)
+
+**Not for celld cells.** Fixed-shape orchestration stays on celld V8 isolates (same ADR).
+
+### Kata (fallback for production Kubernetes)
+
+- **`CLAWQL_SANDBOX_BACKEND=kata`** or auto when Agent Substrate is not configured and RuntimeClass exists
 - **`CLAWQL_SANDBOX_KATA_RUNTIME_CLASS`** — default `kata-qemu` (match Helm `security.kata.runtimeClassName`)
 - **`CLAWQL_SANDBOX_KATA_NAMESPACE`** — Job namespace (default: pod ServiceAccount namespace)
 - **`CLAWQL_SANDBOX_KATA_SERVICE_ACCOUNT`** — optional Job pod ServiceAccount
