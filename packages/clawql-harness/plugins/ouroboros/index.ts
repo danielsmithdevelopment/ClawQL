@@ -136,3 +136,12 @@ export function createOuroborosHarnessPlugin(
 
 /** Default harness Ouroboros plugin (no Langfuse eval tool). */
 export const OuroborosPlugin: HarnessPlugin = createOuroborosHarnessPlugin();
+
+/** Fast Decision skill fast-path (§4) — live validity, never cached. */
+export {
+  decideSkillFastPath,
+  SkillValidityStore,
+  InMemorySkillValidityStoreLive,
+  type SkillFastPathDecision,
+  type SkillValidityStatus,
+} from "./skill-fast-path.js";

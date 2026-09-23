@@ -15,6 +15,11 @@ export {
   promoteDocumentType,
   type PromoteResult,
 } from "./meta/promote.js";
+export {
+  matchOntologyVocabularyTerm,
+  type VocabularyTermCandidate,
+  type VocabularyMatchOutcome,
+} from "./meta/vocabulary-match.js";
 export type {
   FieldObservation,
   QueryObservation,

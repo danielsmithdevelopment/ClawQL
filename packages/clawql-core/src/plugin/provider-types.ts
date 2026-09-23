@@ -33,6 +33,10 @@ export type VaultSeedEntry = {
   readonly ontologyType: string;
 };
 
+/** Provider-declared preferred vocabulary for Layer 3 field minting (§2.3 / §11). */
+export type PreferredVocabularyId =
+  "schema.org" | "fibo" | "dublin-core" | "project-local" | (string & {});
+
 export type LifecycleScope = "tool" | "model" | "session";
 
 export type LifecycleEvent =
@@ -42,6 +46,7 @@ export type LifecycleEvent =
   | "on-deny"
   | "pre-model"
   | "post-model"
+  | "pre-compaction"
   | "session-start"
   | "session-end";
 
@@ -223,6 +228,81 @@ export type WormAuditEvent =
         readonly sessionId: string;
       };
       readonly timestamp: string;
+    }
+  | {
+      readonly type:
+        | "FAST_DECISION_ATTEMPTED"
+        | "FAST_DECISION_ABOVE_THRESHOLD"
+        | "FAST_DECISION_BELOW_THRESHOLD_FALLBACK";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly scores: readonly { readonly candidateId: string; readonly confidence: number }[];
+      readonly thresholdApplied: number;
+      readonly costlyErrorDirection: "false_positive" | "false_negative";
+      readonly outcome: "above_threshold" | "below_threshold_fallback";
+      readonly selectedCandidateId?: string;
+      readonly selectedConfidence?: number;
+      readonly backendId: string;
+      readonly wormEntryType?: string;
+      readonly hardFallbackRequired?: boolean;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SKILL_FAST_PATH_EXECUTED" | "SKILL_FAST_PATH_REJECTED_STALE_SKILL";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly skillId: string;
+      readonly validityStatus: "accepted" | "rejected" | "rolled_back";
+      readonly confidence: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SGDOP_PREFILTER_APPLIED";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly includedCount: number;
+      readonly excludedCount: number;
+      readonly thresholdApplied: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SGDOP_CANDIDATE_INCLUDED";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly peerId: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "PRE_COMPACTION_CACHE_CHECK_RUN";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly thresholdApplied: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "PRE_COMPACTION_CACHE_ITEM_WRITTEN";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly entryId: string;
+      readonly cacheItemId: string;
+      readonly confidence: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "ONTOLOGY_STANDARD_TERM_USED" | "ONTOLOGY_NOVEL_FIELD_FALLBACK";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly term?: string;
+      readonly fieldName?: string;
+      readonly preferredVocabulary?: string;
+      readonly timestamp: string;
     };
 
 export class WormAuditSink extends Context.Tag("clawql/WormAuditSink")<
@@ -286,6 +366,11 @@ export interface ProviderPlugin {
   readonly skills?: readonly SkillDefinition[];
   readonly vaultSeed?: readonly VaultSeedEntry[];
   readonly hooks?: readonly LifecycleHook[];
+  /**
+   * Optional preferred vocabulary for ontology Layer 3 promotion
+   * (Schema.org, FIBO, Dublin Core, …). Legal-domain vocab deliberately unresolved.
+   */
+  readonly preferredVocabulary?: PreferredVocabularyId;
   readonly install: (
     ctx: PluginContext
   ) => Effect.Effect<void, PluginInstallError, PluginInstallServices>;
