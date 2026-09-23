@@ -15,4 +15,5 @@ export {
   type BurstArchitectureWORMEntryType,
   type MeshWORMEntryType,
   type OperatorLifecycleWORMEntryType,
+  type SessionRoutingWORMEntryType,
 } from "./worm-types.js";

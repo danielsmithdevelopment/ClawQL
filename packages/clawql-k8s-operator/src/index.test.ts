@@ -45,6 +45,10 @@ describe("BurstOperatorService", () => {
     );
     expect(types).toContain("MESH_POLICY_DENIED");
     expect(types).toContain("FILLER_WORKLOAD_EVICTED");
+    expect(types).toContain("THICC_SESSION_SPLIT");
+    expect(types).toContain("CELL_PLACEMENT_LOAD_AWARE");
+    expect(types).toContain("NEW_CAPACITY_PREFERRED_ROUTING");
+    expect(types).toHaveLength(9);
   });
 
   it("detectDrift through Tag", async () => {

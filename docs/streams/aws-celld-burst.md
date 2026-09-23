@@ -368,9 +368,30 @@ export type OperatorLifecycleWORMEntryType =
 
 **celld fleet health.** Verifies celld nodes remain correctly part of the shared S3-backed fleet (bucket lease records current, peer discovery functioning) and alerts/remediates if a node silently drops out without anyone noticing — this is an availability concern, not primarily a security one, but it belongs in the same operator since it's the same class of "is the infrastructure actually behaving as specified" watch function.
 
+**Session-aware cell placement, sourced from Modal's own published production experience serving trillion-parameter coding-agent inference at scale.** Modal's engineering team documented three specific, named failure modes in naive stateless routing for exactly this class of session-structured, cache-sensitive workload (Modal, "How to serve trillions of tokens for trillion-parameter coding agents," September 2026) — all three apply directly to how the operator places `AgentSessionDO`/`SubscriptionDO` cells across the celld fleet, and are adopted here as required operator behaviors rather than left as general good practice:
+
+1. **Split "thicc sessions" across replicas rather than preserving perfect affinity.** A single subscription firing many concurrent events can otherwise concentrate an unbounded number of `AgentSessionDO` cells onto one celld node even while aggregate fleet load looks balanced — Modal observed this as the single largest cause of hot replicas and tail latency in their own production traffic. The operator enforces a per-session concurrency threshold; a subscription's cell-spawn rate exceeding that threshold routes the excess to a different node rather than preserving strict co-location.
+2. **Route new cells by real, fine-grained load signals — running work and resource utilization — not by consistent hashing alone.** Modal's own math is direct and worth citing precisely: under uniform-random or pure-hash placement, the variance in load per replica does not shrink as fleet size grows, producing a fixed, scale-independent rate of both under-loaded and significantly over-loaded nodes (in their measured deployment, roughly a 4% chance of a replica serving at or below one session and a 0.5% chance of a replica serving twelve or more, against a target of five — independent of how many replicas exist). The operator's cell-placement decisions must weight current running-cell count and node resource utilization, not only a consistent-hash of session/subscription identity.
+3. **Prefer newly-provisioned capacity for new work during a scale-up, rather than rebalancing existing warm sessions onto it.** When the operator's own headroom request triggers Karpenter to provision a new celld node (Section 5), newly-arriving sessions and cell spawns should be preferentially routed to that new node first, rather than triggering relocation of already-in-flight, cache-warm cells to rebalance load. Modal identified this specific pattern — "regrettably cold prefills" caused by unnecessary relocation during scale-up — as the root cause of both queueing spikes and lower-than-expected per-replica throughput in their own deployment.
+
+```typescript
+export type SessionRoutingWORMEntryType =
+  | "THICC_SESSION_SPLIT" // a subscription's cell-spawn rate
+  // exceeded the concurrency threshold
+  // and was routed to an additional node
+  | "CELL_PLACEMENT_LOAD_AWARE" // a placement decision was made using
+  // real load signals, logged with the
+  // signals used, for later tuning
+  | "NEW_CAPACITY_PREFERRED_ROUTING"; // new sessions were preferentially
+// routed to newly-provisioned
+// capacity during a scale-up event
+```
+
+This responsibility should be exercised specifically during the Section 13 three-arm load test — Modal's own finding that these fixes reduced load dispersion to "strongly sub-Poisson" (variance under half the mean, down from variance several times the mean under naive routing) is a concrete, external benchmark worth comparing the operator's own measured session-placement variance against, once that test runs.
+
 ### 8.3 The operator's own actions are themselves audited
 
-Every operator action that changes cluster state — evicting a filler pod, flagging policy drift, requesting Karpenter capacity — produces its own WORM entry, following the same discipline already applied to plugin install/uninstall, hook firings, and spend-tier changes throughout this project. An operator that silently reconciles cluster state without leaving a record would itself be exactly the kind of unaudited privileged actor this entire architecture exists to prevent.
+Every operator action that changes cluster state — evicting a filler pod, flagging policy drift, requesting Karpenter capacity, splitting a thicc session, or preferring new capacity during scale-up — produces its own WORM entry, following the same discipline already applied to plugin install/uninstall, hook firings, and spend-tier changes throughout this project. An operator that silently reconciles cluster state without leaving a record would itself be exactly the kind of unaudited privileged actor this entire architecture exists to prevent.
 
 **Fail-closed + tip continuity:** mesh denial bridging and lifecycle events must append to the tip-loaded host `WORMAuditTrail` (same rule as Lab 5b dual-write). No parallel audit schema.
 
@@ -385,7 +406,11 @@ export type BurstArchitectureWORMEntryType =
   | "FILLER_WORKLOAD_EVICTED"
   | "CELLD_CAPACITY_HEADROOM_REQUESTED"
   | "KARPENTER_NODE_REQUESTED"
-  | "CELLD_FLEET_NODE_DROPPED"; // fleet health remediation event
+  | "CELLD_FLEET_NODE_DROPPED" // fleet health remediation event
+  | "THICC_SESSION_SPLIT" // Section 8.2, sourced from Modal's
+  // published production routing fixes
+  | "CELL_PLACEMENT_LOAD_AWARE"
+  | "NEW_CAPACITY_PREFERRED_ROUTING";
 ```
 
 All of these append to the same clawql-audit `WORMAuditTrail` already used by every other subsystem in this project (hooks, plugin lifecycle, spend governance, execute batching, payments). There is no separate audit mechanism for cluster/mesh-level events — the entire point of this section is that the WORM trail remains the single, complete, correlatable record regardless of which layer (application hook, mesh policy, or cluster operator) produced the event.
@@ -400,6 +425,7 @@ Types live in `packages/clawql-k8s-operator` (draft).
 - celld's cold-start latency inherits from V8 isolate architecture in principle; it has not yet been measured on ClawQL's own AWS deployment specifically (see Section 12 / §13).
 - Istio ambient mesh's own ztunnel startup time on a freshly-provisioned node has not yet been measured as part of an end-to-end burst test (see Section 12 / §13).
 - The `clawql-k8s-operator` as described here is a specification plus Effect type/service scaffold, not yet a shipped controller.
+- Session-aware cell placement (Section 8.2 Modal-sourced behaviors) is specified and typed in WORM entry unions, not yet a live placement controller — variance vs Modal's "strongly sub-Poisson" result is a §12 checklist item, not a measured claim.
 - The three-arm load test (§13) is a **demo design**, not a completed experiment — no arm's latency/cost numbers exist yet.
 
 ---
@@ -415,7 +441,7 @@ Types live in `packages/clawql-k8s-operator` (draft).
 | L7 mesh security (HTTP path/method policy)                                 | Istio waypoint, opt-in per namespace                    | Independently-authored from ATR scope, for genuine defense-in-depth            |
 | Fine-grained, business-logic enforcement                                   | clawql-core hooks                                       | Restrict-only invariant, ATR-scope-aware, already specified                    |
 | Cross-cluster / external ephemeral connections                             | clawql-network selector (Headscale/tailcat)             | Unchanged by anything in this spec; tailcat never runs in-cell                 |
-| Mesh-policy drift detection, denial bridging, node lifecycle, fleet health | clawql-k8s-operator                                     | Ties the above together under one fail-closed, WORM-audited posture            |
+| Mesh-policy drift, denial bridging, node lifecycle, fleet health, session-aware cell placement | clawql-k8s-operator                                     | Ties the above together under one fail-closed, WORM-audited posture            |
 | ClawQLInstance / tier ConfigMaps                                           | clawql-operator (existing)                              | Separate CRD scaffold — do not conflate                                        |
 | Every consequential event above                                            | clawql-audit WORM trail                                 | Single, complete, correlatable record — no parallel audit mechanism            |
 
@@ -458,6 +484,19 @@ Types live in `packages/clawql-k8s-operator` (draft).
     real WORM chain as every other subsystem's entries, with
     correct tip continuity — and that Arm A's operator WORM
     timestamps correlate with the Grafana timeline (§13.4).
+
+[ ] Measure session-placement load variance across the celld fleet
+    during the Section 13 three-arm load test, with the operator's
+    thicc-session-splitting, load-aware placement, and new-capacity-
+    preferred routing (Section 8.2) all active. Compare the measured
+    variance-to-mean ratio against Modal's own published production
+    result (variance under half the mean, "strongly sub-Poisson,"
+    down from several times the mean under naive routing) as an
+    external reference point — not a target this deployment is
+    guaranteed to match, since Modal's number reflects a different
+    workload and scale, but a meaningful sanity check that the three
+    adopted fixes are actually reducing dispersion rather than only
+    adding operator complexity with no measurable effect.
 
 [ ] Only after every item above has a real, measured result:
     publish using the §13.5 result template (all three arms, real
