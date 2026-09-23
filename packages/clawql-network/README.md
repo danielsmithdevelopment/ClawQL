@@ -36,6 +36,31 @@ import { startTailcatListener, connectViaTailcat } from "clawql-network";
 selectTransport({ targetType: "unknown" }); // => 'headscale-mesh' (safe default)
 ```
 
+## Gap A — Gateway registry
+
+Org-scoped fleet store (not `network.json`):
+
+```typescript
+import {
+  GatewayRegistryService,
+  gatewayRegistryLiveLayer,
+  attachGatewayRegistryRoutes,
+  startGatewayHeartbeatLoop,
+  initNetworking,
+} from "clawql-network";
+
+await initNetworking({ orgId: "acme", gatewayKind: "regional" });
+// enrolls via joinMesh → registerGateway, then starts heartbeat interval
+
+// HTTP (also mounted on clawql-mcp HTTP gateway):
+// GET  /network/orgs/:orgId/gateways
+// POST /network/gateways/register
+// POST /network/gateways/:gatewayId/heartbeat
+// Auth: Bearer CLAWQL_NETWORK_REGISTRY_TOKEN (or CLAWQL_NETWORK_REGISTRY_PUBLIC=1)
+```
+
+MCP: `network_list_mesh_peers`, `network_register_gateway`, `network_gateway_heartbeat` via `createNetworkPlugin()`.
+
 ## Related deployment docs
 
 - [`docs/deployment/tailscale-and-headscale-for-clawql.md`](../../docs/deployment/tailscale-and-headscale-for-clawql.md)
