@@ -16,7 +16,7 @@ package: "packages/clawql-sandbox/ (Agent Substrate adoption) + celld / clawql-c
 
 ## 1. The Decision
 
-`clawql-sandbox` adopts Google's open-source **Agent Substrate** (Cloud Hypervisor microVM or gVisor, operator's choice) as its isolation backend, replacing the originally-planned bespoke Kata Containers/Docker/Seatbelt build as the *primary* production path for untrusted arbitrary-code execution. Legacy backends (Kata, Docker, Cloudflare bridge, Seatbelt) remain available as fallbacks and for local/dev.
+`clawql-sandbox` adopts Google's open-source **Agent Substrate** (Cloud Hypervisor microVM or gVisor, operator's choice) as its isolation backend, replacing the originally-planned bespoke Kata Containers/Docker/Seatbelt build as the _primary_ production path for untrusted arbitrary-code execution. Legacy backends (Kata, Docker, Cloudflare bridge, Seatbelt) remain available as fallbacks and for local/dev.
 
 `clawql-cellrt` / **celld** continues to use celld's V8-isolate model, unchanged. **These are not competing choices for the same problem** — they are the correct backend for two genuinely different problems. This ADR exists so that distinction is never silently re-litigated by treating "Agent Substrate is newer/denser/Google-backed" as a reason to also apply it to celld's workload.
 
@@ -34,11 +34,11 @@ Adopting Agent Substrate **supersedes** the earlier parked question of whether `
 
 ### 3.1 Different problems
 
-| | Agent Substrate / `clawql-sandbox` | celld / `clawql-cellrt` |
-|---|---|---|
-| Threat model | Untrusted / unpredictable code; host-escape, credential theft, exfiltration risk | Fixed-shape TypeScript orchestration; no `child_process`/`fs`/`net` by construction |
-| Question answered | How do I safely run code I cannot fully trust or predict? | How do I run enormous numbers of small, already-trusted-by-construction pieces as cheaply as possible? |
-| Resume cost class | ~sub-500ms microVM/gVisor restore | ~sub-1ms–sub-5ms V8 isolate cold start |
+|                   | Agent Substrate / `clawql-sandbox`                                               | celld / `clawql-cellrt`                                                                                |
+| ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Threat model      | Untrusted / unpredictable code; host-escape, credential theft, exfiltration risk | Fixed-shape TypeScript orchestration; no `child_process`/`fs`/`net` by construction                    |
+| Question answered | How do I safely run code I cannot fully trust or predict?                        | How do I run enormous numbers of small, already-trusted-by-construction pieces as cheaply as possible? |
+| Resume cost class | ~sub-500ms microVM/gVisor restore                                                | ~sub-1ms–sub-5ms V8 isolate cold start                                                                 |
 
 Moving cell workloads onto Agent Substrate would buy a security guarantee the workload cannot need, at a measurable latency regression.
 
@@ -69,8 +69,8 @@ Code: `classifyIsolationWorkload` / `IsolationDecisionService` in `clawql-sandbo
 
 ## 4. What Adoption Changes in clawql-sandbox
 
-| Before | After |
-|---|---|
+| Before                                     | After                                                                  |
+| ------------------------------------------ | ---------------------------------------------------------------------- |
 | Primary plan: bespoke Kata/Docker/Seatbelt | Primary: Agent Substrate; Kata/Docker/bridge/Seatbelt remain fallbacks |
 
 **ClawQL still builds on top:**
@@ -90,11 +90,11 @@ As of this writing, Agent Substrate is open source and generally available for *
 
 ## 6. Implementation map
 
-| Artifact | Path |
-|---|---|
-| This ADR | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md` |
-| Backend | `packages/clawql-sandbox/src/agent-substrate/` |
-| Decision rule | `packages/clawql-sandbox/src/isolation-decision.ts` |
+| Artifact            | Path                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| This ADR            | `docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`                                          |
+| Backend             | `packages/clawql-sandbox/src/agent-substrate/`                                                      |
+| Decision rule       | `packages/clawql-sandbox/src/isolation-decision.ts`                                                 |
 | celld / cellrt note | `docs/streams/clawql-celld.md`, `docs/streams/clawql-cellrt.md` (isolation rule; runtime unchanged) |
 
 ---
@@ -107,5 +107,5 @@ As of this writing, Agent Substrate is open source and generally available for *
 
 ---
 
-*Isolation Architecture Decision Record · ADR 0011 · v0.1 · September 2026*  
-*Contact: daniel@clawql.com*
+_Isolation Architecture Decision Record · ADR 0011 · v0.1 · September 2026_  
+_Contact: daniel@clawql.com_

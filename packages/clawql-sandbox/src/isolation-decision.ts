@@ -8,9 +8,7 @@ import { Context, Effect, Layer } from "effect";
 /** Which isolation host a workload must use. */
 export type IsolationHostKind = "clawql-sandbox-agent-substrate" | "celld-v8-isolate";
 
-export type IsolationWorkloadClass =
-  | "untrusted_arbitrary_code"
-  | "fixed_shape_orchestration";
+export type IsolationWorkloadClass = "untrusted_arbitrary_code" | "fixed_shape_orchestration";
 
 export type IsolationDecisionInput = {
   readonly workloadId: string;
@@ -30,9 +28,7 @@ export type IsolationDecision = {
   readonly rationale: string;
 };
 
-export function classifyIsolationWorkload(
-  input: IsolationDecisionInput
-): IsolationDecision {
+export function classifyIsolationWorkload(input: IsolationDecisionInput): IsolationDecision {
   if (input.behaviorNotFullyKnownInAdvance) {
     return {
       workloadId: input.workloadId,
@@ -53,14 +49,10 @@ export function classifyIsolationWorkload(
   };
 }
 
-export class IsolationDecisionService extends Context.Tag(
-  "clawql/IsolationDecisionService"
-)<
+export class IsolationDecisionService extends Context.Tag("clawql/IsolationDecisionService")<
   IsolationDecisionService,
   {
-    readonly classify: (
-      input: IsolationDecisionInput
-    ) => Effect.Effect<IsolationDecision>;
+    readonly classify: (input: IsolationDecisionInput) => Effect.Effect<IsolationDecision>;
   }
 >() {}
 

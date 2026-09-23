@@ -63,10 +63,7 @@ export function decideExecuteReachability(args: {
     const inScope =
       args.promoted.skillId === args.toolName ||
       args.promoted.validatedScope.includes(args.toolName);
-    if (
-      inScope &&
-      validatedScopeSubsetOfS(args.promoted.validatedScope, args.atrScope)
-    ) {
+    if (inScope && validatedScopeSubsetOfS(args.promoted.validatedScope, args.atrScope)) {
       return {
         allow: true,
         bucket: "gated_skill",
@@ -146,9 +143,7 @@ function findPromotionCoveringTool(
 ): Effect.Effect<import("./types.js").PromotedSkillRecord | undefined> {
   return Effect.gen(function* () {
     const all = yield* list();
-    return all.find(
-      (p) => p.skillId === toolName || p.validatedScope.includes(toolName)
-    );
+    return all.find((p) => p.skillId === toolName || p.validatedScope.includes(toolName));
   });
 }
 

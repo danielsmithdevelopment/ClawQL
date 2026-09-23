@@ -13,9 +13,7 @@ function fakeChild(exitCode: number, stdout = ""): import("node:child_process").
   return child;
 }
 
-const mockSpawn = vi.hoisted(() =>
-  vi.fn((..._args: unknown[]) => fakeChild(0, "42\n"))
-);
+const mockSpawn = vi.hoisted(() => vi.fn((..._args: unknown[]) => fakeChild(0, "42\n")));
 
 vi.mock("node:child_process", async (importOriginal) => {
   const cp = await importOriginal<typeof import("node:child_process")>();

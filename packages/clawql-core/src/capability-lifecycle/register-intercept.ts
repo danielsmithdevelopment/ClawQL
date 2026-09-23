@@ -17,9 +17,7 @@ export type RegisterInterceptOutcome = ExecuteReachabilityDecision & {
  * Port harness wrappers call when their native registry/plugin loader mutates.
  * clawql-core decides routing — harness claims carry no authority.
  */
-export class CapabilityRegisterIntercept extends Context.Tag(
-  "clawql/CapabilityRegisterIntercept"
-)<
+export class CapabilityRegisterIntercept extends Context.Tag("clawql/CapabilityRegisterIntercept")<
   CapabilityRegisterIntercept,
   {
     /**
@@ -32,9 +30,9 @@ export class CapabilityRegisterIntercept extends Context.Tag(
     ) => Effect.Effect<
       RegisterInterceptOutcome,
       never,
-      import("./session-catalog.js").SessionCatalogService |
-        import("./promotion-store.js").PromotionStore |
-        WormAuditSink
+      | import("./session-catalog.js").SessionCatalogService
+      | import("./promotion-store.js").PromotionStore
+      | WormAuditSink
     >;
     /** Whether any harness has wired a real register-side mechanism. */
     readonly isRegisterSideImplemented: () => Effect.Effect<boolean>;

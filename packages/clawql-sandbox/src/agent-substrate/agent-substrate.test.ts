@@ -39,9 +39,7 @@ describe("classifyIsolationWorkload (ADR 0011 §3.2)", () => {
   });
 
   it("examples match the permanent rule", () => {
-    expect(ISOLATION_DECISION_EXAMPLES.sandboxExec.host).toBe(
-      "clawql-sandbox-agent-substrate"
-    );
+    expect(ISOLATION_DECISION_EXAMPLES.sandboxExec.host).toBe("clawql-sandbox-agent-substrate");
     expect(ISOLATION_DECISION_EXAMPLES.celldCell.host).toBe("celld-v8-isolate");
   });
 

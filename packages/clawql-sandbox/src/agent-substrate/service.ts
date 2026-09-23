@@ -157,9 +157,7 @@ export function createMockAgentSubstrateLayer(
             }
             const persistenceMode = input.persistenceMode ?? defaultPersistence();
             const sessionId = resolveSandboxId(persistenceMode, input.sessionId);
-            const before = yield* Ref.get(sessions).pipe(
-              Effect.map((m) => m.get(sessionId))
-            );
+            const before = yield* Ref.get(sessions).pipe(Effect.map((m) => m.get(sessionId)));
             const resumedFromSuspend = before?.state === "suspended";
             yield* ensureSession(sessionId);
             // Mock execution: echo a deterministic marker (no real guest).
@@ -225,8 +223,7 @@ export function createLiveAgentSubstrateLayer(
         }
         const body = (yield* Effect.tryPromise({
           try: () => res.json() as Promise<AgentSubstrateSession>,
-          catch: (cause) =>
-            new AgentSubstrateError({ reason: "ensureSession JSON failed", cause }),
+          catch: (cause) => new AgentSubstrateError({ reason: "ensureSession JSON failed", cause }),
         })) as AgentSubstrateSession;
         yield* recordAgentSubstrateLifecycle({ kind: "session_created", session: body });
         return body;

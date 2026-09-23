@@ -34,17 +34,16 @@ export class AgentSubstrateWormSink extends Context.Tag("clawql/AgentSubstrateWo
   }
 >() {}
 
-export const InMemoryAgentSubstrateWormSinkLive: Layer.Layer<AgentSubstrateWormSink> =
-  Layer.effect(
-    AgentSubstrateWormSink,
-    Effect.gen(function* () {
-      const ref = yield* Ref.make<AgentSubstrateWormRecord[]>([]);
-      return {
-        append: (record) => Ref.update(ref, (xs) => [...xs, record]),
-        list: () => Ref.get(ref),
-      };
-    })
-  );
+export const InMemoryAgentSubstrateWormSinkLive: Layer.Layer<AgentSubstrateWormSink> = Layer.effect(
+  AgentSubstrateWormSink,
+  Effect.gen(function* () {
+    const ref = yield* Ref.make<AgentSubstrateWormRecord[]>([]);
+    return {
+      append: (record) => Ref.update(ref, (xs) => [...xs, record]),
+      list: () => Ref.get(ref),
+    };
+  })
+);
 
 function sessionRecord(
   type: AgentSubstrateWormEntryType,

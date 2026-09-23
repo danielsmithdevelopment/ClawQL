@@ -39,11 +39,11 @@ export function runCapabilityLifecycleTurn(
 ): Effect.Effect<
   CapabilityLifecycleOutcome,
   never,
-  import("../classifier/registry.js").FastDecisionRegistry |
-    import("../classifier/scorer.js").FastDecisionScorer |
-    import("../classifier/threshold-policy.js").FastDecisionThresholdPolicyService |
-    import("../classifier/skill-fast-path.js").SkillValidityStore |
-    import("../plugin/provider-types.js").WormAuditSink
+  | import("../classifier/registry.js").FastDecisionRegistry
+  | import("../classifier/scorer.js").FastDecisionScorer
+  | import("../classifier/threshold-policy.js").FastDecisionThresholdPolicyService
+  | import("../classifier/skill-fast-path.js").SkillValidityStore
+  | import("../plugin/provider-types.js").WormAuditSink
 > {
   return Effect.gen(function* () {
     const skill = yield* decideSkillFastPath(ctx);

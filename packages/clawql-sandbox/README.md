@@ -20,13 +20,13 @@ When **`CLAWQL_ENABLE_SANDBOX=1`**, **`SandboxPlugin`** (`createSandboxPlugin` f
 
 ## Backends (priority in `auto`)
 
-| Backend | When | Env |
-| --- | --- | --- |
-| **Agent Substrate** (primary, ADR 0011) | Cloud Hypervisor microVM or gVisor | `CLAWQL_SANDBOX_AGENT_SUBSTRATE_*` / pin `agent-substrate` |
-| **Kata Containers** | Kubernetes Job + `runtimeClassName` (fallback) | `CLAWQL_SANDBOX_KATA_*` / pin `kata` |
-| **Docker / Podman** | Local CLI `docker run` | `docker`, `CLAWQL_SANDBOX_DOCKER_*` |
-| **Cloudflare bridge** | Workers `@cloudflare/sandbox` | `CLAWQL_SANDBOX_BRIDGE_URL` + token |
-| **macOS Seatbelt** | Dev macOS only | `macos-seatbelt` |
+| Backend                                 | When                                           | Env                                                        |
+| --------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------- |
+| **Agent Substrate** (primary, ADR 0011) | Cloud Hypervisor microVM or gVisor             | `CLAWQL_SANDBOX_AGENT_SUBSTRATE_*` / pin `agent-substrate` |
+| **Kata Containers**                     | Kubernetes Job + `runtimeClassName` (fallback) | `CLAWQL_SANDBOX_KATA_*` / pin `kata`                       |
+| **Docker / Podman**                     | Local CLI `docker run`                         | `docker`, `CLAWQL_SANDBOX_DOCKER_*`                        |
+| **Cloudflare bridge**                   | Workers `@cloudflare/sandbox`                  | `CLAWQL_SANDBOX_BRIDGE_URL` + token                        |
+| **macOS Seatbelt**                      | Dev macOS only                                 | `macos-seatbelt`                                           |
 
 ### Agent Substrate (recommended for untrusted / arbitrary code)
 

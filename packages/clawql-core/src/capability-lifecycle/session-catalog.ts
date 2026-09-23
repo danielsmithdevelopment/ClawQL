@@ -92,9 +92,7 @@ export const InMemorySessionCatalogLive: Layer.Layer<SessionCatalogService> = La
           }
 
           const grantWider = input.explicitWiderScopeGrant ?? [];
-          const baseScope = input.newAtrScope
-            ? toSet(input.newAtrScope)
-            : prior.atrScope;
+          const baseScope = input.newAtrScope ? toSet(input.newAtrScope) : prior.atrScope;
 
           // Default: rebound catalog scope ⊆ prior S
           const nextScope = new Set<string>();

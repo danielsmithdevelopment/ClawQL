@@ -38,7 +38,7 @@ ClawQL's decision (Streams v0.2): **do not build a custom DO runtime on Node `wo
 
 ### Isolation architecture (ADR 0011) — celld is not Agent Substrate
 
-**Decided September 2026:** [`clawql-sandbox`](../../packages/clawql-sandbox/) adopts Google **Agent Substrate** for *untrusted / arbitrary* code. **celld stays on V8 isolates** for fixed-shape orchestration. These are different threat models — do not move cells onto Agent Substrate because of density or Google backing. Permanent rule: [`docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`](../adr/0011-isolation-agent-substrate-sandbox-celld.md).
+**Decided September 2026:** [`clawql-sandbox`](../../packages/clawql-sandbox/) adopts Google **Agent Substrate** for _untrusted / arbitrary_ code. **celld stays on V8 isolates** for fixed-shape orchestration. These are different threat models — do not move cells onto Agent Substrate because of density or Google backing. Permanent rule: [`docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`](../adr/0011-isolation-agent-substrate-sandbox-celld.md).
 
 ### Why celld vs build-own
 

@@ -25,7 +25,10 @@ export class PromotionStore extends Context.Tag("clawql/PromotionStore")<
       record: PromotedSkillRecord,
       sessionId: string
     ) => Effect.Effect<PromotedSkillRecord, PromotionStoreError, WormAuditSink>;
-    readonly revoke: (skillId: string, sessionId: string) => Effect.Effect<boolean, never, WormAuditSink>;
+    readonly revoke: (
+      skillId: string,
+      sessionId: string
+    ) => Effect.Effect<boolean, never, WormAuditSink>;
   }
 >() {}
 

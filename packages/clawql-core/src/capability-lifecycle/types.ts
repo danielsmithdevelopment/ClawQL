@@ -66,5 +66,6 @@ export type RegisterInterceptReport = {
   readonly sessionId: string;
   readonly toolName: string;
   readonly harnessId: string;
-  readonly mechanism: "tool_registry_mutation" | "plugin_load_callback" | "filesystem_watch" | "unspecified";
+  readonly mechanism:
+    "tool_registry_mutation" | "plugin_load_callback" | "filesystem_watch" | "unspecified";
 };
