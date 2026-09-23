@@ -432,18 +432,18 @@ Types live in `packages/clawql-k8s-operator` (draft).
 
 ## 11. Package Boundaries — Summary
 
-| Concern                                                                    | Owner                                                   | Why                                                                            |
-| -------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Cell hosting, in-memory burst absorption                                   | celld (forked as clawql-cellrt eventually)              | V8 isolate model, sub-ms cell startup                                          |
-| Node-level compute provisioning                                            | Karpenter + EC2                                         | Handles filler-workload replacement capacity, not celld's own burst absorption |
-| Filler-workload preemption policy                                          | Kubernetes PriorityClass, driven by clawql-k8s-operator | Deliberate, audited eviction — not generic scheduler pressure                  |
-| L4 mesh security (mTLS, coarse network identity)                           | Istio ztunnel                                           | Always-on, per-node, no HTTP awareness                                         |
-| L7 mesh security (HTTP path/method policy)                                 | Istio waypoint, opt-in per namespace                    | Independently-authored from ATR scope, for genuine defense-in-depth            |
-| Fine-grained, business-logic enforcement                                   | clawql-core hooks                                       | Restrict-only invariant, ATR-scope-aware, already specified                    |
-| Cross-cluster / external ephemeral connections                             | clawql-network selector (Headscale/tailcat)             | Unchanged by anything in this spec; tailcat never runs in-cell                 |
+| Concern                                                                                        | Owner                                                   | Why                                                                            |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Cell hosting, in-memory burst absorption                                                       | celld (forked as clawql-cellrt eventually)              | V8 isolate model, sub-ms cell startup                                          |
+| Node-level compute provisioning                                                                | Karpenter + EC2                                         | Handles filler-workload replacement capacity, not celld's own burst absorption |
+| Filler-workload preemption policy                                                              | Kubernetes PriorityClass, driven by clawql-k8s-operator | Deliberate, audited eviction — not generic scheduler pressure                  |
+| L4 mesh security (mTLS, coarse network identity)                                               | Istio ztunnel                                           | Always-on, per-node, no HTTP awareness                                         |
+| L7 mesh security (HTTP path/method policy)                                                     | Istio waypoint, opt-in per namespace                    | Independently-authored from ATR scope, for genuine defense-in-depth            |
+| Fine-grained, business-logic enforcement                                                       | clawql-core hooks                                       | Restrict-only invariant, ATR-scope-aware, already specified                    |
+| Cross-cluster / external ephemeral connections                                                 | clawql-network selector (Headscale/tailcat)             | Unchanged by anything in this spec; tailcat never runs in-cell                 |
 | Mesh-policy drift, denial bridging, node lifecycle, fleet health, session-aware cell placement | clawql-k8s-operator                                     | Ties the above together under one fail-closed, WORM-audited posture            |
-| ClawQLInstance / tier ConfigMaps                                           | clawql-operator (existing)                              | Separate CRD scaffold — do not conflate                                        |
-| Every consequential event above                                            | clawql-audit WORM trail                                 | Single, complete, correlatable record — no parallel audit mechanism            |
+| ClawQLInstance / tier ConfigMaps                                                               | clawql-operator (existing)                              | Separate CRD scaffold — do not conflate                                        |
+| Every consequential event above                                                                | clawql-audit WORM trail                                 | Single, complete, correlatable record — no parallel audit mechanism            |
 
 ---
 
