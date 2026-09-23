@@ -27,8 +27,7 @@ export class GlinerScorerConfigService extends Context.Tag("clawql/GlinerScorerC
 /** Read env at call time (tests can mutate process.env). */
 export function readGlinerScorerConfigFromEnv(): GlinerScorerConfig {
   const endpointUrl = process.env.CLAWQL_FAST_DECISION_GLINER_URL?.trim() || undefined;
-  const modelId =
-    process.env.CLAWQL_FAST_DECISION_GLINER_MODEL?.trim() || DEFAULT_GLINER_MODEL_ID;
+  const modelId = process.env.CLAWQL_FAST_DECISION_GLINER_MODEL?.trim() || DEFAULT_GLINER_MODEL_ID;
   const apiToken = process.env.CLAWQL_FAST_DECISION_GLINER_TOKEN?.trim() || undefined;
   const timeoutRaw = process.env.CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS?.trim();
   const timeoutMs = timeoutRaw ? Number(timeoutRaw) : 5_000;
@@ -47,6 +46,8 @@ export const GlinerScorerConfigLive: Layer.Layer<GlinerScorerConfigService> = La
   }
 );
 
-export function glinerEndpointConfigured(config: GlinerScorerConfig = readGlinerScorerConfigFromEnv()): boolean {
+export function glinerEndpointConfigured(
+  config: GlinerScorerConfig = readGlinerScorerConfigFromEnv()
+): boolean {
   return Boolean(config.endpointUrl?.trim());
 }

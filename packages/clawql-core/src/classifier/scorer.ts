@@ -83,9 +83,7 @@ export type GlinerClassifyResponseBody = {
 };
 
 function candidateDescription(c: FastDecisionCandidate): string {
-  return String(
-    c.features.description ?? c.features.label ?? c.features.name ?? c.candidateId
-  );
+  return String(c.features.description ?? c.features.label ?? c.features.name ?? c.candidateId);
 }
 
 function requestText(ctx: FastDecisionContext): string {
@@ -142,9 +140,7 @@ export function scoreViaGlinerHttp(
         try: () => res.json() as Promise<GlinerClassifyResponseBody>,
         catch: (e) => e,
       })) as GlinerClassifyResponseBody;
-      const byId = new Map(
-        (parsed.scores ?? []).map((s) => [s.id, clamp01(Number(s.confidence))])
-      );
+      const byId = new Map((parsed.scores ?? []).map((s) => [s.id, clamp01(Number(s.confidence))]));
       return request.candidates
         .map((c) => ({
           candidateId: c.candidateId,
