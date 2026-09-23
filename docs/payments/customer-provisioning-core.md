@@ -191,19 +191,19 @@ Provider on org events: `billing`. Raw API secrets never appear in audit payload
 
 ## Env cheat sheet
 
-| Env                                              | Role                                                                   |
-| ------------------------------------------------ | ---------------------------------------------------------------------- |
-| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                                 |
-| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                         |
-| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                                |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                                 |
-| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)                  |
-| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))         |
-| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                     |
-| `CELLD_BUCKET`                                   | When set, topology runs `celld cell list --json` for cell agents       |
-| `CELLD_LIST_JSON`                                | Inline JSON or `@/path.json` cell list fixture (tests / air-gap)       |
-| `CLAWQL_AGENT_CORRELATION_ID`                    | Optional default Gap B `lastCorrelationId` for adapter heartbeats      |
-| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                      |
+| Env                                              | Role                                                              |
+| ------------------------------------------------ | ----------------------------------------------------------------- |
+| `CLAWQL_CREDITS_ENABLED`                         | Required for provision                                            |
+| `CLAWQL_API_KEYS_PATH`                           | Override issued-key store path                                    |
+| `CLAWQL_CPC_PROVISION_TOKEN`                     | Shared secret for HTTP provision routes                           |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER`            | Enable meter reporting                                            |
+| `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)             |
+| `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))    |
+| `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                |
+| `CELLD_BUCKET`                                   | When set, topology runs `celld cell list --json` for cell agents  |
+| `CELLD_LIST_JSON`                                | Inline JSON or `@/path.json` cell list fixture (tests / air-gap)  |
+| `CLAWQL_AGENT_CORRELATION_ID`                    | Optional default Gap B `lastCorrelationId` for adapter heartbeats |
+| `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                 |
 
 ---
 

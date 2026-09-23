@@ -95,8 +95,7 @@ export function parseCelldListJson(stdout: string): CellDraft[] {
   return rows.map((raw) => {
     const r = raw as Record<string, unknown>;
     const agentId = String(r.id ?? r.cellId ?? r.name ?? "cell-unknown");
-    const hib =
-      r.hibernating === true || r.status === "hibernating" || r.state === "hibernating";
+    const hib = r.hibernating === true || r.status === "hibernating" || r.state === "hibernating";
     const lastActive = String(
       r.lastActive ?? r.last_active ?? r.updatedAt ?? new Date().toISOString()
     );
@@ -124,9 +123,7 @@ export const loadCelldCells = (env: NodeJS.ProcessEnv): Effect.Effect<CelldLoadR
       const fixture = env.CELLD_LIST_JSON?.trim();
       if (fixture) {
         try {
-          const raw = fixture.startsWith("@")
-            ? await readFile(fixture.slice(1), "utf8")
-            : fixture;
+          const raw = fixture.startsWith("@") ? await readFile(fixture.slice(1), "utf8") : fixture;
           return { cells: parseCelldListJson(raw), unavailable: false };
         } catch {
           return { cells: [], unavailable: true };

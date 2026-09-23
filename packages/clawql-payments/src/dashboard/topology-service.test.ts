@@ -13,12 +13,8 @@ import {
 
 describe("mcpAgentTraceLink", () => {
   it("builds distinct per-agent /trace/agent/ URLs (no focus=, no bare compare)", () => {
-    expect(mcpAgentTraceLink("/mcp-ui/trace", "hermes-042")).toBe(
-      "/mcp-ui/trace/agent/hermes-042"
-    );
-    expect(mcpAgentTraceLink("/mcp-ui/trace", "cline-017")).toBe(
-      "/mcp-ui/trace/agent/cline-017"
-    );
+    expect(mcpAgentTraceLink("/mcp-ui/trace", "hermes-042")).toBe("/mcp-ui/trace/agent/hermes-042");
+    expect(mcpAgentTraceLink("/mcp-ui/trace", "cline-017")).toBe("/mcp-ui/trace/agent/cline-017");
     expect(mcpAgentTraceLink("/mcp-ui/trace", "hermes-042")).not.toBe(
       mcpAgentTraceLink("/mcp-ui/trace", "cline-017")
     );

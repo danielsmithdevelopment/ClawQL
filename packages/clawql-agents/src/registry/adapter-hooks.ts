@@ -51,9 +51,7 @@ export const registerAgentInstanceOnStart = (
   return Effect.gen(function* () {
     const reg = yield* AgentInstanceRegistryService;
     const lastCorrelationId =
-      config.lastCorrelationId?.trim() ||
-      process.env.CLAWQL_AGENT_CORRELATION_ID?.trim() ||
-      "";
+      config.lastCorrelationId?.trim() || process.env.CLAWQL_AGENT_CORRELATION_ID?.trim() || "";
     yield* reg.registerAgentInstance({
       agentId,
       agentType: hints.agentName as PersistentAgentType,
