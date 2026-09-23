@@ -200,9 +200,10 @@ Provider on org events: `billing`. Raw API secrets never appear in audit payload
 | `STRIPE_METER_EVENT_NAME` / `STRIPE_CUSTOMER_ID` | Meter config (org prefers its own `stripeCustomerId`)                  |
 | `STRIPE_PRO_PRICE_ID` / `STRIPE_TEAM_PRICE_ID`   | Live Checkout Prices ([ops runbook](./stripe-products-ops.md))         |
 | `CLAWQL_MCP_UI_TRACE_BASE`                       | Optional flamegraph base (default `/mcp-ui/trace`)                     |
-| `CLAWQL_TOPOLOGY_SNAPSHOT`                       | Optional JSON path `{ gateways: GatewayNode[] }` for topology override |
+| `CELLD_BUCKET`                                   | When set, topology runs `celld cell list --json` for cell agents       |
+| `CELLD_LIST_JSON`                                | Inline JSON or `@/path.json` cell list fixture (tests / air-gap)       |
+| `CLAWQL_AGENT_CORRELATION_ID`                    | Optional default Gap B `lastCorrelationId` for adapter heartbeats      |
 | `CLAWQL_CPC_DASHBOARD_RETURN_URL`                | Stripe Portal return URL override                                      |
-| `CELLD_BUCKET`                                   | When set, topology tries `celld cell list --json` for cell agents      |
 
 ---
 
@@ -230,9 +231,9 @@ Full-scope command center ([customer-dashboard-full-scope-v0.1](../specs/billing
 | 2   | API keys       | List active org keys; issue / rotate (revoke + issue); secret shown once                                                                                |
 | 3   | Usage          | **`getOrgUnifiedSpendSummary`** (+ optional WORM spend) — not `computeCurrentSpend`                                                                     |
 | 4   | Topology       | Hierarchical gateways (`regional` \| `edge`) + agents (`persistent` \| `cell`); status dots; collapsed by default; empty → “connect your first gateway” |
-| 5   | Traces         | Embedded iframe of existing `/mcp-ui/trace/compare` + WORM rows; topology `trace` links focus the embed                                                 |
+| 5   | Traces         | Default iframe embeds existing `/mcp-ui/trace/compare` demo; topology **trace** links open `/mcp-ui/trace/agent/<session>` (live or explicit not-found) |
 
-Topology is a read aggregation (`TopologyService`) over Headscale/Tailscale mesh, ManagedGateway, compensation accounts, and `celld cell list` when `CELLD_BUCKET` is set. Optional override: `CLAWQL_TOPOLOGY_SNAPSHOT`.
+Topology is a read aggregation (`TopologyService`) over Gap A (`GatewayRegistryService` / Headscale mesh identity), Gap B (`AgentInstanceRegistryService`), and `celld cell list` when `CELLD_BUCKET` or `CELLD_LIST_JSON` is set. Failures against a configured celld source surface as `celld-unavailable` in the Sources line — not a silent empty fleet. No Tailscale scrape, compensation-ledger stand-in, or production `CLAWQL_TOPOLOGY_SNAPSHOT` override.
 
 ```bash
 # After provision

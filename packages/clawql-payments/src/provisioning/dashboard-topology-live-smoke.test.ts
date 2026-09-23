@@ -154,9 +154,10 @@ describe("§5 live topology smoke", () => {
     expect(tree.gateways[0]!.children[0]!.agentId).toBe("hermes-042");
     expect(tree.gateways[0]!.children[0]!.agentType).toBe("hermes");
     expect(tree.gateways[0]!.children[0]!.parentGatewayId).toBe("gw-east");
-    // #1082 honesty: bare compare demo URL — not a fake per-agent ?focus=
-    expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/compare");
+    // #1082 option 1: distinct per-agent live-or-404 URL (not bare compare, not fake focus=)
+    expect(tree.gateways[0]!.children[0]!.traceLink).toBe("/mcp-ui/trace/agent/hermes-042");
     expect(tree.gateways[0]!.children[0]!.traceLink).not.toMatch(/focus=/);
+    expect(tree.gateways[0]!.children[0]!.traceLink).not.toMatch(/\/compare$/);
 
     await withDashAndMcpUi(process.env, async (base) => {
       const dashRes = await fetch(
@@ -177,33 +178,32 @@ describe("§5 live topology smoke", () => {
       expect(html).toContain("[Regional Gateway: us-east-1]");
       expect(html).toContain("Hermes hermes-042");
       expect(html).toContain("Sources: gateway-registry, agent-instance-registry");
-      expect(html).toContain("/mcp-ui/trace/compare");
+      expect(html).toContain("/mcp-ui/trace/compare"); // default Traces embed
       expect(html).not.toContain("compare?focus=hermes-042");
-      expect(html).toContain('data-trace-src="/mcp-ui/trace/compare"');
-      expect(html).toContain(">demo</a>");
-      expect(html).toContain("not this agent's session");
+      expect(html).toContain('data-trace-src="/mcp-ui/trace/agent/hermes-042"');
+      expect(html).toContain(">trace</a>");
+      expect(html).not.toContain(">demo</a>");
       expect(html).toContain('id="trace-embed"');
       expect(html).toMatch(/dot-healthy/);
 
-      const traceHref = "/mcp-ui/trace/compare";
-      const traceRes = await fetch(`${base}${traceHref}`);
-      const traceHtml = await traceRes.text();
+      const agentTraceHref = "/mcp-ui/trace/agent/hermes-042";
+      const agentRes = await fetch(`${base}${agentTraceHref}`);
+      const agentHtml = await agentRes.text();
+      const compareRes = await fetch(`${base}/mcp-ui/trace/compare`);
+      const compareHtml = await compareRes.text();
 
-      console.log("\n=== TRACE LINK RESPONSE ===");
-      console.log("status:", traceRes.status);
-      console.log("content-type:", traceRes.headers.get("content-type"));
-      console.log("title/body markers:", {
-        hasFlamegraph: /flame|compare|trace/i.test(traceHtml),
-        hasSvgOrBars: /svg|fg-|flamegraph|bar/i.test(traceHtml),
-        snippet: traceHtml.slice(0, 600).replace(/\s+/g, " "),
-      });
-      console.log("=== END TRACE ===\n");
+      console.log("\n=== AGENT TRACE LINK RESPONSE ===");
+      console.log("status:", agentRes.status);
+      console.log("content-type:", agentRes.headers.get("content-type"));
+      console.log("snippet:", agentHtml.slice(0, 600).replace(/\s+/g, " "));
+      console.log("=== END AGENT TRACE ===\n");
 
-      expect(traceRes.status).toBe(200);
-      expect(traceRes.headers.get("content-type") ?? "").toMatch(/html/);
-      // Honest demo compare must render (not 404 / "No trace")
-      expect(traceHtml).not.toMatch(/No trace for session/i);
-      expect(traceHtml).toMatch(/compare|flame|compression/i);
+      // Without a seeded correlation, agent route is explicit not-found — not the demo.
+      expect(agentRes.status).toBe(404);
+      expect(agentHtml).toMatch(/No trace for session/i);
+      expect(agentHtml).not.toBe(compareHtml);
+      expect(compareRes.status).toBe(200);
+      expect(compareHtml).toMatch(/compare|flame|compression/i);
     });
   });
 });

@@ -445,6 +445,70 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     );
   });
 
+  /**
+   * Per-agent / per-cell topology deep-link (#1082 option 1).
+   * Resolves live inference for the agent session key when present; otherwise
+   * explicit not-found — never silent demo compare swap.
+   */
+  router.get("/trace/agent/:agentId", async (req, res) => {
+    const agentId = String(req.params.agentId ?? "").trim();
+    if (!isValidTraceSessionId(agentId)) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(agentId || "(empty)", {
+            basePath,
+            hint: "Agent id must be a short alphanumeric token (dashboard topology session key).",
+          })
+        );
+      return;
+    }
+
+    let records: TraceCallRecord[] | null;
+    try {
+      records = await resolveTraceRecords(agentId, options.listTraceCalls);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res
+        .status(502)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(agentId, {
+            basePath,
+            hint: `Failed to load agent trace: ${message}`,
+          })
+        );
+      return;
+    }
+
+    if (!records) {
+      res.status(404).type("html").send(
+        renderTraceNotFoundPage(agentId, {
+          basePath,
+          hint: options.listTraceCalls
+            ? `No inference calls for agent/session “${agentId}”. When the agent (or cell) publishes a correlation id via Gap B heartbeat lastCorrelationId — or uses agentId as the correlation key — live calls appear here. Until then this empty state is intentional (not a demo).`
+            : "Wire listTraceCalls (MCP_API_ADAPTER_INFERENCE_TRACE=1) so agent-scoped sessions can resolve. Until then this page is an explicit empty state — not the compare demo.",
+        })
+      );
+      return;
+    }
+
+    const graph = buildContextFlamegraph(agentId, records, {
+      tokenization: traceTokenizationMeta(agentId, records),
+    });
+    const wantJson =
+      String(req.query.format ?? "").toLowerCase() === "json" ||
+      (req.accepts(["html", "json"]) === "json" &&
+        String(req.query.format ?? "").toLowerCase() !== "html");
+
+    if (wantJson) {
+      res.status(200).json(graph);
+      return;
+    }
+    res.status(200).type("html").send(renderContextFlamegraphPage(graph, { basePath }));
+  });
+
   router.get("/trace/:sessionId", async (req, res) => {
     const sessionId = String(req.params.sessionId ?? "").trim();
     if (!sessionId || sessionId.length > 200 || /[^\w.:@+-]/.test(sessionId)) {

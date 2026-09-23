@@ -82,7 +82,8 @@ Once A and B exist:
 GatewayNode (regional|edge) <- listMeshPeers(orgId)      [Gap A, real]
 AgentNode (persistent)      <- listAgentInstances(orgId)  [Gap B, real]
 AgentNode (cell)            <- celld fleet API             [already real]
-traceLink                   <- /mcp-ui/trace/compare        [already real]
+traceLink                   <- /mcp-ui/trace/agent/<sessionKey>
+                               (lastCorrelationId ?? agentId; live-or-404, never silent demo)
 ```
 
 Four real sources, zero heuristic scraping, zero ledger-as-stand-in.

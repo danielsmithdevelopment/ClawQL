@@ -11,6 +11,7 @@ import {
   AGENT_HEARTBEAT_INTERVAL_MS,
   AGENT_IDLE_AFTER_MISSED,
   AGENT_OFFLINE_AFTER_MISSED,
+  type AgentHeartbeatOptions,
   type AgentInstanceRecord,
   type AgentInstanceStatus,
   type RegisterAgentInstanceInput,
@@ -31,7 +32,8 @@ export class AgentInstanceRegistryService extends Context.Tag(
     ) => Effect.Effect<AgentInstanceRecord>;
     readonly heartbeat: (
       agentId: string,
-      orgId: string
+      orgId: string,
+      opts?: AgentHeartbeatOptions
     ) => Effect.Effect<AgentInstanceRecord | null>;
     readonly listAgentInstances: (orgId: string) => Effect.Effect<readonly AgentInstanceRecord[]>;
   }
@@ -110,6 +112,7 @@ export const agentInstanceRegistryLiveLayer = (
         }
         const path = agentInstanceRegistryPath(orgId, home);
         const now = new Date().toISOString();
+        const corr = input.lastCorrelationId?.trim();
         const record: AgentInstanceRecord = {
           agentId,
           agentType: input.agentType,
@@ -117,6 +120,7 @@ export const agentInstanceRegistryLiveLayer = (
           orgId,
           lastActive: now,
           status: "active",
+          ...(corr ? { lastCorrelationId: corr } : {}),
         };
         const file = yield* loadFile(path);
         yield* saveFile(path, {
@@ -126,16 +130,22 @@ export const agentInstanceRegistryLiveLayer = (
         return record;
       }),
 
-    heartbeat: (agentId, orgId) =>
+    heartbeat: (agentId, orgId, opts) =>
       Effect.gen(function* () {
         const path = agentInstanceRegistryPath(orgId.trim(), home);
         const file = yield* loadFile(path);
         const existing = file.instances[agentId.trim()];
         if (!existing) return null;
+        const corr = opts?.lastCorrelationId?.trim();
         const record: AgentInstanceRecord = {
           ...existing,
           lastActive: new Date().toISOString(),
           status: "active",
+          ...(corr
+            ? { lastCorrelationId: corr }
+            : existing.lastCorrelationId
+              ? { lastCorrelationId: existing.lastCorrelationId }
+              : {}),
         };
         yield* saveFile(path, {
           version: 1,
@@ -170,25 +180,33 @@ export const agentInstanceRegistryMemoryLayer = (
   return Layer.succeed(AgentInstanceRegistryService, {
     registerAgentInstance: (input) =>
       Effect.sync(() => {
+        const corr = input.lastCorrelationId?.trim();
         const record: AgentInstanceRecord = {
           ...input,
           lastActive: new Date().toISOString(),
           status: "active",
+          ...(corr ? { lastCorrelationId: corr } : {}),
         };
         const byOrg = store.get(record.orgId) ?? new Map();
         byOrg.set(record.agentId, record);
         store.set(record.orgId, byOrg);
         return record;
       }),
-    heartbeat: (agentId, orgId) =>
+    heartbeat: (agentId, orgId, opts) =>
       Effect.sync(() => {
         const byOrg = store.get(orgId);
         const existing = byOrg?.get(agentId);
         if (!existing || !byOrg) return null;
+        const corr = opts?.lastCorrelationId?.trim();
         const record: AgentInstanceRecord = {
           ...existing,
           lastActive: new Date().toISOString(),
           status: "active",
+          ...(corr
+            ? { lastCorrelationId: corr }
+            : existing.lastCorrelationId
+              ? { lastCorrelationId: existing.lastCorrelationId }
+              : {}),
         };
         byOrg.set(agentId, record);
         return record;
