@@ -94,6 +94,8 @@ In the course of this specification's development, four separate, independently-
 
 **`fastino/gliner2-privacy-filter-PII-multi`, an already-fine-tuned, Apache 2.0, publicly available checkpoint, is a concrete, evaluable candidate implementation for Panguard's already-specified PII autoredaction hooks** (the `pii-autoredact-model` and `pii-autoredact-tool-result` hooks in the `clawql-core` plugin architecture specification), which previously had no assigned model. This should be evaluated directly, on this project's own real data, alongside any other PII-detection option already under consideration, using the identical Section 7 validation discipline — not adopted on the strength of Fastino's own claims about it.
 
+**Scope note (deliberately not in this table):** GUI-control / desktop-automation models — including later trycua releases such as Cua-S1-4B that take screen state and emit GUI actions, even when RL-trained on live environments under Apache 2.0 — answer a different question than the text/schema closed-category decisions in Section 3.3 and are out of scope for this survey; they may matter later to `clawql-agents` or a GUI-automation provider plugin, not to this classifier registry.
+
 ---
 
 ## 3. The Primitive Itself
@@ -460,6 +462,7 @@ Every entry carries: `useSiteId`, candidates scored, top candidate and confidenc
 - Not a claim that legal-domain vocabulary standardization is solved — explicitly deferred, unresolved, pending further specific research.
 - Not a claim that reasoning-trace opacity on closed frontier models is solved — Section 6.5 states plainly this is a permanent, structural limitation, partially and only partially mitigated by agent-authored chain-of-thought cache annotations.
 - Not a claim that LensVLM-style selective expansion (Section 6.7a) is adopted — documented future direction only; licensing and JSON-history applicability unresolved.
+- Not an inventory of GUI-control / desktop-automation models (e.g. Cua-S1-4B) — Section 2.8's scope note excludes that category from the candidate table; absence of a well-known Apache 2.0 GUI agent from the same lab as CUA-S1-FORMS is intentional, not an oversight.
 - Not a claim, anywhere in this document, that any specific performance, latency, cost, or net-efficiency figure has been measured on this project's own infrastructure. Every numeric figure cited (Jev's own claimed speedup, Chroma's context-rot findings, Uber's 38-second-versus-20-minute example, the 60% cache-write cost share) is a third-party published figure, cited for context and motivation, not a validated property of this project's own implementation. Section 6.8 specifies the exact secondary (cost/latency) validation required, and Section 7 specifies the primary (correctness/calibration) validation required, both before any such figure may be cited as this project's own result.
 - Live GLiNER inference requires a deployed sidecar (`CLAWQL_FAST_DECISION_GLINER_URL`); without it the default stack is an honest `gliner2-stub`, not pretended live inference.
 - This is leg 5 of the 8.0.0 release, being built in full per explicit instruction — not deferred, not spec-only, not optional — but Section 7 validation has not yet been run on production task shapes, and nothing in this document should be read as describing already-validated production behavior.
