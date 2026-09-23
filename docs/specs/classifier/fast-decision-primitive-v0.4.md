@@ -6,6 +6,7 @@ package: "packages/clawql-core/classifier/ + packages/clawql-ontology/ + package
 ---
 
 # The Fast Decision Primitive
+
 ## Full Consolidated Specification v0.4
 
 **September 2026**
@@ -38,7 +39,7 @@ Raw execution traces accumulate immutably in a Raw Layer. A Wiki Maintainer cons
 
 ### 2.3 The ontology's layered schema (System 3)
 
-Layer 0 (new, additive) tags document identity/provenance metadata using the Dublin Core 15-element vocabulary at ingest time — standardizing document *identity*, distinct from domain *content*. Layer 1 is pre-built, hand-declared domain schemas (typed fields such as `has_springing_lien`). Layer 2 is a runtime document-inventory fallback (`doc_type`, `key_terms{}`) for content the pre-built schema doesn't cover. Layer 3 is a learned promotion engine: recurring patterns in Layer 2's fallback data are detected, scored for consistency, proposed, gated against held-out data, and — if accepted — promoted into a first-class typed field in Layer 1, effective from that point forward, never retroactively rewriting prior data.
+Layer 0 (new, additive) tags document identity/provenance metadata using the Dublin Core 15-element vocabulary at ingest time — standardizing document _identity_, distinct from domain _content_. Layer 1 is pre-built, hand-declared domain schemas (typed fields such as `has_springing_lien`). Layer 2 is a runtime document-inventory fallback (`doc_type`, `key_terms{}`) for content the pre-built schema doesn't cover. Layer 3 is a learned promotion engine: recurring patterns in Layer 2's fallback data are detected, scored for consistency, proposed, gated against held-out data, and — if accepted — promoted into a first-class typed field in Layer 1, effective from that point forward, never retroactively rewriting prior data.
 
 Provider plugins may declare a `preferredVocabulary` (Schema.org for general web entities, FIBO for finance; legal-domain vocabulary — LegalRuleML, LKIF, Akoma Ntoso — is explicitly, deliberately unresolved, since no single standard dominates that domain the way Dublin Core, Schema.org, and FIBO do theirs). When Layer 3 is about to mint a new field, it checks the owning provider's declared vocabulary first; a matching standard term is used in preference to a novel project-local field name.
 
@@ -78,12 +79,12 @@ This preserves the advantage the original from-scratch plan was reaching for —
 
 In the course of this specification's development, four separate, independently-built open-weight implementations of the same underlying idea — schema-defined, single-forward-pass, calibrated typed decisions in place of autoregressive generation — surfaced from four separate teams, on different timelines, with no apparent coordination between them:
 
-| Candidate | License | Params | Native task shape | Provenance | ClawQL role |
-|---|---|---|---|---|---|
-| **GLiNER2 / GLiNER2.5** (Fastino) | Apache 2.0 | 74M–0.3B | Multi-task classification, NER, relation extraction, structured extraction, one forward pass | Predates Jev by ~1 year; peer-reviewed EMNLP 2025; production adoption | **Primary production scorer** |
-| **Needle 3** (Cactus Compute) | Apache 2.0 (model); Cactus Engine separately licensed — verify before engine binary adoption | 25–121M, sliceable 2–20 layers | Tool/function calling, span-grounded structured extraction | New, September 2026 | Optional secondary / edge |
-| **CUA-S1-FORMS** (trycua) | MIT | 706K | Single bounded workflow (form-filling: FILL/CHECK/CLICK/SKIP) | New, September 2026 | Specialist only |
-| **Laya** (Convai Innovations) | Apache 2.0 | 322–421M | Typed `choice`/`score`/`noul` over arbitrary state | New, September 2026; RLCD-trained | Documented alternative; not default |
+| Candidate                         | License                                                                                      | Params                         | Native task shape                                                                            | Provenance                                                             | ClawQL role                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- |
+| **GLiNER2 / GLiNER2.5** (Fastino) | Apache 2.0                                                                                   | 74M–0.3B                       | Multi-task classification, NER, relation extraction, structured extraction, one forward pass | Predates Jev by ~1 year; peer-reviewed EMNLP 2025; production adoption | **Primary production scorer**       |
+| **Needle 3** (Cactus Compute)     | Apache 2.0 (model); Cactus Engine separately licensed — verify before engine binary adoption | 25–121M, sliceable 2–20 layers | Tool/function calling, span-grounded structured extraction                                   | New, September 2026                                                    | Optional secondary / edge           |
+| **CUA-S1-FORMS** (trycua)         | MIT                                                                                          | 706K                           | Single bounded workflow (form-filling: FILL/CHECK/CLICK/SKIP)                                | New, September 2026                                                    | Specialist only                     |
+| **Laya** (Convai Innovations)     | Apache 2.0                                                                                   | 322–421M                       | Typed `choice`/`score`/`noul` over arbitrary state                                           | New, September 2026; RLCD-trained                                      | Documented alternative; not default |
 
 **This convergence is stronger evidence for the underlying architectural approach than any single project's self-reported benchmark, and is treated here as validation of the general primitive design (Section 3), not as a reason to pick a "winner" among marketing claims alone.** Four independent teams arriving at the same solution is a stronger signal than one team's marketing — but it does not exempt any candidate from Section 7's held-out, frontier-judged validation on this project's own task shapes. Independent bakeoff evidence (Laya zero-shot lag; Needle immaturity vs GLiNER's multi-year lineage) **does** justify selecting GLiNER as the default wiring while still requiring Section 7 before any use site is trusted in production.
 
@@ -101,44 +102,44 @@ In the course of this specification's development, four separate, independently-
 
 Stripped of the architectural framing any of Section 2.8's four candidates use to describe themselves, this primitive is a classifier — the same fundamental shape as a digit-recognition network trained on MNIST, or the "hotdog / not hotdog" app: a fixed set of possible categories, one forward pass, a confidence score per category, pick the highest one (or abstain if none clears a threshold). None of the four candidates in Section 2.8 are doing anything conceptually new relative to this decades-old pattern — what is new is applying it to language-conditioned categories (an arbitrary tool list, an arbitrary schema, an arbitrary text-described option set) rather than a fixed pixel grid mapped to ten hardcoded digits.
 
-This framing matters because it inherits a well-known, decades-old failure mode directly: a classifier forced to produce a highest-probability answer over its fixed category set will always produce *some* answer, even when the real input is nothing like anything it was trained on — the classic "confidently mislabels an out-of-distribution input" failure every practitioner encounters the first time a digit classifier is shown something unusual. This is precisely the mechanism behind Laya's own disclosed Khmer failure (Section 2.8: 0% accuracy at 95% confidence) — not a defect specific to one model, but the generic risk of any classifier asked to answer outside its trained distribution. Section 7's calibration-validation requirement exists specifically to catch this, and it should be read with this framing in mind: this primitive is, at its core, a hotdog/not-hotdog classifier applied to ClawQL's own decisions, and it deserves exactly the scrutiny a domain expert would give any classifier before trusting it on a case unlike its training data.
+This framing matters because it inherits a well-known, decades-old failure mode directly: a classifier forced to produce a highest-probability answer over its fixed category set will always produce _some_ answer, even when the real input is nothing like anything it was trained on — the classic "confidently mislabels an out-of-distribution input" failure every practitioner encounters the first time a digit classifier is shown something unusual. This is precisely the mechanism behind Laya's own disclosed Khmer failure (Section 2.8: 0% accuracy at 95% confidence) — not a defect specific to one model, but the generic risk of any classifier asked to answer outside its trained distribution. Section 7's calibration-validation requirement exists specifically to catch this, and it should be read with this framing in mind: this primitive is, at its core, a hotdog/not-hotdog classifier applied to ClawQL's own decisions, and it deserves exactly the scrutiny a domain expert would give any classifier before trusting it on a case unlike its training data.
 
 ### 3.1 Core contract
 
 ```typescript
 interface FastDecisionCandidate {
-  candidateId: string
-  features: Record<string, unknown>   // whatever the use site needs
-                                        // to describe this candidate
+  candidateId: string;
+  features: Record<string, unknown>; // whatever the use site needs
+  // to describe this candidate
 }
 
 interface FastDecisionUseSite {
-  useSiteId: string                    // open-ended string, not a
-                                         // fixed enum — new use sites
-                                         // register without touching
-                                         // this interface
-  description: string
-  candidateSetProvider: (ctx: FastDecisionContext) => Promise<FastDecisionCandidate[]>
-  costlyErrorDirection: 'false_positive' | 'false_negative'
-  threshold: number                     // set per Section 9's
-                                          // principle for THIS use
-                                          // site specifically, never
-                                          // copied from another
-  wormEntryType: string
+  useSiteId: string; // open-ended string, not a
+  // fixed enum — new use sites
+  // register without touching
+  // this interface
+  description: string;
+  candidateSetProvider: (ctx: FastDecisionContext) => Promise<FastDecisionCandidate[]>;
+  costlyErrorDirection: "false_positive" | "false_negative";
+  threshold: number; // set per Section 9's
+  // principle for THIS use
+  // site specifically, never
+  // copied from another
+  wormEntryType: string;
 }
 
 interface FastDecisionResult {
-  useSiteId: string
-  candidatesScored: number
-  scores: { candidateId: string; confidence: number }[]
-  thresholdApplied: number
-  outcome: 'above_threshold' | 'below_threshold_fallback'
+  useSiteId: string;
+  candidatesScored: number;
+  scores: { candidateId: string; confidence: number }[];
+  thresholdApplied: number;
+  outcome: "above_threshold" | "below_threshold_fallback";
 }
 
 async function runFastDecision(
   useSite: FastDecisionUseSite,
-  ctx: FastDecisionContext,
-): Promise<FastDecisionResult>
+  ctx: FastDecisionContext
+): Promise<FastDecisionResult>;
 ```
 
 Effect-primary implementation: `runFastDecision(useSiteId, ctx)` via `FastDecisionService`; Promise façades only at host boundaries (Express / MCP). Open registry: `FastDecisionRegistry.register` — new use sites do not change this contract.
@@ -149,17 +150,17 @@ A problem is a legitimate candidate for this primitive if and only if it has a *
 
 ### 3.3 Registered use sites (formerly Types A–H, now registry entries)
 
-| useSiteId | What it decides | Feeds | Fit vs. GLiNER2 |
-|---|---|---|---|
-| `search_provider_tool_routing` | Which provider/tool is relevant to a query | Accelerates `search`'s existing ranking — does not replace it | Direct fit (multi-label classify) |
-| `skill_fast_path_match` | Does a currently-valid, committed skill already cover this task | Skill execution (Section 4) | Direct fit |
-| `ontology_vocabulary_term_match` | Does a standard vocabulary term exist for a promotion candidate | Ontology Layer 3 promotion | Direct fit |
-| `document_entity_type_classification` | What kind of document/entity is this, at ingest | Upstream of ontology Layers 1–3 | Direct fit |
-| `field_to_schema_mapping` | Which existing Layer 1 field does this extracted value belong to | Ontology Layer 1, per-extraction | **Native strength** (schema-conditioned extraction) |
-| `pattern_consistency_check` | Does this occurrence match the expected shape for its pattern | Feeds the `consistencyScore` computation in Layer 3 | Direct fit |
-| `relationship_edge_classification` | What kind of relationship connects two established entities | Ontology graph-building, analogous to Uber's Context Graph edge-typing | **Native strength** (relation extraction) |
-| `sgdop_peer_prefilter` | Which available peers are plausibly worth the exact SGDOP projection | DAOS recruitment (Section 5, expensive-computation gating) | **Approximate fit only — see Section 3.4** |
-| `pre_compaction_ontology_cache_check` | What in the current uncompacted context is load-bearing and must be cached before pruning | Context management (Section 6, full design) | Fit expected — binary `cache_this` / `dont_cache_this` with enriched features; validate context sizing (Section 6.8) |
+| useSiteId                             | What it decides                                                                           | Feeds                                                                  | Fit vs. GLiNER2                                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `search_provider_tool_routing`        | Which provider/tool is relevant to a query                                                | Accelerates `search`'s existing ranking — does not replace it          | Direct fit (multi-label classify)                                                                                    |
+| `skill_fast_path_match`               | Does a currently-valid, committed skill already cover this task                           | Skill execution (Section 4)                                            | Direct fit                                                                                                           |
+| `ontology_vocabulary_term_match`      | Does a standard vocabulary term exist for a promotion candidate                           | Ontology Layer 3 promotion                                             | Direct fit                                                                                                           |
+| `document_entity_type_classification` | What kind of document/entity is this, at ingest                                           | Upstream of ontology Layers 1–3                                        | Direct fit                                                                                                           |
+| `field_to_schema_mapping`             | Which existing Layer 1 field does this extracted value belong to                          | Ontology Layer 1, per-extraction                                       | **Native strength** (schema-conditioned extraction)                                                                  |
+| `pattern_consistency_check`           | Does this occurrence match the expected shape for its pattern                             | Feeds the `consistencyScore` computation in Layer 3                    | Direct fit                                                                                                           |
+| `relationship_edge_classification`    | What kind of relationship connects two established entities                               | Ontology graph-building, analogous to Uber's Context Graph edge-typing | **Native strength** (relation extraction)                                                                            |
+| `sgdop_peer_prefilter`                | Which available peers are plausibly worth the exact SGDOP projection                      | DAOS recruitment (Section 5, expensive-computation gating)             | **Approximate fit only — see Section 3.4**                                                                           |
+| `pre_compaction_ontology_cache_check` | What in the current uncompacted context is load-bearing and must be cached before pruning | Context management (Section 6, full design)                            | Fit expected — binary `cache_this` / `dont_cache_this` with enriched features; validate context sizing (Section 6.8) |
 
 This table is illustrative, not closed. Registering a tenth, eleventh, or unforeseen use site requires no change to Section 3.1's contract.
 
@@ -256,11 +257,11 @@ Point 4's objection — frontier labs already tune compaction well — does not 
 
 ### 6.4 Resolving point 2: the classifier must have sufficient local context, by design
 
-Point 2's objection is correct as stated against the naive implementation, and is treated as a hard design constraint, not a suggestion: **a candidate for this use site's fast-decision scoring must never be scored in isolation.** The `pre_compaction_ontology_cache_check` use site (Section 3.3, Section 6.7) is fed the task's relevant ontology structure (typed entities, fields, and relationships already established for this task — Systems 3.1 through 3.5's typed knowledge, not raw thread replay), the current cache-tool contents (System-4-adjacent durable task state), and relevant prior audit-trail entries. This satisfies Section 3.2's own precondition for a valid application of the primitive — the candidate set remains fixed and enumerable, but each candidate's *features* now include genuinely sufficient context to judge relevance correctly, rather than the call's surface shape alone.
+Point 2's objection is correct as stated against the naive implementation, and is treated as a hard design constraint, not a suggestion: **a candidate for this use site's fast-decision scoring must never be scored in isolation.** The `pre_compaction_ontology_cache_check` use site (Section 3.3, Section 6.7) is fed the task's relevant ontology structure (typed entities, fields, and relationships already established for this task — Systems 3.1 through 3.5's typed knowledge, not raw thread replay), the current cache-tool contents (System-4-adjacent durable task state), and relevant prior audit-trail entries. This satisfies Section 3.2's own precondition for a valid application of the primitive — the candidate set remains fixed and enumerable, but each candidate's _features_ now include genuinely sufficient context to judge relevance correctly, rather than the call's surface shape alone.
 
 ### 6.5 Resolving point 3: a structural mitigation, explicitly bounded, never claimed as a full fix
 
-Point 3's objection — reasoning traces are invisible on frontier APIs, and this technique cannot recover what was never exposed — is accepted in full as a **permanent, structural limitation on closed frontier models specifically.** No architectural choice on this project's side changes what a third-party API chooses to expose. The mitigation adopted is real but explicitly partial: agents are instructed to include a compressed chain-of-thought justification alongside any cache entry they write — not the original hidden reasoning tokens (which remain permanently inaccessible), but the agent's own externalized summary of why a given action was taken and what its outcome was. This gives future decisions access to the *rationale* behind a prior action even without the original opaque reasoning trace, which is a genuine improvement over total loss of that context, but must never be described as equivalent to preserving the actual reasoning. **This risk applies specifically and only to models whose reasoning is API-opaque.** For this project's own primary model stack — open-weight models (Nemotron, Ornith, Qwen) running on infrastructure this project controls — reasoning is not opaque by the same external-API constraint, meaning this specific risk is structurally smaller for the deployment configuration this project's regulated-enterprise thesis is built around, though not necessarily zero depending on how a given open-weight model's own reasoning is exposed or discarded internally.
+Point 3's objection — reasoning traces are invisible on frontier APIs, and this technique cannot recover what was never exposed — is accepted in full as a **permanent, structural limitation on closed frontier models specifically.** No architectural choice on this project's side changes what a third-party API chooses to expose. The mitigation adopted is real but explicitly partial: agents are instructed to include a compressed chain-of-thought justification alongside any cache entry they write — not the original hidden reasoning tokens (which remain permanently inaccessible), but the agent's own externalized summary of why a given action was taken and what its outcome was. This gives future decisions access to the _rationale_ behind a prior action even without the original opaque reasoning trace, which is a genuine improvement over total loss of that context, but must never be described as equivalent to preserving the actual reasoning. **This risk applies specifically and only to models whose reasoning is API-opaque.** For this project's own primary model stack — open-weight models (Nemotron, Ornith, Qwen) running on infrastructure this project controls — reasoning is not opaque by the same external-API constraint, meaning this specific risk is structurally smaller for the deployment configuration this project's regulated-enterprise thesis is built around, though not necessarily zero depending on how a given open-weight model's own reasoning is exposed or discarded internally.
 
 ### 6.6 Resolving point 5: structural cache ordering, plus an explicit statement of priority over cost
 
@@ -317,9 +318,9 @@ load-bearing is still missed
 
 Everything in Sections 6.1–6.7 is built around a token-deletion model: score existing tool-call/result content, decide what to drop, cache anything load-bearing before it is gone. Apple's LensVLM (Xie et al., 2026, arXiv:2605.07019) demonstrates a different, credible answer to the same underlying problem, worth documenting here even though it is not adopted in this version of the specification.
 
-**The mechanism:** rather than deleting content, LensVLM renders long text as compressed images (up to roughly 4.3x compression with accuracy comparable to the full-text upper bound, and up to 10.1x while still outperforming retrieval and other compression baselines), scans the compressed representation cheaply, and *selectively expands only the specific pages that turn out to be relevant* back to their full, uncompressed form via a learned tool call — never discarding the underlying content at all.
+**The mechanism:** rather than deleting content, LensVLM renders long text as compressed images (up to roughly 4.3x compression with accuracy comparable to the full-text upper bound, and up to 10.1x while still outperforming retrieval and other compression baselines), scans the compressed representation cheaply, and _selectively expands only the specific pages that turn out to be relevant_ back to their full, uncompressed form via a learned tool call — never discarding the underlying content at all.
 
-**Why this is a structurally stronger answer to two of the six original compaction-critique objections specifically, worth stating precisely rather than in general terms:** Point 2 of that critique (a classifier scoring content in isolation "doesn't even know what it's deciding on") and Point 6 (the danger of the stated implementation detail that deleted content is gone permanently, with only an unreliable "re-run the tool" fallback) are both addressed by construction here, not by mitigation. Sections 6.4 and 6.7's cache-hook design mitigate the risk of getting a delete-or-keep decision wrong by trying to catch load-bearing content *before* deletion — a real safeguard, but one that depends on correctly identifying what matters in advance. LensVLM's approach never has to make that binary decision correctly in advance at all: the full content remains available in compressed form indefinitely, and expansion happens on demand when something turns out to matter, rather than requiring a prior classifier decision to have already preserved it.
+**Why this is a structurally stronger answer to two of the six original compaction-critique objections specifically, worth stating precisely rather than in general terms:** Point 2 of that critique (a classifier scoring content in isolation "doesn't even know what it's deciding on") and Point 6 (the danger of the stated implementation detail that deleted content is gone permanently, with only an unreliable "re-run the tool" fallback) are both addressed by construction here, not by mitigation. Sections 6.4 and 6.7's cache-hook design mitigate the risk of getting a delete-or-keep decision wrong by trying to catch load-bearing content _before_ deletion — a real safeguard, but one that depends on correctly identifying what matters in advance. LensVLM's approach never has to make that binary decision correctly in advance at all: the full content remains available in compressed form indefinitely, and expansion happens on demand when something turns out to matter, rather than requiring a prior classifier decision to have already preserved it.
 
 **Two things must be resolved before this becomes more than a documented direction:**
 
@@ -340,7 +341,7 @@ Every validation requirement in this specification so far (Section 6.8, and the 
 
 ### 7.1 Why this ordering matters more than anything else in this document
 
-A fast, cheap, well-calibrated wrong answer is a worse outcome than a slow, expensive right one, for every use site registered against this primitive. This is not a new principle — it is the same principle underlying every benchmark decision made elsewhere in this project (the frozen Harvey LAB protocol's refusal to cite a number before it is judged against a real baseline; the Executor comparison's insistence on live, matched arms rather than favorable estimates; ExtractBench's refusal to call a pipeline-correctness check an agent-competence result). Speed and cost are properties of a *good* decision. They are not, on their own, evidence that a decision is *correct*, and this specification's entire safety model (Section 3.2's fallback requirement, Section 9's threshold-direction table) depends on confidence scores being genuinely calibrated — meaning a reported 90% confidence must actually correspond to approximately 90% real-world accuracy on held-out data. A model that is fast, cheap, and confidently wrong defeats the fallback mechanism silently, which is the single most dangerous failure mode this primitive could produce.
+A fast, cheap, well-calibrated wrong answer is a worse outcome than a slow, expensive right one, for every use site registered against this primitive. This is not a new principle — it is the same principle underlying every benchmark decision made elsewhere in this project (the frozen Harvey LAB protocol's refusal to cite a number before it is judged against a real baseline; the Executor comparison's insistence on live, matched arms rather than favorable estimates; ExtractBench's refusal to call a pipeline-correctness check an agent-competence result). Speed and cost are properties of a _good_ decision. They are not, on their own, evidence that a decision is _correct_, and this specification's entire safety model (Section 3.2's fallback requirement, Section 9's threshold-direction table) depends on confidence scores being genuinely calibrated — meaning a reported 90% confidence must actually correspond to approximately 90% real-world accuracy on held-out data. A model that is fast, cheap, and confidently wrong defeats the fallback mechanism silently, which is the single most dangerous failure mode this primitive could produce.
 
 ### 7.2 The required test, per use site, before Section 6.8's cost/latency validation is even relevant
 
@@ -395,13 +396,13 @@ Swarm activity observed -> NSV computed (cheap, aggregate)
 
 No single, universal confidence threshold applies across every use site registered against this primitive. Each requires an explicit answer to "which kind of error is actually costly here" before a threshold is set:
 
-| Use site | Costly error | Threshold tuning |
-|---|---|---|
-| `skill_fast_path_match` | False positive (executing a stale/invalid skill) | High / strict — bias toward slow-path fallback |
-| Streams event dispatch (any use site applied there) | False positive (routing an event incorrectly) | Highest / strictest — hard fallback guarantee, no exceptions |
-| `ontology_vocabulary_term_match` | False positive (using the wrong standard term) | Moderate — a wrong match is a correctable quality issue, not a safety issue |
-| `sgdop_peer_prefilter` | False negative (wrongly excluding a real candidate) | Low / permissive — bloom-filter style, bias toward inclusion |
-| `pre_compaction_ontology_cache_check` | False negative (failing to cache something load-bearing) | Low / permissive — identical reasoning to the SGDOP prefilter: bounded over-cache cost versus potentially unrecoverable state loss |
+| Use site                                            | Costly error                                             | Threshold tuning                                                                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `skill_fast_path_match`                             | False positive (executing a stale/invalid skill)         | High / strict — bias toward slow-path fallback                                                                                     |
+| Streams event dispatch (any use site applied there) | False positive (routing an event incorrectly)            | Highest / strictest — hard fallback guarantee, no exceptions                                                                       |
+| `ontology_vocabulary_term_match`                    | False positive (using the wrong standard term)           | Moderate — a wrong match is a correctable quality issue, not a safety issue                                                        |
+| `sgdop_peer_prefilter`                              | False negative (wrongly excluding a real candidate)      | Low / permissive — bloom-filter style, bias toward inclusion                                                                       |
+| `pre_compaction_ontology_cache_check`               | False negative (failing to cache something load-bearing) | Low / permissive — identical reasoning to the SGDOP prefilter: bounded over-cache cost versus potentially unrecoverable state loss |
 
 This table is illustrative of the principle, not exhaustive of every registered use site — any new use site added to the registry (Section 3.3) must independently answer this question rather than inheriting a threshold from an existing entry. Implementation: `FastDecisionThresholdPolicyService` / per-use-site `costlyErrorDirection`.
 
@@ -411,18 +412,18 @@ This table is illustrative of the principle, not exhaustive of every registered 
 
 ```typescript
 export type FastDecisionWORMEntryType =
-  | 'FAST_DECISION_ATTEMPTED'              // generic: any use site ran,
-                                             // regardless of outcome
-  | 'FAST_DECISION_ABOVE_THRESHOLD'
-  | 'FAST_DECISION_BELOW_THRESHOLD_FALLBACK'
-  | 'SKILL_FAST_PATH_EXECUTED'
-  | 'SKILL_FAST_PATH_REJECTED_STALE_SKILL'
-  | 'ONTOLOGY_STANDARD_TERM_USED'
-  | 'ONTOLOGY_NOVEL_FIELD_FALLBACK'
-  | 'SGDOP_PREFILTER_APPLIED'
-  | 'SGDOP_CANDIDATE_INCLUDED'
-  | 'PRE_COMPACTION_CACHE_CHECK_RUN'
-  | 'PRE_COMPACTION_CACHE_ITEM_WRITTEN'
+  | "FAST_DECISION_ATTEMPTED" // generic: any use site ran,
+  // regardless of outcome
+  | "FAST_DECISION_ABOVE_THRESHOLD"
+  | "FAST_DECISION_BELOW_THRESHOLD_FALLBACK"
+  | "SKILL_FAST_PATH_EXECUTED"
+  | "SKILL_FAST_PATH_REJECTED_STALE_SKILL"
+  | "ONTOLOGY_STANDARD_TERM_USED"
+  | "ONTOLOGY_NOVEL_FIELD_FALLBACK"
+  | "SGDOP_PREFILTER_APPLIED"
+  | "SGDOP_CANDIDATE_INCLUDED"
+  | "PRE_COMPACTION_CACHE_CHECK_RUN"
+  | "PRE_COMPACTION_CACHE_ITEM_WRITTEN";
 ```
 
 Every entry carries: `useSiteId`, candidates scored, top candidate and confidence, threshold applied and its configured direction (Section 9), and outcome. High-volume use sites (`field_to_schema_mapping`, `pattern_consistency_check`, given their per-value, per-occurrence frequency) may warrant batched WORM entries rather than one per occurrence — an implementation detail to resolve during build, not a reason to skip auditing these decision types. This is the same trail, same hash-chain, same dual-ack, same Merkle-batchable discipline as every other consequential action in this project — there is no parallel or lesser audit mechanism for decisions made by this primitive.
@@ -431,18 +432,18 @@ Every entry carries: `useSiteId`, candidates scored, top candidate and confidenc
 
 ## 11. Package Boundaries
 
-| Concern | Package | Why |
-|---|---|---|
-| The fast-decision primitive itself (registry, contract, execution) | `packages/clawql-core/src/classifier/` (`clawql-core/classifier`) | Sits in front of `search`, skill execution, ontology promotion, DAOS recruitment, and context management — owned by none of them individually |
-| `search` / `execute`, two-tier skill index | `clawql-core`, existing plugin architecture | Unchanged — the primitive reads and accelerates, never replaces |
-| WikiSkill evolution loop | `clawql-harness`'s Ouroboros plugin | Unchanged — the primitive is a new consumer of the existing skill-impact log |
-| Ontology Layers 0–3 + promotion engine | `clawql-ontology` | Extended: multiple use sites feed into or accelerate existing layer logic; none replace it |
-| `preferredVocabulary` declaration | `ProviderPlugin` interface, `clawql-core` | One optional field on an existing interface |
-| DAOS NSV/SGDOP coordination | Existing DAOS specification | Extended: `sgdop_peer_prefilter` sits between the NSV tripwire and the exact projection |
-| `pre-compaction` lifecycle event | New event on the existing `LifecycleEvent` union, `clawql-core` plugin architecture | A genuine, blocking hook, following the exact contract already established for every other enforcement hook — not a new hook system |
-| Cache tool's stable, append-only ordering | `clawql-memory` / the existing cache tool + classifier `StableCacheBlockService` | Structural change to write pattern only; no new storage system |
-| Confidence threshold policy, per use site | Configuration, same pattern as `SpendTier` (`FastDecisionThresholdPolicyService`) | Section 9 establishes threshold direction and strictness are set per use site, never globally |
-| WORM entries, all use sites | `clawql-audit` | Same trail, same discipline, no parallel audit mechanism |
+| Concern                                                            | Package                                                                             | Why                                                                                                                                           |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| The fast-decision primitive itself (registry, contract, execution) | `packages/clawql-core/src/classifier/` (`clawql-core/classifier`)                   | Sits in front of `search`, skill execution, ontology promotion, DAOS recruitment, and context management — owned by none of them individually |
+| `search` / `execute`, two-tier skill index                         | `clawql-core`, existing plugin architecture                                         | Unchanged — the primitive reads and accelerates, never replaces                                                                               |
+| WikiSkill evolution loop                                           | `clawql-harness`'s Ouroboros plugin                                                 | Unchanged — the primitive is a new consumer of the existing skill-impact log                                                                  |
+| Ontology Layers 0–3 + promotion engine                             | `clawql-ontology`                                                                   | Extended: multiple use sites feed into or accelerate existing layer logic; none replace it                                                    |
+| `preferredVocabulary` declaration                                  | `ProviderPlugin` interface, `clawql-core`                                           | One optional field on an existing interface                                                                                                   |
+| DAOS NSV/SGDOP coordination                                        | Existing DAOS specification                                                         | Extended: `sgdop_peer_prefilter` sits between the NSV tripwire and the exact projection                                                       |
+| `pre-compaction` lifecycle event                                   | New event on the existing `LifecycleEvent` union, `clawql-core` plugin architecture | A genuine, blocking hook, following the exact contract already established for every other enforcement hook — not a new hook system           |
+| Cache tool's stable, append-only ordering                          | `clawql-memory` / the existing cache tool + classifier `StableCacheBlockService`    | Structural change to write pattern only; no new storage system                                                                                |
+| Confidence threshold policy, per use site                          | Configuration, same pattern as `SpendTier` (`FastDecisionThresholdPolicyService`)   | Section 9 establishes threshold direction and strictness are set per use site, never globally                                                 |
+| WORM entries, all use sites                                        | `clawql-audit`                                                                      | Same trail, same discipline, no parallel audit mechanism                                                                                      |
 
 ---
 
@@ -467,19 +468,19 @@ Every entry carries: `useSiteId`, candidates scored, top candidate and confidenc
 
 ## Implementation appendix (repo)
 
-| Concern | Location |
-|---|---|
-| Primitive (registry, contract, execution) | `packages/clawql-core/src/classifier/` |
-| Primary scorer | `GlinerFastDecisionScorerLive` / `FastDecisionGlinerStackLive` (`scorer.ts`, `gliner-config.ts`) |
-| Env | `CLAWQL_FAST_DECISION_GLINER_URL`, `CLAWQL_FAST_DECISION_GLINER_MODEL` (default `fastino/gliner2.5-base-v1`), `CLAWQL_FAST_DECISION_GLINER_TOKEN`, `CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS` |
-| Optional Needle secondary | `NeedleFastDecisionScorerLive` |
-| Tests / offline | `HeuristicFastDecisionScorerLive` |
-| Skill fast path | `skill-fast-path.ts` + live `SkillValidityStore` |
-| SGDOP prefilter | `sgdop-prefilter.ts` |
-| Pre-compaction hook + stable cache | `pre-compaction.ts`, `pre-compaction-hook.ts`, `stable-cache-block.ts` |
-| §7 harness | `validation.ts` |
-| Threshold policy | `threshold-policy.ts` |
-| Built-in use sites | `use-sites/builtins.ts` |
+| Concern                                   | Location                                                                                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primitive (registry, contract, execution) | `packages/clawql-core/src/classifier/`                                                                                                                                                      |
+| Primary scorer                            | `GlinerFastDecisionScorerLive` / `FastDecisionGlinerStackLive` (`scorer.ts`, `gliner-config.ts`)                                                                                            |
+| Env                                       | `CLAWQL_FAST_DECISION_GLINER_URL`, `CLAWQL_FAST_DECISION_GLINER_MODEL` (default `fastino/gliner2.5-base-v1`), `CLAWQL_FAST_DECISION_GLINER_TOKEN`, `CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS` |
+| Optional Needle secondary                 | `NeedleFastDecisionScorerLive`                                                                                                                                                              |
+| Tests / offline                           | `HeuristicFastDecisionScorerLive`                                                                                                                                                           |
+| Skill fast path                           | `skill-fast-path.ts` + live `SkillValidityStore`                                                                                                                                            |
+| SGDOP prefilter                           | `sgdop-prefilter.ts`                                                                                                                                                                        |
+| Pre-compaction hook + stable cache        | `pre-compaction.ts`, `pre-compaction-hook.ts`, `stable-cache-block.ts`                                                                                                                      |
+| §7 harness                                | `validation.ts`                                                                                                                                                                             |
+| Threshold policy                          | `threshold-policy.ts`                                                                                                                                                                       |
+| Built-in use sites                        | `use-sites/builtins.ts`                                                                                                                                                                     |
 
 ### Related docs
 
@@ -490,6 +491,6 @@ Every entry carries: `useSiteId`, candidates scored, top candidate and confidenc
 
 ---
 
-*The Fast Decision Primitive · Full Consolidated Specification v0.4 · September 2026*
-*Location: packages/clawql-core/classifier/, packages/clawql-ontology/, packages/clawql-harness/plugins/ouroboros/, clawql-audit, DAOS coordination layer*
-*Primary scorer: GLiNER2 / GLiNER2.5 · Contact: daniel@clawql.com*
+_The Fast Decision Primitive · Full Consolidated Specification v0.4 · September 2026_
+_Location: packages/clawql-core/classifier/, packages/clawql-ontology/, packages/clawql-harness/plugins/ouroboros/, clawql-audit, DAOS coordination layer_
+_Primary scorer: GLiNER2 / GLiNER2.5 · Contact: daniel@clawql.com_
