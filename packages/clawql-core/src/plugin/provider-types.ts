@@ -303,6 +303,46 @@ export type WormAuditEvent =
       readonly fieldName?: string;
       readonly preferredVocabulary?: string;
       readonly timestamp: string;
+    }
+  | {
+      readonly type: "CAPABILITY_WRITE_INTERCEPTED";
+      readonly sessionId: string;
+      readonly toolName: string;
+      readonly interceptKind: "register" | "invoke";
+      readonly disposition: "routed_to_sandbox" | "denied";
+      readonly reason: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SLOW_PATH_COMPLETED_NO_NEW_CAPABILITY";
+      readonly sessionId: string;
+      readonly timestamp: string;
+      readonly metadata?: Record<string, unknown>;
+    }
+  | {
+      readonly type: "PROMOTION_ACCEPTED" | "PROMOTION_PROPOSED" | "PROMOTION_REJECTED";
+      readonly sessionId: string;
+      readonly skillId: string;
+      readonly validatedScope?: readonly string[];
+      readonly wormRef?: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SESSION_CATALOG_REBOUND";
+      readonly sessionId: string;
+      readonly authorizedBy: string;
+      readonly rebindGeneration: number;
+      readonly toolCount: number;
+      readonly atrScopeSize: number;
+      readonly widerScopeGranted: boolean;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SESSION_SCOPE_WIDENED";
+      readonly sessionId: string;
+      readonly authorizedBy: string;
+      readonly grantedTokens: readonly string[];
+      readonly timestamp: string;
     };
 
 export class WormAuditSink extends Context.Tag("clawql/WormAuditSink")<
