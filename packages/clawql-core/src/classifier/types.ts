@@ -114,8 +114,4 @@ export type SkillFastPathDecision =
 export type SgdopProjectionBucket = "high" | "medium" | "low";
 
 export type PreferredVocabulary =
-  | "schema.org"
-  | "fibo"
-  | "dublin-core"
-  | "project-local"
-  | (string & {});
+  "schema.org" | "fibo" | "dublin-core" | "project-local" | (string & {});

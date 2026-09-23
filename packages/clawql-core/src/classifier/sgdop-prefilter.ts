@@ -39,10 +39,10 @@ export function applySgdopPeerPrefilter(
 ): Effect.Effect<
   SgdopPrefilterResult,
   never,
-  import("./registry.js").FastDecisionRegistry |
-    import("./scorer.js").FastDecisionScorer |
-    import("./threshold-policy.js").FastDecisionThresholdPolicyService |
-    WormAuditSink
+  | import("./registry.js").FastDecisionRegistry
+  | import("./scorer.js").FastDecisionScorer
+  | import("./threshold-policy.js").FastDecisionThresholdPolicyService
+  | WormAuditSink
 > {
   return Effect.gen(function* () {
     const worm = yield* WormAuditSink;

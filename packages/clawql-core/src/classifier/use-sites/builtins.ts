@@ -5,10 +5,7 @@
 import { Effect } from "effect";
 import type { FastDecisionCandidate, FastDecisionContext, FastDecisionUseSite } from "../types.js";
 
-function fromExtrasArray(
-  ctx: FastDecisionContext,
-  key: string
-): readonly FastDecisionCandidate[] {
+function fromExtrasArray(ctx: FastDecisionContext, key: string): readonly FastDecisionCandidate[] {
   const raw = ctx.extras?.[key];
   if (!Array.isArray(raw)) return [];
   return raw.map((item, i) => {
@@ -33,8 +30,7 @@ export const searchProviderToolRoutingUseSite: FastDecisionUseSite = {
   costlyErrorDirection: "false_positive",
   threshold: 0.75,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
-  candidateSetProvider: (ctx) =>
-    Effect.sync(() => fromExtrasArray(ctx, "providerToolCandidates")),
+  candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "providerToolCandidates")),
 };
 
 /** skill_fast_path_match — committed valid skill coverage check. */
@@ -64,8 +60,7 @@ export const documentEntityTypeClassificationUseSite: FastDecisionUseSite = {
   costlyErrorDirection: "false_positive",
   threshold: 0.7,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
-  candidateSetProvider: (ctx) =>
-    Effect.sync(() => fromExtrasArray(ctx, "documentTypeCandidates")),
+  candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "documentTypeCandidates")),
 };
 
 export const fieldToSchemaMappingUseSite: FastDecisionUseSite = {
@@ -74,8 +69,7 @@ export const fieldToSchemaMappingUseSite: FastDecisionUseSite = {
   costlyErrorDirection: "false_positive",
   threshold: 0.75,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
-  candidateSetProvider: (ctx) =>
-    Effect.sync(() => fromExtrasArray(ctx, "schemaFieldCandidates")),
+  candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "schemaFieldCandidates")),
 };
 
 export const patternConsistencyCheckUseSite: FastDecisionUseSite = {
@@ -84,8 +78,7 @@ export const patternConsistencyCheckUseSite: FastDecisionUseSite = {
   costlyErrorDirection: "false_positive",
   threshold: 0.7,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
-  candidateSetProvider: (ctx) =>
-    Effect.sync(() => fromExtrasArray(ctx, "patternCandidates")),
+  candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "patternCandidates")),
 };
 
 export const relationshipEdgeClassificationUseSite: FastDecisionUseSite = {
@@ -122,8 +115,7 @@ export const preCompactionOntologyCacheCheckUseSite: FastDecisionUseSite = {
   costlyErrorDirection: "false_negative",
   threshold: 0.35,
   wormEntryType: "PRE_COMPACTION_CACHE_CHECK_RUN",
-  candidateSetProvider: (ctx) =>
-    Effect.sync(() => fromExtrasArray(ctx, "historyEntryCandidates")),
+  candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "historyEntryCandidates")),
 };
 
 export const BUILTIN_FAST_DECISION_USE_SITES: readonly FastDecisionUseSite[] = [

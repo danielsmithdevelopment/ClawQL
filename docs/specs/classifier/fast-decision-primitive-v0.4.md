@@ -17,18 +17,18 @@ This document is the in-repo home for the Fast Decision Primitive v0.4. It super
 
 ## Package boundary (§11)
 
-| Concern | Location |
-|---|---|
+| Concern                                   | Location                                                          |
+| ----------------------------------------- | ----------------------------------------------------------------- |
 | Primitive (registry, contract, execution) | `packages/clawql-core/src/classifier/` (`clawql-core/classifier`) |
-| `search` / `execute`, skill index | `clawql-core` plugin architecture (unchanged) |
-| WikiSkill / Ouroboros | `clawql-harness` Ouroboros plugin + `clawql-ouroboros` |
-| Ontology Layers 0–3 + vocabulary match | `clawql-ontology` |
-| `preferredVocabulary` | optional field on `ProviderPlugin` |
-| DAOS NSV/SGDOP prefilter | classifier `sgdop_peer_prefilter` + DAOS specs |
-| `pre-compaction` lifecycle event | `LifecycleEvent` in `clawql-core` |
-| Stable append-only cache block | classifier `StableCacheBlockService` |
-| Threshold policy | classifier `FastDecisionThresholdPolicyService` |
-| WORM entries | `clawql-audit` + core `WormAuditEvent` |
+| `search` / `execute`, skill index         | `clawql-core` plugin architecture (unchanged)                     |
+| WikiSkill / Ouroboros                     | `clawql-harness` Ouroboros plugin + `clawql-ouroboros`            |
+| Ontology Layers 0–3 + vocabulary match    | `clawql-ontology`                                                 |
+| `preferredVocabulary`                     | optional field on `ProviderPlugin`                                |
+| DAOS NSV/SGDOP prefilter                  | classifier `sgdop_peer_prefilter` + DAOS specs                    |
+| `pre-compaction` lifecycle event          | `LifecycleEvent` in `clawql-core`                                 |
+| Stable append-only cache block            | classifier `StableCacheBlockService`                              |
+| Threshold policy                          | classifier `FastDecisionThresholdPolicyService`                   |
+| WORM entries                              | `clawql-audit` + core `WormAuditEvent`                            |
 
 ## Core contract (§3.1)
 
@@ -67,4 +67,4 @@ See full non-claims in the product specification: no Jev reliance; Section 7 val
 - DAOS coordination: [`docs/ouroboros/daos-coordination-layer-specification.md`](../../ouroboros/daos-coordination-layer-specification.md)
 - Ontology meta: [`docs/specs/ontology/meta-ontology-v0.1.md`](../ontology/meta-ontology-v0.1.md)
 
-*The Fast Decision Primitive · v0.4 · September 2026 · Location: packages/clawql-core/classifier/*
+_The Fast Decision Primitive · v0.4 · September 2026 · Location: packages/clawql-core/classifier/_

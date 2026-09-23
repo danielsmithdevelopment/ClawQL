@@ -29,9 +29,7 @@ function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
-function heuristicScores(
-  request: FastDecisionScoreRequest
-): readonly FastDecisionScore[] {
+function heuristicScores(request: FastDecisionScoreRequest): readonly FastDecisionScore[] {
   const query = (request.ctx.query ?? "").toLowerCase();
   return request.candidates
     .map((c: FastDecisionCandidate) => {

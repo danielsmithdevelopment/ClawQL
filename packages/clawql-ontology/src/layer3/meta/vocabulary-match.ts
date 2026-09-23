@@ -45,10 +45,10 @@ export function matchOntologyVocabularyTerm(
 ): Effect.Effect<
   VocabularyMatchOutcome,
   never,
-  import("clawql-core").FastDecisionRegistry |
-    import("clawql-core").FastDecisionScorer |
-    import("clawql-core").FastDecisionThresholdPolicyService |
-    WormAuditSink
+  | import("clawql-core").FastDecisionRegistry
+  | import("clawql-core").FastDecisionScorer
+  | import("clawql-core").FastDecisionThresholdPolicyService
+  | WormAuditSink
 > {
   return Effect.gen(function* () {
     const worm = yield* WormAuditSink;

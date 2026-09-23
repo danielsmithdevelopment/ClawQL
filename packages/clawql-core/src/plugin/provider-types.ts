@@ -35,11 +35,7 @@ export type VaultSeedEntry = {
 
 /** Provider-declared preferred vocabulary for Layer 3 field minting (§2.3 / §11). */
 export type PreferredVocabularyId =
-  | "schema.org"
-  | "fibo"
-  | "dublin-core"
-  | "project-local"
-  | (string & {});
+  "schema.org" | "fibo" | "dublin-core" | "project-local" | (string & {});
 
 export type LifecycleScope = "tool" | "model" | "session";
 

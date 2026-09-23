@@ -18,10 +18,7 @@ export class SkillValidityStore extends Context.Tag("clawql/SkillValidityStore")
   {
     /** Live status — must be called on every fast-path attempt; never cache externally. */
     readonly getStatus: (skillId: string) => Effect.Effect<SkillValidityStatus | undefined>;
-    readonly setStatus: (
-      skillId: string,
-      status: SkillValidityStatus
-    ) => Effect.Effect<void>;
+    readonly setStatus: (skillId: string, status: SkillValidityStatus) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<ReadonlyMap<string, SkillValidityStatus>>;
   }
 >() {}
@@ -56,20 +53,17 @@ export function decideSkillFastPath(
 ): Effect.Effect<
   SkillFastPathDecision,
   never,
-  import("./registry.js").FastDecisionRegistry |
-    import("./scorer.js").FastDecisionScorer |
-    import("./threshold-policy.js").FastDecisionThresholdPolicyService |
-    SkillValidityStore |
-    WormAuditSink
+  | import("./registry.js").FastDecisionRegistry
+  | import("./scorer.js").FastDecisionScorer
+  | import("./threshold-policy.js").FastDecisionThresholdPolicyService
+  | SkillValidityStore
+  | WormAuditSink
 > {
   return Effect.gen(function* () {
     const validity = yield* SkillValidityStore;
     const worm = yield* WormAuditSink;
 
-    const decision: FastDecisionResult = yield* runFastDecision(
-      "skill_fast_path_match",
-      ctx
-    ).pipe(
+    const decision: FastDecisionResult = yield* runFastDecision("skill_fast_path_match", ctx).pipe(
       Effect.catchTag("FastDecisionUseSiteNotFoundError", () =>
         Effect.succeed({
           useSiteId: "skill_fast_path_match",

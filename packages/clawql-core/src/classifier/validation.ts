@@ -142,10 +142,12 @@ export function evaluateCorrectnessAndCalibration(
   };
 }
 
-export const FastDecisionValidationLive: Layer.Layer<FastDecisionValidationService> =
-  Layer.succeed(FastDecisionValidationService, {
+export const FastDecisionValidationLive: Layer.Layer<FastDecisionValidationService> = Layer.succeed(
+  FastDecisionValidationService,
+  {
     evaluate: (useSiteId, cases, criteria) =>
       Effect.sync(() =>
         evaluateCorrectnessAndCalibration(useSiteId, cases, criteria ?? DEFAULT_VALIDATION_CRITERIA)
       ),
-  });
+  }
+);

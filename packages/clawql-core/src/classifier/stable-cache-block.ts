@@ -51,12 +51,8 @@ export const InMemoryStableCacheBlockLive: Layer.Layer<StableCacheBlockService> 
             id: input.id,
             fact: input.fact,
             writtenAt: input.writtenAt ?? new Date().toISOString(),
-            ...(input.justification !== undefined
-              ? { justification: input.justification }
-              : {}),
-            ...(input.sourceEntryId !== undefined
-              ? { sourceEntryId: input.sourceEntryId }
-              : {}),
+            ...(input.justification !== undefined ? { justification: input.justification } : {}),
+            ...(input.sourceEntryId !== undefined ? { sourceEntryId: input.sourceEntryId } : {}),
             ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
           };
           yield* Ref.update(ref, (xs) => [...xs, item]);

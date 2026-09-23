@@ -30,7 +30,10 @@ export class FastDecisionThresholdPolicyService extends Context.Tag(
     /** Effective threshold: policy override if present, else use-site default. */
     readonly resolve: (
       useSiteId: string,
-      useSiteDefault: { readonly threshold: number; readonly costlyErrorDirection: CostlyErrorDirection }
+      useSiteDefault: {
+        readonly threshold: number;
+        readonly costlyErrorDirection: CostlyErrorDirection;
+      }
     ) => Effect.Effect<{
       readonly threshold: number;
       readonly costlyErrorDirection: CostlyErrorDirection;

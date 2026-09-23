@@ -41,11 +41,11 @@ export function runPreCompactionOntologyCacheCheck(
 ): Effect.Effect<
   PreCompactionCheckResult,
   never,
-  import("./registry.js").FastDecisionRegistry |
-    import("./scorer.js").FastDecisionScorer |
-    import("./threshold-policy.js").FastDecisionThresholdPolicyService |
-    StableCacheBlockService |
-    WormAuditSink
+  | import("./registry.js").FastDecisionRegistry
+  | import("./scorer.js").FastDecisionScorer
+  | import("./threshold-policy.js").FastDecisionThresholdPolicyService
+  | StableCacheBlockService
+  | WormAuditSink
 > {
   return Effect.gen(function* () {
     const worm = yield* WormAuditSink;
