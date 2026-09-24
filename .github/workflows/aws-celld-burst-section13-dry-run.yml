@@ -133,6 +133,8 @@ jobs:
       can_export: ${{ steps.gate.outputs.can_export }}
       skip_reason: ${{ steps.gate.outputs.skip_reason }}
       want_export: ${{ steps.gate.outputs.want_export }}
+      auth_mode: ${{ steps.gate.outputs.auth_mode }}
+      role_arn: ${{ steps.gate.outputs.role_arn }}
     steps:
       - id: gate
         env:
