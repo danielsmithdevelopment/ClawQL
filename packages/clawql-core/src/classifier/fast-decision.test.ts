@@ -373,8 +373,8 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
-  it("marks productionTrusted only when adjudicated and criteria pass", async () => {
-    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+  it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {
+    const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
     const suite = {
       suiteId: "adj",
@@ -390,6 +390,107 @@ describe("§7 held-out suite runner", () => {
           ],
           groundTruthCandidateId: "hit",
           adjudicated: true,
+          adjudicationKind: "live" as const,
+        },
+      ],
+    };
+    const glinerLayer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.test",
+        modelId: "test-gliner",
+        timeoutMs: 2000,
+      },
+      fetchImpl: (async () =>
+        new Response(
+          JSON.stringify({
+            scores: [
+              { id: "hit", confidence: 0.95 },
+              { id: "miss", confidence: 0.1 },
+            ],
+            backend: "gliner2:test",
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )) as unknown as typeof fetch,
+    });
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(suite, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(glinerLayer))
+    );
+    expect(report.passedCriteria).toBe(true);
+    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.productionTrusted).toBe(true);
+  });
+
+  it("adjudicated without adjudicationKind cannot light productionTrusted", async () => {
+    const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
+    const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
+    const suite = {
+      suiteId: "missing-kind",
+      description: "adjudicated:true alone is insufficient",
+      cases: [
+        {
+          caseId: "m1",
+          useSiteId: "skill_fast_path_match",
+          query: "x",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.1 } },
+          ],
+          groundTruthCandidateId: "hit",
+          adjudicated: true,
+        },
+      ],
+    };
+    const glinerLayer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.test",
+        modelId: "test-gliner",
+        timeoutMs: 2000,
+      },
+      fetchImpl: (async () =>
+        new Response(
+          JSON.stringify({
+            scores: [
+              { id: "hit", confidence: 0.95 },
+              { id: "miss", confidence: 0.1 },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )) as unknown as typeof fetch,
+    });
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(suite, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(glinerLayer))
+    );
+    expect(report.passedCriteria).toBe(true);
+    expect(report.productionTrusted).toBe(false);
+    expect(report.failureReasons.some((x) => x.includes("live frontier adjudication"))).toBe(true);
+  });
+
+  it("prior-confidence scorer cannot light productionTrusted even with live labels", async () => {
+    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+    const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
+    const suite = {
+      suiteId: "prior-not-gliner",
+      description: "prior scorer is not live gliner2",
+      cases: [
+        {
+          caseId: "p1",
+          useSiteId: "skill_fast_path_match",
+          query: "x",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.1 } },
+          ],
+          groundTruthCandidateId: "hit",
+          adjudicated: true,
+          adjudicationKind: "live" as const,
         },
       ],
     };
@@ -401,7 +502,9 @@ describe("§7 held-out suite runner", () => {
       }).pipe(Effect.provide(PriorConfidenceScorerLive))
     );
     expect(report.passedCriteria).toBe(true);
-    expect(report.productionTrusted).toBe(true);
+    expect(report.scorerBackend).toBe("prior-confidence");
+    expect(report.productionTrusted).toBe(false);
+    expect(report.failureReasons.some((x) => x.includes("not live gliner2"))).toBe(true);
   });
 
   it("dry-run adjudication never lights productionTrusted even when criteria pass", async () => {
@@ -448,11 +551,11 @@ describe("§7 held-out suite runner", () => {
     );
     expect(report.passedCriteria).toBe(true);
     expect(report.productionTrusted).toBe(false);
-    expect(report.failureReasons.some((x) => x.includes("dry-run adjudication"))).toBe(true);
+    expect(report.failureReasons.some((x) => x.includes("live frontier adjudication"))).toBe(true);
   });
 
-  it("HTTP adjudicator + PriorConfidenceScorer can light productionTrusted on a mini suite", async () => {
-    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+  it("HTTP adjudicator + live gliner2 HTTP can light productionTrusted on a mini suite", async () => {
+    const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const {
       adjudicateHeldOutSuite,
       applyAdjudicationLabels,
@@ -505,13 +608,34 @@ describe("§7 held-out suite runner", () => {
     expect(adj.labels[0]?.groundTruthCandidateId).toBe("hit");
 
     const labeled = applyAdjudicationLabels(suite, adj.labels);
+    expect(labeled.cases[0]?.adjudicationKind).toBe("live");
+
+    const glinerLayer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.test",
+        modelId: "test-gliner",
+        timeoutMs: 2000,
+      },
+      fetchImpl: (async () =>
+        new Response(
+          JSON.stringify({
+            scores: [
+              { id: "hit", confidence: 0.95 },
+              { id: "miss", confidence: 0.05 },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )) as unknown as typeof fetch,
+    });
+
     const report = await Effect.runPromise(
       runHeldOutValidationForUseSite(labeled, "skill_fast_path_match", {
         minAccuracy: 0.7,
         maxMeanCalibrationError: 0.2,
         minCases: 1,
-      }).pipe(Effect.provide(PriorConfidenceScorerLive))
+      }).pipe(Effect.provide(glinerLayer))
     );
+    expect(report.scorerBackend).toBe("gliner2");
     expect(report.productionTrusted).toBe(true);
   });
 });

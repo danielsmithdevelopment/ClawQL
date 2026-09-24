@@ -53,9 +53,11 @@ export type HeldOutValidationRunReport = {
   readonly meanCalibrationError: number;
   readonly passedCriteria: boolean;
   readonly failureReasons: readonly string[];
+  /** Scorer `backendId()` at validation time (e.g. `gliner2`, `gliner2-stub`). */
+  readonly scorerBackend: string;
   /**
-   * True only when criteria pass AND every case is frontier-adjudicated with
-   * live (non-dry-run) provenance.
+   * True only when criteria pass, every case has `adjudicationKind: "live"`,
+   * and scorerBackend is live `gliner2`.
    */
   readonly productionTrusted: boolean;
   readonly cases: readonly ScoredHeldOutCase[];

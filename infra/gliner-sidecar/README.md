@@ -4,17 +4,17 @@ HTTP sidecar matching `packages/clawql-core` `scoreViaGlinerHttp` contract.
 
 ## Endpoints
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| `GET` | `/healthz` | Liveness + mode |
+| Method | Path                         | Purpose                              |
+| ------ | ---------------------------- | ------------------------------------ |
+| `GET`  | `/healthz`                   | Liveness + mode                      |
 | `POST` | `/v1/fast-decision/classify` | Score fixed label set for a use site |
 
 ## Modes
 
-| `CLAWQL_GLINER_SIDECAR_MODE` | Behavior |
-|------------------------------|----------|
-| `mock` (default) | Token-overlap heuristic — no model weights; CI-safe |
-| `gliner2` | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via the **`gliner2`** package (`AutoExtractor` / Fastino GLiNER2.5) |
+| `CLAWQL_GLINER_SIDECAR_MODE` | Behavior                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `mock` (default)             | Token-overlap heuristic — no model weights; CI-safe                                                           |
+| `gliner2`                    | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via the **`gliner2`** package (`AutoExtractor` / Fastino GLiNER2.5) |
 
 ## Wire to clawql-core
 
@@ -52,9 +52,9 @@ python app.py
 
 ## §7 honesty
 
-| Pass type | Meaning |
-|-----------|---------|
-| Wiring / mock | Sidecar HTTP + classifier path works |
-| `productionTrusted` | Frontier-adjudicated held-out (`adjudicated: true`) **and** live GLiNER (or fine-tune) scores meet criteria |
+| Pass type           | Meaning                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Wiring / mock       | Sidecar HTTP + classifier path works                                                                                        |
+| `productionTrusted` | Frontier-adjudicated held-out (`adjudicationKind: "live"`) **and** live GLiNER2 scorer (`backendId: gliner2`) meet criteria |
 
 Mock mode is for wiring and integration tests only. Dry-run adjudication (`FrontierAdjudicator` dry-run Layer) must not be cited as a production gate pass.

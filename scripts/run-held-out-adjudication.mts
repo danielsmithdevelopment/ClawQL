@@ -61,6 +61,7 @@ const summary = {
     caseCount: r.caseCount,
     passedCriteria: r.passedCriteria,
     productionTrusted: r.productionTrusted,
+    scorerBackend: r.scorerBackend,
     meanCalibrationError: r.meanCalibrationError,
     rawAccuracy: r.rawAccuracy,
     failureReasons: r.failureReasons,
@@ -73,8 +74,8 @@ const summary = {
       ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
       : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
     anyProductionTrusted
-      ? "at least one use-site reports productionTrusted"
-      : "productionTrusted remains false until live adjudication + calibration criteria pass with live GLiNER scores",
+      ? "at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + criteria)"
+      : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + calibration criteria pass",
   ].join("; "),
 };
 

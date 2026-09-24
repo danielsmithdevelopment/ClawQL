@@ -2,8 +2,9 @@
  * §7.2 frontier adjudication — label held-out cases via a judge port.
  *
  * Dry-run / recorded fixtures keep CI honest without calling a frontier API.
- * productionTrusted requires adjudicated:true with live (non-dry-run) provenance
- * AND live scorer criteria (dry-run labels / stub scorer never light the gate).
+ * productionTrusted requires `adjudicationKind: "live"` on every case AND live
+ * `gliner2` scorer backend (dry-run labels / stub / prior / heuristic never light
+ * the gate).
  */
 
 import { Context, Effect, Layer } from "effect";
