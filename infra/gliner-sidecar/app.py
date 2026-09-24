@@ -73,26 +73,39 @@ def mock_scores(text: str, labels: list[Label]) -> list[Score]:
 
 
 def gliner2_scores(text: str, labels: list[Label]) -> list[Score]:
+    """Score labels with Fastino GLiNER2 via the `gliner2` package (AutoExtractor)."""
     global _gliner_model
     try:
-        from gliner import GLiNER  # type: ignore
+        from gliner2 import AutoExtractor  # type: ignore
     except ImportError as e:
         raise RuntimeError(
-            "gliner2 mode requires `pip install gliner` (and torch). "
+            "gliner2 mode requires `pip install gliner2 peft` (and torch). "
             "Use CLAWQL_GLINER_SIDECAR_MODE=mock for CI/local without weights."
         ) from e
 
     if _gliner_model is None:
-        _gliner_model = GLiNER.from_pretrained(MODEL_ID)
+        _gliner_model = AutoExtractor.from_pretrained(MODEL_ID)
 
     label_names = [lab.description or lab.id for lab in labels]
-    entities = _gliner_model.predict_entities(text, label_names, threshold=0.0)
+    # One-shot entity extract: max span confidence per label (0 if none).
+    raw = _gliner_model.extract_entities(
+        text,
+        label_names,
+        threshold=0.0,
+        include_confidence=True,
+    )
+    entities = (raw or {}).get("entities") or {}
     by_desc: dict[str, float] = {n: 0.0 for n in label_names}
-    for ent in entities or []:
-        label = ent.get("label") or ent.get("type")
-        score = float(ent.get("score", 0.0))
-        if label in by_desc:
-            by_desc[label] = max(by_desc[label], score)
+    for name, spans in entities.items():
+        if name not in by_desc:
+            continue
+        best = 0.0
+        for span in spans or []:
+            if isinstance(span, dict):
+                best = max(best, float(span.get("confidence", 0.0)))
+            elif isinstance(span, (int, float)):
+                best = max(best, float(span))
+        by_desc[name] = best
 
     out: list[Score] = []
     for lab in labels:

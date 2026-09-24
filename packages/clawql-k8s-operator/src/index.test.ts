@@ -213,4 +213,23 @@ describe("BurstWatchLoop + placement variance", () => {
     expect(report.uniqueNodes).toBeGreaterThan(0);
     expect(report.note).toMatch(/Simulation only/);
   });
+
+  it("PodInformer unavailable double returns null via startPodInformerOrNull", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      UnavailablePodInformerLive,
+      PodInformerService,
+      startPodInformerOrNull,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const handle = await Effect.runPromise(
+      Effect.gen(function* () {
+        const informer = yield* PodInformerService;
+        const stub = yield* BurstWatchStub;
+        return yield* startPodInformerOrNull(informer, stub, { namespace: "default" });
+      }).pipe(Effect.provide(Layer.mergeAll(UnavailablePodInformerLive, BurstWatchStubLive)))
+    );
+    expect(handle).toBeNull();
+  });
 });

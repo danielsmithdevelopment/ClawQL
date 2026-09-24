@@ -1,7 +1,7 @@
 {
   "name": "clawql-k8s-operator",
   "version": "0.1.0",
-  "description": "Draft Effect scaffold for burst/mesh/fleet Kubernetes operator (aws-celld-burst spec) \u2014 distinct from clawql-operator ClawQLInstance CRD",
+  "description": "Draft Effect scaffold for burst/mesh/fleet Kubernetes operator (aws-celld-burst spec) — distinct from clawql-operator ClawQLInstance CRD",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -23,6 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^2.0.0",
     "effect": "^3.21.4"
   },
   "devDependencies": {

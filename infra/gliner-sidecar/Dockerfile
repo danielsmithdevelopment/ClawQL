@@ -15,7 +15,6 @@ EXPOSE 8080
 CMD ["python", "app.py"]
 
 FROM base AS gliner2
-# Live weights deps are installed here (not as a scanned requirements*.txt) so
-# default CI OSV stays on the mock floor pins only.
-RUN pip install --no-cache-dir "gliner>=0.2.0" torch
+# Live Fastino GLiNER2.5 weights (large torch + gliner2). Not scanned as requirements*.txt.
+RUN pip install --no-cache-dir "gliner2>=1.0.0" peft tiktoken protobuf torch
 ENV CLAWQL_GLINER_SIDECAR_MODE=gliner2

@@ -28,10 +28,17 @@ export {
   BurstWatchLoopLive,
   BurstWatchControllerLive,
   makeBurstWatchStub,
+  PodInformerService,
+  KubernetesPodInformerLive,
+  UnavailablePodInformerLive,
+  startPodInformerOrNull,
+  makeKubernetesPodInformer,
   type WatchDispatchResult,
   type WatchEvent,
   type WatchEventKind,
   type WatchLoopTickResult,
+  type PodInformerHandle,
+  type PodInformerOptions,
 } from "./watches/index.js";
 export {
   simulatePlacementVariance,
