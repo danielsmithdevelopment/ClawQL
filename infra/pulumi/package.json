@@ -38,7 +38,7 @@
     "@pulumi/aws": "^7.44.0",
     "@pulumi/cloudflare": "^6.19.0",
     "@pulumi/gcp": "^9.36.1",
-    "@pulumi/pulumi": "^3.259.0",
+    "@pulumi/pulumi": "^3.262.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

@@ -30,7 +30,7 @@
     "effect": "^3.21.4",
     "express-rate-limit": "^8.7.0",
     "jose": "^6.2.12",
-    "viem": "^2.55.4"
+    "viem": "^2.56.8"
   },
   "peerDependencies": {
     "@simplewebauthn/server": "^14.0.1",
