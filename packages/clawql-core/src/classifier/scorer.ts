@@ -99,10 +99,7 @@ function requestText(ctx: FastDecisionContext): string {
 }
 
 /** Compose classify text: query body + optional use-site framing (suffix). */
-export function composeGlinerClassifyText(
-  taskFraming: string | undefined,
-  body: string
-): string {
+export function composeGlinerClassifyText(taskFraming: string | undefined, body: string): string {
   const framing = taskFraming?.trim() ?? "";
   const q = body.trim();
   if (!framing) return q;
