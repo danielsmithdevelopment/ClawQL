@@ -4,4 +4,5 @@ export * from "./pod-informer.js";
 export * from "./istio-denial-adapter.js";
 export * from "./istio-access-log-tail.js";
 export * from "./karpenter-lifecycle-adapter.js";
+export * from "./karpenter-nodeclaim-informer.js";
 export * from "./celld-fleet-health.js";

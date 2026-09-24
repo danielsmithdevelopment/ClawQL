@@ -230,6 +230,62 @@ describe("BurstWatchLoop + placement variance", () => {
     );
     expect(handle).toBeNull();
   });
+
+  it("NodeClaimInformer unavailable double returns null via startNodeClaimInformerOrNull", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      UnavailableNodeClaimInformerLive,
+      NodeClaimInformerService,
+      startNodeClaimInformerOrNull,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const handle = await Effect.runPromise(
+      Effect.gen(function* () {
+        const informer = yield* NodeClaimInformerService;
+        const stub = yield* BurstWatchStub;
+        return yield* startNodeClaimInformerOrNull(informer, stub);
+      }).pipe(Effect.provide(Layer.mergeAll(UnavailableNodeClaimInformerLive, BurstWatchStubLive)))
+    );
+    expect(handle).toBeNull();
+  });
+
+  it("nodeClaimToLifecycleRecord maps Ready / Deleted / Disrupting", async () => {
+    const { nodeClaimToLifecycleRecord } = await import("./watches/index.js");
+    const ready = nodeClaimToLifecycleRecord(
+      {
+        metadata: { name: "nc-ready" },
+        status: {
+          nodeName: "ip-10-0-1-9",
+          conditions: [{ type: "Ready", status: "True" }],
+        },
+      },
+      "MODIFIED"
+    );
+    expect(ready.phase).toBe("ready");
+    expect(ready.nodeName).toBe("ip-10-0-1-9");
+
+    const deleted = nodeClaimToLifecycleRecord(
+      { metadata: { name: "nc-gone" }, status: {} },
+      "DELETED"
+    );
+    expect(deleted.phase).toBe("terminating");
+
+    const disrupting = nodeClaimToLifecycleRecord(
+      {
+        metadata: { name: "nc-drain" },
+        status: {
+          conditions: [
+            { type: "Ready", status: "True" },
+            { type: "Disrupting", status: "True", reason: "Empty" },
+          ],
+        },
+      },
+      "MODIFIED"
+    );
+    expect(disrupting.phase).toBe("disrupting");
+    expect(disrupting.reason).toBe("Empty");
+  });
 });
 
 describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
