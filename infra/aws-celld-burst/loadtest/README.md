@@ -53,6 +53,19 @@ Rate-card **order-of-magnitude** for one same-day three-arm window in `us-east-1
 
 **Cost Explorer caveat:** usable tagged spend often lags ~24h; do not publish §13.5 `$Y` until the tagged window has settled in Cost Explorer.
 
+## Filling §13.5 from real exports (not dry-run)
+
+After a same-day three-arm run + Cost Explorer CSVs + k6 metrics:
+
+```bash
+node infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs \
+  --arm-a ce-arm-a.csv --arm-b ce-arm-b.csv --arm-c ce-arm-c.csv \
+  --metrics metrics.json \
+  --out infra/aws-celld-burst/loadtest/results/section13-5-filled.md
+```
+
+Fail-closed: missing/non-numeric cost columns or missing `p99Ms` / `drops` / `spikeSeconds` abort without writing invented `$Y`.
+
 ## Honesty
 
 Do not invent latency or dollar numbers from this scaffold. Unfavorable Arm B/C results must appear in the §13.5 template exactly as measured.
