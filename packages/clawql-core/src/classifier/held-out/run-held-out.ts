@@ -113,11 +113,7 @@ export function runHeldOutValidationForUseSite(
     // (HELD_OUT_WIRING_CRITERIA) must not light the flag.
     const productionCal = isDefaultValidationCriteria(criteria)
       ? cal
-      : evaluateCorrectnessAndCalibration(
-          useSiteId,
-          heldOutCases,
-          DEFAULT_VALIDATION_CRITERIA
-        );
+      : evaluateCorrectnessAndCalibration(useSiteId, heldOutCases, DEFAULT_VALIDATION_CRITERIA);
     const adjudicatedCount = scored.filter((s) => s.adjudicated).length;
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
     const liveKindCount = scored.filter((s) => s.adjudicationKind === "live").length;
