@@ -2,6 +2,9 @@
 
 ### Added
 
+- **§13.5 / celld AWS credential overrides** — `CLAWQL_CE_*` (Cost Explorer) and `CLAWQL_CELLD_AWS_*` (lease fetch) override `AWS_*` so mixed sandboxes can keep R2 sync keys in `AWS_*` without inventing `$Y` / leases; still refuse when the effective key equals `CLAWQL_SYNC_*`.
+- **Post-#1119 audit honesty** — `scripts/audit-post-1119-remaining-gaps.mts` marks frontier live corpus DONE when GHA live labels fetch, and scaffold/dry-run rows DONE when in-repo paths are complete; `goalComplete` still requires real CE CSVs.
+- **Frontier artifact re-fetch** — `scripts/fetch-frontier-adjudication-artifact.sh` downloads into a temp dir then promotes (avoids `gh run download` refusing to overwrite existing label files on audit re-runs).
 - **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService` (also via BurstWatchSources bootstrap).
 - **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; optional Istio access-log tail + celld lease-snapshot fleet health (`celldLeaseSnapshotJson` / `celldLeaseSnapshotPath`); unavailable sources reported honestly (no invented events).
 - **Frontier GHA builds merkle before core** — `fast-decision-frontier-adjudication.yml` runs `npm run build -w clawql-merkle -w clawql-core` so DTS resolve does not fail on `clawql-merkle` after `npm ci`.

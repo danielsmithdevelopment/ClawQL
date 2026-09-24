@@ -24,11 +24,31 @@ if [[ -z "${RUN_ID}" ]]; then
   exit 2
 fi
 
+# Download into a fresh temp dir then promote — gh run download refuses to
+# overwrite existing files in OUT (re-fetch / audit re-runs would false-fail).
+TMP="$(mktemp -d)"
+trap 'rm -rf "${TMP}"' EXIT
 echo "Downloading artifacts from run $RUN_ID → $OUT"
-if ! gh run download "$RUN_ID" -n held-out-frontier-adjudication -D "$OUT"; then
+if ! gh run download "$RUN_ID" -n held-out-frontier-adjudication -D "$TMP"; then
   echo "Artifact held-out-frontier-adjudication missing on run $RUN_ID (likely credential-gate skip-notice only)." >&2
   exit 3
 fi
+# Promote known artifact files; preserve unrelated OUT contents (e.g. local rescores).
+for f in held-out-frontier-labels.json held-out-frontier-summary.json gliner2-healthz.json; do
+  if [[ -f "$TMP/$f" ]]; then
+    cp -f "$TMP/$f" "$OUT/$f"
+  fi
+done
+# Copy any other files from the artifact as well
+shopt -s nullglob
+for f in "$TMP"/*; do
+  base="$(basename "$f")"
+  case "$base" in
+    held-out-frontier-labels.json|held-out-frontier-summary.json|gliner2-healthz.json) ;;
+    *) cp -f "$f" "$OUT/$base" ;;
+  esac
+done
+shopt -u nullglob
 
 SUMMARY="$OUT/held-out-frontier-summary.json"
 LABELS="$OUT/held-out-frontier-labels.json"

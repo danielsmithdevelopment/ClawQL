@@ -6,8 +6,11 @@
 #   - real AWS credentials that pass sts get-caller-identity
 #   - CLAWQL_CELLD_LEASE_BUCKET (required)
 #   - optional CLAWQL_CELLD_LEASE_PREFIX (default: leases/)
+#   - optional CLAWQL_CELLD_AWS_ACCESS_KEY_ID + CLAWQL_CELLD_AWS_SECRET_ACCESS_KEY
+#     (+ optional CLAWQL_CELLD_AWS_SESSION_TOKEN / CLAWQL_CELLD_AWS_REGION) to
+#     override AWS_* when the sandbox keeps R2 sync keys in AWS_*
 #
-# Refuses Cloudflare R2-style sync keys when AWS_ACCESS_KEY_ID equals
+# Refuses Cloudflare R2-style sync keys when effective AWS_ACCESS_KEY_ID equals
 # CLAWQL_SYNC_ACCESS_KEY_ID (same honesty gate as §13.5 CE export).
 #
 # Writes JSON array of { nodeId, renewedAtMs, ttlMs?, peerIds? } to OUT_FILE.
@@ -23,10 +26,29 @@ PREFIX="${CLAWQL_CELLD_LEASE_PREFIX:-leases/}"
 
 die() { echo "fetch-celld-leases-from-s3: $*" >&2; exit 2; }
 
+# Prefer explicit celld AWS credentials so AWS_* can remain R2 sync.
+if [[ -n "${CLAWQL_CELLD_AWS_ACCESS_KEY_ID:-}" ]]; then
+  if [[ -z "${CLAWQL_CELLD_AWS_SECRET_ACCESS_KEY:-}" ]]; then
+    die "CLAWQL_CELLD_AWS_ACCESS_KEY_ID set but CLAWQL_CELLD_AWS_SECRET_ACCESS_KEY missing"
+  fi
+  export AWS_ACCESS_KEY_ID="${CLAWQL_CELLD_AWS_ACCESS_KEY_ID}"
+  export AWS_SECRET_ACCESS_KEY="${CLAWQL_CELLD_AWS_SECRET_ACCESS_KEY}"
+  if [[ -n "${CLAWQL_CELLD_AWS_SESSION_TOKEN:-}" ]]; then
+    export AWS_SESSION_TOKEN="${CLAWQL_CELLD_AWS_SESSION_TOKEN}"
+  else
+    unset AWS_SESSION_TOKEN || true
+  fi
+  if [[ -n "${CLAWQL_CELLD_AWS_REGION:-}" ]]; then
+    export AWS_DEFAULT_REGION="${CLAWQL_CELLD_AWS_REGION}"
+    export AWS_REGION="${CLAWQL_CELLD_AWS_REGION}"
+  fi
+  echo "Using CLAWQL_CELLD_AWS_* credentials for lease fetch (overrode AWS_*)"
+fi
+
 # Fail-closed ordering: R2 collision before aws CLI requirement
 if [[ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${AWS_ACCESS_KEY_ID:-}" && \
       "${AWS_ACCESS_KEY_ID}" == "${CLAWQL_SYNC_ACCESS_KEY_ID}" ]]; then
-  die "AWS_ACCESS_KEY_ID matches CLAWQL_SYNC_ACCESS_KEY_ID (R2 sync) — refusing; use real AWS celld fleet credentials"
+  die "AWS_ACCESS_KEY_ID matches CLAWQL_SYNC_ACCESS_KEY_ID (R2 sync) — refusing; use real AWS celld fleet credentials (or set CLAWQL_CELLD_AWS_*)"
 fi
 if [[ -z "${BUCKET}" ]]; then
   die "set CLAWQL_CELLD_LEASE_BUCKET"
