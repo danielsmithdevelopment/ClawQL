@@ -656,9 +656,8 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
         "mcp";
       await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-        runWithMcpRequestContext(
-          { sessionId: mcpSession, atrScopeTokens },
-          () => transport!.handleRequest(req, res, req.body)
+        runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+          transport!.handleRequest(req, res, req.body)
         )
       );
     } catch (err: unknown) {

@@ -29,9 +29,7 @@ export type AdjudicationRunReport = {
 export class FrontierAdjudicator extends Context.Tag("clawql/FrontierAdjudicator")<
   FrontierAdjudicator,
   {
-    readonly adjudicateCase: (
-      c: HeldOutCaseSpec
-    ) => Effect.Effect<AdjudicationLabel, Error>;
+    readonly adjudicateCase: (c: HeldOutCaseSpec) => Effect.Effect<AdjudicationLabel, Error>;
     readonly judgeModelId: () => string;
   }
 >() {}
@@ -53,8 +51,7 @@ export function makeDryRunFrontierAdjudicator(
         adjudicated: true as const,
         judgeModel,
         judgedAt: new Date().toISOString(),
-        rationale:
-          "dry-run: echoed fixture groundTruthCandidateId — not a frontier judge verdict",
+        rationale: "dry-run: echoed fixture groundTruthCandidateId — not a frontier judge verdict",
       }),
   };
 }
@@ -166,11 +163,7 @@ export function adjudicateHeldOutSuite(
 export function frontierAdjudicatorLayerFromEnv(): Layer.Layer<FrontierAdjudicator> {
   const url = process.env.CLAWQL_FAST_DECISION_JUDGE_URL?.trim();
   if (!url) return DryRunFrontierAdjudicatorLive;
-  const model =
-    process.env.CLAWQL_FAST_DECISION_JUDGE_MODEL?.trim() || "frontier-judge";
+  const model = process.env.CLAWQL_FAST_DECISION_JUDGE_MODEL?.trim() || "frontier-judge";
   const token = process.env.CLAWQL_FAST_DECISION_JUDGE_TOKEN?.trim();
-  return Layer.succeed(
-    FrontierAdjudicator,
-    makeHttpFrontierAdjudicator({ url, model, token })
-  );
+  return Layer.succeed(FrontierAdjudicator, makeHttpFrontierAdjudicator({ url, model, token }));
 }

@@ -55,9 +55,7 @@ export function resolveCapabilitySessionSeed(
   return [...DEFAULT_CAPABILITY_SESSION_SEED];
 }
 
-export class CapabilityCatalogBootstrap extends Context.Tag(
-  "clawql/CapabilityCatalogBootstrap"
-)<
+export class CapabilityCatalogBootstrap extends Context.Tag("clawql/CapabilityCatalogBootstrap")<
   CapabilityCatalogBootstrap,
   {
     /**

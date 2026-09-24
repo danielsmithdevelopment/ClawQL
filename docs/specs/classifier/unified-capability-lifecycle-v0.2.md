@@ -52,7 +52,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 | Pure allow-rule + WORM shapes                 | Implemented                                                                                       |
 | Accept-time promotion ⊆ S                     | Implemented                                                                                       |
 | Harness cannot set disposition / sandbox fork | Implemented (core policy)                                                                         |
-| Default MCP execute gate                      | **Default-on** (opt out `CLAWQL_CAPABILITY_LIFECYCLE=0`); lazy catalog bootstrap                    |
+| Default MCP execute gate                      | **Default-on** (opt out `CLAWQL_CAPABILITY_LIFECYCLE=0`); lazy catalog bootstrap                  |
 | Register-side step 5                          | Wired in `clawql-harness` (opt-in via `CLAWQL_HARNESS_CAPABILITY_REGISTER` / config; not MCP env) |
 
 ## Related
