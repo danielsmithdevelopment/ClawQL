@@ -205,8 +205,7 @@ export function createGlinerFastDecisionScorerLayer(
       }
       return scoreViaGlinerHttp(config, request, fetchImpl).pipe(
         Effect.map((result) => {
-          lastBackendId =
-            result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
+          lastBackendId = result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
           return result.scores;
         })
       );
