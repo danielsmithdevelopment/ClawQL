@@ -70,12 +70,12 @@ Mixed sandboxes that keep Cloudflare R2 sync keys in `AWS_*` can override with
 `CLAWQL_CE_SESSION_TOKEN` / `CLAWQL_CE_REGION`). The script still refuses when the
 *effective* access key equals `CLAWQL_SYNC_ACCESS_KEY_ID`.
 
-**GHA OIDC (no static CE keys):** set repository variable or secret
-`CLAWQL_CE_ROLE_ARN` to an IAM role trusted for
-`token.actions.githubusercontent.com` (Cost Explorer read). The
-`aws-celld-burst-section13-dry-run.yml` workflow assumes that role when
-`section13-ce-export` is dispatched. Optional `vars.CLAWQL_CE_REGION`
-(default `us-east-1`).
+**GHA OIDC (no static CE keys):** deploy
+[`../iam/github-oidc-ce-export-role.yaml`](../iam/github-oidc-ce-export-role.yaml)
+(CloudFormation), set repository variable or secret `CLAWQL_CE_ROLE_ARN` to the
+`RoleArn` output, then dispatch `section13-ce-export`. Optional
+`vars.CLAWQL_CE_REGION` (default `us-east-1`). The workflow assumes that role via
+`id-token` and never invents `$Y`.
 
 Fail-closed: refuses missing aws CLI, R2-sync key collision, STS failure, or empty Cost Explorer results.
 

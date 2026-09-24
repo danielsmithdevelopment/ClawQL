@@ -11,6 +11,7 @@ Sample manifests and notes for **Bursty Streams on AWS** (celld + Karpenter + Is
 | `manifests/priority-classes.yaml`                 | Tier 1–3 PriorityClasses from §5.2                          |
 | `manifests/filler-disruption-budget.example.yaml` | Example Karpenter disruptionBudget for filler NodePool      |
 | `loadtest/`                                       | Three-arm k6 scaffold + §13.5 result template (§13)         |
+| `iam/github-oidc-ce-export-role.yaml`             | CloudFormation: GitHub OIDC role for §13.5 Cost Explorer read (`CLAWQL_CE_ROLE_ARN`) |
 | `fetch-celld-leases-from-s3.sh`                   | Fail-closed S3 lease snapshot for `CelldFleetHealthService` (optional `CLAWQL_CELLD_AWS_*` overrides when `AWS_*` is R2 sync) |
 | (repo) `scripts/run-burst-watch-from-s3-leases.sh` | Fetch leases then evaluate via `BurstWatchSources` (fail-closed) |
 

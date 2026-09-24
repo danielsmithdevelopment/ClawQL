@@ -1,0 +1,113 @@
+# GitHub Actions OIDC → IAM role for §13.5 Cost Explorer export (fail-closed).
+#
+# Deploy once with credentials that can create IAM roles (not the CE role itself).
+# Then set repository var/secret CLAWQL_CE_ROLE_ARN to the RoleArn output and
+# dispatch section13-ce-export. Never invents $Y — only grants ce:GetCostAndUsage
+# + sts:GetCallerIdentity for the export script.
+#
+# Example:
+#   aws cloudformation deploy \
+#     --stack-name clawql-section13-ce-export-oidc \
+#     --template-file infra/aws-celld-burst/iam/github-oidc-ce-export-role.yaml \
+#     --capabilities CAPABILITY_NAMED_IAM \
+#     --parameter-overrides \
+#       GitHubOrg=danielsmithdevelopment \
+#       GitHubRepo=ClawQL \
+#       CreateOidcProvider=false \
+#       ExistingOidcProviderArn=arn:aws:iam::ACCOUNT:oidc-provider/token.actions.githubusercontent.com
+#
+#   aws cloudformation describe-stacks \
+#     --stack-name clawql-section13-ce-export-oidc \
+#     --query 'Stacks[0].Outputs[?OutputKey==`RoleArn`].OutputValue' --output text
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ClawQL §13.5 Cost Explorer read role for GitHub Actions OIDC (section13-ce-export)
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Description: GitHub organization or user that owns the repo
+    Default: danielsmithdevelopment
+  GitHubRepo:
+    Type: String
+    Description: Repository name (not owner/repo)
+    Default: ClawQL
+  RoleName:
+    Type: String
+    Default: clawql-section13-ce-export
+    AllowedPattern: "^[\\w+=,.@-]{1,64}$"
+  CreateOidcProvider:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "false"
+    Description: Create the GitHub OIDC provider (set false if token.actions.githubusercontent.com already exists)
+  ExistingOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: Required when CreateOidcProvider=false — arn:aws:iam::ACCOUNT:oidc-provider/token.actions.githubusercontent.com
+
+Conditions:
+  ShouldCreateOidcProvider: !Equals [!Ref CreateOidcProvider, "true"]
+  UseExistingOidcProvider: !Equals [!Ref CreateOidcProvider, "false"]
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: ShouldCreateOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      # GitHub rotates certs; AWS documents that any non-empty thumbprint is accepted
+      # when the OIDC issuer URL is token.actions.githubusercontent.com.
+      ThumbprintList:
+        - ffffffffffffffffffffffffffffffffffffffff
+
+  CeExportRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      Description: Read-only Cost Explorer for ClawQL section13-ce-export GHA workflow
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - ShouldCreateOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Ref ExistingOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${GitHubRepo}:*"
+      Policies:
+        - PolicyName: clawql-section13-ce-read
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CostExplorerGetCostAndUsage
+                Effect: Allow
+                Action:
+                  - ce:GetCostAndUsage
+                Resource: "*"
+              - Sid: StsCallerIdentity
+                Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                Resource: "*"
+
+Outputs:
+  RoleArn:
+    Description: Set GitHub Actions var/secret CLAWQL_CE_ROLE_ARN to this value
+    Value: !GetAtt CeExportRole.Arn
+  RoleName:
+    Value: !Ref CeExportRole
+  OidcProviderArn:
+    Description: OIDC provider used by the role trust policy
+    Value: !If
+      - ShouldCreateOidcProvider
+      - !Ref GitHubOidcProvider
+      - !Ref ExistingOidcProviderArn
