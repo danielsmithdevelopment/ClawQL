@@ -399,6 +399,20 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
+  it("loads Harvey v0.2 suite with provisional GT covering Lab workflow sites", async () => {
+    const { harveyHeldOutSuiteV02, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = harveyHeldOutSuiteV02();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.2-harvey");
+    expect(suite.cases.length).toBeGreaterThanOrEqual(20);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(resolveHeldOutSuite("v0.2-harvey").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBeGreaterThanOrEqual(5);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
   it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
