@@ -7,12 +7,20 @@
 #   - env CLAWQL_S13_TAG_KEY (default: clawql:section13-arm)
 #   - env CLAWQL_S13_START / CLAWQL_S13_END (YYYY-MM-DD, Cost Explorer exclusive end)
 #   - optional arm tag values: CLAWQL_S13_ARM_A / _B / _C (defaults: A, B, C)
+#   - optional CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY (+ optional
+#     CLAWQL_CE_SESSION_TOKEN / CLAWQL_CE_REGION) to override AWS_* when the
+#     sandbox keeps R2 sync keys in AWS_* (mixed Cursor/Cloud Agent envs)
 #
-# Refuses Cloudflare R2-style keys (same prefix as CLAWQL_SYNC when equal) by
-# requiring a successful STS call against default AWS endpoints.
+# Refuses Cloudflare R2-style keys (effective AWS_ACCESS_KEY_ID equals
+# CLAWQL_SYNC_ACCESS_KEY_ID) by requiring a successful STS call against default
+# AWS endpoints.
 #
 # Usage:
 #   CLAWQL_S13_START=2026-09-20 CLAWQL_S13_END=2026-09-21 \
+#     bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh ./ce-out
+#   # Mixed sandbox (AWS_* == R2 sync):
+#   CLAWQL_CE_ACCESS_KEY_ID=… CLAWQL_CE_SECRET_ACCESS_KEY=… \
+#     CLAWQL_S13_START=… CLAWQL_S13_END=… \
 #     bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh ./ce-out
 set -euo pipefail
 
@@ -26,11 +34,30 @@ END="${CLAWQL_S13_END:-}"
 
 die() { echo "export-cost-explorer-arms: $*" >&2; exit 2; }
 
+# Prefer explicit CE credentials so AWS_* can remain R2 sync in mixed sandboxes.
+if [[ -n "${CLAWQL_CE_ACCESS_KEY_ID:-}" ]]; then
+  if [[ -z "${CLAWQL_CE_SECRET_ACCESS_KEY:-}" ]]; then
+    die "CLAWQL_CE_ACCESS_KEY_ID set but CLAWQL_CE_SECRET_ACCESS_KEY missing"
+  fi
+  export AWS_ACCESS_KEY_ID="${CLAWQL_CE_ACCESS_KEY_ID}"
+  export AWS_SECRET_ACCESS_KEY="${CLAWQL_CE_SECRET_ACCESS_KEY}"
+  if [[ -n "${CLAWQL_CE_SESSION_TOKEN:-}" ]]; then
+    export AWS_SESSION_TOKEN="${CLAWQL_CE_SESSION_TOKEN}"
+  else
+    unset AWS_SESSION_TOKEN || true
+  fi
+  if [[ -n "${CLAWQL_CE_REGION:-}" ]]; then
+    export AWS_DEFAULT_REGION="${CLAWQL_CE_REGION}"
+    export AWS_REGION="${CLAWQL_CE_REGION}"
+  fi
+  echo "Using CLAWQL_CE_* credentials for Cost Explorer (overrode AWS_*)"
+fi
+
 # Fail-closed ordering: refuse R2-sync key collision before requiring aws CLI
 # so CI / local sandboxes without aws still prove the honesty gate.
 if [[ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" && -n "${AWS_ACCESS_KEY_ID:-}" && \
       "${AWS_ACCESS_KEY_ID}" == "${CLAWQL_SYNC_ACCESS_KEY_ID}" ]]; then
-  die "AWS_ACCESS_KEY_ID matches CLAWQL_SYNC_ACCESS_KEY_ID (R2 sync) — refusing; use real AWS EKS/CE credentials"
+  die "AWS_ACCESS_KEY_ID matches CLAWQL_SYNC_ACCESS_KEY_ID (R2 sync) — refusing; use real AWS EKS/CE credentials (or set CLAWQL_CE_*)"
 fi
 if [[ -z "${START}" || -z "${END}" ]]; then
   die "set CLAWQL_S13_START and CLAWQL_S13_END (YYYY-MM-DD; END exclusive)"

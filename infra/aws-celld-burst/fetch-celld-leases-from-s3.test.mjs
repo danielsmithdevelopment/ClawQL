@@ -41,4 +41,20 @@ describe("fetch-celld-leases-from-s3 fail-closed", () => {
     assert.equal(r.status, 2);
     assert.match(r.stderr, /R2 sync/);
   });
+
+  it("CLAWQL_CELLD_AWS_* override bypasses R2 collision on AWS_* then fails closed without aws CLI", () => {
+    const r = run({
+      CLAWQL_CELLD_LEASE_BUCKET: "fake-bucket",
+      AWS_ACCESS_KEY_ID: "r2keysame",
+      AWS_SECRET_ACCESS_KEY: "secret",
+      CLAWQL_SYNC_ACCESS_KEY_ID: "r2keysame",
+      CLAWQL_SYNC_SECRET_ACCESS_KEY: "secret",
+      CLAWQL_CELLD_AWS_ACCESS_KEY_ID: "real-celld-key",
+      CLAWQL_CELLD_AWS_SECRET_ACCESS_KEY: "real-celld-secret",
+      PATH: "/usr/bin:/bin",
+    });
+    assert.notEqual(r.status, 0);
+    assert.doesNotMatch(r.stderr, /R2 sync/);
+    assert.match(r.stderr + r.stdout, /CLAWQL_CELLD_AWS_|aws CLI not found|sts get-caller-identity/);
+  });
 });

@@ -65,6 +65,11 @@ CLAWQL_S13_START=2026-09-20 CLAWQL_S13_END=2026-09-21 \
   bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh ./ce-out
 ```
 
+Mixed sandboxes that keep Cloudflare R2 sync keys in `AWS_*` can override with
+`CLAWQL_CE_ACCESS_KEY_ID` / `CLAWQL_CE_SECRET_ACCESS_KEY` (optional
+`CLAWQL_CE_SESSION_TOKEN` / `CLAWQL_CE_REGION`). The script still refuses when the
+*effective* access key equals `CLAWQL_SYNC_ACCESS_KEY_ID`.
+
 Fail-closed: refuses missing aws CLI, R2-sync key collision, STS failure, or empty Cost Explorer results.
 
 ## Merging k6 summaries → metrics.json
