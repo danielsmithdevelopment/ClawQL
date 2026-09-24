@@ -1,6 +1,7 @@
 /**
  * §7 held-out runner — score cases via FastDecisionScorer, then correctness/calibration.
- * productionTrusted stays false until every case is frontier-adjudicated AND criteria pass.
+ * productionTrusted stays false until every case is live-frontier-adjudicated,
+ * the scorer backend is live `gliner2`, AND criteria pass.
  */
 
 import { readFileSync } from "node:fs";
@@ -19,6 +20,9 @@ import type {
   HeldOutValidationRunReport,
   ScoredHeldOutCase,
 } from "./types.js";
+
+/** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
+export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
 
 export function defaultHeldOutSuite(): HeldOutSuiteManifest {
   return FAST_DECISION_HELD_OUT_V01;
@@ -84,8 +88,10 @@ export function runHeldOutValidationForUseSite(
   criteria: ValidationCriteria = DEFAULT_VALIDATION_CRITERIA
 ): Effect.Effect<HeldOutValidationRunReport, never, FastDecisionScorer> {
   return Effect.gen(function* () {
+    const scorer = yield* FastDecisionScorer;
     const cases = casesForUseSite(suite, useSiteId);
     const scored = yield* scoreHeldOutCases(cases);
+    const scorerBackend = scorer.backendId();
     const cal = evaluateCorrectnessAndCalibration(
       useSiteId,
       scored.map((s) => ({
@@ -97,16 +103,22 @@ export function runHeldOutValidationForUseSite(
     );
     const adjudicatedCount = scored.filter((s) => s.adjudicated).length;
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
-    const dryRunCount = scored.filter((s) => s.adjudicationKind === "dry-run").length;
-    const liveAdjudicated = allAdjudicated && scored.every((s) => s.adjudicationKind !== "dry-run");
+    const liveKindCount = scored.filter((s) => s.adjudicationKind === "live").length;
+    const liveAdjudicated = allAdjudicated && liveKindCount === scored.length;
+    const liveGliner = scorerBackend === PRODUCTION_TRUSTED_SCORER_BACKEND;
     const failureReasons = [...cal.failureReasons];
     if (!allAdjudicated) {
       failureReasons.push(
         `adjudication incomplete: ${adjudicatedCount}/${scored.length} cases frontier-adjudicated`
       );
-    } else if (dryRunCount > 0) {
+    } else if (!liveAdjudicated) {
       failureReasons.push(
-        `dry-run adjudication cannot light productionTrusted (${dryRunCount}/${scored.length} dry-run)`
+        `live frontier adjudication required for productionTrusted (live=${liveKindCount}/${scored.length}; dry-run or missing adjudicationKind does not count)`
+      );
+    }
+    if (!liveGliner) {
+      failureReasons.push(
+        `scorer backend "${scorerBackend}" is not live ${PRODUCTION_TRUSTED_SCORER_BACKEND} (stub/fallback/heuristic/prior cannot light productionTrusted)`
       );
     }
     return {
@@ -118,7 +130,8 @@ export function runHeldOutValidationForUseSite(
       meanCalibrationError: cal.meanCalibrationError,
       passedCriteria: cal.passed,
       failureReasons,
-      productionTrusted: cal.passed && liveAdjudicated,
+      scorerBackend,
+      productionTrusted: cal.passed && liveAdjudicated && liveGliner,
       cases: scored,
     };
   });
