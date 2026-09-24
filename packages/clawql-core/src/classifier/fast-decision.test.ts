@@ -323,3 +323,60 @@ describe("GLiNER2 primary scorer", () => {
     expect(scores[0]?.confidence).toBeCloseTo(0.91);
   });
 });
+
+describe("§7 held-out suite runner", () => {
+  it("runs embedded suite and keeps productionTrusted false until adjudicated", async () => {
+    const { HeuristicFastDecisionScorerLive } = await import("./scorer.js");
+    const {
+      defaultHeldOutSuite,
+      runHeldOutValidationSuite,
+    } = await import("./held-out/index.js");
+
+    const suite = defaultHeldOutSuite();
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+
+    const reports = await Effect.runPromise(
+      runHeldOutValidationSuite(suite).pipe(Effect.provide(HeuristicFastDecisionScorerLive))
+    );
+
+    expect(reports.length).toBeGreaterThan(0);
+    for (const r of reports) {
+      expect(r.productionTrusted).toBe(false);
+      expect(r.failureReasons.some((x) => x.includes("adjudication incomplete"))).toBe(
+        true
+      );
+      expect(r.caseCount).toBeGreaterThan(0);
+    }
+  });
+
+  it("marks productionTrusted only when adjudicated and criteria pass", async () => {
+    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+    const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
+    const suite = {
+      suiteId: "adj",
+      description: "adjudicated fixture",
+      cases: [
+        {
+          caseId: "a1",
+          useSiteId: "skill_fast_path_match",
+          query: "x",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.1 } },
+          ],
+          groundTruthCandidateId: "hit",
+          adjudicated: true,
+        },
+      ],
+    };
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(suite, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(PriorConfidenceScorerLive))
+    );
+    expect(report.passedCriteria).toBe(true);
+    expect(report.productionTrusted).toBe(true);
+  });
+});

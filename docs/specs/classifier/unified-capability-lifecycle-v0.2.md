@@ -17,7 +17,7 @@ package: "packages/clawql-core/classifier/ + packages/clawql-core/capability-lif
 | Session catalog (bucket 1) + rebind    | `packages/clawql-core/src/capability-lifecycle/session-catalog.ts`      |
 | Promotion store (bucket 3)             | `packages/clawql-core/src/capability-lifecycle/promotion-store.ts`      |
 | Execute reachability allow-rule        | `packages/clawql-core/src/capability-lifecycle/execute-reachability.ts` |
-| Register-side port (§3.5.1 — open)     | `packages/clawql-core/src/capability-lifecycle/register-intercept.ts`   |
+| Register-side port (§3.5.1)            | `packages/clawql-core/.../register-intercept.ts` + `packages/clawql-harness/src/capability-register-wiring.ts` |
 | Blocking `pre-execute` hook            | `packages/clawql-core/src/capability-lifecycle/hook.ts`                 |
 | Fast-path → slow-path orchestration    | `packages/clawql-core/src/capability-lifecycle/lifecycle.ts`            |
 | Fast Decision / skill fast-path        | `packages/clawql-core/src/classifier/`                                  |
@@ -43,7 +43,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 
 - Steps 1–4 (invoke): covered by `capability-lifecycle.test.ts`.
 - MCP path: opt-in `CLAWQL_CAPABILITY_LIFECYCLE=1` installs a blocking `pre-execute` plugin on `McpProxyPipeline` (`capability-lifecycle-plugin.test.ts`). Catalog must be bound per session (`bindSessionCatalog`) or calls fail closed. Default install without the env flag does **not** enforce §3.5.
-- Step 5 (register-side before harness treats tool as live): **not runnable** until a harness adapter implements `CapabilityRegisterIntercept.markImplemented` + report path (§3.5.1 options: tool-registry mutation hook, plugin-load callback, or filesystem watch).
+- Step 5 (register-side before harness treats tool as live): **wired** in `clawql-harness` via `ctx.tools.register` → `CapabilityRegisterIntercept` when `CLAWQL_CAPABILITY_LIFECYCLE=1` or `enableCapabilityRegisterIntercept: true`. Tools outside session_catalog∩S are not added to the live tool map (`routed_to_sandbox` recorded in `blockedRegistrations`).
 
 ## Implementation status (honest)
 
@@ -53,7 +53,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 | Accept-time promotion ⊆ S                     | Implemented                                   |
 | Harness cannot set disposition / sandbox fork | Implemented (core policy)                     |
 | Default MCP execute gate                      | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
-| Register-side step 5                          | Open                                          |
+| Register-side step 5                          | Wired in `clawql-harness` (opt-in)             |
 
 ## Related
 

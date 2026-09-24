@@ -4,6 +4,14 @@ import {
   type MeshAtrDriftReport,
   type PolicyAllowSet,
 } from "../drift.js";
+import {
+  bridgeMeshDenial,
+  decideSessionCellPlacement,
+  type BridgedMeshDenial,
+  type MeshDenialEvent,
+  type PlacementDecision,
+  type PlacementRequest,
+} from "../session-placement.js";
 import type { BurstArchitectureWORMEntryType } from "../worm-types.js";
 import { BURST_ARCHITECTURE_WORM_ENTRY_TYPES } from "../worm-types.js";
 
@@ -19,6 +27,12 @@ export class BurstOperatorService extends Context.Tag(
     readonly wormEntryTypes: () => Effect.Effect<
       readonly BurstArchitectureWORMEntryType[]
     >;
+    readonly placeSessionCell: (
+      req: PlacementRequest
+    ) => Effect.Effect<PlacementDecision>;
+    readonly bridgeMeshDenial: (
+      event: MeshDenialEvent
+    ) => Effect.Effect<BridgedMeshDenial>;
   }
 >() {}
 
@@ -28,6 +42,8 @@ export const BurstOperatorServiceLive = Layer.succeed(
     detectDrift: (meshAllows, atrAllows) =>
       detectMeshAtrDrift(meshAllows, atrAllows),
     wormEntryTypes: () => Effect.succeed(BURST_ARCHITECTURE_WORM_ENTRY_TYPES),
+    placeSessionCell: (req) => Effect.sync(() => decideSessionCellPlacement(req)),
+    bridgeMeshDenial: (event) => Effect.sync(() => bridgeMeshDenial(event)),
   })
 );
 

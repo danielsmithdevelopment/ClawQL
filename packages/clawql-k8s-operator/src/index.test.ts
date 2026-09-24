@@ -51,6 +51,68 @@ describe("BurstOperatorService", () => {
     expect(types).toHaveLength(9);
   });
 
+  it("places thicc sessions and prefers new capacity", async () => {
+    const thicc = await runBurstOperatorEffect(
+      Effect.gen(function* () {
+        const svc = yield* BurstOperatorService;
+        return yield* svc.placeSessionCell({
+          sessionId: "s1",
+          subscriptionId: "sub1",
+          sessionSpawnCountOnPreferred: 8,
+          preferredNodeId: "n1",
+          thiccSessionThreshold: 5,
+          nodes: [
+            { nodeId: "n1", runningCellCount: 20, memoryUtil: 0.9 },
+            { nodeId: "n2", runningCellCount: 2, memoryUtil: 0.2 },
+          ],
+        });
+      })
+    );
+    expect(thicc.wormType).toBe("THICC_SESSION_SPLIT");
+    expect(thicc.nodeId).toBe("n2");
+
+    const fresh = await runBurstOperatorEffect(
+      Effect.gen(function* () {
+        const svc = yield* BurstOperatorService;
+        return yield* svc.placeSessionCell({
+          sessionId: "s2",
+          subscriptionId: "sub2",
+          sessionSpawnCountOnPreferred: 0,
+          thiccSessionThreshold: 5,
+          nodes: [
+            { nodeId: "old", runningCellCount: 1, memoryUtil: 0.1 },
+            {
+              nodeId: "new",
+              runningCellCount: 0,
+              memoryUtil: 0.05,
+              newlyProvisioned: true,
+            },
+          ],
+        });
+      })
+    );
+    expect(fresh.wormType).toBe("NEW_CAPACITY_PREFERRED_ROUTING");
+    expect(fresh.nodeId).toBe("new");
+  });
+
+  it("bridges mesh denials to WORM-shaped payloads", async () => {
+    const bridged = await runBurstOperatorEffect(
+      Effect.gen(function* () {
+        const svc = yield* BurstOperatorService;
+        return yield* svc.bridgeMeshDenial({
+          requestId: "r1",
+          sourceIdentity: "spiffe://pay",
+          destination: "audit-worm",
+          layer: "waypoint",
+          reason: "method deny",
+          sessionId: "sess-1",
+        });
+      })
+    );
+    expect(bridged.wormType).toBe("MESH_POLICY_DENIED");
+    expect(bridged.sessionId).toBe("sess-1");
+  });
+
   it("detectDrift through Tag", async () => {
     const report = await Effect.runPromise(
       Effect.gen(function* () {

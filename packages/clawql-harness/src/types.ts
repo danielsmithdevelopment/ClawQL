@@ -115,6 +115,13 @@ export type ClawQLHarnessConfig = {
   readonly wormDbPath?: string;
   readonly sessionId?: string;
   readonly atrScope?: HarnessScope;
+  /**
+   * §3.5.1 — when true (or CLAWQL_CAPABILITY_LIFECYCLE=1), each `ctx.tools.register`
+   * reports through CapabilityRegisterIntercept before the tool is treated as live.
+   */
+  readonly enableCapabilityRegisterIntercept?: boolean;
+  /** Optional override Layer for register-side (defaults to shared catalog + sync WORM). */
+  readonly capabilityRegisterWiring?: import("./capability-register-wiring.js").CapabilityRegisterWiring;
 };
 
 export type BenchmarkTask = HarnessTask;

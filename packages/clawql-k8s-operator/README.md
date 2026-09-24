@@ -21,4 +21,4 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 
 ## Not yet implemented
 
-Kubernetes watch loops, Istio telemetry bridge, Karpenter API calls, S3 lease fleet health, live session-placement controller.
+Kubernetes watch loops, Istio telemetry subscription, Karpenter API calls, S3 lease fleet health. Session placement + mesh-denial bridge helpers are pure Effect (usable from a future controller).
