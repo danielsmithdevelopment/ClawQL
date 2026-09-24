@@ -55,6 +55,20 @@ Rate-card **order-of-magnitude** for one same-day three-arm window in `us-east-1
 
 ## Filling §13.5 from real exports (not dry-run)
 
+After Cost Explorer CSVs and k6 metrics exist:
+
+```bash
+node infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs \
+  --arm-a ce-arm-a.csv --arm-b ce-arm-b.csv --arm-c ce-arm-c.csv \
+  --metrics metrics.json --out results/section13-5-filled.md
+```
+
+Fail-closed unit tests (no invented `$Y`):
+
+```bash
+node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs
+```
+
 After a same-day three-arm run + Cost Explorer CSVs + k6 metrics:
 
 ```bash
