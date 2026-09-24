@@ -24,6 +24,14 @@ import type {
 /** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
 
+function isDefaultValidationCriteria(c: ValidationCriteria): boolean {
+  return (
+    c.minAccuracy === DEFAULT_VALIDATION_CRITERIA.minAccuracy &&
+    c.maxMeanCalibrationError === DEFAULT_VALIDATION_CRITERIA.maxMeanCalibrationError &&
+    c.minCases === DEFAULT_VALIDATION_CRITERIA.minCases
+  );
+}
+
 export function defaultHeldOutSuite(): HeldOutSuiteManifest {
   return FAST_DECISION_HELD_OUT_V01;
 }
@@ -65,7 +73,10 @@ export function scoreHeldOutCases(
         ctx: ctxForCase(c),
         candidates: c.candidates,
       });
-      const top = [...scores].sort((a, b) => b.confidence - a.confidence)[0];
+      const zeroSignal = scores.length > 0 && scores.every((s) => s.confidence <= 0);
+      const top = zeroSignal
+        ? undefined
+        : [...scores].sort((a, b) => b.confidence - a.confidence)[0];
       out.push({
         caseId: c.caseId,
         useSiteId: c.useSiteId,
@@ -75,7 +86,7 @@ export function scoreHeldOutCases(
         scores,
         topCandidateId: top?.candidateId,
         topConfidence: top?.confidence,
-        correct: top?.candidateId === c.groundTruthCandidateId,
+        correct: Boolean(top && top.candidateId === c.groundTruthCandidateId),
       });
     }
     return out;
@@ -92,15 +103,17 @@ export function runHeldOutValidationForUseSite(
     const cases = casesForUseSite(suite, useSiteId);
     const scored = yield* scoreHeldOutCases(cases);
     const scorerBackend = scorer.backendId();
-    const cal = evaluateCorrectnessAndCalibration(
-      useSiteId,
-      scored.map((s) => ({
-        caseId: s.caseId,
-        groundTruthCandidateId: s.groundTruthCandidateId,
-        scores: s.scores,
-      })),
-      criteria
-    );
+    const heldOutCases = scored.map((s) => ({
+      caseId: s.caseId,
+      groundTruthCandidateId: s.groundTruthCandidateId,
+      scores: s.scores,
+    }));
+    const cal = evaluateCorrectnessAndCalibration(useSiteId, heldOutCases, criteria);
+    // productionTrusted always uses DEFAULT production criteria — wiring criteria
+    // (HELD_OUT_WIRING_CRITERIA) must not light the flag.
+    const productionCal = isDefaultValidationCriteria(criteria)
+      ? cal
+      : evaluateCorrectnessAndCalibration(useSiteId, heldOutCases, DEFAULT_VALIDATION_CRITERIA);
     const adjudicatedCount = scored.filter((s) => s.adjudicated).length;
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
     const liveKindCount = scored.filter((s) => s.adjudicationKind === "live").length;
@@ -121,6 +134,14 @@ export function runHeldOutValidationForUseSite(
         `scorer backend "${scorerBackend}" is not live ${PRODUCTION_TRUSTED_SCORER_BACKEND} (stub/fallback/heuristic/prior cannot light productionTrusted)`
       );
     }
+    if (liveAdjudicated && liveGliner && !productionCal.passed) {
+      for (const reason of productionCal.failureReasons) {
+        const tagged = `productionTrusted criteria: ${reason}`;
+        if (!failureReasons.includes(tagged) && !failureReasons.includes(reason)) {
+          failureReasons.push(tagged);
+        }
+      }
+    }
     return {
       suiteId: suite.suiteId,
       useSiteId,
@@ -131,7 +152,7 @@ export function runHeldOutValidationForUseSite(
       passedCriteria: cal.passed,
       failureReasons,
       scorerBackend,
-      productionTrusted: cal.passed && liveAdjudicated && liveGliner,
+      productionTrusted: productionCal.passed && liveAdjudicated && liveGliner,
       cases: scored,
     };
   });

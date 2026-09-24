@@ -28,6 +28,7 @@ import {
   glinerEndpointConfigured,
   loadLiveAdjudicationLabelsFromJsonFile,
   runHeldOutValidationSuite,
+  DEFAULT_VALIDATION_CRITERIA,
   type AdjudicationLabel,
   type AdjudicationRunReport,
 } from "clawql-core";
@@ -74,7 +75,8 @@ const labeled = applyAdjudicationLabels(suite, adj.labels);
 const { reports, scorerBackend } = await Effect.runPromise(
   Effect.gen(function* () {
     const scorer = yield* FastDecisionScorer;
-    const reports = yield* runHeldOutValidationSuite(labeled);
+    // Live / labels-in path uses production DEFAULT criteria (not wiring).
+    const reports = yield* runHeldOutValidationSuite(labeled, DEFAULT_VALIDATION_CRITERIA);
     return { reports, scorerBackend: scorer.backendId() };
   }).pipe(Effect.provide(scorerLayer))
 );
@@ -88,6 +90,7 @@ const summary = {
   labelsIn: labelsInPath ?? null,
   scorerBackend,
   glinerLiveConfigured,
+  validationCriteria: DEFAULT_VALIDATION_CRITERIA,
   reports: reports.map((r) => ({
     useSiteId: r.useSiteId,
     adjudicatedCount: r.adjudicatedCount,
@@ -98,6 +101,12 @@ const summary = {
     meanCalibrationError: r.meanCalibrationError,
     rawAccuracy: r.rawAccuracy,
     failureReasons: r.failureReasons,
+    cases: r.cases.map((c) => ({
+      caseId: c.caseId,
+      topCandidateId: c.topCandidateId ?? null,
+      topConfidence: c.topConfidence ?? null,
+      correct: c.correct,
+    })),
   })),
   honesty: [
     labelsInPath
@@ -108,9 +117,10 @@ const summary = {
     glinerLiveConfigured
       ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
       : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
+    `productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=${DEFAULT_VALIDATION_CRITERIA.minAccuracy}, maxMeanCalibrationError=${DEFAULT_VALIDATION_CRITERIA.maxMeanCalibrationError}) — wiring criteria cannot light the flag`,
     anyProductionTrusted
-      ? "at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + criteria)"
-      : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + calibration criteria pass",
+      ? "at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + DEFAULT criteria)"
+      : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass",
   ].join("; "),
 };
 

@@ -263,6 +263,24 @@ describe("§7 correctness + calibration gate", () => {
     expect(report.passed).toBe(false);
     expect(report.rawAccuracy).toBe(0);
   });
+
+  it("abstains on all-zero confidences instead of inventing accuracy from fixture order", () => {
+    const report = evaluateCorrectnessAndCalibration("skill_fast_path_match", [
+      {
+        caseId: "z1",
+        groundTruthCandidateId: "hit",
+        scores: [
+          { candidateId: "hit", confidence: 0 },
+          { candidateId: "miss", confidence: 0 },
+        ],
+      },
+    ]);
+    expect(report.passed).toBe(false);
+    expect(report.rawAccuracy).toBe(0);
+    expect(report.meanCalibrationError).toBe(1);
+    expect(report.failureReasons.some((r) => r.includes("zeroSignalAbstain"))).toBe(true);
+    expect(report.failureReasons.some((r) => r.includes("noCalibratableScores"))).toBe(true);
+  });
 });
 
 describe("GLiNER2 primary scorer", () => {

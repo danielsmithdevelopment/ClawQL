@@ -1,23 +1,50 @@
-# §13 Bursty Streams three-arm loadtest — dry-run harness only.
+# §13 Bursty Streams three-arm loadtest — dry-run harness + optional CE export.
 #
 # Always safe to run: exercises infra/aws-celld-burst/loadtest/dry-run.mjs and
 # asserts status=dry-run + null dollarY. Does NOT claim §13.5 publishable results.
 #
-# Live EKS + Cost Explorer three-arm (§13.5) remains external: no AWS credentials
-# in this workflow invent numbers. A credential gate job notices when AWS secrets
-# are present but still does not auto-run a live three-arm (ingest endpoints +
-# Cost Explorer lag are operator-owned).
+# Optional live Cost Explorer CSV export (still not a full three-arm EKS run):
+#   - workflow_dispatch with run_ce_export=true
+#   - repository_dispatch type `section13-ce-export`
+# Credential gate prefers CLAWQL_CE_* (mixed R2 sandboxes) then CLAWQL_AWS_* /
+# AWS_*. Export fail-closes on R2 collision / STS failure / empty CE rows —
+# never invents $Y. Full §13.5 still needs operator k6 arms + fill-result.
+#
+# Secrets (any pair):
+#   CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY  (preferred)
+#   CLAWQL_AWS_ACCESS_KEY_ID + CLAWQL_AWS_SECRET_ACCESS_KEY
+#   AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+# Optional: CLAWQL_S13_START / CLAWQL_S13_END (defaults: yesterday / today UTC)
 
 name: AWS celld-burst §13 dry-run
 
 on:
   workflow_dispatch:
+    inputs:
+      run_ce_export:
+        description: Run Cost Explorer three-arm CSV export when CE/AWS secrets exist
+        required: true
+        default: false
+        type: boolean
+      s13_start:
+        description: CLAWQL_S13_START (YYYY-MM-DD, CE inclusive start)
+        required: false
+        default: ""
+        type: string
+      s13_end:
+        description: CLAWQL_S13_END (YYYY-MM-DD, CE exclusive end)
+        required: false
+        default: ""
+        type: string
+  repository_dispatch:
+    types: [section13-ce-export]
   pull_request:
     paths:
       - "infra/aws-celld-burst/loadtest/**"
       - "infra/aws-celld-burst/fetch-celld-leases-from-s3.*"
       - "scripts/run-burst-watch-from-s3-leases.*"
       - "scripts/burst-watch-from-celld-leases.mts"
+      - "scripts/fetch-section13-ce-export-artifact.sh"
       - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
   push:
     branches: [main]
@@ -26,6 +53,7 @@ on:
       - "infra/aws-celld-burst/fetch-celld-leases-from-s3.*"
       - "scripts/run-burst-watch-from-s3-leases.*"
       - "scripts/burst-watch-from-celld-leases.mts"
+      - "scripts/fetch-section13-ce-export-artifact.sh"
       - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
 
 permissions:
@@ -97,27 +125,139 @@ jobs:
   live-gate:
     name: Live §13.5 credential notice
     runs-on: ubuntu-latest
+    outputs:
+      can_export: ${{ steps.gate.outputs.can_export }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      want_export: ${{ steps.gate.outputs.want_export }}
     steps:
-      - id: secret
+      - id: gate
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLAWQL_CE_ACCESS_KEY_ID: ${{ secrets.CLAWQL_CE_ACCESS_KEY_ID }}
+          CLAWQL_CE_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_CE_SECRET_ACCESS_KEY }}
           CLAWQL_AWS_ACCESS_KEY_ID: ${{ secrets.CLAWQL_AWS_ACCESS_KEY_ID }}
           CLAWQL_AWS_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_RUN_CE: ${{ github.event.inputs.run_ce_export }}
         run: |
           set -euo pipefail
-          HAS=false
-          if [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
-            HAS=true
+          HAS_CE=false
+          HAS_AWS=false
+          if [ -n "${CLAWQL_CE_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_CE_SECRET_ACCESS_KEY:-}" ]; then
+            HAS_CE=true
           fi
           if [ -n "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_AWS_SECRET_ACCESS_KEY:-}" ]; then
-            HAS=true
+            HAS_AWS=true
+          fi
+          if [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+            HAS_AWS=true
+          fi
+          # Refuse when the only AWS_* pair equals R2 sync (same honesty as export script).
+          if [ "${HAS_CE}" != "true" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" ] && \
+             [ "${AWS_ACCESS_KEY_ID}" = "${CLAWQL_SYNC_ACCESS_KEY_ID}" ] && \
+             [ -z "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ]; then
+            HAS_AWS=false
+            echo "::notice::AWS_ACCESS_KEY_ID equals CLAWQL_SYNC (R2) — not usable for CE; set CLAWQL_CE_*"
+          fi
+          CAN=false
+          if [ "${HAS_CE}" = "true" ] || [ "${HAS_AWS}" = "true" ]; then
+            CAN=true
+          fi
+          WANT=false
+          if [ "${EVENT_NAME}" = "repository_dispatch" ]; then
+            WANT=true
+          elif [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${INPUT_RUN_CE}" = "true" ]; then
+            WANT=true
+          fi
+          SKIP="ok"
+          if [ "${WANT}" = "true" ] && [ "${CAN}" != "true" ]; then
+            SKIP="missing_ce_or_aws_secrets"
+          elif [ "${WANT}" != "true" ]; then
+            SKIP="export_not_requested"
           fi
           {
-            echo "has_aws=${HAS}"
+            echo "can_export=${CAN}"
+            echo "want_export=${WANT}"
+            echo "skip_reason=${SKIP}"
           } >>"$GITHUB_OUTPUT"
-          if [ "${HAS}" = "true" ]; then
-            echo "::notice::AWS secrets present — live §13.5 still requires operator EKS arms + Cost Explorer; this workflow does not invent \$Y"
+          if [ "${HAS_CE}" = "true" ]; then
+            echo "::notice::CLAWQL_CE_* secrets present — CE export available via workflow_dispatch/repository_dispatch"
+          elif [ "${HAS_AWS}" = "true" ]; then
+            echo "::notice::AWS / CLAWQL_AWS_* secrets present — CE export available (prefer CLAWQL_CE_* when AWS_* is R2 sync)"
           else
-            echo "::notice::No AWS secrets — live §13.5 remains external (expected for most PRs)"
+            echo "::notice::No CLAWQL_CE_* / usable AWS secrets — live §13.5 CE export remains external"
           fi
+
+  ce-export:
+    name: §13.5 Cost Explorer export
+    needs: live-gate
+    if: needs.live-gate.outputs.want_export == 'true' && needs.live-gate.outputs.can_export == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Install AWS CLI v2
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install --update
+          aws --version
+
+      - name: Export three-arm Cost Explorer CSVs (fail-closed)
+        env:
+          CLAWQL_CE_ACCESS_KEY_ID: ${{ secrets.CLAWQL_CE_ACCESS_KEY_ID }}
+          CLAWQL_CE_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_CE_SECRET_ACCESS_KEY }}
+          CLAWQL_CE_SESSION_TOKEN: ${{ secrets.CLAWQL_CE_SESSION_TOKEN }}
+          CLAWQL_CE_REGION: ${{ secrets.CLAWQL_CE_REGION }}
+          CLAWQL_AWS_ACCESS_KEY_ID: ${{ secrets.CLAWQL_AWS_ACCESS_KEY_ID }}
+          CLAWQL_AWS_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_S13_TAG_KEY: ${{ vars.CLAWQL_S13_TAG_KEY }}
+          INPUT_START: ${{ github.event.inputs.s13_start }}
+          INPUT_END: ${{ github.event.inputs.s13_end }}
+          PAYLOAD_START: ${{ github.event.client_payload.s13_start }}
+          PAYLOAD_END: ${{ github.event.client_payload.s13_end }}
+        run: |
+          set -euo pipefail
+          # Prefer CLAWQL_CE_*; else map CLAWQL_AWS_* into CLAWQL_CE_* for the export script.
+          if [ -z "${CLAWQL_CE_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ]; then
+            export CLAWQL_CE_ACCESS_KEY_ID="${CLAWQL_AWS_ACCESS_KEY_ID}"
+            export CLAWQL_CE_SECRET_ACCESS_KEY="${CLAWQL_AWS_SECRET_ACCESS_KEY}"
+            echo "Mapped CLAWQL_AWS_* → CLAWQL_CE_* for export"
+          fi
+          START="${INPUT_START:-}"
+          END="${INPUT_END:-}"
+          if [ -z "${START}" ]; then START="${PAYLOAD_START:-}"; fi
+          if [ -z "${END}" ]; then END="${PAYLOAD_END:-}"; fi
+          if [ -z "${START}" ] || [ -z "${END}" ]; then
+            END="$(date -u +%Y-%m-%d)"
+            START="$(date -u -d 'yesterday' +%Y-%m-%d)"
+          fi
+          export CLAWQL_S13_START="${START}"
+          export CLAWQL_S13_END="${END}"
+          mkdir -p artifacts/ce-export
+          bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh artifacts/ce-export
+          node infra/aws-celld-burst/loadtest/write-ce-export-summary.mjs artifacts/ce-export
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: section13-ce-export
+          path: artifacts/ce-export/
+          if-no-files-found: error
+
+  ce-export-skip:
+    name: Skip CE export (gate)
+    needs: live-gate
+    if: needs.live-gate.outputs.want_export == 'true' && needs.live-gate.outputs.can_export != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::notice::CE export requested but skipped — ${{ needs.live-gate.outputs.skip_reason }}"
+          echo "Install CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY (preferred) or usable AWS secrets."
