@@ -54,9 +54,7 @@ function parseCostUsd(csvText, label) {
     throw new Error(`${label}: CSV needs header + at least one data row`);
   }
   const header = lines[0].split(",").map((h) => h.replace(/^"|"$/g, "").trim());
-  const costIdx = header.findIndex((h) =>
-    /unblended.?cost|net.?amortized.?cost|cost/i.test(h)
-  );
+  const costIdx = header.findIndex((h) => /unblended.?cost|net.?amortized.?cost|cost/i.test(h));
   if (costIdx < 0) {
     throw new Error(`${label}: no Cost column in header: ${header.join(",")}`);
   }

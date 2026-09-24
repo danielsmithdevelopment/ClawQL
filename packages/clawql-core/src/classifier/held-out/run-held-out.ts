@@ -67,6 +67,7 @@ export function scoreHeldOutCases(
         useSiteId: c.useSiteId,
         groundTruthCandidateId: c.groundTruthCandidateId,
         adjudicated: c.adjudicated,
+        adjudicationKind: c.adjudicationKind,
         scores,
         topCandidateId: top?.candidateId,
         topConfidence: top?.confidence,
@@ -96,10 +97,16 @@ export function runHeldOutValidationForUseSite(
     );
     const adjudicatedCount = scored.filter((s) => s.adjudicated).length;
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
+    const dryRunCount = scored.filter((s) => s.adjudicationKind === "dry-run").length;
+    const liveAdjudicated = allAdjudicated && scored.every((s) => s.adjudicationKind !== "dry-run");
     const failureReasons = [...cal.failureReasons];
     if (!allAdjudicated) {
       failureReasons.push(
         `adjudication incomplete: ${adjudicatedCount}/${scored.length} cases frontier-adjudicated`
+      );
+    } else if (dryRunCount > 0) {
+      failureReasons.push(
+        `dry-run adjudication cannot light productionTrusted (${dryRunCount}/${scored.length} dry-run)`
       );
     }
     return {
@@ -111,7 +118,7 @@ export function runHeldOutValidationForUseSite(
       meanCalibrationError: cal.meanCalibrationError,
       passedCriteria: cal.passed,
       failureReasons,
-      productionTrusted: cal.passed && allAdjudicated,
+      productionTrusted: cal.passed && liveAdjudicated,
       cases: scored,
     };
   });

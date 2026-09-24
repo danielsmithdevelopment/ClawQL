@@ -21,7 +21,9 @@
 #     -f event_type=frontier-adjudication
 #
 # Honesty: uploaded labels are live-judge provenance. productionTrusted still
-# requires calibration criteria + live GLiNER scores (see held-out runner).
+# requires calibration criteria + live GLiNER scores. Optional repo variable
+# CLAWQL_FAST_DECISION_GLINER_URL (or job env) wires the primary GLiNER scorer;
+# without it the runner reports honest gliner2-stub (never heuristic-as-primary).
 
 name: Fast Decision frontier adjudication
 
@@ -176,6 +178,9 @@ jobs:
       - name: Run held-out adjudication (live judge)
         env:
           CLAWQL_FAST_DECISION_JUDGE_URL: http://127.0.0.1:18765/v1/fast-decision/adjudicate
+          # Optional: point at a reachable live GLiNER sidecar for calibration scores.
+          CLAWQL_FAST_DECISION_GLINER_URL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_URL }}
+          CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
@@ -183,7 +188,7 @@ jobs:
             --out artifacts/held-out-frontier-labels.json \
             | tee artifacts/held-out-frontier-summary.json
           # Fail the job if we somehow stayed in dry-run
-          MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); console.log(s.adjudicationMode,s.judgeModel,s.labelCount)")"
+          MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); if(!s.scorerBackend) process.exit(3); console.log(s.adjudicationMode,s.judgeModel,s.labelCount,s.scorerBackend)")"
           echo "::notice::adjudication ${MODE}"
 
       - name: Stop sidecar

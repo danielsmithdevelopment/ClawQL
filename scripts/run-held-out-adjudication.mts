@@ -3,10 +3,11 @@
  * §7 held-out adjudication runner.
  *
  * Default: dry-run adjudicator (echoes fixture GT with provenance).
- * Live: set CLAWQL_FAST_DECISION_JUDGE_URL (+ optional MODEL/TOKEN).
+ * Live judge: set CLAWQL_FAST_DECISION_JUDGE_URL (+ optional MODEL/TOKEN).
  *
- * Writes labels JSON (if --out) and prints validation reports.
- * Does NOT claim productionTrusted for dry-run alone — report fields say so.
+ * Scorer: GLiNER2 primary via CLAWQL_FAST_DECISION_GLINER_URL (live HTTP).
+ * Without the URL the scorer reports honest `gliner2-stub` (never heuristic-
+ * as-primary). productionTrusted still requires live judge labels + criteria.
  *
  * Usage:
  *   npx tsx scripts/run-held-out-adjudication.mts
@@ -14,13 +15,15 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import {
-  HeuristicFastDecisionScorerLive,
+  FastDecisionScorer,
+  createGlinerFastDecisionScorerLayer,
   adjudicateHeldOutSuite,
   applyAdjudicationLabels,
   defaultHeldOutSuite,
   frontierAdjudicatorLayerFromEnv,
+  glinerEndpointConfigured,
   runHeldOutValidationSuite,
 } from "clawql-core";
 
@@ -29,33 +32,50 @@ const outPath = outIdx >= 0 ? process.argv[outIdx + 1] : undefined;
 
 const suite = defaultHeldOutSuite();
 const adjLayer = frontierAdjudicatorLayerFromEnv();
+/** Primary scorer — live HTTP when CLAWQL_FAST_DECISION_GLINER_URL is set. */
+const scorerLayer = createGlinerFastDecisionScorerLayer();
+const glinerLiveConfigured = glinerEndpointConfigured();
 
-const adj = await Effect.runPromise(
-  adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer))
-);
+const adj = await Effect.runPromise(adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer)));
 
 const labeled = applyAdjudicationLabels(suite, adj.labels);
-const reports = await Effect.runPromise(
-  runHeldOutValidationSuite(labeled).pipe(Effect.provide(HeuristicFastDecisionScorerLive))
+const { reports, scorerBackend } = await Effect.runPromise(
+  Effect.gen(function* () {
+    const scorer = yield* FastDecisionScorer;
+    const reports = yield* runHeldOutValidationSuite(labeled);
+    return { reports, scorerBackend: scorer.backendId() };
+  }).pipe(Effect.provide(scorerLayer))
 );
 
+const anyProductionTrusted = reports.some((r) => r.productionTrusted);
 const summary = {
   suiteId: suite.suiteId,
   adjudicationMode: adj.mode,
   judgeModel: adj.judgeModel,
   labelCount: adj.labels.length,
+  scorerBackend,
+  glinerLiveConfigured,
   reports: reports.map((r) => ({
     useSiteId: r.useSiteId,
     adjudicatedCount: r.adjudicatedCount,
     caseCount: r.caseCount,
     passedCriteria: r.passedCriteria,
     productionTrusted: r.productionTrusted,
+    meanCalibrationError: r.meanCalibrationError,
+    rawAccuracy: r.rawAccuracy,
     failureReasons: r.failureReasons,
   })),
-  honesty:
+  honesty: [
     adj.mode === "dry-run"
-      ? "dry-run labels are not frontier-judge verdicts; do not cite productionTrusted from this mode alone"
-      : "live judge labels applied — productionTrusted still requires calibration criteria + live GLiNER scores",
+      ? "dry-run labels are not frontier-judge verdicts (cannot light productionTrusted)"
+      : "live judge labels applied",
+    glinerLiveConfigured
+      ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
+      : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
+    anyProductionTrusted
+      ? "at least one use-site reports productionTrusted"
+      : "productionTrusted remains false until live adjudication + calibration criteria pass with live GLiNER scores",
+  ].join("; "),
 };
 
 if (outPath) {

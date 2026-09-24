@@ -1,9 +1,13 @@
 /**
  * §7 held-out case shapes — frontier-adjudicated ground truth for calibration gate.
- * Synthetic fixtures ship with `adjudicated: false`; productionTrusted requires all true.
+ * Synthetic fixtures ship with `adjudicated: false`; productionTrusted requires all true
+ * with live (non-dry-run) provenance.
  */
 
 import type { FastDecisionCandidate, FastDecisionScore } from "../types.js";
+
+/** How the case got `adjudicated: true`. Dry-run never lights productionTrusted. */
+export type AdjudicationKind = "dry-run" | "live";
 
 export type HeldOutCaseSpec = {
   readonly caseId: string;
@@ -14,8 +18,11 @@ export type HeldOutCaseSpec = {
   /**
    * True only after frontier-judge (e.g. Sonnet 4.6) adjudication per §7.2.
    * Synthetic pre-registered fixtures must leave this false.
+   * Dry-run may set this true for wiring, but must set `adjudicationKind: "dry-run"`.
    */
   readonly adjudicated: boolean;
+  /** Present when adjudicated; omitted on raw fixtures. */
+  readonly adjudicationKind?: AdjudicationKind;
   readonly notes?: string;
 };
 
@@ -30,6 +37,7 @@ export type ScoredHeldOutCase = {
   readonly useSiteId: string;
   readonly groundTruthCandidateId: string;
   readonly adjudicated: boolean;
+  readonly adjudicationKind?: AdjudicationKind;
   readonly scores: readonly FastDecisionScore[];
   readonly topCandidateId?: string;
   readonly topConfidence?: number;
@@ -45,7 +53,10 @@ export type HeldOutValidationRunReport = {
   readonly meanCalibrationError: number;
   readonly passedCriteria: boolean;
   readonly failureReasons: readonly string[];
-  /** True only when criteria pass AND every case is frontier-adjudicated. */
+  /**
+   * True only when criteria pass AND every case is frontier-adjudicated with
+   * live (non-dry-run) provenance.
+   */
   readonly productionTrusted: boolean;
   readonly cases: readonly ScoredHeldOutCase[];
 };

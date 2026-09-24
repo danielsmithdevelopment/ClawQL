@@ -2,8 +2,8 @@
  * §7.2 frontier adjudication — label held-out cases via a judge port.
  *
  * Dry-run / recorded fixtures keep CI honest without calling a frontier API.
- * productionTrusted still requires adjudicated:true on every case AND live
- * scorer criteria (mock sidecar alone never lights the gate).
+ * productionTrusted requires adjudicated:true with live (non-dry-run) provenance
+ * AND live scorer criteria (dry-run labels / stub scorer never light the gate).
  */
 
 import { Context, Effect, Layer } from "effect";
@@ -116,6 +116,10 @@ export function makeHttpFrontierAdjudicator(args: {
   };
 }
 
+export function adjudicationKindForLabel(label: AdjudicationLabel): "dry-run" | "live" {
+  return label.judgeModel.startsWith("dry-run") ? "dry-run" : "live";
+}
+
 export function applyAdjudicationLabels(
   suite: HeldOutSuiteManifest,
   labels: readonly AdjudicationLabel[]
@@ -130,6 +134,7 @@ export function applyAdjudicationLabels(
         ...c,
         groundTruthCandidateId: label.groundTruthCandidateId,
         adjudicated: true,
+        adjudicationKind: adjudicationKindForLabel(label),
         notes: [c.notes, `adjudicated by ${label.judgeModel}: ${label.rationale}`]
           .filter(Boolean)
           .join(" | "),

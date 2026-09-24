@@ -404,6 +404,53 @@ describe("§7 held-out suite runner", () => {
     expect(report.productionTrusted).toBe(true);
   });
 
+  it("dry-run adjudication never lights productionTrusted even when criteria pass", async () => {
+    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+    const {
+      adjudicateHeldOutSuite,
+      applyAdjudicationLabels,
+      runHeldOutValidationForUseSite,
+      DryRunFrontierAdjudicatorLive,
+    } = await import("./held-out/index.js");
+
+    const suite = {
+      suiteId: "dry-run-adj",
+      description: "dry-run must not light productionTrusted",
+      cases: [
+        {
+          caseId: "d1",
+          useSiteId: "skill_fast_path_match",
+          query: "x",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.1 } },
+          ],
+          groundTruthCandidateId: "hit",
+          adjudicated: false,
+        },
+      ],
+    };
+
+    const adj = await Effect.runPromise(
+      adjudicateHeldOutSuite(suite).pipe(Effect.provide(DryRunFrontierAdjudicatorLive))
+    );
+    expect(adj.mode).toBe("dry-run");
+    const labeled = applyAdjudicationLabels(suite, adj.labels);
+    expect(labeled.cases[0]?.adjudicated).toBe(true);
+    expect(labeled.cases[0]?.adjudicationKind).toBe("dry-run");
+
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(labeled, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(PriorConfidenceScorerLive))
+    );
+    expect(report.passedCriteria).toBe(true);
+    expect(report.productionTrusted).toBe(false);
+    expect(report.failureReasons.some((x) => x.includes("dry-run adjudication"))).toBe(true);
+  });
+
   it("HTTP adjudicator + PriorConfidenceScorer can light productionTrusted on a mini suite", async () => {
     const { PriorConfidenceScorerLive } = await import("./scorer.js");
     const {
