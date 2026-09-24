@@ -22,6 +22,14 @@ export {
   type PlacementRequest,
 } from "./session-placement.js";
 export {
+  BurstWatchStub,
+  BurstWatchStubLive,
+  makeBurstWatchStub,
+  type WatchDispatchResult,
+  type WatchEvent,
+  type WatchEventKind,
+} from "./watches/index.js";
+export {
   BURST_ARCHITECTURE_WORM_ENTRY_TYPES,
   type BurstArchitectureWORMEntryType,
   type MeshWORMEntryType,

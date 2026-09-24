@@ -123,3 +123,48 @@ describe("BurstOperatorService", () => {
     expect(report.ok).toBe(true);
   });
 });
+
+describe("BurstWatchStub", () => {
+  it("drains mesh denials and placement from an in-memory queue", async () => {
+    const { BurstWatchStub, BurstWatchStubLive } = await import("./watches/index.js");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const watches = yield* BurstWatchStub;
+        yield* watches.enqueue({
+          kind: "mesh_denial",
+          event: {
+            requestId: "r1",
+            sourceIdentity: "spiffe://pay",
+            destination: "audit-worm",
+            layer: "waypoint",
+            reason: "deny",
+            sessionId: "s1",
+          },
+        });
+        yield* watches.enqueue({
+          kind: "node_load",
+          nodes: [
+            { nodeId: "n1", runningCellCount: 10, memoryUtil: 0.8 },
+            { nodeId: "n2", runningCellCount: 1, memoryUtil: 0.1 },
+          ],
+        });
+        return yield* watches.drain({
+          atrAllows: new Set(["svc-a"]),
+          meshAllows: new Set(["svc-a", "svc-b"]),
+          placement: {
+            sessionId: "s1",
+            subscriptionId: "sub",
+            sessionSpawnCountOnPreferred: 0,
+            preferredNodeId: "n1",
+            thiccSessionThreshold: 5,
+            nodes: [{ nodeId: "n1", runningCellCount: 10, memoryUtil: 0.8 }],
+          },
+        });
+      }).pipe(Effect.provide(BurstWatchStubLive))
+    );
+    expect(result.processed).toBe(2);
+    expect(result.meshBridges[0]?.wormType).toBe("MESH_POLICY_DENIED");
+    expect(result.driftReports[0]?.ok).toBe(false);
+    expect(result.placements.length).toBeGreaterThan(0);
+  });
+});

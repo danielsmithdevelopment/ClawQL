@@ -10,6 +10,13 @@
 | ---- | ------- |
 | `burst-1m-gap-2m.js` | k6 script: identical 1M / 10-min zero / 2M stream |
 | `RESULT_TEMPLATE.md` | Publishable result template (§13.5) — fill after a real run |
+| `dry-run.mjs` | Local mock HTTP burst + `results/dry-run-summary.json` (`status: dry-run`, null metrics/`$Y`) |
+
+```bash
+node infra/aws-celld-burst/loadtest/dry-run.mjs
+```
+
+**Honesty:** dry-run proves the summary schema and harness wiring only. Do not publish dry-run output as §13.5.
 
 ## Usage (when arms exist)
 

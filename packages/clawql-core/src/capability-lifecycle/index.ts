@@ -5,6 +5,7 @@
 
 export * from "./types.js";
 export * from "./session-catalog.js";
+export * from "./catalog-bootstrap.js";
 export * from "./promotion-store.js";
 export * from "./execute-reachability.js";
 export * from "./register-intercept.js";

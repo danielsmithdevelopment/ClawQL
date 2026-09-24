@@ -13,6 +13,7 @@ import { isMppMcpJsonRpcPaymentError } from "clawql-payments/mpp";
 import { runMcpProxyBeforeCallTool } from "../composition/clawql-api-adapters.js";
 import { recordMcpToolCallAudit, type McpToolAuditOutcome } from "./mcp-tool-audit.js";
 import { wrapMcpToolHandler } from "../observability/otel-tracing.js";
+import { getMcpRequestContext } from "./mcp-request-context.js";
 
 /** Meta tools — ring buffer only; skip durable WORM to avoid noise/recursion. */
 export const WORM_AUDIT_SKIP_TOOLS = new Set(["audit", "cache"]);
@@ -107,7 +108,11 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
     await Effect.runPromise(appendMcpToolAttemptEffect(toolName, args[0]));
 
     try {
-      await runMcpProxyBeforeCallTool(toolName, args[0]);
+      const mcpCtx = getMcpRequestContext();
+      await runMcpProxyBeforeCallTool(toolName, args[0], {
+        sessionId: mcpCtx?.sessionId,
+        atrScopeTokens: mcpCtx?.atrScopeTokens,
+      });
     } catch (err: unknown) {
       const errDetail =
         clawqlPolicyBlockMessage(err) ?? (err instanceof Error ? err.message : String(err));

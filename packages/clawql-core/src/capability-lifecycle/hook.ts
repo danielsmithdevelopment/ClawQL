@@ -11,6 +11,7 @@ import type {
   LifecycleHook,
   WormAuditSink,
 } from "../plugin/provider-types.js";
+import { ensureSessionCatalogBound } from "./catalog-bootstrap.js";
 import { evaluateExecuteReachability } from "./execute-reachability.js";
 import type { SessionCatalogService } from "./session-catalog.js";
 import type { PromotionStore } from "./promotion-store.js";
@@ -60,6 +61,19 @@ export function createCapabilityReachabilityHook(
           } satisfies HookResult;
         }
         const sessionId = resolveSessionId(ctx);
+        // Lazy bootstrap: bind session_catalog∩S from ATR tokens (or default seed)
+        // before the three-bucket check so default-on MCP does not fail-closed on
+        // unbound sessions that still carry a declared / seeded scope.
+        const atrTokens = [...ctx.session.atrScope];
+        yield* ensureSessionCatalogBound({
+          sessionId,
+          atrTokens,
+        }).pipe(
+          Effect.provide(options.catalogLayer),
+          Effect.catchTag("SessionCatalogError", (err) =>
+            err.reason.includes("already bound") ? Effect.void : Effect.void
+          )
+        );
         const decision = yield* evaluateExecuteReachability({
           sessionId,
           toolName,

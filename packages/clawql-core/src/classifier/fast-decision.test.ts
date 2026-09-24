@@ -403,4 +403,36 @@ describe("§7 held-out suite runner", () => {
     expect(report.passedCriteria).toBe(true);
     expect(report.productionTrusted).toBe(true);
   });
+
+  it("dry-run adjudicator labels cases without lighting productionTrusted under heuristic alone", async () => {
+    const { HeuristicFastDecisionScorerLive } = await import("./scorer.js");
+    const {
+      defaultHeldOutSuite,
+      adjudicateHeldOutSuite,
+      applyAdjudicationLabels,
+      runHeldOutValidationSuite,
+      DryRunFrontierAdjudicatorLive,
+    } = await import("./held-out/index.js");
+
+    const suite = defaultHeldOutSuite();
+    const adj = await Effect.runPromise(
+      adjudicateHeldOutSuite(suite).pipe(Effect.provide(DryRunFrontierAdjudicatorLive))
+    );
+    expect(adj.mode).toBe("dry-run");
+    expect(adj.labels.every((l) => l.adjudicated)).toBe(true);
+
+    const labeled = applyAdjudicationLabels(suite, adj.labels);
+    expect(labeled.cases.every((c) => c.adjudicated)).toBe(true);
+
+    // Dry-run labels + heuristic still report productionTrusted only when criteria pass;
+    // embedded suite is not calibrated for heuristic — gate must stay honest.
+    const reports = await Effect.runPromise(
+      runHeldOutValidationSuite(labeled).pipe(Effect.provide(HeuristicFastDecisionScorerLive))
+    );
+    // Adjudication incomplete reason gone; trusted only if criteria also pass.
+    for (const r of reports) {
+      expect(r.adjudicatedCount).toBe(r.caseCount);
+      expect(r.failureReasons.some((x) => x.includes("adjudication incomplete"))).toBe(false);
+    }
+  });
 });

@@ -18,7 +18,9 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `BurstArchitectureWORMEntryType` — append to existing `clawql-audit` trail only (includes `SessionRoutingWORMEntryType`: `THICC_SESSION_SPLIT`, `CELL_PLACEMENT_LOAD_AWARE`, `NEW_CAPACITY_PREFERRED_ROUTING`)
 - `detectMeshAtrDrift` — pure Effect comparison of mesh allow-set vs ATR allow-set
 - `BurstOperatorService` Context.Tag + Live layer
+- `BurstWatchStub` — in-memory watch queue (mesh denial / node load / eviction) for dry-run controllers
+- `infra/aws-celld-burst/loadtest/dry-run.mjs` — local mock §13 summary (`status: dry-run`, null `$Y`)
 
-## Not yet implemented
+## Not yet implemented (needs real cluster / AWS)
 
-Kubernetes watch loops, Istio telemetry subscription, Karpenter API calls, S3 lease fleet health. Session placement + mesh-denial bridge helpers are pure Effect (usable from a future controller).
+Kubernetes informer loops against a live API server, Istio telemetry subscription, Karpenter API calls, S3 lease fleet health, calibrated three-arm Cost Explorer numbers (§13.5). Session placement + mesh-denial bridge helpers are pure Effect (usable from a future controller).

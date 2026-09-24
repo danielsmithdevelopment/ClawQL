@@ -42,7 +42,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 ## Five-step test honesty
 
 - Steps 1–4 (invoke): covered by `capability-lifecycle.test.ts`.
-- MCP path: opt-in `CLAWQL_CAPABILITY_LIFECYCLE=1` installs a blocking `pre-execute` plugin on `McpProxyPipeline` (`capability-lifecycle-plugin.test.ts`). Catalog must be bound per session (`bindSessionCatalog`) or calls fail closed. Default install without the env flag does **not** enforce §3.5.
+- MCP path: **default-on** unless `CLAWQL_CAPABILITY_LIFECYCLE=0`. Blocking `pre-execute` plugin on `McpProxyPipeline` (`capability-lifecycle-plugin.test.ts`). Catalog is lazily seeded from ATR tokens, `CLAWQL_CAPABILITY_SESSION_SEED`, or `DEFAULT_CAPABILITY_SESSION_SEED` (`catalog-bootstrap.ts`); hosts may still call `bindSessionCatalog` explicitly. Opt out with `=0`.
 - Step 5 (register-side before harness treats tool as live): **wired** in `clawql-harness` via `ctx.tools.register` → `CapabilityRegisterIntercept` when `enableCapabilityRegisterIntercept: true` or `CLAWQL_HARNESS_CAPABILITY_REGISTER=1` (independent of `CLAWQL_CAPABILITY_LIFECYCLE`, the MCP pre-execute gate). Default wiring shares `getCapabilityLifecycleRuntime().catalogLayer`. On enable, empty sessions are seeded from `atrScope.toolsInScope`; tools outside that set are not added to the live tool map (`routed_to_sandbox` → `blockedRegistrations`).
 
 ## Implementation status (honest)
@@ -52,7 +52,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 | Pure allow-rule + WORM shapes                 | Implemented                                                                                       |
 | Accept-time promotion ⊆ S                     | Implemented                                                                                       |
 | Harness cannot set disposition / sandbox fork | Implemented (core policy)                                                                         |
-| Default MCP execute gate                      | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`)                                                     |
+| Default MCP execute gate                      | **Default-on** (opt out `CLAWQL_CAPABILITY_LIFECYCLE=0`); lazy catalog bootstrap                    |
 | Register-side step 5                          | Wired in `clawql-harness` (opt-in via `CLAWQL_HARNESS_CAPABILITY_REGISTER` / config; not MCP env) |
 
 ## Related

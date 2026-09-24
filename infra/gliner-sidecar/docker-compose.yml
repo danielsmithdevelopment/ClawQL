@@ -1,8 +1,28 @@
 services:
   gliner-sidecar:
-    build: .
+    build:
+      context: .
+      target: base
     ports:
       - "8080:8080"
     environment:
       CLAWQL_GLINER_SIDECAR_MODE: mock
       CLAWQL_FAST_DECISION_GLINER_MODEL: fastino/gliner2.5-base-v1
+
+  # Live weights — requires HF download + disk. Not used in default CI.
+  # docker compose --profile live up gliner-sidecar-live
+  gliner-sidecar-live:
+    profiles: ["live"]
+    build:
+      context: .
+      target: gliner2
+    ports:
+      - "8081:8080"
+    volumes:
+      - gliner-hf-cache:/root/.cache/huggingface
+    environment:
+      CLAWQL_GLINER_SIDECAR_MODE: gliner2
+      CLAWQL_FAST_DECISION_GLINER_MODEL: fastino/gliner2.5-base-v1
+
+volumes:
+  gliner-hf-cache:
