@@ -25,7 +25,11 @@ Prefix: `raw/harvey-lab/`
 
 - Cases ship with `adjudicated: false`.
 - `groundTruthCandidateId` is **provisional**, chosen from successful vs failed Lab tool sequences and Lab docs (Pattern E, Fix 6/7, filing≠second-request). It is **not** a frontier-judge Fast Decision label and **not** Lab CPR.
-- Re-run `scripts/run-held-out-adjudication.mts --suite v0.2-harvey` with a live judge (or `--labels-in`) before citing `productionTrusted`.
+- Re-run live frontier adjudication for this suite:
+  - GHA: `gh workflow run fast-decision-frontier-adjudication.yml -f suite=v0.2-harvey -f with_gliner=true`
+  - Local: `CLAWQL_FAST_DECISION_JUDGE_URL=… npx tsx scripts/run-held-out-adjudication.mts --suite v0.2-harvey --out …`
+  - Replay: `RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh`
+- Do not cite `productionTrusted` until live labels + live GLiNER2 + DEFAULT criteria pass.
 
 ## Docs cross-links
 

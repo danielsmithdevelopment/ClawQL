@@ -4,16 +4,18 @@
 #
 # Usage:
 #   bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
-#   RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#   SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#   RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
 #     → also runs held-out validation with --labels-in + live GLiNER when
 #       CLAWQL_FAST_DECISION_GLINER_URL is set.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$ROOT/artifacts/held-out-frontier-from-gha}"
+SUITE="${SUITE:-}"
 mkdir -p "$OUT"
 
 WF="fast-decision-frontier-adjudication.yml"
-echo "Looking up latest successful run of $WF …"
+echo "Looking up latest successful run of $WF${SUITE:+ (prefer suite=$SUITE)} …"
 RUN_ID="$(
   gh run list --workflow="$WF" --status=success --limit 50 \
     --json databaseId,conclusion \
@@ -29,22 +31,51 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 echo "Downloading artifacts from run $RUN_ID → $OUT"
-if ! gh run download "$RUN_ID" -n held-out-frontier-adjudication -D "$TMP"; then
-  echo "Artifact held-out-frontier-adjudication missing on run $RUN_ID (likely credential-gate skip-notice only)." >&2
+
+ARTIFACT_NAMES=()
+if [[ -n "${SUITE}" ]]; then
+  ARTIFACT_NAMES+=("held-out-frontier-adjudication-${SUITE}")
+fi
+# Legacy name (pre-suite matrix) + v0.1 default.
+ARTIFACT_NAMES+=("held-out-frontier-adjudication" "held-out-frontier-adjudication-v0.1")
+
+DOWNLOADED=""
+for name in "${ARTIFACT_NAMES[@]}"; do
+  if gh run download "$RUN_ID" -n "$name" -D "$TMP" 2>/dev/null; then
+    DOWNLOADED="$name"
+    echo "Downloaded artifact: $name"
+    break
+  fi
+done
+if [[ -z "${DOWNLOADED}" ]]; then
+  echo "No held-out-frontier-adjudication* artifact on run $RUN_ID (likely credential-gate skip-notice only)." >&2
   exit 3
 fi
+
 # Promote known artifact files; preserve unrelated OUT contents (e.g. local rescores).
-for f in held-out-frontier-labels.json held-out-frontier-summary.json gliner2-healthz.json; do
+for f in held-out-frontier-labels.json held-out-frontier-summary.json gliner2-healthz.json \
+  held-out-frontier-labels-v0.1.json held-out-frontier-summary-v0.1.json \
+  held-out-frontier-labels-v0.2-harvey.json held-out-frontier-summary-v0.2-harvey.json; do
   if [[ -f "$TMP/$f" ]]; then
     cp -f "$TMP/$f" "$OUT/$f"
   fi
 done
+# Prefer suite-suffixed files as the canonical labels/summary when SUITE is set.
+if [[ -n "${SUITE}" ]]; then
+  if [[ -f "$OUT/held-out-frontier-labels-${SUITE}.json" ]]; then
+    cp -f "$OUT/held-out-frontier-labels-${SUITE}.json" "$OUT/held-out-frontier-labels.json"
+  fi
+  if [[ -f "$OUT/held-out-frontier-summary-${SUITE}.json" ]]; then
+    cp -f "$OUT/held-out-frontier-summary-${SUITE}.json" "$OUT/held-out-frontier-summary.json"
+  fi
+fi
 # Copy any other files from the artifact as well
 shopt -s nullglob
 for f in "$TMP"/*; do
   base="$(basename "$f")"
   case "$base" in
     held-out-frontier-labels.json|held-out-frontier-summary.json|gliner2-healthz.json) ;;
+    held-out-frontier-labels-*.json|held-out-frontier-summary-*.json) ;;
     *) cp -f "$f" "$OUT/$base" ;;
   esac
 done
@@ -58,10 +89,26 @@ if [[ -f "$SUMMARY" ]]; then
       "import { readFileSync } from 'node:fs'; const s=JSON.parse(readFileSync(process.argv[1],'utf8')); console.log(s.adjudicationMode||'')" \
       "$SUMMARY"
   )"
-  echo "adjudicationMode=$MODE"
+  SID="$(
+    node --input-type=module -e \
+      "import { readFileSync } from 'node:fs'; const s=JSON.parse(readFileSync(process.argv[1],'utf8')); console.log(s.suiteId||'')" \
+      "$SUMMARY"
+  )"
+  echo "adjudicationMode=$MODE suiteId=$SID"
   if [[ "$MODE" != "live" ]]; then
     echo "Downloaded summary is not live adjudication (mode=$MODE) — refusing to treat as frontier corpus." >&2
     exit 4
+  fi
+  if [[ -n "${SUITE}" ]]; then
+    EXPECT=""
+    case "${SUITE}" in
+      v0.1) EXPECT="fast-decision-held-out-v0.1" ;;
+      v0.2-harvey) EXPECT="fast-decision-held-out-v0.2-harvey" ;;
+    esac
+    if [[ -n "${EXPECT}" && "${SID}" != "${EXPECT}" ]]; then
+      echo "Suite mismatch: wanted ${EXPECT}, got suiteId=${SID} (artifact ${DOWNLOADED})." >&2
+      exit 7
+    fi
   fi
 fi
 
@@ -77,9 +124,12 @@ if [[ "${RESCORE:-0}" == "1" ]]; then
     echo "Missing $LABELS for --labels-in rescore." >&2
     exit 6
   fi
-  echo "Rescoring with --labels-in $LABELS …"
+  echo "Rescoring with --labels-in $LABELS${SUITE:+ --suite $SUITE} …"
+  RESCORE_ARGS=(--labels-in "$LABELS" --out "$OUT/held-out-rescore-with-live-gliner.json")
+  if [[ -n "${SUITE}" ]]; then
+    RESCORE_ARGS+=(--suite "${SUITE}")
+  fi
   npx tsx "$ROOT/scripts/run-held-out-adjudication.mts" \
-    --labels-in "$LABELS" \
-    --out "$OUT/held-out-rescore-with-live-gliner.json" \
+    "${RESCORE_ARGS[@]}" \
     | tee "$OUT/held-out-rescore-summary.json"
 fi
