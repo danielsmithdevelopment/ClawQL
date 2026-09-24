@@ -4,6 +4,7 @@
  * `tryCreatePodInformer` returns null and callers stay on the stub queue.
  */
 
+import { randomUUID } from "node:crypto";
 import { Context, Effect, Layer } from "effect";
 import type { BurstWatchStub } from "./burst-watch-stub.js";
 import type { CelldNodeLoad } from "../session-placement.js";
@@ -26,7 +27,10 @@ export class PodInformerService extends Context.Tag("clawql/PodInformerService")
     /** Start watching pods; fails with reason when kubeconfig / cluster unavailable. */
     readonly start: (
       options: PodInformerOptions
-    ) => Effect.Effect<PodInformerHandle, { readonly _tag: "PodInformerUnavailable"; readonly reason: string }>;
+    ) => Effect.Effect<
+      PodInformerHandle,
+      { readonly _tag: "PodInformerUnavailable"; readonly reason: string }
+    >;
   }
 >() {}
 
@@ -76,7 +80,11 @@ export function makeKubernetesPodInformer(): Context.Tag.Service<typeof PodInfor
 
           const pods = new Map<
             string,
-            { spec?: { nodeName?: string }; status?: { phase?: string }; metadata?: { name?: string } }
+            {
+              spec?: { nodeName?: string };
+              status?: { phase?: string };
+              metadata?: { name?: string };
+            }
           >();
           let closed = false;
 
@@ -90,7 +98,7 @@ export function makeKubernetesPodInformer(): Context.Tag.Service<typeof PodInfor
                 spec?: { nodeName?: string };
                 status?: { phase?: string; reason?: string };
               };
-              const key = pod.metadata?.uid ?? pod.metadata?.name ?? String(Math.random());
+              const key = pod.metadata?.uid ?? pod.metadata?.name ?? `anon-${randomUUID()}`;
               if (phase === "DELETED") {
                 pods.delete(key);
                 const name = pod.metadata?.name ?? key;
