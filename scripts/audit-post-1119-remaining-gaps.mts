@@ -211,6 +211,10 @@ function fileContains(path: string, re: RegExp): boolean {
     fileContains(
       ".github/workflows/aws-celld-burst-section13-dry-run.yml",
       /section13-ce-export|export-cost-explorer-arms/
+    ) &&
+    fileContains(
+      ".github/workflows/aws-celld-burst-section13-dry-run.yml",
+      /CLAWQL_CE_ROLE_ARN|role-to-assume/
     );
 
   push({
