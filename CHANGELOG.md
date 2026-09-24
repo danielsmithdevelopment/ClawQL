@@ -2,9 +2,9 @@
 
 ### Added
 
+- **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService` (also via BurstWatchSources bootstrap).
+- **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; optional Istio access-log tail + celld lease-snapshot fleet health (`celldLeaseSnapshotJson` / `celldLeaseSnapshotPath`); unavailable sources reported honestly (no invented events).
 - **Post-#1119 gaps audit script** — `scripts/audit-post-1119-remaining-gaps.mts` reports capability gate / productionTrusted / frontier / watches / §13 honestly (`goalComplete` only when live evidence exists).
-- **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService`.
-- **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; unavailable sources reported honestly (no invented events).
 - **Istio access-log file tail** — `IstioAccessLogTailService` follows an NDJSON Envoy/ztunnel access-log path into BurstWatchStub; missing path fail-closed (no invented denials).
 - **Karpenter NodeClaim informer** — `NodeClaimInformerService` watches `karpenter.sh/v1` NodeClaims into BurstWatchStub via lifecycle mapping; unavailable without kubeconfig (fail-closed).
 - **Frontier GHA co-runs live GLiNER2** — `with_gliner` (default on schedule / dispatch) installs Fastino GLiNER2 + starts sidecar so the same artifact reports `scorerBackend=gliner2` when secrets pass; timeout 90m.
