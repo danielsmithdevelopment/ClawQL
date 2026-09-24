@@ -50,6 +50,12 @@ jobs:
           python -m pip install -r infra/gliner-sidecar/requirements.txt
           python -m pip install "gliner2>=1.0.0" peft tiktoken protobuf torch --extra-index-url https://download.pytorch.org/whl/cpu
 
+      - name: GLiNER sidecar unit tests (mock + multilabel mapping)
+        run: |
+          set -euo pipefail
+          cd infra/gliner-sidecar
+          python -m unittest test_app.py -v
+
       - name: Cache Hugging Face hub
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
