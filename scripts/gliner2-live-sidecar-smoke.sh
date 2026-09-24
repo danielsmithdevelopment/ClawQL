@@ -13,6 +13,9 @@ export CLAWQL_GLINER_SIDECAR_PORT="${CLAWQL_GLINER_SIDECAR_PORT:-18081}"
 
 "$PY" -c "import gliner2, torch; print('gliner2', getattr(gliner2,'__version__','?'), 'torch', torch.__version__)"
 
+# Mock-path unit tests (no torch) — catches multi_label classify regressions early.
+"$PY" -m unittest test_app.py -v
+
 "$PY" -m uvicorn app:app --host 127.0.0.1 --port "$CLAWQL_GLINER_SIDECAR_PORT" &
 PID=$!
 cleanup() { kill "$PID" 2>/dev/null || true; }
@@ -40,6 +43,16 @@ assert h.get("mode")=="gliner2", h
 assert h.get("backend")=="gliner2", h
 backend=c.get("backend","")
 assert backend.startswith("gliner2:"), c
-assert "scores" in c and len(c["scores"])>=1
-print("GLINER2_LIVE_SMOKE_OK", {"health": h, "backend": backend, "top": c["scores"][0]})
+scores=c.get("scores") or []
+assert len(scores)>=1, c
+# Multi-label classify must not collapse to all-zero (entity-extract failure mode).
+assert any(float(s.get("confidence") or 0) > 0 for s in scores), (
+    "all-zero confidences — expected multi_label classification scores",
+    c,
+)
+by_id={s["id"]: float(s["confidence"]) for s in scores}
+# Prefer matching label when both candidates are scored.
+if "merge" in by_id and "slack" in by_id and by_id["merge"] > 0:
+    assert by_id["merge"] >= by_id["slack"], c
+print("GLINER2_LIVE_SMOKE_OK", {"health": h, "backend": backend, "top": scores[0], "by_id": by_id})
 PY

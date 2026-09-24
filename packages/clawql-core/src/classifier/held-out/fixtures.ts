@@ -160,22 +160,29 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
     {
       caseId: "pattern-001",
       useSiteId: "pattern_consistency_check",
-      query: "occurrence looks like a mezzanine springing-lien clause but maturity is blank",
+      query:
+        "occurrence resembles a mezzanine springing-lien clause; maturity field is blank (required)",
       candidates: [
         {
           candidateId: "match",
           features: {
             label: "match",
-            description: "Matches expected springing-lien pattern shape",
+            description: "Select match only when maturity and other required fields are filled",
           },
         },
         {
           candidateId: "mismatch",
-          features: { label: "mismatch", description: "Does not match expected pattern shape" },
+          features: {
+            label: "mismatch",
+            description: "Select mismatch only when filled fields contradict the pattern",
+          },
         },
         {
           candidateId: "uncertain",
-          features: { label: "uncertain", description: "Insufficient fields to decide" },
+          features: {
+            label: "uncertain",
+            description: "Select uncertain when maturity is blank (required field missing)",
+          },
         },
       ],
       groundTruthCandidateId: "uncertain",
@@ -206,7 +213,8 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
     {
       caseId: "sgdop-pre-001",
       useSiteId: "sgdop_peer_prefilter",
-      query: "peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
+      query:
+        "pending work: write ontology cache blocks for promotion; peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
       candidates: [
         {
           candidateId: "ontology-cache-writer",
@@ -226,7 +234,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
       ],
       groundTruthCandidateId: "ontology-cache-writer",
       adjudicated: false,
-      notes: "Coarse prefilter — false_negative is costly",
+      notes: "Coarse prefilter — false_negative is costly; query must state pending work",
     },
     {
       caseId: "precompact-001",
@@ -238,12 +246,16 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
           candidateId: "cache_this",
           features: {
             label: "cache_this",
-            description: "Keep in ontology/stable cache across compaction",
+            description:
+              "Keep in ontology/stable cache across compaction when FIBO match and WORM audit exist",
           },
         },
         {
           candidateId: "dont_cache_this",
-          features: { label: "dont_cache_this", description: "Drop before compaction" },
+          features: {
+            label: "dont_cache_this",
+            description: "Drop before compaction when extraction is unstable or unaudited",
+          },
         },
       ],
       groundTruthCandidateId: "cache_this",

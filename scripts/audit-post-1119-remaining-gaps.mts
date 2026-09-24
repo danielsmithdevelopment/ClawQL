@@ -71,12 +71,18 @@ function fileContains(path: string, re: RegExp): boolean {
   const gateOk =
     fileContains(gateSrc, /adjudicationKind/) &&
     fileContains(gateSrc, /PRODUCTION_TRUSTED_SCORER_BACKEND|gliner2/);
+  // Sidecar must use multi-label classify (entity-extract alone → all-zero scores).
+  const sidecar = "infra/gliner-sidecar/app.py";
+  const multilabel =
+    fileContains(sidecar, /multi_label\s*=\s*True/) &&
+    fileContains(sidecar, /classification\(/) &&
+    existsSync("infra/gliner-sidecar/test_app.py");
 
   push({
     id: "productionTrusted-code-gate",
     requirement: "productionTrusted requires live adjudicationKind + gliner2 + criteria",
-    verdict: gateOk && !anyTrusted ? "DONE" : anyTrusted ? "OPEN" : "PATH_DONE",
-    evidence: `gateSrc=${gateOk} syntheticTrusted=${anyTrusted} sites=${reports.length}`,
+    verdict: gateOk && multilabel && !anyTrusted ? "DONE" : anyTrusted ? "OPEN" : "PATH_DONE",
+    evidence: `gateSrc=${gateOk} multilabelClassify=${multilabel} syntheticTrusted=${anyTrusted} sites=${reports.length}`,
   });
 }
 

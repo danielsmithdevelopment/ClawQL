@@ -73,7 +73,13 @@ def mock_scores(text: str, labels: list[Label]) -> list[Score]:
 
 
 def gliner2_scores(text: str, labels: list[Label]) -> list[Score]:
-    """Score labels with Fastino GLiNER2 via the `gliner2` package (AutoExtractor)."""
+    """Score labels with Fastino GLiNER2 closed-category classification.
+
+    Uses ``create_schema().classification(..., multi_label=True)`` so every
+    candidate gets a calibrated confidence. Entity-extract alone often returns
+    empty spans for Fast Decision use-site labels (skill ids, schema fields),
+    which produced all-zero rankings and false calibration.
+    """
     global _gliner_model
     try:
         from gliner2 import AutoExtractor  # type: ignore
@@ -86,31 +92,62 @@ def gliner2_scores(text: str, labels: list[Label]) -> list[Score]:
     if _gliner_model is None:
         _gliner_model = AutoExtractor.from_pretrained(MODEL_ID)
 
-    label_names = [lab.description or lab.id for lab in labels]
-    # One-shot entity extract: max span confidence per label (0 if none).
-    raw = _gliner_model.extract_entities(
+    if not labels:
+        return []
+
+    # Prefer id→description map so classify returns scores keyed by candidate id.
+    label_map: dict[str, str] = {
+        lab.id: (lab.description.strip() or lab.id) for lab in labels
+    }
+    schema = _gliner_model.create_schema()
+    schema.classification("choice", label_map, multi_label=True, cls_threshold=0.0)
+    raw = _gliner_model.extract(
         text,
-        label_names,
+        schema,
         threshold=0.0,
+        format_results=False,
         include_confidence=True,
     )
-    entities = (raw or {}).get("entities") or {}
-    by_desc: dict[str, float] = {n: 0.0 for n in label_names}
-    for name, spans in entities.items():
-        if name not in by_desc:
-            continue
-        best = 0.0
-        for span in spans or []:
-            if isinstance(span, dict):
-                best = max(best, float(span.get("confidence", 0.0)))
-            elif isinstance(span, (int, float)):
-                best = max(best, float(span))
-        by_desc[name] = best
+    by_id: dict[str, float] = {lab.id: 0.0 for lab in labels}
+    choice = (raw or {}).get("choice")
+    # format_results=False → list[(label, confidence)] or single (label, conf)
+    items: list[tuple[str, float]] = []
+    if isinstance(choice, list):
+        for item in choice:
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                items.append((str(item[0]), float(item[1])))
+            elif isinstance(item, dict):
+                items.append(
+                    (
+                        str(item.get("label") or item.get("id") or ""),
+                        float(item.get("confidence") or item.get("score") or 0.0),
+                    )
+                )
+    elif isinstance(choice, (list, tuple)) and len(choice) == 2 and not isinstance(
+        choice[0], (list, tuple, dict)
+    ):
+        items.append((str(choice[0]), float(choice[1])))
+    elif isinstance(choice, dict):
+        items.append(
+            (
+                str(choice.get("label") or choice.get("id") or ""),
+                float(choice.get("confidence") or choice.get("score") or 0.0),
+            )
+        )
 
-    out: list[Score] = []
-    for lab in labels:
-        key = lab.description or lab.id
-        out.append(Score(id=lab.id, confidence=round(by_desc.get(key, 0.0), 4)))
+    for name, conf in items:
+        if name in by_id:
+            by_id[name] = max(by_id[name], conf)
+        else:
+            # Model may echo description keys when label_descriptions used.
+            for lab_id, desc in label_map.items():
+                if name == desc:
+                    by_id[lab_id] = max(by_id[lab_id], conf)
+
+    out: list[Score] = [
+        Score(id=lab.id, confidence=round(float(by_id.get(lab.id, 0.0)), 4))
+        for lab in labels
+    ]
     out.sort(key=lambda s: s.confidence, reverse=True)
     return out
 

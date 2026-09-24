@@ -1,6 +1,6 @@
 {
   "suiteId": "fast-decision-held-out-v0.1",
-  "description": "Pre-registered synthetic held-out shapes covering all 9 builtin use sites for \u00a77 harness wiring. adjudicated=false until frontier-judge labels land \u2014 do not cite as productionTrusted.",
+  "description": "Pre-registered synthetic held-out shapes covering all 9 builtin use sites for §7 harness wiring. adjudicated=false until frontier-judge labels land — do not cite as productionTrusted.",
   "cases": [
     {
       "caseId": "skill-fp-001",
@@ -31,7 +31,7 @@
       ],
       "groundTruthCandidateId": "skill.extract.springing_lien",
       "adjudicated": false,
-      "notes": "Ambiguous vs generic search \u2014 hard case for \u00a77"
+      "notes": "Ambiguous vs generic search — hard case for §7"
     },
     {
       "caseId": "skill-fp-002",
@@ -119,7 +119,7 @@
     {
       "caseId": "field-map-001",
       "useSiteId": "field_to_schema_mapping",
-      "query": "extracted value: 'yes \u2014 lien springs on default of the mezzanine note'",
+      "query": "extracted value: 'yes — lien springs on default of the mezzanine note'",
       "candidates": [
         {
           "candidateId": "has_springing_lien",
@@ -180,27 +180,27 @@
     {
       "caseId": "pattern-001",
       "useSiteId": "pattern_consistency_check",
-      "query": "occurrence looks like a mezzanine springing-lien clause but maturity is blank",
+      "query": "occurrence resembles a mezzanine springing-lien clause; maturity field is blank (required)",
       "candidates": [
         {
           "candidateId": "match",
           "features": {
             "label": "match",
-            "description": "Matches expected springing-lien pattern shape"
+            "description": "Select match only when maturity and other required fields are filled"
           }
         },
         {
           "candidateId": "mismatch",
           "features": {
             "label": "mismatch",
-            "description": "Does not match expected pattern shape"
+            "description": "Select mismatch only when filled fields contradict the pattern"
           }
         },
         {
           "candidateId": "uncertain",
           "features": {
             "label": "uncertain",
-            "description": "Insufficient fields to decide"
+            "description": "Select uncertain when maturity is blank (required field missing)"
           }
         }
       ],
@@ -241,7 +241,7 @@
     {
       "caseId": "sgdop-pre-001",
       "useSiteId": "sgdop_peer_prefilter",
-      "query": "peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
+      "query": "pending work: write ontology cache blocks for promotion; peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
       "candidates": [
         {
           "candidateId": "ontology-cache-writer",
@@ -267,7 +267,7 @@
       ],
       "groundTruthCandidateId": "ontology-cache-writer",
       "adjudicated": false,
-      "notes": "Coarse prefilter \u2014 false_negative is costly"
+      "notes": "Coarse prefilter — false_negative is costly; query must state pending work"
     },
     {
       "caseId": "precompact-001",
@@ -278,14 +278,14 @@
           "candidateId": "cache_this",
           "features": {
             "label": "cache_this",
-            "description": "Keep in ontology/stable cache across compaction"
+            "description": "Keep in ontology/stable cache across compaction when FIBO match and WORM audit exist"
           }
         },
         {
           "candidateId": "dont_cache_this",
           "features": {
             "label": "dont_cache_this",
-            "description": "Drop before compaction"
+            "description": "Drop before compaction when extraction is unstable or unaudited"
           }
         }
       ],
