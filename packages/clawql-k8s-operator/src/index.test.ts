@@ -517,4 +517,21 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     );
     expect(result.drained.processed).toBe(2);
   });
+
+  it("parseCelldLeaseSnapshotJson accepts export shape and rejects empty", async () => {
+    const { parseCelldLeaseSnapshotJson } = await import("./watches/index.js");
+    const ok = await Effect.runPromise(
+      parseCelldLeaseSnapshotJson(
+        JSON.stringify([{ nodeId: "n1", renewedAtMs: 1000, ttlMs: 30_000 }])
+      )
+    );
+    expect(ok).toHaveLength(1);
+    expect(ok[0]?.nodeId).toBe("n1");
+
+    const bad = await Effect.runPromise(parseCelldLeaseSnapshotJson("[]").pipe(Effect.either));
+    expect(bad._tag).toBe("Left");
+    if (bad._tag === "Left") {
+      expect(bad.left._tag).toBe("CelldLeaseSnapshotInvalid");
+    }
+  });
 });

@@ -65,6 +65,7 @@ export {
   CelldFleetHealthLive,
   makeCelldFleetHealthService,
   evaluateCelldFleetHealth,
+  parseCelldLeaseSnapshotJson,
   enqueueFleetHealthToStub,
   type WatchDispatchResult,
   type WatchEvent,

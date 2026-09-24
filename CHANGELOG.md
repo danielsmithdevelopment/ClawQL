@@ -2,6 +2,7 @@
 
 ### Added
 
+- **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService`.
 - **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; unavailable sources reported honestly (no invented events).
 - **Istio access-log file tail** — `IstioAccessLogTailService` follows an NDJSON Envoy/ztunnel access-log path into BurstWatchStub; missing path fail-closed (no invented denials).
 - **Karpenter NodeClaim informer** — `NodeClaimInformerService` watches `karpenter.sh/v1` NodeClaims into BurstWatchStub via lifecycle mapping; unavailable without kubeconfig (fail-closed).

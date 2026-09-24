@@ -25,9 +25,9 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `IstioAccessLogTailService` — follow an on-disk NDJSON access-log path into BurstWatchStub; missing path → unavailable (fail-closed)
 - `KarpenterLifecycleWatchService` — map NodeClaim/disruption-shaped records → watch events + WORM types (mock/CRD-feed)
 - `NodeClaimInformerService` — `@kubernetes/client-node` Watch on `nodeclaims.karpenter.sh` → lifecycle map → BurstWatchStub when kubeconfig works; otherwise unavailable (fail-closed)
-- `CelldFleetHealthService` — evaluate injected S3 lease snapshots → `CELLD_FLEET_NODE_DROPPED` (no AWS SDK; hosts supply lease records)
+- `CelldFleetHealthService` — evaluate injected S3 lease snapshots → `CELLD_FLEET_NODE_DROPPED`; `parseCelldLeaseSnapshotJson` for `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` exports (no AWS SDK in-package)
 - Placement variance simulation + `infra/aws-celld-burst/loadtest/dry-run.mjs` (`status: dry-run`, null `$Y`)
 
 ## Not yet implemented (needs real cluster / AWS)
 
-Live Istio cluster log-pipeline subscription (beyond file-tail), live Karpenter eviction _actions_ (informer watches NodeClaims only), live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters + file-tail / NodeClaim/Pod informers parse/feed the watch queue when kubeconfig or log path works; production eviction APIs and Cost Explorer remain external.
+Live Istio cluster log-pipeline subscription (beyond file-tail), live Karpenter eviction _actions_ (informer watches NodeClaims only), in-process AWS SDK ListObjects (hosts use `fetch-celld-leases-from-s3.sh` today), calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters + file-tail / NodeClaim/Pod informers parse/feed the watch queue when kubeconfig or log path works; production eviction APIs and Cost Explorer remain external.
