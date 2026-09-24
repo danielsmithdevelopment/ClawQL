@@ -16,6 +16,8 @@
 node infra/aws-celld-burst/loadtest/dry-run.mjs
 ```
 
+**CI:** [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](../../../.github/workflows/aws-celld-burst-section13-dry-run.yml) runs the same harness on path-filtered PRs/`main` pushes and `workflow_dispatch`, asserts `status=dry-run` + null `$Y` / p50/p99, and uploads the summary artifact. A companion job only *notices* whether AWS secrets exist — it never auto-runs a live three-arm or invents Cost Explorer numbers.
+
 **Honesty:** dry-run proves the summary schema and harness wiring only. Do not publish dry-run output as §13.5.
 
 ## Usage (when arms exist)
