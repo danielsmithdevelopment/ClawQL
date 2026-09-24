@@ -21,10 +21,12 @@
 #
 # Operator (actions:write):
 #   gh workflow run fast-decision-frontier-adjudication.yml --ref main \
-#     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false -f with_gliner=true
+#     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false -f with_gliner=true \
+#     -f suite=v0.2-harvey
+#   # repository_dispatch client_payload.suite also accepted (default v0.1).
 #
 # Download + optional local rescore:
-#   RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh
+#   RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh
 #
 # Honesty: uploaded labels are live-judge provenance. productionTrusted requires
 # adjudicationKind=live + backendId=gliner2 + calibration criteria.
@@ -52,6 +54,14 @@ on:
         required: true
         default: true
         type: boolean
+      suite:
+        description: Held-out suite name (v0.1 | v0.2-harvey)
+        required: true
+        default: v0.1
+        type: choice
+        options:
+          - v0.1
+          - v0.2-harvey
   repository_dispatch:
     types: [frontier-adjudication]
 
@@ -72,6 +82,7 @@ jobs:
       via_openrouter: ${{ steps.gate.outputs.via_openrouter }}
       judge_model: ${{ steps.gate.outputs.judge_model }}
       with_gliner: ${{ steps.gate.outputs.with_gliner }}
+      suite: ${{ steps.gate.outputs.suite }}
     steps:
       - id: secret
         env:
@@ -99,6 +110,8 @@ jobs:
           JUDGE_MODEL: ${{ inputs.judge_model || 'claude-sonnet-4-6' }}
           EVENT_NAME: ${{ github.event_name }}
           WANT_GLINER: ${{ inputs.with_gliner }}
+          INPUT_SUITE: ${{ inputs.suite || '' }}
+          PAYLOAD_SUITE: ${{ github.event.client_payload.suite || '' }}
         run: |
           set -euo pipefail
           VIA_OR=false
@@ -127,15 +140,33 @@ jobs:
           if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${WANT_GLINER}" = "false" ]; then
             WITH_GLINER=false
           fi
+          # Suite: workflow_dispatch input > repository_dispatch payload > schedule default.
+          # Schedule runs both via matrix on adjudicate job; gate still emits a primary suite.
+          SUITE="v0.1"
+          if [ -n "${INPUT_SUITE}" ]; then
+            SUITE="${INPUT_SUITE}"
+          elif [ -n "${PAYLOAD_SUITE}" ]; then
+            SUITE="${PAYLOAD_SUITE}"
+          elif [ "${EVENT_NAME}" = "schedule" ]; then
+            SUITE="v0.2-harvey"
+          fi
+          case "${SUITE}" in
+            v0.1|v0.2-harvey) ;;
+            *)
+              CAN=false
+              REASON="unsupported suite '${SUITE}' (want v0.1 or v0.2-harvey)"
+              ;;
+          esac
           {
             echo "can_run=${CAN}"
             echo "skip_reason=${REASON}"
             echo "via_openrouter=${VIA_OR}"
             echo "judge_model=${JUDGE_MODEL}"
             echo "with_gliner=${WITH_GLINER}"
+            echo "suite=${SUITE}"
           } >>"$GITHUB_OUTPUT"
           if [ "${CAN}" = "true" ]; then
-            echo "::notice::Credential gate passed (via_openrouter=${VIA_OR}, with_gliner=${WITH_GLINER})"
+            echo "::notice::Credential gate passed (via_openrouter=${VIA_OR}, with_gliner=${WITH_GLINER}, suite=${SUITE})"
           else
             echo "::warning::Credential gate blocked frontier adjudication: ${REASON}"
           fi
@@ -151,11 +182,16 @@ jobs:
           echo "Install ANTHROPIC_API_KEY or OPENROUTER_API_KEY as repo Actions secrets, then re-dispatch."
 
   adjudicate:
-    name: Held-out frontier adjudicate
+    name: Held-out frontier adjudicate (${{ matrix.suite }})
     needs: gate
     if: needs.gate.outputs.can_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # Schedule covers both suites; dispatch/payload uses the gated suite only.
+        suite: ${{ github.event_name == 'schedule' && fromJSON('["v0.1","v0.2-harvey"]') || fromJSON(format('["{0}"]', needs.gate.outputs.suite)) }}
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -166,6 +202,7 @@ jobs:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
       CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL || 'fastino/gliner2.5-base-v1' }}
+      HELD_OUT_SUITE: ${{ matrix.suite }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -278,10 +315,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts
+          SUITE="${HELD_OUT_SUITE:-v0.1}"
+          echo "::notice::adjudicating suite=${SUITE}"
           npx tsx scripts/run-held-out-adjudication.mts \
-            --out artifacts/held-out-frontier-labels.json \
-            | tee artifacts/held-out-frontier-summary.json
-          MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); if(!s.scorerBackend) process.exit(3); console.log(s.adjudicationMode,s.judgeModel,s.labelCount,s.scorerBackend)")"
+            --suite "${SUITE}" \
+            --out "artifacts/held-out-frontier-labels-${SUITE}.json" \
+            | tee "artifacts/held-out-frontier-summary-${SUITE}.json"
+          # Stable names for the primary suite artifact (fetch script + audits).
+          cp -f "artifacts/held-out-frontier-labels-${SUITE}.json" artifacts/held-out-frontier-labels.json
+          cp -f "artifacts/held-out-frontier-summary-${SUITE}.json" artifacts/held-out-frontier-summary.json
+          MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); if(!s.scorerBackend) process.exit(3); console.log(s.adjudicationMode,s.judgeModel,s.labelCount,s.scorerBackend,s.suiteId)")"
           echo "::notice::adjudication ${MODE}"
           if [ "${WITH_GLINER}" = "true" ]; then
             node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.scorerBackend!=='gliner2') { console.error('expected scorerBackend=gliner2, got', s.scorerBackend); process.exit(4); }"
@@ -303,9 +346,11 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: held-out-frontier-adjudication
+          name: held-out-frontier-adjudication-${{ matrix.suite }}
           path: |
             artifacts/held-out-frontier-labels.json
             artifacts/held-out-frontier-summary.json
+            artifacts/held-out-frontier-labels-${{ matrix.suite }}.json
+            artifacts/held-out-frontier-summary-${{ matrix.suite }}.json
             artifacts/gliner2-healthz.json
           if-no-files-found: warn

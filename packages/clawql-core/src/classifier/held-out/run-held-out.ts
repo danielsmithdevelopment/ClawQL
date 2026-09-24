@@ -14,7 +14,7 @@ import {
   evaluateCorrectnessAndCalibration,
   type ValidationCriteria,
 } from "../validation.js";
-import { FAST_DECISION_HELD_OUT_V01 } from "./fixtures.js";
+import { FAST_DECISION_HELD_OUT_V01, harveyHeldOutSuiteV02 } from "./fixtures.js";
 import type {
   HeldOutCaseSpec,
   HeldOutSuiteManifest,
@@ -24,6 +24,9 @@ import type {
 
 /** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
+
+/** Named suites selectable via `--suite` / resolveHeldOutSuite. */
+export type HeldOutSuiteName = "v0.1" | "v0.2-harvey";
 
 const BUILTIN_TASK_FRAMING: ReadonlyMap<string, string> = new Map(
   BUILTIN_FAST_DECISION_USE_SITES.map((s) => [s.useSiteId, s.description])
@@ -43,6 +46,22 @@ function isDefaultValidationCriteria(c: ValidationCriteria): boolean {
 
 export function defaultHeldOutSuite(): HeldOutSuiteManifest {
   return FAST_DECISION_HELD_OUT_V01;
+}
+
+/**
+ * Resolve a named suite or filesystem path.
+ * - `v0.1` / omitted → synthetic wiring suite
+ * - `v0.2-harvey` → Harvey LAB workflow suite
+ * - other string → JSON path via loadHeldOutSuite
+ */
+export function resolveHeldOutSuite(nameOrPath?: string): HeldOutSuiteManifest {
+  if (!nameOrPath || nameOrPath === "v0.1" || nameOrPath === "default") {
+    return defaultHeldOutSuite();
+  }
+  if (nameOrPath === "v0.2-harvey" || nameOrPath === "harvey") {
+    return harveyHeldOutSuiteV02();
+  }
+  return loadHeldOutSuite(nameOrPath);
 }
 
 /** Load suite from JSON path, or return the embedded v0.1 suite when path omitted. */
