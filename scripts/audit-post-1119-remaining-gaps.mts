@@ -111,13 +111,26 @@ function fileContains(path: string, re: RegExp): boolean {
     "packages/clawql-k8s-operator/src/watches/istio-access-log-tail.ts",
     "packages/clawql-k8s-operator/src/watches/istio-denial-adapter.ts",
     "packages/clawql-k8s-operator/src/watches/celld-fleet-health.ts",
+    "packages/clawql-k8s-operator/src/watches/burst-watch-sources.ts",
   ];
   const present = watches.filter((p) => existsSync(p));
+  const leaseFetch = existsSync("infra/aws-celld-burst/fetch-celld-leases-from-s3.sh");
+  const sourcesWiresFleet =
+    existsSync("packages/clawql-k8s-operator/src/watches/burst-watch-sources.ts") &&
+    fileContains(
+      "packages/clawql-k8s-operator/src/watches/burst-watch-sources.ts",
+      /celld-fleet-health|celldLeaseSnapshotJson/
+    );
   push({
     id: "k8s-watches-scaffold",
-    requirement: "K8s BurstWatch + Pod/NodeClaim/Istio/fleet adapters",
-    verdict: present.length >= 4 ? "PATH_DONE" : "OPEN",
-    evidence: `present=${present.length}/${watches.length}: ${present.map((p) => p.split("/").pop()).join(",")}`,
+    requirement: "K8s BurstWatch + Pod/NodeClaim/Istio/fleet adapters + sources bootstrap",
+    verdict:
+      present.length >= 5 && leaseFetch && sourcesWiresFleet
+        ? "PATH_DONE"
+        : present.length >= 4
+          ? "PATH_DONE"
+          : "OPEN",
+    evidence: `present=${present.length}/${watches.length} leaseFetch=${leaseFetch} sourcesWiresFleet=${sourcesWiresFleet}: ${present.map((p) => p.split("/").pop()).join(",")}`,
   });
 }
 
