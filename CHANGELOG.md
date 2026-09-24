@@ -2,6 +2,9 @@
 
 ### Added
 
+- **Frontier GHA co-runs live GLiNER2** — `with_gliner` (default on schedule / dispatch) installs Fastino GLiNER2 + starts sidecar so the same artifact reports `scorerBackend=gliner2` when secrets pass; timeout 90m.
+- **§13.5 Cost Explorer export scaffold** — `infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh` fail-closes on R2-sync keys / missing STS / empty CE rows; wired into §13 dry-run CI tests.
+- **§13.5 k6 → metrics merge** — `merge-k6-summaries-to-metrics.mjs` extracts p99/drops from three arm summaries; `spikeSeconds` must be operator-supplied (Grafana); k6 `RESULT_DIR` writes `k6-arm-*.json`.
 - **Held-out `--labels-in` rescore** — `parseLiveAdjudicationLabels` / `loadLiveAdjudicationLabelsFromJsonFile` refuse dry-run provenance; `scripts/run-held-out-adjudication.mts --labels-in` replays GHA live labels; `RESCORE=1` on `fetch-frontier-adjudication-artifact.sh` runs live GLiNER validation when URL is set.
 - **Frontier schedule + full held-out coverage** — daily cron on `.github/workflows/fast-decision-frontier-adjudication.yml` (credential-gated; skip-notice when secrets absent) so live labels can land without agent `actions:write`; `scripts/fetch-frontier-adjudication-artifact.sh` downloads the latest live artifact fail-closed; held-out suite now covers all 9 builtin use sites (still `adjudicated=false` until frontier labels).
 - **productionTrusted requires live GLiNER2** — held-out gate now needs `adjudicationKind: "live"` on every case **and** scorer `backendId === "gliner2"` (prior/heuristic/stub/fallback cannot light the flag); reports include `scorerBackend`.

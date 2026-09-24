@@ -6,11 +6,14 @@
 
 ## Files
 
-| Path                 | Purpose                                                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------- |
-| `burst-1m-gap-2m.js` | k6 script: identical 1M / 10-min zero / 2M stream                                             |
-| `RESULT_TEMPLATE.md` | Publishable result template (§13.5) — fill after a real run                                   |
-| `dry-run.mjs`        | Local mock HTTP burst + `results/dry-run-summary.json` (`status: dry-run`, null metrics/`$Y`) |
+| Path                                | Purpose                                                                                       |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `burst-1m-gap-2m.js`                | k6 script: identical 1M / 10-min zero / 2M stream                                             |
+| `RESULT_TEMPLATE.md`                | Publishable result template (§13.5) — fill after a real run                                   |
+| `dry-run.mjs`                       | Local mock HTTP burst + `results/dry-run-summary.json` (`status: dry-run`, null metrics/`$Y`) |
+| `export-cost-explorer-arms.sh`      | Fail-closed Cost Explorer three-arm CSV export (refuses R2-sync keys)                         |
+| `merge-k6-summaries-to-metrics.mjs` | Merge three k6 summaries → metrics.json (spikeSeconds operator-supplied)                      |
+| `fill-result-from-exports.mjs`      | Fill §13.5 from CE CSVs + metrics.json (no invented `$Y`)                                     |
 
 ```bash
 node infra/aws-celld-burst/loadtest/dry-run.mjs
@@ -53,29 +56,47 @@ Rate-card **order-of-magnitude** for one same-day three-arm window in `us-east-1
 
 **Cost Explorer caveat:** usable tagged spend often lags ~24h; do not publish §13.5 `$Y` until the tagged window has settled in Cost Explorer.
 
+## Exporting Cost Explorer CSVs (not inventing $Y)
+
+When real AWS credentials (not R2 sync) and tagged arms exist:
+
+```bash
+CLAWQL_S13_START=2026-09-20 CLAWQL_S13_END=2026-09-21 \
+  bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh ./ce-out
+```
+
+Fail-closed: refuses missing aws CLI, R2-sync key collision, STS failure, or empty Cost Explorer results.
+
+## Merging k6 summaries → metrics.json
+
+After three arm runs (set `RESULT_DIR=./k6-out` so `handleSummary` writes `k6-arm-{A,B,C}.json`):
+
+```bash
+node infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.mjs \
+  --arm-a k6-out/k6-arm-A.json --arm-b k6-out/k6-arm-B.json --arm-c k6-out/k6-arm-C.json \
+  --spike-b-seconds 45 --spike-c-seconds 20 \
+  --out metrics.json
+```
+
+`spike-*-seconds` must come from Grafana / operator observation of the post-gap spike — the script refuses to invent them from aggregate k6 JSON.
+
 ## Filling §13.5 from real exports (not dry-run)
 
-After Cost Explorer CSVs and k6 metrics exist:
-
-```bash
-node infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs \
-  --arm-a ce-arm-a.csv --arm-b ce-arm-b.csv --arm-c ce-arm-c.csv \
-  --metrics metrics.json --out results/section13-5-filled.md
-```
-
-Fail-closed unit tests (no invented `$Y`):
-
-```bash
-node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs
-```
-
-After a same-day three-arm run + Cost Explorer CSVs + k6 metrics:
+After Cost Explorer CSVs and metrics.json exist:
 
 ```bash
 node infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs \
   --arm-a ce-arm-a.csv --arm-b ce-arm-b.csv --arm-c ce-arm-c.csv \
   --metrics metrics.json \
   --out infra/aws-celld-burst/loadtest/results/section13-5-filled.md
+```
+
+Fail-closed unit tests (no invented `$Y`):
+
+```bash
+node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs \
+  infra/aws-celld-burst/loadtest/export-cost-explorer-arms.test.mjs \
+  infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.test.mjs
 ```
 
 Fail-closed: missing/non-numeric cost columns or missing `p99Ms` / `drops` / `spikeSeconds` abort without writing invented `$Y`.

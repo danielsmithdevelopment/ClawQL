@@ -73,7 +73,10 @@ jobs:
           SUMMARY: infra/aws-celld-burst/loadtest/results/dry-run-summary.json
 
       - name: Fail-closed filler unit tests
-        run: node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs
+        run: |
+          node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs
+          node --test infra/aws-celld-burst/loadtest/export-cost-explorer-arms.test.mjs
+          node --test infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.test.mjs
 
       - uses: actions/upload-artifact@v7
         if: always()

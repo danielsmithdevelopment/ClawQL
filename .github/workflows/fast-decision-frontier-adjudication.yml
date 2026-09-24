@@ -1,4 +1,4 @@
-# Optional §7.2 frontier adjudication (Sonnet / OpenRouter).
+# Optional §7.2 frontier adjudication (Sonnet / OpenRouter) + optional live GLiNER2.
 #
 # Does NOT run on every PR. Triggers:
 #   - schedule (daily) — produces live labels when repo secrets exist; otherwise
@@ -9,33 +9,31 @@
 #
 # Credential gate (same pattern as harvey-lab-firm-knowledge.yml). When secrets
 # are present, starts the HTTP frontier-judge sidecar and runs
-# scripts/run-held-out-adjudication.mts.
+# scripts/run-held-out-adjudication.mts. When with_gliner=true (default on
+# schedule / dispatch), also starts a live GLiNER2 sidecar so the same artifact
+# can report scorerBackend=gliner2 (productionTrusted still needs criteria).
 #
 # Secrets (either):
 #   ANTHROPIC_API_KEY  — preferred for claude-sonnet-4-6
 #   OPENROUTER_API_KEY — alternate / Claude via OpenRouter when
 #                        CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER=1
+# Optional: HF_TOKEN (faster/gated HF downloads for live GLiNER)
 #
 # Operator (actions:write):
 #   gh workflow run fast-decision-frontier-adjudication.yml --ref main \
-#     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false
-#   # or:
-#   gh api -X POST repos/OWNER/REPO/dispatches \
-#     -f event_type=frontier-adjudication
+#     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false -f with_gliner=true
 #
-# Download latest labels (after a successful live run):
-#   bash scripts/fetch-frontier-adjudication-artifact.sh
+# Download + optional local rescore:
+#   RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh
 #
-# Honesty: uploaded labels are live-judge provenance. productionTrusted still
-# requires calibration criteria + live GLiNER scores (`backendId=gliner2` and
-# `adjudicationKind=live`). Optional repo variable CLAWQL_FAST_DECISION_GLINER_URL
-# wires the primary GLiNER scorer; without it the runner reports honest gliner2-stub.
+# Honesty: uploaded labels are live-judge provenance. productionTrusted requires
+# adjudicationKind=live + backendId=gliner2 + calibration criteria.
 
 name: Fast Decision frontier adjudication
 
 on:
   schedule:
-    # Daily — skip-notice when secrets absent; live labels when present.
+    # Daily — skip-notice when secrets absent; live labels (+ GLiNER) when present.
     - cron: "17 6 * * *"
   workflow_dispatch:
     inputs:
@@ -48,6 +46,11 @@ on:
         description: Prefer OpenRouter for Claude judge
         required: true
         default: false
+        type: boolean
+      with_gliner:
+        description: Co-run live GLiNER2 sidecar for scorerBackend=gliner2
+        required: true
+        default: true
         type: boolean
   repository_dispatch:
     types: [frontier-adjudication]
@@ -68,6 +71,7 @@ jobs:
       skip_reason: ${{ steps.gate.outputs.skip_reason }}
       via_openrouter: ${{ steps.gate.outputs.via_openrouter }}
       judge_model: ${{ steps.gate.outputs.judge_model }}
+      with_gliner: ${{ steps.gate.outputs.with_gliner }}
     steps:
       - id: secret
         env:
@@ -93,6 +97,8 @@ jobs:
           HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
           WANT_OR: ${{ inputs.via_openrouter || false }}
           JUDGE_MODEL: ${{ inputs.judge_model || 'claude-sonnet-4-6' }}
+          EVENT_NAME: ${{ github.event_name }}
+          WANT_GLINER: ${{ inputs.with_gliner }}
         run: |
           set -euo pipefail
           VIA_OR=false
@@ -116,14 +122,20 @@ jobs:
               echo "::notice::No ANTHROPIC_API_KEY — falling back to OpenRouter"
             fi
           fi
+          # Schedule / repository_dispatch default with_gliner=true; workflow_dispatch honors input.
+          WITH_GLINER=true
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${WANT_GLINER}" = "false" ]; then
+            WITH_GLINER=false
+          fi
           {
             echo "can_run=${CAN}"
             echo "skip_reason=${REASON}"
             echo "via_openrouter=${VIA_OR}"
             echo "judge_model=${JUDGE_MODEL}"
+            echo "with_gliner=${WITH_GLINER}"
           } >>"$GITHUB_OUTPUT"
           if [ "${CAN}" = "true" ]; then
-            echo "::notice::Credential gate passed (via_openrouter=${VIA_OR})"
+            echo "::notice::Credential gate passed (via_openrouter=${VIA_OR}, with_gliner=${WITH_GLINER})"
           else
             echo "::warning::Credential gate blocked frontier adjudication: ${REASON}"
           fi
@@ -143,7 +155,7 @@ jobs:
     needs: gate
     if: needs.gate.outputs.can_run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -151,6 +163,9 @@ jobs:
       CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER: ${{ needs.gate.outputs.via_openrouter }}
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Fast Decision Judge
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+      CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL || 'fastino/gliner2.5-base-v1' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -164,6 +179,69 @@ jobs:
 
       - name: Build clawql-core
         run: npm run build --workspace=clawql-core
+
+      - uses: actions/setup-python@v6
+        if: needs.gate.outputs.with_gliner == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: infra/gliner-sidecar/requirements.txt
+
+      - name: Install live GLiNER2 + torch (CPU)
+        if: needs.gate.outputs.with_gliner == 'true'
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -r infra/gliner-sidecar/requirements.txt
+          python -m pip install "gliner2>=1.0.0" peft tiktoken protobuf torch --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache Hugging Face hub
+        if: needs.gate.outputs.with_gliner == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/huggingface
+          key: hf-gliner2-${{ env.CLAWQL_FAST_DECISION_GLINER_MODEL }}-${{ runner.os }}
+          restore-keys: |
+            hf-gliner2-${{ env.CLAWQL_FAST_DECISION_GLINER_MODEL }}-
+            hf-gliner2-
+
+      - name: Start live GLiNER2 sidecar
+        if: needs.gate.outputs.with_gliner == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          export CLAWQL_GLINER_SIDECAR_MODE=gliner2
+          export CLAWQL_GLINER_SIDECAR_HOST=127.0.0.1
+          export CLAWQL_GLINER_SIDECAR_PORT=18081
+          export CLAWQL_FAST_DECISION_GLINER_MODEL="${CLAWQL_FAST_DECISION_GLINER_MODEL:-fastino/gliner2.5-base-v1}"
+          HEALTHZ="${{ github.workspace }}/artifacts/gliner2-healthz.json"
+          (
+            cd infra/gliner-sidecar
+            python -m uvicorn app:app --host 127.0.0.1 --port 18081 \
+              >"${RUNNER_TEMP}/gliner2.log" 2>&1 &
+            echo $! >"${RUNNER_TEMP}/gliner2.pid"
+          )
+          for _ in $(seq 1 180); do
+            if curl -sf "http://127.0.0.1:18081/healthz" >/dev/null; then
+              curl -sf "http://127.0.0.1:18081/healthz" | tee "${HEALTHZ}"
+              node -e "const s=require(process.argv[1]); if(s.backend!=='gliner2') process.exit(2); console.log('gliner', s.mode, s.backend)" "${HEALTHZ}"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::gliner2 sidecar failed to become healthy"
+          cat "${RUNNER_TEMP}/gliner2.log" || true
+          exit 1
+
+      - name: Resolve GLiNER URL
+        id: gliner_url
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.gate.outputs.with_gliner }}" = "true" ]; then
+            echo "url=http://127.0.0.1:18081" >>"$GITHUB_OUTPUT"
+          else
+            echo "url=${{ vars.CLAWQL_FAST_DECISION_GLINER_URL }}" >>"$GITHUB_OUTPUT"
+          fi
 
       - name: Start frontier-judge HTTP sidecar
         run: |
@@ -184,29 +262,36 @@ jobs:
           cat "${RUNNER_TEMP}/frontier-judge.log" || true
           exit 1
 
-      - name: Run held-out adjudication (live judge)
+      - name: Run held-out adjudication (live judge ± live GLiNER)
         env:
           CLAWQL_FAST_DECISION_JUDGE_URL: http://127.0.0.1:18765/v1/fast-decision/adjudicate
-          # Optional: point at a reachable live GLiNER sidecar for calibration scores.
-          CLAWQL_FAST_DECISION_GLINER_URL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_URL }}
-          CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL }}
+          CLAWQL_FAST_DECISION_GLINER_URL: ${{ steps.gliner_url.outputs.url }}
+          CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS: "120000"
+          WITH_GLINER: ${{ needs.gate.outputs.with_gliner }}
         run: |
           set -euo pipefail
           mkdir -p artifacts
           npx tsx scripts/run-held-out-adjudication.mts \
             --out artifacts/held-out-frontier-labels.json \
             | tee artifacts/held-out-frontier-summary.json
-          # Fail the job if we somehow stayed in dry-run
           MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); if(!s.scorerBackend) process.exit(3); console.log(s.adjudicationMode,s.judgeModel,s.labelCount,s.scorerBackend)")"
           echo "::notice::adjudication ${MODE}"
+          if [ "${WITH_GLINER}" = "true" ]; then
+            node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.scorerBackend!=='gliner2') { console.error('expected scorerBackend=gliner2, got', s.scorerBackend); process.exit(4); }"
+            echo "::notice::live gliner2 scorer confirmed"
+          fi
 
-      - name: Stop sidecar
+      - name: Stop sidecars
         if: always()
         run: |
           if [ -f "${RUNNER_TEMP}/frontier-judge.pid" ]; then
             kill "$(cat "${RUNNER_TEMP}/frontier-judge.pid")" 2>/dev/null || true
           fi
+          if [ -f "${RUNNER_TEMP}/gliner2.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/gliner2.pid")" 2>/dev/null || true
+          fi
           cat "${RUNNER_TEMP}/frontier-judge.log" || true
+          cat "${RUNNER_TEMP}/gliner2.log" || true
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -215,4 +300,5 @@ jobs:
           path: |
             artifacts/held-out-frontier-labels.json
             artifacts/held-out-frontier-summary.json
+            artifacts/gliner2-healthz.json
           if-no-files-found: warn
