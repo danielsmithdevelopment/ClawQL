@@ -244,9 +244,9 @@ jobs:
           export CLAWQL_S13_END="${END}"
           mkdir -p artifacts/ce-export
           bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh artifacts/ce-export
-          node --input-type=module -e '
+          node --input-type=module <<'NODE'
             import { writeFileSync, readFileSync } from "node:fs";
-            const arms = ["a","b","c"].map((arm) => {
+            const arms = ["a", "b", "c"].map((arm) => {
               const p = `artifacts/ce-export/ce-arm-${arm}.csv`;
               const lines = readFileSync(p, "utf8").trim().split(/\n/);
               return { arm, rows: Math.max(0, lines.length - 1), path: p };
@@ -256,11 +256,15 @@ jobs:
               start: process.env.CLAWQL_S13_START,
               end: process.env.CLAWQL_S13_END,
               arms,
-              honesty: "Cost Explorer CSVs only — not filled $Y until k6 metrics + fill-result-from-exports.mjs",
+              honesty:
+                "Cost Explorer CSVs only — not filled dollarY until k6 metrics + fill-result-from-exports.mjs",
             };
-            writeFileSync("artifacts/ce-export/ce-export-summary.json", JSON.stringify(summary, null, 2) + "\n");
+            writeFileSync(
+              "artifacts/ce-export/ce-export-summary.json",
+              JSON.stringify(summary, null, 2) + "\n"
+            );
             console.log(JSON.stringify(summary));
-          '
+NODE
 
       - uses: actions/upload-artifact@v7
         with:
