@@ -46,6 +46,8 @@ export CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/gliner2.5-base-v1
 python app.py
 # Docker: docker compose --profile live up --build gliner-sidecar-live
 # Image target installs gliner2+torch (large). HF cache volume recommended.
+# Optional GHA: workflow_dispatch `.github/workflows/fast-decision-gliner2-live.yml`
+#   (bash scripts/gliner2-live-sidecar-smoke.sh) — not on every PR.
 ```
 
 ## §7 honesty

@@ -1,0 +1,72 @@
+# Optional live GLiNER2 Fast Decision sidecar smoke.
+#
+# Does NOT run on every PR (large torch + HF download). workflow_dispatch only.
+# Optional HF_TOKEN secret speeds / unlocks gated models; public Fastino weights
+# usually work anonymously with rate limits.
+#
+# Honesty: success proves live gliner2 HTTP classify. productionTrusted still
+# requires frontier adjudication + calibration criteria.
+
+name: Fast Decision GLiNER2 live smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Hugging Face model id
+        required: true
+        default: fastino/gliner2.5-base-v1
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gliner2-live-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-smoke:
+    name: Live gliner2 classify
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ inputs.model }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: infra/gliner-sidecar/requirements.txt
+
+      - name: Install sidecar + gliner2 + torch (CPU)
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -r infra/gliner-sidecar/requirements.txt
+          python -m pip install "gliner2>=1.0.0" peft tiktoken protobuf torch --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache Hugging Face hub
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/huggingface
+          key: hf-gliner2-${{ inputs.model }}-${{ runner.os }}
+          restore-keys: |
+            hf-gliner2-${{ inputs.model }}-
+            hf-gliner2-
+
+      - name: Live gliner2 smoke
+        run: bash scripts/gliner2-live-sidecar-smoke.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gliner2-live-smoke
+          path: |
+            /tmp/gliner2-live-healthz.json
+            /tmp/gliner2-live-classify.json
+          if-no-files-found: warn
