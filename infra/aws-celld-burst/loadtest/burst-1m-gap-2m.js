@@ -73,19 +73,21 @@ export default function () {
 }
 
 export function handleSummary(data) {
-  return {
-    stdout: JSON.stringify(
-      {
-        arm: ARM,
-        note: "Scaffold summary only — calibrate VUs and attach Cost Explorer before publishing §13.5",
-        metrics: {
-          http_reqs: data.metrics.http_reqs?.values,
-          http_req_duration: data.metrics.http_req_duration?.values,
-          burst_dropped_or_failed: data.metrics.burst_dropped_or_failed?.values,
-        },
-      },
-      null,
-      2
-    ),
+  const payload = {
+    arm: ARM,
+    note: "Scaffold summary only — calibrate VUs and attach Cost Explorer before publishing §13.5",
+    metrics: {
+      http_reqs: data.metrics.http_reqs?.values,
+      http_req_duration: data.metrics.http_req_duration?.values,
+      burst_dropped_or_failed: data.metrics.burst_dropped_or_failed?.values,
+    },
   };
+  const body = JSON.stringify(payload, null, 2);
+  const out = { stdout: body };
+  // Optional: RESULT_DIR=/path writes k6-arm-{ARM}.json for merge-k6-summaries-to-metrics.mjs
+  const resultDir = __ENV.RESULT_DIR;
+  if (resultDir) {
+    out[`${resultDir}/k6-arm-${ARM}.json`] = body;
+  }
+  return out;
 }
