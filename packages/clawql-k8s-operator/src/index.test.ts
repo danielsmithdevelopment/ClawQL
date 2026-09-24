@@ -324,4 +324,34 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     expect(result.drained.processed).toBe(2);
     expect(result.drained.placements.length).toBeGreaterThan(0);
   });
+
+  it("flags stale/missing celld S3 leases as CELLD_FLEET_NODE_DROPPED", async () => {
+    const { BurstWatchStub, BurstWatchStubLive, CelldFleetHealthLive, enqueueFleetHealthToStub } =
+      await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const now = 1_000_000;
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const stub = yield* BurstWatchStub;
+        const report = yield* enqueueFleetHealthToStub(stub, {
+          nowMs: now,
+          defaultTtlMs: 30_000,
+          expectedNodeIds: ["n1", "n2", "n3"],
+          leases: [
+            { nodeId: "n1", renewedAtMs: now - 5_000, ttlMs: 30_000 },
+            { nodeId: "n2", renewedAtMs: now - 120_000, ttlMs: 30_000 },
+          ],
+        });
+        const drained = yield* stub.drain();
+        return { report, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(CelldFleetHealthLive, BurstWatchStubLive)))
+    );
+
+    expect(result.report.ok).toBe(false);
+    expect(result.report.findings.map((f) => f.nodeId).sort()).toEqual(["n2", "n3"]);
+    expect(result.report.findings.every((f) => f.wormType === "CELLD_FLEET_NODE_DROPPED")).toBe(
+      true
+    );
+    expect(result.drained.processed).toBe(2);
+  });
 });

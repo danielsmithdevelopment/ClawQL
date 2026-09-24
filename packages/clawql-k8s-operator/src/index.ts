@@ -45,6 +45,11 @@ export {
   makeKarpenterLifecycleWatchService,
   mapKarpenterLifecycle,
   enqueueKarpenterRecordsToStub,
+  CelldFleetHealthService,
+  CelldFleetHealthLive,
+  makeCelldFleetHealthService,
+  evaluateCelldFleetHealth,
+  enqueueFleetHealthToStub,
   type WatchDispatchResult,
   type WatchEvent,
   type WatchEventKind,
@@ -55,6 +60,10 @@ export {
   type KarpenterLifecycleRecord,
   type KarpenterLifecycleMapped,
   type KarpenterLifecyclePhase,
+  type CelldLeaseRecord,
+  type FleetHealthFinding,
+  type FleetHealthReport,
+  type FleetHealthCheckArgs,
 } from "./watches/index.js";
 export { simulatePlacementVariance, type PlacementVarianceReport } from "./placement-variance.js";
 export {
