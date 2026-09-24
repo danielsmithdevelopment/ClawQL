@@ -286,6 +286,34 @@ describe("BurstWatchLoop + placement variance", () => {
     expect(disrupting.phase).toBe("disrupting");
     expect(disrupting.reason).toBe("Empty");
   });
+
+  it("BurstWatchSourcesUnavailableLive reports both informers not started", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      BurstWatchSourcesUnavailableLive,
+      BurstWatchSourcesService,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const sources = yield* BurstWatchSourcesService;
+        const stub = yield* BurstWatchStub;
+        const handle = yield* sources.start(stub, {
+          istioAccessLogPath: "/var/log/istio/access.ndjson",
+        });
+        handle.stop();
+        return handle;
+      }).pipe(Effect.provide(Layer.mergeAll(BurstWatchSourcesUnavailableLive, BurstWatchStubLive)))
+    );
+    expect(result.startedCount).toBe(0);
+    expect(result.statuses.map((s) => s.id).sort()).toEqual([
+      "istio-access-log-tail",
+      "nodeclaim-informer",
+      "pod-informer",
+    ]);
+    expect(result.statuses.every((s) => s.started === false)).toBe(true);
+  });
 });
 
 describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
