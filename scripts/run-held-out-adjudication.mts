@@ -4,6 +4,7 @@
  *
  * Default: dry-run adjudicator (echoes fixture GT with provenance).
  * Live judge: set CLAWQL_FAST_DECISION_JUDGE_URL (+ optional MODEL/TOKEN).
+ * Replay live GHA labels: `--labels-in path.json` (fail-closed on dry-run provenance).
  *
  * Scorer: GLiNER2 primary via CLAWQL_FAST_DECISION_GLINER_URL (live HTTP).
  * Without the URL the scorer reports honest `gliner2-stub` (never heuristic-
@@ -12,6 +13,7 @@
  * Usage:
  *   npx tsx scripts/run-held-out-adjudication.mts
  *   npx tsx scripts/run-held-out-adjudication.mts --out /tmp/labels.json
+ *   npx tsx scripts/run-held-out-adjudication.mts --labels-in artifacts/held-out-frontier-labels.json
  */
 
 import { writeFileSync } from "node:fs";
@@ -24,19 +26,49 @@ import {
   defaultHeldOutSuite,
   frontierAdjudicatorLayerFromEnv,
   glinerEndpointConfigured,
+  loadLiveAdjudicationLabelsFromJsonFile,
   runHeldOutValidationSuite,
+  type AdjudicationLabel,
+  type AdjudicationRunReport,
 } from "clawql-core";
 
-const outIdx = process.argv.indexOf("--out");
-const outPath = outIdx >= 0 ? process.argv[outIdx + 1] : undefined;
+function argValue(flag: string): string | undefined {
+  const idx = process.argv.indexOf(flag);
+  return idx >= 0 ? process.argv[idx + 1] : undefined;
+}
+
+const outPath = argValue("--out");
+const labelsInPath = argValue("--labels-in");
 
 const suite = defaultHeldOutSuite();
-const adjLayer = frontierAdjudicatorLayerFromEnv();
 /** Primary scorer — live HTTP when CLAWQL_FAST_DECISION_GLINER_URL is set. */
 const scorerLayer = createGlinerFastDecisionScorerLayer();
 const glinerLiveConfigured = glinerEndpointConfigured();
 
-const adj = await Effect.runPromise(adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer)));
+let adj: AdjudicationRunReport;
+if (labelsInPath) {
+  let labels: readonly AdjudicationLabel[];
+  try {
+    labels = await Effect.runPromise(loadLiveAdjudicationLabelsFromJsonFile(labelsInPath));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`--labels-in failed: ${msg}`);
+    process.exit(1);
+  }
+  const labeledCases = applyAdjudicationLabels(suite, labels).cases;
+  const judgeModel = labels[0]?.judgeModel ?? "labels-in";
+  adj = {
+    suiteId: suite.suiteId,
+    judgeModel,
+    mode: "live",
+    labels,
+    cases: labeledCases,
+  };
+  console.error(`loaded ${labels.length} live labels from ${labelsInPath}`);
+} else {
+  const adjLayer = frontierAdjudicatorLayerFromEnv();
+  adj = await Effect.runPromise(adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer)));
+}
 
 const labeled = applyAdjudicationLabels(suite, adj.labels);
 const { reports, scorerBackend } = await Effect.runPromise(
@@ -53,6 +85,7 @@ const summary = {
   adjudicationMode: adj.mode,
   judgeModel: adj.judgeModel,
   labelCount: adj.labels.length,
+  labelsIn: labelsInPath ?? null,
   scorerBackend,
   glinerLiveConfigured,
   reports: reports.map((r) => ({
@@ -67,9 +100,11 @@ const summary = {
     failureReasons: r.failureReasons,
   })),
   honesty: [
-    adj.mode === "dry-run"
-      ? "dry-run labels are not frontier-judge verdicts (cannot light productionTrusted)"
-      : "live judge labels applied",
+    labelsInPath
+      ? `live labels loaded from ${labelsInPath}`
+      : adj.mode === "dry-run"
+        ? "dry-run labels are not frontier-judge verdicts (cannot light productionTrusted)"
+        : "live judge labels applied",
     glinerLiveConfigured
       ? `scorer=${scorerBackend} (CLAWQL_FAST_DECISION_GLINER_URL set)`
       : "scorer=gliner2-stub (set CLAWQL_FAST_DECISION_GLINER_URL for live scores)",
@@ -82,7 +117,11 @@ const summary = {
 if (outPath) {
   writeFileSync(
     outPath,
-    JSON.stringify({ labels: adj.labels, cases: labeled.cases, summary }, null, 2) + "\n"
+    JSON.stringify(
+      { labels: adj.labels as readonly AdjudicationLabel[], cases: labeled.cases, summary },
+      null,
+      2
+    ) + "\n"
   );
   console.error(`wrote ${outPath}`);
 }

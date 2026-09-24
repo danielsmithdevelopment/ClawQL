@@ -7,6 +7,7 @@
  * the gate).
  */
 
+import { readFileSync } from "node:fs";
 import { Context, Effect, Layer } from "effect";
 import type { HeldOutCaseSpec, HeldOutSuiteManifest } from "./types.js";
 
@@ -142,6 +143,56 @@ export function applyAdjudicationLabels(
       };
     }),
   };
+}
+
+/**
+ * Parse frontier labels JSON (GHA artifact / runner `--out` shape).
+ * Fail-closed: refuses dry-run judgeModel provenance and empty/malformed payloads.
+ */
+export function parseLiveAdjudicationLabels(raw: unknown): readonly AdjudicationLabel[] {
+  const obj = raw as { labels?: unknown } | unknown[];
+  const list = Array.isArray(obj) ? obj : (obj as { labels?: unknown }).labels;
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new Error("adjudication labels JSON must contain a non-empty labels array");
+  }
+  const out: AdjudicationLabel[] = [];
+  for (const item of list) {
+    const l = item as Partial<AdjudicationLabel>;
+    if (!l || typeof l.caseId !== "string" || !l.caseId.trim()) {
+      throw new Error("label missing caseId");
+    }
+    if (typeof l.groundTruthCandidateId !== "string" || !l.groundTruthCandidateId.trim()) {
+      throw new Error(`label ${l.caseId}: missing groundTruthCandidateId`);
+    }
+    if (typeof l.judgeModel !== "string" || !l.judgeModel.trim()) {
+      throw new Error(`label ${l.caseId}: missing judgeModel`);
+    }
+    if (l.judgeModel.startsWith("dry-run")) {
+      throw new Error(
+        `label ${l.caseId}: refusing dry-run judgeModel "${l.judgeModel}" (use live frontier labels only)`
+      );
+    }
+    out.push({
+      caseId: l.caseId,
+      groundTruthCandidateId: l.groundTruthCandidateId,
+      adjudicated: true,
+      judgeModel: l.judgeModel,
+      judgedAt:
+        typeof l.judgedAt === "string" && l.judgedAt ? l.judgedAt : new Date().toISOString(),
+      rationale: typeof l.rationale === "string" ? l.rationale : "",
+    });
+  }
+  return out;
+}
+
+/** Load + parse live labels from a JSON file path (Effect.sync for Effect hosts). */
+export function loadLiveAdjudicationLabelsFromJsonFile(
+  path: string
+): Effect.Effect<readonly AdjudicationLabel[], Error> {
+  return Effect.try({
+    try: () => parseLiveAdjudicationLabels(JSON.parse(readFileSync(path, "utf8"))),
+    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+  });
 }
 
 export function adjudicateHeldOutSuite(
