@@ -26,7 +26,17 @@ export function harveyHeldOutSuiteV02Path(): string {
         join(here, "..", "held-out-fixtures", HARVEY_V02_FILENAME),
         join(here, "..", "src", "classifier", "held-out", "fixtures", HARVEY_V02_FILENAME),
         join(here, "..", "..", "src", "classifier", "held-out", "fixtures", HARVEY_V02_FILENAME),
-        join(here, "..", "..", "..", "src", "classifier", "held-out", "fixtures", HARVEY_V02_FILENAME)
+        join(
+          here,
+          "..",
+          "..",
+          "..",
+          "src",
+          "classifier",
+          "held-out",
+          "fixtures",
+          HARVEY_V02_FILENAME
+        )
       );
     }
   } catch {

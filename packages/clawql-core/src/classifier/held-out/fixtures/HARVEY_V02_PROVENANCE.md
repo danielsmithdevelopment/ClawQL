@@ -10,16 +10,16 @@ Prefix: `raw/harvey-lab/`
 
 ## Transcripts mined (nemotron-clawql)
 
-| Task | Run | CPR | First tools | Used for |
-| ---- | --- | --- | ----------- | -------- |
-| 001 | `31653266479` | 1.0 | `clawql_memory_recall` + `HSR_SECOND_REQUEST` | HSR list routing, doc type, Pattern E |
-| 002 | `31653266479` | 1.0 | same recall pattern | HSR merger-review routing |
-| 004 | `31653266479` | 0.0 | recall then FTC compliance letter | doc type, client_short_name |
-| 008 | `31653266479` | 0.0 | recall + bash | filing vs second-request framing |
-| 012 | `31653266479` | 1.0 | blind `grep springing lien` | prefer structured tool |
-| 018 | `31757993774` | 0.0 | bash ls/hunt 40 turns | anti-pattern first tool |
-| 018 | `31853395295` | 0.0 | `memory_recall` CREDIT_FACILITY then grep | over-recall vs SQL |
-| 018 | `31855811931` | 1.0 | `clawql_sql` cohort counts | gold routing for springing-lien rate |
+| Task | Run           | CPR | First tools                                   | Used for                              |
+| ---- | ------------- | --- | --------------------------------------------- | ------------------------------------- |
+| 001  | `31653266479` | 1.0 | `clawql_memory_recall` + `HSR_SECOND_REQUEST` | HSR list routing, doc type, Pattern E |
+| 002  | `31653266479` | 1.0 | same recall pattern                           | HSR merger-review routing             |
+| 004  | `31653266479` | 0.0 | recall then FTC compliance letter             | doc type, client_short_name           |
+| 008  | `31653266479` | 0.0 | recall + bash                                 | filing vs second-request framing      |
+| 012  | `31653266479` | 1.0 | blind `grep springing lien`                   | prefer structured tool                |
+| 018  | `31757993774` | 0.0 | bash ls/hunt 40 turns                         | anti-pattern first tool               |
+| 018  | `31853395295` | 0.0 | `memory_recall` CREDIT_FACILITY then grep     | over-recall vs SQL                    |
+| 018  | `31855811931` | 1.0 | `clawql_sql` cohort counts                    | gold routing for springing-lien rate  |
 
 ## Honesty
 
