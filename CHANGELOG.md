@@ -2,6 +2,7 @@
 
 ### Added
 
+- **Istio access-log file tail** — `IstioAccessLogTailService` follows an NDJSON Envoy/ztunnel access-log path into BurstWatchStub; missing path fail-closed (no invented denials).
 - **Karpenter NodeClaim informer** — `NodeClaimInformerService` watches `karpenter.sh/v1` NodeClaims into BurstWatchStub via lifecycle mapping; unavailable without kubeconfig (fail-closed).
 - **Frontier GHA co-runs live GLiNER2** — `with_gliner` (default on schedule / dispatch) installs Fastino GLiNER2 + starts sidecar so the same artifact reports `scorerBackend=gliner2` when secrets pass; timeout 90m.
 - **§13.5 Cost Explorer export scaffold** — `infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh` fail-closes on R2-sync keys / missing STS / empty CE rows; wired into §13 dry-run CI tests.
