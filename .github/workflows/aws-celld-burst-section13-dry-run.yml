@@ -1,0 +1,110 @@
+# §13 Bursty Streams three-arm loadtest — dry-run harness only.
+#
+# Always safe to run: exercises infra/aws-celld-burst/loadtest/dry-run.mjs and
+# asserts status=dry-run + null dollarY. Does NOT claim §13.5 publishable results.
+#
+# Live EKS + Cost Explorer three-arm (§13.5) remains external: no AWS credentials
+# in this workflow invent numbers. A credential gate job notices when AWS secrets
+# are present but still does not auto-run a live three-arm (ingest endpoints +
+# Cost Explorer lag are operator-owned).
+
+name: AWS celld-burst §13 dry-run
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "infra/aws-celld-burst/loadtest/**"
+      - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/aws-celld-burst/loadtest/**"
+      - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aws-celld-burst-s13-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dry-run:
+    name: §13 dry-run harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+
+      - name: Run dry-run.mjs and assert honesty fields
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          node infra/aws-celld-burst/loadtest/dry-run.mjs \
+            | tee artifacts/section13-dry-run.log
+          SUMMARY="infra/aws-celld-burst/loadtest/results/dry-run-summary.json"
+          test -f "${SUMMARY}"
+          node --input-type=module -e "
+            import { readFileSync } from 'node:fs';
+            const s = JSON.parse(readFileSync(process.env.SUMMARY, 'utf8'));
+            if (s.status !== 'dry-run') {
+              console.error('expected status=dry-run, got', s.status);
+              process.exit(2);
+            }
+            if (s.dollarY !== null) {
+              console.error('expected dollarY=null, got', s.dollarY);
+              process.exit(2);
+            }
+            for (const [k, m] of Object.entries(s.metrics || {})) {
+              if (m.p50Ms !== null || m.p99Ms !== null || m.costUsd !== null) {
+                console.error('arm metrics must stay null in dry-run', k, m);
+                process.exit(2);
+              }
+            }
+            console.log('assert ok', s.status, 'dollarY=', s.dollarY);
+          "
+          echo "::notice::§13 dry-run passed (null \$Y) — not publishable as §13.5"
+        env:
+          SUMMARY: infra/aws-celld-burst/loadtest/results/dry-run-summary.json
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: aws-celld-burst-section13-dry-run
+          path: |
+            infra/aws-celld-burst/loadtest/results/dry-run-summary.json
+            artifacts/section13-dry-run.log
+          if-no-files-found: warn
+
+  live-gate:
+    name: Live §13.5 credential notice
+    runs-on: ubuntu-latest
+    steps:
+      - id: secret
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLAWQL_AWS_ACCESS_KEY_ID: ${{ secrets.CLAWQL_AWS_ACCESS_KEY_ID }}
+          CLAWQL_AWS_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_AWS_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          HAS=false
+          if [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+            HAS=true
+          fi
+          if [ -n "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_AWS_SECRET_ACCESS_KEY:-}" ]; then
+            HAS=true
+          fi
+          {
+            echo "has_aws=${HAS}"
+          } >>"$GITHUB_OUTPUT"
+          if [ "${HAS}" = "true" ]; then
+            echo "::notice::AWS secrets present — live §13.5 still requires operator EKS arms + Cost Explorer; this workflow does not invent \$Y"
+          else
+            echo "::notice::No AWS secrets — live §13.5 remains external (expected for most PRs)"
+          fi
