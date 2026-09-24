@@ -4,6 +4,7 @@
 
 - **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService` (also via BurstWatchSources bootstrap).
 - **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; optional Istio access-log tail + celld lease-snapshot fleet health (`celldLeaseSnapshotJson` / `celldLeaseSnapshotPath`); unavailable sources reported honestly (no invented events).
+- **BurstWatch lease operator glue** — `scripts/run-burst-watch-from-s3-leases.sh` + `burst-watch-from-celld-leases.mts` fetch (fail-closed) then evaluate host lease snapshots via `BurstWatchSources` (no invented leases).
 - **Post-#1119 gaps audit script** — `scripts/audit-post-1119-remaining-gaps.mts` reports capability gate / productionTrusted / frontier / watches / §13 honestly (`goalComplete` only when live evidence exists).
 - **Istio access-log file tail** — `IstioAccessLogTailService` follows an NDJSON Envoy/ztunnel access-log path into BurstWatchStub; missing path fail-closed (no invented denials).
 - **Karpenter NodeClaim informer** — `NodeClaimInformerService` watches `karpenter.sh/v1` NodeClaims into BurstWatchStub via lifecycle mapping; unavailable without kubeconfig (fail-closed).

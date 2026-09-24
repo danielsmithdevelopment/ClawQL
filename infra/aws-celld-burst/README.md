@@ -12,6 +12,7 @@ Sample manifests and notes for **Bursty Streams on AWS** (celld + Karpenter + Is
 | `manifests/filler-disruption-budget.example.yaml` | Example Karpenter disruptionBudget for filler NodePool      |
 | `loadtest/`                                       | Three-arm k6 scaffold + §13.5 result template (§13)         |
 | `fetch-celld-leases-from-s3.sh`                   | Fail-closed S3 lease snapshot for `CelldFleetHealthService` |
+| (repo) `scripts/run-burst-watch-from-s3-leases.sh` | Fetch leases then evaluate via `BurstWatchSources` (fail-closed) |
 
 ## Status
 
