@@ -404,35 +404,67 @@ describe("§7 held-out suite runner", () => {
     expect(report.productionTrusted).toBe(true);
   });
 
-  it("dry-run adjudicator labels cases without lighting productionTrusted under heuristic alone", async () => {
-    const { HeuristicFastDecisionScorerLive } = await import("./scorer.js");
+  it("HTTP adjudicator + PriorConfidenceScorer can light productionTrusted on a mini suite", async () => {
+    const { PriorConfidenceScorerLive } = await import("./scorer.js");
     const {
-      defaultHeldOutSuite,
       adjudicateHeldOutSuite,
       applyAdjudicationLabels,
-      runHeldOutValidationSuite,
-      DryRunFrontierAdjudicatorLive,
+      runHeldOutValidationForUseSite,
+      makeHttpFrontierAdjudicator,
+      FrontierAdjudicator,
     } = await import("./held-out/index.js");
+    const { Layer } = await import("effect");
 
-    const suite = defaultHeldOutSuite();
-    const adj = await Effect.runPromise(
-      adjudicateHeldOutSuite(suite).pipe(Effect.provide(DryRunFrontierAdjudicatorLive))
+    const suite = {
+      suiteId: "http-adj-mini",
+      description: "mini suite for HTTP judge path",
+      cases: [
+        {
+          caseId: "h1",
+          useSiteId: "skill_fast_path_match",
+          query: "pick hit",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.05 } },
+          ],
+          groundTruthCandidateId: "miss", // wrong provisional — judge corrects
+          adjudicated: false,
+        },
+      ],
+    };
+
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({
+          groundTruthCandidateId: "hit",
+          rationale: "recorded judge fixture",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )) as unknown as typeof fetch;
+
+    const judgeLayer = Layer.succeed(
+      FrontierAdjudicator,
+      makeHttpFrontierAdjudicator({
+        url: "http://judge.test/v1/adjudicate",
+        model: "test-judge",
+        fetchImpl,
+      })
     );
-    expect(adj.mode).toBe("dry-run");
-    expect(adj.labels.every((l) => l.adjudicated)).toBe(true);
+
+    const adj = await Effect.runPromise(
+      adjudicateHeldOutSuite(suite).pipe(Effect.provide(judgeLayer))
+    );
+    expect(adj.mode).toBe("live");
+    expect(adj.labels[0]?.groundTruthCandidateId).toBe("hit");
 
     const labeled = applyAdjudicationLabels(suite, adj.labels);
-    expect(labeled.cases.every((c) => c.adjudicated)).toBe(true);
-
-    // Dry-run labels + heuristic still report productionTrusted only when criteria pass;
-    // embedded suite is not calibrated for heuristic — gate must stay honest.
-    const reports = await Effect.runPromise(
-      runHeldOutValidationSuite(labeled).pipe(Effect.provide(HeuristicFastDecisionScorerLive))
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(labeled, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(PriorConfidenceScorerLive))
     );
-    // Adjudication incomplete reason gone; trusted only if criteria also pass.
-    for (const r of reports) {
-      expect(r.adjudicatedCount).toBe(r.caseCount);
-      expect(r.failureReasons.some((x) => x.includes("adjudication incomplete"))).toBe(false);
-    }
+    expect(report.productionTrusted).toBe(true);
   });
 });

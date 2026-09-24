@@ -24,11 +24,19 @@ export {
 export {
   BurstWatchStub,
   BurstWatchStubLive,
+  BurstWatchLoop,
+  BurstWatchLoopLive,
+  BurstWatchControllerLive,
   makeBurstWatchStub,
   type WatchDispatchResult,
   type WatchEvent,
   type WatchEventKind,
+  type WatchLoopTickResult,
 } from "./watches/index.js";
+export {
+  simulatePlacementVariance,
+  type PlacementVarianceReport,
+} from "./placement-variance.js";
 export {
   BURST_ARCHITECTURE_WORM_ENTRY_TYPES,
   type BurstArchitectureWORMEntryType,

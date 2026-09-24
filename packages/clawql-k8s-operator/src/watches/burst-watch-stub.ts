@@ -78,9 +78,7 @@ export function makeBurstWatchStub(): Effect.Effect<Context.Tag.Service<typeof B
           }
 
           if (args?.atrAllows && args?.meshAllows) {
-            driftReports.push(
-              yield* detectMeshAtrDrift(args.meshAllows, args.atrAllows)
-            );
+            driftReports.push(yield* detectMeshAtrDrift(args.meshAllows, args.atrAllows));
           }
 
           if (args?.placement && placements.length === 0) {

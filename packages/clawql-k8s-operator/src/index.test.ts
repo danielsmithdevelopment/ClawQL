@@ -168,3 +168,49 @@ describe("BurstWatchStub", () => {
     expect(result.placements.length).toBeGreaterThan(0);
   });
 });
+
+describe("BurstWatchLoop + placement variance", () => {
+  it("runs controller stack until idle", async () => {
+    const { BurstWatchLoop, BurstWatchControllerLive } = await import("./watches/index.js");
+    const ticks = await Effect.runPromise(
+      Effect.gen(function* () {
+        const loop = yield* BurstWatchLoop;
+        yield* loop.enqueue({
+          kind: "mesh_denial",
+          event: {
+            requestId: "r2",
+            sourceIdentity: "spiffe://x",
+            destination: "y",
+            layer: "ztunnel",
+            reason: "deny",
+            sessionId: "s2",
+          },
+        });
+        return yield* loop.runUntilIdle({
+          atrAllows: new Set(["a"]),
+          meshAllows: new Set(["a"]),
+        });
+      }).pipe(Effect.provide(BurstWatchControllerLive))
+    );
+    expect(ticks[0]?.processed).toBe(1);
+    expect(ticks[0]?.meshBridges[0]?.wormType).toBe("MESH_POLICY_DENIED");
+    expect(ticks.some((t) => t.processed === 0)).toBe(true);
+  });
+
+  it("simulates placement variance without inventing AWS numbers", async () => {
+    const { simulatePlacementVariance } = await import("./placement-variance.js");
+    const report = await Effect.runPromise(
+      simulatePlacementVariance({
+        sessions: 40,
+        nodes: [
+          { nodeId: "n1", runningCellCount: 5, memoryUtil: 0.4 },
+          { nodeId: "n2", runningCellCount: 5, memoryUtil: 0.4 },
+          { nodeId: "n3", runningCellCount: 1, memoryUtil: 0.1, newlyProvisioned: true },
+        ],
+      })
+    );
+    expect(report.samples).toBe(40);
+    expect(report.uniqueNodes).toBeGreaterThan(0);
+    expect(report.note).toMatch(/Simulation only/);
+  });
+});
