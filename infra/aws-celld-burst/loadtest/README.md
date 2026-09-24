@@ -19,7 +19,7 @@
 node infra/aws-celld-burst/loadtest/dry-run.mjs
 ```
 
-**CI:** [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](../../../.github/workflows/aws-celld-burst-section13-dry-run.yml) runs the same harness on path-filtered PRs/`main` pushes and `workflow_dispatch`, asserts `status=dry-run` + null `$Y` / p50/p99, and uploads the summary artifact. A companion credential gate notices `CLAWQL_CE_*` (preferred) / usable AWS secrets. Optional live CE CSV export: `workflow_dispatch` with `run_ce_export=true` or `repository_dispatch` type `section13-ce-export` (fail-closed; never invents `$Y`). Fetch with `bash scripts/fetch-section13-ce-export-artifact.sh`.
+**CI:** [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](../../../.github/workflows/aws-celld-burst-section13-dry-run.yml) runs the same harness on path-filtered PRs/`main` pushes and `workflow_dispatch`, asserts `status=dry-run` + null `$Y` / p50/p99, and uploads the summary artifact. A companion credential gate notices `CLAWQL_CE_*` (preferred) / `CLAWQL_CE_ROLE_ARN` (OIDC) / usable AWS secrets. Optional live CE CSV export: `workflow_dispatch` with `run_ce_export=true` or `repository_dispatch` type `section13-ce-export` (fail-closed; never invents `$Y`). Fetch with `bash scripts/fetch-section13-ce-export-artifact.sh`.
 
 **Honesty:** dry-run proves the summary schema and harness wiring only. Do not publish dry-run output as §13.5.
 
@@ -69,6 +69,13 @@ Mixed sandboxes that keep Cloudflare R2 sync keys in `AWS_*` can override with
 `CLAWQL_CE_ACCESS_KEY_ID` / `CLAWQL_CE_SECRET_ACCESS_KEY` (optional
 `CLAWQL_CE_SESSION_TOKEN` / `CLAWQL_CE_REGION`). The script still refuses when the
 *effective* access key equals `CLAWQL_SYNC_ACCESS_KEY_ID`.
+
+**GHA OIDC (no static CE keys):** deploy
+[`../iam/github-oidc-ce-export-role.yaml`](../iam/github-oidc-ce-export-role.yaml)
+(CloudFormation), set repository variable or secret `CLAWQL_CE_ROLE_ARN` to the
+`RoleArn` output, then dispatch `section13-ce-export`. Optional
+`vars.CLAWQL_CE_REGION` (default `us-east-1`). The workflow assumes that role via
+`id-token` and never invents `$Y`.
 
 Fail-closed: refuses missing aws CLI, R2-sync key collision, STS failure, or empty Cost Explorer results.
 

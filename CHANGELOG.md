@@ -2,6 +2,7 @@
 
 ### Added
 
+- **§13.5 CE export via GitHub OIDC** — `aws-celld-burst-section13-dry-run.yml` accepts `CLAWQL_CE_ROLE_ARN` (vars or secrets) to assume an IAM role with Cost Explorer read via `id-token`; static `CLAWQL_CE_*` keys remain preferred when present. Operator CloudFormation: `infra/aws-celld-burst/iam/github-oidc-ce-export-role.yaml`. Still fail-closed; never invents `$Y`.
 - **GLiNER2 multi-label classify scoring** — sidecar `gliner2_scores` uses `classification(..., multi_label=True)` instead of entity-extract-only so Fast Decision candidates get calibrated confidences (entity-extract often returned all-zero for skill/schema ids). Unit tests in `infra/gliner-sidecar/test_app.py`; frontier/live-smoke GHA run them; live smoke asserts non-all-zero scores; post-#1119 audit requires the multilabel path.
 - **Fast Decision task framing** — GLiNER classify text is prefixed with the use-site description (`taskFraming`) so multi-label scoring sees the decision job; held-out fixtures clarify underspecified pattern/sgdop/precompact cases without inventing labels.
 - **productionTrusted DEFAULT criteria + zero-signal abstain** — held-out `productionTrusted` always requires `DEFAULT_VALIDATION_CRITERIA` (wiring criteria cannot light it); calibration abstains on all-zero confidences and reports `noCalibratableScores` instead of inventing accuracy from fixture order.

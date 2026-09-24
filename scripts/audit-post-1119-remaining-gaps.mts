@@ -211,7 +211,12 @@ function fileContains(path: string, re: RegExp): boolean {
     fileContains(
       ".github/workflows/aws-celld-burst-section13-dry-run.yml",
       /section13-ce-export|export-cost-explorer-arms/
-    );
+    ) &&
+    fileContains(
+      ".github/workflows/aws-celld-burst-section13-dry-run.yml",
+      /CLAWQL_CE_ROLE_ARN|role-to-assume/
+    ) &&
+    existsSync("infra/aws-celld-burst/iam/github-oidc-ce-export-role.yaml");
 
   push({
     id: "section13-dry-run-and-tools",
@@ -229,6 +234,10 @@ function fileContains(path: string, re: RegExp): boolean {
   const effectiveAws = ceKey || aws;
   const r2Collision = Boolean(effectiveAws) && Boolean(sync) && effectiveAws === sync;
   const hasCeOverride = envSet("CLAWQL_CE_ACCESS_KEY_ID") && envSet("CLAWQL_CE_SECRET_ACCESS_KEY");
+  const hasCeRoleArn = envSet("CLAWQL_CE_ROLE_ARN");
+  const ceOidcTemplate = existsSync(
+    "infra/aws-celld-burst/iam/github-oidc-ce-export-role.yaml"
+  );
   const ce = spawnSync(
     "bash",
     ["infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh", "/tmp/ce-audit-out"],
@@ -265,7 +274,7 @@ function fileContains(path: string, re: RegExp): boolean {
         : r2Collision || refusedR2 || ce.status !== 0
           ? "BLOCKED"
           : "OPEN",
-    evidence: `AWS_EQ_SYNC=${aws === sync} CE_override=${hasCeOverride} effectiveEqSync=${r2Collision} ceStatus=${ce.status} refusedR2=${refusedR2} wroteCsv=${wroteCsv} ghaCsv=${ghaCsv}`,
+    evidence: `AWS_EQ_SYNC=${aws === sync} CE_override=${hasCeOverride} CE_ROLE_ARN=${hasCeRoleArn} oidcTemplate=${ceOidcTemplate} effectiveEqSync=${r2Collision} ceStatus=${ce.status} refusedR2=${refusedR2} wroteCsv=${wroteCsv} ghaCsv=${ghaCsv}`,
   });
 }
 

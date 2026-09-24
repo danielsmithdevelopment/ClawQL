@@ -10,11 +10,13 @@
 # AWS_*. Export fail-closes on R2 collision / STS failure / empty CE rows —
 # never invents $Y. Full §13.5 still needs operator k6 arms + fill-result.
 #
-# Secrets (any pair):
-#   CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY  (preferred)
+# Secrets / vars for live CE export (any one path):
+#   CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY  (preferred static)
 #   CLAWQL_AWS_ACCESS_KEY_ID + CLAWQL_AWS_SECRET_ACCESS_KEY
-#   AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+#   AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY  (refused when equal to CLAWQL_SYNC_*)
+#   CLAWQL_CE_ROLE_ARN (vars or secrets) — GitHub OIDC assume-role (no static keys)
 # Optional: CLAWQL_S13_START / CLAWQL_S13_END (defaults: yesterday / today UTC)
+# Optional: CLAWQL_CE_REGION / vars.CLAWQL_CE_REGION (default us-east-1 for OIDC)
 
 name: AWS celld-burst §13 dry-run
 
@@ -58,6 +60,8 @@ on:
 
 permissions:
   contents: read
+  # id-token needed when CLAWQL_CE_ROLE_ARN is set (OIDC assume-role for CE).
+  id-token: write
 
 concurrency:
   group: aws-celld-burst-s13-${{ github.ref }}
@@ -129,6 +133,8 @@ jobs:
       can_export: ${{ steps.gate.outputs.can_export }}
       skip_reason: ${{ steps.gate.outputs.skip_reason }}
       want_export: ${{ steps.gate.outputs.want_export }}
+      auth_mode: ${{ steps.gate.outputs.auth_mode }}
+      role_arn: ${{ steps.gate.outputs.role_arn }}
     steps:
       - id: gate
         env:
@@ -139,12 +145,20 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_CE_ROLE_ARN_SECRET: ${{ secrets.CLAWQL_CE_ROLE_ARN }}
+          CLAWQL_CE_ROLE_ARN_VAR: ${{ vars.CLAWQL_CE_ROLE_ARN }}
           EVENT_NAME: ${{ github.event_name }}
           INPUT_RUN_CE: ${{ github.event.inputs.run_ce_export }}
         run: |
           set -euo pipefail
           HAS_CE=false
           HAS_AWS=false
+          HAS_ROLE=false
+          ROLE_ARN="${CLAWQL_CE_ROLE_ARN_VAR:-}"
+          if [ -z "${ROLE_ARN}" ]; then ROLE_ARN="${CLAWQL_CE_ROLE_ARN_SECRET:-}"; fi
+          if [ -n "${ROLE_ARN}" ]; then
+            HAS_ROLE=true
+          fi
           if [ -n "${CLAWQL_CE_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_CE_SECRET_ACCESS_KEY:-}" ]; then
             HAS_CE=true
           fi
@@ -155,15 +169,16 @@ jobs:
             HAS_AWS=true
           fi
           # Refuse when the only AWS_* pair equals R2 sync (same honesty as export script).
-          if [ "${HAS_CE}" != "true" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+          if [ "${HAS_CE}" != "true" ] && [ "${HAS_ROLE}" != "true" ] && \
+             [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
              [ -n "${CLAWQL_SYNC_ACCESS_KEY_ID:-}" ] && \
              [ "${AWS_ACCESS_KEY_ID}" = "${CLAWQL_SYNC_ACCESS_KEY_ID}" ] && \
              [ -z "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ]; then
             HAS_AWS=false
-            echo "::notice::AWS_ACCESS_KEY_ID equals CLAWQL_SYNC (R2) — not usable for CE; set CLAWQL_CE_*"
+            echo "::notice::AWS_ACCESS_KEY_ID equals CLAWQL_SYNC (R2) — not usable for CE; set CLAWQL_CE_* or CLAWQL_CE_ROLE_ARN"
           fi
           CAN=false
-          if [ "${HAS_CE}" = "true" ] || [ "${HAS_AWS}" = "true" ]; then
+          if [ "${HAS_CE}" = "true" ] || [ "${HAS_AWS}" = "true" ] || [ "${HAS_ROLE}" = "true" ]; then
             CAN=true
           fi
           WANT=false
@@ -178,17 +193,24 @@ jobs:
           elif [ "${WANT}" != "true" ]; then
             SKIP="export_not_requested"
           fi
+          AUTH="keys"
+          if [ "${HAS_ROLE}" = "true" ]; then AUTH="oidc"; fi
+          if [ "${HAS_CE}" = "true" ]; then AUTH="ce_keys"; fi
           {
             echo "can_export=${CAN}"
             echo "want_export=${WANT}"
             echo "skip_reason=${SKIP}"
+            echo "auth_mode=${AUTH}"
+            echo "role_arn=${ROLE_ARN}"
           } >>"$GITHUB_OUTPUT"
           if [ "${HAS_CE}" = "true" ]; then
             echo "::notice::CLAWQL_CE_* secrets present — CE export available via workflow_dispatch/repository_dispatch"
+          elif [ "${HAS_ROLE}" = "true" ]; then
+            echo "::notice::CLAWQL_CE_ROLE_ARN set — CE export can use GitHub OIDC assume-role"
           elif [ "${HAS_AWS}" = "true" ]; then
-            echo "::notice::AWS / CLAWQL_AWS_* secrets present — CE export available (prefer CLAWQL_CE_* when AWS_* is R2 sync)"
+            echo "::notice::AWS / CLAWQL_AWS_* secrets present — CE export available (prefer CLAWQL_CE_* or CLAWQL_CE_ROLE_ARN when AWS_* is R2 sync)"
           else
-            echo "::notice::No CLAWQL_CE_* / usable AWS secrets — live §13.5 CE export remains external"
+            echo "::notice::No CLAWQL_CE_* / CLAWQL_CE_ROLE_ARN / usable AWS secrets — live §13.5 CE export remains external"
           fi
 
   ce-export:
@@ -197,6 +219,9 @@ jobs:
     if: needs.live-gate.outputs.want_export == 'true' && needs.live-gate.outputs.can_export == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -208,7 +233,28 @@ jobs:
           sudo /tmp/aws/install --update
           aws --version
 
-      - name: Export three-arm Cost Explorer CSVs (fail-closed)
+      - name: Assume CE role via GitHub OIDC
+        if: needs.live-gate.outputs.auth_mode == 'oidc'
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a16d10021e7ce35612f3f6a7
+        with:
+          role-to-assume: ${{ needs.live-gate.outputs.role_arn }}
+          aws-region: ${{ vars.CLAWQL_CE_REGION != '' && vars.CLAWQL_CE_REGION || 'us-east-1' }}
+          role-session-name: clawql-section13-ce-export
+
+      # OIDC path: do not inject AWS_* / CLAWQL_CE_* secrets (would overwrite assumed-role env).
+      - name: Export three-arm Cost Explorer CSVs (OIDC)
+        if: needs.live-gate.outputs.auth_mode == 'oidc'
+        env:
+          CLAWQL_SYNC_ACCESS_KEY_ID: ${{ secrets.CLAWQL_SYNC_ACCESS_KEY_ID }}
+          CLAWQL_S13_TAG_KEY: ${{ vars.CLAWQL_S13_TAG_KEY }}
+          INPUT_START: ${{ github.event.inputs.s13_start }}
+          INPUT_END: ${{ github.event.inputs.s13_end }}
+          PAYLOAD_START: ${{ github.event.client_payload.s13_start }}
+          PAYLOAD_END: ${{ github.event.client_payload.s13_end }}
+        run: bash scripts/run-section13-ce-export-gha.sh
+
+      - name: Export three-arm Cost Explorer CSVs (static keys)
+        if: needs.live-gate.outputs.auth_mode != 'oidc'
         env:
           CLAWQL_CE_ACCESS_KEY_ID: ${{ secrets.CLAWQL_CE_ACCESS_KEY_ID }}
           CLAWQL_CE_SECRET_ACCESS_KEY: ${{ secrets.CLAWQL_CE_SECRET_ACCESS_KEY }}
@@ -224,27 +270,7 @@ jobs:
           INPUT_END: ${{ github.event.inputs.s13_end }}
           PAYLOAD_START: ${{ github.event.client_payload.s13_start }}
           PAYLOAD_END: ${{ github.event.client_payload.s13_end }}
-        run: |
-          set -euo pipefail
-          # Prefer CLAWQL_CE_*; else map CLAWQL_AWS_* into CLAWQL_CE_* for the export script.
-          if [ -z "${CLAWQL_CE_ACCESS_KEY_ID:-}" ] && [ -n "${CLAWQL_AWS_ACCESS_KEY_ID:-}" ]; then
-            export CLAWQL_CE_ACCESS_KEY_ID="${CLAWQL_AWS_ACCESS_KEY_ID}"
-            export CLAWQL_CE_SECRET_ACCESS_KEY="${CLAWQL_AWS_SECRET_ACCESS_KEY}"
-            echo "Mapped CLAWQL_AWS_* → CLAWQL_CE_* for export"
-          fi
-          START="${INPUT_START:-}"
-          END="${INPUT_END:-}"
-          if [ -z "${START}" ]; then START="${PAYLOAD_START:-}"; fi
-          if [ -z "${END}" ]; then END="${PAYLOAD_END:-}"; fi
-          if [ -z "${START}" ] || [ -z "${END}" ]; then
-            END="$(date -u +%Y-%m-%d)"
-            START="$(date -u -d 'yesterday' +%Y-%m-%d)"
-          fi
-          export CLAWQL_S13_START="${START}"
-          export CLAWQL_S13_END="${END}"
-          mkdir -p artifacts/ce-export
-          bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh artifacts/ce-export
-          node infra/aws-celld-burst/loadtest/write-ce-export-summary.mjs artifacts/ce-export
+        run: bash scripts/run-section13-ce-export-gha.sh
 
       - uses: actions/upload-artifact@v7
         with:
@@ -260,4 +286,4 @@ jobs:
     steps:
       - run: |
           echo "::notice::CE export requested but skipped — ${{ needs.live-gate.outputs.skip_reason }}"
-          echo "Install CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY (preferred) or usable AWS secrets."
+          echo "Install CLAWQL_CE_ACCESS_KEY_ID + CLAWQL_CE_SECRET_ACCESS_KEY, CLAWQL_CE_ROLE_ARN (OIDC), or usable AWS secrets."
