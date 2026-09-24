@@ -12,6 +12,7 @@
  *
  * Usage:
  *   npx tsx scripts/run-held-out-adjudication.mts
+ *   npx tsx scripts/run-held-out-adjudication.mts --suite v0.2-harvey
  *   npx tsx scripts/run-held-out-adjudication.mts --out /tmp/labels.json
  *   npx tsx scripts/run-held-out-adjudication.mts --labels-in artifacts/held-out-frontier-labels.json
  */
@@ -23,10 +24,10 @@ import {
   createGlinerFastDecisionScorerLayer,
   adjudicateHeldOutSuite,
   applyAdjudicationLabels,
-  defaultHeldOutSuite,
   frontierAdjudicatorLayerFromEnv,
   glinerEndpointConfigured,
   loadLiveAdjudicationLabelsFromJsonFile,
+  resolveHeldOutSuite,
   runHeldOutValidationSuite,
   DEFAULT_VALIDATION_CRITERIA,
   type AdjudicationLabel,
@@ -40,8 +41,10 @@ function argValue(flag: string): string | undefined {
 
 const outPath = argValue("--out");
 const labelsInPath = argValue("--labels-in");
+const suiteArg = argValue("--suite");
 
-const suite = defaultHeldOutSuite();
+const suite = resolveHeldOutSuite(suiteArg);
+console.error(`suite=${suite.suiteId} cases=${suite.cases.length}`);
 /** Primary scorer — live HTTP when CLAWQL_FAST_DECISION_GLINER_URL is set. */
 const scorerLayer = createGlinerFastDecisionScorerLayer();
 const glinerLiveConfigured = glinerEndpointConfigured();

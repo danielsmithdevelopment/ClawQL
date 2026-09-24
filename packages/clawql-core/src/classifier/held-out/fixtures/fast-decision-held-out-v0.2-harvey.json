@@ -1,0 +1,764 @@
+{
+  "suiteId": "fast-decision-held-out-v0.2-harvey",
+  "description": "Harvey LAB firm-knowledge workflow decision points mined from R2 clawql-openbench-traces (nemotron-clawql transcripts). adjudicated=false until frontier-judge labels land — provisional groundTruth reflects successful vs failed Lab tool choices, not CPR as FD labels. Provenance: fixtures/HARVEY_V02_PROVENANCE.md",
+  "cases": [
+    {
+      "caseId": "harvey-018-sql-cohort-count",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Among Banking & Finance credit facilities in firm knowledge, how many mention a springing lien? Report k of N using structured corpus tools.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested DuckDB matters (is_credit_facility, mentions_springing_lien)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Ontology recall with title/practiceArea filters"
+          }
+        },
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "features": {
+            "label": "bash+grep workspace hunt",
+            "description": "Shell listing matters and grepping springing lien across DMS paths"
+          }
+        },
+        {
+          "candidateId": "tool.generic_search",
+          "features": {
+            "label": "generic search",
+            "description": "Broad unstructured search without schema filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "Probe #7 all-pass run-31855811931 opened with clawql_sql COUNT; failed run-31757993774 burned 40 turns on bash. R2: raw/harvey-lab/2026/08/15/run-31855811931/.../018"
+    },
+    {
+      "caseId": "harvey-018-wrong-first-tool-bash",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Start the credit-facility springing-lien cohort task: pick the first tool that defines denominator N correctly.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query",
+            "description": "SELECT matter_id FROM matters WHERE is_credit_facility"
+          }
+        },
+        {
+          "candidateId": "tool.bash_ls_workspace",
+          "features": {
+            "label": "bash ls workspace",
+            "description": "ls $WORKSPACE_DIR/documents/matters before any structured query"
+          }
+        },
+        {
+          "candidateId": "tool.grep_springing_blind",
+          "features": {
+            "label": "grep springing lien blind",
+            "description": "grep springing lien across /workspace without cohort filter"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "Contrast fail transcript run-31757993774 turn1 bash vs success run-31855811931 turn1 clawql_sql"
+    },
+    {
+      "caseId": "harvey-018-memory-vs-sql-cohort",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Recall the credit facility cohort for Banking & Finance springing-lien rate. Prefer the instrument that returned exact N=12 with k=0 in the all-pass probe.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query",
+            "description": "DuckDB matters WHERE is_credit_facility; count mentions_springing_lien"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_credit_title",
+          "features": {
+            "label": "memory_recall CREDIT_FACILITY title",
+            "description": "schema legal.Matter filters title contains CREDIT_FACILITY"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_practice_area",
+          "features": {
+            "label": "memory_recall practiceArea Banking",
+            "description": "filters practiceArea contains Banking & Finance (over-recall risk)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "run-31853395295 used memory_recall then grepped 36 paths (miss); run-31855811931 used SQL (pass)"
+    },
+    {
+      "caseId": "harvey-001-hsr-second-request-list",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Enumerate every antitrust matter in firm knowledge that received an HSR second request.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall HSR_SECOND_REQUEST",
+            "description": "schema legal.Matter filters title contains HSR_SECOND_REQUEST"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query",
+            "description": "SQL over matters flagged for HSR second request"
+          }
+        },
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "features": {
+            "label": "bash+grep second request",
+            "description": "grep Second Request across documents/matters without ontology"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": false,
+      "notes": "Batch2 task 001 all-pass run-31653266479 opened with clawql_memory_recall + HSR_SECOND_REQUEST filter"
+    },
+    {
+      "caseId": "harvey-002-hsr-merger-reviews",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "List antitrust merger reviews that drew an HSR second request and summarize count.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Ontology recall with HSR_SECOND_REQUEST title flag"
+          }
+        },
+        {
+          "candidateId": "tool.grep_second_request",
+          "features": {
+            "label": "grep Second Request",
+            "description": "Path grep for Second Request strings in DMS"
+          }
+        },
+        {
+          "candidateId": "tool.bash_find",
+          "features": {
+            "label": "bash find",
+            "description": "find under documents/matters for filing names"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": false,
+      "notes": "task 002 all-pass; same first-tool pattern as 001"
+    },
+    {
+      "caseId": "harvey-012-springing-lien-first-tool",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Find which financing matters involve springing lien language in the closing package corpus.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query",
+            "description": "Structured springing-lien / credit-facility flags in DuckDB"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Ontology recall for springing lien / CREDIT_FACILITY"
+          }
+        },
+        {
+          "candidateId": "tool.grep_springing_blind",
+          "features": {
+            "label": "grep springing lien /workspace",
+            "description": "Blind grep path=/workspace pattern springing lien"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "task 012 all-pass still opened with blind grep (fragile); preferred structured tool for FD routing"
+    },
+    {
+      "caseId": "harvey-008-hsr-vs-filing-confusion",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Most recent HSR filing in antitrust practice — do not confuse filing with second-request-only cohort.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_hsr_filing",
+          "features": {
+            "label": "memory_recall HSR filing",
+            "description": "Recall matters with HSR filing signals (not only second request)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_second_request_only",
+          "features": {
+            "label": "memory_recall HSR_SECOND_REQUEST only",
+            "description": "Title flag HSR_SECOND_REQUEST — wrong framing for 'filing' prompts"
+          }
+        },
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "features": {
+            "label": "bash+grep",
+            "description": "Unstructured hunt for filing dates"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_hsr_filing",
+      "adjudicated": false,
+      "notes": "task 008 failed (0% CPR); docs warn HSR filing ≠ second request (ouroboros grounding wonder)"
+    },
+    {
+      "caseId": "harvey-skill-credit-facility-sql",
+      "useSiteId": "skill_fast_path_match",
+      "query": "Run the firm-knowledge credit-facility springing-lien cohort check with ClawQL data tools.",
+      "candidates": [
+        {
+          "candidateId": "skill.harvey.credit_facility_sql",
+          "features": {
+            "label": "credit facility SQL skill",
+            "description": "Committed skill: data_query is_credit_facility + mentions_springing_lien counts"
+          }
+        },
+        {
+          "candidateId": "skill.generic.search",
+          "features": {
+            "label": "generic search skill",
+            "description": "Broad search without DuckDB cohort"
+          }
+        },
+        {
+          "candidateId": "skill.slack.notify",
+          "features": {
+            "label": "slack notify",
+            "description": "Post status to Slack"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.harvey.credit_facility_sql",
+      "adjudicated": false,
+      "notes": "Maps probe #7 winning workflow to skill fast-path use site"
+    },
+    {
+      "caseId": "harvey-skill-hsr-second-request-recall",
+      "useSiteId": "skill_fast_path_match",
+      "query": "List HSR second-request antitrust matters using the firm ontology Pattern E path.",
+      "candidates": [
+        {
+          "candidateId": "skill.harvey.hsr_second_request_recall",
+          "features": {
+            "label": "HSR second-request recall skill",
+            "description": "memory_recall schema+filters title HSR_SECOND_REQUEST then cite proof docs"
+          }
+        },
+        {
+          "candidateId": "skill.generic.grep_dms",
+          "features": {
+            "label": "grep DMS skill",
+            "description": "Recursive grep of matter folders"
+          }
+        },
+        {
+          "candidateId": "skill.github.prs",
+          "features": {
+            "label": "github PRs",
+            "description": "List GitHub pull requests"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.harvey.hsr_second_request_recall",
+      "adjudicated": false,
+      "notes": "Batch2 tasks 001/002 winning Pattern E path"
+    },
+    {
+      "caseId": "harvey-doc-second-request-strategy-memo",
+      "useSiteId": "document_entity_type_classification",
+      "query": "Document path: documents/matters/1003-00001/Memos & Analysis/second-request-strategy-memo.docx — classify entity type at ingest.",
+      "candidates": [
+        {
+          "candidateId": "strategy_memo",
+          "features": {
+            "label": "strategy / analysis memo",
+            "description": "Second-request strategy memo under Memos & Analysis"
+          }
+        },
+        {
+          "candidateId": "hsr_filing_transmittal",
+          "features": {
+            "label": "HSR filing transmittal letter",
+            "description": "Transmittal letter for HSR filing"
+          }
+        },
+        {
+          "candidateId": "invoice",
+          "features": {
+            "label": "invoice",
+            "description": "Accounts payable invoice"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "strategy_memo",
+      "adjudicated": false,
+      "notes": "Opened by task 001/002 after recall (run-31653266479)"
+    },
+    {
+      "caseId": "harvey-doc-substantial-compliance-cert",
+      "useSiteId": "document_entity_type_classification",
+      "query": "Document: matters/1041-00001/FTC Submissions/substantial-compliance-certification-letter.docx",
+      "candidates": [
+        {
+          "candidateId": "ftc_substantial_compliance_letter",
+          "features": {
+            "label": "FTC substantial compliance certification",
+            "description": "Agency submission certifying substantial compliance"
+          }
+        },
+        {
+          "candidateId": "engagement_letter",
+          "features": {
+            "label": "engagement letter",
+            "description": "Client engagement letter"
+          }
+        },
+        {
+          "candidateId": "deed_of_trust",
+          "features": {
+            "label": "deed of trust",
+            "description": "Security instrument"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "ftc_substantial_compliance_letter",
+      "adjudicated": false,
+      "notes": "task 004 transcript read this path (run-31653266479)"
+    },
+    {
+      "caseId": "harvey-doc-credit-agreement-closing",
+      "useSiteId": "document_entity_type_classification",
+      "query": "Closing package file under Transaction Documents titled Senior Secured Credit Agreement with springing lien schedule.",
+      "candidates": [
+        {
+          "candidateId": "credit_agreement",
+          "features": {
+            "label": "credit / loan agreement",
+            "description": "Execution credit facility agreement"
+          }
+        },
+        {
+          "candidateId": "hsr_second_request",
+          "features": {
+            "label": "HSR second request",
+            "description": "Antitrust second request filing"
+          }
+        },
+        {
+          "candidateId": "invoice",
+          "features": {
+            "label": "invoice",
+            "description": "AP invoice"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "credit_agreement",
+      "adjudicated": false,
+      "notes": "Credit-facility / springing-lien Lab domain (tasks 016–018)"
+    },
+    {
+      "caseId": "harvey-vocab-hsr-second-request-flag",
+      "useSiteId": "ontology_vocabulary_term_match",
+      "query": "Promotion candidate: title flag for matters that drew an HSR second request",
+      "candidates": [
+        {
+          "candidateId": "flag:HSR_SECOND_REQUEST",
+          "features": {
+            "label": "HSR_SECOND_REQUEST",
+            "description": "Ontology title flag used by Pattern E memory_recall filters"
+          }
+        },
+        {
+          "candidateId": "flag:HSR_FILING",
+          "features": {
+            "label": "HSR_FILING",
+            "description": "Generic HSR filing flag (broader than second request)"
+          }
+        },
+        {
+          "candidateId": "novel:second_request_maybe",
+          "features": {
+            "label": "second_request_maybe",
+            "description": "Project-local novel field name"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "flag:HSR_SECOND_REQUEST",
+      "adjudicated": false,
+      "notes": "Required Pattern E flag in harvey-lab-pause-handoff / batch2 clawql arm"
+    },
+    {
+      "caseId": "harvey-vocab-credit-facility-flag",
+      "useSiteId": "ontology_vocabulary_term_match",
+      "query": "Promotion candidate field for Banking & Finance credit facility cohort denominator",
+      "candidates": [
+        {
+          "candidateId": "flag:CREDIT_FACILITY",
+          "features": {
+            "label": "CREDIT_FACILITY",
+            "description": "Ontology/title flag for credit facility matters (Fix 6/7)"
+          }
+        },
+        {
+          "candidateId": "flag:SPRINGING_LIEN_ONLY",
+          "features": {
+            "label": "SPRINGING_LIEN_ONLY",
+            "description": "Positive springing-lien evidence flag — not the cohort denominator"
+          }
+        },
+        {
+          "candidateId": "novel:loan_ish",
+          "features": {
+            "label": "loan_ish",
+            "description": "Vague project-local label"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "flag:CREDIT_FACILITY",
+      "adjudicated": false,
+      "notes": "Fix 6 seeded CREDIT_FACILITY; probe #7 SQL used is_credit_facility"
+    },
+    {
+      "caseId": "harvey-vocab-springing-lien-term",
+      "useSiteId": "ontology_vocabulary_term_match",
+      "query": "Preferred vocabulary for springing lien on security instruments in credit facilities",
+      "candidates": [
+        {
+          "candidateId": "fibo:SpringingLien",
+          "features": {
+            "label": "FIBO SpringingLien",
+            "description": "Authoritative FIBO term"
+          }
+        },
+        {
+          "candidateId": "novel:has_springy_thing",
+          "features": {
+            "label": "has_springy_thing",
+            "description": "Project-local slang field"
+          }
+        },
+        {
+          "candidateId": "schema:lien",
+          "features": {
+            "label": "schema.org lien",
+            "description": "Over-broad lien concept"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "fibo:SpringingLien",
+      "adjudicated": false,
+      "notes": "Aligns Lab springing-lien domain with ontology preferredVocabulary"
+    },
+    {
+      "caseId": "harvey-field-matter-id",
+      "useSiteId": "field_to_schema_mapping",
+      "query": "Extracted value 1041-00001 from HSR second-request matter listing — map to Layer 1 field",
+      "candidates": [
+        {
+          "candidateId": "matter_id",
+          "features": {
+            "label": "matter_id",
+            "description": "Canonical matter identifier"
+          }
+        },
+        {
+          "candidateId": "client_short_name",
+          "features": {
+            "label": "client_short_name",
+            "description": "Client short name (e.g. Solara Digital)"
+          }
+        },
+        {
+          "candidateId": "deal_value_usd",
+          "features": {
+            "label": "deal_value_usd",
+            "description": "Deal value in USD"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "matter_id",
+      "adjudicated": false,
+      "notes": "SQL gold / transcripts list matter_id; Solara Digital is client_short_name"
+    },
+    {
+      "caseId": "harvey-field-client-short-name",
+      "useSiteId": "field_to_schema_mapping",
+      "query": "Extracted value 'Solara Digital' from substantial-compliance letter for matter 1041-00001",
+      "candidates": [
+        {
+          "candidateId": "client_short_name",
+          "features": {
+            "label": "client_short_name",
+            "description": "Client short name — do not truncate to Solara"
+          }
+        },
+        {
+          "candidateId": "matter_id",
+          "features": {
+            "label": "matter_id",
+            "description": "Matter id"
+          }
+        },
+        {
+          "candidateId": "practice_area",
+          "features": {
+            "label": "practice_area",
+            "description": "Practice area string"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "client_short_name",
+      "adjudicated": false,
+      "notes": "task 008/004 transcripts emphasize full client short name Solara Digital"
+    },
+    {
+      "caseId": "harvey-field-is-credit-facility",
+      "useSiteId": "field_to_schema_mapping",
+      "query": "Boolean from DuckDB: matter is in credit facility cohort used for springing-lien rate",
+      "candidates": [
+        {
+          "candidateId": "is_credit_facility",
+          "features": {
+            "label": "is_credit_facility",
+            "description": "Cohort membership boolean for credit facilities"
+          }
+        },
+        {
+          "candidateId": "mentions_springing_lien",
+          "features": {
+            "label": "mentions_springing_lien",
+            "description": "Positive springing-lien mention flag (numerator, not cohort)"
+          }
+        },
+        {
+          "candidateId": "hsr_second_request_date",
+          "features": {
+            "label": "hsr_second_request_date",
+            "description": "Date of HSR second request"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "is_credit_facility",
+      "adjudicated": false,
+      "notes": "Probe #7 SQL: WHERE is_credit_facility; k from mentions_springing_lien"
+    },
+    {
+      "caseId": "harvey-pattern-e-schema-filters",
+      "useSiteId": "pattern_consistency_check",
+      "query": "Does this ClawQL recall call match Pattern E for HSR second-request listing: schema legal.Matter + title contains HSR_SECOND_REQUEST?",
+      "candidates": [
+        {
+          "candidateId": "pattern_match",
+          "features": {
+            "label": "matches Pattern E",
+            "description": "schema + filters present with HSR_SECOND_REQUEST title flag"
+          }
+        },
+        {
+          "candidateId": "pattern_mismatch",
+          "features": {
+            "label": "mismatched",
+            "description": "Query-only recall without schema/filters"
+          }
+        },
+        {
+          "candidateId": "uncertain",
+          "features": {
+            "label": "uncertain",
+            "description": "Cannot tell from the call shape"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "pattern_match",
+      "adjudicated": false,
+      "notes": "Pause-handoff requires Pattern E on clawql arm"
+    },
+    {
+      "caseId": "harvey-pattern-filing-vs-second-request",
+      "useSiteId": "pattern_consistency_check",
+      "query": "Agent answered a 'most recent HSR filing' prompt using only HSR_SECOND_REQUEST cohort filters — consistent with expected pattern?",
+      "candidates": [
+        {
+          "candidateId": "pattern_mismatch",
+          "features": {
+            "label": "framing mismatch",
+            "description": "Second-request cohort ≠ HSR filing prompt (Wonder failure mode)"
+          }
+        },
+        {
+          "candidateId": "pattern_match",
+          "features": {
+            "label": "matches",
+            "description": "Treating filing and second request as identical is OK"
+          }
+        },
+        {
+          "candidateId": "uncertain",
+          "features": {
+            "label": "uncertain",
+            "description": "Ambiguous"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "pattern_mismatch",
+      "adjudicated": false,
+      "notes": "harvey-lab-ouroboros-grounding-wonder.md + task 008 failure mode"
+    },
+    {
+      "caseId": "harvey-rel-matter-to-proof-doc",
+      "useSiteId": "relationship_edge_classification",
+      "query": "Matter 1003-00001 is evidenced by Memos & Analysis/second-request-strategy-memo.docx for HSR second request — relationship type?",
+      "candidates": [
+        {
+          "candidateId": "evidenced_by",
+          "features": {
+            "label": "evidenced_by",
+            "description": "Matter fact supported by cited proof document"
+          }
+        },
+        {
+          "candidateId": "guarantees",
+          "features": {
+            "label": "guarantees",
+            "description": "Guaranty relationship between parties"
+          }
+        },
+        {
+          "candidateId": "amends",
+          "features": {
+            "label": "amends",
+            "description": "Amendment to prior agreement"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "evidenced_by",
+      "adjudicated": false,
+      "notes": "Lab scoring requires proof-doc citation after recall"
+    },
+    {
+      "caseId": "harvey-rel-client-to-matter",
+      "useSiteId": "relationship_edge_classification",
+      "query": "Client Solara Digital is the party on matter 1041-00001 antitrust second-request matter — edge type?",
+      "candidates": [
+        {
+          "candidateId": "client_of",
+          "features": {
+            "label": "client_of / party_on",
+            "description": "Client short name linked to matter"
+          }
+        },
+        {
+          "candidateId": "opposes",
+          "features": {
+            "label": "opposes",
+            "description": "Adverse party"
+          }
+        },
+        {
+          "candidateId": "guarantees",
+          "features": {
+            "label": "guarantees",
+            "description": "Guaranty"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "client_of",
+      "adjudicated": false,
+      "notes": "Scorecard/transcript client_short_name binding"
+    },
+    {
+      "caseId": "harvey-sgdop-credit-facility-peers",
+      "useSiteId": "sgdop_peer_prefilter",
+      "query": "SGDOP projection over credit-facility cohort for springing-lien rate — which peers are worth exact projection?",
+      "candidates": [
+        {
+          "candidateId": "peer.data_query",
+          "features": {
+            "label": "data_query peer",
+            "description": "DuckDB cohort stats peer"
+          }
+        },
+        {
+          "candidateId": "peer.memory_recall",
+          "features": {
+            "label": "memory_recall peer",
+            "description": "Ontology recall peer"
+          }
+        },
+        {
+          "candidateId": "peer.bash_grep",
+          "features": {
+            "label": "bash grep peer",
+            "description": "Unstructured grep peer — high cost low precision"
+          }
+        },
+        {
+          "candidateId": "peer.slack_notify",
+          "features": {
+            "label": "slack peer",
+            "description": "Notification peer irrelevant to projection"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "peer.data_query",
+      "adjudicated": false,
+      "notes": "Prefilter should prefer structured SQL peer for 018-style cohort math"
+    },
+    {
+      "caseId": "harvey-precompact-credit-facility-cache",
+      "useSiteId": "pre_compaction_ontology_cache_check",
+      "query": "Before compaction: should CREDIT_FACILITY cohort + springing-lien detector flags stay in ontology cache for firm-knowledge Lab sessions?",
+      "candidates": [
+        {
+          "candidateId": "cache_this",
+          "features": {
+            "label": "cache_this",
+            "description": "Keep credit-facility / springing-lien ontology flags warm"
+          }
+        },
+        {
+          "candidateId": "drop_cache",
+          "features": {
+            "label": "drop_cache",
+            "description": "Evict — Fix 5 prompt-only without vault flags caused overnight hunts"
+          }
+        },
+        {
+          "candidateId": "uncertain",
+          "features": {
+            "label": "uncertain",
+            "description": "Unknown"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "cache_this",
+      "adjudicated": false,
+      "notes": "harvey-lab-clawql-results.md: vault lacked Banking ontology → agent hunted forever"
+    }
+  ]
+}
