@@ -49,16 +49,18 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            echo "has_openrouter=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "has_openrouter=false" >>"$GITHUB_OUTPUT"
-          fi
-          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            echo "has_anthropic=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "has_anthropic=false" >>"$GITHUB_OUTPUT"
-          fi
+          {
+            if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+              echo "has_openrouter=true"
+            else
+              echo "has_openrouter=false"
+            fi
+            if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+              echo "has_anthropic=true"
+            else
+              echo "has_anthropic=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
 
       - id: gate
         env:
@@ -88,9 +90,11 @@ jobs:
               echo "::notice::No ANTHROPIC_API_KEY — falling back to OpenRouter"
             fi
           fi
-          echo "can_run=${CAN}" >>"$GITHUB_OUTPUT"
-          echo "skip_reason=${REASON}" >>"$GITHUB_OUTPUT"
-          echo "via_openrouter=${VIA_OR}" >>"$GITHUB_OUTPUT"
+          {
+            echo "can_run=${CAN}"
+            echo "skip_reason=${REASON}"
+            echo "via_openrouter=${VIA_OR}"
+          } >>"$GITHUB_OUTPUT"
           if [ "${CAN}" = "true" ]; then
             echo "::notice::Credential gate passed (via_openrouter=${VIA_OR})"
           else
@@ -130,7 +134,7 @@ jobs:
           npx tsx scripts/frontier-judge-http-server.mts \
             >"${RUNNER_TEMP}/frontier-judge.log" 2>&1 &
           echo $! >"${RUNNER_TEMP}/frontier-judge.pid"
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -sf "http://127.0.0.1:18765/healthz" >/dev/null; then
               echo "judge healthy"
               curl -sf "http://127.0.0.1:18765/healthz"
