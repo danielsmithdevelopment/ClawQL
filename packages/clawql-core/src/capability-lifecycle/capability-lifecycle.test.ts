@@ -345,4 +345,25 @@ describe("slow path WORM + hook enforcement", () => {
     );
     expect(allowed.allow).toBe(true);
   });
+
+  it("lazy bootstrap unions process-registered MCP tools into default seed", async () => {
+    const {
+      clearProcessRegisteredCapabilityToolsForTests,
+      ensureSessionCatalogBound,
+      noteProcessRegisteredCapabilityTools,
+      resolveCapabilitySessionSeed,
+    } = await import("./catalog-bootstrap.js");
+    clearProcessRegisteredCapabilityToolsForTests();
+    noteProcessRegisteredCapabilityTools(["notify", "knowledge_search_onyx", "schedule"]);
+    const seed = await Effect.runPromise(resolveCapabilitySessionSeed(null));
+    expect(seed).toContain("notify");
+    expect(seed).toContain("search");
+    const { layer } = stack();
+    const catalog = await Effect.runPromise(
+      ensureSessionCatalogBound({ sessionId: "seed-union" }).pipe(Effect.provide(layer))
+    );
+    expect(catalog.tools.has("notify")).toBe(true);
+    expect(catalog.tools.has("knowledge_search_onyx")).toBe(true);
+    clearProcessRegisteredCapabilityToolsForTests();
+  });
 });

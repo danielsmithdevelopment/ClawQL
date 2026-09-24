@@ -61,6 +61,7 @@ import { configureMemoryOnyxSearch } from "clawql-memory/recall/onyx-recall";
 import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
 import { configureHomeSyncHooks } from "../composition/configure-home-sync.js";
 import { handleMemorySyncToolInput, memorySyncToolSchema } from "../home-sync/memory-sync.js";
+import { noteProcessRegisteredCapabilityTools } from "clawql-core";
 
 export { executeOutputFields, projectRestByFields } from "clawql-api";
 
@@ -160,6 +161,15 @@ function registerPluginMcpTools(server: McpServer): void {
 
 export function registerTools(server: McpServer) {
   // Zod shapes are MCP SDK transport-only; Effect Schema decodes inside handlers.
+  const registeredNames: string[] = [
+    "search",
+    "execute",
+    "cache",
+    "audit",
+    "skills_list",
+    "skills_get",
+  ];
+
   server.tool(
     "search",
     searchToolZodShape,
@@ -196,6 +206,9 @@ export function registerTools(server: McpServer) {
   );
 
   registerPluginMcpTools(server);
+  for (const tool of getClawqlApi().listMcpTools()) {
+    registeredNames.push(tool.name);
+  }
 
   if (resolvePluginCompositionFlags().enableMemory) {
     server.tool(
@@ -203,7 +216,12 @@ export function registerTools(server: McpServer) {
       memorySyncToolSchema,
       wrapRegisteredMcpToolHandler("memory_sync", handleMemorySyncToolInput)
     );
+    registeredNames.push("memory_sync");
   }
+
+  // Capability lifecycle default-on: seed unbound sessions with tools actually
+  // live on this process (optional notify/onyx/schedule included when registered).
+  noteProcessRegisteredCapabilityTools(registeredNames);
 }
 
 // ─────────────────────────────────────────────────────────────

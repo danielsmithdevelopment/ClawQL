@@ -12,6 +12,7 @@
 
 import {
   CapabilityRegisterIntercept,
+  clearProcessRegisteredCapabilityToolsForTests,
   createCapabilityReachabilityHook,
   createSharedCapabilityCatalogLayer,
   defineProviderPlugin,
@@ -61,6 +62,7 @@ export function getCapabilityLifecycleRuntime(): CapabilityLifecyclePluginHandle
 /** Test helper — drop singleton between cases. */
 export function resetCapabilityLifecycleRuntimeForTests(): void {
   processRuntime = undefined;
+  clearProcessRegisteredCapabilityToolsForTests();
 }
 
 /**
