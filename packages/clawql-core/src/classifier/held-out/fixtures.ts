@@ -1,6 +1,7 @@
 /**
  * Pre-registered §7 held-out suite (synthetic — adjudicated=false).
  * JSON twin: ./fixtures/fast-decision-held-out-v0.1.json
+ * Keep in sync with the JSON file (all 9 builtin use sites).
  */
 
 import type { HeldOutSuiteManifest } from "./types.js";
@@ -8,7 +9,7 @@ import type { HeldOutSuiteManifest } from "./types.js";
 export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
   suiteId: "fast-decision-held-out-v0.1",
   description:
-    "Pre-registered synthetic held-out shapes for §7 harness wiring. adjudicated=false until frontier-judge labels land — do not cite as productionTrusted.",
+    "Pre-registered synthetic held-out shapes covering all 9 builtin use sites for §7 harness wiring. adjudicated=false until frontier-judge labels land — do not cite as productionTrusted.",
   cases: [
     {
       caseId: "skill-fp-001",
@@ -24,10 +25,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
         },
         {
           candidateId: "skill.slack.notify",
-          features: {
-            label: "slack notify",
-            description: "Post a Slack message",
-          },
+          features: { label: "slack notify", description: "Post a Slack message" },
         },
         {
           candidateId: "skill.generic.search",
@@ -55,10 +53,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
         },
         {
           candidateId: "skill.github.prs",
-          features: {
-            label: "github pull requests",
-            description: "List open GitHub PRs",
-          },
+          features: { label: "github pull requests", description: "List open GitHub PRs" },
         },
       ],
       groundTruthCandidateId: "skill.linear.list_assigned",
@@ -72,10 +67,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
       candidates: [
         {
           candidateId: "deed_of_trust",
-          features: {
-            label: "deed of trust",
-            description: "Security instrument / deed of trust",
-          },
+          features: { label: "deed of trust", description: "Security instrument / deed of trust" },
         },
         {
           candidateId: "invoice",
@@ -83,10 +75,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
         },
         {
           candidateId: "engagement_letter",
-          features: {
-            label: "engagement letter",
-            description: "Legal engagement letter",
-          },
+          features: { label: "engagement letter", description: "Legal engagement letter" },
         },
       ],
       groundTruthCandidateId: "deed_of_trust",
@@ -113,10 +102,7 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
         },
         {
           candidateId: "novel:has_springing_lien",
-          features: {
-            label: "novel local field",
-            description: "Project-local novel field name",
-          },
+          features: { label: "novel local field", description: "Project-local novel field name" },
         },
       ],
       groundTruthCandidateId: "fibo:SpringingLien",
@@ -140,13 +126,127 @@ export const FAST_DECISION_HELD_OUT_V01: HeldOutSuiteManifest = {
         },
         {
           candidateId: "borrower_name",
-          features: {
-            label: "borrower_name",
-            description: "Primary borrower legal name",
-          },
+          features: { label: "borrower_name", description: "Primary borrower legal name" },
         },
       ],
       groundTruthCandidateId: "has_springing_lien",
+      adjudicated: false,
+    },
+    {
+      caseId: "search-route-001",
+      useSiteId: "search_provider_tool_routing",
+      query: "find the OpenAPI operation that creates a Linear issue comment",
+      candidates: [
+        {
+          candidateId: "linear.create_comment",
+          features: { label: "linear create comment", description: "POST Linear issue comment" },
+        },
+        {
+          candidateId: "github.create_issue_comment",
+          features: {
+            label: "github create issue comment",
+            description: "POST GitHub issue comment",
+          },
+        },
+        {
+          candidateId: "slack.chat_postMessage",
+          features: { label: "slack post message", description: "Slack chat.postMessage" },
+        },
+      ],
+      groundTruthCandidateId: "linear.create_comment",
+      adjudicated: false,
+      notes: "Near-duplicate GitHub vs Linear comment tools",
+    },
+    {
+      caseId: "pattern-001",
+      useSiteId: "pattern_consistency_check",
+      query: "occurrence looks like a mezzanine springing-lien clause but maturity is blank",
+      candidates: [
+        {
+          candidateId: "match",
+          features: {
+            label: "match",
+            description: "Matches expected springing-lien pattern shape",
+          },
+        },
+        {
+          candidateId: "mismatch",
+          features: { label: "mismatch", description: "Does not match expected pattern shape" },
+        },
+        {
+          candidateId: "uncertain",
+          features: { label: "uncertain", description: "Insufficient fields to decide" },
+        },
+      ],
+      groundTruthCandidateId: "uncertain",
+      adjudicated: false,
+      notes: "Blank maturity should not force a false-positive match",
+    },
+    {
+      caseId: "rel-edge-001",
+      useSiteId: "relationship_edge_classification",
+      query: "Borrower LLC is guarantor on the mezzanine note secured by the Deed of Trust",
+      candidates: [
+        {
+          candidateId: "guarantees",
+          features: { label: "guarantees", description: "Entity guarantees an obligation" },
+        },
+        {
+          candidateId: "owns",
+          features: { label: "owns", description: "Equity ownership edge" },
+        },
+        {
+          candidateId: "secures",
+          features: { label: "secures", description: "Collateral secures a note" },
+        },
+      ],
+      groundTruthCandidateId: "guarantees",
+      adjudicated: false,
+    },
+    {
+      caseId: "sgdop-pre-001",
+      useSiteId: "sgdop_peer_prefilter",
+      query: "peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
+      candidates: [
+        {
+          candidateId: "ontology-cache-writer",
+          features: {
+            label: "ontology-cache-writer",
+            description: "Writes ontology cache blocks for promotion",
+          },
+        },
+        {
+          candidateId: "slack-notifier",
+          features: { label: "slack-notifier", description: "Posts Slack notifications" },
+        },
+        {
+          candidateId: "pdf-ocr-sidecar",
+          features: { label: "pdf-ocr-sidecar", description: "OCR for scanned PDFs" },
+        },
+      ],
+      groundTruthCandidateId: "ontology-cache-writer",
+      adjudicated: false,
+      notes: "Coarse prefilter — false_negative is costly",
+    },
+    {
+      caseId: "precompact-001",
+      useSiteId: "pre_compaction_ontology_cache_check",
+      query:
+        "tool result: extracted has_springing_lien=true with FIBO SpringingLien match and prior WORM audit",
+      candidates: [
+        {
+          candidateId: "cache_this",
+          features: {
+            label: "cache_this",
+            description: "Keep in ontology/stable cache across compaction",
+          },
+        },
+        {
+          candidateId: "dont_cache_this",
+          features: { label: "dont_cache_this", description: "Drop before compaction" },
+        },
+      ],
+      groundTruthCandidateId: "cache_this",
       adjudicated: false,
     },
   ],
