@@ -21,10 +21,11 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
 - `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable
 - `IstioDenialWatchService` — parse Envoy/ztunnel access-log JSON/NDJSON → `mesh_denial` (denial bridging; no policy generation)
+- `IstioAccessLogTailService` — follow an on-disk NDJSON access-log path into BurstWatchStub; missing path → unavailable (fail-closed)
 - `KarpenterLifecycleWatchService` — map NodeClaim/disruption-shaped records → watch events + WORM types (mock/CRD-feed; no live Karpenter client)
 - `CelldFleetHealthService` — evaluate injected S3 lease snapshots → `CELLD_FLEET_NODE_DROPPED` (no AWS SDK; hosts supply lease records)
 - Placement variance simulation + `infra/aws-celld-burst/loadtest/dry-run.mjs` (`status: dry-run`, null `$Y`)
 
 ## Not yet implemented (needs real cluster / AWS)
 
-Live Istio telemetry subscription (cluster log pipeline), live Karpenter API eviction actions, live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters parse/feed the watch queue; production telemetry/API remain external.
+Live Istio cluster log-pipeline subscription (beyond file-tail), live Karpenter API eviction actions, live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters + file-tail / Pod informers parse/feed the watch queue; production eviction APIs and Cost Explorer remain external.
