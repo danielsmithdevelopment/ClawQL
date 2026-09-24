@@ -1,6 +1,9 @@
 # Optional §7.2 frontier adjudication (Sonnet / OpenRouter) + optional live GLiNER2.
 #
 # Does NOT run on every PR. Triggers:
+#   - Marker PR/push (Harvey LAB style): path-filtered on
+#       packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication
+#     First non-comment line = suite (v0.1 | v0.2-harvey). Absent/empty → skip.
 #   - schedule (daily) — produces live labels when repo secrets exist; otherwise
 #     credential-gate skip-notice (same Harvey LAB pattern). Removes need for
 #     agent `actions:write` to dispatch once secrets are installed.
@@ -10,8 +13,9 @@
 # Credential gate (same pattern as harvey-lab-firm-knowledge.yml). When secrets
 # are present, starts the HTTP frontier-judge sidecar and runs
 # scripts/run-held-out-adjudication.mts. When with_gliner=true (default on
-# schedule / dispatch), also starts a live GLiNER2 sidecar so the same artifact
-# can report scorerBackend=gliner2 (productionTrusted still needs criteria).
+# schedule / dispatch / marker PR), also starts a live GLiNER2 sidecar so the
+# same artifact can report scorerBackend=gliner2 (productionTrusted still needs
+# criteria).
 #
 # Secrets (either):
 #   ANTHROPIC_API_KEY  — preferred for claude-sonnet-4-6
@@ -19,14 +23,18 @@
 #                        CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER=1
 # Optional: HF_TOKEN (faster/gated HF downloads for live GLiNER)
 #
+# Operator (Harvey-style, no actions:write needed):
+#   1. Branch from main; set packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication
+#      to `v0.2-harvey` (first non-comment line).
+#   2. Open PR → this workflow runs on the PR (same-repo secrets).
+#   3. After labels land: SUITE=v0.2-harvey RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh
+#   4. Remove/empty the marker in a follow-up commit (do not leave sticky on main).
+#
 # Operator (actions:write):
 #   gh workflow run fast-decision-frontier-adjudication.yml --ref main \
 #     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false -f with_gliner=true \
 #     -f suite=v0.2-harvey
 #   # repository_dispatch client_payload.suite also accepted (default v0.1).
-#
-# Download + optional local rescore:
-#   RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh
 #
 # Honesty: uploaded labels are live-judge provenance. productionTrusted requires
 # adjudicationKind=live + backendId=gliner2 + calibration criteria.
@@ -64,12 +72,21 @@ on:
           - v0.2-harvey
   repository_dispatch:
     types: [frontier-adjudication]
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication"
+      - ".github/workflows/fast-decision-frontier-adjudication.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication"
+      - ".github/workflows/fast-decision-frontier-adjudication.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: frontier-adjudication-${{ github.ref }}
+  group: frontier-adjudication-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -84,6 +101,28 @@ jobs:
       with_gliner: ${{ steps.gate.outputs.with_gliner }}
       suite: ${{ steps.gate.outputs.suite }}
     steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - id: marker
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication"
+          SUITE_FROM_MARKER=""
+          if [ -f "${MARKER}" ]; then
+            SUITE_FROM_MARKER="$(
+              awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true
+            )"
+          fi
+          {
+            echo "suite=${SUITE_FROM_MARKER}"
+            if [ -n "${SUITE_FROM_MARKER}" ]; then
+              echo "present=true"
+            else
+              echo "present=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
+          echo "::notice::marker suite='${SUITE_FROM_MARKER}' present=$([ -n "${SUITE_FROM_MARKER}" ] && echo true || echo false)"
+
       - id: secret
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -112,6 +151,8 @@ jobs:
           WANT_GLINER: ${{ inputs.with_gliner }}
           INPUT_SUITE: ${{ inputs.suite || '' }}
           PAYLOAD_SUITE: ${{ github.event.client_payload.suite || '' }}
+          MARKER_SUITE: ${{ steps.marker.outputs.suite }}
+          MARKER_PRESENT: ${{ steps.marker.outputs.present }}
         run: |
           set -euo pipefail
           VIA_OR=false
@@ -135,20 +176,33 @@ jobs:
               echo "::notice::No ANTHROPIC_API_KEY — falling back to OpenRouter"
             fi
           fi
-          # Schedule / repository_dispatch default with_gliner=true; workflow_dispatch honors input.
+          # Schedule / repository_dispatch / marker PR default with_gliner=true;
+          # workflow_dispatch honors input.
           WITH_GLINER=true
           if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ "${WANT_GLINER}" = "false" ]; then
             WITH_GLINER=false
           fi
-          # Suite: workflow_dispatch input > repository_dispatch payload > schedule default.
-          # Schedule runs both via matrix on adjudicate job; gate still emits a primary suite.
+          # Suite priority:
+          #   workflow_dispatch input > repository_dispatch payload >
+          #   marker file (PR/push) > schedule default (v0.2-harvey primary) >
+          #   v0.1 fallback.
+          # For pull_request/push: marker must be present or we skip (Harvey style).
           SUITE="v0.1"
           if [ -n "${INPUT_SUITE}" ]; then
             SUITE="${INPUT_SUITE}"
           elif [ -n "${PAYLOAD_SUITE}" ]; then
             SUITE="${PAYLOAD_SUITE}"
+          elif [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${MARKER_PRESENT}" != "true" ] || [ -z "${MARKER_SUITE}" ]; then
+              CAN=false
+              REASON="marker packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication missing or empty (Harvey-style gate)"
+            else
+              SUITE="${MARKER_SUITE}"
+            fi
           elif [ "${EVENT_NAME}" = "schedule" ]; then
             SUITE="v0.2-harvey"
+          elif [ -n "${MARKER_SUITE}" ]; then
+            SUITE="${MARKER_SUITE}"
           fi
           case "${SUITE}" in
             v0.1|v0.2-harvey) ;;

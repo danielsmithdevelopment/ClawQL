@@ -1,0 +1,6 @@
+# Frontier adjudication marker (Harvey LAB style).
+# Leave EMPTY (comments only) when not intentionally triggering a live run.
+# First non-comment, non-empty line = suite (v0.1 | v0.2-harvey).
+#
+# Last run: PR #1145 / GHA 36058969016 — suite v0.2-harvey live labels landed
+# (claude-sonnet-4-6 + gliner2). Cleared so merge does not re-fire adjudication.
