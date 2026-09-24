@@ -53,6 +53,17 @@ Rate-card **order-of-magnitude** for one same-day three-arm window in `us-east-1
 
 **Cost Explorer caveat:** usable tagged spend often lags ~24h; do not publish §13.5 `$Y` until the tagged window has settled in Cost Explorer.
 
+## Exporting Cost Explorer CSVs (not inventing $Y)
+
+When real AWS credentials (not R2 sync) and tagged arms exist:
+
+```bash
+CLAWQL_S13_START=2026-09-20 CLAWQL_S13_END=2026-09-21 \
+  bash infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh ./ce-out
+```
+
+Fail-closed: refuses missing aws CLI, R2-sync key collision, STS failure, or empty Cost Explorer results.
+
 ## Filling §13.5 from real exports (not dry-run)
 
 After Cost Explorer CSVs and k6 metrics exist:
