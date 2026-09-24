@@ -15,11 +15,17 @@ on:
   pull_request:
     paths:
       - "infra/aws-celld-burst/loadtest/**"
+      - "infra/aws-celld-burst/fetch-celld-leases-from-s3.*"
+      - "scripts/run-burst-watch-from-s3-leases.*"
+      - "scripts/burst-watch-from-celld-leases.mts"
       - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
   push:
     branches: [main]
     paths:
       - "infra/aws-celld-burst/loadtest/**"
+      - "infra/aws-celld-burst/fetch-celld-leases-from-s3.*"
+      - "scripts/run-burst-watch-from-s3-leases.*"
+      - "scripts/burst-watch-from-celld-leases.mts"
       - ".github/workflows/aws-celld-burst-section13-dry-run.yml"
 
 permissions:

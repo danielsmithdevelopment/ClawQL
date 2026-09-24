@@ -138,16 +138,19 @@ function fileContains(path: string, re: RegExp): boolean {
       "packages/clawql-k8s-operator/src/watches/burst-watch-sources.ts",
       /celld-fleet-health|celldLeaseSnapshotJson/
     );
+  const leaseOperatorGlue =
+    existsSync("scripts/run-burst-watch-from-s3-leases.sh") &&
+    existsSync("scripts/burst-watch-from-celld-leases.mts");
   push({
     id: "k8s-watches-scaffold",
     requirement: "K8s BurstWatch + Pod/NodeClaim/Istio/fleet adapters + sources bootstrap",
     verdict:
-      present.length >= 5 && leaseFetch && sourcesWiresFleet
+      present.length >= 5 && leaseFetch && sourcesWiresFleet && leaseOperatorGlue
         ? "PATH_DONE"
         : present.length >= 4
           ? "PATH_DONE"
           : "OPEN",
-    evidence: `present=${present.length}/${watches.length} leaseFetch=${leaseFetch} sourcesWiresFleet=${sourcesWiresFleet}: ${present.map((p) => p.split("/").pop()).join(",")}`,
+    evidence: `present=${present.length}/${watches.length} leaseFetch=${leaseFetch} sourcesWiresFleet=${sourcesWiresFleet} leaseOperatorGlue=${leaseOperatorGlue}: ${present.map((p) => p.split("/").pop()).join(",")}`,
   });
 }
 
