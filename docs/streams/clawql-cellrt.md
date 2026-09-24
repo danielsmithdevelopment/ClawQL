@@ -32,6 +32,10 @@ It is **not** a general-purpose DO runtime and **not** a Node `worker_threads` r
 
 **Do not build a custom DO runtime on Node `worker_threads`.** cellrt is Rust + Wasmtime. celld remains the Workers-API-compatible self-hosted option.
 
+### Isolation architecture (ADR 0011)
+
+`clawql-cellrt` / celld **do not** adopt Agent Substrate. Agent Substrate is the isolation backend for **`clawql-sandbox`** (untrusted arbitrary code). Cell workloads remain V8-isolate (celld) or the owned Rust/Wasmtime path (cellrt). Replacing cell isolation with microVMs would regress cold-start for a threat model cells structurally do not have. See [`docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`](../adr/0011-isolation-agent-substrate-sandbox-celld.md).
+
 ### Repo placement (decision of record)
 
 cellrt is **not** a general-purpose DO runtime (unlike celld). It is tightly coupled to ClawQL:

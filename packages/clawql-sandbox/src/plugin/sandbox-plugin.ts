@@ -11,8 +11,9 @@ export const sandboxCodeSchema = {
   code: z
     .string()
     .describe(
-      "Source code to run isolated. In Kubernetes: unset CLAWQL_SANDBOX_BACKEND defaults to auto (Kata → Docker → bridge → Seatbelt). " +
-        "Off-cluster unset = Cloudflare bridge. Pin kata|bridge|macos-seatbelt|docker or use auto."
+      "Source code to run isolated. In Kubernetes: unset CLAWQL_SANDBOX_BACKEND defaults to auto " +
+        "(Agent Substrate → Kata → Docker → bridge → Seatbelt; ADR 0011). " +
+        "Off-cluster unset = Cloudflare bridge. Pin agent-substrate|kata|bridge|macos-seatbelt|docker or use auto."
     ),
   language: z
     .enum(["python", "javascript", "shell"])
