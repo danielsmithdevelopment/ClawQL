@@ -352,6 +352,34 @@ describe("BurstWatchLoop + placement variance", () => {
     expect(result.drained.processed).toBe(2);
   });
 
+  it("BurstWatchSources reads lease snapshot from path fail-closed when missing", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      BurstWatchSourcesUnavailableLive,
+      BurstWatchSourcesService,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const sources = yield* BurstWatchSourcesService;
+        const stub = yield* BurstWatchStub;
+        const handle = yield* sources.start(stub, {
+          enablePodInformer: false,
+          enableNodeClaimInformer: false,
+          celldLeaseSnapshotPath: "/tmp/clawql-missing-leases-does-not-exist.json",
+        });
+        const queued = yield* stub.snapshotQueue();
+        handle.stop();
+        return { handle, queued };
+      }).pipe(Effect.provide(Layer.mergeAll(BurstWatchSourcesUnavailableLive, BurstWatchStubLive)))
+    );
+    expect(result.handle.startedCount).toBe(0);
+    expect(result.handle.statuses.find((s) => s.id === "celld-fleet-health")?.started).toBe(false);
+    expect(result.handle.statuses.find((s) => s.id === "celld-fleet-health")?.detail).toMatch(/cannot read/);
+    expect(result.queued).toEqual([]);
+  });
+
   it("BurstWatchSources refuses invalid lease snapshot without inventing events", async () => {
     const {
       BurstWatchStub,

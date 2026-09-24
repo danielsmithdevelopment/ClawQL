@@ -3,6 +3,7 @@
 ### Added
 
 - **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService` (also via BurstWatchSources bootstrap).
+- **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; optional Istio access-log tail + celld lease-snapshot fleet health (`celldLeaseSnapshotJson` / `celldLeaseSnapshotPath`); unavailable sources reported honestly (no invented events).
 - **BurstWatch sources bootstrap** — `BurstWatchSourcesService` starts Pod + NodeClaim informers onto BurstWatchStub when kubeconfig works; optional Istio access-log tail + celld lease-snapshot fleet health; unavailable sources reported honestly (no invented events).
 - **Post-#1119 gaps audit script** — `scripts/audit-post-1119-remaining-gaps.mts` reports capability gate / productionTrusted / frontier / watches / §13 honestly (`goalComplete` only when live evidence exists).
 - **celld S3 lease fetch** — `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh` fail-closes on R2-sync keys / missing bucket / empty prefix; `parseCelldLeaseSnapshotJson` feeds `CelldFleetHealthService`.

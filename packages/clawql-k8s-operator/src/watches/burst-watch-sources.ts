@@ -9,6 +9,7 @@
  * Spec: docs/streams/aws-celld-burst.md §8.
  */
 
+import { readFileSync } from "node:fs";
 import { Context, Effect, Layer } from "effect";
 import type { BurstWatchStub } from "./burst-watch-stub.js";
 import {
@@ -49,7 +50,12 @@ export type BurstWatchSourcesOptions = {
    * Parsed fail-closed; never invents leases when missing/invalid.
    */
   readonly celldLeaseSnapshotJson?: string;
-  /** Pre-parsed leases (alternative to `celldLeaseSnapshotJson`). */
+  /**
+   * Path to a lease snapshot JSON file (same shape as `celldLeaseSnapshotJson`).
+   * Missing/unreadable → started:false (fail-closed).
+   */
+  readonly celldLeaseSnapshotPath?: string;
+  /** Pre-parsed leases (alternative to JSON / path). */
   readonly celldLeases?: readonly CelldLeaseRecord[];
   readonly celldExpectedNodeIds?: readonly string[];
   readonly celldFleetSourceNote?: string;
@@ -170,7 +176,8 @@ export function makeBurstWatchSourcesService(
 
         const wantFleet =
           typeof options?.celldLeaseSnapshotJson === "string" ||
-          (options?.celldLeases !== undefined && options.celldLeases.length >= 0);
+          typeof options?.celldLeaseSnapshotPath === "string" ||
+          options?.celldLeases !== undefined;
         if (wantFleet) {
           if (!fleet) {
             statuses.push({
@@ -182,7 +189,27 @@ export function makeBurstWatchSourcesService(
             const leasesResult =
               options?.celldLeases !== undefined
                 ? Effect.succeed(options.celldLeases)
-                : parseCelldLeaseSnapshotJson(options!.celldLeaseSnapshotJson!);
+                : Effect.gen(function* () {
+                    let raw = options?.celldLeaseSnapshotJson;
+                    if (raw === undefined && options?.celldLeaseSnapshotPath) {
+                      const path = options.celldLeaseSnapshotPath;
+                      const read = yield* Effect.try({
+                        try: () => readFileSync(path, "utf8"),
+                        catch: (e) => ({
+                          _tag: "CelldLeaseSnapshotInvalid" as const,
+                          reason: `cannot read ${path}: ${e instanceof Error ? e.message : String(e)}`,
+                        }),
+                      });
+                      raw = read;
+                    }
+                    if (typeof raw !== "string") {
+                      return yield* Effect.fail({
+                        _tag: "CelldLeaseSnapshotInvalid" as const,
+                        reason: "no lease snapshot json or path provided",
+                      });
+                    }
+                    return yield* parseCelldLeaseSnapshotJson(raw);
+                  });
             const leasesOrErr = yield* Effect.either(leasesResult);
             if (leasesOrErr._tag === "Left") {
               statuses.push({
