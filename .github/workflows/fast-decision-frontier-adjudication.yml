@@ -1,6 +1,9 @@
 # Optional §7.2 frontier adjudication (Sonnet / OpenRouter).
 #
 # Does NOT run on every PR. Triggers:
+#   - schedule (daily) — produces live labels when repo secrets exist; otherwise
+#     credential-gate skip-notice (same Harvey LAB pattern). Removes need for
+#     agent `actions:write` to dispatch once secrets are installed.
 #   - workflow_dispatch (Actions UI / `gh workflow run` with actions:write)
 #   - repository_dispatch type `frontier-adjudication` (PAT / app token)
 #
@@ -20,14 +23,20 @@
 #   gh api -X POST repos/OWNER/REPO/dispatches \
 #     -f event_type=frontier-adjudication
 #
+# Download latest labels (after a successful live run):
+#   bash scripts/fetch-frontier-adjudication-artifact.sh
+#
 # Honesty: uploaded labels are live-judge provenance. productionTrusted still
-# requires calibration criteria + live GLiNER scores. Optional repo variable
-# CLAWQL_FAST_DECISION_GLINER_URL (or job env) wires the primary GLiNER scorer;
-# without it the runner reports honest gliner2-stub (never heuristic-as-primary).
+# requires calibration criteria + live GLiNER scores (`backendId=gliner2` and
+# `adjudicationKind=live`). Optional repo variable CLAWQL_FAST_DECISION_GLINER_URL
+# wires the primary GLiNER scorer; without it the runner reports honest gliner2-stub.
 
 name: Fast Decision frontier adjudication
 
 on:
+  schedule:
+    # Daily — skip-notice when secrets absent; live labels when present.
+    - cron: "17 6 * * *"
   workflow_dispatch:
     inputs:
       judge_model:

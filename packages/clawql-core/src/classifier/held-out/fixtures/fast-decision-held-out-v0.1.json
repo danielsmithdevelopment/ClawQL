@@ -1,6 +1,6 @@
 {
   "suiteId": "fast-decision-held-out-v0.1",
-  "description": "Pre-registered synthetic held-out shapes for §7 harness wiring. adjudicated=false until frontier-judge labels land — do not cite as productionTrusted.",
+  "description": "Pre-registered synthetic held-out shapes covering all 9 builtin use sites for \u00a77 harness wiring. adjudicated=false until frontier-judge labels land \u2014 do not cite as productionTrusted.",
   "cases": [
     {
       "caseId": "skill-fp-001",
@@ -31,7 +31,7 @@
       ],
       "groundTruthCandidateId": "skill.extract.springing_lien",
       "adjudicated": false,
-      "notes": "Ambiguous vs generic search — hard case for §7"
+      "notes": "Ambiguous vs generic search \u2014 hard case for \u00a77"
     },
     {
       "caseId": "skill-fp-002",
@@ -70,11 +70,17 @@
         },
         {
           "candidateId": "invoice",
-          "features": { "label": "invoice", "description": "Accounts payable invoice" }
+          "features": {
+            "label": "invoice",
+            "description": "Accounts payable invoice"
+          }
         },
         {
           "candidateId": "engagement_letter",
-          "features": { "label": "engagement letter", "description": "Legal engagement letter" }
+          "features": {
+            "label": "engagement letter",
+            "description": "Legal engagement letter"
+          }
         }
       ],
       "groundTruthCandidateId": "deed_of_trust",
@@ -113,7 +119,7 @@
     {
       "caseId": "field-map-001",
       "useSiteId": "field_to_schema_mapping",
-      "query": "extracted value: 'yes — lien springs on default of the mezzanine note'",
+      "query": "extracted value: 'yes \u2014 lien springs on default of the mezzanine note'",
       "candidates": [
         {
           "candidateId": "has_springing_lien",
@@ -138,6 +144,152 @@
         }
       ],
       "groundTruthCandidateId": "has_springing_lien",
+      "adjudicated": false
+    },
+    {
+      "caseId": "search-route-001",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "find the OpenAPI operation that creates a Linear issue comment",
+      "candidates": [
+        {
+          "candidateId": "linear.create_comment",
+          "features": {
+            "label": "linear create comment",
+            "description": "POST Linear issue comment"
+          }
+        },
+        {
+          "candidateId": "github.create_issue_comment",
+          "features": {
+            "label": "github create issue comment",
+            "description": "POST GitHub issue comment"
+          }
+        },
+        {
+          "candidateId": "slack.chat_postMessage",
+          "features": {
+            "label": "slack post message",
+            "description": "Slack chat.postMessage"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "linear.create_comment",
+      "adjudicated": false,
+      "notes": "Near-duplicate GitHub vs Linear comment tools"
+    },
+    {
+      "caseId": "pattern-001",
+      "useSiteId": "pattern_consistency_check",
+      "query": "occurrence looks like a mezzanine springing-lien clause but maturity is blank",
+      "candidates": [
+        {
+          "candidateId": "match",
+          "features": {
+            "label": "match",
+            "description": "Matches expected springing-lien pattern shape"
+          }
+        },
+        {
+          "candidateId": "mismatch",
+          "features": {
+            "label": "mismatch",
+            "description": "Does not match expected pattern shape"
+          }
+        },
+        {
+          "candidateId": "uncertain",
+          "features": {
+            "label": "uncertain",
+            "description": "Insufficient fields to decide"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "uncertain",
+      "adjudicated": false,
+      "notes": "Blank maturity should not force a false-positive match"
+    },
+    {
+      "caseId": "rel-edge-001",
+      "useSiteId": "relationship_edge_classification",
+      "query": "Borrower LLC is guarantor on the mezzanine note secured by the Deed of Trust",
+      "candidates": [
+        {
+          "candidateId": "guarantees",
+          "features": {
+            "label": "guarantees",
+            "description": "Entity guarantees an obligation"
+          }
+        },
+        {
+          "candidateId": "owns",
+          "features": {
+            "label": "owns",
+            "description": "Equity ownership edge"
+          }
+        },
+        {
+          "candidateId": "secures",
+          "features": {
+            "label": "secures",
+            "description": "Collateral secures a note"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "guarantees",
+      "adjudicated": false
+    },
+    {
+      "caseId": "sgdop-pre-001",
+      "useSiteId": "sgdop_peer_prefilter",
+      "query": "peers available: ontology-cache-writer, slack-notifier, pdf-ocr-sidecar",
+      "candidates": [
+        {
+          "candidateId": "ontology-cache-writer",
+          "features": {
+            "label": "ontology-cache-writer",
+            "description": "Writes ontology cache blocks for promotion"
+          }
+        },
+        {
+          "candidateId": "slack-notifier",
+          "features": {
+            "label": "slack-notifier",
+            "description": "Posts Slack notifications"
+          }
+        },
+        {
+          "candidateId": "pdf-ocr-sidecar",
+          "features": {
+            "label": "pdf-ocr-sidecar",
+            "description": "OCR for scanned PDFs"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "ontology-cache-writer",
+      "adjudicated": false,
+      "notes": "Coarse prefilter \u2014 false_negative is costly"
+    },
+    {
+      "caseId": "precompact-001",
+      "useSiteId": "pre_compaction_ontology_cache_check",
+      "query": "tool result: extracted has_springing_lien=true with FIBO SpringingLien match and prior WORM audit",
+      "candidates": [
+        {
+          "candidateId": "cache_this",
+          "features": {
+            "label": "cache_this",
+            "description": "Keep in ontology/stable cache across compaction"
+          }
+        },
+        {
+          "candidateId": "dont_cache_this",
+          "features": {
+            "label": "dont_cache_this",
+            "description": "Drop before compaction"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "cache_this",
       "adjudicated": false
     }
   ]
