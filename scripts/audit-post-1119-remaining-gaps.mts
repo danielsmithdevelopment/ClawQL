@@ -93,13 +93,30 @@ function fileContains(path: string, re: RegExp): boolean {
   const noLive =
     /No successful frontier adjudication run found/i.test(fetch.stderr + fetch.stdout) ||
     fetch.status !== 0;
+  const glinerUrl =
+    process.env.CLAWQL_FAST_DECISION_GLINER_URL ??
+    (envSet("CLAWQL_GLINER_SIDECAR_HOST")
+      ? `http://${process.env.CLAWQL_GLINER_SIDECAR_HOST}:${process.env.CLAWQL_GLINER_SIDECAR_PORT ?? "8080"}`
+      : "");
+  let glinerHealthz = "unset";
+  if (glinerUrl) {
+    const hz = spawnSync(
+      "curl",
+      ["-sf", "-m", "2", `${glinerUrl.replace(/\/$/, "")}/healthz`],
+      { encoding: "utf8" }
+    );
+    glinerHealthz =
+      hz.status === 0 && /"backend"\s*:\s*"gliner2"/.test(hz.stdout)
+        ? "live-gliner2"
+        : `unreachable status=${hz.status}`;
+  }
 
   push({
     id: "frontier-live-corpus",
     requirement: "Live frontier Sonnet labels exist (productionTrusted corpus)",
     verdict:
       !noLive && (hasAnthropic || hasOpenRouter) ? "DONE" : hasWithGliner ? "PATH_DONE" : "OPEN",
-    evidence: `workflowWithGliner=${hasWithGliner} ANTHROPIC=${hasAnthropic} OPENROUTER=${hasOpenRouter} fetchNoLive=${noLive}`,
+    evidence: `workflowWithGliner=${hasWithGliner} ANTHROPIC=${hasAnthropic} OPENROUTER=${hasOpenRouter} fetchNoLive=${noLive} glinerHealthz=${glinerHealthz}`,
   });
 }
 
