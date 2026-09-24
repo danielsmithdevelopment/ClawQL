@@ -14,7 +14,7 @@ HTTP sidecar matching `packages/clawql-core` `scoreViaGlinerHttp` contract.
 | `CLAWQL_GLINER_SIDECAR_MODE` | Behavior                                                                                                      |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `mock` (default)             | Token-overlap heuristic — no model weights; CI-safe                                                           |
-| `gliner2`                    | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via the **`gliner2`** package (`AutoExtractor` / Fastino GLiNER2.5) |
+| `gliner2`                    | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via the **`gliner2`** package (`AutoExtractor` / Fastino GLiNER2.5). Scores use **multi-label classification** (not entity-extract alone) so every candidate gets a calibrated confidence. |
 
 ## Wire to clawql-core
 

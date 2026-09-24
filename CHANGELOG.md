@@ -2,6 +2,7 @@
 
 ### Added
 
+- **GLiNER2 multi-label classify scoring** — sidecar `gliner2_scores` uses `classification(..., multi_label=True)` instead of entity-extract-only so Fast Decision candidates get calibrated confidences (entity-extract often returned all-zero for skill/schema ids). Unit tests in `infra/gliner-sidecar/test_app.py`.
 - **productionTrusted DEFAULT criteria + zero-signal abstain** — held-out `productionTrusted` always requires `DEFAULT_VALIDATION_CRITERIA` (wiring criteria cannot light it); calibration abstains on all-zero confidences and reports `noCalibratableScores` instead of inventing accuracy from fixture order.
 - **§13.5 CE export GHA path** — `aws-celld-burst-section13-dry-run.yml` credential-gates on `CLAWQL_CE_*` (preferred) / usable AWS secrets; optional `workflow_dispatch` / `repository_dispatch` (`section13-ce-export`) runs fail-closed Cost Explorer CSV export + `scripts/fetch-section13-ce-export-artifact.sh`.
 - **Audit `dollarY` honesty** — post-#1119 audit asserts dry-run `dollarY===null` (canonical field) and requires CE GHA path for section13-dry-run DONE.
