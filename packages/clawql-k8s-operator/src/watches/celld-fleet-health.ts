@@ -48,6 +48,55 @@ export type FleetHealthCheckArgs = {
 };
 
 /**
+ * Parse JSON produced by `infra/aws-celld-burst/fetch-celld-leases-from-s3.sh`
+ * (or an equivalent host export). Fail-closed on empty / non-numeric renewals.
+ */
+export function parseCelldLeaseSnapshotJson(
+  raw: string
+): Effect.Effect<
+  readonly CelldLeaseRecord[],
+  { readonly _tag: "CelldLeaseSnapshotInvalid"; readonly reason: string }
+> {
+  return Effect.try({
+    try: () => {
+      const parsed: unknown = JSON.parse(raw);
+      const rows = Array.isArray(parsed) ? parsed : [parsed];
+      if (rows.length === 0) {
+        throw new Error("empty lease snapshot — refuse inventing fleet health");
+      }
+      const leases: CelldLeaseRecord[] = [];
+      for (const row of rows) {
+        if (typeof row !== "object" || row === null) {
+          throw new Error("lease row is not an object");
+        }
+        const r = row as Record<string, unknown>;
+        const nodeId = r.nodeId ?? r.node_id ?? r.id;
+        const renewed = r.renewedAtMs ?? r.renewed_at_ms ?? r.renewedAt;
+        if (typeof nodeId !== "string" || nodeId.length === 0) {
+          throw new Error("lease missing nodeId");
+        }
+        if (typeof renewed !== "number" || !Number.isFinite(renewed)) {
+          throw new Error(`lease ${nodeId} missing numeric renewedAtMs`);
+        }
+        const ttl = r.ttlMs ?? r.ttl_ms;
+        const peers = r.peerIds ?? r.peer_ids;
+        leases.push({
+          nodeId,
+          renewedAtMs: renewed,
+          ...(typeof ttl === "number" && Number.isFinite(ttl) ? { ttlMs: ttl } : {}),
+          ...(Array.isArray(peers) ? { peerIds: peers.map(String) } : {}),
+        });
+      }
+      return leases;
+    },
+    catch: (e) => ({
+      _tag: "CelldLeaseSnapshotInvalid" as const,
+      reason: e instanceof Error ? e.message : String(e),
+    }),
+  });
+}
+
+/**
  * Compare lease snapshots to expected fleet membership.
  * Stale or missing leases produce CELLD_FLEET_NODE_DROPPED findings.
  */
@@ -103,9 +152,7 @@ export function evaluateCelldFleetHealth(
       checkedAtMs: now,
       findings,
       watchEvents,
-      note:
-        args.sourceNote ??
-        "Scaffold lease evaluation only — not live S3 ListObjects evidence.",
+      note: args.sourceNote ?? "Scaffold lease evaluation only — not live S3 ListObjects evidence.",
     } satisfies FleetHealthReport;
   });
 }

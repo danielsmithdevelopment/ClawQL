@@ -6,11 +6,12 @@ Sample manifests and notes for **Bursty Streams on AWS** (celld + Karpenter + Is
 
 ## Contents
 
-| Path | Purpose |
-| ---- | ------- |
-| `manifests/priority-classes.yaml` | Tier 1–3 PriorityClasses from §5.2 |
-| `manifests/filler-disruption-budget.example.yaml` | Example Karpenter disruptionBudget for filler NodePool |
-| `loadtest/` | Three-arm k6 scaffold + §13.5 result template (§13) |
+| Path                                              | Purpose                                                     |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| `manifests/priority-classes.yaml`                 | Tier 1–3 PriorityClasses from §5.2                          |
+| `manifests/filler-disruption-budget.example.yaml` | Example Karpenter disruptionBudget for filler NodePool      |
+| `loadtest/`                                       | Three-arm k6 scaffold + §13.5 result template (§13)         |
+| `fetch-celld-leases-from-s3.sh`                   | Fail-closed S3 lease snapshot for `CelldFleetHealthService` |
 
 ## Status
 

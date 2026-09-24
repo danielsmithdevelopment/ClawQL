@@ -77,6 +77,7 @@ jobs:
           node --test infra/aws-celld-burst/loadtest/fill-result-from-exports.test.mjs
           node --test infra/aws-celld-burst/loadtest/export-cost-explorer-arms.test.mjs
           node --test infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.test.mjs
+          node --test infra/aws-celld-burst/fetch-celld-leases-from-s3.test.mjs
 
       - uses: actions/upload-artifact@v7
         if: always()
