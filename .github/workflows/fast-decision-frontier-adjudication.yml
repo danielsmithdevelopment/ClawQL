@@ -1,0 +1,178 @@
+# Optional §7.2 frontier adjudication (Sonnet / OpenRouter).
+#
+# Does NOT run on every PR. workflow_dispatch + credential gate (same pattern as
+# harvey-lab-firm-knowledge.yml). When secrets are present, starts the HTTP
+# frontier-judge sidecar and runs scripts/run-held-out-adjudication.mts.
+#
+# Secrets (either):
+#   ANTHROPIC_API_KEY  — preferred for claude-sonnet-4-6
+#   OPENROUTER_API_KEY — alternate / Claude via OpenRouter when
+#                        CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER=1
+#
+# Honesty: uploaded labels are live-judge provenance. productionTrusted still
+# requires calibration criteria + live GLiNER scores (see held-out runner).
+
+name: Fast Decision frontier adjudication
+
+on:
+  workflow_dispatch:
+    inputs:
+      judge_model:
+        description: Judge model id (Anthropic or OpenRouter)
+        required: true
+        default: claude-sonnet-4-6
+        type: string
+      via_openrouter:
+        description: Prefer OpenRouter for Claude judge
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontier-adjudication-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Credential gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+      skip_reason: ${{ steps.gate.outputs.skip_reason }}
+      via_openrouter: ${{ steps.gate.outputs.via_openrouter }}
+    steps:
+      - id: secret
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          {
+            if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+              echo "has_openrouter=true"
+            else
+              echo "has_openrouter=false"
+            fi
+            if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+              echo "has_anthropic=true"
+            else
+              echo "has_anthropic=false"
+            fi
+          } >>"$GITHUB_OUTPUT"
+
+      - id: gate
+        env:
+          HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
+          HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
+          WANT_OR: ${{ inputs.via_openrouter }}
+        run: |
+          set -euo pipefail
+          VIA_OR=false
+          if [ "${WANT_OR}" = "true" ]; then
+            VIA_OR=true
+          fi
+          CAN=true
+          REASON=""
+          if [ "${VIA_OR}" = "true" ]; then
+            if [ "${HAS_OR}" != "true" ]; then
+              CAN=false
+              REASON="OPENROUTER_API_KEY missing (via_openrouter=true)"
+            fi
+          else
+            if [ "${HAS_AN}" != "true" ] && [ "${HAS_OR}" != "true" ]; then
+              CAN=false
+              REASON="ANTHROPIC_API_KEY and OPENROUTER_API_KEY both missing"
+            fi
+            if [ "${HAS_AN}" != "true" ] && [ "${HAS_OR}" = "true" ]; then
+              VIA_OR=true
+              echo "::notice::No ANTHROPIC_API_KEY — falling back to OpenRouter"
+            fi
+          fi
+          {
+            echo "can_run=${CAN}"
+            echo "skip_reason=${REASON}"
+            echo "via_openrouter=${VIA_OR}"
+          } >>"$GITHUB_OUTPUT"
+          if [ "${CAN}" = "true" ]; then
+            echo "::notice::Credential gate passed (via_openrouter=${VIA_OR})"
+          else
+            echo "::warning::Credential gate blocked frontier adjudication: ${REASON}"
+          fi
+
+  adjudicate:
+    name: Held-out frontier adjudicate
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CLAWQL_FAST_DECISION_JUDGE_MODEL: ${{ inputs.judge_model }}
+      CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER: ${{ needs.gate.outputs.via_openrouter }}
+      CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+      CLAWQL_OPENROUTER_APP_TITLE: ClawQL Fast Decision Judge
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build clawql-core
+        run: npm run build --workspace=clawql-core
+
+      - name: Start frontier-judge HTTP sidecar
+        run: |
+          set -euo pipefail
+          npx tsx scripts/frontier-judge-http-server.mts \
+            >"${RUNNER_TEMP}/frontier-judge.log" 2>&1 &
+          echo $! >"${RUNNER_TEMP}/frontier-judge.pid"
+          for _ in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:18765/healthz" >/dev/null; then
+              echo "judge healthy"
+              curl -sf "http://127.0.0.1:18765/healthz"
+              echo
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::frontier-judge failed to become healthy"
+          cat "${RUNNER_TEMP}/frontier-judge.log" || true
+          exit 1
+
+      - name: Run held-out adjudication (live judge)
+        env:
+          CLAWQL_FAST_DECISION_JUDGE_URL: http://127.0.0.1:18765/v1/fast-decision/adjudicate
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          npx tsx scripts/run-held-out-adjudication.mts \
+            --out artifacts/held-out-frontier-labels.json \
+            | tee artifacts/held-out-frontier-summary.json
+          # Fail the job if we somehow stayed in dry-run
+          MODE="$(node -e "const s=require('./artifacts/held-out-frontier-summary.json'); if(s.adjudicationMode!=='live') process.exit(2); console.log(s.adjudicationMode,s.judgeModel,s.labelCount)")"
+          echo "::notice::adjudication ${MODE}"
+
+      - name: Stop sidecar
+        if: always()
+        run: |
+          if [ -f "${RUNNER_TEMP}/frontier-judge.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/frontier-judge.pid")" 2>/dev/null || true
+          fi
+          cat "${RUNNER_TEMP}/frontier-judge.log" || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: held-out-frontier-adjudication
+          path: |
+            artifacts/held-out-frontier-labels.json
+            artifacts/held-out-frontier-summary.json
+          if-no-files-found: warn
