@@ -1,0 +1,216 @@
+#!/usr/bin/env npx tsx
+/**
+ * Honest post-#1119 remaining-gaps audit.
+ *
+ * Does NOT invent frontier labels or §13.5 $Y. Prints a machine-readable
+ * report and exits 0 always when the audit itself runs (findings carry
+ * goalComplete). Exit 2 only on unexpected audit infrastructure failure.
+ *
+ * Usage: npx tsx scripts/audit-post-1119-remaining-gaps.mts
+ */
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { Effect } from "effect";
+
+type Verdict = "DONE" | "PATH_DONE" | "OPEN" | "BLOCKED";
+type Row = {
+  readonly id: string;
+  readonly requirement: string;
+  readonly verdict: Verdict;
+  readonly evidence: string;
+};
+
+const rows: Row[] = [];
+const push = (row: Row) => rows.push(row);
+
+function envSet(name: string): boolean {
+  const v = process.env[name];
+  return typeof v === "string" && v.length > 0;
+}
+
+function fileContains(path: string, re: RegExp): boolean {
+  if (!existsSync(path)) return false;
+  return re.test(readFileSync(path, "utf8"));
+}
+
+// --- 1. MCP capability gate default-on ---
+{
+  const plugin = "packages/clawql-api/src/plugins/capability-lifecycle-plugin.ts";
+  const { capabilityLifecyclePluginEnabled } =
+    await import("../packages/clawql-api/src/plugins/capability-lifecycle-plugin.ts");
+  const prev = process.env.CLAWQL_CAPABILITY_LIFECYCLE;
+  delete process.env.CLAWQL_CAPABILITY_LIFECYCLE;
+  const defaultOn = capabilityLifecyclePluginEnabled();
+  process.env.CLAWQL_CAPABILITY_LIFECYCLE = "0";
+  const optOut = !capabilityLifecyclePluginEnabled();
+  if (prev === undefined) delete process.env.CLAWQL_CAPABILITY_LIFECYCLE;
+  else process.env.CLAWQL_CAPABILITY_LIFECYCLE = prev;
+
+  push({
+    id: "capability-gate-default-on",
+    requirement: "MCP capability gate default-on (=0 opt-out)",
+    verdict: defaultOn && optOut && fileContains(plugin, /Default \*\*on\*\*/) ? "DONE" : "OPEN",
+    evidence: `defaultOn=${defaultOn} optOutWorks=${optOut} plugin=${plugin}`,
+  });
+}
+
+// --- 2. productionTrusted code gate + current corpus honesty ---
+{
+  const { runHeldOutValidationSuite, defaultHeldOutSuite } =
+    await import("../packages/clawql-core/src/classifier/held-out/index.js");
+  const { HeuristicFastDecisionScorerLive } =
+    await import("../packages/clawql-core/src/classifier/scorer.js");
+  const reports = await Effect.runPromise(
+    runHeldOutValidationSuite(defaultHeldOutSuite()).pipe(
+      Effect.provide(HeuristicFastDecisionScorerLive)
+    )
+  );
+  const anyTrusted = reports.some((r) => r.productionTrusted);
+  const gateSrc = "packages/clawql-core/src/classifier/held-out/run-held-out.ts";
+  const gateOk =
+    fileContains(gateSrc, /adjudicationKind/) &&
+    fileContains(gateSrc, /PRODUCTION_TRUSTED_SCORER_BACKEND|gliner2/);
+
+  push({
+    id: "productionTrusted-code-gate",
+    requirement: "productionTrusted requires live adjudicationKind + gliner2 + criteria",
+    verdict: gateOk && !anyTrusted ? "DONE" : anyTrusted ? "OPEN" : "PATH_DONE",
+    evidence: `gateSrc=${gateOk} syntheticTrusted=${anyTrusted} sites=${reports.length}`,
+  });
+}
+
+// --- 3. Frontier live labels / GLiNER co-run path ---
+{
+  const frontierWf = ".github/workflows/fast-decision-frontier-adjudication.yml";
+  const hasWithGliner =
+    fileContains(frontierWf, /with_gliner/) && fileContains(frontierWf, /scorerBackend/);
+  const hasAnthropic = envSet("ANTHROPIC_API_KEY");
+  const hasOpenRouter = envSet("OPENROUTER_API_KEY");
+  const fetch = spawnSync("bash", ["scripts/fetch-frontier-adjudication-artifact.sh"], {
+    encoding: "utf8",
+  });
+  const noLive =
+    /No successful frontier adjudication run found/i.test(fetch.stderr + fetch.stdout) ||
+    fetch.status !== 0;
+
+  push({
+    id: "frontier-live-corpus",
+    requirement: "Live frontier Sonnet labels exist (productionTrusted corpus)",
+    verdict:
+      !noLive && (hasAnthropic || hasOpenRouter) ? "DONE" : hasWithGliner ? "PATH_DONE" : "OPEN",
+    evidence: `workflowWithGliner=${hasWithGliner} ANTHROPIC=${hasAnthropic} OPENROUTER=${hasOpenRouter} fetchNoLive=${noLive}`,
+  });
+}
+
+// --- 4. K8s watches scaffold ---
+{
+  const watches = [
+    "packages/clawql-k8s-operator/src/watches/pod-informer.ts",
+    "packages/clawql-k8s-operator/src/watches/karpenter-nodeclaim-informer.ts",
+    "packages/clawql-k8s-operator/src/watches/istio-access-log-tail.ts",
+    "packages/clawql-k8s-operator/src/watches/istio-denial-adapter.ts",
+    "packages/clawql-k8s-operator/src/watches/celld-fleet-health.ts",
+  ];
+  const present = watches.filter((p) => existsSync(p));
+  push({
+    id: "k8s-watches-scaffold",
+    requirement: "K8s BurstWatch + Pod/NodeClaim/Istio/fleet adapters",
+    verdict: present.length >= 4 ? "PATH_DONE" : "OPEN",
+    evidence: `present=${present.length}/${watches.length}: ${present.map((p) => p.split("/").pop()).join(",")}`,
+  });
+}
+
+// --- 5. §13 dry-run null $Y + operator chain ---
+{
+  const dryRun = spawnSync("node", ["infra/aws-celld-burst/loadtest/dry-run.mjs"], {
+    encoding: "utf8",
+  });
+  const summaryPath = "infra/aws-celld-burst/loadtest/results/dry-run-summary.json";
+  let dryOk = false;
+  if (existsSync(summaryPath)) {
+    const s = JSON.parse(readFileSync(summaryPath, "utf8")) as {
+      status?: string;
+      costUsdY?: unknown;
+    };
+    dryOk = s.status === "dry-run" && (s.costUsdY === null || s.costUsdY === undefined);
+  }
+  const ceScript = "infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh";
+  const k6Merge = "infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.mjs";
+  const fill = "infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs";
+  const tools = [ceScript, k6Merge, fill].every((p) => existsSync(p));
+
+  push({
+    id: "section13-dry-run-and-tools",
+    requirement: "§13 dry-run null $Y + CE/k6/fill operator chain",
+    verdict: dryOk && tools ? "PATH_DONE" : "OPEN",
+    evidence: `dryExit=${dryRun.status} dryOk=${dryOk} tools=${tools}`,
+  });
+}
+
+// --- 6. Real AWS §13.5 $Y ---
+{
+  const aws = process.env.AWS_ACCESS_KEY_ID ?? "";
+  const sync = process.env.CLAWQL_SYNC_ACCESS_KEY_ID ?? "";
+  const r2Collision = Boolean(aws) && aws === sync;
+  const ce = spawnSync(
+    "bash",
+    ["infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh", "/tmp/ce-audit-out"],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        CLAWQL_S13_START: "2026-09-20",
+        CLAWQL_S13_END: "2026-09-21",
+      },
+    }
+  );
+  const refusedR2 = /R2 sync/i.test(ce.stderr);
+
+  push({
+    id: "section13-real-Y",
+    requirement: "Real §13.5 $Y from Cost Explorer (not R2, not invented)",
+    verdict: r2Collision || refusedR2 || ce.status !== 0 ? "BLOCKED" : "OPEN",
+    evidence: `AWS_EQ_SYNC=${r2Collision} ceStatus=${ce.status} refusedR2=${refusedR2}`,
+  });
+}
+
+const goalComplete = rows.every((r) => r.verdict === "DONE");
+const report = {
+  generatedAt: new Date().toISOString(),
+  objective:
+    "Close remaining post-#1119 gaps: frontier adjudication + live GLiNER2, MCP capability gate default-on, K8s watches + Bursty Streams §13",
+  goalComplete,
+  rows,
+  note: goalComplete
+    ? "All requirements DONE with live evidence."
+    : "In-repo paths may be PATH_DONE; live corpus / real $Y / cluster still required for goalComplete.",
+};
+
+const outDir = "artifacts";
+mkdirSync(outDir, { recursive: true });
+const jsonPath = join(outDir, "post-1119-remaining-gaps-audit.json");
+writeFileSync(jsonPath, JSON.stringify(report, null, 2) + "\n");
+
+const md = [
+  `# Post-#1119 remaining gaps audit`,
+  ``,
+  `**Generated:** ${report.generatedAt}`,
+  `**goalComplete:** ${goalComplete}`,
+  ``,
+  `| ID | Requirement | Verdict | Evidence |`,
+  `| --- | --- | --- | --- |`,
+  ...rows.map(
+    (r) => `| ${r.id} | ${r.requirement} | **${r.verdict}** | ${r.evidence.replace(/\|/g, "/")} |`
+  ),
+  ``,
+  report.note,
+  ``,
+];
+const mdPath = join(outDir, "post-1119-remaining-gaps-audit.md");
+writeFileSync(mdPath, md.join("\n"));
+
+console.log(JSON.stringify(report, null, 2));
+console.log(`Wrote ${jsonPath}`);
+console.log(`Wrote ${mdPath}`);
+process.exit(0);
