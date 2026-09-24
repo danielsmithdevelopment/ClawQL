@@ -2,6 +2,7 @@
 
 ### Added
 
+- **Live R2 → fleet-health smoke** — `scripts/celld-fleet-health-r2-smoke.mts` lists Cloudflare R2 via `CLAWQL_SYNC_*` and feeds `evaluateCelldFleetHealth` (honest: not EKS leases / not §13.5); optional `sourceNote` on fleet-health args.
 - **Optional live GLiNER2 CI** — `scripts/gliner2-live-sidecar-smoke.sh` + [`.github/workflows/fast-decision-gliner2-live.yml`](.github/workflows/fast-decision-gliner2-live.yml) (`workflow_dispatch`, CPU torch + HF cache; asserts `backend` starts with `gliner2:` — not `productionTrusted`).
 - **Operator path for remaining external gaps** — frontier GHA accepts `repository_dispatch` (`frontier-adjudication`) + explicit skip-notice when secrets missing; `infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs` fills §13.5 from Cost Explorer CSVs + k6 metrics (fail-closed, no invented `$Y`).
 - **§13 dry-run CI** — [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](.github/workflows/aws-celld-burst-section13-dry-run.yml) path-filtered + `workflow_dispatch` harness asserting `status=dry-run` and null `$Y` / p50/p99 (not publishable as §13.5; live EKS + Cost Explorer remain operator-owned).

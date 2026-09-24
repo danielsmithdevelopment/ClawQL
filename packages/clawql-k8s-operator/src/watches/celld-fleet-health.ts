@@ -40,6 +40,11 @@ export type FleetHealthCheckArgs = {
   readonly expectedNodeIds?: readonly string[];
   readonly nowMs?: number;
   readonly defaultTtlMs?: number;
+  /**
+   * Override report.note. Default states scaffold-only (no live ListObjects).
+   * Hosts that fed leases from a real S3/R2 List should set an honest source note.
+   */
+  readonly sourceNote?: string;
 };
 
 /**
@@ -98,7 +103,9 @@ export function evaluateCelldFleetHealth(
       checkedAtMs: now,
       findings,
       watchEvents,
-      note: "Scaffold lease evaluation only — not live S3 ListObjects evidence.",
+      note:
+        args.sourceNote ??
+        "Scaffold lease evaluation only — not live S3 ListObjects evidence.",
     } satisfies FleetHealthReport;
   });
 }
