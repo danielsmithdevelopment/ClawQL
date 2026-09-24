@@ -19,9 +19,10 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `detectMeshAtrDrift` — pure Effect comparison of mesh allow-set vs ATR allow-set
 - `BurstOperatorService` Context.Tag + Live layer
 - `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
-- `BurstWatchSourcesService` — compose Pod + NodeClaim informers onto the stub (unavailable without cluster; optional Istio path noted for hosts)
+- `BurstWatchSourcesService` — compose Pod + NodeClaim informers (+ optional Istio access-log tail) onto the stub; unavailable without cluster/path (fail-closed)
 - `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable
 - `IstioDenialWatchService` — parse Envoy/ztunnel access-log JSON/NDJSON → `mesh_denial` (denial bridging; no policy generation)
+- `IstioAccessLogTailService` — follow an on-disk NDJSON access-log path into BurstWatchStub; missing path → unavailable (fail-closed)
 - `KarpenterLifecycleWatchService` — map NodeClaim/disruption-shaped records → watch events + WORM types (mock/CRD-feed)
 - `NodeClaimInformerService` — `@kubernetes/client-node` Watch on `nodeclaims.karpenter.sh` → lifecycle map → BurstWatchStub when kubeconfig works; otherwise unavailable (fail-closed)
 - `CelldFleetHealthService` — evaluate injected S3 lease snapshots → `CELLD_FLEET_NODE_DROPPED` (no AWS SDK; hosts supply lease records)
@@ -29,4 +30,4 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 
 ## Not yet implemented (needs real cluster / AWS)
 
-Live Istio telemetry subscription (cluster log pipeline), live Karpenter eviction _actions_ (informer watches NodeClaims only), live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters + NodeClaim/Pod informers parse/feed the watch queue when kubeconfig works; production eviction APIs and Cost Explorer remain external.
+Live Istio cluster log-pipeline subscription (beyond file-tail), live Karpenter eviction _actions_ (informer watches NodeClaims only), live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters + file-tail / NodeClaim/Pod informers parse/feed the watch queue when kubeconfig or log path works; production eviction APIs and Cost Explorer remain external.

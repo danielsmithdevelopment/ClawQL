@@ -20,6 +20,11 @@ import {
   startNodeClaimInformerOrNull,
   type NodeClaimInformerHandle,
 } from "./karpenter-nodeclaim-informer.js";
+import {
+  IstioAccessLogTailService,
+  startIstioAccessLogTailOrNull,
+  type IstioAccessLogTailHandle,
+} from "./istio-access-log-tail.js";
 
 export type BurstWatchSourcesOptions = {
   readonly podNamespace?: string;
@@ -28,9 +33,8 @@ export type BurstWatchSourcesOptions = {
   readonly enablePodInformer?: boolean;
   readonly enableNodeClaimInformer?: boolean;
   /**
-   * When set, hosts may wire IstioAccessLogTail after #1133 lands.
-   * This bootstrap records the path intent without requiring the tail module
-   * on older mains — prefer startBurstWatchSourcesWithIstio when available.
+   * When set, start IstioAccessLogTailService against this NDJSON path.
+   * Missing/unreadable path → status started:false (fail-closed).
    */
   readonly istioAccessLogPath?: string;
 };
@@ -59,7 +63,8 @@ export class BurstWatchSourcesService extends Context.Tag("clawql/BurstWatchSour
 
 export function makeBurstWatchSourcesService(
   pod: Context.Tag.Service<typeof PodInformerService>,
-  nodeClaim: Context.Tag.Service<typeof NodeClaimInformerService>
+  nodeClaim: Context.Tag.Service<typeof NodeClaimInformerService>,
+  istioTail?: Context.Tag.Service<typeof IstioAccessLogTailService>
 ): Context.Tag.Service<typeof BurstWatchSourcesService> {
   return {
     start: (stub, options) =>
@@ -113,12 +118,33 @@ export function makeBurstWatchSourcesService(
         }
 
         if (options?.istioAccessLogPath) {
-          // Path recorded for operators; live tail lives in IstioAccessLogTailService (#1133).
-          statuses.push({
-            id: "istio-access-log-tail",
-            started: false,
-            detail: `path configured (${options.istioAccessLogPath}) — start via IstioAccessLogTailService`,
-          });
+          if (!istioTail) {
+            statuses.push({
+              id: "istio-access-log-tail",
+              started: false,
+              detail: "IstioAccessLogTailService not provided to bootstrap",
+            });
+          } else {
+            const handle: IstioAccessLogTailHandle | null = yield* startIstioAccessLogTailOrNull(
+              istioTail,
+              stub,
+              { path: options.istioAccessLogPath, fromStart: true }
+            );
+            if (handle) {
+              stops.push(handle.stop);
+              statuses.push({
+                id: "istio-access-log-tail",
+                started: true,
+                detail: `file-tail ${options.istioAccessLogPath}`,
+              });
+            } else {
+              statuses.push({
+                id: "istio-access-log-tail",
+                started: false,
+                detail: `unavailable (${options.istioAccessLogPath})`,
+              });
+            }
+          }
         }
 
         const startedCount = statuses.filter((s) => s.started).length;
@@ -142,19 +168,23 @@ export function makeBurstWatchSourcesService(
 export const BurstWatchSourcesLive: Layer.Layer<
   BurstWatchSourcesService,
   never,
-  PodInformerService | NodeClaimInformerService
+  PodInformerService | NodeClaimInformerService | IstioAccessLogTailService
 > = Layer.effect(
   BurstWatchSourcesService,
   Effect.gen(function* () {
     const pod = yield* PodInformerService;
     const nc = yield* NodeClaimInformerService;
-    return makeBurstWatchSourcesService(pod, nc);
+    const istio = yield* IstioAccessLogTailService;
+    return makeBurstWatchSourcesService(pod, nc, istio);
   })
 );
 
 /** Test / no-cluster stack: unavailable informers + sources service. */
 export const BurstWatchSourcesUnavailableLive: Layer.Layer<
-  BurstWatchSourcesService | PodInformerService | NodeClaimInformerService
+  | BurstWatchSourcesService
+  | PodInformerService
+  | NodeClaimInformerService
+  | IstioAccessLogTailService
 > = BurstWatchSourcesLive.pipe(
   Layer.provideMerge(
     Layer.mergeAll(
@@ -170,6 +200,18 @@ export const BurstWatchSourcesUnavailableLive: Layer.Layer<
           Effect.fail({
             _tag: "NodeClaimInformerUnavailable" as const,
             reason: "test double — no cluster",
+          }),
+      }),
+      Layer.succeed(IstioAccessLogTailService, {
+        start: () =>
+          Effect.fail({
+            _tag: "IstioAccessLogTailUnavailable" as const,
+            reason: "test double — no access-log path",
+          }),
+        ingestFileOnce: () =>
+          Effect.fail({
+            _tag: "IstioAccessLogTailUnavailable" as const,
+            reason: "test double — no access-log path",
           }),
       })
     )

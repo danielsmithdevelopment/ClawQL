@@ -368,6 +368,85 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     expect(result.drained.meshBridges[1]?.metadata.layer).toBe("ztunnel");
   });
 
+  it("IstioAccessLogTail ingestFileOnce bridges denials from a real file", async () => {
+    const { writeFileSync, mkdtempSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      IstioAccessLogTailStandaloneLive,
+      IstioAccessLogTailService,
+      UnavailableIstioAccessLogTailLive,
+      startIstioAccessLogTailOrNull,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const dir = mkdtempSync(join(tmpdir(), "istio-tail-"));
+    const path = join(dir, "access.ndjson");
+    writeFileSync(
+      path,
+      [
+        JSON.stringify({
+          response_code: 403,
+          response_flags: "RBAC",
+          "source.principal": "spiffe://cluster.local/ns/a/sa/x",
+          "destination.principal": "spiffe://cluster.local/ns/b/sa/y",
+          "x-request-id": "file-deny-1",
+          reporter: "waypoint",
+        }),
+        "",
+      ].join("\n")
+    );
+
+    const once = await Effect.runPromise(
+      Effect.gen(function* () {
+        const tail = yield* IstioAccessLogTailService;
+        const stub = yield* BurstWatchStub;
+        const ingested = yield* tail.ingestFileOnce(path);
+        for (const ev of ingested.events) {
+          yield* stub.enqueue(ev);
+        }
+        const drained = yield* stub.drain();
+        return { ingested, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(IstioAccessLogTailStandaloneLive, BurstWatchStubLive)))
+    );
+    expect(once.ingested.events).toHaveLength(1);
+    expect(once.drained.meshBridges).toHaveLength(1);
+    expect(once.drained.meshBridges[0]?.metadata.requestId).toBe("file-deny-1");
+
+    const nullHandle = await Effect.runPromise(
+      Effect.gen(function* () {
+        const tail = yield* IstioAccessLogTailService;
+        const stub = yield* BurstWatchStub;
+        return yield* startIstioAccessLogTailOrNull(tail, stub, {
+          path: join(dir, "missing.ndjson"),
+        });
+      }).pipe(Effect.provide(Layer.mergeAll(UnavailableIstioAccessLogTailLive, BurstWatchStubLive)))
+    );
+    expect(nullHandle).toBeNull();
+  });
+
+  it("IstioAccessLogTail start fails closed when path missing", async () => {
+    const { IstioAccessLogTailStandaloneLive, IstioAccessLogTailService } =
+      await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const tail = yield* IstioAccessLogTailService;
+        return yield* tail
+          .start({
+            path: "/tmp/clawql-istio-access-log-does-not-exist-088d.ndjson",
+            onEvent: () => Effect.void,
+          })
+          .pipe(Effect.either);
+      }).pipe(Effect.provide(IstioAccessLogTailStandaloneLive))
+    );
+    expect(result._tag).toBe("Left");
+    if (result._tag === "Left") {
+      expect(result.left._tag).toBe("IstioAccessLogTailUnavailable");
+    }
+  });
+
   it("maps Karpenter provisioning and filler eviction into watch + WORM types", async () => {
     const {
       BurstWatchStub,
