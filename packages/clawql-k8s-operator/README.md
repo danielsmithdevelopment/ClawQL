@@ -6,9 +6,9 @@
 
 ## vs `clawql-operator`
 
-| Package | Job |
-| ------- | --- |
-| **`clawql-operator`** | `ClawQLInstance` CRD, tier ConfigMaps, optional MCP Deployment rolls |
+| Package                          | Job                                                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`clawql-operator`**            | `ClawQLInstance` CRD, tier ConfigMaps, optional MCP Deployment rolls                                                                                                                             |
 | **`clawql-k8s-operator`** (this) | Mesh-policy **drift detection** (not generation), mesh denial → host `clawql-audit`, filler eviction / Karpenter headroom, celld fleet health, session-aware cell placement (Modal-sourced §8.2) |
 
 Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collapses defense-in-depth into one source of truth.
@@ -20,8 +20,10 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `BurstOperatorService` Context.Tag + Live layer
 - `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
 - `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable
+- `IstioDenialWatchService` — parse Envoy/ztunnel access-log JSON/NDJSON → `mesh_denial` (denial bridging; no policy generation)
+- `KarpenterLifecycleWatchService` — map NodeClaim/disruption-shaped records → watch events + WORM types (mock/CRD-feed; no live Karpenter client)
 - Placement variance simulation + `infra/aws-celld-burst/loadtest/dry-run.mjs` (`status: dry-run`, null `$Y`)
 
 ## Not yet implemented (needs real cluster / AWS)
 
-Istio telemetry subscription, Karpenter API eviction actions, S3 lease fleet health, calibrated three-arm Cost Explorer numbers (§13.5). Pod informer is the first live Watch path; mesh/Karpenter watches remain stub-fed.
+Live Istio telemetry subscription (cluster log pipeline), live Karpenter API eviction actions, S3 lease fleet health, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters parse/feed the watch queue; production telemetry/API remain external.
