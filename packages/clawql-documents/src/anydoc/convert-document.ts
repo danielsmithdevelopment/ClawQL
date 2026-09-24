@@ -50,6 +50,8 @@ function looksLikeOcrNeeded(errMsg: string): boolean {
   const m = errMsg.toLowerCase();
   return (
     m.includes("ocr") ||
+    m.includes("needocr") ||
+    m.includes("needsocr") ||
     m.includes("scanned") ||
     m.includes("image-only") ||
     m.includes("image based") ||
