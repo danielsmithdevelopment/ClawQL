@@ -1,13 +1,24 @@
 # Optional §7.2 frontier adjudication (Sonnet / OpenRouter).
 #
-# Does NOT run on every PR. workflow_dispatch + credential gate (same pattern as
-# harvey-lab-firm-knowledge.yml). When secrets are present, starts the HTTP
-# frontier-judge sidecar and runs scripts/run-held-out-adjudication.mts.
+# Does NOT run on every PR. Triggers:
+#   - workflow_dispatch (Actions UI / `gh workflow run` with actions:write)
+#   - repository_dispatch type `frontier-adjudication` (PAT / app token)
+#
+# Credential gate (same pattern as harvey-lab-firm-knowledge.yml). When secrets
+# are present, starts the HTTP frontier-judge sidecar and runs
+# scripts/run-held-out-adjudication.mts.
 #
 # Secrets (either):
 #   ANTHROPIC_API_KEY  — preferred for claude-sonnet-4-6
 #   OPENROUTER_API_KEY — alternate / Claude via OpenRouter when
 #                        CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER=1
+#
+# Operator (actions:write):
+#   gh workflow run fast-decision-frontier-adjudication.yml --ref main \
+#     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false
+#   # or:
+#   gh api -X POST repos/OWNER/REPO/dispatches \
+#     -f event_type=frontier-adjudication
 #
 # Honesty: uploaded labels are live-judge provenance. productionTrusted still
 # requires calibration criteria + live GLiNER scores (see held-out runner).
@@ -27,6 +38,8 @@ on:
         required: true
         default: false
         type: boolean
+  repository_dispatch:
+    types: [frontier-adjudication]
 
 permissions:
   contents: read
@@ -43,6 +56,7 @@ jobs:
       can_run: ${{ steps.gate.outputs.can_run }}
       skip_reason: ${{ steps.gate.outputs.skip_reason }}
       via_openrouter: ${{ steps.gate.outputs.via_openrouter }}
+      judge_model: ${{ steps.gate.outputs.judge_model }}
     steps:
       - id: secret
         env:
@@ -66,7 +80,8 @@ jobs:
         env:
           HAS_OR: ${{ steps.secret.outputs.has_openrouter }}
           HAS_AN: ${{ steps.secret.outputs.has_anthropic }}
-          WANT_OR: ${{ inputs.via_openrouter }}
+          WANT_OR: ${{ inputs.via_openrouter || false }}
+          JUDGE_MODEL: ${{ inputs.judge_model || 'claude-sonnet-4-6' }}
         run: |
           set -euo pipefail
           VIA_OR=false
@@ -94,12 +109,23 @@ jobs:
             echo "can_run=${CAN}"
             echo "skip_reason=${REASON}"
             echo "via_openrouter=${VIA_OR}"
+            echo "judge_model=${JUDGE_MODEL}"
           } >>"$GITHUB_OUTPUT"
           if [ "${CAN}" = "true" ]; then
             echo "::notice::Credential gate passed (via_openrouter=${VIA_OR})"
           else
             echo "::warning::Credential gate blocked frontier adjudication: ${REASON}"
           fi
+
+  skip-notice:
+    name: Skip (missing credentials)
+    needs: gate
+    if: needs.gate.outputs.can_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "::warning::Frontier adjudication skipped: ${{ needs.gate.outputs.skip_reason }}"
+          echo "Install ANTHROPIC_API_KEY or OPENROUTER_API_KEY as repo Actions secrets, then re-dispatch."
 
   adjudicate:
     name: Held-out frontier adjudicate
@@ -110,7 +136,7 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      CLAWQL_FAST_DECISION_JUDGE_MODEL: ${{ inputs.judge_model }}
+      CLAWQL_FAST_DECISION_JUDGE_MODEL: ${{ needs.gate.outputs.judge_model }}
       CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER: ${{ needs.gate.outputs.via_openrouter }}
       CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Fast Decision Judge
