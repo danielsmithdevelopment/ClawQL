@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Download the latest successful Fast Decision frontier adjudication artifact.
 # Does not invent labels — fails closed when no successful live run exists.
+#
+# Usage:
+#   bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#   RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#     → also runs held-out validation with --labels-in + live GLiNER when
+#       CLAWQL_FAST_DECISION_GLINER_URL is set.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:-$ROOT/artifacts/held-out-frontier-from-gha}"
@@ -25,6 +31,7 @@ if ! gh run download "$RUN_ID" -n held-out-frontier-adjudication -D "$OUT"; then
 fi
 
 SUMMARY="$OUT/held-out-frontier-summary.json"
+LABELS="$OUT/held-out-frontier-labels.json"
 if [[ -f "$SUMMARY" ]]; then
   MODE="$(
     node --input-type=module -e \
@@ -40,3 +47,19 @@ fi
 
 echo "OK: frontier labels under $OUT"
 ls -la "$OUT"
+
+if [[ "${RESCORE:-0}" == "1" ]]; then
+  if [[ -z "${CLAWQL_FAST_DECISION_GLINER_URL:-}" ]]; then
+    echo "RESCORE=1 requires CLAWQL_FAST_DECISION_GLINER_URL for live gliner2 scores." >&2
+    exit 5
+  fi
+  if [[ ! -f "$LABELS" ]]; then
+    echo "Missing $LABELS for --labels-in rescore." >&2
+    exit 6
+  fi
+  echo "Rescoring with --labels-in $LABELS …"
+  npx tsx "$ROOT/scripts/run-held-out-adjudication.mts" \
+    --labels-in "$LABELS" \
+    --out "$OUT/held-out-rescore-with-live-gliner.json" \
+    | tee "$OUT/held-out-rescore-summary.json"
+fi

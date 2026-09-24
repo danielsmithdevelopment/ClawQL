@@ -2,6 +2,7 @@
 
 ### Added
 
+- **Held-out `--labels-in` rescore** — `parseLiveAdjudicationLabels` / `loadLiveAdjudicationLabelsFromJsonFile` refuse dry-run provenance; `scripts/run-held-out-adjudication.mts --labels-in` replays GHA live labels; `RESCORE=1` on `fetch-frontier-adjudication-artifact.sh` runs live GLiNER validation when URL is set.
 - **Frontier schedule + full held-out coverage** — daily cron on `.github/workflows/fast-decision-frontier-adjudication.yml` (credential-gated; skip-notice when secrets absent) so live labels can land without agent `actions:write`; `scripts/fetch-frontier-adjudication-artifact.sh` downloads the latest live artifact fail-closed; held-out suite now covers all 9 builtin use sites (still `adjudicated=false` until frontier labels).
 - **productionTrusted requires live GLiNER2** — held-out gate now needs `adjudicationKind: "live"` on every case **and** scorer `backendId === "gliner2"` (prior/heuristic/stub/fallback cannot light the flag); reports include `scorerBackend`.
 - **Held-out runner wires GLiNER2 primary** — `scripts/run-held-out-adjudication.mts` uses `createGlinerFastDecisionScorerLayer` (live when `CLAWQL_FAST_DECISION_GLINER_URL` set; else honest `gliner2-stub`); summary reports `scorerBackend` / `glinerLiveConfigured`. Frontier GHA passes optional `vars.CLAWQL_FAST_DECISION_GLINER_URL`. Dry-run adjudication sets `adjudicationKind: "dry-run"` and **cannot** light `productionTrusted`.

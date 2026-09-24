@@ -554,6 +554,91 @@ describe("§7 held-out suite runner", () => {
     expect(report.failureReasons.some((x) => x.includes("live frontier adjudication"))).toBe(true);
   });
 
+  it("parseLiveAdjudicationLabels refuses dry-run provenance", async () => {
+    const { parseLiveAdjudicationLabels } = await import("./held-out/index.js");
+    expect(() =>
+      parseLiveAdjudicationLabels({
+        labels: [
+          {
+            caseId: "x",
+            groundTruthCandidateId: "hit",
+            adjudicated: true,
+            judgeModel: "dry-run-recorded",
+            judgedAt: new Date().toISOString(),
+            rationale: "nope",
+          },
+        ],
+      })
+    ).toThrow(/refusing dry-run/);
+  });
+
+  it("labels-in path + live gliner2 can light productionTrusted", async () => {
+    const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
+    const { applyAdjudicationLabels, parseLiveAdjudicationLabels, runHeldOutValidationForUseSite } =
+      await import("./held-out/index.js");
+
+    const labels = parseLiveAdjudicationLabels({
+      labels: [
+        {
+          caseId: "a1",
+          groundTruthCandidateId: "hit",
+          adjudicated: true,
+          judgeModel: "claude-sonnet-4-6",
+          judgedAt: new Date().toISOString(),
+          rationale: "fixture live label",
+        },
+      ],
+    });
+    const suite = {
+      suiteId: "labels-in",
+      description: "labels-in",
+      cases: [
+        {
+          caseId: "a1",
+          useSiteId: "skill_fast_path_match",
+          query: "x",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.1 } },
+          ],
+          groundTruthCandidateId: "miss",
+          adjudicated: false,
+        },
+      ],
+    };
+    const labeled = applyAdjudicationLabels(suite, labels);
+    expect(labeled.cases[0]?.adjudicationKind).toBe("live");
+    expect(labeled.cases[0]?.groundTruthCandidateId).toBe("hit");
+
+    const glinerLayer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.test",
+        modelId: "test-gliner",
+        timeoutMs: 2000,
+      },
+      fetchImpl: (async () =>
+        new Response(
+          JSON.stringify({
+            scores: [
+              { id: "hit", confidence: 0.95 },
+              { id: "miss", confidence: 0.1 },
+            ],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )) as unknown as typeof fetch,
+    });
+
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(labeled, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(glinerLayer))
+    );
+    expect(report.scorerBackend).toBe("gliner2");
+    expect(report.productionTrusted).toBe(true);
+  });
+
   it("HTTP adjudicator + live gliner2 HTTP can light productionTrusted on a mini suite", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const {
