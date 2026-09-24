@@ -8,6 +8,7 @@ import { Effect } from "effect";
 import {
   capabilityRegisterInterceptEnabled,
   defaultCapabilityRegisterWiring,
+  ensureSessionCatalogFromHarnessScope,
   reportHarnessToolRegistration,
   type CapabilityRegisterWiring,
 } from "./capability-register-wiring.js";
@@ -163,6 +164,15 @@ export const registerHarnessPlugins = (
       started: true,
       capabilityRegisterWiring: wiring,
     };
+
+    if (wiring) {
+      ensureSessionCatalogFromHarnessScope({
+        wiring,
+        sessionId: state.sessionId,
+        scope: state.scope,
+      });
+    }
+
     const ctx = buildHarnessContext(state);
 
     for (const plugin of config.plugins) {

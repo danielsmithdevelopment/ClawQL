@@ -322,6 +322,35 @@ describe("GLiNER2 primary scorer", () => {
     expect(scores[0]?.candidateId).toBe("tool.a");
     expect(scores[0]?.confidence).toBeCloseTo(0.91);
   });
+
+  it("does not claim gliner2 backendId when sidecar HTTP fails", async () => {
+    const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
+    const layer = createGlinerFastDecisionScorerLayer({
+      config: {
+        endpointUrl: "http://gliner.down",
+        modelId: "fastino/gliner2.5-base-v1",
+        timeoutMs: 500,
+      },
+      fetchImpl: (async () => new Response("nope", { status: 503 })) as unknown as typeof fetch,
+    });
+
+    const backendId = await Effect.runPromise(
+      Effect.gen(function* () {
+        const scorer = yield* FastDecisionScorer;
+        yield* scorer.score({
+          useSiteId: "skill_fast_path_match",
+          ctx: { sessionId: "s", query: "extract springing lien" },
+          candidates: [
+            { candidateId: "a", features: { description: "extract springing lien" } },
+            { candidateId: "b", features: { description: "slack" } },
+          ],
+        });
+        return scorer.backendId();
+      }).pipe(Effect.provide(layer))
+    );
+
+    expect(backendId).toBe("gliner2-http-fallback-heuristic");
+  });
 });
 
 describe("§7 held-out suite runner", () => {

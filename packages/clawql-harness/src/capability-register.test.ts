@@ -1,19 +1,21 @@
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import { describe, expect, it } from "vitest";
 import {
   SessionCatalogService,
   WormAuditSink,
-  createSharedCapabilityCatalogLayer,
 } from "clawql-core";
-import { Layer } from "effect";
+import { getCapabilityLifecycleRuntime, resetCapabilityLifecycleRuntimeForTests } from "clawql-api";
 import {
   buildHarnessContext,
   defaultCapabilityRegisterWiring,
+  isolatedCapabilityRegisterWiring,
   registerHarnessPlugins,
   makeHarnessWormLayer,
+  reportHarnessToolRegistration,
   type HarnessRegistryState,
 } from "./index.js";
 import type { HarnessPlugin, HarnessTool } from "./types.js";
+import { OuroborosPlugin } from "../plugins/ouroboros/index.js";
 
 const noopTool = (name: string): HarnessTool => ({
   name,
@@ -22,7 +24,7 @@ const noopTool = (name: string): HarnessTool => ({
 });
 
 describe("§3.5.1 capability register intercept wiring", () => {
-  it("blocks novel tools from going live when intercept enabled and catalog empty", async () => {
+  it("blocks novel tools when intercept enabled and catalog has no match", async () => {
     const wormLayer = makeHarnessWormLayer();
     const state = await Effect.runPromise(
       registerHarnessPlugins({
@@ -39,6 +41,11 @@ describe("§3.5.1 capability register intercept wiring", () => {
         model: { provider: "stub", name: "t" },
         sessionId: "reg-s1",
         enableCapabilityRegisterIntercept: true,
+        capabilityRegisterWiring: isolatedCapabilityRegisterWiring(),
+        atrScope: {
+          toolsInScope: ["search"],
+          toolsOutOfScope: [],
+        },
       }).pipe(Effect.provide(wormLayer))
     );
 
@@ -47,28 +54,11 @@ describe("§3.5.1 capability register intercept wiring", () => {
     expect(state.blockedRegistrations.get("novel.hot.plugin")?.disposition).toBe(
       "routed_to_sandbox"
     );
+    // in-scope seed allows search
+    expect(state.tools.size).toBe(0);
   });
 
-  it("accepts tools in session_catalog ∩ S when intercept enabled", async () => {
-    const catalogLayer = createSharedCapabilityCatalogLayer();
-    const wormSink = Layer.succeed(WormAuditSink, {
-      append: () => Effect.void,
-    });
-    const shared = Layer.mergeAll(catalogLayer, wormSink);
-
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const catalogs = yield* SessionCatalogService;
-        yield* catalogs.bind({
-          sessionId: "reg-s2",
-          tools: new Set(["search"]),
-          atrScope: new Set(["search"]),
-          boundAt: new Date().toISOString(),
-          rebindGeneration: 0,
-        });
-      }).pipe(Effect.provide(shared))
-    );
-
+  it("accepts tools seeded from atrScope.toolsInScope", async () => {
     const wormLayer = makeHarnessWormLayer();
     const state = await Effect.runPromise(
       registerHarnessPlugins({
@@ -84,18 +74,68 @@ describe("§3.5.1 capability register intercept wiring", () => {
           } satisfies HarnessPlugin,
         ],
         model: { provider: "stub", name: "t" },
-        sessionId: "reg-s2",
+        sessionId: "reg-seed",
         enableCapabilityRegisterIntercept: true,
-        capabilityRegisterWiring: {
-          harnessId: "clawql-harness",
-          layer: shared,
+        capabilityRegisterWiring: isolatedCapabilityRegisterWiring(),
+        atrScope: {
+          toolsInScope: ["search"],
+          toolsOutOfScope: [],
         },
       }).pipe(Effect.provide(wormLayer))
     );
 
     expect(state.tools.has("search")).toBe(true);
     expect(state.tools.has("novel.other")).toBe(false);
-    expect(state.blockedRegistrations.has("novel.other")).toBe(true);
+  });
+
+  it("shares catalog with clawql-api getCapabilityLifecycleRuntime()", async () => {
+    resetCapabilityLifecycleRuntimeForTests();
+    const runtime = getCapabilityLifecycleRuntime();
+    const wormSink = Layer.succeed(WormAuditSink, { append: () => Effect.void });
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const catalogs = yield* SessionCatalogService;
+        yield* catalogs.bind({
+          sessionId: "shared-s",
+          tools: new Set(["search"]),
+          atrScope: new Set(["search"]),
+          boundAt: new Date().toISOString(),
+          rebindGeneration: 0,
+        });
+      }).pipe(Effect.provide(Layer.mergeAll(runtime.catalogLayer, wormSink)))
+    );
+
+    const wiring = defaultCapabilityRegisterWiring();
+    const result = reportHarnessToolRegistration({
+      wiring,
+      sessionId: "shared-s",
+      tool: noopTool("search"),
+    });
+    expect(result.accepted).toBe(true);
+  });
+
+  it("does not intercept when CLAWQL_CAPABILITY_LIFECYCLE=1 alone (MCP gate only)", async () => {
+    const prev = process.env.CLAWQL_CAPABILITY_LIFECYCLE;
+    const prevH = process.env.CLAWQL_HARNESS_CAPABILITY_REGISTER;
+    process.env.CLAWQL_CAPABILITY_LIFECYCLE = "1";
+    delete process.env.CLAWQL_HARNESS_CAPABILITY_REGISTER;
+    try {
+      const wormLayer = makeHarnessWormLayer();
+      const state = await Effect.runPromise(
+        registerHarnessPlugins({
+          plugins: [OuroborosPlugin],
+          model: { provider: "stub", name: "t" },
+          sessionId: "life-mcp-only",
+        }).pipe(Effect.provide(wormLayer))
+      );
+      expect(state.tools.has("clawql_think")).toBe(true);
+      expect(state.blockedRegistrations.size).toBe(0);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_CAPABILITY_LIFECYCLE;
+      else process.env.CLAWQL_CAPABILITY_LIFECYCLE = prev;
+      if (prevH === undefined) delete process.env.CLAWQL_HARNESS_CAPABILITY_REGISTER;
+      else process.env.CLAWQL_HARNESS_CAPABILITY_REGISTER = prevH;
+    }
   });
 
   it("does not intercept when disabled (default)", async () => {
@@ -118,11 +158,6 @@ describe("§3.5.1 capability register intercept wiring", () => {
     );
     expect(state.tools.has("anything.goes")).toBe(true);
     expect(state.blockedRegistrations.size).toBe(0);
-  });
-
-  it("defaultCapabilityRegisterWiring exposes clawql-harness id", () => {
-    const w = defaultCapabilityRegisterWiring();
-    expect(w.harnessId).toBe("clawql-harness");
   });
 
   it("buildHarnessContext without wiring still registers", () => {

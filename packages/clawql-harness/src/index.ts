@@ -17,6 +17,8 @@ export {
   assertRegisterSideLiveOrThrow,
   capabilityRegisterInterceptEnabled,
   defaultCapabilityRegisterWiring,
+  ensureSessionCatalogFromHarnessScope,
+  isolatedCapabilityRegisterWiring,
   reportHarnessToolRegistration,
   type CapabilityRegisterWiring,
   type RegisterToolWithInterceptResult,

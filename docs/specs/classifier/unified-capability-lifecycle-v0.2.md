@@ -43,7 +43,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 
 - Steps 1–4 (invoke): covered by `capability-lifecycle.test.ts`.
 - MCP path: opt-in `CLAWQL_CAPABILITY_LIFECYCLE=1` installs a blocking `pre-execute` plugin on `McpProxyPipeline` (`capability-lifecycle-plugin.test.ts`). Catalog must be bound per session (`bindSessionCatalog`) or calls fail closed. Default install without the env flag does **not** enforce §3.5.
-- Step 5 (register-side before harness treats tool as live): **wired** in `clawql-harness` via `ctx.tools.register` → `CapabilityRegisterIntercept` when `CLAWQL_CAPABILITY_LIFECYCLE=1` or `enableCapabilityRegisterIntercept: true`. Tools outside session_catalog∩S are not added to the live tool map (`routed_to_sandbox` recorded in `blockedRegistrations`).
+- Step 5 (register-side before harness treats tool as live): **wired** in `clawql-harness` via `ctx.tools.register` → `CapabilityRegisterIntercept` when `enableCapabilityRegisterIntercept: true` or `CLAWQL_HARNESS_CAPABILITY_REGISTER=1` (independent of `CLAWQL_CAPABILITY_LIFECYCLE`, the MCP pre-execute gate). Default wiring shares `getCapabilityLifecycleRuntime().catalogLayer`. On enable, empty sessions are seeded from `atrScope.toolsInScope`; tools outside that set are not added to the live tool map (`routed_to_sandbox` → `blockedRegistrations`).
 
 ## Implementation status (honest)
 
@@ -53,7 +53,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 | Accept-time promotion ⊆ S                     | Implemented                                   |
 | Harness cannot set disposition / sandbox fork | Implemented (core policy)                     |
 | Default MCP execute gate                      | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
-| Register-side step 5                          | Wired in `clawql-harness` (opt-in)            |
+| Register-side step 5                          | Wired in `clawql-harness` (opt-in via `CLAWQL_HARNESS_CAPABILITY_REGISTER` / config; not MCP env) |
 
 ## Related
 

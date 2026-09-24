@@ -2,8 +2,8 @@
 
 ### Added
 
-- **Fast Decision §7 held-out runner + GLiNER sidecar** — embedded suite `fast-decision-held-out-v0.1` with `productionTrusted` gated on frontier adjudication; HTTP sidecar at [`infra/gliner-sidecar/`](infra/gliner-sidecar/) (`mock` default / optional `gliner2`).
-- **Capability lifecycle §3.5.1 register-side** — `clawql-harness` wires `ctx.tools.register` through `CapabilityRegisterIntercept` when `CLAWQL_CAPABILITY_LIFECYCLE=1` / `enableCapabilityRegisterIntercept`.
+- **Fast Decision §7 held-out runner + GLiNER sidecar** — embedded suite `fast-decision-held-out-v0.1` with `productionTrusted` gated on frontier adjudication; HTTP sidecar at [`infra/gliner-sidecar/`](infra/gliner-sidecar/) (`mock` default / optional `gliner2`); scorer reports `gliner2-http-fallback-heuristic` when URL is set but HTTP fails (never claims live GLiNER on fallback).
+- **Capability lifecycle §3.5.1 register-side** — `clawql-harness` wires `ctx.tools.register` through `CapabilityRegisterIntercept` when `enableCapabilityRegisterIntercept` / `CLAWQL_HARNESS_CAPABILITY_REGISTER=1` (independent of the MCP `CLAWQL_CAPABILITY_LIFECYCLE` gate); default wiring shares `getCapabilityLifecycleRuntime()` catalog.
 - **Burst operator session placement** — pure Effect thicc-session / load-aware / new-capacity helpers + mesh-denial bridge on `BurstOperatorService` (`packages/clawql-k8s-operator`).
 
 - **ADR 0011 — Isolation architecture** — [`docs/adr/0011-isolation-agent-substrate-sandbox-celld.md`](docs/adr/0011-isolation-agent-substrate-sandbox-celld.md): decision that untrusted code belongs in `clawql-sandbox` and fixed-shape orchestration in celld. **Implementation status:** Control-plane _adapter stub_ (mock + optional HTTP façade) — not a vendored Google Agent Substrate dependency. Backend kind `agent-substrate` leads auto-selection only when explicitly configured.

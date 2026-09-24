@@ -94,15 +94,24 @@ function requestText(ctx: FastDecisionContext): string {
 
 /**
  * Live HTTP call to a GLiNER sidecar. Effect-primary; host may wrap with runPromise.
+ * Returns scores plus whether the sidecar actually answered (vs heuristic fallback).
  */
+export type GlinerHttpScoreResult = {
+  readonly scores: readonly FastDecisionScore[];
+  readonly source: "live" | "fallback-heuristic" | "no-endpoint";
+};
+
 export function scoreViaGlinerHttp(
   config: GlinerScorerConfig,
   request: FastDecisionScoreRequest,
   fetchImpl: typeof fetch = fetch
-): Effect.Effect<readonly FastDecisionScore[]> {
+): Effect.Effect<GlinerHttpScoreResult> {
   const base = config.endpointUrl?.replace(/\/$/, "");
   if (!base) {
-    return Effect.sync(() => heuristicScores(request));
+    return Effect.sync(() => ({
+      scores: heuristicScores(request),
+      source: "no-endpoint" as const,
+    }));
   }
 
   const body: GlinerClassifyRequestBody = {
@@ -133,24 +142,36 @@ export function scoreViaGlinerHttp(
         catch: (e) => e,
       });
       if (!res.ok) {
-        // Fail soft to heuristic — threshold policy still gates action.
-        return heuristicScores(request);
+        return {
+          scores: heuristicScores(request),
+          source: "fallback-heuristic" as const,
+        };
       }
       const parsed = (yield* Effect.tryPromise({
         try: () => res.json() as Promise<GlinerClassifyResponseBody>,
         catch: (e) => e,
       })) as GlinerClassifyResponseBody;
       const byId = new Map((parsed.scores ?? []).map((s) => [s.id, clamp01(Number(s.confidence))]));
-      return request.candidates
-        .map((c) => ({
-          candidateId: c.candidateId,
-          confidence: byId.get(c.candidateId) ?? 0,
-        }))
-        .sort((a, b) => b.confidence - a.confidence);
+      return {
+        scores: request.candidates
+          .map((c) => ({
+            candidateId: c.candidateId,
+            confidence: byId.get(c.candidateId) ?? 0,
+          }))
+          .sort((a, b) => b.confidence - a.confidence),
+        source: "live" as const,
+      };
     } finally {
       clearTimeout(timer);
     }
-  }).pipe(Effect.catchAll(() => Effect.sync(() => heuristicScores(request))));
+  }).pipe(
+    Effect.catchAll(() =>
+      Effect.sync(() => ({
+        scores: heuristicScores(request),
+        source: "fallback-heuristic" as const,
+      }))
+    )
+  );
 }
 
 export type GlinerScorerLayerOptions = {
@@ -162,24 +183,34 @@ export type GlinerScorerLayerOptions = {
 /**
  * GLiNER2 Fast Decision scorer — **primary** production Layer.
  *
- * - No `CLAWQL_FAST_DECISION_GLINER_URL` → `backendId: gliner2-stub` + heuristic
- *   (honest: not claiming live GLiNER weights in-process).
- * - URL set → `backendId: gliner2` + HTTP classify against sidecar.
+ * - No `CLAWQL_FAST_DECISION_GLINER_URL` → `backendId: gliner2-stub`
+ * - URL set + live HTTP success → `backendId: gliner2`
+ * - URL set + HTTP/parse failure → `backendId: gliner2-http-fallback-heuristic`
+ *   (never claim live GLiNER when the sidecar did not answer)
  */
 export function createGlinerFastDecisionScorerLayer(
   options: GlinerScorerLayerOptions = {}
 ): Layer.Layer<FastDecisionScorer> {
   const config = options.config ?? readGlinerScorerConfigFromEnv();
-  const live = Boolean(config.endpointUrl?.trim());
-  const backendId = live ? "gliner2" : "gliner2-stub";
+  const liveConfigured = Boolean(config.endpointUrl?.trim());
   const fetchImpl = options.fetchImpl ?? fetch;
+  let lastBackendId = liveConfigured ? "gliner2" : "gliner2-stub";
 
   return Layer.succeed(FastDecisionScorer, {
-    backendId: () => backendId,
-    score: (request) =>
-      live
-        ? scoreViaGlinerHttp(config, request, fetchImpl)
-        : Effect.sync(() => heuristicScores(request)),
+    backendId: () => lastBackendId,
+    score: (request) => {
+      if (!liveConfigured) {
+        lastBackendId = "gliner2-stub";
+        return Effect.sync(() => heuristicScores(request));
+      }
+      return scoreViaGlinerHttp(config, request, fetchImpl).pipe(
+        Effect.map((result) => {
+          lastBackendId =
+            result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
+          return result.scores;
+        })
+      );
+    },
   });
 }
 

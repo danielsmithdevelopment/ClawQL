@@ -1,18 +1,28 @@
 /**
  * Wire CapabilityRegisterIntercept into harness tool registration (§3.5.1).
- * Opt-in: CLAWQL_CAPABILITY_LIFECYCLE=1 or config.enableCapabilityRegisterIntercept.
+ *
+ * Opt-in (harness-specific — does NOT share CLAWQL_CAPABILITY_LIFECYCLE with the
+ * MCP pre-execute gate, so enabling MCP enforcement cannot silently empty harness
+ * tool maps):
+ *   - config.enableCapabilityRegisterIntercept === true, or
+ *   - CLAWQL_HARNESS_CAPABILITY_REGISTER=1
+ *
+ * Default wiring shares the process catalog Layer from
+ * clawql-api `getCapabilityLifecycleRuntime()` so MCP bindSessionCatalog and
+ * harness register see the same Maps.
  */
 
 import {
   CapabilityRegisterIntercept,
+  SessionCatalogService,
   WormAuditSink,
   createSharedCapabilityCatalogLayer,
-  type RegisterInterceptOutcome,
-  type SessionCatalogService,
   type PromotionStore,
+  type RegisterInterceptOutcome,
 } from "clawql-core";
+import { getCapabilityLifecycleRuntime } from "clawql-api";
 import { Effect, Layer, type Layer as LayerT } from "effect";
-import type { HarnessTool } from "./types.js";
+import type { HarnessScope, HarnessTool } from "./types.js";
 import { HarnessPluginError as HarnessPluginErrorClass } from "./types.js";
 
 export const CLAWQL_HARNESS_REGISTER_ID = "clawql-harness";
@@ -24,10 +34,14 @@ export type CapabilityRegisterWiring = {
   readonly harnessId: string;
 };
 
+/**
+ * Harness register-side only. Deliberately ignores CLAWQL_CAPABILITY_LIFECYCLE
+ * (that flag is the MCP pre-execute gate).
+ */
 export function capabilityRegisterInterceptEnabled(explicit?: boolean): boolean {
   if (explicit === true) return true;
   if (explicit === false) return false;
-  return process.env.CLAWQL_CAPABILITY_LIFECYCLE?.trim() === "1";
+  return process.env.CLAWQL_HARNESS_CAPABILITY_REGISTER?.trim() === "1";
 }
 
 /** Sync-safe WORM sink for the register boundary (no async Ref bootstrap). */
@@ -36,10 +50,19 @@ const SyncMemoryWormLive: LayerT.Layer<WormAuditSink> = Layer.succeed(WormAuditS
 });
 
 /**
- * Default process Layer: shared catalog + sync WORM sink for register boundary.
- * Hosts may replace with getCapabilityLifecycleRuntime().catalogLayer + real WormAuditSink.
+ * Prefer the process-shared catalog from clawql-api so MCP bindSessionCatalog
+ * and harness register-side see the same session Maps.
  */
 export function defaultCapabilityRegisterWiring(): CapabilityRegisterWiring {
+  const runtime = getCapabilityLifecycleRuntime();
+  return {
+    harnessId: CLAWQL_HARNESS_REGISTER_ID,
+    layer: Layer.mergeAll(runtime.catalogLayer, SyncMemoryWormLive),
+  };
+}
+
+/** Isolated wiring for unit tests (does not touch process singleton). */
+export function isolatedCapabilityRegisterWiring(): CapabilityRegisterWiring {
   return {
     harnessId: CLAWQL_HARNESS_REGISTER_ID,
     layer: Layer.mergeAll(createSharedCapabilityCatalogLayer(), SyncMemoryWormLive),
@@ -80,6 +103,31 @@ export function reportHarnessToolRegistration(args: {
     accepted: outcome.allow === true && outcome.registerSideImplemented === true,
     outcome,
   };
+}
+
+/**
+ * If this session has no catalog yet, bind one from harness atrScope.toolsInScope
+ * so in-scope tools can register; novel tools still route to sandbox.
+ */
+export function ensureSessionCatalogFromHarnessScope(args: {
+  readonly wiring: CapabilityRegisterWiring;
+  readonly sessionId: string;
+  readonly scope: HarnessScope;
+}): void {
+  const program = Effect.gen(function* () {
+    const catalogs = yield* SessionCatalogService;
+    const existing = yield* catalogs.get(args.sessionId);
+    if (existing) return;
+    const tools = new Set(args.scope.toolsInScope);
+    yield* catalogs.bind({
+      sessionId: args.sessionId,
+      tools,
+      atrScope: tools,
+      boundAt: new Date().toISOString(),
+      rebindGeneration: 0,
+    });
+  });
+  Effect.runSync(program.pipe(Effect.provide(args.wiring.layer)));
 }
 
 export function assertRegisterSideLiveOrThrow(

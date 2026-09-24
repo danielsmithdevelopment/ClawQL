@@ -116,11 +116,12 @@ export type ClawQLHarnessConfig = {
   readonly sessionId?: string;
   readonly atrScope?: HarnessScope;
   /**
-   * §3.5.1 — when true (or CLAWQL_CAPABILITY_LIFECYCLE=1), each `ctx.tools.register`
-   * reports through CapabilityRegisterIntercept before the tool is treated as live.
+   * §3.5.1 — when true (or CLAWQL_HARNESS_CAPABILITY_REGISTER=1), each
+   * `ctx.tools.register` reports through CapabilityRegisterIntercept before the
+   * tool is treated as live. Independent of CLAWQL_CAPABILITY_LIFECYCLE (MCP gate).
    */
   readonly enableCapabilityRegisterIntercept?: boolean;
-  /** Optional override Layer for register-side (defaults to shared catalog + sync WORM). */
+  /** Optional override Layer for register-side (defaults to shared clawql-api catalog). */
   readonly capabilityRegisterWiring?: import("./capability-register-wiring.js").CapabilityRegisterWiring;
 };
 
