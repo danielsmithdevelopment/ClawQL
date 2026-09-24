@@ -1,8 +1,6 @@
-# Marker to trigger Fast Decision frontier adjudication (Harvey LAB style).
-# Present on a PR/push that also touches this path → GHA runs live judge + GLiNER.
-# First non-comment, non-empty line is the suite name (v0.1 | v0.2-harvey).
-# Remove or empty this file after the run lands (do not leave permanently on main
-# unless you intend schedule-like PR noise).
+# Frontier adjudication marker (Harvey LAB style).
+# Leave EMPTY (comments only) when not intentionally triggering a live run.
+# First non-comment, non-empty line = suite (v0.1 | v0.2-harvey).
 #
-# Example PR: open a branch that only adds/updates this marker to v0.2-harvey.
-v0.2-harvey
+# Last run: PR #1145 / GHA 36058969016 — suite v0.2-harvey live labels landed
+# (claude-sonnet-4-6 + gliner2). Cleared so merge does not re-fire adjudication.
