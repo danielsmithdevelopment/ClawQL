@@ -202,13 +202,8 @@ cd "$ROOT"
 # Fresh DO SQLite avoids stale spawn_count / NodeFenced leftovers across smokes.
 rm -rf "$ROOT/.celld/dev"
 # Config must live under the project (celld resolves worker entry relative to it).
-celld dev "$SMOKE_CFG" --port "$PORT" &
-CELLD_PID=$!
-
-cd "$ROOT"
-# Fresh DO SQLite avoids stale spawn_count / NodeFenced leftovers across smokes.
-rm -rf "$ROOT/.celld/dev"
-# Config must live under the project (celld resolves worker entry relative to it).
+# Single spawn only — a second unlogged `celld dev` races the port and makes
+# wait_http treat the logged PID as dead while the first still comes up ready.
 CELLD_LOG="${FULL_STACK_CELLD_LOG:-$(mktemp "${TMPDIR:-/tmp}/streams-celld.XXXXXX.log")}"
 celld dev "$SMOKE_CFG" --port "$PORT" >"$CELLD_LOG" 2>&1 &
 CELLD_PID=$!

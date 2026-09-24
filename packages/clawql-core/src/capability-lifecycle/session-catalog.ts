@@ -1,0 +1,151 @@
+/**
+ * Session catalog — bucket 1 (Unified Capability Lifecycle v0.2 §3.5 / §3.5.2).
+ * Frozen after bind; mid-session changes only via explicit rebind.
+ */
+
+import { Context, Effect, Layer } from "effect";
+import { Data } from "effect";
+import { WormAuditSink, type WormAuditEvent } from "../plugin/provider-types.js";
+import type { SessionCatalog, SessionCatalogRebindInput } from "./types.js";
+
+export class SessionCatalogError extends Data.TaggedError("SessionCatalogError")<{
+  readonly reason: string;
+}> {}
+
+export class SessionCatalogService extends Context.Tag("clawql/SessionCatalogService")<
+  SessionCatalogService,
+  {
+    readonly bind: (catalog: SessionCatalog) => Effect.Effect<SessionCatalog, SessionCatalogError>;
+    readonly get: (sessionId: string) => Effect.Effect<SessionCatalog | undefined>;
+    /**
+     * Explicit session rebind (§3.5.2). Default: new scope ⊆ prior S.
+     * Wider scope requires explicitWiderScopeGrant with its own WORM.
+     */
+    readonly rebind: (
+      input: SessionCatalogRebindInput
+    ) => Effect.Effect<SessionCatalog, SessionCatalogError, WormAuditSink>;
+    readonly hasTool: (sessionId: string, toolName: string) => Effect.Effect<boolean>;
+  }
+>() {}
+
+function toSet(xs: readonly string[]): ReadonlySet<string> {
+  return new Set(xs);
+}
+
+export function makeInMemorySessionCatalogService(): Context.Tag.Service<
+  typeof SessionCatalogService
+> {
+  const store = new Map<string, SessionCatalog>();
+
+  return {
+    bind: (catalog) =>
+      Effect.gen(function* () {
+        if (store.has(catalog.sessionId)) {
+          return yield* Effect.fail(
+            new SessionCatalogError({
+              reason: `session catalog already bound for ${catalog.sessionId} — use rebind`,
+            })
+          );
+        }
+        for (const t of catalog.tools) {
+          if (!catalog.atrScope.has(t)) {
+            return yield* Effect.fail(
+              new SessionCatalogError({
+                reason: `tool ${t} not in atrScope at bind`,
+              })
+            );
+          }
+        }
+        store.set(catalog.sessionId, catalog);
+        return catalog;
+      }),
+
+    get: (sessionId) => Effect.sync(() => store.get(sessionId)),
+
+    hasTool: (sessionId, toolName) =>
+      Effect.sync(() => store.get(sessionId)?.tools.has(toolName) ?? false),
+
+    rebind: (input) =>
+      Effect.gen(function* () {
+        const worm = yield* WormAuditSink;
+        const prior = store.get(input.sessionId);
+        if (!prior) {
+          return yield* Effect.fail(
+            new SessionCatalogError({
+              reason: `no session catalog for rebind: ${input.sessionId}`,
+            })
+          );
+        }
+
+        const grantWider = input.explicitWiderScopeGrant ?? [];
+        const baseScope = input.newAtrScope ? toSet(input.newAtrScope) : prior.atrScope;
+
+        const nextScope = new Set<string>();
+        for (const token of baseScope) {
+          if (prior.atrScope.has(token) || grantWider.includes(token)) {
+            nextScope.add(token);
+          } else {
+            return yield* Effect.fail(
+              new SessionCatalogError({
+                reason: `rebind would widen S with token ${token} without explicitWiderScopeGrant`,
+              })
+            );
+          }
+        }
+        const newlyGranted = grantWider.filter((t) => !prior.atrScope.has(t));
+        for (const token of newlyGranted) {
+          nextScope.add(token);
+        }
+
+        const tools = toSet(input.newTools);
+        for (const t of tools) {
+          if (!nextScope.has(t)) {
+            return yield* Effect.fail(
+              new SessionCatalogError({
+                reason: `rebind tool ${t} not in rebound atrScope`,
+              })
+            );
+          }
+        }
+
+        const catalog: SessionCatalog = {
+          sessionId: input.sessionId,
+          atrScope: nextScope,
+          tools,
+          boundAt: new Date().toISOString(),
+          rebindGeneration: prior.rebindGeneration + 1,
+        };
+
+        store.set(input.sessionId, catalog);
+
+        yield* worm.append({
+          type: "SESSION_CATALOG_REBOUND",
+          sessionId: input.sessionId,
+          authorizedBy: input.authorizedBy,
+          rebindGeneration: catalog.rebindGeneration,
+          toolCount: catalog.tools.size,
+          atrScopeSize: catalog.atrScope.size,
+          widerScopeGranted: newlyGranted.length > 0,
+          timestamp: new Date().toISOString(),
+        } as WormAuditEvent);
+
+        if (newlyGranted.length > 0) {
+          yield* worm.append({
+            type: "SESSION_SCOPE_WIDENED",
+            sessionId: input.sessionId,
+            authorizedBy: input.authorizedBy,
+            grantedTokens: newlyGranted,
+            timestamp: new Date().toISOString(),
+          } as WormAuditEvent);
+        }
+
+        return catalog;
+      }),
+  };
+}
+
+/** Fresh Map per Layer build (tests). Prefer Layer.succeed(make…) for process singletons. */
+export const InMemorySessionCatalogLive: Layer.Layer<SessionCatalogService> = Layer.sync(
+  SessionCatalogService,
+  makeInMemorySessionCatalogService
+);

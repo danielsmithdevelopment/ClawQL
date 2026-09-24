@@ -1,0 +1,10 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.0
+# Transitive floors for OSV (guided-resolve of this requirements.txt):
+anyio>=4.14.2
+h11>=0.16.0
+idna>=3.15
+# Optional live weights (mode=gliner2):
+# gliner>=0.2.0
+# torch

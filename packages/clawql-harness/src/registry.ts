@@ -5,6 +5,13 @@ import {
   makeWORMAuditTrailLayer,
 } from "clawql-audit";
 import { Effect } from "effect";
+import {
+  capabilityRegisterInterceptEnabled,
+  defaultCapabilityRegisterWiring,
+  ensureSessionCatalogFromHarnessScope,
+  reportHarnessToolRegistration,
+  type CapabilityRegisterWiring,
+} from "./capability-register-wiring.js";
 import type {
   ClawQLHarnessConfig,
   HarnessContext,
@@ -21,6 +28,11 @@ import { HarnessPluginError as HarnessPluginErrorClass } from "./types.js";
 export type HarnessRegistryState = {
   readonly plugins: readonly HarnessPlugin[];
   readonly tools: Map<string, HarnessTool>;
+  /** Tools blocked by register-side intercept (routed_to_sandbox / deny). */
+  readonly blockedRegistrations: Map<
+    string,
+    { readonly disposition: string; readonly reason: string }
+  >;
   readonly loopHandlers: {
     plan: LoopHandler[];
     act: LoopHandler[];
@@ -31,6 +43,7 @@ export type HarnessRegistryState = {
   readonly model: ModelConfig;
   readonly scope: HarnessScope;
   readonly started: boolean;
+  readonly capabilityRegisterWiring?: CapabilityRegisterWiring;
 };
 
 const defaultScope = (): HarnessScope => ({
@@ -48,6 +61,25 @@ export const buildHarnessContext = (state: HarnessRegistryState): HarnessContext
     register: (tool) => {
       if (state.tools.has(tool.name)) {
         throw new Error(`Harness tool already registered: ${tool.name}`);
+      }
+      if (state.capabilityRegisterWiring) {
+        const result = reportHarnessToolRegistration({
+          wiring: state.capabilityRegisterWiring,
+          sessionId: state.sessionId,
+          tool,
+          markImplemented: true,
+        });
+        if (!result.accepted) {
+          const disposition =
+            result.outcome.allow === false ? result.outcome.disposition : "denied";
+          const reason =
+            result.outcome.allow === false
+              ? result.outcome.reason
+              : "register-side not implemented";
+          state.blockedRegistrations.set(tool.name, { disposition, reason });
+          // §3.5.1: do not treat as live in the harness tool map / MCP bridge.
+          return;
+        }
       }
       state.tools.set(tool.name, tool);
     },
@@ -114,15 +146,33 @@ export const registerHarnessPlugins = (
   config: ClawQLHarnessConfig
 ): Effect.Effect<HarnessRegistryState, HarnessPluginError, WORMAuditTrailService> =>
   Effect.gen(function* () {
+    const enableIntercept = capabilityRegisterInterceptEnabled(
+      config.enableCapabilityRegisterIntercept
+    );
+    const wiring = enableIntercept
+      ? (config.capabilityRegisterWiring ?? defaultCapabilityRegisterWiring())
+      : undefined;
+
     const state: HarnessRegistryState = {
       plugins: config.plugins,
       tools: new Map(),
+      blockedRegistrations: new Map(),
       loopHandlers: { plan: [], act: [], observe: [], evaluate: [] },
       sessionId: config.sessionId ?? crypto.randomUUID(),
       model: config.model,
       scope: config.atrScope ?? defaultScope(),
       started: true,
+      capabilityRegisterWiring: wiring,
     };
+
+    if (wiring) {
+      ensureSessionCatalogFromHarnessScope({
+        wiring,
+        sessionId: state.sessionId,
+        scope: state.scope,
+      });
+    }
+
     const ctx = buildHarnessContext(state);
 
     for (const plugin of config.plugins) {

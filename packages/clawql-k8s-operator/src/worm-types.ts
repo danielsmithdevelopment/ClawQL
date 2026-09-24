@@ -13,9 +13,16 @@ export type OperatorLifecycleWORMEntryType =
   | "KARPENTER_NODE_REQUESTED"
   | "CELLD_FLEET_NODE_DROPPED";
 
+/** Session-aware placement — Modal production routing fixes (spec §8.2). */
+export type SessionRoutingWORMEntryType =
+  | "THICC_SESSION_SPLIT"
+  | "CELL_PLACEMENT_LOAD_AWARE"
+  | "NEW_CAPACITY_PREFERRED_ROUTING";
+
 export type BurstArchitectureWORMEntryType =
   | MeshWORMEntryType
-  | OperatorLifecycleWORMEntryType;
+  | OperatorLifecycleWORMEntryType
+  | SessionRoutingWORMEntryType;
 
 export const BURST_ARCHITECTURE_WORM_ENTRY_TYPES = [
   "MESH_POLICY_DENIED",
@@ -24,4 +31,7 @@ export const BURST_ARCHITECTURE_WORM_ENTRY_TYPES = [
   "CELLD_CAPACITY_HEADROOM_REQUESTED",
   "KARPENTER_NODE_REQUESTED",
   "CELLD_FLEET_NODE_DROPPED",
+  "THICC_SESSION_SPLIT",
+  "CELL_PLACEMENT_LOAD_AWARE",
+  "NEW_CAPACITY_PREFERRED_ROUTING",
 ] as const satisfies readonly BurstArchitectureWORMEntryType[];
