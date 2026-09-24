@@ -36,9 +36,7 @@ const adjLayer = frontierAdjudicatorLayerFromEnv();
 const scorerLayer = createGlinerFastDecisionScorerLayer();
 const glinerLiveConfigured = glinerEndpointConfigured();
 
-const adj = await Effect.runPromise(
-  adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer))
-);
+const adj = await Effect.runPromise(adjudicateHeldOutSuite(suite).pipe(Effect.provide(adjLayer)));
 
 const labeled = applyAdjudicationLabels(suite, adj.labels);
 const { reports, scorerBackend } = await Effect.runPromise(

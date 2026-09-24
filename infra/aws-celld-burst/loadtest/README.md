@@ -6,17 +6,17 @@
 
 ## Files
 
-| Path | Purpose |
-| ---- | ------- |
-| `burst-1m-gap-2m.js` | k6 script: identical 1M / 10-min zero / 2M stream |
-| `RESULT_TEMPLATE.md` | Publishable result template (§13.5) — fill after a real run |
-| `dry-run.mjs` | Local mock HTTP burst + `results/dry-run-summary.json` (`status: dry-run`, null metrics/`$Y`) |
+| Path                 | Purpose                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| `burst-1m-gap-2m.js` | k6 script: identical 1M / 10-min zero / 2M stream                                             |
+| `RESULT_TEMPLATE.md` | Publishable result template (§13.5) — fill after a real run                                   |
+| `dry-run.mjs`        | Local mock HTTP burst + `results/dry-run-summary.json` (`status: dry-run`, null metrics/`$Y`) |
 
 ```bash
 node infra/aws-celld-burst/loadtest/dry-run.mjs
 ```
 
-**CI:** [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](../../../.github/workflows/aws-celld-burst-section13-dry-run.yml) runs the same harness on path-filtered PRs/`main` pushes and `workflow_dispatch`, asserts `status=dry-run` + null `$Y` / p50/p99, and uploads the summary artifact. A companion job only *notices* whether AWS secrets exist — it never auto-runs a live three-arm or invents Cost Explorer numbers.
+**CI:** [`.github/workflows/aws-celld-burst-section13-dry-run.yml`](../../../.github/workflows/aws-celld-burst-section13-dry-run.yml) runs the same harness on path-filtered PRs/`main` pushes and `workflow_dispatch`, asserts `status=dry-run` + null `$Y` / p50/p99, and uploads the summary artifact. A companion job only _notices_ whether AWS secrets exist — it never auto-runs a live three-arm or invents Cost Explorer numbers.
 
 **Honesty:** dry-run proves the summary schema and harness wiring only. Do not publish dry-run output as §13.5.
 
@@ -38,16 +38,16 @@ Rate-card **order-of-magnitude** for one same-day three-arm window in `us-east-1
 
 **Assumptions:** one EKS cluster; arms **sequential** (reconfigure between A→B→C); ~6–10 wall-clock hours including bring-up, one full 1M/10m-gap/2M cycle per arm (~12+ min traffic + drain), and teardown; Arm A = 3× `r6g.2xlarge` celld nodes held through the day; Arm B/C = Karpenter Spot/On-Demand burst nodes (peak tens of mid-size instances for ~1–2 minutes per spike, near-zero during gap for B); one ALB; one NAT Gateway; lightweight in-cluster LGTM; k6 from a single `c7g.xlarge` (or equivalent) for ~1 hour of active generation across arms.
 
-| Line item | Low (lean) | Mid (likely) | High (re-runs / larger fleets) |
-| --------- | ---------- | ------------ | ------------------------------ |
-| EKS control plane (~$0.10/hr × 8–12h) | ~$1 | ~$1 | ~$2 |
-| Arm A always-on memory nodes (3× r6g.2xlarge ≈ $0.40/hr each) | ~$8–10 | ~$12–15 | ~$25 (5 nodes / longer day) |
-| Arm B/C Karpenter burst EC2 (Spot-heavy) | ~$5–10 | ~$15–30 | ~$60–100 |
-| ALB + LCU under ~17k–33k RPS spikes | ~$5 | ~$15–40 | ~$80 |
-| NAT Gateway + egress (3M small HTTP bodies × 3 arms) | ~$2–5 | ~$8–15 | ~$30 |
-| k6 generator instance | ~$1 | ~$2 | ~$5 |
-| S3 / CloudWatch logs / misc | ~$1 | ~$3–5 | ~$15 |
-| **Same-day total (planning)** | **~$25–40** | **~$60–120** | **~$200–350** |
+| Line item                                                     | Low (lean)  | Mid (likely) | High (re-runs / larger fleets) |
+| ------------------------------------------------------------- | ----------- | ------------ | ------------------------------ |
+| EKS control plane (~$0.10/hr × 8–12h)                         | ~$1         | ~$1          | ~$2                            |
+| Arm A always-on memory nodes (3× r6g.2xlarge ≈ $0.40/hr each) | ~$8–10      | ~$12–15      | ~$25 (5 nodes / longer day)    |
+| Arm B/C Karpenter burst EC2 (Spot-heavy)                      | ~$5–10      | ~$15–30      | ~$60–100                       |
+| ALB + LCU under ~17k–33k RPS spikes                           | ~$5         | ~$15–40      | ~$80                           |
+| NAT Gateway + egress (3M small HTTP bodies × 3 arms)          | ~$2–5       | ~$8–15       | ~$30                           |
+| k6 generator instance                                         | ~$1         | ~$2          | ~$5                            |
+| S3 / CloudWatch logs / misc                                   | ~$1         | ~$3–5        | ~$15                           |
+| **Same-day total (planning)**                                 | **~$25–40** | **~$60–120** | **~$200–350**                  |
 
 **Not included:** multi-day soak, parallel arms (≈3× EKS/NAT), production-size observability retention, GPU/IDP sidecars for a full §2.1 document pipeline (that can dominate — budget separately if the ingest path runs real `run_idp_pipeline`), or human time.
 

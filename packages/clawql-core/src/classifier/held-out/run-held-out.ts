@@ -98,8 +98,7 @@ export function runHeldOutValidationForUseSite(
     const adjudicatedCount = scored.filter((s) => s.adjudicated).length;
     const allAdjudicated = scored.length > 0 && adjudicatedCount === scored.length;
     const dryRunCount = scored.filter((s) => s.adjudicationKind === "dry-run").length;
-    const liveAdjudicated =
-      allAdjudicated && scored.every((s) => s.adjudicationKind !== "dry-run");
+    const liveAdjudicated = allAdjudicated && scored.every((s) => s.adjudicationKind !== "dry-run");
     const failureReasons = [...cal.failureReasons];
     if (!allAdjudicated) {
       failureReasons.push(
