@@ -327,10 +327,7 @@ describe("GLiNER2 primary scorer", () => {
 describe("§7 held-out suite runner", () => {
   it("runs embedded suite and keeps productionTrusted false until adjudicated", async () => {
     const { HeuristicFastDecisionScorerLive } = await import("./scorer.js");
-    const {
-      defaultHeldOutSuite,
-      runHeldOutValidationSuite,
-    } = await import("./held-out/index.js");
+    const { defaultHeldOutSuite, runHeldOutValidationSuite } = await import("./held-out/index.js");
 
     const suite = defaultHeldOutSuite();
     expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
@@ -342,9 +339,7 @@ describe("§7 held-out suite runner", () => {
     expect(reports.length).toBeGreaterThan(0);
     for (const r of reports) {
       expect(r.productionTrusted).toBe(false);
-      expect(r.failureReasons.some((x) => x.includes("adjudication incomplete"))).toBe(
-        true
-      );
+      expect(r.failureReasons.some((x) => x.includes("adjudication incomplete"))).toBe(true);
       expect(r.caseCount).toBeGreaterThan(0);
     }
   });

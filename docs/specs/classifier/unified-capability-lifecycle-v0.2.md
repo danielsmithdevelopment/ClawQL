@@ -11,17 +11,17 @@ package: "packages/clawql-core/classifier/ + packages/clawql-core/capability-lif
 
 ## Implementation map
 
-| Concern                                | Path                                                                    |
-| -------------------------------------- | ----------------------------------------------------------------------- |
-| Spec (this page)                       | `docs/specs/classifier/unified-capability-lifecycle-v0.2.md`            |
-| Session catalog (bucket 1) + rebind    | `packages/clawql-core/src/capability-lifecycle/session-catalog.ts`      |
-| Promotion store (bucket 3)             | `packages/clawql-core/src/capability-lifecycle/promotion-store.ts`      |
-| Execute reachability allow-rule        | `packages/clawql-core/src/capability-lifecycle/execute-reachability.ts` |
+| Concern                                | Path                                                                                                           |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Spec (this page)                       | `docs/specs/classifier/unified-capability-lifecycle-v0.2.md`                                                   |
+| Session catalog (bucket 1) + rebind    | `packages/clawql-core/src/capability-lifecycle/session-catalog.ts`                                             |
+| Promotion store (bucket 3)             | `packages/clawql-core/src/capability-lifecycle/promotion-store.ts`                                             |
+| Execute reachability allow-rule        | `packages/clawql-core/src/capability-lifecycle/execute-reachability.ts`                                        |
 | Register-side port (§3.5.1)            | `packages/clawql-core/.../register-intercept.ts` + `packages/clawql-harness/src/capability-register-wiring.ts` |
-| Blocking `pre-execute` hook            | `packages/clawql-core/src/capability-lifecycle/hook.ts`                 |
-| Fast-path → slow-path orchestration    | `packages/clawql-core/src/capability-lifecycle/lifecycle.ts`            |
-| Fast Decision / skill fast-path        | `packages/clawql-core/src/classifier/`                                  |
-| Sandbox (bucket 2 host for novel code) | `packages/clawql-sandbox/` (ADR 0011)                                   |
+| Blocking `pre-execute` hook            | `packages/clawql-core/src/capability-lifecycle/hook.ts`                                                        |
+| Fast-path → slow-path orchestration    | `packages/clawql-core/src/capability-lifecycle/lifecycle.ts`                                                   |
+| Fast Decision / skill fast-path        | `packages/clawql-core/src/classifier/`                                                                         |
+| Sandbox (bucket 2 host for novel code) | `packages/clawql-sandbox/` (ADR 0011)                                                                          |
 
 ## §3.5 Three buckets (new clawql-core contract)
 
@@ -53,7 +53,7 @@ ELSE DENY + CAPABILITY_WRITE_INTERCEPTED
 | Accept-time promotion ⊆ S                     | Implemented                                   |
 | Harness cannot set disposition / sandbox fork | Implemented (core policy)                     |
 | Default MCP execute gate                      | Opt-in only (`CLAWQL_CAPABILITY_LIFECYCLE=1`) |
-| Register-side step 5                          | Wired in `clawql-harness` (opt-in)             |
+| Register-side step 5                          | Wired in `clawql-harness` (opt-in)            |
 
 ## Related
 

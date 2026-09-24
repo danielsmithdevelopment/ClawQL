@@ -63,7 +63,10 @@
       "candidates": [
         {
           "candidateId": "deed_of_trust",
-          "features": { "label": "deed of trust", "description": "Security instrument / deed of trust" }
+          "features": {
+            "label": "deed of trust",
+            "description": "Security instrument / deed of trust"
+          }
         },
         {
           "candidateId": "invoice",
