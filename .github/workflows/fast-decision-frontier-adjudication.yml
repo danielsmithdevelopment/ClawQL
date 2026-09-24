@@ -177,8 +177,8 @@ jobs:
       - name: Install workspace
         run: npm ci
 
-      - name: Build clawql-core
-        run: npm run build --workspace=clawql-core
+      - name: Build clawql-merkle + clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
 
       - uses: actions/setup-python@v6
         if: needs.gate.outputs.with_gliner == 'true'
