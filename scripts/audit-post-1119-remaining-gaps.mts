@@ -184,20 +184,34 @@ function fileContains(path: string, re: RegExp): boolean {
   if (existsSync(summaryPath)) {
     const s = JSON.parse(readFileSync(summaryPath, "utf8")) as {
       status?: string;
+      dollarY?: unknown;
       costUsdY?: unknown;
     };
-    dryOk = s.status === "dry-run" && (s.costUsdY === null || s.costUsdY === undefined);
+    // Canonical field is dollarY (dry-run.mjs); costUsdY is never emitted.
+    dryOk =
+      s.status === "dry-run" &&
+      s.dollarY === null &&
+      (s.costUsdY === undefined || s.costUsdY === null);
   }
   const ceScript = "infra/aws-celld-burst/loadtest/export-cost-explorer-arms.sh";
   const k6Merge = "infra/aws-celld-burst/loadtest/merge-k6-summaries-to-metrics.mjs";
   const fill = "infra/aws-celld-burst/loadtest/fill-result-from-exports.mjs";
   const tools = [ceScript, k6Merge, fill].every((p) => existsSync(p));
+  const ceGha =
+    fileContains(
+      ".github/workflows/aws-celld-burst-section13-dry-run.yml",
+      /CLAWQL_CE_ACCESS_KEY_ID/
+    ) &&
+    fileContains(
+      ".github/workflows/aws-celld-burst-section13-dry-run.yml",
+      /section13-ce-export|export-cost-explorer-arms/
+    );
 
   push({
     id: "section13-dry-run-and-tools",
     requirement: "§13 dry-run null $Y + CE/k6/fill operator chain",
-    verdict: dryOk && tools ? "DONE" : "OPEN",
-    evidence: `dryExit=${dryRun.status} dryOk=${dryOk} tools=${tools}`,
+    verdict: dryOk && tools && ceGha ? "DONE" : dryOk && tools ? "PATH_DONE" : "OPEN",
+    evidence: `dryExit=${dryRun.status} dryOk=${dryOk} tools=${tools} ceGha=${ceGha}`,
   });
 }
 
@@ -227,12 +241,25 @@ function fileContains(path: string, re: RegExp): boolean {
     existsSync("/tmp/ce-audit-out/ce-arm-a.csv") &&
     existsSync("/tmp/ce-audit-out/ce-arm-b.csv") &&
     existsSync("/tmp/ce-audit-out/ce-arm-c.csv");
+  const fetchCe = spawnSync("bash", ["scripts/fetch-section13-ce-export-artifact.sh", "/tmp/ce-gha-audit"], {
+    encoding: "utf8",
+  });
+  const ghaCsv =
+    fetchCe.status === 0 &&
+    existsSync("/tmp/ce-gha-audit/ce-arm-a.csv") &&
+    existsSync("/tmp/ce-gha-audit/ce-arm-b.csv") &&
+    existsSync("/tmp/ce-gha-audit/ce-arm-c.csv");
 
   push({
     id: "section13-real-Y",
     requirement: "Real §13.5 $Y from Cost Explorer (not R2, not invented)",
-    verdict: wroteCsv ? "DONE" : r2Collision || refusedR2 || ce.status !== 0 ? "BLOCKED" : "OPEN",
-    evidence: `AWS_EQ_SYNC=${aws === sync} CE_override=${hasCeOverride} effectiveEqSync=${r2Collision} ceStatus=${ce.status} refusedR2=${refusedR2} wroteCsv=${wroteCsv}`,
+    verdict:
+      wroteCsv || ghaCsv
+        ? "DONE"
+        : r2Collision || refusedR2 || ce.status !== 0
+          ? "BLOCKED"
+          : "OPEN",
+    evidence: `AWS_EQ_SYNC=${aws === sync} CE_override=${hasCeOverride} effectiveEqSync=${r2Collision} ceStatus=${ce.status} refusedR2=${refusedR2} wroteCsv=${wroteCsv} ghaCsv=${ghaCsv}`,
   });
 }
 

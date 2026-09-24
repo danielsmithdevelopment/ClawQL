@@ -2,6 +2,10 @@
 
 ### Added
 
+- **productionTrusted DEFAULT criteria + zero-signal abstain** — held-out `productionTrusted` always requires `DEFAULT_VALIDATION_CRITERIA` (wiring criteria cannot light it); calibration abstains on all-zero confidences and reports `noCalibratableScores` instead of inventing accuracy from fixture order.
+- **§13.5 CE export GHA path** — `aws-celld-burst-section13-dry-run.yml` credential-gates on `CLAWQL_CE_*` (preferred) / usable AWS secrets; optional `workflow_dispatch` / `repository_dispatch` (`section13-ce-export`) runs fail-closed Cost Explorer CSV export + `scripts/fetch-section13-ce-export-artifact.sh`.
+- **Audit `dollarY` honesty** — post-#1119 audit asserts dry-run `dollarY===null` (canonical field) and requires CE GHA path for section13-dry-run DONE.
+
 - **§13.5 / celld AWS credential overrides** — `CLAWQL_CE_*` (Cost Explorer) and `CLAWQL_CELLD_AWS_*` (lease fetch) override `AWS_*` so mixed sandboxes can keep R2 sync keys in `AWS_*` without inventing `$Y` / leases; still refuse when the effective key equals `CLAWQL_SYNC_*`.
 - **Post-#1119 audit honesty** — `scripts/audit-post-1119-remaining-gaps.mts` marks frontier live corpus DONE when GHA live labels fetch, and scaffold/dry-run rows DONE when in-repo paths are complete; `goalComplete` still requires real CE CSVs.
 - **Frontier artifact re-fetch** — `scripts/fetch-frontier-adjudication-artifact.sh` downloads into a temp dir then promotes (avoids `gh run download` refusing to overwrite existing label files on audit re-runs).

@@ -71,6 +71,14 @@ function pickTop(scores: readonly FastDecisionScore[]): FastDecisionScore | unde
   return [...scores].sort((a, b) => b.confidence - a.confidence)[0];
 }
 
+/**
+ * True when every score is ≤0 — stable sort would otherwise pick candidate[0]
+ * as "top" and invent accuracy/calibration from zero-signal rankings.
+ */
+function isZeroSignal(scores: readonly FastDecisionScore[]): boolean {
+  return scores.length > 0 && scores.every((s) => s.confidence <= 0);
+}
+
 export function evaluateCorrectnessAndCalibration(
   useSiteId: string,
   cases: readonly HeldOutCase[],
@@ -82,11 +90,24 @@ export function evaluateCorrectnessAndCalibration(
   }
 
   let correct = 0;
+  let scoredCases = 0;
+  let abstainedZeroSignal = 0;
   const bucketHits = DEFAULT_BUCKETS.map(() => ({ correct: 0, total: 0 }));
 
   for (const c of cases) {
+    if (c.scores.length === 0) continue;
+    // Abstain on all-zero / non-positive confidences — do not treat fixture
+    // order as a correct ranking.
+    if (isZeroSignal(c.scores)) {
+      abstainedZeroSignal++;
+      continue;
+    }
     const top = pickTop(c.scores);
-    if (!top) continue;
+    if (!top || top.confidence <= 0) {
+      abstainedZeroSignal++;
+      continue;
+    }
+    scoredCases++;
     const isCorrect = top.candidateId === c.groundTruthCandidateId;
     if (isCorrect) correct++;
     const conf = top.confidence;
@@ -120,6 +141,16 @@ export function evaluateCorrectnessAndCalibration(
       ? 1
       : nonEmpty.reduce((s, b) => s + b.calibrationError, 0) / nonEmpty.length;
 
+  if (abstainedZeroSignal > 0) {
+    failureReasons.push(
+      `zeroSignalAbstain ${abstainedZeroSignal}/${cases.length} (all-zero / non-positive confidences are not ranked)`
+    );
+  }
+  if (nonEmpty.length === 0) {
+    failureReasons.push(
+      `noCalibratableScores: no top confidences landed in buckets ≥0.5 (scoredCases=${scoredCases}; sentinel meanCalibrationError=1)`
+    );
+  }
   if (rawAccuracy < criteria.minAccuracy) {
     failureReasons.push(
       `rawAccuracy ${rawAccuracy.toFixed(3)} < minAccuracy ${criteria.minAccuracy}`
