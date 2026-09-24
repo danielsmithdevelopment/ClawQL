@@ -18,6 +18,12 @@ export type FastDecisionScoreRequest = {
   readonly useSiteId: string;
   readonly ctx: FastDecisionContext;
   readonly candidates: readonly FastDecisionCandidate[];
+  /**
+   * Use-site task framing prepended to classify text so multi-label GLiNER
+   * sees the decision job (not only the raw query). Production runners pass
+   * `FastDecisionUseSite.description`; held-out resolves from builtins.
+   */
+  readonly taskFraming?: string;
 };
 
 export class FastDecisionScorer extends Context.Tag("clawql/FastDecisionScorer")<
@@ -92,6 +98,20 @@ function requestText(ctx: FastDecisionContext): string {
   return JSON.stringify(ctx.extras ?? {});
 }
 
+/** Compose classify text: query body + optional use-site framing (suffix). */
+export function composeGlinerClassifyText(
+  taskFraming: string | undefined,
+  body: string
+): string {
+  const framing = taskFraming?.trim() ?? "";
+  const q = body.trim();
+  if (!framing) return q;
+  if (!q) return framing;
+  // Suffix framing: prefixing the task often biases multi-label classify away
+  // from the query evidence (e.g. pattern blank-field → uncertain).
+  return `${q}\n\nTask: ${framing}`;
+}
+
 /**
  * Live HTTP call to a GLiNER sidecar. Effect-primary; host may wrap with runPromise.
  * Returns scores plus whether the sidecar actually answered (vs heuristic fallback).
@@ -116,7 +136,7 @@ export function scoreViaGlinerHttp(
 
   const body: GlinerClassifyRequestBody = {
     useSiteId: request.useSiteId,
-    text: requestText(request.ctx),
+    text: composeGlinerClassifyText(request.taskFraming, requestText(request.ctx)),
     labels: request.candidates.map((c) => ({
       id: c.candidateId,
       description: candidateDescription(c),

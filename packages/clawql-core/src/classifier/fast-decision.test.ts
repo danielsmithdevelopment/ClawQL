@@ -301,8 +301,10 @@ describe("GLiNER2 primary scorer", () => {
 
   it("uses live HTTP classify when endpoint configured", async () => {
     const { createGlinerFastDecisionScorerLayer, FastDecisionScorer } = await import("./scorer.js");
-    const fetchImpl = (async () =>
-      new Response(
+    let capturedBody: unknown;
+    const fetchImpl = (async (_url: RequestInfo | URL, init?: RequestInit) => {
+      capturedBody = JSON.parse(String(init?.body ?? "{}"));
+      return new Response(
         JSON.stringify({
           scores: [
             { id: "tool.a", confidence: 0.91 },
@@ -310,7 +312,8 @@ describe("GLiNER2 primary scorer", () => {
           ],
         }),
         { status: 200, headers: { "content-type": "application/json" } }
-      )) as unknown as typeof fetch;
+      );
+    }) as unknown as typeof fetch;
 
     const layer = createGlinerFastDecisionScorerLayer({
       config: {
@@ -327,6 +330,7 @@ describe("GLiNER2 primary scorer", () => {
         const scored = yield* scorer.score({
           useSiteId: "search_provider_tool_routing",
           ctx: { sessionId: "s1", query: "read a file" },
+          taskFraming: "Which provider/tool is relevant to a query",
           candidates: [
             { candidateId: "tool.a", features: { description: "read files" } },
             { candidateId: "tool.b", features: { description: "send email" } },
@@ -339,6 +343,10 @@ describe("GLiNER2 primary scorer", () => {
     expect(backendId).toBe("gliner2");
     expect(scores[0]?.candidateId).toBe("tool.a");
     expect(scores[0]?.confidence).toBeCloseTo(0.91);
+    expect(capturedBody).toMatchObject({
+      text: "read a file\n\nTask: Which provider/tool is relevant to a query",
+      useSiteId: "search_provider_tool_routing",
+    });
   });
 
   it("does not claim gliner2 backendId when sidecar HTTP fails", async () => {

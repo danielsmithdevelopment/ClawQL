@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { Context, Effect, Layer } from "effect";
 import { FastDecisionScorer } from "../scorer.js";
 import type { FastDecisionContext } from "../types.js";
+import { BUILTIN_FAST_DECISION_USE_SITES } from "../use-sites/builtins.js";
 import {
   DEFAULT_VALIDATION_CRITERIA,
   evaluateCorrectnessAndCalibration,
@@ -23,6 +24,14 @@ import type {
 
 /** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
+
+const BUILTIN_TASK_FRAMING: ReadonlyMap<string, string> = new Map(
+  BUILTIN_FAST_DECISION_USE_SITES.map((s) => [s.useSiteId, s.description])
+);
+
+export function taskFramingForUseSite(useSiteId: string): string | undefined {
+  return BUILTIN_TASK_FRAMING.get(useSiteId);
+}
 
 function isDefaultValidationCriteria(c: ValidationCriteria): boolean {
   return (
@@ -72,6 +81,7 @@ export function scoreHeldOutCases(
         useSiteId: c.useSiteId,
         ctx: ctxForCase(c),
         candidates: c.candidates,
+        taskFraming: taskFramingForUseSite(c.useSiteId),
       });
       const zeroSignal = scores.length > 0 && scores.every((s) => s.confidence <= 0);
       const top = zeroSignal

@@ -46,7 +46,8 @@ export const skillFastPathMatchUseSite: FastDecisionUseSite = {
 /** ontology_vocabulary_term_match — Layer 3 preferredVocabulary preference. */
 export const ontologyVocabularyTermMatchUseSite: FastDecisionUseSite = {
   useSiteId: "ontology_vocabulary_term_match",
-  description: "Does a standard vocabulary term exist for a promotion candidate",
+  description:
+    "Does a standard vocabulary term exist for a promotion candidate? Prefer authoritative ontology vocabulary (FIBO, schema.org) over novel project-local field names.",
   costlyErrorDirection: "false_positive",
   threshold: 0.7,
   wormEntryType: "ONTOLOGY_STANDARD_TERM_USED",

@@ -94,6 +94,7 @@ export function runFastDecisionWithUseSite(
       useSiteId: useSite.useSiteId,
       ctx,
       candidates,
+      taskFraming: useSite.description,
     });
 
     const top = scores[0];
