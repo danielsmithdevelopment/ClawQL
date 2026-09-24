@@ -6,9 +6,9 @@
 
 ## vs `clawql-operator`
 
-| Package | Job |
-| ------- | --- |
-| **`clawql-operator`** | `ClawQLInstance` CRD, tier ConfigMaps, optional MCP Deployment rolls |
+| Package                          | Job                                                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`clawql-operator`**            | `ClawQLInstance` CRD, tier ConfigMaps, optional MCP Deployment rolls                                                                                                                             |
 | **`clawql-k8s-operator`** (this) | Mesh-policy **drift detection** (not generation), mesh denial → host `clawql-audit`, filler eviction / Karpenter headroom, celld fleet health, session-aware cell placement (Modal-sourced §8.2) |
 
 Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collapses defense-in-depth into one source of truth.
@@ -18,7 +18,13 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `BurstArchitectureWORMEntryType` — append to existing `clawql-audit` trail only (includes `SessionRoutingWORMEntryType`: `THICC_SESSION_SPLIT`, `CELL_PLACEMENT_LOAD_AWARE`, `NEW_CAPACITY_PREFERRED_ROUTING`)
 - `detectMeshAtrDrift` — pure Effect comparison of mesh allow-set vs ATR allow-set
 - `BurstOperatorService` Context.Tag + Live layer
+- `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
+- `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable
+- `IstioDenialWatchService` — parse Envoy/ztunnel access-log JSON/NDJSON → `mesh_denial` (denial bridging; no policy generation)
+- `KarpenterLifecycleWatchService` — map NodeClaim/disruption-shaped records → watch events + WORM types (mock/CRD-feed; no live Karpenter client)
+- `CelldFleetHealthService` — evaluate injected S3 lease snapshots → `CELLD_FLEET_NODE_DROPPED` (no AWS SDK; hosts supply lease records)
+- Placement variance simulation + `infra/aws-celld-burst/loadtest/dry-run.mjs` (`status: dry-run`, null `$Y`)
 
-## Not yet implemented
+## Not yet implemented (needs real cluster / AWS)
 
-Kubernetes watch loops, Istio telemetry subscription, Karpenter API calls, S3 lease fleet health. Session placement + mesh-denial bridge helpers are pure Effect (usable from a future controller).
+Live Istio telemetry subscription (cluster log pipeline), live Karpenter API eviction actions, live S3 ListObjects lease scraping, calibrated three-arm Cost Explorer numbers (§13.5). In-repo adapters parse/feed the watch queue; production telemetry/API remain external.

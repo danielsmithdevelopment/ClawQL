@@ -14,6 +14,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { attachGraphqlHttpToMcpApp } from "./graphql-http-attach.js";
 import { createRegisteredMcpServer } from "../mcp/mcp-server-factory.js";
+import { runWithMcpRequestContext } from "../mcp/mcp-request-context.js";
 import {
   fireSessionEnd,
   fireSessionStart,
@@ -643,8 +644,21 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         jsonRpcError(res, "Bad Request: transport could not be resolved.");
         return;
       }
+      const atrToolsHeader = req.header("x-clawql-capability-tools")?.trim();
+      const atrScopeTokens = atrToolsHeader
+        ? atrToolsHeader
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : undefined;
+      const mcpSession =
+        sessionId ??
+        (typeof transport.sessionId === "string" ? transport.sessionId : undefined) ??
+        "mcp";
       await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-        transport!.handleRequest(req, res, req.body)
+        runWithMcpRequestContext({ sessionId: mcpSession, atrScopeTokens }, () =>
+          transport!.handleRequest(req, res, req.body)
+        )
       );
     } catch (err: unknown) {
       console.error("[clawql-mcp-http] POST /mcp error:", err);
@@ -689,7 +703,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       return;
     }
     await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-      transport.handleRequest(req, res)
+      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res))
     );
   });
 
@@ -705,7 +719,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       return;
     }
     await runWithMcpX402Context(headersFromExpressRequest(req), () =>
-      transport.handleRequest(req, res)
+      runWithMcpRequestContext({ sessionId }, () => transport.handleRequest(req, res))
     );
   });
 

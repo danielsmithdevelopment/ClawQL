@@ -1,15 +1,18 @@
 /**
- * Opt-in ProviderPlugin: three-bucket execute() reachability on MCP pre-execute.
+ * Default-on ProviderPlugin: three-bucket execute() reachability on MCP pre-execute.
  *
- * Enabled with CLAWQL_CAPABILITY_LIFECYCLE=1. Hosts must bind a session catalog
- * (via getCapabilityLifecycleRuntime().bindSessionCatalog) before tools succeed —
- * fail-closed otherwise.
+ * Enabled unless CLAWQL_CAPABILITY_LIFECYCLE=0. Hosts may still call
+ * bindSessionCatalog explicitly; otherwise the blocking hook lazily seeds the
+ * catalog from ATR tokens or CLAWQL_CAPABILITY_SESSION_SEED /
+ * DEFAULT_CAPABILITY_SESSION_SEED (see catalog-bootstrap.ts).
  *
- * This is the production wiring for §3.5; clawql-core alone is only a library.
+ * Harness register-side stays opt-in via CLAWQL_HARNESS_CAPABILITY_REGISTER —
+ * this MCP gate never enables it.
  */
 
 import {
   CapabilityRegisterIntercept,
+  clearProcessRegisteredCapabilityToolsForTests,
   createCapabilityReachabilityHook,
   createSharedCapabilityCatalogLayer,
   defineProviderPlugin,
@@ -32,8 +35,16 @@ export type CapabilityLifecyclePluginHandle = {
   readonly bindSessionCatalog: (catalog: SessionCatalog) => Effect.Effect<SessionCatalog, Error>;
 };
 
+/**
+ * Default **on**. Explicit `CLAWQL_CAPABILITY_LIFECYCLE=0` opts out.
+ * Legacy `=1` remains on (same as unset).
+ */
 export function capabilityLifecyclePluginEnabled(): boolean {
-  return process.env.CLAWQL_CAPABILITY_LIFECYCLE?.trim() === "1";
+  const raw = process.env.CLAWQL_CAPABILITY_LIFECYCLE?.trim();
+  if (raw === "0" || raw?.toLowerCase() === "false" || raw?.toLowerCase() === "off") {
+    return false;
+  }
+  return true;
 }
 
 let processRuntime: CapabilityLifecyclePluginHandle | undefined;
@@ -51,6 +62,7 @@ export function getCapabilityLifecycleRuntime(): CapabilityLifecyclePluginHandle
 /** Test helper — drop singleton between cases. */
 export function resetCapabilityLifecycleRuntimeForTests(): void {
   processRuntime = undefined;
+  clearProcessRegisteredCapabilityToolsForTests();
 }
 
 /**
@@ -62,9 +74,9 @@ export function createCapabilityLifecyclePlugin(): CapabilityLifecyclePluginHand
   const hook = createCapabilityReachabilityHook({ catalogLayer });
   const plugin = defineProviderPlugin({
     id: CAPABILITY_LIFECYCLE_PLUGIN_ID,
-    version: "0.1.0",
+    version: "0.2.0",
     description:
-      "Unified Capability Lifecycle §3.5 three-bucket execute reachability (blocking pre-execute)",
+      "Unified Capability Lifecycle §3.5 three-bucket execute reachability (blocking pre-execute; default-on)",
     hooks: [hook],
   });
 
@@ -79,7 +91,7 @@ export function createCapabilityLifecyclePlugin(): CapabilityLifecyclePluginHand
   };
 }
 
-/** Sync plugins for composeDefaultPlugins when env enabled. */
+/** Sync plugins for composeDefaultPlugins when enabled (default-on). */
 export function capabilityLifecycleDefaultPlugins(): readonly ProviderPlugin[] {
   return capabilityLifecyclePluginEnabled() ? [getCapabilityLifecycleRuntime().plugin] : [];
 }

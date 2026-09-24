@@ -14,7 +14,7 @@ HTTP sidecar matching `packages/clawql-core` `scoreViaGlinerHttp` contract.
 | `CLAWQL_GLINER_SIDECAR_MODE` | Behavior |
 |------------------------------|----------|
 | `mock` (default) | Token-overlap heuristic — no model weights; CI-safe |
-| `gliner2` | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via `gliner` (install extra deps) |
+| `gliner2` | Loads `CLAWQL_FAST_DECISION_GLINER_MODEL` via the **`gliner2`** package (`AutoExtractor` / Fastino GLiNER2.5) |
 
 ## Wire to clawql-core
 
@@ -26,7 +26,7 @@ export CLAWQL_FAST_DECISION_GLINER_URL=http://127.0.0.1:8080
 
 Without `CLAWQL_FAST_DECISION_GLINER_URL`, the classifier reports honest `gliner2-stub`.
 
-## Run
+## Run (mock)
 
 ```bash
 cd infra/gliner-sidecar
@@ -34,8 +34,25 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python app.py
 # or: docker compose up --build
+# or: bash scripts/gliner-sidecar-smoke.sh
+```
+
+## Run (live Fastino GLiNER2.5 weights)
+
+```bash
+pip install gliner2 peft tiktoken protobuf torch
+export CLAWQL_GLINER_SIDECAR_MODE=gliner2
+export CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/gliner2.5-base-v1
+python app.py
+# Docker: docker compose --profile live up --build gliner-sidecar-live
+# Image target installs gliner2+torch (large). HF cache volume recommended.
 ```
 
 ## §7 honesty
 
-Mock mode is for wiring and integration tests only. Section 7 `productionTrusted` still requires frontier-adjudicated held-out cases scored by a real GLiNER (or fine-tuned) backend — mock passing wiring criteria is not a production gate pass.
+| Pass type | Meaning |
+|-----------|---------|
+| Wiring / mock | Sidecar HTTP + classifier path works |
+| `productionTrusted` | Frontier-adjudicated held-out (`adjudicated: true`) **and** live GLiNER (or fine-tune) scores meet criteria |
+
+Mock mode is for wiring and integration tests only. Dry-run adjudication (`FrontierAdjudicator` dry-run Layer) must not be cited as a production gate pass.

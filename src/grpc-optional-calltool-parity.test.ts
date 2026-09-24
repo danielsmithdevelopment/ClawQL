@@ -7,7 +7,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resetSpecCache } from "clawql-api";
+import { resetSpecCache, resetCapabilityLifecycleRuntimeForTests } from "clawql-api";
 import { resetClawqlApiForTests } from "./composition/clawql-api-adapters.js";
 import { instanceSpecWith } from "./host/server-stdio-env.js";
 import { resetSchemaFieldCache } from "./mcp/tools.js";
@@ -30,6 +30,8 @@ describe("gRPC CallTool optional-tool parity", () => {
     resetClawqlApiForTests();
     resetSpecCache();
     resetSchemaFieldCache();
+    // Fresh capability catalog + process tool surface per case (in-process gRPC).
+    resetCapabilityLifecycleRuntimeForTests();
   });
 
   afterEach(() => {
@@ -37,6 +39,7 @@ describe("gRPC CallTool optional-tool parity", () => {
     resetClawqlApiForTests();
     resetSpecCache();
     resetSchemaFieldCache();
+    resetCapabilityLifecycleRuntimeForTests();
   });
 
   it("schedule list returns JSON over CallTool", async () => {

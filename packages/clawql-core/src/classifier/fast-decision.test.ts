@@ -403,4 +403,68 @@ describe("§7 held-out suite runner", () => {
     expect(report.passedCriteria).toBe(true);
     expect(report.productionTrusted).toBe(true);
   });
+
+  it("HTTP adjudicator + PriorConfidenceScorer can light productionTrusted on a mini suite", async () => {
+    const { PriorConfidenceScorerLive } = await import("./scorer.js");
+    const {
+      adjudicateHeldOutSuite,
+      applyAdjudicationLabels,
+      runHeldOutValidationForUseSite,
+      makeHttpFrontierAdjudicator,
+      FrontierAdjudicator,
+    } = await import("./held-out/index.js");
+    const { Layer } = await import("effect");
+
+    const suite = {
+      suiteId: "http-adj-mini",
+      description: "mini suite for HTTP judge path",
+      cases: [
+        {
+          caseId: "h1",
+          useSiteId: "skill_fast_path_match",
+          query: "pick hit",
+          candidates: [
+            { candidateId: "hit", features: { priorConfidence: 0.95 } },
+            { candidateId: "miss", features: { priorConfidence: 0.05 } },
+          ],
+          groundTruthCandidateId: "miss", // wrong provisional — judge corrects
+          adjudicated: false,
+        },
+      ],
+    };
+
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({
+          groundTruthCandidateId: "hit",
+          rationale: "recorded judge fixture",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )) as unknown as typeof fetch;
+
+    const judgeLayer = Layer.succeed(
+      FrontierAdjudicator,
+      makeHttpFrontierAdjudicator({
+        url: "http://judge.test/v1/adjudicate",
+        model: "test-judge",
+        fetchImpl,
+      })
+    );
+
+    const adj = await Effect.runPromise(
+      adjudicateHeldOutSuite(suite).pipe(Effect.provide(judgeLayer))
+    );
+    expect(adj.mode).toBe("live");
+    expect(adj.labels[0]?.groundTruthCandidateId).toBe("hit");
+
+    const labeled = applyAdjudicationLabels(suite, adj.labels);
+    const report = await Effect.runPromise(
+      runHeldOutValidationForUseSite(labeled, "skill_fast_path_match", {
+        minAccuracy: 0.7,
+        maxMeanCalibrationError: 0.2,
+        minCases: 1,
+      }).pipe(Effect.provide(PriorConfidenceScorerLive))
+    );
+    expect(report.productionTrusted).toBe(true);
+  });
 });

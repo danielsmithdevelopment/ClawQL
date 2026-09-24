@@ -21,9 +21,7 @@ describe("detectMeshAtrDrift", () => {
       detectMeshAtrDrift(new Set(["svc-a", "svc-b"]), new Set(["svc-a"]))
     );
     expect(report.ok).toBe(false);
-    expect(report.findings.some((f) => f.kind === "under_restricts")).toBe(
-      true
-    );
+    expect(report.findings.some((f) => f.kind === "under_restricts")).toBe(true);
   });
 
   it("flags over_restricts when mesh is narrower than ATR", async () => {
@@ -121,5 +119,239 @@ describe("BurstOperatorService", () => {
       }).pipe(Effect.provide(BurstOperatorServiceLive))
     );
     expect(report.ok).toBe(true);
+  });
+});
+
+describe("BurstWatchStub", () => {
+  it("drains mesh denials and placement from an in-memory queue", async () => {
+    const { BurstWatchStub, BurstWatchStubLive } = await import("./watches/index.js");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const watches = yield* BurstWatchStub;
+        yield* watches.enqueue({
+          kind: "mesh_denial",
+          event: {
+            requestId: "r1",
+            sourceIdentity: "spiffe://pay",
+            destination: "audit-worm",
+            layer: "waypoint",
+            reason: "deny",
+            sessionId: "s1",
+          },
+        });
+        yield* watches.enqueue({
+          kind: "node_load",
+          nodes: [
+            { nodeId: "n1", runningCellCount: 10, memoryUtil: 0.8 },
+            { nodeId: "n2", runningCellCount: 1, memoryUtil: 0.1 },
+          ],
+        });
+        return yield* watches.drain({
+          atrAllows: new Set(["svc-a"]),
+          meshAllows: new Set(["svc-a", "svc-b"]),
+          placement: {
+            sessionId: "s1",
+            subscriptionId: "sub",
+            sessionSpawnCountOnPreferred: 0,
+            preferredNodeId: "n1",
+            thiccSessionThreshold: 5,
+            nodes: [{ nodeId: "n1", runningCellCount: 10, memoryUtil: 0.8 }],
+          },
+        });
+      }).pipe(Effect.provide(BurstWatchStubLive))
+    );
+    expect(result.processed).toBe(2);
+    expect(result.meshBridges[0]?.wormType).toBe("MESH_POLICY_DENIED");
+    expect(result.driftReports[0]?.ok).toBe(false);
+    expect(result.placements.length).toBeGreaterThan(0);
+  });
+});
+
+describe("BurstWatchLoop + placement variance", () => {
+  it("runs controller stack until idle", async () => {
+    const { BurstWatchLoop, BurstWatchControllerLive } = await import("./watches/index.js");
+    const ticks = await Effect.runPromise(
+      Effect.gen(function* () {
+        const loop = yield* BurstWatchLoop;
+        yield* loop.enqueue({
+          kind: "mesh_denial",
+          event: {
+            requestId: "r2",
+            sourceIdentity: "spiffe://x",
+            destination: "y",
+            layer: "ztunnel",
+            reason: "deny",
+            sessionId: "s2",
+          },
+        });
+        return yield* loop.runUntilIdle({
+          atrAllows: new Set(["a"]),
+          meshAllows: new Set(["a"]),
+        });
+      }).pipe(Effect.provide(BurstWatchControllerLive))
+    );
+    expect(ticks[0]?.processed).toBe(1);
+    expect(ticks[0]?.meshBridges[0]?.wormType).toBe("MESH_POLICY_DENIED");
+    expect(ticks.some((t) => t.processed === 0)).toBe(true);
+  });
+
+  it("simulates placement variance without inventing AWS numbers", async () => {
+    const { simulatePlacementVariance } = await import("./placement-variance.js");
+    const report = await Effect.runPromise(
+      simulatePlacementVariance({
+        sessions: 40,
+        nodes: [
+          { nodeId: "n1", runningCellCount: 5, memoryUtil: 0.4 },
+          { nodeId: "n2", runningCellCount: 5, memoryUtil: 0.4 },
+          { nodeId: "n3", runningCellCount: 1, memoryUtil: 0.1, newlyProvisioned: true },
+        ],
+      })
+    );
+    expect(report.samples).toBe(40);
+    expect(report.uniqueNodes).toBeGreaterThan(0);
+    expect(report.note).toMatch(/Simulation only/);
+  });
+
+  it("PodInformer unavailable double returns null via startPodInformerOrNull", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      UnavailablePodInformerLive,
+      PodInformerService,
+      startPodInformerOrNull,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const handle = await Effect.runPromise(
+      Effect.gen(function* () {
+        const informer = yield* PodInformerService;
+        const stub = yield* BurstWatchStub;
+        return yield* startPodInformerOrNull(informer, stub, { namespace: "default" });
+      }).pipe(Effect.provide(Layer.mergeAll(UnavailablePodInformerLive, BurstWatchStubLive)))
+    );
+    expect(handle).toBeNull();
+  });
+});
+
+describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
+  it("parses Envoy RBAC denial NDJSON into mesh_denial bridges", async () => {
+    const { BurstWatchStub, BurstWatchStubLive, IstioDenialWatchLive, enqueueIstioNdjsonToStub } =
+      await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const ndjson = [
+      JSON.stringify({
+        response_code: 200,
+        path: "/ok",
+        method: "GET",
+        "source.principal": "spiffe://cluster.local/ns/a/sa/ok",
+      }),
+      JSON.stringify({
+        response_code: 403,
+        response_flags: "RBAC",
+        response_code_details: "rbac_access_denied_matched_policy[ns[pay]-policy[deny]-rule[0]]",
+        path: "/audit-worm",
+        method: "POST",
+        "source.principal": "spiffe://cluster.local/ns/pay/sa/agent",
+        "destination.principal": "spiffe://cluster.local/ns/clawql/sa/audit",
+        "x-request-id": "req-deny-1",
+        "x-clawql-session-id": "sess-pay-1",
+        reporter: "waypoint",
+      }),
+      JSON.stringify({
+        response_code: 403,
+        connection_termination_details: "denied_by_ztunnel",
+        "source.principal": "spiffe://cluster.local/ns/x/sa/y",
+        upstream_cluster: "outbound|8080||audit.clawql.svc.cluster.local",
+        reporter: "ztunnel",
+        request_id: "zt-1",
+      }),
+    ].join("\n");
+
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const stub = yield* BurstWatchStub;
+        const enq = yield* enqueueIstioNdjsonToStub(stub, ndjson);
+        const drained = yield* stub.drain();
+        return { enq, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(IstioDenialWatchLive, BurstWatchStubLive)))
+    );
+
+    expect(result.enq.enqueued).toBe(2);
+    expect(result.enq.skippedNonDenials).toBe(1);
+    expect(result.drained.meshBridges).toHaveLength(2);
+    expect(result.drained.meshBridges[0]?.wormType).toBe("MESH_POLICY_DENIED");
+    expect(result.drained.meshBridges[0]?.sessionId).toBe("sess-pay-1");
+    expect(result.drained.meshBridges[0]?.metadata.layer).toBe("waypoint");
+    expect(result.drained.meshBridges[1]?.metadata.layer).toBe("ztunnel");
+  });
+
+  it("maps Karpenter provisioning and filler eviction into watch + WORM types", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      KarpenterLifecycleWatchLive,
+      enqueueKarpenterRecordsToStub,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const stub = yield* BurstWatchStub;
+        const enq = yield* enqueueKarpenterRecordsToStub(stub, [
+          { name: "nc-1", phase: "provisioning", nodeName: "ip-10-0-1-5" },
+          {
+            name: "filler-batch",
+            phase: "disrupting",
+            reason: "filler preempt for celld",
+            fillerEviction: true,
+            sessionId: "sess-fill",
+          },
+        ]);
+        const drained = yield* stub.drain({
+          placement: {
+            sessionId: "sess-fill",
+            subscriptionId: "sub",
+            sessionSpawnCountOnPreferred: 0,
+            thiccSessionThreshold: 5,
+            nodes: [{ nodeId: "ip-10-0-1-5", runningCellCount: 0, memoryUtil: 0 }],
+          },
+        });
+        return { enq, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(KarpenterLifecycleWatchLive, BurstWatchStubLive)))
+    );
+
+    expect(result.enq.enqueued).toBe(2);
+    expect(result.enq.wormTypes).toContain("KARPENTER_NODE_REQUESTED");
+    expect(result.enq.wormTypes).toContain("FILLER_WORKLOAD_EVICTED");
+    expect(result.drained.processed).toBe(2);
+    expect(result.drained.placements.length).toBeGreaterThan(0);
+  });
+
+  it("flags stale/missing celld S3 leases as CELLD_FLEET_NODE_DROPPED", async () => {
+    const { BurstWatchStub, BurstWatchStubLive, CelldFleetHealthLive, enqueueFleetHealthToStub } =
+      await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const now = 1_000_000;
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const stub = yield* BurstWatchStub;
+        const report = yield* enqueueFleetHealthToStub(stub, {
+          nowMs: now,
+          defaultTtlMs: 30_000,
+          expectedNodeIds: ["n1", "n2", "n3"],
+          leases: [
+            { nodeId: "n1", renewedAtMs: now - 5_000, ttlMs: 30_000 },
+            { nodeId: "n2", renewedAtMs: now - 120_000, ttlMs: 30_000 },
+          ],
+        });
+        const drained = yield* stub.drain();
+        return { report, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(CelldFleetHealthLive, BurstWatchStubLive)))
+    );
+
+    expect(result.report.ok).toBe(false);
+    expect(result.report.findings.map((f) => f.nodeId).sort()).toEqual(["n2", "n3"]);
+    expect(result.report.findings.every((f) => f.wormType === "CELLD_FLEET_NODE_DROPPED")).toBe(
+      true
+    );
+    expect(result.drained.processed).toBe(2);
   });
 });
