@@ -19,7 +19,7 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 - `detectMeshAtrDrift` — pure Effect comparison of mesh allow-set vs ATR allow-set
 - `BurstOperatorService` Context.Tag + Live layer
 - `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
-- `BurstWatchSourcesService` — compose Pod + NodeClaim informers (+ optional Istio access-log tail) onto the stub; unavailable without cluster/path (fail-closed)
+- `BurstWatchSourcesService` — compose Pod + NodeClaim informers (+ optional Istio access-log tail + celld lease snapshot fleet health) onto the stub; unavailable without cluster/path/valid leases (fail-closed)
 - `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable
 - `IstioDenialWatchService` — parse Envoy/ztunnel access-log JSON/NDJSON → `mesh_denial` (denial bridging; no policy generation)
 - `IstioAccessLogTailService` — follow an on-disk NDJSON access-log path into BurstWatchStub; missing path → unavailable (fail-closed)

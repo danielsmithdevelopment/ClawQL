@@ -314,6 +314,71 @@ describe("BurstWatchLoop + placement variance", () => {
     ]);
     expect(result.statuses.every((s) => s.started === false)).toBe(true);
   });
+
+  it("BurstWatchSources evaluates host lease snapshot into fleet drop signals", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      BurstWatchSourcesUnavailableLive,
+      BurstWatchSourcesService,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const now = Date.now();
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const sources = yield* BurstWatchSourcesService;
+        const stub = yield* BurstWatchStub;
+        const handle = yield* sources.start(stub, {
+          enablePodInformer: false,
+          enableNodeClaimInformer: false,
+          celldLeaseSnapshotJson: JSON.stringify([
+            { nodeId: "n-fresh", renewedAtMs: now, ttlMs: 30_000 },
+            { nodeId: "n-stale", renewedAtMs: now - 120_000, ttlMs: 30_000 },
+          ]),
+          celldExpectedNodeIds: ["n-fresh", "n-stale", "n-missing"],
+          celldFleetSourceNote: "test lease snapshot",
+        });
+        const queued = yield* stub.snapshotQueue();
+        const drained = yield* stub.drain();
+        handle.stop();
+        return { handle, queued, drained };
+      }).pipe(Effect.provide(Layer.mergeAll(BurstWatchSourcesUnavailableLive, BurstWatchStubLive)))
+    );
+    expect(result.handle.startedCount).toBe(1);
+    const fleet = result.handle.statuses.find((s) => s.id === "celld-fleet-health");
+    expect(fleet?.started).toBe(true);
+    expect(fleet?.detail).toMatch(/findings=2/);
+    expect(result.queued.filter((e) => e.kind === "pod_eviction_request")).toHaveLength(2);
+    expect(result.drained.processed).toBe(2);
+  });
+
+  it("BurstWatchSources refuses invalid lease snapshot without inventing events", async () => {
+    const {
+      BurstWatchStub,
+      BurstWatchStubLive,
+      BurstWatchSourcesUnavailableLive,
+      BurstWatchSourcesService,
+    } = await import("./watches/index.js");
+    const { Layer } = await import("effect");
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        const sources = yield* BurstWatchSourcesService;
+        const stub = yield* BurstWatchStub;
+        const handle = yield* sources.start(stub, {
+          enablePodInformer: false,
+          enableNodeClaimInformer: false,
+          celldLeaseSnapshotJson: "[]",
+        });
+        const queued = yield* stub.snapshotQueue();
+        handle.stop();
+        return { handle, queued };
+      }).pipe(Effect.provide(Layer.mergeAll(BurstWatchSourcesUnavailableLive, BurstWatchStubLive)))
+    );
+    expect(result.handle.startedCount).toBe(0);
+    expect(result.handle.statuses.find((s) => s.id === "celld-fleet-health")?.started).toBe(false);
+    expect(result.queued).toEqual([]);
+  });
+
 });
 
 describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
