@@ -60,7 +60,11 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
 
 ## Next
 
-1. Frontier-adjudicate this suite (live labels) — only remaining gate for `productionTrusted`.
+1. Frontier-adjudicate this suite (live labels) via Harvey-style marker → GHA
+   (`packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication` =
+   `v0.4-routing-fresh` on PR #1147). Fetch:
+   `SUITE=v0.4-routing-fresh RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh`.
+   Only remaining gate for `productionTrusted`.
 2. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
 3. Future T/τ retunes → freeze **v0.5** before fit.
 

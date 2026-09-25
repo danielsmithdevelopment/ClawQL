@@ -4,8 +4,8 @@
 #
 # Usage:
 #   bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
-#   SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
-#   RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#   SUITE=v0.4-routing-fresh bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
+#   RESCORE=1 SUITE=v0.4-routing-fresh bash scripts/fetch-frontier-adjudication-artifact.sh [outdir]
 #     → also runs held-out validation with --labels-in + live GLiNER when
 #       CLAWQL_FAST_DECISION_GLINER_URL is set.
 set -euo pipefail
@@ -15,47 +15,91 @@ SUITE="${SUITE:-}"
 mkdir -p "$OUT"
 
 WF="fast-decision-frontier-adjudication.yml"
-echo "Looking up latest successful run of $WF${SUITE:+ (prefer suite=$SUITE)} …"
-RUN_ID="$(
-  gh run list --workflow="$WF" --status=success --limit 50 \
-    --json databaseId,conclusion \
-    --jq '[.[] | select(.conclusion=="success")][0].databaseId // empty'
-)"
-if [[ -z "${RUN_ID}" ]]; then
-  echo "No successful frontier adjudication run found (secrets may be missing or schedule has not fired)." >&2
-  exit 2
+# Optional: RUN_ID=<id> skips lookup. When SUITE is set, walk recent successful
+# runs until the suite-named artifact is present (avoids grabbing a prior suite).
+RUN_ID="${RUN_ID:-}"
+TMP="$(mktemp -d)"
+trap 'rm -rf "${TMP}"' EXIT
+
+download_suite_artifact() {
+  local run_id="$1"
+  local name="held-out-frontier-adjudication-${SUITE}"
+  rm -rf "${TMP:?}"/*
+  if gh run download "$run_id" -n "$name" -D "$TMP" 2>/dev/null; then
+    echo "$name"
+    return 0
+  fi
+  return 1
+}
+
+if [[ -n "${RUN_ID}" ]]; then
+  echo "Using RUN_ID=${RUN_ID}${SUITE:+ (suite=$SUITE)} …"
+elif [[ -n "${SUITE}" ]]; then
+  echo "Looking up successful run of $WF with artifact held-out-frontier-adjudication-${SUITE} …"
+  mapfile -t CANDIDATES < <(
+    gh run list --workflow="$WF" --status=success --limit 50 \
+      --json databaseId,conclusion \
+      --jq '[.[] | select(.conclusion=="success")] | .[].databaseId'
+  )
+  DOWNLOADED=""
+  for cand in "${CANDIDATES[@]}"; do
+    if DOWNLOADED="$(download_suite_artifact "$cand")"; then
+      RUN_ID="$cand"
+      echo "Downloaded artifact: $DOWNLOADED from run $RUN_ID"
+      break
+    fi
+  done
+  if [[ -z "${RUN_ID}" || -z "${DOWNLOADED:-}" ]]; then
+    echo "No successful frontier adjudication run with suite=${SUITE} artifact found." >&2
+    exit 2
+  fi
+else
+  echo "Looking up latest successful run of $WF …"
+  RUN_ID="$(
+    gh run list --workflow="$WF" --status=success --limit 50 \
+      --json databaseId,conclusion \
+      --jq '[.[] | select(.conclusion=="success")][0].databaseId // empty'
+  )"
+  if [[ -z "${RUN_ID}" ]]; then
+    echo "No successful frontier adjudication run found (secrets may be missing or schedule has not fired)." >&2
+    exit 2
+  fi
 fi
 
 # Download into a fresh temp dir then promote — gh run download refuses to
 # overwrite existing files in OUT (re-fetch / audit re-runs would false-fail).
-TMP="$(mktemp -d)"
-trap 'rm -rf "${TMP}"' EXIT
-echo "Downloading artifacts from run $RUN_ID → $OUT"
-
-ARTIFACT_NAMES=()
-if [[ -n "${SUITE}" ]]; then
-  ARTIFACT_NAMES+=("held-out-frontier-adjudication-${SUITE}")
-fi
-# Legacy name (pre-suite matrix) + v0.1 default.
-ARTIFACT_NAMES+=("held-out-frontier-adjudication" "held-out-frontier-adjudication-v0.1")
-
-DOWNLOADED=""
-for name in "${ARTIFACT_NAMES[@]}"; do
-  if gh run download "$RUN_ID" -n "$name" -D "$TMP" 2>/dev/null; then
-    DOWNLOADED="$name"
-    echo "Downloaded artifact: $name"
-    break
+if [[ -z "${DOWNLOADED:-}" ]]; then
+  echo "Downloading artifacts from run $RUN_ID → $OUT"
+  ARTIFACT_NAMES=()
+  if [[ -n "${SUITE}" ]]; then
+    ARTIFACT_NAMES+=("held-out-frontier-adjudication-${SUITE}")
   fi
-done
-if [[ -z "${DOWNLOADED}" ]]; then
-  echo "No held-out-frontier-adjudication* artifact on run $RUN_ID (likely credential-gate skip-notice only)." >&2
-  exit 3
+  # Legacy name (pre-suite matrix) + v0.1 default.
+  ARTIFACT_NAMES+=("held-out-frontier-adjudication" "held-out-frontier-adjudication-v0.1")
+
+  DOWNLOADED=""
+  for name in "${ARTIFACT_NAMES[@]}"; do
+    rm -rf "${TMP:?}"/*
+    if gh run download "$RUN_ID" -n "$name" -D "$TMP" 2>/dev/null; then
+      DOWNLOADED="$name"
+      echo "Downloaded artifact: $name"
+      break
+    fi
+  done
+  if [[ -z "${DOWNLOADED}" ]]; then
+    echo "No held-out-frontier-adjudication* artifact on run $RUN_ID (likely credential-gate skip-notice only)." >&2
+    exit 3
+  fi
+else
+  echo "Using downloaded suite artifact under $OUT"
 fi
 
 # Promote known artifact files; preserve unrelated OUT contents (e.g. local rescores).
 for f in held-out-frontier-labels.json held-out-frontier-summary.json gliner2-healthz.json \
   held-out-frontier-labels-v0.1.json held-out-frontier-summary-v0.1.json \
-  held-out-frontier-labels-v0.2-harvey.json held-out-frontier-summary-v0.2-harvey.json; do
+  held-out-frontier-labels-v0.2-harvey.json held-out-frontier-summary-v0.2-harvey.json \
+  held-out-frontier-labels-v0.3-routing-fresh.json held-out-frontier-summary-v0.3-routing-fresh.json \
+  held-out-frontier-labels-v0.4-routing-fresh.json held-out-frontier-summary-v0.4-routing-fresh.json; do
   if [[ -f "$TMP/$f" ]]; then
     cp -f "$TMP/$f" "$OUT/$f"
   fi
@@ -104,6 +148,8 @@ if [[ -f "$SUMMARY" ]]; then
     case "${SUITE}" in
       v0.1) EXPECT="fast-decision-held-out-v0.1" ;;
       v0.2-harvey) EXPECT="fast-decision-held-out-v0.2-harvey" ;;
+      v0.3-routing-fresh) EXPECT="fast-decision-held-out-v0.3-routing-fresh" ;;
+      v0.4-routing-fresh) EXPECT="fast-decision-held-out-v0.4-routing-fresh" ;;
     esac
     if [[ -n "${EXPECT}" && "${SID}" != "${EXPECT}" ]]; then
       echo "Suite mismatch: wanted ${EXPECT}, got suiteId=${SID} (artifact ${DOWNLOADED})." >&2

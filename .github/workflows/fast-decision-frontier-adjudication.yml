@@ -3,7 +3,8 @@
 # Does NOT run on every PR. Triggers:
 #   - Marker PR/push (Harvey LAB style): path-filtered on
 #       packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication
-#     First non-comment line = suite (v0.1 | v0.2-harvey). Absent/empty → skip.
+#     First non-comment line = suite (v0.1 | v0.2-harvey | v0.3-routing-fresh |
+#     v0.4-routing-fresh). Absent/empty → skip.
 #   - schedule (daily) — produces live labels when repo secrets exist; otherwise
 #     credential-gate skip-notice (same Harvey LAB pattern). Removes need for
 #     agent `actions:write` to dispatch once secrets are installed.
@@ -25,15 +26,16 @@
 #
 # Operator (Harvey-style, no actions:write needed):
 #   1. Branch from main; set packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication
-#      to `v0.2-harvey` (first non-comment line).
+#      to `v0.4-routing-fresh` (or v0.2-harvey / v0.3-routing-fresh / v0.1).
 #   2. Open PR → this workflow runs on the PR (same-repo secrets).
-#   3. After labels land: SUITE=v0.2-harvey RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh
+#   3. After labels land:
+#        SUITE=v0.4-routing-fresh RESCORE=1 bash scripts/fetch-frontier-adjudication-artifact.sh
 #   4. Remove/empty the marker in a follow-up commit (do not leave sticky on main).
 #
 # Operator (actions:write):
 #   gh workflow run fast-decision-frontier-adjudication.yml --ref main \
 #     -f judge_model=claude-sonnet-4-6 -f via_openrouter=false -f with_gliner=true \
-#     -f suite=v0.2-harvey
+#     -f suite=v0.4-routing-fresh
 #   # repository_dispatch client_payload.suite also accepted (default v0.1).
 #
 # Honesty: uploaded labels are live-judge provenance. productionTrusted requires
@@ -63,13 +65,15 @@ on:
         default: true
         type: boolean
       suite:
-        description: Held-out suite name (v0.1 | v0.2-harvey)
+        description: Held-out suite name (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh)
         required: true
         default: v0.1
         type: choice
         options:
           - v0.1
           - v0.2-harvey
+          - v0.3-routing-fresh
+          - v0.4-routing-fresh
   repository_dispatch:
     types: [frontier-adjudication]
   pull_request:
@@ -205,10 +209,10 @@ jobs:
             SUITE="${MARKER_SUITE}"
           fi
           case "${SUITE}" in
-            v0.1|v0.2-harvey) ;;
+            v0.1|v0.2-harvey|v0.3-routing-fresh|v0.4-routing-fresh) ;;
             *)
               CAN=false
-              REASON="unsupported suite '${SUITE}' (want v0.1 or v0.2-harvey)"
+              REASON="unsupported suite '${SUITE}' (want v0.1, v0.2-harvey, v0.3-routing-fresh, or v0.4-routing-fresh)"
               ;;
           esac
           {
