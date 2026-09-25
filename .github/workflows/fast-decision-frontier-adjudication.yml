@@ -260,7 +260,7 @@ jobs:
       CLAWQL_OPENROUTER_APP_TITLE: ClawQL Fast Decision Judge
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
-      CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL || 'fastino/gliner2.5-base-v1' }}
+      CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ vars.CLAWQL_FAST_DECISION_GLINER_MODEL || 'fastino/GLiNER2.5-Decide' }}
       HELD_OUT_SUITE: ${{ matrix.suite }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
@@ -316,7 +316,7 @@ jobs:
           export CLAWQL_GLINER_SIDECAR_MODE=gliner2
           export CLAWQL_GLINER_SIDECAR_HOST=127.0.0.1
           export CLAWQL_GLINER_SIDECAR_PORT=18081
-          export CLAWQL_FAST_DECISION_GLINER_MODEL="${CLAWQL_FAST_DECISION_GLINER_MODEL:-fastino/gliner2.5-base-v1}"
+          export CLAWQL_FAST_DECISION_GLINER_MODEL="${CLAWQL_FAST_DECISION_GLINER_MODEL:-fastino/GLiNER2.5-Decide}"
           HEALTHZ="${{ github.workspace }}/artifacts/gliner2-healthz.json"
           (
             cd infra/gliner-sidecar

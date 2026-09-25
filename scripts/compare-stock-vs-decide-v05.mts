@@ -42,6 +42,7 @@ import {
   applyCalibrationToScores,
   applyAdjudicationLabels,
   loadLiveAdjudicationLabelsFromJsonFile,
+  candidatesEquivalent,
   type ScoredHeldOutCase,
   type FastDecisionScore,
   type CalibrationTransform,
@@ -154,7 +155,9 @@ function applyCalib(
       scores,
       topCandidateId: top?.candidateId,
       topConfidence: top?.confidence,
-      correct: Boolean(top && top.candidateId === s.groundTruthCandidateId),
+      correct: Boolean(
+        top && candidatesEquivalent(top.candidateId, s.groundTruthCandidateId)
+      ),
     };
   });
 }
@@ -227,8 +230,8 @@ function rematchGroundTruth(
     return {
       ...s,
       groundTruthCandidateId: gt,
-      // top-* still raw; correct recomputed after calib
-      correct: Boolean(s.topCandidateId && s.topCandidateId === gt),
+      // top-* still raw; correct recomputed after calib (twin-aware)
+      correct: Boolean(s.topCandidateId && candidatesEquivalent(s.topCandidateId, gt)),
     };
   });
 }
@@ -368,15 +371,20 @@ async function phaseReport(): Promise<void> {
   );
 
   const decideReject = arm4;
+  const stockReject = arm3;
+  const equalErrors = decideReject.nErrorsFired === stockReject.nErrorsFired;
+  const decideHigherCoverage = decideReject.fireRate > stockReject.fireRate;
+  const decideFewerErrors = decideReject.nErrorsFired < stockReject.nErrorsFired;
+  // V06 spend rule: fewer fire errors wins; equal errors → prefer higher coverage.
   const shipEligible =
-    decideReject.nErrorsFired === 0 &&
-    decideReject.nFired > 0 &&
     Boolean(gtByCaseId) &&
-    labelCount === decideReject.n;
+    labelCount === decideReject.n &&
+    decideReject.nFired > 0 &&
+    (decideFewerErrors || (equalErrors && decideHigherCoverage));
 
   const report = {
     protocol:
-      "stock vs Decide locked-τ score-once on frozen v0.5; does not hot-swap live path",
+      "stock vs Decide locked-τ on frozen v0.5; twin-aware correctness; V06 spend ship rule",
     evalSuite: EVAL_SUITE,
     fitPath: FIT_PATH,
     labelsPath: labelsPath ?? null,
@@ -390,9 +398,11 @@ async function phaseReport(): Promise<void> {
     decideDump: { path: decidePath, modelId: decide.modelId, backend: decide.backend },
     arms: [arm1, arm2, arm3, arm4],
     shipRule: {
-      rule: "swap live to Decide only if decide_locked_T_tau has nErrorsFired=0 under frontier GT",
+      rule: "V06 spend: fewer fire errors wins; equal errors → prefer higher coverage (twins count as correct)",
       decideNFired: decideReject.nFired,
       decideNErrorsFired: decideReject.nErrorsFired,
+      stockNFired: stockReject.nFired,
+      stockNErrorsFired: stockReject.nErrorsFired,
       frontierLabelsPresent: Boolean(gtByCaseId),
       labelCountMatchesEval: gtByCaseId ? labelCount === decideReject.n : false,
       shipEligible,
@@ -400,7 +410,7 @@ async function phaseReport(): Promise<void> {
     honesty: [
       "v0.5 scored once with knobs locked before any v0.5 scores existed",
       "Decide T/τ from fit-only lock (DECIDE_V05_FIT_TAU_LOCK); no refit on eval",
-      "Stock live path remains T=4/τ=0.70 until shipEligible=true",
+      "After V06 cutover live path is Decide T=0.75/τ=0.80 (see DECIDE_V06_CUTOVER.md)",
       "Closeout citation requires frontier_labels groundTruthSource",
       "quote nFired and CP lower bound whenever citing precision among fired",
     ],

@@ -1,14 +1,19 @@
 # Fast Decision routing closeout v0.4
 
-**Status:** productionTrusted on stock GLiNER 2.5 + reject rule. Decide measured, not live.
+**Status:** v0.4 stock path remains the historical `productionTrusted` claim on suite v0.4. **Live routing path (v0.6):** Decide @ T=0.75 / τ=0.80 after twin collapse — see [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md).
 
-**Suite:** frozen catalog-only routing `v0.4-routing-fresh` (n=40).  
+**Suite (v0.4):** frozen catalog-only routing `v0.4-routing-fresh` (n=40).  
 **Frontier labels:** GHA [36144911649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36144911649).  
-**Four-arm compare:** GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) · PR [#1147](https://github.com/danielsmithdevelopment/ClawQL/pull/1147).
+**Four-arm compare:** GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) · PR [#1147](https://github.com/danielsmithdevelopment/ClawQL/pull/1147).  
+**v0.5 score-once:** GHA [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105) / frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282) · PR [#1148](https://github.com/danielsmithdevelopment/ClawQL/pull/1148).
 
-## What is live
+## What is live (v0.6)
 
-GLiNER 2.5 is a CPU-first on-ramp, not the full router. On a frozen catalog of 40 routing cases, calibrated stock 2.5 (T=4, τ=0.70) fires on **18/40** and was correct on all 18 (95% Clopper–Pearson two-sided lower bound **≈81.5%**, cited as ≈**82%**). The other 22 abstain to the existing fallback. Forced-answer stock 2.5 is **80%** exact-match (8/40 wrong). GLiNER2.5-Decide, scored on the same 40, is **92.5%** forced exact-match (3/40 wrong). Decide with its own reject rule (T=0.75, τ=0.60) fires on **34/40** with **1** error. Production still uses the stock reject arm. Decide is the measured next candidate, not the live path.
+`fastino/GLiNER2.5-Decide` with reject rule **T=0.75 / τ=0.80**, twin-aware correctness for declared mcp↔skill pairs. On frozen v0.5 (twin-aware rematch of the same score dumps): Decide fires **45/75** with **0** fire errors (≈92% CP LB); stock would have fired **32/75** with **0** twin-aware fire errors. Equal errors → prefer coverage → Decide. Details: [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) · [`CATALOG_TWIN_EQUIVALENCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/CATALOG_TWIN_EQUIVALENCE.md) · [`V06_SHIP_RULE_SPEND.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V06_SHIP_RULE_SPEND.md).
+
+## What was live on v0.4 (historical)
+
+GLiNER 2.5 was a CPU-first on-ramp, not the full router. On a frozen catalog of 40 routing cases, calibrated stock 2.5 (T=4, τ=0.70) fires on **18/40** and was correct on all 18 (95% Clopper–Pearson two-sided lower bound **≈81.5%**, cited as ≈**82%**). The other 22 abstain to the existing fallback. Forced-answer stock 2.5 is **80%** exact-match (8/40 wrong). GLiNER2.5-Decide, scored on the same 40, is **92.5%** forced exact-match (3/40 wrong). Decide with its own reject rule (T=0.75, τ=0.60) fires on **34/40** with **1** error. That stock reject arm was the live path through v0.5 until the twin-aware V06 spend.
 
 ## Verified four-arm table
 
@@ -81,11 +86,11 @@ Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire s
 | Decide ship decision | **no swap** — Decide 44/45 (≈88% LB) vs stock 31/32 (≈84% LB); both 1 error; 0-error rule fails Decide |
 | Live-path honesty on v0.5 | stock also **1/32** errors (`route-v05-023` think twin); cite ≈84% LB @ 43%, not “0-error forever” |
 | Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
-| Live path | **still stock** (T=4, τ=0.70); v0.4 `productionTrusted` not rewritten |
+| Live path | **Decide** (T=0.75, τ=0.80) after twin-aware V06 spend — see [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) |
 
-**Docs one-liner.** Decide should probably be live next — not because 60% beats 43%, but because it is the stronger model and its only v0.5 fire error is a catalog twin (stock’s only fire error is also a twin: `route-v05-023`). Switch after twins are collapsed and the comparison rule is declared as a spend; keep stock live this cycle.
+**Docs one-liner.** Live routing path is Decide @ T=0.75 / τ=0.80 after twin collapse: on frozen v0.5 both arms have 0 twin-aware fire errors and Decide covers 60% vs stock 43%.
 
-**v0.6 cutover gate (all three):** (1) stock miss on the page next to Decide’s — **done**, both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage. Then Decide @ T=0.75 / τ=0.80.
+**v0.6 cutover gate (all three — satisfied):** (1) stock miss on the page next to Decide’s — both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage.
 
 Closeout detail: [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_SCORE_ONCE_CLOSEOUT.md)
 

@@ -28,8 +28,8 @@ export const searchProviderToolRoutingUseSite: FastDecisionUseSite = {
   useSiteId: "search_provider_tool_routing",
   description: "Which provider/tool is relevant to a query (accelerates search ranking)",
   costlyErrorDirection: "false_positive",
-  /** Locked τ=0.70 from fit-routing-v0.1 (FP-costly rule). See FIT_TAU_FREEZE_v0.1.md. */
-  threshold: 0.7,
+  /** Locked τ=0.80 from Decide fit lock + v0.6 twin-aware cutover. See DECIDE_V05_FIT_TAU_LOCK.md / V06_SHIP_RULE_SPEND.md. */
+  threshold: 0.8,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
   candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "providerToolCandidates")),
 };

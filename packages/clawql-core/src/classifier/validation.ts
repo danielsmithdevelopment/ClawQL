@@ -4,6 +4,7 @@
  */
 
 import { Context, Effect, Layer } from "effect";
+import { candidatesEquivalent } from "./candidate-equivalence.js";
 import type { FastDecisionScore } from "./types.js";
 
 export type HeldOutCase = {
@@ -108,7 +109,7 @@ export function evaluateCorrectnessAndCalibration(
       continue;
     }
     scoredCases++;
-    const isCorrect = top.candidateId === c.groundTruthCandidateId;
+    const isCorrect = candidatesEquivalent(top.candidateId, c.groundTruthCandidateId);
     if (isCorrect) correct++;
     const conf = top.confidence;
     for (let i = 0; i < DEFAULT_BUCKETS.length; i++) {

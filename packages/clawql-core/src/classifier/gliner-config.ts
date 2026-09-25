@@ -9,13 +9,14 @@ import { Context, Effect, Layer } from "effect";
 export type GlinerScorerConfig = {
   /** Sidecar base URL, e.g. http://gliner:8080 — when set, live HTTP classify is used. */
   readonly endpointUrl?: string;
-  /** HF model id served by the sidecar (default: fastino/gliner2.5-base-v1). */
+  /** HF model id served by the sidecar (default: fastino/GLiNER2.5-Decide). */
   readonly modelId: string;
   readonly apiToken?: string;
   readonly timeoutMs: number;
 };
 
-export const DEFAULT_GLINER_MODEL_ID = "fastino/gliner2.5-base-v1";
+/** Live routing path — Decide cutover (v0.6 spend). See DECIDE_V05_SCORE_ONCE_CLOSEOUT.md. */
+export const DEFAULT_GLINER_MODEL_ID = "fastino/GLiNER2.5-Decide";
 
 export class GlinerScorerConfigService extends Context.Tag("clawql/GlinerScorerConfig")<
   GlinerScorerConfigService,

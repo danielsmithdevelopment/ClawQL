@@ -1031,7 +1031,7 @@ describe("temperature calibration", () => {
     expect(out[1]?.confidence).toBe(0);
   });
 
-  it("defaults calibration ON with temperature_softmax T=4", async () => {
+  it("defaults calibration ON with temperature_softmax T=0.75 (Decide live)", async () => {
     const prev = process.env.CLAWQL_FAST_DECISION_CALIBRATION;
     const prevT = process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
     delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
@@ -1040,11 +1040,41 @@ describe("temperature calibration", () => {
     const cfg = readCalibrationConfigFromEnv();
     expect(cfg.enabled).toBe(true);
     expect(cfg.mode).toBe("temperature_softmax");
-    expect(cfg.temperature).toBe(4);
+    expect(cfg.temperature).toBe(0.75);
     if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION = prev;
     else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
     if (prevT !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE = prevT;
     else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+  });
+});
+
+
+describe("candidatesEquivalent (twins)", () => {
+  it("treats declared mcp↔skill pairs as equivalent", async () => {
+    const { candidatesEquivalent, equivalenceClassOf } = await import("./candidate-equivalence.js");
+    expect(candidatesEquivalent("mcp.memory_ingest", "skill.clawql-memory-ingest")).toBe(true);
+    expect(candidatesEquivalent("skill.clawql-memory-ingest", "mcp.memory_ingest")).toBe(true);
+    expect(candidatesEquivalent("mcp.clawql_think", "skill.deep-thinking")).toBe(true);
+    expect(candidatesEquivalent("mcp.search", "mcp.execute")).toBe(false);
+    expect(candidatesEquivalent("mcp.search", "skill.clawql-composed-mcp-workflows")).toBe(false);
+    expect([...equivalenceClassOf("mcp.notify")].sort()).toEqual(
+      ["mcp.notify", "skill.clawql-notify-workflows"].sort()
+    );
+  });
+
+  it("defaults live GLiNER model to Decide", async () => {
+    const prev = process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+    delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+    const { readGlinerScorerConfigFromEnv, DEFAULT_GLINER_MODEL_ID } = await import("./gliner-config.js");
+    expect(DEFAULT_GLINER_MODEL_ID).toBe("fastino/GLiNER2.5-Decide");
+    expect(readGlinerScorerConfigFromEnv().modelId).toBe("fastino/GLiNER2.5-Decide");
+    if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_MODEL = prev;
+    else delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+  });
+
+  it("defaults search_provider_tool_routing τ to 0.80", async () => {
+    const { searchProviderToolRoutingUseSite } = await import("./use-sites/builtins.js");
+    expect(searchProviderToolRoutingUseSite.threshold).toBe(0.8);
   });
 });
 

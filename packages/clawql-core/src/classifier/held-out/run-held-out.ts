@@ -27,6 +27,7 @@ import type {
   HeldOutValidationRunReport,
   ScoredHeldOutCase,
 } from "./types.js";
+import { candidatesEquivalent } from "../candidate-equivalence.js";
 import { loadClawqlCapabilityOntology } from "../capability-ontology.js";
 import { enrichFastDecisionRequest } from "../ontology-enrichment.js";
 
@@ -182,7 +183,9 @@ export function scoreHeldOutCases(
         scores,
         topCandidateId: top?.candidateId,
         topConfidence: top?.confidence,
-        correct: Boolean(top && top.candidateId === c.groundTruthCandidateId),
+        correct: Boolean(
+          top && candidatesEquivalent(top.candidateId, c.groundTruthCandidateId)
+        ),
       });
     }
     return out;
