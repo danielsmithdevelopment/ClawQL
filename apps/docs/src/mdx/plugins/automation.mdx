@@ -1,0 +1,29 @@
+PluginOpt inclawql-automationPlugins · Registry · Plugin modelOn this pageMCP toolsPrerequisitesLearn moreAutomation
+
+Plugin ID: clawql-automation
+
+Package: packages/clawql-automation — AutomationPlugin
+
+Registers optional automation and GitOps MCP tools. Each tool is gated independently.
+
+MCP tools
+
+ToolEnable flagPurposescheduleCLAWQL_ENABLE_SCHEDULE=1Persisted jobs + synthetic HTTP checksnotifyCLAWQL_ENABLE_NOTIFY=1Slack chat.postMessage wrapperworkflowCLAWQL_ENABLE_WORKFLOW=1Argo Workflows submit/wait/logs (#243)argocdCLAWQL_ENABLE_ARGO_CD=1Argo CD Application observe/sync (#244)
+
+Prerequisites
+
+notify — Slack in spec merge + bot token (SLACK_BOT_TOKEN, CLAWQL_SLACK_TOKEN, …)
+
+workflow / argocd — Kubernetes RBAC, namespace allowlists; see Helm values.yaml
+
+Learn more
+
+Schedule synthetic checks
+
+Slack notify
+
+Schedule &amp; notify workflows
+
+Workflow tool (repo)
+
+Argo CD tool (repo)

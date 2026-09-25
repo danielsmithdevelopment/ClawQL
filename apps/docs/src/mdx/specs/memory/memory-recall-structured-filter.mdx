@@ -1,0 +1,921 @@
+SpecsMemoryOntologyv0.1 specWhy we extended memory with clawql-ontology. Semantic memory_recall finds narrative context; typed schema + filters decide exact set membership against ontology.db. Narrative proof: Memory Finds. Ontology Decides.. Source: docs/specs/memory/memory-recall-structured-filter-v0.1.md. Companion: Legal domain ontology · Enterprise Ontology · Memory.On this page1. Problem2. New Parameters3. Routing Logic4. Ontology Query Implementation5. Result Format6. MCP Tool Specification Update7. Interaction with Existing Sources8. Benchmarks: Before and After9. Testing10. Effect-TS Implementation Notes
+
+title: memory_recall Structured Filter Extension — Spec v0.1
+
+memory_recall Structured Filter Extension — Spec v0.1
+
+August 2026 · Draft
+
+Companion: ClawQL Ontology Legal Domain Spec v0.1 · Enterprise Ontology · OpenBench B-7
+
+Essay (value + OpenBench proof): Memory Finds. Ontology Decides. — semantic near-misses → grader hard-zero; schema + filters closed the set on B-7.1.
+
+1. Problem
+
+Current memory_recall routes all queries through semantic search (keyword + vector + wikilink graph). This is correct for most vault queries — "what did we decide about Cloudflare auth" is a semantic question.
+
+Institutional knowledge enumeration tasks are not semantic questions. "All matters with escrowPct >= 10 AND nonCompeteMonths > 18" is a predicate evaluation over typed fields. Routing it through semantic search introduces:
+
+False positives: a matter with 9% escrow ranks highly because it is semantically similar to one with 12% escrow
+
+Turn cost scaling with corpus size: the agent must read N notes to verify field values, hitting turn limits at N > ~20
+
+Non-determinism: semantic similarity scores vary; the same query may return different results across runs
+
+Structured filter extension routes predicate queries to the ontology index (clawql-ontology legal pack → ontology.db), bypassing semantic search entirely for these cases.
+
+That is why memory capability was extended: vault recall finds narrative context; ontology-typed filters decide exact set membership. Without the ontology index, B-7-style enumeration stays approximate even when memory_recall "succeeds."
+
+2. New Parameters
+
+interface MemoryRecallParams {
+
+// Existing — unchanged
+
+query: string
+
+limit?: number // default 10
+
+maxDepth?: number // wikilink graph traversal depth
+
+sources?: MemorySource[] // vault | vector | codegraph | pageindex | onyx
+
+// New — ontology filter extension
+
+schema?: OntologySchema // "legal.Matter" | "legal.Client" | etc.
+
+filters?: OntologyFilter // typed predicate filters
+
+confidenceMinimum?: ConfidenceLevel // EXTRACTED | INFERRED | AMBIGUOUS
+
+includeConfidenceTags?: boolean // include confidence in each result (default true)
+
+orderBy?: OrderByClause // sort ontology results
+
+}
+
+// Ontology schema identifiers
+
+type OntologySchema =
+
+'legal.Matter' | 'legal.Client' | 'legal.Attorney' | 'legal.Document'
+
+// extensible — new domains add new schema identifiers
+
+// Filter predicate types
+
+type FilterPredicate =
+
+| { eq: string | number | boolean }
+
+| { ne: string | number | boolean }
+
+| { gt: number }
+
+| { gte: number }
+
+| { lt: number }
+
+| { lte: number }
+
+| { in: (string | number)[] }
+
+| { nin: (string | number)[] } // not in list
+
+| { contains: string } // string contains (case-insensitive)
+
+| { startsWith: string }
+
+| { between: [number, number] } // inclusive range
+
+| { isNull: boolean } // field is null / not null
+
+| { and: FilterPredicate[] } // compound AND
+
+| { or: FilterPredicate[] } // compound OR
+
+type OntologyFilter = Record&#x3C;string, FilterPredicate>
+
+// Confidence levels — controls which extraction methods are trusted
+
+type ConfidenceLevel = 'EXTRACTED' | 'INFERRED' | 'AMBIGUOUS'
+
+// EXTRACTED: machine-readable fields only (most precise)
+
+// INFERRED: pattern matching allowed
+
+// AMBIGUOUS: all extractions including conflicting ones
+
+// Order by clause
+
+type OrderByClause = {
+
+field: string
+
+direction: 'asc' | 'desc'
+
+}[]
+
+3. Routing Logic
+
+When memory_recall receives a request:
+
+async function memoryRecall(params: MemoryRecallParams): Promise&#x3C;RecallResult> {
+
+// Route based on presence of schema + filters
+
+if (params.schema &#x26;&#x26; params.filters) {
+
+// Structured predicate path — ontology index
+
+return await ontologyQuery(params)
+
+}
+
+if (params.schema &#x26;&#x26; !params.filters) {
+
+// Schema-typed semantic search — hybrid path
+
+// Semantic search scoped to entities of the given schema type
+
+return await hybridQuery(params)
+
+}
+
+// Default: existing semantic search path — unchanged
+
+return await semanticQuery(params)
+
+}
+
+Three paths, not two:
+
+Structured predicate (schema + filters): pure ontology index query, O(1) per filter, deterministic
+
+Schema-typed semantic (schema only): semantic search scoped to entities of the given type — "tell me about M&#x26;A matters" without specific field predicates
+
+Untyped semantic (no schema): existing behavior, unchanged
+
+Phase 1 ships path 1. Path 2 may fall back to semantic with a sourceNotes hint until hybrid scoping lands.
+
+4. Ontology Query Implementation
+
+async function ontologyQuery(
+
+params: MemoryRecallParams,
+
+): Promise&#x3C;RecallResult> {
+
+const { schema, filters, confidenceMinimum, limit, orderBy } = params
+
+// Parse schema to table name
+
+const tableName = schemaToTable(schema) // "legal.Matter" → "matters"
+
+// Build SQL predicate from filters
+
+const { where, values } = buildWhereClause(filters, confidenceMinimum)
+
+// Build ORDER BY
+
+const orderClause = buildOrderBy(orderBy)
+
+// Execute against ontology.db
+
+const rows = await ontologyDb.query(
+
+`
+
+SELECT e.*, fc.confidence, fc.extraction_method
+
+FROM ${tableName} e
+
+LEFT JOIN field_confidence fc
+
+ON fc.entity_type = ? AND fc.entity_id = e.id
+
+WHERE ${where}
+
+${orderClause}
+
+LIMIT ?
+
+`,
+
+[schemaToEntityType(schema), ...values, limit ?? 20],
+
+)
+
+// Enrich with vault note snippets for context
+
+const enriched = await Promise.all(
+
+rows.map(async (row) => ({
+
+...row,
+
+vaultSnippet: await getVaultSnippet(row.vault_note_path),
+
+queryType: 'structured_predicate' as const,
+
+})),
+
+)
+
+return {
+
+hits: enriched,
+
+queryType: 'structured_predicate',
+
+indexUsed: 'ontology',
+
+schema,
+
+filters,
+
+scannedEntities: await ontologyDb.count(tableName),
+
+filteredEntities: enriched.length,
+
+confidenceMinimum: confidenceMinimum ?? 'EXTRACTED',
+
+}
+
+}
+
+4.1 WHERE clause builder
+
+function buildWhereClause(
+
+filters: OntologyFilter,
+
+confidenceMinimum?: ConfidenceLevel,
+
+): { where: string; values: any[] } {
+
+const clauses: string[] = []
+
+const values: any[] = []
+
+for (const [field, predicate] of Object.entries(filters)) {
+
+const col = camelToSnake(field) // escrowPct → escrow_pct
+
+if ('eq' in predicate) {
+
+clauses.push(`${col} = ?`)
+
+values.push(predicate.eq)
+
+} else if ('gte' in predicate) {
+
+clauses.push(`${col} >= ?`)
+
+values.push(predicate.gte)
+
+} else if ('gt' in predicate) {
+
+clauses.push(`${col} > ?`)
+
+values.push(predicate.gt)
+
+} else if ('lte' in predicate) {
+
+clauses.push(`${col} &#x3C;= ?`)
+
+values.push(predicate.lte)
+
+} else if ('lt' in predicate) {
+
+clauses.push(`${col} &#x3C; ?`)
+
+values.push(predicate.lt)
+
+} else if ('between' in predicate) {
+
+clauses.push(`${col} BETWEEN ? AND ?`)
+
+values.push(predicate.between[0], predicate.between[1])
+
+} else if ('in' in predicate) {
+
+const placeholders = predicate.in.map(() => '?').join(', ')
+
+clauses.push(`${col} IN (${placeholders})`)
+
+values.push(...predicate.in)
+
+} else if ('isNull' in predicate) {
+
+clauses.push(predicate.isNull ? `${col} IS NULL` : `${col} IS NOT NULL`)
+
+} else if ('contains' in predicate) {
+
+clauses.push(`LOWER(${col}) LIKE LOWER(?)`)
+
+values.push(`%${predicate.contains}%`)
+
+} else if ('and' in predicate) {
+
+const sub = predicate.and.map((p) =>
+
+buildWhereClause({ [field]: p }, undefined),
+
+)
+
+clauses.push(`(${sub.map((s) => s.where).join(' AND ')})`)
+
+sub.forEach((s) => values.push(...s.values))
+
+} else if ('or' in predicate) {
+
+const sub = predicate.or.map((p) =>
+
+buildWhereClause({ [field]: p }, undefined),
+
+)
+
+clauses.push(`(${sub.map((s) => s.where).join(' OR ')})`)
+
+sub.forEach((s) => values.push(...s.values))
+
+}
+
+}
+
+// Confidence filter — join with field_confidence table
+
+if (confidenceMinimum) {
+
+const confidenceLevels = confidenceLevelsAtOrAbove(confidenceMinimum)
+
+const placeholders = confidenceLevels.map(() => '?').join(', ')
+
+// Only filter on confidence for fields that have a confidence record
+
+// Fields with no confidence record are included (assumed EXTRACTED for machine-readable)
+
+clauses.push(
+
+`(fc.confidence IS NULL OR fc.confidence IN (${placeholders}))`,
+
+)
+
+values.push(...confidenceLevels)
+
+}
+
+return {
+
+where: clauses.length > 0 ? clauses.join(' AND ') : '1=1',
+
+values,
+
+}
+
+}
+
+// Confidence hierarchy
+
+function confidenceLevelsAtOrAbove(
+
+minimum: ConfidenceLevel,
+
+): ConfidenceLevel[] {
+
+const hierarchy: ConfidenceLevel[] = ['EXTRACTED', 'INFERRED', 'AMBIGUOUS']
+
+const idx = hierarchy.indexOf(minimum)
+
+return hierarchy.slice(0, idx + 1)
+
+// EXTRACTED → ["EXTRACTED"]
+
+// INFERRED → ["EXTRACTED", "INFERRED"]
+
+// AMBIGUOUS → ["EXTRACTED", "INFERRED", "AMBIGUOUS"]
+
+}
+
+5. Result Format
+
+interface RecallResult {
+
+// Existing fields — unchanged for semantic path
+
+hits: RecallHit[]
+
+query: string
+
+// New fields — present when schema/filters used
+
+queryType?: 'structured_predicate' | 'schema_typed_semantic' | 'semantic'
+
+indexUsed?: 'ontology' | 'vector' | 'vault' | 'hybrid'
+
+schema?: OntologySchema
+
+filters?: OntologyFilter
+
+scannedEntities?: number // total entities in index
+
+filteredEntities?: number // entities matching filters
+
+confidenceMinimum?: ConfidenceLevel
+
+}
+
+interface RecallHit {
+
+// Existing fields
+
+path: string // vault note path
+
+score: number // relevance score (1.0 for exact predicate match)
+
+snippet: string // vault note excerpt
+
+// New fields — present for ontology hits
+
+entityId?: string // MAT-XXXX | CLT-XXXX | etc.
+
+entityType?: string // Matter | Client | etc.
+
+fields?: Record&#x3C;string, any> // extracted field values
+
+confidence?: ConfidenceLevel // extraction confidence
+
+extractionMethod?: string // machine_readable | pattern | llm
+
+}
+
+5.1 B-7.1 response shape
+
+{
+
+"hits": [
+
+{
+
+"path": "Memory/MAT-2388-acme-acquisition.md",
+
+"score": 1.0,
+
+"snippet": "## Calderwood &#x26; Harkness — Matter MAT-2388\nAcme Corp Acquisition...",
+
+"entityId": "MAT-2388",
+
+"entityType": "Matter",
+
+"fields": {
+
+"escrowPct": 15,
+
+"nonCompeteMonths": 24,
+
+"clientId": "CLT-0042",
+
+"status": "Active"
+
+},
+
+"confidence": "EXTRACTED",
+
+"extractionMethod": "machine_readable"
+
+},
+
+{
+
+"path": "Memory/MAT-2401-beta-merger.md",
+
+"score": 1.0,
+
+"snippet": "## Calderwood &#x26; Harkness — Matter MAT-2401\nBeta Systems Merger...",
+
+"entityId": "MAT-2401",
+
+"entityType": "Matter",
+
+"fields": {
+
+"escrowPct": 12,
+
+"nonCompeteMonths": 24,
+
+"clientId": "CLT-0017",
+
+"status": "Active"
+
+},
+
+"confidence": "EXTRACTED",
+
+"extractionMethod": "machine_readable"
+
+}
+
+],
+
+"query": "matters with escrow and non-compete clauses",
+
+"queryType": "structured_predicate",
+
+"indexUsed": "ontology",
+
+"schema": "legal.Matter",
+
+"filters": {
+
+"escrowPct": { "gte": 10 },
+
+"nonCompeteMonths": { "gt": 18 }
+
+},
+
+"scannedEntities": 12,
+
+"filteredEntities": 5,
+
+"confidenceMinimum": "EXTRACTED"
+
+}
+
+The agent receives exact hits with no near-misses. matters.json writes itself from hits.map(h => h.entityId). Task complete in 1–2 tool calls.
+
+6. MCP Tool Specification Update
+
+The memory_recall MCP tool description updates to expose the new parameters:
+
+{
+
+name: "memory_recall",
+
+description: `Search the Obsidian vault for relevant notes and knowledge.
+
+Supports two query modes:
+
+1. SEMANTIC (default): natural language query against vault notes, wikilink graph,
+
+and optional vector index. Use for: decisions, runbooks, architecture notes,
+
+anything narrative.
+
+2. STRUCTURED PREDICATE: exact field filtering against ontology index. Use for:
+
+"find all X where field >= value", enumeration tasks, joining entities by
+
+field values. Requires schema + filters parameters. Returns exact matches,
+
+not approximate. O(1) regardless of vault size.
+
+For institutional knowledge enumeration tasks (find all matters matching
+
+criteria), use structured predicate mode with schema: "legal.Matter" and
+
+numeric filters. This is more reliable than keyword search for exact field
+
+comparisons.`,
+
+inputSchema: {
+
+type: "object",
+
+properties: {
+
+query: { type: "string", description: "Natural language query (required for semantic; optional hint for structured)" },
+
+schema: {
+
+type: "string",
+
+enum: ["legal.Matter", "legal.Client", "legal.Attorney", "legal.Document"],
+
+description: "Ontology schema type. Required for structured predicate mode."
+
+},
+
+filters: {
+
+type: "object",
+
+description: "Field predicate filters for structured mode. Keys are field names (camelCase). Values are predicates: { gte: 10 }, { gt: 18 }, { eq: 'Active' }, { in: ['A','B'] }, { between: [10, 20] }."
+
+},
+
+confidenceMinimum: {
+
+type: "string",
+
+enum: ["EXTRACTED", "INFERRED", "AMBIGUOUS"],
+
+default: "EXTRACTED",
+
+description: "Minimum extraction confidence. EXTRACTED = machine-readable fields only (most precise). INFERRED = include pattern-matched fields. AMBIGUOUS = include all."
+
+},
+
+limit: { type: "number", default: 10 },
+
+maxDepth: { type: "number", default: 0, description: "Wikilink graph traversal depth (semantic mode only)" },
+
+orderBy: {
+
+type: "array",
+
+items: { type: "object", properties: { field: { type: "string" }, direction: { type: "string", enum: ["asc", "desc"] } } }
+
+}
+
+},
+
+required: ["query"]
+
+}
+
+}
+
+7. Interaction with Existing Sources
+
+The sources parameter controls which backends contribute to a recall:
+
+sources value
+
+Semantic path
+
+Structured path
+
+["vault"]
+
+Keyword search over Markdown
+
+Ontology index
+
+["vector"]
+
+Vector KNN
+
+N/A (ignored for structured)
+
+["codegraph"]
+
+Code structure graph
+
+N/A
+
+["pageindex"]
+
+Hierarchical heading tree
+
+N/A
+
+["onyx"]
+
+External enterprise search
+
+N/A
+
+undefined
+
+All enabled sources
+
+Ontology index only
+
+When schema + filters are present, sources is effectively overridden to ["vault"] and the ontology index path is used. Other sources are not queried — structured predicate evaluation is single-source by design.
+
+8. Benchmarks: Before and After
+
+B-7.1 without structured filter
+
+Turn 1: memory_recall("matters with escrow") → semantic hits, some near-misses
+
+Turn 2: read MAT-2388 note → verify escrow=15, NC=24 ✓
+
+Turn 3: read MAT-2401 note → verify escrow=12, NC=24 ✓
+
+Turn 4: read MAT-2433 note → verify escrow=9 ✗ (near-miss, skip)
+
+...
+
+Turn 12: read last note
+
+Turn 13: write matters.json
+
+Total: 13 turns, O(n) reads
+
+B-7.1 with structured filter
+
+Turn 1: memory_recall(schema="legal.Matter", filters={escrowPct:{gte:10}, nonCompeteMonths:{gt:18}})
+
+→ exact 5 hits, no near-misses
+
+Turn 2: write matters.json
+
+Total: 2 turns, O(1)
+
+Turn reduction: 13 → 2. This scales: at 250 matters the unstructured path takes ~50+ turns. The structured path stays at 2.
+
+9. Testing
+
+Unit tests
+
+describe('memory_recall structured filter', () => {
+
+test('B-7.1 exact enumeration', async () => {
+
+// Seed 12 matters into ontology.db
+
+await seedMiniIrmFixture()
+
+const result = await memoryRecall({
+
+query: 'matters matching escrow and non-compete criteria',
+
+schema: 'legal.Matter',
+
+filters: {
+
+escrowPct: { gte: 10 },
+
+nonCompeteMonths: { gt: 18 },
+
+},
+
+confidenceMinimum: 'EXTRACTED',
+
+})
+
+expect(result.queryType).toBe('structured_predicate')
+
+expect(result.filteredEntities).toBe(5)
+
+expect(result.hits.map((h) => h.entityId).sort()).toEqual([
+
+'MAT-2388',
+
+'MAT-2401',
+
+'MAT-2415',
+
+'MAT-2450',
+
+'MAT-2462',
+
+])
+
+// Near-misses must not appear
+
+expect(result.hits.map((h) => h.entityId)).not.toContain('MAT-2433') // 9% escrow
+
+})
+
+test('near-miss exclusion', async () => {
+
+const result = await memoryRecall({
+
+query: 'escrow matters',
+
+schema: 'legal.Matter',
+
+filters: { escrowPct: { gte: 10 } },
+
+})
+
+const escrowValues = result.hits.map((h) => h.fields?.escrowPct)
+
+expect(escrowValues.every((v) => v >= 10)).toBe(true)
+
+})
+
+test('confidence filtering excludes INFERRED when minimum is EXTRACTED', async () => {
+
+const result = await memoryRecall({
+
+query: '',
+
+schema: 'legal.Matter',
+
+filters: { escrowPct: { gte: 10 } },
+
+confidenceMinimum: 'EXTRACTED',
+
+})
+
+expect(result.hits.every((h) => h.confidence === 'EXTRACTED')).toBe(true)
+
+})
+
+test('falls back to semantic when no filters provided', async () => {
+
+const result = await memoryRecall({ query: 'M&#x26;A matters with high escrow' })
+
+expect(result.queryType).toBe('semantic')
+
+})
+
+test('O(1) query time independent of vault size', async () => {
+
+// Seed 12 matters
+
+const t1 = Date.now()
+
+await memoryRecall({
+
+query: '',
+
+schema: 'legal.Matter',
+
+filters: { escrowPct: { gte: 10 } },
+
+})
+
+const duration12 = Date.now() - t1
+
+// Seed 250 matters
+
+await seedFullCHFixture()
+
+const t2 = Date.now()
+
+await memoryRecall({
+
+query: '',
+
+schema: 'legal.Matter',
+
+filters: { escrowPct: { gte: 10 } },
+
+})
+
+const duration250 = Date.now() - t2
+
+// Query time should not grow proportionally with corpus size
+
+// Allow 3x headroom for index overhead but reject O(n) growth
+
+expect(duration250).toBeLessThan(duration12 * 3)
+
+})
+
+})
+
+OpenBench integration
+
+Add a B-7.1-ontology variant to the B-7 suite that requires structured filter usage:
+
+{
+
+"id": "institutional-knowledge-enumerate-ontology",
+
+"suite": "B-7",
+
+"description": "B-7.1 with ontology-typed structured filter — must use schema+filters params",
+
+"requireToolPattern": "memory_recall.*schema.*legal\\.Matter",
+
+"grader": "matters-found-exact",
+
+"caps": { "turns": 5, "seconds": 60, "tokens": 4000 }
+
+}
+
+The lower caps (5 turns, 4000 tokens) reflect that ontology-typed enumeration should complete in 2 turns. A passing cell on the ontology variant with 2 turns validates both the product claim and the efficiency claim.
+
+10. Effect-TS Implementation Notes
+
+The ontology query runs as an Effect service and integrates into the existing memory_recall Effect path (executeMemoryRecallCoreEffect) behind the schema + filters branch — same Layer composition pattern, new code path. Disable with CLAWQL_ONTOLOGY_DB=0.
+
+// clawql-memory/src/ontology-query.ts
+
+export const OntologyQuery = {
+
+query: (params: MemoryRecallParams) =>
+
+Effect.gen(function* () {
+
+const db = yield* OntologyDb
+
+const tableName = yield* Effect.sync(() => schemaToTable(params.schema!))
+
+const { where, values } = yield* Effect.sync(() =>
+
+buildWhereClause(params.filters!, params.confidenceMinimum),
+
+)
+
+const rows = yield* db.query(tableName, where, values, params.limit ?? 20)
+
+const enriched = yield* Effect.forEach(rows, enrichWithVaultSnippet)
+
+return buildRecallResult(enriched, params)
+
+}),
+
+}
+
+memory_recall Structured Filter Extension · Spec v0.1 · August 2026 · Draft
+
+Companion: ClawQL Ontology Legal Domain Spec v0.1
+
+Tracked in: clawql-memory package, ontology.db schema migration

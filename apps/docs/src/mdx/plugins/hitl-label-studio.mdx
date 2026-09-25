@@ -1,0 +1,25 @@
+PluginAvailablesrc/Plugins · Registry · Plugin modelOn this pageEnableOperator guide (canonical)MCP toolHITL (Label Studio)
+
+Plugin ID: clawql-hitl-label-studio (in-process; full ProviderPlugin wiring planned)
+
+Status: MCP tool + webhook shipped — see the operator guide below
+
+Human-in-the-loop review via Label Studio task import and webhook callbacks (#228).
+
+Enable
+
+EnvEffectCLAWQL_ENABLE_HITL_LABEL_STUDIO=1Register tool + webhook routeCLAWQL_LABEL_STUDIO_URLLabel Studio base URLCLAWQL_LABEL_STUDIO_API_TOKENAPI tokenCLAWQL_HITL_WEBHOOK_TOKENWebhook auth (required in production)
+
+Operator guide (canonical)
+
+Full architecture, security, RBAC, Helm, and OpenClaw integration:
+
+HITL — Label Studio bridge (MCP) — operator walkthrough
+
+HITL on docs.clawql.com — website overview
+
+HITL &amp; human interfaces — reference hub
+
+MCP tool
+
+ToolPurposehitl_enqueue_label_studioImport tasks for human review

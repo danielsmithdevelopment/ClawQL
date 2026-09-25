@@ -1,0 +1,49 @@
+PluginAvailableclawql-paymentsPlugins · Registry · Plugin modelOn this pagePositioningRoadmapRelatedPayments (clawql-payments)
+
+Status: Shipped (foundation + Tier 1 protocols + Adyen + Connect payouts / Ramp / off-ramp + prepaid credits + agent compensation + accounting export / tax evidence)
+
+Package: packages/clawql-payments
+
+Toggle: Always available as a library; gate rails via CLAWQL_X402_ENFORCE, CLAWQL_MPP_ENABLED, CLAWQL_AP2_ENABLED, CLAWQL_ACP_ENABLED, CLAWQL_PAYPAL_ENABLED, CLAWQL_ADYEN_ENABLED, CLAWQL_CREDITS_ENABLED, CLAWQL_CREDITS_P2P_ENABLED (default off), CLAWQL_COMPENSATION_ENABLED (default off), CLAWQL_MANAGED_HOSTING, CLAWQL_PAYMENTS_MCP_TOOLS, CLAWQL_TAX_PROFILE_ENFORCE, plan entitlements
+
+Plugin: PaymentsX402ProxyPlugin (payments-x402-mcp-proxy) for MCP tool-level x402 enforcement (+ optional AP2 mandate checks); optional payout / compensation tools via CLAWQL_PAYMENTS_MCP_TOOLS=1
+
+Positioning
+
+Read first: hosted vs self-hosted compliance. Managed hosting uses Stripe for platform fees and optional closed-loop company credits (org-credits). Cross-tenant P2P and agent compensation are self-hosted opt-in and forced off when CLAWQL_MANAGED_HOSTING=1.
+
+ClawQL’s Agentic Gateway includes native Stripe + x402 + MPP + AP2 + ACP surfaces, PayPal, Adyen, Connect payouts / Ramp / off-ramp, Cloudflare Wallets (dry-run prep), closed-loop prepaid credits, optional self-hosted P2P / agent compensation, a WORM-audited payment trail, and an accounting subledger export:
+
+RailRoleStripeHuman fiat — subscriptions, invoices, Billing Meters, Shared Payment Tokensx402Per-request USDC micropayments (one chain settlement per paid call)MPPSession-based streaming micropayments (pre-authorize once; high-frequency agent spend)AP2Cryptographic Payment Mandates (authorization / non-repudiation under MCP)ACPMerchant-side agentic checkout sessions (ChatGPT Instant Checkout–style)PayPalHuman wallet Orders v2 create/captureAdyenEnterprise Checkout sessions, payments, HMAC-verified webhooksPayouts / RampCreator bank + Base USDC; Ramp agent cards; Moonpay/Transak off-rampCloudflare Walletsclawql.cloudflare.pay identity + capped Virtual Wallets (dry-run prep)CreditsPrepaid ledger + ACH/FC; org closed-loop budgets; cross-tenant P2P only with CLAWQL_CREDITS_P2P_ENABLED=1CompensationAgent deposit / cash-out — CLAWQL_COMPENSATION_ENABLED=1 (self-hosted)AccountingPeriod subledger CSV/JSON/QB/Xero; tax profile gate; year-end evidence pack
+
+Operator guide: clawql-payments → /payments/clawql-payments (includes Accounting &amp; tax). Learn walkthrough: Payments &amp; entitlements. Cloudflare prep: cloudflare-wallets.
+
+Accounting &amp; tax (operator quick start)
+
+clawql payments audit verify
+
+clawql payments accounting export --from 2026-01-01 --to 2026-12-31 --format csv
+
+clawql payments accounting tax-evidence --tax-year 2026
+
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
+
+CopyCopied!
+
+Full ownership model (subledger vs GL, 1099 / W-9, no in-process e-file): accounting-and-tax.md.
+
+Roadmap
+
+Cloudflare Wallets live API — swap dry-run store for Virtual Wallet HTTP client when public
+
+Mollie / Razorpay — Tier 3 regional processors when regional traction requires them
+
+Docs-site UCP discovery remains a stub. Adyen/AP2/ACP/PayPal live when env flags are set on self-hosted clawql-payments.
+
+Related
+
+Accounting &amp; tax
+
+Inference payments integration
+
+Plugin registry

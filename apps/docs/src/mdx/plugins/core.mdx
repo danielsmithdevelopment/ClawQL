@@ -1,0 +1,29 @@
+PluginAlways onclawql-apiPlugins · Registry · Plugin modelOn this pageMCP toolsHow it fits the plugin modelConfigurationLearn moreGateway core
+
+ClawQL Core is not a plugin — it is the always-composed gateway surface in clawql-api. There is no CLAWQL_ENABLE_* flag to disable these tools.
+
+MCP tools
+
+ToolRolesearchRank operations and skills from the active index by natural-language intentexecuteCall a discovered operation by operationId (REST, Discovery, native GraphQL/gRPC)auditIn-process ring buffer of tool events (not durable — use vault memory for compliance trails)cacheEphemeral in-process LRU key/value scratch state between tool callsskills_listLightweight skill index (SkillIndexEntry)skills_getFull skill body by skillId
+
+How it fits the plugin model
+
+Optional horizontal plugins (clawql-memory, clawql-documents, …) register additional tools via ProviderPlugin / StandaloneSkillPlugin (tools, hooks, or defineRegisteringProviderPlugin). Core tools are registered directly by the gateway and are never omitted from a standard clawql-mcp process.
+
+Configuration
+
+Core behavior is driven by spec selection (which APIs are in the merge) and global env such as:
+
+CLAWQL_PROVIDER, CLAWQL_BUNDLED_PROVIDERS, CLAWQL_SPEC_PATHS — see Bundled providers plugin
+
+CLAWQL_PROVIDER_AUTH_JSON, per-vendor tokens — see Configuration
+
+Learn more
+
+MCP tools reference
+
+Search &amp; execute walkthrough
+
+Audit &amp; observability
+
+Session cache

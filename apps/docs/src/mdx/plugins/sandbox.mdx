@@ -1,0 +1,49 @@
+PluginOpt inclawql-sandboxPlugins · Registry · Plugin modelOn this pageLocal agent containment (fail-closed)MCP toolsEnableBackends (CLAWQL_SANDBOX_BACKEND)Learn moreSandbox
+
+Plugin ID: clawql-sandbox
+
+Package: packages/clawql-sandbox — SandboxPlugin
+
+Two layers:
+
+sandbox_exec MCP — isolated code snippets inside the MCP server pipeline
+
+clawql sandbox CLI — macOS Seatbelt containment for full agent harnesses (Codex, Claude, Cursor, OpenCode)
+
+Local agent containment (fail-closed)
+
+Prevent subagent shell incidents (rm -rf $HOME, etc.) on developer Macs:
+
+clawql sandbox init
+
+clawql sandbox verify # macOS — must pass when failClosed
+
+clawql codex # launches inside Seatbelt when configured
+
+CopyCopied!
+
+See Local agent sandbox and ADR 0008.
+
+Never fail open: if verification fails, harness launch exits with an error.
+
+MCP tools
+
+ToolPurposesandbox_execExecute a code snippet in an isolated environment and return stdout/stderr
+
+Enable
+
+EnvDefaultEffectCLAWQL_ENABLE_SANDBOX=1offRegister SandboxPlugin and sandbox_exec
+
+Backends (CLAWQL_SANDBOX_BACKEND)
+
+ValueTypical usekataKubernetes Jobs with Kata Containers (production)dockerDocker socket backend (single-node dev)macos-seatbeltmacOS Seatbelt sandboxbridgeCloudflare sandbox bridge (default off-cluster)autoSeatbelt → Docker → bridge (or Kata in-cluster when configured)
+
+Helm: enableSandbox: true plus optional sandboxKata / sandboxDocker blocks.
+
+Learn more
+
+Local agent sandbox
+
+Sandbox exec walkthrough
+
+MCP tools § sandbox_exec

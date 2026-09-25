@@ -1,0 +1,87 @@
+PluginOpt inclawql-codegraphPlugins · Registry · Plugin modelOn this pageWhy add this?MCP toolsEnableLanguagesTypeScript / JavaScript depthPreferred workflow: codegraph_syncOptional external Graphify importHybrid recallTypical workflowCode graph (structural)
+
+Package: packages/clawql-codegraph (MIT) — registered by MemoryPlugin when CLAWQL_ENABLE_CODEGRAPH=1
+
+Complements ClawQL vault memory (wikilinks + semantic recall) with precise structural relationships. Fully TypeScript-native: TS/JS via the compiler API (deepest fidelity) plus 30+ languages via tree-sitter WASM (Python, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, ObjC, Bash, Dart, Solidity, …). Louvain clustering via graphology. For TypeScript, ClawQL aims to be the strongest option (enclosing-scope calls, heritage, cross-file linking, React/Next tags, codegraph_explore / codegraph_impact). Optional Graphify graph.json import — no Python runtime.
+
+Why add this?
+
+LayerClawQL todayCode graphNarrative knowledgeObsidian vault, wikilinks, embeddings—Document hierarchyPageIndex (heading trees)—Code structureText chunks + manual wikilinksAST-derived imports/calls/paths
+
+Use memory_recall for decisions and cross-session narrative context. Use codegraph_* before grepping or re-reading dozens of files for architecture tracing. Non-code docs/PDFs stay in the vault / PageIndex / document pipeline — not in this graph.
+
+MCP tools
+
+ToolPurposecodegraph_syncPreferred: native index → Louvain communities → GRAPH_REPORT.md / graph.html → vault ingestcodegraph_exploreOne-shot agent context: explain + neighbors + blast radius + local subgraphcodegraph_impactUpstream blast radius (who depends on this symbol)codegraph_indexNative index (TS/JS compiler + 30+ tree-sitter languages)codegraph_sync_graphifyImport an existing graph.json (or fall back to native sync). Never spawns Python.codegraph_import_graphifyLow-level import of Graphify / node-link graph.jsoncodegraph_queryFind symbols by name or conceptcodegraph_neighborsList edges for a node (imports, calls, contains, …)codegraph_pathShortest path between two symbolscodegraph_explainSummarize a symbol and its connectionscodegraph_subgraphBFS subgraph around a seed query
+
+Edges are labeled EXTRACTED, INFERRED, or AMBIGUOUS. Nodes may carry a Louvain community id after sync.
+
+Enable
+
+EnvDefaultEffectCLAWQL_ENABLE_CODEGRAPH=1offRegister codegraph_* tools via memory tierCLAWQL_CODEGRAPH_ROOTcwdDefault repo root for index / syncCLAWQL_CODEGRAPH_PATH./dataBase path for codegraph.db.jsonCLAWQL_CODEGRAPH_OUT_DIRcodegraph-outArtifact directory for codegraph_syncCLAWQL_CODEGRAPH_BACKENDnativeSet graphify only when loading an external graph.jsonCLAWQL_CODEGRAPH_GRAPHIFY_JSON—Optional path to an external Graphify exportCLAWQL_CODEGRAPH_GRAPHIFY_MCP_URL—Optional HTTP MCP delegate for live queriesCLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1offMerge code graph hits into memory_recall
+
+Requires CLAWQL_ENABLE_MEMORY.
+
+Languages
+
+PathLanguagesNotesTypeScript compiler API.ts .tsx .js .jsx .mjs .cjs (and .mts / .cts)Deepest: enclosing calls, heritage, exports, React/Next tags, cross-file linktree-sitter WASMPython, Go, Rust, Java, C/C++, C#, Ruby, Kotlin, Scala, PHP, Swift, Lua, Zig, Elixir, Objective-C, Bash, Dart, Solidity, OCaml, Elm, ReScript, QL, Emacs Lisp, Vue, JSON/YAML/TOML/HTML/CSS; JS/TS/TSX as fallbackStructural symbols + imports + calls; grammars from tree-sitter-wasms
+
+Extension matrix and package layout: packages/clawql-codegraph/README.md.
+
+Not yet (no WASM in-tree / need dedicated extractors): Fortran, Verilog, PowerShell, Julia, Terraform/HCL, SQL schemas, Markdown semantic edges — use vault/PageIndex/Docling for docs, or import a Graphify graph.json if you already produce one.
+
+TypeScript / JavaScript depth
+
+ClawQL’s TS pipeline is designed so agents should not need a separate Graphify/CodeGraph install for TypeScript repos:
+
+CapabilityBehaviorSymbolsFunctions, methods, classes, interfaces, types, arrow/const functions, constructorsCallsAttached to enclosing function/method (not file-only); foo(), obj.method(), new Foo()Heritageextends / implements edgesModulesRelative imports resolved to file nodes; unique exported callees linked cross-file (INFERRED)Framework tagsreact-component, next-app-router, next-app-dir, exported, default-exportAgent UXPrefer codegraph_explore over multi-hop query→neighbors→path
+
+Preferred workflow: codegraph_sync
+
+Pure TypeScript — no Graphify CLI / pip install:
+
+Native index (TS/JS compiler API + tree-sitter for 30+ languages)
+
+Louvain clustering (graphology) — community ids on nodes
+
+Write codegraph-out/graph.json, GRAPH_REPORT.md, graph.html
+
+Auto-ingest the report via memory_ingest with append + stable title
+
+Codegraph Architecture Report — \{repo\} (\{date\})
+
+Wikilinks: [[Codebase Architecture]], [[\{repo\}]], [[Codegraph Sync History]], plus named communities when present
+
+Day-to-day: prefer codegraph_explore / codegraph_impact; use hybrid memory_recall when enabled
+
+graph.html stays on disk for human review.
+
+Agent tips
+
+Prefer codegraph_explore over query → neighbors → path for a single symbol.
+
+Use codegraph_impact before refactors to see upstream dependents.
+
+Re-run codegraph_sync after large structural moves so the vault architecture report stays current.
+
+Optional external Graphify import
+
+If you already produce a Graphify graph.json elsewhere:
+
+Point CLAWQL_CODEGRAPH_GRAPHIFY_JSON or pass outDir / jsonPath
+
+Call codegraph_import_graphify or codegraph_sync_graphify (import-only; no Python spawn)
+
+Hybrid recall
+
+When CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1, memory_recall returns vault Markdown hits and a codeGraphHits array. Pass includeCodeGraph: true on a single call to force hybrid mode when the env flag is off.
+
+Typical workflow
+
+codegraph_sync after major structural changes
+
+codegraph_path / codegraph_query instead of repeated file reads
+
+memory_recall with hybrid enabled for narrative + structural context
+
+Open codegraph-out/graph.html locally for the interactive view

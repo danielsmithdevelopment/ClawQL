@@ -1,0 +1,153 @@
+PluginAvailableclawql-inference/pluginPlugins · Registry · Plugin modelOn this pageBuilt-in defaults (automatic)Enable / disable pluginsPlugin contractSubpath exportLearn moreInference providers
+
+Inference backends are provider plugins on clawql-inference. The core
+
+package stays lean: gateway, routing, catalog, and a registry. Built-in defaults
+
+register automatically; integrators and third parties add more via the same
+
+plugin contract.
+
+Default posture: bring your own vendor keys (BYOK). ClawQL routes
+
+provider/model directly to DeepSeek, Groq, Fireworks, Together, Mistral,
+
+xAI, Google, OpenAI, Anthropic, and local Ollama. OpenRouter is optional —
+
+keep using it through ClawQL if you prefer that aggregator, but it is never
+
+required.
+
+Built-in defaults (automatic)
+
+composeDefaultProviderPlugins() registers these unless disabled:
+
+Plugin idAdapterCredentials / configopenaiChat completionsOPENAI_API_KEY, CLAWQL_OPENAI_BASE_URLanthropicMessages APIANTHROPIC_API_KEY, CLAWQL_ANTHROPIC_BASE_URLollamaLocal /api/chatOLLAMA_BASE_URL (default http://127.0.0.1:11434)deepseekOpenAI-compatible (direct)DEEPSEEK_API_KEY, CLAWQL_DEEPSEEK_BASE_URLgroqOpenAI-compatible (direct)GROQ_API_KEY, CLAWQL_GROQ_BASE_URLfireworksOpenAI-compatible (direct)FIREWORKS_API_KEY, CLAWQL_FIREWORKS_BASE_URLtogetherOpenAI-compatible (direct)TOGETHER_API_KEY, CLAWQL_TOGETHER_BASE_URLmistralOpenAI-compatible (direct)MISTRAL_API_KEY, CLAWQL_MISTRAL_BASE_URLxaiOpenAI-compatible (direct)XAI_API_KEY, CLAWQL_XAI_BASE_URLgoogleGemini OpenAI-compat endpointGOOGLE_API_KEY, CLAWQL_GOOGLE_OPENAI_BASE_URLopenrouterOptional aggregator escape hatchOPENROUTER_API_KEY, CLAWQL_OPENROUTER_BASE_URL (default https://openrouter.ai/api/v1)
+
+Model ids use provider/model (e.g. deepseek/deepseek-chat,
+
+anthropic/claude-sonnet-4, ollama/phi4). Catalog aliases such as
+
+clawql/cheap-chat resolve to direct BYOK models.
+
+OpenRouter catalog ids keep the vendor path only when you opt in:
+
+openrouter/deepseek/deepseek-chat, openrouter/qwen/qwen3.6-plus.
+
+Direct BYOK quick start (preferred)
+
+export DEEPSEEK_API_KEY=sk-…
+
+clawql inference serve --port 8080
+
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+
+-H &#39;Content-Type: application/json&#39; \
+
+-d &#39;{&quot;model&quot;:&quot;deepseek/deepseek-chat&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;hi&quot;}]}&#39;
+
+# Or use a ClawQL alias
+
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+
+-H &#39;Content-Type: application/json&#39; \
+
+-d &#39;{&quot;model&quot;:&quot;clawql/cheap-chat&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;hi&quot;}]}&#39;
+
+CopyCopied!
+
+OpenRouter escape hatch (optional)
+
+export OPENROUTER_API_KEY=sk-or-…
+
+# Optional allowlist if you only want the aggregator registered:
+
+# export CLAWQL_INFERENCE_PROVIDERS=openrouter
+
+clawql inference serve --port 8080
+
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+
+-H &#39;Content-Type: application/json&#39; \
+
+-d &#39;{&quot;model&quot;:&quot;openrouter/deepseek/deepseek-chat&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;hi&quot;}]}&#39;
+
+CopyCopied!
+
+Optional attribution headers: CLAWQL_OPENROUTER_HTTP_REFERER, CLAWQL_OPENROUTER_APP_TITLE.
+
+Enable / disable plugins
+
+EnvEffectCLAWQL_INFERENCE_PROVIDERS=openai,deepseekAllowlist — only listed provider plugins registerCLAWQL_INFERENCE_DISABLE_PROVIDERS=openrouterDenylist — skip listed builtins
+
+Plugin contract
+
+import type { InferenceProviderPlugin } from &#39;clawql-inference&#39;
+
+export function createAcmeProviderPlugin(): InferenceProviderPlugin {
+
+return {
+
+id: &#39;acme&#39;,
+
+version: &#39;1.0.0&#39;,
+
+onRegister({ env, registry }) {
+
+registry.set(&#39;acme&#39;, createAcmeAdapter({ apiKey: env.ACME_API_KEY }))
+
+},
+
+}
+
+}
+
+CopyCopied!
+
+Compose builtins + extensions:
+
+import {
+
+composeProviderPlugins,
+
+createInferenceGateway,
+
+createProviderRegistry,
+
+} from &#39;clawql-inference&#39;
+
+const gateway = createInferenceGateway({
+
+providers: createProviderRegistry({
+
+env: process.env,
+
+plugins: composeProviderPlugins({
+
+extensions: [createAcmeProviderPlugin()],
+
+}),
+
+}),
+
+})
+
+CopyCopied!
+
+Publish third-party packages as clawql-*-inference-provider (or in-repo under packages/) and pass them to composeProviderPlugins(\{ extensions: [...] \}) — same pattern as horizontal MCP plugins, without runtime npm discovery.
+
+Subpath export
+
+clawql-inference/plugin — builtins, compose helpers, adapter factories for authors
+
+Learn more
+
+Get started with clawql-inference
+
+clawql-Agentic Gateway
+
+Upgrade vs OpenRouter / LiteLLM
+
+Third-party plugins
+
+Plugin registry
