@@ -207,13 +207,13 @@ export function readCalibrationConfigFromEnv(): CalibrationConfig {
     ? modeRaw
     : "temperature_softmax";
   const tRaw = process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE?.trim();
-  // Frozen T=3: fit on Harvey v0.2 (n=24), clean eval on v0.3 routing-fresh (MCE≤0.15).
-  // See held-out/fixtures/CALIBRATION_FREEZE_v0.1.md
-  const temperature = tRaw ? Number(tRaw) : 3;
+  // Frozen T=4: refit on fit-routing-v0.1 (v0.3+Harvey routing, n=41).
+  // Prior Harvey-only freeze was T=3 — superseded by FIT_TAU_FREEZE_v0.1.md.
+  const temperature = tRaw ? Number(tRaw) : 4;
   return {
     enabled,
     mode: enabled ? mode : "none",
-    temperature: Number.isFinite(temperature) && temperature > 0 ? temperature : 3,
+    temperature: Number.isFinite(temperature) && temperature > 0 ? temperature : 4,
   };
 }
 

@@ -4,12 +4,12 @@
 
 Default post-score calibration for live GLiNER2:
 
-| Field              | Value                                                                                   |
-| ------------------ | --------------------------------------------------------------------------------------- |
-| Mode               | `temperature_softmax`                                                                   |
-| Temperature        | **3**                                                                                   |
-| Enabled by default | yes (opt out: `CLAWQL_FAST_DECISION_CALIBRATION=0`)                                     |
-| Env overrides      | `CLAWQL_FAST_DECISION_CALIBRATION_MODE`, `CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE` |
+| Field              | Value                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| Mode               | `temperature_softmax`                                                                          |
+| Temperature        | **3** (historical — superseded by T=4 in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md)) |
+| Enabled by default | yes (opt out: `CLAWQL_FAST_DECISION_CALIBRATION=0`)                                            |
+| Env overrides      | `CLAWQL_FAST_DECISION_CALIBRATION_MODE`, `CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE`        |
 
 Argmax is unchanged (accuracy identical to raw). Temperature only rescales confidences — it does not fix the ~1-in-5 wrong top choice.
 

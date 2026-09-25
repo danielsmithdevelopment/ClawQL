@@ -1015,7 +1015,7 @@ describe("temperature calibration", () => {
     expect(out[1]?.confidence).toBe(0);
   });
 
-  it("defaults calibration ON with temperature_softmax T=3", async () => {
+  it("defaults calibration ON with temperature_softmax T=4", async () => {
     const prev = process.env.CLAWQL_FAST_DECISION_CALIBRATION;
     const prevT = process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
     delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
@@ -1024,7 +1024,7 @@ describe("temperature calibration", () => {
     const cfg = readCalibrationConfigFromEnv();
     expect(cfg.enabled).toBe(true);
     expect(cfg.mode).toBe("temperature_softmax");
-    expect(cfg.temperature).toBe(3);
+    expect(cfg.temperature).toBe(4);
     if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION = prev;
     else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
     if (prevT !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE = prevT;

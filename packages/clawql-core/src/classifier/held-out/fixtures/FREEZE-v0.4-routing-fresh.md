@@ -57,9 +57,9 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
 
 ## Next
 
-1. Populate fit set (≫7 routing; no overlap with this suite) — see [`FIT_SET_SCAFFOLD.md`](./FIT_SET_SCAFFOLD.md).
-2. Fit T (if retuning) and τ on fit set only.
-3. Frontier-adjudicate this suite; score once with locked (T, τ).
+1. ~~Populate fit set~~ → `fast-decision-fit-routing-v0.1` (v0.3+Harvey).
+2. ~~Fit T/τ~~ → locked in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md) (T=4, τ=0.70).
+3. ~~Score once~~ (provisional GT). Remaining: frontier-adjudicate this suite for `productionTrusted`.
 
 ## Related
 

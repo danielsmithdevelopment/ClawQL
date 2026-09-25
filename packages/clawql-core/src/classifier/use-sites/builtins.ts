@@ -28,7 +28,8 @@ export const searchProviderToolRoutingUseSite: FastDecisionUseSite = {
   useSiteId: "search_provider_tool_routing",
   description: "Which provider/tool is relevant to a query (accelerates search ranking)",
   costlyErrorDirection: "false_positive",
-  threshold: 0.75,
+  /** Locked τ=0.70 from fit-routing-v0.1 (FP-costly rule). See FIT_TAU_FREEZE_v0.1.md. */
+  threshold: 0.7,
   wormEntryType: "FAST_DECISION_ATTEMPTED",
   candidateSetProvider: (ctx) => Effect.sync(() => fromExtrasArray(ctx, "providerToolCandidates")),
 };
