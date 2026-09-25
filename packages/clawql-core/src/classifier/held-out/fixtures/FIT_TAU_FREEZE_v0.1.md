@@ -80,6 +80,25 @@ At builtin-old 0.75: coverage 0.400, among-accepted 1.000 (16/16).
 
 Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
+## Why deploy the 45% coverage gate (stock 2.5 + reject rule)
+
+**What we are shipping:** a first-pass filter, not “GLiNER routes everything.” Calibrated stock GLiNER 2.5 may answer **45%** of catalog routing cases and must abstain on the rest. On the held-out fires: **18/18** matched frontier GT; quote precision as **nAccepted=18**, 95% Clopper–Pearson LB ≈**82%** — not 100%. The other **55%** stays on the existing trusted path (larger model / rules / human).
+
+**Why that shape:** wrong route is expensive; abstention is cheap when fallback exists. A forced-answer specialist at ~60% exact-match (Decide on Fast Decisions) is a different product. We chose the operating point where the classifier only speaks when the score clears a threshold fit on a **separate** set.
+
+**Why 45% is not “only half”:** coverage is work taken off the expensive path, not a grade. High-confidence catalog hits can cut frontier routing cost/latency/egress on that slice immediately; the ambiguous tail should not be forced.
+
+**Audience lines:**
+
+- *Engineering:* calibrated reject rule; easy 45% locally; misses → existing path; wrong-tool on held-out fires 0/18; quote 82% LB not 100%.
+- *Product:* not a new brain — fewer misroutes on common catalog tools; same behavior when unsure.
+- *Risk:* high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
+- *Cost:* each fire is an encoder pass instead of a frontier routing call.
+
+**Do not claim:** “2.5 already matches Decide”; “Decide is 82% on our catalog”; precision 100% without (n=18, ~82% LB); collapsing Decide’s forced ~60% with our abstain policy.
+
+**One sentence:** precision-first on-ramp that safely takes nearly half of catalog routing off the expensive path, with a clean held-out chain and a known abstain fallback — not because the encoder is done with routing.
+
 ## Artifact
 
 `/opt/cursor/artifacts/fast-decision-fit-and-score-v04-once.json`  
@@ -90,3 +109,4 @@ Harness: `scripts/fit-and-score-v04-once.mts`
 - [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md)
 - [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md) (**spent**)
 - [`FIT_SET_SCAFFOLD.md`](./FIT_SET_SCAFFOLD.md)
+- [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md) (stock 2.5 vs Decide — do not collapse)
