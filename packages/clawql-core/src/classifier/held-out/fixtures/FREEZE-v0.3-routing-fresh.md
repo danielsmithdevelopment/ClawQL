@@ -31,5 +31,6 @@
 Per `docs/specs/classifier/capability-ontology-from-catalog-v0.1.md` §5.1: any tool/skill `whenToUse` / `whenNotToUse` / `distinguishFrom` text, or generated ontology, used for a non-contaminated score on this set **must** post-date this freeze commit. Do not author hint text in the same change that freezes the set.
 
 ## Scoring discipline (do not break)
+
 - **Do not run v0.3 until hints are written, then run both arms together** (ontology on + `CLAWQL_FAST_DECISION_ONTOLOGY=0`) in the same run against the same `ontologyDigest`. Running ontology-off early would leak which cases fail to the hint author.
 - **Tool IDs in this suite are frozen.** Adding hints may change the ontology digest (expected). Renaming, merging, or splitting tool IDs invalidates cases — re-freeze affected cases; do not patch a mapping.

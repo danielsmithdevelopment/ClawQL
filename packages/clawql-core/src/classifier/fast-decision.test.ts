@@ -533,9 +533,8 @@ describe("§7 held-out suite runner", () => {
   });
 
   it("generates ontology digest stably from catalog without renaming ids", async () => {
-    const { generateCapabilityOntology, loadCatalogSource } = await import(
-      "./generate-capability-ontology.js"
-    );
+    const { generateCapabilityOntology, loadCatalogSource } =
+      await import("./generate-capability-ontology.js");
     const catalog = loadCatalogSource();
     const a = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
     const b = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });

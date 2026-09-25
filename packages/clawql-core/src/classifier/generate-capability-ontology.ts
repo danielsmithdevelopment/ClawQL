@@ -190,8 +190,7 @@ export function generateCapabilityOntology(args?: {
         (kind === "anti_pattern"
           ? "Prefer structured catalog tools when a schema or corpus path exists"
           : "Not the primary tool when a more specific sibling matches the task"),
-      requiresStructuredCorpus:
-        hint.requiresStructuredCorpus ?? STRUCTURED_IDS.has(e.id),
+      requiresStructuredCorpus: hint.requiresStructuredCorpus ?? STRUCTURED_IDS.has(e.id),
       ontologyRole: hint.ontologyRole ?? defaultRole(kind, e.id),
       aliases: [], // per-id rows — no alias collapse
       distinguishFrom: hint.distinguishFrom ?? [],

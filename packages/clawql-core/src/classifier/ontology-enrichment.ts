@@ -48,7 +48,8 @@ export function sanitizePackedHint(text: string): string {
 function formatEntryLine(c: CapabilityEntry): string {
   // Never emit requiresStructuredCorpus / family flags into classify text.
   if (c.kind === "anti_pattern") {
-    const avoid = sanitizePackedHint(c.whenNotToUse) || "prefer structured catalog tools when available";
+    const avoid =
+      sanitizePackedHint(c.whenNotToUse) || "prefer structured catalog tools when available";
     const only = sanitizePackedHint(c.whenToUse) || "only when no structured path exists";
     return `- ${c.capabilityId} [ANTI_PATTERN]: DO_NOT_USE_WHEN: ${avoid} | only_if_no_corpus: ${only}`;
   }
