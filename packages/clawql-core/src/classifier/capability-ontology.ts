@@ -69,7 +69,9 @@ export function clawqlCapabilityOntologyPath(): string {
 }
 
 export function loadClawqlCapabilityOntology(): CapabilityOntology {
-  const raw = JSON.parse(readFileSync(clawqlCapabilityOntologyPath(), "utf8")) as CapabilityOntology;
+  const raw = JSON.parse(
+    readFileSync(clawqlCapabilityOntologyPath(), "utf8")
+  ) as CapabilityOntology;
   if (!raw.ontologyId || !Array.isArray(raw.capabilities)) {
     throw new Error("invalid clawql capability ontology");
   }

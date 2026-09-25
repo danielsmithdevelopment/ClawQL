@@ -63,10 +63,7 @@ export function formatCapabilityOntologyBlock(
   return body;
 }
 
-function packFeatureBag(
-  features: Record<string, unknown>,
-  keys: readonly string[]
-): string {
+function packFeatureBag(features: Record<string, unknown>, keys: readonly string[]): string {
   const parts: string[] = [];
   for (const k of keys) {
     const v = features[k];
@@ -194,9 +191,7 @@ export function composeOntologyEnrichedClassifyText(args: EnrichClassifyTextArgs
   } else if (extras.ontologyContext && typeof extras.ontologyContext === "object") {
     chunks.push(`Task ontology: ${JSON.stringify(extras.ontologyContext)}`);
   } else if (args.ontology) {
-    const only = args.candidateIds?.length
-      ? new Set(args.candidateIds)
-      : undefined;
+    const only = args.candidateIds?.length ? new Set(args.candidateIds) : undefined;
     chunks.push(formatCapabilityOntologyBlock(args.ontology, { onlyIds: only }));
   }
 

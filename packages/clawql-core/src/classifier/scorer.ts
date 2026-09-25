@@ -98,10 +98,7 @@ export type GlinerClassifyResponseBody = {
   readonly scores: readonly { readonly id: string; readonly confidence: number }[];
 };
 
-function candidateDescription(
-  c: FastDecisionCandidate,
-  ontology?: CapabilityOntology
-): string {
+function candidateDescription(c: FastDecisionCandidate, ontology?: CapabilityOntology): string {
   return enrichCandidateDescription(c, ontology);
 }
 
