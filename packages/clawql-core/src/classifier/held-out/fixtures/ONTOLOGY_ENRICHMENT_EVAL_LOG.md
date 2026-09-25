@@ -83,13 +83,13 @@ Artifact: `/opt/cursor/artifacts/v03-dual-arm-readout.json`
 `ontologyDigest` arm B: `bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9`  
 Scorer: live `gliner2` both arms. Provisional fixture GT (`adjudicated=false`).
 
-| Field | Arm A (off) | Arm B (on) | Delta (B−A) |
-| ----- | ----------- | ---------- | ----------- |
-| n | 34 | 34 | — |
-| accuracy | 0.794 | 0.706 | −0.088 |
-| MCE | 0.391 | 0.375 | −0.015 |
-| sibling n / acc | 18 / 0.722 | 18 / 0.722 | 0 |
-| shell-bait n / acc | 9 / 0.778 | 9 / 0.778 | 0 |
+| Field              | Arm A (off) | Arm B (on) | Delta (B−A) |
+| ------------------ | ----------- | ---------- | ----------- |
+| n                  | 34          | 34         | —           |
+| accuracy           | 0.794       | 0.706      | −0.088      |
+| MCE                | 0.391       | 0.375      | −0.015      |
+| sibling n / acc    | 18 / 0.722  | 18 / 0.722 | 0           |
+| shell-bait n / acc | 9 / 0.778   | 9 / 0.778  | 0           |
 
 Flip matrix: gains=2 (`route-v03-023`, `route-v03-026`); regressions=5 (`route-v03-005`, `route-v03-017`, `route-v03-018`, `route-v03-022`, `route-v03-024`); unchanged_correct=22; unchanged_incorrect=5.
 
