@@ -43,7 +43,7 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Decide candidate projection | 23/40 @ 0.80 on spent v0.4 — **not** closeout ([`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)) |
 | Freeze **v0.5** | **FROZEN** — n=75; digests in [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md); drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33` |
 | Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
-| Score once + frontier adj | **next** — stock (T=4/τ=0.70) vs Decide (T=0.75/τ=0.80) |
+| Score once + frontier adj | **in flight** — markers on PR #1148; stock (T=4/τ=0.70) vs Decide (T=0.75/τ=0.80); harness `compare-stock-vs-decide-v05.mts` |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related

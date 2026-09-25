@@ -1,7 +1,7 @@
-# Marker: run stock GLiNER 2.5 vs GLiNER2.5-Decide four-arm compare on frozen v0.4.
+# Marker: run stock GLiNER 2.5 vs GLiNER2.5-Decide locked-τ score-once on frozen v0.5.
 # Leave EMPTY (comments only) when not intentionally triggering.
-# First non-comment line must be present to fire (e.g. v0.4).
+# First non-comment line must be present to fire (`v0.5` or `v0.4`).
 #
-# Triggering: PR #1147 — four-arm score-once (forced × reject) for Decide hypothesis.
+# Triggering: PR #1148 — locked-τ score-once (stock T=4/τ=0.70 vs Decide T=0.75/τ=0.80).
 # Clear after report lands so merge does not re-fire.
-v0.4
+v0.5

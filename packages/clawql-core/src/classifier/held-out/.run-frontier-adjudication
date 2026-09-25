@@ -1,8 +1,8 @@
 # Frontier adjudication marker (Harvey LAB style).
 # Leave EMPTY (comments only) when not intentionally triggering a live run.
 # First non-comment, non-empty line = suite
-# (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh).
+# (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh | v0.5-routing-fresh).
 #
-# Last run: PR #1147 / GHA 36144911649 — suite v0.4-routing-fresh live labels
-# landed (claude-sonnet-4-6 + gliner2); productionTrusted=true. Cleared so
-# merge does not re-fire adjudication.
+# Triggering: PR #1148 — suite v0.5-routing-fresh live labels for Decide closeout.
+# Clear after labels land so merge does not re-fire adjudication.
+v0.5-routing-fresh
