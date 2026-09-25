@@ -35,7 +35,7 @@ function truncate(s: string, max: number): string {
 
 /** Strip or blank strings that would re-bait GLiNER via lexical overlap. */
 export function sanitizePackedHint(text: string): string {
-  let s = text.trim();
+  const s = text.trim();
   for (const re of FORBIDDEN_PACKED) {
     if (re.test(s)) {
       // Drop the whole string rather than emit bait; callers supply abstract replacements.

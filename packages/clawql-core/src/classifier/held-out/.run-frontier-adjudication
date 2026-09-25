@@ -5,4 +5,6 @@
 #
 # Triggering: PR #1147 — suite v0.4-routing-fresh live labels (+ gliner2)
 # for productionTrusted gate after T=4 / τ=0.70 freeze.
+# Retry: judge sidecar now remaps label→id + one correction pass (prior run
+# failed on unknown candidateId → HTTP 502).
 v0.4-routing-fresh

@@ -95,7 +95,10 @@ export function makeHttpFrontierAdjudicator(args: {
             }),
           });
           if (!res.ok) {
-            throw new Error(`judge HTTP ${res.status}`);
+            const detail = (await res.text()).slice(0, 500);
+            throw new Error(
+              `judge HTTP ${res.status}${detail ? `: ${detail}` : ""} (caseId=${c.caseId})`
+            );
           }
           const body = (await res.json()) as {
             groundTruthCandidateId?: string;

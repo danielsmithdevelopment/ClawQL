@@ -39,6 +39,12 @@ type JudgeRequest = {
   model?: string;
 };
 
+type JudgeOut = {
+  groundTruthCandidateId: string;
+  rationale: string;
+  backend: string;
+};
+
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -57,6 +63,11 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(text);
 }
 
+function envFlagTrue(name: string): boolean {
+  const v = process.env[name]?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
 function candidateLines(cands: Candidate[]): string {
   return cands
     .map((c, i) => {
@@ -69,10 +80,34 @@ function candidateLines(cands: Candidate[]): string {
 }
 
 function buildPrompt(req: JudgeRequest): string {
+  const ids = (req.candidates ?? [])
+    .map((c) => c.candidateId)
+    .filter((x): x is string => Boolean(x));
   return [
     "You are the §7.2 frontier judge for ClawQL Fast Decision held-out cases.",
     "Pick exactly one ground-truth candidateId from the list. Respond with JSON only:",
     '{"groundTruthCandidateId":"<id>","rationale":"<one sentence>"}',
+    "The groundTruthCandidateId value MUST be copied exactly from this allowlist (character-for-character):",
+    ids.map((id) => `  - ${id}`).join("\n"),
+    "Do not invent ids. Do not use labels, operationIds from the query, or paraphrases.",
+    "",
+    `useSiteId: ${req.useSiteId ?? ""}`,
+    `caseId: ${req.caseId ?? ""}`,
+    `query: ${req.query ?? ""}`,
+    "candidates:",
+    candidateLines(req.candidates ?? []),
+  ].join("\n");
+}
+
+function buildCorrectionPrompt(req: JudgeRequest, badId: string): string {
+  const ids = (req.candidates ?? [])
+    .map((c) => c.candidateId)
+    .filter((x): x is string => Boolean(x));
+  return [
+    "Your previous answer used an invalid candidateId.",
+    `Invalid value: ${JSON.stringify(badId)}`,
+    "Respond again with JSON only. groundTruthCandidateId MUST be exactly one of:",
+    ids.map((id) => `  - ${id}`).join("\n"),
     "",
     `useSiteId: ${req.useSiteId ?? ""}`,
     `caseId: ${req.caseId ?? ""}`,
@@ -102,10 +137,47 @@ function parseJudgeJson(text: string): { groundTruthCandidateId: string; rationa
   };
 }
 
+/** Strip quotes/backticks/whitespace the model often wraps around ids. */
+function normalizeRawId(raw: string): string {
+  return raw.trim().replace(/^[`'"<]+/, "").replace(/[`'">]+$/, "").trim();
+}
+
+/**
+ * Map a model answer onto an allowlisted candidateId.
+ * Accepts exact id, case-insensitive id, or unique label match.
+ */
+function resolveCandidateId(
+  raw: string,
+  candidates: Candidate[]
+): string | undefined {
+  const ids = candidates
+    .map((c) => c.candidateId)
+    .filter((x): x is string => Boolean(x));
+  const normalized = normalizeRawId(raw);
+  if (ids.includes(normalized)) return normalized;
+  const ci = ids.find((id) => id.toLowerCase() === normalized.toLowerCase());
+  if (ci) return ci;
+  const byLabel = candidates.filter(
+    (c) =>
+      Boolean(c.candidateId) &&
+      (c.features?.label ?? "").trim().toLowerCase() === normalized.toLowerCase()
+  );
+  if (byLabel.length === 1 && byLabel[0]?.candidateId) {
+    return byLabel[0].candidateId;
+  }
+  // mcp.search ← search when only one id ends with .<label>
+  const suffix = ids.filter(
+    (id) =>
+      id.endsWith(`.${normalized}`) || id.toLowerCase().endsWith(`.${normalized.toLowerCase()}`)
+  );
+  if (suffix.length === 1) return suffix[0];
+  return undefined;
+}
+
 async function judgeViaAnthropic(
   prompt: string,
   model: string
-): Promise<{ groundTruthCandidateId: string; rationale: string; backend: string }> {
+): Promise<JudgeOut> {
   const key = process.env.ANTHROPIC_API_KEY?.trim();
   if (!key) throw new Error("ANTHROPIC_API_KEY unset");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -138,7 +210,7 @@ async function judgeViaAnthropic(
 async function judgeViaOpenRouter(
   prompt: string,
   model: string
-): Promise<{ groundTruthCandidateId: string; rationale: string; backend: string }> {
+): Promise<JudgeOut> {
   const key = process.env.OPENROUTER_API_KEY?.trim();
   if (!key) throw new Error("OPENROUTER_API_KEY unset");
   const orModel = model.includes("/") ? model : `anthropic/${model}`;
@@ -167,14 +239,10 @@ async function judgeViaOpenRouter(
   return { ...parsed, backend: `openrouter:${orModel}` };
 }
 
-async function adjudicate(
-  req: JudgeRequest
-): Promise<{ groundTruthCandidateId: string; rationale: string; backend: string }> {
-  const model = (req.model?.trim() || DEFAULT_MODEL).replace(/^anthropic\//, "");
-  const prompt = buildPrompt(req);
+async function callBackend(prompt: string, model: string): Promise<JudgeOut> {
   const preferOr =
-    process.env.CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER?.trim() === "1" ||
-    process.env.CLAWQL_LAB_USE_OPENROUTER?.trim() === "1";
+    envFlagTrue("CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER") ||
+    envFlagTrue("CLAWQL_LAB_USE_OPENROUTER");
   if (preferOr && process.env.OPENROUTER_API_KEY?.trim()) {
     return judgeViaOpenRouter(prompt, model.includes("/") ? model : `anthropic/${model}`);
   }
@@ -185,6 +253,36 @@ async function adjudicate(
     return judgeViaOpenRouter(prompt, model.includes("/") ? model : `anthropic/${model}`);
   }
   throw new Error("No ANTHROPIC_API_KEY or OPENROUTER_API_KEY configured");
+}
+
+async function adjudicate(req: JudgeRequest): Promise<JudgeOut> {
+  const model = (req.model?.trim() || DEFAULT_MODEL).replace(/^anthropic\//, "");
+  const candidates = req.candidates ?? [];
+  const first = await callBackend(buildPrompt(req), model);
+  const resolved = resolveCandidateId(first.groundTruthCandidateId, candidates);
+  if (resolved) {
+    return { ...first, groundTruthCandidateId: resolved };
+  }
+
+  console.error(
+    `[frontier-judge] caseId=${req.caseId ?? "?"} unknown id=${JSON.stringify(first.groundTruthCandidateId)} — retrying once`
+  );
+  const second = await callBackend(
+    buildCorrectionPrompt(req, first.groundTruthCandidateId),
+    model
+  );
+  const resolved2 = resolveCandidateId(second.groundTruthCandidateId, candidates);
+  if (resolved2) {
+    return {
+      ...second,
+      groundTruthCandidateId: resolved2,
+      rationale: second.rationale || first.rationale,
+      backend: `${second.backend}+retry`,
+    };
+  }
+  throw new Error(
+    `judge returned unknown candidateId ${JSON.stringify(second.groundTruthCandidateId)} (first=${JSON.stringify(first.groundTruthCandidateId)})`
+  );
 }
 
 const server = createServer(async (req, res) => {
@@ -207,24 +305,18 @@ const server = createServer(async (req, res) => {
         json(res, 400, { error: "query and candidates required" });
         return;
       }
-      const ids = new Set(
-        body.candidates.map((c) => c.candidateId).filter((x): x is string => Boolean(x))
-      );
       const out = await adjudicate(body);
-      if (!ids.has(out.groundTruthCandidateId)) {
-        json(res, 502, {
-          error: `judge returned unknown candidateId ${out.groundTruthCandidateId}`,
-          backend: out.backend,
-        });
-        return;
-      }
       json(res, 200, {
         groundTruthCandidateId: out.groundTruthCandidateId,
         rationale: out.rationale,
         backend: out.backend,
       });
     } catch (e) {
-      json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[frontier-judge] error: ${msg}`);
+      // 502 for unknown-id / upstream model issues; 500 for other failures.
+      const status = /unknown candidateId|openrouter HTTP|anthropic HTTP/.test(msg) ? 502 : 500;
+      json(res, status, { error: msg });
     }
     return;
   }
