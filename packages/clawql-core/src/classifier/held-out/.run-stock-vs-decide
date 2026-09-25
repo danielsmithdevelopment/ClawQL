@@ -2,6 +2,5 @@
 # Leave EMPTY (comments only) when not intentionally triggering.
 # First non-comment line must be present to fire (`v0.5` or `v0.4`).
 #
-# Triggering: PR #1148 — locked-τ score-once (stock T=4/τ=0.70 vs Decide T=0.75/τ=0.80).
-# Clear after report lands so merge does not re-fire.
-v0.5
+# Last run: PR #1148 / GHA 36185003105 — locked-τ score-once completed.
+# Cleared so merge does not re-fire. Closeout: DECIDE_V05_SCORE_ONCE_CLOSEOUT.md

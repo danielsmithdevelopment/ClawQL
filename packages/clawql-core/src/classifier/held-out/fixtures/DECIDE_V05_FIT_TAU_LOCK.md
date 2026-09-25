@@ -35,4 +35,4 @@ The post-miss candidate τ=0.80 on spent v0.4 was **not** citable ([`DECIDE_TAU_
 
 ## Next
 
-Score **once** on frozen v0.5: stock (T=4, τ=0.70) and Decide (T=0.75, τ=0.80). Frontier-adjudicate. Swap live only if Decide has 0 errors among fires.
+Score-once + frontier adj **done**. Decide **not shipped** (1 fire error under frontier GT). See [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](./DECIDE_V05_SCORE_ONCE_CLOSEOUT.md). Stock live path remains T=4 / τ=0.70.

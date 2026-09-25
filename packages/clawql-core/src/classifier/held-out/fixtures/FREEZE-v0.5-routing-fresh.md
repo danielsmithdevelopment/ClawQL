@@ -4,7 +4,7 @@
 
 **FROZEN** — do not edit cases without cutting a new suite id and new digest.
 
-**Not yet scored.** Stock remains `productionTrusted` on v0.4. Decide remains a gated candidate until score-once + frontier adjudication under the predeclared 0-error ship rule.
+**Scored once** (GHA 36185003105 + frontier 36185003282). Decide **not shipped** — 1 fire error under frontier GT. Stock remains live. See [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](./DECIDE_V05_SCORE_ONCE_CLOSEOUT.md).
 
 ## Role in three-set protocol
 

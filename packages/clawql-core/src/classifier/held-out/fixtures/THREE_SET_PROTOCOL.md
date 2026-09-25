@@ -43,7 +43,8 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Decide candidate projection | 23/40 @ 0.80 on spent v0.4 — **not** closeout ([`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)) |
 | Freeze **v0.5** | **FROZEN** — n=75; digests in [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md); drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33` |
 | Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
-| Score once + frontier adj | **in flight** — markers on PR #1148; stock (T=4/τ=0.70) vs Decide (T=0.75/τ=0.80); harness `compare-stock-vs-decide-v05.mts` |
+| Score once + frontier adj | **done** — GHA score [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105), frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282); Decide 45/75 fire **1 error** → **no swap** ([`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](./DECIDE_V05_SCORE_ONCE_CLOSEOUT.md)) |
+| Live path | **unchanged** — stock T=4 / τ=0.70 (v0.4 productionTrusted) |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related
