@@ -100,7 +100,8 @@ for f in held-out-frontier-labels.json held-out-frontier-summary.json gliner2-he
   held-out-frontier-labels-v0.2-harvey.json held-out-frontier-summary-v0.2-harvey.json \
   held-out-frontier-labels-v0.3-routing-fresh.json held-out-frontier-summary-v0.3-routing-fresh.json \
   held-out-frontier-labels-v0.4-routing-fresh.json held-out-frontier-summary-v0.4-routing-fresh.json \
-  held-out-frontier-labels-v0.5-routing-fresh.json held-out-frontier-summary-v0.5-routing-fresh.json; do
+  held-out-frontier-labels-v0.5-routing-fresh.json held-out-frontier-summary-v0.5-routing-fresh.json \
+  held-out-frontier-labels-v0.6-routing-fresh.json held-out-frontier-summary-v0.6-routing-fresh.json; do
   if [[ -f "$TMP/$f" ]]; then
     cp -f "$TMP/$f" "$OUT/$f"
   fi
@@ -152,6 +153,7 @@ if [[ -f "$SUMMARY" ]]; then
       v0.3-routing-fresh) EXPECT="fast-decision-held-out-v0.3-routing-fresh" ;;
       v0.4-routing-fresh) EXPECT="fast-decision-held-out-v0.4-routing-fresh" ;;
       v0.5-routing-fresh) EXPECT="fast-decision-held-out-v0.5-routing-fresh" ;;
+      v0.6-routing-fresh) EXPECT="fast-decision-held-out-v0.6-routing-fresh" ;;
     esac
     if [[ -n "${EXPECT}" && "${SID}" != "${EXPECT}" ]]; then
       echo "Suite mismatch: wanted ${EXPECT}, got suiteId=${SID} (artifact ${DOWNLOADED})." >&2

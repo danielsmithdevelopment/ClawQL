@@ -1,0 +1,5 @@
+# Marker: run Decide live-path score-once on frozen v0.6.
+# Leave EMPTY (comments only) when not intentionally triggering.
+# First non-comment line must be present to fire (e.g. v0.6).
+#
+# Set after FREEZE-v0.6 digests land. Clear after report lands.

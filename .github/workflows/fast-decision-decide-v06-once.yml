@@ -1,0 +1,175 @@
+# Fast Decision Decide live confirmation on frozen v0.6.
+#
+# Marker: packages/clawql-core/src/classifier/held-out/.run-decide-v06
+# First non-comment line must be present (e.g. `v0.6`) to fire on PR/push.
+#
+# Scores Decide only under live knobs (T=0.75, τ=0.80). Twin-aware report.
+# Does not change live defaults — confirmation readout only.
+
+name: Fast Decision Decide v0.6 once
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decide-v06"
+      - ".github/workflows/fast-decision-decide-v06-once.yml"
+      - "scripts/compare-decide-v06-once.mts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-decide-v06"
+      - ".github/workflows/fast-decision-decide-v06-once.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: decide-v06-once-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Marker gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-decide-v06"
+          PRESENT=false
+          if [ -f "${MARKER}" ]; then
+            LINE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
+            if [ -n "${LINE}" ]; then PRESENT=true; fi
+          fi
+          CAN=true
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${PRESENT}" != "true" ]; then CAN=false; fi
+          fi
+          echo "can_run=${CAN}" >>"$GITHUB_OUTPUT"
+          echo "::notice::decide-v06 gate can_run=${CAN} marker_present=${PRESENT}"
+
+  score:
+    name: Score Decide on v0.6
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      CLAWQL_FAST_DECISION_GLINER_MODEL: fastino/GLiNER2.5-Decide
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install workspace
+        run: npm ci
+      - name: Build clawql-merkle + clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: infra/gliner-sidecar/requirements.txt
+      - name: Install live GLiNER2 + torch (CPU)
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -r infra/gliner-sidecar/requirements.txt
+          python -m pip install "gliner2>=1.0.0" peft tiktoken protobuf torch --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Cache Hugging Face hub
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/huggingface
+          key: hf-gliner2-decide-${{ runner.os }}
+          restore-keys: |
+            hf-gliner2-decide-
+            hf-gliner2-
+      - name: Start live GLiNER2 sidecar
+        run: |
+          set -euo pipefail
+          export CLAWQL_GLINER_SIDECAR_MODE=gliner2
+          export CLAWQL_FAST_DECISION_GLINER_MODEL=fastino/GLiNER2.5-Decide
+          (
+            cd infra/gliner-sidecar
+            python -m uvicorn app:app --host 127.0.0.1 --port 18081 \
+              >"${RUNNER_TEMP}/gliner2.log" 2>&1 &
+            echo $! >"${RUNNER_TEMP}/gliner2.pid"
+          )
+          for _ in $(seq 1 240); do
+            if curl -sf "http://127.0.0.1:18081/healthz" >/dev/null; then
+              curl -sf "http://127.0.0.1:18081/healthz"; echo; exit 0
+            fi
+            sleep 2
+          done
+          cat "${RUNNER_TEMP}/gliner2.log" || true
+          exit 1
+      - name: Score frozen v0.6
+        env:
+          CLAWQL_FAST_DECISION_GLINER_URL: http://127.0.0.1:18081
+          CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS: "180000"
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          npx tsx scripts/compare-decide-v06-once.mts score \
+            --out artifacts/scores-decide-v06.json
+      - name: Stop sidecar
+        if: always()
+        run: |
+          if [ -f "${RUNNER_TEMP}/gliner2.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/gliner2.pid")" 2>/dev/null || true
+          fi
+          cat "${RUNNER_TEMP}/gliner2.log" || true
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: decide-v06-scores
+          path: artifacts/scores-decide-v06.json
+          if-no-files-found: warn
+
+  report:
+    name: Twin-aware report (provisional GT)
+    needs: score
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w clawql-merkle -w clawql-core
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts/downloads
+      - name: Report
+        run: |
+          set -euo pipefail
+          SCORES="$(find artifacts/downloads -type f -name 'scores-decide-v06.json' | head -1)"
+          test -n "${SCORES}" && test -f "${SCORES}"
+          mkdir -p artifacts
+          npx tsx scripts/compare-decide-v06-once.mts report \
+            --scores "${SCORES}" \
+            --out artifacts/decide-v06-provisional-report.json \
+            | tee artifacts/decide-v06-report.stdout.json
+          node -e '
+            const r=require("./artifacts/decide-v06-provisional-report.json");
+            for (const a of r.arms) console.log(a.arm, "fire", a.nFired, "err", a.nErrorsFired, "cp", a.cpLower95);
+          '
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: decide-v06-provisional-report
+          path: |
+            artifacts/decide-v06-provisional-report.json
+            artifacts/decide-v06-report.stdout.json
+          if-no-files-found: warn

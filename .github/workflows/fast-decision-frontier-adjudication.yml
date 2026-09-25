@@ -4,7 +4,7 @@
 #   - Marker PR/push (Harvey LAB style): path-filtered on
 #       packages/clawql-core/src/classifier/held-out/.run-frontier-adjudication
 #     First non-comment line = suite (v0.1 | v0.2-harvey | v0.3-routing-fresh |
-#     v0.4-routing-fresh | v0.5-routing-fresh). Absent/empty → skip.
+#     v0.4-routing-fresh | v0.5-routing-fresh | v0.6-routing-fresh). Absent/empty → skip.
 #   - schedule (daily) — produces live labels when repo secrets exist; otherwise
 #     credential-gate skip-notice (same Harvey LAB pattern). Removes need for
 #     agent `actions:write` to dispatch once secrets are installed.
@@ -65,7 +65,7 @@ on:
         default: true
         type: boolean
       suite:
-        description: Held-out suite name (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh | v0.5-routing-fresh)
+        description: Held-out suite name (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh | v0.5-routing-fresh | v0.6-routing-fresh)
         required: true
         default: v0.1
         type: choice
@@ -75,6 +75,7 @@ on:
           - v0.3-routing-fresh
           - v0.4-routing-fresh
           - v0.5-routing-fresh
+          - v0.6-routing-fresh
   repository_dispatch:
     types: [frontier-adjudication]
   pull_request:
@@ -210,10 +211,10 @@ jobs:
             SUITE="${MARKER_SUITE}"
           fi
           case "${SUITE}" in
-            v0.1|v0.2-harvey|v0.3-routing-fresh|v0.4-routing-fresh|v0.5-routing-fresh) ;;
+            v0.1|v0.2-harvey|v0.3-routing-fresh|v0.4-routing-fresh|v0.5-routing-fresh|v0.6-routing-fresh) ;;
             *)
               CAN=false
-              REASON="unsupported suite '${SUITE}' (want v0.1, v0.2-harvey, v0.3-routing-fresh, v0.4-routing-fresh, or v0.5-routing-fresh)"
+              REASON="unsupported suite '${SUITE}' (want v0.1 … v0.6-routing-fresh)"
               ;;
           esac
           {
