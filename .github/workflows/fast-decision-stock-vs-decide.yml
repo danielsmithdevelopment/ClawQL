@@ -1,0 +1,223 @@
+# Stock GLiNER 2.5 vs GLiNER2.5-Decide — four-arm score-once on frozen v0.4.
+#
+# Does NOT rewrite the v0.4 productionTrusted closeout. Arms:
+#   1. stock forced EM  2. Decide forced EM
+#   3. stock locked (T=4, τ=0.70)  4. Decide (T,τ) refit on same fit set
+#
+# Triggers (Harvey-style marker, no actions:write needed):
+#   Set packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide
+#   (non-empty first non-comment line, e.g. `v0.4`) and open/push a PR.
+#
+# Or: workflow_dispatch / repository_dispatch type `stock-vs-decide`.
+
+name: Fast Decision stock vs Decide
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [stock-vs-decide]
+  pull_request:
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
+      - ".github/workflows/fast-decision-stock-vs-decide.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
+      - ".github/workflows/fast-decision-stock-vs-decide.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-vs-decide-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Marker gate
+    runs-on: ubuntu-latest
+    outputs:
+      can_run: ${{ steps.gate.outputs.can_run }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          MARKER="packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
+          PRESENT=false
+          if [ -f "${MARKER}" ]; then
+            LINE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
+            if [ -n "${LINE}" ]; then PRESENT=true; fi
+          fi
+          CAN=true
+          if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
+            if [ "${PRESENT}" != "true" ]; then
+              CAN=false
+            fi
+          fi
+          echo "can_run=${CAN}" >>"$GITHUB_OUTPUT"
+          echo "::notice::stock-vs-decide gate can_run=${CAN} marker_present=${PRESENT}"
+
+  score:
+    name: Score (${{ matrix.tag }})
+    needs: gate
+    if: needs.gate.outputs.can_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tag: stock
+            model: fastino/gliner2.5-base-v1
+          - tag: decide
+            model: fastino/GLiNER2.5-Decide
+    env:
+      CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ matrix.model }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build clawql-merkle + clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: infra/gliner-sidecar/requirements.txt
+
+      - name: Install live GLiNER2 + torch (CPU)
+        run: |
+          set -euo pipefail
+          python -m pip install -U pip
+          python -m pip install -r infra/gliner-sidecar/requirements.txt
+          python -m pip install "gliner2>=1.0.0" peft tiktoken protobuf torch --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Cache Hugging Face hub
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/huggingface
+          key: hf-gliner2-${{ matrix.model }}-${{ runner.os }}
+          restore-keys: |
+            hf-gliner2-${{ matrix.model }}-
+            hf-gliner2-
+
+      - name: Start live GLiNER2 sidecar
+        run: |
+          set -euo pipefail
+          export CLAWQL_GLINER_SIDECAR_MODE=gliner2
+          export CLAWQL_GLINER_SIDECAR_HOST=127.0.0.1
+          export CLAWQL_GLINER_SIDECAR_PORT=18081
+          export CLAWQL_FAST_DECISION_GLINER_MODEL="${CLAWQL_FAST_DECISION_GLINER_MODEL}"
+          (
+            cd infra/gliner-sidecar
+            python -m uvicorn app:app --host 127.0.0.1 --port 18081 \
+              >"${RUNNER_TEMP}/gliner2.log" 2>&1 &
+            echo $! >"${RUNNER_TEMP}/gliner2.pid"
+          )
+          for _ in $(seq 1 240); do
+            if curl -sf "http://127.0.0.1:18081/healthz" >/dev/null; then
+              curl -sf "http://127.0.0.1:18081/healthz"
+              echo
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::gliner2 sidecar failed to become healthy (${CLAWQL_FAST_DECISION_GLINER_MODEL})"
+          cat "${RUNNER_TEMP}/gliner2.log" || true
+          exit 1
+
+      - name: Score fit + frozen v0.4
+        env:
+          CLAWQL_FAST_DECISION_GLINER_URL: http://127.0.0.1:18081
+          CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS: "180000"
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          npx tsx scripts/compare-stock-vs-decide-v04.mts score \
+            --model-tag "${{ matrix.tag }}" \
+            --out "artifacts/scores-${{ matrix.tag }}.json"
+
+      - name: Stop sidecar
+        if: always()
+        run: |
+          if [ -f "${RUNNER_TEMP}/gliner2.pid" ]; then
+            kill "$(cat "${RUNNER_TEMP}/gliner2.pid")" 2>/dev/null || true
+          fi
+          cat "${RUNNER_TEMP}/gliner2.log" || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: stock-vs-decide-scores-${{ matrix.tag }}
+          path: artifacts/scores-${{ matrix.tag }}.json
+          if-no-files-found: warn
+
+  report:
+    name: Four-arm report
+    needs: score
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install workspace
+        run: npm ci
+
+      - name: Build clawql-merkle + clawql-core
+        run: npm run build -w clawql-merkle -w clawql-core
+
+      - name: Download score dumps
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts/downloads
+
+      - name: Combine report
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          STOCK="$(find artifacts/downloads -type f -name 'scores-stock.json' | head -1)"
+          DECIDE="$(find artifacts/downloads -type f -name 'scores-decide.json' | head -1)"
+          echo "stock=${STOCK}"
+          echo "decide=${DECIDE}"
+          test -n "${STOCK}" && test -f "${STOCK}"
+          test -n "${DECIDE}" && test -f "${DECIDE}"
+          npx tsx scripts/compare-stock-vs-decide-v04.mts report \
+            --stock "${STOCK}" \
+            --decide "${DECIDE}" \
+            --out artifacts/stock-vs-decide-v04-report.json \
+            | tee artifacts/stock-vs-decide-v04-report.stdout.json
+          node -e '
+            const r=require("./artifacts/stock-vs-decide-v04-report.json");
+            if(!Array.isArray(r.arms) || r.arms.length!==4) process.exit(2);
+            for (const a of r.arms) {
+              console.log(a.arm, "fire", a.fireRate, "err", a.nErrorsFired, "cp", a.cpLower95, "forcedAcc", a.forcedExactMatchAcc);
+            }
+          '
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: stock-vs-decide-v04-report
+          path: |
+            artifacts/stock-vs-decide-v04-report.json
+            artifacts/stock-vs-decide-v04-report.stdout.json
+          if-no-files-found: warn

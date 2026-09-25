@@ -146,6 +146,8 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 **Next Decide comparison** is a **new score-once run** on the same frozen 40 (v0.5-compatible arms: 2.5 forced, Decide forced, 2.5@(T,τ), Decide with (T,τ) refit on the same off-set then frozen) — **not a rewrite of this closeout.** Report fire rate, errors among fired, CP LB with \(n_{\text{fired}}\). Fail the run on any tool-changing sidecar remap.
 
+**In flight:** GHA workflow `fast-decision-stock-vs-decide.yml` (marker `.run-stock-vs-decide`) + `scripts/compare-stock-vs-decide-v04.mts`. Decide model id: `fastino/GLiNER2.5-Decide`.
+
 ### Why ship the 45% gate now (canonical narrative)
 
 **Canonical line.** We should ship it because it is a precision-first on-ramp that safely takes nearly half of catalog routing off the expensive path — with a clean held-out chain, fail-closed remaps, and a known abstain fallback — not because GLiNER solves routing.

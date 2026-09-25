@@ -1,0 +1,7 @@
+# Marker: run stock GLiNER 2.5 vs GLiNER2.5-Decide four-arm compare on frozen v0.4.
+# Leave EMPTY (comments only) when not intentionally triggering.
+# First non-comment line must be present to fire (e.g. v0.4).
+#
+# Triggering: PR #1147 — four-arm score-once (forced × reject) for Decide hypothesis.
+# Clear after report lands so merge does not re-fire.
+v0.4
