@@ -1,19 +1,24 @@
-# Decide v0.5 candidate readout (fit-only 0-error τ; spent v0.4)
+# Decide v0.5 candidate readout (spent v0.4 projection — not a closeout)
 
-**Tag:** `candidate` / `not-productionTrusted`  
+**Tag:** `candidate` / `not-productionTrusted` / **`v0.4-spent-for-Decide-reject`**  
 **Rule:** [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)  
+**Provenance:** [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md) — **read first**  
 **Scores:** GHA 36165019073 Decide dump (`fastino/GLiNER2.5-Decide`)  
 **Fit:** `fast-decision-fit-routing-v0.1` n=41  
 **Eval (spent):** v0.4-routing-fresh n=40 + frontier labels 36144911649
 
-## Locked knobs (fit-only)
+## Honesty (locked)
 
-| Knob | Value | Source |
+The protocol line that matters: **v0.4 is spent for choosing knobs.** The 23/40 @ τ=0.80 slice is a **candidate projection on a spent set**, not evidence Decide already passed the ship rule. τ=0.80 was set **after** the four-arm miss (≈0.739) was known — even though the arithmetic can be reproduced from the fit set under the stricter rule.
+
+## Knobs (chronology)
+
+| Knob | Value | When locked |
 | --- | --- | --- |
-| Model | `fastino/GLiNER2.5-Decide` | four-arm score dump |
-| Calibration | `temperature_softmax` **T=0.75** | off-set temperature grid (unchanged) |
-| Prior τ (four-arm) | **0.60** | max coverage @ fit prec≥0.9 (allowed fit FPs) |
-| **Selected τ (v0.5 rule)** | **0.80** | max coverage @ fit prec≥0.9 **and** fit nErrors=0 |
+| Model | `fastino/GLiNER2.5-Decide` | four-arm score |
+| T | **0.75** `temperature_softmax` | off-set during four-arm report (**before** miss diagnosis) |
+| Prior τ | **0.60** | off-set during four-arm (max coverage @ fit prec≥0.9, fit FPs allowed) |
+| Candidate τ | **0.80** | **after** miss known; stricter fit rule (prec≥0.9 **and** fit nErrors=0) |
 
 Artifact: [`frontier-runs/decide-v05-fit-zero-err-tau.json`](./frontier-runs/decide-v05-fit-zero-err-tau.json)
 
@@ -31,38 +36,22 @@ Artifact: [`frontier-runs/decide-v05-fit-zero-err-tau.json`](./frontier-runs/dec
 
 Full: [`frontier-runs/decide-v05-route-v04-004-miss.json`](./frontier-runs/decide-v05-route-v04-004-miss.json)
 
-## Fit @ τ=0.80 (selection set)
+## Projection @ τ=0.80 (do not cite as closeout)
 
-| Metric | Value |
-| --- | --- |
-| nFired | **23 / 41** (≈56%) |
-| nErrorsFired | **0** |
-| precision among fired | **1.0** |
-| CP 95% two-sided LB | ≈**85.2%** |
+| Set | nFired | Errors | Prec | CP 95% LB |
+| --- | --- | --- | --- | --- |
+| Fit | 23/41 | 0 | 1.0 | ≈85.2% |
+| Spent v0.4 | **23/40 (57.5%)** | **0** | 1.0 | ≈85.2% |
 
-## Spent v0.4 score-once @ τ=0.80 (candidate only)
-
-| Metric | Value |
-| --- | --- |
-| nFired | **23 / 40** (**57.5%**) |
-| nErrorsFired | **0** |
-| precision among fired | **1.0** |
-| CP 95% two-sided LB | ≈**85.2%** |
-
-Compare to stock reject on same 40: **18/40 (45%)**, 0 errors, LB ≈81.5%.  
-Compare to prior Decide reject τ=0.60: **34/40 (85%)**, **1** error, LB ≈84.7%.
-
-**Transfer:** fit predicted 0-error at τ=0.80 (23/41); spent eval also 0-error (23/40). The known miss abstains. This is the intended reject-rule shape — still **not** a `productionTrusted` rewrite.
+Compare: stock reject 18/40 (45%), 0 err, LB 81.5%; prior Decide τ=0.60: 34/40 (85%), **1** err, LB 84.7%. Lower bounds overlap — coverage is not a reason to swap.
 
 ## How to read (locked)
 
-1. Shape confirmed: confidence-gate Decide; raise τ under a **fit-only** 0-error rule → miss abstains; coverage lands between 45% and 85% (**57.5%** on this spent slice).
-2. Stock stays live. Decide @ (T=0.75, τ=0.80) is the **candidate** next path.
-3. Citing Decide as productionTrusted requires freezing **v0.5** before this τ is treated as locked for the claim, then score-once + adjudicate on that suite.
-4. Do not say Decide is live, or that 57.5% on spent v0.4 is the new closeout.
+1. Live path unchanged: stock T=4 / τ=0.70, `productionTrusted`.
+2. Decide is the stronger forced model; gating Decide is the right next shape.
+3. Do **not** promote 23/40 @ 0.80. Freeze **v0.5** at **n=70–80**, re-lock τ from fit after freeze, score once, adjudicate, then maybe swap.
+4. Do not nudge the v0.5 drafter toward search vs execute.
 
 ## Next
 
-1. Freeze `v0.5-routing-fresh` (isolated draft → digest → FREEZE doc) **before** any further Decide τ retune for citation.
-2. Score once Decide (T=0.75, τ=0.80) + stock arm for comparison; frontier-adjudicate.
-3. Only if 0 errors among Decide fires under the predeclared rule: consider swapping the live path / env defaults.
+See [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md).

@@ -70,15 +70,19 @@ Ship stock reject because it is the precision-first CPU on-ramp that takes **45%
 
 | Step | Status |
 | --- | --- |
-| Confirm Decide (T,τ) off-set-only | **done** — fit n=41; T=0.75; prior τ=0.60 |
+| Confirm Decide T / prior τ off-set-only | **done** — T=0.75; prior τ=0.60 from fit during four-arm |
 | Pull the one miss | **done** — `route-v04-004` (execute GT → Decide chose search @ ≈0.739) |
-| Predeclare production rule | **done** — ship Decide reject only if 0 errors among fires; τ from fit with prec≥0.9 **and** fit nErrors=0 |
-| Fit-only τ under that rule | **τ=0.80** (fit 23/41, 0 err) |
-| Candidate readout on spent v0.4 | **23/40 fire, 0 errors**, CP LB ≈85.2% — **not** productionTrusted |
-| Freeze v0.5 suite | **next** — required before Decide closeout |
+| Predeclare ship rule | **done** — 0 errors among fires (leave it; favors low coverage) |
+| τ=0.80 provenance | **honest** — selected **after** miss known; **v0.4 spent for Decide reject** ([`DECIDE_TAU_080_PROVENANCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_TAU_080_PROVENANCE.md)) |
+| 23/40 @ τ=0.80 | **candidate projection on spent set only** — not a closeout |
+| Freeze v0.5 | **next** — target **n=70–80**, blind drafter, no search/execute nudge |
 | Live path | **still stock** (T=4, τ=0.70) |
 
-Details: [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md) · [`DECIDE_V05_CANDIDATE_READOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_CANDIDATE_READOUT.md)
+**Docs one-liner.** Decide is measured and confidence-gated as a candidate; stock remains the 0-error CPU on-ramp until a frozen v0.5 closeout says otherwise.
+
+Ontology enrichment stays off; temperature softmax stays the calibration that made the reject rule usable — not reopened by the Decide table.
+
+Details: [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md) · [`FREEZE-v0.5-routing-fresh.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/FREEZE-v0.5-routing-fresh.md)
 
 ## Related
 

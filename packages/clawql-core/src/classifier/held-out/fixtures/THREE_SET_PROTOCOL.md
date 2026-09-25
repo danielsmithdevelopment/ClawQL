@@ -38,17 +38,20 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Score v0.4 once + frontier labels | **done** — provisional + live frontier agree 40/40; GHA 36144911649; **`productionTrusted=true`**; **v0.4 spent** for T/τ selection |
 | Citable claim (routing)           | n=40 catalog-only held-out; @τ=0.70 fires on 45% (nAccepted=18) with 0 errors among those; 95% LB ≈82% — always quote n + LB        |
 | Stock vs Decide four-arm          | **done** — GHA 36165019073; Decide+reject 34/40 with 1 miss                                                                        |
-| Decide v0.5 rule (pre-registered) | **done** — [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md); fit-only 0-error τ       |
-| Decide candidate τ                | **T=0.75, τ=0.80** on fit (23/41, 0 err); spent-v0.4 readout 23/40, 0 err — **not** productionTrusted ([`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)) |
-| Freeze **v0.5** before Decide claim | **next** — isolated draft required before citing Decide as live                                                                    |
+| Decide v0.5 rule (pre-registered) | **done** — 0 errors among fires; leave rule (favors low coverage) |
+| Decide τ=0.80 provenance | **after** four-arm miss — **v0.4 spent for Decide reject** ([`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)) |
+| Decide candidate projection | 23/40 @ 0.80 on spent v0.4 — **not** closeout ([`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)) |
+| Freeze **v0.5** | **next** — target **n=70–80**; blind drafter; no search/execute nudge ([`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md)) |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related
 
 - [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
 - [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md)
+- [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md)
 - [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md)
 - [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)
+- [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)
 - [`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)
 - [`CALIBRATION_FREEZE_v0.1.md`](./CALIBRATION_FREEZE_v0.1.md)
 - [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md)
