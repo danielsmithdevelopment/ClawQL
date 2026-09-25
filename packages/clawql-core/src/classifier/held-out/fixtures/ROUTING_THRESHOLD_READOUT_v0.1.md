@@ -80,12 +80,31 @@ Pooling all FP-costly Harvey use sites (n=22) under the same rule yields τ=**0.
 
 ## Ship decision
 
-| Item                              | Decision                                                                           |
-| --------------------------------- | ---------------------------------------------------------------------------------- |
-| Calibration T=3                   | shipped (default on)                                                               |
-| New routing τ from Harvey routing | **not shipped** (`no_eligible_tau`)                                                |
-| builtins `threshold: 0.75`        | unchanged; v0.3 readout above is the post-calib reference                          |
-| Next for `productionTrusted`      | live frontier adjudication on v0.3 (or a larger routing fit set before retuning τ) |
+| Item                              | Decision                                                                                                         |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Calibration T=3                   | shipped (default on)                                                                                             |
+| New routing τ from Harvey routing | **not shipped** (`no_eligible_tau`)                                                                              |
+| builtins `threshold: 0.75`        | unchanged; v0.3 readout above is the post-calib reference                                                        |
+| Next                              | three-set protocol — freeze v0.4 **before** any new fit set ([`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md)) |
+
+## How much weight @ τ=0.75 on v0.3
+
+- **91% precision is 20/22.** A rough Wilson-style 95% interval is about **0.72–0.97**. Honest statement: somewhere between ~70% and ~97% precision at ~65% coverage — promising, not yet a established 90% fast path.
+- **Provisional GT can move this.** With only 2 FPs, one frontier relabel either way shifts precision ~4–5 points.
+- **Harvey vs v0.3 gap is informative.** Harvey routing never exceeds 0.50 precision at any τ; v0.3 reaches ~0.91 at builtin 0.75. The sets are shaped differently; Harvey is also small and (for enrichment) contaminated — further reason not to fit important knobs on it.
+
+**v0.3 is spent for choosing τ.** The curve is known; future τ choices need a fresh eval set (v0.4) frozen before fit.
+
+## FP diagnosis @ τ=0.75 (spent suite — diagnosis only)
+
+Neither false positive is a sibling-pair collapse (e.g. title-flag A vs B). Both are **specialized tool lost to a generic search-shaped candidate**:
+
+| Case          | Query (abbrev.)                                       | GT                          | Top @T=3                  | Conf  | Pattern                                  |
+| ------------- | ----------------------------------------------------- | --------------------------- | ------------------------- | ----- | ---------------------------------------- |
+| route-v03-023 | 300-page filing needs structural outline, not SQL     | `mcp.pageindex_build_tree`  | `tool.generic_web_search` | 0.792 | long-doc structure → generic web         |
+| route-v03-026 | ground in enterprise-indexed evidence, not public web | `mcp.knowledge_search_onyx` | `mcp.search`              | 0.914 | enterprise knowledge → provider `search` |
+
+A confident fast path at 0.75 would wrong-fire on **specialized corpus/index tools vs generic/provider search**, not on nearly-identical sibling labels. That failure mode is where distinguishFrom / packing (or a larger fit set) would need to work — evaluated only on a future frozen suite, not by retuning against these two queries.
 
 ## Artifact
 
@@ -94,5 +113,6 @@ Harness: `scripts/overnight-routing-threshold-readout.mts`
 
 ## Related
 
+- [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md)
 - [`CALIBRATION_FREEZE_v0.1.md`](./CALIBRATION_FREEZE_v0.1.md)
 - [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md)

@@ -125,7 +125,7 @@ No packing change shipped — `id_only` regresses accuracy; short ≡ full on th
 
 ### Routing threshold (fast-path coverage) — follow-up
 
-See [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md). Harvey routing n=7 cannot meet precision≥0.9 at any τ after T=3 → no new τ shipped. At builtin τ=0.75 on v0.3: coverage **0.647**, accuracy-among-accepted **0.909**.
+See [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md). Harvey routing n=7 cannot meet precision≥0.9 at any τ after T=3 → no new τ shipped. At builtin τ=0.75 on v0.3: coverage **0.647**, accuracy-among-accepted **0.909** (20/22; ~Wilson 95% CI ~0.72–0.97). Both FPs are specialized→generic search, not sibling collapses. **v0.3 spent for choosing τ** — see [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md).
 
 ---
 

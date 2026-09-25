@@ -29,7 +29,7 @@
 ## Scoring discipline
 
 - Dual-arm score completed; see `ONTOLOGY_ENRICHMENT_EVAL_LOG.md` § “v0.3 clean dual-arm result”.
-- **v0.3 is spent for tuning.** Diagnosis of regressions is allowed; hint changes after that need a new frozen suite (**v0.4**).
+- **v0.3 is spent for tuning** (hints/ontology) **and for choosing τ** (coverage curve is known). Diagnosis of FPs/regressions is allowed; any new τ or hint evaluation needs a new frozen set (**v0.4**) under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md).
 - Enrichment is **default off** for routing (`CLAWQL_FAST_DECISION_ONTOLOGY=1` to opt in).
 - **Tool IDs in this suite are frozen.** Renaming, merging, or splitting tool IDs invalidates cases — re-freeze; do not patch a mapping.
 
