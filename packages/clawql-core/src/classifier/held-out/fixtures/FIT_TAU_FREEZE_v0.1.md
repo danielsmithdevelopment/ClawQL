@@ -90,10 +90,10 @@ Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 **Audience lines:**
 
-- *Engineering:* calibrated reject rule; easy 45% locally; misses → existing path; wrong-tool on held-out fires 0/18; quote 82% LB not 100%.
-- *Product:* not a new brain — fewer misroutes on common catalog tools; same behavior when unsure.
-- *Risk:* high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
-- *Cost:* each fire is an encoder pass instead of a frontier routing call.
+- _Engineering:_ calibrated reject rule; easy 45% locally; misses → existing path; wrong-tool on held-out fires 0/18; quote 82% LB not 100%.
+- _Product:_ not a new brain — fewer misroutes on common catalog tools; same behavior when unsure.
+- _Risk:_ high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
+- _Cost:_ each fire is an encoder pass instead of a frontier routing call.
 
 **Do not claim:** “2.5 already matches Decide”; “Decide is 82% on our catalog”; precision 100% without (n=18, ~82% LB); collapsing Decide’s forced ~60% with our abstain policy.
 

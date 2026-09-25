@@ -137,14 +137,14 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 ### Stock GLiNER 2.5 vs Decide — do not collapse metrics
 
-| Artifact | What it is | What our v0.4 number is **not** |
-| -------- | ---------- | ------------------------------- |
-| **Stock GLiNER 2.5** (small/base/multi) | General boundary-encoder family (extraction + classification). Our live path uses this family (`fastino/gliner2.5-base-v1`) with a **reject rule** (T=4, τ=0.70). | Not Decide. Not a forced-answer leaderboard score. |
-| **GLiNER2.5-Decide** | Specialist classification checkpoint (~340M DeBERTa-v3-large), fine-tuned from `gliner2-large-v1` for operational decisions. Fastino reports ~60% forced exact-match on Fast Decisions (5,100 ex / 17 domains). | Unmeasured on our frozen 40. Do **not** write “2.5 already matches Decide” or “Decide is 82% precise on our catalog.” |
+| Artifact                                | What it is                                                                                                                                                                                                      | What our v0.4 number is **not**                                                                                       |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Stock GLiNER 2.5** (small/base/multi) | General boundary-encoder family (extraction + classification). Our live path uses this family (`fastino/gliner2.5-base-v1`) with a **reject rule** (T=4, τ=0.70).                                               | Not Decide. Not a forced-answer leaderboard score.                                                                    |
+| **GLiNER2.5-Decide**                    | Specialist classification checkpoint (~340M DeBERTa-v3-large), fine-tuned from `gliner2-large-v1` for operational decisions. Fastino reports ~60% forced exact-match on Fast Decisions (5,100 ex / 17 domains). | Unmeasured on our frozen 40. Do **not** write “2.5 already matches Decide” or “Decide is 82% precise on our catalog.” |
 
 **Two different scores.** Fastino’s ~60% is Decide, forced exact-match, always answer. Our result is calibrated stock 2.5 on **n=40** catalog-only routing: fire **18/40**, **0/18** errors, CP 95% LB ≈**82%**. Neither number implies the other. v0.4 is a **policy** result (abstain-capable on-ramp), not a model-vs-Decide leaderboard result.
 
-**Hypothesis for a clean next run (v0.5-compatible, same frozen 40, one pass each):** (1) 2.5 forced exact-match, (2) Decide forced exact-match, (3) 2.5 with locked (T,τ), (4) Decide with (T,τ) refit on the *same* off-set then frozen. Report fire rate, errors among fired, CP LB with \(n_{\text{fired}}\). Fail on any tool-changing sidecar remap (already fail-closed for semantic remaps).
+**Hypothesis for a clean next run (v0.5-compatible, same frozen 40, one pass each):** (1) 2.5 forced exact-match, (2) Decide forced exact-match, (3) 2.5 with locked (T,τ), (4) Decide with (T,τ) refit on the _same_ off-set then frozen. Report fire rate, errors among fired, CP LB with \(n_{\text{fired}}\). Fail on any tool-changing sidecar remap (already fail-closed for semantic remaps).
 
 ### Why ship the 45% gate now (internal narrative)
 
