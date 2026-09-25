@@ -83,9 +83,9 @@ Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire s
 | Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
 | Live path | **still stock** (T=4, τ=0.70); v0.4 `productionTrusted` not rewritten |
 
-**Docs one-liner.** v0.5 (n=75, GHA 36185003105 / 36185003282, PR #1148): Decide reject covers more (45/75 vs 32/75) but still has 1 fire error under frontier adjudication, so stock stays the live CPU on-ramp. The Decide miss is a memory-ingest twin (`mcp.*` vs `skill.*`), not a wrong-capability route. Next spend is a new frozen suite or an explicit twin-resolution rule in the catalog — not a τ bump on this set.
+**Docs one-liner.** Decide should probably be live next — not because 60% beats 43%, but because it is the stronger model and its only v0.5 fire error is a catalog twin (stock’s only fire error is also a twin: `route-v05-023`). Switch after twins are collapsed and the comparison rule is declared as a spend; keep stock live this cycle.
 
-**v0.6 order (predeclared):** (1) resolve tool/skill twins in catalog; (2) declare comparison/ship rule; (3) freeze v0.6; (4) score once + adjudicate.
+**v0.6 cutover gate (all three):** (1) stock miss on the page next to Decide’s — **done**, both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage. Then Decide @ T=0.75 / τ=0.80.
 
 Closeout detail: [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_SCORE_ONCE_CLOSEOUT.md)
 
