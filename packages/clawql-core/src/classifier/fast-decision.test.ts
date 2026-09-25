@@ -429,34 +429,44 @@ describe("§7 held-out suite runner", () => {
   });
 
   it("loads ClawQL capability ontology and enriches classify text with whenToUse", async () => {
-    const { loadClawqlCapabilityOntology, lookupCapability, indexCapabilityOntology } =
-      await import("./capability-ontology.js");
+    const {
+      loadClawqlCapabilityOntology,
+      lookupCapability,
+      indexCapabilityOntology,
+      capabilityOntologyDigest,
+    } = await import("./capability-ontology.js");
     const {
       composeOntologyEnrichedClassifyText,
       enrichCandidateDescription,
       enrichFastDecisionRequest,
       buildOntologyEnrichedClassifyPayload,
+      distinguishFromSiblingsHaveIdenticalPackedLabels,
     } = await import("./ontology-enrichment.js");
     const ontology = loadClawqlCapabilityOntology();
     expect(ontology.ontologyId).toContain("clawql-capability");
     expect(ontology.capabilities.length).toBeGreaterThanOrEqual(20);
-    expect(ontology.capabilities.some((c) => c.kind === "skill")).toBe(true);
+    expect(capabilityOntologyDigest(ontology).length).toBe(64);
     const index = indexCapabilityOntology(ontology);
     expect(lookupCapability(index, "mcp.data_query")?.ontologyRole).toBe("structured_query");
-    expect(lookupCapability(index, "tool.bash_grep_hunt")?.kind).toBe("anti_pattern");
-    expect(lookupCapability(index, "skill.clawql-vault-memory")?.kind).toBe("skill");
+    expect(lookupCapability(index, "tool.bash_workspace_hunt")?.kind).toBe("anti_pattern");
+    // Per-id rows: siblings must not share one capabilityId
+    expect(lookupCapability(index, "mcp.memory_recall_title_flag_a")?.capabilityId).toBe(
+      "mcp.memory_recall_title_flag_a"
+    );
+    expect(lookupCapability(index, "mcp.memory_recall_title_flag_b")?.capabilityId).toBe(
+      "mcp.memory_recall_title_flag_b"
+    );
     const text = composeOntologyEnrichedClassifyText({
-      query: "How many credit facilities mention springing lien?",
+      query: "How many credit facilities need an exact structured count?",
       taskFraming: "Which tool is relevant",
       ontology,
-      candidateIds: ["mcp.data_query", "tool.bash_grep_hunt"],
+      candidateIds: ["mcp.data_query", "tool.bash_workspace_hunt"],
     });
-    expect(text).toContain("needs_structured_corpus");
+    expect(text).not.toMatch(/STRUCTURED_CORPUS_PREFERRED|requiresStructuredCorpus=/i);
     expect(text).toMatch(/ANTI_PATTERN|anti_pattern/i);
-    expect(text.toLowerCase()).toContain("springing");
     const baitDesc = enrichCandidateDescription(
       {
-        candidateId: "tool.bash_grep_hunt",
+        candidateId: "tool.bash_workspace_hunt",
         features: {
           label: "grep springing lien /workspace",
           description: "Blind grep path=/workspace pattern springing lien",
@@ -466,7 +476,7 @@ describe("§7 held-out suite runner", () => {
     );
     expect(baitDesc).toMatch(/ANTI_PATTERN/i);
     expect(baitDesc.toLowerCase()).not.toContain("path=/workspace");
-    expect(baitDesc.toLowerCase()).not.toMatch(/blind grep/);
+    expect(baitDesc).not.toMatch(/STRUCTURED_CORPUS_PREFERRED/i);
     const sqlDesc = enrichCandidateDescription(
       {
         candidateId: "mcp.data_query",
@@ -474,24 +484,26 @@ describe("§7 held-out suite runner", () => {
       },
       ontology
     );
-    expect(sqlDesc).toContain("STRUCTURED_CORPUS_PREFERRED");
+    expect(sqlDesc).not.toMatch(/STRUCTURED_CORPUS_PREFERRED|requiresStructuredCorpus=/i);
     expect(sqlDesc).toContain("whenToUse");
+    expect(sqlDesc).toContain("mcp.data_query");
     const enriched = enrichFastDecisionRequest({
-      ctx: { sessionId: "t", query: "list HSR second requests" },
+      ctx: { sessionId: "t", query: "list vault notes" },
       candidates: [
         { candidateId: "mcp.memory_recall", features: { label: "memory_recall" } },
-        { candidateId: "tool.bash_grep_hunt", features: { label: "bash" } },
+        { candidateId: "tool.bash_workspace_hunt", features: { label: "bash" } },
       ],
       ontology,
     });
     expect(enriched.ctx.extras?.ontologyBrief).toEqual(expect.any(String));
+    expect(enriched.ctx.extras?.ontologyDigest).toEqual(expect.any(String));
     expect(String(enriched.candidates[0]?.features.description)).toContain("whenToUse");
     const withOnt = buildOntologyEnrichedClassifyPayload({
       useSiteId: "search_provider_tool_routing",
-      query: "springing lien cohort",
+      query: "exact structured cohort count",
       candidates: [
         {
-          candidateId: "tool.bash_grep_hunt",
+          candidateId: "tool.bash_workspace_hunt",
           features: { description: "grep springing lien across DMS" },
         },
         { candidateId: "mcp.data_query", features: { label: "data_query" } },
@@ -500,10 +512,10 @@ describe("§7 held-out suite runner", () => {
     });
     const withoutOnt = buildOntologyEnrichedClassifyPayload({
       useSiteId: "search_provider_tool_routing",
-      query: "springing lien cohort",
+      query: "exact structured cohort count",
       candidates: [
         {
-          candidateId: "tool.bash_grep_hunt",
+          candidateId: "tool.bash_workspace_hunt",
           features: { description: "grep springing lien across DMS" },
         },
         { candidateId: "mcp.data_query", features: { label: "data_query" } },
@@ -511,6 +523,32 @@ describe("§7 held-out suite runner", () => {
     });
     expect(withOnt.text).not.toBe(withoutOnt.text);
     expect(withOnt.labels[0]?.description).not.toBe(withoutOnt.labels[0]?.description);
+    expect(
+      distinguishFromSiblingsHaveIdenticalPackedLabels(
+        ontology,
+        "mcp.memory_recall_title_flag_a",
+        "mcp.memory_recall_title_flag_b"
+      )
+    ).toBe(false);
+  });
+
+  it("generates ontology digest stably from catalog without renaming ids", async () => {
+    const { generateCapabilityOntology, loadCatalogSource } = await import(
+      "./generate-capability-ontology.js"
+    );
+    const catalog = loadCatalogSource();
+    const a = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
+    const b = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
+    expect(a.digestSha256).toBe(b.digestSha256);
+    expect(a.capabilities.map((c) => c.capabilityId).sort()).toEqual(
+      [...catalog.entries.map((e) => e.id)].sort()
+    );
+    expect(() =>
+      generateCapabilityOntology({
+        catalog,
+        overlay: { overlays: { "mcp.does_not_exist": { whenToUse: "x" } } },
+      })
+    ).toThrow(/unknown id/);
   });
 
   it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {

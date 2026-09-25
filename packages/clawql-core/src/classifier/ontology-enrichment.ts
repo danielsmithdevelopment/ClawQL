@@ -1,44 +1,81 @@
 /**
  * Pack ontology / capability catalog into Fast Decision classify text + labels.
- * Without this, extras.ontologyContext never reaches GLiNER (§6.4 gap).
  *
- * Anti-pattern candidates often ship query-lexical bait ("grep springing lien")
- * that dominates GLiNER over structured tools. Enrichment rewrites those labels
- * from ontology whenNotToUse so the classifier can prefer SQL/recall.
+ * Normative rules (capability-ontology-from-catalog-v0.1 §3.3):
+ * - Per-candidate rows — do not collapse siblings onto one shared paragraph.
+ * - Anti-bait applies to every packed string (whenToUse, whenNotToUse, distinguishFrom.reason).
+ * - requiresStructuredCorpus is never packed into GLiNER text/labels.
  */
 
 import type { CapabilityEntry, CapabilityOntology } from "./capability-ontology.js";
 import { indexCapabilityOntology, lookupCapability } from "./capability-ontology.js";
+import type { DistinguishFromEntry } from "../plugin/routing-hint.js";
 import type { FastDecisionCandidate, FastDecisionContext } from "./types.js";
 
 const MAX_ONTOLOGY_CHARS = 3200;
 const MAX_LABEL_CHARS = 520;
+
+/** Tokens that must not appear in packed enrichment (query-lexical bait / shared family flags). */
+const FORBIDDEN_PACKED = [
+  /STRUCTURED_CORPUS_PREFERRED/i,
+  /requiresStructuredCorpus\s*=/i,
+  /needs_structured_corpus/i,
+  /springing[-\s]?lien/i,
+  /\bHSR_SECOND_REQUEST\b/i,
+  /\bHSR\b/i,
+  /path=\/workspace/i,
+  /\bgrep\b/i,
+  /\bbash\b/i,
+];
 
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
   return `${s.slice(0, max - 1)}…`;
 }
 
-function formatEntryLine(c: CapabilityEntry): string {
-  const flags = [
-    c.kind,
-    c.ontologyRole,
-    c.requiresStructuredCorpus ? "needs_structured_corpus" : "no_corpus_required",
-  ].join(",");
-  if (c.kind === "anti_pattern") {
-    return `- ${c.capabilityId} [ANTI_PATTERN/${c.ontologyRole}]: DO_NOT_USE_WHEN: ${c.whenNotToUse} | only_if_no_corpus: ${c.whenToUse}`;
+/** Strip or blank strings that would re-bait GLiNER via lexical overlap. */
+export function sanitizePackedHint(text: string): string {
+  let s = text.trim();
+  for (const re of FORBIDDEN_PACKED) {
+    if (re.test(s)) {
+      // Drop the whole string rather than emit bait; callers supply abstract replacements.
+      return "";
+    }
   }
-  return `- ${c.capabilityId} [${flags}]: USE: ${c.whenToUse} | AVOID: ${c.whenNotToUse}`;
+  return s;
 }
 
-/** Compact ontology block for classify `text` (query prefix/suffix). */
+function formatEntryLine(c: CapabilityEntry): string {
+  // Never emit requiresStructuredCorpus / family flags into classify text.
+  if (c.kind === "anti_pattern") {
+    const avoid = sanitizePackedHint(c.whenNotToUse) || "prefer structured catalog tools when available";
+    const only = sanitizePackedHint(c.whenToUse) || "only when no structured path exists";
+    return `- ${c.capabilityId} [ANTI_PATTERN]: DO_NOT_USE_WHEN: ${avoid} | only_if_no_corpus: ${only}`;
+  }
+  const use = sanitizePackedHint(c.whenToUse) || c.label;
+  const avoid = sanitizePackedHint(c.whenNotToUse) || "not when a more specific sibling matches";
+  return `- ${c.capabilityId} [${c.kind}/${c.ontologyRole}]: USE: ${use} | AVOID: ${avoid}`;
+}
+
+function formatDistinguish(entries: readonly DistinguishFromEntry[] | undefined): string {
+  if (!entries?.length) return "";
+  const parts: string[] = [];
+  for (const d of entries) {
+    const reason = sanitizePackedHint(d.reason);
+    if (!reason) continue;
+    parts.push(`vs ${d.peerId}: ${reason}`);
+  }
+  return parts.join(" | ");
+}
+
+/** Compact ontology block for classify `text` — per-id lines only (no shared family flags). */
 export function formatCapabilityOntologyBlock(
   ontology: CapabilityOntology,
   opts?: { readonly onlyIds?: ReadonlySet<string>; readonly maxChars?: number }
 ): string {
   const max = opts?.maxChars ?? MAX_ONTOLOGY_CHARS;
   const index = indexCapabilityOntology(ontology);
-  let caps = ontology.capabilities;
+  let caps: CapabilityEntry[] = [...ontology.capabilities];
   if (opts?.onlyIds && opts.onlyIds.size > 0) {
     const picked: CapabilityEntry[] = [];
     for (const id of opts.onlyIds) {
@@ -50,13 +87,15 @@ export function formatCapabilityOntologyBlock(
     if (picked.length > 0) caps = picked;
   }
   const header = [
-    `Capability ontology (${ontology.ontologyId}):`,
+    `Capability ontology (${ontology.ontologyId}${ontology.digestSha256 ? `; digest=${ontology.digestSha256.slice(0, 12)}` : ""}):`,
     ontology.description,
-    "Routing rule: when the task needs exact cohort N or ontology flags, prefer structured_query / ontology_recall over anti_pattern shell/grep.",
+    "Prefer the candidate whose whenToUse best matches the task; respect distinguishFrom siblings.",
   ].join("\n");
   let body = header;
   for (const c of caps) {
-    const line = formatEntryLine(c);
+    let line = formatEntryLine(c);
+    const dist = formatDistinguish(c.distinguishFrom);
+    if (dist) line += ` | ${dist}`;
     if (body.length + line.length + 1 > max) break;
     body += `\n${line}`;
   }
@@ -82,10 +121,8 @@ function packFeatureBag(features: Record<string, unknown>, keys: readonly string
 }
 
 /**
- * Enrich a candidate description with ontology whenToUse + feature context.
- * Anti-patterns: drop query-lexical bait from the original label/description
- * and lead with ANTI_PATTERN + whenNotToUse so GLiNER is not baited by
- * overlapping tokens (e.g. "springing lien" in a bash candidate).
+ * Enrich a candidate description from its own catalog row (exact id).
+ * Never packs requiresStructuredCorpus or shared STRUCTURED_CORPUS_PREFERRED.
  */
 export function enrichCandidateDescription(
   candidate: FastDecisionCandidate,
@@ -112,66 +149,61 @@ export function enrichCandidateDescription(
         candidate.features.name ??
         candidate.candidateId
     );
-    const packed = packFeatureBag(candidate.features, [
-      "ontologyContext",
-      "cacheSnapshot",
-      "auditRefs",
-      "vocabulary",
-      "preferredVocabulary",
-      "decision",
-    ]);
-    return truncate(packed ? `${base} | ${packed}` : base, MAX_LABEL_CHARS);
+    return truncate(base, MAX_LABEL_CHARS);
   }
 
-  // Already enriched by enrichFastDecisionRequest — rebuild once from ontology.
   if (hit.kind === "anti_pattern") {
-    // Keep wording abstract — never echo query-domain tokens (lien, HSR, …)
-    // or GLiNER re-baits onto the anti-pattern via lexical overlap.
+    const avoid =
+      sanitizePackedHint(hit.whenNotToUse) ||
+      "Prefer structured catalog tools when a schema or corpus path exists";
+    const only = sanitizePackedHint(hit.whenToUse) || "only when no structured path exists";
     return truncate(
       [
         `ANTI_PATTERN:${hit.label}`,
         "role=dispreferred_unstructured_hunt",
-        `DO_NOT_USE_WHEN=${hit.whenNotToUse}`,
-        `only_if_no_structured_corpus=${hit.whenToUse}`,
-        "prefer=structured_query|ontology_recall",
-        "score_hint=low_when_corpus_exists",
+        `DO_NOT_USE_WHEN=${avoid}`,
+        `only_if_no_structured_path=${only}`,
       ].join(" | "),
       MAX_LABEL_CHARS
     );
   }
 
-  const parts = [
-    hit.requiresStructuredCorpus ? "STRUCTURED_CORPUS_PREFERRED" : hit.label,
-    `whenToUse=${hit.whenToUse}`,
-    `whenNotToUse=${hit.whenNotToUse}`,
-    `ontology=${hit.capabilityId}(${hit.kind}/${hit.ontologyRole})`,
-  ];
-  if (hit.requiresStructuredCorpus) {
-    parts.push("requiresStructuredCorpus=true");
-  }
-  // Preserve candidate-specific wording so alias siblings (e.g. HSR filing vs
-  // second-request-only) stay distinguishable under one ontology capability.
+  const use = sanitizePackedHint(hit.whenToUse);
+  const avoid = sanitizePackedHint(hit.whenNotToUse);
+  const parts = [`id=${hit.capabilityId}`, `kind=${hit.kind}/${hit.ontologyRole}`];
+  if (use) parts.push(`whenToUse=${use}`);
+  if (avoid) parts.push(`whenNotToUse=${avoid}`);
+
   const origLabel = String(candidate.features.label ?? candidate.features.name ?? "").trim();
   const rawDesc = String(candidate.features._rawDescription ?? "").trim();
   const featureDesc = String(candidate.features.description ?? "").trim();
-  // Prefer pre-enrichment raw text; skip if description was already rewritten.
   const specific =
     rawDesc ||
     (featureDesc && !featureDesc.includes("whenToUse=") && !featureDesc.startsWith("ANTI_PATTERN")
       ? featureDesc
       : "");
-  if (origLabel && !/^ANTI_PATTERN|STRUCTURED_CORPUS/i.test(origLabel)) {
-    parts.push(`label=${origLabel}`);
+  if (origLabel && !/^ANTI_PATTERN/i.test(origLabel)) {
+    const safeLabel = sanitizePackedHint(origLabel) || origLabel.slice(0, 80);
+    if (safeLabel) parts.push(`label=${safeLabel}`);
   }
   if (specific && specific !== origLabel) {
-    const safe = /(?:^|\b)(?:bash|grep)\b|\/workspace/i.test(specific)
-      ? specific.slice(0, 40)
-      : specific.slice(0, 160);
-    parts.push(`detail=${safe}`);
+    const safe = sanitizePackedHint(specific);
+    if (safe) parts.push(`detail=${safe.slice(0, 160)}`);
   }
-  if (candidate.candidateId !== hit.capabilityId) {
-    parts.push(`aliasOf=${candidate.candidateId}`);
+
+  const dist = formatDistinguish(hit.distinguishFrom);
+  if (dist) parts.push(dist);
+
+  // Mirror distinguishFrom from peers that name this candidate.
+  for (const peer of ontology.capabilities) {
+    for (const d of peer.distinguishFrom ?? []) {
+      if (d.peerId === candidate.candidateId || d.peerId === hit.capabilityId) {
+        const reason = sanitizePackedHint(d.reason);
+        if (reason) parts.push(`peer_vs ${peer.capabilityId}: ${reason}`);
+      }
+    }
   }
+
   const packed = packFeatureBag(candidate.features, [
     "ontologyContext",
     "cacheSnapshot",
@@ -184,6 +216,17 @@ export function enrichCandidateDescription(
   return truncate(parts.join(" | "), MAX_LABEL_CHARS);
 }
 
+/** True when two distinguishFrom siblings would pack to identical label text (harvey-008 guard). */
+export function distinguishFromSiblingsHaveIdenticalPackedLabels(
+  ontology: CapabilityOntology,
+  aId: string,
+  bId: string
+): boolean {
+  const a = enrichCandidateDescription({ candidateId: aId, features: { label: aId } }, ontology);
+  const b = enrichCandidateDescription({ candidateId: bId, features: { label: bId } }, ontology);
+  return a === b;
+}
+
 export type EnrichClassifyTextArgs = {
   readonly query: string;
   readonly taskFraming?: string;
@@ -192,10 +235,6 @@ export type EnrichClassifyTextArgs = {
   readonly candidateIds?: readonly string[];
 };
 
-/**
- * Build classify text: query + task framing + ontology block from ctx.extras
- * and/or the ClawQL capability catalog scoped to candidates.
- */
 export function composeOntologyEnrichedClassifyText(args: EnrichClassifyTextArgs): string {
   const q = args.query.trim();
   const framing = args.taskFraming?.trim() ?? "";
@@ -221,7 +260,6 @@ export function composeOntologyEnrichedClassifyText(args: EnrichClassifyTextArgs
   return truncate(chunks.filter(Boolean).join("\n\n"), MAX_ONTOLOGY_CHARS + 800);
 }
 
-/** Build the exact classify payload body the scorer would send (for A/B dumps). */
 export function buildOntologyEnrichedClassifyPayload(args: {
   readonly useSiteId: string;
   readonly query: string;
@@ -233,6 +271,7 @@ export function buildOntologyEnrichedClassifyPayload(args: {
 }): {
   readonly text: string;
   readonly labels: readonly { readonly id: string; readonly description: string }[];
+  readonly ontologyDigest?: string;
 } {
   const ctx = args.ctx ?? { sessionId: "dump", query: args.query };
   const text = args.ontology
@@ -252,10 +291,10 @@ export function buildOntologyEnrichedClassifyPayload(args: {
       id: c.candidateId,
       description: enrichCandidateDescription(c, args.ontology),
     })),
+    ontologyDigest: args.ontology?.digestSha256,
   };
 }
 
-/** Attach capability ontology onto candidates + ctx.extras for held-out / runtime. */
 export function enrichFastDecisionRequest(args: {
   readonly ctx: FastDecisionContext;
   readonly candidates: readonly FastDecisionCandidate[];
@@ -277,8 +316,8 @@ export function enrichFastDecisionRequest(args: {
         ontologyRole: hit.ontologyRole,
         ontologyWhenToUse: hit.whenToUse,
         ontologyWhenNotToUse: hit.whenNotToUse,
+        // Metadata only — scorer must not pack this into GLiNER labels.
         requiresStructuredCorpus: hit.requiresStructuredCorpus,
-        // Preserve raw bait under _rawDescription for debugging; scorer uses description.
         _rawDescription: c.features.description,
         description: enrichCandidateDescription(c, args.ontology),
       },
@@ -291,6 +330,7 @@ export function enrichFastDecisionRequest(args: {
       extras: {
         ...args.ctx.extras,
         capabilityOntologyId: args.ontology.ontologyId,
+        ontologyDigest: args.ontology.digestSha256,
         ontologyBrief: formatCapabilityOntologyBlock(args.ontology, { onlyIds }),
       },
     },

@@ -6,6 +6,7 @@ export * from "./types.js";
 export * from "./registry.js";
 export * from "./gliner-config.js";
 export * from "./capability-ontology.js";
+export * from "./generate-capability-ontology.js";
 export * from "./ontology-enrichment.js";
 export * from "./scorer.js";
 export * from "./threshold-policy.js";

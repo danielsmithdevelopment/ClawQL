@@ -30,6 +30,9 @@ import {
   resolveHeldOutSuite,
   runHeldOutValidationSuite,
   DEFAULT_VALIDATION_CRITERIA,
+  loadClawqlCapabilityOntology,
+  capabilityOntologyDigest,
+  ontologyEnrichmentEnabled,
   type AdjudicationLabel,
   type AdjudicationRunReport,
 } from "clawql-core";
@@ -85,6 +88,14 @@ const { reports, scorerBackend } = await Effect.runPromise(
 );
 
 const anyProductionTrusted = reports.some((r) => r.productionTrusted);
+let ontologyDigest: string | null = null;
+if (ontologyEnrichmentEnabled()) {
+  try {
+    ontologyDigest = capabilityOntologyDigest(loadClawqlCapabilityOntology());
+  } catch {
+    ontologyDigest = null;
+  }
+}
 const summary = {
   suiteId: suite.suiteId,
   adjudicationMode: adj.mode,
@@ -93,6 +104,8 @@ const summary = {
   labelsIn: labelsInPath ?? null,
   scorerBackend,
   glinerLiveConfigured,
+  ontologyEnrichment: ontologyEnrichmentEnabled(),
+  ontologyDigest,
   validationCriteria: DEFAULT_VALIDATION_CRITERIA,
   reports: reports.map((r) => ({
     useSiteId: r.useSiteId,

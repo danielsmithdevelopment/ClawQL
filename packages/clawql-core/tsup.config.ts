@@ -35,5 +35,17 @@ export default defineConfig({
       join(classifierFixtures, "clawql-capability-ontology.json"),
       join(capDest, "clawql-capability-ontology.json")
     );
+    for (const name of [
+      "capability-ontology.generated.json",
+      "capability-ontology.digest",
+      "capability-routing-hints.overlay.json",
+    ]) {
+      const src = join(classifierFixtures, name);
+      try {
+        cpSync(src, join(capDest, name));
+      } catch {
+        /* generated files may be produced by scripts/generate-capability-ontology.mts */
+      }
+    }
   },
 });

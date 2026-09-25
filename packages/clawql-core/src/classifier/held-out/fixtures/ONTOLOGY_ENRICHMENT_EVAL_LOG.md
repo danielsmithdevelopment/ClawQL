@@ -74,6 +74,8 @@ Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md). Se
 
 **Hint / ontology rule:** do not author `whenToUse` / `whenNotToUse` / `distinguishFrom` or regenerate ontology in a way that post-dates scoring claims without this freeze predating those hints (§5.1).
 
+**Scoring:** do **not** run v0.3 until hints are written; then score both arms together against the same `ontologyDigest`. Do not run ontology-off early (leaks failures to the hint author). Tool IDs must not change; ID renames require re-freeze, not a mapping patch.
+
 Requirements met: isolated author, freeze + hash before hints, n=34 with sibling pairs and shell distractors, contaminated smoke remains tagged separately.
 
 ---
