@@ -105,12 +105,12 @@ Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) on frozen v0.4 + frontier labels. Verified Clopper–Pearson 95% two-sided LBs: **64.4%** (32/40), **79.6%** (37/40), **81.5%** (18/18), **84.7%** (33/34). Full table + locked reading in [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md). Public: [`fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md). Report: [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
 
-| Arm                                         | Headline                                                                 |
-| ------------------------------------------- | ------------------------------------------------------------------------ |
-| stock forced                                | 80% EM (32/40), LB 64.4%                                                 |
-| Decide forced                               | **92.5%** EM (37/40), LB 79.6%                                           |
-| stock T=4 / τ=0.70                          | **18/40 fire, 0 errors, LB 81.5% ≈82%** (unchanged closeout)             |
-| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error (33/34), LB 84.7%                                |
+| Arm                                         | Headline                                                     |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| stock forced                                | 80% EM (32/40), LB 64.4%                                     |
+| Decide forced                               | **92.5%** EM (37/40), LB 79.6%                               |
+| stock T=4 / τ=0.70                          | **18/40 fire, 0 errors, LB 81.5% ≈82%** (unchanged closeout) |
+| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error (33/34), LB 84.7%                    |
 
 Stock reject remains the shipped productionTrusted path. Decide+reject is a different operating point (+16 fires, +1 error). Coverage is not the decision: wrong route is costly, abstention is not; CP LBs overlap (≈82% vs ≈85%) so Decide+reject is not “more precise.” Shape is right (confidence-gate Decide); timing is not (one miss + protocol). Next live-path change is **v0.5** — see public closeout “Why not cut over / What to do instead of swapping.”
 
