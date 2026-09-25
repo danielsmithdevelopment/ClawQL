@@ -31,7 +31,7 @@ Report: [`frontier-runs/v0.5-stock-vs-decide-twin-aware-closeout.json`](./fronti
 
 It is **not** a fresh held-out `productionTrusted` claim in the v0.4 sense. v0.5 was already scored; the rematch only changed how twins are counted. That is legitimate because the spend is on the page ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)). The next *held-out* sentence waits for an optional frozen v0.6.
 
-Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path already in production. Freeze digests: [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md) (n=75; score-once pending).
+Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path already in production. Freeze digests: [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md) (n=75). **Scored once:** Decide @ τ=0.80 → 39/75 fires, 2 errors among fires, ≈83% LB — see [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md). Live cite remains the twin-aware v0.5 rematch above.
 
 ## Do not say
 

@@ -1,0 +1,101 @@
+{
+  "protocol": "Decide live-path score-once on frozen v0.6; twin-aware; confirmation suite",
+  "evalSuite": "v0.6-routing-fresh",
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.6-routing-fresh-gha-36199128630-labels.json",
+  "labelCount": 75,
+  "groundTruthSource": "frontier_labels",
+  "lockedKnobs": {
+    "mode": "temperature_softmax",
+    "temperature": 0.75,
+    "tau": 0.8
+  },
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "backend": "gliner2",
+  "arms": [
+    {
+      "arm": "decide_forced",
+      "n": 75,
+      "nFired": 75,
+      "fireRate": 1,
+      "nCorrectFired": 70,
+      "nErrorsFired": 5,
+      "precisionAmongFired": 0.9333333333333333,
+      "cpLower95": 0.8512395208422179,
+      "forcedExactMatchAcc": 0.9333333333333333,
+      "threshold": null,
+      "rejectRule": false
+    },
+    {
+      "arm": "decide_locked_T_tau",
+      "n": 75,
+      "nFired": 39,
+      "fireRate": 0.52,
+      "nCorrectFired": 37,
+      "nErrorsFired": 2,
+      "precisionAmongFired": 0.9487179487179487,
+      "cpLower95": 0.826755218626396,
+      "forcedExactMatchAcc": 0.9333333333333333,
+      "threshold": 0.8,
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 0.75
+      },
+      "rejectRule": true
+    }
+  ],
+  "confirmation": {
+    "nFired": 39,
+    "nErrorsFired": 2,
+    "cpLower95": 0.826755218626396,
+    "citeLb": "\u224883%",
+    "liveCiteReference": "DECIDE_V06_CUTOVER.md (v0.5 twin-aware \u224892% @ 45/75)"
+  },
+  "honesty": [
+    "v0.6 is optional confirmation of the live Decide path \u2014 not a retune",
+    "twins count as correct (CATALOG_TWIN_EQUIVALENCE)",
+    "quote nFired and CP LB whenever citing precision among fired"
+  ],
+  "gha": {
+    "scoreOnce": 36199128704,
+    "frontier": 36199128630
+  },
+  "fireErrors": [
+    {
+      "caseId": "route-v06-040",
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.9344300036101905,
+      "frontierGt": "mcp.execute",
+      "provisionalGt": "mcp.execute",
+      "query": "Invoke tickets.transition with the status and comment fields already validated."
+    },
+    {
+      "caseId": "route-v06-056",
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.8253075053527955,
+      "frontierGt": "tool.bash_workspace_hunt",
+      "provisionalGt": "tool.bash_workspace_hunt",
+      "query": "Look around with find/grep in the repo until the hardcoded region string shows up."
+    }
+  ],
+  "forcedErrorCaseIds": [
+    "route-v06-009",
+    "route-v06-033",
+    "route-v06-040",
+    "route-v06-056",
+    "route-v06-075"
+  ],
+  "frontierVsProvisionalGt": [
+    {
+      "caseId": "route-v06-015",
+      "frontier": "skill.deep-thinking",
+      "prov": "mcp.clawql_think"
+    }
+  ],
+  "verdict": {
+    "livePath": "Decide (unchanged)",
+    "liveCite": "v0.5 twin-aware rematch 45/75 @ \u224892% LB",
+    "confirmationCite": "v0.6 Decide 37/39 @ \u224883% LB (2 fire errors)",
+    "retuneTau": false,
+    "productionTrustedClaim": false
+  }
+}

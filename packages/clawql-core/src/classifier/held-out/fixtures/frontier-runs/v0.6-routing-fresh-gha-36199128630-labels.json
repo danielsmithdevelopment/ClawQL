@@ -1,0 +1,3343 @@
+{
+  "labels": [
+    {
+      "caseId": "route-v06-001",
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:36.649Z",
+      "rationale": "The query explicitly asks to discover provider operationIds from a plain-language description before executing anything, which is exactly the purpose of the search/discovery operation.",
+      "rawGroundTruthCandidateId": "mcp.search"
+    },
+    {
+      "caseId": "route-v06-002",
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:38.422Z",
+      "rationale": "The operationId is already known and arguments are validated, so direct execution is appropriate without any rediscovery step.",
+      "rawGroundTruthCandidateId": "mcp.execute"
+    },
+    {
+      "caseId": "route-v06-003",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:40.411Z",
+      "rationale": "The query asks to retrieve existing vault ontology notes about a retry backoff policy using pre-defined schema filters, which matches memory_recall's purpose of retrieving vault/ontology context with schema/filters.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall"
+    },
+    {
+      "caseId": "route-v06-004",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:42.385Z",
+      "rationale": "The query explicitly asks to write/persist the incident wrap-up to the vault so it survives the session, which matches mcp.memory_ingest's purpose of persisting durable session outcomes to the vault.",
+      "rawGroundTruthCandidateId": "mcp.memory_ingest"
+    },
+    {
+      "caseId": "route-v06-005",
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:44.580Z",
+      "rationale": "The query explicitly requests SQL execution over a local DuckDB matters table with grouping, which maps directly to the structured corpus SQL capability of mcp.data_query.",
+      "rawGroundTruthCandidateId": "mcp.data_query"
+    },
+    {
+      "caseId": "route-v06-006",
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:46.960Z",
+      "rationale": "The query explicitly requests short-lived session scratch storage for a partial payload without writing to the vault, matching mcp.cache's ephemeral session scratch state purpose.",
+      "rawGroundTruthCandidateId": "mcp.cache"
+    },
+    {
+      "caseId": "route-v06-007",
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:49.220Z",
+      "rationale": "The query explicitly requests appending a WORM-linked audit event, which directly matches mcp.audit's capability to append or list WORM-linked audit events.",
+      "rawGroundTruthCandidateId": "mcp.audit"
+    },
+    {
+      "caseId": "route-v06-008",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:51.153Z",
+      "rationale": "The query explicitly requests skill index entries with name, description, and digest without loading full bodies, which matches exactly the skills_list operation.",
+      "rawGroundTruthCandidateId": "mcp.skills_list"
+    },
+    {
+      "caseId": "route-v06-009",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:53.683Z",
+      "rationale": "The query explicitly requests fetching the full markdown body of a specific plugin/skill by id, which is exactly what skills_get does — loading full skill content for a selected skill id.",
+      "rawGroundTruthCandidateId": "mcp.skills_get"
+    },
+    {
+      "caseId": "route-v06-010",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:55.708Z",
+      "rationale": "The query explicitly requests running a Python cell in an isolated interpreter and retaining the sandbox session handle, which directly matches sandbox_exec's purpose of running isolated code snippets with safe persistence.",
+      "rawGroundTruthCandidateId": "mcp.sandbox_exec"
+    },
+    {
+      "caseId": "route-v06-011",
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:00:57.601Z",
+      "rationale": "The query asks to post a Slack milestone notification, which directly matches mcp.notify's purpose of sending Slack milestones or failure notifications.",
+      "rawGroundTruthCandidateId": "mcp.notify"
+    },
+    {
+      "caseId": "route-v06-012",
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:00.059Z",
+      "rationale": "The query asks to register a recurring cadence job (hourly ping) with a dry-run/rehearsal gate, which maps directly to mcp.schedule's recurring synthetic checks with dry_run capability.",
+      "rawGroundTruthCandidateId": "mcp.schedule"
+    },
+    {
+      "caseId": "route-v06-013",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:02.516Z",
+      "rationale": "The query explicitly requests importing a public URL into the external knowledge corpus, which directly matches ingest_external_knowledge's purpose of importing external markdown or URL content, and explicitly excludes the personal vault (ruling out memory_ingest).",
+      "rawGroundTruthCandidateId": "mcp.ingest_external_knowledge"
+    },
+    {
+      "caseId": "route-v06-014",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:04.923Z",
+      "rationale": "The query explicitly requests searching the enterprise Onyx knowledge base for an approved change-control playbook, which directly matches the knowledge_search_onyx tool's purpose of searching enterprise Onyx knowledge before execution.",
+      "rawGroundTruthCandidateId": "mcp.knowledge_search_onyx"
+    },
+    {
+      "caseId": "route-v06-015",
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:07.780Z",
+      "rationale": "The query requests a structured reasoning pass on a consequential operational decision (blue/green fleet cutover), which matches skill.deep-thinking's explicit scope of chain-of-thought reasoning covering world state, assumptions, options, and blast radius before consequential actions.",
+      "rawGroundTruthCandidateId": "skill.deep-thinking"
+    },
+    {
+      "caseId": "route-v06-016",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:09.838Z",
+      "rationale": "The query explicitly asks to build a document tree index over a long policy PDF for navigation, which directly matches pageindex_build_tree's purpose of building document tree indexes for long-form evidence.",
+      "rawGroundTruthCandidateId": "mcp.pageindex_build_tree"
+    },
+    {
+      "caseId": "route-v06-017",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:12.037Z",
+      "rationale": "The query explicitly requests a lineage-tracked evolutionary acceptance loop against a criteria document, which directly matches ouroboros_run_evolutionary_loop's spec-first evolutionary loop with lineage checks capability.",
+      "rawGroundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop"
+    },
+    {
+      "caseId": "route-v06-018",
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:14.164Z",
+      "rationale": "The query explicitly requests grep and find operations across workspace paths, which is precisely the unstructured shell-based search that tool.bash_workspace_hunt is designed for.",
+      "rawGroundTruthCandidateId": "tool.bash_workspace_hunt"
+    },
+    {
+      "caseId": "route-v06-019",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:15.934Z",
+      "rationale": "The query explicitly requests a broad web-style lookup with no schema filters or corpus SQL, which maps directly to the generic unstructured web search tool.",
+      "rawGroundTruthCandidateId": "tool.generic_web_search"
+    },
+    {
+      "caseId": "route-v06-020",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:18.001Z",
+      "rationale": "The query explicitly requests ontology notes with title flag A only, excluding flag B, which exactly matches the mcp.memory_recall_title_flag_a candidate.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_title_flag_a"
+    },
+    {
+      "caseId": "route-v06-021",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:20.221Z",
+      "rationale": "The query explicitly requests recall limited to title flag B rows while excluding flag A, matching exactly the memory_recall title-flag B candidate.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_title_flag_b"
+    },
+    {
+      "caseId": "route-v06-022",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:22.118Z",
+      "rationale": "The query explicitly requests a single SQL COUNT of cohort rows matching a structured flag mask, which is the precise use case for the cohort COUNT operation.",
+      "rawGroundTruthCandidateId": "mcp.data_query_cohort_count"
+    },
+    {
+      "caseId": "route-v06-023",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:24.247Z",
+      "rationale": "The query explicitly requests a wide ontology net with only a practice-area predicate and accepts noisy/over-recall, which directly matches the overbroad filter candidate.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_overbroad"
+    },
+    {
+      "caseId": "route-v06-024",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:26.504Z",
+      "rationale": "The query asks for optional workflow recipes covering append/list/clear patterns on the always-on audit tool, which exactly matches skill.clawql-audit-workflows describing optional guidance for those patterns on the always-registered ClawQL audit tool.",
+      "rawGroundTruthCandidateId": "skill.clawql-audit-workflows"
+    },
+    {
+      "caseId": "route-v06-025",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:28.949Z",
+      "rationale": "The query asks how to use the always-registered cache MCP as throwaway mid-run scratch, which maps directly to the skill covering cache MCP tool usage as ephemeral scratch state during active sessions, not just the raw tool itself.",
+      "rawGroundTruthCandidateId": "skill.clawql-cache-workflows"
+    },
+    {
+      "caseId": "route-v06-026",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:31.022Z",
+      "rationale": "The query asks for a 'playbook' that chains discovery, fire, vault, Slack, and cron into one recipe, which directly maps to the composed MCP workflows skill that provides end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools.",
+      "rawGroundTruthCandidateId": "skill.clawql-composed-mcp-workflows"
+    },
+    {
+      "caseId": "route-v06-027",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:33.189Z",
+      "rationale": "The query asks about safely running a discovered API operation with argument validation and post-change checks, which directly matches the clawql-execute-workflows skill's description of executing discovered API operations safely with argument validation and post-change verification.",
+      "rawGroundTruthCandidateId": "skill.clawql-execute-workflows"
+    },
+    {
+      "caseId": "route-v06-028",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:35.967Z",
+      "rationale": "The query explicitly asks about dry-run-first validation with ingest_external_knowledge, which matches the skill.clawql-external-ingest candidate that specifically covers that validation pattern, making it the more complete and precise ground truth over the bare MCP tool entry.",
+      "rawGroundTruthCandidateId": "skill.clawql-external-ingest"
+    },
+    {
+      "caseId": "route-v06-029",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:37.992Z",
+      "rationale": "The query explicitly asks about stable titles, append threading, and wikilinks, which are the precise distinguishing features described in the clawql-memory-ingest skill candidate.",
+      "rawGroundTruthCandidateId": "skill.clawql-memory-ingest"
+    },
+    {
+      "caseId": "route-v06-030",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:39.959Z",
+      "rationale": "The query explicitly asks for a skill teaching focused vault retrieval with controllable graph hop depth, which directly matches skill.clawql-memory-recall's description of focused queries and graph depth controls.",
+      "rawGroundTruthCandidateId": "skill.clawql-memory-recall"
+    },
+    {
+      "caseId": "route-v06-031",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:42.570Z",
+      "rationale": "The query explicitly asks for the 'recipe' (i.e., workflow patterns) for actionable Slack milestones and failure alerts using the optional notify tool, which maps directly to the skill-level workflow documentation rather than the bare MCP tool.",
+      "rawGroundTruthCandidateId": "skill.clawql-notify-workflows"
+    },
+    {
+      "caseId": "route-v06-032",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:44.765Z",
+      "rationale": "The query asks for a skill walkthrough that instructs evidence-grounding with Onyx before mutation, which matches the clawql-onyx-knowledge-workflows skill that explicitly describes using knowledge_search_onyx to ground workflows in enterprise evidence before execution.",
+      "rawGroundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows"
+    },
+    {
+      "caseId": "route-v06-033",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:47.106Z",
+      "rationale": "The query asks which skill explains spec-first evolutionary loops and boundaries versus raw cluster tooling, which matches the clawql-ouroboros-workflows skill description covering iterative spec-first workflows with ouroboros_* tools and clear boundaries vs raw infra (kubectl/Helm).",
+      "rawGroundTruthCandidateId": "skill.clawql-ouroboros-workflows"
+    },
+    {
+      "caseId": "route-v06-034",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:49.346Z",
+      "rationale": "The query asks for a skill document covering both isolated snippet execution and sandbox session safety patterns, which matches skill.clawql-sandbox-exec exactly as it documents sandbox_exec usage with safe persistence/session patterns.",
+      "rawGroundTruthCandidateId": "skill.clawql-sandbox-exec"
+    },
+    {
+      "caseId": "route-v06-035",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:51.608Z",
+      "rationale": "This skill explicitly covers building synthetic cron probes, dry-run validation, and pairing with alerts/notify, matching all three query requirements.",
+      "rawGroundTruthCandidateId": "skill.clawql-schedule-workflows"
+    },
+    {
+      "caseId": "route-v06-036",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:53.721Z",
+      "rationale": "The query asks specifically about a 'skill' for discovering operationIds with search before execute in multi-provider flows, which maps directly to the clawql-search-workflows skill.",
+      "rawGroundTruthCandidateId": "skill.clawql-search-workflows"
+    },
+    {
+      "caseId": "route-v06-037",
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:55.916Z",
+      "rationale": "The query asks for an advanced Obsidian playbook covering graph links, threaded session notes, and raw log capture—all of which map directly to the comprehensive vault workflow skill that explicitly covers wikilink graphs, session threading, and verbatim captures.",
+      "rawGroundTruthCandidateId": "skill.clawql-vault-memory"
+    },
+    {
+      "caseId": "route-v06-038",
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:01:58.078Z",
+      "rationale": "The query explicitly requests reasoning through assumptions, blast radius, and postmortem notes before a consequential action (bouncing a runner), which matches skill.deep-thinking's description of chain-of-thought reasoning covering world state, assumptions, blast radius, and after-action takeaways.",
+      "rawGroundTruthCandidateId": "skill.deep-thinking"
+    },
+    {
+      "caseId": "route-v06-039",
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:00.210Z",
+      "rationale": "The query asks to discover which operationId matches a natural language description, which is exactly the purpose of the search tool before execution.",
+      "rawGroundTruthCandidateId": "mcp.search"
+    },
+    {
+      "caseId": "route-v06-040",
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:02.548Z",
+      "rationale": "The operation (tickets.transition) and its validated arguments are already known, so execution is the correct route without needing discovery.",
+      "rawGroundTruthCandidateId": "mcp.execute"
+    },
+    {
+      "caseId": "route-v06-041",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:05.060Z",
+      "rationale": "The query asks to fetch ontology context about prior outages using vault schema filters, which maps directly to memory_recall's purpose of retrieving vault or ontology context with schema/filters rather than executing SQL over a structured corpus.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall"
+    },
+    {
+      "caseId": "route-v06-042",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:06.988Z",
+      "rationale": "The query asks to persist a decision for later sessions to find in the vault, which matches memory_ingest's purpose of storing durable session outcomes rather than ephemeral scratch state.",
+      "rawGroundTruthCandidateId": "mcp.memory_ingest"
+    },
+    {
+      "caseId": "route-v06-043",
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:09.269Z",
+      "rationale": "The query explicitly targets DuckDB matters tables with a specific matter ID, which is a structured SQL operation perfectly suited for the data_query/clawql_sql tool.",
+      "rawGroundTruthCandidateId": "mcp.data_query"
+    },
+    {
+      "caseId": "route-v06-044",
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:11.397Z",
+      "rationale": "The query asks to store a partial JSON blob in ephemeral session state temporarily, which matches mcp.cache's purpose as ephemeral session scratch state rather than durable persistence.",
+      "rawGroundTruthCandidateId": "mcp.cache"
+    },
+    {
+      "caseId": "route-v06-045",
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:13.369Z",
+      "rationale": "The query asks to list WORM-linked audit events, which directly matches mcp.audit's capability to append or list WORM-linked audit events.",
+      "rawGroundTruthCandidateId": "mcp.audit"
+    },
+    {
+      "caseId": "route-v06-046",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:15.470Z",
+      "rationale": "The query asks for index entries (ids/digests only) to browse before selecting one to open, which matches skills_list that returns name, description, and digest without full body content.",
+      "rawGroundTruthCandidateId": "mcp.skills_list"
+    },
+    {
+      "caseId": "route-v06-047",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:17.830Z",
+      "rationale": "The query asks to retrieve the full skill markdown for a specific skill id, which maps directly to skills_get that loads full skill content for a selected skill id.",
+      "rawGroundTruthCandidateId": "mcp.skills_get"
+    },
+    {
+      "caseId": "route-v06-048",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:19.809Z",
+      "rationale": "The query explicitly requests running a TypeScript snippet in isolation with persistence enabled, which directly matches sandbox_exec's purpose of running isolated code with safe persistence.",
+      "rawGroundTruthCandidateId": "mcp.sandbox_exec"
+    },
+    {
+      "caseId": "route-v06-049",
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:21.935Z",
+      "rationale": "Sending a Slack message to the on-call channel about a migration failure is a notification action, matching mcp.notify's purpose of sending Slack failure notifications.",
+      "rawGroundTruthCandidateId": "mcp.notify"
+    },
+    {
+      "caseId": "route-v06-050",
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:23.913Z",
+      "rationale": "The query asks for a recurring synthetic probe with dry_run support, which directly matches mcp.schedule's capability for recurring synthetic checks with dry_run.",
+      "rawGroundTruthCandidateId": "mcp.schedule"
+    },
+    {
+      "caseId": "route-v06-051",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:25.874Z",
+      "rationale": "The query explicitly asks to pull in an external URL as knowledge content, which directly matches the ingest_external_knowledge tool's purpose of importing external markdown or URL content.",
+      "rawGroundTruthCandidateId": "mcp.ingest_external_knowledge"
+    },
+    {
+      "caseId": "route-v06-052",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:27.929Z",
+      "rationale": "The query explicitly requests searching Onyx for an enterprise retention policy, which directly matches the knowledge_search_onyx tool designed to search the enterprise Onyx knowledge base before execution.",
+      "rawGroundTruthCandidateId": "mcp.knowledge_search_onyx"
+    },
+    {
+      "caseId": "route-v06-053",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:30.063Z",
+      "rationale": "An irreversible schema drop requires structured reasoning and deliberation before any execution, making clawql_think the correct tool to engage first.",
+      "rawGroundTruthCandidateId": "mcp.clawql_think"
+    },
+    {
+      "caseId": "route-v06-054",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:31.889Z",
+      "rationale": "The query asks to index a lengthy deposition transcript into a navigable document tree, which directly matches pageindex_build_tree's purpose of building document tree indexes for long-form evidence.",
+      "rawGroundTruthCandidateId": "mcp.pageindex_build_tree"
+    },
+    {
+      "caseId": "route-v06-055",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:34.003Z",
+      "rationale": "The query explicitly requests launching the evolutionary loop that iterates the spec and records lineage each generation, which maps directly to the ouroboros_run_evolutionary_loop MCP tool rather than the broader workflow skill.",
+      "rawGroundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop"
+    },
+    {
+      "caseId": "route-v06-056",
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:36.063Z",
+      "rationale": "The query explicitly asks to use find/grep in the repo to locate a hardcoded region string, which is a direct shell/bash workspace hunt operation.",
+      "rawGroundTruthCandidateId": "tool.bash_workspace_hunt"
+    },
+    {
+      "caseId": "route-v06-057",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:38.418Z",
+      "rationale": "The query explicitly requests an unstructured broad web search for competitor pricing pages with no corpus or filters, which matches the generic web search tool rather than SQL over a structured corpus.",
+      "rawGroundTruthCandidateId": "tool.generic_web_search"
+    },
+    {
+      "caseId": "route-v06-058",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:40.158Z",
+      "rationale": "The query explicitly requests ontology recall limited to title-flag A documents only, which matches the title-flag A candidate.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_title_flag_a"
+    },
+    {
+      "caseId": "route-v06-059",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:41.963Z",
+      "rationale": "The query explicitly requests ontology recall limited to title-flag B documents, which matches the title-flag B candidate exactly.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_title_flag_b"
+    },
+    {
+      "caseId": "route-v06-060",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:44.224Z",
+      "rationale": "The query explicitly requests only an integer tally (count) of matters matching two boolean flag conditions, which is exactly the cohort COUNT use case.",
+      "rawGroundTruthCandidateId": "mcp.data_query_cohort_count"
+    },
+    {
+      "caseId": "route-v06-061",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:46.547Z",
+      "rationale": "The query explicitly acknowledges the risk of pulling too many notes via a wide/coarse practice-area filter, which directly matches the overbroad filter candidate over the standard filtered recall.",
+      "rawGroundTruthCandidateId": "mcp.memory_recall_overbroad"
+    },
+    {
+      "caseId": "route-v06-062",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:48.559Z",
+      "rationale": "The query explicitly asks for the recipe/skill layer for managing WORM-style audit trails over a long operator session, not the raw MCP tool itself, matching the workflow guidance skill.",
+      "rawGroundTruthCandidateId": "skill.clawql-audit-workflows"
+    },
+    {
+      "caseId": "route-v06-063",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:51.068Z",
+      "rationale": "The query asks for 'guidance' (documentation/instructional content) treating cache scratch as disposable for a live session, which matches the skill entry that provides workflow guidance about using cache as ephemeral scratch state, rather than the bare tool descriptor.",
+      "rawGroundTruthCandidateId": "skill.clawql-cache-workflows"
+    },
+    {
+      "caseId": "route-v06-064",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:53.189Z",
+      "rationale": "The query asks for a proven recipe chaining search/execute with memory, notify, and schedule, which directly matches the composed workflows skill that provides end-to-end recipes combining those exact tools.",
+      "rawGroundTruthCandidateId": "skill.clawql-composed-mcp-workflows"
+    },
+    {
+      "caseId": "route-v06-065",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:55.260Z",
+      "rationale": "The query asks about a skill pattern for validating execute args and verifying after mutation, which maps to the clawql-execute-workflows skill that explicitly covers argument validation and post-change verification as a workflow pattern.",
+      "rawGroundTruthCandidateId": "skill.clawql-execute-workflows"
+    },
+    {
+      "caseId": "route-v06-066",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:57.563Z",
+      "rationale": "The query specifically asks about dry-run-first validation behavior, which is a skill-level concern describing the operational pattern, not just the raw MCP operation.",
+      "rawGroundTruthCandidateId": "skill.clawql-external-ingest"
+    },
+    {
+      "caseId": "route-v06-067",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:02:59.645Z",
+      "rationale": "The query asks specifically about append-mode threading, stable titles, and wikilinks, which are explicitly detailed in the skill.clawql-memory-ingest candidate rather than the generic mcp.memory_ingest description.",
+      "rawGroundTruthCandidateId": "skill.clawql-memory-ingest"
+    },
+    {
+      "caseId": "route-v06-068",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:01.606Z",
+      "rationale": "The query explicitly mentions 'focused vault recall' and 'graph depth,' which directly matches the clawql-memory-recall skill's description of focused queries and graph depth controls before deep work.",
+      "rawGroundTruthCandidateId": "skill.clawql-memory-recall"
+    },
+    {
+      "caseId": "route-v06-069",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:03.609Z",
+      "rationale": "The query explicitly mentions 'Playbook' and 'optional notify tool', matching the skill's description of actionable Slack milestones and failure notifications with the optional notify tool.",
+      "rawGroundTruthCandidateId": "skill.clawql-notify-workflows"
+    },
+    {
+      "caseId": "route-v06-070",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:06.096Z",
+      "rationale": "The query explicitly asks to 'bring up the enterprise-evidence skill playbook,' which maps to the skill that orchestrates knowledge search workflows before mutating actions, not the raw MCP search tool directly.",
+      "rawGroundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows"
+    },
+    {
+      "caseId": "route-v06-071",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:08.229Z",
+      "rationale": "The query asks for a skill covering ouroboros iterative specs with lineage and explicit boundaries against raw Helm/kubectl, which matches the skill candidate's description of spec-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra.",
+      "rawGroundTruthCandidateId": "skill.clawql-ouroboros-workflows"
+    },
+    {
+      "caseId": "route-v06-072",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:10.473Z",
+      "rationale": "The query asks for sandbox skill docs covering both isolated cells and safe session reuse, which maps to the skill entry that explicitly documents safe persistence/session patterns in addition to isolated execution.",
+      "rawGroundTruthCandidateId": "skill.clawql-sandbox-exec"
+    },
+    {
+      "caseId": "route-v06-073",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:12.324Z",
+      "rationale": "This candidate explicitly covers all three requirements: synthetic probes, dry_run validation, and notify pairing in a single skill.",
+      "rawGroundTruthCandidateId": "skill.clawql-schedule-workflows"
+    },
+    {
+      "caseId": "route-v06-074",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:14.487Z",
+      "rationale": "The query explicitly references the 'search-workflows skill' and discovering operationIds in multi-provider setups, which maps directly to the clawql-search-workflows skill candidate.",
+      "rawGroundTruthCandidateId": "skill.clawql-search-workflows"
+    },
+    {
+      "caseId": "route-v06-075",
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "adjudicated": true,
+      "judgeModel": "claude-sonnet-4-6",
+      "judgedAt": "2026-09-25T23:03:17.698Z",
+      "rationale": "The query explicitly requests deep vault-memory skill covering both ingest and recall for building a wikilink knowledge graph, which matches skill.clawql-vault-memory's description of deep ClawQL Obsidian vault workflows spanning memory_ingest and memory_recall tools with wikilink graph support.",
+      "rawGroundTruthCandidateId": "skill.clawql-vault-memory"
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "route-v06-001",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I need the right provider operationIds for creating a billing invoice from a plain-language ask before I call anything.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": true,
+      "notes": "Natural-language discovery of operationIds is search, not execute or unstructured web search. | adjudicated by claude-sonnet-4-6: The query explicitly asks to discover provider operationIds from a plain-language description before executing anything, which is exactly the purpose of the search/discovery operation.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-002",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "operationId is already known and the args validated — fire it without rediscovering the API.",
+      "candidates": [
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": true,
+      "notes": "Known operationId with validated args maps to execute. | adjudicated by claude-sonnet-4-6: The operationId is already known and arguments are validated, so direct execution is appropriate without any rediscovery step.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-003",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Pull vault ontology notes about our retry backoff policy using the schema filters we already defined.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": true,
+      "notes": "Schema-filtered vault/ontology retrieval is memory_recall. | adjudicated by claude-sonnet-4-6: The query asks to retrieve existing vault ontology notes about a retry backoff policy using pre-defined schema filters, which matches memory_recall's purpose of retrieving vault/ontology context with schema/filters.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-004",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Write today's incident wrap-up into the vault so the outcome survives this session.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "adjudicated": true,
+      "notes": "Persisting durable session outcomes is memory_ingest, not ephemeral cache. | adjudicated by claude-sonnet-4-6: The query explicitly asks to write/persist the incident wrap-up to the vault so it survives the session, which matches mcp.memory_ingest's purpose of persisting durable session outcomes to the vault.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-005",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Query the local DuckDB matters tables for open files grouped by court venue.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": true,
+      "notes": "SQL over structured corpus is data_query, not vault recall or broad search. | adjudicated by claude-sonnet-4-6: The query explicitly requests SQL execution over a local DuckDB matters table with grouping, which maps directly to the structured corpus SQL capability of mcp.data_query.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-006",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Park this partial provider payload in short-lived session scratch for the next hop; do not write the vault.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": true,
+      "notes": "Ephemeral scratch state is cache, not durable ingest or audit. | adjudicated by claude-sonnet-4-6: The query explicitly requests short-lived session scratch storage for a partial payload without writing to the vault, matching mcp.cache's ephemeral session scratch state purpose.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-007",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Append a WORM-linked audit event for the permission change we just finished.",
+      "candidates": [
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": true,
+      "notes": "WORM-linked audit append/list is the audit tool. | adjudicated by claude-sonnet-4-6: The query explicitly requests appending a WORM-linked audit event, which directly matches mcp.audit's capability to append or list WORM-linked audit events.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-008",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Show me the skill index entries with name, description, and digest—don't load full bodies yet.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": true,
+      "notes": "Listing index metadata is skills_list; full content is skills_get. | adjudicated by claude-sonnet-4-6: The query explicitly requests skill index entries with name, description, and digest without loading full bodies, which matches exactly the skills_list operation.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-009",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Fetch the full markdown body of plugin id clawql-schedule-workflows so I can walk its checklist.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "features": {
+            "label": "clawql-schedule-workflows",
+            "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": true,
+      "notes": "Loading full content for a selected skill id is skills_get. | adjudicated by claude-sonnet-4-6: The query explicitly requests fetching the full markdown body of a specific plugin/skill by id, which is exactly what skills_get does — loading full skill content for a selected skill id.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-010",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Run this short Python cell inside the isolated interpreter and retain the sandbox session handle.",
+      "candidates": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "adjudicated": true,
+      "notes": "Isolated code snippets with safe persistence is sandbox_exec. | adjudicated by claude-sonnet-4-6: The query explicitly requests running a Python cell in an isolated interpreter and retaining the sandbox session handle, which directly matches sandbox_exec's purpose of running isolated code snippets with safe persistence.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-011",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Post a Slack milestone that the nightly reconciliation finished successfully.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": true,
+      "notes": "Slack milestone/failure notifications are notify. | adjudicated by claude-sonnet-4-6: The query asks to post a Slack milestone notification, which directly matches mcp.notify's purpose of sending Slack milestones or failure notifications.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-012",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Register a cadence job that pings payments every hour, but only after a no-op rehearsal succeeds.",
+      "candidates": [
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "features": {
+            "label": "ouroboros_run_evolutionary_loop",
+            "description": "Spec-first evolutionary loop with lineage checks"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": true,
+      "notes": "Recurring synthetic checks with dry_run is schedule. | adjudicated by claude-sonnet-4-6: The query asks to register a recurring cadence job (hourly ping) with a dry-run/rehearsal gate, which maps directly to mcp.schedule's recurring synthetic checks with dry_run capability.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-013",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Bring this public standards document URL into our external knowledge corpus (not the personal vault).",
+      "candidates": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "features": {
+            "label": "pageindex_build_tree",
+            "description": "Build document tree indexes for long-form evidence"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "adjudicated": true,
+      "notes": "Importing external markdown/URL content is ingest_external_knowledge. | adjudicated by claude-sonnet-4-6: The query explicitly requests importing a public URL into the external knowledge corpus, which directly matches ingest_external_knowledge's purpose of importing external markdown or URL content, and explicitly excludes the personal vault (ruling out memory_ingest).",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-014",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Before we touch production APIs, search enterprise Onyx for the approved change-control playbook.",
+      "candidates": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "adjudicated": true,
+      "notes": "Enterprise Onyx knowledge search before execution is knowledge_search_onyx. | adjudicated by claude-sonnet-4-6: The query explicitly requests searching the enterprise Onyx knowledge base for an approved change-control playbook, which directly matches the knowledge_search_onyx tool's purpose of searching enterprise Onyx knowledge before execution.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-015",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Do a structured reasoning pass on whether we should cut over the blue/green fleet tonight.",
+      "candidates": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "features": {
+            "label": "clawql_think",
+            "description": "Structured reasoning before consequential decisions"
+          }
+        },
+        {
+          "candidateId": "skill.deep-thinking",
+          "features": {
+            "label": "deep-thinking",
+            "description": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failur"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "adjudicated": true,
+      "notes": "Structured reasoning before a consequential decision is clawql_think. | adjudicated by claude-sonnet-4-6: The query requests a structured reasoning pass on a consequential operational decision (blue/green fleet cutover), which matches skill.deep-thinking's explicit scope of chain-of-thought reasoning covering world state, assumptions, options, and blast radius before consequential actions.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-016",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Build a document tree index over this long policy PDF so we can navigate evidence later.",
+      "candidates": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "features": {
+            "label": "pageindex_build_tree",
+            "description": "Build document tree indexes for long-form evidence"
+          }
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "adjudicated": true,
+      "notes": "Building long-form document tree indexes is pageindex_build_tree. | adjudicated by claude-sonnet-4-6: The query explicitly asks to build a document tree index over a long policy PDF for navigation, which directly matches pageindex_build_tree's purpose of building document tree indexes for long-form evidence.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-017",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Kick off a lineage-tracked evolutionary acceptance loop against the written criteria document.",
+      "candidates": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "features": {
+            "label": "ouroboros_run_evolutionary_loop",
+            "description": "Spec-first evolutionary loop with lineage checks"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "features": {
+            "label": "clawql_think",
+            "description": "Structured reasoning before consequential decisions"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "adjudicated": true,
+      "notes": "Spec-first evolutionary loop with lineage is ouroboros_run_evolutionary_loop. | adjudicated by claude-sonnet-4-6: The query explicitly requests a lineage-tracked evolutionary acceptance loop against a criteria document, which directly matches ouroboros_run_evolutionary_loop's spec-first evolutionary loop with lineage checks capability.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-018",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Just grep and find across the workspace paths until something mentioning lease renewals turns up.",
+      "candidates": [
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "adjudicated": true,
+      "notes": "Explicit unstructured shell listing/grepping matches bash_workspace_hunt. | adjudicated by claude-sonnet-4-6: The query explicitly requests grep and find operations across workspace paths, which is precisely the unstructured shell-based search that tool.bash_workspace_hunt is designed for.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-019",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Do a broad web-style lookup for any mention of our product name—no schema filters, no corpus SQL.",
+      "candidates": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": true,
+      "notes": "Broad search without schema/SQL is generic unstructured search. | adjudicated by claude-sonnet-4-6: The query explicitly requests a broad web-style lookup with no schema filters or corpus SQL, which maps directly to the generic unstructured web search tool.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-020",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Recall ontology notes whose title flag is A only—exclude anything tagged flag B.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": true,
+      "notes": "Title flag A (not B) selects memory_recall_title_flag_a. | adjudicated by claude-sonnet-4-6: The query explicitly requests ontology notes with title flag A only, excluding flag B, which exactly matches the mcp.memory_recall_title_flag_a candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-021",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Ontology recall limited to title flag B rows — exclude anything tagged flag A.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": true,
+      "notes": "Title flag B (not A) selects memory_recall_title_flag_b. | adjudicated by claude-sonnet-4-6: The query explicitly requests recall limited to title flag B rows while excluding flag A, matching exactly the memory_recall title-flag B candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-022",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Return a single SQL COUNT of cohort rows that satisfy the N structured flag mask.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "features": {
+            "label": "data_query cohort COUNT",
+            "description": "SQL COUNT over structured flags for exact k of N"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": true,
+      "notes": "Exact k-of-N COUNT over structured flags is data_query_cohort_count. | adjudicated by claude-sonnet-4-6: The query explicitly requests a single SQL COUNT of cohort rows matching a structured flag mask, which is the precise use case for the cohort COUNT operation.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-023",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Cast a wide ontology net with only a practice-area predicate even if recall gets noisy.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": true,
+      "notes": "Coarse practice-area filter with over-recall risk is memory_recall_overbroad. | adjudicated by claude-sonnet-4-6: The query explicitly requests a wide ontology net with only a practice-area predicate and accepts noisy/over-recall, which directly matches the overbroad filter candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-024",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I want the optional workflow recipes for append/list/clear patterns on the always-on audit tool.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "features": {
+            "label": "clawql-audit-workflows",
+            "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs."
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "features": {
+            "label": "clawql-cache-workflows",
+            "description": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "adjudicated": true,
+      "notes": "Guidance recipes for audit multi-step patterns is the audit-workflows skill. | adjudicated by claude-sonnet-4-6: The query asks for optional workflow recipes covering append/list/clear patterns on the always-on audit tool, which exactly matches skill.clawql-audit-workflows describing optional guidance for those patterns on the always-registered ClawQL audit tool.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-025",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "How should I use the always-registered cache MCP as throwaway mid-run scratch?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "features": {
+            "label": "clawql-cache-workflows",
+            "description": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions."
+          }
+        },
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "adjudicated": true,
+      "notes": "Workflow guidance for cache scratch usage is clawql-cache-workflows. | adjudicated by claude-sonnet-4-6: The query asks how to use the always-registered cache MCP as throwaway mid-run scratch, which maps directly to the skill covering cache MCP tool usage as ephemeral scratch state during active sessions, not just the raw tool itself.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-026",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Where is the playbook that chains discovery, fire, vault, Slack, and cron into one recipe?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "features": {
+            "label": "clawql-composed-mcp-workflows",
+            "description": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools."
+          }
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "features": {
+            "label": "clawql-execute-workflows",
+            "description": "Execute discovered API operations safely with argument validation and post-change verification."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "adjudicated": true,
+      "notes": "Combined multi-tool recipes are composed-mcp-workflows. | adjudicated by claude-sonnet-4-6: The query asks for a 'playbook' that chains discovery, fire, vault, Slack, and cron into one recipe, which directly maps to the composed MCP workflows skill that provides end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-027",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Walk me through safely running a discovered API operation with argument validation and post-change checks.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "features": {
+            "label": "clawql-execute-workflows",
+            "description": "Execute discovered API operations safely with argument validation and post-change verification."
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "adjudicated": true,
+      "notes": "Safe execute recipes with validation/verification are execute-workflows. | adjudicated by claude-sonnet-4-6: The query asks about safely running a discovered API operation with argument validation and post-change checks, which directly matches the clawql-execute-workflows skill's description of executing discovered API operations safely with argument validation and post-change verification.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-028",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "How do I import external markdown via ingest_external_knowledge with dry-run-first validation?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "features": {
+            "label": "clawql-external-ingest",
+            "description": "Import external markdown or URL content using ingest_external_knowledge with dry-run-first validation."
+          }
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "adjudicated": true,
+      "notes": "Dry-run-first external ingest guidance is clawql-external-ingest. | adjudicated by claude-sonnet-4-6: The query explicitly asks about dry-run-first validation with ingest_external_knowledge, which matches the skill.clawql-external-ingest candidate that specifically covers that validation pattern, making it the more complete and precise ground truth over the bare MCP tool entry.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-029",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Remind me how to persist durable outcomes with stable titles, append threading, and wikilinks.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "features": {
+            "label": "clawql-vault-memory",
+            "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes,"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "adjudicated": true,
+      "notes": "memory_ingest skill covers stable titles/append/wikilinks patterns. | adjudicated by claude-sonnet-4-6: The query explicitly asks about stable titles, append threading, and wikilinks, which are the precise distinguishing features described in the clawql-memory-ingest skill candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-030",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I need the skill that teaches focused vault retrieval with controllable graph hop depth before I dig in.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "features": {
+            "label": "clawql-memory-recall",
+            "description": "Recall relevant vault context before deep work using focused queries and graph depth controls."
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "adjudicated": true,
+      "notes": "Focused recall with graph depth is clawql-memory-recall skill. | adjudicated by claude-sonnet-4-6: The query explicitly asks for a skill teaching focused vault retrieval with controllable graph hop depth, which directly matches skill.clawql-memory-recall's description of focused queries and graph depth controls.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-031",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "What's the recipe for actionable Slack milestones and failure alerts using the optional notify tool?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "features": {
+            "label": "clawql-notify-workflows",
+            "description": "Send actionable Slack milestones and failure notifications with the optional notify tool."
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "features": {
+            "label": "clawql-schedule-workflows",
+            "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "adjudicated": true,
+      "notes": "Notify milestone/failure recipes are clawql-notify-workflows. | adjudicated by claude-sonnet-4-6: The query explicitly asks for the 'recipe' (i.e., workflow patterns) for actionable Slack milestones and failure alerts using the optional notify tool, which maps directly to the skill-level workflow documentation rather than the bare MCP tool.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-032",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which skill walkthrough tells me to evidence-ground with Onyx before I mutate anything?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "features": {
+            "label": "clawql-onyx-knowledge-workflows",
+            "description": "Use knowledge_search_onyx to ground workflows in enterprise evidence before execution."
+          }
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "adjudicated": true,
+      "notes": "Onyx grounding playbook is clawql-onyx-knowledge-workflows. | adjudicated by claude-sonnet-4-6: The query asks for a skill walkthrough that instructs evidence-grounding with Onyx before mutation, which matches the clawql-onyx-knowledge-workflows skill that explicitly describes using knowledge_search_onyx to ground workflows in enterprise evidence before execution.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-033",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which skill explains spec-first evolutionary loops and when not to drop to raw cluster tooling?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "features": {
+            "label": "clawql-ouroboros-workflows",
+            "description": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm)."
+          }
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "features": {
+            "label": "ouroboros_run_evolutionary_loop",
+            "description": "Spec-first evolutionary loop with lineage checks"
+          }
+        },
+        {
+          "candidateId": "skill.deep-thinking",
+          "features": {
+            "label": "deep-thinking",
+            "description": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failur"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "adjudicated": true,
+      "notes": "Ouroboros workflow skill covers lineage and infra boundaries. | adjudicated by claude-sonnet-4-6: The query asks which skill explains spec-first evolutionary loops and boundaries versus raw cluster tooling, which matches the clawql-ouroboros-workflows skill description covering iterative spec-first workflows with ouroboros_* tools and clear boundaries vs raw infra (kubectl/Helm).",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-034",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which skill documents isolated snippet execution plus how to keep sandbox sessions safely?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "features": {
+            "label": "clawql-sandbox-exec",
+            "description": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns."
+          }
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "features": {
+            "label": "clawql-execute-workflows",
+            "description": "Execute discovered API operations safely with argument validation and post-change verification."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "adjudicated": true,
+      "notes": "Sandbox skill guidance is clawql-sandbox-exec. | adjudicated by claude-sonnet-4-6: The query asks for a skill document covering both isolated snippet execution and sandbox session safety patterns, which matches skill.clawql-sandbox-exec exactly as it documents sandbox_exec usage with safe persistence/session patterns.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-035",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which skill walks building synthetic cron probes, dry-run checks, and pairing alerts?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "features": {
+            "label": "clawql-schedule-workflows",
+            "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify."
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "features": {
+            "label": "clawql-notify-workflows",
+            "description": "Send actionable Slack milestones and failure notifications with the optional notify tool."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "adjudicated": true,
+      "notes": "Schedule+dry_run+notify recipes are clawql-schedule-workflows. | adjudicated by claude-sonnet-4-6: This skill explicitly covers building synthetic cron probes, dry-run validation, and pairing with alerts/notify, matching all three query requirements.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-036",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "In a multi-provider flow, what's the skill for discovering correct operationIds with search before execute?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "features": {
+            "label": "clawql-execute-workflows",
+            "description": "Execute discovered API operations safely with argument validation and post-change verification."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "adjudicated": true,
+      "notes": "Search-before-execute discovery skill is clawql-search-workflows. | adjudicated by claude-sonnet-4-6: The query asks specifically about a 'skill' for discovering operationIds with search before execute in multi-provider flows, which maps directly to the clawql-search-workflows skill.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-037",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I want the advanced Obsidian playbook: graph links, threaded session notes, and raw log capture.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "features": {
+            "label": "clawql-vault-memory",
+            "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes,"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "features": {
+            "label": "clawql-memory-recall",
+            "description": "Recall relevant vault context before deep work using focused queries and graph depth controls."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "adjudicated": true,
+      "notes": "Combined deep vault graph workflows are clawql-vault-memory. | adjudicated by claude-sonnet-4-6: The query asks for an advanced Obsidian playbook covering graph links, threaded session notes, and raw log capture—all of which map directly to the comprehensive vault workflow skill that explicitly covers wikilink graphs, session threading, and verbatim captures.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-038",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Pause before bouncing the runner — reason through assumptions, blast radius, and postmortem notes first.",
+      "candidates": [
+        {
+          "candidateId": "skill.deep-thinking",
+          "features": {
+            "label": "deep-thinking",
+            "description": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failur"
+          }
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "features": {
+            "label": "clawql_think",
+            "description": "Structured reasoning before consequential decisions"
+          }
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "adjudicated": true,
+      "notes": "Consequential CoT with blast radius/takeaways is deep-thinking skill. | adjudicated by claude-sonnet-4-6: The query explicitly requests reasoning through assumptions, blast radius, and postmortem notes before a consequential action (bouncing a runner), which matches skill.deep-thinking's description of chain-of-thought reasoning covering world state, assumptions, blast radius, and after-action takeaways.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-039",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which Stripe-adjacent operationId matches 'void an unpaid invoice' in natural language?",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": true,
+      "notes": "Still discovering operationIds → search. | adjudicated by claude-sonnet-4-6: The query asks to discover which operationId matches a natural language description, which is exactly the purpose of the search tool before execution.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-040",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Invoke tickets.transition with the status and comment fields already validated.",
+      "candidates": [
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": true,
+      "notes": "Known operationId ready to run → execute. | adjudicated by claude-sonnet-4-6: The operation (tickets.transition) and its validated arguments are already known, so execution is the correct route without needing discovery.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-041",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Fetch ontology context about prior outages with the filters in our vault schema.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "adjudicated": true,
+      "notes": "Vault/ontology with schema filters → memory_recall. | adjudicated by claude-sonnet-4-6: The query asks to fetch ontology context about prior outages using vault schema filters, which maps directly to memory_recall's purpose of retrieving vault or ontology context with schema/filters rather than executing SQL over a structured corpus.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-042",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Persist the decision that we chose canary rollout so later sessions can find it in the vault.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        },
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "adjudicated": true,
+      "notes": "Durable vault persistence → memory_ingest. | adjudicated by claude-sonnet-4-6: The query asks to persist a decision for later sessions to find in the vault, which matches memory_ingest's purpose of storing durable session outcomes rather than ephemeral scratch state.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-043",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Query the matters DuckDB tables for counsel assigned to matter M-4412.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": true,
+      "notes": "Structured corpus SQL beats shell hunt or generic search. | adjudicated by claude-sonnet-4-6: The query explicitly targets DuckDB matters tables with a specific matter ID, which is a structured SQL operation perfectly suited for the data_query/clawql_sql tool.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-044",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Park this partial JSON blob in ephemeral session state until the follow-up turn.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": true,
+      "notes": "Ephemeral scratch, not durable vault write. | adjudicated by claude-sonnet-4-6: The query asks to store a partial JSON blob in ephemeral session state temporarily, which matches mcp.cache's purpose as ephemeral session scratch state rather than durable persistence.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-045",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "List recent WORM-linked audit events for this agent run.",
+      "candidates": [
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": true,
+      "notes": "Listing audit events is audit, not Slack notify. | adjudicated by claude-sonnet-4-6: The query asks to list WORM-linked audit events, which directly matches mcp.audit's capability to append or list WORM-linked audit events.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-046",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "List skill index entries (ids/digests only) so I can choose which full body to open next.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": true,
+      "notes": "Index listing vs full body: skills_list. | adjudicated by claude-sonnet-4-6: The query asks for index entries (ids/digests only) to browse before selecting one to open, which matches skills_list that returns name, description, and digest without full body content.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-047",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Retrieve the full skill markdown for id clawql-onyx-knowledge-workflows.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": true,
+      "notes": "Full skill content load is skills_get. | adjudicated by claude-sonnet-4-6: The query asks to retrieve the full skill markdown for a specific skill id, which maps directly to skills_get that loads full skill content for a selected skill id.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-048",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Run this TypeScript transform snippet in isolation with persistence enabled.",
+      "candidates": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "adjudicated": true,
+      "notes": "Isolated snippet execution is sandbox_exec, not workspace grep. | adjudicated by claude-sonnet-4-6: The query explicitly requests running a TypeScript snippet in isolation with persistence enabled, which directly matches sandbox_exec's purpose of running isolated code with safe persistence.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-049",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Slack the on-call channel that the migration failed at step 3.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": true,
+      "notes": "Failure notification to Slack is notify. | adjudicated by claude-sonnet-4-6: Sending a Slack message to the on-call channel about a migration failure is a notification action, matching mcp.notify's purpose of sending Slack failure notifications.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-050",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Create a recurring synthetic probe that dry_runs before it pages anyone.",
+      "candidates": [
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": true,
+      "notes": "Recurring synthetic check with dry_run is schedule. | adjudicated by claude-sonnet-4-6: The query asks for a recurring synthetic probe with dry_run support, which directly matches mcp.schedule's capability for recurring synthetic checks with dry_run.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-051",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Pull in the external handbook from https://example.org/handbook.md as knowledge content.",
+      "candidates": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "adjudicated": true,
+      "notes": "URL/markdown import is ingest_external_knowledge. | adjudicated by claude-sonnet-4-6: The query explicitly asks to pull in an external URL as knowledge content, which directly matches the ingest_external_knowledge tool's purpose of importing external markdown or URL content.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-052",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Search Onyx for the enterprise retention policy before we execute any delete operations.",
+      "candidates": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "adjudicated": true,
+      "notes": "Enterprise Onyx evidence before execution. | adjudicated by claude-sonnet-4-6: The query explicitly requests searching Onyx for an enterprise retention policy, which directly matches the knowledge_search_onyx tool designed to search the enterprise Onyx knowledge base before execution.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-053",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Structure a reasoning trace before we approve the irreversible schema drop.",
+      "candidates": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "features": {
+            "label": "clawql_think",
+            "description": "Structured reasoning before consequential decisions"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "adjudicated": true,
+      "notes": "Consequential pre-decision reasoning is clawql_think. | adjudicated by claude-sonnet-4-6: An irreversible schema drop requires structured reasoning and deliberation before any execution, making clawql_think the correct tool to engage first.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-054",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Index this lengthy deposition transcript into a navigable document tree.",
+      "candidates": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "features": {
+            "label": "pageindex_build_tree",
+            "description": "Build document tree indexes for long-form evidence"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "adjudicated": true,
+      "notes": "Long-form evidence tree indexing is pageindex_build_tree. | adjudicated by claude-sonnet-4-6: The query asks to index a lengthy deposition transcript into a navigable document tree, which directly matches pageindex_build_tree's purpose of building document tree indexes for long-form evidence.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-055",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Launch the evolutionary loop that iterates the spec and records lineage each generation.",
+      "candidates": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "features": {
+            "label": "ouroboros_run_evolutionary_loop",
+            "description": "Spec-first evolutionary loop with lineage checks"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "features": {
+            "label": "clawql-ouroboros-workflows",
+            "description": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm)."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "adjudicated": true,
+      "notes": "Running the loop tool itself, not just reading the skill. | adjudicated by claude-sonnet-4-6: The query explicitly requests launching the evolutionary loop that iterates the spec and records lineage each generation, which maps directly to the ouroboros_run_evolutionary_loop MCP tool rather than the broader workflow skill.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-056",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Look around with find/grep in the repo until the hardcoded region string shows up.",
+      "candidates": [
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "adjudicated": true,
+      "notes": "User explicitly wants unstructured workspace shell hunt. | adjudicated by claude-sonnet-4-6: The query explicitly asks to use find/grep in the repo to locate a hardcoded region string, which is a direct shell/bash workspace hunt operation.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-057",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Do an unstructured broad search for competitor pricing pages—no corpus, no filters.",
+      "candidates": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": true,
+      "notes": "Broad search without schema/SQL. | adjudicated by claude-sonnet-4-6: The query explicitly requests an unstructured broad web search for competitor pricing pages with no corpus or filters, which matches the generic web search tool rather than SQL over a structured corpus.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-058",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Ontology recall limited to title-flag A documents only.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": true,
+      "notes": "Sibling title-flag A vs B; A is requested. | adjudicated by claude-sonnet-4-6: The query explicitly requests ontology recall limited to title-flag A documents only, which matches the title-flag A candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-059",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Ontology recall limited to title-flag B documents only.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": true,
+      "notes": "Sibling title-flag B vs A; B is requested. | adjudicated by claude-sonnet-4-6: The query explicitly requests ontology recall limited to title-flag B documents, which matches the title-flag B candidate exactly.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-060",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Just the integer tally from DuckDB: matters where structured flags X and Y are both on.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "features": {
+            "label": "data_query cohort COUNT",
+            "description": "SQL COUNT over structured flags for exact k of N"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": true,
+      "notes": "Exact cohort COUNT vs general SQL. | adjudicated by claude-sonnet-4-6: The query explicitly requests only an integer tally (count) of matters matching two boolean flag conditions, which is exactly the cohort COUNT use case.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-061",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Recall by a wide practice-area filter knowing we may pull too many notes.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": true,
+      "notes": "Overbroad practice-area filter vs focused recall. | adjudicated by claude-sonnet-4-6: The query explicitly acknowledges the risk of pulling too many notes via a wide/coarse practice-area filter, which directly matches the overbroad filter candidate over the standard filtered recall.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-062",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Point me at the recipe skill for managing WORM-style audit trails over a long operator session (not the raw MCP).",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "features": {
+            "label": "clawql-audit-workflows",
+            "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs."
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "adjudicated": true,
+      "notes": "Skill guidance vs invoking audit directly. | adjudicated by claude-sonnet-4-6: The query explicitly asks for the recipe/skill layer for managing WORM-style audit trails over a long operator session, not the raw MCP tool itself, matching the workflow guidance skill.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-063",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Where is the guidance that treats cache scratch as disposable for the duration of a live session?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "features": {
+            "label": "clawql-cache-workflows",
+            "description": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions."
+          }
+        },
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "adjudicated": true,
+      "notes": "Skill playbook for cache usage. | adjudicated by claude-sonnet-4-6: The query asks for 'guidance' (documentation/instructional content) treating cache scratch as disposable for a live session, which matches the skill entry that provides workflow guidance about using cache as ephemeral scratch state, rather than the bare tool descriptor.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-064",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Compose a proven recipe that chains search/execute with memory, notify, and schedule.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "features": {
+            "label": "clawql-composed-mcp-workflows",
+            "description": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools."
+          }
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "adjudicated": true,
+      "notes": "End-to-end composed recipes, not search-only. | adjudicated by claude-sonnet-4-6: The query asks for a proven recipe chaining search/execute with memory, notify, and schedule, which directly matches the composed workflows skill that provides end-to-end recipes combining those exact tools.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-065",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Where is the skill pattern for validating execute args and verifying after the mutation?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "features": {
+            "label": "clawql-execute-workflows",
+            "description": "Execute discovered API operations safely with argument validation and post-change verification."
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "adjudicated": true,
+      "notes": "Workflow skill for safe execute patterns. | adjudicated by claude-sonnet-4-6: The query asks about a skill pattern for validating execute args and verifying after mutation, which maps to the clawql-execute-workflows skill that explicitly covers argument validation and post-change verification as a workflow pattern.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-066",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Dry-run-first validation when importing external URL content—what's the skill?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "features": {
+            "label": "clawql-external-ingest",
+            "description": "Import external markdown or URL content using ingest_external_knowledge with dry-run-first validation."
+          }
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "adjudicated": true,
+      "notes": "External ingest skill emphasizes dry-run-first. | adjudicated by claude-sonnet-4-6: The query specifically asks about dry-run-first validation behavior, which is a skill-level concern describing the operational pattern, not just the raw MCP operation.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-067",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "How should I thread append-mode vault writes with stable titles and wikilinks?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "features": {
+            "label": "clawql-memory-ingest",
+            "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "adjudicated": true,
+      "notes": "memory-ingest skill for title/append/wikilink patterns. | adjudicated by claude-sonnet-4-6: The query asks specifically about append-mode threading, stable titles, and wikilinks, which are explicitly detailed in the skill.clawql-memory-ingest candidate rather than the generic mcp.memory_ingest description.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-068",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Which skill covers focused vault recall with graph depth before I dig into a hard problem?",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "features": {
+            "label": "clawql-memory-recall",
+            "description": "Recall relevant vault context before deep work using focused queries and graph depth controls."
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "features": {
+            "label": "memory_recall",
+            "description": "Retrieve vault or ontology context with schema/filters"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "adjudicated": true,
+      "notes": "Recall skill vs raw memory_recall tool. | adjudicated by claude-sonnet-4-6: The query explicitly mentions 'focused vault recall' and 'graph depth,' which directly matches the clawql-memory-recall skill's description of focused queries and graph depth controls before deep work.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-069",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Playbook for Slack milestones and failure notifications with the optional notify tool.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "features": {
+            "label": "clawql-notify-workflows",
+            "description": "Send actionable Slack milestones and failure notifications with the optional notify tool."
+          }
+        },
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "adjudicated": true,
+      "notes": "Notify workflows skill. | adjudicated by claude-sonnet-4-6: The query explicitly mentions 'Playbook' and 'optional notify tool', matching the skill's description of actionable Slack milestones and failure notifications with the optional notify tool.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-070",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Bring up the enterprise-evidence skill playbook before we take the next mutating action.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "features": {
+            "label": "clawql-onyx-knowledge-workflows",
+            "description": "Use knowledge_search_onyx to ground workflows in enterprise evidence before execution."
+          }
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "adjudicated": true,
+      "notes": "Skill playbook wrapping knowledge_search_onyx. | adjudicated by claude-sonnet-4-6: The query explicitly asks to 'bring up the enterprise-evidence skill playbook,' which maps to the skill that orchestrates knowledge search workflows before mutating actions, not the raw MCP search tool directly.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-071",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Skill for ouroboros iterative specs with lineage and boundaries against raw Helm/kubectl.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "features": {
+            "label": "clawql-ouroboros-workflows",
+            "description": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm)."
+          }
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "features": {
+            "label": "ouroboros_run_evolutionary_loop",
+            "description": "Spec-first evolutionary loop with lineage checks"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "adjudicated": true,
+      "notes": "Ouroboros workflows skill vs running the loop tool. | adjudicated by claude-sonnet-4-6: The query asks for a skill covering ouroboros iterative specs with lineage and explicit boundaries against raw Helm/kubectl, which matches the skill candidate's description of spec-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-072",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Open the sandbox skill docs covering isolated cells and safe session reuse.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "features": {
+            "label": "clawql-sandbox-exec",
+            "description": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns."
+          }
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "adjudicated": true,
+      "notes": "Sandbox skill guidance. | adjudicated by claude-sonnet-4-6: The query asks for sandbox skill docs covering both isolated cells and safe session reuse, which maps to the skill entry that explicitly documents safe persistence/session patterns in addition to isolated execution.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-073",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Open the schedule skill that covers synthetic probes, dry_run, and notify pairing.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "features": {
+            "label": "clawql-schedule-workflows",
+            "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify."
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "features": {
+            "label": "clawql-notify-workflows",
+            "description": "Send actionable Slack milestones and failure notifications with the optional notify tool."
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "adjudicated": true,
+      "notes": "Schedule workflows skill combining dry_run and notify pairing. | adjudicated by claude-sonnet-4-6: This candidate explicitly covers all three requirements: synthetic probes, dry_run validation, and notify pairing in a single skill.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-074",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Search-workflows skill for discovering the right operationIds in multi-provider setups before execute.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "features": {
+            "label": "clawql-search-workflows",
+            "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "adjudicated": true,
+      "notes": "Search workflows skill for multi-provider discovery. | adjudicated by claude-sonnet-4-6: The query explicitly references the 'search-workflows skill' and discovering operationIds in multi-provider setups, which maps directly to the clawql-search-workflows skill candidate.",
+      "adjudicationKind": "live"
+    },
+    {
+      "caseId": "route-v06-075",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Deep vault-memory skill for building a wikilink knowledge graph across ingest and recall.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "features": {
+            "label": "clawql-vault-memory",
+            "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes,"
+          }
+        },
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "features": {
+            "label": "clawql-memory-recall",
+            "description": "Recall relevant vault context before deep work using focused queries and graph depth controls."
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "adjudicated": true,
+      "notes": "Deep vault graph skill spanning ingest/recall. | adjudicated by claude-sonnet-4-6: The query explicitly requests deep vault-memory skill covering both ingest and recall for building a wikilink knowledge graph, which matches skill.clawql-vault-memory's description of deep ClawQL Obsidian vault workflows spanning memory_ingest and memory_recall tools with wikilink graph support.",
+      "adjudicationKind": "live"
+    }
+  ],
+  "summary": {
+    "suiteId": "fast-decision-held-out-v0.6-routing-fresh",
+    "adjudicationMode": "live",
+    "judgeModel": "claude-sonnet-4-6",
+    "labelCount": 75,
+    "labelsIn": null,
+    "scorerBackend": "gliner2",
+    "glinerLiveConfigured": true,
+    "ontologyEnrichment": false,
+    "ontologyDigest": null,
+    "validationCriteria": {
+      "minAccuracy": 0.7,
+      "maxMeanCalibrationError": 0.15,
+      "minCases": 1
+    },
+    "candidateIdRemapPolicy": "cosmetic-only (quote/case); semantic label/suffix remaps fail the case — never counted",
+    "candidateIdRemaps": [],
+    "reports": [
+      {
+        "useSiteId": "search_provider_tool_routing",
+        "adjudicatedCount": 75,
+        "caseCount": 75,
+        "passedCriteria": false,
+        "productionTrusted": false,
+        "scorerBackend": "gliner2",
+        "meanCalibrationError": 0.1925925925925926,
+        "rawAccuracy": 0.9333333333333333,
+        "failureReasons": [
+          "meanCalibrationError 0.193 > max 0.15"
+        ],
+        "cases": [
+          {
+            "caseId": "route-v06-001",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.8936354077968502,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-002",
+            "topCandidateId": "mcp.execute",
+            "topConfidence": 0.7926990620588399,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-003",
+            "topCandidateId": "mcp.memory_recall",
+            "topConfidence": 0.7917686791410734,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-004",
+            "topCandidateId": "mcp.memory_ingest",
+            "topConfidence": 0.9844600317414134,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-005",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.6735626089659922,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-006",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.9527845484913389,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-007",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9895322001414936,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-008",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.853467418246393,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-009",
+            "topCandidateId": "skill.clawql-schedule-workflows",
+            "topConfidence": 0.5278340232451237,
+            "correct": false
+          },
+          {
+            "caseId": "route-v06-010",
+            "topCandidateId": "mcp.sandbox_exec",
+            "topConfidence": 0.9059413248443026,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-011",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.7907517818091999,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-012",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.5084964018329161,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-013",
+            "topCandidateId": "mcp.ingest_external_knowledge",
+            "topConfidence": 0.9943168203121369,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-014",
+            "topCandidateId": "mcp.knowledge_search_onyx",
+            "topConfidence": 0.9905416505904215,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-015",
+            "topCandidateId": "skill.deep-thinking",
+            "topConfidence": 0.5208917173511706,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-016",
+            "topCandidateId": "mcp.pageindex_build_tree",
+            "topConfidence": 0.9618452142541793,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-017",
+            "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+            "topConfidence": 0.7318734000413759,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-018",
+            "topCandidateId": "tool.bash_workspace_hunt",
+            "topConfidence": 0.9782255114613277,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-019",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.9895777852835791,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-020",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.8111994981592109,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-021",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.9892241459912516,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-022",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.877477278114618,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-023",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.9316001804373095,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-024",
+            "topCandidateId": "skill.clawql-audit-workflows",
+            "topConfidence": 0.8492825872309437,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-025",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.7428688654688151,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-026",
+            "topCandidateId": "skill.clawql-composed-mcp-workflows",
+            "topConfidence": 0.5980493095519774,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-027",
+            "topCandidateId": "skill.clawql-execute-workflows",
+            "topConfidence": 0.5733234421886413,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-028",
+            "topCandidateId": "skill.clawql-external-ingest",
+            "topConfidence": 0.6270827520769375,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-029",
+            "topCandidateId": "skill.clawql-memory-ingest",
+            "topConfidence": 0.5438724736388955,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-030",
+            "topCandidateId": "skill.clawql-memory-recall",
+            "topConfidence": 0.7510018826499346,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-031",
+            "topCandidateId": "skill.clawql-notify-workflows",
+            "topConfidence": 0.5837805887868734,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-032",
+            "topCandidateId": "mcp.knowledge_search_onyx",
+            "topConfidence": 0.47261225726706635,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-033",
+            "topCandidateId": "skill.deep-thinking",
+            "topConfidence": 0.589144334112482,
+            "correct": false
+          },
+          {
+            "caseId": "route-v06-034",
+            "topCandidateId": "skill.clawql-sandbox-exec",
+            "topConfidence": 0.6249749695789001,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-035",
+            "topCandidateId": "skill.clawql-schedule-workflows",
+            "topConfidence": 0.6282599782566258,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-036",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.5518147826512473,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-037",
+            "topCandidateId": "skill.clawql-vault-memory",
+            "topConfidence": 0.39015767155614023,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-038",
+            "topCandidateId": "skill.deep-thinking",
+            "topConfidence": 0.7342744746446673,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-039",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.994739726000273,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-040",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.9344300036101905,
+            "correct": false
+          },
+          {
+            "caseId": "route-v06-041",
+            "topCandidateId": "mcp.memory_recall",
+            "topConfidence": 0.9157881148601683,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-042",
+            "topCandidateId": "mcp.memory_ingest",
+            "topConfidence": 0.9642988359840727,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-043",
+            "topCandidateId": "mcp.data_query",
+            "topConfidence": 0.7459355273590238,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-044",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.947261175069187,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-045",
+            "topCandidateId": "mcp.audit",
+            "topConfidence": 0.9974786267921946,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-046",
+            "topCandidateId": "mcp.skills_list",
+            "topConfidence": 0.5262421705752188,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-047",
+            "topCandidateId": "mcp.skills_get",
+            "topConfidence": 0.9914134377537306,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-048",
+            "topCandidateId": "mcp.sandbox_exec",
+            "topConfidence": 0.994126960023955,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-049",
+            "topCandidateId": "mcp.notify",
+            "topConfidence": 0.5706020679936529,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-050",
+            "topCandidateId": "mcp.schedule",
+            "topConfidence": 0.9740723376895459,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-051",
+            "topCandidateId": "mcp.ingest_external_knowledge",
+            "topConfidence": 0.9090272173980024,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-052",
+            "topCandidateId": "mcp.knowledge_search_onyx",
+            "topConfidence": 0.8658341848995285,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-053",
+            "topCandidateId": "mcp.clawql_think",
+            "topConfidence": 0.9605856836225525,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-054",
+            "topCandidateId": "mcp.pageindex_build_tree",
+            "topConfidence": 0.7370584103029627,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-055",
+            "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+            "topConfidence": 0.6336805302934155,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-056",
+            "topCandidateId": "mcp.search",
+            "topConfidence": 0.8253075053527955,
+            "correct": false
+          },
+          {
+            "caseId": "route-v06-057",
+            "topCandidateId": "tool.generic_web_search",
+            "topConfidence": 0.9974144344840659,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-058",
+            "topCandidateId": "mcp.memory_recall_title_flag_a",
+            "topConfidence": 0.6411036859825806,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-059",
+            "topCandidateId": "mcp.memory_recall_title_flag_b",
+            "topConfidence": 0.9073743295724366,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-060",
+            "topCandidateId": "mcp.data_query_cohort_count",
+            "topConfidence": 0.5265188486940219,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-061",
+            "topCandidateId": "mcp.memory_recall_overbroad",
+            "topConfidence": 0.8952866394218238,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-062",
+            "topCandidateId": "skill.clawql-audit-workflows",
+            "topConfidence": 0.8971229473765713,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-063",
+            "topCandidateId": "mcp.cache",
+            "topConfidence": 0.6417026822123698,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-064",
+            "topCandidateId": "skill.clawql-composed-mcp-workflows",
+            "topConfidence": 0.7519959109515559,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-065",
+            "topCandidateId": "skill.clawql-execute-workflows",
+            "topConfidence": 0.9371792130406777,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-066",
+            "topCandidateId": "skill.clawql-external-ingest",
+            "topConfidence": 0.8812183482874393,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-067",
+            "topCandidateId": "skill.clawql-memory-ingest",
+            "topConfidence": 0.8912204429581547,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-068",
+            "topCandidateId": "skill.clawql-memory-recall",
+            "topConfidence": 0.992484499239768,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-069",
+            "topCandidateId": "skill.clawql-notify-workflows",
+            "topConfidence": 0.9454469906173886,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-070",
+            "topCandidateId": "skill.clawql-onyx-knowledge-workflows",
+            "topConfidence": 0.6310779479975392,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-071",
+            "topCandidateId": "skill.clawql-ouroboros-workflows",
+            "topConfidence": 0.8533775516570492,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-072",
+            "topCandidateId": "skill.clawql-sandbox-exec",
+            "topConfidence": 0.7819339643932637,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-073",
+            "topCandidateId": "skill.clawql-schedule-workflows",
+            "topConfidence": 0.49947317505486766,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-074",
+            "topCandidateId": "skill.clawql-search-workflows",
+            "topConfidence": 0.7167201847831334,
+            "correct": true
+          },
+          {
+            "caseId": "route-v06-075",
+            "topCandidateId": "skill.clawql-memory-recall",
+            "topConfidence": 0.4666269447133974,
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "honesty": "live judge labels applied; scorer=gliner2 (CLAWQL_FAST_DECISION_GLINER_URL set); productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=0.7, maxMeanCalibrationError=0.15) — wiring criteria cannot light the flag; productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass; no candidateId remaps on this run"
+  }
+}

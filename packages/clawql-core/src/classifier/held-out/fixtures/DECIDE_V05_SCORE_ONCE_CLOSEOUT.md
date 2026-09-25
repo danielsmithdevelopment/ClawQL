@@ -91,7 +91,7 @@ If (1)–(3) hold, switch — that is the right long-term path. If twins are not
 1. Collapse tool/skill twins in the catalog (equivalence class, or judge accepts either). **done**
 2. Declare the comparison/ship rule **as a spend** (equal fire-errors → prefer higher coverage; twins ≠ model errors). **done** → live Decide ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md))
 3. Freeze v0.6 (blind; digests). **done** — [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md)
-4. Score once + frontier-adjudicate (confirmation only; knobs locked).
+4. Score once + frontier-adjudicate (confirmation only; knobs locked). **done** — Decide 39/75 fires, 2 errors, ≈83% LB; live cite unchanged ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md))
 
 ## Docs one-liner
 

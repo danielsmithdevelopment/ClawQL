@@ -4,7 +4,7 @@
 
 **FROZEN** — do not edit cases without cutting a new suite id and new digest.
 
-**Not yet scored.** Optional confirmation suite for the already-live Decide path ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)). Live knobs stay locked: T=0.75 / τ=0.80 / model Decide. Twin-aware correctness via [`CATALOG_TWIN_EQUIVALENCE.md`](./CATALOG_TWIN_EQUIVALENCE.md).
+**Scored once** (Decide GHA [36199128704](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128704) + frontier [36199128630](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128630)). Optional confirmation: Decide @ τ=0.80 → **39/75** fires, **2** errors among fires, CP LB **≈83%**. Live cite unchanged (v0.5 twin-aware rematch). See [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md).
 
 ## Role
 

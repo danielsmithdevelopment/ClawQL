@@ -3,6 +3,4 @@
 # First non-comment, non-empty line = suite
 # (v0.1 | v0.2-harvey | v0.3-routing-fresh | v0.4-routing-fresh | v0.5-routing-fresh | v0.6-routing-fresh).
 #
-# Last run: PR #1148 / GHA 36185003282 — suite v0.5-routing-fresh. Cleared.
-# Set to v0.6-routing-fresh after FREEZE-v0.6 lands.
-v0.6-routing-fresh
+# Last run: PR #1149 / GHA 36199128630 — suite v0.6-routing-fresh. Cleared.
