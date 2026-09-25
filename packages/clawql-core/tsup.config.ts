@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const heldOutFixtures = join(root, "src/classifier/held-out/fixtures");
+const classifierFixtures = join(root, "src/classifier/fixtures");
 
 export default defineConfig({
   entry: ["src/index.ts", "src/streams-slim.ts", "src/classifier/index.ts"],
@@ -24,5 +25,11 @@ export default defineConfig({
     ]) {
       cpSync(join(heldOutFixtures, name), join(dest, name));
     }
+    const capDest = join(root, "dist/classifier-fixtures");
+    mkdirSync(capDest, { recursive: true });
+    cpSync(
+      join(classifierFixtures, "clawql-capability-ontology.json"),
+      join(capDest, "clawql-capability-ontology.json")
+    );
   },
 });

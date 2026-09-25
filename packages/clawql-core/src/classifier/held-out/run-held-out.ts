@@ -21,6 +21,8 @@ import type {
   HeldOutValidationRunReport,
   ScoredHeldOutCase,
 } from "./types.js";
+import { loadClawqlCapabilityOntology } from "../capability-ontology.js";
+import { enrichFastDecisionRequest } from "../ontology-enrichment.js";
 
 /** Only live GLiNER2 HTTP success lights the productionTrusted scorer gate. */
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
@@ -89,18 +91,46 @@ function ctxForCase(c: HeldOutCaseSpec): FastDecisionContext {
   };
 }
 
+/**
+ * When CLAWQL_FAST_DECISION_ONTOLOGY=0, skip capability enrichment (A/B).
+ * Default: enrich with ClawQL capability ontology so GLiNER sees whenToUse.
+ */
+export function ontologyEnrichmentEnabled(): boolean {
+  const v = process.env.CLAWQL_FAST_DECISION_ONTOLOGY?.trim().toLowerCase();
+  if (v === "0" || v === "false" || v === "off") return false;
+  return true;
+}
+
 export function scoreHeldOutCases(
   cases: readonly HeldOutCaseSpec[]
 ): Effect.Effect<readonly ScoredHeldOutCase[], never, FastDecisionScorer> {
   return Effect.gen(function* () {
     const scorer = yield* FastDecisionScorer;
+    const ontology = ontologyEnrichmentEnabled()
+      ? yield* Effect.sync(() => {
+          try {
+            return loadClawqlCapabilityOntology();
+          } catch {
+            return undefined;
+          }
+        })
+      : undefined;
     const out: ScoredHeldOutCase[] = [];
     for (const c of cases) {
+      const baseCtx = ctxForCase(c);
+      const enriched = ontology
+        ? enrichFastDecisionRequest({
+            ctx: baseCtx,
+            candidates: c.candidates,
+            ontology,
+          })
+        : { ctx: baseCtx, candidates: c.candidates };
       const scores = yield* scorer.score({
         useSiteId: c.useSiteId,
-        ctx: ctxForCase(c),
-        candidates: c.candidates,
+        ctx: enriched.ctx,
+        candidates: enriched.candidates,
         taskFraming: taskFramingForUseSite(c.useSiteId),
+        capabilityOntology: ontology,
       });
       const zeroSignal = scores.length > 0 && scores.every((s) => s.confidence <= 0);
       const top = zeroSignal

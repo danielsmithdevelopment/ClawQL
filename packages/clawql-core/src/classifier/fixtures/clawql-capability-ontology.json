@@ -1,0 +1,396 @@
+{
+  "ontologyId": "clawql-capability-ontology-v0.2",
+  "preferredVocabulary": "project-local",
+  "description": "Layer-1 catalog of ClawQL MCP tools, Cursor skills, and known anti-patterns for Fast Decision enrichment. Classifier sees whenToUse / whenNotToUse / ontologyRole — not bare candidate ids or query-lexical shell bait.",
+  "capabilities": [
+    {
+      "capabilityId": "clawql.search",
+      "kind": "tool",
+      "label": "search",
+      "mcpTool": "search",
+      "whenToUse": "Discover provider/API operationIds from natural language before execute",
+      "whenNotToUse": "Not a substitute for firm-knowledge SQL cohort counts or ontology flag recall",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "discovery",
+      "aliases": ["tool.generic_search", "generic_search"]
+    },
+    {
+      "capabilityId": "clawql.execute",
+      "kind": "tool",
+      "label": "execute",
+      "mcpTool": "execute",
+      "whenToUse": "Run a known operationId with validated arguments after search",
+      "whenNotToUse": "Do not guess operationIds; search first",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "mutation_or_read",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.memory_recall",
+      "kind": "tool",
+      "label": "memory_recall",
+      "mcpTool": "memory_recall",
+      "whenToUse": "Retrieve vault/ontology context; enumerate matters by schema filters and title flags (HSR_SECOND_REQUEST, CREDIT_FACILITY)",
+      "whenNotToUse": "Do not use blind bash/grep over DMS when ontology flags or SQL cohorts exist; avoid over-broad practiceArea-only filters when a precise flag exists",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "ontology_recall",
+      "aliases": [
+        "mcp.memory_recall",
+        "mcp.memory_recall_credit_title",
+        "mcp.memory_recall_practice_area",
+        "mcp.memory_recall_hsr_filing",
+        "mcp.memory_recall_second_request_only"
+      ]
+    },
+    {
+      "capabilityId": "clawql.memory_ingest",
+      "kind": "tool",
+      "label": "memory_ingest",
+      "mcpTool": "memory_ingest",
+      "whenToUse": "Persist durable decisions, insights, and session outcomes to the vault",
+      "whenNotToUse": "Not for querying firm-knowledge cohorts",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "write",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.structured_corpus_query",
+      "kind": "tool",
+      "label": "structured corpus / data_query / clawql_sql",
+      "mcpTool": "execute",
+      "whenToUse": "Exact cohort counts and schema filters over pre-ingested DuckDB/matters (is_credit_facility, mentions_springing_lien, HSR flags). Prefer when denominator N must be correct.",
+      "whenNotToUse": "Do not replace with bash ls/grep hunts when the structured corpus is available",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "structured_query",
+      "aliases": ["mcp.data_query", "clawql_sql", "data_query"]
+    },
+    {
+      "capabilityId": "clawql.cache",
+      "kind": "tool",
+      "label": "cache",
+      "mcpTool": "cache",
+      "whenToUse": "Ephemeral session scratch state during multi-step workflows",
+      "whenNotToUse": "Not durable vault storage; not firm-knowledge search",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "session_state",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.audit",
+      "kind": "tool",
+      "label": "audit",
+      "mcpTool": "audit",
+      "whenToUse": "Append/list WORM-linked audit events for consequential actions",
+      "whenNotToUse": "Not a document search tool",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "compliance",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.skills_list",
+      "kind": "tool",
+      "label": "skills_list",
+      "mcpTool": "skills_list",
+      "whenToUse": "Cheap discovery of SkillIndexEntry (name, description, digest)",
+      "whenNotToUse": "Fetch full skill body with skills_get only after selection",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_discovery",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.skills_get",
+      "kind": "tool",
+      "label": "skills_get",
+      "mcpTool": "skills_get",
+      "whenToUse": "Load full SkillContent for a selected skill id",
+      "whenNotToUse": "Do not load every skill body during ranking",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_load",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.sandbox_exec",
+      "kind": "tool",
+      "label": "sandbox_exec",
+      "mcpTool": "sandbox_exec",
+      "whenToUse": "Isolated code snippets with safe persistence when Agent Substrate is required",
+      "whenNotToUse": "Not for firm-knowledge cohort enumeration",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "isolated_compute",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.notify",
+      "kind": "tool",
+      "label": "notify",
+      "mcpTool": "notify",
+      "whenToUse": "Send actionable Slack milestones and failure notifications",
+      "whenNotToUse": "Not for firm-knowledge search or cohort counts",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "notification",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.schedule",
+      "kind": "tool",
+      "label": "schedule",
+      "mcpTool": "schedule",
+      "whenToUse": "Recurring synthetic checks with dry_run validation",
+      "whenNotToUse": "Not for one-shot firm-knowledge queries",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "scheduling",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.ingest_external_knowledge",
+      "kind": "tool",
+      "label": "ingest_external_knowledge",
+      "mcpTool": "ingest_external_knowledge",
+      "whenToUse": "Import external markdown or URL content with dry-run-first validation",
+      "whenNotToUse": "Not for querying already-ingested firm corpus",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "external_ingest",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.knowledge_search_onyx",
+      "kind": "tool",
+      "label": "knowledge_search_onyx",
+      "mcpTool": "knowledge_search_onyx",
+      "whenToUse": "Ground workflows in enterprise Onyx evidence before execution",
+      "whenNotToUse": "Not a substitute for structured DuckDB cohort SQL when flags exist",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "enterprise_search",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.clawql_think",
+      "kind": "tool",
+      "label": "clawql_think",
+      "mcpTool": "clawql_think",
+      "whenToUse": "Structured chain-of-thought before consequential decisions",
+      "whenNotToUse": "Not a data retrieval tool",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "reasoning",
+      "aliases": []
+    },
+    {
+      "capabilityId": "clawql.pageindex",
+      "kind": "tool",
+      "label": "pageindex_*",
+      "mcpTool": "pageindex_build_tree",
+      "whenToUse": "Build/traverse/synthesize document trees for long-form evidence",
+      "whenNotToUse": "Not for exact SQL cohort counts",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "document_index",
+      "aliases": [
+        "pageindex_build_tree",
+        "pageindex_traverse",
+        "pageindex_synthesize",
+        "pageindex_get_content"
+      ]
+    },
+    {
+      "capabilityId": "clawql.ouroboros",
+      "kind": "tool",
+      "label": "ouroboros_*",
+      "mcpTool": "ouroboros_run_evolutionary_loop",
+      "whenToUse": "Specification-first evolutionary loops with lineage and drift checks",
+      "whenNotToUse": "Not a substitute for kubectl/Helm or firm-knowledge SQL",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "spec_evolution",
+      "aliases": [
+        "ouroboros_create_seed_from_document",
+        "ouroboros_run_evolutionary_loop",
+        "ouroboros_get_lineage_status",
+        "ouroboros_measure_drift"
+      ]
+    },
+    {
+      "capabilityId": "clawql.anti_pattern.unstructured_shell",
+      "kind": "anti_pattern",
+      "label": "unstructured shell/grep hunt",
+      "whenToUse": "Only when no structured corpus or ontology flags exist for the task",
+      "whenNotToUse": "Never first tool for credit-facility springing-lien rates, HSR second-request lists, or other pre-ingested firm-knowledge cohorts — prefer memory_recall or structured SQL",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "anti_pattern",
+      "aliases": [
+        "tool.bash_grep_hunt",
+        "tool.bash_ls_workspace",
+        "tool.grep_springing_blind",
+        "tool.grep_second_request",
+        "tool.bash_find"
+      ]
+    },
+    {
+      "capabilityId": "skill.harvey.credit_facility_sql",
+      "kind": "skill",
+      "label": "Harvey credit-facility SQL cohort",
+      "whenToUse": "Committed procedure for Banking & Finance springing-lien rate via structured corpus",
+      "whenNotToUse": "Invalid if skill validity rolled back",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "skill_fast_path",
+      "aliases": ["skill.harvey.credit_facility_sql"]
+    },
+    {
+      "capabilityId": "skill.harvey.hsr_second_request_recall",
+      "kind": "skill",
+      "label": "Harvey HSR second-request recall",
+      "whenToUse": "Committed procedure to list antitrust matters with HSR_SECOND_REQUEST via ontology recall",
+      "whenNotToUse": "Do not confuse with HSR filing-only prompts",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "skill_fast_path",
+      "aliases": ["skill.harvey.hsr_second_request_recall"]
+    },
+    {
+      "capabilityId": "skill.clawql-search-workflows",
+      "kind": "skill",
+      "label": "clawql-search-workflows",
+      "whenToUse": "Discover correct operationIds before execute, especially multi-provider",
+      "whenNotToUse": "Not for firm-knowledge cohort SQL",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-search-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-execute-workflows",
+      "kind": "skill",
+      "label": "clawql-execute-workflows",
+      "whenToUse": "Execute discovered API operations with validation and post-change verification",
+      "whenNotToUse": "Search first when operationId unknown",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-execute-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-memory-recall",
+      "kind": "skill",
+      "label": "clawql-memory-recall",
+      "whenToUse": "Recall vault context before deep work with focused queries and graph depth",
+      "whenNotToUse": "Not a substitute for DuckDB cohort SQL when schema flags exist",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-memory-recall"]
+    },
+    {
+      "capabilityId": "skill.clawql-memory-ingest",
+      "kind": "skill",
+      "label": "clawql-memory-ingest",
+      "whenToUse": "Persist durable outcomes with stable titles, append threading, wikilinks",
+      "whenNotToUse": "Not for querying cohorts",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-memory-ingest"]
+    },
+    {
+      "capabilityId": "skill.clawql-vault-memory",
+      "kind": "skill",
+      "label": "clawql-vault-memory",
+      "whenToUse": "Deep Obsidian vault ingest/recall with structured insights and session threading",
+      "whenNotToUse": "Not for unstructured DMS greps when ontology exists",
+      "requiresStructuredCorpus": true,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-vault-memory"]
+    },
+    {
+      "capabilityId": "skill.clawql-cache-workflows",
+      "kind": "skill",
+      "label": "clawql-cache-workflows",
+      "whenToUse": "Ephemeral scratch state during active sessions via cache MCP tool",
+      "whenNotToUse": "Not durable vault storage",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-cache-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-audit-workflows",
+      "kind": "skill",
+      "label": "clawql-audit-workflows",
+      "whenToUse": "Append/list/clear audit patterns during multi-step runs",
+      "whenNotToUse": "Not a search tool",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-audit-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-notify-workflows",
+      "kind": "skill",
+      "label": "clawql-notify-workflows",
+      "whenToUse": "Actionable Slack milestones and failure notifications",
+      "whenNotToUse": "Not firm-knowledge retrieval",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-notify-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-schedule-workflows",
+      "kind": "skill",
+      "label": "clawql-schedule-workflows",
+      "whenToUse": "Recurring synthetic checks with dry_run, often paired with notify",
+      "whenNotToUse": "Not one-shot cohort queries",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-schedule-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-sandbox-exec",
+      "kind": "skill",
+      "label": "clawql-sandbox-exec",
+      "whenToUse": "Isolated code snippets via sandbox_exec with safe persistence",
+      "whenNotToUse": "Not firm-knowledge cohort enumeration",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-sandbox-exec"]
+    },
+    {
+      "capabilityId": "skill.clawql-composed-mcp-workflows",
+      "kind": "skill",
+      "label": "clawql-composed-mcp-workflows",
+      "whenToUse": "End-to-end recipes combining search/execute, memory, notify, schedule",
+      "whenNotToUse": "Prefer narrower skills when a single tool path is clear",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-composed-mcp-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-onyx-knowledge-workflows",
+      "kind": "skill",
+      "label": "clawql-onyx-knowledge-workflows",
+      "whenToUse": "Ground workflows in enterprise Onyx evidence before execution",
+      "whenNotToUse": "Not DuckDB cohort SQL",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-onyx-knowledge-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-ouroboros-workflows",
+      "kind": "skill",
+      "label": "clawql-ouroboros-workflows",
+      "whenToUse": "Spec-first evolutionary loops with lineage; not raw kubectl/Helm",
+      "whenNotToUse": "Not firm-knowledge SQL",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-ouroboros-workflows"]
+    },
+    {
+      "capabilityId": "skill.clawql-external-ingest",
+      "kind": "skill",
+      "label": "clawql-external-ingest",
+      "whenToUse": "Import external markdown/URL via ingest_external_knowledge with dry-run-first",
+      "whenNotToUse": "Not querying already-ingested corpus",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["clawql-external-ingest"]
+    },
+    {
+      "capabilityId": "skill.deep-thinking",
+      "kind": "skill",
+      "label": "deep-thinking",
+      "whenToUse": "Chain-of-thought before consequential decisions, restarts, or postmortems",
+      "whenNotToUse": "Not a data retrieval path",
+      "requiresStructuredCorpus": false,
+      "ontologyRole": "skill_workflow",
+      "aliases": ["deep-thinking"]
+    }
+  ]
+}

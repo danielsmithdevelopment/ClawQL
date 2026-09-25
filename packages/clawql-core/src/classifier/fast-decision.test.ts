@@ -413,6 +413,91 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
+  it("loads ClawQL capability ontology and enriches classify text with whenToUse", async () => {
+    const { loadClawqlCapabilityOntology, lookupCapability, indexCapabilityOntology } =
+      await import("./capability-ontology.js");
+    const {
+      composeOntologyEnrichedClassifyText,
+      enrichCandidateDescription,
+      enrichFastDecisionRequest,
+      buildOntologyEnrichedClassifyPayload,
+    } = await import("./ontology-enrichment.js");
+    const ontology = loadClawqlCapabilityOntology();
+    expect(ontology.ontologyId).toContain("clawql-capability");
+    expect(ontology.capabilities.length).toBeGreaterThanOrEqual(20);
+    expect(ontology.capabilities.some((c) => c.kind === "skill")).toBe(true);
+    const index = indexCapabilityOntology(ontology);
+    expect(lookupCapability(index, "mcp.data_query")?.ontologyRole).toBe("structured_query");
+    expect(lookupCapability(index, "tool.bash_grep_hunt")?.kind).toBe("anti_pattern");
+    expect(lookupCapability(index, "skill.clawql-vault-memory")?.kind).toBe("skill");
+    const text = composeOntologyEnrichedClassifyText({
+      query: "How many credit facilities mention springing lien?",
+      taskFraming: "Which tool is relevant",
+      ontology,
+      candidateIds: ["mcp.data_query", "tool.bash_grep_hunt"],
+    });
+    expect(text).toContain("needs_structured_corpus");
+    expect(text).toMatch(/ANTI_PATTERN|anti_pattern/i);
+    expect(text.toLowerCase()).toContain("springing");
+    const baitDesc = enrichCandidateDescription(
+      {
+        candidateId: "tool.bash_grep_hunt",
+        features: {
+          label: "grep springing lien /workspace",
+          description: "Blind grep path=/workspace pattern springing lien",
+        },
+      },
+      ontology
+    );
+    expect(baitDesc).toMatch(/ANTI_PATTERN/i);
+    expect(baitDesc.toLowerCase()).not.toContain("path=/workspace");
+    expect(baitDesc.toLowerCase()).not.toMatch(/blind grep/);
+    const sqlDesc = enrichCandidateDescription(
+      {
+        candidateId: "mcp.data_query",
+        features: { label: "data_query", description: "SQL over DuckDB" },
+      },
+      ontology
+    );
+    expect(sqlDesc).toContain("STRUCTURED_CORPUS_PREFERRED");
+    expect(sqlDesc).toContain("whenToUse");
+    const enriched = enrichFastDecisionRequest({
+      ctx: { sessionId: "t", query: "list HSR second requests" },
+      candidates: [
+        { candidateId: "mcp.memory_recall", features: { label: "memory_recall" } },
+        { candidateId: "tool.bash_grep_hunt", features: { label: "bash" } },
+      ],
+      ontology,
+    });
+    expect(enriched.ctx.extras?.ontologyBrief).toEqual(expect.any(String));
+    expect(String(enriched.candidates[0]?.features.description)).toContain("whenToUse");
+    const withOnt = buildOntologyEnrichedClassifyPayload({
+      useSiteId: "search_provider_tool_routing",
+      query: "springing lien cohort",
+      candidates: [
+        {
+          candidateId: "tool.bash_grep_hunt",
+          features: { description: "grep springing lien across DMS" },
+        },
+        { candidateId: "mcp.data_query", features: { label: "data_query" } },
+      ],
+      ontology,
+    });
+    const withoutOnt = buildOntologyEnrichedClassifyPayload({
+      useSiteId: "search_provider_tool_routing",
+      query: "springing lien cohort",
+      candidates: [
+        {
+          candidateId: "tool.bash_grep_hunt",
+          features: { description: "grep springing lien across DMS" },
+        },
+        { candidateId: "mcp.data_query", features: { label: "data_query" } },
+      ],
+    });
+    expect(withOnt.text).not.toBe(withoutOnt.text);
+    expect(withOnt.labels[0]?.description).not.toBe(withoutOnt.labels[0]?.description);
+  });
+
   it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");

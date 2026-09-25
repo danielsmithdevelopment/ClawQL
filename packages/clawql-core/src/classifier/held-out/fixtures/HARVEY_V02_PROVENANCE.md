@@ -33,6 +33,11 @@ Prefix: `raw/harvey-lab/`
   - Local: `CLAWQL_FAST_DECISION_JUDGE_URL=… npx tsx scripts/run-held-out-adjudication.mts --suite v0.2-harvey --out …`
   - Replay: `RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh`
 - Do not cite `productionTrusted` until live labels + live GLiNER2 + DEFAULT criteria pass.
+- **Ontology enrichment (default on):** held-out scoring packs
+  `clawql-capability-ontology.json` (tools + Cursor skills + anti-patterns) into
+  GLiNER classify text/labels. Anti-pattern candidates are rewritten to strip
+  query-lexical bait (e.g. “grep springing lien”) so structured SQL/recall can
+  compete. Disable with `CLAWQL_FAST_DECISION_ONTOLOGY=0` for A/B.
 
 ## Docs cross-links
 
