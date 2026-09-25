@@ -4,6 +4,8 @@
 
 **FROZEN** — do not edit cases without cutting a new suite id and new digest.
 
+**SPENT for choosing T / τ** (and for hint/ontology tuning against its scores). Single post-fit score is on record in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md). Any future retuning needs a new frozen eval set (**v0.5**) under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md), frozen **before** fit.
+
 ## Role in three-set protocol
 
 This is the **final eval set** under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md).
@@ -51,15 +53,16 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
 
 ## Scoring discipline
 
-- **Do not score for selection.** Fit set → fit T/τ → then score this suite once.
-- Enrichment remains default off unless an experiment explicitly opts in (and must not use this suite to tune hints).
+- **Scored once** after fit locked (T=4, τ=0.70). Do not re-score for selection or retuning.
+- **Spent:** the coverage curve and among-accepted counts are known. Choosing a new T/τ after seeing them is contamination — cut **v0.5** first.
+- Enrichment A/B remains allowed from a catalog-contamination standpoint (drafter saw no hint text), but must not use v0.4 failures to author hints.
 - **Tool IDs in this suite are frozen.**
 
 ## Next
 
-1. ~~Populate fit set~~ → `fast-decision-fit-routing-v0.1` (v0.3+Harvey).
-2. ~~Fit T/τ~~ → locked in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md) (T=4, τ=0.70).
-3. ~~Score once~~ (provisional GT). Remaining: frontier-adjudicate this suite for `productionTrusted`.
+1. Frontier-adjudicate this suite (live labels) — only remaining gate for `productionTrusted`.
+2. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
+3. Future T/τ retunes → freeze **v0.5** before fit.
 
 ## Related
 

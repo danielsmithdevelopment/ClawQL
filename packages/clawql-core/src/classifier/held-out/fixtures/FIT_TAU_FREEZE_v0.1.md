@@ -56,7 +56,15 @@ Scored **once** after (T, τ) locked. `adjudicated=false`.
 
 At builtin-old 0.75: coverage 0.400, among-accepted 1.000 (16/16).
 
-**Weight:** provisional GT; frontier adjudication can move these. nAccepted=18 is still modest for a 90%+ claim.
+### How to read (locked)
+
+1. **Transfer:** fit predicted precision 0.90 at coverage ~0.49; v0.4 gave 1.00 at 0.45. Fit→eval hold is the strongest evidence calibration is real, not luck.
+2. **Defensible precision claim (provisional GT):** with n=18 and zero misses, a one-sided 95% lower bound on precision is about **0.82**. Claim: at least ~82% precision (likely higher) on ~45% of routing decisions — not “100% proven.”
+3. **Slow-path behavior:** overall acc 0.80; all 8 wrong answers stayed below τ (fallback to full agent). That is the intended fast-path shape.
+4. **Sensitivity:** zero observed FPs means adjudication can only hurt precision if it re-labels some of the 18 “correct” as wrong.
+5. **v0.4 is spent** for choosing T/τ. Retunes need **v0.5** frozen before fit.
+
+**Weight:** provisional GT; frontier adjudication required for `productionTrusted`.
 
 ## productionTrusted
 
@@ -70,5 +78,5 @@ Harness: `scripts/fit-and-score-v04-once.mts`
 ## Related
 
 - [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md)
-- [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md)
+- [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md) (**spent**)
 - [`FIT_SET_SCAFFOLD.md`](./FIT_SET_SCAFFOLD.md)
