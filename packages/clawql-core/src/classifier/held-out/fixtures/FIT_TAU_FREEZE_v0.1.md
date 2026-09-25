@@ -64,11 +64,23 @@ At builtin-old 0.75: coverage 0.400, among-accepted 1.000 (16/16).
 4. **Sensitivity:** zero observed FPs means adjudication can only hurt precision if it re-labels some of the 18 “correct” as wrong.
 5. **v0.4 is spent** for choosing T/τ. Retunes need **v0.5** frozen before fit.
 
-**Weight:** provisional GT; frontier adjudication required for `productionTrusted`.
+**Weight:** provisional GT matched live frontier labels 40/40 (see below).
 
 ## productionTrusted
 
-**false** — needs live frontier labels on v0.4. Calibration + τ criteria pass on provisional GT.
+**true** — GHA run [36144911649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36144911649)
+(PR #1147 marker → suite `v0.4-routing-fresh`):
+
+| Gate                         | Result                                      |
+| ---------------------------- | ------------------------------------------- |
+| adjudicationMode             | `live` (claude-sonnet-4-6 via OpenRouter)   |
+| scorerBackend                | `gliner2` (live sidecar)                    |
+| DEFAULT criteria (acc / MCE) | **pass** — acc 0.800 / MCE 0.118            |
+| use-site `productionTrusted` | **true** (`search_provider_tool_routing`)   |
+| Frontier vs provisional GT   | **40/40 agree** (no label flips)            |
+| @τ=0.70 among-accepted       | **18/18**, coverage 0.45, 0 wrongs above τ |
+
+Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 ## Artifact
 

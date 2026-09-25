@@ -35,8 +35,8 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Freeze v0.4                       | **done** — `FREEZE-v0.4-routing-fresh.md`                                                                              |
 | Fit set (≫7 routing)              | **done** — v0.3+Harvey routing n=41                                                                                    |
 | Fit T/τ                           | **done** — T=4, τ=0.70 (`FIT_TAU_FREEZE_v0.1.md`)                                                                      |
-| Score v0.4 once + frontier labels | scored once (provisional GT); **v0.4 spent** for T/τ selection; frontier labels still required for `productionTrusted` |
-| Future T/τ retune                 | freeze **v0.5** before fit                                                                                             |
+| Score v0.4 once + frontier labels | **done** — provisional + live frontier agree 40/40; GHA 36144911649; **`productionTrusted=true`**; **v0.4 spent** for T/τ selection |
+| Future T/τ retune                 | freeze **v0.5** before fit                                                                                                         |
 
 ## Related
 

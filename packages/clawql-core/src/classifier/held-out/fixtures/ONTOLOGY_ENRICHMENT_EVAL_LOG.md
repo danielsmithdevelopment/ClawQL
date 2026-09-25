@@ -129,7 +129,7 @@ See [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md). 
 
 ### Three-set completion (provisional GT)
 
-Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 scored once: @τ coverage 0.45, among-accepted 18/18 (one-sided 95% LB ≈0.82). Fit→eval transfer held. **v0.4 spent** for further T/τ selection. See [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md). Remaining: frontier adjudication for `productionTrusted`.
+Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 scored once: @τ coverage 0.45, among-accepted 18/18 (one-sided 95% LB ≈0.82). Fit→eval transfer held. **v0.4 spent** for further T/τ selection. Frontier GHA [36144911649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36144911649): live Sonnet + gliner2 → **`productionTrusted=true`** (frontier GT ≡ provisional 40/40). See [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md).
 
 ---
 
