@@ -12,7 +12,7 @@
 - **Live cite stays** twin-aware v0.5 rematch: **45/75**, **0** errors, CP LB **≈92%**. Quoting v0.6 as 0-error is false.
 - v0.6 numbers: **37/39** → CP 95% LB **≈82.7%** (cite **≈83%**). Fire rate **39/75 (52%)** vs v0.5 rematch **45/75 (60%)**.
 - Both fire misses are **real capability misses**, not twins: Decide preferred `mcp.search` while GT was `mcp.execute` / `tool.bash_workspace_hunt`.
-- Both misses **fired above τ** (0.934 and 0.825). They never reach abstain committee, low/high frontier, or MoA. Coordination-on-abstain cannot fix a confident wrong fast-path. Under the [Unified Capability Lifecycle](../../../../../docs/specs/classifier/unified-capability-lifecycle-v0.2.md) they would take the **fast path** and execute the wrong committed procedure with no reasoning pass.
+- Both misses **fired above τ** (0.934 and 0.825). They never reach abstain committee, low/high frontier, or MoA. Coordination-on-abstain cannot fix a confident wrong fast-path. Under the [Unified Capability Lifecycle](../../../../../../docs/specs/classifier/unified-capability-lifecycle-v0.2.md) they would take the **fast path** and execute the wrong committed procedure with no reasoning pass.
 - Do **not** retune τ on `040`/`056`. Do **not** swap back to stock. Do **not** put the ≈83% LB on docs.clawql.com as the live number.
 
 ## Runs
