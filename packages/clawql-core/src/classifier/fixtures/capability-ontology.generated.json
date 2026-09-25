@@ -8,12 +8,17 @@
       "kind": "tool",
       "label": "search",
       "mcpTool": "search",
-      "whenToUse": "Discover provider/API operationIds from natural language before execute",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Discover an unknown provider operationId from natural language before any execute",
+      "whenNotToUse": "Do not use when the operationId is already known and arguments are ready",
       "requiresStructuredCorpus": false,
       "ontologyRole": "discovery",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.execute",
+          "reason": "search discovers an unknown operationId; execute runs a known one"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -25,11 +30,16 @@
       "label": "execute",
       "mcpTool": "execute",
       "whenToUse": "Run a known operationId with validated arguments",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenNotToUse": "Do not guess an operationId; search first when it is unknown",
       "requiresStructuredCorpus": false,
       "ontologyRole": "mutation_or_read",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.search",
+          "reason": "execute requires a known operationId; search is for discovery"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -40,12 +50,21 @@
       "kind": "tool",
       "label": "memory_recall",
       "mcpTool": "memory_recall",
-      "whenToUse": "Retrieve vault or ontology context with schema/filters",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Retrieve vault or ontology context with schema or title filters",
+      "whenNotToUse": "Not for exact SQL cohort counts; not for persisting new notes",
       "requiresStructuredCorpus": true,
       "ontologyRole": "ontology_recall",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.data_query",
+          "reason": "memory_recall is ontology/vault filters; data_query is SQL over the structured corpus"
+        },
+        {
+          "peerId": "mcp.memory_ingest",
+          "reason": "recall reads vault context; ingest writes durable notes"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -57,11 +76,20 @@
       "label": "memory_ingest",
       "mcpTool": "memory_ingest",
       "whenToUse": "Persist durable session outcomes to the vault",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenNotToUse": "Not for querying cohorts or ephemeral scratch",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "write",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_recall",
+          "reason": "ingest writes; recall reads"
+        },
+        {
+          "peerId": "mcp.cache",
+          "reason": "ingest is durable vault storage; cache is session-only scratch"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -72,12 +100,21 @@
       "kind": "tool",
       "label": "data_query / clawql_sql",
       "mcpTool": "data_query",
-      "whenToUse": "SQL over pre-ingested structured corpus (DuckDB/matters)",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "SQL over the pre-ingested structured corpus for filtered rows or joins",
+      "whenNotToUse": "Not a substitute for vault note recall; not unstructured path hunting",
       "requiresStructuredCorpus": true,
       "ontologyRole": "structured_query",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_recall",
+          "reason": "data_query is SQL on corpus tables; memory_recall is ontology/vault filters"
+        },
+        {
+          "peerId": "mcp.data_query_cohort_count",
+          "reason": "generic data_query returns rows/joins; cohort_count specializes in exact k of N"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -88,12 +125,21 @@
       "kind": "tool",
       "label": "cache",
       "mcpTool": "cache",
-      "whenToUse": "Ephemeral session scratch state",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Ephemeral session scratch state that need not survive the session",
+      "whenNotToUse": "Not durable vault storage; not a compliance trail",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "session_state",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.audit",
+          "reason": "cache is ephemeral scratch; audit is WORM-linked compliance events"
+        },
+        {
+          "peerId": "mcp.memory_ingest",
+          "reason": "cache does not persist; ingest writes durable vault notes"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -104,12 +150,17 @@
       "kind": "tool",
       "label": "audit",
       "mcpTool": "audit",
-      "whenToUse": "Append or list WORM-linked audit events",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Append or list WORM-linked audit events for consequential actions",
+      "whenNotToUse": "Not ephemeral scratch; not a document search tool",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "compliance",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.cache",
+          "reason": "audit is durable WORM events; cache is session scratch"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -120,12 +171,17 @@
       "kind": "tool",
       "label": "skills_list",
       "mcpTool": "skills_list",
-      "whenToUse": "List skill index entries (name, description, digest)",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "List skill index entries when the needed skill id is not yet known",
+      "whenNotToUse": "Do not load every skill body during ranking",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "skill_discovery",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.skills_get",
+          "reason": "skills_list is cheap index discovery; skills_get loads one full skill body"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -136,12 +192,17 @@
       "kind": "tool",
       "label": "skills_get",
       "mcpTool": "skills_get",
-      "whenToUse": "Load full skill content for a selected skill id",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Load full skill content for a known skill id",
+      "whenNotToUse": "Do not call until the skill id is selected",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "skill_load",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.skills_list",
+          "reason": "skills_get needs a known id; skills_list discovers ids"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -152,12 +213,17 @@
       "kind": "tool",
       "label": "sandbox_exec",
       "mcpTool": "sandbox_exec",
-      "whenToUse": "Run isolated code snippets with safe persistence",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Run an isolated code snippet with safe persistence",
+      "whenNotToUse": "Not for firm-knowledge cohort enumeration or unstructured path hunting as a first tool",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "isolated_compute",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "tool.bash_workspace_hunt",
+          "reason": "sandbox_exec is isolated snippet execution; unstructured workspace hunt is dispreferred"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -168,12 +234,17 @@
       "kind": "tool",
       "label": "notify",
       "mcpTool": "notify",
-      "whenToUse": "Send Slack milestones or failure notifications",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Send a one-time Slack milestone or failure notification",
+      "whenNotToUse": "Not for recurring synthetic checks",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "notification",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.schedule",
+          "reason": "notify is one-shot messaging; schedule is recurring checks with dry_run"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -184,12 +255,17 @@
       "kind": "tool",
       "label": "schedule",
       "mcpTool": "schedule",
-      "whenToUse": "Recurring synthetic checks with dry_run",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Create recurring synthetic checks validated with dry_run",
+      "whenNotToUse": "Not for a single one-shot alert",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "scheduling",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.notify",
+          "reason": "schedule is recurring; notify is one-shot"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -200,12 +276,17 @@
       "kind": "tool",
       "label": "ingest_external_knowledge",
       "mcpTool": "ingest_external_knowledge",
-      "whenToUse": "Import external markdown or URL content",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Import external markdown or URL content into knowledge",
+      "whenNotToUse": "Not for persisting a self-produced session outcome note",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "external_ingest",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_ingest",
+          "reason": "external ingest imports third-party content; memory_ingest stores session outcomes"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -216,12 +297,21 @@
       "kind": "tool",
       "label": "knowledge_search_onyx",
       "mcpTool": "knowledge_search_onyx",
-      "whenToUse": "Search enterprise Onyx knowledge before execution",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Search enterprise Onyx-indexed evidence before execution",
+      "whenNotToUse": "Not generic public web search; not DuckDB cohort SQL",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "enterprise_search",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "tool.generic_web_search",
+          "reason": "onyx is enterprise-indexed evidence; generic web search is unstructured public search"
+        },
+        {
+          "peerId": "mcp.memory_recall",
+          "reason": "onyx searches enterprise index; memory_recall targets vault/ontology"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -232,10 +322,10 @@
       "kind": "tool",
       "label": "clawql_think",
       "mcpTool": "clawql_think",
-      "whenToUse": "Structured reasoning before consequential decisions",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Structured reasoning before a consequential decision",
+      "whenNotToUse": "Not a data retrieval or execute path",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "reasoning",
       "aliases": [],
       "distinguishFrom": [],
       "provenance": {
@@ -248,12 +338,17 @@
       "kind": "tool",
       "label": "pageindex_build_tree",
       "mcpTool": "pageindex_build_tree",
-      "whenToUse": "Build document tree indexes for long-form evidence",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Build a navigable tree index over long-form documents",
+      "whenNotToUse": "Not for exact SQL cohort counts",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "document_index",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.data_query",
+          "reason": "pageindex structures long-form documents; data_query runs corpus SQL"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -264,10 +359,10 @@
       "kind": "tool",
       "label": "ouroboros_run_evolutionary_loop",
       "mcpTool": "ouroboros_run_evolutionary_loop",
-      "whenToUse": "Spec-first evolutionary loop with lineage checks",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Run a spec-first evolutionary loop with lineage checks",
+      "whenNotToUse": "Not a substitute for isolated snippet execution alone",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "tool",
+      "ontologyRole": "spec_evolution",
       "aliases": [],
       "distinguishFrom": [],
       "provenance": {
@@ -279,8 +374,8 @@
       "capabilityId": "tool.bash_workspace_hunt",
       "kind": "anti_pattern",
       "label": "bash/grep/find workspace hunt",
-      "whenToUse": "Unstructured shell listing and grepping over workspace paths",
-      "whenNotToUse": "Prefer structured catalog tools when a schema or corpus path exists",
+      "whenToUse": "Only when no structured catalog path exists for the task",
+      "whenNotToUse": "Never first choice when SQL, ontology recall, or other catalog tools apply; unstructured workspace hunting lacks cohort N",
       "requiresStructuredCorpus": false,
       "ontologyRole": "anti_pattern",
       "aliases": [],
@@ -295,12 +390,21 @@
       "kind": "tool",
       "label": "generic unstructured search",
       "mcpTool": "tool.generic_web_search",
-      "whenToUse": "Broad search without schema filters or corpus SQL",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Broad unstructured search without schema filters when no catalog tool fits",
+      "whenNotToUse": "Prefer catalog discovery, enterprise index, or corpus SQL when those apply",
       "requiresStructuredCorpus": false,
-      "ontologyRole": "discovery",
+      "ontologyRole": "unstructured_search",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.search",
+          "reason": "generic web search is unstructured; mcp.search discovers provider operationIds"
+        },
+        {
+          "peerId": "mcp.knowledge_search_onyx",
+          "reason": "generic web search is public/unstructured; onyx is enterprise-indexed"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -311,12 +415,17 @@
       "kind": "tool",
       "label": "memory_recall title-flag A",
       "mcpTool": "memory_recall_title_flag_a",
-      "whenToUse": "Ontology recall filtered by title flag A (not flag B)",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Ontology recall filtered by title flag A, excluding flag B",
+      "whenNotToUse": "Wrong when the task asks for title flag B only",
       "requiresStructuredCorpus": true,
       "ontologyRole": "ontology_recall",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_recall_title_flag_b",
+          "reason": "flag A filter excludes flag B; flag B filter excludes flag A"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -327,12 +436,17 @@
       "kind": "tool",
       "label": "memory_recall title-flag B",
       "mcpTool": "memory_recall_title_flag_b",
-      "whenToUse": "Ontology recall filtered by title flag B (not flag A)",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Ontology recall filtered by title flag B, excluding flag A",
+      "whenNotToUse": "Wrong when the task asks for title flag A only",
       "requiresStructuredCorpus": true,
       "ontologyRole": "ontology_recall",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_recall_title_flag_a",
+          "reason": "flag B filter excludes flag A; flag A filter excludes flag B"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -343,12 +457,21 @@
       "kind": "tool",
       "label": "data_query cohort COUNT",
       "mcpTool": "data_query_cohort_count",
-      "whenToUse": "SQL COUNT over structured flags for exact k of N",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Exact COUNT over structured flags for k of N denominators",
+      "whenNotToUse": "Not for coarse topical vault sweeps without a count requirement",
       "requiresStructuredCorpus": true,
       "ontologyRole": "structured_query",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.memory_recall_overbroad",
+          "reason": "cohort_count needs exact N; overbroad recall is a coarse topical sweep"
+        },
+        {
+          "peerId": "mcp.data_query",
+          "reason": "cohort_count is the COUNT specialization; data_query is general SQL"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -359,12 +482,17 @@
       "kind": "tool",
       "label": "memory_recall overbroad filter",
       "mcpTool": "memory_recall_overbroad",
-      "whenToUse": "Ontology recall with a coarse practice-area filter (risk of over-recall)",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Coarse practice-area vault sweep when exact counts are not required",
+      "whenNotToUse": "Wrong when the task needs exact k of N over structured flags",
       "requiresStructuredCorpus": true,
       "ontologyRole": "ontology_recall",
       "aliases": [],
-      "distinguishFrom": [],
+      "distinguishFrom": [
+        {
+          "peerId": "mcp.data_query_cohort_count",
+          "reason": "overbroad recall is topical and count-agnostic; cohort_count is exact N"
+        }
+      ],
       "provenance": {
         "source": "catalog-declared",
         "catalogId": "clawql-routing-catalog-for-fresh-set-draft-v1"
@@ -374,8 +502,8 @@
       "capabilityId": "skill.clawql-audit-workflows",
       "kind": "skill",
       "label": "clawql-audit-workflows",
-      "whenToUse": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed patterns for append/list audit during multi-step runs",
+      "whenNotToUse": "Not a search tool",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -389,8 +517,8 @@
       "capabilityId": "skill.clawql-cache-workflows",
       "kind": "skill",
       "label": "clawql-cache-workflows",
-      "whenToUse": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed patterns for ephemeral cache scratch",
+      "whenNotToUse": "Not durable vault storage",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -404,8 +532,8 @@
       "capabilityId": "skill.clawql-composed-mcp-workflows",
       "kind": "skill",
       "label": "clawql-composed-mcp-workflows",
-      "whenToUse": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "End-to-end recipes combining search, execute, memory, notify, schedule",
+      "whenNotToUse": "Prefer a narrower skill when a single tool path is clear",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -419,8 +547,8 @@
       "capabilityId": "skill.clawql-execute-workflows",
       "kind": "skill",
       "label": "clawql-execute-workflows",
-      "whenToUse": "Execute discovered API operations safely with argument validation and post-change verification.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed workflow for validated execute after discovery",
+      "whenNotToUse": "Search first when operationId is unknown",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -434,8 +562,8 @@
       "capabilityId": "skill.clawql-external-ingest",
       "kind": "skill",
       "label": "clawql-external-ingest",
-      "whenToUse": "Import external markdown or URL content using ingest_external_knowledge with dry-run-first validation.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Import external markdown or URL with dry-run-first validation",
+      "whenNotToUse": "Not querying already-ingested corpus",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -449,8 +577,8 @@
       "capabilityId": "skill.clawql-memory-ingest",
       "kind": "skill",
       "label": "clawql-memory-ingest",
-      "whenToUse": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed workflow for durable vault ingest with stable titles",
+      "whenNotToUse": "Not for querying cohorts",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -464,8 +592,8 @@
       "capabilityId": "skill.clawql-memory-recall",
       "kind": "skill",
       "label": "clawql-memory-recall",
-      "whenToUse": "Recall relevant vault context before deep work using focused queries and graph depth controls.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed workflow for vault recall with focused queries",
+      "whenNotToUse": "Not a substitute for DuckDB cohort COUNT when exact N is required",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -479,8 +607,8 @@
       "capabilityId": "skill.clawql-notify-workflows",
       "kind": "skill",
       "label": "clawql-notify-workflows",
-      "whenToUse": "Send actionable Slack milestones and failure notifications with the optional notify tool.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed patterns for Slack milestones and failure alerts",
+      "whenNotToUse": "Not firm-knowledge retrieval",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -494,8 +622,8 @@
       "capabilityId": "skill.clawql-onyx-knowledge-workflows",
       "kind": "skill",
       "label": "clawql-onyx-knowledge-workflows",
-      "whenToUse": "Use knowledge_search_onyx to ground workflows in enterprise evidence before execution.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Ground workflows in enterprise Onyx evidence before execution",
+      "whenNotToUse": "Not DuckDB cohort SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -509,8 +637,8 @@
       "capabilityId": "skill.clawql-ouroboros-workflows",
       "kind": "skill",
       "label": "clawql-ouroboros-workflows",
-      "whenToUse": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm).",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Spec-first evolutionary loops with lineage checks",
+      "whenNotToUse": "Not firm-knowledge SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -524,8 +652,8 @@
       "capabilityId": "skill.clawql-sandbox-exec",
       "kind": "skill",
       "label": "clawql-sandbox-exec",
-      "whenToUse": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed patterns for isolated sandbox_exec snippets",
+      "whenNotToUse": "Not firm-knowledge cohort enumeration",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -539,8 +667,8 @@
       "capabilityId": "skill.clawql-schedule-workflows",
       "kind": "skill",
       "label": "clawql-schedule-workflows",
-      "whenToUse": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed patterns for recurring checks with dry_run",
+      "whenNotToUse": "Not one-shot cohort queries",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -554,8 +682,8 @@
       "capabilityId": "skill.clawql-search-workflows",
       "kind": "skill",
       "label": "clawql-search-workflows",
-      "whenToUse": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows.",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Committed workflow for discovering operationIds before execute",
+      "whenNotToUse": "Not for firm-knowledge cohort SQL",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -569,8 +697,8 @@
       "capabilityId": "skill.clawql-vault-memory",
       "kind": "skill",
       "label": "clawql-vault-memory",
-      "whenToUse": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes,",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Deep vault ingest and recall with structured insights",
+      "whenNotToUse": "Not unstructured workspace hunting when ontology exists",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -584,8 +712,8 @@
       "capabilityId": "skill.deep-thinking",
       "kind": "skill",
       "label": "deep-thinking",
-      "whenToUse": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failur",
-      "whenNotToUse": "Not the primary tool when a more specific sibling matches the task",
+      "whenToUse": "Chain-of-thought before consequential decisions or restarts",
+      "whenNotToUse": "Not a data retrieval path",
       "requiresStructuredCorpus": false,
       "ontologyRole": "skill_workflow",
       "aliases": [],
@@ -596,5 +724,5 @@
       }
     }
   ],
-  "digestSha256": "f0aac1e4c7d33957ac6cf87241cac0a1dc783637951d07ec3ac7997e529d6e68"
+  "digestSha256": "bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9"
 }
