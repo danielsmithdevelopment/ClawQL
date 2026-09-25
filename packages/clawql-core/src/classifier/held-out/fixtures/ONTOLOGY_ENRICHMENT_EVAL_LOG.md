@@ -158,10 +158,10 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 **Audience lines.**
 
-- *Engineering:* reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run.
-- *Product:* not a new brain — fewer misroutes on common tools; same behavior when unsure.
-- *Risk:* high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
-- *Cost:* each fire is an encoder pass instead of a frontier routing call.
+- _Engineering:_ reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run.
+- _Product:_ not a new brain — fewer misroutes on common tools; same behavior when unsure.
+- _Risk:_ high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
+- _Cost:_ each fire is an encoder pass instead of a frontier routing call.
 
 **Do not say.** 2.5 already matches Decide. Decide is 82% on our catalog. Forced ~60% and abstain 45%/0-error are the same metric. Precision is 100% without (n=18) and the ~82% bound.
 
