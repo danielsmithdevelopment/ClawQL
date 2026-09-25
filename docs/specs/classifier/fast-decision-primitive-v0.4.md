@@ -361,6 +361,12 @@ For every use site in Section 3.3's registry, before it is trusted to fire in pr
 
 Implementation: `FastDecisionValidationService` / `evaluateCorrectnessAndCalibration`.
 
+### 7.2a Held-out integrity, contamination, and pinned ontology digests
+
+Nothing tuned against the evaluation set counts as held-out lift. If ontology text, label rewrites, thresholds, or prompts were authored while looking at failures on the same cases under test, tag the run `contaminated-smoke` in the eval log and do not cite it as a §7 pass or as held-out improvement.
+
+When capability ontology enrichment is in the path, every eval summary must record the **ontology digest** used for that run (pinned harness). Mixing digests within a run, or omitting the digest, invalidates citation. Catalog-generated ontology and plugin-declared `whenToUse` / `whenNotToUse` / `distinguishFrom` are specified in [`capability-ontology-from-catalog-v0.1.md`](./capability-ontology-from-catalog-v0.1.md).
+
 ### 7.3 What this means for GLiNER2 specifically, given capacity and deployment
 
 GLiNER2/2.5's own published benchmark numbers (Section 2.6, Section 3.4) are, like every other figure cited in this specification, unverified against this project's own task shapes and must not be treated as evidence of correctness on ClawQL's own decisions. Parameter count relative to frontier models remains a legitimate reason for caution specifically on hard, ambiguous cases — less capacity can mean weaker handling of genuinely ambiguous decisions, independent of how well a model performs on narrower mechanical benchmarks. This is exactly why Section 7.2's held-out, frontier-judged validation is required before any use site goes live, and why passing that test — not GLiNER's speed, cost, or self-reported benchmark scores — is what actually determines whether GLiNER is the right model for a given use site, or whether that use site should instead route to a larger, slower, more expensive model (including, if held-out validation shows GLiNER underperforming on a specific use site, an open-weight LLM already in this project's own stack — Nemotron, Ornith, or Qwen — used directly rather than through this primitive at all for that specific case). Optional Needle remains available for edge/tiny deployments where Section 7 passes for that backend on the relevant use site.

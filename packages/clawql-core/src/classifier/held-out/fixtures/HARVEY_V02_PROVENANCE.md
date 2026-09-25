@@ -39,6 +39,18 @@ Prefix: `raw/harvey-lab/`
   query-lexical bait (e.g. “grep springing lien”) so structured SQL/recall can
   compete. Disable with `CLAWQL_FAST_DECISION_ONTOLOGY=0` for A/B.
 
+### Contaminated smoke — do not cite as held-out lift
+
+The 2026-09-25 ontology ON/OFF A/B on this suite’s routing site (n=7,
+4/7→5/7, MCE 0.483→0.383) is tagged **`contaminated-smoke`**. The capability
+fixture and label rewrites were authored against these same Harvey routing
+failures. Net +1 hides 3 gains / 2 regressions; the two regressions
+(`harvey-012`, `harvey-008`) were **correct without ontology** (sibling
+collapse under shared catalog text). Full write-up:
+[`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md).
+Do not quote those numbers as §7 held-out lift. Fresh routing set + catalog-
+generated ontology: [`capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md).
+
 ## Docs cross-links
 
 - `docs/benchmarks/harvey-lab-clawql-results.md`

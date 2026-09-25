@@ -22,6 +22,7 @@ export default defineConfig({
       "fast-decision-held-out-v0.1.json",
       "fast-decision-held-out-v0.2-harvey.json",
       "HARVEY_V02_PROVENANCE.md",
+      "ONTOLOGY_ENRICHMENT_EVAL_LOG.md",
     ]) {
       cpSync(join(heldOutFixtures, name), join(dest, name));
     }
