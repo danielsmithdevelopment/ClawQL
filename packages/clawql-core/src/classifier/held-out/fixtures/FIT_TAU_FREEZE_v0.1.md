@@ -59,7 +59,7 @@ At builtin-old 0.75: coverage 0.400, among-accepted 1.000 (16/16).
 ### How to read (locked)
 
 1. **Transfer:** fit predicted precision 0.90 at coverage ~0.49; v0.4 gave 1.00 at 0.45. Fit→eval hold is the strongest evidence calibration is real, not luck.
-2. **Citable claim (include n + LB whenever quoted):** on a frozen, catalog-only held-out set of **n=40** routing decisions, calibrated GLiNER (T=4) fires on **45%** of them (**nAccepted=18**) with **zero errors among those**; confirmed by frontier adjudication (GT ≡ provisional 40/40). One-sided 95% lower bound on precision ≈ **0.82**. Quote as: *45% coverage, 18/18 among-accepted, n=40, 95% LB ≈82%* — not “100% proven.”
+2. **Citable claim (include n + LB whenever quoted):** on a frozen, catalog-only held-out set of **n=40** routing decisions, calibrated GLiNER (T=4) fires on **45%** of them (**nAccepted=18**) with **zero errors among those**; confirmed by frontier adjudication (GT ≡ provisional 40/40). One-sided 95% lower bound on precision ≈ **0.82**. Quote as: _45% coverage, 18/18 among-accepted, n=40, 95% LB ≈82%_ — not “100% proven.”
 3. **Slow-path behavior:** overall acc 0.80; all 8 wrong answers stayed below τ (fallback to full agent). That is the intended fast-path shape.
 4. **Sensitivity:** zero observed FPs; frontier labels did not flip any of the 18 accepted cases.
 5. **v0.4 is spent** for choosing T/τ (and for citing this claim as the final-eval score). Retunes need **v0.5** frozen before fit. Same fit → freeze → score-once → adjudicate sequence is the template for other use sites.

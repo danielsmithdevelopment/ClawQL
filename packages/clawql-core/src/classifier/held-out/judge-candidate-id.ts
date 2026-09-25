@@ -43,7 +43,11 @@ export type JudgeCandidateLike = {
 
 /** Strip quotes/backticks/angle brackets the model often wraps around ids. */
 export function normalizeJudgeRawId(raw: string): string {
-  return raw.trim().replace(/^[`'"<]+/, "").replace(/[`'">]+$/, "").trim();
+  return raw
+    .trim()
+    .replace(/^[`'"<]+/, "")
+    .replace(/[`'">]+$/, "")
+    .trim();
 }
 
 function allowlistedIds(candidates: readonly JudgeCandidateLike[]): string[] {
@@ -69,9 +73,7 @@ export function resolveJudgeCandidateId(
 
   if (ids.includes(normalized)) {
     const remap =
-      normalized !== raw
-        ? ({ before: raw, after: normalized, kind: "cosmetic" } as const)
-        : null;
+      normalized !== raw ? ({ before: raw, after: normalized, kind: "cosmetic" } as const) : null;
     return { ok: true, candidateId: normalized, remap };
   }
 
@@ -104,8 +106,7 @@ export function resolveJudgeCandidateId(
 
   const suffix = ids.filter(
     (id) =>
-      id.endsWith(`.${normalized}`) ||
-      id.toLowerCase().endsWith(`.${normalized.toLowerCase()}`)
+      id.endsWith(`.${normalized}`) || id.toLowerCase().endsWith(`.${normalized.toLowerCase()}`)
   );
   if (suffix.length === 1) {
     return {
