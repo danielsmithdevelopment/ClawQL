@@ -11,6 +11,7 @@ import type { DistinguishFromEntry } from "../plugin/routing-hint.js";
 import {
   digestCanonicalJson,
   generateCapabilityOntology,
+  loadHintOverlay,
   type GeneratedCapabilityOntology,
 } from "./generate-capability-ontology.js";
 
@@ -91,11 +92,26 @@ export function clawqlCapabilityOntologyPath(): string {
 }
 
 export function loadClawqlCapabilityOntology(): CapabilityOntology {
-  // Prefer live generation from frozen catalog so digests stay honest without a prior build step.
+  // Prefer on-disk generated file (includes applied hint overlay + digest).
+  for (const dir of fixtureDirs()) {
+    const genPath = join(dir, GENERATED_FILENAME);
+    const rawText = tryRead(genPath);
+    if (rawText) {
+      const raw = JSON.parse(rawText) as CapabilityOntology;
+      if (raw.ontologyId && Array.isArray(raw.capabilities)) {
+        return raw;
+      }
+    }
+  }
   try {
-    return generateCapabilityOntology();
+    const overlayPath = fixtureDirs()
+      .map((d) => join(d, "capability-routing-hints.overlay.json"))
+      .find((p) => tryRead(p) != null);
+    return generateCapabilityOntology({
+      overlay: loadHintOverlay(overlayPath),
+    });
   } catch {
-    /* fall through to on-disk */
+    /* fall through */
   }
   const path = clawqlCapabilityOntologyPath();
   const raw = JSON.parse(tryRead(path) ?? "{}") as CapabilityOntology;

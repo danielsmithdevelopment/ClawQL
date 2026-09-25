@@ -26,6 +26,7 @@ export default defineConfig({
       "ONTOLOGY_ENRICHMENT_EVAL_LOG.md",
       "FREEZE-v0.3-routing-fresh.md",
       "routing-fresh-v0.3-source-catalog.json",
+      "V03_DUAL_ARM_READOUT_PREREGISTERED.md",
     ]) {
       cpSync(join(heldOutFixtures, name), join(dest, name));
     }

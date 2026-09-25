@@ -76,6 +76,23 @@ Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md). Se
 
 **Scoring:** do **not** run v0.3 until hints are written; then score both arms together against the same `ontologyDigest`. Do not run ontology-off early (leaks failures to the hint author). Tool IDs must not change; ID renames require re-freeze, not a mapping patch.
 
+### Dual-arm readout (pre-registered fields only)
+
+Pre-registered: [`V03_DUAL_ARM_READOUT_PREREGISTERED.md`](./V03_DUAL_ARM_READOUT_PREREGISTERED.md) (committed before hint overlay).  
+Artifact: `/opt/cursor/artifacts/v03-dual-arm-readout.json`  
+`ontologyDigest` arm B: `bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9`  
+Scorer: live `gliner2` both arms. Provisional fixture GT (`adjudicated=false`).
+
+| Field | Arm A (off) | Arm B (on) | Delta (B−A) |
+| ----- | ----------- | ---------- | ----------- |
+| n | 34 | 34 | — |
+| accuracy | 0.794 | 0.706 | −0.088 |
+| MCE | 0.391 | 0.375 | −0.015 |
+| sibling n / acc | 18 / 0.722 | 18 / 0.722 | 0 |
+| shell-bait n / acc | 9 / 0.778 | 9 / 0.778 | 0 |
+
+Flip matrix: gains=2 (`route-v03-023`, `route-v03-026`); regressions=5 (`route-v03-005`, `route-v03-017`, `route-v03-018`, `route-v03-022`, `route-v03-024`); unchanged_correct=22; unchanged_incorrect=5.
+
 Requirements met: isolated author, freeze + hash before hints, n=34 with sibling pairs and shell distractors, contaminated smoke remains tagged separately.
 
 ---
