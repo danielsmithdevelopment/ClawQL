@@ -127,9 +127,17 @@ No packing change shipped — `id_only` regresses accuracy; short ≡ full on th
 
 See [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md). Harvey routing n=7 cannot meet precision≥0.9 at any τ after T=3 → no new τ shipped. At builtin τ=0.75 on v0.3: coverage **0.647**, accuracy-among-accepted **0.909** (20/22; ~Wilson 95% CI ~0.72–0.97). Both FPs are specialized→generic search, not sibling collapses. **v0.3 spent for choosing τ** — see [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md).
 
-### Three-set completion (provisional GT)
+### Three-set completion + productionTrusted (routing closed)
 
-Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 scored once: @τ coverage 0.45, among-accepted 18/18 (one-sided 95% LB ≈0.82). Fit→eval transfer held. **v0.4 spent** for further T/τ selection. Frontier GHA [36144911649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36144911649): live Sonnet + gliner2 → **`productionTrusted=true`** (frontier GT ≡ provisional 40/40). See [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md).
+Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 scored once then frontier-adjudicated (GHA [36144911649](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36144911649)): live Sonnet + gliner2 → **`productionTrusted=true`** (frontier GT ≡ provisional **40/40**).
+
+**Citable claim (always include n + LB):** on a frozen, catalog-only held-out set of **n=40** routing decisions, calibrated GLiNER fires on **45%** (**nAccepted=18**) with **zero errors among those**; one-sided 95% lower bound on precision ≈ **82%**.
+
+**v0.4 is spent** — do not retune T/τ or hints against it. Next retune starts from a frozen **v0.5**. The same **fit → freeze → score-once → adjudicate** sequence is the template for the other Fast Decision use sites. See [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md), [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md).
+
+### Judge sidecar remap policy (post-adj harden)
+
+Cosmetic-only (`quote`/`case` → allowlisted id): logged `before→after` in the run summary (`candidateIdRemaps`). Semantic remaps (label→id / suffix) **fail the case** — never counted as the judge's answer.
 
 ---
 

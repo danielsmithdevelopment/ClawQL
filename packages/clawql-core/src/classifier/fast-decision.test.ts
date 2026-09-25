@@ -1031,3 +1031,61 @@ describe("temperature calibration", () => {
     else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
   });
 });
+
+describe("resolveJudgeCandidateId (bounded remap)", () => {
+  const cands = [
+    { candidateId: "mcp.search", features: { label: "search" } },
+    { candidateId: "mcp.execute", features: { label: "execute" } },
+  ];
+
+  it("accepts exact allowlisted ids without remap", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const r = resolveJudgeCandidateId("mcp.search", cands);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.candidateId).toBe("mcp.search");
+      expect(r.remap).toBeNull();
+    }
+  });
+
+  it("logs cosmetic quote/case remaps and keeps the same tool id", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const quoted = resolveJudgeCandidateId("`mcp.search`", cands);
+    expect(quoted.ok).toBe(true);
+    if (quoted.ok) {
+      expect(quoted.candidateId).toBe("mcp.search");
+      expect(quoted.remap).toEqual({
+        before: "`mcp.search`",
+        after: "mcp.search",
+        kind: "cosmetic",
+      });
+    }
+    const cased = resolveJudgeCandidateId("MCP.SEARCH", cands);
+    expect(cased.ok).toBe(true);
+    if (cased.ok) {
+      expect(cased.candidateId).toBe("mcp.search");
+      expect(cased.remap?.kind).toBe("cosmetic");
+      expect(cased.remap?.after).toBe("mcp.search");
+    }
+  });
+
+  it("fails closed on semantic label/suffix remaps instead of re-pointing", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const label = resolveJudgeCandidateId("search", cands);
+    expect(label.ok).toBe(false);
+    if (!label.ok) {
+      expect(label.reason).toBe("semantic-remap-forbidden");
+      expect(label.wouldRemap).toEqual({
+        before: "search",
+        after: "mcp.search",
+        kind: "semantic",
+      });
+    }
+    const invent = resolveJudgeCandidateId("billing.refundCharge", cands);
+    expect(invent.ok).toBe(false);
+    if (!invent.ok) {
+      expect(invent.reason).toBe("unknown");
+      expect(invent.wouldRemap).toBeNull();
+    }
+  });
+});

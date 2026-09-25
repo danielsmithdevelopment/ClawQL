@@ -4,7 +4,9 @@
 
 **FROZEN** — do not edit cases without cutting a new suite id and new digest.
 
-**SPENT for choosing T / τ** (and for hint/ontology tuning against its scores). Single post-fit score is on record in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md). Any future retuning needs a new frozen eval set (**v0.5**) under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md), frozen **before** fit.
+**SPENT** for choosing T / τ, for hint/ontology tuning against its scores, and as the final-eval score behind the citable routing claim. Any future retuning needs a new frozen eval set (**v0.5**) under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md), frozen **before** fit.
+
+**Citable claim (always include n + LB):** on this frozen catalog-only set of **n=40** routing decisions, calibrated GLiNER fires on **45%** (**nAccepted=18**) with **zero errors among those**, confirmed by frontier adjudication; one-sided 95% LB on precision ≈ **82%**.
 
 ## Role in three-set protocol
 

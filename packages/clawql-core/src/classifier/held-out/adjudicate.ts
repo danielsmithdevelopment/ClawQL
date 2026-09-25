@@ -18,6 +18,14 @@ export type AdjudicationLabel = {
   readonly judgeModel: string;
   readonly judgedAt: string;
   readonly rationale: string;
+  /** Raw id before cosmetic normalize, when the sidecar remapped. */
+  readonly rawGroundTruthCandidateId?: string;
+  /** Visible cosmetic remap only — semantic remaps must fail the case. */
+  readonly candidateIdRemap?: {
+    readonly before: string;
+    readonly after: string;
+    readonly kind: "cosmetic";
+  };
 };
 
 export type AdjudicationRunReport = {
@@ -103,9 +111,32 @@ export function makeHttpFrontierAdjudicator(args: {
           const body = (await res.json()) as {
             groundTruthCandidateId?: string;
             rationale?: string;
+            rawGroundTruthCandidateId?: string;
+            candidateIdRemap?: {
+              before?: string;
+              after?: string;
+              kind?: string;
+            } | null;
           };
           if (!body.groundTruthCandidateId) {
             throw new Error("judge response missing groundTruthCandidateId");
+          }
+          const remap =
+            body.candidateIdRemap &&
+            typeof body.candidateIdRemap.before === "string" &&
+            typeof body.candidateIdRemap.after === "string" &&
+            body.candidateIdRemap.kind === "cosmetic"
+              ? {
+                  before: body.candidateIdRemap.before,
+                  after: body.candidateIdRemap.after,
+                  kind: "cosmetic" as const,
+                }
+              : undefined;
+          // Fail closed: sidecar must not silently accept a semantic remap.
+          if (body.candidateIdRemap?.kind === "semantic") {
+            throw new Error(
+              `judge semantic candidateId remap forbidden (caseId=${c.caseId}, before=${JSON.stringify(body.candidateIdRemap.before)}, after=${JSON.stringify(body.candidateIdRemap.after)})`
+            );
           }
           return {
             caseId: c.caseId,
@@ -114,6 +145,10 @@ export function makeHttpFrontierAdjudicator(args: {
             judgeModel: args.model,
             judgedAt: new Date().toISOString(),
             rationale: body.rationale ?? "",
+            ...(typeof body.rawGroundTruthCandidateId === "string"
+              ? { rawGroundTruthCandidateId: body.rawGroundTruthCandidateId }
+              : {}),
+            ...(remap ? { candidateIdRemap: remap } : {}),
           };
         },
         catch: (e) => (e instanceof Error ? e : new Error(String(e))),
@@ -175,6 +210,15 @@ export function parseLiveAdjudicationLabels(raw: unknown): readonly Adjudication
         `label ${l.caseId}: refusing dry-run judgeModel "${l.judgeModel}" (use live frontier labels only)`
       );
     }
+    if (
+      l.candidateIdRemap &&
+      typeof l.candidateIdRemap === "object" &&
+      (l.candidateIdRemap as { kind?: unknown }).kind === "semantic"
+    ) {
+      throw new Error(
+        `label ${l.caseId}: refusing semantic candidateIdRemap (must fail the adjudication run, not count)`
+      );
+    }
     out.push({
       caseId: l.caseId,
       groundTruthCandidateId: l.groundTruthCandidateId,
@@ -183,6 +227,22 @@ export function parseLiveAdjudicationLabels(raw: unknown): readonly Adjudication
       judgedAt:
         typeof l.judgedAt === "string" && l.judgedAt ? l.judgedAt : new Date().toISOString(),
       rationale: typeof l.rationale === "string" ? l.rationale : "",
+      ...(typeof l.rawGroundTruthCandidateId === "string"
+        ? { rawGroundTruthCandidateId: l.rawGroundTruthCandidateId }
+        : {}),
+      ...(l.candidateIdRemap &&
+      typeof l.candidateIdRemap === "object" &&
+      typeof (l.candidateIdRemap as { before?: unknown }).before === "string" &&
+      typeof (l.candidateIdRemap as { after?: unknown }).after === "string" &&
+      (l.candidateIdRemap as { kind?: unknown }).kind === "cosmetic"
+        ? {
+            candidateIdRemap: {
+              before: (l.candidateIdRemap as { before: string }).before,
+              after: (l.candidateIdRemap as { after: string }).after,
+              kind: "cosmetic" as const,
+            },
+          }
+        : {}),
     });
   }
   return out;

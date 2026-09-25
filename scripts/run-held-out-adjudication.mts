@@ -88,6 +88,14 @@ const { reports, scorerBackend } = await Effect.runPromise(
 );
 
 const anyProductionTrusted = reports.some((r) => r.productionTrusted);
+const candidateIdRemaps = adj.labels
+  .filter((l) => l.candidateIdRemap)
+  .map((l) => ({
+    caseId: l.caseId,
+    before: l.candidateIdRemap!.before,
+    after: l.candidateIdRemap!.after,
+    kind: l.candidateIdRemap!.kind,
+  }));
 let ontologyDigest: string | null = null;
 if (ontologyEnrichmentEnabled()) {
   try {
@@ -107,6 +115,9 @@ const summary = {
   ontologyEnrichment: ontologyEnrichmentEnabled(),
   ontologyDigest,
   validationCriteria: DEFAULT_VALIDATION_CRITERIA,
+  candidateIdRemapPolicy:
+    "cosmetic-only (quote/case); semantic label/suffix remaps fail the case — never counted",
+  candidateIdRemaps,
   reports: reports.map((r) => ({
     useSiteId: r.useSiteId,
     adjudicatedCount: r.adjudicatedCount,
@@ -137,6 +148,9 @@ const summary = {
     anyProductionTrusted
       ? "at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + DEFAULT criteria)"
       : "productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass",
+    candidateIdRemaps.length > 0
+      ? `candidateIdRemaps=${candidateIdRemaps.length} cosmetic (logged before→after); semantic remaps fail closed`
+      : "no candidateId remaps on this run",
   ].join("; "),
 };
 

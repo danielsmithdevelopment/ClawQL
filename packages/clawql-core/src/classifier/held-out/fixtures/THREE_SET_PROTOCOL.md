@@ -36,6 +36,8 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Fit set (≫7 routing)              | **done** — v0.3+Harvey routing n=41                                                                                                 |
 | Fit T/τ                           | **done** — T=4, τ=0.70 (`FIT_TAU_FREEZE_v0.1.md`)                                                                                   |
 | Score v0.4 once + frontier labels | **done** — provisional + live frontier agree 40/40; GHA 36144911649; **`productionTrusted=true`**; **v0.4 spent** for T/τ selection |
+| Citable claim (routing)           | n=40 catalog-only held-out; @τ=0.70 fires on 45% (nAccepted=18) with 0 errors among those; 95% LB ≈82% — always quote n + LB        |
+| Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 | Future T/τ retune                 | freeze **v0.5** before fit                                                                                                          |
 
 ## Related
