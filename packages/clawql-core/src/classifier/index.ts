@@ -17,6 +17,7 @@ export * from "./stable-cache-block.js";
 export * from "./pre-compaction.js";
 export * from "./pre-compaction-hook.js";
 export * from "./validation.js";
+export * from "./temperature-calibration.js";
 export * from "./held-out/index.js";
 export * from "./service.js";
 export * from "./use-sites/builtins.js";

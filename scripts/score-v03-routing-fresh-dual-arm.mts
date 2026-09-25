@@ -59,6 +59,9 @@ async function scoreArm(ontologyOn: boolean): Promise<{
   } else {
     delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
   }
+  // Dual-arm enrichment compare must disable temperature calib so MCE deltas
+  // reflect ontology packing only (calib is evaluated separately).
+  process.env.CLAWQL_FAST_DECISION_CALIBRATION = "0";
   const suite = resolveHeldOutSuite("v0.3-routing-fresh");
   const layer = createGlinerFastDecisionScorerLayer();
   const { reports, scorerBackend } = await Effect.runPromise(
@@ -88,13 +91,19 @@ const routingCases = casesForUseSite(suite, "search_provider_tool_routing");
 const siblingIds = new Set(routingCases.filter(isSiblingCase).map((c) => c.caseId));
 const shellIds = new Set(routingCases.filter(isShellBaitCase).map((c) => c.caseId));
 
-console.error(`suite=${suite.suiteId} n=${routingCases.length} sibling=${siblingIds.size} shell=${shellIds.size}`);
+console.error(
+  `suite=${suite.suiteId} n=${routingCases.length} sibling=${siblingIds.size} shell=${shellIds.size}`
+);
 console.error("scoring arm A (ontology off)…");
 const armA = await scoreArm(false);
-console.error(`armA backend=${armA.backend} acc=${armA.rawAccuracy} mce=${armA.meanCalibrationError}`);
+console.error(
+  `armA backend=${armA.backend} acc=${armA.rawAccuracy} mce=${armA.meanCalibrationError}`
+);
 console.error("scoring arm B (ontology on; CLAWQL_FAST_DECISION_ONTOLOGY=1)…");
 const armB = await scoreArm(true);
-console.error(`armB backend=${armB.backend} acc=${armB.rawAccuracy} mce=${armB.meanCalibrationError}`);
+console.error(
+  `armB backend=${armB.backend} acc=${armB.rawAccuracy} mce=${armB.meanCalibrationError}`
+);
 
 const byA = new Map(armA.scored.map((s) => [s.caseId, s]));
 const byB = new Map(armB.scored.map((s) => [s.caseId, s]));
@@ -121,8 +130,7 @@ function subsetAcc(scored: readonly ScoredHeldOutCase[], ids: ReadonlySet<string
 const readout = {
   suiteId: suite.suiteId,
   preregisteredReadout: "V03_DUAL_ARM_READOUT_PREREGISTERED.md",
-  suiteFreezeDigest:
-    "02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa",
+  suiteFreezeDigest: "02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa",
   ontologyDigestArmB: armB.ontologyDigest,
   scorerBackendArmA: armA.backend,
   scorerBackendArmB: armB.backend,

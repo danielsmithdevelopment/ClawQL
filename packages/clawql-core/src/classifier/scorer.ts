@@ -17,6 +17,11 @@ import {
   composeOntologyEnrichedClassifyText,
   enrichCandidateDescription,
 } from "./ontology-enrichment.js";
+import {
+  applyCalibrationToScores,
+  readCalibrationConfigFromEnv,
+  type CalibrationConfig,
+} from "./temperature-calibration.js";
 import type { FastDecisionCandidate, FastDecisionContext, FastDecisionScore } from "./types.js";
 
 export type FastDecisionScoreRequest = {
@@ -218,7 +223,20 @@ export type GlinerScorerLayerOptions = {
   readonly config?: GlinerScorerConfig;
   /** Injected fetch for tests. */
   readonly fetchImpl?: typeof fetch;
+  /**
+   * Post-score calibration (§7). Defaults to env
+   * CLAWQL_FAST_DECISION_CALIBRATION / _MODE / _TEMPERATURE.
+   */
+  readonly calibration?: CalibrationConfig;
 };
+
+function maybeCalibrate(
+  scores: readonly FastDecisionScore[],
+  calibration: CalibrationConfig
+): readonly FastDecisionScore[] {
+  if (!calibration.enabled || calibration.mode === "none") return scores;
+  return applyCalibrationToScores(scores, calibration);
+}
 
 /**
  * GLiNER2 Fast Decision scorer — **primary** production Layer.
@@ -232,6 +250,7 @@ export function createGlinerFastDecisionScorerLayer(
   options: GlinerScorerLayerOptions = {}
 ): Layer.Layer<FastDecisionScorer> {
   const config = options.config ?? readGlinerScorerConfigFromEnv();
+  const calibration = options.calibration ?? readCalibrationConfigFromEnv();
   const liveConfigured = Boolean(config.endpointUrl?.trim());
   const fetchImpl = options.fetchImpl ?? fetch;
   let lastBackendId = liveConfigured ? "gliner2" : "gliner2-stub";
@@ -241,12 +260,12 @@ export function createGlinerFastDecisionScorerLayer(
     score: (request) => {
       if (!liveConfigured) {
         lastBackendId = "gliner2-stub";
-        return Effect.sync(() => heuristicScores(request));
+        return Effect.sync(() => maybeCalibrate(heuristicScores(request), calibration));
       }
       return scoreViaGlinerHttp(config, request, fetchImpl).pipe(
         Effect.map((result) => {
           lastBackendId = result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
-          return result.scores;
+          return maybeCalibrate(result.scores, calibration);
         })
       );
     },

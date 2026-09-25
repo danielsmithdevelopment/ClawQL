@@ -321,6 +321,7 @@ describe("GLiNER2 primary scorer", () => {
         modelId: "fastino/gliner2.5-base-v1",
         timeoutMs: 1000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl,
     });
 
@@ -595,6 +596,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -645,6 +647,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -811,6 +814,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -896,6 +900,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -917,5 +922,96 @@ describe("§7 held-out suite runner", () => {
     );
     expect(report.scorerBackend).toBe("gliner2");
     expect(report.productionTrusted).toBe(true);
+  });
+});
+
+describe("temperature calibration", () => {
+  it("temperature_softmax flattens one-hot peaks and can pass §7 when conf≈acc", async () => {
+    const { applyCalibrationToScores, evaluateCorrectnessAndCalibration } =
+      await import("./index.js");
+    // 8/10 correct, all raw conf ≈ 1.0 → MCE |0.8-0.95|=0.15 borderline-fail with more miss
+    // Use 7/10 → acc 0.7, MCE 0.25 fails hard; after T softens into ~0.7 band, MCE drops.
+    const raw = Array.from({ length: 10 }, (_, i) => ({
+      caseId: String(i),
+      groundTruthCandidateId: "a",
+      scores: [
+        { candidateId: i >= 7 ? "b" : "a", confidence: 0.999 },
+        { candidateId: i >= 7 ? "a" : "b", confidence: 0.001 },
+      ],
+    }));
+    const rawReport = evaluateCorrectnessAndCalibration("t", raw);
+    expect(rawReport.rawAccuracy).toBe(0.7);
+    expect(rawReport.meanCalibrationError).toBeGreaterThan(0.15);
+    expect(rawReport.passed).toBe(false);
+
+    let bestMce = 1;
+    let bestPassed = false;
+    for (const T of [5, 8, 10, 12, 15, 20, 25, 30]) {
+      const cal = evaluateCorrectnessAndCalibration(
+        "t",
+        raw.map((c) => ({
+          ...c,
+          scores: applyCalibrationToScores(c.scores, {
+            mode: "temperature_softmax",
+            temperature: T,
+          }),
+        }))
+      );
+      if (cal.meanCalibrationError < bestMce) bestMce = cal.meanCalibrationError;
+      if (cal.passed) bestPassed = true;
+    }
+    expect(bestMce).toBeLessThan(rawReport.meanCalibrationError);
+    expect(bestPassed).toBe(true);
+  });
+
+  it("fitTemperatureByGrid picks a T that reduces MCE on the fit set", async () => {
+    const { fitTemperatureByGrid } = await import("./temperature-calibration.js");
+    const { Effect } = await import("effect");
+    const cases = Array.from({ length: 10 }, (_, i) => ({
+      groundTruthCandidateId: "a",
+      scores: [
+        { candidateId: i >= 7 ? "b" : "a", confidence: 0.999 },
+        { candidateId: i >= 7 ? "a" : "b", confidence: 0.001 },
+      ],
+    }));
+    const fit = await Effect.runPromise(
+      fitTemperatureByGrid({
+        cases,
+        mode: "temperature_softmax",
+        temperatures: [1, 5, 10, 20, 30],
+      })
+    );
+    expect(fit.temperature).toBeGreaterThan(1);
+    expect(fit.meanCalibrationError).toBeLessThan(0.25);
+  });
+
+  it("margin mode reports top-second gap as confidence", async () => {
+    const { applyCalibrationToScores } = await import("./temperature-calibration.js");
+    const out = applyCalibrationToScores(
+      [
+        { candidateId: "a", confidence: 0.9 },
+        { candidateId: "b", confidence: 0.4 },
+      ],
+      { mode: "margin", temperature: 1 }
+    );
+    expect(out[0]?.candidateId).toBe("a");
+    expect(out[0]?.confidence).toBeCloseTo(0.5, 5);
+    expect(out[1]?.confidence).toBe(0);
+  });
+
+  it("defaults calibration ON with temperature_softmax T=3", async () => {
+    const prev = process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    const prevT = process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+    delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+    const { readCalibrationConfigFromEnv } = await import("./temperature-calibration.js");
+    const cfg = readCalibrationConfigFromEnv();
+    expect(cfg.enabled).toBe(true);
+    expect(cfg.mode).toBe("temperature_softmax");
+    expect(cfg.temperature).toBe(3);
+    if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION = prev;
+    else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    if (prevT !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE = prevT;
+    else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
   });
 });
