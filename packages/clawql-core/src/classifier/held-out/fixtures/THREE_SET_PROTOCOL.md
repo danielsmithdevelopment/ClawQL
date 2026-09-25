@@ -28,17 +28,18 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 
 ## Current status
 
-| Step                              | Status                                  |
-| --------------------------------- | --------------------------------------- |
-| v0.3 spent (tuning + τ selection) | done                                    |
-| FP diagnosis on v0.3 @ τ=0.75     | see `ROUTING_THRESHOLD_READOUT_v0.1.md` |
-| Freeze v0.4                       | in progress                             |
-| Fit set (≫7 routing)              | not started (after v0.4 freeze)         |
-| Fit T/τ                           | blocked on fit set                      |
-| Score v0.4 once + frontier labels | blocked                                 |
+| Step                              | Status                                    |
+| --------------------------------- | ----------------------------------------- |
+| v0.3 spent (tuning + τ selection) | done                                      |
+| FP diagnosis on v0.3 @ τ=0.75     | see `ROUTING_THRESHOLD_READOUT_v0.1.md`   |
+| Freeze v0.4                       | **done** — `FREEZE-v0.4-routing-fresh.md` |
+| Fit set (≫7 routing)              | next                                      |
+| Fit T/τ                           | blocked on fit set                        |
+| Score v0.4 once + frontier labels | blocked                                   |
 
 ## Related
 
 - [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
+- [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md)
 - [`CALIBRATION_FREEZE_v0.1.md`](./CALIBRATION_FREEZE_v0.1.md)
 - [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md)

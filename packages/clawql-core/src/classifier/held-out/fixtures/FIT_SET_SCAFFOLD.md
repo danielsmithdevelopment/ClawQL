@@ -25,4 +25,4 @@ Reuse unless amended before fit:
 
 ## Status
 
-`blocked_on: v0.4_freeze`
+`v0.4_frozen` — fit-set population may begin. Do not score v0.4 for selection.
