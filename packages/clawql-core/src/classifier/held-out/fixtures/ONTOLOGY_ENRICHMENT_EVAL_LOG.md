@@ -2,22 +2,22 @@
 
 ## Contaminated smoke — DO NOT CITE AS HELD-OUT LIFT
 
-| Field | Value |
-| ----- | ----- |
-| Tag | **`contaminated-smoke`** |
-| Suite | `fast-decision-held-out-v0.2-harvey` (routing site `search_provider_tool_routing`, n=7) |
-| Date (UTC) | 2026-09-25 |
+| Field       | Value                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| Tag         | **`contaminated-smoke`**                                                                                         |
+| Suite       | `fast-decision-held-out-v0.2-harvey` (routing site `search_provider_tool_routing`, n=7)                          |
+| Date (UTC)  | 2026-09-25                                                                                                       |
 | Branch / PR | `cursor/ontology-enriched-classifier-088d` / [#1146](https://github.com/danielsmithdevelopment/ClawQL/pull/1146) |
-| Ontology | hand fixture `clawql-capability-ontology.json` **v0.2** |
-| Scorer | live `gliner2` (`fastino/gliner2.5-base-v1`) |
-| Labels | live Sonnet 4.6 frontier labels (24 cases; routing subset n=7) |
+| Ontology    | hand fixture `clawql-capability-ontology.json` **v0.2**                                                          |
+| Scorer      | live `gliner2` (`fastino/gliner2.5-base-v1`)                                                                     |
+| Labels      | live Sonnet 4.6 frontier labels (24 cases; routing subset n=7)                                                   |
 
 ### Headline numbers (contaminated)
 
-| Condition | Routing accuracy | Routing MCE |
-| --------- | ---------------- | ----------- |
-| `CLAWQL_FAST_DECISION_ONTOLOGY=0` | 4/7 = 0.571 | 0.483 |
-| ontology on (default) | 5/7 = 0.714 | 0.383 |
+| Condition                         | Routing accuracy | Routing MCE |
+| --------------------------------- | ---------------- | ----------- |
+| `CLAWQL_FAST_DECISION_ONTOLOGY=0` | 4/7 = 0.571      | 0.483       |
+| ontology on (default)             | 5/7 = 0.714      | 0.383       |
 
 **Net +1 on n=7 is a 14-point swing from one net case.** Flip matrix: **3 gains, 2 regressions, 2 unchanged.** Gains were bash/grep→`mcp.data_query`. Regressions were cases that were **already correct without ontology**.
 
@@ -25,7 +25,7 @@
 
 The capability fixture, anti-pattern rewrite, and bait-neutralization were authored **while looking at failures on these same Harvey routing cases** (aliases for `tool.bash_*` / `tool.grep_*`, springing-lien / HSR wording). That violates §7 held-out integrity: nothing tuned against the evaluation set counts as held-out lift.
 
-**Allowed reading:** enrichment *can* change GLiNER scores in the direction of anti-pattern avoidance (contaminated smoke).  
+**Allowed reading:** enrichment _can_ change GLiNER scores in the direction of anti-pattern avoidance (contaminated smoke).  
 **Forbidden reading:** “ontology enrichment improved held-out routing by 14 points.”
 
 Artifacts: `/opt/cursor/artifacts/ontology-ab-rescore.json`, `classify-payload-*-ontology.json`, `sibling-regression-diagnosis.json`.
