@@ -64,8 +64,12 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
 
 1. ~~Frontier-adjudicate this suite~~ **done** — GHA run 36144911649;
    `productionTrusted=true` (live + gliner2 + DEFAULT criteria). Marker cleared.
-2. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
-3. Future T/τ retunes → freeze **v0.5** before fit.
+2. ~~Stock vs Decide four-arm score-once~~ **done** — GHA run
+   [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073);
+   report in [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
+   Does **not** rewrite productionTrusted. Marker cleared.
+3. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
+4. Future T/τ retunes → freeze **v0.5** before fit.
 
 ## Related
 

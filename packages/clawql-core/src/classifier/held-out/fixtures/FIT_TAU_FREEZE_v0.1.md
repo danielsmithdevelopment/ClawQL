@@ -101,10 +101,24 @@ Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 **Protocol property (current, not a follow-up):** semantic sidecar remaps are fail-closed — a remap that changes which tool counts as the model’s answer fails the run.
 
+## Stock vs Decide four-arm (score-once; does not rewrite this freeze)
+
+GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) on frozen v0.4 + frontier labels. Full table in [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md) § “Stock vs Decide four-arm.” Report: [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
+
+| Arm                  | Headline                                      |
+| -------------------- | --------------------------------------------- |
+| stock forced         | 80% EM (32/40)                                |
+| Decide forced        | **92.5%** EM (37/40)                          |
+| stock T=4 / τ=0.70   | **18/40 fire, 0 errors, CP LB ≈82%** (unchanged closeout) |
+| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error, CP LB ≈85% |
+
+Stock reject remains the shipped productionTrusted path. Decide coverage is higher but not zero-error; swapping models needs **v0.5** + adjudication.
+
 ## Artifact
 
 `/opt/cursor/artifacts/fast-decision-fit-and-score-v04-once.json`  
-Harness: `scripts/fit-and-score-v04-once.mts`
+Harness: `scripts/fit-and-score-v04-once.mts`  
+Compare: `scripts/compare-stock-vs-decide-v04.mts`
 
 ## Related
 
