@@ -26,6 +26,19 @@ This is the **final eval set** under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTO
 | Suite `fast-decision-held-out-v0.4-routing-fresh.json`  | `06a88f292e344656fa64720202ae664364b5648b7b7d30c46c9293b9e3636c89` |
 | Source catalog `routing-fresh-v0.4-source-catalog.json` | `57352fb8b30ffae82343a883bf0bf4e9d2dd0ebfcdff5117ad58db937613db52` |
 
+## Which catalog the drafter saw
+
+| Field                                                                    | Value                                                                                              |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| File given to drafter                                                    | `/tmp/isolated-routing-drafter-v04/catalog.json` (= repo `routing-fresh-v0.4-source-catalog.json`) |
+| Entry fields present                                                     | `id`, `kind`, `label`, `description` only                                                          |
+| Hint fields (`whenToUse` / `whenNotToUse` / `distinguishFrom` / overlay) | **absent** — 0 entries carry them                                                                  |
+| Why digest ≠ v0.3 catalog                                                | `catalogId` + `note` string only; same 38 entry bodies as v0.3                                     |
+
+The capability-routing hints overlay (`capability-routing-hints.overlay.json`) was **not** part of the draft catalog. Drafter could not echo hint prose into queries.
+
+**Enrichment A/B on v0.4:** allowed from a catalog-contamination standpoint (no hint text in the draft catalog). Still obey three-set order: do not tune enrichment against v0.4 scores; a dual-arm after freeze is fine if enrichment text was authored without looking at v0.4 failures.
+
 ## Freeze metadata
 
 - Frozen at (UTC): `2026-09-25T13:15:40Z`

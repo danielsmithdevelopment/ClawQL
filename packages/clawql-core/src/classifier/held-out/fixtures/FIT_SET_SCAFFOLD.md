@@ -1,28 +1,23 @@
-# Fit-set scaffold (do not populate until v0.4 is frozen)
+# Fit set v0.1 — `fast-decision-fit-routing-v0.1`
 
-## Rule
+## Composition (shortcut)
 
-Per [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md): **freeze v0.4 first**, then build this fit set, then fit T/τ, then score v0.4 once.
+| Source                   | n      | Notes                                                        |
+| ------------------------ | ------ | ------------------------------------------------------------ |
+| Spent v0.3 routing-fresh | 34     | spent as **eval**; reusable for **fit**                      |
+| Harvey v0.2 routing only | 7      | contaminated-smoke slice; included for size, not as sole fit |
+| **Total**                | **41** |                                                              |
 
-This file is a placeholder so the ordering is not forgotten. **Do not add fit-set cases here until `FREEZE-v0.4-routing-fresh.md` exists with digests.**
+Exact query overlap with frozen v0.4: **0**.
 
-## Target shape (after freeze)
+Suite file: `fast-decision-fit-routing-v0.1.json`
 
-| Field              | Intent                                                                                        |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| Size               | ≫7 routing cases (aim ≥40)                                                                    |
-| useSiteId          | `search_provider_tool_routing` (primary); optional FP-costly peers only if labeled separately |
-| Overlap with v0.4  | **none** (token-overlap check required)                                                       |
-| Overlap with v0.3  | allowed for fit only (v0.3 is spent); still prefer fresh fit queries                          |
-| Harvey routing n=7 | may include as a small contaminated-smoke probe slice, never as the sole fit                  |
+## Used for
 
-## Selection rules (lock before any v0.4 score)
-
-Reuse unless amended before fit:
-
-- **T:** grid on fit set minimizing MCE (mode default `temperature_softmax`).
-- **τ (FP-costly):** among τ with precision ≥ 0.90 on fit routing, maximize coverage; ties → higher τ; if none qualify → `selected=null` (do not ship a weak gate).
+1. Refit temperature (may differ from prior Harvey-only T=3).
+2. Select τ under locked FP-costly rule (precision ≥ 0.90 → max coverage; else `null`).
+3. Freeze `(T, τ)`, then score v0.4 **once**.
 
 ## Status
 
-`v0.4_frozen` — fit-set population may begin. Do not score v0.4 for selection.
+`ready` — see `scripts/fit-and-score-v04-once.mts` and `FIT_TAU_FREEZE_v0.1.md` after the run.
