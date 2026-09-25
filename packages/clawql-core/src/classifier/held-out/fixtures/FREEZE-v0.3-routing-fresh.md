@@ -16,6 +16,7 @@
 
 ## Freeze metadata
 - Frozen at (UTC): `2026-09-25T02:48:42Z`
+- Freeze commit: `fe803af825c866f126f02efe595daf9047af203d`
 - Case count: 34
 - useSiteId: `search_provider_tool_routing` (all cases)
 - adjudicated: false (all)
