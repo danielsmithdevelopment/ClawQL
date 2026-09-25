@@ -62,9 +62,36 @@ Keep stock reject in production. Treat Decide+reject as **v0.5**, not as a hot-s
 - Stock 80% forced EM is the shipped precision number.
 - Higher coverage alone justifies cutting over tonight.
 
-## Closeout sentence (unchanged until v0.5)
+## Closeout sentence (live path)
 
-Ship stock reject because it is the precision-first CPU on-ramp that takes **45%** of catalog routing off the expensive path with a clean **0-error** held-out fire set.
+Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire sets: **0/18** on v0.4 (≈82% LB @ 45%); **1/32** on v0.5 (≈84% LB @ 43%). Do not say the live arm is presently “never wrong on fires.”
+
+## v0.5 progress (Decide candidate — not live)
+
+| Step | Status |
+| --- | --- |
+| Confirm Decide T / prior τ off-set-only | **done** — T=0.75; prior τ=0.60 from fit during four-arm |
+| Pull the one miss | **done** — `route-v04-004` (execute GT → Decide chose search @ ≈0.739) |
+| Predeclare ship rule | **done** — 0 errors among fires (leave it; favors low coverage) |
+| τ=0.80 provenance | **honest** — selected **after** miss known; **v0.4 spent for Decide reject** ([`DECIDE_TAU_080_PROVENANCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_TAU_080_PROVENANCE.md)) |
+| 23/40 @ τ=0.80 | **candidate projection on spent set only** — not a closeout |
+| Freeze v0.5 | **FROZEN** — n=75; isolated drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33`; digests in FREEZE-v0.5 |
+| Decide τ re-lock after freeze | **done** — T=0.75 / **τ=0.80** from fit only (no v0.5 scores) |
+| Score once + frontier adj | **done** — score GHA [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105); frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282) |
+| Decide ship decision | **no swap** — Decide 44/45 (≈88% LB) vs stock 31/32 (≈84% LB); both 1 error; 0-error rule fails Decide |
+| Live-path honesty on v0.5 | stock also **1/32** errors (`route-v05-023` think twin); cite ≈84% LB @ 43%, not “0-error forever” |
+| Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
+| Live path | **still stock** (T=4, τ=0.70); v0.4 `productionTrusted` not rewritten |
+
+**Docs one-liner.** Decide should probably be live next — not because 60% beats 43%, but because it is the stronger model and its only v0.5 fire error is a catalog twin (stock’s only fire error is also a twin: `route-v05-023`). Switch after twins are collapsed and the comparison rule is declared as a spend; keep stock live this cycle.
+
+**v0.6 cutover gate (all three):** (1) stock miss on the page next to Decide’s — **done**, both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage. Then Decide @ T=0.75 / τ=0.80.
+
+Closeout detail: [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_SCORE_ONCE_CLOSEOUT.md)
+
+Ontology enrichment stays off; temperature softmax stays the calibration that made the reject rule usable — not reopened by the Decide table.
+
+Details: [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md) · [`FREEZE-v0.5-routing-fresh.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/FREEZE-v0.5-routing-fresh.md)
 
 ## Related
 

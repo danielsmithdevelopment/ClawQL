@@ -72,7 +72,12 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
    [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md).
    Does **not** rewrite productionTrusted. Marker cleared.
 3. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
-4. **Next live-path change → v0.5:** confidence-gate Decide (same reject-rule shape), but do **not** hot-swap tonight. Confirm (T,τ) off-set-only; pull the one miss; frontier-adjudicate the 34 fires; predeclare the production rule before chasing coverage; score once. Until then: ship stock reject (45% / 0-error).
+4. ~~Decide v0.5 rule + miss pull~~ **done** on
+   `cursor/fast-decision-decide-v05-088d`. τ=0.80 provenance is **post-miss** —
+   v0.4 spent for Decide reject ([`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)).
+   23/40 @ 0.80 = candidate projection only. **Next:** freeze v0.5 at **n=70–80**,
+   blind drafter ([`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md)).
+   Stock reject remains live.
 
 ## Related
 

@@ -1,12 +1,15 @@
-# Stock GLiNER 2.5 vs GLiNER2.5-Decide — four-arm score-once on frozen v0.4.
+# Stock GLiNER 2.5 vs GLiNER2.5-Decide — score-once compare.
 #
-# Does NOT rewrite the v0.4 productionTrusted closeout. Arms:
-#   1. stock forced EM  2. Decide forced EM
-#   3. stock locked (T=4, τ=0.70)  4. Decide (T,τ) refit on same fit set
+# Marker first non-comment line selects protocol:
+#   v0.4 → four-arm (forced × reject; Decide τ refit) on frozen v0.4
+#   v0.5 → locked-τ (stock T=4/τ=0.70, Decide T=0.75/τ=0.80) on frozen v0.5
+#
+# Does NOT hot-swap the live path. v0.5 ship rule: Decide 0 errors among fires
+# under frontier-adjudicated GT (report shipEligible).
 #
 # Triggers (Harvey-style marker, no actions:write needed):
 #   Set packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide
-#   (non-empty first non-comment line, e.g. `v0.4`) and open/push a PR.
+#   (non-empty first non-comment line, e.g. `v0.5`) and open/push a PR.
 #
 # Or: workflow_dispatch / repository_dispatch type `stock-vs-decide`.
 
@@ -20,11 +23,15 @@ on:
     paths:
       - "packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
       - ".github/workflows/fast-decision-stock-vs-decide.yml"
+      - "scripts/compare-stock-vs-decide-v04.mts"
+      - "scripts/compare-stock-vs-decide-v05.mts"
   push:
     branches: [main]
     paths:
       - "packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
       - ".github/workflows/fast-decision-stock-vs-decide.yml"
+      - "scripts/compare-stock-vs-decide-v04.mts"
+      - "scripts/compare-stock-vs-decide-v05.mts"
 
 permissions:
   contents: read
@@ -39,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       can_run: ${{ steps.gate.outputs.can_run }}
+      protocol: ${{ steps.gate.outputs.protocol }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - id: gate
@@ -48,9 +56,17 @@ jobs:
           set -euo pipefail
           MARKER="packages/clawql-core/src/classifier/held-out/.run-stock-vs-decide"
           PRESENT=false
+          PROTOCOL="v0.5"
           if [ -f "${MARKER}" ]; then
             LINE="$(awk 'NF && $1 !~ /^#/ { print $1; exit }' "${MARKER}" || true)"
-            if [ -n "${LINE}" ]; then PRESENT=true; fi
+            if [ -n "${LINE}" ]; then
+              PRESENT=true
+              case "${LINE}" in
+                v0.4|v0.4-routing-fresh) PROTOCOL="v0.4" ;;
+                v0.5|v0.5-routing-fresh) PROTOCOL="v0.5" ;;
+                *) PROTOCOL="${LINE}" ;;
+              esac
+            fi
           fi
           CAN=true
           if [ "${EVENT_NAME}" = "pull_request" ] || [ "${EVENT_NAME}" = "push" ]; then
@@ -58,8 +74,18 @@ jobs:
               CAN=false
             fi
           fi
+          case "${PROTOCOL}" in
+            v0.4|v0.5) ;;
+            *)
+              if [ "${CAN}" = "true" ]; then
+                CAN=false
+                echo "::warning::unsupported stock-vs-decide protocol '${PROTOCOL}' (want v0.4 or v0.5)"
+              fi
+              ;;
+          esac
           echo "can_run=${CAN}" >>"$GITHUB_OUTPUT"
-          echo "::notice::stock-vs-decide gate can_run=${CAN} marker_present=${PRESENT}"
+          echo "protocol=${PROTOCOL}" >>"$GITHUB_OUTPUT"
+          echo "::notice::stock-vs-decide gate can_run=${CAN} marker_present=${PRESENT} protocol=${PROTOCOL}"
 
   score:
     name: Score (${{ matrix.tag }})
@@ -79,6 +105,7 @@ jobs:
       CLAWQL_FAST_DECISION_GLINER_MODEL: ${{ matrix.model }}
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
       HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+      COMPARE_PROTOCOL: ${{ needs.gate.outputs.protocol }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -140,14 +167,19 @@ jobs:
           cat "${RUNNER_TEMP}/gliner2.log" || true
           exit 1
 
-      - name: Score fit + frozen v0.4
+      - name: Score fit + frozen eval
         env:
           CLAWQL_FAST_DECISION_GLINER_URL: http://127.0.0.1:18081
           CLAWQL_FAST_DECISION_GLINER_TIMEOUT_MS: "180000"
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          npx tsx scripts/compare-stock-vs-decide-v04.mts score \
+          SCRIPT="scripts/compare-stock-vs-decide-v05.mts"
+          if [ "${COMPARE_PROTOCOL}" = "v0.4" ]; then
+            SCRIPT="scripts/compare-stock-vs-decide-v04.mts"
+          fi
+          echo "::notice::scoring via ${SCRIPT} protocol=${COMPARE_PROTOCOL}"
+          npx tsx "${SCRIPT}" score \
             --model-tag "${{ matrix.tag }}" \
             --out "artifacts/scores-${{ matrix.tag }}.json"
 
@@ -167,10 +199,12 @@ jobs:
           if-no-files-found: warn
 
   report:
-    name: Four-arm report
-    needs: score
+    name: Compare report
+    needs: [gate, score]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      COMPARE_PROTOCOL: ${{ needs.gate.outputs.protocol }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
@@ -200,24 +234,41 @@ jobs:
           echo "decide=${DECIDE}"
           test -n "${STOCK}" && test -f "${STOCK}"
           test -n "${DECIDE}" && test -f "${DECIDE}"
-          npx tsx scripts/compare-stock-vs-decide-v04.mts report \
-            --stock "${STOCK}" \
-            --decide "${DECIDE}" \
-            --out artifacts/stock-vs-decide-v04-report.json \
-            | tee artifacts/stock-vs-decide-v04-report.stdout.json
-          node -e '
-            const r=require("./artifacts/stock-vs-decide-v04-report.json");
-            if(!Array.isArray(r.arms) || r.arms.length!==4) process.exit(2);
-            for (const a of r.arms) {
-              console.log(a.arm, "fire", a.fireRate, "err", a.nErrorsFired, "cp", a.cpLower95, "forcedAcc", a.forcedExactMatchAcc);
-            }
-          '
+          if [ "${COMPARE_PROTOCOL}" = "v0.4" ]; then
+            npx tsx scripts/compare-stock-vs-decide-v04.mts report \
+              --stock "${STOCK}" \
+              --decide "${DECIDE}" \
+              --out artifacts/stock-vs-decide-v04-report.json \
+              | tee artifacts/stock-vs-decide-report.stdout.json
+            node -e '
+              const r=require("./artifacts/stock-vs-decide-v04-report.json");
+              if(!Array.isArray(r.arms) || r.arms.length!==4) process.exit(2);
+              for (const a of r.arms) {
+                console.log(a.arm, "fire", a.fireRate, "err", a.nErrorsFired, "cp", a.cpLower95, "forcedAcc", a.forcedExactMatchAcc);
+              }
+            '
+          else
+            npx tsx scripts/compare-stock-vs-decide-v05.mts report \
+              --stock "${STOCK}" \
+              --decide "${DECIDE}" \
+              --out artifacts/stock-vs-decide-v05-report.json \
+              | tee artifacts/stock-vs-decide-report.stdout.json
+            node -e '
+              const r=require("./artifacts/stock-vs-decide-v05-report.json");
+              if(!Array.isArray(r.arms) || r.arms.length!==4) process.exit(2);
+              for (const a of r.arms) {
+                console.log(a.arm, "fire", a.fireRate, "err", a.nErrorsFired, "cp", a.cpLower95, "forcedAcc", a.forcedExactMatchAcc);
+              }
+              console.log("shipEligible", r.shipRule.shipEligible, "gt", r.groundTruthSource);
+            '
+          fi
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: stock-vs-decide-v04-report
+          name: stock-vs-decide-${{ needs.gate.outputs.protocol }}-report
           path: |
             artifacts/stock-vs-decide-v04-report.json
-            artifacts/stock-vs-decide-v04-report.stdout.json
+            artifacts/stock-vs-decide-v05-report.json
+            artifacts/stock-vs-decide-report.stdout.json
           if-no-files-found: warn

@@ -19,6 +19,7 @@ import {
   harveyHeldOutSuiteV02,
   routingFreshHeldOutSuiteV03,
   routingFreshHeldOutSuiteV04,
+  routingFreshHeldOutSuiteV05,
 } from "./fixtures.js";
 import type {
   HeldOutCaseSpec,
@@ -33,7 +34,12 @@ import { enrichFastDecisionRequest } from "../ontology-enrichment.js";
 export const PRODUCTION_TRUSTED_SCORER_BACKEND = "gliner2";
 
 /** Named suites selectable via `--suite` / resolveHeldOutSuite. */
-export type HeldOutSuiteName = "v0.1" | "v0.2-harvey" | "v0.3-routing-fresh" | "v0.4-routing-fresh";
+export type HeldOutSuiteName =
+  | "v0.1"
+  | "v0.2-harvey"
+  | "v0.3-routing-fresh"
+  | "v0.4-routing-fresh"
+  | "v0.5-routing-fresh";
 
 const BUILTIN_TASK_FRAMING: ReadonlyMap<string, string> = new Map(
   BUILTIN_FAST_DECISION_USE_SITES.map((s) => [s.useSiteId, s.description])
@@ -61,6 +67,7 @@ export function defaultHeldOutSuite(): HeldOutSuiteManifest {
  * - `v0.2-harvey` → Harvey LAB workflow suite
  * - `v0.3-routing-fresh` → frozen catalog-only routing suite (spent for τ/hints)
  * - `v0.4-routing-fresh` → frozen final-eval routing suite (three-set protocol)
+ * - `v0.5-routing-fresh` → frozen Decide-vs-stock final-eval suite (n=75)
  * - other string → JSON path via loadHeldOutSuite
  */
 export function resolveHeldOutSuite(nameOrPath?: string): HeldOutSuiteManifest {
@@ -83,6 +90,13 @@ export function resolveHeldOutSuite(nameOrPath?: string): HeldOutSuiteManifest {
     nameOrPath === "v0.4"
   ) {
     return routingFreshHeldOutSuiteV04();
+  }
+  if (
+    nameOrPath === "v0.5-routing-fresh" ||
+    nameOrPath === "routing-fresh-v0.5" ||
+    nameOrPath === "v0.5"
+  ) {
+    return routingFreshHeldOutSuiteV05();
   }
   return loadHeldOutSuite(nameOrPath);
 }
