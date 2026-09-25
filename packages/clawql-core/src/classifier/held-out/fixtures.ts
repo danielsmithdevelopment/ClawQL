@@ -26,17 +26,7 @@ function heldOutFixtureCandidates(filename: string): string[] {
         join(here, "..", "held-out-fixtures", filename),
         join(here, "..", "src", "classifier", "held-out", "fixtures", filename),
         join(here, "..", "..", "src", "classifier", "held-out", "fixtures", filename),
-        join(
-          here,
-          "..",
-          "..",
-          "..",
-          "src",
-          "classifier",
-          "held-out",
-          "fixtures",
-          filename
-        )
+        join(here, "..", "..", "..", "src", "classifier", "held-out", "fixtures", filename)
       );
     }
   } catch {

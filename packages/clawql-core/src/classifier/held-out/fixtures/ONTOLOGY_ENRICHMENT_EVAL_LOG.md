@@ -60,15 +60,15 @@ With enrichment **both aliases map to one ontology id** `clawql.memory_recall` a
 
 ## Fresh routing set (frozen)
 
-| Field | Value |
-| ----- | ----- |
-| Suite | `fast-decision-held-out-v0.3-routing-fresh` |
-| Cases | 34 (`search_provider_tool_routing`) |
-| Suite digest (SHA-256) | `02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa` |
-| Catalog digest (SHA-256) | `45a3899ce0b3f6efb3621b47db46daf640843ed7282fc2a372ce425c0e266cbf` |
-| Frozen at (UTC) | `2026-09-25T02:48:42Z` |
-| Drafter | isolated session `bc-c622daec-7440-5141-950b-6caf06ea173d` (catalog + schema only) |
-| Review | correctness-only; no query rewrites; no hint text in freeze commit |
+| Field                    | Value                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| Suite                    | `fast-decision-held-out-v0.3-routing-fresh`                                        |
+| Cases                    | 34 (`search_provider_tool_routing`)                                                |
+| Suite digest (SHA-256)   | `02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa`                 |
+| Catalog digest (SHA-256) | `45a3899ce0b3f6efb3621b47db46daf640843ed7282fc2a372ce425c0e266cbf`                 |
+| Frozen at (UTC)          | `2026-09-25T02:48:42Z`                                                             |
+| Drafter                  | isolated session `bc-c622daec-7440-5141-950b-6caf06ea173d` (catalog + schema only) |
+| Review                   | correctness-only; no query rewrites; no hint text in freeze commit                 |
 
 Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md). Select via `--suite v0.3-routing-fresh`.
 

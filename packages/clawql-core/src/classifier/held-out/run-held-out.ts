@@ -14,7 +14,11 @@ import {
   evaluateCorrectnessAndCalibration,
   type ValidationCriteria,
 } from "../validation.js";
-import { FAST_DECISION_HELD_OUT_V01, harveyHeldOutSuiteV02, routingFreshHeldOutSuiteV03 } from "./fixtures.js";
+import {
+  FAST_DECISION_HELD_OUT_V01,
+  harveyHeldOutSuiteV02,
+  routingFreshHeldOutSuiteV03,
+} from "./fixtures.js";
 import type {
   HeldOutCaseSpec,
   HeldOutSuiteManifest,
