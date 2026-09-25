@@ -62,9 +62,23 @@ Keep stock reject in production. Treat Decide+reject as **v0.5**, not as a hot-s
 - Stock 80% forced EM is the shipped precision number.
 - Higher coverage alone justifies cutting over tonight.
 
-## Closeout sentence (unchanged until v0.5)
+## Closeout sentence (unchanged until Decide earns its own closeout)
 
 Ship stock reject because it is the precision-first CPU on-ramp that takes **45%** of catalog routing off the expensive path with a clean **0-error** held-out fire set.
+
+## v0.5 progress (Decide candidate — not live)
+
+| Step | Status |
+| --- | --- |
+| Confirm Decide (T,τ) off-set-only | **done** — fit n=41; T=0.75; prior τ=0.60 |
+| Pull the one miss | **done** — `route-v04-004` (execute GT → Decide chose search @ ≈0.739) |
+| Predeclare production rule | **done** — ship Decide reject only if 0 errors among fires; τ from fit with prec≥0.9 **and** fit nErrors=0 |
+| Fit-only τ under that rule | **τ=0.80** (fit 23/41, 0 err) |
+| Candidate readout on spent v0.4 | **23/40 fire, 0 errors**, CP LB ≈85.2% — **not** productionTrusted |
+| Freeze v0.5 suite | **next** — required before Decide closeout |
+| Live path | **still stock** (T=4, τ=0.70) |
+
+Details: [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/src/classifier/held-out/fixtures/V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md) · [`DECIDE_V05_CANDIDATE_READOUT.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_CANDIDATE_READOUT.md)
 
 ## Related
 
