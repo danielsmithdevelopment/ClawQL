@@ -29,6 +29,7 @@ This is the **final eval set** under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTO
 ## Freeze metadata
 
 - Frozen at (UTC): `2026-09-25T13:15:40Z`
+- Freeze commit: `205ad185d822e640caf7dd5a3d2887139208f0a2`
 - Drafter agent: `bc-71b177a1-b4ba-5b31-8b33-eb71d1bd2d26`
 - Case count: 40
 - useSiteId: `search_provider_tool_routing` (all cases)
