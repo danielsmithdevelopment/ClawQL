@@ -44,8 +44,8 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Freeze **v0.5** | **FROZEN** — n=75; digests in [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md); drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33` |
 | Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
 | Score once + frontier adj | **done** — twin-aware rematch: both reject arms **0** fire errors; Decide 45/75 vs stock 32/75 → **Decide wins** under V06 spend rule ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)) |
-| Live path | **Decide** T=0.75 / τ=0.80 ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)); twins collapsed ([`CATALOG_TWIN_EQUIVALENCE.md`](./CATALOG_TWIN_EQUIVALENCE.md)) |
-| v0.6 order | twin collapse + spend rule **done**; cutover **done**; optional new frozen suite remains future held-out claim |
+| Live path | **Decide** T=0.75 / τ=0.80 ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)); cite 45/75 @ ≈92% LB (stock rematch 32/75 @ ≈89%); not a fresh productionTrusted claim |
+| v0.6 freeze | **optional confirmation** — not a blocker for the path already in production |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related

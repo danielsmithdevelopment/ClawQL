@@ -9,7 +9,15 @@
 
 ## What is live (v0.6)
 
-`fastino/GLiNER2.5-Decide` with reject rule **T=0.75 / τ=0.80**, twin-aware correctness for declared mcp↔skill pairs. On frozen v0.5 (twin-aware rematch of the same score dumps): Decide fires **45/75** with **0** fire errors (≈92% CP LB); stock would have fired **32/75** with **0** twin-aware fire errors. Equal errors → prefer coverage → Decide. Details: [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) · [`CATALOG_TWIN_EQUIVALENCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/CATALOG_TWIN_EQUIVALENCE.md) · [`V06_SHIP_RULE_SPEND.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V06_SHIP_RULE_SPEND.md).
+`fastino/GLiNER2.5-Decide`, **T=0.75**, routing **τ=0.80**, CPU, fail-closed remaps, abstain to fallback. Declared `mcp.*` ↔ `skill.clawql-*` twins count as correct. PR [#1149](https://github.com/danielsmithdevelopment/ClawQL/pull/1149).
+
+**Cite line.** Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (**n=75**): **45/75** fires, **0** errors among fires, 95% CP lower bound **≈92%** (45/45 → 92.1%). Stock reject on the same rematch: **32/75**, **0** errors, LB **≈89%** (32/32 → 89.1%). Coverage is why Decide is live.
+
+**How earned.** Not a new freeze. Twin collapse + declared spend rule (equal fire errors → prefer coverage) + rematch of the same v0.5 dumps — no τ move, no GT relabel. Details: [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) · [`CATALOG_TWIN_EQUIVALENCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/CATALOG_TWIN_EQUIVALENCE.md) · [`V06_SHIP_RULE_SPEND.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V06_SHIP_RULE_SPEND.md).
+
+**What this is not.** Not a fresh held-out `productionTrusted` claim in the v0.4 sense. The next held-out sentence waits for an optional frozen v0.6 (confirmation, not a production blocker).
+
+**Do not say.** Decide passed the old 0-error rule before twin collapse; the 1-error frontier table is still the live score; v0.4 stock `productionTrusted` is the current default; 60% coverage is forced exact-match.
 
 ## What was live on v0.4 (historical)
 
@@ -88,7 +96,7 @@ Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire s
 | Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
 | Live path | **Decide** (T=0.75, τ=0.80) after twin-aware V06 spend — see [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) |
 
-**Docs one-liner.** Live routing path is Decide @ T=0.75 / τ=0.80 after twin collapse: on frozen v0.5 both arms have 0 twin-aware fire errors and Decide covers 60% vs stock 43%.
+**Docs one-liner.** Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (n=75): 45/75 fires, 0 errors among fires, 95% CP LB ≈92% (stock same rematch: 32/75, 0 errors, ≈89%). Coverage is why Decide is live. Not a fresh v0.4-style `productionTrusted` claim — optional frozen v0.6 is confirmation only.
 
 **v0.6 cutover gate (all three — satisfied):** (1) stock miss on the page next to Decide’s — both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage.
 
