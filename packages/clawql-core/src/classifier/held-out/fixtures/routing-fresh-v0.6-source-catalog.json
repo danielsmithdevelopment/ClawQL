@@ -1,0 +1,234 @@
+{
+  "catalogId": "routing-fresh-v0.6-source-catalog",
+  "note": "Catalog-only draft input for v0.6 confirmation (id/label/description). No whenToUse hints. Same entry bodies as v0.5; new catalogId. Twin equivalence is a scoring rule — not shown to the drafter.",
+  "entries": [
+    {
+      "id": "mcp.search",
+      "kind": "tool",
+      "label": "search",
+      "description": "Discover provider/API operationIds from natural language before execute"
+    },
+    {
+      "id": "mcp.execute",
+      "kind": "tool",
+      "label": "execute",
+      "description": "Run a known operationId with validated arguments"
+    },
+    {
+      "id": "mcp.memory_recall",
+      "kind": "tool",
+      "label": "memory_recall",
+      "description": "Retrieve vault or ontology context with schema/filters"
+    },
+    {
+      "id": "mcp.memory_ingest",
+      "kind": "tool",
+      "label": "memory_ingest",
+      "description": "Persist durable session outcomes to the vault"
+    },
+    {
+      "id": "mcp.data_query",
+      "kind": "tool",
+      "label": "data_query / clawql_sql",
+      "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+    },
+    {
+      "id": "mcp.cache",
+      "kind": "tool",
+      "label": "cache",
+      "description": "Ephemeral session scratch state"
+    },
+    {
+      "id": "mcp.audit",
+      "kind": "tool",
+      "label": "audit",
+      "description": "Append or list WORM-linked audit events"
+    },
+    {
+      "id": "mcp.skills_list",
+      "kind": "tool",
+      "label": "skills_list",
+      "description": "List skill index entries (name, description, digest)"
+    },
+    {
+      "id": "mcp.skills_get",
+      "kind": "tool",
+      "label": "skills_get",
+      "description": "Load full skill content for a selected skill id"
+    },
+    {
+      "id": "mcp.sandbox_exec",
+      "kind": "tool",
+      "label": "sandbox_exec",
+      "description": "Run isolated code snippets with safe persistence"
+    },
+    {
+      "id": "mcp.notify",
+      "kind": "tool",
+      "label": "notify",
+      "description": "Send Slack milestones or failure notifications"
+    },
+    {
+      "id": "mcp.schedule",
+      "kind": "tool",
+      "label": "schedule",
+      "description": "Recurring synthetic checks with dry_run"
+    },
+    {
+      "id": "mcp.ingest_external_knowledge",
+      "kind": "tool",
+      "label": "ingest_external_knowledge",
+      "description": "Import external markdown or URL content"
+    },
+    {
+      "id": "mcp.knowledge_search_onyx",
+      "kind": "tool",
+      "label": "knowledge_search_onyx",
+      "description": "Search enterprise Onyx knowledge before execution"
+    },
+    {
+      "id": "mcp.clawql_think",
+      "kind": "tool",
+      "label": "clawql_think",
+      "description": "Structured reasoning before consequential decisions"
+    },
+    {
+      "id": "mcp.pageindex_build_tree",
+      "kind": "tool",
+      "label": "pageindex_build_tree",
+      "description": "Build document tree indexes for long-form evidence"
+    },
+    {
+      "id": "mcp.ouroboros_run_evolutionary_loop",
+      "kind": "tool",
+      "label": "ouroboros_run_evolutionary_loop",
+      "description": "Spec-first evolutionary loop with lineage checks"
+    },
+    {
+      "id": "tool.bash_workspace_hunt",
+      "kind": "anti_pattern",
+      "label": "bash/grep/find workspace hunt",
+      "description": "Unstructured shell listing and grepping over workspace paths"
+    },
+    {
+      "id": "tool.generic_web_search",
+      "kind": "tool",
+      "label": "generic unstructured search",
+      "description": "Broad search without schema filters or corpus SQL"
+    },
+    {
+      "id": "mcp.memory_recall_title_flag_a",
+      "kind": "tool",
+      "label": "memory_recall title-flag A",
+      "description": "Ontology recall filtered by title flag A (not flag B)"
+    },
+    {
+      "id": "mcp.memory_recall_title_flag_b",
+      "kind": "tool",
+      "label": "memory_recall title-flag B",
+      "description": "Ontology recall filtered by title flag B (not flag A)"
+    },
+    {
+      "id": "mcp.data_query_cohort_count",
+      "kind": "tool",
+      "label": "data_query cohort COUNT",
+      "description": "SQL COUNT over structured flags for exact k of N"
+    },
+    {
+      "id": "mcp.memory_recall_overbroad",
+      "kind": "tool",
+      "label": "memory_recall overbroad filter",
+      "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+    },
+    {
+      "id": "skill.clawql-audit-workflows",
+      "kind": "skill",
+      "label": "clawql-audit-workflows",
+      "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered — no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs."
+    },
+    {
+      "id": "skill.clawql-cache-workflows",
+      "kind": "skill",
+      "label": "clawql-cache-workflows",
+      "description": "Use the cache MCP tool (ClawQL Core, always on) as ephemeral scratch state during active sessions."
+    },
+    {
+      "id": "skill.clawql-composed-mcp-workflows",
+      "kind": "skill",
+      "label": "clawql-composed-mcp-workflows",
+      "description": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools."
+    },
+    {
+      "id": "skill.clawql-execute-workflows",
+      "kind": "skill",
+      "label": "clawql-execute-workflows",
+      "description": "Execute discovered API operations safely with argument validation and post-change verification."
+    },
+    {
+      "id": "skill.clawql-external-ingest",
+      "kind": "skill",
+      "label": "clawql-external-ingest",
+      "description": "Import external markdown or URL content using ingest_external_knowledge with dry-run-first validation."
+    },
+    {
+      "id": "skill.clawql-memory-ingest",
+      "kind": "skill",
+      "label": "clawql-memory-ingest",
+      "description": "Persist durable session outcomes with memory_ingest using stable titles, append threading, and wikilinks."
+    },
+    {
+      "id": "skill.clawql-memory-recall",
+      "kind": "skill",
+      "label": "clawql-memory-recall",
+      "description": "Recall relevant vault context before deep work using focused queries and graph depth controls."
+    },
+    {
+      "id": "skill.clawql-notify-workflows",
+      "kind": "skill",
+      "label": "clawql-notify-workflows",
+      "description": "Send actionable Slack milestones and failure notifications with the optional notify tool."
+    },
+    {
+      "id": "skill.clawql-onyx-knowledge-workflows",
+      "kind": "skill",
+      "label": "clawql-onyx-knowledge-workflows",
+      "description": "Use knowledge_search_onyx to ground workflows in enterprise evidence before execution."
+    },
+    {
+      "id": "skill.clawql-ouroboros-workflows",
+      "kind": "skill",
+      "label": "clawql-ouroboros-workflows",
+      "description": "Run iterative specification-first workflows with ouroboros_* tools, lineage checks, and clear boundaries vs raw infra (kubectl/Helm)."
+    },
+    {
+      "id": "skill.clawql-sandbox-exec",
+      "kind": "skill",
+      "label": "clawql-sandbox-exec",
+      "description": "Run isolated code snippets via sandbox_exec with safe persistence/session patterns."
+    },
+    {
+      "id": "skill.clawql-schedule-workflows",
+      "kind": "skill",
+      "label": "clawql-schedule-workflows",
+      "description": "Build recurring synthetic checks with schedule, validate via dry_run, and pair with notify."
+    },
+    {
+      "id": "skill.clawql-search-workflows",
+      "kind": "skill",
+      "label": "clawql-search-workflows",
+      "description": "Use ClawQL search to discover correct operationIds before execute calls, especially in multi-provider workflows."
+    },
+    {
+      "id": "skill.clawql-vault-memory",
+      "kind": "skill",
+      "label": "clawql-vault-memory",
+      "description": "Deep ClawQL Obsidian vault workflows using memory_ingest and memory_recall MCP tools—structured insights, wikilink graphs, session threading, verbatim captures, and recall queries. Use when persisting important context, building a knowledge graph, starting tasks that may depend on prior vault notes,"
+    },
+    {
+      "id": "skill.deep-thinking",
+      "kind": "skill",
+      "label": "deep-thinking",
+      "description": "Chain-of-thought deep reasoning before consequential decisions: world state, assumptions, hypotheses, options, blast radius, and after-action takeaways. Use when restarting services, killing processes, launching long evals, choosing between known-good vs shortcut paths, debugging intermittent failur"
+    }
+  ]
+}

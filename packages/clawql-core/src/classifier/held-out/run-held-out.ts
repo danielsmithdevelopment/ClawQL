@@ -20,6 +20,7 @@ import {
   routingFreshHeldOutSuiteV03,
   routingFreshHeldOutSuiteV04,
   routingFreshHeldOutSuiteV05,
+  routingFreshHeldOutSuiteV06,
 } from "./fixtures.js";
 import type {
   HeldOutCaseSpec,
@@ -40,7 +41,8 @@ export type HeldOutSuiteName =
   | "v0.2-harvey"
   | "v0.3-routing-fresh"
   | "v0.4-routing-fresh"
-  | "v0.5-routing-fresh";
+  | "v0.5-routing-fresh"
+  | "v0.6-routing-fresh";
 
 const BUILTIN_TASK_FRAMING: ReadonlyMap<string, string> = new Map(
   BUILTIN_FAST_DECISION_USE_SITES.map((s) => [s.useSiteId, s.description])
@@ -69,6 +71,7 @@ export function defaultHeldOutSuite(): HeldOutSuiteManifest {
  * - `v0.3-routing-fresh` → frozen catalog-only routing suite (spent for τ/hints)
  * - `v0.4-routing-fresh` → frozen final-eval routing suite (three-set protocol)
  * - `v0.5-routing-fresh` → frozen Decide-vs-stock final-eval suite (n=75)
+ * - `v0.6-routing-fresh` → frozen optional Decide live confirmation suite (n=75)
  * - other string → JSON path via loadHeldOutSuite
  */
 export function resolveHeldOutSuite(nameOrPath?: string): HeldOutSuiteManifest {
@@ -98,6 +101,13 @@ export function resolveHeldOutSuite(nameOrPath?: string): HeldOutSuiteManifest {
     nameOrPath === "v0.5"
   ) {
     return routingFreshHeldOutSuiteV05();
+  }
+  if (
+    nameOrPath === "v0.6-routing-fresh" ||
+    nameOrPath === "routing-fresh-v0.6" ||
+    nameOrPath === "v0.6"
+  ) {
+    return routingFreshHeldOutSuiteV06();
   }
   return loadHeldOutSuite(nameOrPath);
 }

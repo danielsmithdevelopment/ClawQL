@@ -88,10 +88,10 @@ If (1)–(3) hold, switch — that is the right long-term path. If twins are not
 
 ## Order for next round (v0.6)
 
-1. Collapse tool/skill twins in the catalog (equivalence class, or judge accepts either).
-2. Declare the comparison/ship rule **as a spend** (equal fire-errors → prefer higher coverage; twins ≠ model errors).
-3. Freeze v0.6 (blind; digests).
-4. Score once + frontier-adjudicate; cut over to Decide if (1)–(3) still hold.
+1. Collapse tool/skill twins in the catalog (equivalence class, or judge accepts either). **done**
+2. Declare the comparison/ship rule **as a spend** (equal fire-errors → prefer higher coverage; twins ≠ model errors). **done** → live Decide ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md))
+3. Freeze v0.6 (blind; digests). **done** — [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md)
+4. Score once + frontier-adjudicate (confirmation only; knobs locked).
 
 ## Docs one-liner
 

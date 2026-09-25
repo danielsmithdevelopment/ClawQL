@@ -45,7 +45,7 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
 | Score once + frontier adj | **done** — twin-aware rematch: both reject arms **0** fire errors; Decide 45/75 vs stock 32/75 → **Decide wins** under V06 spend rule ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)) |
 | Live path | **Decide** T=0.75 / τ=0.80 ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)); cite 45/75 @ ≈92% LB (stock rematch 32/75 @ ≈89%); not a fresh productionTrusted claim |
-| v0.6 freeze | **optional confirmation** — not a blocker for the path already in production |
+| Freeze **v0.6** | **FROZEN** — n=75; digests in [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md); drafter `bc-7a0e11f5-9f22-5f61-a970-ffa120a222c2`; **optional confirmation** (score-once pending) |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related
@@ -53,10 +53,12 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 - [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
 - [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md)
 - [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md)
+- [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md)
 - [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md)
 - [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)
 - [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)
 - [`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)
 - [`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)
+- [`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)
 - [`CALIBRATION_FREEZE_v0.1.md`](./CALIBRATION_FREEZE_v0.1.md)
 - [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md)
