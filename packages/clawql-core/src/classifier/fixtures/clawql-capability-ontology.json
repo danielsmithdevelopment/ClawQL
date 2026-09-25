@@ -211,7 +211,7 @@
       "kind": "anti_pattern",
       "label": "unstructured shell/grep hunt",
       "whenToUse": "Only when no structured corpus or ontology flags exist for the task",
-      "whenNotToUse": "Never first tool for credit-facility springing-lien rates, HSR second-request lists, or other pre-ingested firm-knowledge cohorts — prefer memory_recall or structured SQL",
+      "whenNotToUse": "Never first tool for pre-ingested firm-knowledge cohorts with schema flags or SQL denominators — prefer memory_recall or structured SQL; unstructured shell has no cohort N",
       "requiresStructuredCorpus": false,
       "ontologyRole": "anti_pattern",
       "aliases": [

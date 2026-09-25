@@ -125,12 +125,16 @@ export function enrichCandidateDescription(
 
   // Already enriched by enrichFastDecisionRequest — rebuild once from ontology.
   if (hit.kind === "anti_pattern") {
+    // Keep wording abstract — never echo query-domain tokens (lien, HSR, …)
+    // or GLiNER re-baits onto the anti-pattern via lexical overlap.
     return truncate(
       [
         `ANTI_PATTERN:${hit.label}`,
+        "role=dispreferred_unstructured_hunt",
         `DO_NOT_USE_WHEN=${hit.whenNotToUse}`,
         `only_if_no_structured_corpus=${hit.whenToUse}`,
         "prefer=structured_query|ontology_recall",
+        "score_hint=low_when_corpus_exists",
       ].join(" | "),
       MAX_LABEL_CHARS
     );
@@ -145,10 +149,28 @@ export function enrichCandidateDescription(
   if (hit.requiresStructuredCorpus) {
     parts.push("requiresStructuredCorpus=true");
   }
-  // Keep a short non-bait original hint only for non-anti-pattern tools.
-  const orig = String(candidate.features.label ?? candidate.features.name ?? "").trim();
-  if (orig && !orig.toLowerCase().includes("grep") && !orig.toLowerCase().includes("bash")) {
-    parts.push(`label=${orig}`);
+  // Preserve candidate-specific wording so alias siblings (e.g. HSR filing vs
+  // second-request-only) stay distinguishable under one ontology capability.
+  const origLabel = String(candidate.features.label ?? candidate.features.name ?? "").trim();
+  const rawDesc = String(candidate.features._rawDescription ?? "").trim();
+  const featureDesc = String(candidate.features.description ?? "").trim();
+  // Prefer pre-enrichment raw text; skip if description was already rewritten.
+  const specific =
+    rawDesc ||
+    (featureDesc && !featureDesc.includes("whenToUse=") && !featureDesc.startsWith("ANTI_PATTERN")
+      ? featureDesc
+      : "");
+  if (origLabel && !/^ANTI_PATTERN|STRUCTURED_CORPUS/i.test(origLabel)) {
+    parts.push(`label=${origLabel}`);
+  }
+  if (specific && specific !== origLabel) {
+    const safe = /(?:^|\b)(?:bash|grep)\b|\/workspace/i.test(specific)
+      ? specific.slice(0, 40)
+      : specific.slice(0, 160);
+    parts.push(`detail=${safe}`);
+  }
+  if (candidate.candidateId !== hit.capabilityId) {
+    parts.push(`aliasOf=${candidate.candidateId}`);
   }
   const packed = packFeatureBag(candidate.features, [
     "ontologyContext",
