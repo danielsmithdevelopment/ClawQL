@@ -104,13 +104,15 @@ function ctxForCase(c: HeldOutCaseSpec): FastDecisionContext {
 }
 
 /**
- * When CLAWQL_FAST_DECISION_ONTOLOGY=0, skip capability enrichment (A/B).
- * Default: enrich with ClawQL capability ontology so GLiNER sees whenToUse.
+ * Capability ontology enrichment for held-out / runtime scoring.
+ *
+ * Default **off** after clean v0.3 dual-arm (no evidence of routing benefit;
+ * see ONTOLOGY_ENRICHMENT_EVAL_LOG.md). Opt in: CLAWQL_FAST_DECISION_ONTOLOGY=1.
  */
 export function ontologyEnrichmentEnabled(): boolean {
   const v = process.env.CLAWQL_FAST_DECISION_ONTOLOGY?.trim().toLowerCase();
-  if (v === "0" || v === "false" || v === "off") return false;
-  return true;
+  if (v === "1" || v === "true" || v === "on" || v === "yes") return true;
+  return false;
 }
 
 export function scoreHeldOutCases(

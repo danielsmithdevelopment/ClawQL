@@ -26,11 +26,17 @@
 - adjudicated: false (all)
 - Suite file: `fast-decision-held-out-v0.3-routing-fresh.json`
 
+## Scoring discipline
+
+- Dual-arm score completed; see `ONTOLOGY_ENRICHMENT_EVAL_LOG.md` § “v0.3 clean dual-arm result”.
+- **v0.3 is spent for tuning.** Diagnosis of regressions is allowed; hint changes after that need a new frozen suite (**v0.4**).
+- Enrichment is **default off** for routing (`CLAWQL_FAST_DECISION_ONTOLOGY=1` to opt in).
+- **Tool IDs in this suite are frozen.** Renaming, merging, or splitting tool IDs invalidates cases — re-freeze; do not patch a mapping.
+
 ## Hint / ontology rule
 
 Per `docs/specs/classifier/capability-ontology-from-catalog-v0.1.md` §5.1: any tool/skill `whenToUse` / `whenNotToUse` / `distinguishFrom` text, or generated ontology, used for a non-contaminated score on this set **must** post-date this freeze commit. Do not author hint text in the same change that freezes the set.
 
-## Scoring discipline (do not break)
+## Historical pre-score note
 
-- **Do not run v0.3 until hints are written, then run both arms together** (ontology on + `CLAWQL_FAST_DECISION_ONTOLOGY=0`) in the same run against the same `ontologyDigest`. Running ontology-off early would leak which cases fail to the hint author.
-- **Tool IDs in this suite are frozen.** Adding hints may change the ontology digest (expected). Renaming, merging, or splitting tool IDs invalidates cases — re-freeze affected cases; do not patch a mapping.
+Pre-score rule was: do not run v0.3 until hints are written; then both arms together. That sequence was followed. Clean result: no evidence of benefit (point estimate negative, not significant; target subsets flat). Contaminated Harvey +14pt did not reproduce.

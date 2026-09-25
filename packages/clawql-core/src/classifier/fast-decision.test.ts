@@ -428,6 +428,24 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
+  it("defaults ontology enrichment off; opt in with CLAWQL_FAST_DECISION_ONTOLOGY=1", async () => {
+    const { ontologyEnrichmentEnabled } = await import("./held-out/run-held-out.js");
+    const prev = process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+    try {
+      delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+      expect(ontologyEnrichmentEnabled()).toBe(false);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "0";
+      expect(ontologyEnrichmentEnabled()).toBe(false);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "1";
+      expect(ontologyEnrichmentEnabled()).toBe(true);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "true";
+      expect(ontologyEnrichmentEnabled()).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+      else process.env.CLAWQL_FAST_DECISION_ONTOLOGY = prev;
+    }
+  });
+
   it("loads ClawQL capability ontology and enriches classify text with whenToUse", async () => {
     const {
       loadClawqlCapabilityOntology,

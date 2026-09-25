@@ -6,10 +6,10 @@
 
 ## Arms
 
-| Arm              | Condition                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| A — ontology off | `CLAWQL_FAST_DECISION_ONTOLOGY=0`                                                      |
-| B — ontology on  | enrichment default on (hints overlay applied; same `ontologyDigest` for the whole run) |
+| Arm | Condition |
+| --- | --------- |
+| A — ontology off | enrichment default / unset (`CLAWQL_FAST_DECISION_ONTOLOGY` unset or off) |
+| B — ontology on | `CLAWQL_FAST_DECISION_ONTOLOGY=1` (hints overlay applied; same `ontologyDigest` for the whole run) |
 
 Both arms run in one session against the same provisional fixture GT (`adjudicated=false`). Live frontier labels are out of scope for this readout.
 
@@ -29,14 +29,14 @@ Also report **accuracy delta** (B − A) and **MCE delta** (B − A).
 
 A case is in this subset if its candidate set includes **both** members of any catalog sibling pair:
 
-| Pair                                                                |
-| ------------------------------------------------------------------- |
+| Pair |
+| ---- |
 | `mcp.memory_recall_title_flag_a` + `mcp.memory_recall_title_flag_b` |
-| `mcp.data_query_cohort_count` + `mcp.memory_recall_overbroad`       |
-| `mcp.cache` + `mcp.audit`                                           |
-| `mcp.skills_list` + `mcp.skills_get`                                |
-| `mcp.notify` + `mcp.schedule`                                       |
-| `mcp.search` + `mcp.execute`                                        |
+| `mcp.data_query_cohort_count` + `mcp.memory_recall_overbroad` |
+| `mcp.cache` + `mcp.audit` |
+| `mcp.skills_list` + `mcp.skills_get` |
+| `mcp.notify` + `mcp.schedule` |
+| `mcp.search` + `mcp.execute` |
 
 Report for each arm: **n_sibling**, **accuracy_sibling**.
 
@@ -50,12 +50,12 @@ Report for each arm: **n_shell**, **accuracy_shell**.
 
 Compare arm A vs arm B per case:
 
-| Cell                    | Definition                   |
-| ----------------------- | ---------------------------- |
-| **gain**                | incorrect on A, correct on B |
-| **regression**          | correct on A, incorrect on B |
-| **unchanged_correct**   | correct on both              |
-| **unchanged_incorrect** | incorrect on both            |
+| Cell | Definition |
+| ---- | ---------- |
+| **gain** | incorrect on A, correct on B |
+| **regression** | correct on A, incorrect on B |
+| **unchanged_correct** | correct on both |
+| **unchanged_incorrect** | incorrect on both |
 
 Report counts for all four cells (not only net). List caseIds in gain and regression cells.
 

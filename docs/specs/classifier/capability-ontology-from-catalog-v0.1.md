@@ -176,6 +176,8 @@ The **control** is process:
 
 If hint text lands before the frozen set, treat subsequent scores as contaminated until a new frozen set is cut.
 
+**Post-v0.3:** the clean dual-arm on `v0.3-routing-fresh` showed **no evidence of benefit** (point estimate negative; target subsets flat; contaminated Harvey lift did not reproduce). Enrichment is therefore **default off** for routing (`CLAWQL_FAST_DECISION_ONTOLOGY=1` to opt in). That suite is **spent for tuning** — further hint edits require a new frozen set (v0.4). See `ONTOLOGY_ENRICHMENT_EVAL_LOG.md`.
+
 ---
 
 ## 6. Implementation order

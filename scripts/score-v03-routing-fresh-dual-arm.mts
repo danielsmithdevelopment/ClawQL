@@ -55,9 +55,9 @@ async function scoreArm(ontologyOn: boolean): Promise<{
   readonly ontologyDigest: string | null;
 }> {
   if (ontologyOn) {
-    delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+    process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "1";
   } else {
-    process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "0";
+    delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
   }
   const suite = resolveHeldOutSuite("v0.3-routing-fresh");
   const layer = createGlinerFastDecisionScorerLayer();
@@ -92,7 +92,7 @@ console.error(`suite=${suite.suiteId} n=${routingCases.length} sibling=${sibling
 console.error("scoring arm A (ontology off)…");
 const armA = await scoreArm(false);
 console.error(`armA backend=${armA.backend} acc=${armA.rawAccuracy} mce=${armA.meanCalibrationError}`);
-console.error("scoring arm B (ontology on)…");
+console.error("scoring arm B (ontology on; CLAWQL_FAST_DECISION_ONTOLOGY=1)…");
 const armB = await scoreArm(true);
 console.error(`armB backend=${armB.backend} acc=${armB.rawAccuracy} mce=${armB.meanCalibrationError}`);
 

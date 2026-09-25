@@ -2,22 +2,22 @@
 
 ## Contaminated smoke — DO NOT CITE AS HELD-OUT LIFT
 
-| Field       | Value                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- |
-| Tag         | **`contaminated-smoke`**                                                                                         |
-| Suite       | `fast-decision-held-out-v0.2-harvey` (routing site `search_provider_tool_routing`, n=7)                          |
-| Date (UTC)  | 2026-09-25                                                                                                       |
+| Field | Value |
+| ----- | ----- |
+| Tag | **`contaminated-smoke`** |
+| Suite | `fast-decision-held-out-v0.2-harvey` (routing site `search_provider_tool_routing`, n=7) |
+| Date (UTC) | 2026-09-25 |
 | Branch / PR | `cursor/ontology-enriched-classifier-088d` / [#1146](https://github.com/danielsmithdevelopment/ClawQL/pull/1146) |
-| Ontology    | hand fixture `clawql-capability-ontology.json` **v0.2**                                                          |
-| Scorer      | live `gliner2` (`fastino/gliner2.5-base-v1`)                                                                     |
-| Labels      | live Sonnet 4.6 frontier labels (24 cases; routing subset n=7)                                                   |
+| Ontology | hand fixture `clawql-capability-ontology.json` **v0.2** |
+| Scorer | live `gliner2` (`fastino/gliner2.5-base-v1`) |
+| Labels | live Sonnet 4.6 frontier labels (24 cases; routing subset n=7) |
 
 ### Headline numbers (contaminated)
 
-| Condition                         | Routing accuracy | Routing MCE |
-| --------------------------------- | ---------------- | ----------- |
-| `CLAWQL_FAST_DECISION_ONTOLOGY=0` | 4/7 = 0.571      | 0.483       |
-| ontology on (default)             | 5/7 = 0.714      | 0.383       |
+| Condition | Routing accuracy | Routing MCE |
+| --------- | ---------------- | ----------- |
+| ontology off | 4/7 = 0.571 | 0.483 |
+| ontology on | 5/7 = 0.714 | 0.383 |
 
 **Net +1 on n=7 is a 14-point swing from one net case.** Flip matrix: **3 gains, 2 regressions, 2 unchanged.** Gains were bash/grep→`mcp.data_query`. Regressions were cases that were **already correct without ontology**.
 
@@ -32,74 +32,71 @@ Artifacts: `/opt/cursor/artifacts/ontology-ab-rescore.json`, `classify-payload-*
 
 ---
 
-## Sibling regression diagnosis (before more enrichment)
+## Sibling regression diagnosis (pre-catalog fix; historical)
 
-Both regressions were **correct without ontology**. Do not add more shared ontology text until this is fixed — more shared `whenToUse` will keep trading bait fixes for sibling confusion.
-
-### harvey-012 (`mcp.data_query` → `mcp.memory_recall`)
-
-Without enrichment the labels are distinct:
-
-- `mcp.data_query` → “Structured springing-lien / credit-facility flags in DuckDB”
-- `mcp.memory_recall` → “Ontology recall for springing lien / CREDIT_FACILITY”
-
-With enrichment **both** become `STRUCTURED_CORPUS_PREFERRED` plus long shared catalog prose. `memory_recall`'s `whenToUse` literally names `CREDIT_FACILITY` / springing-adjacent flags; `data_query`'s `whenToUse` also names `mentions_springing_lien`. The anti-pattern line says “prefer memory_recall or structured SQL,” which does not prefer SQL over recall. Sibling tools collapse toward one “structured” blob; GLiNER picks recall.
-
-### harvey-008 (`mcp.memory_recall_hsr_filing` → `mcp.memory_recall_second_request_only`)
-
-Without enrichment the disambiguation is in the **candidate-specific** text:
-
-- filing: “Recall matters with HSR filing signals (**not only second request**)”
-- second-request-only: “Title flag `HSR_SECOND_REQUEST` — **wrong framing for 'filing' prompts**”
-
-With enrichment **both aliases map to one ontology id** `clawql.memory_recall` and receive the **same** `whenToUse`, which name-drops `HSR_SECOND_REQUEST` first. The sibling distinction is diluted; GLiNER prefers the second-request alias.
-
-**Conclusion:** shared catalog text that aliases many candidates to one capability is the regression mechanism — including shared family flags packed into labels (`STRUCTURED_CORPUS_PREFERRED` / `requiresStructuredCorpus`). Fix belongs in per-tool / per-sibling declarations (`distinguishFrom`), with family flags kept as routing metadata only (never packed into GLiNER label text). See catalog spec §3.2–§3.3.
+Both Harvey regressions were **correct without ontology**. Shared alias paragraphs / `STRUCTURED_CORPUS_PREFERRED` collapsed siblings. Catalog-sourced per-ID enrichment + `distinguishFrom` were specified to close that path. See [`capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md).
 
 ---
 
 ## Fresh routing set (frozen)
 
-| Field                    | Value                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| Suite                    | `fast-decision-held-out-v0.3-routing-fresh`                                        |
-| Cases                    | 34 (`search_provider_tool_routing`)                                                |
-| Suite digest (SHA-256)   | `02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa`                 |
-| Catalog digest (SHA-256) | `45a3899ce0b3f6efb3621b47db46daf640843ed7282fc2a372ce425c0e266cbf`                 |
-| Frozen at (UTC)          | `2026-09-25T02:48:42Z`                                                             |
-| Drafter                  | isolated session `bc-c622daec-7440-5141-950b-6caf06ea173d` (catalog + schema only) |
-| Review                   | correctness-only; no query rewrites; no hint text in freeze commit                 |
+| Field | Value |
+| ----- | ----- |
+| Suite | `fast-decision-held-out-v0.3-routing-fresh` |
+| Cases | 34 (`search_provider_tool_routing`) |
+| Suite digest (SHA-256) | `02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa` |
+| Catalog digest (SHA-256) | `45a3899ce0b3f6efb3621b47db46daf640843ed7282fc2a372ce425c0e266cbf` |
+| Frozen at (UTC) | `2026-09-25T02:48:42Z` |
+| Drafter | isolated session `bc-c622daec-7440-5141-950b-6caf06ea173d` (catalog + schema only) |
 
-Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md). Select via `--suite v0.3-routing-fresh`.
+Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md).
 
-**Hint / ontology rule:** do not author `whenToUse` / `whenNotToUse` / `distinguishFrom` or regenerate ontology in a way that post-dates scoring claims without this freeze predating those hints (§5.1).
+---
 
-**Scoring:** do **not** run v0.3 until hints are written; then score both arms together against the same `ontologyDigest`. Do not run ontology-off early (leaks failures to the hint author). Tool IDs must not change; ID renames require re-freeze, not a mapping patch.
+## v0.3 clean dual-arm result — NEGATIVE (no evidence of benefit)
 
-### Dual-arm readout (pre-registered fields only)
+| Field | Value |
+| ----- | ----- |
+| Tag | **`clean-held-out` / `negative`** |
+| Suite | `fast-decision-held-out-v0.3-routing-fresh` (n=34) |
+| Process | Pre-registered readout → catalog-only overlay → regenerate → both arms one run |
+| Pre-register commit | before hint overlay (see git history / `V03_DUAL_ARM_READOUT_PREREGISTERED.md`) |
+| `ontologyDigest` (arm B) | `bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9` |
+| Scorer | live `gliner2` both arms |
+| GT | provisional fixture (`adjudicated=false`) — not frontier labels |
+| Artifact | `/opt/cursor/artifacts/v03-dual-arm-readout.json` |
 
-Pre-registered: [`V03_DUAL_ARM_READOUT_PREREGISTERED.md`](./V03_DUAL_ARM_READOUT_PREREGISTERED.md) (committed before hint overlay).  
-Artifact: `/opt/cursor/artifacts/v03-dual-arm-readout.json`  
-`ontologyDigest` arm B: `bf3e0e038a3f423f753f55375f9aa09179bd64483bf4b3da38797b7c7cd3d4f9`  
-Scorer: live `gliner2` both arms. Provisional fixture GT (`adjudicated=false`).
+### Pre-registered metrics
 
-| Field              | Arm A (off) | Arm B (on) | Delta (B−A) |
-| ------------------ | ----------- | ---------- | ----------- |
-| n                  | 34          | 34         | —           |
-| accuracy           | 0.794       | 0.706      | −0.088      |
-| MCE                | 0.391       | 0.375      | −0.015      |
-| sibling n / acc    | 18 / 0.722  | 18 / 0.722 | 0           |
-| shell-bait n / acc | 9 / 0.778   | 9 / 0.778  | 0           |
+| Field | Arm A (off) | Arm B (on) | Δ (B−A) |
+| ----- | ----------- | ---------- | ------- |
+| n | 34 | 34 | — |
+| accuracy | 0.794 | 0.706 | −0.088 |
+| MCE | 0.391 | 0.375 | −0.015 |
+| sibling-pair n / acc | 18 / 0.722 | 18 / 0.722 | 0 |
+| shell-bait n / acc | 9 / 0.778 | 9 / 0.778 | 0 |
 
-Flip matrix: gains=2 (`route-v03-023`, `route-v03-026`); regressions=5 (`route-v03-005`, `route-v03-017`, `route-v03-018`, `route-v03-022`, `route-v03-024`); unchanged_correct=22; unchanged_incorrect=5.
+Flip matrix: gains=2; regressions=5; unchanged_correct=22; unchanged_incorrect=5. Discordant pairs = 7.
 
-Requirements met: isolated author, freeze + hash before hints, n=34 with sibling pairs and shell distractors, contaminated smoke remains tagged separately.
+### How to read (locked)
+
+1. **Defensible statement:** no evidence of benefit from ontology enrichment on this clean held-out routing set; point estimate is negative; with only 7 discordant pairs a McNemar-style reading is not significant (p ≈ 0.45). **Not** “enrichment hurts” as a confirmed claim. GT remains provisional.
+2. **Target failure modes did not move.** Sibling-pair and shell-bait accuracies were identical in both arms. Enrichment did not fix what it was built to fix.
+3. **Calibration is poor in both arms** (MCE ≈ 0.38). Neither arm can gate a fast path. That blocks productionTrusted regardless of enrichment.
+4. **Contaminated smoke did not reproduce.** Harvey’s +14-point swing was contamination; the clean v0.3 run did not show benefit. Keep both on the record.
+
+### Consequences
+
+1. **Enrichment default off for routing** — `CLAWQL_FAST_DECISION_ONTOLOGY` must be explicitly `1`/`true`/`on` to enrich; unset/empty = off.
+2. **v0.3 is spent for tuning.** Inspecting the 5 regressions for diagnosis is fine; any hint changes after that require a new frozen set (**v0.4**) to evaluate, or it is Harvey-style contamination again.
+3. **Question the lever, not only the hint text (hypothesis).** GLiNER matches against label embeddings; long packed label strings may dilute what made labels distinct. Not a finding. Points toward fine-tuning on ClawQL traces (FD §2.7) and temperature calibration more than further label prose.
 
 ---
 
 ## Related
 
-- Provenance: `HARVEY_V02_PROVENANCE.md`
+- Contaminated smoke vs clean negative: this file (both sections)
+- Pre-registered readout: [`V03_DUAL_ARM_READOUT_PREREGISTERED.md`](./V03_DUAL_ARM_READOUT_PREREGISTERED.md)
 - Freeze: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
-- Step-3 catalog ontology: [`docs/specs/classifier/capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md)
+- Catalog ontology spec: [`docs/specs/classifier/capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md)
 - Fast Decision §7: [`docs/specs/classifier/fast-decision-primitive-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-primitive-v0.4.md)
