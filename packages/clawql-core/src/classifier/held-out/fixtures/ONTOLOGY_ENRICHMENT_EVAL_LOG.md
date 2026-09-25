@@ -54,7 +54,7 @@ Without enrichment the disambiguation is in the **candidate-specific** text:
 
 With enrichment **both aliases map to one ontology id** `clawql.memory_recall` and receive the **same** `whenToUse`, which name-drops `HSR_SECOND_REQUEST` first. The sibling distinction is diluted; GLiNER prefers the second-request alias.
 
-**Conclusion:** shared catalog text that aliases many candidates to one capability is the regression mechanism. Fix belongs in per-tool / per-sibling declarations (`distinguishFrom`), not more fixture prose tuned on these cases.
+**Conclusion:** shared catalog text that aliases many candidates to one capability is the regression mechanism — including shared family flags packed into labels (`STRUCTURED_CORPUS_PREFERRED` / `requiresStructuredCorpus`). Fix belongs in per-tool / per-sibling declarations (`distinguishFrom`), with family flags kept as routing metadata only (never packed into GLiNER label text). See catalog spec §3.2–§3.3.
 
 ---
 
