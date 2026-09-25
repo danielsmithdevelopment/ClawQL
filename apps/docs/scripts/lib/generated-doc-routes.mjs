@@ -51,6 +51,8 @@ export const GENERATED_BODY_ROUTES = {
   'memory-recall-structured-filter-body.mdx':
     '/specs/memory/memory-recall-structured-filter',
   'ontology-legal-domain-body.mdx': '/specs/ontology/legal-domain',
+  'fast-decision-routing-closeout-body.mdx':
+    '/specs/classifier/fast-decision-routing-closeout',
   'clawql-network-body.mdx': '/specs/network/clawql-network',
   'clawql-agents-body.mdx': '/agents/clawql-agents',
   'getting-started-for-teams-body.mdx': '/getting-started/for-teams',

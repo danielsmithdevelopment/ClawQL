@@ -146,50 +146,77 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 ### Stock vs Decide four-arm — DONE (score-once; does not rewrite closeout)
 
-| Field        | Value                                                                                                                                |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                     |
-| Date (UTC)   | 2026-09-25                                                                                                                           |
-| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                            |
-| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                      |
-| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                |
-| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                    |
-| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json) |
+| Field        | Value                                                                                                                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                                                                                                    |
+| Date (UTC)   | 2026-09-25                                                                                                                                                                                                          |
+| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                                                                                                           |
+| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                                                                                                     |
+| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                                                                                               |
+| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                                                                                                   |
+| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json)                                                                                |
+| Public docs  | [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md) → [docs.clawql.com](https://docs.clawql.com/specs/classifier/fast-decision-routing-closeout) |
+
+Clopper–Pearson 95% two-sided lower bounds verified against the table:
 
 | Arm                  | Model               | Calibration    | Fire            | Errors | Prec among fired | CP 95% LB | Forced EM |
 | -------------------- | ------------------- | -------------- | --------------- | ------ | ---------------- | --------- | --------- |
-| `stock_forced`       | `gliner2.5-base-v1` | none           | 40/40 (100%)    | 8      | 80.0%            | ≈64%      | **80.0%** |
-| `decide_forced`      | `GLiNER2.5-Decide`  | none           | 40/40 (100%)    | 3      | 92.5%            | ≈80%      | **92.5%** |
-| `stock_locked_T_tau` | `gliner2.5-base-v1` | T=4, τ=0.70    | **18/40 (45%)** | **0**  | **100%**         | **≈82%**  | 80.0%     |
-| `decide_refit_T_tau` | `GLiNER2.5-Decide`  | T=0.75, τ=0.60 | 34/40 (85%)     | 1      | 97.1%            | ≈85%      | 92.5%     |
+| `stock_forced`       | `gliner2.5-base-v1` | none           | 40/40 (100%)    | 8      | 80.0%            | **64.4%** | **80.0%** |
+| `decide_forced`      | `GLiNER2.5-Decide`  | none           | 40/40 (100%)    | 3      | 92.5%            | **79.6%** | **92.5%** |
+| `stock_locked_T_tau` | `gliner2.5-base-v1` | T=4, τ=0.70    | **18/40 (45%)** | **0**  | **100%** (18/18) | **81.5%** | 80.0%     |
+| `decide_refit_T_tau` | `GLiNER2.5-Decide`  | T=0.75, τ=0.60 | **34/40 (85%)** | **1**  | 97.1% (33/34)    | **84.7%** | 92.5%     |
 
-**How to read (locked)**
+**What is now measured.** Same frozen 40, four arms, one scoring pass each. Stock reject reproduces the shipped claim (18/40, 0 errors, ≈82% LB). Decide forced beats stock forced on this catalog (92.5% vs 80% EM; 3 errors vs 8). Decide+reject raises coverage from 45% to 85% at one error (33/34, ≈85% LB). That is a different operating point, not a replacement closeout.
 
-1. **Stock reject arm reproduces the productionTrusted claim** — same 18/40 fires, 0 errors, CP LB ≈82%. Compare did not rewrite that closeout.
-2. **Decide forced >> stock forced on this catalog** — 92.5% vs 80% exact-match (37/40 vs 32/40). That is a forced-answer gap, not a claim that Decide inherits the 82% reject-rule LB.
-3. **Decide + reject trades coverage for one error** — 85% fire (34/40) with **1** wrong among fired (CP LB ≈85%). Higher traffic off expensive path than stock’s 45%, but **not** zero-error; do not swap productionTrusted to Decide without a new suite + adjudication.
-4. **Honesty:** v0.4 remains spent for stock T/τ. Decide (T,τ) fit only on the shared off-set; applied once to frozen v0.4. Quote \(n_{\text{fired}}\) + CP LB whenever citing precision among fired. Marker `.run-stock-vs-decide` cleared after green.
+**Why not cut over to Decide tonight (shape is right; timing is not).** The instinct to put the *same* confidence gate on Decide is correct — that is v0.5. The reason not to swap tonight is the **one miss and the protocol**, not a preference for 45% coverage.
+
+- **Arms are different operating points.** Stock reject: speak less, never wrong on held-out fires (18/40, 0 errors). Decide+reject: speak more, wrong once (34/40, 1 error).
+- **Coverage is not the decision.** Wrong route is costly; abstention is not. +16 local decisions and +1 misroute on the same 40. If a bad tool call is worse than an extra frontier call, 0-error at 45% can beat 1-error at 85% until that miss is understood.
+- **Intervals do not settle it.** CP LBs ≈82% (18/18) vs ≈85% (33/34) overlap. Decide+reject is not “more precise” — higher coverage, slightly higher LB, and a realized error. 85% coverage is not a free upgrade.
+- **`productionTrusted` does not transfer.** Stock earned it (off-set fit → freeze → score once → 0 errors among fires → fail-closed remaps → frontier 40/40). Decide used different knobs (T=0.75, τ=0.60). One GHA arm is a candidate result, not a new trusted path.
+
+**v0.5 instead of a hot-swap.** Keep stock reject live. Then: (1) confirm Decide (T,τ) fit only on the off-set; (2) pull the one miss (input, candidates, scores, chosen tool, GT, remap?); (3) frontier-adjudicate the 34 fires under v0.4 rules; (4) predeclare the production rule before chasing coverage (e.g. ship Decide reject only if errors among fires stay 0, or allow 1 if labeled hard + fallback would have caught it); (5) score once — if the miss remains, keep stock or raise Decide’s τ until fires are 0-error again (coverage will land between 45% and 85%).
+
+**Team sentence.** We *will* put the same confidence gate on Decide — that is the point of v0.5 — but we do not replace a 0-error CPU on-ramp with an 85% gate that already misrouted once on the frozen set just because coverage looks better.
+
+**Locked reading**
+
+1. Stock reject arm = productionTrusted claim (unchanged).
+2. Decide forced >> stock forced on this catalog — forced-answer gap, not an 82% reject-rule inheritance.
+3. Decide+reject is +16 fires and +1 error vs stock reject. Coverage is better; the zero-error property is not.
+4. Honesty: v0.4 remains spent for stock T/τ. Decide (T,τ) fit only on the shared off-set; applied once to frozen v0.4. Quote \(n_{\text{fired}}\) + CP LB whenever citing precision among fired.
+
+**Audience lines (add to docs.clawql.com)**
+
+- _Engineering:_ four-arm GHA 36165019073 green; PR #1147. Do not hot-swap weights or thresholds. Confidence-gate Decide as v0.5 after the miss is understood.
+- _Product:_ users should see fewer frontier routing calls on common tools, same behavior when the gate abstains.
+- _Risk:_ Decide+reject is +16 fires and +1 error vs stock reject. Coverage is better; the zero-error property is not. Intervals overlap — not “more precise.”
+- _Cost:_ the live gate still runs on CPU with no GPU required; each fire is a local encoder pass.
+
+**Do not say.** Decide is now productionTrusted. Decide is 82% on our catalog. 85% coverage with one error is the same claim as 45% coverage with zero errors. Stock 80% forced EM is the shipped precision number. Higher coverage alone justifies cutting over tonight.
+
+**Next.** v0.5 checklist above. Until that lands, the closeout sentence stays: ship stock reject because it is the precision-first CPU on-ramp that takes 45% of catalog routing off the expensive path with a clean 0-error held-out fire set.
 
 ### Why ship the 45% gate now (canonical narrative)
 
 **Canonical line.** We should ship it because it is a precision-first on-ramp that safely takes nearly half of catalog routing off the expensive path — with a clean held-out chain, fail-closed remaps, and a known abstain fallback — not because GLiNER solves routing.
 
-**What you are deploying.** A first-pass filter on stock GLiNER 2.5, not a full router. Calibrated 2.5 may answer **45%** of catalog routing cases and must abstain on the rest. On the 18 held-out fires it matched frontier GT every time. Quote precision as **18/18 on (n=40)**, 95% CP lower bound ≈**82%** — not 100%. The other **55%** stays on the path you already trust.
+**What you are deploying.** A first-pass filter on stock GLiNER 2.5, not a full router. Calibrated 2.5 may answer **45%** of catalog routing cases and must abstain on the rest. On the 18 held-out fires it matched frontier GT every time. Quote precision as **18/18 on (n=40)**, 95% CP lower bound ≈**82%** (exact two-sided LB **81.5%**) — not 100%. The other **55%** stays on the path you already trust.
 
-**Why this is the right shape.** Wrong route is expensive. Abstention is cheap when fallback exists. Decide’s ~60% forced exact-match is a different product: always answer. You only let the classifier speak after (T,τ) were fit on a separate set, the catalog eval was frozen, scoring was one pass, and remaps that change the counted tool fail the run.
+**Why this is the right shape.** Wrong route is expensive. Abstention is cheap when fallback exists. Decide’s forced exact-match on this catalog is **92.5%** (measured); Fastino’s ~60% marketing figure is a different product shape (always answer). You only let the classifier speak after (T,τ) were fit on a separate set, the catalog eval was frozen, scoring was one pass, and remaps that change the counted tool fail the run.
 
 **Why 45% is enough to include.** Coverage is traffic taken off the expensive path, not a grade. High-confidence catalog hits cut frontier cost, latency, and egress now. Waiting for 90% coverage usually means 100% of traffic stays on fallback.
 
 **Audience lines.**
 
-- _Engineering:_ reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run.
-- _Product:_ not a new brain — fewer misroutes on common tools; same behavior when unsure.
-- _Risk:_ high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
-- _Cost:_ each fire is an encoder pass instead of a frontier routing call.
+- _Engineering:_ reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run; four-arm GHA green — do not hot-swap to Decide.
+- _Product:_ not a new brain — fewer frontier routing calls on common tools; same behavior when the gate abstains.
+- _Risk:_ high-precision on-ramp, not a router replacement; Decide+reject trades +16 fires for +1 error — do not treat that as the same claim.
+- _Cost:_ live gate is CPU-only; each fire is a local encoder pass instead of a frontier routing call.
 
-**Do not say.** 2.5 already matches Decide. Decide is 82% on our catalog. Forced ~60% and abstain 45%/0-error are the same metric. Precision is 100% without (n=18) and the ~82% bound.
+**Do not say.** Decide is now productionTrusted. Decide is 82% on our catalog. 85% coverage with one error is the same claim as 45% coverage with zero errors. Stock 80% forced EM is the shipped precision number. Precision is 100% without (n=18) and the ~82% bound.
 
-Full copy also in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md) § “Why deploy the 45% coverage gate.”
+Public copy: [`fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md). Also in [`FIT_TAU_FREEZE_v0.1.md`](./FIT_TAU_FREEZE_v0.1.md).
 
 ### Judge sidecar remap policy (current protocol property)
 
@@ -205,3 +232,4 @@ Cosmetic-only (`quote`/`case` → allowlisted id): logged `before→after` in th
 - Freeze: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
 - Catalog ontology spec: [`docs/specs/classifier/capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md)
 - Fast Decision §7: [`docs/specs/classifier/fast-decision-primitive-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-primitive-v0.4.md)
+- Public closeout: [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md)

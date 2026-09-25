@@ -66,10 +66,13 @@ The capability-routing hints overlay (`capability-routing-hints.overlay.json`) w
    `productionTrusted=true` (live + gliner2 + DEFAULT criteria). Marker cleared.
 2. ~~Stock vs Decide four-arm score-once~~ **done** — GHA run
    [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073);
-   report in [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
+   verified CP LBs 64.4% / 79.6% / 81.5% / 84.7%. Report in
+   [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
+   Public narrative:
+   [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md).
    Does **not** rewrite productionTrusted. Marker cleared.
 3. Optional: enrichment dual-arm with hints authored without looking at v0.4 failures.
-4. Future T/τ retunes → freeze **v0.5** before fit.
+4. **Next live-path change → v0.5:** confidence-gate Decide (same reject-rule shape), but do **not** hot-swap tonight. Confirm (T,τ) off-set-only; pull the one miss; frontier-adjudicate the 34 fires; predeclare the production rule before chasing coverage; score once. Until then: ship stock reject (45% / 0-error).
 
 ## Related
 

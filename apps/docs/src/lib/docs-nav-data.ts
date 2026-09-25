@@ -195,6 +195,11 @@ export const docsNavigation: Array<NavGroup> = [
         tag: 'v0.1',
       },
       {
+        title: 'Fast Decision routing closeout',
+        href: '/specs/classifier/fast-decision-routing-closeout',
+        tag: 'v0.4',
+      },
+      {
         title: 'clawql-network',
         href: '/specs/network/clawql-network',
         tag: 'v0.1',

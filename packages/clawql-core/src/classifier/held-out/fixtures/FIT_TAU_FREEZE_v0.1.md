@@ -92,27 +92,27 @@ Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 **Audience lines.**
 
-- _Engineering:_ reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run.
-- _Product:_ not a new brain — fewer misroutes on common tools; same behavior when unsure.
-- _Risk:_ high-precision on-ramp, not a router replacement; disable the fire path without redesigning fallback.
-- _Cost:_ each fire is an encoder pass instead of a frontier routing call.
+- _Engineering:_ reject rule in front of the catalog; easy 45% local; misses → existing path; 0/18 wrong-tool on held-out fires; quote the 82% lower bound; tool-changing remaps fail the run; four-arm GHA 36165019073 green — do not hot-swap weights or thresholds.
+- _Product:_ users should see fewer frontier routing calls on common tools, same behavior when the gate abstains.
+- _Risk:_ high-precision on-ramp, not a router replacement; Decide+reject is +16 fires and +1 error vs stock reject — coverage better, zero-error property not.
+- _Cost:_ live gate is CPU-only (no GPU); each fire is a local encoder pass.
 
-**Do not say.** 2.5 already matches Decide. Decide is 82% on our catalog. Forced ~60% and abstain 45%/0-error are the same metric. Precision is 100% without (n=18) and the ~82% bound.
+**Do not say.** Decide is now productionTrusted. Decide is 82% on our catalog. 85% coverage with one error is the same claim as 45% coverage with zero errors. Stock 80% forced EM is the shipped precision number. Precision is 100% without (n=18) and the ~82% bound.
 
 **Protocol property (current, not a follow-up):** semantic sidecar remaps are fail-closed — a remap that changes which tool counts as the model’s answer fails the run.
 
 ## Stock vs Decide four-arm (score-once; does not rewrite this freeze)
 
-GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) on frozen v0.4 + frontier labels. Full table in [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md) § “Stock vs Decide four-arm.” Report: [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
+GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) on frozen v0.4 + frontier labels. Verified Clopper–Pearson 95% two-sided LBs: **64.4%** (32/40), **79.6%** (37/40), **81.5%** (18/18), **84.7%** (33/34). Full table + locked reading in [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md). Public: [`fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md). Report: [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
 
-| Arm                                         | Headline                                                  |
-| ------------------------------------------- | --------------------------------------------------------- |
-| stock forced                                | 80% EM (32/40)                                            |
-| Decide forced                               | **92.5%** EM (37/40)                                      |
-| stock T=4 / τ=0.70                          | **18/40 fire, 0 errors, CP LB ≈82%** (unchanged closeout) |
-| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error, CP LB ≈85%                       |
+| Arm                                         | Headline                                                                 |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| stock forced                                | 80% EM (32/40), LB 64.4%                                                 |
+| Decide forced                               | **92.5%** EM (37/40), LB 79.6%                                           |
+| stock T=4 / τ=0.70                          | **18/40 fire, 0 errors, LB 81.5% ≈82%** (unchanged closeout)             |
+| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error (33/34), LB 84.7%                                |
 
-Stock reject remains the shipped productionTrusted path. Decide coverage is higher but not zero-error; swapping models needs **v0.5** + adjudication.
+Stock reject remains the shipped productionTrusted path. Decide+reject is a different operating point (+16 fires, +1 error). Coverage is not the decision: wrong route is costly, abstention is not; CP LBs overlap (≈82% vs ≈85%) so Decide+reject is not “more precise.” Shape is right (confidence-gate Decide); timing is not (one miss + protocol). Next live-path change is **v0.5** — see public closeout “Why not cut over / What to do instead of swapping.”
 
 ## Artifact
 
@@ -126,3 +126,4 @@ Compare: `scripts/compare-stock-vs-decide-v04.mts`
 - [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md) (**spent**)
 - [`FIT_SET_SCAFFOLD.md`](./FIT_SET_SCAFFOLD.md)
 - [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md) (stock 2.5 vs Decide — do not collapse)
+- Public closeout: [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md)
