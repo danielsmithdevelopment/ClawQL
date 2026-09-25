@@ -16,6 +16,8 @@ Env overrides still work: `CLAWQL_FAST_DECISION_GLINER_MODEL`, `CLAWQL_FAST_DECI
 
 Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (**n=75**): **45/75** fires, **0** errors among fires, 95% CP lower bound **≈92%** (exact 92.1% at 45/45). Stock reject on the same rematch: **32/75**, **0** errors, LB **≈89%** (exact 89.1% at 32/32). **Coverage** is why Decide is live.
 
+**This is the public / docs.clawql.com live number.** Optional v0.6 confirmation (≈83% LB, 2 fire errors) must not replace it — see [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md).
+
 ## How the cutover was earned
 
 **Not a new freeze.** Twin collapse + declared spend rule (equal fire errors → prefer coverage) + rematch of the **same** v0.5 dumps (GHA score [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105), frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282)). No τ move. No GT relabel. Under that rule both arms are 0-error among fires; Decide wins on coverage (45/75 vs 32/75).
@@ -31,7 +33,7 @@ Report: [`frontier-runs/v0.5-stock-vs-decide-twin-aware-closeout.json`](./fronti
 
 It is **not** a fresh held-out `productionTrusted` claim in the v0.4 sense. v0.5 was already scored; the rematch only changed how twins are counted. That is legitimate because the spend is on the page ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)). The next *held-out* sentence waits for an optional frozen v0.6.
 
-Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path already in production. Freeze digests: [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md) (n=75). **Scored once:** Decide @ τ=0.80 → 39/75 fires, 2 errors among fires, ≈83% LB — see [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md). Live cite remains the twin-aware v0.5 rematch above.
+Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path already in production. Freeze digests: [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md) (n=75). **Scored once:** Decide @ τ=0.80 → 39/75 (52%) fires, **37/39** correct, **2** above-τ fire errors (search vs execute/hunt — not twins), ≈82.7% LB cite ≈83% — see [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md). Live cite remains the twin-aware v0.5 rematch above. Do not put ≈83% on docs.clawql.com.
 
 ## Do not say
 
@@ -39,6 +41,8 @@ Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path al
 - The 1-error frontier table (pre-twin) is still the live score.
 - v0.4 stock `productionTrusted` is the current default.
 - 60% coverage is forced exact-match (it is reject-arm fire rate).
+- v0.6 confirmation is 0-error among fires, or that ≈83% LB is the live / docs.clawql.com number.
+- Abstain→frontier→MoA would have caught the v0.6 fire misses (both sat **above** τ).
 
 ## What did not change
 
@@ -58,4 +62,4 @@ Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path al
 
 ## Docs one-liner
 
-Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (n=75): 45/75 fires, 0 errors among fires, 95% CP LB ≈92% (stock same rematch: 32/75, 0 errors, ≈89%). Coverage is why Decide is live.
+Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (n=75): 45/75 fires, 0 errors among fires, 95% CP LB ≈92% (stock same rematch: 32/75, 0 errors, ≈89%). Coverage is why Decide is live. Optional v0.6 confirms the path; it does not bless 0-error, and its two misses sit above τ.

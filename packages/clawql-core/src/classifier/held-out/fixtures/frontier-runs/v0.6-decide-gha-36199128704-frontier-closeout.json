@@ -94,8 +94,25 @@
   "verdict": {
     "livePath": "Decide (unchanged)",
     "liveCite": "v0.5 twin-aware rematch 45/75 @ \u224892% LB",
-    "confirmationCite": "v0.6 Decide 37/39 @ \u224883% LB (2 fire errors)",
+    "confirmationCite": "v0.6 Decide 37/39 @ \u224883% LB (2 above-tau fire errors) \u2014 not public live number",
     "retuneTau": false,
-    "productionTrustedClaim": false
+    "swapToStock": false,
+    "productionTrustedClaim": false,
+    "docsClawqlComNumber": "v0.5 rematch \u224892% only"
+  },
+  "lockedReading": {
+    "liveCite": "v0.5 twin-aware rematch 45/75 @ \u224892% LB \u2014 public / docs.clawql.com number",
+    "confirmation": "37/39 \u2192 CP 95% LB \u224882.7% (cite \u224883%); fireRate 39/75 = 52% vs rematch 60%",
+    "fireMissesAreTwins": false,
+    "fireMissesAboveTau": true,
+    "escalationSeesFireMisses": false,
+    "doNot": [
+      "quote v0.6 as 0-error",
+      "retune tau on route-v06-040 / route-v06-056",
+      "swap back to stock",
+      "put \u224883% LB on docs.clawql.com as the live number"
+    ],
+    "nextSpend": "catalog/schema or pre-fire check on high-tau search when prompt is persist/run/find-in-repo; then new frozen suite \u2014 not a tau knob move on these 75",
+    "oneLiner": "Optional v0.6 confirms Decide is still the live CPU fast path; it does not bless 0-error, and the two misses sit above tau, so slow-path escalation never sees them."
   }
 }

@@ -45,7 +45,7 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
 | Score once + frontier adj | **done** — twin-aware rematch: both reject arms **0** fire errors; Decide 45/75 vs stock 32/75 → **Decide wins** under V06 spend rule ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)) |
 | Live path | **Decide** T=0.75 / τ=0.80 ([`DECIDE_V06_CUTOVER.md`](./DECIDE_V06_CUTOVER.md)); cite 45/75 @ ≈92% LB (stock rematch 32/75 @ ≈89%); not a fresh productionTrusted claim |
-| Freeze **v0.6** | **FROZEN + scored once** — n=75; digests in [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md); Decide 39/75 @ τ=0.80 with **2** fire errors (≈83% LB); live cite unchanged ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md)) |
+| Freeze **v0.6** | **FROZEN + scored once** — confirmation only: 39/75 (52%) fires, 37/39, 2 above-τ search↔execute/hunt misses (≈83% LB); **live cite unchanged** ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md)); next spend = catalog/pre-fire then new suite, not τ |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related

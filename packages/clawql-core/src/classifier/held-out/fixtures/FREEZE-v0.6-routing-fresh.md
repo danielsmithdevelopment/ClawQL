@@ -4,7 +4,7 @@
 
 **FROZEN** — do not edit cases without cutting a new suite id and new digest.
 
-**Scored once** (Decide GHA [36199128704](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128704) + frontier [36199128630](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128630)). Optional confirmation: Decide @ τ=0.80 → **39/75** fires, **2** errors among fires, CP LB **≈83%**. Live cite unchanged (v0.5 twin-aware rematch). See [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md).
+**Scored once** (Decide GHA [36199128704](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128704) + frontier [36199128630](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128630)). Confirmation only: **37/39** @ ≈82.7% LB (cite ≈83%), fire rate 52%; **2** above-τ capability misses (search vs execute/hunt — not twins). Live cite unchanged (v0.5 rematch ≈92%). See [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md).
 
 ## Role
 

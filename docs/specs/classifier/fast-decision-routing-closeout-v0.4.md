@@ -15,9 +15,9 @@
 
 **How earned.** Not a new freeze. Twin collapse + declared spend rule (equal fire errors → prefer coverage) + rematch of the same v0.5 dumps — no τ move, no GT relabel. Details: [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) · [`CATALOG_TWIN_EQUIVALENCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/CATALOG_TWIN_EQUIVALENCE.md) · [`V06_SHIP_RULE_SPEND.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/V06_SHIP_RULE_SPEND.md).
 
-**What this is not.** Not a fresh held-out `productionTrusted` claim in the v0.4 sense. The next held-out sentence waits for an optional frozen v0.6 (confirmation, not a production blocker).
+**What this is not.** Not a fresh held-out `productionTrusted` claim in the v0.4 sense. Optional frozen v0.6 is **confirmation only** (39/75 @ ≈83% LB, 2 above-τ search↔execute/hunt misses) — not a new live cite and not the docs.clawql.com number ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CONFIRMATION_CLOSEOUT.md)).
 
-**Do not say.** Decide passed the old 0-error rule before twin collapse; the 1-error frontier table is still the live score; v0.4 stock `productionTrusted` is the current default; 60% coverage is forced exact-match.
+**Do not say.** Decide passed the old 0-error rule before twin collapse; the 1-error frontier table is still the live score; v0.4 stock `productionTrusted` is the current default; 60% coverage is forced exact-match; v0.6 is 0-error among fires; ≈83% LB is the live public number; abstain/frontier/MoA would have caught the v0.6 fire misses.
 
 ## What was live on v0.4 (historical)
 
@@ -96,7 +96,7 @@ Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire s
 | Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
 | Live path | **Decide** (T=0.75, τ=0.80) after twin-aware V06 spend — see [`DECIDE_V06_CUTOVER.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CUTOVER.md) |
 
-**Docs one-liner.** Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (n=75): 45/75 fires, 0 errors among fires, 95% CP LB ≈92% (stock same rematch: 32/75, 0 errors, ≈89%). Coverage is why Decide is live. Optional frozen v0.6 confirmation (GHA 36199128704 + 36199128630): 39/75 fires, 2 errors, ≈83% LB — does not replace the rematch cite ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CONFIRMATION_CLOSEOUT.md)).
+**Docs one-liner.** Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch (n=75): 45/75 fires, 0 errors among fires, 95% CP LB ≈92% (stock same rematch: 32/75, 0 errors, ≈89%). Coverage is why Decide is live. Optional v0.6 confirmation: 39/75 (52%) fires, 37/39 correct, 2 above-τ search↔execute/hunt misses (≈83% LB) — confirmation only, not the docs.clawql.com cite ([`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V06_CONFIRMATION_CLOSEOUT.md)).
 
 **v0.6 cutover gate (all three — satisfied):** (1) stock miss on the page next to Decide’s — both twins; (2) catalog collapses mcp↔skill twins as one allowed answer; (3) ship rule logged as a spend: equal fire-errors → prefer higher coverage.
 
