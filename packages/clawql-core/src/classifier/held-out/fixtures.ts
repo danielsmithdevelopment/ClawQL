@@ -2,6 +2,7 @@
  * Pre-registered §7 held-out suites (adjudicated=false until frontier labels).
  * - v0.1: synthetic wiring shapes (JSON twin: fast-decision-held-out-v0.1.json)
  * - v0.2-harvey: Harvey LAB workflow cases (JSON: fast-decision-held-out-v0.2-harvey.json)
+ * - v0.3-routing-fresh: catalog-only draft, frozen before hint text (JSON + FREEZE.md)
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -10,22 +11,21 @@ import { fileURLToPath } from "node:url";
 import type { HeldOutSuiteManifest } from "./types.js";
 
 const HARVEY_V02_FILENAME = "fast-decision-held-out-v0.2-harvey.json";
+const ROUTING_FRESH_V03_FILENAME = "fast-decision-held-out-v0.3-routing-fresh.json";
 
-/** Resolve Harvey v0.2 JSON beside this module (src) or under package src from dist. */
-export function harveyHeldOutSuiteV02Path(): string {
+function heldOutFixtureCandidates(filename: string): string[] {
   const candidates: string[] = [];
   try {
-    // ESM / vitest / tsx — import.meta.url is defined
     const metaUrl = import.meta.url as string | undefined;
     if (metaUrl) {
       const here = dirname(fileURLToPath(metaUrl));
       candidates.push(
-        join(here, "fixtures", HARVEY_V02_FILENAME),
-        join(here, "held-out", "fixtures", HARVEY_V02_FILENAME),
-        join(here, "held-out-fixtures", HARVEY_V02_FILENAME),
-        join(here, "..", "held-out-fixtures", HARVEY_V02_FILENAME),
-        join(here, "..", "src", "classifier", "held-out", "fixtures", HARVEY_V02_FILENAME),
-        join(here, "..", "..", "src", "classifier", "held-out", "fixtures", HARVEY_V02_FILENAME),
+        join(here, "fixtures", filename),
+        join(here, "held-out", "fixtures", filename),
+        join(here, "held-out-fixtures", filename),
+        join(here, "..", "held-out-fixtures", filename),
+        join(here, "..", "src", "classifier", "held-out", "fixtures", filename),
+        join(here, "..", "..", "src", "classifier", "held-out", "fixtures", filename),
         join(
           here,
           "..",
@@ -35,30 +35,37 @@ export function harveyHeldOutSuiteV02Path(): string {
           "classifier",
           "held-out",
           "fixtures",
-          HARVEY_V02_FILENAME
+          filename
         )
       );
     }
   } catch {
     /* CJS bundle may lack import.meta.url */
   }
-  // Repo / workspace cwd fallbacks (scripts, CJS require)
   candidates.push(
-    join(
-      process.cwd(),
-      "packages/clawql-core/src/classifier/held-out/fixtures",
-      HARVEY_V02_FILENAME
-    ),
-    join(process.cwd(), "src/classifier/held-out/fixtures", HARVEY_V02_FILENAME),
-    join(process.cwd(), "packages/clawql-core/dist/held-out-fixtures", HARVEY_V02_FILENAME),
-    join(process.cwd(), "dist/held-out-fixtures", HARVEY_V02_FILENAME)
+    join(process.cwd(), "packages/clawql-core/src/classifier/held-out/fixtures", filename),
+    join(process.cwd(), "src/classifier/held-out/fixtures", filename),
+    join(process.cwd(), "packages/clawql-core/dist/held-out-fixtures", filename),
+    join(process.cwd(), "dist/held-out-fixtures", filename)
   );
-  for (const p of candidates) {
+  return candidates;
+}
+
+function resolveHeldOutFixturePath(filename: string): string {
+  for (const p of heldOutFixtureCandidates(filename)) {
     if (existsSync(p)) return p;
   }
-  throw new Error(
-    `Harvey v0.2 suite JSON not found (looked for ${HARVEY_V02_FILENAME}; cwd=${process.cwd()})`
-  );
+  throw new Error(`Held-out suite JSON not found (looked for ${filename}; cwd=${process.cwd()})`);
+}
+
+/** Resolve Harvey v0.2 JSON beside this module (src) or under package src from dist. */
+export function harveyHeldOutSuiteV02Path(): string {
+  return resolveHeldOutFixturePath(HARVEY_V02_FILENAME);
+}
+
+/** Resolve frozen v0.3 routing-fresh JSON. */
+export function routingFreshHeldOutSuiteV03Path(): string {
+  return resolveHeldOutFixturePath(ROUTING_FRESH_V03_FILENAME);
 }
 
 /** Harvey LAB firm-knowledge workflow suite (R2-mined; provisional GT). */
@@ -67,6 +74,20 @@ export function harveyHeldOutSuiteV02(): HeldOutSuiteManifest {
   const raw = JSON.parse(readFileSync(path, "utf8")) as HeldOutSuiteManifest;
   if (raw.suiteId !== "fast-decision-held-out-v0.2-harvey" || !Array.isArray(raw.cases)) {
     throw new Error(`invalid Harvey v0.2 suite at ${path}`);
+  }
+  return raw;
+}
+
+/**
+ * Fresh routing held-out (catalog-only isolated draft). Contaminated Harvey
+ * routing smoke must not be cited as lift; score this suite after freeze.
+ * Provenance: fixtures/FREEZE-v0.3-routing-fresh.md
+ */
+export function routingFreshHeldOutSuiteV03(): HeldOutSuiteManifest {
+  const path = routingFreshHeldOutSuiteV03Path();
+  const raw = JSON.parse(readFileSync(path, "utf8")) as HeldOutSuiteManifest;
+  if (raw.suiteId !== "fast-decision-held-out-v0.3-routing-fresh" || !Array.isArray(raw.cases)) {
+    throw new Error(`invalid routing-fresh v0.3 suite at ${path}`);
   }
   return raw;
 }

@@ -21,8 +21,11 @@ export default defineConfig({
     for (const name of [
       "fast-decision-held-out-v0.1.json",
       "fast-decision-held-out-v0.2-harvey.json",
+      "fast-decision-held-out-v0.3-routing-fresh.json",
       "HARVEY_V02_PROVENANCE.md",
       "ONTOLOGY_ENRICHMENT_EVAL_LOG.md",
+      "FREEZE-v0.3-routing-fresh.md",
+      "routing-fresh-v0.3-source-catalog.json",
     ]) {
       cpSync(join(heldOutFixtures, name), join(dest, name));
     }

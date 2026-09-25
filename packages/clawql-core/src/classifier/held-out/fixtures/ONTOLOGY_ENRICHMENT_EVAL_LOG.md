@@ -58,20 +58,29 @@ With enrichment **both aliases map to one ontology id** `clawql.memory_recall` a
 
 ---
 
-## Fresh routing set (requirements — not authored here)
+## Fresh routing set (frozen)
 
-Author **before** further ontology edits. Ontology authors must not write the set.
+| Field | Value |
+| ----- | ----- |
+| Suite | `fast-decision-held-out-v0.3-routing-fresh` |
+| Cases | 34 (`search_provider_tool_routing`) |
+| Suite digest (SHA-256) | `02aa28eaf9f4d74f41e048c6735484cfab80a57c9c73f5a85402809d57a700aa` |
+| Catalog digest (SHA-256) | `45a3899ce0b3f6efb3621b47db46daf640843ed7282fc2a372ce425c0e266cbf` |
+| Frozen at (UTC) | `2026-09-25T02:48:42Z` |
+| Drafter | isolated session `bc-c622daec-7440-5141-950b-6caf06ea173d` (catalog + schema only) |
+| Review | correctness-only; no query rewrites; no hint text in freeze commit |
 
-1. Freeze cases + record content hash before any enrichment change.
-2. Several cases per tool family (well past n=7) so one flip is not a 14-point swing.
-3. Include sibling pairs on purpose (known failure mode) **and** shell-bait cases.
-4. Eval runs must record the ontology digest used (pinned harness).
-5. Tag any prior contaminated smokes in this log; never promote them to held-out citations.
+Provenance: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md). Select via `--suite v0.3-routing-fresh`.
+
+**Hint / ontology rule:** do not author `whenToUse` / `whenNotToUse` / `distinguishFrom` or regenerate ontology in a way that post-dates scoring claims without this freeze predating those hints (§5.1).
+
+Requirements met: isolated author, freeze + hash before hints, n=34 with sibling pairs and shell distractors, contaminated smoke remains tagged separately.
 
 ---
 
 ## Related
 
 - Provenance: `HARVEY_V02_PROVENANCE.md`
+- Freeze: [`FREEZE-v0.3-routing-fresh.md`](./FREEZE-v0.3-routing-fresh.md)
 - Step-3 catalog ontology: [`docs/specs/classifier/capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md)
 - Fast Decision §7: [`docs/specs/classifier/fast-decision-primitive-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-primitive-v0.4.md)

@@ -413,6 +413,21 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
+  it("loads frozen v0.3 routing-fresh suite (catalog-only draft)", async () => {
+    const { routingFreshHeldOutSuiteV03, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = routingFreshHeldOutSuiteV03();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.3-routing-fresh");
+    expect(suite.cases.length).toBeGreaterThanOrEqual(28);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(suite.cases.every((c) => c.useSiteId === "search_provider_tool_routing")).toBe(true);
+    expect(resolveHeldOutSuite("v0.3-routing-fresh").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBe(suite.cases.length);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
   it("loads ClawQL capability ontology and enriches classify text with whenToUse", async () => {
     const { loadClawqlCapabilityOntology, lookupCapability, indexCapabilityOntology } =
       await import("./capability-ontology.js");

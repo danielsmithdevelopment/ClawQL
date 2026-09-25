@@ -180,7 +180,7 @@ If hint text lands before the frozen set, treat subsequent scores as contaminate
 
 ## 6. Implementation order
 
-1. **Fresh routing set** — author, freeze, hash (predates any new hint text).
+1. **Fresh routing set** — **done:** `fast-decision-held-out-v0.3-routing-fresh` frozen (`FREEZE-v0.3-routing-fresh.md`); suite digest must predate hint text.
 2. Types + optional fields via `ToolRoutingHint` on `McpToolDefinition` / `SkillDefinition` (no behavior change).
 3. Generator + digest; dual-read generated ontology in scorer with fixture fallback behind a flag.
 4. Wire enrichment to **per-id** rows + `distinguishFrom` (fix sibling collapse); enforce §3.3 including no packing of `requiresStructuredCorpus`.
