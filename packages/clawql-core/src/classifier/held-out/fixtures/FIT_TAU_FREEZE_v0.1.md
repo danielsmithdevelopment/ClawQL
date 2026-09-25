@@ -105,12 +105,12 @@ Locked (T=4, τ=0.70) reading is unchanged under live labels.
 
 GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) on frozen v0.4 + frontier labels. Full table in [`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md) § “Stock vs Decide four-arm.” Report: [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json).
 
-| Arm                  | Headline                                      |
-| -------------------- | --------------------------------------------- |
-| stock forced         | 80% EM (32/40)                                |
-| Decide forced        | **92.5%** EM (37/40)                          |
-| stock T=4 / τ=0.70   | **18/40 fire, 0 errors, CP LB ≈82%** (unchanged closeout) |
-| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error, CP LB ≈85% |
+| Arm                                         | Headline                                                  |
+| ------------------------------------------- | --------------------------------------------------------- |
+| stock forced                                | 80% EM (32/40)                                            |
+| Decide forced                               | **92.5%** EM (37/40)                                      |
+| stock T=4 / τ=0.70                          | **18/40 fire, 0 errors, CP LB ≈82%** (unchanged closeout) |
+| Decide T=0.75 / τ=0.60 (refit off-set only) | 34/40 fire, **1** error, CP LB ≈85%                       |
 
 Stock reject remains the shipped productionTrusted path. Decide coverage is higher but not zero-error; swapping models needs **v0.5** + adjudication.
 

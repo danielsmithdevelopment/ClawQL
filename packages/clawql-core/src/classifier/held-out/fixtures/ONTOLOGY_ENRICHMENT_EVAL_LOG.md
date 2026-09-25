@@ -137,31 +137,31 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 ### Stock GLiNER 2.5 vs Decide — do not collapse metrics
 
-| Artifact                                | What it is                                                                                                                                                                                                      | What our v0.4 number is **not**                                                                                       |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Stock GLiNER 2.5** (small/base/multi) | General boundary-encoder family (extraction + classification). Our live path uses this family (`fastino/gliner2.5-base-v1`) with a **reject rule** (T=4, τ=0.70).                                               | Not Decide. Not a forced-answer leaderboard score.                                                                    |
+| Artifact                                | What it is                                                                                                                                                                                                      | What our v0.4 number is **not**                                                                                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stock GLiNER 2.5** (small/base/multi) | General boundary-encoder family (extraction + classification). Our live path uses this family (`fastino/gliner2.5-base-v1`) with a **reject rule** (T=4, τ=0.70).                                               | Not Decide. Not a forced-answer leaderboard score.                                                                                              |
 | **GLiNER2.5-Decide**                    | Specialist classification checkpoint (~340M DeBERTa-v3-large), fine-tuned from `gliner2-large-v1` for operational decisions. Fastino reports ~60% forced exact-match on Fast Decisions (5,100 ex / 17 domains). | Now measured on our frozen 40 (below). Do **not** write “2.5 already matches Decide” or collapse Decide forced EM with stock reject-rule CP LB. |
 
 **Two different scores.** Fastino’s ~60% is Decide, forced exact-match, always answer. Our productionTrusted result is calibrated stock 2.5 on **n=40** catalog-only routing: fire **18/40**, **0/18** errors, CP 95% LB ≈**82%**. Neither number implies the other. v0.4 is a **policy** result (abstain-capable on-ramp), not a model-vs-Decide leaderboard result.
 
 ### Stock vs Decide four-arm — DONE (score-once; does not rewrite closeout)
 
-| Field        | Value                                                                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                            |
-| Date (UTC)   | 2026-09-25                                                                                                                                  |
-| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                                   |
-| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                              |
-| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                       |
-| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                            |
-| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json)         |
+| Field        | Value                                                                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                     |
+| Date (UTC)   | 2026-09-25                                                                                                                           |
+| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                            |
+| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                      |
+| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                |
+| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                    |
+| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json) |
 
-| Arm                   | Model              | Calibration     | Fire           | Errors | Prec among fired | CP 95% LB | Forced EM |
-| --------------------- | ------------------ | --------------- | -------------- | ------ | ---------------- | --------- | --------- |
-| `stock_forced`        | `gliner2.5-base-v1` | none            | 40/40 (100%)   | 8      | 80.0%            | ≈64%      | **80.0%** |
-| `decide_forced`       | `GLiNER2.5-Decide` | none            | 40/40 (100%)   | 3      | 92.5%            | ≈80%      | **92.5%** |
-| `stock_locked_T_tau`  | `gliner2.5-base-v1` | T=4, τ=0.70     | **18/40 (45%)** | **0**  | **100%**         | **≈82%**  | 80.0%     |
-| `decide_refit_T_tau`  | `GLiNER2.5-Decide` | T=0.75, τ=0.60  | 34/40 (85%)    | 1      | 97.1%            | ≈85%      | 92.5%     |
+| Arm                  | Model               | Calibration    | Fire            | Errors | Prec among fired | CP 95% LB | Forced EM |
+| -------------------- | ------------------- | -------------- | --------------- | ------ | ---------------- | --------- | --------- |
+| `stock_forced`       | `gliner2.5-base-v1` | none           | 40/40 (100%)    | 8      | 80.0%            | ≈64%      | **80.0%** |
+| `decide_forced`      | `GLiNER2.5-Decide`  | none           | 40/40 (100%)    | 3      | 92.5%            | ≈80%      | **92.5%** |
+| `stock_locked_T_tau` | `gliner2.5-base-v1` | T=4, τ=0.70    | **18/40 (45%)** | **0**  | **100%**         | **≈82%**  | 80.0%     |
+| `decide_refit_T_tau` | `GLiNER2.5-Decide`  | T=0.75, τ=0.60 | 34/40 (85%)     | 1      | 97.1%            | ≈85%      | 92.5%     |
 
 **How to read (locked)**
 
