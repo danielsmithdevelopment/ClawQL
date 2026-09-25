@@ -1,70 +1,63 @@
-# Freeze scaffold: fast-decision-held-out-v0.5-routing-fresh
+# Freeze: fast-decision-held-out-v0.5-routing-fresh
 
 ## Status
 
-**NOT FROZEN** — placeholder only. Do not score for a Decide `productionTrusted` claim until an isolated draft is frozen with digests below.
+**FROZEN** — do not edit cases without cutting a new suite id and new digest.
+
+**Not yet scored.** Stock remains `productionTrusted` on v0.4. Decide remains a gated candidate until score-once + frontier adjudication under the predeclared 0-error ship rule.
+
+## Role in three-set protocol
+
+This is the **final eval set** for the Decide-vs-stock reject comparison under [`THREE_SET_PROTOCOL.md`](./THREE_SET_PROTOCOL.md) and [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md).
+
+- Target size **70–80** so ~30 Decide accepts (~90% LB) and stock gets a comparable accept count at ~45% coverage. **n=75**.
+- Frozen **before** Decide τ is re-locked for citation and before any v0.5 scores exist.
+- v0.4 remains spent for choosing knobs (stock **and** Decide reject). Do not promote the spent-v0.4 23/40 @ τ=0.80 projection.
+
+## Integrity process
+
+1. Isolated drafter [`bc-fa82b86b-9c8d-55ea-941a-90a98da56f33`](https://cursor.com/agents/bc-fa82b86b-9c8d-55ea-941a-90a98da56f33) received **only** `/tmp/isolated-routing-drafter-v05/{catalog.json,CASE_SCHEMA.md,DRAFT_INSTRUCTIONS.md}`. Banned: spent suites, ontology eval log, miss query / `route-v04-004`, four-arm report, FIT/τ freezes as templates. **No search/execute nudge.**
+2. Reviewer checked **schema only**: unique caseIds, GT ∈ candidates, catalog label/description verbatim, `adjudicated=false`, n=75, GT covers all 38 catalog ids. **No query rewrites by the reviewer.**
+3. Token-overlap vs frozen v0.4 + fit set: initial draft had 9 near-paraphrase hits. Same isolated drafter re-worded those 9 queries only (candidates/GT unchanged), without reading prior suite query text. Re-check: **0** exact copies; **0** high-overlap hits (jaccard ≥0.45 / shared≥8@0.35).
+4. Banned miss phrases (`users.deactivate`, `skip discovery`): **0** hits.
+
+## Digests (SHA-256 of canonical JSON: sorted keys, compact separators, whitespace-normalized strings)
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Suite `fast-decision-held-out-v0.5-routing-fresh.json` | `e2883ad01f100a3ba618a2bd8aa2f55fdb66c4ed8019af8cde59a3af5e9c7a2c` |
+| Source catalog `routing-fresh-v0.5-source-catalog.json` | `b7ffa6982713b5338357a46fdf1715552c6c5207d61d18df11bd82c601c44544` |
+
+## Which catalog the drafter saw
+
+| Field | Value |
+| --- | --- |
+| File | `/tmp/isolated-routing-drafter-v05/catalog.json` (= repo `routing-fresh-v0.5-source-catalog.json`) |
+| Entry fields | `id`, `kind`, `label`, `description` only |
+| Hint fields | **absent** |
+| Entry count | 38 (same bodies as v0.4 catalog; new `catalogId` / `note`) |
+
+## Freeze metadata
+
+- Frozen at (UTC): `2026-09-25T19:10:00Z`
+- Drafter agent: `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33`
+- Case count: **75**
+- useSiteId: `search_provider_tool_routing` (all)
+- adjudicated: false (all)
+- Suite file: `fast-decision-held-out-v0.5-routing-fresh.json`
+- Candidate sizes: 32×2-cand, 43×3-cand
+- Distinct GT ids: **38** / 38 catalog entries
+
+## Scoring discipline (after this freeze)
+
+1. Re-lock Decide τ from the **fit set only** under: prec≥0.9 **and** fit nErrors=0 → max coverage (ties → higher τ). Keep T=0.75. Record in [`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md).
+2. Score **once**: stock (T=4, τ=0.70) and Decide (T=0.75, τ_locked) on this suite.
+3. Frontier-adjudicate.
+4. Swap live only if Decide still has **0 errors among fires**. Retuning τ after seeing v0.5 fires is a new spend.
 
 ## Docs one-liner
 
 Decide is measured and confidence-gated as a candidate; stock remains the 0-error CPU on-ramp until a frozen v0.5 closeout says otherwise.
-
-## Why v0.5 is required
-
-- **v0.4 is spent for choosing knobs** (stock T/τ **and** Decide reject — see [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)).
-- The 23/40 @ τ=0.80 slice is a **candidate projection on a spent set**, not evidence Decide already passed the ship rule.
-- Ontology enrichment stays **off**; temperature softmax stays the calibration that made the reject rule usable. Neither is reopened by the Decide table.
-
-## Size the suite for the claim (locked before draft)
-
-With **zero errors among k accepted** cases, a rough 95% lower bound on precision is ~0.05^(1/k):
-
-| Accepted, 0 errors | ~95% LB |
-| --- | --- |
-| 18 | ~85% |
-| 30 | ~90% |
-| 60 | ~95% |
-
-| Goal | Implication for n |
-| --- | --- |
-| Decide ≥90% LB at 0 errors among fires | need ~**30** accepted; at ~57% coverage ⇒ **n ≳ 55** |
-| Stock comparable accepted count at ~45% coverage | aim **n = 70–80** |
-| n=40 (v0.4 size) | **insufficient** — reproduces overlapping LBs; cannot settle stock vs Decide |
-
-**Target case count for v0.5: 70–80** catalog-only routing cases (`search_provider_tool_routing`).
-
-## Ship rule for Decide on v0.5 (predeclared — do not change after seeing fires)
-
-Keep: **ship Decide reject only if errors among fires stay 0** after freeze → lock knobs from fit → score once → frontier-adjudicate.
-
-Be aware: this rule **favors low coverage** (more fires ⇒ harder to stay at zero errors at equal true precision). A later round may compare “CP LB at least as high as stock’s” more fairly. **Changing the rule now would be post-hoc — leave it.**
-
-## Drafter blindness (hard)
-
-1. Isolated drafter sees **catalog-only** semantics (same discipline as v0.4).
-2. **Banned:** spent suites, ontology eval log, Decide miss query / `route-v04-004`, four-arm report, FIT/τ freezes used as templates.
-3. **Do not nudge** the drafter toward the `search` vs `execute` confusion from `route-v04-004`. If that confusion is common, a catalog-derived set will contain it on its own.
-4. Schema review only (unique caseIds, GT ∈ candidates, no query rewrites by reviewer).
-5. Token-overlap check vs v0.4 and the fit set: zero high-overlap / exact copies.
-6. Write digests into this file; flip status to **FROZEN** **before** any Decide τ re-lock for citation.
-7. Score **once**: stock (T=4, τ=0.70) and Decide (T=0.75, τ re-locked from fit under the predeclared 0-error rule after freeze). Frontier-adjudicate. Swap live only if Decide still has 0 errors among fires.
-
-## Locked inputs (already done — do not redo for freeze)
-
-| Item | Ref |
-| --- | --- |
-| Production rule | [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md) |
-| τ=0.80 provenance (spent) | [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md) |
-| Candidate readout (not closeout) | [`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md) |
-| Miss under prior τ=0.60 | [`frontier-runs/decide-v05-route-v04-004-miss.json`](./frontier-runs/decide-v05-route-v04-004-miss.json) |
-| Stock live path | T=4, τ=0.70 — **unchanged** |
-
-## Digests (fill at freeze)
-
-| Artifact | SHA-256 |
-| --- | --- |
-| Suite `fast-decision-held-out-v0.5-routing-fresh.json` | _pending_ |
-| Source catalog | _pending_ |
-| Case count | _pending_ (target 70–80) |
 
 ## Related
 
@@ -72,3 +65,4 @@ Be aware: this rule **favors low coverage** (more fires ⇒ harder to stay at ze
 - [`FREEZE-v0.4-routing-fresh.md`](./FREEZE-v0.4-routing-fresh.md) (spent)
 - [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)
 - [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)
+- [`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)

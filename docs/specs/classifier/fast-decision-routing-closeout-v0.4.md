@@ -75,7 +75,9 @@ Ship stock reject because it is the precision-first CPU on-ramp that takes **45%
 | Predeclare ship rule | **done** — 0 errors among fires (leave it; favors low coverage) |
 | τ=0.80 provenance | **honest** — selected **after** miss known; **v0.4 spent for Decide reject** ([`DECIDE_TAU_080_PROVENANCE.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_TAU_080_PROVENANCE.md)) |
 | 23/40 @ τ=0.80 | **candidate projection on spent set only** — not a closeout |
-| Freeze v0.5 | **next** — target **n=70–80**, blind drafter, no search/execute nudge |
+| Freeze v0.5 | **FROZEN** — n=75; isolated drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33`; digests in FREEZE-v0.5 |
+| Decide τ re-lock after freeze | **done** — T=0.75 / **τ=0.80** from fit only (no v0.5 scores) |
+| Score once + frontier adj | **next** |
 | Live path | **still stock** (T=4, τ=0.70) |
 
 **Docs one-liner.** Decide is measured and confidence-gated as a candidate; stock remains the 0-error CPU on-ramp until a frozen v0.5 closeout says otherwise.

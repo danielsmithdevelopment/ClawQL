@@ -41,7 +41,9 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 | Decide v0.5 rule (pre-registered) | **done** — 0 errors among fires; leave rule (favors low coverage) |
 | Decide τ=0.80 provenance | **after** four-arm miss — **v0.4 spent for Decide reject** ([`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)) |
 | Decide candidate projection | 23/40 @ 0.80 on spent v0.4 — **not** closeout ([`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)) |
-| Freeze **v0.5** | **next** — target **n=70–80**; blind drafter; no search/execute nudge ([`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md)) |
+| Freeze **v0.5** | **FROZEN** — n=75; digests in [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md); drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33` |
+| Decide τ re-lock after freeze | **done** — T=0.75, **τ=0.80** fit-only ([`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)); no v0.5 scores used |
+| Score once + frontier adj | **next** — stock (T=4/τ=0.70) vs Decide (T=0.75/τ=0.80) |
 | Template for other use sites      | same fit → freeze → score-once → adjudicate sequence                                                                                |
 
 ## Related
@@ -53,5 +55,6 @@ v0.3 is **spent for choosing τ** (and for hint/ontology tuning). The coverage c
 - [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)
 - [`DECIDE_TAU_080_PROVENANCE.md`](./DECIDE_TAU_080_PROVENANCE.md)
 - [`DECIDE_V05_CANDIDATE_READOUT.md`](./DECIDE_V05_CANDIDATE_READOUT.md)
+- [`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md)
 - [`CALIBRATION_FREEZE_v0.1.md`](./CALIBRATION_FREEZE_v0.1.md)
 - [`ROUTING_THRESHOLD_READOUT_v0.1.md`](./ROUTING_THRESHOLD_READOUT_v0.1.md)

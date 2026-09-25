@@ -1,0 +1,135 @@
+{
+  "lockedAfterFreeze": true,
+  "freezeSuite": "fast-decision-held-out-v0.5-routing-fresh",
+  "freezeSuiteDigest": "e2883ad01f100a3ba618a2bd8aa2f55fdb66c4ed8019af8cde59a3af5e9c7a2c",
+  "lockedAtUtc": "2026-09-25T19:10:30Z",
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "transform": {
+    "mode": "temperature_softmax",
+    "temperature": 0.75
+  },
+  "selectionRule": "among fit \u03c4 with precision\u22650.9 AND nErrorsFired=0, maximize fireRate; ties \u2192 higher \u03c4",
+  "fitPath": "packages/clawql-core/src/classifier/held-out/fixtures/fast-decision-fit-routing-v0.1.json",
+  "fitScoresFrom": "GHA 36165019073 decide dump (fit rows only; eval unused for selection)",
+  "selectedTau": 0.8,
+  "fitAtSelected": {
+    "nFired": 23,
+    "nErrors": 0,
+    "precision": 1.0,
+    "cpLower95": 0.8518148710847756
+  },
+  "curveFitOnly": [
+    {
+      "tau": 0.5,
+      "nFired": 36,
+      "nErrors": 4,
+      "precision": 0.8888888888888888,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.55,
+      "nFired": 33,
+      "nErrors": 3,
+      "precision": 0.9090909090909091,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.6,
+      "nFired": 33,
+      "nErrors": 3,
+      "precision": 0.9090909090909091,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.65,
+      "nFired": 31,
+      "nErrors": 2,
+      "precision": 0.9354838709677419,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.7,
+      "nFired": 28,
+      "nErrors": 2,
+      "precision": 0.9285714285714286,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.75,
+      "nFired": 27,
+      "nErrors": 1,
+      "precision": 0.9629629629629629,
+      "cpLower95": null,
+      "eligible": false
+    },
+    {
+      "tau": 0.8,
+      "nFired": 23,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.8518148710847756,
+      "eligible": true
+    },
+    {
+      "tau": 0.85,
+      "nFired": 17,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.8049356770309067,
+      "eligible": true
+    },
+    {
+      "tau": 0.9,
+      "nFired": 16,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.7940927857921772,
+      "eligible": true
+    },
+    {
+      "tau": 0.92,
+      "nFired": 14,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.7683642383498834,
+      "eligible": true
+    },
+    {
+      "tau": 0.95,
+      "nFired": 13,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.752947361999529,
+      "eligible": true
+    },
+    {
+      "tau": 0.97,
+      "nFired": 10,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.6915028921812392,
+      "eligible": true
+    },
+    {
+      "tau": 0.99,
+      "nFired": 3,
+      "nErrors": 0,
+      "precision": 1.0,
+      "cpLower95": 0.2924017738212866,
+      "eligible": true
+    }
+  ],
+  "priorFourArmTau": 0.6,
+  "postMissCandidateTau080": 0.8,
+  "note": "This lock supersedes the post-miss \u03c4=0.80 candidate for citation purposes. Same arithmetic may yield 0.80 again; the freeze timestamp now predates any v0.5 eval scores.",
+  "honesty": [
+    "Eval rows from the Decide dump were not used to select \u03c4",
+    "v0.5 suite not yet scored",
+    "Stock live path unchanged (T=4, \u03c4=0.70)"
+  ]
+}

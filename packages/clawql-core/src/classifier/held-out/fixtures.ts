@@ -4,6 +4,7 @@
  * - v0.2-harvey: Harvey LAB workflow cases (JSON: fast-decision-held-out-v0.2-harvey.json)
  * - v0.3-routing-fresh: catalog-only draft, frozen before hint text (JSON + FREEZE.md)
  * - v0.4-routing-fresh: final eval set under three-set protocol (JSON + FREEZE-v0.4)
+ * - v0.5-routing-fresh: Decide-vs-stock final eval (JSON + FREEZE-v0.5); n=75
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -14,6 +15,7 @@ import type { HeldOutSuiteManifest } from "./types.js";
 const HARVEY_V02_FILENAME = "fast-decision-held-out-v0.2-harvey.json";
 const ROUTING_FRESH_V03_FILENAME = "fast-decision-held-out-v0.3-routing-fresh.json";
 const ROUTING_FRESH_V04_FILENAME = "fast-decision-held-out-v0.4-routing-fresh.json";
+const ROUTING_FRESH_V05_FILENAME = "fast-decision-held-out-v0.5-routing-fresh.json";
 function heldOutFixtureCandidates(filename: string): string[] {
   const candidates: string[] = [];
   try {
@@ -64,6 +66,11 @@ export function routingFreshHeldOutSuiteV04Path(): string {
   return resolveHeldOutFixturePath(ROUTING_FRESH_V04_FILENAME);
 }
 
+/** Resolve frozen v0.5 routing-fresh JSON (Decide-vs-stock final eval). */
+export function routingFreshHeldOutSuiteV05Path(): string {
+  return resolveHeldOutFixturePath(ROUTING_FRESH_V05_FILENAME);
+}
+
 /** Harvey LAB firm-knowledge workflow suite (R2-mined; provisional GT). */
 export function harveyHeldOutSuiteV02(): HeldOutSuiteManifest {
   const path = harveyHeldOutSuiteV02Path();
@@ -98,6 +105,19 @@ export function routingFreshHeldOutSuiteV04(): HeldOutSuiteManifest {
   const raw = JSON.parse(readFileSync(path, "utf8")) as HeldOutSuiteManifest;
   if (raw.suiteId !== "fast-decision-held-out-v0.4-routing-fresh" || !Array.isArray(raw.cases)) {
     throw new Error(`invalid routing-fresh v0.4 suite at ${path}`);
+  }
+  return raw;
+}
+
+/**
+ * Decide-vs-stock final-eval routing held-out (catalog-only isolated draft, n=75).
+ * Provenance: fixtures/FREEZE-v0.5-routing-fresh.md — score once after Decide τ lock.
+ */
+export function routingFreshHeldOutSuiteV05(): HeldOutSuiteManifest {
+  const path = routingFreshHeldOutSuiteV05Path();
+  const raw = JSON.parse(readFileSync(path, "utf8")) as HeldOutSuiteManifest;
+  if (raw.suiteId !== "fast-decision-held-out-v0.5-routing-fresh" || !Array.isArray(raw.cases)) {
+    throw new Error(`invalid routing-fresh v0.5 suite at ${path}`);
   }
   return raw;
 }
