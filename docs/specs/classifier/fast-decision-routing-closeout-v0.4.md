@@ -62,9 +62,9 @@ Keep stock reject in production. Treat Decide+reject as **v0.5**, not as a hot-s
 - Stock 80% forced EM is the shipped precision number.
 - Higher coverage alone justifies cutting over tonight.
 
-## Closeout sentence (unchanged until Decide earns its own closeout)
+## Closeout sentence (live path)
 
-Ship stock reject because it is the precision-first CPU on-ramp that takes **45%** of catalog routing off the expensive path with a clean **0-error** held-out fire set.
+Ship stock reject as the precision-first CPU on-ramp. Cite suite-specific fire sets: **0/18** on v0.4 (≈82% LB @ 45%); **1/32** on v0.5 (≈84% LB @ 43%). Do not say the live arm is presently “never wrong on fires.”
 
 ## v0.5 progress (Decide candidate — not live)
 
@@ -78,10 +78,14 @@ Ship stock reject because it is the precision-first CPU on-ramp that takes **45%
 | Freeze v0.5 | **FROZEN** — n=75; isolated drafter `bc-fa82b86b-9c8d-55ea-941a-90a98da56f33`; digests in FREEZE-v0.5 |
 | Decide τ re-lock after freeze | **done** — T=0.75 / **τ=0.80** from fit only (no v0.5 scores) |
 | Score once + frontier adj | **done** — score GHA [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105); frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282) |
-| Decide ship decision | **no swap** — Decide@0.80 fires **45/75** with **1** error (mcp↔skill twin `route-v05-007`); stock stays live |
-| Live path | **still stock** (T=4, τ=0.70) |
+| Decide ship decision | **no swap** — Decide 44/45 (≈88% LB) vs stock 31/32 (≈84% LB); both 1 error; 0-error rule fails Decide |
+| Live-path honesty on v0.5 | stock also **1/32** errors (`route-v05-023` think twin); cite ≈84% LB @ 43%, not “0-error forever” |
+| Twin / adjudicator | frontier is authority; Decide blocker `route-v05-007` is mcp↔skill twin — **not** execute→search |
+| Live path | **still stock** (T=4, τ=0.70); v0.4 `productionTrusted` not rewritten |
 
-**Docs one-liner.** Decide was scored once on frozen v0.5 under the predeclared 0-error rule and still had one fire error; stock remains the live CPU on-ramp.
+**Docs one-liner.** v0.5 (n=75, GHA 36185003105 / 36185003282, PR #1148): Decide reject covers more (45/75 vs 32/75) but still has 1 fire error under frontier adjudication, so stock stays the live CPU on-ramp. The Decide miss is a memory-ingest twin (`mcp.*` vs `skill.*`), not a wrong-capability route. Next spend is a new frozen suite or an explicit twin-resolution rule in the catalog — not a τ bump on this set.
+
+**v0.6 order (predeclared):** (1) resolve tool/skill twins in catalog; (2) declare comparison/ship rule; (3) freeze v0.6; (4) score once + adjudicate.
 
 Closeout detail: [`DECIDE_V05_SCORE_ONCE_CLOSEOUT.md`](../../../packages/clawql-core/src/classifier/held-out/fixtures/DECIDE_V05_SCORE_ONCE_CLOSEOUT.md)
 

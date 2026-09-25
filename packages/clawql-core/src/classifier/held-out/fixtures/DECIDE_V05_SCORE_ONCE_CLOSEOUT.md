@@ -4,11 +4,20 @@
 **Rule:** [`V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md`](./V05_DECIDE_PRODUCTION_RULE_PREREGISTERED.md)  
 **Suite:** frozen [`FREEZE-v0.5-routing-fresh.md`](./FREEZE-v0.5-routing-fresh.md) (n=75)  
 **Knobs:** [`DECIDE_V05_FIT_TAU_LOCK.md`](./DECIDE_V05_FIT_TAU_LOCK.md) — Decide T=0.75 / τ=0.80; stock T=4 / τ=0.70  
-**GHA:** score-once [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105); frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282)
+**GHA:** score-once [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105); frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282) · PR [#1148](https://github.com/danielsmithdevelopment/ClawQL/pull/1148)
 
-## Verdict
+## Locked verdict
 
-**Do not swap** the live reject path to Decide. Under frontier-adjudicated GT, Decide locked reject fires **45/75** with **1 error among fires** → fails the predeclared 0-error ship rule. Stock stays live (T=4, τ=0.70).
+**No cutover.** Decide still has **1 error among fires** on a fresh suite, so it fails “ship only if 0 errors among fires.” Live path stays stock GLiNER 2.5 @ (T=4, τ=0.70). v0.4 `productionTrusted` is **not** rewritten. Retuning τ on these 75 fires is a **new spend**.
+
+Intervals (cite these):
+
+| Arm | Correct / fired | CP 95% LB | Cite |
+| --- | ---: | ---: | --- |
+| stock locked | **31/32** | **83.8%** | ≈**84%** @ 43% coverage |
+| Decide locked | **44/45** | **88.2%** | ≈**88%** @ 60% coverage |
+
+Decide @ (T=0.75, τ=0.80) is a **higher-coverage candidate** (60% vs 43%) with **overlapping** precision bounds — not a more precise gate.
 
 ## Locked-τ arms (frontier GT)
 
@@ -21,7 +30,28 @@
 
 Report: [`frontier-runs/v0.5-stock-vs-decide-gha-36185003105-closeout.json`](./frontier-runs/v0.5-stock-vs-decide-gha-36185003105-closeout.json)
 
-## Decide reject miss (the ship blocker)
+## What the table does not hide
+
+### 1. Live path is not 0-error on fresh data
+
+Stock reject on v0.5: **32/75** fires, **1** error. That does **not** revoke the v0.4 closeout (different frozen set; knobs already spent). Do **not** keep saying the live arm “never wrong on fires” as a present-tense fact.
+
+| Suite | Stock reject fires | Errors | Cite |
+| --- | ---: | ---: | --- |
+| v0.4 | 18/40 (45%) | **0/18** | ≈82% LB |
+| v0.5 | 32/75 (43%) | **1/32** | ≈84% LB |
+
+**Honest live-path claim now:** ≈**84%** precision LB at ≈**43%** coverage on v0.5, consistent with v0.4’s ≈82%.
+
+Stock’s miss is **`route-v05-023`** (not the Decide blocker): suite/provisional GT `mcp.clawql_think`; frontier GT `skill.deep-thinking`; stock top `mcp.clawql_think` @ ≈0.733 (≥ τ=0.70). Same twin class, different case.
+
+### 2. Decide beat stock on both measures; the rule blocked it anyway
+
+Decide fires more (60% vs 43%) with a higher LB (≈88% vs ≈84%); both made exactly one error. A 0-error-only rule that the incumbent also fails on fresh data is not comparing the arms fairly — but the rule was **predeclared**, so this round’s verdict stands. For **v0.6**, declare the comparison rule **before** scoring, e.g.:
+
+> Ship the candidate if its CP 95% LB is at least the live arm’s **and** its coverage is at least as high.
+
+### 3. The Decide miss is catalog twin ambiguity, not a capability misroute
 
 | Field | Value |
 | --- | --- |
@@ -31,13 +61,13 @@ Report: [`frontier-runs/v0.5-stock-vs-decide-gha-36185003105-closeout.json`](./f
 | Suite / provisional GT | `mcp.memory_ingest` |
 | Frontier GT | `skill.clawql-memory-ingest` |
 | Decide top @ T=0.75 | `mcp.memory_ingest` @ conf **≈0.841** (≥ τ=0.80 → fires) |
-| Kind | mcp↔skill twin preference (frontier prefers skill wrapper); **not** a wrong-capability miss like `route-v04-004` |
+| vs `route-v04-004` | **Different class** — that was execute→search; this is a twin/alias collision |
+
+**Adjudicator choice (locked):** frontier is the scoring authority; suite GT can disagree with the judge on twins. Under that choice, Decide’s fire is an error by construction → ship rule fails. If suite GT were authority, Decide did not misroute capability.
+
+Do **not** relabel v0.5 now — changing GT after seeing that it flips the verdict is the same post-hoc problem as retuning τ.
 
 Artifact: [`frontier-runs/v0.5-stock-vs-decide-reject-errors.json`](./frontier-runs/v0.5-stock-vs-decide-reject-errors.json)
-
-## Stock note (honesty, not a retune)
-
-On this same frontier GT, stock locked also has **1** fire error (`route-v05-023`: `mcp.clawql_think` vs frontier `skill.deep-thinking`). That does **not** revoke v0.4 `productionTrusted` (different suite). It does mean v0.5 is not a free 0-error win for either arm under skill-preferring frontier labels.
 
 ## Frontier labels
 
@@ -48,14 +78,19 @@ On this same frontier GT, stock locked also has **1** fire error (`route-v05-023
 
 ## What we do **not** do
 
-- Hot-swap Decide despite higher coverage (45 vs 32) and stronger forced EM
-- Retune τ after seeing v0.5 fires (new spend)
-- Cite the provisional-GT 0/0 reject table as closeout (needs frontier GT)
+- Hot-swap Decide despite higher coverage and higher LB
+- Retune τ after seeing v0.5 fires
+- Relabel twin GTs on v0.5 after seeing the verdict flip
+- Cite provisional-GT 0/0 reject tables as closeout
+- Claim the live arm is presently “never wrong on fires”
 
-## Next (if pursuing Decide again)
+## Order for next round (v0.6)
 
-Cut a new suite / new spend under the three-set protocol, or predeclare a different ship rule (e.g. CP LB ≥ stock) **before** looking at the next eval scores. Diagnosis of mcp↔skill twin labeling is allowed on this spent v0.5 set.
+1. **Resolve tool/skill twins in the catalog** — either one equivalence class that counts as a single correct answer, or `distinguishFrom` text when the skill wrapper is preferred over the raw tool.
+2. **Declare the ship / comparison rule** before any scores (example above).
+3. **Freeze v0.6** (blind; digests).
+4. **Score once** and frontier-adjudicate.
 
-## Team one-liner
+## Docs one-liner
 
-Decide@0.80 covers more of frozen v0.5 than stock@0.70 but still has one fire error under frontier GT (mcp vs skill twin); stock remains the live 0-error on-ramp from the v0.4 closeout.
+v0.5 (n=75, GHA 36185003105 / 36185003282, PR #1148): Decide reject covers more (45/75 vs 32/75) but still has 1 fire error under frontier adjudication, so stock stays the live CPU on-ramp. The Decide miss is a memory-ingest twin (`mcp.*` vs `skill.*`), not a wrong-capability route. Next spend is a new frozen suite or an explicit twin-resolution rule in the catalog — not a τ bump on this set.
