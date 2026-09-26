@@ -1,0 +1,1873 @@
+PlatformPaymentsNative agentic + enterprise rails. Generated from docs/payments/clawql-payments.md on main. Related: Payments plugin, Learn walkthrough, Agentic Gateway.On this pageWhat ships todayArchitectureLocal configurationManaged plan tiersStripe billingx402 micropaymentsPayment audit (WORM)Accounting &amp; taxFull CLI referenceInference integration checklistTroubleshootingFollow-up workRelated
+
+title: clawql-payments
+
+clawql-payments
+
+Hands-on walkthrough: Payments &#x26; entitlements (Learn) — plan limits, Stripe/x402 paths, WORM audit, and inference checklist in one sequence.
+
+Status: Shipped foundation (July 2026)
+
+Package: packages/clawql-payments
+
+CLI: clawql payments \*
+
+clawql-payments is ClawQL's unified payments layer for human fiat and agent micropayments.
+
+Positioning: ClawQL speaks Stripe, x402, MPP, AP2, and ACP — plus PayPal Orders and Adyen Checkout — with a WORM-audited payment event trail. On managed hosting, those rails collect platform fees and support closed-loop company credits (role budgets / within-org transfers — org-credits); they are not a consumer P2P network. Cross-tenant peer payments and agent compensation ship for self-hosted operators — see hosted vs self-hosted compliance.
+
+It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / Enterprise) via Stripe and is available to self-hosted operators who want to bill their own customers.
+
+What ships today
+
+Capability
+
+Status
+
+Notes
+
+Managed plan tiers + entitlements
+
+✅
+
+Local usage.json counters; limit enforcement in inference
+
+Stripe customers, subscriptions, invoices
+
+✅
+
+Live SDK when STRIPE_SECRET_KEY is set
+
+Stripe webhook signature verification
+
+✅
+
+CLI verify/process; audit on invoice.paid
+
+Stripe Billing Meters (meterEvents.create)
+
+✅
+
+API + inference hook when CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1
+
+x402 gate config + facilitator HTTP verify
+
+✅
+
+POST /verify against x402.org or CDP
+
+x402 Express middleware (402 + PAYMENT-REQUIRED)
+
+✅
+
+Wired into clawql-inference HTTP
+
+x402 MCP in-process enforcement
+
+✅
+
+CLAWQL_X402_ENFORCE=1 on stdio / Streamable HTTP / gRPC MCP tool calls
+
+Payment WORM audit (hash-chained JSONL)
+
+✅
+
+$CLAWQL_HOME/Payments/audit.jsonl + audit verify
+
+Payment WORM audit (Postgres)
+
+✅
+
+CLAWQL_PAYMENTS_AUDIT_STORE=postgres for multi-node deployments
+
+Payment audit → Loki/SIEM export
+
+✅
+
+Fire-and-forget push on append when CLAWQL_LOKI_PUSH_URL is set
+
+.well-known/payments.json discovery
+
+✅
+
+Dynamic on MCP + inference HTTP; static route on docs site
+
+MPP /openapi.json discovery
+
+✅
+
+Dynamic on MCP + inference HTTP; canonical x-payment-info.offers[]
+
+MPP HTTP 402 + MCP -32042 runtime
+
+✅
+
+Dual x402 + MPP challenges when CLAWQL_MPP_ENABLED=1
+
+MPP credential verification + receipts
+
+✅
+
+MppVerificationService — x402 facilitator + Stripe SPT (STRIPE_PROFILE_ID)
+
+MPP optional mppx adapter
+
+✅
+
+MppxAdapterService when CLAWQL_MPPX_ENABLED=1 + optional mppx dep
+
+MCP JSON-RPC payment errors
+
+✅
+
+-32042/-32043 when CLAWQL_MPP_MCP_JSONRPC=1 (default: tool-result \_meta)
+
+Extended finance provider adverts in offers[]
+
+✅
+
+CLAWQL_MPP_FINANCE_PROVIDERS — discovery labels; PayPal live via Orders below
+
+AP2 Payment Mandates
+
+✅
+
+Ap2MandateService — parse/verify VCs, optional HS256, bridge into x402 gates
+
+ACP checkout sessions
+
+✅
+
+AcpCheckoutService — create/complete + Stripe SPT (dry-run without key)
+
+PayPal Orders v2
+
+✅
+
+PaypalOrdersService — OAuth, create order, capture
+
+Adyen Checkout
+
+✅
+
+AdyenCheckoutService — sessions, payments, HMAC webhooks (enterprise)
+
+Creator payouts (Stripe Connect + Base USDC)
+
+✅
+
+PayoutService — bank transfers + live USDC with receipt confirmation
+
+Ramp agent virtual / agentic cards
+
+✅
+
+RampService — vault path + native cards:read_agentic when enabled
+
+Cloudflare Wallets (identity + Virtual Wallets)
+
+🚧
+
+CloudflareWalletService — dry-run prep; handle clawql.cloudflare.pay reserved — cloudflare-wallets.md
+
+Consumer off-ramp (Moonpay / Transak)
+
+✅
+
+Sessions + OfframpWebhookService completion settle
+
+Payments MCP tools (payout / ramp / offramp / compensation)
+
+✅
+
+CLAWQL*PAYMENTS_MCP_TOOLS=1; optional AP2 gate; includes agent_compensation*\*
+
+Prepaid credits + bank top-up + P2P transfer
+
+✅\*
+
+Grant ledger + FC/ACH top-up; P2P transfer self-hosted opt-in (CLAWQL_CREDITS_P2P_ENABLED=1) — credits-ach.md / compliance
+
+Agent compensation (credits + 2PC cash-out)
+
+✅\*
+
+AgentCompensationService — self-hosted opt-in (CLAWQL_COMPENSATION_ENABLED=1); off on managed
+
+Accounting export + tax evidence
+
+✅
+
+Subledger CSV/JSON/QB/Xero; TaxProfileService gate; year-end pack — accounting-and-tax.md
+
+Roadmap
+
+Tier
+
+Item
+
+Role
+
+Notes
+
+1
+
+Accounting export
+
+Period CSV/JSON subledger from payment WORM
+
+✅ Shipped — accounting-and-tax.md
+
+2
+
+Tax profile gate + year-end
+
+Tags + export; Stripe Connect Tax for 1099s
+
+✅ Gate + evidence pack; no in-process IRS e-file
+
+1
+
+Cloudflare Wallets live
+
+Identity + capped Virtual Wallet HTTP API
+
+Scaffold shipped; wire client when CF API is public
+
+3
+
+Mollie / Razorpay
+
+Regional processors
+
+Add when regional traction requires them
+
+Already covered (do not duplicate): Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, bank ACH top-ups via Stripe Financial Connections (Plaid-backed Link UI — no separate Plaid SDK), Stripe Connect payouts, live Base USDC payouts with receipt confirmation, consumer off-ramp + webhooks (Moonpay/Transak), Ramp vault + native agentic cards. Not planned: Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required, full GL / tax e-file product (subledger export + Stripe Connect Tax / CPA handoff — accounting-and-tax.md), full KYC product surface (identity docs / watchlists belong in Documents + a banking vertical — see docs/design/clawql-banking-vertical.md; payments may later expose only a thin KycGatePort before payouts).
+
+Docs-site UCP .well-known documents remain scanner-facing stubs. AP2 / ACP / PayPal / Adyen are live in self-hosted clawql-payments when their env flags are set.
+
+Architecture
+
+clawql-payments
+
+├── stripe/ Subscriptions, invoices, webhooks, Billing Meters, SPT
+
+├── x402/ Wallet, gates, facilitator verify/settle, middleware
+
+├── mpp/ OpenAPI discovery, Payment 402 challenges, verification, mppx
+
+├── ap2/ Payment Mandates (parse/verify) + x402 gate bridge
+
+├── acp/ Agentic checkout sessions (create/complete + Stripe SPT)
+
+├── paypal/ PayPal Orders v2 create/capture
+
+├── adyen/ Adyen Checkout sessions, payments, HMAC webhooks
+
+├── payouts/ Stripe Connect bank payouts + Base USDC sends
+
+├── ramp/ Ramp funds + virtual / agent cards
+
+├── cloudflare-wallets/ Cloudflare identity + Virtual Wallets (dry-run prep)
+
+├── offramp/ Consumer USDC → fiat (Moonpay / Transak)
+
+├── credits/ Prepaid ledger + FC/ACH top-up + P2P tenant transfer
+
+├── compensation/ Agent credits ledger + DAOS-aligned 2PC staging
+
+├── accounting/ Subledger export, CoA map, tax profile gate, evidence pack
+
+├── plans/ Tier definitions, entitlements, usage.json counters
+
+├── audit/ Hash-chained append-only JSONL + integrity verify
+
+└── cli/ clawql payments \* implementations
+
+See also accounting-and-tax.md (subledger export + tax ownership), payouts-ramp.md, cloudflare-wallets.md, credits-ach.md, agent-compensation.md, and sgdop-coordinator-compensation-bridge.md (CompensationStagingPort shipped; Coordinator integration still roadmap).
+
+flowchart TB
+
+subgraph clients [Clients]
+
+HTTP[HTTP / OpenAI SDK]
+
+MCP[MCP tools]
+
+CLI[clawql payments CLI]
+
+end
+
+subgraph inference [clawql-inference]
+
+X402MW[x402 middleware]
+
+Auth[Virtual key auth]
+
+GW[Agentic Gateway]
+
+Ent[Entitlement wrapper]
+
+end
+
+subgraph payments [clawql-payments]
+
+Gates[x402-gates.json]
+
+Plans[plans + usage.json]
+
+Stripe[Stripe SDK]
+
+Fac[x402 facilitator HTTP]
+
+WORM[Payment audit WORM]
+
+end
+
+HTTP --> X402MW
+
+X402MW -->|402 or allow| Auth
+
+Auth --> GW
+
+GW --> Ent
+
+Ent --> Plans
+
+Ent -->|optional| Stripe
+
+X402MW --> Gates
+
+X402MW --> Fac
+
+X402MW --> WORM
+
+CLI --> payments
+
+Three usage systems (do not conflate)
+
+ClawQL tracks usage in three independent layers. Each serves a different purpose:
+
+Layer
+
+Storage
+
+Purpose
+
+Env / toggle
+
+Plan entitlements
+
+$CLAWQL_HOME/Payments/usage.json
+
+Managed tier caps (inference calls/mo, docs, memory)
+
+CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+
+Inference call store
+
+jsonl / postgres under $CLAWQL_HOME/Inference/
+
+Token counts, latency, export/finetune flywheel
+
+CLAWQL_INFERENCE_STORE
+
+Virtual key budgets
+
+$CLAWQL_HOME/Inference/virtual-keys.json
+
+Per-team USD budget + rate limits
+
+CLAWQL_INFERENCE_KEYS_ENABLED=1
+
+Plan usage drives quota enforcement and optional Stripe Billing Meters. The call store drives observability and training data. Virtual keys drive per-team spend caps at auth time.
+
+Local configuration
+
+All local state lives under $CLAWQL_HOME/Payments/ (default ~/.clawql/Payments/):
+
+File
+
+Contents
+
+payments.json
+
+Tenant id, plan tier, Stripe metadata, x402 wallet/facilitator
+
+x402-gates.json
+
+Payment-gated HTTP paths and MCP tool names
+
+usage.json
+
+Monthly counters per tenant (inference_calls, documents, memory_mb)
+
+audit.jsonl
+
+Append-only hash-chained payment audit log
+
+audit.meta.json
+
+Chain head (seq, last_hash) for fast append
+
+accounting-map.json
+
+Optional customer chart-of-accounts overrides (GL codes)
+
+tax-profiles.json
+
+Opaque tax readiness tags (1099nec / collected) — never SSNs
+
+tax-evidence/&#x3C;year>/
+
+Year-end evidence packs (evidence.json + evidence.md)
+
+Example payments.json:
+
+{
+
+"tenantId": "acme-prod",
+
+"plan": "team",
+
+"stripe": {
+
+"accountId": "acct_xxx",
+
+"customerId": "cus_xxx",
+
+"meterEventName": "clawql_inference_calls",
+
+"webhookSecret": "whsec\_..."
+
+},
+
+"x402": {
+
+"walletAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+
+"facilitatorUrl": "https://x402.org/facilitator",
+
+"defaultAsset": "USDC"
+
+}
+
+}
+
+File modes are 0600. Never commit secrets or webhook signing keys.
+
+Managed plan tiers
+
+Defined in packages/clawql-payments/src/plans/tiers.ts:
+
+Plan
+
+Inference calls/mo
+
+Documents/mo
+
+Memory (MB)
+
+Seats
+
+x402
+
+free
+
+100
+
+10
+
+100
+
+1
+
+off
+
+pro
+
+10,000
+
+500
+
+5,000
+
+1
+
+on
+
+team
+
+100,000
+
+5,000
+
+50,000
+
+20
+
+on
+
+enterprise
+
+unlimited
+
+unlimited
+
+unlimited
+
+unlimited
+
+on
+
+clawql payments plan show
+
+clawql payments plan upgrade --tier team
+
+clawql payments usage report --month 2026-07
+
+Inference entitlement enforcement
+
+When CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1, every successful inference call:
+
+Pre-check — checkEntitlementLimit() against usage.json for the resolved tenant
+
+Execute — gateway completes the request
+
+Post-record — increment inference_calls in usage.json
+
+Optional Stripe meter — when CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1, emit billing.meterEvents.create
+
+Over-limit tenants receive 402 insufficient_quota (OpenAI-compatible error shape).
+
+Tenant resolution order:
+
+InferenceRequest.tenantId
+
+Virtual key team header
+
+payments.json → tenantId
+
+"default"
+
+Implementation: packages/clawql-inference/src/entitlements/.
+
+Stripe billing
+
+Prerequisites
+
+Stripe account with Billing Meters configured in the Dashboard
+
+Meter event name matching STRIPE_METER_EVENT_NAME or payments.json → stripe.meterEventName
+
+Customer linked via clawql payments stripe customer create (persists customerId) or STRIPE_CUSTOMER_ID
+
+Environment variables
+
+Variable
+
+Required
+
+Purpose
+
+STRIPE_SECRET_KEY
+
+Yes (live API)
+
+Stripe SDK authentication
+
+STRIPE_PRO_PRICE_ID
+
+For Pro subs
+
+Flat subscription price id
+
+STRIPE_TEAM_PRICE_ID
+
+For Team subs
+
+Flat subscription price id
+
+STRIPE_CUSTOMER_ID
+
+Meter reporting
+
+Override when not in payments.json
+
+STRIPE_METER_EVENT_NAME
+
+Meter reporting
+
+Dashboard meter event name (e.g. clawql_inference_calls)
+
+CLAWQL_PAYMENTS_REPORT_STRIPE_METER
+
+Meter reporting
+
+Set to 1 to emit meter events after each inference call
+
+Setup flow
+
+export STRIPE_SECRET_KEY=sk_test_...
+
+export STRIPE_PRO_PRICE_ID=price_...
+
+export STRIPE_TEAM_PRICE_ID=price_...
+
+export STRIPE_METER_EVENT_NAME=clawql_inference_calls
+
+# 1. Store webhook secret locally (never commit)
+
+clawql payments stripe setup --webhook-secret whsec\_...
+
+# 2. Create customer (persists customerId to payments.json)
+
+clawql payments stripe customer create --email billing@acme.com --name "Acme Inc"
+
+# 3. Create subscription for flat tier fee
+
+clawql payments stripe subscription create --customer cus_xxx --plan pro
+
+# 4. Enable meter reporting on inference
+
+export CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1
+
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+
+clawql inference serve --port 8080
+
+Meter event idempotency
+
+Each meter event includes an identifier for Stripe-side deduplication:
+
+With correlation id: inference:\{tenantId\}:\{correlationId\}
+
+Without: inference:\{tenantId\}:\{timestamp_ms\}
+
+Replaying the same correlation id within Stripe's dedup window will not double-bill.
+
+Manual meter report (debug / backfill)
+
+clawql payments stripe meter report --value 1 --customer cus_xxx \
+
+--event-name clawql_inference_calls \
+
+--identifier inference:default:manual-test-001
+
+Webhooks
+
+Webhook verification is CLI-first today — suitable for sidecar processors and CI:
+
+clawql payments stripe webhook verify \
+
+--payload ./event.json \
+
+--signature "t=...,v1=..." \
+
+--process
+
+Verified invoice.paid events append STRIPE_INVOICE_PAID to the payment WORM. Invoice creation alone does not write audit entries.
+
+Supported handlers: packages/clawql-payments/src/stripe/webhook.ts.
+
+x402 micropayments
+
+x402 v2 enables pay-per-request access to HTTP routes and MCP tools using USDC on EVM chains. ClawQL integrates facilitator-based verification — clients send a signed payment payload; the server verifies via POST /verify before allowing the request.
+
+When to use x402 vs plan entitlements
+
+Model
+
+Best for
+
+Plan entitlements
+
+Managed SaaS tiers with monthly caps
+
+x402 gates
+
+Pay-per-call APIs, public endpoints, agent-to-agent micropayments
+
+Both
+
+Hybrid: subscription base + overage per call on specific routes
+
+They are independent toggles. A route can be x402-gated without plan enforcement, and vice versa.
+
+Environment variables
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_X402_ENFORCE
+
+off
+
+Enable middleware (402 until paid)
+
+CLAWQL_X402_FACILITATOR_URL
+
+https://x402.org/facilitator
+
+Facilitator base URL
+
+CLAWQL_X402_NETWORK
+
+eip155:84532
+
+CAIP-2 chain id (Base Sepolia testnet)
+
+CLAWQL_X402_USDC_ASSET
+
+Base Sepolia USDC
+
+Token contract address
+
+CLAWQL_X402_SCHEME
+
+exact
+
+Payment scheme (exact or upto)
+
+CLAWQL_X402_MAX_TIMEOUT_SECONDS
+
+60
+
+Payment validity window
+
+CLAWQL_X402_FACILITATOR_BEARER
+
+—
+
+Bearer token for CDP / private facilitators
+
+CDP_API_KEY_ID + CDP_API_KEY_SECRET
+
+—
+
+Coinbase Developer Platform auth alternative
+
+Wallet and facilitator URL can also be stored in payments.json → x402.
+
+AP2 / ACP / PayPal / Adyen
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_AP2_ENABLED
+
+off
+
+Advertise AP2 in payments.json discovery; enable mandate verify path
+
+CLAWQL_AP2_REQUIRE
+
+off
+
+Deny x402-gated calls without a valid X-AP2-Payment-Mandate header
+
+CLAWQL_AP2_HMAC_SECRET
+
+—
+
+Optional HS256 secret for signed Payment Mandate JWTs
+
+CLAWQL_AP2_ALLOW_WITHOUT_X402
+
+off
+
+When mandate verifies, allow gate without x402 proof (auth-only mode)
+
+CLAWQL_ACP_ENABLED
+
+off
+
+Enable ACP checkout session create/complete
+
+CLAWQL_ACP_DRY_RUN
+
+off
+
+Complete ACP checkout without live Stripe SPT charge (tests/dev)
+
+CLAWQL_ACP_MERCHANT_ID
+
+clawql
+
+Merchant id stamped into WORM audit
+
+CLAWQL_PAYPAL_ENABLED
+
+auto
+
+Explicit on/off; defaults on when PayPal client credentials are set
+
+PAYPAL_CLIENT_ID
+
+—
+
+PayPal REST client id
+
+PAYPAL_CLIENT_SECRET
+
+—
+
+PayPal REST client secret
+
+PAYPAL_API_BASE / PAYPAL_MODE
+
+sandbox
+
+Override API host (live → api-m.paypal.com)
+
+CLAWQL_ADYEN_ENABLED
+
+auto
+
+Explicit on/off; defaults on when Adyen API key + merchant are set
+
+ADYEN_API_KEY
+
+—
+
+Adyen Checkout API key
+
+ADYEN_MERCHANT_ACCOUNT
+
+—
+
+Adyen merchant account code
+
+ADYEN_HMAC_KEY
+
+—
+
+Hex HMAC key for standard webhook verification
+
+ADYEN_CLIENT_KEY
+
+—
+
+Optional client key returned with session create
+
+ADYEN_ENVIRONMENT
+
+test
+
+test or live
+
+ADYEN_LIVE_ENDPOINT_PREFIX
+
+—
+
+Required for live Checkout base URL prefix
+
+Payouts (Stripe Connect + USDC) + Ramp + consumer off-ramp
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_PAYOUTS_ENABLED
+
+auto
+
+Defaults on when STRIPE_SECRET_KEY is set
+
+CLAWQL_PAYOUTS_DRY_RUN
+
+auto
+
+Dry-run when no Stripe key; force with 1
+
+CLAWQL_PAYOUTS_RETURN_URL
+
+local
+
+Connect onboarding return URL
+
+CLAWQL_PAYOUTS_REFRESH_URL
+
+local
+
+Connect onboarding refresh URL
+
+CLAWQL_PAYOUTS_USDC_PRIVATE_KEY
+
+—
+
+Hot wallet for live Base USDC sends (viem optional dep)
+
+CLAWQL_PAYOUTS_USDC_DRY_RUN
+
+auto
+
+Force dry USDC; default dry when no private key
+
+CLAWQL_PAYOUTS_USDC_CONFIRMATIONS
+
+1
+
+Receipt confirmations before PAYOUT_PAID
+
+CLAWQL_RAMP_ENABLED
+
+auto
+
+Defaults on when RAMP_CLIENT_ID + RAMP_CLIENT_SECRET are set
+
+CLAWQL_RAMP_DRY_RUN
+
+auto
+
+Dry-run when Ramp credentials missing
+
+CLAWQL_RAMP_AGENTIC
+
+off
+
+Native Agent Cards API (cards:read_agentic)
+
+RAMP_CLIENT_ID / SECRET
+
+—
+
+Ramp OAuth client credentials
+
+RAMP_ENVIRONMENT
+
+demo
+
+demo or production
+
+CLAWQL_OFFRAMP_ENABLED
+
+off
+
+Consumer Moonpay/Transak sell sessions
+
+CLAWQL_OFFRAMP_DRY_RUN
+
+auto
+
+Dry widget URLs when no provider key
+
+CLAWQL_OFFRAMP_PROVIDER
+
+moonpay
+
+moonpay or transak
+
+MOONPAY*API_KEY / TRANSAK*\*
+
+—
+
+Provider API keys
+
+MOONPAY_WEBHOOK_SECRET
+
+—
+
+MoonPay Signature-V2 verify
+
+TRANSAK_ACCESS_TOKEN
+
+—
+
+Transak webhook JWT HS256 secret
+
+CLAWQL_PAYMENTS_MCP_TOOLS
+
+off
+
+Register payout / ramp / offramp / agent*compensation*\* MCP tools
+
+CLAWQL_PAYMENTS_MCP_REQUIRE_AP2
+
+off
+
+Require AP2 mandate JWT on those tools
+
+See payouts-ramp.md.
+
+Agent compensation (SGDOP / 2PC)
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_COMPENSATION_ENABLED
+
+on
+
+Agent deposit / cash-out staging + confirm
+
+CLAWQL_COMPENSATION_DIRECT
+
+off
+
+Allow non-2PC deposit (tests / operators)
+
+CLAWQL_COMPENSATION_ACTION_TTL_SEC
+
+7200
+
+Pending action TTL
+
+CLAWQL_COMPENSATION_APPROVAL_BASE
+
+—
+
+HATEOAS approval base (or CLAWQL_OUROBOROS_GATEWAY_URL)
+
+CLAWQL_COMPENSATION_CREDIT_USD_RATE
+
+1
+
+Credits → USD at cash-out
+
+See agent-compensation.md and sgdop-coordinator-compensation-bridge.md.
+
+Prepaid credits + ACH bank top-up
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_CREDITS_ENABLED
+
+off
+
+Enable prepaid credit ledger
+
+CLAWQL_CREDITS_ENFORCE_INFERENCE
+
+on\*
+
+Sync DeductionService.hold on inference (\*when credits enabled)
+
+CLAWQL_CREDITS_INFERENCE_COST_CENTS
+
+1
+
+Hold amount (USD cents) per inference completion
+
+CLAWQL_ACH_TOPUP_ENABLED
+
+auto
+
+FC + ACH top-up; defaults on when credits + STRIPE_SECRET_KEY are set
+
+CLAWQL_ACH_TOPUP_DRY_RUN
+
+off
+
+Link/top-up without live Stripe ACH (tests/demos)
+
+CLAWQL_CREDITS_RETURN_URL
+
+—
+
+Optional Financial Connections return URL
+
+See credits-ach.md and deduction-service.md.
+
+export CLAWQL_CREDITS_ENABLED=1
+
+clawql payments credits show
+
+# P2P: pay @handle (stages) — confirm with code (+ optional TOTP)
+
+clawql payments credits directory claim --handle bob --tenant-id other-tenant
+
+clawql payments credits pay --to @bob --amount 10
+
+clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+
+clawql payments credits step-up enroll # optional authenticator
+
+export CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP=1
+
+Setup flow
+
+export CLAWQL_X402_ENFORCE=1
+
+export CLAWQL_X402_FACILITATOR_URL=https://x402.org/facilitator
+
+# 1. Configure pay-to wallet
+
+clawql payments x402 wallet setup --address 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+
+# 2. Gate a route or MCP tool
+
+clawql payments x402 gate --resource /v1/chat/completions --price 0.001 --asset USDC
+
+clawql payments x402 gate --tool knowledge_search --price 0.0005
+
+# 3. Start inference with middleware
+
+clawql inference serve --port 8080
+
+HTTP request flow
+
+sequenceDiagram
+
+participant Client
+
+participant MW as x402 middleware
+
+participant Fac as Facilitator
+
+participant App as Inference handler
+
+Client->>MW: POST /v1/chat/completions (no payment)
+
+MW->>Client: 402 + PAYMENT-REQUIRED header (base64 JSON)
+
+Client->>MW: POST + PAYMENT-SIGNATURE header
+
+MW->>Fac: POST /verify { paymentPayload, paymentRequirements }
+
+Fac-->>MW: { isValid: true, payer: 0x... }
+
+MW->>App: next() — req.x402Payer set
+
+App-->>Client: 200 completion
+
+Headers:
+
+Header
+
+Direction
+
+Purpose
+
+PAYMENT-REQUIRED
+
+Response (402)
+
+Base64-encoded PaymentRequired JSON
+
+PAYMENT-SIGNATURE / X-PAYMENT
+
+Request
+
+Client payment proof (JSON or base64)
+
+X-Clawql-Tool
+
+Request
+
+Gate MCP tools as tool:\{name\} (HTTP middleware path)
+
+X-Correlation-Id
+
+Request
+
+Audit correlation (optional)
+
+MCP in-process enforcement
+
+When CLAWQL_X402_ENFORCE=1, native MCP tool calls (tools/call over stdio, Streamable HTTP /mcp, or gRPC session transport) run the same enforceX402Gate() path as inference HTTP middleware — before the tool handler executes.
+
+Enforcement is registered as PaymentsX402ProxyPlugin (kind: mcp-proxy) on the shared McpProxyPipeline alongside Panguard — all MCP tools pass through wrapRegisteredMcpToolHandler → runMcpProxyBeforeCallTool. Disable the plugin with CLAWQL_PAYMENTS_X402_PROXY_PLUGIN=0 (rare; prefer turning off CLAWQL_X402_ENFORCE).
+
+Effect entrypoints: paymentsServicesLiveLayer() merges all services; runPaymentsEffect() runs programs at async boundaries (CLI, Express, legacy exports). MCP x402 uses native mcpX402BeforeCallToolEffect → X402EnforcementService (not a tryPromise shim).
+
+Effect services (clawql-payments/plugin):
+
+Service
+
+Responsibility
+
+PaymentsConfigService
+
+payments.json load/save/merge
+
+PaymentAuditService
+
+WORM audit append/list/verify (+ ring buffer + Loki side effects)
+
+X402GateService
+
+x402-gates.json CRUD
+
+X402RuntimeConfigService
+
+Network, facilitator, wallet from config + env
+
+X402FacilitatorService
+
+Facilitator verify/settle HTTP
+
+X402EnforcementService
+
+Gate enforcement + settlement reconciliation
+
+UsageStoreService
+
+Monthly usage counters
+
+EntitlementService
+
+Plan limit checks (EntitlementLimitError)
+
+PaymentsDiscoveryService
+
+/.well-known/payments.json builder
+
+MppOpenApiService
+
+MPP /openapi.json builder (x-payment-info.offers[])
+
+MppVerificationService
+
+MPP credential verify (x402 + Stripe SPT), challenge registry, receipts
+
+StripeClientService
+
+Stripe SDK client lifecycle
+
+StripeWebhookService
+
+Webhook verify + WORM-audited event handling
+
+StripeMeterService
+
+Meter events + inference usage reporting
+
+StripeBillingService
+
+Setup, customer, subscription, invoice, portal
+
+Public async exports (loadPaymentsConfig, enforceX402Gate, appendPaymentWormEntry, …) delegate to runPaymentsEffect. Stripe modules now use Effect services (StripeClientService, StripeWebhookService, StripeMeterService, StripeBillingService) with tagged errors (StripeSignatureError, StripeApiError, …); legacy Error subclasses remain at async boundaries for CLI compatibility.
+
+Configure gates with clawql payments x402 gate --tool &#x3C;name> --price &#x3C;usdc>.
+
+Payment proof on MCP transports:
+
+Transport
+
+How to attach proof
+
+Streamable HTTP
+
+PAYMENT-SIGNATURE / X-PAYMENT on the HTTP request to /mcp
+
+gRPC MCP session
+
+Same header names as gRPC metadata (lowercase keys)
+
+stdio
+
+No request headers — use Streamable HTTP or gRPC for paid tools
+
+When payment is required, the tool returns an MCP result with isError: true and JSON describing the x402 PaymentRequired payload (HTTP 402 semantics in tool output). Invalid proofs emit X402_PAYMENT_FAILED audit events (same as HTTP deny paths).
+
+402 response body (x402 v2):
+
+{
+
+"x402Version": 2,
+
+"error": "PAYMENT-SIGNATURE header is required",
+
+"resource": {
+
+"url": "http://localhost:8080/v1/chat/completions",
+
+"mimeType": "application/json"
+
+},
+
+"accepts": [
+
+{
+
+"scheme": "exact",
+
+"network": "eip155:84532",
+
+"amount": "1000",
+
+"asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+
+"payTo": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+
+"maxTimeoutSeconds": 60
+
+}
+
+],
+
+"extensions": { "facilitator": "https://x402.org/facilitator" }
+
+}
+
+Amounts are USDC atomic units (6 decimals): 0.001 USDC → "1000".
+
+CLI reference
+
+clawql payments x402 wallet setup --address 0x...
+
+clawql payments x402 gate --resource /v1/chat/completions --price 0.001
+
+clawql payments x402 gate --tool knowledge_search --price 0.0005
+
+clawql payments x402 gate list
+
+clawql payments x402 verify --payload ./payment.json --resource /v1/chat/completions
+
+clawql payments x402 reconcile --date 2026-07-11
+
+verify calls the configured facilitator with a saved payload — useful for debugging client integrations without running the full HTTP server.
+
+Programmatic usage
+
+createX402Gate,
+
+createX402PaymentMiddleware,
+
+enforceX402Gate,
+
+verifyViaFacilitator,
+
+} from 'clawql-payments/x402'
+
+Middleware mounts before auth in packages/clawql-inference/src/api/server.ts.
+
+Payment audit (WORM)
+
+Payment events append to an append-only, hash-chained audit log at $CLAWQL_HOME/Payments/audit.jsonl. Each record includes seq, prev_hash, and hash (SHA-256 over canonical JSON) so tampering breaks the chain. By default each append fsyncs to disk (CLAWQL_PAYMENTS_AUDIT_FSYNC=1).
+
+A hot in-process mirror still feeds the MCP audit ring buffer (summary fields only). Authoritative payment history — including full structured payload — lives in audit.jsonl.
+
+Event
+
+Trigger
+
+STRIPE_INVOICE_PAID
+
+Verified webhook
+
+STRIPE_PAYMENT_FAILED
+
+Verified webhook
+
+STRIPE_METER_REPORTED
+
+Successful meter event
+
+X402_PAYMENT_RECEIVED
+
+Facilitator verify + reconcile
+
+X402_PAYMENT_FAILED
+
+Invalid proof, facilitator error, or misconfiguration (not require_payment)
+
+ENTITLEMENT_LIMIT_REACHED
+
+Plan cap hit
+
+PLAN_UPGRADED / PLAN_DOWNGRADED
+
+clawql payments plan upgrade
+
+AP2_MANDATE_VERIFIED / AP2_MANDATE_FAILED
+
+Ap2MandateService verify
+
+ACP_CHECKOUT_CREATED / ACP_CHECKOUT_COMPLETED
+
+AcpCheckoutService create/complete
+
+PAYPAL_ORDER_CREATED / PAYPAL_ORDER_CAPTURED / PAYPAL_CAPTURE_FAILED
+
+PayPal Orders
+
+ADYEN_SESSION_CREATED
+
+Adyen Checkout Session create
+
+ADYEN_PAYMENT_AUTHORIZED / ADYEN_PAYMENT_FAILED
+
+Adyen /payments or AUTHORISATION webhook
+
+ADYEN_WEBHOOK_PROCESSED
+
+Adyen standard notification verified / recorded
+
+CONNECT_ACCOUNT_CREATED
+
+Stripe Connect Express account create
+
+PAYOUT_INITIATED / PAYOUT_PAID / PAYOUT_FAILED
+
+Creator bank/USDC payout
+
+RAMP_FUND_CREATED
+
+Ramp spend fund create
+
+RAMP_VIRTUAL_CARD_ISSUED / RAMP_AGENT_CARD_ISSUED
+
+Ramp vault / agent-scoped card (no PAN in WORM)
+
+Environment
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_PAYMENTS_AUDIT_STORE
+
+jsonl (memory in tests)
+
+jsonl = durable file; memory = in-process only; postgres = shared DB
+
+CLAWQL_PAYMENTS_AUDIT_FSYNC
+
+on
+
+fsync after each append (set 0 to disable; jsonl only)
+
+CLAWQL_PAYMENTS_DATABASE_URL
+
+—
+
+Postgres connection string when AUDIT_STORE=postgres
+
+CLAWQL*PAYMENTS_DB*\*
+
+—
+
+Component vars (HOST, USER, PASSWORD, NAME, PORT)
+
+CLAWQL_INFERENCE_DATABASE_URL
+
+—
+
+Fallback Postgres URL when payments URL is unset (shared DB)
+
+Postgres audit store (enterprise)
+
+For multi-node ClawQL deployments, set:
+
+export CLAWQL_PAYMENTS_AUDIT_STORE=postgres
+
+export CLAWQL_PAYMENTS_DATABASE_URL=postgres://clawql:secret@db.internal:5432/clawql
+
+# Or reuse the inference database:
+
+# export CLAWQL_INFERENCE_DATABASE_URL=postgres://...
+
+Records remain hash-chained (seq, prev_hash, hash) in table clawql_payments_audit. Chain head metadata lives in clawql_payments_audit_meta. clawql payments audit verify validates integrity regardless of store backend.
+
+Loki / SIEM export
+
+Each successful append can push the full payment payload (not just MCP ring-buffer summaries) to Grafana Loki:
+
+export CLAWQL_LOKI_PUSH_URL=https://loki.example.com/loki/api/v1/push
+
+export CLAWQL_LOKI_BEARER_TOKEN=... # optional
+
+export CLAWQL_LOKI_TENANT_ID=tenant-1 # optional X-Scope-OrgID
+
+export CLAWQL_PAYMENTS_LOKI_JOB=clawql-payments-audit # optional stream job label
+
+# export CLAWQL_PAYMENTS_LOKI_PUSH=0 # disable payments push only
+
+# export CLAWQL_ENABLE_LOKI_PUSH=0 # disable all Loki push (MCP + payments)
+
+Push is fire-and-forget — Loki failures log to stderr and do not fail payment processing.
+
+Payment discovery (/.well-known/payments.json)
+
+Self-hosted ClawQL serves a dynamic payment discovery document at:
+
+curl http://localhost:8080/.well-known/payments.json # MCP HTTP (default PORT)
+
+curl http://localhost:8080/.well-known/payments.json # inference HTTP (CLAWQL_INFERENCE_PORT)
+
+The document lists configured x402 gates (HTTP paths and MCP tools), wallet/facilitator metadata, and Stripe plan/meter info when configured. The docs site serves a static commerce discovery route at /openapi.json and /.well-known/payments.json for agent readiness scanners.
+
+MPP discovery (/openapi.json)
+
+Self-hosted ClawQL serves a dynamic MPP OpenAPI document at:
+
+curl http://localhost:8080/openapi.json # MCP HTTP or inference HTTP
+
+Each paid route includes x-payment-info.offers[] with x402 and stripe methods when configured. Set CLAWQL_MPP_OPENAPI=0 to disable the route. See MPP discovery.
+
+When CLAWQL_X402_ENFORCE=1, HTTP 402 responses include both x402 PAYMENT-REQUIRED and MPP WWW-Authenticate: Payment challenges. MCP paid-tool errors surface MPP metadata on tool results (org.paymentauth/payment-required) for clients that expect JSON-RPC -32042.
+
+Credential verification runs through MppVerificationService (Effect) inside X402EnforcementService.enforceGate():
+
+Authorization: Payment … — canonical MPP credentials (Stripe SPT or x402 payload in payload)
+
+PAYMENT-SIGNATURE — legacy x402 credentials (still verified when MPP is enabled)
+
+Successful verification returns Payment-Receipt on HTTP 200 and records settlement in the payment audit WORM
+
+Stripe SPT charges require STRIPE_SECRET_KEY and optionally STRIPE_PROFILE_ID / STRIPE_NETWORK_ID for Business Network profiles
+
+Challenge IDs issued on 402 are registered for single-use verification (replay protection). Failed verification surfaces MCP -32043 metadata on deny paths when applicable.
+
+CLI
+
+clawql payments audit --correlation-id seed_abc_gen_2
+
+clawql payments audit verify # validate hash chain integrity
+
+clawql payments audit verify --json
+
+clawql payments spend report --group-by provider
+
+spend report now aggregates real amount_usd / amount_usdc values from persisted payloads (not placeholder data).
+
+Programmatic verify
+
+const result = await verifyPaymentAuditLog()
+
+if (!result.ok) {
+
+console.error(result.issues)
+
+}
+
+Accounting &#x26; tax
+
+The payment WORM is the subledger of record for ClawQL-mediated money flows. ClawQL exports that trail for books and CPA handoff — it does not replace QuickBooks/Xero/NetSuite or file IRS forms in-process.
+
+Deep dive: accounting-and-tax.md.
+
+Capability
+
+What it does
+
+Period export
+
+One row per monetary WORM event → CSV / JSON / QuickBooks-style / Xero-style
+
+Classification
+
+New WORM writes carry accounting (direction, category, tax treatment); credits top-ups = prepaid liability, not revenue
+
+CoA mapping
+
+Default GL codes; override with $CLAWQL_HOME/Payments/accounting-map.json
+
+Integrity gate
+
+Export refuses to run if audit verify fails (unless --skip-verify)
+
+Tax profiles
+
+Opaque readiness tags only (no SSN/ITIN in payments storage)
+
+Payout gate
+
+Opt-in: CLAWQL_TAX_PROFILE_ENFORCE=1 blocks creator/agent payouts without a collected profile
+
+Year-end pack
+
+Markdown + JSON evidence for payouts / compensation cash-outs (not an e-file)
+
+Period close (operator recipe)
+
+# 1. Integrity
+
+clawql payments audit verify
+
+# 2. Subledger for the books
+
+clawql payments accounting export \
+
+--date-from 2026-01-01 --date-to 2026-03-31 \
+
+--format csv \
+
+--output ./books/2026-q1-subledger.csv
+
+# QuickBooks / Xero bank-style templates
+
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format qb-csv
+
+clawql payments accounting export --from 2026-01-01 --to 2026-03-31 --format xero-csv
+
+# 3. Year-end evidence (payouts + compensation cash-outs)
+
+clawql payments accounting tax-evidence --tax-year 2026
+
+# → $CLAWQL_HOME/Payments/tax-evidence/2026/evidence.json + evidence.md
+
+Import the CSV into your GL or CPA spreadsheet. Reconcile Stripe balance / USDC wallet / ACH pending separately.
+
+Tax profiles (payout readiness)
+
+# Store readiness only — PII stays in vault / Stripe / KYC vendor
+
+clawql payments tax-profile set \
+
+--party-id creator-1 \
+
+--tax-form 1099nec \
+
+--collected \
+
+--tax-profile-ref vault:w9_abc
+
+clawql payments tax-profile show --party-id creator-1
+
+# Opt-in gate before PayoutService money-out
+
+export CLAWQL_TAX_PROFILE_ENFORCE=1
+
+Form / obligation
+
+Owner
+
+Stripe invoices / receipts
+
+Stripe (existing billing)
+
+US 1099-NEC / 1099-K on Connect
+
+Prefer Stripe Connect Tax; ClawQL exports evidence
+
+W-9 / W-8 collection UX
+
+Banking / onboarding vertical; payments stores readiness
+
+VAT / GST invoices
+
+Stripe Tax / regional processor; invoice refs in WORM
+
+Agent compensation classification
+
+CPA outside ClawQL; cash-out rows in tax-evidence pack
+
+Environment
+
+Variable
+
+Default
+
+Purpose
+
+CLAWQL_TAX_PROFILE_ENFORCE
+
+off
+
+When 1, PayoutService.createPayout requires a collected tax profile (or taxForm=none) for the party
+
+Example accounting-map.json
+
+{
+
+"categories": {
+
+"saas_revenue": "4000",
+
+"usage_revenue": "4100",
+
+"micropayment_revenue": "4100",
+
+"prepaid_liability": "2500",
+
+"prepaid_redemption": "4100",
+
+"creator_payout": "6000",
+
+"agent_compensation": "6100",
+
+"agent_spend": "6200"
+
+}
+
+}
+
+Programmatic export
+
+const books = await buildAccountingExport({
+
+from: '2026-01-01',
+
+to: '2026-12-31',
+
+format: 'csv',
+
+})
+
+const evidence = await buildTaxEvidencePack({ taxYear: 2026 })
+
+Full CLI reference
+
+# Plans
+
+clawql payments plan show | upgrade --tier team
+
+clawql payments usage report --month 2026-07
+
+# Stripe
+
+clawql payments stripe setup --webhook-secret whsec\_...
+
+clawql payments stripe customer create --email user@acme.com
+
+clawql payments stripe subscription create --customer cus_xxx --plan pro
+
+clawql payments stripe invoice create --customer cus_xxx --amount 500
+
+clawql payments stripe meter report --value 1 --customer cus_xxx
+
+clawql payments stripe webhook verify --payload ./event.json --signature "..." --process
+
+# x402
+
+clawql payments x402 wallet setup | gate | gate list | verify | reconcile
+
+# Audit
+
+clawql payments spend report --group-by provider
+
+clawql payments audit --correlation-id xxx
+
+clawql payments audit verify
+
+# Accounting &#x26; tax (subledger + evidence — not a full GL / IRS e-file)
+
+clawql payments accounting export --from 2026-01-01 --to 2026-12-31 --format csv
+
+clawql payments accounting export --date-from 2026-01-01 --date-to 2026-12-31 --format qb-csv --output ./books.csv
+
+clawql payments accounting tax-evidence --tax-year 2026
+
+clawql payments tax-profile set --party-id creator-1 --tax-form 1099nec --collected
+
+clawql payments tax-profile show [--party-id creator-1]
+
+# Prepaid credits (top-up + P2P @handle pay with stage/confirm step-up)
+
+clawql payments credits show | bank-link | topup --customer cus_xxx --amount 25
+
+clawql payments credits directory claim --handle bob --tenant-id other-tenant
+
+clawql payments credits pay --to @bob --amount 10
+
+clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
+
+clawql payments credits step-up enroll|show
+
+Inference integration checklist
+
+Self-hosted operators enabling the full payments stack:
+
+# Plan limits
+
+export CLAWQL_PAYMENTS_ENFORCE_INFERENCE=1
+
+# Stripe meter (optional — requires Dashboard meter + customer)
+
+export CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1
+
+export STRIPE_METER_EVENT_NAME=clawql_inference_calls
+
+# x402 pay-per-call (optional — independent of plan limits)
+
+export CLAWQL_X402_ENFORCE=1
+
+export CLAWQL_X402_FACILITATOR_URL=https://x402.org/facilitator
+
+clawql inference serve --port 8080
+
+Middleware order in the HTTP app:
+
+JSON body parser
+
+x402 payment middleware (CLAWQL_X402_ENFORCE)
+
+Virtual key auth (CLAWQL_INFERENCE_KEYS_ENABLED)
+
+OpenAI-compat router (entitlement check inside gateway + HTTP layer for streaming)
+
+See also: packages/clawql-inference/README.md.
+
+Troubleshooting
+
+402 insufficient_quota on inference
+
+Run clawql payments plan show — check usage.inferenceCalls vs entitlements
+
+Confirm tenant id: virtual key team must match the tenant you expect
+
+Enterprise plan uses Infinity — verify payments.json → plan
+
+x402 402 with invalid x402 payment payload
+
+Header must be valid JSON or base64-encoded JSON matching PaymentPayloadV2
+
+Use clawql payments x402 verify --payload ./file.json --resource &#x3C;url> to test facilitator path
+
+x402 402 with x402 wallet address is not configured
+
+Run clawql payments x402 wallet setup --address 0x...
+
+Facilitator verify fails
+
+Check CLAWQL_X402_FACILITATOR_URL reaches /verify (not double-suffixed)
+
+For CDP: set CLAWQL_X402_FACILITATOR_BEARER or CDP_API_KEY_ID + CDP_API_KEY_SECRET
+
+Testnet: ensure client payment targets CLAWQL_X402_NETWORK and CLAWQL_X402_USDC_ASSET
+
+Stripe meter events not appearing
+
+Confirm CLAWQL_PAYMENTS_REPORT_STRIPE_METER=1
+
+Customer id must be in payments.json or STRIPE_CUSTOMER_ID
+
+Meter event name must match Dashboard: STRIPE_METER_EVENT_NAME or payments.json → stripe.meterEventName
+
+Check payment audit for STRIPE_METER_REPORTED or CLI errors
+
+Webhook signature failures
+
+Use raw request body (not re-serialized JSON) for verification
+
+Secret from clawql payments stripe setup or payments.json → stripe.webhookSecret
+
+Follow-up work
+
+Item
+
+Tracking
+
+Hosted webhook HTTP endpoint
+
+not CLI-only
+
+Related
+
+Accounting &#x26; tax: docs/payments/accounting-and-tax.md
+
+Package README: packages/clawql-payments/README.md
+
+Inference doc: docs/inference/clawql-inference.md
+
+x402 protocol: x402.org

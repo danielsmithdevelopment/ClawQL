@@ -1,0 +1,47 @@
+Plugindefault-availableproviders/ (on-disk specs)Plugins · Registry · Plugin modelOn this pageNo-config defaultOpt-in (preferred)Deprecated env flagsPrecedenceSee alsoBundled providers
+
+Bundled providers are on-disk OpenAPI / Discovery / GraphQL specs under providers/. They power search and execute — they are not MCP plugins and have no Plugin.onRegister hook.
+
+Available by default, loaded only when opted in — same spirit as horizontal MCP plugins.
+
+No-config default
+
+Fresh install with no provider selection loads nothing from the catalog (native GraphQL/gRPC only when configured). Core MCP tools (search, execute, audit, cache) still register.
+
+Opt-in (preferred)
+
+MechanismExampleInstance providers.packCLAWQL_INSTANCE_SPEC=\{&quot;providers&quot;:\{&quot;pack&quot;:&quot;default&quot;\}\}Instance providers.enabled\{&quot;providers&quot;:\{&quot;enabled&quot;:[&quot;github&quot;,&quot;linear&quot;]\}\}Helmproviders.pack: default (chart default is none)
+
+Curated pack default
+
+ProviderNotesCloudflareEdge/DNS/Workers APIsGitHubREST automationSlackWeb API (powers optional notify when enabled)LinearBundled GraphQL-only vendorNotionOfficial REST OpenAPIOnyxEnterprise search spec (pair with Onyx MCP tool when enabled)
+
+Other packs
+
+pack / CLAWQL_PROVIDERBehaviornoneExplicit empty (same as no-config)default / default-providersCurated six-vendor pack aboveall-providersEvery bundled vendor + Google top-50 + AWS top-50google, aws, atlassianFocused merged presetsCLAWQL_BUNDLED_PROVIDERS=a,b,…Custom explicit subset
+
+Only CLAWQL_ENABLE_DOCUMENTS=0 trims the document/IDP vendor set from all-providers.
+
+Deprecated env flags
+
+CLAWQL_ENABLE_GOOGLE / CLAWQL_ENABLE_AWS / CLAWQL_ENABLE_CLOUDFLARE no longer select the provider stack. Use providers.enabled: [&quot;google&quot;] or pack: &quot;google&quot; / all-providers instead.
+
+Precedence
+
+CLAWQL_SPEC_PATHS
+
+CLAWQL_BUNDLED_PROVIDERS
+
+Instance providers (CLAWQL_INSTANCE_SPEC)
+
+CLAWQL_PROVIDER (merged pack or single vendor)
+
+Empty stack when nothing else is set
+
+Single-spec mode (CLAWQL_SPEC_PATH, CLAWQL_PROVIDER=cloudflare, …) bypasses the merge rules above.
+
+See also
+
+providers/README.md
+
+Configuration
