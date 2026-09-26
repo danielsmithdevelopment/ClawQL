@@ -23,19 +23,19 @@ This is the **final eval set** for the Decide-vs-stock reject comparison under [
 
 ## Digests (SHA-256 of canonical JSON: sorted keys, compact separators, whitespace-normalized strings)
 
-| Artifact | SHA-256 |
-| --- | --- |
-| Suite `fast-decision-held-out-v0.5-routing-fresh.json` | `e2883ad01f100a3ba618a2bd8aa2f55fdb66c4ed8019af8cde59a3af5e9c7a2c` |
+| Artifact                                                | SHA-256                                                            |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
+| Suite `fast-decision-held-out-v0.5-routing-fresh.json`  | `e2883ad01f100a3ba618a2bd8aa2f55fdb66c4ed8019af8cde59a3af5e9c7a2c` |
 | Source catalog `routing-fresh-v0.5-source-catalog.json` | `b7ffa6982713b5338357a46fdf1715552c6c5207d61d18df11bd82c601c44544` |
 
 ## Which catalog the drafter saw
 
-| Field | Value |
-| --- | --- |
-| File | `/tmp/isolated-routing-drafter-v05/catalog.json` (= repo `routing-fresh-v0.5-source-catalog.json`) |
-| Entry fields | `id`, `kind`, `label`, `description` only |
-| Hint fields | **absent** |
-| Entry count | 38 (same bodies as v0.4 catalog; new `catalogId` / `note`) |
+| Field        | Value                                                                                              |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| File         | `/tmp/isolated-routing-drafter-v05/catalog.json` (= repo `routing-fresh-v0.5-source-catalog.json`) |
+| Entry fields | `id`, `kind`, `label`, `description` only                                                          |
+| Hint fields  | **absent**                                                                                         |
+| Entry count  | 38 (same bodies as v0.4 catalog; new `catalogId` / `note`)                                         |
 
 ## Freeze metadata
 

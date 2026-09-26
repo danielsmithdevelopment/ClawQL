@@ -6,12 +6,12 @@
 
 ## Locked parameters (Decide candidate path)
 
-| Knob | Value | Source |
-| --- | --- | --- |
-| Model | `fastino/GLiNER2.5-Decide` | four-arm score dump |
-| Calibration | `temperature_softmax` **T=0.75** | off-set temperature grid on fit n=41 |
-| Routing τ | **0.80** | fit-only under predeclared 0-error rule |
-| Enrichment | off | unchanged |
+| Knob        | Value                            | Source                                  |
+| ----------- | -------------------------------- | --------------------------------------- |
+| Model       | `fastino/GLiNER2.5-Decide`       | four-arm score dump                     |
+| Calibration | `temperature_softmax` **T=0.75** | off-set temperature grid on fit n=41    |
+| Routing τ   | **0.80**                         | fit-only under predeclared 0-error rule |
+| Enrichment  | off                              | unchanged                               |
 
 Artifact: [`frontier-runs/decide-v05-fit-tau-lock.json`](./frontier-runs/decide-v05-fit-tau-lock.json)
 
@@ -21,13 +21,13 @@ Among fit thresholds with precision ≥ 0.90 **and** fit `nErrorsFired = 0`, max
 
 ## Fit @ τ=0.80
 
-| Metric | Value |
-| --- | --- |
-| n | 41 |
-| nFired | **23** |
-| nErrorsFired | **0** |
-| precision among fired | **1.0** |
-| CP 95% two-sided LB | ≈**85.2%** |
+| Metric                | Value      |
+| --------------------- | ---------- |
+| n                     | 41         |
+| nFired                | **23**     |
+| nErrorsFired          | **0**      |
+| precision among fired | **1.0**    |
+| CP 95% two-sided LB   | ≈**85.2%** |
 
 ## Provenance note
 

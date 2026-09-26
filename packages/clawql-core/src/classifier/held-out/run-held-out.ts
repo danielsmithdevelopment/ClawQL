@@ -193,9 +193,7 @@ export function scoreHeldOutCases(
         scores,
         topCandidateId: top?.candidateId,
         topConfidence: top?.confidence,
-        correct: Boolean(
-          top && candidatesEquivalent(top.candidateId, c.groundTruthCandidateId)
-        ),
+        correct: Boolean(top && candidatesEquivalent(top.candidateId, c.groundTruthCandidateId)),
       });
     }
     return out;

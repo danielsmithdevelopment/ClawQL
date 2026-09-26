@@ -17,41 +17,41 @@
 
 ## Runs
 
-| Step | GHA |
-| --- | --- |
-| Decide score-once | [36199128704](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128704) |
+| Step                  | GHA                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| Decide score-once     | [36199128704](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128704) |
 | Frontier adjudication | [36199128630](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36199128630) |
 
 Artifacts: [`frontier-runs/v0.6-decide-gha-36199128704-frontier-closeout.json`](./frontier-runs/v0.6-decide-gha-36199128704-frontier-closeout.json) · [`frontier-runs/v0.6-routing-fresh-gha-36199128630-labels.json`](./frontier-runs/v0.6-routing-fresh-gha-36199128630-labels.json) · [`frontier-runs/v0.6-score-dumps/scores-decide-v06.json`](./frontier-runs/v0.6-score-dumps/scores-decide-v06.json)
 
 ## Twin-aware Decide reject arm (frontier GT)
 
-| Metric | Value |
-| --- | ---: |
-| n | 75 |
-| fired | **39** (fireRate **0.52**) |
-| correct among fires | **37/39** |
-| errors among fires | **2** |
-| precision among fires | 0.949 |
-| 95% CP LB | **≈82.7%** (cite **≈83%** — confirmation only) |
+| Metric                |                                          Value |
+| --------------------- | ---------------------------------------------: |
+| n                     |                                             75 |
+| fired                 |                     **39** (fireRate **0.52**) |
+| correct among fires   |                                      **37/39** |
+| errors among fires    |                                          **2** |
+| precision among fires |                                          0.949 |
+| 95% CP LB             | **≈82.7%** (cite **≈83%** — confirmation only) |
 
 Forced EM (no τ): 70/75 (5 errors). Frontier GT disagreed with provisional on **1** case (`route-v06-015` think twin); rematch numbers match provisional on the reject arm.
 
 ## Fire errors (above τ — escalation never sees them)
 
-| Case | Top (calibrated) | Frontier GT | Twin? | Note |
-| --- | --- | --- | --- | --- |
-| `route-v06-040` | `mcp.search` @ ≈0.934 | `mcp.execute` | **no** | Persist/run phrasing with validated fields — search↔execute residual |
-| `route-v06-056` | `mcp.search` @ ≈0.825 | `tool.bash_workspace_hunt` | **no** | Repo find/grep bait — search↔hunt residual |
+| Case            | Top (calibrated)      | Frontier GT                | Twin?  | Note                                                                 |
+| --------------- | --------------------- | -------------------------- | ------ | -------------------------------------------------------------------- |
+| `route-v06-040` | `mcp.search` @ ≈0.934 | `mcp.execute`              | **no** | Persist/run phrasing with validated fields — search↔execute residual |
+| `route-v06-056` | `mcp.search` @ ≈0.825 | `tool.bash_workspace_hunt` | **no** | Repo find/grep bait — search↔hunt residual                           |
 
-Abstaining forced misses (conf < τ — slow path *could* see these): `route-v06-009`, `route-v06-033`, `route-v06-075`.
+Abstaining forced misses (conf < τ — slow path _could_ see these): `route-v06-009`, `route-v06-033`, `route-v06-075`.
 
 ## Vs live cite
 
-| Claim | Numbers | Where it may appear |
-| --- | --- | --- |
-| **Live cite (unchanged)** | twin-aware v0.5 rematch: **45/75** fires, **0** errors, ≈**92%** LB | docs.clawql.com / product cite |
-| **v0.6 confirmation** | **39/75** fires, **2** errors, ≈**83%** LB | this closeout only — **not** the public live number |
+| Claim                     | Numbers                                                             | Where it may appear                                 |
+| ------------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| **Live cite (unchanged)** | twin-aware v0.5 rematch: **45/75** fires, **0** errors, ≈**92%** LB | docs.clawql.com / product cite                      |
+| **v0.6 confirmation**     | **39/75** fires, **2** errors, ≈**83%** LB                          | this closeout only — **not** the public live number |
 
 ## What v0.6 is good for
 
@@ -80,4 +80,4 @@ Then a **new frozen suite** after that change — do not retune τ or relabel GT
 
 ## Docs one-liner
 
-Optional v0.6 confirms Decide is still the live CPU fast path; it does not bless 0-error, and the two misses sit *above* τ, so slow-path escalation never sees them. Live cite remains twin-aware v0.5 rematch 45/75 @ ≈92% LB.
+Optional v0.6 confirms Decide is still the live CPU fast path; it does not bless 0-error, and the two misses sit _above_ τ, so slow-path escalation never sees them. Live cite remains twin-aware v0.5 rematch 45/75 @ ≈92% LB.

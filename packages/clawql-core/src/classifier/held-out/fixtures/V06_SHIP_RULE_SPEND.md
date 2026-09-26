@@ -20,11 +20,11 @@ The v0.5 predeclared rule was “ship Decide only if 0 errors among fires.” Bo
 
 ## Cutover checklist (from v0.5 policy)
 
-| # | Condition | Status |
-| --- | --- | --- |
-| 1 | Stock v0.5 miss written next to Decide’s | **done** — both twins |
-| 2 | Catalog treats mcp↔skill twins as one allowed answer | **this spend** — code + doc |
-| 3 | Ship rule declared as a spend (this file) | **this spend** |
+| #   | Condition                                            | Status                      |
+| --- | ---------------------------------------------------- | --------------------------- |
+| 1   | Stock v0.5 miss written next to Decide’s             | **done** — both twins       |
+| 2   | Catalog treats mcp↔skill twins as one allowed answer | **this spend** — code + doc |
+| 3   | Ship rule declared as a spend (this file)            | **this spend**              |
 
 When (1)–(3) hold and twin-aware rematch shows Decide wins under the rule above → cut over live path.
 

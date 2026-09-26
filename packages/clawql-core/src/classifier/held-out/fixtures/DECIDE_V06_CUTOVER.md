@@ -22,16 +22,16 @@ Live router is calibrated GLiNER2.5-Decide @ τ=0.80. On twin-aware v0.5 rematch
 
 **Not a new freeze.** Twin collapse + declared spend rule (equal fire errors → prefer coverage) + rematch of the **same** v0.5 dumps (GHA score [36185003105](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003105), frontier [36185003282](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36185003282)). No τ move. No GT relabel. Under that rule both arms are 0-error among fires; Decide wins on coverage (45/75 vs 32/75).
 
-| Arm | Correct / fired | CP 95% LB | Cite | fireRate |
-| --- | ---: | ---: | --- | ---: |
-| stock locked T=4 / τ=0.70 | **32/32** | **89.1%** | ≈**89%** | 0.427 |
-| Decide locked T=0.75 / τ=0.80 | **45/45** | **92.1%** | ≈**92%** | **0.600** |
+| Arm                           | Correct / fired | CP 95% LB | Cite     |  fireRate |
+| ----------------------------- | --------------: | --------: | -------- | --------: |
+| stock locked T=4 / τ=0.70     |       **32/32** | **89.1%** | ≈**89%** |     0.427 |
+| Decide locked T=0.75 / τ=0.80 |       **45/45** | **92.1%** | ≈**92%** | **0.600** |
 
 Report: [`frontier-runs/v0.5-stock-vs-decide-twin-aware-closeout.json`](./frontier-runs/v0.5-stock-vs-decide-twin-aware-closeout.json)
 
 ## What this is not
 
-It is **not** a fresh held-out `productionTrusted` claim in the v0.4 sense. v0.5 was already scored; the rematch only changed how twins are counted. That is legitimate because the spend is on the page ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)). The next *held-out* sentence waits for an optional frozen v0.6.
+It is **not** a fresh held-out `productionTrusted` claim in the v0.4 sense. v0.5 was already scored; the rematch only changed how twins are counted. That is legitimate because the spend is on the page ([`V06_SHIP_RULE_SPEND.md`](./V06_SHIP_RULE_SPEND.md)). The next _held-out_ sentence waits for an optional frozen v0.6.
 
 Deferred v0.6 freeze is **optional confirmation**, not a blocker for the path already in production. Freeze digests: [`FREEZE-v0.6-routing-fresh.md`](./FREEZE-v0.6-routing-fresh.md) (n=75). **Scored once:** Decide @ τ=0.80 → 39/75 (52%) fires, **37/39** correct, **2** above-τ fire errors (search vs execute/hunt — not twins), ≈82.7% LB cite ≈83% — see [`DECIDE_V06_CONFIRMATION_CLOSEOUT.md`](./DECIDE_V06_CONFIRMATION_CLOSEOUT.md). Live cite remains the twin-aware v0.5 rematch above. Do not put ≈83% on docs.clawql.com.
 

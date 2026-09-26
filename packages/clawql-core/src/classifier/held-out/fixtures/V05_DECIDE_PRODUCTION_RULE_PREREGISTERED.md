@@ -24,6 +24,7 @@ Decide is the stronger forced-answer model on the frozen catalog (92.5% vs 80% E
    > Among thresholds with fit precision ≥ 0.90 **and** fit `nErrorsFired = 0`, maximize fire rate; ties → higher τ.
 
    Re-lock τ under this rule with a freeze timestamp that **predates** any v0.5 scores. Do not treat the post-miss τ=0.80 projection as already locked for citation.
+
 4. Keep Decide **T=0.75** (`temperature_softmax`) from the off-set temperature fit unless a new fit set is cut.
 5. Remap policy unchanged: semantic tool-changing remaps **fail the run**.
 6. The 23/40 @ τ=0.80 slice is a **candidate projection on a spent set** — not a closeout. Promoting it or retuning τ after seeing v0.5 fires is a new spend.
@@ -32,12 +33,12 @@ Decide is the stronger forced-answer model on the frozen catalog (92.5% vs 80% E
 
 ## Rejected alternatives
 
-| Option | Why rejected |
-| --- | --- |
-| Hot-swap Decide @ τ=0.60 | Realized 1/34 error on frozen 40; not a 0-error gate |
+| Option                                              | Why rejected                                           |
+| --------------------------------------------------- | ------------------------------------------------------ |
+| Hot-swap Decide @ τ=0.60                            | Realized 1/34 error on frozen 40; not a 0-error gate   |
 | Hot-swap Decide @ τ=0.80 from spent-v0.4 projection | τ moved after miss known; v0.4 spent for Decide reject |
-| Allow 1 error if “hard case” | Not predeclared for this cutover |
-| Nudge v0.5 drafter toward search/execute | Contaminates the suite; keep catalog-blind |
+| Allow 1 error if “hard case”                        | Not predeclared for this cutover                       |
+| Nudge v0.5 drafter toward search/execute            | Contaminates the suite; keep catalog-blind             |
 
 ## Miss to pull (step 2) — diagnosis allowed on spent suite
 

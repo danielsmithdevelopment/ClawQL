@@ -25,9 +25,7 @@
       "scorerBackend": "gliner2",
       "meanCalibrationError": 0.16111111111111112,
       "rawAccuracy": 0.8533333333333334,
-      "failureReasons": [
-        "meanCalibrationError 0.161 > max 0.15"
-      ],
+      "failureReasons": ["meanCalibrationError 0.161 > max 0.15"],
       "cases": [
         {
           "caseId": "route-v05-001",

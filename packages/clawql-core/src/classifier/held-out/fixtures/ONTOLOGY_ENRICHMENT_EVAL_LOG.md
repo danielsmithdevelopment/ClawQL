@@ -146,15 +146,15 @@ Fit = spent v0.3 + Harvey routing (n=41) → locked **T=4**, **τ=0.70**. v0.4 s
 
 ### Stock vs Decide four-arm — DONE (score-once; does not rewrite closeout)
 
-| Field        | Value                                                                                                                                                                                                               |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                                                                                                    |
-| Date (UTC)   | 2026-09-25                                                                                                                                                                                                          |
-| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                                                                                                           |
-| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                                                                                                     |
-| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                                                                                               |
-| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                                                                                                   |
-| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json)                                                                                |
+| Field        | Value                                                                                                                                                                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tag          | **`clean-held-out` / `stock-vs-decide-compare`**                                                                                                                                                                                              |
+| Date (UTC)   | 2026-09-25                                                                                                                                                                                                                                    |
+| GHA          | [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) (tip `53bea37f`)                                                                                                                                     |
+| Workflow     | `fast-decision-stock-vs-decide.yml` + `scripts/compare-stock-vs-decide-v04.mts`                                                                                                                                                               |
+| Labels       | frontier-adjudicated `v0.4-routing-fresh-gha-36144911649-labels.json`                                                                                                                                                                         |
+| Fit (Decide) | same off-set `fast-decision-fit-routing-v0.1` → Decide **T=0.75**, **τ=0.60** (stock T/τ stay locked at 4 / 0.70)                                                                                                                             |
+| Artifact     | [`frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json`](./frontier-runs/v0.4-stock-vs-decide-gha-36165019073-report.json)                                                                                                          |
 | Public docs  | [`docs/specs/classifier/fast-decision-routing-closeout-v0.4.md`](../../../../../../docs/specs/classifier/fast-decision-routing-closeout-v0.4.md) → [docs.clawql.com](https://docs.clawql.com/specs/classifier/fast-decision-routing-closeout) |
 
 Clopper–Pearson 95% two-sided lower bounds verified against the table:
@@ -168,7 +168,7 @@ Clopper–Pearson 95% two-sided lower bounds verified against the table:
 
 **What is now measured.** Same frozen 40, four arms, one scoring pass each. Stock reject reproduces the shipped claim (18/40, 0 errors, ≈82% LB). Decide forced beats stock forced on this catalog (92.5% vs 80% EM; 3 errors vs 8). Decide+reject raises coverage from 45% to 85% at one error (33/34, ≈85% LB). That is a different operating point, not a replacement closeout.
 
-**Why not cut over to Decide tonight (shape is right; timing is not).** The instinct to put the *same* confidence gate on Decide is correct — that is v0.5. The reason not to swap tonight is the **one miss and the protocol**, not a preference for 45% coverage.
+**Why not cut over to Decide tonight (shape is right; timing is not).** The instinct to put the _same_ confidence gate on Decide is correct — that is v0.5. The reason not to swap tonight is the **one miss and the protocol**, not a preference for 45% coverage.
 
 - **Arms are different operating points.** Stock reject: speak less, never wrong on held-out fires (18/40, 0 errors). Decide+reject: speak more, wrong once (34/40, 1 error).
 - **Coverage is not the decision.** Wrong route is costly; abstention is not. +16 local decisions and +1 misroute on the same 40. If a bad tool call is worse than an extra frontier call, 0-error at 45% can beat 1-error at 85% until that miss is understood.
@@ -177,7 +177,7 @@ Clopper–Pearson 95% two-sided lower bounds verified against the table:
 
 **v0.5 instead of a hot-swap.** Keep stock reject live. Then: (1) confirm Decide (T,τ) fit only on the off-set; (2) pull the one miss (input, candidates, scores, chosen tool, GT, remap?); (3) frontier-adjudicate the 34 fires under v0.4 rules; (4) predeclare the production rule before chasing coverage (e.g. ship Decide reject only if errors among fires stay 0, or allow 1 if labeled hard + fallback would have caught it); (5) score once — if the miss remains, keep stock or raise Decide’s τ until fires are 0-error again (coverage will land between 45% and 85%).
 
-**Team sentence.** We *will* put the same confidence gate on Decide — that is the point of v0.5 — but we do not replace a 0-error CPU on-ramp with an 85% gate that already misrouted once on the frozen set just because coverage looks better.
+**Team sentence.** We _will_ put the same confidence gate on Decide — that is the point of v0.5 — but we do not replace a 0-error CPU on-ramp with an 85% gate that already misrouted once on the frozen set just because coverage looks better.
 
 **Locked reading**
 

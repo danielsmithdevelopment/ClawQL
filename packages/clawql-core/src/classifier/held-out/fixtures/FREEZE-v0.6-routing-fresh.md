@@ -23,19 +23,19 @@ This is an **optional confirmation** held-out under the V06 spend — **not** a 
 
 ## Digests (SHA-256 of canonical JSON: sorted keys, compact separators, whitespace-normalized strings)
 
-| Artifact | SHA-256 |
-| --- | --- |
-| Suite `fast-decision-held-out-v0.6-routing-fresh.json` | `605a65a8ed07ac0dc8f3faf09209789af465b59e95675a5375d52431e41eec4c` |
+| Artifact                                                | SHA-256                                                            |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
+| Suite `fast-decision-held-out-v0.6-routing-fresh.json`  | `605a65a8ed07ac0dc8f3faf09209789af465b59e95675a5375d52431e41eec4c` |
 | Source catalog `routing-fresh-v0.6-source-catalog.json` | `12838c00d757ea9570bb3afdabac29645f11b951552dda9d6c055136dfd4a660` |
 
 ## Which catalog the drafter saw
 
-| Field | Value |
-| --- | --- |
-| File | `/tmp/isolated-routing-drafter-v06/catalog.json` (= repo `routing-fresh-v0.6-source-catalog.json`) |
-| Entry fields | `id`, `kind`, `label`, `description` only |
-| Hint fields | **absent** |
-| Entry count | 38 (same bodies as v0.5 catalog; new `catalogId` / `note`) |
+| Field        | Value                                                                                              |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| File         | `/tmp/isolated-routing-drafter-v06/catalog.json` (= repo `routing-fresh-v0.6-source-catalog.json`) |
+| Entry fields | `id`, `kind`, `label`, `description` only                                                          |
+| Hint fields  | **absent**                                                                                         |
+| Entry count  | 38 (same bodies as v0.5 catalog; new `catalogId` / `note`)                                         |
 
 ## Freeze metadata
 

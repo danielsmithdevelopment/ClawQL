@@ -12,30 +12,30 @@
 
 Intervals (cite these):
 
-| Arm | Correct / fired | CP 95% LB | Cite |
-| --- | ---: | ---: | --- |
-| stock locked | **31/32** | **83.8%** | ≈**84%** @ 43% coverage |
-| Decide locked | **44/45** | **88.2%** | ≈**88%** @ 60% coverage |
+| Arm           | Correct / fired | CP 95% LB | Cite                    |
+| ------------- | --------------: | --------: | ----------------------- |
+| stock locked  |       **31/32** | **83.8%** | ≈**84%** @ 43% coverage |
+| Decide locked |       **44/45** | **88.2%** | ≈**88%** @ 60% coverage |
 
 Decide @ (T=0.75, τ=0.80) is a **higher-coverage candidate** (60% vs 43%) with **overlapping** precision bounds — not a more precise gate. The +13 catalog routes (45 vs 32) that never hit the frontier are a real ops gain, not a vanity metric.
 
 ## Locked-τ arms (frontier GT)
 
-| Arm | nFired | nErrors | precision | CP 95% LB | fireRate |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| stock forced EM | 75 | 11 | 0.853 | ≈0.753 | 1.00 |
-| Decide forced EM | 75 | 6 | 0.920 | ≈0.834 | 1.00 |
-| stock locked (T=4, τ=0.70) | **32** | **1** | 0.969 | ≈0.838 | 0.427 |
-| Decide locked (T=0.75, τ=0.80) | **45** | **1** | 0.978 | ≈0.882 | 0.600 |
+| Arm                            | nFired | nErrors | precision | CP 95% LB | fireRate |
+| ------------------------------ | -----: | ------: | --------: | --------: | -------: |
+| stock forced EM                |     75 |      11 |     0.853 |    ≈0.753 |     1.00 |
+| Decide forced EM               |     75 |       6 |     0.920 |    ≈0.834 |     1.00 |
+| stock locked (T=4, τ=0.70)     | **32** |   **1** |     0.969 |    ≈0.838 |    0.427 |
+| Decide locked (T=0.75, τ=0.80) | **45** |   **1** |     0.978 |    ≈0.882 |    0.600 |
 
 Report: [`frontier-runs/v0.5-stock-vs-decide-gha-36185003105-closeout.json`](./frontier-runs/v0.5-stock-vs-decide-gha-36185003105-closeout.json)
 
 ## Side-by-side fire errors (both on the page)
 
-| Arm | caseId | Model top | Suite GT | Frontier GT | Kind |
-| --- | --- | --- | --- | --- | --- |
+| Arm    | caseId          | Model top                    | Suite GT            | Frontier GT                  | Kind           |
+| ------ | --------------- | ---------------------------- | ------------------- | ---------------------------- | -------------- |
 | Decide | `route-v05-007` | `mcp.memory_ingest` @ ≈0.841 | `mcp.memory_ingest` | `skill.clawql-memory-ingest` | mcp↔skill twin |
-| Stock | `route-v05-023` | `mcp.clawql_think` @ ≈0.733 | `mcp.clawql_think` | `skill.deep-thinking` | mcp↔skill twin |
+| Stock  | `route-v05-023` | `mcp.clawql_think` @ ≈0.733  | `mcp.clawql_think`  | `skill.deep-thinking`        | mcp↔skill twin |
 
 Neither miss is execute→search (`route-v04-004` class). Both matched suite GT; frontier preferred the skill twin. Under frontier authority they count as errors; under suite GT neither misrouted capability. The “1 vs 1” table is mostly an ontology/adjudicator artifact.
 
@@ -45,10 +45,10 @@ Artifact: [`frontier-runs/v0.5-stock-vs-decide-reject-errors.json`](./frontier-r
 
 ### 1. Live path is not 0-error on fresh data
 
-| Suite | Stock reject fires | Errors | Cite |
-| --- | ---: | ---: | --- |
-| v0.4 | 18/40 (45%) | **0/18** | ≈82% LB |
-| v0.5 | 32/75 (43%) | **1/32** | ≈84% LB |
+| Suite | Stock reject fires |   Errors | Cite    |
+| ----- | -----------------: | -------: | ------- |
+| v0.4  |        18/40 (45%) | **0/18** | ≈82% LB |
+| v0.5  |        32/75 (43%) | **1/32** | ≈84% LB |
 
 **Honest live-path claim now:** ≈**84%** precision LB at ≈**43%** coverage on v0.5. Do not say the live arm is presently “never wrong on fires.”
 

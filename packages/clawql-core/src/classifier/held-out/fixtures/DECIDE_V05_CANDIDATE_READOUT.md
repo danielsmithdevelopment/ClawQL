@@ -13,35 +13,35 @@ The protocol line that matters: **v0.4 is spent for choosing knobs.** The 23/40 
 
 ## Knobs (chronology)
 
-| Knob | Value | When locked |
-| --- | --- | --- |
-| Model | `fastino/GLiNER2.5-Decide` | four-arm score |
-| T | **0.75** `temperature_softmax` | off-set during four-arm report (**before** miss diagnosis) |
-| Prior τ | **0.60** | off-set during four-arm (max coverage @ fit prec≥0.9, fit FPs allowed) |
-| Candidate τ | **0.80** | **after** miss known; stricter fit rule (prec≥0.9 **and** fit nErrors=0) |
+| Knob        | Value                          | When locked                                                              |
+| ----------- | ------------------------------ | ------------------------------------------------------------------------ |
+| Model       | `fastino/GLiNER2.5-Decide`     | four-arm score                                                           |
+| T           | **0.75** `temperature_softmax` | off-set during four-arm report (**before** miss diagnosis)               |
+| Prior τ     | **0.60**                       | off-set during four-arm (max coverage @ fit prec≥0.9, fit FPs allowed)   |
+| Candidate τ | **0.80**                       | **after** miss known; stricter fit rule (prec≥0.9 **and** fit nErrors=0) |
 
 Artifact: [`frontier-runs/decide-v05-fit-zero-err-tau.json`](./frontier-runs/decide-v05-fit-zero-err-tau.json)
 
 ## Miss under prior τ=0.60
 
-| Field | Value |
-| --- | --- |
-| caseId | `route-v04-004` |
-| Query | Call `users.deactivate` with userId=8821 immediately; skip discovery… |
-| GT (frontier) | `mcp.execute` |
-| Decide top | `mcp.search` @ calibrated conf **≈0.739** |
-| Remap | none |
-| Effect at τ=0.60 | **fires wrong tool** |
-| Effect at τ=0.80 | **abstains** (0.739 < 0.80) |
+| Field            | Value                                                                 |
+| ---------------- | --------------------------------------------------------------------- |
+| caseId           | `route-v04-004`                                                       |
+| Query            | Call `users.deactivate` with userId=8821 immediately; skip discovery… |
+| GT (frontier)    | `mcp.execute`                                                         |
+| Decide top       | `mcp.search` @ calibrated conf **≈0.739**                             |
+| Remap            | none                                                                  |
+| Effect at τ=0.60 | **fires wrong tool**                                                  |
+| Effect at τ=0.80 | **abstains** (0.739 < 0.80)                                           |
 
 Full: [`frontier-runs/decide-v05-route-v04-004-miss.json`](./frontier-runs/decide-v05-route-v04-004-miss.json)
 
 ## Projection @ τ=0.80 (do not cite as closeout)
 
-| Set | nFired | Errors | Prec | CP 95% LB |
-| --- | --- | --- | --- | --- |
-| Fit | 23/41 | 0 | 1.0 | ≈85.2% |
-| Spent v0.4 | **23/40 (57.5%)** | **0** | 1.0 | ≈85.2% |
+| Set        | nFired            | Errors | Prec | CP 95% LB |
+| ---------- | ----------------- | ------ | ---- | --------- |
+| Fit        | 23/41             | 0      | 1.0  | ≈85.2%    |
+| Spent v0.4 | **23/40 (57.5%)** | **0**  | 1.0  | ≈85.2%    |
 
 Compare: stock reject 18/40 (45%), 0 err, LB 81.5%; prior Decide τ=0.60: 34/40 (85%), **1** err, LB 84.7%. Lower bounds overlap — coverage is not a reason to swap.
 

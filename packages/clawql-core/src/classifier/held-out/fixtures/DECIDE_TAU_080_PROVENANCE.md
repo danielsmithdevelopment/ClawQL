@@ -6,13 +6,13 @@
 
 ## Order of events (UTC, 2026-09-25)
 
-| When | What | Decide τ in force |
-| --- | --- | --- |
-| ~17:06–17:11 | Four-arm GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) | Fit selected **τ=0.60** under max coverage @ fit prec≥0.9 (**fit FPs allowed**; fit @0.60: 33 fired / 3 errors) |
-| ~17:11 | Report published: Decide+reject 34/40, **1** error | still 0.60 |
-| After report ingest | Miss pulled: `route-v04-004`, Decide `mcp.search` @ ≈**0.739**, GT `mcp.execute` | diagnosis on spent suite (allowed) |
-| After miss known | Stricter fit rule introduced: prec≥0.9 **and** fit `nErrorsFired=0` → max coverage → **τ=0.80** | **0.80** |
-| After τ=0.80 set | Spent-v0.4 projection: 23/40, 0 errors, LB ≈85.2% | labeled **candidate / not closeout** |
+| When                | What                                                                                                  | Decide τ in force                                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ~17:06–17:11        | Four-arm GHA [36165019073](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36165019073) | Fit selected **τ=0.60** under max coverage @ fit prec≥0.9 (**fit FPs allowed**; fit @0.60: 33 fired / 3 errors) |
+| ~17:11              | Report published: Decide+reject 34/40, **1** error                                                    | still 0.60                                                                                                      |
+| After report ingest | Miss pulled: `route-v04-004`, Decide `mcp.search` @ ≈**0.739**, GT `mcp.execute`                      | diagnosis on spent suite (allowed)                                                                              |
+| After miss known    | Stricter fit rule introduced: prec≥0.9 **and** fit `nErrorsFired=0` → max coverage → **τ=0.80**       | **0.80**                                                                                                        |
+| After τ=0.80 set    | Spent-v0.4 projection: 23/40, 0 errors, LB ≈85.2%                                                     | labeled **candidate / not closeout**                                                                            |
 
 Sources: GHA job timestamps; commit `dc4e57ca` (Decide v0.5 rule + candidate readout); artifacts `decide-v05-route-v04-004-miss.json`, `decide-v05-fit-zero-err-tau.json`.
 
@@ -21,7 +21,7 @@ Sources: GHA job timestamps; commit `dc4e57ca` (Decide v0.5 rule + candidate rea
 - Decide **T=0.75** (`temperature_softmax`) was fit on `fast-decision-fit-routing-v0.1` (n=41) during the four-arm **report** phase — off-set only. That T lock stands.
 - Decide **τ=0.60** was the only τ locked from fit **before / during** that run (same report phase, same off-set, prior selection rule).
 
-## What is *not* true
+## What is _not_ true
 
 - It is **not** true that τ=0.80 was computed from the fit set under the 0-error rule and frozen **before** anyone used the 0.739 miss to move the threshold.
 - Reproducibility of “fit-only arithmetic for τ=0.80 under the stricter rule” does **not** clear contamination: the **choice of that stricter rule** was motivated by the v0.4 miss.

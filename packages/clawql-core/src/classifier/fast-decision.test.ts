@@ -1064,7 +1064,6 @@ describe("temperature calibration", () => {
   });
 });
 
-
 describe("candidatesEquivalent (twins)", () => {
   it("treats declared mcp↔skill pairs as equivalent", async () => {
     const { candidatesEquivalent, equivalenceClassOf } = await import("./candidate-equivalence.js");
@@ -1081,7 +1080,8 @@ describe("candidatesEquivalent (twins)", () => {
   it("defaults live GLiNER model to Decide", async () => {
     const prev = process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
     delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
-    const { readGlinerScorerConfigFromEnv, DEFAULT_GLINER_MODEL_ID } = await import("./gliner-config.js");
+    const { readGlinerScorerConfigFromEnv, DEFAULT_GLINER_MODEL_ID } =
+      await import("./gliner-config.js");
     expect(DEFAULT_GLINER_MODEL_ID).toBe("fastino/GLiNER2.5-Decide");
     expect(readGlinerScorerConfigFromEnv().modelId).toBe("fastino/GLiNER2.5-Decide");
     if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_MODEL = prev;

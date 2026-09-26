@@ -14,21 +14,21 @@ Declared twin pairs count as **one correct answer**. Exact id match still wins. 
 
 ## Declared pairs
 
-| MCP tool | Skill twin |
-| --- | --- |
-| `mcp.search` | `skill.clawql-search-workflows` |
-| `mcp.execute` | `skill.clawql-execute-workflows` |
-| `mcp.memory_ingest` | `skill.clawql-memory-ingest` |
-| `mcp.memory_recall` | `skill.clawql-memory-recall` |
-| `mcp.notify` | `skill.clawql-notify-workflows` |
-| `mcp.schedule` | `skill.clawql-schedule-workflows` |
-| `mcp.sandbox_exec` | `skill.clawql-sandbox-exec` |
-| `mcp.audit` | `skill.clawql-audit-workflows` |
-| `mcp.cache` | `skill.clawql-cache-workflows` |
-| `mcp.ingest_external_knowledge` | `skill.clawql-external-ingest` |
-| `mcp.knowledge_search_onyx` | `skill.clawql-onyx-knowledge-workflows` |
-| `mcp.ouroboros_run_evolutionary_loop` | `skill.clawql-ouroboros-workflows` |
-| `mcp.clawql_think` | `skill.deep-thinking` |
+| MCP tool                              | Skill twin                              |
+| ------------------------------------- | --------------------------------------- |
+| `mcp.search`                          | `skill.clawql-search-workflows`         |
+| `mcp.execute`                         | `skill.clawql-execute-workflows`        |
+| `mcp.memory_ingest`                   | `skill.clawql-memory-ingest`            |
+| `mcp.memory_recall`                   | `skill.clawql-memory-recall`            |
+| `mcp.notify`                          | `skill.clawql-notify-workflows`         |
+| `mcp.schedule`                        | `skill.clawql-schedule-workflows`       |
+| `mcp.sandbox_exec`                    | `skill.clawql-sandbox-exec`             |
+| `mcp.audit`                           | `skill.clawql-audit-workflows`          |
+| `mcp.cache`                           | `skill.clawql-cache-workflows`          |
+| `mcp.ingest_external_knowledge`       | `skill.clawql-external-ingest`          |
+| `mcp.knowledge_search_onyx`           | `skill.clawql-onyx-knowledge-workflows` |
+| `mcp.ouroboros_run_evolutionary_loop` | `skill.clawql-ouroboros-workflows`      |
+| `mcp.clawql_think`                    | `skill.deep-thinking`                   |
 
 ## Explicitly not twins
 

@@ -69,10 +69,7 @@ export function equivalenceClassOf(
 }
 
 export type CandidateEquivalenceApi = {
-  readonly candidatesEquivalent: (
-    predicted: string,
-    groundTruth: string
-  ) => Effect.Effect<boolean>;
+  readonly candidatesEquivalent: (predicted: string, groundTruth: string) => Effect.Effect<boolean>;
   readonly equivalenceClassOf: (id: string) => Effect.Effect<ReadonlySet<string>>;
 };
 
