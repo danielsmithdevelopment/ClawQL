@@ -760,7 +760,7 @@ VariancePenalty_i = 1 - min(1.0, position_variance_i / variance_ceiling)
 
 IsolationScale_i = contribution_isolation_score_i [if enabled, else 1.0]
 
-delta_D_i = delta_d _ VariancePenalty_i _ IsolationScale_i [if AccrueDividend_i]
+delta*D_i = delta_d * VariancePenalty*i * IsolationScale_i [if AccrueDividend_i]
 
 D_i_new = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
 
