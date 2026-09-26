@@ -321,6 +321,7 @@ describe("GLiNER2 primary scorer", () => {
         modelId: "fastino/gliner2.5-base-v1",
         timeoutMs: 1000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl,
     });
 
@@ -413,6 +414,209 @@ describe("§7 held-out suite runner", () => {
     }
   });
 
+  it("loads frozen v0.3 routing-fresh suite (catalog-only draft)", async () => {
+    const { routingFreshHeldOutSuiteV03, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = routingFreshHeldOutSuiteV03();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.3-routing-fresh");
+    expect(suite.cases.length).toBeGreaterThanOrEqual(28);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(suite.cases.every((c) => c.useSiteId === "search_provider_tool_routing")).toBe(true);
+    expect(resolveHeldOutSuite("v0.3-routing-fresh").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBe(suite.cases.length);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
+  it("loads frozen v0.4 routing-fresh suite (final eval; three-set protocol)", async () => {
+    const { routingFreshHeldOutSuiteV04, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = routingFreshHeldOutSuiteV04();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.4-routing-fresh");
+    expect(suite.cases.length).toBe(40);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(suite.cases.every((c) => c.useSiteId === "search_provider_tool_routing")).toBe(true);
+    expect(resolveHeldOutSuite("v0.4").suiteId).toBe(suite.suiteId);
+    expect(resolveHeldOutSuite("v0.4-routing-fresh").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBe(40);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
+  it("loads frozen v0.5 routing-fresh suite (Decide-vs-stock final eval; n=75)", async () => {
+    const { routingFreshHeldOutSuiteV05, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = routingFreshHeldOutSuiteV05();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.5-routing-fresh");
+    expect(suite.cases.length).toBe(75);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(suite.cases.every((c) => c.useSiteId === "search_provider_tool_routing")).toBe(true);
+    expect(resolveHeldOutSuite("v0.5").suiteId).toBe(suite.suiteId);
+    expect(resolveHeldOutSuite("v0.5-routing-fresh").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBe(75);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
+  it("loads frozen v0.6 routing-fresh suite (Decide live confirmation; n=75)", async () => {
+    const { routingFreshHeldOutSuiteV06, resolveHeldOutSuite, casesForUseSite } =
+      await import("./held-out/index.js");
+    const suite = routingFreshHeldOutSuiteV06();
+    expect(suite.suiteId).toBe("fast-decision-held-out-v0.6-routing-fresh");
+    expect(suite.cases.length).toBe(75);
+    expect(suite.cases.every((c) => c.adjudicated === false)).toBe(true);
+    expect(suite.cases.every((c) => c.useSiteId === "search_provider_tool_routing")).toBe(true);
+    expect(resolveHeldOutSuite("v0.6").suiteId).toBe(suite.suiteId);
+    expect(resolveHeldOutSuite("v0.6-routing-fresh").suiteId).toBe(suite.suiteId);
+    expect(casesForUseSite(suite, "search_provider_tool_routing").length).toBe(75);
+    for (const c of suite.cases) {
+      expect(c.candidates.some((x) => x.candidateId === c.groundTruthCandidateId)).toBe(true);
+    }
+  });
+
+  it("defaults ontology enrichment off; opt in with CLAWQL_FAST_DECISION_ONTOLOGY=1", async () => {
+    const { ontologyEnrichmentEnabled } = await import("./held-out/run-held-out.js");
+    const prev = process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+    try {
+      delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+      expect(ontologyEnrichmentEnabled()).toBe(false);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "0";
+      expect(ontologyEnrichmentEnabled()).toBe(false);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "1";
+      expect(ontologyEnrichmentEnabled()).toBe(true);
+      process.env.CLAWQL_FAST_DECISION_ONTOLOGY = "true";
+      expect(ontologyEnrichmentEnabled()).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_FAST_DECISION_ONTOLOGY;
+      else process.env.CLAWQL_FAST_DECISION_ONTOLOGY = prev;
+    }
+  });
+
+  it("loads ClawQL capability ontology and enriches classify text with whenToUse", async () => {
+    const {
+      loadClawqlCapabilityOntology,
+      lookupCapability,
+      indexCapabilityOntology,
+      capabilityOntologyDigest,
+    } = await import("./capability-ontology.js");
+    const {
+      composeOntologyEnrichedClassifyText,
+      enrichCandidateDescription,
+      enrichFastDecisionRequest,
+      buildOntologyEnrichedClassifyPayload,
+      distinguishFromSiblingsHaveIdenticalPackedLabels,
+    } = await import("./ontology-enrichment.js");
+    const ontology = loadClawqlCapabilityOntology();
+    expect(ontology.ontologyId).toContain("clawql-capability");
+    expect(ontology.capabilities.length).toBeGreaterThanOrEqual(20);
+    expect(capabilityOntologyDigest(ontology).length).toBe(64);
+    const index = indexCapabilityOntology(ontology);
+    expect(lookupCapability(index, "mcp.data_query")?.ontologyRole).toBe("structured_query");
+    expect(lookupCapability(index, "tool.bash_workspace_hunt")?.kind).toBe("anti_pattern");
+    // Per-id rows: siblings must not share one capabilityId
+    expect(lookupCapability(index, "mcp.memory_recall_title_flag_a")?.capabilityId).toBe(
+      "mcp.memory_recall_title_flag_a"
+    );
+    expect(lookupCapability(index, "mcp.memory_recall_title_flag_b")?.capabilityId).toBe(
+      "mcp.memory_recall_title_flag_b"
+    );
+    const text = composeOntologyEnrichedClassifyText({
+      query: "How many credit facilities need an exact structured count?",
+      taskFraming: "Which tool is relevant",
+      ontology,
+      candidateIds: ["mcp.data_query", "tool.bash_workspace_hunt"],
+    });
+    expect(text).not.toMatch(/STRUCTURED_CORPUS_PREFERRED|requiresStructuredCorpus=/i);
+    expect(text).toMatch(/ANTI_PATTERN|anti_pattern/i);
+    const baitDesc = enrichCandidateDescription(
+      {
+        candidateId: "tool.bash_workspace_hunt",
+        features: {
+          label: "grep springing lien /workspace",
+          description: "Blind grep path=/workspace pattern springing lien",
+        },
+      },
+      ontology
+    );
+    expect(baitDesc).toMatch(/ANTI_PATTERN/i);
+    expect(baitDesc.toLowerCase()).not.toContain("path=/workspace");
+    expect(baitDesc).not.toMatch(/STRUCTURED_CORPUS_PREFERRED/i);
+    const sqlDesc = enrichCandidateDescription(
+      {
+        candidateId: "mcp.data_query",
+        features: { label: "data_query", description: "SQL over DuckDB" },
+      },
+      ontology
+    );
+    expect(sqlDesc).not.toMatch(/STRUCTURED_CORPUS_PREFERRED|requiresStructuredCorpus=/i);
+    expect(sqlDesc).toContain("whenToUse");
+    expect(sqlDesc).toContain("mcp.data_query");
+    const enriched = enrichFastDecisionRequest({
+      ctx: { sessionId: "t", query: "list vault notes" },
+      candidates: [
+        { candidateId: "mcp.memory_recall", features: { label: "memory_recall" } },
+        { candidateId: "tool.bash_workspace_hunt", features: { label: "bash" } },
+      ],
+      ontology,
+    });
+    expect(enriched.ctx.extras?.ontologyBrief).toEqual(expect.any(String));
+    expect(enriched.ctx.extras?.ontologyDigest).toEqual(expect.any(String));
+    expect(String(enriched.candidates[0]?.features.description)).toContain("whenToUse");
+    const withOnt = buildOntologyEnrichedClassifyPayload({
+      useSiteId: "search_provider_tool_routing",
+      query: "exact structured cohort count",
+      candidates: [
+        {
+          candidateId: "tool.bash_workspace_hunt",
+          features: { description: "grep springing lien across DMS" },
+        },
+        { candidateId: "mcp.data_query", features: { label: "data_query" } },
+      ],
+      ontology,
+    });
+    const withoutOnt = buildOntologyEnrichedClassifyPayload({
+      useSiteId: "search_provider_tool_routing",
+      query: "exact structured cohort count",
+      candidates: [
+        {
+          candidateId: "tool.bash_workspace_hunt",
+          features: { description: "grep springing lien across DMS" },
+        },
+        { candidateId: "mcp.data_query", features: { label: "data_query" } },
+      ],
+    });
+    expect(withOnt.text).not.toBe(withoutOnt.text);
+    expect(withOnt.labels[0]?.description).not.toBe(withoutOnt.labels[0]?.description);
+    expect(
+      distinguishFromSiblingsHaveIdenticalPackedLabels(
+        ontology,
+        "mcp.memory_recall_title_flag_a",
+        "mcp.memory_recall_title_flag_b"
+      )
+    ).toBe(false);
+  });
+
+  it("generates ontology digest stably from catalog without renaming ids", async () => {
+    const { generateCapabilityOntology, loadCatalogSource } =
+      await import("./generate-capability-ontology.js");
+    const catalog = loadCatalogSource();
+    const a = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
+    const b = generateCapabilityOntology({ catalog, overlay: { overlays: {} } });
+    expect(a.digestSha256).toBe(b.digestSha256);
+    expect(a.capabilities.map((c) => c.capabilityId).sort()).toEqual(
+      [...catalog.entries.map((e) => e.id)].sort()
+    );
+    expect(() =>
+      generateCapabilityOntology({
+        catalog,
+        overlay: { overlays: { "mcp.does_not_exist": { whenToUse: "x" } } },
+      })
+    ).toThrow(/unknown id/);
+  });
+
   it("marks productionTrusted only with live adjudicationKind + live gliner2 scorer", async () => {
     const { createGlinerFastDecisionScorerLayer } = await import("./scorer.js");
     const { runHeldOutValidationForUseSite } = await import("./held-out/index.js");
@@ -440,6 +644,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -490,6 +695,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -656,6 +862,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -741,6 +948,7 @@ describe("§7 held-out suite runner", () => {
         modelId: "test-gliner",
         timeoutMs: 2000,
       },
+      calibration: { enabled: false, mode: "none", temperature: 1 },
       fetchImpl: (async () =>
         new Response(
           JSON.stringify({
@@ -762,5 +970,184 @@ describe("§7 held-out suite runner", () => {
     );
     expect(report.scorerBackend).toBe("gliner2");
     expect(report.productionTrusted).toBe(true);
+  });
+});
+
+describe("temperature calibration", () => {
+  it("temperature_softmax flattens one-hot peaks and can pass §7 when conf≈acc", async () => {
+    const { applyCalibrationToScores, evaluateCorrectnessAndCalibration } =
+      await import("./index.js");
+    // 8/10 correct, all raw conf ≈ 1.0 → MCE |0.8-0.95|=0.15 borderline-fail with more miss
+    // Use 7/10 → acc 0.7, MCE 0.25 fails hard; after T softens into ~0.7 band, MCE drops.
+    const raw = Array.from({ length: 10 }, (_, i) => ({
+      caseId: String(i),
+      groundTruthCandidateId: "a",
+      scores: [
+        { candidateId: i >= 7 ? "b" : "a", confidence: 0.999 },
+        { candidateId: i >= 7 ? "a" : "b", confidence: 0.001 },
+      ],
+    }));
+    const rawReport = evaluateCorrectnessAndCalibration("t", raw);
+    expect(rawReport.rawAccuracy).toBe(0.7);
+    expect(rawReport.meanCalibrationError).toBeGreaterThan(0.15);
+    expect(rawReport.passed).toBe(false);
+
+    let bestMce = 1;
+    let bestPassed = false;
+    for (const T of [5, 8, 10, 12, 15, 20, 25, 30]) {
+      const cal = evaluateCorrectnessAndCalibration(
+        "t",
+        raw.map((c) => ({
+          ...c,
+          scores: applyCalibrationToScores(c.scores, {
+            mode: "temperature_softmax",
+            temperature: T,
+          }),
+        }))
+      );
+      if (cal.meanCalibrationError < bestMce) bestMce = cal.meanCalibrationError;
+      if (cal.passed) bestPassed = true;
+    }
+    expect(bestMce).toBeLessThan(rawReport.meanCalibrationError);
+    expect(bestPassed).toBe(true);
+  });
+
+  it("fitTemperatureByGrid picks a T that reduces MCE on the fit set", async () => {
+    const { fitTemperatureByGrid } = await import("./temperature-calibration.js");
+    const { Effect } = await import("effect");
+    const cases = Array.from({ length: 10 }, (_, i) => ({
+      groundTruthCandidateId: "a",
+      scores: [
+        { candidateId: i >= 7 ? "b" : "a", confidence: 0.999 },
+        { candidateId: i >= 7 ? "a" : "b", confidence: 0.001 },
+      ],
+    }));
+    const fit = await Effect.runPromise(
+      fitTemperatureByGrid({
+        cases,
+        mode: "temperature_softmax",
+        temperatures: [1, 5, 10, 20, 30],
+      })
+    );
+    expect(fit.temperature).toBeGreaterThan(1);
+    expect(fit.meanCalibrationError).toBeLessThan(0.25);
+  });
+
+  it("margin mode reports top-second gap as confidence", async () => {
+    const { applyCalibrationToScores } = await import("./temperature-calibration.js");
+    const out = applyCalibrationToScores(
+      [
+        { candidateId: "a", confidence: 0.9 },
+        { candidateId: "b", confidence: 0.4 },
+      ],
+      { mode: "margin", temperature: 1 }
+    );
+    expect(out[0]?.candidateId).toBe("a");
+    expect(out[0]?.confidence).toBeCloseTo(0.5, 5);
+    expect(out[1]?.confidence).toBe(0);
+  });
+
+  it("defaults calibration ON with temperature_softmax T=0.75 (Decide live)", async () => {
+    const prev = process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    const prevT = process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+    delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+    const { readCalibrationConfigFromEnv } = await import("./temperature-calibration.js");
+    const cfg = readCalibrationConfigFromEnv();
+    expect(cfg.enabled).toBe(true);
+    expect(cfg.mode).toBe("temperature_softmax");
+    expect(cfg.temperature).toBe(0.75);
+    if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION = prev;
+    else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION;
+    if (prevT !== undefined) process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE = prevT;
+    else delete process.env.CLAWQL_FAST_DECISION_CALIBRATION_TEMPERATURE;
+  });
+});
+
+describe("candidatesEquivalent (twins)", () => {
+  it("treats declared mcp↔skill pairs as equivalent", async () => {
+    const { candidatesEquivalent, equivalenceClassOf } = await import("./candidate-equivalence.js");
+    expect(candidatesEquivalent("mcp.memory_ingest", "skill.clawql-memory-ingest")).toBe(true);
+    expect(candidatesEquivalent("skill.clawql-memory-ingest", "mcp.memory_ingest")).toBe(true);
+    expect(candidatesEquivalent("mcp.clawql_think", "skill.deep-thinking")).toBe(true);
+    expect(candidatesEquivalent("mcp.search", "mcp.execute")).toBe(false);
+    expect(candidatesEquivalent("mcp.search", "skill.clawql-composed-mcp-workflows")).toBe(false);
+    expect([...equivalenceClassOf("mcp.notify")].sort()).toEqual(
+      ["mcp.notify", "skill.clawql-notify-workflows"].sort()
+    );
+  });
+
+  it("defaults live GLiNER model to Decide", async () => {
+    const prev = process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+    delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+    const { readGlinerScorerConfigFromEnv, DEFAULT_GLINER_MODEL_ID } =
+      await import("./gliner-config.js");
+    expect(DEFAULT_GLINER_MODEL_ID).toBe("fastino/GLiNER2.5-Decide");
+    expect(readGlinerScorerConfigFromEnv().modelId).toBe("fastino/GLiNER2.5-Decide");
+    if (prev !== undefined) process.env.CLAWQL_FAST_DECISION_GLINER_MODEL = prev;
+    else delete process.env.CLAWQL_FAST_DECISION_GLINER_MODEL;
+  });
+
+  it("defaults search_provider_tool_routing τ to 0.80", async () => {
+    const { searchProviderToolRoutingUseSite } = await import("./use-sites/builtins.js");
+    expect(searchProviderToolRoutingUseSite.threshold).toBe(0.8);
+  });
+});
+
+describe("resolveJudgeCandidateId (bounded remap)", () => {
+  const cands = [
+    { candidateId: "mcp.search", features: { label: "search" } },
+    { candidateId: "mcp.execute", features: { label: "execute" } },
+  ];
+
+  it("accepts exact allowlisted ids without remap", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const r = resolveJudgeCandidateId("mcp.search", cands);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.candidateId).toBe("mcp.search");
+      expect(r.remap).toBeNull();
+    }
+  });
+
+  it("logs cosmetic quote/case remaps and keeps the same tool id", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const quoted = resolveJudgeCandidateId("`mcp.search`", cands);
+    expect(quoted.ok).toBe(true);
+    if (quoted.ok) {
+      expect(quoted.candidateId).toBe("mcp.search");
+      expect(quoted.remap).toEqual({
+        before: "`mcp.search`",
+        after: "mcp.search",
+        kind: "cosmetic",
+      });
+    }
+    const cased = resolveJudgeCandidateId("MCP.SEARCH", cands);
+    expect(cased.ok).toBe(true);
+    if (cased.ok) {
+      expect(cased.candidateId).toBe("mcp.search");
+      expect(cased.remap?.kind).toBe("cosmetic");
+      expect(cased.remap?.after).toBe("mcp.search");
+    }
+  });
+
+  it("fails closed on semantic label/suffix remaps instead of re-pointing", async () => {
+    const { resolveJudgeCandidateId } = await import("./held-out/judge-candidate-id.js");
+    const label = resolveJudgeCandidateId("search", cands);
+    expect(label.ok).toBe(false);
+    if (!label.ok) {
+      expect(label.reason).toBe("semantic-remap-forbidden");
+      expect(label.wouldRemap).toEqual({
+        before: "search",
+        after: "mcp.search",
+        kind: "semantic",
+      });
+    }
+    const invent = resolveJudgeCandidateId("billing.refundCharge", cands);
+    expect(invent.ok).toBe(false);
+    if (!invent.ok) {
+      expect(invent.reason).toBe("unknown");
+      expect(invent.wouldRemap).toBeNull();
+    }
   });
 });

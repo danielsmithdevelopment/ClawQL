@@ -33,6 +33,23 @@ Prefix: `raw/harvey-lab/`
   - Local: `CLAWQL_FAST_DECISION_JUDGE_URL=… npx tsx scripts/run-held-out-adjudication.mts --suite v0.2-harvey --out …`
   - Replay: `RESCORE=1 SUITE=v0.2-harvey bash scripts/fetch-frontier-adjudication-artifact.sh`
 - Do not cite `productionTrusted` until live labels + live GLiNER2 + DEFAULT criteria pass.
+- **Ontology enrichment (default off for routing):** held-out scoring may pack
+  catalog-generated ontology into GLiNER classify text/labels when
+  `CLAWQL_FAST_DECISION_ONTOLOGY=1`. Clean v0.3 dual-arm showed no evidence of
+  benefit (see `ONTOLOGY_ENRICHMENT_EVAL_LOG.md`). The earlier Harvey +14pt A/B
+  is **contaminated-smoke** — do not cite as held-out lift.
+
+### Contaminated smoke — do not cite as held-out lift
+
+The 2026-09-25 ontology ON/OFF A/B on this suite’s routing site (n=7,
+4/7→5/7, MCE 0.483→0.383) is tagged **`contaminated-smoke`**. The capability
+fixture and label rewrites were authored against these same Harvey routing
+failures. Net +1 hides 3 gains / 2 regressions; the two regressions
+(`harvey-012`, `harvey-008`) were **correct without ontology** (sibling
+collapse under shared catalog text). Full write-up:
+[`ONTOLOGY_ENRICHMENT_EVAL_LOG.md`](./ONTOLOGY_ENRICHMENT_EVAL_LOG.md).
+Do not quote those numbers as §7 held-out lift. Fresh routing set + catalog-
+generated ontology: [`capability-ontology-from-catalog-v0.1.md`](../../../../../../docs/specs/classifier/capability-ontology-from-catalog-v0.1.md).
 
 ## Docs cross-links
 

@@ -7,12 +7,19 @@ import type { Effect } from "effect";
 import { Context } from "effect";
 import type { ClawQLError, McpToolAlreadyRegisteredError } from "../errors/clawql-error.js";
 import type { ClawQLPluginRegistrationApi, McpToolDefinition } from "./registration-api.js";
+import type { ToolRoutingHint } from "./routing-hint.js";
+
+export type { DistinguishFromEntry, ToolRoutingHint } from "./routing-hint.js";
 
 /** Tool registered into search/execute (MCP tool boundary). */
 export type ToolDefinition = McpToolDefinition;
 
 export type SkillApplicability = "always" | "query-matched";
 
+/**
+ * Skill registration. Routing hints compose via `ToolRoutingHint` intersection
+ * (same fields as tools — do not re-list or the shapes will drift).
+ */
 export type SkillDefinition = {
   readonly skillId: string;
   /** Full SKILL.md body. */
@@ -25,7 +32,7 @@ export type SkillDefinition = {
   readonly applicability?: SkillApplicability;
   readonly name?: string;
   readonly description?: string;
-};
+} & ToolRoutingHint;
 
 export type VaultSeedEntry = {
   readonly title: string;

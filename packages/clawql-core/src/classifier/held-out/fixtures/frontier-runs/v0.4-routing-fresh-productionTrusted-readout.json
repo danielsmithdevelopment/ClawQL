@@ -1,0 +1,70 @@
+{
+  "runId": 36144911649,
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "adjudicationMode": "live",
+  "judgeModel": "claude-sonnet-4-6",
+  "scorerBackend": "gliner2",
+  "glinerLiveConfigured": true,
+  "ontologyEnrichment": false,
+  "n": 40,
+  "rawAccuracy": 0.8,
+  "meanCalibrationError": 0.11764705882352941,
+  "passedCriteria": true,
+  "productionTrusted": true,
+  "failureReasons": [],
+  "tau": 0.7,
+  "coverageAtTau": 0.45,
+  "acceptedCount": 18,
+  "amongAcceptedCorrect": 18,
+  "amongAcceptedAcc": 1,
+  "wrongsAboveTau": [],
+  "wrongCaseIds": [
+    {
+      "caseId": "route-v04-002",
+      "conf": 0.500112635190774,
+      "top": "mcp.search"
+    },
+    {
+      "caseId": "route-v04-004",
+      "conf": 0.6604360252540297,
+      "top": "mcp.search"
+    },
+    {
+      "caseId": "route-v04-005",
+      "conf": 0.5008540536552712,
+      "top": "mcp.skills_get"
+    },
+    {
+      "caseId": "route-v04-018",
+      "conf": 0.5029049710123731,
+      "top": "mcp.memory_recall_title_flag_b"
+    },
+    {
+      "caseId": "route-v04-026",
+      "conf": 0.5760376777254115,
+      "top": "mcp.data_query"
+    },
+    {
+      "caseId": "route-v04-029",
+      "conf": 0.5002572665420446,
+      "top": "mcp.search"
+    },
+    {
+      "caseId": "route-v04-033",
+      "conf": 0.5085086121346764,
+      "top": "mcp.search"
+    },
+    {
+      "caseId": "route-v04-038",
+      "conf": 0.50050897564263,
+      "top": "mcp.audit"
+    }
+  ],
+  "provisionalVsFrontierAgree": 40,
+  "criteria": {
+    "minAccuracy": 0.7,
+    "maxMeanCalibrationError": 0.15,
+    "minCases": 1
+  },
+  "honesty": "live judge labels applied; scorer=gliner2 (CLAWQL_FAST_DECISION_GLINER_URL set); productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=0.7, maxMeanCalibrationError=0.15) — wiring criteria cannot light the flag; at least one use-site reports productionTrusted (live adjudicationKind + live gliner2 + DEFAULT criteria)"
+}

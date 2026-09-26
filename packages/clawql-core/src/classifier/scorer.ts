@@ -7,11 +7,21 @@
  */
 
 import { Context, Effect, Layer } from "effect";
+import type { CapabilityOntology } from "./capability-ontology.js";
 import {
   DEFAULT_GLINER_MODEL_ID,
   type GlinerScorerConfig,
   readGlinerScorerConfigFromEnv,
 } from "./gliner-config.js";
+import {
+  composeOntologyEnrichedClassifyText,
+  enrichCandidateDescription,
+} from "./ontology-enrichment.js";
+import {
+  applyCalibrationToScores,
+  readCalibrationConfigFromEnv,
+  type CalibrationConfig,
+} from "./temperature-calibration.js";
 import type { FastDecisionCandidate, FastDecisionContext, FastDecisionScore } from "./types.js";
 
 export type FastDecisionScoreRequest = {
@@ -24,6 +34,11 @@ export type FastDecisionScoreRequest = {
    * `FastDecisionUseSite.description`; held-out resolves from builtins.
    */
   readonly taskFraming?: string;
+  /**
+   * Optional ClawQL capability ontology — packed into classify text + labels
+   * so GLiNER sees whenToUse / anti-patterns (not only query vs bare ids).
+   */
+  readonly capabilityOntology?: CapabilityOntology;
 };
 
 export class FastDecisionScorer extends Context.Tag("clawql/FastDecisionScorer")<
@@ -88,8 +103,8 @@ export type GlinerClassifyResponseBody = {
   readonly scores: readonly { readonly id: string; readonly confidence: number }[];
 };
 
-function candidateDescription(c: FastDecisionCandidate): string {
-  return String(c.features.description ?? c.features.label ?? c.features.name ?? c.candidateId);
+function candidateDescription(c: FastDecisionCandidate, ontology?: CapabilityOntology): string {
+  return enrichCandidateDescription(c, ontology);
 }
 
 function requestText(ctx: FastDecisionContext): string {
@@ -98,7 +113,10 @@ function requestText(ctx: FastDecisionContext): string {
   return JSON.stringify(ctx.extras ?? {});
 }
 
-/** Compose classify text: query body + optional use-site framing (suffix). */
+/**
+ * Compose classify text: query + ontology brief + optional use-site framing.
+ * Prefer `composeOntologyEnrichedClassifyText` when a capability ontology is present.
+ */
 export function composeGlinerClassifyText(taskFraming: string | undefined, body: string): string {
   const framing = taskFraming?.trim() ?? "";
   const q = body.trim();
@@ -131,12 +149,22 @@ export function scoreViaGlinerHttp(
     }));
   }
 
+  const ontology = request.capabilityOntology;
+  const text = ontology
+    ? composeOntologyEnrichedClassifyText({
+        query: requestText(request.ctx),
+        taskFraming: request.taskFraming,
+        ontology,
+        ctx: request.ctx,
+        candidateIds: request.candidates.map((c) => c.candidateId),
+      })
+    : composeGlinerClassifyText(request.taskFraming, requestText(request.ctx));
   const body: GlinerClassifyRequestBody = {
     useSiteId: request.useSiteId,
-    text: composeGlinerClassifyText(request.taskFraming, requestText(request.ctx)),
+    text,
     labels: request.candidates.map((c) => ({
       id: c.candidateId,
-      description: candidateDescription(c),
+      description: candidateDescription(c, ontology),
     })),
     model: config.modelId,
   };
@@ -195,7 +223,20 @@ export type GlinerScorerLayerOptions = {
   readonly config?: GlinerScorerConfig;
   /** Injected fetch for tests. */
   readonly fetchImpl?: typeof fetch;
+  /**
+   * Post-score calibration (§7). Defaults to env
+   * CLAWQL_FAST_DECISION_CALIBRATION / _MODE / _TEMPERATURE.
+   */
+  readonly calibration?: CalibrationConfig;
 };
+
+function maybeCalibrate(
+  scores: readonly FastDecisionScore[],
+  calibration: CalibrationConfig
+): readonly FastDecisionScore[] {
+  if (!calibration.enabled || calibration.mode === "none") return scores;
+  return applyCalibrationToScores(scores, calibration);
+}
 
 /**
  * GLiNER2 Fast Decision scorer — **primary** production Layer.
@@ -209,6 +250,7 @@ export function createGlinerFastDecisionScorerLayer(
   options: GlinerScorerLayerOptions = {}
 ): Layer.Layer<FastDecisionScorer> {
   const config = options.config ?? readGlinerScorerConfigFromEnv();
+  const calibration = options.calibration ?? readCalibrationConfigFromEnv();
   const liveConfigured = Boolean(config.endpointUrl?.trim());
   const fetchImpl = options.fetchImpl ?? fetch;
   let lastBackendId = liveConfigured ? "gliner2" : "gliner2-stub";
@@ -218,12 +260,12 @@ export function createGlinerFastDecisionScorerLayer(
     score: (request) => {
       if (!liveConfigured) {
         lastBackendId = "gliner2-stub";
-        return Effect.sync(() => heuristicScores(request));
+        return Effect.sync(() => maybeCalibrate(heuristicScores(request), calibration));
       }
       return scoreViaGlinerHttp(config, request, fetchImpl).pipe(
         Effect.map((result) => {
           lastBackendId = result.source === "live" ? "gliner2" : "gliner2-http-fallback-heuristic";
-          return result.scores;
+          return maybeCalibrate(result.scores, calibration);
         })
       );
     },

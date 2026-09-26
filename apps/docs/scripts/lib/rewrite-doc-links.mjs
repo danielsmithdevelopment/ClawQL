@@ -101,6 +101,8 @@ export const DOC_SITE_ROUTES = {
   'docs/specs/memory/memory-recall-structured-filter-v0.1.md':
     '/specs/memory/memory-recall-structured-filter',
   'docs/specs/ontology/legal-domain-v0.1.md': '/specs/ontology/legal-domain',
+  'docs/specs/classifier/fast-decision-routing-closeout-v0.4.md':
+    '/specs/classifier/fast-decision-routing-closeout',
   'docs/specs/network/clawql-network-v0.1.md': '/specs/network/clawql-network',
   'docs/agents/clawql-agents-spec-v0.1.md': '/agents/clawql-agents',
   'docs/architecture/zero-trust-agentic-fabric.md':

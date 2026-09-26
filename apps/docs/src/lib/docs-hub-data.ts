@@ -117,6 +117,13 @@ export const architectureHubCards: Array<ReferenceCard> = [
     icon: DocumentIcon,
   }),
   card({
+    href: '/specs/classifier/fast-decision-routing-closeout',
+    name: 'Fast Decision routing closeout',
+    description:
+      'Stock GLiNER 2.5 reject rule is productionTrusted on frozen n=40; Decide measured, not live.',
+    icon: DocumentIcon,
+  }),
+  card({
     href: '/specs/network/clawql-network',
     name: 'clawql-network',
     description:

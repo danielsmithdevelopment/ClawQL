@@ -113,6 +113,11 @@ const ENTRIES: Array<Entry> = [
     priority: 0.85,
   },
   {
+    path: '/specs/classifier/fast-decision-routing-closeout',
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  },
+  {
     path: '/specs/network/clawql-network',
     changeFrequency: 'monthly',
     priority: 0.9,

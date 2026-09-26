@@ -5,7 +5,16 @@
  * Implements the CLAWQL_FAST_DECISION_JUDGE_URL contract:
  *   POST /v1/fast-decision/adjudicate
  *   Body: { caseId, useSiteId, query, candidates, model? }
- *   Response: { groundTruthCandidateId, rationale }
+ *   Response: {
+ *     groundTruthCandidateId, rationale, backend?,
+ *     rawGroundTruthCandidateId?, candidateIdRemap?
+ *   }
+ *
+ * CandidateId policy (bounded):
+ *   - Cosmetic normalize only (quote strip / case fold to allowlisted id).
+ *   - Every cosmetic remap is returned + logged (before → after).
+ *   - Semantic remaps (label → id, suffix) **fail the case** — never counted.
+ *   - One correction retry if the first answer is not allowlisted.
  *
  * Backends (first match):
  *   1. ANTHROPIC_API_KEY → Anthropic Messages API (default model claude-sonnet-4-6)
@@ -20,6 +29,7 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { resolveJudgeCandidateId } from "clawql-core";
 
 const PORT = Number(process.env.CLAWQL_FRONTIER_JUDGE_PORT ?? "18765");
 const HOST = process.env.CLAWQL_FRONTIER_JUDGE_HOST ?? "127.0.0.1";
@@ -37,6 +47,20 @@ type JudgeRequest = {
   query?: string;
   candidates?: Candidate[];
   model?: string;
+};
+
+type CosmeticRemap = {
+  before: string;
+  after: string;
+  kind: "cosmetic";
+};
+
+type JudgeOut = {
+  groundTruthCandidateId: string;
+  rationale: string;
+  backend: string;
+  rawGroundTruthCandidateId: string;
+  candidateIdRemap: CosmeticRemap | null;
 };
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -57,6 +81,11 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(text);
 }
 
+function envFlagTrue(name: string): boolean {
+  const v = process.env[name]?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
 function candidateLines(cands: Candidate[]): string {
   return cands
     .map((c, i) => {
@@ -69,10 +98,34 @@ function candidateLines(cands: Candidate[]): string {
 }
 
 function buildPrompt(req: JudgeRequest): string {
+  const ids = (req.candidates ?? [])
+    .map((c) => c.candidateId)
+    .filter((x): x is string => Boolean(x));
   return [
     "You are the §7.2 frontier judge for ClawQL Fast Decision held-out cases.",
     "Pick exactly one ground-truth candidateId from the list. Respond with JSON only:",
     '{"groundTruthCandidateId":"<id>","rationale":"<one sentence>"}',
+    "The groundTruthCandidateId value MUST be copied exactly from this allowlist (character-for-character):",
+    ids.map((id) => `  - ${id}`).join("\n"),
+    "Do not invent ids. Do not use labels, operationIds from the query, or paraphrases.",
+    "",
+    `useSiteId: ${req.useSiteId ?? ""}`,
+    `caseId: ${req.caseId ?? ""}`,
+    `query: ${req.query ?? ""}`,
+    "candidates:",
+    candidateLines(req.candidates ?? []),
+  ].join("\n");
+}
+
+function buildCorrectionPrompt(req: JudgeRequest, badId: string): string {
+  const ids = (req.candidates ?? [])
+    .map((c) => c.candidateId)
+    .filter((x): x is string => Boolean(x));
+  return [
+    "Your previous answer used an invalid candidateId.",
+    `Invalid value: ${JSON.stringify(badId)}`,
+    "Respond again with JSON only. groundTruthCandidateId MUST be exactly one of:",
+    ids.map((id) => `  - ${id}`).join("\n"),
     "",
     `useSiteId: ${req.useSiteId ?? ""}`,
     `caseId: ${req.caseId ?? ""}`,
@@ -167,14 +220,13 @@ async function judgeViaOpenRouter(
   return { ...parsed, backend: `openrouter:${orModel}` };
 }
 
-async function adjudicate(
-  req: JudgeRequest
+async function callBackend(
+  prompt: string,
+  model: string
 ): Promise<{ groundTruthCandidateId: string; rationale: string; backend: string }> {
-  const model = (req.model?.trim() || DEFAULT_MODEL).replace(/^anthropic\//, "");
-  const prompt = buildPrompt(req);
   const preferOr =
-    process.env.CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER?.trim() === "1" ||
-    process.env.CLAWQL_LAB_USE_OPENROUTER?.trim() === "1";
+    envFlagTrue("CLAWQL_FRONTIER_JUDGE_VIA_OPENROUTER") ||
+    envFlagTrue("CLAWQL_LAB_USE_OPENROUTER");
   if (preferOr && process.env.OPENROUTER_API_KEY?.trim()) {
     return judgeViaOpenRouter(prompt, model.includes("/") ? model : `anthropic/${model}`);
   }
@@ -187,6 +239,81 @@ async function adjudicate(
   throw new Error("No ANTHROPIC_API_KEY or OPENROUTER_API_KEY configured");
 }
 
+function acceptOrThrow(
+  caseId: string | undefined,
+  raw: string,
+  candidates: Candidate[],
+  backend: string,
+  rationale: string
+): JudgeOut {
+  const resolved = resolveJudgeCandidateId(raw, candidates);
+  if (resolved.ok) {
+    if (resolved.remap) {
+      console.error(
+        `[frontier-judge] caseId=${caseId ?? "?"} cosmetic remap ${JSON.stringify(resolved.remap.before)} → ${JSON.stringify(resolved.remap.after)}`
+      );
+    }
+    return {
+      groundTruthCandidateId: resolved.candidateId,
+      rationale,
+      backend,
+      rawGroundTruthCandidateId: raw,
+      candidateIdRemap: resolved.remap,
+    };
+  }
+  if (resolved.reason === "semantic-remap-forbidden" && resolved.wouldRemap) {
+    throw new Error(
+      `semantic candidateId remap forbidden (caseId=${caseId ?? "?"}, before=${JSON.stringify(resolved.wouldRemap.before)}, after=${JSON.stringify(resolved.wouldRemap.after)}) — refuse rather than re-point the judge answer`
+    );
+  }
+  throw new Error(
+    `judge returned unknown candidateId ${JSON.stringify(raw)} (caseId=${caseId ?? "?"})`
+  );
+}
+
+async function adjudicate(req: JudgeRequest): Promise<JudgeOut> {
+  const model = (req.model?.trim() || DEFAULT_MODEL).replace(/^anthropic\//, "");
+  const candidates = req.candidates ?? [];
+  const first = await callBackend(buildPrompt(req), model);
+  try {
+    return acceptOrThrow(
+      req.caseId,
+      first.groundTruthCandidateId,
+      candidates,
+      first.backend,
+      first.rationale
+    );
+  } catch (firstErr) {
+    const firstMsg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+    // Semantic remap is a hard fail — do not retry into a silent re-point.
+    if (firstMsg.includes("semantic candidateId remap forbidden")) {
+      throw firstErr;
+    }
+    console.error(
+      `[frontier-judge] caseId=${req.caseId ?? "?"} ${firstMsg} — retrying once with correction prompt`
+    );
+    const second = await callBackend(
+      buildCorrectionPrompt(req, first.groundTruthCandidateId),
+      model
+    );
+    try {
+      const accepted = acceptOrThrow(
+        req.caseId,
+        second.groundTruthCandidateId,
+        candidates,
+        `${second.backend}+retry`,
+        second.rationale || first.rationale
+      );
+      return accepted;
+    } catch (secondErr) {
+      const secondMsg = secondErr instanceof Error ? secondErr.message : String(secondErr);
+      throw new Error(
+        `${secondMsg} (first=${JSON.stringify(first.groundTruthCandidateId)})`
+      );
+    }
+  }
+}
+
 const server = createServer(async (req, res) => {
   const url = req.url?.split("?")[0] ?? "";
   if (req.method === "GET" && (url === "/healthz" || url === "/")) {
@@ -196,6 +323,8 @@ const server = createServer(async (req, res) => {
       hasAnthropic: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
       hasOpenRouter: Boolean(process.env.OPENROUTER_API_KEY?.trim()),
       defaultModel: DEFAULT_MODEL,
+      candidateIdRemapPolicy:
+        "cosmetic-only (quote/case); semantic label/suffix remaps fail the case",
     });
     return;
   }
@@ -207,24 +336,22 @@ const server = createServer(async (req, res) => {
         json(res, 400, { error: "query and candidates required" });
         return;
       }
-      const ids = new Set(
-        body.candidates.map((c) => c.candidateId).filter((x): x is string => Boolean(x))
-      );
       const out = await adjudicate(body);
-      if (!ids.has(out.groundTruthCandidateId)) {
-        json(res, 502, {
-          error: `judge returned unknown candidateId ${out.groundTruthCandidateId}`,
-          backend: out.backend,
-        });
-        return;
-      }
       json(res, 200, {
         groundTruthCandidateId: out.groundTruthCandidateId,
         rationale: out.rationale,
         backend: out.backend,
+        rawGroundTruthCandidateId: out.rawGroundTruthCandidateId,
+        candidateIdRemap: out.candidateIdRemap,
       });
     } catch (e) {
-      json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[frontier-judge] error: ${msg}`);
+      const status =
+        /unknown candidateId|semantic candidateId remap|openrouter HTTP|anthropic HTTP/.test(msg)
+          ? 502
+          : 500;
+      json(res, status, { error: msg });
     }
     return;
   }

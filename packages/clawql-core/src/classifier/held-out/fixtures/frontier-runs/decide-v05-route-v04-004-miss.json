@@ -1,0 +1,16 @@
+{
+  "caseId": "route-v04-004",
+  "query": "Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op.",
+  "groundTruth": "mcp.execute",
+  "chosen": "mcp.search",
+  "topConfidenceCalibrated": 0.7393817580978831,
+  "second": {
+    "candidateId": "mcp.execute",
+    "confidence": 0.26061824190211685
+  },
+  "rawTop": "mcp.search",
+  "rawConf": 0.7052,
+  "remapTouched": false,
+  "note": "Decide prefers mcp.search over mcp.execute on an execute-shaped \"skip discovery\" query; conf 0.739 so \u03c4=0.60 fires the miss; \u03c4\u22650.75 abstains.",
+  "frontierGtAgreed": true
+}

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const heldOutFixtures = join(root, "src/classifier/held-out/fixtures");
+const classifierFixtures = join(root, "src/classifier/fixtures");
 
 export default defineConfig({
   entry: ["src/index.ts", "src/streams-slim.ts", "src/classifier/index.ts"],
@@ -20,9 +21,32 @@ export default defineConfig({
     for (const name of [
       "fast-decision-held-out-v0.1.json",
       "fast-decision-held-out-v0.2-harvey.json",
+      "fast-decision-held-out-v0.3-routing-fresh.json",
       "HARVEY_V02_PROVENANCE.md",
+      "ONTOLOGY_ENRICHMENT_EVAL_LOG.md",
+      "FREEZE-v0.3-routing-fresh.md",
+      "routing-fresh-v0.3-source-catalog.json",
+      "V03_DUAL_ARM_READOUT_PREREGISTERED.md",
     ]) {
       cpSync(join(heldOutFixtures, name), join(dest, name));
+    }
+    const capDest = join(root, "dist/classifier-fixtures");
+    mkdirSync(capDest, { recursive: true });
+    cpSync(
+      join(classifierFixtures, "clawql-capability-ontology.json"),
+      join(capDest, "clawql-capability-ontology.json")
+    );
+    for (const name of [
+      "capability-ontology.generated.json",
+      "capability-ontology.digest",
+      "capability-routing-hints.overlay.json",
+    ]) {
+      const src = join(classifierFixtures, name);
+      try {
+        cpSync(src, join(capDest, name));
+      } catch {
+        /* generated files may be produced by scripts/generate-capability-ontology.mts */
+      }
     }
   },
 });
