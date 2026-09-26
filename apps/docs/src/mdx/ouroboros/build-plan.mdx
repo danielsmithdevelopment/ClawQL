@@ -158,11 +158,11 @@ Fidelity score
 
 Retention
 
->= fidelity_high_threshold (default 0.90)
+> = fidelity_high_threshold (default 0.90)
 
 30 days (retention_days_standard)
 
->= fidelity_low_threshold (default 0.75)
+> = fidelity_low_threshold (default 0.75)
 
 60 days (retention_days_extended)
 
@@ -192,13 +192,13 @@ AND (consistency confirmed over last w_consistency rounds) // persistence gate
 
 delta_D_i = delta_d
 
-* (1 - min(1.0, position_variance_i / variance_ceiling)) // variance penalty
+- (1 - min(1.0, position_variance_i / variance_ceiling)) // variance penalty
 
-* isolation_score_i // isolation scale (if enabled)
+- isolation_score_i // isolation scale (if enabled)
 
 D_i_new = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
 
-w_floor_i = min(W_FLOOR_CEILING, w_min + kappa * D_i_new)
+w_floor_i = min(W_FLOOR_CEILING, w_min + kappa \* D_i_new)
 
 Every accrual decision — including the specific gate that denied accrual — is written to WORM as an OuroborosPayload with the session correlation_id. An agent with unexpectedly low dividends can be debugged by querying its WORM trail and reading the denial reasons directly.
 

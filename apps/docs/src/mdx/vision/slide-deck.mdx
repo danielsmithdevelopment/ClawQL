@@ -238,7 +238,7 @@ Kiali — service graph, health, and config validation for the mesh
 
 Grafana Tempo (or OTel → OTLP backend of choice) — end-to-end traces for Ouroboros spans, Onyx, document services, and mesh hops
 
-Istio ingress/egress gateways — single front door and controlled egress; internal DNS still *.svc.cluster.local behind the mesh
+Istio ingress/egress gateways — single front door and controlled egress; internal DNS still \*.svc.cluster.local behind the mesh
 
 Slide 7 — MCP Tool Surface
 
@@ -898,7 +898,7 @@ Cuckoo Filters: O(1) Deduplication
 
 Probabilistic membership testing with deletion support — keeping the pipeline fast at scale.
 
-A Cuckoo filter answers “have I seen this before?” in O(1) time with very low false positive rates. Unlike Bloom filters, it supports deletions — meaning documents can be removed from the deduplicated set without rebuilding. Configured via CLAWQL_CUCKOO_* environment variables.
+A Cuckoo filter answers “have I seen this before?” in O(1) time with very low false positive rates. Unlike Bloom filters, it supports deletions — meaning documents can be removed from the deduplicated set without rebuilding. Configured via CLAWQL*CUCKOO*\* environment variables.
 
 Stirling → Paperless Ingestion
 
@@ -942,7 +942,7 @@ Merkle Trees: Cryptographic Audit Trails
 
 Tamper-evident, verifiable proof that every processing step produced the correct result — including knowledge retrieval.
 
-A Merkle tree hashes each processing step’s output into a leaf node. The root hash proves the entire chain — if any step’s output was tampered with, the root changes. ClawQL stores the Merkle root in Postgres after every Ouroboros workflow. Configured via CLAWQL_MERKLE_* environment variables.
+A Merkle tree hashes each processing step’s output into a leaf node. The root hash proves the entire chain — if any step’s output was tampered with, the root changes. ClawQL stores the Merkle root in Postgres after every Ouroboros workflow. Configured via CLAWQL*MERKLE*\* environment variables.
 
 Merkle Tree Structure (Knowledge-Augmented Workflow)
 
@@ -1098,7 +1098,7 @@ Minimal bundled OpenAPI: onyx_send_search_message → POST /search/send-search-m
 
 OSV-Scanner (security provider pattern)
 
-Bundled or CI-generated OpenAPI (or a thin providers/osv-*.json) that wraps the OSV-Scanner CLI or HTTP adapter — same search + execute semantics: discover “scan image / lockfile / SBOM” operations, run on demand from agents or Ouroboros, GraphQL-trim to CVE / package / version / fix. Integrates with the Golden Image pipeline: Trivy (layer) + OSV (ecosystem DB) + SBOM export; failures gate Cosign sign + OPA/Kyverno admit.
+Bundled or CI-generated OpenAPI (or a thin providers/osv-\*.json) that wraps the OSV-Scanner CLI or HTTP adapter — same search + execute semantics: discover “scan image / lockfile / SBOM” operations, run on demand from agents or Ouroboros, GraphQL-trim to CVE / package / version / fix. Integrates with the Golden Image pipeline: Trivy (layer) + OSV (ecosystem DB) + SBOM export; failures gate Cosign sign + OPA/Kyverno admit.
 
 Slide 28 — Unified Kubernetes Helm Chart
 
@@ -1132,7 +1132,7 @@ Optional Istio — istiod, ingress/egress gateways, Kiali; Ambient profile prefe
 
 OSV-Scanner — CronJob and/or in-cluster scan Deployment with read-only docker.sock or Kaniko/Cosign outputs — wired to the same namespace
 
-HashiCorp Vault — your subchart or in-cluster vault:8200 Service; Vault Agent Injector (or equivalent) populates Secret objects for ClawQL, Flink, and TLS where you do not rely on Istio SDS alone — orthogonal to Helm vault.*, which only mounts Obsidian Markdown at obsidianVaultPath (#161)
+HashiCorp Vault — your subchart or in-cluster vault:8200 Service; Vault Agent Injector (or equivalent) populates Secret objects for ClawQL, Flink, and TLS where you do not rely on Istio SDS alone — orthogonal to Helm vault.\*, which only mounts Obsidian Markdown at obsidianVaultPath (#161)
 
 Rolling updates: rebuild ClawQL image, helm upgrade — zero-downtime in most cases
 
@@ -1254,7 +1254,7 @@ Istio ingress/egw
 
 istio-ingressgateway
 
-clawql.local, *.clawql.local
+clawql.local, \*.clawql.local
 
 North-south, VirtualService + Gateway
 
@@ -1276,7 +1276,7 @@ Secrets, injectors, dynamic creds when configured
 
 Dragonfly (shared, RESP / redis://)
 
-in-cluster *-dragonfly:6379
+in-cluster \*-dragonfly:6379
 
 internal
 

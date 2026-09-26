@@ -186,7 +186,7 @@ pruning:
 
 enabled: true
 
-schedule: '0 4 * * *'
+schedule: '0 4 \* \* \*'
 
 maxNodes: 50000 # reduced from production default of 250000
 
@@ -1038,7 +1038,7 @@ pruning:
 
 enabled: true
 
-schedule: '0 4 * * *' # Cron schedule; runs daily at 4am by default
+schedule: '0 4 \* \* \*' # Cron schedule; runs daily at 4am by default
 
 maxGraphNodes: 250000 # Trigger pruning when graph exceeds this size
 
@@ -1430,7 +1430,7 @@ curl http://localhost:8080/api/tools?vertical=lending
 
 kubectl -n clawql exec -it deploy/postgres -- \
 
-psql -U clawql -c "SELECT * FROM pg_policies WHERE tablename LIKE 'lending_%';"
+psql -U clawql -c "SELECT \* FROM pg*policies WHERE tablename LIKE 'lending*%';"
 
 # Verify the compliance matrix entry
 
@@ -2348,7 +2348,7 @@ kubectl -n clawql logs job/clawql-migration
 
 kubectl -n clawql exec -it deploy/postgres -- \
 
-psql -U clawql clawql -c "SELECT * FROM clawql_migrations ORDER BY applied_at DESC LIMIT 5;"
+psql -U clawql clawql -c "SELECT \* FROM clawql_migrations ORDER BY applied_at DESC LIMIT 5;"
 
 Compare the most recently applied migration against the list of steps for the target version in the release notes.
 

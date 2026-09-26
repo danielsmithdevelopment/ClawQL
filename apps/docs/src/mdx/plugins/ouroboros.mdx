@@ -12,7 +12,7 @@ ToolPurposeclawql_thinkStructured planning / reflection helperouroboros_create_s
 
 Registration and lineage
 
-Env / HelmDefaultEffect(always on)—makeHarnessLayer(createOuroborosHarnessPlugin) registers the tools aboveCLAWQL_ENABLE_OUROBOROS(deprecated)No longer gates MCP registration; ignore for tool loadCLAWQL_OUROBOROS_DATABASE_URL or CLAWQL_OUROBOROS_DB_*unset = in-memoryDurable Postgres events (clawql_ouroboros_events)CLAWQL_ENABLE_LANGFUSE_EVAL=1offLangfuse eval → ouroboros_propose_seed_revision_from_eval
+Env / HelmDefaultEffect(always on)—makeHarnessLayer(createOuroborosHarnessPlugin) registers the tools aboveCLAWQL*ENABLE_OUROBOROS(deprecated)No longer gates MCP registration; ignore for tool loadCLAWQL_OUROBOROS_DATABASE_URL or CLAWQL_OUROBOROS_DB*\*unset = in-memoryDurable Postgres events (clawql_ouroboros_events)CLAWQL_ENABLE_LANGFUSE_EVAL=1offLangfuse eval → ouroboros_propose_seed_revision_from_eval
 
 Do not teach clawql-ouroboros/mcp-hooks as the clawql-mcp registration path (OK for embedding the library in your own MCP host).
 

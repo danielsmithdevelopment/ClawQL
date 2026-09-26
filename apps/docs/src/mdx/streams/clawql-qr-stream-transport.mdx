@@ -208,7 +208,7 @@ npx mcp-api-adapter \
 
 --qr-output thermal --qr-printer /dev/usb/lp0 --qr-mode audit-export
 
-Env: CLAWQL_QR_OUTPUT, CLAWQL_QR_INPUT, MCP_API_ADAPTER_QR_*.
+Env: CLAWQL*QR_OUTPUT, CLAWQL_QR_INPUT, MCP_API_ADAPTER_QR*\*.
 
 4.3 HTTP surface (planned)
 
@@ -248,7 +248,7 @@ Camera → clawql-streams QrStreamSourceProvider
 
 ├─ NATS publish + WORM entry
 
-└─ significance filter → Agent DO (memory_*, notify, execute…)
+└─ significance filter → Agent DO (memory\_\*, notify, execute…)
 
 5.1 stream_subscribe example
 

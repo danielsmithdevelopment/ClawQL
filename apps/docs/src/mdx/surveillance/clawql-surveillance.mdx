@@ -12,7 +12,7 @@ Vertical: Surveillance camera evidence integrity and compliance
 
 Enable: CLAWQL_SURVEILLANCE_ENABLED=1
 
-CLI: clawql surveillance *
+CLI: clawql surveillance \*
 
 clawql-surveillance is ClawQL's vertical package for surveillance camera vendors who need to demonstrate cryptographic chain of custody for footage offered as criminal evidence. It sits alongside clawql-lending and clawql-real-estate in the modularization v2.1 architecture — a domain-specific opt-in package on the same Agentic Gateway, sharing security, memory, audit, and the WORM pipeline.
 
@@ -478,7 +478,7 @@ CLAWQL_SURVEILLANCE_ACCURACY_CERT_REQUIRED=1 # block export if cert expired
 
 # Public verification API
 
-CLAWQL_SURVEILLANCE_PUBLIC_VERIFY_ENABLED=1 # no auth required on /surveillance/verify/*
+CLAWQL_SURVEILLANCE_PUBLIC_VERIFY_ENABLED=1 # no auth required on /surveillance/verify/\*
 
 CLAWQL_SURVEILLANCE_PUBLIC_VERIFY_PORT=8090 # separate port for public endpoints
 

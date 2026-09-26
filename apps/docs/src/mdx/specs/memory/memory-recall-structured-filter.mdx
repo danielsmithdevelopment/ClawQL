@@ -186,7 +186,7 @@ const rows = await ontologyDb.query(
 
 `
 
-SELECT e.*, fc.confidence, fc.extraction_method
+SELECT e.\*, fc.confidence, fc.extraction_method
 
 FROM ${tableName} e
 
@@ -854,7 +854,7 @@ const duration250 = Date.now() - t2
 
 // Allow 3x headroom for index overhead but reject O(n) growth
 
-expect(duration250).toBeLessThan(duration12 * 3)
+expect(duration250).toBeLessThan(duration12 \* 3)
 
 })
 
@@ -892,21 +892,21 @@ export const OntologyQuery = {
 
 query: (params: MemoryRecallParams) =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-const db = yield* OntologyDb
+const db = yield\* OntologyDb
 
-const tableName = yield* Effect.sync(() => schemaToTable(params.schema!))
+const tableName = yield\* Effect.sync(() => schemaToTable(params.schema!))
 
-const { where, values } = yield* Effect.sync(() =>
+const { where, values } = yield\* Effect.sync(() =>
 
 buildWhereClause(params.filters!, params.confidenceMinimum),
 
 )
 
-const rows = yield* db.query(tableName, where, values, params.limit ?? 20)
+const rows = yield\* db.query(tableName, where, values, params.limit ?? 20)
 
-const enriched = yield* Effect.forEach(rows, enrichWithVaultSnippet)
+const enriched = yield\* Effect.forEach(rows, enrichWithVaultSnippet)
 
 return buildRecallResult(enriched, params)
 

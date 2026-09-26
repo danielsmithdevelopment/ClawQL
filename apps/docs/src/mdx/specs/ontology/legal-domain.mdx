@@ -20,9 +20,9 @@ clawql-ontology/domains/legal/
 
 packages/clawql-ontology/packs/legal/
 
-*.cqe entity files
+\*.cqe entity files
 
-packs/legal/entities/*.cqe (ADR 0010)
+packs/legal/entities/\*.cqe (ADR 0010)
 
 ontology.db
 
@@ -382,11 +382,11 @@ For notes without explicit field blocks, extract from Markdown structure:
 
 Pattern matching rules — these are intentionally simple and conservative:
 
-escrowPct: /escrow[:\s]+(\d+(?:\.\d+)?)\s*%/i
+escrowPct: /escrow[:\s]+(\d+(?:\.\d+)?)\s\*%/i
 
-nonCompeteMonths: /non-?compete[:\s]+(\d+)\s*months?/i
+nonCompeteMonths: /non-?compete[:\s]+(\d+)\s\*months?/i
 
-dealValueUSD: /deal\s+value[:\s]+\$?([\d,]+(?:\.\d+)?)\s*[MKB]?/i
+dealValueUSD: /deal\s+value[:\s]+\$?([\d,]+(?:\.\d+)?)\s\*[MKB]?/i
 
 When pattern matching is used (not machine-readable fields), set a confidence tag on the extracted field: EXTRACTED (machine-readable) vs INFERRED (pattern match) vs AMBIGUOUS (multiple conflicting extractions). The confidence tag is included in query results so agents can reason about extraction quality.
 
@@ -548,7 +548,7 @@ CREATE INDEX idx_matters_status ON matters(status);
 
 4.2 Population
 
-memory_ingest populates the ontology index alongside the existing vault write. Structured memory_recall also lazy-syncs CLAWQL_* blocks from vault Markdown when the index is empty (OpenBench seed paths that write files without ingest).
+memory*ingest populates the ontology index alongside the existing vault write. Structured memory_recall also lazy-syncs CLAWQL*\* blocks from vault Markdown when the index is empty (OpenBench seed paths that write files without ingest).
 
 5. Integration with memory_recall
 
@@ -598,7 +598,7 @@ Phase 1 (before B-7.2):
 
 Legal domain schema file (Matter.cqe + Client/Attorney/Document)
 
-Machine-readable field parser for CLAWQL_* blocks
+Machine-readable field parser for CLAWQL\_\* blocks
 
 ontology.db SQLite schema and population via memory_ingest (+ lazy vault sync)
 

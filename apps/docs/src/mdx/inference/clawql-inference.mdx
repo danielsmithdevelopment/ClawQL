@@ -436,7 +436,7 @@ clawql inference keys list
 
 clawql inference keys revoke --id vk_abc123
 
-Keys persist at $CLAWQL_HOME/Inference/virtual-keys.json (secrets stored as SHA-256 hashes only). When enforcement is active, /v1/* requires a valid key; /healthz stays open.
+Keys persist at $CLAWQL_HOME/Inference/virtual-keys.json (secrets stored as SHA-256 hashes only). When enforcement is active, /v1/\* requires a valid key; /healthz stays open.
 
 team and virtualKeyId are stamped on inference records; spend rollups support --group-by team.
 
@@ -634,7 +634,7 @@ Scheduled auto-export when sample thresholds are met.
 
 clawql inference pipeline enable \
 
---schedule "0 2 * * 0" \
+--schedule "0 2 \* \* 0" \
 
 --min-samples 500 \
 

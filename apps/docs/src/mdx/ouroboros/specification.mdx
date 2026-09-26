@@ -104,7 +104,7 @@ STREAM_NAME = "CHAT_HANDOFF"
 
 KV_BUCKET = "PENDING_ACTIONS"
 
-ACTION_TTL_SECONDS = 2 * 60 * 60
+ACTION_TTL_SECONDS = 2 _ 60 _ 60
 
 HANDOFF_SECRET = os.environ.get("HANDOFF_SECRET", "").encode()
 
@@ -134,7 +134,7 @@ await js.add_stream(StreamConfig(
 
 name=STREAM_NAME, subjects=["chat.handoff.*"],
 
-max_msgs_per_subject=200, max_age=7 * 24 * 60 * 60,
+max_msgs_per_subject=200, max_age=7 _ 24 _ 60 \* 60,
 
 ))
 
@@ -202,7 +202,7 @@ raise HTTPException(403, "Invalid or missing signature")
 
 try:
 
-padded = payload + "=" * (-len(payload) % 4)
+padded = payload + "=" \* (-len(payload) % 4)
 
 data = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
 
@@ -228,7 +228,7 @@ data = {
 
 "agent": agent,
 
-"summary": (summary or "").replace("_", " "),
+"summary": (summary or "").replace("\_", " "),
 
 "next_actions": (next or "").split(";") if next else [],
 
@@ -318,7 +318,7 @@ raise HTTPException(403, "Invalid or missing signature")
 
 try:
 
-padded = payload + "=" * (-len(payload) % 4)
+padded = payload + "=" \* (-len(payload) % 4)
 
 args = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
 
@@ -536,7 +536,7 @@ Normalized Semantic Variance (NSV)
 
 The Coordinator computes the mean pairwise cosine distance across all agents sharing an embeddingModelVersion:
 
-NSV = (1 / (n * (n - 1))) * sum over i != j of (1 - cos(theta_i,j))
+NSV = (1 / (n _ (n - 1))) _ sum over i != j of (1 - cos(theta_i,j))
 
 NSV is bounded, reproducible, and requires no high-dimensional volume estimate. Its convergence threshold NSV_crit is not a universal constant — embedding spaces are anisotropic, and a single cutoff does not transfer reliably across models. NSV_crit is calibrated per embeddingModelVersion at the 10th percentile of a baseline dispersion run. This calibration is only as good as the diversity of that baseline run; correlated calibration agents produce a threshold set too low, causing the detector to under-report convergence.
 
@@ -644,11 +644,11 @@ where S_bar is the mean cosine similarity between agent positions and known-unre
 
 The reward or penalty is centered against the swarm's recent baseline success rate V_pool, an exponential moving average of Evaluator verdicts tracked independently of any individual agent's reputation — to avoid a circular baseline in which an agent's own weight distorts the standard it is later judged against:
 
-V_pool_new = (1 - eta) * V_pool_old + eta * V
+V_pool_new = (1 - eta) _ V_pool_old + eta _ V
 
 The full update, given Evaluator verdict V in \{0, 1\}:
 
-delta_w_i = gamma * (S_i - S_bar) * (V - V_pool)
+delta_w_i = gamma _ (S_i - S_bar) _ (V - V_pool)
 
 w_i_new = clamp(w_i_old + delta_w_i, 0.1, 1.0)
 
@@ -662,13 +662,13 @@ s_bar, v_pool, gamma, w_min=0.1, w_max=1.0):
 
 s_i = float(np.dot(agent_position, candidate_embedding))
 
-delta_w = gamma * (s_i - s_bar) * (verdict - v_pool)
+delta_w = gamma _ (s_i - s_bar) _ (verdict - v_pool)
 
 return float(np.clip(w_i + delta_w, w_min, w_max))
 
 def update_v_pool(v_pool, verdict, eta):
 
-return (1 - eta) * v_pool + eta * verdict
+return (1 - eta) _ v_pool + eta _ verdict
 
 def calibrate_s_bar(unrelated_pairs: list) -> float:
 
@@ -698,11 +698,11 @@ VariancePenalty_i = 1 - min(1.0, position_variance_i / variance_ceiling)
 
 IsolationScale_i = contribution_isolation_score_i [if enabled, else 1.0]
 
-delta_D_i = delta_d * VariancePenalty_i * IsolationScale_i [if AccrueDividend_i]
+delta_D_i = delta_d _ VariancePenalty_i _ IsolationScale_i [if AccrueDividend_i]
 
 D_i_new = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
 
-w_floor_i = min(W_FLOOR_CEILING, w_min + kappa * D_i_new)
+w_floor_i = min(W_FLOOR_CEILING, w_min + kappa \* D_i_new)
 
 Reward hacking mitigations built into the function:
 
@@ -750,7 +750,7 @@ with full visibility into swarm state by design.
 
 """
 
-def __init__(self, nats_url, eigenvalue_floor=1e-6, gamma=0.1, eta=0.05,
+def **init**(self, nats_url, eigenvalue_floor=1e-6, gamma=0.1, eta=0.05,
 
 lambda_d=0.03, kappa=0.15, delta_d=0.05,
 
@@ -896,7 +896,7 @@ verdict == 1
 
 and blind_projection > self.d_crit + self.d_crit_hysteresis
 
-and self._consistency_confirmed(agent_id)
+and self.\_consistency_confirmed(agent_id)
 
 )
 
@@ -910,7 +910,7 @@ history.pop(0)
 
 D = self.dividends.get(agent_id, 0.0)
 
-D = D * (1 - self.lambda_d) # decay
+D = D \* (1 - self.lambda_d) # decay
 
 if accrues:
 
@@ -918,13 +918,13 @@ D = min(1.0, D + self.delta_d)
 
 self.dividends[agent_id] = D
 
-w_floor = min(self.w_floor_ceiling, 0.1 + self.kappa * D)
+w_floor = min(self.w_floor_ceiling, 0.1 + self.kappa \* D)
 
 if self.weights[agent_id] &#x3C; w_floor:
 
 self.weights[agent_id] = w_floor
 
-def _consistency_confirmed(self, agent_id: str) -> bool:
+def \_consistency_confirmed(self, agent_id: str) -> bool:
 
 history = self.consistency_history.get(agent_id, [])
 
@@ -950,7 +950,7 @@ ids = list(pool.keys())
 
 matrix = np.stack([pool[i] for i in ids])
 
-_, blind_direction = compute_sgdop(matrix, candidate, self.eigenvalue_floor)
+\_, blind_direction = compute_sgdop(matrix, candidate, self.eigenvalue_floor)
 
 position = pool.get(agent_id)
 
@@ -1006,7 +1006,7 @@ except nats.errors.TimeoutError:
 
 raise ValueError(f"No candidate available for version {version}")
 
-embedding_fn = self._get_embedding_fn(version)
+embedding_fn = self.\_get_embedding_fn(version)
 
 vector = np.array(embedding_fn(candidate_text), dtype=float)
 
@@ -1018,13 +1018,13 @@ raise ValueError("Candidate embedding has zero norm")
 
 return vector / norm
 
-def _get_embedding_fn(self, version: str):
+def \_get_embedding_fn(self, version: str):
 
 """Return the embedding function registered for this embeddingModelVersion.
 
 Raises NotImplementedError if version is not registered."""
 
-fn = getattr(self, "_embedding_registry", {}).get(version)
+fn = getattr(self, "\_embedding_registry", {}).get(version)
 
 if fn is None:
 
@@ -1048,11 +1048,11 @@ Must use the same frozen model and normalization as agent positions.
 
 """
 
-if not hasattr(self, "_embedding_registry"):
+if not hasattr(self, "\_embedding_registry"):
 
-self._embedding_registry = {}
+self.\_embedding_registry = {}
 
-self._embedding_registry[version] = embedding_fn
+self.\_embedding_registry[version] = embedding_fn
 
 Part III: Integration
 

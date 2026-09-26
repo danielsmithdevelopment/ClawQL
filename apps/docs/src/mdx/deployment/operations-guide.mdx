@@ -182,7 +182,7 @@ Upgrade
 
 helm upgrade clawql ./manifests/charts/clawql-mcp -n clawql -f your-values.yaml --wait
 
-Image tags: set image.tag (MCP), documentPipeline.*.image.tag, onyx.*.image.tag as needed. Prefer rolling upgrades with --wait and watch kubectl -n clawql get pods.
+Image tags: set image.tag (MCP), documentPipeline._.image.tag, onyx._.image.tag as needed. Prefer rolling upgrades with --wait and watch kubectl -n clawql get pods.
 
 Secrets rotation
 
@@ -190,7 +190,7 @@ Update the Vault KV entry or Kubernetes Secret (ESO reconciles on interval).
 
 Restart MCP if env is not hot-reloaded: kubectl -n clawql rollout restart deploy/clawql-mcp-http.
 
-Document pipeline tokens (PAPERLESS_API_TOKEN, STIRLING_API_KEY, NEXTCLOUD_*, CONESHARE_API_TOKEN) live on chart-managed Secrets when auth.* blocks are set — see helm.md.
+Document pipeline tokens (PAPERLESS*API_TOKEN, STIRLING_API_KEY, NEXTCLOUD*_, CONESHARE_API_TOKEN) live on chart-managed Secrets when auth._ blocks are set — see helm.md.
 
 Scale
 
@@ -222,7 +222,7 @@ When no spec env is set, the opinionated default stack loads (Cloudflare, GitHub
 
 Operator scaffold (opt-in, shipped 7.0.0)
 
-The operator scaffold reconciles ClawQLInstance CRs to tier-spec ConfigMaps and optionally rolls MCP when spec.mcp.rolloutOnTierSpecChange is set. Helm CLAWQL_ENABLE_* workflows remain the default when the operator is not installed.
+The operator scaffold reconciles ClawQLInstance CRs to tier-spec ConfigMaps and optionally rolls MCP when spec.mcp.rolloutOnTierSpecChange is set. Helm CLAWQL*ENABLE*\* workflows remain the default when the operator is not installed.
 
 Install CRD + reconcile: clawql-operator-helm.md
 

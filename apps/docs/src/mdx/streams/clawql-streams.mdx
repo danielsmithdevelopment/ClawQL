@@ -62,7 +62,7 @@ On the celld / Cloudflare path, each agent cell is a Workers-safe slim core plus
 
 Shipped today (docs/examples/streams-celld): Gateway / Subscription / AgentSession DOs, in-process clawql-core/streams-slim, optional fetch(CLAWQL_MCP_URL) + fetch(CLAWQL_MCP_ADAPTER_URL), LTX audit flush. Evidence matrix: streams-celld-evidence.md.
 
-Still planned: the clawql-streams coordination package (stream_* MCP tools) and a future optional Workers-safe clawql-api slim for offline search.
+Still planned: the clawql-streams coordination package (stream\_\* MCP tools) and a future optional Workers-safe clawql-api slim for offline search.
 
 ┌─────────────────────────────────────────────────────────┐
 
@@ -76,7 +76,7 @@ Still planned: the clawql-streams coordination package (stream_* MCP tools) and 
 
 │ │ (filter/spawn; │ │ (audit / cache / hash-chain) │ │
 
-│ │ stream_* TBD) │ │ — in-process │ │
+│ │ stream\_\* TBD) │ │ — in-process │ │
 
 │ └────────┬────────┘ └──────────────┬───────────────┘ │
 
@@ -184,7 +184,7 @@ memory_recall · search · execute
 
 notify · stream_read · memory_ingest
 
-+ adapter-exposed upstream tools
+- adapter-exposed upstream tools
 
 └─ fetch(clawql-inference) for every model turn
 
@@ -378,7 +378,7 @@ await this.ctx.storage.put("ws_intent", { ...intent, backoffMs: 1_000 });
 
 } catch {
 
-const next = Math.min((intent.backoffMs ?? 1_000) * 2, 60_000);
+const next = Math.min((intent.backoffMs ?? 1_000) \* 2, 60_000);
 
 await this.ctx.storage.put("ws_intent", { ...intent, backoffMs: next });
 
@@ -680,7 +680,7 @@ Behavior
 
 Append model
 
-SQLite rows keyed by monotonic worm:* / event tables; never update-in-place for audit rows
+SQLite rows keyed by monotonic worm:\* / event tables; never update-in-place for audit rows
 
 Replication
 
@@ -1102,7 +1102,7 @@ Role in Streams
 
 clawql-streams
 
-Coordination: subscriptions, filter, spawn, MCP stream_* (planned)
+Coordination: subscriptions, filter, spawn, MCP stream\_\* (planned)
 
 clawql-core
 
@@ -1114,7 +1114,7 @@ Out of process — fetch(CLAWQL_MCP_ADAPTER_URL) REST POST /\{tool\}
 
 clawql-mcp / Core
 
-Out of process — fetch(CLAWQL_MCP_URL) Streamable HTTP for search/execute/memory_*
+Out of process — fetch(CLAWQL*MCP_URL) Streamable HTTP for search/execute/memory*\*
 
 clawql-inference
 
@@ -1158,7 +1158,7 @@ clawql-streams coordination (planned package; Lab 5b skeleton today)
 
 │ └─ clawql-core/streams-slim (in-process audit/cache/hash-chain)
 
-├─ fetch → clawql-mcp (search / execute / memory_*)
+├─ fetch → clawql-mcp (search / execute / memory\_\*)
 
 ├─ fetch → mcp-api-adapter (optional REST tool surface)
 

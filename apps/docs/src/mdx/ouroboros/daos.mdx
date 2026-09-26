@@ -730,7 +730,7 @@ All parameters sourced from the active Manifest Policy Block. Presets provide va
 
 Mean pairwise cosine distance across all agents sharing an embeddingModelVersion:
 
-NSV = (1 / (n * (n-1))) * sum over i != j of (1 - cos(theta_i,j))
+NSV = (1 / (n _ (n-1))) _ sum over i != j of (1 - cos(theta_i,j))
 
 A cheap scalar tripwire for swarm-level clustering. Convergence threshold nsv_crit is calibrated per embedding model via a baseline dispersion run rather than fixed universally, because embedding spaces are anisotropic and a single cutoff does not transfer reliably across models. Calibration validity is bounded by the diversity of the calibration run itself.
 
@@ -760,11 +760,11 @@ VariancePenalty_i = 1 - min(1.0, position_variance_i / variance_ceiling)
 
 IsolationScale_i = contribution_isolation_score_i [if enabled, else 1.0]
 
-delta_D_i = delta_d * VariancePenalty_i * IsolationScale_i [if AccrueDividend_i]
+delta_D_i = delta_d _ VariancePenalty_i _ IsolationScale_i [if AccrueDividend_i]
 
 D_i_new = min(1.0, decay(D_i_old, lambda_d) + delta_D_i)
 
-w_floor_i = min(W_FLOOR_CEILING, w_min + kappa * D_i_new)
+w_floor_i = min(W_FLOOR_CEILING, w_min + kappa \* D_i_new)
 
 Reward hacking mitigations:
 

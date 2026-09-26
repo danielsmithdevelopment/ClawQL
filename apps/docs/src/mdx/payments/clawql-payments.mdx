@@ -10,7 +10,7 @@ Status: Shipped foundation (July 2026)
 
 Package: packages/clawql-payments
 
-CLI: clawql payments *
+CLI: clawql payments \*
 
 clawql-payments is ClawQL's unified payments layer for human fiat and agent micropayments.
 
@@ -120,7 +120,7 @@ MCP JSON-RPC payment errors
 
 ✅
 
--32042/-32043 when CLAWQL_MPP_MCP_JSONRPC=1 (default: tool-result _meta)
+-32042/-32043 when CLAWQL_MPP_MCP_JSONRPC=1 (default: tool-result \_meta)
 
 Extended finance provider adverts in offers[]
 
@@ -180,17 +180,17 @@ Payments MCP tools (payout / ramp / offramp / compensation)
 
 ✅
 
-CLAWQL_PAYMENTS_MCP_TOOLS=1; optional AP2 gate; includes agent_compensation_*
+CLAWQL*PAYMENTS_MCP_TOOLS=1; optional AP2 gate; includes agent_compensation*\*
 
 Prepaid credits + bank top-up + P2P transfer
 
-✅*
+✅\*
 
 Grant ledger + FC/ACH top-up; P2P transfer self-hosted opt-in (CLAWQL_CREDITS_P2P_ENABLED=1) — credits-ach.md / compliance
 
 Agent compensation (credits + 2PC cash-out)
 
-✅*
+✅\*
 
 AgentCompensationService — self-hosted opt-in (CLAWQL_COMPENSATION_ENABLED=1); off on managed
 
@@ -282,7 +282,7 @@ clawql-payments
 
 ├── audit/ Hash-chained append-only JSONL + integrity verify
 
-└── cli/ clawql payments * implementations
+└── cli/ clawql payments \* implementations
 
 See also accounting-and-tax.md (subledger export + tax ownership), payouts-ramp.md, cloudflare-wallets.md, credits-ach.md, agent-compensation.md, and sgdop-coordinator-compensation-bridge.md (CompensationStagingPort shipped; Coordinator integration still roadmap).
 
@@ -438,7 +438,7 @@ Example payments.json:
 
 "meterEventName": "clawql_inference_calls",
 
-"webhookSecret": "whsec_..."
+"webhookSecret": "whsec\_..."
 
 },
 
@@ -618,7 +618,7 @@ export STRIPE_METER_EVENT_NAME=clawql_inference_calls
 
 # 1. Store webhook secret locally (never commit)
 
-clawql payments stripe setup --webhook-secret whsec_...
+clawql payments stripe setup --webhook-secret whsec\_...
 
 # 2. Create customer (persists customerId to payments.json)
 
@@ -966,7 +966,7 @@ moonpay
 
 moonpay or transak
 
-MOONPAY_API_KEY / TRANSAK_*
+MOONPAY*API_KEY / TRANSAK*\*
 
 —
 
@@ -988,7 +988,7 @@ CLAWQL_PAYMENTS_MCP_TOOLS
 
 off
 
-Register payout / ramp / offramp / agent_compensation_* MCP tools
+Register payout / ramp / offramp / agent*compensation*\* MCP tools
 
 CLAWQL_PAYMENTS_MCP_REQUIRE_AP2
 
@@ -1452,7 +1452,7 @@ CLAWQL_PAYMENTS_DATABASE_URL
 
 Postgres connection string when AUDIT_STORE=postgres
 
-CLAWQL_PAYMENTS_DB_*
+CLAWQL*PAYMENTS_DB*\*
 
 —
 
@@ -1726,7 +1726,7 @@ clawql payments usage report --month 2026-07
 
 # Stripe
 
-clawql payments stripe setup --webhook-secret whsec_...
+clawql payments stripe setup --webhook-secret whsec\_...
 
 clawql payments stripe customer create --email user@acme.com
 

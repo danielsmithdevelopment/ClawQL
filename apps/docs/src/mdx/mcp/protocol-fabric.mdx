@@ -6,7 +6,7 @@ ClawQL Protocol Fabric
 
 Status: Shipped (loop proven August 2026)
 
-Depends on: ClawQL Core (search / execute / memory_*) · mcp-api-adapter @0.6+ · mcp-grpc-transport
+Depends on: ClawQL Core (search / execute / memory\_\*) · mcp-api-adapter @0.6+ · mcp-grpc-transport
 
 Smoke: scripts/dev/smoke-protocol-fabric-loop.sh · design notes in protocol-fabric-loop-benchmark.md
 
@@ -80,7 +80,7 @@ WebSocket event
 
 → mcp-api-adapter (/ws tools/call)
 
-→ clawql-mcp execute(cli__fabric_event__run)
+→ clawql-mcp execute(cli**fabric_event**run)
 
 → gen-cli subprocess
 
@@ -88,7 +88,7 @@ WebSocket event
 
 → clawql-mcp memory_ingest
 
-→ vault note with marker FABRIC_LOOP_*
+→ vault note with marker FABRIC*LOOP*\*
 
 → memory_recall finds the marker
 
@@ -96,7 +96,7 @@ What that proves in plain language:
 
 WS → MCP — a WebSocket client calls execute through the adapter without speaking MCP itself.
 
-MCP → CLI — Core runs a CLI custom source (cli__fabric_event__run) that shells out to gen-cli.
+MCP → CLI — Core runs a CLI custom source (cli**fabric_event**run) that shells out to gen-cli.
 
 CLI → REST → MCP — gen-cli POSTs adapter REST /memory_ingest; the adapter translates that back into the MCP memory_ingest tool.
 
@@ -134,7 +134,7 @@ WS tools/call execute
 
 ▼
 
-clawql execute(cli__fabric_event__run)
+clawql execute(cli**fabric_event**run)
 
 │ spawn
 
@@ -166,7 +166,7 @@ Adapter /healthz lists websocket in surfaces
 
 Two distinct WS execute calls return ok: true
 
-memory_recall finds the FABRIC_LOOP_* markers
+memory*recall finds the FABRIC_LOOP*\* markers
 
 Exit 0
 
@@ -182,7 +182,7 @@ WebSocket message shape
 
 "arguments": {
 
-"operationId": "cli__fabric_event__run",
+"operationId": "cli**fabric_event**run",
 
 "args": {
 

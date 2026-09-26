@@ -126,7 +126,7 @@ clawql-cellrt binary (Rust, static, ~50–80 MB target)
 
 │ │ └─ clawql-core.wasm (Effect-TS via ComponentizeJS + jco)
 
-│ │ ├─ search · execute · memory_* · audit · cache
+│ │ ├─ search · execute · memory\_\* · audit · cache
 
 │ │ ├─ clawql-ontology (structured filter queries)
 
@@ -622,7 +622,7 @@ No membership list. No control plane. Nodes write/renew leases under nodes/\{nod
 
 9.2 Cell ownership (compare-and-swap)
 
-Conditional put on leases/\{cell_id\} (S3 If-None-Match: * / R2 equivalent). Lease TTL ~30s with renewal. On node death, another node acquires the lease, rebuilds SQLite from LTX segments, and resumes.
+Conditional put on leases/\{cell_id\} (S3 If-None-Match: \* / R2 equivalent). Lease TTL ~30s with renewal. On node death, another node acquires the lease, rebuilds SQLite from LTX segments, and resumes.
 
 Adding a node: point it at the same bucket. No join command. No membership list.
 
@@ -688,7 +688,7 @@ cargo build --release --target x86_64-unknown-linux-musl
 
 cosign verify-blob \
 
---certificate-identity-regexp ".*clawql-cellrt.*" \
+--certificate-identity-regexp "._clawql-cellrt._" \
 
 --certificate-oidc-issuer https://token.actions.githubusercontent.com \
 

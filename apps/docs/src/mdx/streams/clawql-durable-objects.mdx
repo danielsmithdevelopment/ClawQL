@@ -82,7 +82,7 @@ No unrestricted filesystem (DO storage / SQLite only)
 
 HTTP egress only to approved model endpoints (policy manifest via inference gateway)
 
-Virtual key required for every /v1/* call
+Virtual key required for every /v1/\* call
 
 PAL routing + semantic cache + Langfuse/OTel as on the standalone gateway
 
@@ -168,21 +168,21 @@ export_status
 
 pending / flushed / failed + destination
 
-On celld, append-only worm:* keys/tables in the same SQLite are replicated via LTX and constitute the forensic trail.
+On celld, append-only worm:\* keys/tables in the same SQLite are replicated via LTX and constitute the forensic trail.
 
 8. Session close sequence
 
 1. Agent loop exits (converged | maxTurns | budget | error | timeout)
 
-2. TrainingDataSidecar: finalize RTP Verdict node; wrap OBT; export
+1. TrainingDataSidecar: finalize RTP Verdict node; wrap OBT; export
 
-3. DeductionService.capture(actual) or release on failure (if held)
+1. DeductionService.capture(actual) or release on failure (if held)
 
-4. AuditSidecar: DO_DESTROYED + spend summary (storage.put → LTX on celld)
+1. AuditSidecar: DO_DESTROYED + spend summary (storage.put → LTX on celld)
 
-5. InferenceSidecar: expire virtual key
+1. InferenceSidecar: expire virtual key
 
-6. Clear sensitive SQLite; DO stub destroys / becomes reclaimable
+1. Clear sensitive SQLite; DO stub destroys / becomes reclaimable
 
 Order matters: export and capture before key expiry so the last inference metadata is still attributable; key expiry before destroy so no orphan process can reuse the binding.
 

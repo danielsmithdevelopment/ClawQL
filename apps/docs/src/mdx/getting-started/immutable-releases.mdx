@@ -134,9 +134,9 @@ clawql-release publish --tag v0.0.0-local \
 
 # Print tx id from the publish output, then:
 
-clawql-release verify local_&#x3C;…>
+clawql-release verify local\_&#x3C;…>
 
-clawql-release pull local_&#x3C;…> --rift
+clawql-release pull local\_&#x3C;…> --rift
 
 One-shot CI/local script (same flow GitHub Actions runs):
 
@@ -408,7 +408,7 @@ Every publish writes releases/&#x3C;tag>/manifest.json (schema v0.2) including:
 
 repository.commit + dirty flag
 
-artifacts.* / images.* with SHA-256 (+ Ed25519 signatures)
+artifacts._ / images._ with SHA-256 (+ Ed25519 signatures)
 
 merkleRoot over those leaves
 

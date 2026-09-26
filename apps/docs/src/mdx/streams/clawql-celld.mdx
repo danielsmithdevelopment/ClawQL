@@ -46,9 +46,9 @@ celld deploy + in-place adoption; pair with POST /reload on internal listener fo
 
 Health endpoint moved to /.well-known/celld/health
 
-Update load-balancer and K8s readiness probes (was /__celld/health)
+Update load-balancer and K8s readiness probes (was /\_\_celld/health)
 
-Operator CLI — celld cell list, celld kv *, celld queue *
+Operator CLI — celld cell list, celld kv _, celld queue _
 
 Fleet smoke: list cells after webhook traffic; inspect KV namespaces used by bindings
 
@@ -438,7 +438,7 @@ buffer_stats
 
 pending counts for ambient delivery
 
-worm:*
+worm:\*
 
 subscription-level reactive audit rows
 
@@ -468,7 +468,7 @@ export_status
 
 pending / flushed / failed
 
-worm:*
+worm:\*
 
 append-only forensic trail
 
@@ -486,11 +486,11 @@ celld deploy (esbuild)
 
 └─ Worker + DO classes
 
-├─ clawql-streams (router, filter, stream_* MCP) — planned package
+├─ clawql-streams (router, filter, stream\_\* MCP) — planned package
 
 ├─ clawql-core/streams-slim (audit, cache, hash-chain) — Workers-safe entry
 
-├─ fetch(CLAWQL_MCP_URL) → clawql-mcp search/execute/memory_* (Streamable HTTP)
+├─ fetch(CLAWQL*MCP_URL) → clawql-mcp search/execute/memory*\* (Streamable HTTP)
 
 └─ fetch(CLAWQL_MCP_ADAPTER_URL) → mcp-api-adapter REST POST /{tool}
 
@@ -500,7 +500,7 @@ code ≤ 64 MiB
 
 In-process today: AgentSessionDO imports clawql-core/streams-slim for hash-chained audit + session cache. Example: docs/examples/streams-celld.
 
-Out-of-process today: search / execute / memory_* via Streamable HTTP MCP (CLAWQL_MCP_URL). Optional protocol-fabric REST via CLAWQL_MCP_ADAPTER_URL (POST /\{tool\} on mcp-api-adapter). Inference via fetch(INFERENCE_URL). Do not embed full clawql-api, clawql-memory, mcp-api-adapter, or the full clawql-core barrel (webmcp-draft / node:fs).
+Out-of-process today: search / execute / memory\_\* via Streamable HTTP MCP (CLAWQL_MCP_URL). Optional protocol-fabric REST via CLAWQL_MCP_ADAPTER_URL (POST /\{tool\} on mcp-api-adapter). Inference via fetch(INFERENCE_URL). Do not embed full clawql-api, clawql-memory, mcp-api-adapter, or the full clawql-core barrel (webmcp-draft / node:fs).
 
 Why not “full core” inside the cell?
 
@@ -606,7 +606,7 @@ celld dev --port 9876
 
 celld dev uses a persistent local object store under .celld/dev (add .celld/ to .gitignore). It rebuilds on source changes without Docker or cloud credentials. The internal operator API stays on loopback only.
 
-Readiness during fleet rollout: probe GET /.well-known/celld/health (v0.4.0+), not /__celld/health.
+Readiness during fleet rollout: probe GET /.well-known/celld/health (v0.4.0+), not /\_\_celld/health.
 
 7.2 Configure object storage
 
@@ -880,7 +880,7 @@ One application per fleet — no multi-tenant scheduler; isolate ClawQL orgs wit
 
 Crypto gaps — no deriveKey; design around digest/HMAC/AES-GCM/sign.
 
-Silent Node stubs — importing unimplemented node:* may not fail; lint/ban child_process, http, net in the DO package.
+Silent Node stubs — importing unimplemented node:\* may not fail; lint/ban child_process, http, net in the DO package.
 
 Streaming fetch retry — v0.4.0 peer tunnel does not retry after body transmission starts; use stable operation IDs.
 

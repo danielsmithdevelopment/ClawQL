@@ -6,7 +6,7 @@ Package: packages/clawql-data — DataPlugin
 
 Structured SQL via pluggable data engine plugins (CLAWQL_DATA_ENGINE, default duckdb).
 
-Effect-TS interior: driver / inventory IO → DataEnginePlugin (Effect.gen) → DataEngineService Layer → data_*Program / runDataEffect. Promise facades remain only at MCP handlers and ClawqlDataStore (lab CLIs).
+Effect-TS interior: driver / inventory IO → DataEnginePlugin (Effect.gen) → DataEngineService Layer → data\_\*Program / runDataEffect. Promise facades remain only at MCP handlers and ClawqlDataStore (lab CLIs).
 
 MCP tools
 
@@ -14,6 +14,6 @@ ToolPurposedata_queryRead-only SQL (SELECT / WITH / DESCRIBE / SHOW / SUMMARIZE)
 
 Enable
 
-EnvDefaultEffectCLAWQL_ENABLE_DATA=1offRegister DataPlugin and the data_* toolsCLAWQL_DATA_PATHvault lab/matters.duckdb or :memory:Backend database path (engine-specific)CLAWQL_DATA_ENGINEduckdbRegistered engine plugin id (registerDataEngine)
+EnvDefaultEffectCLAWQL*ENABLE_DATA=1offRegister DataPlugin and the data*\* toolsCLAWQL_DATA_PATHvault lab/matters.duckdb or :memory:Backend database path (engine-specific)CLAWQL_DATA_ENGINEduckdbRegistered engine plugin id (registerDataEngine)
 
 Helm: enableData: true.

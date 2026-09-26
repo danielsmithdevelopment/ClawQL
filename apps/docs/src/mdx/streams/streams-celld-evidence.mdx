@@ -26,7 +26,7 @@ Yes
 
 Unit tests + webhook smoke assertions
 
-Audit LTX flush (audit:ring, audit:seq:*)
+Audit LTX flush (audit:ring, audit:seq:\*)
 
 Yes (DO storage)
 
@@ -68,7 +68,7 @@ Manual
 
 docs/examples/idp/streams-celld/README.md
 
-clawql-streams package / stream_* tools
+clawql-streams package / stream\_\* tools
 
 Not shipped
 
@@ -128,7 +128,7 @@ STREAMS_CELLD_SMOKE_REQUIRED=1 bash docs/examples/streams-celld/scripts/full-sta
 
 Boots real clawql-mcp-http with CLAWQL_WORM_ENABLED=1 + CLAWQL_WORM_HTTP_PORT (host WORMAuditTrail HTTP), real mcp-api-adapter, points celld at MCP + adapter + CLAWQL_AUDIT_WORM_URL, and asserts:
 
-search / memory_* / adapter REST / inference health
+search / memory\_\* / adapter REST / inference health
 
 spawn writes SESSION_START via audit.compliance (clawql-audit-http)
 
@@ -166,7 +166,7 @@ CI job Streams celld full-stack (permanent)
 
 Doc sync
 
-After editing docs/streams/clawql-*.md, regenerate site pages:
+After editing docs/streams/clawql-\*.md, regenerate site pages:
 
 node apps/docs/scripts/sync-clawql-streams-doc.mjs
 
@@ -204,7 +204,7 @@ Continuity
 
 Cell session bookkeeping (ring flush)
 
-DO audit:ring / audit:seq:* → celld LTX
+DO audit:ring / audit:seq:\* → celld LTX
 
 Snapshot only — ring resets to genesis on new isolate
 
@@ -214,7 +214,7 @@ Host clawql-audit via POST \{CLAWQL_AUDIT_WORM_URL\}/entries
 
 Tip-loaded WORMAuditTrail (no fork on host restart)
 
-MCP tool hops (search / execute / memory_*) when CLAWQL_WORM_ENABLED=1 on host
+MCP tool hops (search / execute / memory\_\*) when CLAWQL_WORM_ENABLED=1 on host
 
 Same host process WORM (dual-write in MCP wrap)
 

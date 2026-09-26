@@ -404,7 +404,7 @@ Cloud provider replays old trail
 
 Partial (timestamps)
 
-+ session binding to event hash
+- session binding to event hash
 
 TEE binary tampered
 
@@ -430,15 +430,15 @@ Out of scope / known limitation: a threat actor who controls the display path (c
 
 1. Binary attestation (Cosign + SEV-SNP)
 
-2. WASM capability sandbox
+1. WASM capability sandbox
 
-3. Attestation-gated virtual keys
+1. Attestation-gated virtual keys
 
-4. WORM audit (LTX, RPO=0)
+1. WORM audit (LTX, RPO=0)
 
-5. QR air-gap transport ← this document
+1. QR air-gap transport ← this document
 
-6. GPU confidential computing
+1. GPU confidential computing
 
 Each link removes one trust assumption. Together they remove the operator from the trust model — a regulated customer can verify the chain independently.
 

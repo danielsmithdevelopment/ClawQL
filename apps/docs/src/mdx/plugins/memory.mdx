@@ -38,7 +38,7 @@ CopyCopied!
 
 SourceWhat it contributesvaultKeyword + wikilink BFS over Obsidian MarkdownvectorEmbedding KNN seeds (when vector backend + API key configured)codegraphStructural symbol hits (codeGraphHits + normalized hits)pageindexTerm-overlap heading nodes from stored PageIndex treesonyxEnterprise citations via injected Onyx search
 
-Defaults when sources is omitted: vault + vector, plus hybrids from env (CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH, _PAGEINDEX, _ONYX) or includeCodeGraph: true.
+Defaults when sources is omitted: vault + vector, plus hybrids from env (CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH, \_PAGEINDEX, \_ONYX) or includeCodeGraph: true.
 
 Response:
 
@@ -72,7 +72,7 @@ FlagEffectrebuild.pageindexRebuild PageIndex for the written note (or set CLAWQL
 
 Enable / disable
 
-EnvDefaultEffectCLAWQL_ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory + PageIndex + code graph toolsCLAWQL_ENABLE_PAGEINDEX=0onHide pageindex_* only (memory ingest/recall remain)CLAWQL_ENABLE_CODEGRAPH=1offRegister codegraph_* tools (structural code graph)CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1offDefault sources includes codegraphCLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1offDefault sources includes pageindexCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1offRebuild PageIndex after every successful ingest
+EnvDefaultEffectCLAWQL*ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory + PageIndex + code graph toolsCLAWQL_ENABLE_PAGEINDEX=0onHide pageindex*_ only (memory ingest/recall remain)CLAWQL*ENABLE_CODEGRAPH=1offRegister codegraph*_ tools (structural code graph)CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1offDefault sources includes codegraphCLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1offDefault sources includes pageindexCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1offRebuild PageIndex after every successful ingest
 
 Prerequisites
 

@@ -280,7 +280,7 @@ minimumNecessary should be respected in onRecallFilter. If it is true and your f
 
 1.4 normalizeOperationId — Algorithm and Edge Cases
 
-All MCP tool operation IDs follow the format kind__provider__operation using double underscores as separators.
+All MCP tool operation IDs follow the format kind**provider**operation using double underscores as separators.
 
 // From clawql-core
 
@@ -310,7 +310,7 @@ underwriting
 
 createDealRoom
 
-lending__underwriting__createDealRoom
+lending**underwriting**createDealRoom
 
 legal
 
@@ -318,7 +318,7 @@ contracts
 
 clause_extract
 
-legal__contracts__clause_extract
+legal**contracts**clause_extract
 
 healthcare
 
@@ -326,13 +326,13 @@ fhir
 
 parse_r4
 
-healthcare__fhir__parse_r4
+healthcare**fhir**parse_r4
 
 Edge cases:
 
 Single underscores within any segment are preserved as-is. clause_extract stays clause_extract.
 
-Double underscores within a segment are escaped to __ESC__ before the ID is constructed. If your operation name is create__room, it becomes create__ESC__room in the output, producing kind__provider__create__ESC__room. This is the only safe way to include double underscores in a segment. In practice: do not use double underscores in segment names. It is avoidable and the escaping, while correct, is ugly.
+Double underscores within a segment are escaped to **ESC** before the ID is constructed. If your operation name is create**room, it becomes create**ESC**room in the output, producing kind**provider**create**ESC\_\_room. This is the only safe way to include double underscores in a segment. In practice: do not use double underscores in segment names. It is avoidable and the escaping, while correct, is ugly.
 
 Operation IDs are case-sensitive. createDealRoom and createdealroom are different tools. Use camelCase for the operation segment and lowercase for kind and provider segments.
 
@@ -456,7 +456,7 @@ It may only import from its own sub-packages and approved third-party libraries.
 
 Why: It is published separately under MIT for use cases that do not need the full platform. Introducing a ClawQL dependency breaks every external consumer.
 
-Enforcement: Separate tsconfig.json with paths configured to exclude all @clawql/* imports. CI validates the published package can be installed and used without any other ClawQL package present.
+Enforcement: Separate tsconfig.json with paths configured to exclude all @clawql/\* imports. CI validates the published package can be installed and used without any other ClawQL package present.
 
 Rule 6: clawql-lending declares clawql-blockchain as an optional peer dependency only.
 
@@ -474,13 +474,13 @@ When a vertical needs data from another vertical, the correct pattern is:
 
 const result =
 
-yield *
+yield \*
 
 ClawQLApi.pipe(
 
 Effect.flatMap((api) =>
 
-api.execute('legal__contracts__clause_extract', {
+api.execute('legal**contracts**clause_extract', {
 
 documentId,
 
@@ -512,11 +512,11 @@ The execute call routes through clawql-api, which validates the elevated ATR cla
 
 // ✅ Allowed: receiving a horizontal capability via Effect Context
 
-const memory = yield* MemoryService;
+const memory = yield\* MemoryService;
 
 // ✅ Allowed: calling another vertical via the gateway
 
-const result = yield* api.execute("legal__contracts__clause_extract", params);
+const result = yield\* api.execute("legal**contracts**clause_extract", params);
 
 // ❌ Prohibited: importing another vertical
 
@@ -560,15 +560,15 @@ claims: ATRClaims,
 
 }
 
->() {}
+> () {}
 
 // Using a service in a vertical
 
-const myEffect = Effect.gen(function* () {
+const myEffect = Effect.gen(function\* () {
 
-const memory = yield* MemoryService
+const memory = yield\* MemoryService
 
-const results = yield* memory.recall({ query: 'client ABC123' }, claims)
+const results = yield\* memory.recall({ query: 'client ABC123' }, claims)
 
 return results
 
@@ -592,11 +592,11 @@ ClawQLApi | MemoryService | DocumentsService
 
 > = Layer.effectDiscard(
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-const api = yield* ClawQLApi
+const api = yield\* ClawQLApi
 
-yield* api.registerPlugin({
+yield\* api.registerPlugin({
 
 id: 'lending',
 
@@ -604,11 +604,11 @@ version: '1.0.0',
 
 onRegister: (api) =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-yield* api.registerTools(lendingTools)
+yield\* api.registerTools(lendingTools)
 
-yield* api.registerSpecs(lendingRequiredSpecs)
+yield\* api.registerSpecs(lendingRequiredSpecs)
 
 }),
 
@@ -634,15 +634,15 @@ Required providers are expressed in the Layer type signature. Optional providers
 
 // Optional blockchain provider — lending works without it
 
-const blockchainOpt = yield * Effect.serviceOption(BlockchainService)
+const blockchainOpt = yield \* Effect.serviceOption(BlockchainService)
 
 if (Option.isSome(blockchainOpt)) {
 
-yield * blockchainOpt.value.tokenize(asset)
+yield \* blockchainOpt.value.tokenize(asset)
 
 } else {
 
-yield * Effect.logWarning('Blockchain not available; skipping tokenization')
+yield \* Effect.logWarning('Blockchain not available; skipping tokenization')
 
 }
 
@@ -658,7 +658,7 @@ const MemoryTestLayer = Layer.succeed(MemoryService, {
 
 ingest: (node) => Effect.succeed(void 0),
 
-recall: (_query, _claims) =>
+recall: (\_query, \_claims) =>
 
 Effect.succeed([
 
@@ -684,7 +684,7 @@ createdAt: Date.now(),
 
 const DocumentsTestLayer = Layer.succeed(DocumentsService, {
 
-process: (_input) =>
+process: (\_input) =>
 
 Effect.succeed({
 
@@ -718,11 +718,11 @@ LendingLive,
 
 it('creates a deal room', () =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-const api = yield* ClawQLApi
+const api = yield\* ClawQLApi
 
-const result = yield* api.execute('lending__underwriting__createDealRoom', {
+const result = yield\* api.execute('lending**underwriting**createDealRoom', {
 
 clientId: 'ABC123',
 
@@ -746,7 +746,7 @@ All errors in ClawQL packages must use the typed error factories from clawql-cor
 
 // Use a predefined error kind
 
-yield *
+yield \*
 
 Effect.fail(
 
@@ -764,7 +764,7 @@ message: 'Connection pool exhausted',
 
 // Define a vertical-specific error kind (register it in your vertical's onRegister)
 
-yield *
+yield \*
 
 Effect.fail(
 
@@ -792,11 +792,11 @@ input: DocumentInput,
 
 ): Stream.Stream&#x3C;ProcessingStage, ClawQLError, DocumentsService> =>
 
-Stream.gen(function* () {
+Stream.gen(function\* () {
 
-const docs = yield* DocumentsService
+const docs = yield\* DocumentsService
 
-yield* Stream.fromEffect(
+yield\* Stream.fromEffect(
 
 docs
 
@@ -806,7 +806,7 @@ docs
 
 )
 
-yield* Stream.fromEffect(
+yield\* Stream.fromEffect(
 
 docs
 
@@ -992,13 +992,13 @@ context: ToolContext, // provided by clawql-api; contains claims, requestId, etc
 
 ): Effect.Effect&#x3C;DealRoom, LendingError, MemoryService | DocumentsService> =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
 // Validate business rules
 
 if (input.amount &#x3C;= 0) {
 
-yield* Effect.fail(
+yield\* Effect.fail(
 
 makeError('LENDING_INVALID_AMOUNT', { amount: input.amount }),
 
@@ -1008,11 +1008,11 @@ makeError('LENDING_INVALID_AMOUNT', { amount: input.amount }),
 
 // Use injected services
 
-const memory = yield* MemoryService
+const memory = yield\* MemoryService
 
 // Record the operation with full provenance
 
-yield* memory.ingest({
+yield\* memory.ingest({
 
 id: generateULID(),
 
@@ -1076,9 +1076,9 @@ return validated
 
 onIngestHook: (node, context) =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-const validated = yield* validateNode(node)
+const validated = yield\* validateNode(node)
 
 return validated
 
@@ -1094,7 +1094,7 @@ console.log('Processing node:', node.id)
 
 // ✅ Correct
 
-yield * Effect.logInfo('Processing node', { nodeId: node.id })
+yield \* Effect.logInfo('Processing node', { nodeId: node.id })
 
 Effect.logInfo, Effect.logWarning, and Effect.logError produce structured log entries that appear in SigNoz with the correct trace context. console.log produces unstructured output that cannot be correlated with traces or filtered by tenant.
 
@@ -1158,11 +1158,11 @@ Providers are automatically wrapped in a circuit breaker by clawql-api. The defa
 
 export type ProviderError =
 
-| { _tag: 'TransientError'; message: string } // counts toward circuit breaker
+| { \_tag: 'TransientError'; message: string } // counts toward circuit breaker
 
-| { _tag: 'PermanentError'; message: string } // does not trip circuit breaker
+| { \_tag: 'PermanentError'; message: string } // does not trip circuit breaker
 
-| { _tag: 'AuthError'; message: string } // does not trip circuit breaker
+| { \_tag: 'AuthError'; message: string } // does not trip circuit breaker
 
 5.4 Lifecycle via Effect Layers
 
@@ -1170,11 +1170,11 @@ export const MyProviderLive = Layer.scoped(
 
 MyProviderService,
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
 // Acquire resources
 
-const connection = yield* Effect.acquireRelease(
+const connection = yield\* Effect.acquireRelease(
 
 connectToMyProvider(config),
 
@@ -1222,7 +1222,7 @@ Before tool output is returned: If your tool handler produces output containing 
 
 const redacted =
 
-yield *
+yield \*
 
 RedactionService.pipe(
 
@@ -1250,7 +1250,7 @@ const content = serializeReport(report)
 
 const root = computeMerkleRoot(content)
 
-yield *
+yield \*
 
 auditLog.record({
 
@@ -1268,7 +1268,7 @@ timestamp: Date.now(),
 
 })
 
-yield * storageProvider.write(path, content)
+yield \* storageProvider.write(path, content)
 
 The Merkle root must be recorded before the write, not after. If the write fails, the audit record must be rolled back or marked as failed. Do not produce orphaned audit records that claim a write succeeded when it did not.
 
@@ -1280,7 +1280,7 @@ Verticals must not make their own access control decisions based on raw role or 
 
 const permitted =
 
-yield *
+yield \*
 
 PolicyService.pipe(
 
@@ -1300,7 +1300,7 @@ resource: { vertical: 'lending', tenantId: input.tenantId },
 
 if (!permitted) {
 
-yield *
+yield \*
 
 Effect.fail(
 

@@ -100,7 +100,7 @@ Important facts:
 
 - Docs: https://docs.clawql.com/agent-setup https://docs.clawql.com/quickstart
 
-Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/*-onboarding.md.
+Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/\*-onboarding.md.
 
 When done, summarize: home path, secrets vault path, MCP transport, vendor tested, memory vault status.
 
@@ -322,7 +322,7 @@ Facts:
 
 - There is no local ~/.ClawQL on my phone; durable memory lives in object storage (R2/S3/GCS).
 
-- Sync credentials are in Cursor Cloud Secrets (CLAWQL_SYNC_* + CLAWQL_R2_ACCOUNT_ID).
+- Sync credentials are in Cursor Cloud Secrets (CLAWQL*SYNC*\* + CLAWQL_R2_ACCOUNT_ID).
 
 - Provider API tokens are in Secrets or CLAWQL_HOME/vault/providers.json — never in mcp.json or git.
 
@@ -334,9 +334,9 @@ Workflow:
 
 3. Before ending the run: memory_sync { "direction": "auto" } to pull then push the team bucket.
 
-If sync is not configured, say so and list which CLAWQL_SYNC_* secrets are missing.
+If sync is not configured, say so and list which CLAWQL*SYNC*\* secrets are missing.
 
-Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/*-onboarding.md.
+Do not invent API responses. On auth failure, point to vault/providers.json or docs/providers/\*-onboarding.md.
 
 Docs: https://docs.clawql.com/agent-setup#cursor-ios-cloud-agent https://docs.clawql.com/getting-started/for-teams#team-vault-sync
 
@@ -356,7 +356,7 @@ CLAWQL_SYNC_BUCKET, prefix, and R2/S3/GCS credentials in dashboard Secrets
 
 execute auth failures
 
-Provider keys in vault/providers.json or matching CLAWQL_* env secrets
+Provider keys in vault/providers.json or matching CLAWQL\_\* env secrets
 
 MCP tools missing
 
@@ -370,7 +370,7 @@ Local agent sandbox (macOS Seatbelt)
 
 Contain AI coding agents and subagents to company repo paths only — fail-closed, never fail-open.
 
-The Matt Shumer class incident (rm -rf after $HOME mis-expansion in a subagent) is blocked at the kernel: Seatbelt denies file-write* outside explicit allowed paths even when the shell command is wrong.
+The Matt Shumer class incident (rm -rf after $HOME mis-expansion in a subagent) is blocked at the kernel: Seatbelt denies file-write\* outside explicit allowed paths even when the shell command is wrong.
 
 One-liner setup
 
@@ -452,9 +452,9 @@ Profiles use Seatbelt (param "…") filled at launch via -D:
 
 (allow default)
 
-(deny file-write*)
+(deny file-write\*)
 
-(allow file-write*
+(allow file-write\*
 
 (subpath "/tmp")
 
@@ -462,7 +462,7 @@ Profiles use Seatbelt (param "…") filled at launch via -D:
 
 (subpath (param "CLAWQL_DIR")))
 
-(deny file-read*
+(deny file-read\*
 
 (subpath (param "HOME_SSH"))
 

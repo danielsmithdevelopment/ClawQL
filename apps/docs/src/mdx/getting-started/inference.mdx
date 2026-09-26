@@ -20,7 +20,7 @@ Use catalog models such as openrouter/deepseek/deepseek-chat or openrouter/qwen/
 
 Point clients at clawql-inference (OPENAI_BASE_URL / gateway /v1) — same OpenAI-compatible API, with ClawQL memory and policy in front.
 
-That path is intentional: bring your aggregator key first, then add direct BYOK (deepseek/*, anthropic/*, openai/*, …) when you want to disintermediate OpenRouter for cost, latency, or residency.
+That path is intentional: bring your aggregator key first, then add direct BYOK (deepseek/_, anthropic/_, openai/\*, …) when you want to disintermediate OpenRouter for cost, latency, or residency.
 
 OpenBench CI defaults to this OpenRouter-first model so live benchmarks work with a single secret. See OpenBench GitHub Actions.
 
@@ -36,11 +36,11 @@ Drop-in OpenAI SDK / curl / coding-agent base URL
 
 /v1/models
 
-Credentialed catalog + clawql/* aliases
+Credentialed catalog + clawql/\* aliases
 
 OpenRouter (day-one)
 
-Use your existing OPENROUTER_API_KEY + openrouter/* models
+Use your existing OPENROUTER_API_KEY + openrouter/\* models
 
 Direct BYOK
 
@@ -78,7 +78,7 @@ clawql inference serve
 
 ▼ ▼ ▼
 
-openrouter/* DeepSeek / Groq / OpenAI / …
+openrouter/\* DeepSeek / Groq / OpenAI / …
 
 (existing aggregator key) (direct BYOK when ready)
 
@@ -284,7 +284,7 @@ Per-team budgets / rate limits; secrets stored hashed
 
 No noAuth on anything networked
 
-Require Bearer / virtual key on /v1/*
+Require Bearer / virtual key on /v1/\*
 
 Tenant from the token
 

@@ -314,7 +314,7 @@ Collaborative problem-solving protocol
 
 Publish — stuck Edge opens problems.\{id\}.open; VG initializes Valkey problem record
 
-Parallel execute — Edges pull Valkey state, avoid duplicate attempts, publish .attempt.*
+Parallel execute — Edges pull Valkey state, avoid duplicate attempts, publish .attempt.\*
 
 Breakthrough — first solver publishes .solved; peers stop; VG validates (Evaluator hook)
 

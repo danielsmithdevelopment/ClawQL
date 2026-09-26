@@ -1,4 +1,4 @@
-PluginsVerticals = presetsJuly 2026PluginsThe home for ClawQL extensions. Horizontal plugins are reusable capabilities. Domain verticals are presets that compose those capabilities (almost always Memory, usually Documents) and ship domain-tailored .cqw boilerplate ready to run or modify.Browse registryDomain verticalsPlugin modelHow to read this catalogHorizontal — shared building blocks (Memory, Documents, Automation, …). Use alone or let a vertical pull them in.Domain vertical — industry presets on the same ProviderPlugin / StandaloneSkillPlugin model (Phase-2 Plugin.onRegister is removed in 8.0). Each row lists what it composes and the domain boilerplate it ships — not a fork of Memory or Documents.MCP proxy / providers / core — policy chokepoints, spec merge stacks, and always-on gateway tools.Example: Lending composes Memory + Documents (+ Automation), then differentiates with LOS .cqw workflows. Filter the table by Domain verticals or share a URL with ?kind=vertical.Plugin registrySearchable, sortable table with kind/status filters and pagination — built for dozens today and hundreds as the catalog grows. Click a name for dedicated docs when available.Loading registry…Domain verticalsVerticals are plugin presets for an industry — not a separate product line. Enabling lending or legal composes the horizontal plugins that domain needs and ships tailored workflow starters.LayerWhat it isExampleHorizontal pluginsReusable capabilitiesMemory, Documents, AutomationDomain verticalPreset that composes horizontals + domain surfaceLending → Memory + Documents + LOS .cqwBoilerplateDifferentiated per verticalUnderwriting vs privilege-review vs claims startersVerticals never import other verticals — cross-domain work goes through clawql-api.execute()Disabled verticals have zero runtime footprintDomain .cqw (and related .cq*) starters should be tailored to that vertical — not generic copiesNo vertical packages are shipped yet — filter the registry by Domain verticals to compare planned presetsFilter registry: verticals.cqw workflowsContributor specPlugin modelConcepts and target architecture for becoming a plugin — including how horizontal packages and domain verticals register MCP tools.Synced from docs/design/clawql-plugin-model.md and the living table source docs/reference/clawql-plugin-registry.md. The interactive registry above is the site catalog; those files remain the repo ground truth for contributors.
+PluginsVerticals = presetsJuly 2026PluginsThe home for ClawQL extensions. Horizontal plugins are reusable capabilities. Domain verticals are presets that compose those capabilities (almost always Memory, usually Documents) and ship domain-tailored .cqw boilerplate ready to run or modify.Browse registryDomain verticalsPlugin modelHow to read this catalogHorizontal — shared building blocks (Memory, Documents, Automation, …). Use alone or let a vertical pull them in.Domain vertical — industry presets on the same ProviderPlugin / StandaloneSkillPlugin model (Phase-2 Plugin.onRegister is removed in 8.0). Each row lists what it composes and the domain boilerplate it ships — not a fork of Memory or Documents.MCP proxy / providers / core — policy chokepoints, spec merge stacks, and always-on gateway tools.Example: Lending composes Memory + Documents (+ Automation), then differentiates with LOS .cqw workflows. Filter the table by Domain verticals or share a URL with ?kind=vertical.Plugin registrySearchable, sortable table with kind/status filters and pagination — built for dozens today and hundreds as the catalog grows. Click a name for dedicated docs when available.Loading registry…Domain verticalsVerticals are plugin presets for an industry — not a separate product line. Enabling lending or legal composes the horizontal plugins that domain needs and ships tailored workflow starters.LayerWhat it isExampleHorizontal pluginsReusable capabilitiesMemory, Documents, AutomationDomain verticalPreset that composes horizontals + domain surfaceLending → Memory + Documents + LOS .cqwBoilerplateDifferentiated per verticalUnderwriting vs privilege-review vs claims startersVerticals never import other verticals — cross-domain work goes through clawql-api.execute()Disabled verticals have zero runtime footprintDomain .cqw (and related .cq\*) starters should be tailored to that vertical — not generic copiesNo vertical packages are shipped yet — filter the registry by Domain verticals to compare planned presetsFilter registry: verticals.cqw workflowsContributor specPlugin modelConcepts and target architecture for becoming a plugin — including how horizontal packages and domain verticals register MCP tools.Synced from docs/design/clawql-plugin-model.md and the living table source docs/reference/clawql-plugin-registry.md. The interactive registry above is the site catalog; those files remain the repo ground truth for contributors.
 
 title: ClawQL plugin model — horizontal packages and MCP tools
 
@@ -54,7 +54,7 @@ wrapMcpToolHandler (OpenTelemetry)
 
 logMcpToolShape (payload shape logging, no secrets)
 
-CLAWQL_ENABLE_* gates in registerTools()
+CLAWQL*ENABLE*\* gates in registerTools()
 
 Remaining in tools.ts: HITL and any tools not yet moved to a plugin package.
 
@@ -68,7 +68,7 @@ plugins: [
 
 PanguardProxyPlugin, // kind: mcp-proxy — policy chokepoint, no new tools
 
-MemoryPlugin, // memory_* + pageindex_* when enabled
+MemoryPlugin, // memory*\* + pageindex*\* when enabled
 
 DocumentsPlugin, // ingest_external_knowledge when enabled
 
@@ -92,7 +92,7 @@ Notes
 
 MemoryPlugin
 
-memory_ingest, memory_recall, pageindex_*
+memory*ingest, memory_recall, pageindex*\*
 
 PageIndex via clawql-pageindex; hide with CLAWQL_ENABLE_PAGEINDEX=0
 
@@ -122,9 +122,9 @@ version: '1.0.0',
 
 onRegister: (api) =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
-yield* api.registerMcpTool(
+yield\* api.registerMcpTool(
 
 'memory_ingest',
 
@@ -134,7 +134,7 @@ handleMemoryIngest,
 
 )
 
-yield* api.registerMcpTool(
+yield\* api.registerMcpTool(
 
 'memory_recall',
 
@@ -148,7 +148,7 @@ handleMemoryRecall,
 
 onTeardown: (api) =>
 
-Effect.gen(function* () {
+Effect.gen(function\* () {
 
 // Close pools, flush workers if any
 
@@ -172,7 +172,7 @@ onRegister
 
 Register MCP tools, internal ops, hooks
 
-MemoryPlugin adds memory_* tools
+MemoryPlugin adds memory\_\* tools
 
 onTeardown
 
@@ -238,7 +238,7 @@ Third-party npm plugins
 
 ❌ No public registration API
 
-Publish clawql-*-plugin; compose via Operator / env
+Publish clawql-\*-plugin; compose via Operator / env
 
 Effect Layer per horizontal package
 
@@ -254,7 +254,7 @@ Remaining (plugin work)
 
 runMemoryIngest, runMemoryRecall, vault, memory.db in clawql-memory
 
-✅ MemoryPlugin.onRegister registers memory_* tools; tools.ts calls registerPluginMcpTools()
+✅ MemoryPlugin.onRegister registers memory\_\* tools; tools.ts calls registerPluginMcpTools()
 
 runIngestExternalKnowledge in clawql-documents
 
@@ -280,7 +280,7 @@ Export a Plugin (and eventually an Effect Layer).
 
 Implement onRegister to register your MCP tools and declare requiredSpecs if you need Postgres, Onyx, etc.
 
-Document the Operator toggle or CLAWQL_ENABLE_* flag that includes or omits your Layer.
+Document the Operator toggle or CLAWQL*ENABLE*\* flag that includes or omits your Layer.
 
 Until Layer composition is stable, in-repo extensions should continue via bundled providers (providers/) and MCP tools in the monorepo. Third-party registration without forking tools.ts is explicitly roadmap, not current API.
 
@@ -292,7 +292,7 @@ Agent (stdio / HTTP / gRPC)
 
 ▼
 
-MCP transport (src/server*.ts, thin tools adapter)
+MCP transport (src/server\*.ts, thin tools adapter)
 
 │
 
