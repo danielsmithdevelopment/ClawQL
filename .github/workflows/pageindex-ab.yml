@@ -10,6 +10,10 @@
 #   .run-agent-lite       → freeze-candidate, limit=24, trials=1
 #   .run-hard-agent-lite  → hard-candidate, limit=24, trials=1
 #   .run-hard-agent-full  → hard-candidate, full corpus (limit=0), trials=3, +extra arms
+#
+# Important: GitHub PR `paths` uses a three-dot tip-vs-base diff. A sentinel that
+# remains on the branch re-fires this workflow on *every* PR push. Remove the
+# sentinel after the run lands. Concurrency cancels superseded in-flight spends.
 
 name: PageIndex A/B (memory stack default-route)
 
@@ -42,6 +46,10 @@ on:
       - "benchmarks/pageindex-ab/.run-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-full"
+
+concurrency:
+  group: pageindex-ab-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -89,52 +97,7 @@ jobs:
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-      - name: Require OpenRouter
-        env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: |
-          if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "OPENROUTER_API_KEY secret required for agent-factorial"
-            exit 1
-          fi
-          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
-            https://openrouter.ai/api/v1/key || true)
-          echo "openrouter_key_http=$code"
-          if [ "$code" != "200" ]; then
-            echo "::error::OpenRouter key probe failed HTTP $code"
-            cat /tmp/or-key.json || true
-            exit 1
-          fi
-          python3 - <<'PY'
-          import json
-          d=json.load(open("/tmp/or-key.json"))
-          data=d.get("data") or d
-          rem=data.get("limit_remaining")
-          usage=data.get("usage")
-          limit=data.get("limit")
-          print(f"limit={limit}")
-          print(f"usage={usage}")
-          print(f"limit_remaining={rem}")
-          print(
-              "note=limit_remaining is the key spend cap, not prepaid account credits; "
-              "402 insufficient credits can still occur when credits are empty"
-          )
-          if rem is not None and float(rem) <= 0:
-              raise SystemExit("OpenRouter key spend limit exhausted")
-          PY
-      - name: Install
-        run: npm ci --ignore-scripts
-      - name: Build packages
-        # Same dep order as ci.yml unit-test job (memory DTS needs these).
-        run: >
-          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
-          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
-          -w clawql-api -w clawql-memory
+      # Decide spend before npm/OpenRouter so a missing/removed sentinel is a no-op green check.
       - name: Select corpus and scale
         id: corpus
         run: |
@@ -172,13 +135,71 @@ jobs:
               echo "run_displacement=1"
               echo "run_agent=1"
             else
-              echo "::error::No pageindex-ab run sentinel; refusing to spend OpenRouter credits"
-              exit 1
+              echo "::notice::No pageindex-ab run sentinel on tip; skipping agent spend"
+              echo "name="
+              echo "builder="
+              echo "limit=0"
+              echo "trials=0"
+              echo "extra_arms=0"
+              echo "run_displacement=0"
+              echo "run_agent=0"
             fi
           } >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Require OpenRouter
+        if: ${{ steps.corpus.outputs.run_agent == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for agent-factorial"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d=json.load(open("/tmp/or-key.json"))
+          data=d.get("data") or d
+          rem=data.get("limit_remaining")
+          usage=data.get("usage")
+          limit=data.get("limit")
+          print(f"limit={limit}")
+          print(f"usage={usage}")
+          print(f"limit_remaining={rem}")
+          print(
+              "note=limit_remaining is the key spend cap, not prepaid account credits; "
+              "402 insufficient credits can still occur when credits are empty"
+          )
+          if rem is not None and float(rem) <= 0:
+              raise SystemExit("OpenRouter key spend limit exhausted")
+          PY
+      - name: Install
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        # Same dep order as ci.yml unit-test job (memory DTS needs these).
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-api -w clawql-memory
       - name: Build candidate corpus
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
         run: python3 "benchmarks/pageindex-ab/scripts/${{ steps.corpus.outputs.builder }}"
       - name: Offline factorial (candidate)
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
         run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus ${{ steps.corpus.outputs.name }}
       - name: Displacement check (hard-candidate)
         if: ${{ steps.corpus.outputs.run_displacement == '1' }}
@@ -222,7 +243,7 @@ jobs:
           CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab
         run: node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
       - name: Upload agent artifacts
-        if: always()
+        if: ${{ always() && (steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1') }}
         uses: actions/upload-artifact@v4
         with:
           name: pageindex-ab-agent-factorial
