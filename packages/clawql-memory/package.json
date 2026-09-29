@@ -56,6 +56,16 @@
       "import": "./dist/recall/recall.js",
       "require": "./dist/recall/recall.cjs"
     },
+    "./recall/vault-ranker": {
+      "types": "./dist/recall/vault-ranker.d.ts",
+      "import": "./dist/recall/vault-ranker.js",
+      "require": "./dist/recall/vault-ranker.cjs"
+    },
+    "./recall/read-around": {
+      "types": "./dist/recall/read-around.d.ts",
+      "import": "./dist/recall/read-around.js",
+      "require": "./dist/recall/read-around.cjs"
+    },
     "./recall/onyx-recall": {
       "types": "./dist/recall/onyx-recall.d.ts",
       "import": "./dist/recall/onyx-recall.js",
