@@ -247,14 +247,22 @@
   "spent": false,
   "notes": "Synthetic freeze-candidate for offline factorial. Replace with Docling PDFs + second-annotator keys before confirmatory scored run. Never cite contaminated-smoke.",
   "predictions": {
-    "pageindex_effect": 0.1067,
-    "bm25_effect": 0,
-    "codegraph_effect": 0,
-    "expected_new_default": "H-idf-pi (offline candidate only; agent matrix pending)",
+    "pageindex_effect": 0.0,
+    "bm25_effect": 0.0,
+    "codegraph_effect": 0.0,
+    "expected_new_default": "no change from agent-lite ceiling; offline extractive still favored H-idf-pi",
     "recorded_by": "cloud-agent",
-    "recorded_at": "2026-09-29T02:00:00Z",
-    "rationale": "Offline extractive factorial on synthetic freeze-candidate: PI +~0.11, BM25 0, CG proxy 0. Contaminated-smoke showed same direction. Not confirmatory.",
-    "offline_source": "results/freeze-candidate/pilot-report.json",
-    "status": "draft_offline_not_confirmatory"
+    "recorded_at": "2026-09-29T03:03:00Z",
+    "rationale": "GHA agent-lite (flash-lite, n=24) hit 0.958 on every arm \u2014 contrasts 0. Synthetic corpus too easy once sections are retrieved. Offline extractive PI +0.11 remains the only discriminative signal. Not confirmatory.",
+    "agent_lite": {
+      "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36514394251",
+      "model": "google/gemini-2.5-flash-lite",
+      "n_questions": 24,
+      "strict_accuracy_all_arms": 0.9583,
+      "prompt_tokens": 43942,
+      "completion_tokens": 8416,
+      "cost_estimate_usd": 0.00776
+    },
+    "status": "draft_agent_lite_ceiling_not_confirmatory"
   }
 }

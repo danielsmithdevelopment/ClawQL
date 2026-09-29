@@ -228,17 +228,18 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 ## Predictions (fill before scored run)
 
-Draft offline (synthetic freeze-candidate extractive factorial, n=225, **not confirmatory**):
+Draft signals (synthetic freeze-candidate — **not confirmatory**):
 
-| Field                | Value                                                 |
-| -------------------- | ----------------------------------------------------- |
-| PageIndex effect     | +0.107 (offline candidate)                            |
-| BM25 effect          | 0.0 (offline candidate; short synthetic docs)         |
-| CodeGraph effect     | 0.0 offline proxy (file ranker; native index pending) |
-| Expected new default | `H-idf-pi` pending agent confirmation                 |
-| Recorded by / date   | cloud-agent / 2026-09-29                              |
+| Field                | Offline extractive (n=225) | Agent-lite flash-lite (n=24) |
+| -------------------- | -------------------------- | ---------------------------- |
+| PageIndex effect     | +0.107                     | 0.0 (all arms 0.958)         |
+| BM25 effect          | 0.0                        | 0.0                          |
+| CodeGraph effect     | 0.0 (file-ranker proxy)    | 0.0                          |
+| Expected new default | `H-idf-pi` if offline holds | ceiling — no arm separation |
+| Cost                 | $0                         | ~$0.008 (GHA run 36514394251) |
+| Recorded by / date   | cloud-agent / 2026-09-29   | cloud-agent / 2026-09-29     |
 
-Replace with human-recorded predictions before the spent `pageindex-ab-v1` agent scored run.
+Agent-lite used retrieve→one-shot `google/gemini-2.5-flash-lite`; synthetic corpus is too easy once sections are in context. Need harder/human freeze (or full OpenCode) before 8.0.0 flips.
 
 ## Status
 
