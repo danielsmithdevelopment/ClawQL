@@ -373,9 +373,10 @@ def run_live(
     pdf_dir.mkdir(parents=True, exist_ok=True)
     storage_path.mkdir(parents=True, exist_ok=True)
 
+    # Flat spelling only — cannot mix index=/chat= slots with storage_path.
     client = PageIndexClient(
-        index=index_model,
-        chat=chat_model,
+        index_model=index_model,
+        chat_model=chat_model,
         storage_path=str(storage_path),
     )
 

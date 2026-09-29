@@ -150,9 +150,10 @@ jobs:
               echo "run_displacement=1"
               echo "run_agent=1"
             else
-              echo "::notice::No pageindex-ab run sentinel on tip; skipping agent spend"
-              echo "name="
-              echo "builder="
+              # Do not write ::notice:: into GITHUB_OUTPUT (invalid format).
+              echo "No pageindex-ab agent sentinel on tip; skipping agent spend" >&2
+              echo "name=none"
+              echo "builder=none"
               echo "limit=0"
               echo "trials=0"
               echo "extra_arms=0"
