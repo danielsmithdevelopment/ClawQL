@@ -6,30 +6,6 @@
       "title": "Internet Engineering Task Force (IETF)                     M. Nottingham"
     },
     {
-      "id": "sec-1-introduction-2",
-      "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
-    },
-    {
-      "id": "sec-2-notational-conventions-3",
-      "title": "2 Notational Conventions  . . . . . . . . . . . . . . . . . . .   3"
-    },
-    {
-      "id": "sec-3-well-known-uris-3",
-      "title": "3 Well-Known URIs . . . . . . . . . . . . . . . . . . . . . . .   3"
-    },
-    {
-      "id": "sec-4-security-considerations-5",
-      "title": "4 Security Considerations . . . . . . . . . . . . . . . . . . .   5"
-    },
-    {
-      "id": "sec-5-iana-considerations-8",
-      "title": "5 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8"
-    },
-    {
-      "id": "sec-6-references-9",
-      "title": "6 References  . . . . . . . . . . . . . . . . . . . . . . . . .   9"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
     },
@@ -68,14 +44,6 @@
     {
       "id": "sec-5-iana-considerations",
       "title": "5 IANA Considerations"
-    },
-    {
-      "id": "sec-5-1-the-well-known-uri-registry",
-      "title": "5.1 The Well-Known URI Registry"
-    },
-    {
-      "id": "sec-5-2-the-uniform-resource-identifier-uri-schemes-registry",
-      "title": "5.2 The Uniform Resource Identifier (URI) Schemes Registry"
     },
     {
       "id": "sec-6-references",

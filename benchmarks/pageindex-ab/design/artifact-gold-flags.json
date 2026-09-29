@@ -1,0 +1,210 @@
+{
+  "summary": {
+    "ok": true,
+    "keys_path": "/workspace/benchmarks/pageindex-ab/corpus/hard-candidate/keys.jsonl",
+    "maps_path": "/workspace/benchmarks/pageindex-ab/corpus/hard-candidate/section-maps",
+    "keys_with_gold_clean": 72,
+    "keys_flagged_defective": 0,
+    "keys_no_gold_sections": 54,
+    "keys_gold_id_absent_rows": 0,
+    "keys_no_map": 24,
+    "map_artifact_section_count": 0,
+    "flagged_key_ids": [],
+    "note": "Any key whose gold section title fails is_artifact_heading_title is defective (wrong-reason pass risk). Exclude from H-idf baselines."
+  },
+  "flagged_keys": [
+    {
+      "id": "hc-code-01-q01",
+      "document_id": "tiny-calc",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-01-q02",
+      "document_id": "tiny-calc",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-01-q03",
+      "document_id": "tiny-calc",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-02-q01",
+      "document_id": "tiny-ledger",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-02-q02",
+      "document_id": "tiny-ledger",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-02-q03",
+      "document_id": "tiny-ledger",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-03-q01",
+      "document_id": "tiny-router",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-03-q02",
+      "document_id": "tiny-router",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-03-q03",
+      "document_id": "tiny-router",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-04-q01",
+      "document_id": "tiny-parser",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-04-q02",
+      "document_id": "tiny-parser",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-04-q03",
+      "document_id": "tiny-parser",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-05-q01",
+      "document_id": "tiny-cache",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-05-q02",
+      "document_id": "tiny-cache",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-05-q03",
+      "document_id": "tiny-cache",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-06-q01",
+      "document_id": "tiny-queue",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-06-q02",
+      "document_id": "tiny-queue",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-06-q03",
+      "document_id": "tiny-queue",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-07-q01",
+      "document_id": "tiny-auth",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-07-q02",
+      "document_id": "tiny-auth",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-07-q03",
+      "document_id": "tiny-auth",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-08-q01",
+      "document_id": "tiny-metrics",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    },
+    {
+      "id": "hc-code-08-q02",
+      "document_id": "tiny-metrics",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/index.ts"
+      ]
+    },
+    {
+      "id": "hc-code-08-q03",
+      "document_id": "tiny-metrics",
+      "reason": "no_map",
+      "gold_sections": [
+        "src/core.ts"
+      ]
+    }
+  ],
+  "map_artifact_sections": []
+}

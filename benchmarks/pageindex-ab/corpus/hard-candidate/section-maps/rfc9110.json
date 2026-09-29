@@ -286,30 +286,6 @@
       "title": "6.4.2 Identifying Content"
     },
     {
-      "id": "sec-1-if-the-request-method-is-head-or-the-response-status-code-is-204",
-      "title": "1 If the request method is HEAD or the response status code is 204"
-    },
-    {
-      "id": "sec-2-if-the-request-method-is-get-and-the-response-status-code-is-200",
-      "title": "2 If the request method is GET and the response status code is 200"
-    },
-    {
-      "id": "sec-3-if-the-request-method-is-get-and-the-response-status-code-is-203",
-      "title": "3 If the request method is GET and the response status code is 203"
-    },
-    {
-      "id": "sec-4-if-the-request-method-is-get-and-the-response-status-code-is-206",
-      "title": "4 If the request method is GET and the response status code is 206"
-    },
-    {
-      "id": "sec-5-if-the-response-has-a-content-location-header-field-and-its-field",
-      "title": "5 If the response has a Content-Location header field and its field"
-    },
-    {
-      "id": "sec-6-if-the-response-has-a-content-location-header-field-and-its-field",
-      "title": "6 If the response has a Content-Location header field and its field"
-    },
-    {
       "id": "sec-7-otherwise-the-content-is-unidentified-by-http-but-a-more",
       "title": "7 Otherwise, the content is unidentified by HTTP, but a more"
     },
@@ -706,18 +682,6 @@
       "title": "12.5.3 Accept-Encoding"
     },
     {
-      "id": "sec-1-if-no-accept-encoding-header-field-is-in-the-request-any-content",
-      "title": "1 If no Accept-Encoding header field is in the request, any content"
-    },
-    {
-      "id": "sec-2-if-the-representation-has-no-content-coding-then-it-is",
-      "title": "2 If the representation has no content coding, then it is"
-    },
-    {
-      "id": "sec-3-if-the-representation-s-content-coding-is-one-of-the-content",
-      "title": "3 If the representation's content coding is one of the content"
-    },
-    {
       "id": "sec-12-5-4-accept-language",
       "title": "12.5.4 Accept-Language"
     },
@@ -742,64 +706,100 @@
       "title": "13.1 Preconditions"
     },
     {
-      "id": "sec-13-1-1-if-match",
-      "title": "13.1.1 If-Match"
-    },
-    {
-      "id": "sec-1-if-the-field-value-is-the-condition-is-true-if-the-origin",
-      "title": "1 If the field value is \"*\", the condition is true if the origin"
-    },
-    {
-      "id": "sec-2-if-the-field-value-is-a-list-of-entity-tags-the-condition-is",
-      "title": "2 If the field value is a list of entity tags, the condition is"
-    },
-    {
       "id": "sec-3-otherwise-the-condition-is-false",
       "title": "3 Otherwise, the condition is false."
-    },
-    {
-      "id": "sec-13-1-2-if-none-match",
-      "title": "13.1.2 If-None-Match"
-    },
-    {
-      "id": "sec-1-if-the-field-value-is-the-condition-is-false-if-the-origin",
-      "title": "1 If the field value is \"*\", the condition is false if the origin"
-    },
-    {
-      "id": "sec-2-if-the-field-value-is-a-list-of-entity-tags-the-condition-is",
-      "title": "2 If the field value is a list of entity tags, the condition is"
     },
     {
       "id": "sec-3-otherwise-the-condition-is-true",
       "title": "3 Otherwise, the condition is true."
     },
     {
-      "id": "sec-13-1-3-if-modified-since",
-      "title": "13.1.3 If-Modified-Since"
-    },
-    {
-      "id": "sec-1-if-the-selected-representation-s-last-modification-date-is",
-      "title": "1 If the selected representation's last modification date is"
-    },
-    {
       "id": "sec-2-otherwise-the-condition-is-true",
       "title": "2 Otherwise, the condition is true."
-    },
-    {
-      "id": "sec-13-1-4-if-unmodified-since",
-      "title": "13.1.4 If-Unmodified-Since"
-    },
-    {
-      "id": "sec-1-if-the-selected-representation-s-last-modification-date-is",
-      "title": "1 If the selected representation's last modification date is"
     },
     {
       "id": "sec-2-otherwise-the-condition-is-false",
       "title": "2 Otherwise, the condition is false."
     },
     {
-      "id": "sec-13-1-5-if-range",
-      "title": "13.1.5 If-Range"
+      "id": "sec-3-otherwise-the-condition-is-false",
+      "title": "3 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-2-otherwise-the-condition-is-false",
+      "title": "2 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-13-2-evaluation-of-preconditions",
+      "title": "13.2 Evaluation of Preconditions"
+    },
+    {
+      "id": "sec-13-2-2-precedence-of-preconditions",
+      "title": "13.2.2 Precedence of Preconditions"
+    },
+    {
+      "id": "sec-6-otherwise",
+      "title": "6 Otherwise,"
+    },
+    {
+      "id": "sec-14-range-requests",
+      "title": "14 Range Requests"
+    },
+    {
+      "id": "sec-14-1-range-units",
+      "title": "14.1 Range Units"
+    },
+    {
+      "id": "sec-14-1-1-range-specifiers",
+      "title": "14.1.1 Range Specifiers"
+    },
+    {
+      "id": "sec-14-1-2-byte-ranges",
+      "title": "14.1.2 Byte Ranges"
+    },
+    {
+      "id": "sec-14-2-range",
+      "title": "14.2 Range"
+    },
+    {
+      "id": "sec-14-3-accept-ranges",
+      "title": "14.3 Accept-Ranges"
+    },
+    {
+      "id": "sec-14-4-content-range",
+      "title": "14.4 Content-Range"
+    },
+    {
+      "id": "sec-14-5-partial-put",
+      "title": "14.5 Partial PUT"
+    },
+    {
+      "id": "sec-14-6-media-type-multipart-byteranges",
+      "title": "14.6 Media Type multipart/byteranges"
+    },
+    {
+      "id": "sec-1-additional-crlfs-might-precede-the-first-boundary-string-in-the",
+      "title": "1 Additional CRLFs might precede the first boundary string in the"
+    },
+    {
+      "id": "sec-2-although-rfc2046-permits-the-boundary-string-to-be-quoted-some",
+      "title": "2 Although [RFC2046] permits the boundary string to be quoted, some"
+    },
+    {
+      "id": "sec-15-status-codes",
+      "title": "15 Status Codes"
+    },
+    {
+      "id": "sec-15-1-overview-of-status-codes",
+      "title": "15.1 Overview of Status Codes"
+    },
+    {
+      "id": "sec-15-2-informational-1xx",
+      "title": "15.2 Informational 1xx"
+    },
+    {
+      "id": "sec-15-3-successful-2xx",
+      "title": "15.3 Successful 2xx"
     }
   ],
   "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt"

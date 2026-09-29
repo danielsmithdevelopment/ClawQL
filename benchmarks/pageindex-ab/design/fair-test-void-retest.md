@@ -63,12 +63,13 @@ Section maps from `build_hard_candidate.py` / `rfc_to_markdown` treat **TOC lead
 
 ## Retest requirements
 
-1. Fix `rfc_to_markdown` / map extract (skip TOC leader-dots + list-step headings).
-2. Filter TOC/list in product `splitMarkdownSections` (defense in depth).
-3. Regenerate section maps + section-gold keys; drop or rewrite defective IDs.
-4. Re-run `H-idf` offline (cheap) on cleaned corpus.
-5. New fair-test cohort: larger **fresh** hard set; shared frontier + finalize + majority; Net bar scaled to valid n (or pre-registered exact test).
-6. Only then decide Vectify port vs further backlog.
+1. Fix `rfc_to_markdown` / map extract — **done**.
+2. Filter TOC/list in product `splitMarkdownSections` — **done** (+ vault demote script / migrate note).
+3. **Flag all artifact golds** with `flag_artifact_gold_keys.py` before any H-idf re-run — pre-rebuild: 8 keys + 92 map ghosts; post-rebuild must be 0.
+4. **Rebuild** hard-candidate (not patch) — **machine done**; **human pass** required ([`HUMAN_PASS.md`](../corpus/hard-candidate/HUMAN_PASS.md)).
+5. Re-run `H-idf` offline on the **clean, human-approved** key set only.
+6. New fair-test cohort: larger **fresh validated** set — do not reuse void IDs as proof. Pre-register beat rule for valid n.
+7. Only then decide Vectify port vs further backlog. 2/3 on sound keys is thin either way.
 
 ## Related
 

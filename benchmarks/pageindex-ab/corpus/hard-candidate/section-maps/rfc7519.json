@@ -6,58 +6,6 @@
       "title": "Internet Engineering Task Force (IETF)                          M. Jones"
     },
     {
-      "id": "sec-1-introduction-4",
-      "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   4"
-    },
-    {
-      "id": "sec-2-terminology-4",
-      "title": "2 Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   4"
-    },
-    {
-      "id": "sec-3-json-web-token-jwt-overview-6",
-      "title": "3 JSON Web Token (JWT) Overview . . . . . . . . . . . . . . . .   6"
-    },
-    {
-      "id": "sec-4-jwt-claims-8",
-      "title": "4 JWT Claims  . . . . . . . . . . . . . . . . . . . . . . . . .   8"
-    },
-    {
-      "id": "sec-5-jose-header-11",
-      "title": "5 JOSE Header . . . . . . . . . . . . . . . . . . . . . . . . .  11"
-    },
-    {
-      "id": "sec-6-unsecured-jwts-12",
-      "title": "6 Unsecured JWTs  . . . . . . . . . . . . . . . . . . . . . . .  12"
-    },
-    {
-      "id": "sec-7-creating-and-validating-jwts-13",
-      "title": "7 Creating and Validating JWTs  . . . . . . . . . . . . . . . .  13"
-    },
-    {
-      "id": "sec-8-implementation-requirements-16",
-      "title": "8 Implementation Requirements . . . . . . . . . . . . . . . . .  16"
-    },
-    {
-      "id": "sec-9-uri-for-declaring-that-content-is-a-jwt-17",
-      "title": "9 URI for Declaring that Content is a JWT . . . . . . . . . . .  17"
-    },
-    {
-      "id": "sec-10-iana-considerations-17",
-      "title": "10 IANA Considerations . . . . . . . . . . . . . . . . . . . . .  17"
-    },
-    {
-      "id": "sec-11-security-considerations-21",
-      "title": "11 Security Considerations . . . . . . . . . . . . . . . . . . .  21"
-    },
-    {
-      "id": "sec-12-privacy-considerations-22",
-      "title": "12 Privacy Considerations  . . . . . . . . . . . . . . . . . . .  22"
-    },
-    {
-      "id": "sec-13-references-22",
-      "title": "13 References  . . . . . . . . . . . . . . . . . . . . . . . . .  22"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
     },
@@ -118,24 +66,12 @@
       "title": "7.1 Creating a JWT"
     },
     {
-      "id": "sec-1-create-a-jwt-claims-set-containing-the-desired-claims-note-that",
-      "title": "1 Create a JWT Claims Set containing the desired claims.  Note that"
-    },
-    {
       "id": "sec-2-let-the-message-be-the-octets-of-the-utf-8-representation-of-the",
       "title": "2 Let the Message be the octets of the UTF-8 representation of the"
     },
     {
-      "id": "sec-3-create-a-jose-header-containing-the-desired-set-of-header",
-      "title": "3 Create a JOSE Header containing the desired set of Header"
-    },
-    {
       "id": "sec-4-depending-upon-whether-the-jwt-is-a-jws-or-jwe-there-are-two",
       "title": "4 Depending upon whether the JWT is a JWS or JWE, there are two"
-    },
-    {
-      "id": "sec-5-if-a-nested-signing-or-encryption-operation-will-be-performed",
-      "title": "5 If a nested signing or encryption operation will be performed,"
     },
     {
       "id": "sec-6-otherwise-let-the-resulting-jwt-be-the-jws-or-jwe",
@@ -146,24 +82,12 @@
       "title": "7.2 Validating a JWT"
     },
     {
-      "id": "sec-1-verify-that-the-jwt-contains-at-least-one-period",
-      "title": "1 Verify that the JWT contains at least one period ('.')"
-    },
-    {
       "id": "sec-2-let-the-encoded-jose-header-be-the-portion-of-the-jwt-before-the",
       "title": "2 Let the Encoded JOSE Header be the portion of the JWT before the"
     },
     {
       "id": "sec-3-base64url-decode-the-encoded-jose-header-following-the",
       "title": "3 Base64url decode the Encoded JOSE Header following the"
-    },
-    {
-      "id": "sec-4-verify-that-the-resulting-octet-sequence-is-a-utf-8-encoded",
-      "title": "4 Verify that the resulting octet sequence is a UTF-8-encoded"
-    },
-    {
-      "id": "sec-5-verify-that-the-resulting-jose-header-includes-only-parameters",
-      "title": "5 Verify that the resulting JOSE Header includes only parameters"
     },
     {
       "id": "sec-6-determine-whether-the-jwt-is-a-jws-or-a-jwe-using-any-of-the",
@@ -174,16 +98,8 @@
       "title": "7 Depending upon whether the JWT is a JWS or JWE, there are two"
     },
     {
-      "id": "sec-8-if-the-jose-header-contains-a-cty-content-type-value-of",
-      "title": "8 If the JOSE Header contains a \"cty\" (content type) value of"
-    },
-    {
       "id": "sec-9-otherwise-base64url-decode-the-message-following-the",
       "title": "9 Otherwise, base64url decode the Message following the"
-    },
-    {
-      "id": "sec-10-verify-that-the-resulting-octet-sequence-is-a-utf-8-encoded",
-      "title": "10 Verify that the resulting octet sequence is a UTF-8-encoded"
     },
     {
       "id": "sec-7-3-string-comparison-rules",

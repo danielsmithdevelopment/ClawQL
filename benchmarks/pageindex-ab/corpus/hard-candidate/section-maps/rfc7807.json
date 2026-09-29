@@ -6,44 +6,12 @@
       "title": "Internet Engineering Task Force (IETF)                     M. Nottingham"
     },
     {
-      "id": "sec-1-introduction-2",
-      "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
-    },
-    {
-      "id": "sec-2-requirements-3",
-      "title": "2 Requirements  . . . . . . . . . . . . . . . . . . . . . . . .   3"
-    },
-    {
-      "id": "sec-3-the-problem-details-json-object-3",
-      "title": "3 The Problem Details JSON Object . . . . . . . . . . . . . . .   3"
-    },
-    {
-      "id": "sec-4-defining-new-problem-types-6",
-      "title": "4 Defining New Problem Types  . . . . . . . . . . . . . . . . .   6"
-    },
-    {
-      "id": "sec-5-security-considerations-8",
-      "title": "5 Security Considerations . . . . . . . . . . . . . . . . . . .   8"
-    },
-    {
-      "id": "sec-6-iana-considerations-9",
-      "title": "6 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   9"
-    },
-    {
-      "id": "sec-7-references-11",
-      "title": "7 References  . . . . . . . . . . . . . . . . . . . . . . . . .  11"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
     },
     {
       "id": "sec-2-requirements",
       "title": "2 Requirements"
-    },
-    {
-      "id": "sec-3-the-problem-details-json-object",
-      "title": "3 The Problem Details JSON Object"
     },
     {
       "id": "sec-3-1-members-of-a-problem-details-object",

@@ -6,54 +6,6 @@
       "title": "Internet Engineering Task Force (IETF)                     D. Hardt, Ed."
     },
     {
-      "id": "sec-1-introduction-4",
-      "title": "1 Introduction ....................................................4"
-    },
-    {
-      "id": "sec-2-client-registration-13",
-      "title": "2 Client Registration ............................................13"
-    },
-    {
-      "id": "sec-3-protocol-endpoints-18",
-      "title": "3 Protocol Endpoints .............................................18"
-    },
-    {
-      "id": "sec-4-obtaining-authorization-23",
-      "title": "4 Obtaining Authorization ........................................23"
-    },
-    {
-      "id": "sec-5-issuing-an-access-token-43",
-      "title": "5 Issuing an Access Token ........................................43"
-    },
-    {
-      "id": "sec-6-refreshing-an-access-token-47",
-      "title": "6 Refreshing an Access Token .....................................47"
-    },
-    {
-      "id": "sec-7-accessing-protected-resources-48",
-      "title": "7 Accessing Protected Resources ..................................48"
-    },
-    {
-      "id": "sec-8-extensibility-50",
-      "title": "8 Extensibility ..................................................50"
-    },
-    {
-      "id": "sec-9-native-applications-52",
-      "title": "9 Native Applications ............................................52"
-    },
-    {
-      "id": "sec-10-security-considerations-53",
-      "title": "10 Security Considerations .......................................53"
-    },
-    {
-      "id": "sec-11-iana-considerations-62",
-      "title": "11 IANA Considerations ...........................................62"
-    },
-    {
-      "id": "sec-12-references-68",
-      "title": "12 References ....................................................68"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
     },

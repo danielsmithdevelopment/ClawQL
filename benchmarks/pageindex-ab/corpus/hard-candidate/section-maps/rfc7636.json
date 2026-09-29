@@ -6,52 +6,8 @@
       "title": "Internet Engineering Task Force (IETF)                  N. Sakimura, Ed."
     },
     {
-      "id": "sec-1-introduction-3",
-      "title": "1 Introduction ....................................................3"
-    },
-    {
-      "id": "sec-2-notational-conventions-6",
-      "title": "2 Notational Conventions ..........................................6"
-    },
-    {
-      "id": "sec-3-terminology-7",
-      "title": "3 Terminology .....................................................7"
-    },
-    {
-      "id": "sec-4-protocol-8",
-      "title": "4 Protocol ........................................................8"
-    },
-    {
-      "id": "sec-5-compatibility-11",
-      "title": "5 Compatibility ..................................................11"
-    },
-    {
-      "id": "sec-6-iana-considerations-11",
-      "title": "6 IANA Considerations ............................................11"
-    },
-    {
-      "id": "sec-7-security-considerations-13",
-      "title": "7 Security Considerations ........................................13"
-    },
-    {
-      "id": "sec-8-references-15",
-      "title": "8 References .....................................................15"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
-    },
-    {
-      "id": "sec-1-the-attacker-manages-to-register-a-malicious-application-on-the",
-      "title": "1 The attacker manages to register a malicious application on the"
-    },
-    {
-      "id": "sec-2-the-oauth-2-0-authorization-code-grant-is-used",
-      "title": "2 The OAuth 2.0 authorization code grant is used."
-    },
-    {
-      "id": "sec-3-the-attacker-has-access-to-the-oauth-2-0-rfc6749-client-id-and",
-      "title": "3 The attacker has access to the OAuth 2.0 [RFC6749] \"client_id\" and"
     },
     {
       "id": "sec-4-either-one-of-the-following-condition-is-met",

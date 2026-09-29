@@ -6,62 +6,6 @@
       "title": "Internet Engineering Task Force (IETF)                      T. Bray, Ed."
     },
     {
-      "id": "sec-1-introduction-3",
-      "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3"
-    },
-    {
-      "id": "sec-2-json-grammar-5",
-      "title": "2 JSON Grammar  . . . . . . . . . . . . . . . . . . . . . . . .   5"
-    },
-    {
-      "id": "sec-3-values-6",
-      "title": "3 Values  . . . . . . . . . . . . . . . . . . . . . . . . . . .   6"
-    },
-    {
-      "id": "sec-4-objects-6",
-      "title": "4 Objects . . . . . . . . . . . . . . . . . . . . . . . . . . .   6"
-    },
-    {
-      "id": "sec-5-arrays-7",
-      "title": "5 Arrays  . . . . . . . . . . . . . . . . . . . . . . . . . . .   7"
-    },
-    {
-      "id": "sec-6-numbers-7",
-      "title": "6 Numbers . . . . . . . . . . . . . . . . . . . . . . . . . . .   7"
-    },
-    {
-      "id": "sec-7-strings-8",
-      "title": "7 Strings . . . . . . . . . . . . . . . . . . . . . . . . . . .   8"
-    },
-    {
-      "id": "sec-8-string-and-character-issues-9",
-      "title": "8 String and Character Issues . . . . . . . . . . . . . . . . .   9"
-    },
-    {
-      "id": "sec-9-parsers-10",
-      "title": "9 Parsers . . . . . . . . . . . . . . . . . . . . . . . . . . .  10"
-    },
-    {
-      "id": "sec-10-generators-10",
-      "title": "10 Generators  . . . . . . . . . . . . . . . . . . . . . . . . .  10"
-    },
-    {
-      "id": "sec-11-iana-considerations-11",
-      "title": "11 IANA Considerations . . . . . . . . . . . . . . . . . . . . .  11"
-    },
-    {
-      "id": "sec-12-security-considerations-12",
-      "title": "12 Security Considerations . . . . . . . . . . . . . . . . . . .  12"
-    },
-    {
-      "id": "sec-13-examples-12",
-      "title": "13 Examples  . . . . . . . . . . . . . . . . . . . . . . . . . .  12"
-    },
-    {
-      "id": "sec-14-references-14",
-      "title": "14 References  . . . . . . . . . . . . . . . . . . . . . . . . .  14"
-    },
-    {
       "id": "sec-1-introduction",
       "title": "1 Introduction"
     },

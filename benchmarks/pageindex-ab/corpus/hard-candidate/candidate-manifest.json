@@ -1,17 +1,17 @@
 {
   "tag": "pageindex-ab-v1-hard-candidate",
   "created_at": "2026-09-29T03:10:00Z",
-  "harness_commit": "a6f1bdc55b76be1955efb9824ab900ec8b0afc1f",
+  "harness_commit": "88a838fef151291a68b8248f290508edf86263b8",
   "spec_path": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
-  "spec_sha256": "b3189bdeaf98bb1eb8c2d326cc1729a7ac6c690fd98f255892cfb7c4d5edd351",
+  "spec_sha256": "7b41b613cbec2ef523114d07ee9ffae276324d09b32a9b65d67814b2374dd7d0",
   "model_primary": "google/gemini-2.5-flash-lite",
   "documents": [
     {
       "id": "rfc8259",
       "stratum": "well_structured",
       "path": "docs/rfc8259.md",
-      "sha256": "03f576f160fa126ad2c3528e087eb23ed19aadcf91da16b967109fa672c7c170",
-      "token_estimate": 7127,
+      "sha256": "e622eebb6547157cc5f77516d7af6c292e72f467034457444363ca3cc766f39d",
+      "token_estimate": 7125,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc8259.txt"
     },
@@ -19,8 +19,8 @@
       "id": "rfc6749",
       "stratum": "well_structured",
       "path": "docs/rfc6749.md",
-      "sha256": "b2d21dec05a4a2b28b6346125845377b0e7d85b56893e98b198254cef7daf2b6",
-      "token_estimate": 40980,
+      "sha256": "cccb99fbb07f88e897d43cb829fe9bffd28076411d740b6e174a235fb27eb841",
+      "token_estimate": 40977,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc6749.txt"
     },
@@ -28,7 +28,7 @@
       "id": "rfc7519",
       "stratum": "well_structured",
       "path": "docs/rfc7519.md",
-      "sha256": "e521fe641a2ed37f3a6fb5773452295adae7ddace8f41467355845be2853dd2a",
+      "sha256": "4ce8107497ff9fd77d12daaedf60bff13be7810eb3bdd20aaaee9eb2dce8dbb7",
       "token_estimate": 15806,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc7519.txt"
@@ -37,8 +37,8 @@
       "id": "rfc7636",
       "stratum": "well_structured",
       "path": "docs/rfc7636.md",
-      "sha256": "49869211e75661d0c64be2a7f440a0d428bd139db71ac0f3f08530830274bbe2",
-      "token_estimate": 9915,
+      "sha256": "835817104619c3dc9f465fe9a0369e3f8ca3cadf5766473c651323fa4a097ecb",
+      "token_estimate": 9912,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc7636.txt"
     },
@@ -46,8 +46,8 @@
       "id": "rfc7807",
       "stratum": "well_structured",
       "path": "docs/rfc7807.md",
-      "sha256": "6091470aafb714d95f7d0c17c69a4d95b0710a3cfdb773be24845eec494019e6",
-      "token_estimate": 7831,
+      "sha256": "0cae3126741444f4d1b6de692be890406a0b12549772f9baecbcfca1d04b6a63",
+      "token_estimate": 7830,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc7807.txt"
     },
@@ -55,8 +55,8 @@
       "id": "rfc8615",
       "stratum": "well_structured",
       "path": "docs/rfc8615.md",
-      "sha256": "5b1537c78bd7a93d5400189f6e7699420d26add950b8f355a30df6f2b4d91383",
-      "token_estimate": 6747,
+      "sha256": "6ddc83c58865ead552f89920237ed3b240b3f584213d9575b6ad80de09c113ab",
+      "token_estimate": 6745,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc8615.txt"
     },
@@ -64,8 +64,8 @@
       "id": "rfc9110",
       "stratum": "well_structured",
       "path": "docs/rfc9110.md",
-      "sha256": "d9c42e2a6aa664fee0582a70b7f0d2259b8cf0e2e99c625b694f2e1f9e477e20",
-      "token_estimate": 125956,
+      "sha256": "8a73aa743a4c81514459fae36da8c9ae6ec4559095d5aedd6f3db4034ea9bd8d",
+      "token_estimate": 125950,
       "fits_arm_d": false,
       "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt"
     },
@@ -186,100 +186,20 @@
     }
   ],
   "questions_path": "keys.jsonl",
-  "questions_sha256": "a74290babd13a30147c4e8f9f28ce611fa09081211f330dc49f83b2d36d2cd0a",
+  "questions_sha256": "d1669b3599ea614fe0f7da340ee653a991185177f65034d34499104f8cd31cab",
   "decision_rules_version": "0.2",
   "spent": false,
-  "notes": "Hard candidate: public RFCs + long synthetics. Harvey LAB and ExtractBench fixtures excluded. Not spent. Dropped cite-impossible RFC keys (year fallback + MUST/SHALL with empty gold) before freeze.",
+  "notes": "Hard candidate REBUILT 2026-09-29 with TOC/list-filtered section mapping. Prior machine keys untrusted (artifact golds). Human pass required (HUMAN_PASS.md) before H-idf baseline or freeze spend.",
   "exclusions": [
     "harvey-labs",
     "extractbench",
     "contaminated-smoke"
   ],
+  "human_pass_required": true,
+  "builder_version": "artifact-filter-2026-09-29",
   "predictions": {
-    "pageindex_effect_offline": -0.0062,
-    "pageindex_effect_agent_lite": -0.125,
-    "pageindex_agent_lite_note": "underpowered: 3/24 questions, 1 trial, p\u22480.25 \u2014 noise not clear negative",
-    "bm25_effect_offline": 0.0062,
-    "bm25_effect_agent_lite": 0.0,
-    "codegraph_effect": 0.0,
-    "codegraph_note": "untested \u2014 code stratum ceilinged; file-ranker proxy not native CG",
-    "expected_new_default": "keep H-idf (today); RRF PI harms via displacement; union helps but diagnostic-only",
-    "recorded_by": "cloud-agent",
-    "recorded_at": "2026-09-29T04:48:00Z",
-    "status": "draft_hard_candidate_full_agent_lite",
-    "agent_lite": {
-      "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36516156879",
-      "model": "google/gemini-2.5-flash-lite",
-      "n_questions": 24,
-      "H_idf": 0.7917,
-      "H_idf_pi": 0.6667,
-      "prompt_tokens": 119056,
-      "completion_tokens": 7106,
-      "cost_estimate_usd": 0.0147
-    },
-    "notes": "Keep H-idf. Full agent confirms converted_pdf RRF displacement (13/13). Union +0.019 diagnostic only. Confirmed after OpenRouter credits restore (run 36524273079; identical cells).",
-    "pageindex_effect_agent_full": -0.0776,
-    "union_vs_today_agent_full": 0.0186,
-    "gated_vs_today_agent_full": 0.0062,
-    "bm25_effect_agent_full": 0.0031,
-    "agent_full": {
-      "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396",
-      "confirm_run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079",
-      "model": "google/gemini-2.5-flash-lite",
-      "n_questions": 161,
-      "trials": 3,
-      "n_arms": 10,
-      "H_idf": 0.8261,
-      "H_idf_pi": 0.7516,
-      "H_idf_pi_union": 0.8447,
-      "H_idf_pi_gated": 0.8323,
-      "prompt_tokens": 4137624,
-      "completion_tokens": 193524,
-      "cost_estimate_usd": 0.491
-    },
-    "key_hygiene": {
-      "dropped_keys": [
-        "hc-rfc-01-q05",
-        "hc-rfc-02-q05",
-        "hc-rfc-03-q05",
-        "hc-rfc-03-q07",
-        "hc-rfc-04-q05",
-        "hc-rfc-04-q07",
-        "hc-rfc-05-q05",
-        "hc-rfc-05-q07",
-        "hc-rfc-06-q05",
-        "hc-rfc-07-q05",
-        "hc-rfc-08-q05"
-      ],
-      "reason": "empty gold_sections; year keys also had bogus answers (e.g. 2070)",
-      "rfc_retrieval_miss_gold_ranks": "benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md"
-    },
-    "agent_rescore_150": {
-      "source": "benchmarks/pageindex-ab/design/agent-rescore-150.json",
-      "H_idf": 0.84,
-      "H_idf_pi": 0.7533,
-      "H_idf_pi_union": 0.8533,
-      "H_idf_pi_gated": 0.84,
-      "pageindex_main_effect": -0.0867,
-      "bm25_main_effect": 0.0,
-      "union_vs_today": 0.0133,
-      "gated_vs_today": 0.0
-    },
-    "next_spend_order": [
-      "track-B-write-codegraph-prove-keys-real-repos-callers-impact-crossfile",
-      "track-C-k-sweep-3-6-10+union-matched-k-own-budget-displacement",
-      "track-B-codegraph-vs-grep-agent-loop-once-keys-ready"
-    ],
-    "freeze_critical_path": {
-      "A": "benchmarks/pageindex-ab/design/vectify-fair-test.md",
-      "A_beat": "Net>=5 on 12 misses AND no-harm>=14/15; tie\u2192purge; anthropic/claude-sonnet-4.6==Track B; shared finalize; 3-trial majority; IETF pdf/txt",
-      "A_gha_sentinel": "benchmarks/pageindex-ab/.run-vectify-fair",
-      "B": "benchmarks/pageindex-ab/design/agent-loop-freeze.md",
-      "combine": "PageIndex closed; CodeGraph keep iff Track B beats grep on prove keys",
-      "A_status": "done \u2014 tie Net=4 \u2192 purge PageIndex (#1175); no Vectify port",
-      "B_critical_path": "write grep-insoluble real-repo CodeGraph questions by 2026-10-15 or codegraph_* leaves bundle",
-      "B_not": "RFC deep-miss set (7/8 defective \u2014 design/unsolved-8-key-review.md)",
-      "C_schedule": "k-sweep / union matched-k \u2014 elevated (shared top-k displacement lesson)"
-    }
+    "hard_candidate_status": "rebuilt_awaiting_human_pass",
+    "artifact_gold_pre_rebuild": "design/artifact-gold-flags-pre-rebuild.json",
+    "artifact_gold_post_rebuild": "design/artifact-gold-flags.json"
   }
 }

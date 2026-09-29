@@ -11,6 +11,7 @@
 | In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                             |
 | Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                             |
 | `pageindex_*` tools / hybrid PageIndex   | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_PAGEINDEX`, `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX`, and `pageindex.db.json` sync — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) |
+| Section IDs from TOC / list “headings”   | **Filtered** in `read_around`    | See [Section artifact headings](#section-artifact-headings-toc--lists)                                                            |
 | `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                |
 
 Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.
@@ -106,6 +107,24 @@ export CLAWQL_PANGUARD_IN_PROCESS=1
 The Cloudflare Workers under [`infra/cloudflare/`](../../infra/cloudflare/README.md) are a **pre-8.0 parallel MCP** (hardcoded catalog, D1 audit, no `ProviderPlugin`). They **must** be updated to ClawQL **8.0.0** and the current plugin / empty-catalog / skills design before they are treated as a product surface.
 
 Canonical MCP remains Node `clawql-mcp` / Helm `manifests/charts/clawql-mcp`. Status and layout: [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md).
+
+## Section artifact headings (TOC / lists)
+
+Some converters promote **table-of-contents leader-dot lines** and **numbered list/procedure steps** to ATX Markdown headings. Those mint bogus `sec-*` IDs and can inflate or depress graded retrieval scores.
+
+**8.0 product behavior:** `splitMarkdownSections` / `read_around` **skip** those titles at read time for every vault document (existing included). No persisted section index is left behind — IDs are derived from current Markdown on each call.
+
+**Optional one-time vault cleanup:** demote artifact ATX lines in files so the source Markdown itself is clean (recommended if you ingested RFC-style TXT→MD with TOC lines as `##`):
+
+```bash
+# Dry-run report
+node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
+
+# Rewrite: demote matching ## lines to plain text
+node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH" --write
+```
+
+Regression coverage: TOC + numbered-list cases in `packages/clawql-memory/src/recall/read-around.test.ts`.
 
 ## Docs
 

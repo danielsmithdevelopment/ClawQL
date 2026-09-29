@@ -56,6 +56,34 @@ An array structure is represented as square brackets.
     expect(sections.filter((s) => s.title === "1 Introduction")).toHaveLength(1);
   });
 
+  it("skips numbered list/procedure steps mistaken for headings", () => {
+    const doc = `# JWT
+
+## 7 Creating a JWT
+
+1. Create claims.
+2. Sign.
+
+## 1 Create a JWT Claims Set containing the desired claims. Note that
+
+This line was wrongly promoted to ATX in a bad converter.
+
+## 5 Verify that the resulting JOSE Header includes only parameters
+
+Also a procedure step, not a section.
+
+## 8 Validating a JWT
+
+Validation steps follow.
+`;
+    const sections = splitMarkdownSections(doc);
+    const titles = sections.map((s) => s.title);
+    expect(titles).toContain("7 Creating a JWT");
+    expect(titles).toContain("8 Validating a JWT");
+    expect(titles.some((t) => t.startsWith("1 Create a JWT Claims"))).toBe(false);
+    expect(titles.some((t) => t.startsWith("5 Verify that"))).toBe(false);
+  });
+
   it("splits ATX headings into stable section ids", () => {
     const sections = splitMarkdownSections(DOC);
     const ids = sections.map((s) => s.id);
