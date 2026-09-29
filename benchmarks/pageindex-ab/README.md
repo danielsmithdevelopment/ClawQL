@@ -68,6 +68,11 @@ node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
 
 GHA (uses repo `OPENROUTER_API_KEY` secret):
 
+Until `pageindex-ab.yml` is on the default branch, trigger agent-lite by
+touching `benchmarks/pageindex-ab/.run-agent-lite` on a PR (path filter).
+
+After it lands on default:
+
 ```bash
 gh workflow run pageindex-ab.yml \
   -f mode=agent-factorial \

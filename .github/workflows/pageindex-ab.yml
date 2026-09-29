@@ -1,6 +1,10 @@
 # Memory stack default-route A/B (pageindex-ab)
 # - Offline retrieval pilot: no secrets
-# - Agent-lite factorial: OPENROUTER_API_KEY + cheap flash-lite (workflow_dispatch)
+# - Agent-lite factorial: OPENROUTER_API_KEY + cheap flash-lite
+#
+# Note: workflow_dispatch only works after this file lands on the default branch.
+# Until then, push a change to benchmarks/pageindex-ab/.run-agent-lite to trigger
+# agent-factorial from a PR head (uses the branch workflow file).
 
 name: PageIndex A/B (memory stack default-route)
 
@@ -26,13 +30,16 @@ on:
         description: OpenRouter model id (no openrouter/ prefix)
         type: string
         default: google/gemini-2.5-flash-lite
+  pull_request:
+    paths:
+      - "benchmarks/pageindex-ab/.run-agent-lite"
 
 permissions:
   contents: read
 
 jobs:
   offline-pilot:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'offline-pilot' || github.event_name != 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'offline-pilot' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -64,7 +71,7 @@ jobs:
             benchmarks/pageindex-ab/results/freeze-candidate/
 
   agent-factorial:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial') || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -81,7 +88,6 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for agent-factorial"
             exit 1
           fi
-          # Fail fast if key is exhausted / invalid
           code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
             -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
             https://openrouter.ai/api/v1/key || true)
@@ -111,9 +117,9 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PAGEINDEX_AB_CORPUS: freeze-candidate
           PAGEINDEX_AB_MODE: agent-lite
-          PAGEINDEX_AB_MODEL: ${{ inputs.model }}
-          PAGEINDEX_AB_LIMIT: ${{ inputs.limit }}
-          PAGEINDEX_AB_TRIALS: ${{ inputs.trials }}
+          PAGEINDEX_AB_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.model || 'google/gemini-2.5-flash-lite' }}
+          PAGEINDEX_AB_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || 24 }}
+          PAGEINDEX_AB_TRIALS: ${{ github.event_name == 'workflow_dispatch' && inputs.trials || 1 }}
           PAGEINDEX_AB_CONCURRENCY: "4"
           CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
           CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab
