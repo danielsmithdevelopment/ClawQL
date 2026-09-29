@@ -4,4 +4,4 @@
 #
 # Approximate cost: ~161 questions × 10 arms × 3 trials ≈ 4.8k flash-lite calls (~$0.30–0.40).
 # Do not decide product defaults from n=24 / 1-trial samples.
-trigger: 2026-09-29Tdisplacement-union-gated-full
+trigger: 2026-09-29Tdisplacement-union-gated-full-main
