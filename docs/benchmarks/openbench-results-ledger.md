@@ -1,3 +1,14 @@
+### 2026-09-28 — `pageindex-ab` eval spec v0.1 + harness scaffold (no scored run)
+
+**Not a WIN/FAIL cell.** Formalizes the product gate for `pageindex_*`: default route / specialist / demote. Graders score answers+citations only (fixes August tooling-only WINs).
+
+| Item | State |
+| --- | --- |
+| Spec | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) |
+| Harness | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/) |
+| Code finding | Bare `memory_recall` default = vault+vector (**E−**), not E; hybrid PageIndex is env-gated |
+| Next | Corpus freeze → `read_around` precondition → pilot on `contaminated-smoke` → single scored run |
+
 ### 2026-08-08 — B-7.2 + B-7.1-blind activated (pre-C&H)
 
 | Cell        | Task id                                   | Status                                                                                                                   |

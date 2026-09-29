@@ -46,8 +46,10 @@ benchmarks/openbench/
   README.md
 ```
 
-Advanced suites B-1…B-6 (specs + Phase 1 packs):
+Advanced suites B-1…B-7 (specs + Phase 1 packs):
 [`docs/benchmarks/openbench-advanced-specs.md`](../../docs/benchmarks/openbench-advanced-specs.md).
+**PageIndex product gate (multi-arm):** [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md)
++ harness [`benchmarks/pageindex-ab/`](../pageindex-ab/) (not a binary on/off task).
 CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
 
 ## Prerequisites

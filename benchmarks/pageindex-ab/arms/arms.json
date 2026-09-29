@@ -1,0 +1,118 @@
+{
+  "suite": "pageindex-ab",
+  "spec": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
+  "budget": {
+    "max_tool_calls": 12,
+    "max_retrieved_tokens": 8000,
+    "timeout_seconds": 180
+  },
+  "model_primary": "openrouter/deepseek/deepseek-chat",
+  "arms": [
+    {
+      "id": "A-pageindex",
+      "label": "A. PageIndex",
+      "allowed_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize"
+      ],
+      "forbidden_tools": ["memory_recall"],
+      "memory_recall_sources": null,
+      "setup": ["pageindex_build_tree"],
+      "confirmatory": true
+    },
+    {
+      "id": "B-vector",
+      "label": "B. Vector recall",
+      "allowed_tools": ["memory_recall", "read_around"],
+      "forbidden_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "pageindex_build_tree"
+      ],
+      "memory_recall_sources": ["vector"],
+      "setup": ["embeddings"],
+      "confirmatory": true
+    },
+    {
+      "id": "C-fulltext",
+      "label": "C. Full-text search",
+      "allowed_tools": ["memory_recall", "read_around"],
+      "forbidden_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "pageindex_build_tree"
+      ],
+      "memory_recall_sources": ["vault"],
+      "setup": [],
+      "confirmatory": true,
+      "notes": "Vault = token TF(+IDF) via substring occurrence counts, not BM25."
+    },
+    {
+      "id": "Cplus-grep",
+      "label": "C+. Grep baseline",
+      "allowed_tools": ["grep", "read_range"],
+      "forbidden_tools": [
+        "memory_recall",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "pageindex_build_tree"
+      ],
+      "memory_recall_sources": null,
+      "setup": [],
+      "confirmatory": false,
+      "notes": "Exploratory stronger simple baseline; never used for Outcome 1–3."
+    },
+    {
+      "id": "D-whole-doc",
+      "label": "D. Whole document",
+      "allowed_tools": [],
+      "forbidden_tools": ["memory_recall", "pageindex_traverse", "pageindex_get_content", "pageindex_synthesize", "pageindex_build_tree", "read_around", "grep", "read_range"],
+      "memory_recall_sources": null,
+      "setup": [],
+      "confirmatory": false,
+      "requires_fits_arm_d": true,
+      "exempt_retrieved_token_cap": true
+    },
+    {
+      "id": "E-hybrid",
+      "label": "E. Hybrid with PageIndex",
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize"
+      ],
+      "forbidden_tools": [],
+      "memory_recall_sources": ["vault", "vector", "pageindex"],
+      "setup": ["pageindex_build_tree", "embeddings"],
+      "confirmatory": true,
+      "notes": "Explicit sources — not bare omit-sources default (that is E− today)."
+    },
+    {
+      "id": "E-minus",
+      "label": "E−. Hybrid minus PageIndex",
+      "allowed_tools": ["memory_recall", "read_around"],
+      "forbidden_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "pageindex_build_tree"
+      ],
+      "memory_recall_sources": ["vault", "vector"],
+      "setup": ["embeddings"],
+      "confirmatory": true,
+      "notes": "Matches resolveMemoryRecallSources({}) with hybrid pageindex env off."
+    }
+  ],
+  "confirmatory_comparisons": [
+    ["A-pageindex", "B-vector"],
+    ["A-pageindex", "C-fulltext"],
+    ["E-hybrid", "E-minus"]
+  ],
+  "holm_alpha": 0.05
+}
