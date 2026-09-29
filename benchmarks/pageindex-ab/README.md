@@ -13,10 +13,11 @@ benchmarks/pageindex-ab/
   README.md
   arms/arms.json          # 8 confirmatory (2×2×2) + diagnostics
   schema/                 # answer / question / manifest
-  scripts/                # tier-1 grade, bootstrap, McNemar, conformance, validate
-  design/read-around.md   # precondition
+  scripts/                # grade, bootstrap, McNemar, pilots, freeze-candidate builder
+  design/read-around.md
   fixtures/contaminated-smoke/
-  corpus/  questions/     # frozen set lands here
+  corpus/freeze-candidate/  # synthetic candidate (not spent)
+  questions/                # frozen JSONL lands here
 ```
 
 ## Confirmatory factorial
@@ -35,16 +36,46 @@ Diagnostics (`D-*`): alone baselines, grep, whole-doc, structured ontology, Duck
 ## Quick checks (no API spend)
 
 ```bash
+npm run build -w clawql-pageindex -w clawql-memory
+
 python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
+python3 benchmarks/pageindex-ab/scripts/offline_ranker_compare.py
+
+# Contaminated-smoke (NEVER cite)
+node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
+
+# Synthetic freeze-candidate factorial (not spent)
+python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
+node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus freeze-candidate
 ```
+
+Optional public RFC seeds:
+
+```bash
+python3 benchmarks/pageindex-ab/scripts/fetch_public_corpus.py
+```
+
+Agent factorial (needs OpenRouter):
+
+```bash
+node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
+# exits 2 without OPENROUTER_API_KEY; prepares task stubs under results/agent-factorial/
+```
+
+GHA: `.github/workflows/pageindex-ab.yml`.
 
 ## Preconditions
 
-1. Okapi BM25 vault ranker flag (not implemented yet).
-2. `read_around` for section expansion.
-3. Code stratum repos + native `codegraph_sync` fixtures.
-4. Cross-document list questions + ontology rows.
-5. Correct [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) — see [`docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md`](../../docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md).
+| Item | Status |
+| --- | --- |
+| BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`) | Landed |
+| `read_around` | Landed |
+| Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed |
+| Offline retrieval factorial runner | Landed |
+| Synthetic freeze-candidate (24 docs + 8 repos + keys) | Landed |
+| Human freeze (`pageindex-ab-v1`) + Docling PDFs | **Not started** |
+| Agent factorial (OpenCode × OpenRouter) | Blocked on secret |
+| Memory-stack post correction on live site | Draft in-repo |
 
 ## Industry claim track (separate)
 
