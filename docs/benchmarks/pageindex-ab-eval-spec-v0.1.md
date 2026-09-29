@@ -33,15 +33,15 @@ The result feeds one decision about the `pageindex_*` tools, which have shipped 
 
 Six arms share one model, one harness and one budget, and every arm has a real way to find the answer, so any arm can win. The August flaw, an off arm with no retrieval at all, cannot recur.
 
-| Arm | What the model gets | What it tells us |
-| --- | --- | --- |
-| **A. PageIndex** | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` over a tree built once per document with `pageindex_build_tree` | Does heading-tree navigation find the right section? |
-| **B. Vector recall** | `memory_recall` with `sources: ["vector"]`, plus a read-around tool that returns the section a chunk sits in | Does semantic chunk search do as well? |
-| **C. Full-text search** | `memory_recall` with `sources: ["vault"]` (keyword), plus the same read-around tool | Is the simplest competent baseline enough? |
-| **C+. Grep baseline** *(optional, recommended)* | Harness-local `grep` + `read_range` over the shared Markdown | Stronger simple baseline if vault TF scoring looks too weak |
-| **D. Whole document** | The full document in context, no tools; only documents that fit with 30% headroom | The accuracy ceiling, and what skipping retrieval costs |
-| **E. Hybrid with PageIndex** | `memory_recall` with `sources: ["vault", "vector", "pageindex"]` (explicit; see open-question resolution) | Whether hybrid-including-PageIndex wins |
-| **E−. Hybrid minus PageIndex** | `memory_recall` with `sources: ["vault", "vector"]` | Whether PageIndex adds anything inside hybrid recall |
+| Arm                                             | What the model gets                                                                                                                   | What it tells us                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **A. PageIndex**                                | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` over a tree built once per document with `pageindex_build_tree` | Does heading-tree navigation find the right section?        |
+| **B. Vector recall**                            | `memory_recall` with `sources: ["vector"]`, plus a read-around tool that returns the section a chunk sits in                          | Does semantic chunk search do as well?                      |
+| **C. Full-text search**                         | `memory_recall` with `sources: ["vault"]` (keyword), plus the same read-around tool                                                   | Is the simplest competent baseline enough?                  |
+| **C+. Grep baseline** _(optional, recommended)_ | Harness-local `grep` + `read_range` over the shared Markdown                                                                          | Stronger simple baseline if vault TF scoring looks too weak |
+| **D. Whole document**                           | The full document in context, no tools; only documents that fit with 30% headroom                                                     | The accuracy ceiling, and what skipping retrieval costs     |
+| **E. Hybrid with PageIndex**                    | `memory_recall` with `sources: ["vault", "vector", "pageindex"]` (explicit; see open-question resolution)                             | Whether hybrid-including-PageIndex wins                     |
+| **E−. Hybrid minus PageIndex**                  | `memory_recall` with `sources: ["vault", "vector"]`                                                                                   | Whether PageIndex adds anything inside hybrid recall        |
 
 A against B and C answers "is PageIndex a better retriever?" E against E− answers "should it stay in the default route?" D bounds both.
 
@@ -55,15 +55,15 @@ Held constant across arms:
 
 ### Arm conformance (allowed tools)
 
-| Arm | Allowed tools | Forbidden |
-| --- | --- | --- |
-| A | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` (tree pre-built) | `memory_recall`, other `pageindex_*` at query time except listed |
-| B | `memory_recall` (`sources: ["vector"]` only), `read_around` | `pageindex_*`, vault source |
-| C | `memory_recall` (`sources: ["vault"]` only), `read_around` | `pageindex_*`, vector source |
-| C+ | `grep`, `read_range` | MCP recall / pageindex |
-| D | none | any retrieval tool |
-| E | `memory_recall` (`sources: ["vault","vector","pageindex"]`), optional `pageindex_*` follow-ups from recall hints, `read_around` | other sources |
-| E− | `memory_recall` (`sources: ["vault","vector"]`), `read_around` | `pageindex` source / `pageindex_*` |
+| Arm | Allowed tools                                                                                                                   | Forbidden                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| A   | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` (tree pre-built)                                          | `memory_recall`, other `pageindex_*` at query time except listed |
+| B   | `memory_recall` (`sources: ["vector"]` only), `read_around`                                                                     | `pageindex_*`, vault source                                      |
+| C   | `memory_recall` (`sources: ["vault"]` only), `read_around`                                                                      | `pageindex_*`, vector source                                     |
+| C+  | `grep`, `read_range`                                                                                                            | MCP recall / pageindex                                           |
+| D   | none                                                                                                                            | any retrieval tool                                               |
+| E   | `memory_recall` (`sources: ["vault","vector","pageindex"]`), optional `pageindex_*` follow-ups from recall hints, `read_around` | other sources                                                    |
+| E−  | `memory_recall` (`sources: ["vault","vector"]`), `read_around`                                                                  | `pageindex` source / `pageindex_*`                               |
 
 A violation voids and reruns the cell rather than scoring it zero.
 
@@ -73,11 +73,11 @@ A violation voids and reruns the cell rather than scoring it zero.
 
 **Documents: 8 per structure stratum, 20K to 150K tokens each.**
 
-| Stratum | Examples (public sources) | Why it's here |
-| --- | --- | --- |
-| **Well-structured** | SEC 10-K filings, IETF RFCs, agency rulebooks | PageIndex's home turf: deep, accurate heading trees |
-| **Converted PDFs** | Credit agreements and contracts from EDGAR exhibits, regulatory guidance, run through Docling | The real IDP path: headings exist but conversion is imperfect |
-| **Weakly structured** | Hearing transcripts, long email threads, OCR'd scans with flat or wrong headings | Where a heading tree should struggle |
+| Stratum               | Examples (public sources)                                                                     | Why it's here                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Well-structured**   | SEC 10-K filings, IETF RFCs, agency rulebooks                                                 | PageIndex's home turf: deep, accurate heading trees           |
+| **Converted PDFs**    | Credit agreements and contracts from EDGAR exhibits, regulatory guidance, run through Docling | The real IDP path: headings exist but conversion is imperfect |
+| **Weakly structured** | Hearing transcripts, long email threads, OCR'd scans with flat or wrong headings              | Where a heading tree should struggle                          |
 
 About a third of the documents fit the model's context with headroom, so Arm D has enough cases to set a ceiling. Harvey LAB and ExtractBench documents are excluded, so those benchmarks stay clean.
 
@@ -121,16 +121,16 @@ Section IDs come from the shared Docling conversion, so every arm can cite the s
 
 **Strict accuracy is the one primary metric; everything else explains it or prices it.** Choosing it now means the decision can't be re-argued around whichever number looks best afterward.
 
-| Metric | Definition | Role |
-| --- | --- | --- |
-| **Strict accuracy** | Share of questions graded fully correct, with `not_found` counted correct only on unanswerable questions | Primary; the decision rules use this |
-| Partial credit | Correct = 1, partial = 0.5 | Reported, not decisive |
-| Citation precision and recall | Cited section IDs against gold section IDs | Shows whether an arm found the evidence or got lucky |
-| Abstention | Correct `not_found` on unanswerable questions; false `not_found` on answerable ones | Catches guessing, and catches refusing too easily |
-| Tokens per question | Input, output and retrieved tokens, priced at the pinned model's list price | The cost side of the trade |
-| Tool calls per question | Count of retrieval calls | Efficiency, and agent loop risk |
-| Latency | p50 and p95 wall-clock seconds per question | What users feel |
-| Setup cost | Tree build and embedding time and tokens, once per document | Separates index cost from query cost |
+| Metric                        | Definition                                                                                               | Role                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Strict accuracy**           | Share of questions graded fully correct, with `not_found` counted correct only on unanswerable questions | Primary; the decision rules use this                 |
+| Partial credit                | Correct = 1, partial = 0.5                                                                               | Reported, not decisive                               |
+| Citation precision and recall | Cited section IDs against gold section IDs                                                               | Shows whether an arm found the evidence or got lucky |
+| Abstention                    | Correct `not_found` on unanswerable questions; false `not_found` on answerable ones                      | Catches guessing, and catches refusing too easily    |
+| Tokens per question           | Input, output and retrieved tokens, priced at the pinned model's list price                              | The cost side of the trade                           |
+| Tool calls per question       | Count of retrieval calls                                                                                 | Efficiency, and agent loop risk                      |
+| Latency                       | p50 and p95 wall-clock seconds per question                                                              | What users feel                                      |
+| Setup cost                    | Tree build and embedding time and tokens, once per document                                              | Separates index cost from query cost                 |
 
 Every metric is reported three ways: overall, by structure stratum, and by question type. The strata and types are where a specialist result, the second decision outcome, would show up.
 
@@ -143,11 +143,11 @@ Every metric is reported three ways: overall, by structure stratum, and by quest
 - **Intervals.** A paired bootstrap over questions, 10,000 resamples, for each accuracy difference. McNemar on per-question majority votes as a cross-check. Clopper–Pearson bounds for single-arm rates, as in the classifier evals. Scripts: `scripts/bootstrap_paired.py`, `scripts/mcnemar_paired.py`.
 
 | True accuracy gain | Power at 3 trials per question |
-| --- | --- |
-| 5 points | 0.36 |
-| 8 points | 0.80 |
-| 10 points | 0.93 |
-| 12 points | 0.99 |
+| ------------------ | ------------------------------ |
+| 5 points           | 0.36                           |
+| 8 points           | 0.80                           |
+| 10 points          | 0.93                           |
+| 12 points          | 0.99                           |
 
 These powers come from a simulation that assumes a spread of question difficulty; the real spread will move them somewhat. With single trials, the standard McNemar formula needs a 10–13 point gain for 80% power, which is why each question runs three times.
 
@@ -159,11 +159,11 @@ These powers come from a simulation that assumes a spread of question difficulty
 
 The result maps mechanically to one outcome, checked top to bottom. The first whose conditions all hold wins, and these rules are frozen with the question set.
 
-| Outcome | Every condition must hold |
-| --- | --- |
-| **1. Default route** | E beats E− on strict accuracy, with the Holm-adjusted interval excluding zero. A is no more than 3 points below B or C. E costs no more than 1.25× E−'s tokens per question. |
+| Outcome                | Every condition must hold                                                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Default route**   | E beats E− on strict accuracy, with the Holm-adjusted interval excluding zero. A is no more than 3 points below B or C. E costs no more than 1.25× E−'s tokens per question.                                |
 | **2. Specialist tool** | Outcome 1 fails, and either: A beats both B and C by at least 8 points in one stratum or question type, confirmed later on a fresh set; or A is within 3 points of the best of B and C at 30% fewer tokens. |
-| **3. Demote** | Neither holds. `pageindex_*` leaves the default catalog and becomes internal-only. |
+| **3. Demote**          | Neither holds. `pageindex_*` leaves the default catalog and becomes internal-only.                                                                                                                          |
 
 **The 3-point margin is a screen, not a proof.** With an 8-point detectable difference, the test can't show two arms are equal within 3 points. It can only refuse to reward an arm that looks worse.
 
@@ -197,12 +197,12 @@ The same rules that kept the classifier evals honest apply here, plus one for th
 6. **Grading (1 day).** Tier-2 judging, adjudication, and the blind 10% human re-grade.
 7. **Decision (half a day).** Apply the rules, add the results to `docs/benchmarks/openbench-results-ledger.md`, and act on the outcome.
 
-| Item | Size | Approximate cost |
-| --- | --- | --- |
-| Main run | 3,072 cells, about 127M input and 6M output tokens | $45 |
-| Tier-2 judging and adjudication | 3,072 answers | $18 |
-| Frontier-model subset | 342 cells | $53 |
-| **Total** |  | **about $120** |
+| Item                            | Size                                               | Approximate cost |
+| ------------------------------- | -------------------------------------------------- | ---------------- |
+| Main run                        | 3,072 cells, about 127M input and 6M output tokens | $45              |
+| Tier-2 judging and adjudication | 3,072 answers                                      | $18              |
+| Frontier-model subset           | 342 cells                                          | $53              |
+| **Total**                       |                                                    | **about $120**   |
 
 Costs assume about 40,000 input tokens per retrieval cell, since the agent re-sends context each turn, plus DeepSeek-class and Sonnet-class list prices. Confirm current prices before running; even at double, the compute is under $250.
 
@@ -210,42 +210,42 @@ Costs assume about 40,000 input tokens per retrieval cell, since the agent re-se
 
 These must land before the scored run, or the corresponding arms are blocked:
 
-| Gap | Why it blocks | Proposed fix |
-| --- | --- | --- |
-| **No `read_around` MCP tool** | Arms B and C need a section-window read after chunk hits | Add harness-local (or MCP) `read_around({ chunkId \| path, sectionId? })` returning the shared Docling section for a hit |
-| **Arm E ≠ bare default today** | `resolveMemoryRecallSources({})` returns `vault`+`vector` only unless `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1` | Define Arm E as **explicit** `sources: ["vault","vector","pageindex"]` (or hybrid env on). Treat enabling hybrid-by-default as the **product action** after Outcome 1, not as today's default |
-| **OpenBenchTrace `arm` enum is binary** | Six arms need distinct labels | Use `arm_label`; optionally bump schema later |
-| **No paired stats scripts previously** | Decision rules need bootstrap + McNemar | Landed under `benchmarks/pageindex-ab/scripts/` |
+| Gap                                     | Why it blocks                                                                                                   | Proposed fix                                                                                                                                                                                  |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No `read_around` MCP tool**           | Arms B and C need a section-window read after chunk hits                                                        | Add harness-local (or MCP) `read_around({ chunkId \| path, sectionId? })` returning the shared Docling section for a hit                                                                      |
+| **Arm E ≠ bare default today**          | `resolveMemoryRecallSources({})` returns `vault`+`vector` only unless `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1` | Define Arm E as **explicit** `sources: ["vault","vector","pageindex"]` (or hybrid env on). Treat enabling hybrid-by-default as the **product action** after Outcome 1, not as today's default |
+| **OpenBenchTrace `arm` enum is binary** | Six arms need distinct labels                                                                                   | Use `arm_label`; optionally bump schema later                                                                                                                                                 |
+| **No paired stats scripts previously**  | Decision rules need bootstrap + McNemar                                                                         | Landed under `benchmarks/pageindex-ab/scripts/`                                                                                                                                               |
 
 ## Open questions — resolutions (pre-freeze)
 
-| Question | Resolution | Evidence |
-| --- | --- | --- |
-| **Primary model** | Keep `openrouter/deepseek/deepseek-chat` (pinned version) for continuity with August OpenBench and advanced-suite methodology. Frontier subset is the generalization check. | Matches `docs/benchmarks/openbench-advanced-specs.md` shared setup |
-| **Judge independence** | Tier-2 judge must be a **different model family** from the frontier subset runner. If the subset uses Sonnet 4.6, judge with GPT-class (or vice versa). Adjudicator is a third family when available. | Spec contamination control |
-| **What "as shipped" means** | **Today, omit-`sources` does not include PageIndex.** Default = Arm E−. Arm E is the candidate default (explicit three-source / hybrid flag). Outcome 1 is the gate to flip `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX` (or product default) on. | `packages/clawql-memory/src/recall/recall-sources.ts`, `recall-sources.test.ts` |
-| **Is Arm C a straw man?** | Vault is **token TF (+ optional corpus IDF)** via case-insensitive substring occurrence counts — not Okapi BM25. Keep Arm C as the product baseline; **add optional Arm C+** (`grep` + `read_range`) as exploratory. C+ never decides Outcome 1–3. | `packages/clawql-memory/src/recall/recall.ts` `keywordScore` |
-| **Who writes the questions** | Human-owned keys. Model-drafted candidates allowed only if the drafting model never sees arm tools, prompts, or outputs. Second annotator + frontier adjudication before freeze. | Contamination controls |
-| **IDP locate step** | Out of scope for v1. Follow-up spec after this result (ExtractBench field location). | Spec § open questions |
+| Question                     | Resolution                                                                                                                                                                                                                                         | Evidence                                                                        |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Primary model**            | Keep `openrouter/deepseek/deepseek-chat` (pinned version) for continuity with August OpenBench and advanced-suite methodology. Frontier subset is the generalization check.                                                                        | Matches `docs/benchmarks/openbench-advanced-specs.md` shared setup              |
+| **Judge independence**       | Tier-2 judge must be a **different model family** from the frontier subset runner. If the subset uses Sonnet 4.6, judge with GPT-class (or vice versa). Adjudicator is a third family when available.                                              | Spec contamination control                                                      |
+| **What "as shipped" means**  | **Today, omit-`sources` does not include PageIndex.** Default = Arm E−. Arm E is the candidate default (explicit three-source / hybrid flag). Outcome 1 is the gate to flip `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX` (or product default) on.       | `packages/clawql-memory/src/recall/recall-sources.ts`, `recall-sources.test.ts` |
+| **Is Arm C a straw man?**    | Vault is **token TF (+ optional corpus IDF)** via case-insensitive substring occurrence counts — not Okapi BM25. Keep Arm C as the product baseline; **add optional Arm C+** (`grep` + `read_range`) as exploratory. C+ never decides Outcome 1–3. | `packages/clawql-memory/src/recall/recall.ts` `keywordScore`                    |
+| **Who writes the questions** | Human-owned keys. Model-drafted candidates allowed only if the drafting model never sees arm tools, prompts, or outputs. Second annotator + frontier adjudication before freeze.                                                                   | Contamination controls                                                          |
+| **IDP locate step**          | Out of scope for v1. Follow-up spec after this result (ExtractBench field location).                                                                                                                                                               | Spec § open questions                                                           |
 
 ## Predictions (fill before scored run)
 
 > Record before scoring. Do not edit after freeze.
 
-| Field | Value |
-| --- | --- |
-| Expected outcome (1 / 2 / 3) | _TBD_ |
-| Why | _TBD_ |
-| Recorded by | _TBD_ |
-| Date | _TBD_ |
-| Manifest tag | `pageindex-ab-v1` |
+| Field                        | Value             |
+| ---------------------------- | ----------------- |
+| Expected outcome (1 / 2 / 3) | _TBD_             |
+| Why                          | _TBD_             |
+| Recorded by                  | _TBD_             |
+| Date                         | _TBD_             |
+| Manifest tag                 | `pageindex-ab-v1` |
 
 ## Status
 
-| Item | State |
-| --- | --- |
-| Decision rules | Frozen in this v0.1 text |
-| Harness scaffold | Landed (`benchmarks/pageindex-ab/`) |
-| Corpus / questions | Not started |
-| `read_around` tool | Not started (precondition) |
-| Scored run | Blocked on corpus + preconditions |
+| Item               | State                               |
+| ------------------ | ----------------------------------- |
+| Decision rules     | Frozen in this v0.1 text            |
+| Harness scaffold   | Landed (`benchmarks/pageindex-ab/`) |
+| Corpus / questions | Not started                         |
+| `read_around` tool | Not started (precondition)          |
+| Scored run         | Blocked on corpus + preconditions   |
