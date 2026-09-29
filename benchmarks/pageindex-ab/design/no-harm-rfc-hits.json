@@ -1,0 +1,119 @@
+{
+  "definition": "RFC questions where H-idf agent-lite majority is already answer-correct (answer-only grade, citations ignored); no-harm cohort for Vectify fair test",
+  "n": 15,
+  "target_n": 15,
+  "note": "Balanced sample of 15.",
+  "available_hits": 35,
+  "source_answers": "/tmp/piab-ok/agent-factorial/agent-answers.jsonl",
+  "excludes_deep_misses": true,
+  "grade_mode": "answer_only",
+  "question_ids": [
+    "hc-rfc-02-q01",
+    "hc-rfc-03-q01",
+    "hc-rfc-04-q01",
+    "hc-rfc-05-q01",
+    "hc-rfc-01-q01",
+    "hc-rfc-06-q01",
+    "hc-rfc-07-q01",
+    "hc-rfc-08-q01",
+    "hc-rfc-02-q04",
+    "hc-rfc-03-q04",
+    "hc-rfc-04-q04",
+    "hc-rfc-05-q04",
+    "hc-rfc-01-q04",
+    "hc-rfc-06-q04",
+    "hc-rfc-07-q07"
+  ],
+  "rows": [
+    {
+      "id": "hc-rfc-02-q01",
+      "doc": "rfc6749",
+      "type": "exact_term",
+      "normalized_answer": "6749"
+    },
+    {
+      "id": "hc-rfc-03-q01",
+      "doc": "rfc7519",
+      "type": "exact_term",
+      "normalized_answer": "7519"
+    },
+    {
+      "id": "hc-rfc-04-q01",
+      "doc": "rfc7636",
+      "type": "exact_term",
+      "normalized_answer": "7636"
+    },
+    {
+      "id": "hc-rfc-05-q01",
+      "doc": "rfc7807",
+      "type": "exact_term",
+      "normalized_answer": "7807"
+    },
+    {
+      "id": "hc-rfc-01-q01",
+      "doc": "rfc8259",
+      "type": "exact_term",
+      "normalized_answer": "8259"
+    },
+    {
+      "id": "hc-rfc-06-q01",
+      "doc": "rfc8615",
+      "type": "exact_term",
+      "normalized_answer": "8615"
+    },
+    {
+      "id": "hc-rfc-07-q01",
+      "doc": "rfc9110",
+      "type": "exact_term",
+      "normalized_answer": "9110"
+    },
+    {
+      "id": "hc-rfc-08-q01",
+      "doc": "rfc9205",
+      "type": "exact_term",
+      "normalized_answer": "9205"
+    },
+    {
+      "id": "hc-rfc-02-q04",
+      "doc": "rfc6749",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track"
+    },
+    {
+      "id": "hc-rfc-03-q04",
+      "doc": "rfc7519",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track                         "
+    },
+    {
+      "id": "hc-rfc-04-q04",
+      "doc": "rfc7636",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track                         "
+    },
+    {
+      "id": "hc-rfc-05-q04",
+      "doc": "rfc7807",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track                         "
+    },
+    {
+      "id": "hc-rfc-01-q04",
+      "doc": "rfc8259",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track"
+    },
+    {
+      "id": "hc-rfc-06-q04",
+      "doc": "rfc8615",
+      "type": "exact_term",
+      "normalized_answer": "Standards Track"
+    },
+    {
+      "id": "hc-rfc-07-q07",
+      "doc": "rfc9110",
+      "type": "exact_term",
+      "normalized_answer": "2818, 7230, 7231, 7232, 7233, 7235,"
+    }
+  ]
+}

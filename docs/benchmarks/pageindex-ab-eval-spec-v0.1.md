@@ -263,9 +263,11 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 | Track | Work | Spec |
 | ----- | ---- | ---- |
-| **A** | VectifyAI fair test (LLM summaries + strong tree nav) vs query-rewrite on 12 deep RFC misses | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
-| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep — **schedule now** | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
-| **C** | k-sweep `{3,6,10}` + union matched-k (~$0.50) — not freeze-gating for catalog purge | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
+| **A** | Vectify vs query-rewrite (same strong model; answer-only; Net≥5 + no-harm; IETF PDFs; GHA `.run-vectify-fair`) | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
+| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
+| **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
+
+**Beat lock (A):** Net \(W-L \ge 5\) on 12 misses and no-harm ≥14/15; smaller Net = tie = purge. **Combine:** Vectify win + our lose → purge ours, port later; both lose → purge; our agent-loop wins → keep opt-in.
 
 Union rescore edge shrank to **+2 Q** (0.840→0.853) — more likely k-explained.
 

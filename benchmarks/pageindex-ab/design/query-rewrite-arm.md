@@ -11,10 +11,10 @@ Of 15 RFC retrieval misses under `H-idf` (top-k=3), offline gold ranks show only
 | id      | `H-idf-qrewrite`                                                                                                                                                                    |
 | Control | `H-idf` (same top-k after merge)                                                                                                                                                    |
 | Method  | One cheap model call rewrites the question into 2–3 alternate queries; retrieve each with today's IDF vault ranker; **union** section ids (dedupe, preserve best score); take top-k |
-| Model   | flash-lite (or cheaper) — pennies at n=150                                                                                                                                          |
-| Gate    | Strict accuracy vs `H-idf` on the **150-key** corpus; report n and sign-test / McNemar                                                                                              |
+| Model   | **Fair-test scored arm:** same strong model as Vectify chat (`VECTIFY_FAIR_MODEL`, e.g. `openai/gpt-4o`). Heuristic rewrite is a floor only. Full-corpus pennies pass may still use flash-lite later. |
+| Gate (fair test) | Answer-only vs `D-vectify-pi` on 12 misses + 15 no-harm; Vectify must Net≥5 **and** no-harm pass — see [vectify-fair-test.md](vectify-fair-test.md) |
 
-If this recovers most of the 12 deep misses, the rewrite step is a candidate for **`memory_recall` default path** (helps every client, including those without a strong agent loop). If not, proceed to strong-model agent loop + grep.
+If the LLM rewrite recovers most of the 12 deep misses without no-harm regressions, it is a candidate for **`memory_recall` default path**. Heuristic 1/12 is not evidence.
 
 ## Suggested spend order (updated for freeze)
 
