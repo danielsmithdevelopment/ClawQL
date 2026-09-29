@@ -42,7 +42,7 @@ Hybrid PageIndex has been **opt-in since introduction** ([#653](https://github.c
 
 ## Optional clarity edits
 
-- Distinguish **catalog default-on** (`pageindex_*` tools registered unless `CLAWQL_ENABLE_PAGEINDEX=0`) from **recall-source default-on** (not the same switch).
+- Distinguish **catalog opt-in** (`pageindex_*` tools registered only with `CLAWQL_ENABLE_PAGEINDEX=1` as of 8.0.0) from **recall-source opt-in** (`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX` — not the same switch; still default off).
 - CodeGraph: native tree-sitter builder is default (`CLAWQL_CODEGRAPH_BACKEND=native`); Graphify is optional import — not required for the layer to exist ([#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793)).
 - Point readers at the default-route eval: [`pageindex-ab-eval-spec-v0.1.md`](../../benchmarks/pageindex-ab-eval-spec-v0.1.md) (v0.2 body).
 

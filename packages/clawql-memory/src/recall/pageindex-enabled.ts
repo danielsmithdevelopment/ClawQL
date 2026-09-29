@@ -1,4 +1,8 @@
-/** Whether pageindex_* MCP tools are registered (default on; set CLAWQL_ENABLE_PAGEINDEX=0 to hide). */
+/**
+ * Whether pageindex_* MCP tools are registered.
+ * 8.0.0+: default **off** — set CLAWQL_ENABLE_PAGEINDEX=1 to enable (prove-or-purge).
+ */
 export function pageIndexEnabled(): boolean {
-  return process.env.CLAWQL_ENABLE_PAGEINDEX?.trim() !== "0";
+  const v = process.env.CLAWQL_ENABLE_PAGEINDEX?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
 }

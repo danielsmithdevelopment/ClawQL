@@ -6,7 +6,9 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
-**Current lean (hard agent-lite 161×10×3, runs [36522240396](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396) / confirmatory [36524273079](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079)):** keep `H-idf`. RRF PageIndex **hurts** (13–0 converted_pdf, displacement-confirmed). Union/BM25/gated are noise-scale. **Neither PI nor BM25 joins the default.** Keys: 150 after dropping cite-impossible RFC items. Gold-rank preview: [design/rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md). 8.0.0 purge: [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
+**Current lean:** keep `H-idf`. RRF PageIndex **hurts**. Neither PI nor BM25 joins the default. `pageindex_*` catalog default **off** in 8.0.0 (`CLAWQL_ENABLE_PAGEINDEX=1` to opt in).
+
+**Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md). Next spend order: [query-rewrite-arm.md](design/query-rewrite-arm.md). Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 

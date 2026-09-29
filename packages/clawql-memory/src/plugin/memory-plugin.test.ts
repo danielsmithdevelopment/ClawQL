@@ -35,8 +35,8 @@ describe("createMemoryPlugin", () => {
     expect(names).toEqual(["memory_ingest", "memory_recall", "read_around"]);
   });
 
-  it("registers pageindex tools when CLAWQL_ENABLE_PAGEINDEX is not 0", () => {
-    delete process.env.CLAWQL_ENABLE_PAGEINDEX;
+  it("registers pageindex tools when CLAWQL_ENABLE_PAGEINDEX=1", () => {
+    process.env.CLAWQL_ENABLE_PAGEINDEX = "1";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     installPluginMcpTools(createMemoryPlugin(), api);
@@ -47,14 +47,15 @@ describe("createMemoryPlugin", () => {
     expect(names).toContain("pageindex_get_content");
   });
 
-  it("omits pageindex tools when CLAWQL_ENABLE_PAGEINDEX=0", () => {
-    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+  it("omits pageindex tools by default (8.0.0 opt-in)", () => {
+    delete process.env.CLAWQL_ENABLE_PAGEINDEX;
     process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
     expect(names).toEqual(["memory_ingest", "memory_recall", "read_around"]);
+    expect(names).not.toContain("pageindex_build_tree");
   });
 
   it("registers codegraph tools when CLAWQL_ENABLE_CODEGRAPH=1", () => {

@@ -253,6 +253,22 @@
       ],
       "reason": "empty gold_sections; year keys also had bogus answers (e.g. 2070)",
       "rfc_retrieval_miss_gold_ranks": "benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md"
-    }
+    },
+    "agent_rescore_150": {
+      "source": "benchmarks/pageindex-ab/design/agent-rescore-150.json",
+      "H_idf": 0.84,
+      "H_idf_pi": 0.7533,
+      "H_idf_pi_union": 0.8533,
+      "H_idf_pi_gated": 0.84,
+      "pageindex_main_effect": -0.0867,
+      "bm25_main_effect": 0.0,
+      "union_vs_today": 0.0133,
+      "gated_vs_today": 0.0
+    },
+    "next_spend_order": [
+      "query-rewrite",
+      "k-sweep-3-6-10+union-matched-k",
+      "strong-model-agent-loop"
+    ]
   }
 }

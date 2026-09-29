@@ -4,13 +4,14 @@
 
 ## Breaking defaults (read first)
 
-| Before 8.0                               | After 8.0                        | What to set                                                                                                            |
-| ---------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Bundled OpenAPI pack often loaded        | **Empty catalog** until opted in | `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm `providers.pack=default` |
-| Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                       |
-| In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                  |
-| Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                  |
-| `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                     |
+| Before 8.0                               | After 8.0                        | What to set                                                                                                                       |
+| ---------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Bundled OpenAPI pack often loaded        | **Empty catalog** until opted in | `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm `providers.pack=default`            |
+| Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                                  |
+| In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                             |
+| Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                             |
+| `pageindex_*` tools default **on**       | **Off** until opted in           | `CLAWQL_ENABLE_PAGEINDEX=1` (prove-or-purge by 2026-10-15; see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)) |
+| `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                |
 
 Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.
 

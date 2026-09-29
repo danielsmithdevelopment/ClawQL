@@ -251,12 +251,15 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 **Pre–next-run hygiene**
 
-- Dropped cite-impossible RFC keys (MUST/SHALL + “earliest publication year” fallbacks; 11 keys → 150 remaining).
-- Offline gold ranks for 15 RFC retrieval misses: only **3/15** sit in ranks 4–10; **12/15** need query rewrite / agent loop, not larger k alone ([`rfc-retrieval-miss-gold-ranks.md`](../../benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md)).
-- Confirm run 36524273079 re-called the model (`prior_cells: 0`); identical scores ⇒ deterministic flash-lite; trials ≠ independent variance.
-- Six code `H-idf` misses are all “What file exports X?” — **grep-solvable**; CodeGraph must prove unique jobs (callers / impact / cross-file).
+- Dropped cite-impossible RFC keys (11 → **150** remaining); rule recorded in [freeze-log-key-hygiene.md](../../benchmarks/pageindex-ab/design/freeze-log-key-hygiene.md) (pre-freeze, not arm-based).
+- **Rescore (free):** filter saved cells → `H-idf` 0.840, PI main **−0.087**, union +0.013, gated 0, BM25 0 ([agent-rescore-150.json](../../benchmarks/pageindex-ab/design/agent-rescore-150.json)).
+- Offline gold ranks: only **3/15** RFC retrieval misses in ranks 4–10 ([rfc-retrieval-miss-gold-ranks.md](../../benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md)).
+- Key sanity script clean on remaining keys (`validate_keys_sanity.py`).
+- Confirm run re-called the model (`prior_cells: 0`); trials deterministic.
+- Six code misses are grep-solvable; CG must prove unique jobs.
+- **8.0.0:** `CLAWQL_ENABLE_PAGEINDEX` default **off**; prove-or-purge by **2026-10-15**.
 
-**Next eval spend (~$0.50/arm):** k-sweep `{3,6,10}` on today’s default, then union control at matched mean context size.
+**Next eval spend order:** (1) query-rewrite arm (pennies) → (2) k-sweep `{3,6,10}` + union matched-k (~$0.50) → (3) strong-model agent loop + grep. See [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md).
 
 Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass still required before spent `pageindex-ab-v1`.
 

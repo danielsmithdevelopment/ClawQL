@@ -66,7 +66,7 @@ export async function recallPageIndexSupplement(input: {
       followUps: [
         {
           tool: "pageindex_build_tree",
-          reason: "PageIndex tools are disabled (CLAWQL_ENABLE_PAGEINDEX=0).",
+          reason: "PageIndex tools are disabled (set CLAWQL_ENABLE_PAGEINDEX=1 to enable).",
         },
       ],
       skipped: "PageIndex disabled",

@@ -110,7 +110,7 @@ Each piece has one job. The vault is the only canonical store; everything else i
 | Env                                            | Default | Effect                                                             |
 | ---------------------------------------------- | ------- | ------------------------------------------------------------------ |
 | **`CLAWQL_ENABLE_MEMORY=0`**                   | on      | Omit `MemoryPlugin` and hide memory + PageIndex + code graph tools |
-| **`CLAWQL_ENABLE_PAGEINDEX=0`**                | on      | Hide `pageindex_*` only (memory ingest/recall remain)              |
+| **`CLAWQL_ENABLE_PAGEINDEX=1`**                | **off** | Register `pageindex_*` (8.0.0 opt-in; memory ingest/recall remain) |
 | **`CLAWQL_ENABLE_CODEGRAPH=1`**                | off     | Register `codegraph_*` tools (structural code graph)               |
 | **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**  | off     | Default `sources` includes codegraph                               |
 | **`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1`**  | off     | Default `sources` includes pageindex                               |
