@@ -31,6 +31,7 @@ describe("read_around", () => {
     ).toBe(true);
     expect(isArtifactHeadingTitle("1 Introduction")).toBe(false);
     expect(isArtifactHeadingTitle("4.7 Specifying HTTP Header Fields")).toBe(false);
+    expect(isArtifactHeadingTitle("48155 Münster")).toBe(true);
   });
 
   it("skips TOC ghosts when splitting sections", () => {

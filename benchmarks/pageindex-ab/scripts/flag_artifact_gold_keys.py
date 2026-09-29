@@ -4,19 +4,24 @@
 Uses the same rules as build_hard_candidate.is_artifact_heading_title /
 product isArtifactHeadingTitle. Run on every section map before H-idf
 re-runs so baselines exclude wrong-reason passes.
+
+Also supports --vault to scan ingested Markdown for artifact ATX headings
+(wrong-reason risk in real recall), independent of eval keys.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
-from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_hard_candidate import is_artifact_heading_title  # noqa: E402
+
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 
 
 def load_maps(maps_dir: Path) -> dict[str, dict[str, str]]:
@@ -34,31 +39,62 @@ def load_maps(maps_dir: Path) -> dict[str, dict[str, str]]:
     return out
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument(
-        "--maps",
-        type=Path,
-        default=ROOT / "corpus" / "hard-candidate" / "section-maps",
-    )
-    p.add_argument(
-        "--keys",
-        type=Path,
-        default=ROOT / "corpus" / "hard-candidate" / "keys.jsonl",
-    )
-    p.add_argument(
-        "--out",
-        type=Path,
-        default=ROOT / "design" / "artifact-gold-flags.json",
-    )
-    args = p.parse_args()
+def scan_vault(vault: Path) -> dict:
+    """Walk vault Markdown; count ATX titles that fail the artifact filter."""
+    files: list[dict] = []
+    total_headings = 0
+    total_artifacts = 0
+    for p in sorted(vault.rglob("*.md")):
+        if any(part in {".git", "node_modules"} for part in p.parts):
+            continue
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        hits: list[dict] = []
+        file_heads = 0
+        for i, line in enumerate(text.splitlines(), 1):
+            m = HEADING_RE.match(line)
+            if not m:
+                continue
+            file_heads += 1
+            title = m.group(2).strip()
+            if is_artifact_heading_title(title):
+                hits.append({"line": i, "level": len(m.group(1)), "title": title})
+        total_headings += file_heads
+        if not hits:
+            continue
+        total_artifacts += len(hits)
+        files.append(
+            {
+                "path": str(p.relative_to(vault)),
+                "heading_count": file_heads,
+                "artifact_count": len(hits),
+                "samples": hits[:8],
+            }
+        )
+    rate = (total_artifacts / total_headings) if total_headings else 0.0
+    return {
+        "ok": True,
+        "mode": "vault",
+        "vault": str(vault),
+        "files_scanned": sum(1 for _ in vault.rglob("*.md")),
+        "files_with_artifacts": len(files),
+        "total_atx_headings": total_headings,
+        "artifact_heading_count": total_artifacts,
+        "artifact_heading_rate": round(rate, 4),
+        "files": files,
+        "note": (
+            "Artifact ATX headings in source Markdown mint bogus sec-* IDs for any "
+            "tool that does not use the 8.0 splitMarkdownSections filter. "
+            "Product read_around skips them; optional demote via "
+            "scripts/dev/vault-resection-artifact-headings.mjs --write."
+        ),
+    }
 
-    if not args.maps.is_dir() or not args.keys.is_file():
-        print(json.dumps({"ok": False, "error": "maps or keys missing"}), file=sys.stderr)
-        return 2
 
-    maps = load_maps(args.maps)
-    # Also flag map entries that are artifacts (even if no key pins them)
+def flag_keys(maps_dir: Path, keys_path: Path) -> dict:
+    maps = load_maps(maps_dir)
     map_artifacts: list[dict] = []
     for doc, by in maps.items():
         for sid, title in by.items():
@@ -71,7 +107,7 @@ def main() -> int:
     missing_gold = 0
     no_map = 0
 
-    with args.keys.open(encoding="utf-8") as f:
+    with keys_path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -106,13 +142,17 @@ def main() -> int:
                         {"section_id": gid, "reason": "artifact_title", "title": title}
                     )
             if bad_hits:
+                if any(h["reason"] == "artifact_title" for h in bad_hits):
+                    reason = "gold_is_artifact"
+                else:
+                    reason = "gold_id_absent"
                 flagged.append(
                     {
                         "id": qid,
                         "document_id": doc,
                         "question_type": row.get("question_type"),
                         "question": row.get("question"),
-                        "reason": "gold_is_artifact",
+                        "reason": reason,
                         "hits": bad_hits,
                     }
                 )
@@ -121,8 +161,9 @@ def main() -> int:
 
     summary = {
         "ok": True,
-        "keys_path": str(args.keys),
-        "maps_path": str(args.maps),
+        "mode": "keys",
+        "keys_path": str(keys_path),
+        "maps_path": str(maps_dir),
         "keys_with_gold_clean": clean,
         "keys_flagged_defective": len([x for x in flagged if x.get("reason") == "gold_is_artifact"]),
         "keys_no_gold_sections": no_gold,
@@ -135,15 +176,66 @@ def main() -> int:
             "defective (wrong-reason pass risk). Exclude from H-idf baselines."
         ),
     }
-    payload = {
+    return {
         "summary": summary,
         "flagged_keys": flagged,
         "map_artifact_sections": map_artifacts,
     }
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--maps",
+        type=Path,
+        default=ROOT / "corpus" / "hard-candidate" / "section-maps",
+    )
+    p.add_argument(
+        "--keys",
+        type=Path,
+        default=ROOT / "corpus" / "hard-candidate" / "keys.jsonl",
+    )
+    p.add_argument(
+        "--out",
+        type=Path,
+        default=ROOT / "design" / "artifact-gold-flags.json",
+    )
+    p.add_argument(
+        "--vault",
+        type=Path,
+        default=None,
+        help="Scan vault Markdown for artifact ATX headings (skip keys/maps mode).",
+    )
+    args = p.parse_args()
+
+    if args.vault is not None:
+        vault = args.vault.expanduser().resolve()
+        if not vault.is_dir():
+            print(json.dumps({"ok": False, "error": f"vault not a directory: {vault}"}), file=sys.stderr)
+            return 2
+        payload = scan_vault(vault)
+        out = args.out
+        if out == ROOT / "design" / "artifact-gold-flags.json":
+            out = ROOT / "design" / "vault-artifact-headings.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        print(
+            json.dumps(
+                {k: payload[k] for k in payload if k != "files"},
+                indent=2,
+            )
+        )
+        return 0
+
+    if not args.maps.is_dir() or not args.keys.is_file():
+        print(json.dumps({"ok": False, "error": "maps or keys missing"}), file=sys.stderr)
+        return 2
+
+    payload = flag_keys(args.maps, args.keys)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(summary, indent=2))
-    return 0 if summary["keys_flagged_defective"] >= 0 else 1
+    print(json.dumps(payload["summary"], indent=2))
+    return 0
 
 
 if __name__ == "__main__":

@@ -1,0 +1,693 @@
+{
+  "ok": true,
+  "mode": "vault",
+  "vault": "/tmp/rfc-naive-vault-_aglteos",
+  "files_scanned": 16,
+  "files_with_artifacts": 15,
+  "total_atx_headings": 1262,
+  "artifact_heading_count": 212,
+  "artifact_heading_rate": 0.168,
+  "files": [
+    {
+      "path": "rfc3986.md",
+      "heading_count": 85,
+      "artifact_count": 12,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  4"
+        },
+        {
+          "line": 81,
+          "level": 2,
+          "title": "2 Characters . . . . . . . . . . . . . . . . . . . . . . . . . . 11"
+        },
+        {
+          "line": 89,
+          "level": 2,
+          "title": "3 Syntax Components  . . . . . . . . . . . . . . . . . . . . . . 16"
+        },
+        {
+          "line": 100,
+          "level": 2,
+          "title": "4 Usage  . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25"
+        },
+        {
+          "line": 108,
+          "level": 2,
+          "title": "5 Reference Resolution . . . . . . . . . . . . . . . . . . . . . 28"
+        },
+        {
+          "line": 134,
+          "level": 2,
+          "title": "6 Normalization and Comparison . . . . . . . . . . . . . . . . . 38"
+        },
+        {
+          "line": 143,
+          "level": 2,
+          "title": "7 Security Considerations  . . . . . . . . . . . . . . . . . . . 43"
+        },
+        {
+          "line": 152,
+          "level": 2,
+          "title": "8 IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 46"
+        }
+      ]
+    },
+    {
+      "path": "rfc4648.md",
+      "heading_count": 40,
+      "artifact_count": 16,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction ....................................................3"
+        },
+        {
+          "line": 72,
+          "level": 2,
+          "title": "2 Conventions Used in This Document ...............................3"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "3 Implementation Discrepancies ....................................3"
+        },
+        {
+          "line": 83,
+          "level": 2,
+          "title": "4 Base 64 Encoding ................................................5"
+        },
+        {
+          "line": 86,
+          "level": 2,
+          "title": "5 Base 64 Encoding with URL and Filename Safe Alphabet ............7"
+        },
+        {
+          "line": 89,
+          "level": 2,
+          "title": "6 Base 32 Encoding ................................................8"
+        },
+        {
+          "line": 92,
+          "level": 2,
+          "title": "7 Base 32 Encoding with Extended Hex Alphabet ....................10"
+        },
+        {
+          "line": 95,
+          "level": 2,
+          "title": "8 Base 16 Encoding ...............................................10"
+        }
+      ]
+    },
+    {
+      "path": "rfc5321.md",
+      "heading_count": 185,
+      "artifact_count": 16,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  5"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "2 The SMTP Model . . . . . . . . . . . . . . . . . . . . . . . .  7"
+        },
+        {
+          "line": 96,
+          "level": 2,
+          "title": "3 The SMTP Procedures: An Overview . . . . . . . . . . . . . . . 17"
+        },
+        {
+          "line": 131,
+          "level": 2,
+          "title": "4 The SMTP Specifications  . . . . . . . . . . . . . . . . . . . 32"
+        },
+        {
+          "line": 176,
+          "level": 2,
+          "title": "5 Address Resolution and Mail Handling . . . . . . . . . . . . . 69"
+        },
+        {
+          "line": 181,
+          "level": 2,
+          "title": "6 Problem Detection and Handling . . . . . . . . . . . . . . . . 71"
+        },
+        {
+          "line": 197,
+          "level": 2,
+          "title": "7 Security Considerations  . . . . . . . . . . . . . . . . . . . 75"
+        },
+        {
+          "line": 209,
+          "level": 2,
+          "title": "8 IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 79"
+        }
+      ]
+    },
+    {
+      "path": "rfc6749.md",
+      "heading_count": 111,
+      "artifact_count": 12,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction ....................................................4"
+        },
+        {
+          "line": 85,
+          "level": 2,
+          "title": "2 Client Registration ............................................13"
+        },
+        {
+          "line": 94,
+          "level": 2,
+          "title": "3 Protocol Endpoints .............................................18"
+        },
+        {
+          "line": 103,
+          "level": 2,
+          "title": "4 Obtaining Authorization ........................................23"
+        },
+        {
+          "line": 132,
+          "level": 2,
+          "title": "5 Issuing an Access Token ........................................43"
+        },
+        {
+          "line": 137,
+          "level": 2,
+          "title": "6 Refreshing an Access Token .....................................47"
+        },
+        {
+          "line": 140,
+          "level": 2,
+          "title": "7 Accessing Protected Resources ..................................48"
+        },
+        {
+          "line": 145,
+          "level": 2,
+          "title": "8 Extensibility ..................................................50"
+        }
+      ]
+    },
+    {
+      "path": "rfc6901.md",
+      "heading_count": 23,
+      "artifact_count": 10,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . . . 2"
+        },
+        {
+          "line": 72,
+          "level": 2,
+          "title": "2 Conventions . . . . . . . . . . . . . . . . . . . . . . . . . . 2"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "3 Syntax  . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2"
+        },
+        {
+          "line": 78,
+          "level": 2,
+          "title": "4 Evaluation  . . . . . . . . . . . . . . . . . . . . . . . . . . 3"
+        },
+        {
+          "line": 81,
+          "level": 2,
+          "title": "5 JSON String Representation  . . . . . . . . . . . . . . . . . . 4"
+        },
+        {
+          "line": 84,
+          "level": 2,
+          "title": "6 URI Fragment Identifier Representation  . . . . . . . . . . . . 5"
+        },
+        {
+          "line": 87,
+          "level": 2,
+          "title": "7 Error Handling  . . . . . . . . . . . . . . . . . . . . . . . . 6"
+        },
+        {
+          "line": 90,
+          "level": 2,
+          "title": "8 Security Considerations . . . . . . . . . . . . . . . . . . . . 6"
+        }
+      ]
+    },
+    {
+      "path": "rfc7231.md",
+      "heading_count": 132,
+      "artifact_count": 19,
+      "samples": [
+        {
+          "line": 126,
+          "level": 2,
+          "title": "1 Introduction ....................................................6"
+        },
+        {
+          "line": 131,
+          "level": 2,
+          "title": "2 Resources .......................................................7"
+        },
+        {
+          "line": 134,
+          "level": 2,
+          "title": "3 Representations .................................................7"
+        },
+        {
+          "line": 147,
+          "level": 2,
+          "title": "4 Request Methods ................................................21"
+        },
+        {
+          "line": 164,
+          "level": 2,
+          "title": "5 Request Header Fields ..........................................33"
+        },
+        {
+          "line": 191,
+          "level": 2,
+          "title": "6 Response Status Codes ..........................................47"
+        },
+        {
+          "line": 236,
+          "level": 2,
+          "title": "7 Response Header Fields .........................................64"
+        },
+        {
+          "line": 258,
+          "level": 2,
+          "title": "8 IANA Considerations ............................................73"
+        }
+      ]
+    },
+    {
+      "path": "rfc7396.md",
+      "heading_count": 15,
+      "artifact_count": 6,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
+        },
+        {
+          "line": 72,
+          "level": 2,
+          "title": "2 Processing Merge Patch Documents  . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "3 Example . . . . . . . . . . . . . . . . . . . . . . . . . . .   4"
+        },
+        {
+          "line": 78,
+          "level": 2,
+          "title": "4 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5"
+        },
+        {
+          "line": 81,
+          "level": 2,
+          "title": "5 Security Considerations . . . . . . . . . . . . . . . . . . .   6"
+        },
+        {
+          "line": 84,
+          "level": 2,
+          "title": "6 References  . . . . . . . . . . . . . . . . . . . . . . . . .   7"
+        }
+      ]
+    },
+    {
+      "path": "rfc7464.md",
+      "heading_count": 16,
+      "artifact_count": 5,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction and Motivation .....................................2"
+        },
+        {
+          "line": 73,
+          "level": 2,
+          "title": "2 JSON Text Sequence Format .......................................3"
+        },
+        {
+          "line": 80,
+          "level": 2,
+          "title": "3 Security Considerations .........................................6"
+        },
+        {
+          "line": 83,
+          "level": 2,
+          "title": "4 IANA Considerations .............................................6"
+        },
+        {
+          "line": 86,
+          "level": 2,
+          "title": "5 Normative References ............................................7"
+        }
+      ]
+    },
+    {
+      "path": "rfc7519.md",
+      "heading_count": 66,
+      "artifact_count": 21,
+      "samples": [
+        {
+          "line": 126,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   4"
+        },
+        {
+          "line": 130,
+          "level": 2,
+          "title": "2 Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   4"
+        },
+        {
+          "line": 133,
+          "level": 2,
+          "title": "3 JSON Web Token (JWT) Overview . . . . . . . . . . . . . . . .   6"
+        },
+        {
+          "line": 137,
+          "level": 2,
+          "title": "4 JWT Claims  . . . . . . . . . . . . . . . . . . . . . . . . .   8"
+        },
+        {
+          "line": 150,
+          "level": 2,
+          "title": "5 JOSE Header . . . . . . . . . . . . . . . . . . . . . . . . .  11"
+        },
+        {
+          "line": 156,
+          "level": 2,
+          "title": "6 Unsecured JWTs  . . . . . . . . . . . . . . . . . . . . . . .  12"
+        },
+        {
+          "line": 160,
+          "level": 2,
+          "title": "7 Creating and Validating JWTs  . . . . . . . . . . . . . . . .  13"
+        },
+        {
+          "line": 166,
+          "level": 2,
+          "title": "8 Implementation Requirements . . . . . . . . . . . . . . . . .  16"
+        }
+      ]
+    },
+    {
+      "path": "rfc7636.md",
+      "heading_count": 42,
+      "artifact_count": 11,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction ....................................................3"
+        },
+        {
+          "line": 73,
+          "level": 2,
+          "title": "2 Notational Conventions ..........................................6"
+        },
+        {
+          "line": 76,
+          "level": 2,
+          "title": "3 Terminology .....................................................7"
+        },
+        {
+          "line": 80,
+          "level": 2,
+          "title": "4 Protocol ........................................................8"
+        },
+        {
+          "line": 93,
+          "level": 2,
+          "title": "5 Compatibility ..................................................11"
+        },
+        {
+          "line": 96,
+          "level": 2,
+          "title": "6 IANA Considerations ............................................11"
+        },
+        {
+          "line": 103,
+          "level": 2,
+          "title": "7 Security Considerations ........................................13"
+        },
+        {
+          "line": 111,
+          "level": 2,
+          "title": "8 References .....................................................15"
+        }
+      ]
+    },
+    {
+      "path": "rfc7807.md",
+      "heading_count": 21,
+      "artifact_count": 8,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
+        },
+        {
+          "line": 72,
+          "level": 2,
+          "title": "2 Requirements  . . . . . . . . . . . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "3 The Problem Details JSON Object . . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 80,
+          "level": 2,
+          "title": "4 Defining New Problem Types  . . . . . . . . . . . . . . . . .   6"
+        },
+        {
+          "line": 85,
+          "level": 2,
+          "title": "5 Security Considerations . . . . . . . . . . . . . . . . . . .   8"
+        },
+        {
+          "line": 88,
+          "level": 2,
+          "title": "6 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   9"
+        },
+        {
+          "line": 93,
+          "level": 2,
+          "title": "7 References  . . . . . . . . . . . . . . . . . . . . . . . . .  11"
+        },
+        {
+          "line": 183,
+          "level": 2,
+          "title": "3 The Problem Details JSON Object"
+        }
+      ]
+    },
+    {
+      "path": "rfc8259.md",
+      "heading_count": 37,
+      "artifact_count": 14,
+      "samples": [
+        {
+          "line": 126,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 132,
+          "level": 2,
+          "title": "2 JSON Grammar  . . . . . . . . . . . . . . . . . . . . . . . .   5"
+        },
+        {
+          "line": 135,
+          "level": 2,
+          "title": "3 Values  . . . . . . . . . . . . . . . . . . . . . . . . . . .   6"
+        },
+        {
+          "line": 138,
+          "level": 2,
+          "title": "4 Objects . . . . . . . . . . . . . . . . . . . . . . . . . . .   6"
+        },
+        {
+          "line": 141,
+          "level": 2,
+          "title": "5 Arrays  . . . . . . . . . . . . . . . . . . . . . . . . . . .   7"
+        },
+        {
+          "line": 144,
+          "level": 2,
+          "title": "6 Numbers . . . . . . . . . . . . . . . . . . . . . . . . . . .   7"
+        },
+        {
+          "line": 147,
+          "level": 2,
+          "title": "7 Strings . . . . . . . . . . . . . . . . . . . . . . . . . . .   8"
+        },
+        {
+          "line": 150,
+          "level": 2,
+          "title": "8 String and Character Issues . . . . . . . . . . . . . . . . .   9"
+        }
+      ]
+    },
+    {
+      "path": "rfc8446.md",
+      "heading_count": 102,
+      "artifact_count": 14,
+      "samples": [
+        {
+          "line": 126,
+          "level": 2,
+          "title": "1 Introduction ....................................................6"
+        },
+        {
+          "line": 132,
+          "level": 2,
+          "title": "2 Protocol Overview ..............................................10"
+        },
+        {
+          "line": 138,
+          "level": 2,
+          "title": "3 Presentation Language ..........................................19"
+        },
+        {
+          "line": 149,
+          "level": 2,
+          "title": "4 Handshake Protocol .............................................24"
+        },
+        {
+          "line": 193,
+          "level": 2,
+          "title": "5 Record Protocol ................................................77"
+        },
+        {
+          "line": 201,
+          "level": 2,
+          "title": "6 Alert Protocol .................................................85"
+        },
+        {
+          "line": 206,
+          "level": 2,
+          "title": "7 Cryptographic Computations .....................................90"
+        },
+        {
+          "line": 220,
+          "level": 2,
+          "title": "9 Compliance Requirements .......................................102"
+        }
+      ]
+    },
+    {
+      "path": "rfc8615.md",
+      "heading_count": 22,
+      "artifact_count": 8,
+      "samples": [
+        {
+          "line": 69,
+          "level": 2,
+          "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
+        },
+        {
+          "line": 72,
+          "level": 2,
+          "title": "2 Notational Conventions  . . . . . . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 75,
+          "level": 2,
+          "title": "3 Well-Known URIs . . . . . . . . . . . . . . . . . . . . . . .   3"
+        },
+        {
+          "line": 79,
+          "level": 2,
+          "title": "4 Security Considerations . . . . . . . . . . . . . . . . . . .   5"
+        },
+        {
+          "line": 86,
+          "level": 2,
+          "title": "5 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8"
+        },
+        {
+          "line": 91,
+          "level": 2,
+          "title": "6 References  . . . . . . . . . . . . . . . . . . . . . . . . .   9"
+        },
+        {
+          "line": 456,
+          "level": 2,
+          "title": "5.1 The Well-Known URI Registry"
+        },
+        {
+          "line": 500,
+          "level": 2,
+          "title": "5.2 The Uniform Resource Identifier (URI) Schemes Registry"
+        }
+      ]
+    },
+    {
+      "path": "rfc9110.md",
+      "heading_count": 316,
+      "artifact_count": 40,
+      "samples": [
+        {
+          "line": 2321,
+          "level": 2,
+          "title": "1 If the request method is HEAD or the response status code is 204"
+        },
+        {
+          "line": 2327,
+          "level": 2,
+          "title": "2 If the request method is GET and the response status code is 200"
+        },
+        {
+          "line": 2333,
+          "level": 2,
+          "title": "3 If the request method is GET and the response status code is 203"
+        },
+        {
+          "line": 2340,
+          "level": 2,
+          "title": "4 If the request method is GET and the response status code is 206"
+        },
+        {
+          "line": 2346,
+          "level": 2,
+          "title": "5 If the response has a Content-Location header field and its field"
+        },
+        {
+          "line": 2352,
+          "level": 2,
+          "title": "6 If the response has a Content-Location header field and its field"
+        },
+        {
+          "line": 5913,
+          "level": 2,
+          "title": "1 If no Accept-Encoding header field is in the request, any content"
+        },
+        {
+          "line": 5918,
+          "level": 2,
+          "title": "2 If the representation has no content coding, then it is"
+        }
+      ]
+    }
+  ],
+  "note": "Artifact ATX headings in source Markdown mint bogus sec-* IDs for any tool that does not use the 8.0 splitMarkdownSections filter. Product read_around skips them; optional demote via scripts/dev/vault-resection-artifact-headings.mjs --write."
+}

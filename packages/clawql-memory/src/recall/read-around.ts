@@ -65,6 +65,9 @@ export function isArtifactHeadingTitle(title: string): boolean {
   // Numbered list / procedure step mistaken for a section heading
   const m = /^(\d+(?:\.\d+)*)\s+(.+)$/.exec(t);
   if (m) {
+    // Postal codes / page junk ("48155 Münster") — not real section numbers
+    const top = Number.parseInt(m[1]!.split(".", 1)[0]!, 10);
+    if (Number.isFinite(top) && top > 40) return true;
     const rest = m[2]!;
     if (
       /^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b/.test(rest)

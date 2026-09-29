@@ -112,19 +112,24 @@ Canonical MCP remains Node `clawql-mcp` / Helm `manifests/charts/clawql-mcp`. St
 
 Some converters promote **table-of-contents leader-dot lines** and **numbered list/procedure steps** to ATX Markdown headings. Those mint bogus `sec-*` IDs and can inflate or depress graded retrieval scores.
 
-**8.0 product behavior:** `splitMarkdownSections` / `read_around` **skip** those titles at read time for every vault document (existing included). No persisted section index is left behind — IDs are derived from current Markdown on each call.
+**How common:** on a naive (unfiltered) TXT→MD convert of 16 public RFCs, **~17%** of promoted ATX headings were TOC/list artifacts (212 / 1262). That class of ghosts wrong-reasons retrieval and citation IDs. Operator Memory vaults that never ingested RFC-style converts may show **0** today — the filter still matters for the next contaminated ingest.
 
-**Optional one-time vault cleanup:** demote artifact ATX lines in files so the source Markdown itself is clean (recommended if you ingested RFC-style TXT→MD with TOC lines as `##`):
+**8.0 product behavior:** `splitMarkdownSections` / `read_around` **skip** those titles at read time for every vault document (existing included). No persisted section index is left behind — IDs are derived from current Markdown on each call. Combined with the optional re-section below, this improves real recall on contaminated vaults without waiting for re-ingest.
+
+**Scan / optional one-time vault cleanup:**
 
 ```bash
-# Dry-run report
+# Report artifact ATX headings in your vault (same rules as the product filter)
+python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
+
+# Dry-run demote report
 node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
 
 # Rewrite: demote matching ## lines to plain text
 node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH" --write
 ```
 
-Regression coverage: TOC + numbered-list cases in `packages/clawql-memory/src/recall/read-around.test.ts`.
+Regression coverage: TOC + numbered-list + postal-junk cases in `packages/clawql-memory/src/recall/read-around.test.ts`. Scan notes: [`benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md`](../../benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md).
 
 ## Docs
 
