@@ -48,8 +48,8 @@ benchmarks/openbench/
 
 Advanced suites B-1…B-7 (specs + Phase 1 packs):
 [`docs/benchmarks/openbench-advanced-specs.md`](../../docs/benchmarks/openbench-advanced-specs.md).
-**PageIndex product gate (multi-arm):** [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md)
-+ harness [`benchmarks/pageindex-ab/`](../pageindex-ab/) (not a binary on/off task).
+**Memory stack default-route A/B (v0.2):** [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md)
++ harness [`benchmarks/pageindex-ab/`](../pageindex-ab/) — BM25 × PageIndex × CodeGraph factorial (not binary on/off).
 CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
 
 ## Prerequisites

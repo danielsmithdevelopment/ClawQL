@@ -40,12 +40,15 @@ def main() -> int:
 
     arms = load_json(ROOT / "arms" / "arms.json")
     assert isinstance(arms, dict)
-    assert len(arms["arms"]) >= 6
-    ids = {a["id"] for a in arms["arms"]}
-    for needed in ("A-pageindex", "B-vector", "C-fulltext", "E-hybrid", "E-minus", "D-whole-doc"):
+    conf = arms.get("confirmatory_arms") or []
+    assert len(conf) == 8, f"expected 8 confirmatory arms, got {len(conf)}"
+    ids = {a["id"] for a in conf}
+    for needed in ("H-idf", "H-idf-pi", "H-bm25", "H-bm25-pi-cg"):
         assert needed in ids, needed
+    assert arms.get("philosophy", {}).get("latency_gates") is False
+    assert arms.get("philosophy", {}).get("token_cost_gates") is False
+    assert len(arms.get("confirmatory_contrasts") or []) >= 4
 
-    # schemas parse
     for name in ("answer-contract", "question", "manifest"):
         load_json(ROOT / "schema" / f"{name}.schema.json")
 
@@ -79,8 +82,7 @@ def main() -> int:
         capture_output=True,
         text=True,
     )
-    boot = json.loads(r2.stdout)
-    assert "mean_delta_a_minus_b" in boot
+    assert "mean_delta_a_minus_b" in json.loads(r2.stdout)
 
     r3 = subprocess.run(
         [
@@ -100,7 +102,7 @@ def main() -> int:
             sys.executable,
             str(SCRIPTS / "check_arm_conformance.py"),
             "--arm",
-            "A-pageindex",
+            "D-pageindex",
             "--trace",
             str(SMOKE / "sample-trace-ok.json"),
         ],
@@ -115,7 +117,7 @@ def main() -> int:
             sys.executable,
             str(SCRIPTS / "check_arm_conformance.py"),
             "--arm",
-            "A-pageindex",
+            "D-pageindex",
             "--trace",
             str(SMOKE / "sample-trace-violation.json"),
         ],
@@ -125,7 +127,32 @@ def main() -> int:
     )
     assert bad.returncode == 2, bad.stdout + bad.stderr
 
-    print(json.dumps({"ok": True, "strict_accuracy_smoke": grade["summary"]["strict_accuracy"]}, indent=2))
+    whole = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS / "check_arm_conformance.py"),
+            "--arm",
+            "D-whole-doc",
+            "--trace",
+            str(SMOKE / "sample-trace-ok.json"),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert whole.returncode == 2, whole.stdout + whole.stderr
+
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "spec_version": arms.get("spec_version"),
+                "confirmatory_arms": len(conf),
+                "strict_accuracy_smoke": grade["summary"]["strict_accuracy"],
+            },
+            indent=2,
+        )
+    )
     return 0
 
 

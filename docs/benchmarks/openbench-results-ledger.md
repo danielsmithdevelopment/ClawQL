@@ -1,13 +1,17 @@
-### 2026-09-28 — `pageindex-ab` eval spec v0.1 + harness scaffold (no scored run)
+### 2026-09-29 — `pageindex-ab` eval spec **v0.2** (task-completion factorial; no scored run)
 
-**Not a WIN/FAIL cell.** Formalizes the product gate for `pageindex_*`: default route / specialist / demote. Graders score answers+citations only (fixes August tooling-only WINs).
+**Not a WIN/FAIL cell.** Reframe: does each addition (BM25, PageIndex, CodeGraph) improve today's omit-`sources` default? Latency/cost reported, never gates. Live [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) overclaims hybrid defaults — correction draft [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
 
-| Item         | State                                                                                          |
-| ------------ | ---------------------------------------------------------------------------------------------- |
-| Spec         | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md)                           |
-| Harness      | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/)                                   |
-| Code finding | Bare `memory_recall` default = vault+vector (**E−**), not E; hybrid PageIndex is env-gated     |
-| Next         | Corpus freeze → `read_around` precondition → pilot on `contaminated-smoke` → single scored run |
+| Item    | State                                                                                              |
+| ------- | -------------------------------------------------------------------------------------------------- |
+| Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)                   |
+| Harness | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/) — 8 confirmatory + diagnostics       |
+| Control | `H-idf` = vault IDF + vector                                                                       |
+| Next    | BM25 flag → `read_around` → corpus (+ list + code strata) → freeze → scored run                    |
+
+### 2026-09-28 — `pageindex-ab` eval spec v0.1 scaffold (superseded by v0.2)
+
+v0.1 used specialist/demote framing and token caps. Superseded by task-completion-only factorial.
 
 ### 2026-08-08 — B-7.2 + B-7.1-blind activated (pre-C&H)
 

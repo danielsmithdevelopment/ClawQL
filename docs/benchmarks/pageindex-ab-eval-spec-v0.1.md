@@ -1,251 +1,244 @@
 ---
-title: "PageIndex A/B: Does It Earn Its Place?"
-status: "spec-frozen-pending-corpus"
-version: "0.1"
-date: "2026-09-28"
+title: "Memory stack default-route A/B"
+status: "spec-pre-freeze"
+version: "0.2"
+date: "2026-09-29"
 author: "@Daniel"
 tag: "pageindex-ab-v1"
+supersedes: "0.1 (earn-its-place / specialist / demote framing)"
 ---
 
-# PageIndex A/B: Does It Earn Its Place? (Eval Spec v0.1)
+# Memory stack default-route A/B (Eval Spec v0.2)
 
-Sep 28, 2026 · @Daniel
-
-Harness scaffold: [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/). Related WINs that this eval **supersedes for product decisions**: `pageindex-section-qa`, `hybrid-recall-source-pin`, `memory-recall-pageindex-pin` (retired tooling proofs, not retrieval superiority).
+Sep 29, 2026 · @Daniel  
+Harness: [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/)  
+Post correction (live overclaims): [`docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md)
 
 ## The question and the decision
 
-PageIndex has never been shown to beat a simpler way of finding things in a long document. This test answers one question: **on long-document questions, does PageIndex give better answers, cheaper answers, or neither, compared with vector recall, plain full-text search, and just reading the document?**
+**Does each addition improve today's default recall on task completion?**
+
+Today's omit-`sources` default is **vault keyword (IDF + log-TF) + vector**. PageIndex, CodeGraph, Onyx hybrids, and BM25 ranking are **not** on that path. This suite decides which additions become default. Task completion is the only gate. Latency and cost are **reported, never decisive** — finishing the work beats saving tokens or milliseconds.
 
 What we have today does not answer it:
 
-- **OpenBench `pageindex-section-qa` (August 2026): on 1.0, off 0.0.** The grader required real ClawQL tool-call evidence in both arms, so the off arm, which had no PageIndex tools, could not score by design. Most cells were a single trial. This proves the tools work end to end, not that they help.
-- **ExtractBench (August 19): PageIndex never ran.** The pipeline sent Docling text through chunked Qwen, 120 LLM calls for one 10-page document. The 70.5% score measures that path. Wiring PageIndex in was proposed; no later run used it.
-- **Everything else is design description**: layer 3 of the memory-stack post and the `clawql-memory` docs.
+- **OpenBench PageIndex cells (August 2026):** tooling WINs (on 1.0 / off 0.0 by construction). Prove tools work, not that they help.
+- **ExtractBench:** PageIndex never ran.
+- **[#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801):** IDF + log-TF beat raw TF / grep on a 116-note bakeoff — not BM25, not long-document QA.
+- **[#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806):** hybrid master switch + RRF — opt-in (`CLAWQL_MEMORY_RECALL_HYBRID=1`).
+- **B-7 structured ontology:** `schema`+`filters` → 5/5 where vault keyword scored 0 — different path, still not fused with text layers.
+- **Published memory-stack post** still describes simultaneous PageIndex+vector as if default, and PageIndex as LLM category routing — neither matches shipping code (see corrections doc).
 
-The result feeds one decision about the `pageindex_*` tools, which have shipped since 7.0.0 and appear in the MCP catalog:
+### Product action after a clear gain
 
-1. **Default route.** PageIndex becomes the first retrieval hop for long documents in `memory_recall` and the IDP locate step.
-2. **Specialist tool.** It stays available for the question types where it wins, off the default path.
-3. **Demote.** It leaves the default catalog and becomes internal-only, which also settles the September 23 note that `pageindex_*` internals were visible to demo prospects.
+Any addition whose confirmatory contrast clears zero on strict accuracy (task completion) becomes **default-on** in the matching scope. The full combination of winning additions must also beat today's default before it ships as the new omit-`sources` path. Specialist/demote outcomes from v0.1 are retired: we are not optimizing for catalog thinness.
 
-## Arms
+## Design: factorial inside the hybrid
 
-Six arms share one model, one harness and one budget, and every arm has a real way to find the answer, so any arm can win. The August flaw, an off arm with no retrieval at all, cannot recur.
+Base for every confirmatory cell: `memory_recall` with vault + vector always on, shared Docling text, shared section IDs, same model/harness/budget.
 
-| Arm                                             | What the model gets                                                                                                                   | What it tells us                                            |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **A. PageIndex**                                | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` over a tree built once per document with `pageindex_build_tree` | Does heading-tree navigation find the right section?        |
-| **B. Vector recall**                            | `memory_recall` with `sources: ["vector"]`, plus a read-around tool that returns the section a chunk sits in                          | Does semantic chunk search do as well?                      |
-| **C. Full-text search**                         | `memory_recall` with `sources: ["vault"]` (keyword), plus the same read-around tool                                                   | Is the simplest competent baseline enough?                  |
-| **C+. Grep baseline** _(optional, recommended)_ | Harness-local `grep` + `read_range` over the shared Markdown                                                                          | Stronger simple baseline if vault TF scoring looks too weak |
-| **D. Whole document**                           | The full document in context, no tools; only documents that fit with 30% headroom                                                     | The accuracy ceiling, and what skipping retrieval costs     |
-| **E. Hybrid with PageIndex**                    | `memory_recall` with `sources: ["vault", "vector", "pageindex"]` (explicit; see open-question resolution)                             | Whether hybrid-including-PageIndex wins                     |
-| **E−. Hybrid minus PageIndex**                  | `memory_recall` with `sources: ["vault", "vector"]`                                                                                   | Whether PageIndex adds anything inside hybrid recall        |
+**Three factors (2×2×2 = 8 confirmatory arms):**
 
-A against B and C answers "is PageIndex a better retriever?" E against E− answers "should it stay in the default route?" D bounds both.
+| Factor | Off (today) | On (candidate) |
+| --- | --- | --- |
+| **Ranker** | IDF + log-TF (`keywordScore` as shipped) | Okapi BM25 (length-normalized; to implement) |
+| **PageIndex** | not in `sources` | `sources` includes `pageindex` (+ trees pre-built) |
+| **CodeGraph** | not in `sources` | `sources` includes `codegraph` (+ native index pre-built) |
 
-Held constant across arms:
+| Arm id | Ranker | PageIndex | CodeGraph | Role |
+| --- | --- | --- | --- | --- |
+| `H-idf` | IDF | off | off | **Today's default** (control) |
+| `H-idf-pi` | IDF | on | off | +PageIndex |
+| `H-bm25` | BM25 | off | off | +BM25 |
+| `H-bm25-pi` | BM25 | on | off | +BM25 +PageIndex |
+| `H-idf-cg` | IDF | off | on | +CodeGraph |
+| `H-idf-pi-cg` | IDF | on | on | +PI +CG |
+| `H-bm25-cg` | BM25 | off | on | +BM25 +CG |
+| `H-bm25-pi-cg` | BM25 | on | on | Full candidate |
 
-- **Model:** `openrouter/deepseek/deepseek-chat`, pinned to one version, as in the August OpenBench runs. A second pass on a subset uses a frontier model, so the result isn't specific to a frugal model.
-- **Harness:** OpenCode → `clawql-inference`, one system prompt that differs only in the tool list.
-- **Budget per question:** 12 tool calls, 8,000 retrieved tokens, 180 s. Arm D is exempt from the retrieval cap by definition; its tokens are reported, not capped.
-- **Text:** one Docling conversion per document, one Markdown file, one set of section IDs, used by every arm.
-- **Setup cost:** tree builds and embeddings happen once per document and are reported separately, not charged per question.
+Each addition's effect is estimated **across both settings of the other factors** (main-effect contrast), which in simulation detects about a **6-point** accuracy gain at 80% power at the same question budget that needed ~8 points for a single pairwise A/B.
 
-### Arm conformance (allowed tools)
+### Confirmatory contrasts (Holm-corrected α = 0.05)
 
-| Arm | Allowed tools                                                                                                                   | Forbidden                                                        |
-| --- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| A   | `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` (tree pre-built)                                          | `memory_recall`, other `pageindex_*` at query time except listed |
-| B   | `memory_recall` (`sources: ["vector"]` only), `read_around`                                                                     | `pageindex_*`, vault source                                      |
-| C   | `memory_recall` (`sources: ["vault"]` only), `read_around`                                                                      | `pageindex_*`, vector source                                     |
-| C+  | `grep`, `read_range`                                                                                                            | MCP recall / pageindex                                           |
-| D   | none                                                                                                                            | any retrieval tool                                               |
-| E   | `memory_recall` (`sources: ["vault","vector","pageindex"]`), optional `pageindex_*` follow-ups from recall hints, `read_around` | other sources                                                    |
-| E−  | `memory_recall` (`sources: ["vault","vector"]`), `read_around`                                                                  | `pageindex` source / `pageindex_*`                               |
+Fixed before freeze. Unit of analysis = question (mean of 3 trials). Paired bootstrap over questions, 10,000 resamples; McNemar on majority votes as cross-check.
 
-A violation voids and reruns the cell rather than scoring it zero.
+1. **PageIndex effect** — mean(PI on) − mean(PI off) across the other two factors.
+2. **BM25 effect** — mean(BM25) − mean(IDF) across the other two factors.
+3. **CodeGraph effect** — mean(CG on) − mean(CG off) across the other two factors (primary power on the **code stratum**; also report document-stratum delta for noise).
+4. **Combination vs today** — best arm that includes every addition that won (1)–(3), versus `H-idf`. Must clear zero before the new default ships.
+
+**Ship rule:** an addition whose contrast excludes zero becomes default-on in scope (see CodeGraph scope below). Latency, tokens, and dollars are reported beside the decision, never used to veto a clear completion gain.
+
+### Diagnostic arms (exploratory — never decide defaults)
+
+| Arm id | What the model gets | Why |
+| --- | --- | --- |
+| `D-pageindex` | `pageindex_*` only | Where heading trees win/lose alone |
+| `D-vector` | `sources: ["vector"]` + `read_around` | Semantic-only baseline |
+| `D-idf` | `sources: ["vault"]` IDF + `read_around` | Today's keyword alone |
+| `D-bm25` | `sources: ["vault"]` BM25 + `read_around` | Strongest cheap keyword alone |
+| `D-grep` | harness `grep` + `read_range` | Ceiling for exact-term substring |
+| `D-whole-doc` | full doc in context (30% headroom only) | When to skip retrieval |
+| `D-structured` | `memory_recall` with `schema`+`filters` only | Ontology path (list questions) |
+| `D-sql` | `clawql_sql` / `data_query` only | DuckDB document-extraction path |
+
+## Held constant
+
+- **Model:** `openrouter/deepseek/deepseek-chat`, pinned. Frontier subset (64 questions, 1 trial) checks direction.
+- **Harness:** OpenCode → `clawql-inference`; system prompt differs only by tool list / ranker flag.
+- **Budget per question:** 12 tool calls, 180 s wall clock. Retrieved-token and cost figures are **logged**, not capped for pass/fail.
+- **Text:** one Docling conversion per document; one Markdown; one section-ID map for all arms.
+- **Setup cost:** tree builds, embeddings, codegraph index, BM25 stats — once per document, reported separately.
+- **CodeGraph builder:** native tree-sitter default (`CLAWQL_CODEGRAPH_BACKEND=native`). Graphify import (`codegraph_import_graphify`) is a **secondary** comparison on the code stratum only — not a third default-route factor.
+- **Graders** score answer + citations (+ test pass on code tasks). Never which tools were used. Arm conformance voids+reruns on violations.
 
 ## Corpus and questions
 
-24 long documents and 192 questions, balanced so no arm gets only its home turf. PageIndex navigates by headings, so document structure is the variable most likely to decide the result, and the corpus spans it on purpose.
+### Document / repo strata
 
-**Documents: 8 per structure stratum, 20K to 150K tokens each.**
+| Stratum | Size | Purpose |
+| --- | --- | --- |
+| **Well-structured docs** | 8 docs, 20K–150K tokens | PageIndex home turf |
+| **Converted PDFs** | 8 docs | Real IDP path (imperfect headings) |
+| **Weakly structured docs** | 8 docs | Flat/wrong headings |
+| **Code repos** | 8 small/medium repos | CodeGraph home turf — "what breaks if X changes," graded by tests / gold symbols |
 
-| Stratum               | Examples (public sources)                                                                     | Why it's here                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **Well-structured**   | SEC 10-K filings, IETF RFCs, agency rulebooks                                                 | PageIndex's home turf: deep, accurate heading trees           |
-| **Converted PDFs**    | Credit agreements and contracts from EDGAR exhibits, regulatory guidance, run through Docling | The real IDP path: headings exist but conversion is imperfect |
-| **Weakly structured** | Hearing transcripts, long email threads, OCR'd scans with flat or wrong headings              | Where a heading tree should struggle                          |
+Harvey LAB and ExtractBench fixtures stay excluded from the freeze set.
 
-About a third of the documents fit the model's context with headroom, so Arm D has enough cases to set a ceiling. Harvey LAB and ExtractBench documents are excluded, so those benchmarks stay clean.
+### Question types (documents)
 
-**Questions: 8 per document, 32 of each type.**
+8 per document, balanced: section lookup, buried detail, cross-section, misleading heading, exact term, not-in-document — plus **cross-document list / enumerate** questions (structured path's home turf; required so default-route decisions cannot ignore ontology/SQL).
 
-1. **Section lookup:** the answer sits in one section whose heading matches the question.
-2. **Buried detail:** the answer is in a table, footnote or schedule inside a section.
-3. **Cross-section:** the answer needs two or more sections combined.
-4. **Misleading heading:** the answer sits under a heading that shares no words with the question. This is the case that should hurt PageIndex most.
-5. **Exact term:** a defined term, ID or figure that keyword search should nail.
-6. **Not in the document:** the correct answer is to say it isn't there. This catches arms that guess.
+### Question types (code)
 
-**Answer keys.** Each question gets a short normalized answer, accepted variants, and the gold section IDs that contain the evidence. Writers see only the document text, never a PageIndex tree or any arm's output. A second annotator checks every key, and disagreements go to frontier adjudication before the freeze.
+Per repo: impact/blast-radius, symbol locate, "what breaks if this changes," and at least one end-to-end coding task graded by the repo's tests (task completion bar).
 
-**Freeze and spend.** The manifest records a SHA-256 for every document, the question file and the harness commit, tagged `pageindex-ab-v1`. It is scored once. After that it is spent: any tuning prompted by the results needs a fresh v2 set.
-
-## Harness and grading
-
-The test runs as suite `pageindex-ab` (scaffold under [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/); OpenBench task wrappers land when the corpus freezes), on GitHub Actions like the August runs, with one matrix cell per arm, question and trial. **Graders score the answer and its citations, never which tools were used.** That is the fix for the August result.
-
-**Answer contract.** Every arm ends with the same JSON:
+### Answer contract
 
 ```json
 {"answer": "…", "sections": ["<section id>", …], "not_found": false}
 ```
 
-Section IDs come from the shared Docling conversion, so every arm can cite the same way. Schema: [`benchmarks/pageindex-ab/schema/answer-contract.schema.json`](../../benchmarks/pageindex-ab/schema/answer-contract.schema.json).
+Code cells may add `"symbols": ["…"]` and `"tests_passed": true|false`. Schema: [`benchmarks/pageindex-ab/schema/answer-contract.schema.json`](../../benchmarks/pageindex-ab/schema/answer-contract.schema.json).
 
-**Grading, in two tiers.**
+## CodeGraph default scope
 
-1. **Deterministic (tier 1).** Normalized exact match for exact-term and numeric answers, set overlap between cited and gold section IDs, and a correct `not_found` for unanswerable questions. Script: `scripts/grade_tier1.py`.
-2. **Semantic (tier 2).** A frontier judge scores free-text answers as correct, partial or wrong against the key. It sees the question, the key and the answer, with arm names and tool traces stripped.
+| Result | Product action |
+| --- | --- |
+| CG helps code stratum and does **not** harm document strict accuracy (interval on docs includes zero or is non-negative) | Default-on everywhere when `CLAWQL_ENABLE_CODEGRAPH` can index |
+| CG helps code but harms documents | Default-on **only** in workspaces with a repo / codegraph id |
+| CG helps neither | Stay opt-in |
 
-**Adjudication.** When the tiers disagree or the judge is unsure, a second frontier judge (different model family) rules. A person reviews what they still disagree on. A blind human re-grade of 10% of cells reports judge agreement alongside the results.
+Native vs Graphify vs both: exploratory on the code stratum; does not gate the default-on decision.
 
-**Infrastructure failures.** Timeouts and runner hangs are logged as noise and rerun, not scored as failures. If more than 5% of one arm's cells fail on infrastructure, scoring waits until that's fixed.
+## Ontology, DuckDB, and structured recall (in scope for gaps)
 
-**Traces.** Every cell writes its tool calls, tokens and latency to the call store as an OpenBenchTrace, so any result can be traced back to exactly what the model did. Multi-arm labeling must use `arm_label` (OpenBench trace `arm` enum remains binary `on`/`off` until a schema bump).
+Facts as of this write:
+
+| Layer | Role today |
+| --- | --- |
+| **Vault prose** | Canonical. CQE packs write typed rows into `ontology.db` (SQLite) at ingest ([#877](https://github.com/danielsmithdevelopment/ClawQL/pull/877)). |
+| **Structured `memory_recall`** | `schema`+`filters` → SQL over `ontology.db`, **skips** vault/vector/pageindex/codegraph text merge. |
+| **DuckDB (`clawql-data`)** | Separate `matters.duckdb`; MCP `data_query` / `clawql_sql`. SQL-only Harvey LAB gold **25/25** (no model). Model-driven contiguous 001–025 still gated. |
+| **Vector / PageIndex / Onyx** | No ontology type link; typed filters do not narrow semantic/tree search. |
+| **CodeGraph** | Own typed graph; same EXTRACTED/INFERRED/AMBIGUOUS tags; `codegraph_impact` → vault `code_change` notes. |
+| **`clawql-ontology`** | CQE packs. Pattern→new-field promotion engine still parked. |
+
+### Gaps that block "best recall" claims
+
+1. **Two SQL stores, two surfaces.** DuckDB can `ATTACH` SQLite, but there is **no** in-repo wiring joining `ontology.db` to `matters.duckdb` under one `clawql_sql`. Verify then unify.
+2. **Structured and text never combine.** Typed filter finds the set; nothing automatically retrieves the proving clause. Need a single plan: SQL for the set, text layers for evidence.
+3. **Cross-document list questions** must be in this freeze set — leaving them out ignores the layer with the largest measured lift (0→5/5 on B-7).
+4. **Run the model-driven Harvey LAB 001–025** pass; SQL gold alone is not agent recall.
+
+Diagnostic arms `D-structured` and `D-sql` measure those paths. A follow-up **v2 fuse cell** (SQL then text) is scheduled after gap (2) ships — not required to freeze v1 confirmatory contrasts (1)–(4).
+
+## Industry benchmarks (separate track)
+
+This A/B ranks **our** setups on long documents + code. It cannot alone claim "best in industry." Conversation-memory vendors cite LoCoMo / LongMemEval / BEAM; published numbers are contested (judge laxity; open-source vs managed gaps). Credible path:
+
+1. Run production recall through LoCoMo, LongMemEval, and **BEAM** (1M / 10M — where gaps remain visible) with a **strict** judge.
+2. Publish the harness.
+3. Lead with BEAM; treat LoCoMo/LongMemEval as saturated / noisy.
+
+Those results complement this suite; they do not replace the default-route factorial.
 
 ## Metrics
 
-**Strict accuracy is the one primary metric; everything else explains it or prices it.** Choosing it now means the decision can't be re-argued around whichever number looks best afterward.
+| Metric | Role |
+| --- | --- |
+| **Strict accuracy / task completion** | **Primary — only decision gate** |
+| Partial credit | Reported |
+| Citation PRF | Evidence vs lucky |
+| Abstention (not_found) | Hallucination / over-refuse |
+| Tokens, tool calls, latency p50/p95, $ | **Reported only** |
+| Setup cost per document | Reported only |
+| Code: tests_passed | Task completion on code cells |
 
-| Metric                        | Definition                                                                                               | Role                                                 |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **Strict accuracy**           | Share of questions graded fully correct, with `not_found` counted correct only on unanswerable questions | Primary; the decision rules use this                 |
-| Partial credit                | Correct = 1, partial = 0.5                                                                               | Reported, not decisive                               |
-| Citation precision and recall | Cited section IDs against gold section IDs                                                               | Shows whether an arm found the evidence or got lucky |
-| Abstention                    | Correct `not_found` on unanswerable questions; false `not_found` on answerable ones                      | Catches guessing, and catches refusing too easily    |
-| Tokens per question           | Input, output and retrieved tokens, priced at the pinned model's list price                              | The cost side of the trade                           |
-| Tool calls per question       | Count of retrieval calls                                                                                 | Efficiency, and agent loop risk                      |
-| Latency                       | p50 and p95 wall-clock seconds per question                                                              | What users feel                                      |
-| Setup cost                    | Tree build and embedding time and tokens, once per document                                              | Separates index cost from query cost                 |
+Reported overall, by stratum, and by question type.
 
-Every metric is reported three ways: overall, by structure stratum, and by question type. The strata and types are where a specialist result, the second decision outcome, would show up.
+## Contamination and gating
 
-## Statistics
+- Freeze documents, questions, keys, and these decision rules before arm-prompt tuning. Hash in manifest (`pageindex-ab-v1`).
+- `contaminated-smoke` pilot only for harness debug; never cite.
+- Equal tuning budget per confirmatory arm.
+- Score the frozen set once; then spent (v2 for further tuning).
+- Read-only harness for tuners; harness commit pinned.
+- Audit implausible scores (>0.98 / <0.02 / >40 pt gaps) before publish.
+- Pinned model; mid-run provider update → full rerun.
+- Predictions on record before scoring.
+- PageIndex / BM25 / CodeGraph get **no more** pilot iterations than each other.
 
-**192 paired questions with 3 trials each can reliably detect an accuracy difference of about 8 points.** A smaller real difference will usually read as "no clear difference", which is itself an answer: extra machinery that can't show an 8-point gain has to earn its place on cost instead.
+## Preconditions before scored run
 
-- **Paired design.** Every arm answers the same questions, so each question is its own control. The unit of analysis is the question, scored as the mean of its 3 trials.
-- **Three confirmatory comparisons, fixed now:** A vs B, A vs C, and E vs E−, Holm-corrected at α = 0.05. Everything else is exploratory, reported with intervals but never used for the decision.
-- **Intervals.** A paired bootstrap over questions, 10,000 resamples, for each accuracy difference. McNemar on per-question majority votes as a cross-check. Clopper–Pearson bounds for single-arm rates, as in the classifier evals. Scripts: `scripts/bootstrap_paired.py`, `scripts/mcnemar_paired.py`.
+| Gap | Owner |
+| --- | --- |
+| Implement Okapi BM25 vault ranker (flag-selectable vs IDF) | `clawql-memory` |
+| `read_around` (or equivalent) for chunk→section | harness or MCP |
+| Native codegraph index fixtures for code stratum | `clawql-codegraph` |
+| Cross-document list keys + ontology rows | annotation |
+| Correct memory-stack post (see below) | GTM — can ship before freeze |
 
-| True accuracy gain | Power at 3 trials per question |
-| ------------------ | ------------------------------ |
-| 5 points           | 0.36                           |
-| 8 points           | 0.80                           |
-| 10 points          | 0.93                           |
-| 12 points          | 0.99                           |
+## Run plan (high level)
 
-These powers come from a simulation that assumes a spread of question difficulty; the real spread will move them somewhat. With single trials, the standard McNemar formula needs a 10–13 point gain for 80% power, which is why each question runs three times.
+1. Corpus + repos + keys (incl. list questions); second annotator; freeze.
+2. BM25 flag + `read_around` + runner for 8 confirmatory + diagnostics.
+3. Pilot on `contaminated-smoke`.
+4. Record predictions → single scored run.
+5. Tier-2 judge (different family from frontier subset) + adjudication + 10% human re-grade.
+6. Apply ship rules; update [`openbench-results-ledger.md`](openbench-results-ledger.md); flip defaults for clear winners; schedule fuse + industry benches.
 
-**Subgroups are underpowered on purpose.** Each structure stratum holds 64 questions, enough to detect only roughly 14-point differences. A stratum result can justify the specialist outcome as a hypothesis, but it needs its own fresh confirmatory set before it changes the product.
+## Published post — required correction (do not wait for results)
 
-**Frontier-model subset.** 64 questions, stratified across strata and types, 1 trial, all arms. It checks that the direction holds on a stronger model; it is not powered for significance.
+Live: [The Complete Agent Memory Stack](https://pragmaticvectors.com/posts/agent-memory-stack/).
 
-## Decision rules
+| Claim in post | Shipping truth |
+| --- | --- |
+| "`memory_recall` … queries across active layers simultaneously" including PageIndex | Omit-`sources` → **vault + vector only**. PageIndex/CodeGraph/Onyx need hybrid env or explicit `sources`. |
+| "ClawQL runs both [PageIndex and vector] simultaneously and reranks" | Not the default; hybrid opt-in since [#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653)/[#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806). **Never measured** as beating either alone. |
+| PageIndex = "LLM classifies" into `page_index_path` / categories | Shipped PageIndex is a **deterministic heading tree** (`pageindex_build_tree` / traverse / synthesize) — vectorless, not LLM category routing. |
+| Vault FTS5 as the lexical path | Vault keyword is in-process **IDF + log-TF** (not SQLite FTS5 BM25). |
 
-The result maps mechanically to one outcome, checked top to bottom. The first whose conditions all hold wins, and these rules are frozen with the question set.
-
-| Outcome                | Every condition must hold                                                                                                                                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Default route**   | E beats E− on strict accuracy, with the Holm-adjusted interval excluding zero. A is no more than 3 points below B or C. E costs no more than 1.25× E−'s tokens per question.                                |
-| **2. Specialist tool** | Outcome 1 fails, and either: A beats both B and C by at least 8 points in one stratum or question type, confirmed later on a fresh set; or A is within 3 points of the best of B and C at 30% fewer tokens. |
-| **3. Demote**          | Neither holds. `pageindex_*` leaves the default catalog and becomes internal-only.                                                                                                                          |
-
-**The 3-point margin is a screen, not a proof.** With an 8-point detectable difference, the test can't show two arms are equal within 3 points. It can only refuse to reward an arm that looks worse.
-
-**Two findings get reported whichever outcome wins.**
-
-- **If Arm D beats every retrieval arm by 10 or more points** on documents that fit in context, the router should skip retrieval for documents that fit. That is a routing change independent of PageIndex.
-- **If any arm answers more than 10% of the unanswerable questions** instead of returning `not_found`, it's flagged as a hallucination risk whatever its accuracy.
-
-## Contamination and gating controls
-
-The same rules that kept the classifier evals honest apply here, plus one for this test: **we built PageIndex, so it gets no more tuning attention than the arms it competes with.**
-
-- **Freeze before hints.** Documents, questions, keys and decision rules are frozen and hashed before any arm's prompt or tool settings are tuned. Question writers never see arm outputs.
-- **A separate pilot set.** Three documents and 20 questions for harness debugging, tagged `contaminated-smoke` and never cited, like the n=7 Harvey routing A/B.
-- **Equal tuning budget.** Each arm gets the same number of pilot iterations to tune its prompt and parameters, including PageIndex's traversal token budget. Tuning after the scored run needs a v2 set.
-- **Score once.** The frozen set is run and scored once, then marked spent.
-- **Read-only harness.** Whoever tunes the arms cannot write to the grader or harness, and the harness commit is pinned in the manifest.
-- **Implausible results get audited first.** Any arm scoring above 0.98 or below 0.02, or any gap over 40 points, is audited by hand before it's reported.
-- **Pinned model.** If the provider updates the model mid-run, every arm is rerun together, never mixed across versions.
-- **Predictions on record.** Before scoring, write down which outcome you expect and why, so the result can surprise us.
-
-## Run plan and budget
-
-**About 8 working days of human+agent effort and roughly $120 of compute; the long pole is writing questions, not running them.**
-
-1. **Corpus (1 day).** Pick the 24 documents, convert them with Docling, spot-check headings, and hash them.
-2. **Questions and keys (2–3 days).** Write the 192 questions and keys, run the second-annotator pass, adjudicate disagreements, then freeze `pageindex-ab-v1` together with the decision rules.
-3. **Suite (2 days).** Finish `pageindex-ab` runner wiring: the six arms, the answer contract, both grading tiers, and the conformance check. (Scaffold landed with this spec.)
-4. **Pilot (1 day).** Debug on the `contaminated-smoke` set and spend each arm's equal tuning budget.
-5. **Scored run (half a day).** Record predictions, then run the frozen set once: 2.5 to 5 hours on GitHub Actions at 20 parallel jobs.
-6. **Grading (1 day).** Tier-2 judging, adjudication, and the blind 10% human re-grade.
-7. **Decision (half a day).** Apply the rules, add the results to `docs/benchmarks/openbench-results-ledger.md`, and act on the outcome.
-
-| Item                            | Size                                               | Approximate cost |
-| ------------------------------- | -------------------------------------------------- | ---------------- |
-| Main run                        | 3,072 cells, about 127M input and 6M output tokens | $45              |
-| Tier-2 judging and adjudication | 3,072 answers                                      | $18              |
-| Frontier-model subset           | 342 cells                                          | $53              |
-| **Total**                       |                                                    | **about $120**   |
-
-Costs assume about 40,000 input tokens per retrieval cell, since the agent re-sends context each turn, plus DeepSeek-class and Sonnet-class list prices. Confirm current prices before running; even at double, the compute is under $250.
-
-## Preconditions (product / harness gaps)
-
-These must land before the scored run, or the corresponding arms are blocked:
-
-| Gap                                     | Why it blocks                                                                                                   | Proposed fix                                                                                                                                                                                  |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **No `read_around` MCP tool**           | Arms B and C need a section-window read after chunk hits                                                        | Add harness-local (or MCP) `read_around({ chunkId \| path, sectionId? })` returning the shared Docling section for a hit                                                                      |
-| **Arm E ≠ bare default today**          | `resolveMemoryRecallSources({})` returns `vault`+`vector` only unless `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1` | Define Arm E as **explicit** `sources: ["vault","vector","pageindex"]` (or hybrid env on). Treat enabling hybrid-by-default as the **product action** after Outcome 1, not as today's default |
-| **OpenBenchTrace `arm` enum is binary** | Six arms need distinct labels                                                                                   | Use `arm_label`; optionally bump schema later                                                                                                                                                 |
-| **No paired stats scripts previously**  | Decision rules need bootstrap + McNemar                                                                         | Landed under `benchmarks/pageindex-ab/scripts/`                                                                                                                                               |
-
-## Open questions — resolutions (pre-freeze)
-
-| Question                     | Resolution                                                                                                                                                                                                                                         | Evidence                                                                        |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| **Primary model**            | Keep `openrouter/deepseek/deepseek-chat` (pinned version) for continuity with August OpenBench and advanced-suite methodology. Frontier subset is the generalization check.                                                                        | Matches `docs/benchmarks/openbench-advanced-specs.md` shared setup              |
-| **Judge independence**       | Tier-2 judge must be a **different model family** from the frontier subset runner. If the subset uses Sonnet 4.6, judge with GPT-class (or vice versa). Adjudicator is a third family when available.                                              | Spec contamination control                                                      |
-| **What "as shipped" means**  | **Today, omit-`sources` does not include PageIndex.** Default = Arm E−. Arm E is the candidate default (explicit three-source / hybrid flag). Outcome 1 is the gate to flip `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX` (or product default) on.       | `packages/clawql-memory/src/recall/recall-sources.ts`, `recall-sources.test.ts` |
-| **Is Arm C a straw man?**    | Vault is **token TF (+ optional corpus IDF)** via case-insensitive substring occurrence counts — not Okapi BM25. Keep Arm C as the product baseline; **add optional Arm C+** (`grep` + `read_range`) as exploratory. C+ never decides Outcome 1–3. | `packages/clawql-memory/src/recall/recall.ts` `keywordScore`                    |
-| **Who writes the questions** | Human-owned keys. Model-drafted candidates allowed only if the drafting model never sees arm tools, prompts, or outputs. Second annotator + frontier adjudication before freeze.                                                                   | Contamination controls                                                          |
-| **IDP locate step**          | Out of scope for v1. Follow-up spec after this result (ExtractBench field location).                                                                                                                                                               | Spec § open questions                                                           |
+Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
 
 ## Predictions (fill before scored run)
 
-> Record before scoring. Do not edit after freeze.
-
-| Field                        | Value             |
-| ---------------------------- | ----------------- |
-| Expected outcome (1 / 2 / 3) | _TBD_             |
-| Why                          | _TBD_             |
-| Recorded by                  | _TBD_             |
-| Date                         | _TBD_             |
-| Manifest tag                 | `pageindex-ab-v1` |
+| Field | Value |
+| --- | --- |
+| PageIndex effect | _TBD_ |
+| BM25 effect | _TBD_ |
+| CodeGraph effect | _TBD_ |
+| Expected new default | _TBD_ |
+| Recorded by / date | _TBD_ |
 
 ## Status
 
-| Item               | State                               |
-| ------------------ | ----------------------------------- |
-| Decision rules     | Frozen in this v0.1 text            |
-| Harness scaffold   | Landed (`benchmarks/pageindex-ab/`) |
-| Corpus / questions | Not started                         |
-| `read_around` tool | Not started (precondition)          |
-| Scored run         | Blocked on corpus + preconditions   |
+| Item | State |
+| --- | --- |
+| Decision philosophy | Frozen in v0.2: task completion only; cost/latency reported |
+| Factorial + contrasts | Frozen in this text |
+| Harness scaffold | Update with v0.2 arms |
+| BM25 implementation | Not started |
+| Corpus / questions | Not started |
+| Memory-stack post fix | Correction draft in-repo; live site pending |
+| Scored run | Blocked on preconditions |

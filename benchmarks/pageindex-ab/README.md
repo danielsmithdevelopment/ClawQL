@@ -1,63 +1,51 @@
-# PageIndex A/B harness (`pageindex-ab`)
+# Memory stack default-route A/B (`pageindex-ab`)
 
-Implements the eval in [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md).
+Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md) **v0.2**.
 
-**Status:** scaffold only. Corpus, questions, and the scored run are not started. Graders score answers and citations — never which tools were used.
+**Question:** does each addition (BM25 ranker, PageIndex, CodeGraph) improve **today's** omit-`sources` default (`vault` IDF + `vector`) on **task completion**?
+
+**Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
 ## Layout
 
 ```
 benchmarks/pageindex-ab/
   README.md
-  schema/           # answer contract, question, manifest, arm configs
-  arms/             # per-arm tool allowlists + recall sources
-  scripts/          # freeze hash, tier-1 grade, conformance, stats
-  fixtures/
-    contaminated-smoke/   # pilot only — never cite in product decisions
-  corpus/           # frozen docs land here (git-lfs or external; hashed in manifest)
-  questions/        # frozen question JSONL (hashed in manifest)
+  arms/arms.json          # 8 confirmatory (2×2×2) + diagnostics
+  schema/                 # answer / question / manifest
+  scripts/                # tier-1 grade, bootstrap, McNemar, conformance, validate
+  design/read-around.md   # precondition
+  fixtures/contaminated-smoke/
+  corpus/  questions/     # frozen set lands here
 ```
 
-## Arms (ids)
+## Confirmatory factorial
 
-| Id | Spec arm | Recall / tools |
+| | PI off | PI on |
 | --- | --- | --- |
-| `A-pageindex` | A | `pageindex_*` only (tree pre-built) |
-| `B-vector` | B | `memory_recall` `sources: ["vector"]` + `read_around` |
-| `C-fulltext` | C | `memory_recall` `sources: ["vault"]` + `read_around` |
-| `Cplus-grep` | C+ (exploratory) | `grep` + `read_range` |
-| `D-whole-doc` | D | no tools; docs with 30% context headroom only |
-| `E-hybrid` | E | `sources: ["vault","vector","pageindex"]` |
-| `E-minus` | E− | `sources: ["vault","vector"]` |
+| **IDF, CG off** | `H-idf` (today) | `H-idf-pi` |
+| **BM25, CG off** | `H-bm25` | `H-bm25-pi` |
+| **IDF, CG on** | `H-idf-cg` | `H-idf-pi-cg` |
+| **BM25, CG on** | `H-bm25-cg` | `H-bm25-pi-cg` |
 
-Confirmatory comparisons (Holm α=0.05): **A vs B**, **A vs C**, **E vs E−**. C+ is exploratory only.
+Contrasts (Holm α=0.05): PageIndex main effect, BM25 main effect, CodeGraph main effect, combination vs `H-idf`.
+
+Diagnostics (`D-*`): alone baselines, grep, whole-doc, structured ontology, DuckDB SQL — never decide defaults.
 
 ## Quick checks (no API spend)
 
 ```bash
-# Schema + smoke fixtures validate
 python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
-
-# Tier-1 grader on synthetic answers
-python3 benchmarks/pageindex-ab/scripts/grade_tier1.py \
-  --answers benchmarks/pageindex-ab/fixtures/contaminated-smoke/sample-answers.jsonl \
-  --keys benchmarks/pageindex-ab/fixtures/contaminated-smoke/sample-keys.jsonl
-
-# Paired bootstrap + McNemar on toy paired scores
-python3 benchmarks/pageindex-ab/scripts/bootstrap_paired.py \
-  --scores benchmarks/pageindex-ab/fixtures/contaminated-smoke/sample-paired-scores.jsonl
-python3 benchmarks/pageindex-ab/scripts/mcnemar_paired.py \
-  --scores benchmarks/pageindex-ab/fixtures/contaminated-smoke/sample-paired-scores.jsonl
 ```
 
-## Preconditions before scored run
+## Preconditions
 
-1. Shared Docling Markdown + section IDs per document.
-2. `read_around` (or equivalent) for arms B/C/E/E−.
-3. Frozen manifest with SHA-256 hashes (`scripts/hash_freeze.py`).
-4. Predictions recorded in the eval spec.
-5. Equal pilot tuning budget spent only on `contaminated-smoke`.
+1. Okapi BM25 vault ranker flag (not implemented yet).
+2. `read_around` for section expansion.
+3. Code stratum repos + native `codegraph_sync` fixtures.
+4. Cross-document list questions + ontology rows.
+5. Correct [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) — see [`docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md`](../../docs/gtm/pragmaticvectors/agent-memory-stack-corrections.md).
 
-## Relationship to OpenBench task WINs
+## Industry claim track (separate)
 
-Retired cells `pageindex-section-qa`, `hybrid-recall-source-pin`, and `memory-recall-pageindex-pin` prove tools work. They do **not** authorize default-route or demote decisions — this suite does.
+LoCoMo / LongMemEval / BEAM with a strict judge — complements this suite; does not replace the factorial.

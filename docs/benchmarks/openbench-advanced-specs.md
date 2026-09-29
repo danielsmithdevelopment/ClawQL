@@ -19,7 +19,7 @@ Related: [`openbench.md`](openbench.md) · [`benchmarks/openbench/README.md`](..
 | B-5       | NSV/SGDOP ensemble diversity                              | High     | Spec only                                                                                                                                                               |
 | B-6       | Domain-specific compliance QA (HLE analog)                | Medium   | Spec only                                                                                                                                                               |
 | B-7       | Institutional knowledge (C&H / amortized)                 | Highest  | B-7.1 redesign live (120 nested + Sonnet 4.6); prior Qwen FAIL [31236859868](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31236859868); B-7.2–7.4 next |
-| **PI-AB** | PageIndex vs vector / vault / hybrid (default-route gate) | Highest  | Spec v0.1 + harness scaffold — [`pageindex-ab-eval-spec-v0.1.md`](pageindex-ab-eval-spec-v0.1.md); corpus pending                                                       |
+| **PI-AB** | Memory stack default-route (BM25 × PageIndex × CodeGraph) | Highest  | Spec **v0.2** — task-completion gate; cost/latency reported only — [`pageindex-ab-eval-spec-v0.1.md`](pageindex-ab-eval-spec-v0.1.md)                                  |
 
 ---
 

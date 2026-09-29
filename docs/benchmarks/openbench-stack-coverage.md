@@ -155,7 +155,7 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 8. ~~**PageIndex long-doc Q&A**~~ — tooling WIN on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)). **Does not decide default-route** — see [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md).
 9. ~~**Hybrid recall source pin**~~ — tooling WIN on 1.0 / off 0.0 ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)). Product superiority gated on `pageindex-ab`.
-   9b. **`pageindex-ab` multi-arm retrieval superiority** — spec + harness scaffold landed; corpus not frozen. Decision: default route / specialist / demote.
+   9b. **`pageindex-ab` memory-stack default-route (v0.2)** — 2×2×2 factorial (ranker × PageIndex × CodeGraph); task completion only. Corpus not frozen.
 10. ~~**Codegraph-guided edit**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).
 11. ~~**External ingest → continue**~~ — verified on 1.0 / off 0.0 ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)).
 

@@ -21,9 +21,15 @@ def normalize_tool(name: str) -> str:
     return n
 
 
-def load_arms(path: Path) -> dict[str, Any]:
+def load_arm(path: Path, arm_id: str) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return {a["id"]: a for a in data["arms"]}
+    arms = list(data.get("confirmatory_arms") or []) + list(data.get("diagnostic_arms") or [])
+    # Backward compat with v0.1 flat "arms" key
+    arms += list(data.get("arms") or [])
+    by_id = {a["id"]: a for a in arms}
+    if arm_id not in by_id:
+        raise SystemExit(f"unknown arm {arm_id}")
+    return by_id[arm_id]
 
 
 def main() -> int:
@@ -42,11 +48,7 @@ def main() -> int:
     )
     args = p.parse_args()
 
-    arms = load_arms(args.arms_config)
-    if args.arm not in arms:
-        print(json.dumps({"ok": False, "error": f"unknown arm {args.arm}"}))
-        return 2
-    arm = arms[args.arm]
+    arm = load_arm(args.arms_config, args.arm)
     allowed = {normalize_tool(t) for t in arm.get("allowed_tools") or []}
     forbidden = {normalize_tool(t) for t in arm.get("forbidden_tools") or []}
 
@@ -64,12 +66,17 @@ def main() -> int:
         elif allowed and n not in allowed:
             violations.append({"tool": n, "reason": "not_allowed"})
 
-    # Arm D: any tool is a violation
+    # Empty allowlist (e.g. whole-doc): any tool is a violation
     if not allowed and names:
-        violations = [{"tool": n, "reason": "arm_d_no_tools"} for n in names]
+        violations = [{"tool": n, "reason": "no_tools_arm"} for n in names]
 
     ok = len(violations) == 0
-    print(json.dumps({"ok": ok, "arm": args.arm, "tools_seen": names, "violations": violations}, indent=2))
+    print(
+        json.dumps(
+            {"ok": ok, "arm": args.arm, "tools_seen": names, "violations": violations},
+            indent=2,
+        )
+    )
     return 0 if ok else 2
 
 

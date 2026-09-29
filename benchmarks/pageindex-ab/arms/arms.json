@@ -1,85 +1,43 @@
 {
   "suite": "pageindex-ab",
   "spec": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
+  "spec_version": "0.2",
+  "philosophy": {
+    "primary_gate": "strict_accuracy_task_completion",
+    "latency_gates": false,
+    "token_cost_gates": false,
+    "report_latency_tokens_cost": true
+  },
   "budget": {
     "max_tool_calls": 12,
-    "max_retrieved_tokens": 8000,
-    "timeout_seconds": 180
+    "timeout_seconds": 180,
+    "max_retrieved_tokens": null,
+    "notes": "Retrieved tokens and $ are logged, never used to fail a cell."
   },
   "model_primary": "openrouter/deepseek/deepseek-chat",
-  "arms": [
+  "factors": {
+    "ranker": ["idf", "bm25"],
+    "pageindex": [false, true],
+    "codegraph": [false, true]
+  },
+  "confirmatory_arms": [
     {
-      "id": "A-pageindex",
-      "label": "A. PageIndex",
-      "allowed_tools": [
-        "pageindex_traverse",
-        "pageindex_get_content",
-        "pageindex_synthesize"
-      ],
-      "forbidden_tools": ["memory_recall"],
-      "memory_recall_sources": null,
-      "setup": ["pageindex_build_tree"],
-      "confirmatory": true
-    },
-    {
-      "id": "B-vector",
-      "label": "B. Vector recall",
+      "id": "H-idf",
+      "label": "Today's default",
+      "ranker": "idf",
+      "pageindex": false,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector"],
       "allowed_tools": ["memory_recall", "read_around"],
-      "forbidden_tools": [
-        "pageindex_traverse",
-        "pageindex_get_content",
-        "pageindex_synthesize",
-        "pageindex_build_tree"
-      ],
-      "memory_recall_sources": ["vector"],
-      "setup": ["embeddings"],
-      "confirmatory": true
+      "role": "control"
     },
     {
-      "id": "C-fulltext",
-      "label": "C. Full-text search",
-      "allowed_tools": ["memory_recall", "read_around"],
-      "forbidden_tools": [
-        "pageindex_traverse",
-        "pageindex_get_content",
-        "pageindex_synthesize",
-        "pageindex_build_tree"
-      ],
-      "memory_recall_sources": ["vault"],
-      "setup": [],
-      "confirmatory": true,
-      "notes": "Vault = token TF(+IDF) via substring occurrence counts, not BM25."
-    },
-    {
-      "id": "Cplus-grep",
-      "label": "C+. Grep baseline",
-      "allowed_tools": ["grep", "read_range"],
-      "forbidden_tools": [
-        "memory_recall",
-        "pageindex_traverse",
-        "pageindex_get_content",
-        "pageindex_synthesize",
-        "pageindex_build_tree"
-      ],
-      "memory_recall_sources": null,
-      "setup": [],
-      "confirmatory": false,
-      "notes": "Exploratory stronger simple baseline; never used for Outcome 1–3."
-    },
-    {
-      "id": "D-whole-doc",
-      "label": "D. Whole document",
-      "allowed_tools": [],
-      "forbidden_tools": ["memory_recall", "pageindex_traverse", "pageindex_get_content", "pageindex_synthesize", "pageindex_build_tree", "read_around", "grep", "read_range"],
-      "memory_recall_sources": null,
-      "setup": [],
-      "confirmatory": false,
-      "requires_fits_arm_d": true,
-      "exempt_retrieved_token_cap": true
-    },
-    {
-      "id": "E-hybrid",
-      "label": "E. Hybrid with PageIndex",
+      "id": "H-idf-pi",
+      "label": "+PageIndex",
+      "ranker": "idf",
+      "pageindex": true,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector", "pageindex"],
       "allowed_tools": [
         "memory_recall",
         "read_around",
@@ -87,32 +45,173 @@
         "pageindex_get_content",
         "pageindex_synthesize"
       ],
-      "forbidden_tools": [],
-      "memory_recall_sources": ["vault", "vector", "pageindex"],
-      "setup": ["pageindex_build_tree", "embeddings"],
-      "confirmatory": true,
-      "notes": "Explicit sources — not bare omit-sources default (that is E− today)."
+      "setup": ["pageindex_build_tree", "embeddings"]
     },
     {
-      "id": "E-minus",
-      "label": "E−. Hybrid minus PageIndex",
+      "id": "H-bm25",
+      "label": "+BM25",
+      "ranker": "bm25",
+      "pageindex": false,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector"],
       "allowed_tools": ["memory_recall", "read_around"],
-      "forbidden_tools": [
+      "setup": ["embeddings", "bm25_stats"],
+      "notes": "Requires CLAWQL_MEMORY_VAULT_RANKER=bm25 (to implement)."
+    },
+    {
+      "id": "H-bm25-pi",
+      "label": "+BM25 +PageIndex",
+      "ranker": "bm25",
+      "pageindex": true,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector", "pageindex"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings", "bm25_stats"]
+    },
+    {
+      "id": "H-idf-cg",
+      "label": "+CodeGraph",
+      "ranker": "idf",
+      "pageindex": false,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "codegraph"],
+      "allowed_tools": ["memory_recall", "read_around", "codegraph_query", "codegraph_impact"],
+      "setup": ["embeddings", "codegraph_sync"],
+      "notes": "Native builder default; Graphify is exploratory on code stratum only."
+    },
+    {
+      "id": "H-idf-pi-cg",
+      "label": "+PI +CG",
+      "ranker": "idf",
+      "pageindex": true,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "pageindex", "codegraph"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
         "pageindex_traverse",
         "pageindex_get_content",
         "pageindex_synthesize",
-        "pageindex_build_tree"
+        "codegraph_query",
+        "codegraph_impact"
       ],
-      "memory_recall_sources": ["vault", "vector"],
-      "setup": ["embeddings"],
-      "confirmatory": true,
-      "notes": "Matches resolveMemoryRecallSources({}) with hybrid pageindex env off."
+      "setup": ["pageindex_build_tree", "embeddings", "codegraph_sync"]
+    },
+    {
+      "id": "H-bm25-cg",
+      "label": "+BM25 +CG",
+      "ranker": "bm25",
+      "pageindex": false,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "codegraph"],
+      "allowed_tools": ["memory_recall", "read_around", "codegraph_query", "codegraph_impact"],
+      "setup": ["embeddings", "bm25_stats", "codegraph_sync"]
+    },
+    {
+      "id": "H-bm25-pi-cg",
+      "label": "Full candidate",
+      "ranker": "bm25",
+      "pageindex": true,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "pageindex", "codegraph"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "codegraph_query",
+        "codegraph_impact"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings", "bm25_stats", "codegraph_sync"]
     }
   ],
-  "confirmatory_comparisons": [
-    ["A-pageindex", "B-vector"],
-    ["A-pageindex", "C-fulltext"],
-    ["E-hybrid", "E-minus"]
+  "confirmatory_contrasts": [
+    {
+      "id": "pageindex_main_effect",
+      "description": "mean(PI on) - mean(PI off) across ranker × codegraph",
+      "holm": true
+    },
+    {
+      "id": "bm25_main_effect",
+      "description": "mean(BM25) - mean(IDF) across pageindex × codegraph",
+      "holm": true
+    },
+    {
+      "id": "codegraph_main_effect",
+      "description": "mean(CG on) - mean(CG off); primary power on code stratum; report doc noise",
+      "holm": true
+    },
+    {
+      "id": "combination_vs_today",
+      "description": "Best arm including every winning addition vs H-idf; must clear zero to ship new default",
+      "holm": true
+    }
   ],
-  "holm_alpha": 0.05
+  "holm_alpha": 0.05,
+  "diagnostic_arms": [
+    {
+      "id": "D-pageindex",
+      "label": "PageIndex alone",
+      "allowed_tools": ["pageindex_traverse", "pageindex_get_content", "pageindex_synthesize"],
+      "forbidden_tools": ["memory_recall"],
+      "setup": ["pageindex_build_tree"]
+    },
+    {
+      "id": "D-vector",
+      "label": "Vector alone",
+      "memory_recall_sources": ["vector"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-idf",
+      "label": "IDF keyword alone",
+      "ranker": "idf",
+      "memory_recall_sources": ["vault"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-bm25",
+      "label": "BM25 keyword alone",
+      "ranker": "bm25",
+      "memory_recall_sources": ["vault"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-grep",
+      "label": "Grep baseline",
+      "allowed_tools": ["grep", "read_range"],
+      "forbidden_tools": ["memory_recall", "pageindex_traverse"]
+    },
+    {
+      "id": "D-whole-doc",
+      "label": "Whole document",
+      "allowed_tools": [],
+      "requires_fits_arm_d": true
+    },
+    {
+      "id": "D-structured",
+      "label": "Ontology structured recall",
+      "allowed_tools": ["memory_recall"],
+      "notes": "schema+filters only; skips text layers. For cross-document list questions."
+    },
+    {
+      "id": "D-sql",
+      "label": "DuckDB clawql_sql",
+      "allowed_tools": ["data_query", "clawql_sql"],
+      "notes": "Document-extraction tables; not fused with ontology.db yet."
+    }
+  ],
+  "ship_rules": {
+    "addition_becomes_default_if": "confirmatory contrast CI excludes zero on strict accuracy",
+    "codegraph_document_harm": "if CG helps code but harms docs, default-on only in repo workspaces",
+    "new_omit_sources_default": "combination_vs_today must clear zero",
+    "never_gate_on": ["latency", "tokens", "dollars"]
+  }
 }
