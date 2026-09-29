@@ -39,6 +39,7 @@ Each piece has one job. The vault is the only canonical store; everything else i
 | ------------------------------- | ------------------------------------------------------------------------------------ |
 | **`memory_ingest`**             | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
 | **`memory_recall`**             | Multi-source recall (`sources`) → `hits[]` + `followUps`; vault `results` kept       |
+| **`read_around`**               | Expand a path/chunk hit into the enclosing Markdown heading section                  |
 | **`pageindex_build_tree`**      | Build a vectorless hierarchical index from Markdown (`clawql-pageindex`)             |
 | **`pageindex_traverse`**        | Walk the PageIndex tree under a token budget                                         |
 | **`pageindex_synthesize`**      | Merge selected nodes into agent context                                              |
@@ -64,7 +65,7 @@ Each piece has one job. The vault is the only canonical store; everything else i
 
 | Source          | What it contributes                                            |
 | --------------- | -------------------------------------------------------------- |
-| **`vault`**     | Keyword + wikilink BFS over Obsidian Markdown                  |
+| **`vault`**     | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF or BM25) |
 | **`vector`**    | Embedding KNN seeds (when vector backend + API key configured) |
 | **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits)     |
 | **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees         |
@@ -78,6 +79,14 @@ Each piece has one job. The vault is the only canonical store; everything else i
 - **`hits`** — normalized multi-source hits (`source`, `id`, `score`, `snippet`, …)
 - **`followUps`** — specialist tool hints (`pageindex_synthesize`, `codegraph_path`, `knowledge_search_onyx`, …)
 - **`sourcesUsed` / `sourceNotes`** — what ran and skip reasons
+- **`vaultRanker`** — `idf` (default) or `bm25` when vault was queried
+
+## Vault lexical ranker
+
+| Env | Default | Effect |
+| --- | --- | --- |
+| **`CLAWQL_MEMORY_VAULT_RANKER=idf`** | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)) |
+| **`CLAWQL_MEMORY_VAULT_RANKER=bm25`** | — | Okapi BM25 (length-normalized). Candidate default via [`pageindex-ab`](../benchmarks/pageindex-ab-eval-spec-v0.1.md) v0.2 |
 
 ## `memory_ingest` rebuild
 
@@ -106,6 +115,7 @@ Each piece has one job. The vault is the only canonical store; everything else i
 | **`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`**  | off     | Default `sources` includes codegraph                               |
 | **`CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX=1`**  | off     | Default `sources` includes pageindex                               |
 | **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`**       | off     | Default `sources` includes onyx (needs Onyx wired + enabled)       |
+| **`CLAWQL_MEMORY_VAULT_RANKER`**               | `idf`   | Vault lexical ranker: `idf` or `bm25`                              |
 | **`CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1`** | off     | Rebuild PageIndex after every successful ingest                    |
 
 ## Prerequisites

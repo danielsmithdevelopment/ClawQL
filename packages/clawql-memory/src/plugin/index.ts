@@ -3,9 +3,11 @@ export {
   createMemoryProviderPlugin,
   handleMemoryIngestToolInput,
   handleMemoryRecallToolInput,
+  handleReadAroundToolInput,
   MEMORY_PLUGIN_ID,
   memoryIngestToolSchema,
   memoryRecallToolSchema,
+  readAroundToolSchema,
   codegraphSyncGraphifyToolSchema,
   codegraphSyncToolSchema,
 } from "./memory-plugin.js";

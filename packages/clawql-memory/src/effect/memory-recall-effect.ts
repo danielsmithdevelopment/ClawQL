@@ -5,8 +5,6 @@ import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "../vault/slug-i
 import { extractWikilinkTargets, stripVaultFrontmatter } from "../vault/markdown.js";
 import { isOkfRetracted, isOkfStale, parseVaultFrontmatter } from "../okf/frontmatter.js";
 import {
-  buildCorpusIdf,
-  keywordScore,
   mapVaultResultToNormalizedHit,
   resolveMemoryRecallSources,
   type MemoryRecallInput,
@@ -16,6 +14,12 @@ import {
   type RecallFollowUpHint,
   type RecallHit,
 } from "../recall/recall.js";
+import {
+  buildVaultRankerStatsEffect,
+  resolveVaultRankerModeEffect,
+  scoreWithVaultRanker,
+  type VaultRankerStats,
+} from "../recall/vault-ranker.js";
 import { MemoryError } from "./memory-errors.js";
 import { EmbeddingService } from "./embedding-service.js";
 import { MemoryDbService } from "./memory-db-service.js";
@@ -219,6 +223,7 @@ export function executeMemoryRecallCoreEffect(
     let indexSurvey: OkfIndexSurvey | undefined;
     let indexFirstBodyLoad = false;
     let bodiesLoaded = 0;
+    let vaultRankerMode: "idf" | "bm25" | undefined;
 
     if (wantVault || wantVector) {
       const useIndexFirst = indexFirstRecallEnabled();
@@ -286,8 +291,12 @@ export function executeMemoryRecallCoreEffect(
       bodiesLoaded = files.length;
       scannedFiles = restrictBodies ? mdFiles.length : files.length;
 
-      // Corpus IDF so ubiquitous tokens (shared vocabulary) do not bury distinctive matches.
-      const idf = wantVault ? buildCorpusIdf(corpusTexts) : undefined;
+      // Lexical ranker: IDF+log-TF (default) or Okapi BM25 via CLAWQL_MEMORY_VAULT_RANKER.
+      let rankerStats: VaultRankerStats | undefined;
+      if (wantVault) {
+        vaultRankerMode = yield* resolveVaultRankerModeEffect();
+        rankerStats = yield* buildVaultRankerStatsEffect(corpusTexts, vaultRankerMode);
+      }
       const catalogScoreByPath = new Map<string, number>();
       if (indexSurvey) {
         for (const h of indexSurvey.catalogHits) {
@@ -297,7 +306,7 @@ export function executeMemoryRecallCoreEffect(
       }
       for (const f of files) {
         const fm = parseVaultFrontmatter(f.text);
-        let score = wantVault && idf ? keywordScore(query, f.text, idf) : 0;
+        let score = wantVault && rankerStats ? scoreWithVaultRanker(query, f.text, rankerStats) : 0;
         if (wantVault) {
           const relNorm = f.rel.replace(/\\/g, "/");
           // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
@@ -391,12 +400,14 @@ export function executeMemoryRecallCoreEffect(
           corpusTexts.push(text);
           textByRel.set(p, text);
         }
-        // Recompute IDF + keyword scores over the expanded body set.
+        // Recompute lexical scores over the expanded body set.
         if (wantVault) {
-          const idf2 = buildCorpusIdf(corpusTexts);
+          const mode2 = vaultRankerMode ?? (yield* resolveVaultRankerModeEffect());
+          const stats2 = yield* buildVaultRankerStatsEffect(corpusTexts, mode2);
+          rankerStats = stats2;
           for (const f of files) {
             const fm = parseVaultFrontmatter(f.text);
-            let score = keywordScore(query, f.text, idf2);
+            let score = scoreWithVaultRanker(query, f.text, stats2);
             const relNorm = f.rel.replace(/\\/g, "/");
             if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
             if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
@@ -606,6 +617,7 @@ export function executeMemoryRecallCoreEffect(
       hits: rankedHits,
       followUps: followUps.length > 0 ? dedupeFollowUps(followUps) : undefined,
       sourcesUsed,
+      vaultRanker: wantVault ? vaultRankerMode : undefined,
       sourceNotes: Object.keys(sourceNotes).length > 0 ? sourceNotes : undefined,
       truncated: wantVault || wantVector ? truncated : undefined,
       scannedFiles: wantVault || wantVector ? scannedFiles : undefined,

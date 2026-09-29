@@ -100,6 +100,11 @@ export type MemoryRecallResult = {
   followUps?: RecallFollowUpHint[];
   /** Sources that were actually queried (after default resolution). */
   sourcesUsed?: MemoryRecallSource[];
+  /**
+   * Lexical vault ranker used when `vault` was queried.
+   * `idf` = default (#801); `bm25` = Okapi BM25 when `CLAWQL_MEMORY_VAULT_RANKER=bm25`.
+   */
+  vaultRanker?: "idf" | "bm25";
   /** Per-source skip reasons (disabled, missing index, missing inject, …). */
   sourceNotes?: Partial<Record<MemoryRecallSource, string>>;
   truncated?: boolean;

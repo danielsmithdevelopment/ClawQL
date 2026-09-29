@@ -24,12 +24,15 @@ import { runMemoryIngest } from "../ingest/ingest.js";
 import { runMemoryRecall } from "../recall/recall.js";
 import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
 import { pageIndexEnabled } from "../recall/pageindex-enabled.js";
+import { executeReadAroundEffect, type ReadAroundInput } from "../recall/read-around.js";
 import {
   decodeMemoryIngestInput,
   decodeMemoryRecallInput,
   memoryIngestToolZodShape,
   memoryRecallToolZodShape,
 } from "../schema/index.js";
+import { VaultConfigService } from "../effect/vault-config-service.js";
+import { memoryServicesLiveLayer } from "../effect/memory-effect-runtime.js";
 
 import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 
@@ -64,6 +67,31 @@ export const pageindexGetContentToolSchema = {
   docId: z.string().min(1),
   nodeId: z.string().min(1),
   storagePath: z.string().optional(),
+};
+
+export const readAroundToolSchema = {
+  path: z
+    .string()
+    .optional()
+    .describe("Vault-relative Markdown path (e.g. Memory/handbook.md)."),
+  markdown: z
+    .string()
+    .optional()
+    .describe("Inline Markdown when path is omitted (eval harness)."),
+  sectionId: z
+    .string()
+    .optional()
+    .describe("Shared section id from Docling/heading map (e.g. sec-protocols)."),
+  chunkText: z
+    .string()
+    .optional()
+    .describe("Snippet from a recall hit; returns the enclosing heading section."),
+  tokenBudget: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Approx token budget for returned content (default 1200)."),
 };
 
 export const codegraphIndexToolSchema = {
@@ -238,6 +266,29 @@ export async function handleMemoryRecallToolInput(
   };
 }
 
+export async function handleReadAroundToolInput(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const input = params as ReadAroundInput;
+  logMcpToolShape("read_around", {
+    path: input.path,
+    hasMarkdown: Boolean(input.markdown),
+    sectionId: input.sectionId,
+    chunkChars: input.chunkText?.length,
+    tokenBudget: input.tokenBudget,
+  });
+  const result = await Effect.runPromise(
+    Effect.gen(function* () {
+      const cfg = yield* VaultConfigService;
+      const vault = cfg.getObsidianVaultPath() ?? undefined;
+      return yield* executeReadAroundEffect(vault, input);
+    }).pipe(Effect.provide(memoryServicesLiveLayer()))
+  );
+  return {
+    content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+  };
+}
+
 async function applyVaultIngestProposal(syncResult: {
   vaultIngest?: {
     title: string;
@@ -355,6 +406,11 @@ export function createMemoryPlugin(): ProviderPlugin {
           name: "memory_recall",
           schema: memoryRecallToolZodShape,
           handler: (args) => handleMemoryRecallToolInput(args),
+        });
+        yield* api.registerMcpTool({
+          name: "read_around",
+          schema: readAroundToolSchema,
+          handler: (args) => handleReadAroundToolInput(args),
         });
 
         if (pageIndexEnabled()) {

@@ -17,6 +17,8 @@ const library = defineConfig({
     "recall/codegraph-recall": "src/recall/codegraph-recall.ts",
     "recall/onyx-recall": "src/recall/onyx-recall.ts",
     "recall/recall-sources": "src/recall/recall-sources.ts",
+    "recall/vault-ranker": "src/recall/vault-ranker.ts",
+    "recall/read-around": "src/recall/read-around.ts",
     "recall/recall": "src/recall/recall.ts",
     "embedding/embedding": "src/embedding/embedding.ts",
     "db/artifacts": "src/db/artifacts.ts",

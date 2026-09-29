@@ -39,6 +39,20 @@ export {
 export { MemoryIngestService, memoryIngestLiveLayer } from "./memory-ingest-service.js";
 export { MemoryRecallService, memoryRecallLiveLayer } from "./memory-recall-service.js";
 export {
+  VaultRankerService,
+  vaultRankerLiveLayer,
+  resolveVaultRankerModeEffect,
+  buildVaultRankerStatsEffect,
+  scoreWithVaultRankerEffect,
+} from "../recall/vault-ranker.js";
+export {
+  ReadAroundService,
+  readAroundLiveLayer,
+  executeReadAroundEffect,
+  splitMarkdownSections,
+  readAroundFromMarkdown,
+} from "../recall/read-around.js";
+export {
   memoryIngestProgram,
   memoryRecallProgram,
   memoryServicesLiveLayer,

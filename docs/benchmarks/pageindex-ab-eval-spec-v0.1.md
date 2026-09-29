@@ -191,18 +191,19 @@ Reported overall, by stratum, and by question type.
 
 ## Preconditions before scored run
 
-| Gap                                                        | Owner                        |
-| ---------------------------------------------------------- | ---------------------------- |
-| Implement Okapi BM25 vault ranker (flag-selectable vs IDF) | `clawql-memory`              |
-| `read_around` (or equivalent) for chunk→section            | harness or MCP               |
-| Native codegraph index fixtures for code stratum           | `clawql-codegraph`           |
-| Cross-document list keys + ontology rows                   | annotation                   |
-| Correct memory-stack post (see below)                      | GTM — can ship before freeze |
+| Gap | Owner | Status |
+| --- | --- | --- |
+| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory` | **Landed** (still default `idf` until scored run) |
+| `read_around` MCP for chunk→section | `clawql-memory` | **Landed** |
+| Native codegraph index fixtures for code stratum | `clawql-codegraph` | Not started |
+| Cross-document list keys + ontology rows | annotation | Not started |
+| 24 docs + 8 repos + question freeze | annotation | Not started |
+| Correct memory-stack post (see below) | GTM | Draft in-repo; live site pending |
 
 ## Run plan (high level)
 
 1. Corpus + repos + keys (incl. list questions); second annotator; freeze.
-2. BM25 flag + `read_around` + runner for 8 confirmatory + diagnostics.
+2. Finish runner for 8 confirmatory + diagnostics (BM25 + `read_around` already landed).
 3. Pilot on `contaminated-smoke`.
 4. Record predictions → single scored run.
 5. Tier-2 judge (different family from frontier subset) + adjudication + 10% human re-grade.

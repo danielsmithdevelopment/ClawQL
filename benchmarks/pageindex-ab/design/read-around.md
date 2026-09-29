@@ -1,24 +1,32 @@
-# Precondition: `read_around` for Arms B / C / E / E−
+# `read_around` — shipped MCP tool
 
-Arms B and C (and hybrid arms that cite sections) need a way to expand a chunk hit into the **shared Docling section** used by the answer contract. PageIndex already has `pageindex_get_content({ docId, nodeId })`; vector/vault hits do not.
+Registered by `clawql-memory` (with memory tier). Expands a path/chunk hit into the enclosing ATX heading section — shared section ids for pageindex-ab citation PRF.
 
-## Contract (proposed)
+## Contract
 
 ```json
 {
   "name": "read_around",
   "arguments": {
-    "document_id": "string",
-    "section_id": "string",
-    "chunk_id": "string (optional)",
-    "token_budget": 1200
+    "path": "Memory/handbook.md",
+    "sectionId": "sec-protocols",
+    "chunkText": "optional snippet from a recall hit",
+    "tokenBudget": 1200
   }
 }
 ```
 
-Returns `{ section_id, title, content, truncated }` from the **same** section map every arm cites. Prefer harness-local registration for the eval if product MCP is not ready; promote to `clawql-memory` only if Outcome 1 or 2 needs it in production.
+Or pass `markdown` inline (eval harness) instead of `path`.
 
-## Non-goals for v1
+Returns `{ ok, section_id, title, content, truncated, sections_available }`.
 
-- Neighbor-window sliding across arbitrary char offsets (nice-to-have; section ID is enough for citation PRF).
-- Building a second section ontology separate from Docling — one map only.
+## Implementation
+
+- `packages/clawql-memory/src/recall/read-around.ts`
+- Effect service `ReadAroundService`
+- Plugin registration in `memory-plugin.ts`
+
+## Non-goals (still)
+
+- Neighbor-window sliding across arbitrary char offsets
+- Auto-fusing Docling JSON section maps (heading slug ids are the v1 contract; Docling id alias table can layer later)
