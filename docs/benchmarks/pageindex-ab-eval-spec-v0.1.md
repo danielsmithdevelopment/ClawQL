@@ -39,11 +39,11 @@ Base for every confirmatory cell: `memory_recall` with vault + vector always on,
 
 **Three factors (2×2×2 = 8 confirmatory arms):**
 
-| Factor        | Off (today)                              | On (candidate)                                            |
-| ------------- | ---------------------------------------- | --------------------------------------------------------- |
+| Factor        | Off (today)                              | On (candidate)                                                    |
+| ------------- | ---------------------------------------- | ----------------------------------------------------------------- |
 | **Ranker**    | IDF + log-TF (`keywordScore` as shipped) | Okapi BM25 (length-normalized; `CLAWQL_MEMORY_VAULT_RANKER=bm25`) |
-| **PageIndex** | not in `sources`                         | `sources` includes `pageindex` (+ trees pre-built)        |
-| **CodeGraph** | not in `sources`                         | `sources` includes `codegraph` (+ native index pre-built) |
+| **PageIndex** | not in `sources`                         | `sources` includes `pageindex` (+ trees pre-built)                |
+| **CodeGraph** | not in `sources`                         | `sources` includes `codegraph` (+ native index pre-built)         |
 
 | Arm id         | Ranker | PageIndex | CodeGraph | Role                          |
 | -------------- | ------ | --------- | --------- | ----------------------------- |
@@ -191,17 +191,17 @@ Reported overall, by stratum, and by question type.
 
 ## Preconditions before scored run
 
-| Gap                                                         | Owner              | Status                                            |
-| ----------------------------------------------------------- | ------------------ | ------------------------------------------------- |
-| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory`    | **Landed** (still default `idf` until scored run) |
-| `read_around` MCP for chunk→section                         | `clawql-memory`    | **Landed**                                        |
-| Contaminated-smoke pilot + offline factorial runner         | harness            | **Landed**                                        |
-| Synthetic freeze-candidate (24 docs + 8 repos + keys)       | harness            | **Landed** (`corpus/freeze-candidate/`, not spent)|
-| Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Partial (file-ranker proxy in offline pilot)      |
-| Cross-document list keys + ontology rows                    | annotation         | One list key in candidate; ontology rows pending  |
-| Human second-pass + Docling PDF swap → `pageindex-ab-v1`    | annotation         | Not started                                       |
-| Agent factorial (OpenCode × OpenRouter)                     | harness            | Blocked on `OPENROUTER_API_KEY`                   |
-| Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                  |
+| Gap                                                         | Owner              | Status                                             |
+| ----------------------------------------------------------- | ------------------ | -------------------------------------------------- |
+| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory`    | **Landed** (still default `idf` until scored run)  |
+| `read_around` MCP for chunk→section                         | `clawql-memory`    | **Landed**                                         |
+| Contaminated-smoke pilot + offline factorial runner         | harness            | **Landed**                                         |
+| Synthetic freeze-candidate (24 docs + 8 repos + keys)       | harness            | **Landed** (`corpus/freeze-candidate/`, not spent) |
+| Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Partial (file-ranker proxy in offline pilot)       |
+| Cross-document list keys + ontology rows                    | annotation         | One list key in candidate; ontology rows pending   |
+| Human second-pass + Docling PDF swap → `pageindex-ab-v1`    | annotation         | Not started                                        |
+| Agent factorial (OpenCode × OpenRouter)                     | harness            | Blocked on `OPENROUTER_API_KEY`                    |
+| Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                   |
 
 ## Run plan (high level)
 
@@ -229,24 +229,24 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 Draft offline (synthetic freeze-candidate extractive factorial, n=225, **not confirmatory**):
 
-| Field                | Value                                                                 |
-| -------------------- | --------------------------------------------------------------------- |
-| PageIndex effect     | +0.107 (offline candidate)                                            |
-| BM25 effect          | 0.0 (offline candidate; short synthetic docs)                         |
-| CodeGraph effect     | 0.0 offline proxy (file ranker; native index pending)                 |
-| Expected new default | `H-idf-pi` pending agent confirmation                                 |
-| Recorded by / date   | cloud-agent / 2026-09-29                                              |
+| Field                | Value                                                 |
+| -------------------- | ----------------------------------------------------- |
+| PageIndex effect     | +0.107 (offline candidate)                            |
+| BM25 effect          | 0.0 (offline candidate; short synthetic docs)         |
+| CodeGraph effect     | 0.0 offline proxy (file ranker; native index pending) |
+| Expected new default | `H-idf-pi` pending agent confirmation                 |
+| Recorded by / date   | cloud-agent / 2026-09-29                              |
 
 Replace with human-recorded predictions before the spent `pageindex-ab-v1` agent scored run.
 
 ## Status
 
-| Item                  | State                                                                 |
-| --------------------- | --------------------------------------------------------------------- |
-| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported           |
-| Factorial + contrasts | Frozen in this text                                                   |
-| Harness scaffold      | v0.2 arms + offline factorial + GHA                                   |
-| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                                 |
-| Corpus / questions    | Freeze-candidate generated; human freeze not spent                    |
-| Memory-stack post fix | Correction draft in-repo; live site pending                           |
-| Scored run            | Blocked on human freeze + OpenRouter agent matrix                     |
+| Item                  | State                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
+| Factorial + contrasts | Frozen in this text                                         |
+| Harness scaffold      | v0.2 arms + offline factorial + GHA                         |
+| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
+| Corpus / questions    | Freeze-candidate generated; human freeze not spent          |
+| Memory-stack post fix | Correction draft in-repo; live site pending                 |
+| Scored run            | Blocked on human freeze + OpenRouter agent matrix           |
