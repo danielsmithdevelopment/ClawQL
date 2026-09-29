@@ -2,7 +2,7 @@
 
 **Status:** **ran** — Track A **tie** (Net=4 < 5) → **purge** ClawQL PageIndex product surface; **no Vectify port**. Decision: [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
 **Post-8.0:** Vectify-style redesign (LLM summaries + strong tree nav) on a **larger fresh hard set** — [`docs/backlog/post-8.0-vectify-pageindex.md`](../../../docs/backlog/post-8.0-vectify-pageindex.md). These 12 RFC keys are **spent**.  
-**Track B:** last lever for the **8** still-unsolved deep misses (grep+read); if that fails, inspect those keys.  
+**Track B (shrunk):** CodeGraph vs grep only — critical path is real-repo grep-insoluble questions ([agent-loop-freeze.md](agent-loop-freeze.md)). The 8 “unsolved” RFC keys are mostly defective ([unsolved-8-key-review.md](unsolved-8-key-review.md)); do not spend there.  
 **Freeze:** 2026-10-15
 
 ## Gap
@@ -125,5 +125,5 @@ python3 benchmarks/pageindex-ab/scripts/decide_vectify_fair_test.py \
 | Track | Work | Blocks |
 | ----- | ---- | ------ |
 | **A (done)** | This fair test → tie / purge / no port | PageIndex product surface purged |
-| **B (last lever)** | Grep+read agent loop on 8 remaining misses — [agent-loop-freeze.md](agent-loop-freeze.md) | Miss recovery / key hygiene; codegraph prove |
-| **C (can lag)** | k-sweep + union matched-k | Default k / union confound only |
+| **B** | CodeGraph vs grep — [agent-loop-freeze.md](agent-loop-freeze.md) | Catalog keep for `codegraph_*` (needs new keys) |
+| **C (schedule)** | k-sweep + union matched-k | Own-budget / displacement control |

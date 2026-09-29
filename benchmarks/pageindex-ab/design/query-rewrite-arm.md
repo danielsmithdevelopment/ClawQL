@@ -18,14 +18,20 @@ If the LLM rewrite recovers most of the 12 deep misses without no-harm regressio
 
 **Live fair-test result (2026-09-29):** scored arm on both cohorts with `claude-sonnet-4.6` + shared finalize + 3-trial majority → **0/12** misses recovered, **12/15** no-harm. **Not** a default-path candidate from this run ([`vectify-fair-decision.json`](vectify-fair-decision.json)).
 
-**One-line check (no retest):** the scored arm **keeps the original question** via `ranked_lists.insert(0, rank_sections(original…))` in `run_query_rewrite_cohort.py`. Despite that, union pollution still yielded 0/12 misses + 12/15 no-harm — close default-path rewrite from this evidence; **still not default-path**.
+**One-line check (no retest):** the scored arm **keeps the original question** via `ranked_lists.insert(0, rank_sections(original…))` in `run_query_rewrite_cohort.py`. Keeping the original did **not** prevent the 3/15 no-harm regressions.
+
+## Lesson: shared top-k = displacement (same failure mode as RRF PageIndex)
+
+Rewrite variants still **compete for the same fixed top-k** and push out gold sections that the original query alone would have kept. That is the same displacement mechanism that sank RRF PageIndex merges.
+
+**Default-path rule:** an addition must bring its **own context budget** (extra slots / separate lane), not share the existing one. That elevates the **k-sweep** (`{3,6,10}` + union matched-k): it measures whether a larger budget removes displacement for any future addition — schedule it; do not treat it as optional lag work.
 
 ## Suggested spend order (updated for freeze)
 
 1. **Re-score** on 150 keys (free; filter saved cells) — done (`design/agent-rescore-150.json`).
 2. **Track A (done):** fair test + this arm → tie / no port / no default rewrite ([`vectify-fair-decision.json`](vectify-fair-decision.json)).
-3. **Track B (last lever):** strong-model [agent loop](agent-loop-freeze.md) — grep+read on the **8** deep misses still unsolved (incl. by Vectify); if that fails, inspect those keys.
-4. **Track C (can lag):** k-sweep `{3,6,10}` + union matched-k (~$0.50) — union confound only; not freeze-gating for catalog purge.
+3. **Track B:** [CodeGraph vs grep](agent-loop-freeze.md) — **critical path = write grep-insoluble real-repo questions** by 2026-10-15; else `codegraph_*` leaves the bundle. RFC “8 unsolved” reviewed → mostly defective ([`unsolved-8-key-review.md`](unsolved-8-key-review.md)); do not spend here.
+4. **Track C (schedule):** k-sweep `{3,6,10}` + union matched-k (~$0.50) — own-budget / displacement control (elevated after rewrite/RRF lesson).
 
 ## Not this arm
 
