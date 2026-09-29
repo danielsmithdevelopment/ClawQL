@@ -51,7 +51,7 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
-        run: npm run build -w clawql-pageindex -w clawql-memory
+        run: npm run build -w clawql-pageindex -w clawql-codegraph -w clawql-memory
       - name: Validate scaffold
         run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
       - name: Offline ranker compare
@@ -109,7 +109,7 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
-        run: npm run build -w clawql-pageindex -w clawql-memory
+        run: npm run build -w clawql-pageindex -w clawql-codegraph -w clawql-memory
       - name: Build freeze-candidate
         run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
       - name: Agent-lite factorial (cheap)

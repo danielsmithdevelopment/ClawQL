@@ -404,7 +404,6 @@ export function executeMemoryRecallCoreEffect(
         if (wantVault) {
           const mode2 = vaultRankerMode ?? (yield* resolveVaultRankerModeEffect());
           const stats2 = yield* buildVaultRankerStatsEffect(corpusTexts, mode2);
-          rankerStats = stats2;
           for (const f of files) {
             const fm = parseVaultFrontmatter(f.text);
             let score = scoreWithVaultRanker(query, f.text, stats2);

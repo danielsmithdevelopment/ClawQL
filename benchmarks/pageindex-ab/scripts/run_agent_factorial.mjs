@@ -262,7 +262,7 @@ function buildPrompt(key, top) {
   return [
     "You answer questions from retrieved document sections only.",
     "Return a single JSON object with keys: answer (string), sections (array of section_id strings you used), not_found (boolean).",
-    "If the answer is not in the context, set not_found=true and answer=\"\".",
+    'If the answer is not in the context, set not_found=true and answer="".',
     "Do not invent facts. No markdown fences.",
     "",
     `Question: ${key.question}`,
