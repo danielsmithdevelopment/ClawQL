@@ -1,7 +1,7 @@
 {
   "name": "clawql-mcp",
   "version": "8.0.0",
-  "description": "Agentic Gateway \u2014 Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
+  "description": "Agentic Gateway — Foundational Platform for Auditable Production AI. MCP search + execute over OpenAPI/Discovery (internal GraphQL projection), optional native GraphQL HTTP and gRPC unary sources",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/server.js",
@@ -176,6 +176,7 @@
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.2",
     "graphql-http": "^1.23.0",
+    "ip-address": "^10.5.1",
     "mcp-grpc-transport": "1.0.0",
     "nanoid": "6.0.1",
     "node-fetch": "^3.3.2",
@@ -184,6 +185,7 @@
     "prom-client": "^15.1.3",
     "sql.js": "^1.14.1",
     "swagger2openapi": "^7.0.8",
+    "undici": "^6.28.1",
     "yaml": "^2.9.0",
     "zod": "4.3.6"
   },
@@ -207,7 +209,7 @@
     "@protobufjs/utf8": "1.1.1",
     "@hono/node-server": "2.0.11",
     "fast-uri": "3.1.7",
-    "ip-address": "10.3.1",
+    "ip-address": "10.5.1",
     "@opentelemetry/core": "2.9.0",
     "esbuild": "0.28.1",
     "hono": "4.13.5",
@@ -216,7 +218,7 @@
     "picomatch": "4.0.4",
     "postcss": "8.5.23",
     "nanoid": "6.0.1",
-    "undici": "6.28.0",
+    "undici": "6.28.1",
     "qs": "6.16.0",
     "protobufjs": "8.7.1",
     "google-proto-files": {

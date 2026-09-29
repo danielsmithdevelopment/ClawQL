@@ -6,7 +6,7 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
-**Current lean (not confirmatory):** keep `H-idf`. Nothing yet shows an addition improving it. Agent-lite PI −12.5 (n=24, 1 trial) is underpowered; the offline converted_pdf drop is the real signal and looks like same-size RRF displacement.
+**Current lean (hard agent-lite 161×10×3, run 36522240396):** keep `H-idf` (0.826). RRF PageIndex **−0.078** (converted_pdf displacement). Diagnostic **union +0.019** / gated +0.006 — do not flip omit-`sources` yet. BM25 flat; CodeGraph untested.
 
 ## Layout
 
@@ -100,9 +100,9 @@ failed with 402 after ~4700/4830 cells despite `limit_remaining≈$50`.
 | Offline retrieval factorial runner                      | Landed (+ union/gated on hard-candidate)            |
 | Displacement check                                      | Landed                                              |
 | Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)    |
-| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline discriminative; agent-lite n=24 underpowered |
+| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline + full agent-lite discriminative   |
 | Human freeze (`pageindex-ab-v1`)                        | **Not started**                                     |
-| Full hard agent-lite × 3 trials                         | Next (`.run-hard-agent-full`)                       |
+| Full hard agent-lite × 3 trials                         | **Landed** run 36522240396 (keep `H-idf`)           |
 | Full OpenCode × clawql-inference                        | Not yet (cost)                                      |
 | Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only)   |
 | Memory-stack post correction on live site               | Draft in-repo                                       |
