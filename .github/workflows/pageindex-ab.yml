@@ -271,13 +271,26 @@ jobs:
   # Trigger: PR sentinel .run-vectify-fair OR workflow_dispatch mode=vectify-fair.
   # Uses secrets.OPENROUTER_API_KEY (same as agent-lite). Remove sentinel after run.
   vectify-fair:
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'vectify-fair') || (github.event_name == 'pull_request' && hashFiles('benchmarks/pageindex-ab/.run-vectify-fair') != '') }}
+    # hashFiles is steps-only — gate spend in the first step (same pattern as agent-factorial).
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'vectify-fair') || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     # Frontier × 27 Q × 2 arms × 3 trials + indexing
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          elif [ -f benchmarks/pageindex-ab/.run-vectify-fair ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-vectify-fair sentinel; skipping Vectify fair-test spend"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
       - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -295,13 +308,17 @@ jobs:
             exit 1
           fi
       - uses: actions/setup-python@v5
+        if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
       - name: Install pageindex SDK
+        if: ${{ steps.gate.outputs.run == '1' }}
         run: pip install -U "pageindex>=0.2.20"
       - name: Build hard-candidate corpus
+        if: ${{ steps.gate.outputs.run == '1' }}
         run: python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
       - name: Resolve fair-test knobs
+        if: ${{ steps.gate.outputs.run == '1' }}
         id: fair
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -313,8 +330,8 @@ jobs:
             echo "index_model=openai/gpt-4o-mini" >> "$GITHUB_OUTPUT"
             echo "trials=3" >> "$GITHUB_OUTPUT"
           fi
-          echo "frontier_model=$(grep -E '^FRONTIER_MODEL' benchmarks/pageindex-ab/scripts/fair_test_common.py | head -1)" >> "$GITHUB_OUTPUT"
       - name: Vectify arm (IETF docs + shared finalize + majority)
+        if: ${{ steps.gate.outputs.run == '1' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
@@ -329,6 +346,7 @@ jobs:
             --index-model "$VECTIFY_INDEX_MODEL" \
             --out benchmarks/pageindex-ab/results/vectify-fair/
       - name: Query-rewrite arm (same frontier + finalize + no-harm)
+        if: ${{ steps.gate.outputs.run == '1' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
@@ -340,11 +358,12 @@ jobs:
             --model "$VECTIFY_FAIR_MODEL" \
             --out benchmarks/pageindex-ab/results/vectify-fair/
       - name: Decide beat / tie / purge
+        if: ${{ steps.gate.outputs.run == '1' }}
         run: |
           python3 benchmarks/pageindex-ab/scripts/decide_vectify_fair_test.py \
             --dir benchmarks/pageindex-ab/results/vectify-fair/
       - name: Upload vectify-fair artifacts
-        if: ${{ always() }}
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
         uses: actions/upload-artifact@v4
         with:
           name: pageindex-ab-vectify-fair
