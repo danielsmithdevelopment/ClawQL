@@ -191,18 +191,18 @@ Reported overall, by stratum, and by question type.
 
 ## Preconditions before scored run
 
-| Gap                                                         | Owner              | Status                                             |
-| ----------------------------------------------------------- | ------------------ | -------------------------------------------------- |
-| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory`    | **Landed** (still default `idf` until scored run)  |
-| `read_around` MCP for chunk→section                         | `clawql-memory`    | **Landed**                                         |
-| Contaminated-smoke pilot + offline factorial runner         | harness            | **Landed**                                         |
-| Synthetic freeze-candidate (24 docs + 8 repos + keys)       | harness            | **Landed** (`corpus/freeze-candidate/`, not spent) |
-| Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Partial (file-ranker proxy in offline pilot)       |
-| Cross-document list keys + ontology rows                    | annotation         | One list key in candidate; ontology rows pending   |
-| Human second-pass + Docling PDF swap → `pageindex-ab-v1`    | annotation         | Not started                                        |
+| Gap                                                         | Owner              | Status                                                       |
+| ----------------------------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory`    | **Landed** (still default `idf` until scored run)            |
+| `read_around` MCP for chunk→section                         | `clawql-memory`    | **Landed**                                                   |
+| Contaminated-smoke pilot + offline factorial runner         | harness            | **Landed**                                                   |
+| Synthetic freeze-candidate (24 docs + 8 repos + keys)       | harness            | **Landed** (`corpus/freeze-candidate/`, not spent)           |
+| Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Partial (file-ranker proxy in offline pilot)                 |
+| Cross-document list keys + ontology rows                    | annotation         | One list key in candidate; ontology rows pending             |
+| Human second-pass + Docling PDF swap → `pageindex-ab-v1`    | annotation         | Not started                                                  |
 | Agent-lite factorial (OpenRouter flash-lite, sampled)       | harness            | **Landed** GHA run 36514394251 — ceiling, not discriminative |
-| Full OpenCode × clawql-inference matrix                     | harness            | Not yet (cost); agent-lite is the cheap path       |
-| Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                   |
+| Full OpenCode × clawql-inference matrix                     | harness            | Not yet (cost); agent-lite is the cheap path                 |
+| Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                             |
 
 ## Run plan (high level)
 
@@ -230,14 +230,14 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 Draft signals (synthetic freeze-candidate — **not confirmatory**):
 
-| Field                | Offline extractive (n=225) | Agent-lite flash-lite (n=24) |
-| -------------------- | -------------------------- | ---------------------------- |
-| PageIndex effect     | +0.107                     | 0.0 (all arms 0.958)         |
-| BM25 effect          | 0.0                        | 0.0                          |
-| CodeGraph effect     | 0.0 (file-ranker proxy)    | 0.0                          |
-| Expected new default | `H-idf-pi` if offline holds | ceiling — no arm separation |
-| Cost                 | $0                         | ~$0.008 (GHA run 36514394251) |
-| Recorded by / date   | cloud-agent / 2026-09-29   | cloud-agent / 2026-09-29     |
+| Field                | Offline extractive (n=225)  | Agent-lite flash-lite (n=24)  |
+| -------------------- | --------------------------- | ----------------------------- |
+| PageIndex effect     | +0.107                      | 0.0 (all arms 0.958)          |
+| BM25 effect          | 0.0                         | 0.0                           |
+| CodeGraph effect     | 0.0 (file-ranker proxy)     | 0.0                           |
+| Expected new default | `H-idf-pi` if offline holds | ceiling — no arm separation   |
+| Cost                 | $0                          | ~$0.008 (GHA run 36514394251) |
+| Recorded by / date   | cloud-agent / 2026-09-29    | cloud-agent / 2026-09-29      |
 
 Agent-lite used retrieve→one-shot `google/gemini-2.5-flash-lite`; synthetic corpus is too easy once sections are in context. Need harder/human freeze (or full OpenCode) before 8.0.0 flips.
 
