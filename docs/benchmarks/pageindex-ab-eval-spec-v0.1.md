@@ -39,22 +39,22 @@ Base for every confirmatory cell: `memory_recall` with vault + vector always on,
 
 **Three factors (2×2×2 = 8 confirmatory arms):**
 
-| Factor | Off (today) | On (candidate) |
-| --- | --- | --- |
-| **Ranker** | IDF + log-TF (`keywordScore` as shipped) | Okapi BM25 (length-normalized; to implement) |
-| **PageIndex** | not in `sources` | `sources` includes `pageindex` (+ trees pre-built) |
-| **CodeGraph** | not in `sources` | `sources` includes `codegraph` (+ native index pre-built) |
+| Factor        | Off (today)                              | On (candidate)                                            |
+| ------------- | ---------------------------------------- | --------------------------------------------------------- |
+| **Ranker**    | IDF + log-TF (`keywordScore` as shipped) | Okapi BM25 (length-normalized; to implement)              |
+| **PageIndex** | not in `sources`                         | `sources` includes `pageindex` (+ trees pre-built)        |
+| **CodeGraph** | not in `sources`                         | `sources` includes `codegraph` (+ native index pre-built) |
 
-| Arm id | Ranker | PageIndex | CodeGraph | Role |
-| --- | --- | --- | --- | --- |
-| `H-idf` | IDF | off | off | **Today's default** (control) |
-| `H-idf-pi` | IDF | on | off | +PageIndex |
-| `H-bm25` | BM25 | off | off | +BM25 |
-| `H-bm25-pi` | BM25 | on | off | +BM25 +PageIndex |
-| `H-idf-cg` | IDF | off | on | +CodeGraph |
-| `H-idf-pi-cg` | IDF | on | on | +PI +CG |
-| `H-bm25-cg` | BM25 | off | on | +BM25 +CG |
-| `H-bm25-pi-cg` | BM25 | on | on | Full candidate |
+| Arm id         | Ranker | PageIndex | CodeGraph | Role                          |
+| -------------- | ------ | --------- | --------- | ----------------------------- |
+| `H-idf`        | IDF    | off       | off       | **Today's default** (control) |
+| `H-idf-pi`     | IDF    | on        | off       | +PageIndex                    |
+| `H-bm25`       | BM25   | off       | off       | +BM25                         |
+| `H-bm25-pi`    | BM25   | on        | off       | +BM25 +PageIndex              |
+| `H-idf-cg`     | IDF    | off       | on        | +CodeGraph                    |
+| `H-idf-pi-cg`  | IDF    | on        | on        | +PI +CG                       |
+| `H-bm25-cg`    | BM25   | off       | on        | +BM25 +CG                     |
+| `H-bm25-pi-cg` | BM25   | on        | on        | Full candidate                |
 
 Each addition's effect is estimated **across both settings of the other factors** (main-effect contrast), which in simulation detects about a **6-point** accuracy gain at 80% power at the same question budget that needed ~8 points for a single pairwise A/B.
 
@@ -71,16 +71,16 @@ Fixed before freeze. Unit of analysis = question (mean of 3 trials). Paired boot
 
 ### Diagnostic arms (exploratory — never decide defaults)
 
-| Arm id | What the model gets | Why |
-| --- | --- | --- |
-| `D-pageindex` | `pageindex_*` only | Where heading trees win/lose alone |
-| `D-vector` | `sources: ["vector"]` + `read_around` | Semantic-only baseline |
-| `D-idf` | `sources: ["vault"]` IDF + `read_around` | Today's keyword alone |
-| `D-bm25` | `sources: ["vault"]` BM25 + `read_around` | Strongest cheap keyword alone |
-| `D-grep` | harness `grep` + `read_range` | Ceiling for exact-term substring |
-| `D-whole-doc` | full doc in context (30% headroom only) | When to skip retrieval |
-| `D-structured` | `memory_recall` with `schema`+`filters` only | Ontology path (list questions) |
-| `D-sql` | `clawql_sql` / `data_query` only | DuckDB document-extraction path |
+| Arm id         | What the model gets                          | Why                                |
+| -------------- | -------------------------------------------- | ---------------------------------- |
+| `D-pageindex`  | `pageindex_*` only                           | Where heading trees win/lose alone |
+| `D-vector`     | `sources: ["vector"]` + `read_around`        | Semantic-only baseline             |
+| `D-idf`        | `sources: ["vault"]` IDF + `read_around`     | Today's keyword alone              |
+| `D-bm25`       | `sources: ["vault"]` BM25 + `read_around`    | Strongest cheap keyword alone      |
+| `D-grep`       | harness `grep` + `read_range`                | Ceiling for exact-term substring   |
+| `D-whole-doc`  | full doc in context (30% headroom only)      | When to skip retrieval             |
+| `D-structured` | `memory_recall` with `schema`+`filters` only | Ontology path (list questions)     |
+| `D-sql`        | `clawql_sql` / `data_query` only             | DuckDB document-extraction path    |
 
 ## Held constant
 
@@ -96,12 +96,12 @@ Fixed before freeze. Unit of analysis = question (mean of 3 trials). Paired boot
 
 ### Document / repo strata
 
-| Stratum | Size | Purpose |
-| --- | --- | --- |
-| **Well-structured docs** | 8 docs, 20K–150K tokens | PageIndex home turf |
-| **Converted PDFs** | 8 docs | Real IDP path (imperfect headings) |
-| **Weakly structured docs** | 8 docs | Flat/wrong headings |
-| **Code repos** | 8 small/medium repos | CodeGraph home turf — "what breaks if X changes," graded by tests / gold symbols |
+| Stratum                    | Size                    | Purpose                                                                          |
+| -------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| **Well-structured docs**   | 8 docs, 20K–150K tokens | PageIndex home turf                                                              |
+| **Converted PDFs**         | 8 docs                  | Real IDP path (imperfect headings)                                               |
+| **Weakly structured docs** | 8 docs                  | Flat/wrong headings                                                              |
+| **Code repos**             | 8 small/medium repos    | CodeGraph home turf — "what breaks if X changes," graded by tests / gold symbols |
 
 Harvey LAB and ExtractBench fixtures stay excluded from the freeze set.
 
@@ -123,11 +123,11 @@ Code cells may add `"symbols": ["…"]` and `"tests_passed": true|false`. Schema
 
 ## CodeGraph default scope
 
-| Result | Product action |
-| --- | --- |
+| Result                                                                                                                   | Product action                                                 |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
 | CG helps code stratum and does **not** harm document strict accuracy (interval on docs includes zero or is non-negative) | Default-on everywhere when `CLAWQL_ENABLE_CODEGRAPH` can index |
-| CG helps code but harms documents | Default-on **only** in workspaces with a repo / codegraph id |
-| CG helps neither | Stay opt-in |
+| CG helps code but harms documents                                                                                        | Default-on **only** in workspaces with a repo / codegraph id   |
+| CG helps neither                                                                                                         | Stay opt-in                                                    |
 
 Native vs Graphify vs both: exploratory on the code stratum; does not gate the default-on decision.
 
@@ -135,14 +135,14 @@ Native vs Graphify vs both: exploratory on the code stratum; does not gate the d
 
 Facts as of this write:
 
-| Layer | Role today |
-| --- | --- |
-| **Vault prose** | Canonical. CQE packs write typed rows into `ontology.db` (SQLite) at ingest ([#877](https://github.com/danielsmithdevelopment/ClawQL/pull/877)). |
-| **Structured `memory_recall`** | `schema`+`filters` → SQL over `ontology.db`, **skips** vault/vector/pageindex/codegraph text merge. |
-| **DuckDB (`clawql-data`)** | Separate `matters.duckdb`; MCP `data_query` / `clawql_sql`. SQL-only Harvey LAB gold **25/25** (no model). Model-driven contiguous 001–025 still gated. |
-| **Vector / PageIndex / Onyx** | No ontology type link; typed filters do not narrow semantic/tree search. |
-| **CodeGraph** | Own typed graph; same EXTRACTED/INFERRED/AMBIGUOUS tags; `codegraph_impact` → vault `code_change` notes. |
-| **`clawql-ontology`** | CQE packs. Pattern→new-field promotion engine still parked. |
+| Layer                          | Role today                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vault prose**                | Canonical. CQE packs write typed rows into `ontology.db` (SQLite) at ingest ([#877](https://github.com/danielsmithdevelopment/ClawQL/pull/877)).        |
+| **Structured `memory_recall`** | `schema`+`filters` → SQL over `ontology.db`, **skips** vault/vector/pageindex/codegraph text merge.                                                     |
+| **DuckDB (`clawql-data`)**     | Separate `matters.duckdb`; MCP `data_query` / `clawql_sql`. SQL-only Harvey LAB gold **25/25** (no model). Model-driven contiguous 001–025 still gated. |
+| **Vector / PageIndex / Onyx**  | No ontology type link; typed filters do not narrow semantic/tree search.                                                                                |
+| **CodeGraph**                  | Own typed graph; same EXTRACTED/INFERRED/AMBIGUOUS tags; `codegraph_impact` → vault `code_change` notes.                                                |
+| **`clawql-ontology`**          | CQE packs. Pattern→new-field promotion engine still parked.                                                                                             |
 
 ### Gaps that block "best recall" claims
 
@@ -165,15 +165,15 @@ Those results complement this suite; they do not replace the default-route facto
 
 ## Metrics
 
-| Metric | Role |
-| --- | --- |
-| **Strict accuracy / task completion** | **Primary — only decision gate** |
-| Partial credit | Reported |
-| Citation PRF | Evidence vs lucky |
-| Abstention (not_found) | Hallucination / over-refuse |
-| Tokens, tool calls, latency p50/p95, $ | **Reported only** |
-| Setup cost per document | Reported only |
-| Code: tests_passed | Task completion on code cells |
+| Metric                                 | Role                             |
+| -------------------------------------- | -------------------------------- |
+| **Strict accuracy / task completion**  | **Primary — only decision gate** |
+| Partial credit                         | Reported                         |
+| Citation PRF                           | Evidence vs lucky                |
+| Abstention (not_found)                 | Hallucination / over-refuse      |
+| Tokens, tool calls, latency p50/p95, $ | **Reported only**                |
+| Setup cost per document                | Reported only                    |
+| Code: tests_passed                     | Task completion on code cells    |
 
 Reported overall, by stratum, and by question type.
 
@@ -191,13 +191,13 @@ Reported overall, by stratum, and by question type.
 
 ## Preconditions before scored run
 
-| Gap | Owner |
-| --- | --- |
-| Implement Okapi BM25 vault ranker (flag-selectable vs IDF) | `clawql-memory` |
-| `read_around` (or equivalent) for chunk→section | harness or MCP |
-| Native codegraph index fixtures for code stratum | `clawql-codegraph` |
-| Cross-document list keys + ontology rows | annotation |
-| Correct memory-stack post (see below) | GTM — can ship before freeze |
+| Gap                                                        | Owner                        |
+| ---------------------------------------------------------- | ---------------------------- |
+| Implement Okapi BM25 vault ranker (flag-selectable vs IDF) | `clawql-memory`              |
+| `read_around` (or equivalent) for chunk→section            | harness or MCP               |
+| Native codegraph index fixtures for code stratum           | `clawql-codegraph`           |
+| Cross-document list keys + ontology rows                   | annotation                   |
+| Correct memory-stack post (see below)                      | GTM — can ship before freeze |
 
 ## Run plan (high level)
 
@@ -212,33 +212,33 @@ Reported overall, by stratum, and by question type.
 
 Live: [The Complete Agent Memory Stack](https://pragmaticvectors.com/posts/agent-memory-stack/).
 
-| Claim in post | Shipping truth |
-| --- | --- |
-| "`memory_recall` … queries across active layers simultaneously" including PageIndex | Omit-`sources` → **vault + vector only**. PageIndex/CodeGraph/Onyx need hybrid env or explicit `sources`. |
-| "ClawQL runs both [PageIndex and vector] simultaneously and reranks" | Not the default; hybrid opt-in since [#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653)/[#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806). **Never measured** as beating either alone. |
-| PageIndex = "LLM classifies" into `page_index_path` / categories | Shipped PageIndex is a **deterministic heading tree** (`pageindex_build_tree` / traverse / synthesize) — vectorless, not LLM category routing. |
-| Vault FTS5 as the lexical path | Vault keyword is in-process **IDF + log-TF** (not SQLite FTS5 BM25). |
+| Claim in post                                                                       | Shipping truth                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "`memory_recall` … queries across active layers simultaneously" including PageIndex | Omit-`sources` → **vault + vector only**. PageIndex/CodeGraph/Onyx need hybrid env or explicit `sources`.                                                                                                             |
+| "ClawQL runs both [PageIndex and vector] simultaneously and reranks"                | Not the default; hybrid opt-in since [#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653)/[#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806). **Never measured** as beating either alone. |
+| PageIndex = "LLM classifies" into `page_index_path` / categories                    | Shipped PageIndex is a **deterministic heading tree** (`pageindex_build_tree` / traverse / synthesize) — vectorless, not LLM category routing.                                                                        |
+| Vault FTS5 as the lexical path                                                      | Vault keyword is in-process **IDF + log-TF** (not SQLite FTS5 BM25).                                                                                                                                                  |
 
 Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
 
 ## Predictions (fill before scored run)
 
-| Field | Value |
-| --- | --- |
-| PageIndex effect | _TBD_ |
-| BM25 effect | _TBD_ |
-| CodeGraph effect | _TBD_ |
+| Field                | Value |
+| -------------------- | ----- |
+| PageIndex effect     | _TBD_ |
+| BM25 effect          | _TBD_ |
+| CodeGraph effect     | _TBD_ |
 | Expected new default | _TBD_ |
-| Recorded by / date | _TBD_ |
+| Recorded by / date   | _TBD_ |
 
 ## Status
 
-| Item | State |
-| --- | --- |
-| Decision philosophy | Frozen in v0.2: task completion only; cost/latency reported |
-| Factorial + contrasts | Frozen in this text |
-| Harness scaffold | Update with v0.2 arms |
-| BM25 implementation | Not started |
-| Corpus / questions | Not started |
-| Memory-stack post fix | Correction draft in-repo; live site pending |
-| Scored run | Blocked on preconditions |
+| Item                  | State                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
+| Factorial + contrasts | Frozen in this text                                         |
+| Harness scaffold      | Update with v0.2 arms                                       |
+| BM25 implementation   | Not started                                                 |
+| Corpus / questions    | Not started                                                 |
+| Memory-stack post fix | Correction draft in-repo; live site pending                 |
+| Scored run            | Blocked on preconditions                                    |
