@@ -1,4 +1,4 @@
 # Touch/commit this file to trigger GHA agent-factorial from a PR
 # Model: google/gemini-2.5-flash-lite · limit: 24 · trials: 1
-triggered_at: 2026-09-29T02:50:30Z
-attempt: 4
+triggered_at: 2026-09-29T02:51:00Z
+attempt: 5-full-build-chain
