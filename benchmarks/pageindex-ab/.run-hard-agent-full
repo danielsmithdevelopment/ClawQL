@@ -1,6 +1,0 @@
-# Trigger GHA agent-factorial on hard-candidate:
-# full corpus (PAGEINDEX_AB_LIMIT=0), 3 trials, union + heading-gated extra arms,
-# plus offline displacement check.
-#
-# Approximate cost: ~161 questions × 10 arms × 3 trials ≈ 4.8k flash-lite calls.
-trigger: 2026-09-29T050119-credits-restored
