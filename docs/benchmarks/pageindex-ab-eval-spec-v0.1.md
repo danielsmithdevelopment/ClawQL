@@ -255,12 +255,12 @@ Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass sti
 
 ## Status
 
-| Item                  | State                                                       |
-| --------------------- | ----------------------------------------------------------- |
-| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
-| Factorial + contrasts | Frozen in this text                                         |
-| Harness scaffold      | v0.2 + union/gated extra arms + displacement check + GHA    |
-| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
+| Item                  | State                                                                |
+| --------------------- | -------------------------------------------------------------------- |
+| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported          |
+| Factorial + contrasts | Frozen in this text                                                  |
+| Harness scaffold      | v0.2 + union/gated extra arms + displacement check + GHA             |
+| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                                |
 | Corpus / questions    | Hard-candidate (RFCs+long synthetics) landed; human freeze not spent |
-| Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scored run            | Blocked on human freeze; scale before concluding            |
+| Memory-stack post fix | Correction draft in-repo; live site pending                          |
+| Scored run            | Blocked on human freeze; scale before concluding                     |
