@@ -10,7 +10,7 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013 / **+2 Q**), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md).
 
-**Freeze critical path (∥):** [Vectify fair test](design/vectify-fair-test.md) — Net≥5 + no-harm; `anthropic/claude-sonnet-4.6` (= Track B); shared finalize; 3-trial majority; IETF; GHA `.run-vectify-fair`. [Agent-loop](design/agent-loop-freeze.md) for catalog prove. k-sweep can lag. Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
+**Freeze critical path (∥):** [Vectify fair test](design/vectify-fair-test.md) **done** — tie Net=4 (need ≥5) → **no Vectify port** ([`design/vectify-fair-decision.json`](design/vectify-fair-decision.json)); qrewrite 0/12 misses + 12/15 no-harm (not a default-path win). [Agent-loop](design/agent-loop-freeze.md) still open for catalog prove. k-sweep can lag. Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 

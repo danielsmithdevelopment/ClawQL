@@ -1,0 +1,154 @@
+{
+  "run": {
+    "gha": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555",
+    "head": "f437ccdd204517f90cafa806c301668fa972275e",
+    "model": "anthropic/claude-sonnet-4.6",
+    "index_model": "openai/gpt-4o-mini",
+    "trials": 3,
+    "grade_mode": "answer_only_majority",
+    "pdf_source": "ietf"
+  },
+  "decision": {
+    "ok": true,
+    "decision": "tie",
+    "freeze_action": "Tie counts as purge (no port). Net must be >= 5 to beat.",
+    "misses": {
+      "n": 12,
+      "vectify_correct": 4,
+      "qrewrite_correct": 0,
+      "W": 4,
+      "L": 0,
+      "T": 8,
+      "net": 4,
+      "net_beat_threshold": 5,
+      "pairs": [
+        {
+          "id": "hc-rfc-08-q03",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-05-q02",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-06-q02",
+          "vectify": true,
+          "qrewrite": false,
+          "tag": "W"
+        },
+        {
+          "id": "hc-rfc-01-q02",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-01-q03",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-04-q02",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-03-q03",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-08-q02",
+          "vectify": true,
+          "qrewrite": false,
+          "tag": "W"
+        },
+        {
+          "id": "hc-rfc-03-q02",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-02-q02",
+          "vectify": true,
+          "qrewrite": false,
+          "tag": "W"
+        },
+        {
+          "id": "hc-rfc-07-q03",
+          "vectify": false,
+          "qrewrite": false,
+          "tag": "T"
+        },
+        {
+          "id": "hc-rfc-07-q02",
+          "vectify": true,
+          "qrewrite": false,
+          "tag": "W"
+        }
+      ]
+    },
+    "no_harm": {
+      "n": 15,
+      "vectify_correct": 15,
+      "qrewrite_correct": 12,
+      "max_regressions_allowed": 1,
+      "pass": true
+    },
+    "rules_ref": "benchmarks/pageindex-ab/design/vectify-fair-test.md"
+  },
+  "summary_vectify": {
+    "arm": "D-vectify-pi",
+    "n": 27,
+    "trials": 3,
+    "answer_only_accuracy": 0.7037037037037037,
+    "by_cohort": {
+      "misses": {
+        "n": 12,
+        "answer_only_accuracy": 0.3333333333333333
+      },
+      "no-harm": {
+        "n": 15,
+        "answer_only_accuracy": 1.0
+      }
+    },
+    "index_model": "openrouter/openai/gpt-4o-mini",
+    "chat_model": "openrouter/anthropic/claude-sonnet-4.6",
+    "finalize_model": "openrouter/anthropic/claude-sonnet-4.6",
+    "pdf_source": "ietf",
+    "grade_mode": "answer_only_majority",
+    "shared_frontier_model": "anthropic/claude-sonnet-4.6"
+  },
+  "summary_qrewrite": {
+    "arm": "H-idf-qrewrite",
+    "n": 27,
+    "trials": 3,
+    "answer_only_accuracy": 0.4444444444444444,
+    "by_cohort": {
+      "misses": {
+        "n": 12,
+        "answer_only_accuracy": 0.0
+      },
+      "no-harm": {
+        "n": 15,
+        "answer_only_accuracy": 0.8
+      }
+    },
+    "top_k": 3,
+    "model": "anthropic/claude-sonnet-4.6",
+    "finalize_model": "anthropic/claude-sonnet-4.6",
+    "heuristic_only": false,
+    "grade_mode": "answer_only_majority",
+    "scored_arm": true,
+    "shared_frontier_model": "anthropic/claude-sonnet-4.6",
+    "no_harm_included": true
+  }
+}

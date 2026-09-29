@@ -1,6 +1,6 @@
 # VectifyAI PageIndex fair test (freeze-critical)
 
-**Status:** pre-spend locks frozen — do not run live until this file matches the runners  
+**Status:** **ran** — Track A **tie** (Net=4 < 5) → **purge** (no Vectify port). Decision: [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
 **Freeze:** 2026-10-15
 
 ## Gap

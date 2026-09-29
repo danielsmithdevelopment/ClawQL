@@ -16,6 +16,8 @@ Of 15 RFC retrieval misses under `H-idf` (top-k=3), offline gold ranks show only
 
 If the LLM rewrite recovers most of the 12 deep misses without no-harm regressions, it is a candidate for **`memory_recall` default path**. Heuristic 1/12 is not evidence.
 
+**Live fair-test result (2026-09-29):** scored arm on both cohorts with `claude-sonnet-4.6` + shared finalize + 3-trial majority → **0/12** misses recovered, **12/15** no-harm. **Not** a default-path candidate from this run ([`vectify-fair-decision.json`](vectify-fair-decision.json)).
+
 ## Suggested spend order (updated for freeze)
 
 1. **Re-score** on 150 keys (free; filter saved cells) — done (`design/agent-rescore-150.json`).
