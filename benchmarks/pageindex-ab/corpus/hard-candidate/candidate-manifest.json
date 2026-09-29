@@ -266,9 +266,14 @@
       "gated_vs_today": 0.0
     },
     "next_spend_order": [
-      "query-rewrite",
-      "k-sweep-3-6-10+union-matched-k",
-      "strong-model-agent-loop"
-    ]
+      "track-A-vectify-fair-test+query-rewrite-on-12-deep-rfc",
+      "track-B-strong-model-agent-loop-vs-grep",
+      "track-C-k-sweep-3-6-10+union-matched-k-can-lag"
+    ],
+    "freeze_critical_path": {
+      "A": "benchmarks/pageindex-ab/design/vectify-fair-test.md",
+      "B": "benchmarks/pageindex-ab/design/agent-loop-freeze.md",
+      "C_lag": "k-sweep / union matched-k"
+    }
   }
 }

@@ -188,6 +188,54 @@
       "setup": ["pageindex_build_tree"]
     },
     {
+      "id": "D-vectify-pi",
+      "label": "Upstream VectifyAI PageIndex (LLM summaries + strong tree nav)",
+      "external": true,
+      "runner": "benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py",
+      "cohort": "benchmarks/pageindex-ab/design/deep-rfc-misses.json",
+      "compare_to": ["H-idf-qrewrite"],
+      "notes": "Fair test — not ClawQL RRF. MIT SDK local mode. See design/vectify-fair-test.md."
+    },
+    {
+      "id": "H-idf-qrewrite",
+      "label": "IDF + cheap query rewrite union",
+      "ranker": "idf",
+      "runner": "benchmarks/pageindex-ab/scripts/run_query_rewrite_cohort.py",
+      "cohort": "benchmarks/pageindex-ab/design/deep-rfc-misses.json",
+      "notes": "Side-by-side control for D-vectify-pi on the 12 deep RFC misses."
+    },
+    {
+      "id": "A-grep",
+      "label": "Strong-model agent loop — grep control",
+      "allowed_tools": ["grep", "read_around"],
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs",
+      "notes": "Freeze Track B control. See design/agent-loop-freeze.md."
+    },
+    {
+      "id": "A-pageindex",
+      "label": "Strong-model agent loop — ClawQL pageindex_*",
+      "allowed_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "read_around"
+      ],
+      "setup": ["pageindex_build_tree"],
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
+      "id": "A-codegraph",
+      "label": "Strong-model agent loop — codegraph vs grep-insoluble jobs",
+      "allowed_tools": [
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "grep"
+      ],
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
       "id": "D-vector",
       "label": "Vector alone",
       "memory_recall_sources": ["vector"],

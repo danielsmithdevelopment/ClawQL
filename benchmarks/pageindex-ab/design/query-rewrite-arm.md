@@ -16,15 +16,15 @@ Of 15 RFC retrieval misses under `H-idf` (top-k=3), offline gold ranks show only
 
 If this recovers most of the 12 deep misses, the rewrite step is a candidate for **`memory_recall` default path** (helps every client, including those without a strong agent loop). If not, proceed to strong-model agent loop + grep.
 
-## Suggested spend order
+## Suggested spend order (updated for freeze)
 
 1. **Re-score** on 150 keys (free; filter saved cells) — done (`design/agent-rescore-150.json`).
-2. **Query-rewrite arm** (pennies).
-3. **k-sweep** `{3,6,10}` on today's default + **union matched-k control** (~$0.50).
-4. **Strong-model agent loop** with separate tools including grep (prove-or-purge for `pageindex_*` / `codegraph_*`).
+2. **Track A (parallel, now):** this arm on the [12 deep RFC misses](deep-rfc-misses.json) **side-by-side** with [Vectify fair test](vectify-fair-test.md) (`run_query_rewrite_cohort.py` + `run_vectify_fair_test.py`).
+3. **Track B (parallel, schedule now):** strong-model [agent loop](agent-loop-freeze.md) — ClawQL `pageindex_*` + `codegraph_*` vs grep (prove-or-purge).
+4. **Track C (can lag):** k-sweep `{3,6,10}` + union matched-k (~$0.50) — union confound only; not freeze-gating for catalog purge.
 
 ## Not this arm
 
-- Not PageIndex.
-- Not multi-turn tool use.
+- Not PageIndex (see Vectify fair test for that).
+- Not multi-turn tool use (see agent-loop freeze).
 - Not changing the default until graded evidence passes the [purge inventory evidence rules](../../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md#evidence-rules).

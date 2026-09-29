@@ -8,7 +8,9 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Current lean:** keep `H-idf`. RRF PageIndex **hurts**. Neither PI nor BM25 joins the default. `pageindex_*` catalog default **off** in 8.0.0 (`CLAWQL_ENABLE_PAGEINDEX=1` to opt in).
 
-**Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md). Next spend order: [query-rewrite-arm.md](design/query-rewrite-arm.md). Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
+**Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013 / **+2 Q**), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md).
+
+**Freeze critical path (∥, start now):** [Vectify fair test](design/vectify-fair-test.md) on [12 deep RFC misses](design/deep-rfc-misses.json) vs [query-rewrite](design/query-rewrite-arm.md); [agent-loop freeze](design/agent-loop-freeze.md) for `pageindex_*`/`codegraph_*` vs grep. k-sweep can lag. Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 

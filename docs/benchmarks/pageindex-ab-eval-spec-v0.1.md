@@ -259,7 +259,15 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 - Six code misses are grep-solvable; CG must prove unique jobs.
 - **8.0.0:** `CLAWQL_ENABLE_PAGEINDEX` default **off**; prove-or-purge by **2026-10-15**.
 
-**Next eval spend order:** (1) query-rewrite arm (pennies) → (2) k-sweep `{3,6,10}` + union matched-k (~$0.50) → (3) strong-model agent loop + grep. See [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md).
+**Freeze critical path (parallel; k-sweep can lag):**
+
+| Track | Work | Spec |
+| ----- | ---- | ---- |
+| **A** | VectifyAI fair test (LLM summaries + strong tree nav) vs query-rewrite on 12 deep RFC misses | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
+| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep — **schedule now** | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
+| **C** | k-sweep `{3,6,10}` + union matched-k (~$0.50) — not freeze-gating for catalog purge | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
+
+Union rescore edge shrank to **+2 Q** (0.840→0.853) — more likely k-explained.
 
 Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass still required before spent `pageindex-ab-v1`.
 
