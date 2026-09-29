@@ -82,7 +82,13 @@ GHA PR triggers:
 | `.run-hard-agent-lite`                      | hard-candidate  | 24    | 1      | on         |
 | `.run-hard-agent-full`                      | hard-candidate  | full  | 3      | on         |
 
-(Until `pageindex-ab.yml` is on the default branch, touch a sentinel on the PR path.)
+See `RUN_HARD_AGENT_FULL.md` to re-trigger after OpenRouter credits are topped up.
+Agent-lite **checkpoints** each cell to `results/agent-factorial/agent-answers.jsonl` and
+resumes on re-run (GHA also tries to reload the prior artifact). Exit code **5** = 402 credits.
+
+**Note:** OpenRouter `limit_remaining` on the key is not prepaid account credits. Run
+[36519248781](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36519248781)
+failed with 402 after ~4700/4830 cells despite `limit_remaining≈$50`.
 
 ## Preconditions
 

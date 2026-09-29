@@ -114,9 +114,17 @@ jobs:
           d=json.load(open("/tmp/or-key.json"))
           data=d.get("data") or d
           rem=data.get("limit_remaining")
+          usage=data.get("usage")
+          limit=data.get("limit")
+          print(f"limit={limit}")
+          print(f"usage={usage}")
           print(f"limit_remaining={rem}")
+          print(
+              "note=limit_remaining is the key spend cap, not prepaid account credits; "
+              "402 insufficient credits can still occur when credits are empty"
+          )
           if rem is not None and float(rem) <= 0:
-            raise SystemExit("OpenRouter key spend limit exhausted")
+              raise SystemExit("OpenRouter key spend limit exhausted")
           PY
       - name: Install
         run: npm ci --ignore-scripts
@@ -129,32 +137,34 @@ jobs:
       - name: Select corpus and scale
         id: corpus
         run: |
-          if [ -f benchmarks/pageindex-ab/.run-hard-agent-full ]; then
-            echo "name=hard-candidate" >> "$GITHUB_OUTPUT"
-            echo "builder=build_hard_candidate.py" >> "$GITHUB_OUTPUT"
-            echo "limit=0" >> "$GITHUB_OUTPUT"
-            echo "trials=3" >> "$GITHUB_OUTPUT"
-            echo "extra_arms=1" >> "$GITHUB_OUTPUT"
-            echo "run_displacement=1" >> "$GITHUB_OUTPUT"
-          elif [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
-            echo "name=hard-candidate" >> "$GITHUB_OUTPUT"
-            echo "builder=build_hard_candidate.py" >> "$GITHUB_OUTPUT"
-            echo "limit=24" >> "$GITHUB_OUTPUT"
-            echo "trials=1" >> "$GITHUB_OUTPUT"
-            echo "extra_arms=1" >> "$GITHUB_OUTPUT"
-            echo "run_displacement=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=freeze-candidate" >> "$GITHUB_OUTPUT"
-            echo "builder=build_freeze_candidate.py" >> "$GITHUB_OUTPUT"
-            echo "limit=24" >> "$GITHUB_OUTPUT"
-            echo "trials=1" >> "$GITHUB_OUTPUT"
-            echo "extra_arms=0" >> "$GITHUB_OUTPUT"
-            echo "run_displacement=0" >> "$GITHUB_OUTPUT"
-          fi
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "limit=${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
-            echo "trials=${{ inputs.trials }}" >> "$GITHUB_OUTPUT"
-          fi
+          {
+            if [ -f benchmarks/pageindex-ab/.run-hard-agent-full ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
+              echo "limit=0"
+              echo "trials=3"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+            elif [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
+              echo "limit=24"
+              echo "trials=1"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+            else
+              echo "name=freeze-candidate"
+              echo "builder=build_freeze_candidate.py"
+              echo "limit=24"
+              echo "trials=1"
+              echo "extra_arms=0"
+              echo "run_displacement=0"
+            fi
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "limit=${{ inputs.limit }}"
+              echo "trials=${{ inputs.trials }}"
+            fi
+          } >> "$GITHUB_OUTPUT"
       - name: Build candidate corpus
         run: python3 "benchmarks/pageindex-ab/scripts/${{ steps.corpus.outputs.builder }}"
       - name: Offline factorial (candidate)
@@ -162,6 +172,30 @@ jobs:
       - name: Displacement check (hard-candidate)
         if: ${{ steps.corpus.outputs.run_displacement == '1' }}
         run: node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
+      - name: Resume prior agent-answers checkpoint
+        if: ${{ steps.corpus.outputs.name == 'hard-candidate' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p benchmarks/pageindex-ab/results/agent-factorial
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          id="$(gh run list --workflow "PageIndex A/B (memory stack default-route)" \
+            --branch "$branch" --limit 15 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion == "failure" or .conclusion == "success")][0].databaseId // empty' || true)"
+          echo "prior_run_id=${id:-none}"
+          if [ -n "$id" ]; then
+            rm -rf /tmp/piab-resume
+            if gh run download "$id" -n pageindex-ab-agent-factorial -D /tmp/piab-resume; then
+              src="$(find /tmp/piab-resume -name agent-answers.jsonl -print -quit || true)"
+              if [ -n "$src" ]; then
+                cp "$src" benchmarks/pageindex-ab/results/agent-factorial/agent-answers.jsonl
+                echo "resumed_lines=$(wc -l < benchmarks/pageindex-ab/results/agent-factorial/agent-answers.jsonl)"
+              else
+                echo "no agent-answers.jsonl in prior artifact (pre-checkpoint failure)"
+              fi
+            fi
+          fi
       - name: Agent-lite factorial
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
