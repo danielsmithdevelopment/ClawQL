@@ -198,15 +198,15 @@
   "predictions": {
     "pageindex_effect_offline": -0.0062,
     "pageindex_effect_agent_lite": -0.125,
-    "pageindex_agent_lite_note": "underpowered: 3/24 questions, 1 trial, p\approx0.25 — noise not clear negative",
+    "pageindex_agent_lite_note": "underpowered: 3/24 questions, 1 trial, p\u22480.25 \u2014 noise not clear negative",
     "bm25_effect_offline": 0.0062,
     "bm25_effect_agent_lite": 0.0,
     "codegraph_effect": 0.0,
-    "codegraph_note": "untested — code stratum ceilinged; file-ranker proxy not native CG",
-    "expected_new_default": "keep H-idf (today); no addition proven helpful yet",
+    "codegraph_note": "untested \u2014 code stratum ceilinged; file-ranker proxy not native CG",
+    "expected_new_default": "keep H-idf (today); RRF PI harms via displacement; union helps but diagnostic-only",
     "recorded_by": "cloud-agent",
-    "recorded_at": "2026-09-29T03:26:00Z",
-    "status": "draft_hard_candidate_awaiting_displacement_and_full_scale",
+    "recorded_at": "2026-09-29T04:48:00Z",
+    "status": "draft_hard_candidate_full_agent_lite",
     "agent_lite": {
       "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36516156879",
       "model": "google/gemini-2.5-flash-lite",
@@ -217,6 +217,24 @@
       "completion_tokens": 7106,
       "cost_estimate_usd": 0.0147
     },
-    "notes": "Keep H-idf. Agent-lite PI \u22120.125 is underpowered. Offline converted_pdf 0.875\u21920.594 is the real signal (likely RRF displacement). Next: displacement check, then full hard \u00d73 with union + heading-gated PI."
+    "notes": "Keep H-idf. Full agent confirms converted_pdf RRF displacement (13/13). Union +0.019 diagnostic only.",
+    "pageindex_effect_agent_full": -0.0776,
+    "union_vs_today_agent_full": 0.0186,
+    "gated_vs_today_agent_full": 0.0062,
+    "bm25_effect_agent_full": 0.0031,
+    "agent_full": {
+      "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396",
+      "model": "google/gemini-2.5-flash-lite",
+      "n_questions": 161,
+      "trials": 3,
+      "n_arms": 10,
+      "H_idf": 0.8261,
+      "H_idf_pi": 0.7516,
+      "H_idf_pi_union": 0.8447,
+      "H_idf_pi_gated": 0.8323,
+      "prompt_tokens": 4137624,
+      "completion_tokens": 193524,
+      "cost_estimate_usd": 0.491
+    }
   }
 }
