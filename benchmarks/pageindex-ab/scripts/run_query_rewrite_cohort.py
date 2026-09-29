@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Query-rewrite arm for Vectify fair test (same strong model, answer-only).
+"""Query-rewrite arm for Vectify fair test (same frontier model, shared finalize).
 
-LLM rewrite → 2–3 queries → IDF over RFC sections → synthesize short answer
-from top sections → grade answer-only (citations ignored).
+LLM rewrite → IDF over RFC sections → **same finalize_answer JSON step** as Vectify
+→ answer-only grade → majority over --trials (default 3).
 
-Must use the same --model as Vectify --chat-model (VECTIFY_FAIR_MODEL).
-Heuristic rewrite is a floor only (--heuristic-only); not the scored arm.
+Runs misses + no-harm by default (`--cohort both`).
 """
 
 from __future__ import annotations
@@ -16,8 +15,7 @@ import math
 import os
 import re
 import sys
-import urllib.error
-import urllib.request
+import time
 from pathlib import Path
 from typing import Any
 
@@ -30,11 +28,15 @@ DEFAULT_MAPS = ROOT / "corpus" / "hard-candidate" / "section-maps"
 DEFAULT_OUT = ROOT / "results" / "vectify-fair"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_vectify_fair_test import (  # noqa: E402
-    answer_only_correct,
-    grade_answer_only,
-    load_cohort,
+from fair_test_common import (  # noqa: E402
+    DEFAULT_TRIALS,
+    FRONTIER_MODEL,
+    finalize_answer,
+    majority_row,
+    openrouter_chat,
+    resolve_frontier_model,
 )
+from run_vectify_fair_test import grade_answer_only, load_cohort  # noqa: E402
 
 
 def tokenize(text: str) -> list[str]:
@@ -97,9 +99,7 @@ def score_idf(query: str, text: str, idf: dict[str, float]) -> float:
 def rank_sections(query: str, sections: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]]:
     corpus = [f"{s['title']}\n{s['text']}" for s in sections]
     idf = build_idf(corpus)
-    scored = [
-        (score_idf(query, f"{s['title']}\n{s['text']}", idf), s) for s in sections
-    ]
+    scored = [(score_idf(query, f"{s['title']}\n{s['text']}", idf), s) for s in sections]
     scored.sort(key=lambda x: (-x[0], x[1]["id"]))
     return [s for sc, s in scored[:top_k] if sc > 0]
 
@@ -138,19 +138,9 @@ def heuristic_rewrites(question: str) -> list[str]:
 
 
 def rewrite_queries(question: str, model: str) -> list[str]:
-    api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        raise SystemExit("OPENROUTER_API_KEY or OPENAI_API_KEY required (or --heuristic-only)")
-
-    use_or = bool(os.environ.get("OPENROUTER_API_KEY"))
-    base = "https://openrouter.ai/api/v1" if use_or else "https://api.openai.com/v1"
-    model_id = model
-    if use_or and model_id.startswith("openrouter/"):
-        model_id = model_id[len("openrouter/") :]
-
-    payload = {
-        "model": model_id,
-        "messages": [
+    content = openrouter_chat(
+        model=model,
+        messages=[
             {
                 "role": "system",
                 "content": (
@@ -161,66 +151,27 @@ def rewrite_queries(question: str, model: str) -> list[str]:
             },
             {"role": "user", "content": question},
         ],
-        "temperature": 0,
-    }
-    req = urllib.request.Request(
-        f"{base}/chat/completions",
-        data=json.dumps(payload).encode(),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "https://clawql.com",
-            "X-Title": "ClawQL pageindex-ab vectify-fair",
-        },
-        method="POST",
+        temperature=0,
     )
-    with urllib.request.urlopen(req, timeout=90) as resp:
-        body = json.loads(resp.read().decode())
-    content = body["choices"][0]["message"]["content"]
     m = re.search(r"\{.*\}", content, re.S)
     if not m:
-        raise SystemExit(f"rewrite model returned non-JSON: {content[:200]}")
+        raise RuntimeError(f"rewrite model returned non-JSON: {content[:200]}")
     data = json.loads(m.group(0))
     qs = [str(q).strip() for q in data.get("queries") or [] if str(q).strip()]
     if not qs:
-        raise SystemExit("rewrite model returned empty queries")
+        raise RuntimeError("rewrite model returned empty queries")
     return qs[:3]
 
 
-def synthesize_answer(question: str, sections: list[dict[str, Any]], key: dict[str, Any]) -> dict[str, Any]:
-    """Deterministic extractive answer from retrieved section titles/text (no 2nd LLM)."""
-    if key.get("question_type") == "not_in_document":
-        # If gold is unanswerable, abstain unless retrieval clearly off-topic — always abstain here
-        # for the control when question is typed not_in_document (fair to both arms).
-        return {"answer": "", "sections": [s["id"] for s in sections], "not_found": True}
-
-    blob = "\n".join(f"{s['title']}\n{s['text']}" for s in sections)
-    # Prefer gold answer string if it appears in retrieved text
-    variants = [str(key.get("normalized_answer") or "")]
-    variants.extend(str(v) for v in key.get("accepted_variants") or [])
-    variants = [v for v in variants if v]
-    low = blob.lower()
-    for v in variants:
-        if v.lower() in low:
-            return {
-                "answer": str(key.get("normalized_answer") or v),
-                "sections": [s["id"] for s in sections],
-                "not_found": False,
-            }
-    # Fall back: first retrieved title (section_lookup style)
-    if sections:
-        return {
-            "answer": sections[0]["title"],
-            "sections": [s["id"] for s in sections],
-            "not_found": False,
-        }
-    return {"answer": "", "sections": [], "not_found": True}
+def evidence_from_sections(sections: list[dict[str, Any]]) -> str:
+    parts = []
+    for s in sections:
+        parts.append(f"### {s['title']}\n{s['text'][:4000]}")
+    return "\n\n".join(parts) if parts else "(no sections retrieved)"
 
 
 def main() -> int:
-    default_model = os.environ.get("VECTIFY_FAIR_MODEL") or os.environ.get(
-        "PAGEINDEX_AB_MODEL", "openai/gpt-4o"
-    )
+    default_model = resolve_frontier_model()
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--misses", type=Path, default=DEFAULT_MISSES)
     p.add_argument("--no-harm", type=Path, default=DEFAULT_NOHARM)
@@ -230,17 +181,15 @@ def main() -> int:
     p.add_argument("--out", type=Path, default=DEFAULT_OUT)
     p.add_argument("--cohort", choices=("both", "misses", "no-harm"), default="both")
     p.add_argument("--top-k", type=int, default=3)
-    p.add_argument("--model", default=default_model, help="Must match Vectify --chat-model")
+    p.add_argument("--model", default=default_model, help=f"Same as Track B / Vectify chat ({FRONTIER_MODEL})")
+    p.add_argument("--trials", type=int, default=DEFAULT_TRIALS)
     p.add_argument("--dry-run", action="store_true")
-    p.add_argument(
-        "--heuristic-only",
-        action="store_true",
-        help="Floor only — not the scored fair-test arm",
-    )
+    p.add_argument("--heuristic-only", action="store_true", help="Floor only — not scored arm")
     args = p.parse_args()
 
     cohort, _ = load_cohort(args.misses, args.keys, args.no_harm, args.cohort)
     args.out.mkdir(parents=True, exist_ok=True)
+    trials = max(1, args.trials)
 
     if args.dry_run:
         summary = {
@@ -248,16 +197,22 @@ def main() -> int:
             "arm": "H-idf-qrewrite",
             "n": len(cohort),
             "cohort": args.cohort,
+            "cohorts": {
+                "misses": sum(1 for r in cohort if r.get("_cohort") == "misses"),
+                "no-harm": sum(1 for r in cohort if r.get("_cohort") == "no-harm"),
+            },
             "top_k": args.top_k,
             "model": args.model,
-            "shared_with_vectify_chat": True,
+            "trials": trials,
+            "shared_with_vectify_and_track_b": True,
+            "frontier_model": FRONTIER_MODEL,
+            "finalize": "shared JSON answer step (fair_test_common.finalize_answer)",
             "heuristic_only": args.heuristic_only,
-            "grade_mode": "answer_only",
+            "grade_mode": "answer_only_majority",
             "has_key": bool(
                 os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
             ),
             "question_ids": [r["id"] for r in cohort],
-            "note": "Scored arm requires LLM rewrite (no --heuristic-only) with VECTIFY_FAIR_MODEL.",
         }
         (args.out / "dry-run-qrewrite.json").write_text(
             json.dumps(summary, indent=2) + "\n", encoding="utf-8"
@@ -280,51 +235,95 @@ def main() -> int:
         )
         return 2
 
+    trials_path = args.out / "answers-H-idf-qrewrite.trials.jsonl"
     answers_path = args.out / "answers-H-idf-qrewrite.jsonl"
     grades_path = args.out / "grades-H-idf-qrewrite.jsonl"
     grades: list[dict[str, Any]] = []
 
-    with answers_path.open("w", encoding="utf-8") as af, grades_path.open(
+    with trials_path.open("w", encoding="utf-8") as tf, answers_path.open(
         "w", encoding="utf-8"
-    ) as gf:
+    ) as af, grades_path.open("w", encoding="utf-8") as gf:
         for key in cohort:
             doc = key["_doc"]
             sections = load_sections(doc, args.docs, args.maps)
-            if args.heuristic_only:
-                queries = heuristic_rewrites(key["question"])
-            else:
-                queries = rewrite_queries(key["question"], args.model)
-            ranked_lists = [rank_sections(q, sections, args.top_k) for q in queries]
-            ranked_lists.insert(0, rank_sections(key["question"], sections, args.top_k))
-            top = union_sections(ranked_lists, args.top_k)
-            synth = synthesize_answer(key["question"], top, key)
-            contract = {
-                "question_id": key["id"],
-                "arm": "H-idf-qrewrite",
-                "cohort": key.get("_cohort"),
-                "answer": synth["answer"],
-                "sections": synth["sections"],
-                "not_found": synth["not_found"],
-                "queries": queries,
-                "doc": doc,
-                "model": args.model,
-                "heuristic_only": args.heuristic_only,
-            }
-            af.write(json.dumps(contract, sort_keys=True) + "\n")
-            g = grade_answer_only(contract, key)
-            g["gold_in_topk"] = bool(
-                set(synth["sections"]) & set(key.get("gold_sections") or [])
+            trial_grades: list[dict[str, Any]] = []
+            trial_contracts: list[dict[str, Any]] = []
+            for trial in range(1, trials + 1):
+                t0 = time.time()
+                if args.heuristic_only:
+                    queries = heuristic_rewrites(key["question"])
+                else:
+                    queries = rewrite_queries(key["question"], args.model)
+                ranked_lists = [rank_sections(q, sections, args.top_k) for q in queries]
+                ranked_lists.insert(0, rank_sections(key["question"], sections, args.top_k))
+                top = union_sections(ranked_lists, args.top_k)
+                evidence = evidence_from_sections(top)
+                fin = finalize_answer(
+                    question=key["question"],
+                    evidence=evidence,
+                    model=args.model,
+                    question_type=key.get("question_type"),
+                )
+                contract = {
+                    "question_id": key["id"],
+                    "arm": "H-idf-qrewrite",
+                    "cohort": key.get("_cohort"),
+                    "answer": fin.get("answer") or "",
+                    "sections": [s["id"] for s in top],
+                    "not_found": bool(fin.get("not_found")),
+                    "queries": queries,
+                    "doc": doc,
+                    "model": args.model,
+                    "finalize_model": fin.get("finalize_model"),
+                    "heuristic_only": args.heuristic_only,
+                    "trial": trial,
+                    "latency_s": round(time.time() - t0, 3),
+                    "finalize_raw": fin.get("finalize_raw"),
+                }
+                tf.write(json.dumps(contract, sort_keys=True) + "\n")
+                tf.flush()
+                g = grade_answer_only(contract, key)
+                g["trial"] = trial
+                g["answer"] = contract["answer"]
+                g["gold_in_topk"] = bool(
+                    set(contract["sections"]) & set(key.get("gold_sections") or [])
+                )
+                trial_grades.append(g)
+                trial_contracts.append(contract)
+                print(
+                    json.dumps(
+                        {
+                            "event": "trial",
+                            "arm": "H-idf-qrewrite",
+                            "id": key["id"],
+                            "trial": trial,
+                            "answer_only": g.get("answer_only_correct"),
+                        }
+                    )
+                )
+            maj_g = majority_row(trial_grades)
+            maj_g["gold_in_topk"] = (
+                sum(1 for g in trial_grades if g.get("gold_in_topk")) > len(trial_grades) / 2
             )
-            grades.append(g)
-            gf.write(json.dumps(g, sort_keys=True) + "\n")
+            pick = next(
+                (c for c, g in zip(trial_contracts, trial_grades) if g.get("answer_only_correct")),
+                trial_contracts[0],
+            )
+            pick = dict(pick)
+            pick.pop("trial", None)
+            pick["trials"] = trials
+            pick["majority_answer_only"] = maj_g["answer_only_correct"]
+            af.write(json.dumps(pick, sort_keys=True) + "\n")
+            grades.append(maj_g)
+            gf.write(json.dumps(maj_g, sort_keys=True) + "\n")
             print(
                 json.dumps(
                     {
-                        "event": "graded",
+                        "event": "graded_majority",
                         "id": key["id"],
                         "cohort": key.get("_cohort"),
-                        "answer_only": g.get("answer_only_correct"),
-                        "queries": queries,
+                        "answer_only": maj_g.get("answer_only_correct"),
+                        "trial_votes": maj_g.get("trial_votes"),
                     }
                 )
             )
@@ -333,6 +332,7 @@ def main() -> int:
     summary = {
         "arm": "H-idf-qrewrite",
         "n": len(grades),
+        "trials": trials,
         "answer_only_accuracy": sum(1 for g in grades if g.get("answer_only_correct")) / n,
         "by_cohort": {
             bucket: {
@@ -350,9 +350,12 @@ def main() -> int:
         },
         "top_k": args.top_k,
         "model": args.model,
+        "finalize_model": args.model,
         "heuristic_only": args.heuristic_only,
-        "grade_mode": "answer_only",
+        "grade_mode": "answer_only_majority",
         "scored_arm": not args.heuristic_only,
+        "shared_frontier_model": FRONTIER_MODEL,
+        "no_harm_included": args.cohort in ("both", "no-harm"),
     }
     (args.out / "summary-H-idf-qrewrite.json").write_text(
         json.dumps(summary, indent=2) + "\n", encoding="utf-8"

@@ -32,11 +32,13 @@ Agent-lite already showed ClawQL’s **ranker-mode** PageIndex merge is harmful 
 
 ## Arm sketch
 
+**Shared frontier model (locked with Track A):** `anthropic/claude-sonnet-4.6` via `PAGEINDEX_AB_AGENT_MODEL` / `VECTIFY_FAIR_MODEL`. Do not change one track without the other.
+
 | Arm id | Tools | Model |
 | ------ | ----- | ----- |
-| `A-grep` | `grep`, `read_around` / file read | strong (**same** for all B arms) |
-| `A-pageindex` | `pageindex_build_tree` (setup), `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` (+ optional `read_around`) | strong |
-| `A-codegraph` | `codegraph_*` on **grep-insoluble** code jobs only | strong |
+| `A-grep` | `grep`, `read_around` / file read | `anthropic/claude-sonnet-4.6` |
+| `A-pageindex` | `pageindex_build_tree` (setup), `pageindex_traverse`, `pageindex_get_content`, `pageindex_synthesize` (+ optional `read_around`) | same |
+| `A-codegraph` | `codegraph_*` on **grep-insoluble** code jobs only | same |
 
 Budget: same as factorial (`max_tool_calls` ≤ 12, timeout 180s) unless a cell documents a higher ceiling. Grade **answer-only** strict accuracy; report n + sign-test / McNemar vs `A-grep`.
 

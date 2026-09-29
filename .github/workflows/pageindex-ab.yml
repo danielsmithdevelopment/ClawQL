@@ -42,13 +42,17 @@ on:
         type: string
         default: google/gemini-2.5-flash-lite
       fair_model:
-        description: Shared strong model for Vectify chat + query-rewrite
+        description: Shared frontier model for Vectify chat + query-rewrite + Track B
         type: string
-        default: openai/gpt-4o
+        default: anthropic/claude-sonnet-4.6
       index_model:
         description: Vectify index/summary model (may be cheaper)
         type: string
         default: openai/gpt-4o-mini
+      fair_trials:
+        description: Trials per question (majority vote)
+        type: number
+        default: 3
   pull_request:
     # Only sentinel touches start agent spend. Workflow-file edits alone must not
     # burn OpenRouter credits (or fail CI when the account is empty).
@@ -269,7 +273,8 @@ jobs:
   vectify-fair:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'vectify-fair') || (github.event_name == 'pull_request' && hashFiles('benchmarks/pageindex-ab/.run-vectify-fair') != '') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    # Frontier × 27 Q × 2 arms × 3 trials + indexing
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - name: Require OpenRouter
@@ -296,25 +301,42 @@ jobs:
         run: pip install -U "pageindex>=0.2.20"
       - name: Build hard-candidate corpus
         run: python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
-      - name: Vectify arm (official IETF PDFs)
+      - name: Resolve fair-test knobs
+        id: fair
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "model=${{ inputs.fair_model }}" >> "$GITHUB_OUTPUT"
+            echo "index_model=${{ inputs.index_model }}" >> "$GITHUB_OUTPUT"
+            echo "trials=${{ inputs.fair_trials }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
+            echo "index_model=openai/gpt-4o-mini" >> "$GITHUB_OUTPUT"
+            echo "trials=3" >> "$GITHUB_OUTPUT"
+          fi
+          echo "frontier_model=$(grep -E '^FRONTIER_MODEL' benchmarks/pageindex-ab/scripts/fair_test_common.py | head -1)" >> "$GITHUB_OUTPUT"
+      - name: Vectify arm (IETF docs + shared finalize + majority)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          VECTIFY_FAIR_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.fair_model || 'openai/gpt-4o' }}
-          VECTIFY_INDEX_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.index_model || 'openai/gpt-4o-mini' }}
+          VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.fair.outputs.model }}
+          VECTIFY_INDEX_MODEL: ${{ steps.fair.outputs.index_model }}
         run: |
           python3 benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py \
             --cohort both \
             --pdf-source ietf \
+            --trials "${{ steps.fair.outputs.trials }}" \
             --chat-model "$VECTIFY_FAIR_MODEL" \
             --index-model "$VECTIFY_INDEX_MODEL" \
             --out benchmarks/pageindex-ab/results/vectify-fair/
-      - name: Query-rewrite arm (same strong model)
+      - name: Query-rewrite arm (same frontier + finalize + no-harm)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          VECTIFY_FAIR_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.fair_model || 'openai/gpt-4o' }}
+          VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.fair.outputs.model }}
         run: |
           python3 benchmarks/pageindex-ab/scripts/run_query_rewrite_cohort.py \
             --cohort both \
+            --trials "${{ steps.fair.outputs.trials }}" \
             --model "$VECTIFY_FAIR_MODEL" \
             --out benchmarks/pageindex-ab/results/vectify-fair/
       - name: Decide beat / tie / purge

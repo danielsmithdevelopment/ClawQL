@@ -263,7 +263,7 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 | Track | Work | Spec |
 | ----- | ---- | ---- |
-| **A** | Vectify vs query-rewrite (same strong model; answer-only; Net≥5 + no-harm; IETF PDFs; GHA `.run-vectify-fair`) | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
+| **A** | Vectify vs query-rewrite (`anthropic/claude-sonnet-4.6` = Track B; shared finalize; 3-trial majority; Net≥5 + no-harm; IETF; GHA `.run-vectify-fair`) | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
 | **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
 | **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
 

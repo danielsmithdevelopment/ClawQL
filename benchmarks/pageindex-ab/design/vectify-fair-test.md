@@ -21,20 +21,23 @@ Judging `pageindex_*` only on our ranker-mode A/B would purge (or keep) the wron
 
 Both arms run on **both** cohorts every live spend.
 
-## Arms (same strong model)
+## Arms (same frontier model as Track B)
 
 | Arm id | Method | Model |
 | ------ | ------ | ----- |
-| `H-idf-qrewrite` | LLM rewrite → 2–3 queries → IDF union top-k → answer from retrieved sections | **Same strong model** as Vectify chat |
-| `D-vectify-pi` | Upstream `pageindex` SDK: LLM summaries + tree chat | **Same strong model** for chat; cheap model OK for index summaries |
+| `H-idf-qrewrite` | LLM rewrite → IDF union top-k → **shared finalize JSON** | `anthropic/claude-sonnet-4.6` |
+| `D-vectify-pi` | Upstream PageIndex tree chat → **same finalize JSON** | `anthropic/claude-sonnet-4.6` (chat); cheap OK for index |
 
-**Locked:** query-rewrite and Vectify tree navigation share one OpenRouter model id (e.g. `openai/gpt-4o`). The heuristic 1/12 rewrite is only a floor — **not** the scored arm. Index/summary model may be cheaper (`openai/gpt-4o-mini` / flash-lite).
+**Locked model:** `VECTIFY_FAIR_MODEL` = `PAGEINDEX_AB_AGENT_MODEL` = **`anthropic/claude-sonnet-4.6`** (repo frontier; same id Track B uses). Combine rules are invalid if the tracks use different models. Index/summary model may stay cheap (`openai/gpt-4o-mini`). Heuristic rewrite is a floor only.
 
-## Grading (answer-only)
+## Answering + grading
 
-- **Decision metric:** answer-only correctness (tier-1 text / variant match, or unanswerable `not_found`).
-- **Citations are not scored.** Vectify section tags will not map to our Docling section ids; citation F1 must not enter the contrast.
-- Report citation overlap only as a diagnostic when available.
+- **Shared finalize step:** both arms produce evidence (Vectify free-text chat, or rewrite retrieved sections), then call the same `finalize_answer` prompt → `{"answer","not_found"}` JSON. Formatting cannot swing the contrast.
+- **Decision metric:** answer-only correctness on that JSON (tier-1 text / variant / `not_found`).
+- **Trials:** **3** independent trials per question per arm; **majority vote** on answer-only correctness (unit of analysis = question).
+- **Citations are not scored.**
+
+No-harm is scored for **both** arms (free data on whether rewrite belongs in the default path).
 
 ## “Beat” definition (locked before first live run)
 
@@ -88,18 +91,18 @@ python3 benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py --dry-run --pdf
 # Live fair test (GHA preferred — uses repo OPENROUTER_API_KEY)
 # Sentinel: touch benchmarks/pageindex-ab/.run-vectify-fair
 export OPENROUTER_API_KEY=…   # local only if needed
-export VECTIFY_FAIR_MODEL=openai/gpt-4o          # shared strong model
-export VECTIFY_INDEX_MODEL=openai/gpt-4o-mini    # summaries only
+export VECTIFY_FAIR_MODEL=anthropic/claude-sonnet-4.6   # == Track B
+export PAGEINDEX_AB_AGENT_MODEL=$VECTIFY_FAIR_MODEL
+export VECTIFY_INDEX_MODEL=openai/gpt-4o-mini
 
 python3 benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py \
-  --pdf-source ietf \
+  --pdf-source ietf --cohort both --trials 3 \
   --chat-model "$VECTIFY_FAIR_MODEL" \
   --index-model "$VECTIFY_INDEX_MODEL" \
   --out benchmarks/pageindex-ab/results/vectify-fair/
 
 python3 benchmarks/pageindex-ab/scripts/run_query_rewrite_cohort.py \
-  --model "$VECTIFY_FAIR_MODEL" \
-  --cohort both \
+  --model "$VECTIFY_FAIR_MODEL" --cohort both --trials 3 \
   --out benchmarks/pageindex-ab/results/vectify-fair/
 
 python3 benchmarks/pageindex-ab/scripts/decide_vectify_fair_test.py \

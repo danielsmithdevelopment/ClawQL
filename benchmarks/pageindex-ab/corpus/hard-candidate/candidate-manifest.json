@@ -272,7 +272,7 @@
     ],
     "freeze_critical_path": {
       "A": "benchmarks/pageindex-ab/design/vectify-fair-test.md",
-      "A_beat": "Net>=5 on 12 misses AND no-harm>=14/15; tie→purge; same strong model; answer-only; IETF pdf/txt",
+      "A_beat": "Net>=5 on 12 misses AND no-harm>=14/15; tie→purge; anthropic/claude-sonnet-4.6==Track B; shared finalize; 3-trial majority; IETF pdf/txt",
       "A_gha_sentinel": "benchmarks/pageindex-ab/.run-vectify-fair",
       "B": "benchmarks/pageindex-ab/design/agent-loop-freeze.md",
       "combine": "Vectify win+ours lose→purge ours, port after 8.0; both lose→purge; ours win→keep opt-in",

@@ -24,7 +24,11 @@ function parseArgs(argv) {
     corpus: "hard-candidate",
     cohort: "deep-rfc",
     arms: ["A-grep", "A-pageindex"],
-    model: process.env.PAGEINDEX_AB_AGENT_MODEL || "anthropic/claude-sonnet-4",
+    // Must match Track A VECTIFY_FAIR_MODEL (fair_test_common.FRONTIER_MODEL).
+    model:
+      process.env.PAGEINDEX_AB_AGENT_MODEL ||
+      process.env.VECTIFY_FAIR_MODEL ||
+      "anthropic/claude-sonnet-4.6",
     out: path.join(ROOT, "results", "agent-loop-freeze"),
   };
   for (let i = 2; i < argv.length; i++) {

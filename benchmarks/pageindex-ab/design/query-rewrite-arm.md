@@ -11,8 +11,8 @@ Of 15 RFC retrieval misses under `H-idf` (top-k=3), offline gold ranks show only
 | id      | `H-idf-qrewrite`                                                                                                                                                                    |
 | Control | `H-idf` (same top-k after merge)                                                                                                                                                    |
 | Method  | One cheap model call rewrites the question into 2–3 alternate queries; retrieve each with today's IDF vault ranker; **union** section ids (dedupe, preserve best score); take top-k |
-| Model   | **Fair-test scored arm:** same strong model as Vectify chat (`VECTIFY_FAIR_MODEL`, e.g. `openai/gpt-4o`). Heuristic rewrite is a floor only. Full-corpus pennies pass may still use flash-lite later. |
-| Gate (fair test) | Answer-only vs `D-vectify-pi` on 12 misses + 15 no-harm; Vectify must Net≥5 **and** no-harm pass — see [vectify-fair-test.md](vectify-fair-test.md) |
+| Model   | **Fair-test scored arm:** `anthropic/claude-sonnet-4.6` (same as Vectify chat + Track B). Shared `finalize_answer` JSON; 3-trial majority. Heuristic rewrite is a floor only. |
+| Gate (fair test) | Answer-only vs `D-vectify-pi` on 12 misses + 15 no-harm; Vectify must Net≥5 **and** no-harm pass — see [vectify-fair-test.md](vectify-fair-test.md). No-harm rewrite scores also inform the default-path rewrite question. |
 
 If the LLM rewrite recovers most of the 12 deep misses without no-harm regressions, it is a candidate for **`memory_recall` default path**. Heuristic 1/12 is not evidence.
 

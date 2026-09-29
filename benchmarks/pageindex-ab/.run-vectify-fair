@@ -1,0 +1,5 @@
+# Sentinel: spend Track A Vectify fair test on PR push.
+# Model: anthropic/claude-sonnet-4.6 (shared with Track B)
+# Cohorts: 12 deep RFC misses + 15 no-harm; trials=3 majority; answer-only + shared finalize
+# Remove this file after the run lands (path-filter re-arms otherwise).
+vectify-fair

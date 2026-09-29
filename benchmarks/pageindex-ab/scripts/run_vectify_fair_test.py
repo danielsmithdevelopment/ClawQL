@@ -33,6 +33,14 @@ IETF_PDF = "https://www.rfc-editor.org/rfc/rfc{num}.pdf"
 IETF_TXT = "https://www.rfc-editor.org/rfc/rfc{num}.txt"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fair_test_common import (  # noqa: E402
+    DEFAULT_TRIALS,
+    FRONTIER_MODEL,
+    INDEX_MODEL_DEFAULT,
+    finalize_answer,
+    majority_row,
+    resolve_frontier_model,
+)
 from grade_tier1 import load_jsonl, normalize_text  # noqa: E402
 
 
@@ -356,6 +364,7 @@ def run_live(
     chat_model: str,
     storage_path: Path,
     pdf_source: str,
+    trials: int,
 ) -> dict[str, Any]:
     from pageindex import PageIndexClient
 
@@ -396,49 +405,90 @@ def run_live(
             )
         )
 
+    trials_path = out_dir / "answers-D-vectify-pi.trials.jsonl"
     answers_path = out_dir / "answers-D-vectify-pi.jsonl"
     grades_path = out_dir / "grades-D-vectify-pi.jsonl"
     grades: list[dict[str, Any]] = []
 
-    with answers_path.open("w", encoding="utf-8") as af, grades_path.open("w", encoding="utf-8") as gf:
+    with trials_path.open("w", encoding="utf-8") as tf, answers_path.open(
+        "w", encoding="utf-8"
+    ) as af, grades_path.open("w", encoding="utf-8") as gf:
         for key in cohort:
             doc = key["_doc"]
             doc_id = registry[doc]
-            t0 = time.time()
-            raw = client.chat(chat_prompt(key), doc_id=doc_id)
-            if not isinstance(raw, str):
-                raw = getattr(raw, "content", None) or getattr(raw, "answer", None) or str(raw)
-            # Normalize NOT_FOUND token
-            if str(raw).strip().upper() == "NOT_FOUND":
+            trial_grades: list[dict[str, Any]] = []
+            trial_contracts: list[dict[str, Any]] = []
+            for trial in range(1, trials + 1):
+                t0 = time.time()
+                # Retrieval evidence: Vectify tree chat (free text)
+                raw = client.chat(chat_prompt(key), doc_id=doc_id)
+                if not isinstance(raw, str):
+                    raw = getattr(raw, "content", None) or getattr(raw, "answer", None) or str(raw)
+                evidence = str(raw)
+                # Same finalize JSON step as query-rewrite
+                fin = finalize_answer(
+                    question=key["question"],
+                    evidence=evidence,
+                    model=chat_model,
+                    question_type=key.get("question_type"),
+                )
                 contract = {
-                    "answer": "",
+                    "answer": fin.get("answer") or "",
                     "sections": [],
-                    "not_found": True,
+                    "not_found": bool(fin.get("not_found")),
                     "question_id": key["id"],
-                    "raw_answer": "NOT_FOUND",
+                    "arm": "D-vectify-pi",
+                    "doc": doc,
+                    "doc_id": doc_id,
+                    "cohort": key.get("_cohort"),
+                    "trial": trial,
+                    "latency_s": round(time.time() - t0, 3),
+                    "chat_model": chat_model,
+                    "finalize_model": fin.get("finalize_model"),
+                    "evidence_raw": evidence[:4000],
+                    "finalize_raw": fin.get("finalize_raw"),
                 }
-            else:
-                contract = map_answer_to_contract(str(raw), key)
-            contract["arm"] = "D-vectify-pi"
-            contract["doc"] = doc
-            contract["doc_id"] = doc_id
-            contract["cohort"] = key.get("_cohort")
-            contract["latency_s"] = round(time.time() - t0, 3)
-            contract["chat_model"] = chat_model
-            af.write(json.dumps(contract, sort_keys=True) + "\n")
+                tf.write(json.dumps(contract, sort_keys=True) + "\n")
+                tf.flush()
+                g = grade_answer_only(contract, key)
+                g["trial"] = trial
+                g["answer"] = contract["answer"]
+                trial_grades.append(g)
+                trial_contracts.append(contract)
+                print(
+                    json.dumps(
+                        {
+                            "event": "trial",
+                            "arm": "D-vectify-pi",
+                            "id": key["id"],
+                            "trial": trial,
+                            "answer_only": g["answer_only_correct"],
+                        }
+                    )
+                )
+            maj_g = majority_row(trial_grades)
+            # Representative contract: first correct trial, else first
+            pick = next(
+                (c for c, g in zip(trial_contracts, trial_grades) if g.get("answer_only_correct")),
+                trial_contracts[0],
+            )
+            pick = dict(pick)
+            pick.pop("trial", None)
+            pick["trials"] = trials
+            pick["majority_answer_only"] = maj_g["answer_only_correct"]
+            af.write(json.dumps(pick, sort_keys=True) + "\n")
             af.flush()
-            g = grade_answer_only(contract, key)
-            grades.append(g)
-            gf.write(json.dumps(g, sort_keys=True) + "\n")
+            grades.append(maj_g)
+            gf.write(json.dumps(maj_g, sort_keys=True) + "\n")
             gf.flush()
             print(
                 json.dumps(
                     {
-                        "event": "graded",
+                        "event": "graded_majority",
                         "id": key["id"],
                         "cohort": key.get("_cohort"),
-                        "answer_only": g["answer_only_correct"],
-                        "latency_s": contract["latency_s"],
+                        "answer_only": maj_g["answer_only_correct"],
+                        "trial_votes": maj_g.get("trial_votes"),
                     }
                 )
             )
@@ -447,6 +497,7 @@ def run_live(
     summary = {
         "arm": "D-vectify-pi",
         "n": len(grades),
+        "trials": trials,
         "answer_only_accuracy": sum(1 for g in grades if g.get("answer_only_correct")) / n,
         "by_cohort": {
             bucket: {
@@ -460,8 +511,10 @@ def run_live(
         },
         "index_model": index_model,
         "chat_model": chat_model,
+        "finalize_model": chat_model,
         "pdf_source": pdf_source,
-        "grade_mode": "answer_only",
+        "grade_mode": "answer_only_majority",
+        "shared_frontier_model": FRONTIER_MODEL,
     }
     (out_dir / "summary-D-vectify-pi.json").write_text(
         json.dumps(summary, indent=2) + "\n", encoding="utf-8"
@@ -500,8 +553,11 @@ def run_dry(
         "has_openai_key": bool(os.environ.get("OPENAI_API_KEY")),
         "has_openrouter_key": bool(os.environ.get("OPENROUTER_API_KEY")),
         "shared_model_env": os.environ.get("VECTIFY_FAIR_MODEL"),
+        "frontier_model": FRONTIER_MODEL,
+        "trials_default": DEFAULT_TRIALS,
+        "finalize": "shared JSON answer step (fair_test_common.finalize_answer)",
         "question_ids": [r["id"] for r in cohort],
-        "grade_mode": "answer_only",
+        "grade_mode": "answer_only_majority",
         "beat_rule": "Net>=5 on misses AND no-harm >=14/15; else tie→purge",
         "note": "Live run via GHA sentinel .run-vectify-fair (OPENROUTER_API_KEY) or local keys.",
     }
@@ -512,10 +568,8 @@ def run_dry(
 
 
 def main() -> int:
-    default_chat = os.environ.get("VECTIFY_FAIR_MODEL") or os.environ.get(
-        "VECTIFY_CHAT_MODEL", "openai/gpt-4o"
-    )
-    default_index = os.environ.get("VECTIFY_INDEX_MODEL", "openai/gpt-4o-mini")
+    default_chat = resolve_frontier_model()
+    default_index = os.environ.get("VECTIFY_INDEX_MODEL", INDEX_MODEL_DEFAULT)
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--misses", type=Path, default=DEFAULT_MISSES)
     p.add_argument("--no-harm", type=Path, default=DEFAULT_NOHARM)
@@ -525,7 +579,12 @@ def main() -> int:
     p.add_argument("--cohort", choices=("both", "misses", "no-harm"), default="both")
     p.add_argument("--pdf-source", choices=("ietf", "bridge"), default="ietf")
     p.add_argument("--index-model", default=default_index)
-    p.add_argument("--chat-model", default=default_chat, help="Must match query-rewrite --model")
+    p.add_argument(
+        "--chat-model",
+        default=default_chat,
+        help=f"Must match Track B + query-rewrite (default {FRONTIER_MODEL})",
+    )
+    p.add_argument("--trials", type=int, default=DEFAULT_TRIALS)
     p.add_argument("--storage", type=Path, default=None)
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
@@ -557,6 +616,7 @@ def main() -> int:
         chat_model=args.chat_model,
         storage_path=args.storage or (args.out / "store"),
         pdf_source=args.pdf_source,
+        trials=max(1, args.trials),
     )
     print(json.dumps({"summary": summary}, indent=2))
     return 0
