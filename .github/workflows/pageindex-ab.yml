@@ -51,7 +51,10 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
-        run: npm run build -w clawql-pageindex -w clawql-codegraph -w clawql-memory
+        # Memory DTS needs core/codegraph/pageindex (and their deps) built first.
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-pageindex
+          -w clawql-codegraph -w clawql-api -w clawql-memory
       - name: Validate scaffold
         run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
       - name: Offline ranker compare
@@ -109,7 +112,10 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
-        run: npm run build -w clawql-pageindex -w clawql-codegraph -w clawql-memory
+        # Memory DTS needs core/codegraph/pageindex (and their deps) built first.
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-pageindex
+          -w clawql-codegraph -w clawql-api -w clawql-memory
       - name: Build freeze-candidate
         run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
       - name: Agent-lite factorial (cheap)
