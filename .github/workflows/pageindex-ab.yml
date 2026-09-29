@@ -51,10 +51,11 @@ jobs:
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
-        # Memory DTS needs core/codegraph/pageindex (and their deps) built first.
+        # Same dep order as ci.yml unit-test job (memory DTS needs these).
         run: >
-          npm run build -w clawql-merkle -w clawql-core -w clawql-pageindex
-          -w clawql-codegraph -w clawql-api -w clawql-memory
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-api -w clawql-memory
       - name: Validate scaffold
         run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
       - name: Offline ranker compare
