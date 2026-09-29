@@ -91,7 +91,8 @@ gh workflow run pageindex-ab.yml \
 | Offline retrieval factorial runner | Landed |
 | Synthetic freeze-candidate (24 docs + 8 repos + keys) | Landed |
 | Human freeze (`pageindex-ab-v1`) + Docling PDFs | **Not started** |
-| Agent factorial (OpenCode × OpenRouter) | Blocked on secret |
+| Agent-lite (flash-lite, n=24, GHA) | Landed — all arms 0.958, contrasts 0 (~$0.008) |
+| Full OpenCode × clawql-inference | Not yet (cost) |
 | Memory-stack post correction on live site | Draft in-repo |
 
 ## Industry claim track (separate)
