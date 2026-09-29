@@ -55,14 +55,26 @@ Optional public RFC seeds:
 python3 benchmarks/pageindex-ab/scripts/fetch_public_corpus.py
 ```
 
-Agent factorial (needs OpenRouter):
+Agent-lite factorial (cheap OpenRouter path — retrieval + one completion per cell):
 
 ```bash
+export OPENROUTER_API_KEY=sk-or-…
+export PAGEINDEX_AB_MODEL=google/gemini-2.5-flash-lite   # default
+export PAGEINDEX_AB_LIMIT=24                             # stratified sample
+export PAGEINDEX_AB_TRIALS=1
 node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
-# exits 2 without OPENROUTER_API_KEY; prepares task stubs under results/agent-factorial/
+# → results/agent-factorial/agent-report.json
 ```
 
-GHA: `.github/workflows/pageindex-ab.yml`.
+GHA (uses repo `OPENROUTER_API_KEY` secret):
+
+```bash
+gh workflow run pageindex-ab.yml \
+  -f mode=agent-factorial \
+  -f model=google/gemini-2.5-flash-lite \
+  -f limit=24 \
+  -f trials=1
+```
 
 ## Preconditions
 

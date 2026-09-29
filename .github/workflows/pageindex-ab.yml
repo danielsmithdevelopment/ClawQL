@@ -1,6 +1,6 @@
 # Memory stack default-route A/B (pageindex-ab)
-# - Offline retrieval pilot: no secrets (contaminated-smoke)
-# - Full agent factorial: requires OPENROUTER_API_KEY (workflow_dispatch)
+# - Offline retrieval pilot: no secrets
+# - Agent-lite factorial: OPENROUTER_API_KEY + cheap flash-lite (workflow_dispatch)
 
 name: PageIndex A/B (memory stack default-route)
 
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: offline-pilot (no LLM) or agent-factorial (needs OpenRouter)
+        description: offline-pilot (no LLM) or agent-factorial (OpenRouter agent-lite)
         type: choice
         options:
           - offline-pilot
@@ -18,6 +18,14 @@ on:
         description: Trials per question (agent mode)
         type: number
         default: 1
+      limit:
+        description: Stratified question sample size (agent-lite; keep low for cost)
+        type: number
+        default: 24
+      model:
+        description: OpenRouter model id (no openrouter/ prefix)
+        type: string
+        default: google/gemini-2.5-flash-lite
 
 permissions:
   contents: read
@@ -58,7 +66,7 @@ jobs:
   agent-factorial:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -73,15 +81,46 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for agent-factorial"
             exit 1
           fi
+          # Fail fast if key is exhausted / invalid
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d=json.load(open("/tmp/or-key.json"))
+          data=d.get("data") or d
+          rem=data.get("limit_remaining")
+          print(f"limit_remaining={rem}")
+          if rem is not None and float(rem) <= 0:
+            raise SystemExit("OpenRouter key spend limit exhausted")
+          PY
       - name: Install
         run: npm ci --ignore-scripts
       - name: Build packages
         run: npm run build -w clawql-pageindex -w clawql-memory
       - name: Build freeze-candidate
         run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
-      - name: Agent factorial
+      - name: Agent-lite factorial (cheap)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENBENCH_TRIALS: ${{ inputs.trials }}
           PAGEINDEX_AB_CORPUS: freeze-candidate
+          PAGEINDEX_AB_MODE: agent-lite
+          PAGEINDEX_AB_MODEL: ${{ inputs.model }}
+          PAGEINDEX_AB_LIMIT: ${{ inputs.limit }}
+          PAGEINDEX_AB_TRIALS: ${{ inputs.trials }}
+          PAGEINDEX_AB_CONCURRENCY: "4"
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab
         run: node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
+      - name: Upload agent artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-agent-factorial
+          path: benchmarks/pageindex-ab/results/agent-factorial/

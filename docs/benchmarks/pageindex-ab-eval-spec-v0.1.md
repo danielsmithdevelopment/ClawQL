@@ -200,7 +200,8 @@ Reported overall, by stratum, and by question type.
 | Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Partial (file-ranker proxy in offline pilot)       |
 | Cross-document list keys + ontology rows                    | annotation         | One list key in candidate; ontology rows pending   |
 | Human second-pass + Docling PDF swap → `pageindex-ab-v1`    | annotation         | Not started                                        |
-| Agent factorial (OpenCode × OpenRouter)                     | harness            | Blocked on `OPENROUTER_API_KEY`                    |
+| Agent-lite factorial (OpenRouter flash-lite, sampled)       | harness            | Wired; dispatch `pageindex-ab.yml` agent-factorial |
+| Full OpenCode × clawql-inference matrix                     | harness            | Not yet (cost); agent-lite is the cheap path       |
 | Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                   |
 
 ## Run plan (high level)
