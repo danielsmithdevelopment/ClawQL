@@ -142,6 +142,26 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def is_artifact_heading_title(title: str) -> bool:
+    """TOC leader-dot lines and numbered list/procedure steps — not real sections."""
+    t = (title or "").strip()
+    if not t:
+        return True
+    if "..." in t or "…" in t or re.search(r"\.\s+\.\s+\.", t) or re.search(r"\.{3,}", t):
+        return True
+    if re.search(r"\s{2,}\d+\s*$", t) and "." in t:
+        return True
+    m = re.match(r"^(\d+(?:\.\d+)*)\s+(.+)$", t)
+    if m:
+        rest = m.group(2)
+        if re.match(
+            r"^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b",
+            rest,
+        ):
+            return True
+    return False
+
+
 def slug_section(title: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", title.lower().strip()).strip("-")
     return f"sec-{s}"[:80]
@@ -186,11 +206,16 @@ def rfc_to_markdown(doc_id: str, raw: str) -> str:
     for line in lines:
         m = section_re.match(line.strip())
         if m and not line.startswith("    "):
+            promoted = f"{m.group('num')} {m.group('title').strip()}"
+            # Skip TOC / list-step lines — they skewed fair-test golds and trees.
+            if is_artifact_heading_title(promoted):
+                out.append(line)
+                continue
             depth = m.group("num").count(".") + 1
             depth = min(max(depth, 2), 4)
             hashes = "#" * depth
             out.append("")
-            out.append(f"{hashes} {m.group('num')} {m.group('title').strip()}")
+            out.append(f"{hashes} {promoted}")
             out.append("")
         else:
             out.append(line)
@@ -212,12 +237,16 @@ def extract_rfc_facts(doc_id: str, markdown: str) -> dict:
     # Find a mid-document unique-ish token (year or acronym)
     years = re.findall(r"\b(20\d{2})\b", markdown)
     facts["year"] = years[0] if years else "2015"
-    # Section title containing "Introduction" or first ## heading after H1
-    heads = re.findall(r"^#{2,4}\s+(.+)$", markdown, re.M)
-    facts["first_section"] = heads[0].strip() if heads else "1 Introduction"
-    # Buried: pick a heading near 60% through headings
+    # Real ATX headings only (TOC / list-step artifacts excluded)
+    heads = [
+        h.strip()
+        for h in re.findall(r"^#{2,4}\s+(.+)$", markdown, re.M)
+        if not is_artifact_heading_title(h)
+    ]
+    facts["first_section"] = heads[0] if heads else "1 Introduction"
+    # Buried: pick a heading near 60% through *valid* headings
     if heads:
-        facts["buried_section"] = heads[min(len(heads) - 1, max(1, int(len(heads) * 0.6)))].strip()
+        facts["buried_section"] = heads[min(len(heads) - 1, max(1, int(len(heads) * 0.6)))]
     else:
         facts["buried_section"] = "Appendix"
     # Obsoletes line
@@ -297,6 +326,7 @@ Schedule 1 lists subsidiary guarantors. The maximum aggregate principal of the L
     sections = [
         {"id": slug_section(t), "title": t}
         for t in re.findall(r"^#{1,3}\s+(.+)$", body, re.M)
+        if not is_artifact_heading_title(t)
     ]
     return body, sections
 
@@ -714,7 +744,11 @@ def main() -> int:
         facts = extract_rfc_facts(doc_id, md)
         out = DOCS / f"{doc_id}.md"
         out.write_text(md, encoding="utf-8")
-        heads = re.findall(r"^#{1,4}\s+(.+)$", md, re.M)
+        heads = [
+            t
+            for t in re.findall(r"^#{1,4}\s+(.+)$", md, re.M)
+            if not is_artifact_heading_title(t)
+        ]
         sections = [{"id": slug_section(t), "title": t} for t in heads[:200]]
         (MAPS / f"{doc_id}.json").write_text(
             json.dumps({"document_id": doc_id, "sections": sections, "source_url": url}, indent=2)

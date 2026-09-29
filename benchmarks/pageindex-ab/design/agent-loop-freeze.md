@@ -2,7 +2,7 @@
 
 ## Status
 
-**PageIndex closed** (Track A tie → purge; [#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)).  
+**PageIndex purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test record is **void, retest** ([fair-test-void-retest.md](fair-test-void-retest.md)); Vectify redesign elevated post-8.0.  
 **Track B scope (shrunk):** **`codegraph_*` vs grep** only — not PageIndex, not the spent RFC deep-miss set.
 
 **Critical path to 2026-10-15:** write **grep-insoluble** CodeGraph questions on **real repos** (callers, impact, cross-file dependencies). Tiny-repo “What file exports X?” is grep’s job and does **not** prove. If those questions are not ready by freeze → purge-inventory default applies and **`codegraph_*` leaves the bundle**.

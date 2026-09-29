@@ -10,8 +10,8 @@
   },
   "decision": {
     "ok": true,
-    "decision": "tie",
-    "freeze_action": "Tie counts as purge (no port). Net must be >= 5 to beat.",
+    "decision": "void_retest",
+    "freeze_action": "Fair test VOID \u2014 9/12 keys defective (TOC/list/wrong-depth). Effective sound n=3; Vectify 2/3 on sound (+2 void TOC credits in reported W=4). ClawQL PageIndex purge still stands (unproven). Vectify redesign elevated for post-8.0 retest after mapper fix. See design/fair-test-void-retest.md.",
     "misses": {
       "n": 12,
       "vectify_correct": 4,
@@ -150,5 +150,27 @@
     "scored_arm": true,
     "shared_frontier_model": "anthropic/claude-sonnet-4.6",
     "no_harm_included": true
+  },
+  "status": "void_retest",
+  "supersedes_decision": "tie",
+  "key_hygiene": {
+    "sound_ids": [
+      "hc-rfc-07-q02",
+      "hc-rfc-08-q02",
+      "hc-rfc-08-q03"
+    ],
+    "sound_vectify_correct": [
+      "hc-rfc-07-q02",
+      "hc-rfc-08-q02"
+    ],
+    "sound_vectify_accuracy": "2/3",
+    "void_toc_vectify_wins": [
+      "hc-rfc-06-q02",
+      "hc-rfc-02-q02"
+    ],
+    "defective_n": 9,
+    "effective_n": 3,
+    "reported_W_includes_void_toc": 2,
+    "ref": "benchmarks/pageindex-ab/design/fair-test-void-retest.md"
   }
 }

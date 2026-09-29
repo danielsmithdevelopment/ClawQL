@@ -1,5 +1,7 @@
 # Review: 8 deep misses still unsolved after Track A
 
+**Superseded for fair-test outcome:** see [`fair-test-void-retest.md`](fair-test-void-retest.md) — Track A is **void, retest** (effective sound n=3; two of Vectify’s four reported wins were TOC ghosts). This note remains as the TOC/list discovery write-up.
+
 **Date:** 2026-09-29  
 **Cohort:** `tag: T` from [`vectify-fair-decision.json`](vectify-fair-decision.json) (neither Vectify nor qrewrite recovered).  
 **Purpose:** read keys **before** spending Track B — do not chase noise.

@@ -51,6 +51,30 @@ function slugify(title: string): string {
     .slice(0, 80);
 }
 
+/**
+ * TOC leader-dot lines and numbered list/procedure steps promoted to ATX.
+ * Hard-candidate RFC conversion historically created these; skip so section IDs
+ * stay on real headings (defense in depth for vault ingest too).
+ */
+export function isArtifactHeadingTitle(title: string): boolean {
+  const t = title.trim();
+  if (!t) return true;
+  // TOC: "1 Introduction  . . . . . .  3" or dotted leaders
+  if (/\.\s+\.\s+\./.test(t) || /\.{3,}/.test(t) || /…/.test(t)) return true;
+  if (/\s{2,}\d+\s*$/.test(t) && t.includes(".")) return true;
+  // Numbered list / procedure step mistaken for a section heading
+  const m = /^(\d+(?:\.\d+)*)\s+(.+)$/.exec(t);
+  if (m) {
+    const rest = m[2]!;
+    if (
+      /^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b/.test(rest)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Split ATX-heading Markdown into sections (H1–H6). Leading prose → sec-preamble. */
 export function splitMarkdownSections(markdown: string): DocSection[] {
   const lines = markdown.split(/\r?\n/);
@@ -62,12 +86,15 @@ export function splitMarkdownSections(markdown: string): DocSection[] {
     const line = lines[i]!;
     const m = headingRe.exec(line);
     if (m) {
-      heads.push({
-        level: m[1]!.length,
-        title: m[2]!.trim(),
-        startLine: i,
-        startOffset: offset,
-      });
+      const title = m[2]!.trim();
+      if (!isArtifactHeadingTitle(title)) {
+        heads.push({
+          level: m[1]!.length,
+          title,
+          startLine: i,
+          startOffset: offset,
+        });
+      }
     }
     offset += line.length + 1;
   }

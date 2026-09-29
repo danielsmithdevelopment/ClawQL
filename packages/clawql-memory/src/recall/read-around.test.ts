@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { readAroundFromMarkdown, splitMarkdownSections } from "./read-around.js";
+import {
+  isArtifactHeadingTitle,
+  readAroundFromMarkdown,
+  splitMarkdownSections,
+} from "./read-around.js";
 
 const DOC = `# Handbook
 
@@ -17,6 +21,41 @@ Retention is 4.2 years.
 `;
 
 describe("read_around", () => {
+  it("detects TOC / list-step artifact heading titles", () => {
+    expect(isArtifactHeadingTitle("1 Introduction  . . . . . . . .   3")).toBe(true);
+    expect(isArtifactHeadingTitle("1 Introduction ....................................................3")).toBe(
+      true
+    );
+    expect(
+      isArtifactHeadingTitle('1 If the field value is "*", the condition is false if the origin')
+    ).toBe(true);
+    expect(isArtifactHeadingTitle("1 Introduction")).toBe(false);
+    expect(isArtifactHeadingTitle("4.7 Specifying HTTP Header Fields")).toBe(false);
+  });
+
+  it("skips TOC ghosts when splitting sections", () => {
+    const contaminated = `# RFC8259
+
+## 1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+
+## 5 Arrays  . . . . . . . . . . . . . . . . . . . . . . . . . . .   7
+
+## 1 Introduction
+
+JSON is a text format.
+
+## 5 Arrays
+
+An array structure is represented as square brackets.
+`;
+    const sections = splitMarkdownSections(contaminated);
+    const titles = sections.map((s) => s.title);
+    expect(titles).toContain("1 Introduction");
+    expect(titles).toContain("5 Arrays");
+    expect(titles.some((t) => t.includes(". . ."))).toBe(false);
+    expect(sections.filter((s) => s.title === "1 Introduction")).toHaveLength(1);
+  });
+
   it("splits ATX headings into stable section ids", () => {
     const sections = splitMarkdownSections(DOC);
     const ids = sections.map((s) => s.id);

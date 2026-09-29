@@ -10,7 +10,7 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013 / **+2 Q**), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md).
 
-**Freeze critical path:** PageIndex **closed** (purge [#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)). **Track B** = [CodeGraph vs grep](design/agent-loop-freeze.md) — write grep-insoluble **real-repo** questions by 2026-10-15 or `codegraph_*` leaves the bundle. **Track C k-sweep** elevated (rewrite/RRF shared top-k displacement → additions need own context budget). RFC “8 unsolved” → mostly key defects ([`design/unsolved-8-key-review.md`](design/unsolved-8-key-review.md)). Purge: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
+**Freeze critical path:** ClawQL PageIndex **purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test record corrected to **void, retest** ([`design/fair-test-void-retest.md`](design/fair-test-void-retest.md)): effective sound n=3, Vectify 2/3; redesign **elevated** post-8.0 after mapper fix. **Track B** = [CodeGraph vs grep](design/agent-loop-freeze.md). **Track C k-sweep** elevated (shared top-k displacement). Purge inventory: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 

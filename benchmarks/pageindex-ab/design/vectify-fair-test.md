@@ -1,8 +1,8 @@
 # VectifyAI PageIndex fair test (freeze-critical)
 
-**Status:** **ran** — Track A **tie** (Net=4 < 5) → **purge** ClawQL PageIndex product surface; **no Vectify port**. Decision: [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
-**Post-8.0:** Vectify-style redesign (LLM summaries + strong tree nav) on a **larger fresh hard set** — [`docs/backlog/post-8.0-vectify-pageindex.md`](../../../docs/backlog/post-8.0-vectify-pageindex.md). These 12 RFC keys are **spent**.  
-**Track B (shrunk):** CodeGraph vs grep only — critical path is real-repo grep-insoluble questions ([agent-loop-freeze.md](agent-loop-freeze.md)). The 8 “unsolved” RFC keys are mostly defective ([unsolved-8-key-review.md](unsolved-8-key-review.md)); do not spend there.  
+**Status:** **void, retest** — 9/12 keys defective; sound n=3; Vectify **2/3** on sound (old W=4 included 2 void TOC credits). ClawQL PageIndex **purge still stands**. Canonical: [`fair-test-void-retest.md`](fair-test-void-retest.md) · [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
+**Post-8.0 (elevated):** Vectify redesign after mapper fix — [`docs/backlog/post-8.0-vectify-pageindex.md`](../../../docs/backlog/post-8.0-vectify-pageindex.md).  
+**Track B (shrunk):** CodeGraph vs grep — [agent-loop-freeze.md](agent-loop-freeze.md).  
 **Freeze:** 2026-10-15
 
 ## Gap
