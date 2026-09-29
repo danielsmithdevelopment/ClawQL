@@ -147,11 +147,7 @@ export class VaultRankerService extends Context.Tag("clawql/VaultRankerService")
       documents: readonly string[],
       mode: VaultRankerMode
     ) => Effect.Effect<VaultRankerStats>;
-    readonly score: (
-      query: string,
-      text: string,
-      stats: VaultRankerStats
-    ) => Effect.Effect<number>;
+    readonly score: (query: string, text: string, stats: VaultRankerStats) => Effect.Effect<number>;
   }
 >() {}
 

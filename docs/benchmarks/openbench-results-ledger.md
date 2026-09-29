@@ -1,11 +1,11 @@
 ### 2026-09-29 — `pageindex-ab` preconditions: BM25 ranker + `read_around` (still no scored run)
 
-| Item | State |
-| --- | --- |
-| `CLAWQL_MEMORY_VAULT_RANKER=bm25` | Landed (default remains `idf`) |
-| MCP `read_around` | Landed |
-| Offline smoke | BM25 tops short-protocols; IDF tops long-boilerplate (length-norm differs) |
-| Next | Corpus (+ list + code strata) → freeze → scored run → 8.0.0 default flips |
+| Item                              | State                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_VAULT_RANKER=bm25` | Landed (default remains `idf`)                                             |
+| MCP `read_around`                 | Landed                                                                     |
+| Offline smoke                     | BM25 tops short-protocols; IDF tops long-boilerplate (length-norm differs) |
+| Next                              | Corpus (+ list + code strata) → freeze → scored run → 8.0.0 default flips  |
 
 ### 2026-09-29 — `pageindex-ab` eval spec **v0.2** (task-completion factorial; no scored run)
 

@@ -191,14 +191,14 @@ Reported overall, by stratum, and by question type.
 
 ## Preconditions before scored run
 
-| Gap | Owner | Status |
-| --- | --- | --- |
-| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory` | **Landed** (still default `idf` until scored run) |
-| `read_around` MCP for chunk→section | `clawql-memory` | **Landed** |
-| Native codegraph index fixtures for code stratum | `clawql-codegraph` | Not started |
-| Cross-document list keys + ontology rows | annotation | Not started |
-| 24 docs + 8 repos + question freeze | annotation | Not started |
-| Correct memory-stack post (see below) | GTM | Draft in-repo; live site pending |
+| Gap                                                         | Owner              | Status                                            |
+| ----------------------------------------------------------- | ------------------ | ------------------------------------------------- |
+| Okapi BM25 vault ranker (`CLAWQL_MEMORY_VAULT_RANKER=bm25`) | `clawql-memory`    | **Landed** (still default `idf` until scored run) |
+| `read_around` MCP for chunk→section                         | `clawql-memory`    | **Landed**                                        |
+| Native codegraph index fixtures for code stratum            | `clawql-codegraph` | Not started                                       |
+| Cross-document list keys + ontology rows                    | annotation         | Not started                                       |
+| 24 docs + 8 repos + question freeze                         | annotation         | Not started                                       |
+| Correct memory-stack post (see below)                       | GTM                | Draft in-repo; live site pending                  |
 
 ## Run plan (high level)
 

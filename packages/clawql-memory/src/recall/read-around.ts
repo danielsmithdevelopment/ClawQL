@@ -149,10 +149,7 @@ export function selectSection(
   return undefined;
 }
 
-export function readAroundFromMarkdown(
-  markdown: string,
-  input: ReadAroundInput
-): ReadAroundResult {
+export function readAroundFromMarkdown(markdown: string, input: ReadAroundInput): ReadAroundResult {
   const sections = splitMarkdownSections(markdown);
   const section = selectSection(sections, input);
   if (!section) {

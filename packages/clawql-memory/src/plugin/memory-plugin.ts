@@ -70,14 +70,8 @@ export const pageindexGetContentToolSchema = {
 };
 
 export const readAroundToolSchema = {
-  path: z
-    .string()
-    .optional()
-    .describe("Vault-relative Markdown path (e.g. Memory/handbook.md)."),
-  markdown: z
-    .string()
-    .optional()
-    .describe("Inline Markdown when path is omitted (eval harness)."),
+  path: z.string().optional().describe("Vault-relative Markdown path (e.g. Memory/handbook.md)."),
+  markdown: z.string().optional().describe("Inline Markdown when path is omitted (eval harness)."),
   sectionId: z
     .string()
     .optional()

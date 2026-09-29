@@ -63,13 +63,13 @@ Each piece has one job. The vault is the only canonical store; everything else i
 }
 ```
 
-| Source          | What it contributes                                            |
-| --------------- | -------------------------------------------------------------- |
+| Source          | What it contributes                                                 |
+| --------------- | ------------------------------------------------------------------- |
 | **`vault`**     | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF or BM25) |
-| **`vector`**    | Embedding KNN seeds (when vector backend + API key configured) |
-| **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits)     |
-| **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees         |
-| **`onyx`**      | Enterprise citations via injected Onyx search                  |
+| **`vector`**    | Embedding KNN seeds (when vector backend + API key configured)      |
+| **`codegraph`** | Structural symbol hits (`codeGraphHits` + normalized hits)          |
+| **`pageindex`** | Term-overlap heading nodes from stored PageIndex trees              |
+| **`onyx`**      | Enterprise citations via injected Onyx search                       |
 
 **Defaults when `sources` is omitted:** `vault` + `vector`, plus hybrids from env (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, `_PAGEINDEX`, `_ONYX`) or `includeCodeGraph: true`.
 
@@ -83,10 +83,10 @@ Each piece has one job. The vault is the only canonical store; everything else i
 
 ## Vault lexical ranker
 
-| Env | Default | Effect |
-| --- | --- | --- |
-| **`CLAWQL_MEMORY_VAULT_RANKER=idf`** | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)) |
-| **`CLAWQL_MEMORY_VAULT_RANKER=bm25`** | — | Okapi BM25 (length-normalized). Candidate default via [`pageindex-ab`](../benchmarks/pageindex-ab-eval-spec-v0.1.md) v0.2 |
+| Env                                   | Default | Effect                                                                                                                    |
+| ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_MEMORY_VAULT_RANKER=idf`**  | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801))                                   |
+| **`CLAWQL_MEMORY_VAULT_RANKER=bm25`** | —       | Okapi BM25 (length-normalized). Candidate default via [`pageindex-ab`](../benchmarks/pageindex-ab-eval-spec-v0.1.md) v0.2 |
 
 ## `memory_ingest` rebuild
 
