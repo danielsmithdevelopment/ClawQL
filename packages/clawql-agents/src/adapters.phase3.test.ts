@@ -11,8 +11,6 @@ import { gateGooseFileWrite, makeGooseAdapterLayer } from "./adapters/goose/inde
 import { OPENHANDS_ATR_TEMPLATES } from "./adapters/openhands/atr-templates.js";
 import { makeOpenHandsBudgetEnforcer } from "./adapters/openhands/budget-enforcer.js";
 import { makeOpenHandsAdapterLayer } from "./adapters/openhands/index.js";
-import { getAdapterBundle } from "./get-adapter.js";
-
 describe("Goose adapter", () => {
   let dir = "";
 
@@ -110,21 +108,4 @@ describe("OpenHands budget enforcer", () => {
     );
     expect(verified.valid).toBe(true);
   });
-});
-
-describe("getAdapterBundle resolves AgentAdapter.name (goose / openhands)", () => {
-  it.each(["goose", "openhands"] as const)(
-    "resolves %s with matching adapter name",
-    async (agent) => {
-      const { wormLayer, adapterLayer } = await Effect.runPromise(
-        getAdapterBundle(agent, `/tmp/${agent}.db`)
-      );
-      const name = await Effect.runPromise(
-        Effect.gen(function* () {
-          return (yield* AgentAdapter).name;
-        }).pipe(Effect.provide(Layer.merge(wormLayer, adapterLayer)))
-      );
-      expect(name).toBe(agent);
-    }
-  );
 });

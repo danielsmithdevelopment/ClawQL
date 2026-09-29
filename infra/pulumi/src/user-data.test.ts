@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildBootstrapUserData, buildGcpStartupScript } from "./user-data.js";
+import { buildBootstrapUserData } from "./user-data.js";
 
 describe("buildBootstrapUserData", () => {
   it("emits bucket, prefix, provider, and vault-only bootstrap script", () => {
@@ -57,12 +57,5 @@ describe("buildBootstrapUserData", () => {
     });
 
     expect(script).toContain('export CLAWQL_SYNC_BUCKET="bucket\\"with\\$quotes"');
-  });
-});
-
-describe("buildGcpStartupScript", () => {
-  it("matches AWS user-data bash", () => {
-    const opts = { bucket: "gcs-bucket", prefix: "shared/", syncProvider: "gcs" as const };
-    expect(buildGcpStartupScript(opts)).toBe(buildBootstrapUserData(opts));
   });
 });

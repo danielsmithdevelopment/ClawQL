@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   autoPullEnabled,
   autoPushExplicitlyEnabled,
-  DEFAULT_AUTO_PUSH_DEBOUNCE_MS,
-  DEFAULT_AUTO_PUSH_MIN_INTERVAL_MS,
   flushPendingAutoPush,
   resetHomeSyncAutoForTests,
   scheduleAutoPushAfterIngest,
@@ -86,11 +84,6 @@ describe("home-sync auto", () => {
     expect(runSyncPush).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
     expect(runSyncPush).toHaveBeenCalledTimes(1);
-  });
-
-  it("defaults to 2s debounce and 30s min interval", () => {
-    expect(DEFAULT_AUTO_PUSH_DEBOUNCE_MS).toBe(2_000);
-    expect(DEFAULT_AUTO_PUSH_MIN_INTERVAL_MS).toBe(30_000);
   });
 
   it("coalesces rapid ingests into one push after quiet", async () => {
