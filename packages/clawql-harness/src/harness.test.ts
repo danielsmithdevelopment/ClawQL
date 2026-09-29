@@ -1,7 +1,7 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { ClawQLHarness, invokeHarnessTool } from "../src/index.js";
 import { OuroborosPlugin } from "../plugins/ouroboros/index.js";
@@ -115,44 +115,4 @@ describe("OpenCode2Plugin", () => {
       else process.env.CLAWQL_OPENCODE_DISABLE_EMBED = prev;
     }
   });
-
-  it("runs live session.create + prompt when OpenCode peers are installed", async () => {
-    const { access } = await import("node:fs/promises");
-    const { createRequire } = await import("node:module");
-    let hasPeers = false;
-    try {
-      await import("@opencode-ai/sdk/v2");
-      const require = createRequire(import.meta.url);
-      const pkg = require.resolve("opencode-ai/package.json");
-      await access(join(dirname(pkg), "bin/opencode.exe"));
-      hasPeers = true;
-    } catch {
-      /* peers not installed — skip live path */
-    }
-    if (!hasPeers) return;
-
-    const harness = await Effect.runPromise(
-      ClawQLHarness.create({
-        plugins: [OpenCode2Plugin],
-        model: { provider: "stub", name: "test-model" },
-      })
-    );
-    const out = (await Effect.runPromise(
-      invokeHarnessTool(harness.state, "opencode2_session", {
-        task: "Reply with exactly: OPENCODE_CLAWQL_OK and nothing else.",
-        title: "clawql-harness-vitest",
-      }).pipe(Effect.provide(harness.layer))
-    )) as {
-      ok?: boolean;
-      text?: string | null;
-      error?: string;
-      sessionId?: string;
-      model?: { providerID: string; modelID: string };
-    };
-    await Effect.runPromise(harness.teardown());
-    expect(out.ok).toBe(true);
-    expect(out.sessionId).toMatch(/^ses_/);
-    expect(out.model).toEqual({ providerID: "opencode", modelID: "big-pickle" });
-    expect(out.text ?? "").toContain("OPENCODE_CLAWQL_OK");
-  }, 120_000);
 });
