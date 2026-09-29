@@ -39,7 +39,7 @@
     "fast-glob": "^3.3.3",
     "flexsearch": "^0.8.205",
     "framer-motion": "^12.23.11",
-    "ip-address": "^10.5.1",
+    "ip-address": "10.5.1",
     "mdast-util-to-string": "^4.0.0",
     "mdx-annotations": "^0.1.4",
     "mermaid": "^11.16.1",
@@ -60,7 +60,7 @@
     "simple-functional-loader": "^1.2.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.8.3",
-    "undici": "^7.29.1",
+    "undici": "7.29.1",
     "unist-util-filter": "^5.0.1",
     "unist-util-visit": "^5.0.0",
     "zustand": "^5.0.6"
