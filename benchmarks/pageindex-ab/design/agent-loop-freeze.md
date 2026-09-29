@@ -5,7 +5,7 @@
 **PageIndex purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test record is **void, retest** ([fair-test-void-retest.md](fair-test-void-retest.md)); Vectify redesign elevated post-8.0.  
 **Track B scope (shrunk):** **`codegraph_*` vs grep** only — not PageIndex, not the spent RFC deep-miss set.
 
-**Critical path to 2026-10-15:** write **grep-insoluble** CodeGraph questions on **real repos** (callers, impact, cross-file dependencies). Tiny-repo “What file exports X?” is grep’s job and does **not** prove. If those questions are not ready by freeze → purge-inventory default applies and **`codegraph_*` leaves the bundle**.
+**Critical path to 2026-10-15:** **human-pass** the drafted **grep-insoluble** CodeGraph questions on the ClawQL monorepo ([`codegraph-prove-keys.md`](codegraph-prove-keys.md)) **in the same sitting** as the grown doc-key pass ([`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md)). Tiny-repo “What file exports X?” is grep’s job and does **not** prove. If those questions are not signed by freeze → purge-inventory default applies and **`codegraph_*` leaves the bundle**.
 
 **RFC “8 unsolved”:** reviewed offline — **7/8 defective** (TOC ghosts / list-step gold / wrong depth); **1 sound** (`hc-rfc-08-q03`). See [`unsolved-8-key-review.md`](unsolved-8-key-review.md). **Do not spend Track B budget on them.**
 
@@ -35,7 +35,7 @@ Before any OpenRouter spend:
 2. **Job class:** callers-of, impact-of-change, cross-file dependency / path — answer **not** recoverable by one `grep` of a unique string.
 3. **Gold:** verified by human or deterministic codegraph oracle on the same tree; cite symbol ids / edges.
 4. **Negative control:** `A-grep` fails (or systematically underperforms) on the same question.
-5. **n:** enough for the beat rule above; publish the list under `design/codegraph-prove-keys.md` (or equivalent) before the run.
+5. **n:** enough for the beat rule above; list drafted under [`codegraph-prove-keys.md`](codegraph-prove-keys.md) (12 keys, oracle assist) — **sign before** the run.
 
 ## Arms
 
