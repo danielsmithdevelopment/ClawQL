@@ -1,0 +1,58 @@
+{
+  "document_id": "rfc6901",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-p-bryan-ed",
+      "title": "Internet Engineering Task Force (IETF)                     P. Bryan, Ed."
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-conventions",
+      "title": "2 Conventions"
+    },
+    {
+      "id": "sec-3-syntax",
+      "title": "3 Syntax"
+    },
+    {
+      "id": "sec-4-evaluation",
+      "title": "4 Evaluation"
+    },
+    {
+      "id": "sec-5-json-string-representation",
+      "title": "5 JSON String Representation"
+    },
+    {
+      "id": "sec-6-uri-fragment-identifier-representation",
+      "title": "6 URI Fragment Identifier Representation"
+    },
+    {
+      "id": "sec-7-error-handling",
+      "title": "7 Error Handling"
+    },
+    {
+      "id": "sec-8-security-considerations",
+      "title": "8 Security Considerations"
+    },
+    {
+      "id": "sec-9-acknowledgements",
+      "title": "9 Acknowledgements"
+    },
+    {
+      "id": "sec-10-references",
+      "title": "10 References"
+    },
+    {
+      "id": "sec-10-1-normative-references",
+      "title": "10.1 Normative References"
+    },
+    {
+      "id": "sec-10-2-informative-references",
+      "title": "10.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc6901.txt"
+}

@@ -1,0 +1,454 @@
+{
+  "document_id": "rfc7231",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-r-fielding-ed",
+      "title": "Internet Engineering Task Force (IETF)                  R. Fielding, Ed."
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-conformance-and-error-handling",
+      "title": "1.1 Conformance and Error Handling"
+    },
+    {
+      "id": "sec-1-2-syntax-notation",
+      "title": "1.2 Syntax Notation"
+    },
+    {
+      "id": "sec-2-resources",
+      "title": "2 Resources"
+    },
+    {
+      "id": "sec-3-representations",
+      "title": "3 Representations"
+    },
+    {
+      "id": "sec-3-1-representation-metadata",
+      "title": "3.1 Representation Metadata"
+    },
+    {
+      "id": "sec-3-1-1-processing-representation-data",
+      "title": "3.1.1 Processing Representation Data"
+    },
+    {
+      "id": "sec-3-1-1-1-media-type",
+      "title": "3.1.1.1 Media Type"
+    },
+    {
+      "id": "sec-3-1-1-2-charset",
+      "title": "3.1.1.2 Charset"
+    },
+    {
+      "id": "sec-3-1-1-3-canonicalization-and-text-defaults",
+      "title": "3.1.1.3 Canonicalization and Text Defaults"
+    },
+    {
+      "id": "sec-3-1-1-4-multipart-types",
+      "title": "3.1.1.4 Multipart Types"
+    },
+    {
+      "id": "sec-3-1-1-5-content-type",
+      "title": "3.1.1.5 Content-Type"
+    },
+    {
+      "id": "sec-3-1-2-encoding-for-compression-or-integrity",
+      "title": "3.1.2 Encoding for Compression or Integrity"
+    },
+    {
+      "id": "sec-3-1-2-1-content-codings",
+      "title": "3.1.2.1 Content Codings"
+    },
+    {
+      "id": "sec-3-1-2-2-content-encoding",
+      "title": "3.1.2.2 Content-Encoding"
+    },
+    {
+      "id": "sec-3-1-3-audience-language",
+      "title": "3.1.3 Audience Language"
+    },
+    {
+      "id": "sec-3-1-3-1-language-tags",
+      "title": "3.1.3.1 Language Tags"
+    },
+    {
+      "id": "sec-3-1-3-2-content-language",
+      "title": "3.1.3.2 Content-Language"
+    },
+    {
+      "id": "sec-3-1-4-identification",
+      "title": "3.1.4 Identification"
+    },
+    {
+      "id": "sec-3-1-4-1-identifying-a-representation",
+      "title": "3.1.4.1 Identifying a Representation"
+    },
+    {
+      "id": "sec-5-otherwise-the-payload-is-unidentified",
+      "title": "5 Otherwise, the payload is unidentified."
+    },
+    {
+      "id": "sec-3-1-4-2-content-location",
+      "title": "3.1.4.2 Content-Location"
+    },
+    {
+      "id": "sec-3-2-representation-data",
+      "title": "3.2 Representation Data"
+    },
+    {
+      "id": "sec-3-3-payload-semantics",
+      "title": "3.3 Payload Semantics"
+    },
+    {
+      "id": "sec-3-4-content-negotiation",
+      "title": "3.4 Content Negotiation"
+    },
+    {
+      "id": "sec-3-4-1-proactive-negotiation",
+      "title": "3.4.1 Proactive Negotiation"
+    },
+    {
+      "id": "sec-3-4-2-reactive-negotiation",
+      "title": "3.4.2 Reactive Negotiation"
+    },
+    {
+      "id": "sec-4-request-methods",
+      "title": "4 Request Methods"
+    },
+    {
+      "id": "sec-4-1-overview",
+      "title": "4.1 Overview"
+    },
+    {
+      "id": "sec-4-2-common-method-properties",
+      "title": "4.2 Common Method Properties"
+    },
+    {
+      "id": "sec-4-2-1-safe-methods",
+      "title": "4.2.1 Safe Methods"
+    },
+    {
+      "id": "sec-4-2-2-idempotent-methods",
+      "title": "4.2.2 Idempotent Methods"
+    },
+    {
+      "id": "sec-4-2-3-cacheable-methods",
+      "title": "4.2.3 Cacheable Methods"
+    },
+    {
+      "id": "sec-4-3-method-definitions",
+      "title": "4.3 Method Definitions"
+    },
+    {
+      "id": "sec-4-3-1-get",
+      "title": "4.3.1 GET"
+    },
+    {
+      "id": "sec-4-3-2-head",
+      "title": "4.3.2 HEAD"
+    },
+    {
+      "id": "sec-4-3-3-post",
+      "title": "4.3.3 POST"
+    },
+    {
+      "id": "sec-4-3-4-put",
+      "title": "4.3.4 PUT"
+    },
+    {
+      "id": "sec-4-3-5-delete",
+      "title": "4.3.5 DELETE"
+    },
+    {
+      "id": "sec-4-3-6-connect",
+      "title": "4.3.6 CONNECT"
+    },
+    {
+      "id": "sec-4-3-7-options",
+      "title": "4.3.7 OPTIONS"
+    },
+    {
+      "id": "sec-4-3-8-trace",
+      "title": "4.3.8 TRACE"
+    },
+    {
+      "id": "sec-5-request-header-fields",
+      "title": "5 Request Header Fields"
+    },
+    {
+      "id": "sec-5-1-controls",
+      "title": "5.1 Controls"
+    },
+    {
+      "id": "sec-5-1-1-expect",
+      "title": "5.1.1 Expect"
+    },
+    {
+      "id": "sec-5-1-2-max-forwards",
+      "title": "5.1.2 Max-Forwards"
+    },
+    {
+      "id": "sec-5-2-conditionals",
+      "title": "5.2 Conditionals"
+    },
+    {
+      "id": "sec-5-3-content-negotiation",
+      "title": "5.3 Content Negotiation"
+    },
+    {
+      "id": "sec-5-3-1-quality-values",
+      "title": "5.3.1 Quality Values"
+    },
+    {
+      "id": "sec-5-3-2-accept",
+      "title": "5.3.2 Accept"
+    },
+    {
+      "id": "sec-5-3-3-accept-charset",
+      "title": "5.3.3 Accept-Charset"
+    },
+    {
+      "id": "sec-5-3-4-accept-encoding",
+      "title": "5.3.4 Accept-Encoding"
+    },
+    {
+      "id": "sec-5-3-5-accept-language",
+      "title": "5.3.5 Accept-Language"
+    },
+    {
+      "id": "sec-5-4-authentication-credentials",
+      "title": "5.4 Authentication Credentials"
+    },
+    {
+      "id": "sec-5-5-request-context",
+      "title": "5.5 Request Context"
+    },
+    {
+      "id": "sec-5-5-1-from",
+      "title": "5.5.1 From"
+    },
+    {
+      "id": "sec-5-5-2-referer",
+      "title": "5.5.2 Referer"
+    },
+    {
+      "id": "sec-5-5-3-user-agent",
+      "title": "5.5.3 User-Agent"
+    },
+    {
+      "id": "sec-6-response-status-codes",
+      "title": "6 Response Status Codes"
+    },
+    {
+      "id": "sec-6-1-overview-of-status-codes",
+      "title": "6.1 Overview of Status Codes"
+    },
+    {
+      "id": "sec-6-2-informational-1xx",
+      "title": "6.2 Informational 1xx"
+    },
+    {
+      "id": "sec-6-3-successful-2xx",
+      "title": "6.3 Successful 2xx"
+    },
+    {
+      "id": "sec-6-4-redirection-3xx",
+      "title": "6.4 Redirection 3xx"
+    },
+    {
+      "id": "sec-1-redirects-that-indicate-the-resource-might-be-available-at-a",
+      "title": "1 Redirects that indicate the resource might be available at a"
+    },
+    {
+      "id": "sec-2-redirection-that-offers-a-choice-of-matching-resources-each",
+      "title": "2 Redirection that offers a choice of matching resources, each"
+    },
+    {
+      "id": "sec-3-redirection-to-a-different-resource-identified-by-the-location",
+      "title": "3 Redirection to a different resource, identified by the Location"
+    },
+    {
+      "id": "sec-4-redirection-to-a-previously-cached-result-as-in-the-304-not",
+      "title": "4 Redirection to a previously cached result, as in the 304 (Not"
+    },
+    {
+      "id": "sec-6-5-client-error-4xx",
+      "title": "6.5 Client Error 4xx"
+    },
+    {
+      "id": "sec-6-6-server-error-5xx",
+      "title": "6.6 Server Error 5xx"
+    },
+    {
+      "id": "sec-7-response-header-fields",
+      "title": "7 Response Header Fields"
+    },
+    {
+      "id": "sec-7-1-control-data",
+      "title": "7.1 Control Data"
+    },
+    {
+      "id": "sec-7-1-1-origination-date",
+      "title": "7.1.1 Origination Date"
+    },
+    {
+      "id": "sec-7-1-1-1-date-time-formats",
+      "title": "7.1.1.1 Date/Time Formats"
+    },
+    {
+      "id": "sec-7-1-1-2-date",
+      "title": "7.1.1.2 Date"
+    },
+    {
+      "id": "sec-7-1-2-location",
+      "title": "7.1.2 Location"
+    },
+    {
+      "id": "sec-7-1-3-retry-after",
+      "title": "7.1.3 Retry-After"
+    },
+    {
+      "id": "sec-7-1-4-vary",
+      "title": "7.1.4 Vary"
+    },
+    {
+      "id": "sec-1-to-inform-cache-recipients-that-they-must-not-use-this-response",
+      "title": "1 To inform cache recipients that they MUST NOT use this response"
+    },
+    {
+      "id": "sec-2-to-inform-user-agent-recipients-that-this-response-is-subject-to",
+      "title": "2 To inform user agent recipients that this response is subject to"
+    },
+    {
+      "id": "sec-7-2-validator-header-fields",
+      "title": "7.2 Validator Header Fields"
+    },
+    {
+      "id": "sec-7-3-authentication-challenges",
+      "title": "7.3 Authentication Challenges"
+    },
+    {
+      "id": "sec-7-4-response-context",
+      "title": "7.4 Response Context"
+    },
+    {
+      "id": "sec-7-4-1-allow",
+      "title": "7.4.1 Allow"
+    },
+    {
+      "id": "sec-7-4-2-server",
+      "title": "7.4.2 Server"
+    },
+    {
+      "id": "sec-8-iana-considerations",
+      "title": "8 IANA Considerations"
+    },
+    {
+      "id": "sec-8-1-method-registry",
+      "title": "8.1 Method Registry"
+    },
+    {
+      "id": "sec-8-1-1-procedure",
+      "title": "8.1.1 Procedure"
+    },
+    {
+      "id": "sec-8-1-2-considerations-for-new-methods",
+      "title": "8.1.2 Considerations for New Methods"
+    },
+    {
+      "id": "sec-8-1-3-registrations",
+      "title": "8.1.3 Registrations"
+    },
+    {
+      "id": "sec-8-2-status-code-registry",
+      "title": "8.2 Status Code Registry"
+    },
+    {
+      "id": "sec-8-2-1-procedure",
+      "title": "8.2.1 Procedure"
+    },
+    {
+      "id": "sec-8-2-2-considerations-for-new-status-codes",
+      "title": "8.2.2 Considerations for New Status Codes"
+    },
+    {
+      "id": "sec-8-2-3-registrations",
+      "title": "8.2.3 Registrations"
+    },
+    {
+      "id": "sec-8-3-header-field-registry",
+      "title": "8.3 Header Field Registry"
+    },
+    {
+      "id": "sec-8-3-1-considerations-for-new-header-fields",
+      "title": "8.3.1 Considerations for New Header Fields"
+    },
+    {
+      "id": "sec-8-3-2-registrations",
+      "title": "8.3.2 Registrations"
+    },
+    {
+      "id": "sec-8-4-content-coding-registry",
+      "title": "8.4 Content Coding Registry"
+    },
+    {
+      "id": "sec-8-4-1-procedure",
+      "title": "8.4.1 Procedure"
+    },
+    {
+      "id": "sec-8-4-2-registrations",
+      "title": "8.4.2 Registrations"
+    },
+    {
+      "id": "sec-9-security-considerations",
+      "title": "9 Security Considerations"
+    },
+    {
+      "id": "sec-9-1-attacks-based-on-file-and-path-names",
+      "title": "9.1 Attacks Based on File and Path Names"
+    },
+    {
+      "id": "sec-9-2-attacks-based-on-command-code-or-query-injection",
+      "title": "9.2 Attacks Based on Command, Code, or Query Injection"
+    },
+    {
+      "id": "sec-9-3-disclosure-of-personal-information",
+      "title": "9.3 Disclosure of Personal Information"
+    },
+    {
+      "id": "sec-9-4-disclosure-of-sensitive-information-in-uris",
+      "title": "9.4 Disclosure of Sensitive Information in URIs"
+    },
+    {
+      "id": "sec-9-5-disclosure-of-fragment-after-redirects",
+      "title": "9.5 Disclosure of Fragment after Redirects"
+    },
+    {
+      "id": "sec-9-6-disclosure-of-product-information",
+      "title": "9.6 Disclosure of Product Information"
+    },
+    {
+      "id": "sec-9-7-browser-fingerprinting",
+      "title": "9.7 Browser Fingerprinting"
+    },
+    {
+      "id": "sec-10-acknowledgments",
+      "title": "10 Acknowledgments"
+    },
+    {
+      "id": "sec-11-references",
+      "title": "11 References"
+    },
+    {
+      "id": "sec-11-1-normative-references",
+      "title": "11.1 Normative References"
+    },
+    {
+      "id": "sec-11-2-informative-references",
+      "title": "11.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7231.txt"
+}

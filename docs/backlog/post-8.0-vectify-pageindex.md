@@ -15,8 +15,8 @@ Upstream Vectify design: **LLM-written node summaries + strong-model tree naviga
 ## Blockers (ordered)
 
 1. **Mapper fix** — done in builder + product `splitMarkdownSections`.
-2. **Flag every artifact gold** — `flag_artifact_gold_keys.py` (pre-rebuild caught 8 keys + 92 map ghosts; post-rebuild must stay at 0).
-3. **Rebuild hard set** — done machine-side; **human pass** on [`HUMAN_PASS.md`](../../benchmarks/pageindex-ab/corpus/hard-candidate/HUMAN_PASS.md) before any baseline.
+2. **Flag every artifact gold** — `flag_artifact_gold_keys.py` (pre-rebuild caught 8 keys + 92 map ghosts; post-grow must stay at 0).
+3. **Grow then rebuild hard set** — machine done (**~238** gold-clean keys for ~8pp k-sweep power; 72 only sees ~13pp). **Human pass** on [`HUMAN_PASS.md`](../../benchmarks/pageindex-ab/corpus/hard-candidate/HUMAN_PASS.md) + CodeGraph in [one sitting](../../benchmarks/pageindex-ab/design/HUMAN_PASS_ONE_SITTING.md).
 4. **Cheap `H-idf` re-run** on the **clean** key set only (after human pass).
 5. **Fresh fair-test cohort** — larger validated set; do not cite spent void IDs as proof. Pre-register beat rule for valid n.
 

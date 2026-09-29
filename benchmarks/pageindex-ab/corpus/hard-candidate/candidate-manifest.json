@@ -1,7 +1,7 @@
 {
   "tag": "pageindex-ab-v1-hard-candidate",
   "created_at": "2026-09-29T03:10:00Z",
-  "harness_commit": "88a838fef151291a68b8248f290508edf86263b8",
+  "harness_commit": "9c98018df99955403283870f1d1fc83e1be8a2bf",
   "spec_path": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
   "spec_sha256": "7b41b613cbec2ef523114d07ee9ffae276324d09b32a9b65d67814b2374dd7d0",
   "model_primary": "google/gemini-2.5-flash-lite",
@@ -37,8 +37,8 @@
       "id": "rfc7636",
       "stratum": "well_structured",
       "path": "docs/rfc7636.md",
-      "sha256": "835817104619c3dc9f465fe9a0369e3f8ca3cadf5766473c651323fa4a097ecb",
-      "token_estimate": 9912,
+      "sha256": "f503683fc987aca4d169406fe3646bd95101ae0cc0b2124f95add1ce7d0559db",
+      "token_estimate": 9911,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc7636.txt"
     },
@@ -64,8 +64,8 @@
       "id": "rfc9110",
       "stratum": "well_structured",
       "path": "docs/rfc9110.md",
-      "sha256": "8a73aa743a4c81514459fae36da8c9ae6ec4559095d5aedd6f3db4034ea9bd8d",
-      "token_estimate": 125950,
+      "sha256": "78456a7c615f05565a4ebe695a703cd7348b46ae0a028e5f5fd60bfcd3ab9d14",
+      "token_estimate": 125949,
       "fits_arm_d": false,
       "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt"
     },
@@ -77,6 +77,78 @@
       "token_estimate": 17265,
       "fits_arm_d": true,
       "source_url": "https://www.rfc-editor.org/rfc/rfc9205.txt"
+    },
+    {
+      "id": "rfc3986",
+      "stratum": "well_structured",
+      "path": "docs/rfc3986.md",
+      "sha256": "aceca6fbe69955fd530a03b6b179f27c286b138c2d3ed12defd1f0a35060d361",
+      "token_estimate": 35529,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc3986.txt"
+    },
+    {
+      "id": "rfc4648",
+      "stratum": "well_structured",
+      "path": "docs/rfc4648.md",
+      "sha256": "f36fb5680b0b557c9fa325cb52378d7b133396efdeea884b42f08b9b28e7ca00",
+      "token_estimate": 8909,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc4648.txt"
+    },
+    {
+      "id": "rfc6901",
+      "stratum": "well_structured",
+      "path": "docs/rfc6901.md",
+      "sha256": "e08c33347302da940af65ef551b9138e650890bb76f4e05a84b2dd39452831da",
+      "token_estimate": 3287,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc6901.txt"
+    },
+    {
+      "id": "rfc7396",
+      "stratum": "well_structured",
+      "path": "docs/rfc7396.md",
+      "sha256": "82c0d7f7b1cc6ed52e645ec183bb63b438236d74f608937b27f2b7daa3100d70",
+      "token_estimate": 3223,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7396.txt"
+    },
+    {
+      "id": "rfc7231",
+      "stratum": "well_structured",
+      "path": "docs/rfc7231.md",
+      "sha256": "a5a52b9ead2584b0284df13f72ac7f607633092fffc4e58dca7c02a754bf3def",
+      "token_estimate": 58877,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7231.txt"
+    },
+    {
+      "id": "rfc8446",
+      "stratum": "well_structured",
+      "path": "docs/rfc8446.md",
+      "sha256": "b8c8109de8ef0c203417a174fdd6f6b11c8504c934224caa52cb13ad2778f9c9",
+      "token_estimate": 84526,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc8446.txt"
+    },
+    {
+      "id": "rfc5321",
+      "stratum": "well_structured",
+      "path": "docs/rfc5321.md",
+      "sha256": "ff10ab4e7aebc0216c9a926fbb0cc3a21e5eac5f4b1ca177c792ced6dbec19ca",
+      "token_estimate": 56618,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc5321.txt"
+    },
+    {
+      "id": "rfc7464",
+      "stratum": "well_structured",
+      "path": "docs/rfc7464.md",
+      "sha256": "c3518b9ba2bf6bc7f9fc2d94525ce7326effff7021eabb711a0343d6ba2e1627",
+      "token_estimate": 4059,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7464.txt"
     },
     {
       "id": "pdf-long-meridian-credit",
@@ -111,6 +183,22 @@
       "fits_arm_d": false
     },
     {
+      "id": "pdf-long-summit-mezz",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-summit-mezz.md",
+      "sha256": "8d7042f071b2fd428fba5d089712a10da1a5147c441d66d5db44ef19aad01b2a",
+      "token_estimate": 3260,
+      "fits_arm_d": false
+    },
+    {
+      "id": "pdf-long-prairie-abs",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-prairie-abs.md",
+      "sha256": "647950fb5111c92551a54ef27c3b54021bea0350f4548189b34f544facf0e024",
+      "token_estimate": 3261,
+      "fits_arm_d": false
+    },
+    {
       "id": "wk-long-clearing-hearing",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-clearing-hearing.md",
@@ -140,6 +228,22 @@
       "path": "docs/wk-long-liquidity-panel.md",
       "sha256": "f30b897dd2b6015bc846dd822f7403af8491ea7f2b5088a73cf2b534c7319633",
       "token_estimate": 2719,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-settlement-debrief",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-settlement-debrief.md",
+      "sha256": "1bd2514aa4d2c97667be9042283e0124caae44c72db5ef6e04de2fa8211b8153",
+      "token_estimate": 2717,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-ops-bridge",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-ops-bridge.md",
+      "sha256": "77fa126e2a71520dbd7bab28506705ca5a9ab31ee07af69fcfeafb949efbe502",
+      "token_estimate": 2714,
       "fits_arm_d": false
     }
   ],
@@ -186,20 +290,14 @@
     }
   ],
   "questions_path": "keys.jsonl",
-  "questions_sha256": "d1669b3599ea614fe0f7da340ee653a991185177f65034d34499104f8cd31cab",
+  "questions_sha256": "5faa058100a1702f2de5074d603a1bbbfccdcc33d5b5e1a91c5a6db071ad5a0c",
   "decision_rules_version": "0.2",
   "spent": false,
-  "notes": "Hard candidate REBUILT 2026-09-29 with TOC/list-filtered section mapping. Prior machine keys untrusted (artifact golds). Human pass required (HUMAN_PASS.md) before H-idf baseline or freeze spend.",
+  "notes": "Hard candidate REBUILT 2026-09-29 (TOC/list filter) then GROWN for k-sweep power (\u2265~190 gold-section keys target; 72 only detects ~13pp effects). Human pass required (HUMAN_PASS.md) before H-idf / freeze spend. Harvey LAB and ExtractBench fixtures excluded. Not spent.",
   "exclusions": [
     "harvey-labs",
     "extractbench",
     "contaminated-smoke"
   ],
-  "human_pass_required": true,
-  "builder_version": "artifact-filter-2026-09-29",
-  "predictions": {
-    "hard_candidate_status": "rebuilt_awaiting_human_pass",
-    "artifact_gold_pre_rebuild": "design/artifact-gold-flags-pre-rebuild.json",
-    "artifact_gold_post_rebuild": "design/artifact-gold-flags.json"
-  }
+  "power_note": "Single-comparison rough MDE: n\u224872 \u2192 ~13pp; n\u2248190 \u2192 ~8pp. Grow before signing if k-sweep may change the default."
 }

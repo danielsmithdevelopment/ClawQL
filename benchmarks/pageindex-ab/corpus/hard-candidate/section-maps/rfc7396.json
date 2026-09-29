@@ -1,0 +1,42 @@
+{
+  "document_id": "rfc7396",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-p-hoffman",
+      "title": "Internet Engineering Task Force (IETF)                        P. Hoffman"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-processing-merge-patch-documents",
+      "title": "2 Processing Merge Patch Documents"
+    },
+    {
+      "id": "sec-3-example",
+      "title": "3 Example"
+    },
+    {
+      "id": "sec-4-iana-considerations",
+      "title": "4 IANA Considerations"
+    },
+    {
+      "id": "sec-5-security-considerations",
+      "title": "5 Security Considerations"
+    },
+    {
+      "id": "sec-6-references",
+      "title": "6 References"
+    },
+    {
+      "id": "sec-6-1-normative-references",
+      "title": "6.1 Normative References"
+    },
+    {
+      "id": "sec-6-2-informative-references",
+      "title": "6.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7396.txt"
+}

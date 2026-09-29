@@ -32,6 +32,7 @@ MANIFEST = OUT / "candidate-manifest.json"
 SEED = ROOT / "corpus" / "seed"
 
 # Public RFCs — well_structured. Prefer mid-size for CI; 9110 is large.
+# Expanded 2026-09-29 so gold-section n can support ~8pp k-sweep effects (not only ~13pp).
 RFC_URLS = [
     ("rfc8259", "https://www.rfc-editor.org/rfc/rfc8259.txt"),  # JSON ~28KB
     ("rfc6749", "https://www.rfc-editor.org/rfc/rfc6749.txt"),  # OAuth ~160KB
@@ -41,6 +42,14 @@ RFC_URLS = [
     ("rfc8615", "https://www.rfc-editor.org/rfc/rfc8615.txt"),  # Well-Known URIs
     ("rfc9110", "https://www.rfc-editor.org/rfc/rfc9110.txt"),  # HTTP Semantics large
     ("rfc9205", "https://www.rfc-editor.org/rfc/rfc9205.txt"),  # BCP HTTP API
+    ("rfc3986", "https://www.rfc-editor.org/rfc/rfc3986.txt"),  # URI
+    ("rfc4648", "https://www.rfc-editor.org/rfc/rfc4648.txt"),  # Base16/32/64
+    ("rfc6901", "https://www.rfc-editor.org/rfc/rfc6901.txt"),  # JSON Pointer
+    ("rfc7396", "https://www.rfc-editor.org/rfc/rfc7396.txt"),  # JSON Merge Patch
+    ("rfc7231", "https://www.rfc-editor.org/rfc/rfc7231.txt"),  # HTTP/1.1 Semantics
+    ("rfc8446", "https://www.rfc-editor.org/rfc/rfc8446.txt"),  # TLS 1.3
+    ("rfc5321", "https://www.rfc-editor.org/rfc/rfc5321.txt"),  # SMTP
+    ("rfc7464", "https://www.rfc-editor.org/rfc/rfc7464.txt"),  # JSON Text Sequences
 ]
 
 # Unique buried markers for long synthetic strata (never appear in RFCs).
@@ -85,6 +94,26 @@ PDF_DOCS = [
         "amort_date": "January 14, 2029",
         "borrower": "Cascade Peak Capital LLC",
     },
+    {
+        "id": "pdf-long-summit-mezz",
+        "title": "Summit Mezzanine Facility (Docling convert)",
+        "principal": "USD 72,000,000",
+        "margin": "6.75%",
+        "leverage": "5.10x",
+        "fee": "1.10%",
+        "amort_date": "August 30, 2030",
+        "borrower": "Summit Ridge Mezz LLC",
+    },
+    {
+        "id": "pdf-long-prairie-abs",
+        "title": "Prairie ABS Warehouse (Docling convert)",
+        "principal": "USD 330,000,000",
+        "margin": "1.85%",
+        "leverage": "1.40x",
+        "fee": "0.22%",
+        "amort_date": "April 1, 2027",
+        "borrower": "Prairie Warehouse Issuer LLC",
+    },
 ]
 
 WEAK_DOCS = [
@@ -124,6 +153,24 @@ WEAK_DOCS = [
         "witness": "Okoye",
         "vendor": "BlueRibbon Matching",
     },
+    {
+        "id": "wk-long-settlement-debrief",
+        "title": "Settlement Debrief Transcript — Partial Fail (synthetic)",
+        "sev": "SEV-2",
+        "rate": "28 percent",
+        "time_e": "16:33",
+        "witness": "Patel",
+        "vendor": "ClearSpan",
+    },
+    {
+        "id": "wk-long-ops-bridge",
+        "title": "Ops Bridge Transcript — Feed Lag (synthetic)",
+        "sev": "SEV-3",
+        "rate": "12 percent",
+        "time_e": "08:51",
+        "witness": "Nguyen",
+        "vendor": "TickWire",
+    },
 ]
 
 REPOS = [
@@ -153,6 +200,10 @@ def is_artifact_heading_title(title: str) -> bool:
         return True
     m = re.match(r"^(\d+(?:\.\d+)*)\s+(.+)$", t)
     if m:
+        # Postal codes / page junk ("48155 Münster") are not RFC section numbers.
+        top = int(m.group(1).split(".", 1)[0])
+        if top > 40:
+            return True
         rest = m.group(2)
         if re.match(
             r"^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b",
@@ -243,15 +294,34 @@ def extract_rfc_facts(doc_id: str, markdown: str) -> dict:
         for h in re.findall(r"^#{2,4}\s+(.+)$", markdown, re.M)
         if not is_artifact_heading_title(h)
     ]
+    facts["heads"] = heads
     facts["first_section"] = heads[0] if heads else "1 Introduction"
     # Buried: pick a heading near 60% through *valid* headings
     if heads:
         facts["buried_section"] = heads[min(len(heads) - 1, max(1, int(len(heads) * 0.6)))]
+        facts["last_section"] = heads[-1]
     else:
         facts["buried_section"] = "Appendix"
+        facts["last_section"] = "Appendix"
+    # Depth picks for larger gold-section n (k-sweep power)
+    facts["depth_sections"] = {}
+    if heads:
+        for label, frac in (
+            ("p20", 0.20),
+            ("p35", 0.35),
+            ("p50", 0.50),
+            ("p65", 0.65),
+            ("p80", 0.80),
+            ("p90", 0.90),
+        ):
+            idx = min(len(heads) - 1, max(0, int(len(heads) * frac)))
+            facts["depth_sections"][label] = heads[idx]
     # Obsoletes line
     m = re.search(r"Obsoletes:\s*([0-9, ]+)", markdown)
     facts["obsoletes"] = m.group(1).strip() if m else ""
+    # Updates line (metadata; may be empty)
+    m = re.search(r"Updates:\s*([0-9, ]+)", markdown)
+    facts["updates"] = m.group(1).strip() if m else ""
     return facts
 
 
@@ -474,6 +544,77 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "notes": "header metadata; gold_sections empty by design (status block)",
         }
     )
+    # Extra gold-section keys (depth ladder + last) — grow n for k-sweep power.
+    # Deduplicate when sparse heading lists collapse multiple fracs onto one title.
+    seen_gold: set[str] = {
+        slug_section(facts["first_section"]),
+        slug_section(facts["buried_section"]),
+    }
+    qn = 9
+    for label, title in (facts.get("depth_sections") or {}).items():
+        gid = slug_section(title)
+        if gid in seen_gold:
+            continue
+        seen_gold.add(gid)
+        pct = label.replace("p", "")
+        keys.append(
+            {
+                "id": f"{base}-q{qn:02d}",
+                "document_id": doc_id,
+                "stratum": "well_structured",
+                "question_type": "section_lookup",
+                "question": (
+                    f"Which body section heading appears near {pct}% depth "
+                    f"(among filtered headings) in {doc_id}?"
+                ),
+                "normalized_answer": title,
+                "accepted_variants": [title[:48], title.split(" ", 1)[-1][:40]],
+                "gold_sections": [gid],
+                "unanswerable": False,
+                "notes": f"depth ladder {label}; gold pinned to filtered heading",
+            }
+        )
+        qn += 1
+    last = facts.get("last_section") or ""
+    if last:
+        gid = slug_section(last)
+        if gid not in seen_gold:
+            seen_gold.add(gid)
+            keys.append(
+                {
+                    "id": f"{base}-q{qn:02d}",
+                    "document_id": doc_id,
+                    "stratum": "well_structured",
+                    "question_type": "section_lookup",
+                    "question": f"What is the last numbered body section heading in {doc_id}?",
+                    "normalized_answer": last,
+                    "accepted_variants": [last[:48], last.split(" ", 1)[-1][:40]],
+                    "gold_sections": [gid],
+                    "unanswerable": False,
+                    "notes": "last filtered heading",
+                }
+            )
+            qn += 1
+    # Cross-section between early and late body headings when distinct.
+    early = (facts.get("depth_sections") or {}).get("p20") or facts["first_section"]
+    late = (facts.get("depth_sections") or {}).get("p80") or facts.get("last_section")
+    if early and late and slug_section(early) != slug_section(late):
+        keys.append(
+            {
+                "id": f"{base}-q{qn:02d}",
+                "document_id": doc_id,
+                "stratum": "well_structured",
+                "question_type": "cross_section",
+                "question": (
+                    f"Name the ~20% depth and ~80% depth body section headings in {doc_id}."
+                ),
+                "normalized_answer": f"{early}; {late}",
+                "accepted_variants": [early[:48], late[:48]],
+                "gold_sections": [slug_section(early), slug_section(late)],
+                "unanswerable": False,
+                "notes": "cross-section early/late filtered headings",
+            }
+        )
     return keys
 
 
@@ -723,6 +864,13 @@ def code_keys(name: str, fn: str, marker: str, i: int) -> list[dict]:
 
 
 def main() -> int:
+    # Preserve human-authored gate files across machine rebuilds.
+    preserved: dict[str, str] = {}
+    for name in ("HUMAN_PASS.md",):
+        p = OUT / name
+        if p.is_file():
+            preserved[name] = p.read_text(encoding="utf-8")
+
     if OUT.exists():
         shutil.rmtree(OUT)
     DOCS.mkdir(parents=True)
@@ -749,7 +897,8 @@ def main() -> int:
             for t in re.findall(r"^#{1,4}\s+(.+)$", md, re.M)
             if not is_artifact_heading_title(t)
         ]
-        sections = [{"id": slug_section(t), "title": t} for t in heads[:200]]
+        # Keep every filtered heading in the map so depth-ladder golds resolve.
+        sections = [{"id": slug_section(t), "title": t} for t in heads]
         (MAPS / f"{doc_id}.json").write_text(
             json.dumps({"document_id": doc_id, "sections": sections, "source_url": url}, indent=2)
             + "\n",
@@ -858,22 +1007,44 @@ def main() -> int:
         "decision_rules_version": "0.2",
         "spent": False,
         "notes": (
-            "Hard candidate: public RFCs + long synthetics. "
+            "Hard candidate REBUILT 2026-09-29 (TOC/list filter) then GROWN for k-sweep "
+            "power (≥~190 gold-section keys target; 72 only detects ~13pp effects). "
+            "Human pass required (HUMAN_PASS.md) before H-idf / freeze spend. "
             "Harvey LAB and ExtractBench fixtures excluded. Not spent."
         ),
         "exclusions": ["harvey-labs", "extractbench", "contaminated-smoke"],
+        "power_note": (
+            "Single-comparison rough MDE: n≈72 → ~13pp; n≈190 → ~8pp. "
+            "Grow before signing if k-sweep may change the default."
+        ),
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    gold_n = sum(1 for k in keys if k.get("gold_sections"))
     (OUT / "README.md").write_text(
-        """# Hard candidate (`pageindex-ab-v1-hard-candidate`)
+        f"""# Hard candidate (`pageindex-ab-v1-hard-candidate`)
 
 Public IETF RFCs (well-structured) + long synthetic Docling/weak docs + 8 tiny repos.
 
-**Not spent.** Harvey LAB and ExtractBench fixtures are excluded by design.
-Human second-pass still required before confirmatory `pageindex-ab-v1` freeze.
+**Grown 2026-09-29** for k-sweep power: machine keys with `gold_sections` ≈ **{gold_n}**
+(target ≥190 so an ~8pp effect is detectable; n=72 only sees ~13pp).
+
+| Gate | Status |
+| ---- | ------ |
+| `flag_artifact_gold_keys.py` | Must stay **0** defective / **0** map artifacts |
+| Human pass | **Required** — [`HUMAN_PASS.md`](HUMAN_PASS.md) + [unified freeze sitting](../../design/HUMAN_PASS_ONE_SITTING.md) |
+| Confirmatory spend / freeze | Blocked until human pass |
+
+Harvey LAB and ExtractBench fixtures are excluded by design.
+
+```bash
+python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py
+python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py   # regenerate from corpus/seed
+```
 """,
         encoding="utf-8",
     )
+    for name, text in preserved.items():
+        (OUT / name).write_text(text, encoding="utf-8")
 
     # Refresh seed manifest for whatever RFCs we have
     seed_docs = []
