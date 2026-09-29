@@ -228,18 +228,20 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 ## Predictions (fill before scored run)
 
-Draft signals (synthetic freeze-candidate — **not confirmatory**):
+Draft signals (**not confirmatory** — hard-candidate preferred over easy synthetic):
 
-| Field                | Offline extractive (n=225)  | Agent-lite flash-lite (n=24)  |
-| -------------------- | --------------------------- | ----------------------------- |
-| PageIndex effect     | +0.107                      | 0.0 (all arms 0.958)          |
-| BM25 effect          | 0.0                         | 0.0                           |
-| CodeGraph effect     | 0.0 (file-ranker proxy)     | 0.0                           |
-| Expected new default | `H-idf-pi` if offline holds | ceiling — no arm separation   |
-| Cost                 | $0                          | ~$0.008 (GHA run 36514394251) |
-| Recorded by / date   | cloud-agent / 2026-09-29    | cloud-agent / 2026-09-29      |
+| Field                | Easy synthetic agent-lite | Hard offline (n=161) | Hard agent-lite (n=24) |
+| -------------------- | ------------------------- | -------------------- | ---------------------- |
+| PageIndex effect     | 0.0 (ceiling 0.958)       | −0.006 overall\*     | **−0.125**             |
+| BM25 effect          | 0.0                       | +0.006               | 0.0                    |
+| CodeGraph effect     | 0.0                       | 0.0                  | 0.0                    |
+| Expected new default | n/a                       | keep `H-idf` for now | keep `H-idf` for now   |
+| Cost                 | ~$0.008                   | $0                   | ~$0.015 (run 36516156879) |
+| Recorded by / date   | cloud-agent / 2026-09-29  | same                 | same                   |
 
-Agent-lite used retrieve→one-shot `google/gemini-2.5-flash-lite`; synthetic corpus is too easy once sections are in context. Need harder/human freeze (or full OpenCode) before 8.0.0 flips.
+\*Hard offline by stratum (`H-idf`→`H-idf-pi`): well_structured 0.631→0.692; converted_pdf 0.875→0.594; weak 0.875→1.0.
+
+Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass still required before spent `pageindex-ab-v1`.
 
 ## Status
 
@@ -249,6 +251,6 @@ Agent-lite used retrieve→one-shot `google/gemini-2.5-flash-lite`; synthetic co
 | Factorial + contrasts | Frozen in this text                                         |
 | Harness scaffold      | v0.2 arms + offline factorial + GHA                         |
 | BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
-| Corpus / questions    | Freeze-candidate generated; human freeze not spent          |
+| Corpus / questions    | Hard-candidate (RFCs+long synthetics) landed; human freeze not spent |
 | Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scored run            | Blocked on harder human freeze (OpenRouter path proven)     |
+| Scored run            | Blocked on human freeze; cheap OpenRouter path proven       |

@@ -72,9 +72,9 @@ GHA: touch `benchmarks/pageindex-ab/.run-hard-agent-lite` on the PR
 | Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed                                              |
 | Offline retrieval factorial runner                      | Landed                                              |
 | Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)    |
-| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline PI helps RFCs, hurts converted-PDF |
+| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline + agent-lite discriminative        |
 | Human freeze (`pageindex-ab-v1`)                        | **Not started**                                     |
-| Agent-lite on hard-candidate                            | In progress via GHA                                 |
+| Agent-lite on hard-candidate                            | Landed — PI **−0.125** (~$0.015, flash-lite n=24)   |
 | Full OpenCode × clawql-inference                        | Not yet (cost)                                      |
 | Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only)   |
 | Memory-stack post correction on live site               | Draft in-repo                                       |

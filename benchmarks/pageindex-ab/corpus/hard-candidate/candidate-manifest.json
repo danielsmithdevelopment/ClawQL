@@ -196,14 +196,25 @@
     "contaminated-smoke"
   ],
   "predictions": {
-    "pageindex_effect": -0.0062,
-    "bm25_effect": 0.0062,
-    "codegraph_effect": 0,
-    "by_stratum_note": "PI helps well_structured (+0.06) and weak (+0.125); hurts converted_pdf (-0.28)",
-    "expected_new_default": "no flip yet \u2014 PI tradeoff across strata; agent-lite pending",
+    "pageindex_effect_offline": -0.0062,
+    "pageindex_effect_agent_lite": -0.125,
+    "bm25_effect_offline": 0.0062,
+    "bm25_effect_agent_lite": 0.0,
+    "codegraph_effect": 0.0,
+    "expected_new_default": "keep H-idf (today); PI not default-on from this hard-candidate sample",
     "recorded_by": "cloud-agent",
-    "recorded_at": "2026-09-29T03:15:00Z",
-    "status": "draft_offline_hard_candidate",
-    "offline_source": "results/hard-candidate/pilot-report.json"
+    "recorded_at": "2026-09-29T03:26:00Z",
+    "status": "draft_hard_candidate_agent_lite",
+    "agent_lite": {
+      "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36516156879",
+      "model": "google/gemini-2.5-flash-lite",
+      "n_questions": 24,
+      "H_idf": 0.7917,
+      "H_idf_pi": 0.6667,
+      "prompt_tokens": 119056,
+      "completion_tokens": 7106,
+      "cost_estimate_usd": 0.0147
+    },
+    "notes": "PI hurts overall on hard-candidate agent-lite (\u22120.125). Offline showed PI help on RFCs/weak but harm on converted_pdf. Not confirmatory freeze."
   }
 }

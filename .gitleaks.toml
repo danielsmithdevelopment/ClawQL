@@ -20,5 +20,8 @@ paths = [
   '''(^|/)coverage/''',
   '''(^|/)packages/mcp-grpc-transport/test-fixtures/''',
   '''(^|/)benchmarks/openbench/tasks/''',
+  # Public IETF RFCs used as pageindex-ab hard-candidate docs (OAuth examples etc.).
+  '''(^|/)benchmarks/pageindex-ab/corpus/hard-candidate/docs/rfc''',
+  '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',
   '''\.test\.ts$''',
 ]
