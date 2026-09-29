@@ -17,7 +17,10 @@
     "spent"
   ],
   "properties": {
-    "tag": { "type": "string", "const": "pageindex-ab-v1" },
+    "tag": {
+      "type": "string",
+      "enum": ["pageindex-ab-v1", "pageindex-ab-v1-candidate"]
+    },
     "created_at": { "type": "string", "format": "date-time" },
     "harness_commit": { "type": "string", "minLength": 7 },
     "spec_path": { "type": "string" },
@@ -50,7 +53,21 @@
     },
     "questions_path": { "type": "string" },
     "questions_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "decision_rules_version": { "type": "string", "const": "0.1" },
+    "decision_rules_version": { "type": "string", "enum": ["0.1", "0.2"] },
+    "repos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "path"],
+        "properties": {
+          "id": { "type": "string" },
+          "path": { "type": "string" },
+          "stratum": { "type": "string" }
+        }
+      }
+    },
+    "notes": { "type": "string" },
     "spent": {
       "type": "boolean",
       "description": "True after the single scored run; further tuning requires v2."

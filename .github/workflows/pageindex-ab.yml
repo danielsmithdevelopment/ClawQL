@@ -1,0 +1,87 @@
+# Memory stack default-route A/B (pageindex-ab)
+# - Offline retrieval pilot: no secrets (contaminated-smoke)
+# - Full agent factorial: requires OPENROUTER_API_KEY (workflow_dispatch)
+
+name: PageIndex A/B (memory stack default-route)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: offline-pilot (no LLM) or agent-factorial (needs OpenRouter)
+        type: choice
+        options:
+          - offline-pilot
+          - agent-factorial
+        default: offline-pilot
+      trials:
+        description: Trials per question (agent mode)
+        type: number
+        default: 1
+
+permissions:
+  contents: read
+
+jobs:
+  offline-pilot:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'offline-pilot' || github.event_name != 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        run: npm run build -w clawql-pageindex -w clawql-memory
+      - name: Validate scaffold
+        run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
+      - name: Offline ranker compare
+        run: python3 benchmarks/pageindex-ab/scripts/offline_ranker_compare.py
+      - name: Retrieval pilot (contaminated-smoke)
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
+      - name: Build freeze-candidate
+        run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
+      - name: Offline factorial (freeze-candidate)
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus freeze-candidate
+      - name: Upload pilot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-offline
+          path: |
+            benchmarks/pageindex-ab/results/contaminated-smoke/
+            benchmarks/pageindex-ab/results/freeze-candidate/
+
+  agent-factorial:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Require OpenRouter
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for agent-factorial"
+            exit 1
+          fi
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        run: npm run build -w clawql-pageindex -w clawql-memory
+      - name: Build freeze-candidate
+        run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
+      - name: Agent factorial
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENBENCH_TRIALS: ${{ inputs.trials }}
+          PAGEINDEX_AB_CORPUS: freeze-candidate
+        run: node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs

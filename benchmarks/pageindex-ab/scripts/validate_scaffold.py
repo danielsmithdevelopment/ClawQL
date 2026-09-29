@@ -142,6 +142,30 @@ def main() -> int:
     )
     assert whole.returncode == 2, whole.stdout + whole.stderr
 
+    # Pilot keys + docs present
+    pilot_keys = ROOT / "fixtures" / "contaminated-smoke" / "pilot-keys.jsonl"
+    must_exist(pilot_keys)
+    must_exist(ROOT / "fixtures" / "contaminated-smoke" / "docs" / "well-structured-agency-rulebook.md")
+    must_exist(ROOT / "scripts" / "run_retrieval_pilot.mjs")
+    must_exist(ROOT / "scripts" / "build_freeze_candidate.py")
+    must_exist(ROOT / "scripts" / "run_agent_factorial.mjs")
+
+    # Build freeze-candidate if missing, then check counts
+    fc = ROOT / "corpus" / "freeze-candidate"
+    if not (fc / "keys.jsonl").exists():
+        subprocess.run(
+            [sys.executable, str(SCRIPTS / "build_freeze_candidate.py")],
+            check=True,
+        )
+    must_exist(fc / "candidate-manifest.json")
+    must_exist(fc / "keys.jsonl")
+    docs = list((fc / "docs").glob("*.md"))
+    repos = [p for p in (fc / "code").iterdir() if p.is_dir()] if (fc / "code").exists() else []
+    assert len(docs) == 24, f"expected 24 freeze-candidate docs, got {len(docs)}"
+    assert len(repos) == 8, f"expected 8 repos, got {len(repos)}"
+    fc_keys = sum(1 for line in (fc / "keys.jsonl").open(encoding="utf-8") if line.strip())
+    assert fc_keys >= 192, f"expected >=192 keys, got {fc_keys}"
+
     print(
         json.dumps(
             {
@@ -149,6 +173,10 @@ def main() -> int:
                 "spec_version": arms.get("spec_version"),
                 "confirmatory_arms": len(conf),
                 "strict_accuracy_smoke": grade["summary"]["strict_accuracy"],
+                "pilot_keys": sum(1 for _ in pilot_keys.open(encoding="utf-8") if _.strip()),
+                "freeze_candidate_docs": len(docs),
+                "freeze_candidate_repos": len(repos),
+                "freeze_candidate_keys": fc_keys,
             },
             indent=2,
         )

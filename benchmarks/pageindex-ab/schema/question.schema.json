@@ -20,7 +20,7 @@
     "document_id": { "type": "string", "minLength": 1 },
     "stratum": {
       "type": "string",
-      "enum": ["well_structured", "converted_pdf", "weakly_structured"]
+      "enum": ["well_structured", "converted_pdf", "weakly_structured", "code"]
     },
     "question_type": {
       "type": "string",
@@ -30,7 +30,8 @@
         "cross_section",
         "misleading_heading",
         "exact_term",
-        "not_in_document"
+        "not_in_document",
+        "cross_document_list"
       ]
     },
     "question": { "type": "string", "minLength": 1 },
@@ -42,9 +43,14 @@
     "gold_sections": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
-      "description": "Empty when unanswerable is true."
+      "description": "Empty when unanswerable is true. File paths allowed for code stratum."
     },
     "unanswerable": { "type": "boolean" },
-    "notes": { "type": "string" }
+    "notes": { "type": "string" },
+    "related_document_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "For cross_document_list questions."
+    }
   }
 }
