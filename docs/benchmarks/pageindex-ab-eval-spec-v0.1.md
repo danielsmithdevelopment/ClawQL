@@ -247,7 +247,16 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 **Displacement (offline + agent, agree):** converted_pdf IDF→RRF losses **13/13** displaced (gold in IDF top-k, gone after same-size merge). Agent converted_pdf: IDF/union/gated **1.000**, RRF **0.594**; union recovers **13/13**, gated keeps **13/13**.
 
-**Product rule:** confirmatory RRF same-size top-k hurts (−7.5 pts vs today on full agent). Cheap-context **union** is the only PI merge that beats `H-idf` (+1.9 pts) — diagnostic only; do not flip omit-`sources` default until confirmatory contrast + human freeze.
+**Product rule:** confirmatory RRF same-size top-k hurts (−7.5 pts vs today on full agent). Cheap-context **union** is the only PI merge that beats `H-idf` (+1.9 pts) — **unproven** (3 RFC wins / 0 losses, p≈0.25) and **confounded** by larger context budget. Do not flip omit-`sources`. Neither PageIndex nor BM25 joins the default; leave `pageindex_*` opt-in until a strong-model agent-loop prove/purge (see [`8.0.0-purge-inventory-spec-v0.1.md`](../releases/8.0.0-purge-inventory-spec-v0.1.md)).
+
+**Pre–next-run hygiene**
+
+- Dropped cite-impossible RFC keys (MUST/SHALL + “earliest publication year” fallbacks; 11 keys → 150 remaining).
+- Offline gold ranks for 15 RFC retrieval misses: only **3/15** sit in ranks 4–10; **12/15** need query rewrite / agent loop, not larger k alone ([`rfc-retrieval-miss-gold-ranks.md`](../../benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md)).
+- Confirm run 36524273079 re-called the model (`prior_cells: 0`); identical scores ⇒ deterministic flash-lite; trials ≠ independent variance.
+- Six code `H-idf` misses are all “What file exports X?” — **grep-solvable**; CodeGraph must prove unique jobs (callers / impact / cross-file).
+
+**Next eval spend (~$0.50/arm):** k-sweep `{3,6,10}` on today’s default, then union control at matched mean context size.
 
 Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass still required before spent `pageindex-ab-v1`.
 

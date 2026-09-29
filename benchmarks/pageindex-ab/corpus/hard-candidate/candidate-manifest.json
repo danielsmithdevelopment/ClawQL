@@ -186,10 +186,10 @@
     }
   ],
   "questions_path": "keys.jsonl",
-  "questions_sha256": "3465f250ef0539a8f179812638965c7876b929229dc7bee8971779241a783112",
+  "questions_sha256": "a74290babd13a30147c4e8f9f28ce611fa09081211f330dc49f83b2d36d2cd0a",
   "decision_rules_version": "0.2",
   "spent": false,
-  "notes": "Hard candidate: public RFCs + long synthetics. Harvey LAB and ExtractBench fixtures excluded. Not spent.",
+  "notes": "Hard candidate: public RFCs + long synthetics. Harvey LAB and ExtractBench fixtures excluded. Not spent. Dropped cite-impossible RFC keys (year fallback + MUST/SHALL with empty gold) before freeze.",
   "exclusions": [
     "harvey-labs",
     "extractbench",
@@ -236,6 +236,23 @@
       "prompt_tokens": 4137624,
       "completion_tokens": 193524,
       "cost_estimate_usd": 0.491
+    },
+    "key_hygiene": {
+      "dropped_keys": [
+        "hc-rfc-01-q05",
+        "hc-rfc-02-q05",
+        "hc-rfc-03-q05",
+        "hc-rfc-03-q07",
+        "hc-rfc-04-q05",
+        "hc-rfc-04-q07",
+        "hc-rfc-05-q05",
+        "hc-rfc-05-q07",
+        "hc-rfc-06-q05",
+        "hc-rfc-07-q05",
+        "hc-rfc-08-q05"
+      ],
+      "reason": "empty gold_sections; year keys also had bogus answers (e.g. 2070)",
+      "rfc_retrieval_miss_gold_ranks": "benchmarks/pageindex-ab/design/rfc-retrieval-miss-gold-ranks.md"
     }
   }
 }

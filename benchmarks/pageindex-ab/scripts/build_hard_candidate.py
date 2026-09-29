@@ -400,17 +400,7 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "gold_sections": [],
             "unanswerable": False,
         },
-        {
-            "id": f"{base}-q05",
-            "document_id": doc_id,
-            "stratum": "well_structured",
-            "question_type": "buried_detail",
-            "question": f"Quote a normative MUST/SHALL requirement phrase from {doc_id}.",
-            "normalized_answer": facts["normative_snippet"][:80],
-            "accepted_variants": ["MUST", "SHALL", "REQUIRED"],
-            "gold_sections": [],
-            "unanswerable": False,
-        },
+        # q05 MUST/SHALL quote removed: empty gold_sections → cite-impossible for every arm.
         {
             "id": f"{base}-q06",
             "document_id": doc_id,
@@ -423,6 +413,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "unanswerable": True,
         },
     ]
+    # q07: Obsoletes only when present. Do NOT fall back to "earliest publication
+    # year" — empty gold_sections + often a bogus body year (e.g. 2070).
     if facts.get("obsoletes"):
         keys.append(
             {
@@ -435,20 +427,7 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "accepted_variants": [x.strip() for x in facts["obsoletes"].split(",") if x.strip()],
                 "gold_sections": [],
                 "unanswerable": False,
-            }
-        )
-    else:
-        keys.append(
-            {
-                "id": f"{base}-q07",
-                "document_id": doc_id,
-                "stratum": "well_structured",
-                "question_type": "exact_term",
-                "question": f"What publication year appears earliest in {doc_id} headers?",
-                "normalized_answer": facts["year"],
-                "accepted_variants": [facts["year"]],
-                "gold_sections": [],
-                "unanswerable": False,
+                "notes": "header metadata; gold_sections empty by design (status block)",
             }
         )
     keys.append(
@@ -462,6 +441,7 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "accepted_variants": [facts["rfc_number"], facts["category"]],
             "gold_sections": [],
             "unanswerable": False,
+            "notes": "header metadata; gold_sections empty by design (status block)",
         }
     )
     return keys

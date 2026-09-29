@@ -6,7 +6,7 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
-**Current lean (hard agent-lite 161×10×3, runs [36522240396](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396) / confirmatory [36524273079](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079)):** keep `H-idf` (0.826). RRF PageIndex **−0.078** (converted_pdf displacement). Diagnostic **union +0.019** / gated +0.006 — do not flip omit-`sources` yet. BM25 flat; CodeGraph untested.
+**Current lean (hard agent-lite 161×10×3, runs [36522240396](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396) / confirmatory [36524273079](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079)):** keep `H-idf`. RRF PageIndex **hurts** (13–0 converted_pdf, displacement-confirmed). Union/BM25/gated are noise-scale. **Neither PI nor BM25 joins the default.** Keys: 150 after dropping cite-impossible RFC items. Gold-rank preview: [design/rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md). 8.0.0 purge: [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout
 
