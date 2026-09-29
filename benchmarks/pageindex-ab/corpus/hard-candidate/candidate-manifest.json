@@ -217,13 +217,14 @@
       "completion_tokens": 7106,
       "cost_estimate_usd": 0.0147
     },
-    "notes": "Keep H-idf. Full agent confirms converted_pdf RRF displacement (13/13). Union +0.019 diagnostic only.",
+    "notes": "Keep H-idf. Full agent confirms converted_pdf RRF displacement (13/13). Union +0.019 diagnostic only. Confirmed after OpenRouter credits restore (run 36524273079; identical cells).",
     "pageindex_effect_agent_full": -0.0776,
     "union_vs_today_agent_full": 0.0186,
     "gated_vs_today_agent_full": 0.0062,
     "bm25_effect_agent_full": 0.0031,
     "agent_full": {
       "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396",
+      "confirm_run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079",
       "model": "google/gemini-2.5-flash-lite",
       "n_questions": 161,
       "trials": 3,

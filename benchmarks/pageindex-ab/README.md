@@ -6,7 +6,7 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
-**Current lean (hard agent-lite 161×10×3, run 36522240396):** keep `H-idf` (0.826). RRF PageIndex **−0.078** (converted_pdf displacement). Diagnostic **union +0.019** / gated +0.006 — do not flip omit-`sources` yet. BM25 flat; CodeGraph untested.
+**Current lean (hard agent-lite 161×10×3, runs [36522240396](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36522240396) / confirmatory [36524273079](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079)):** keep `H-idf` (0.826). RRF PageIndex **−0.078** (converted_pdf displacement). Diagnostic **union +0.019** / gated +0.006 — do not flip omit-`sources` yet. BM25 flat; CodeGraph untested.
 
 ## Layout
 
@@ -36,10 +36,10 @@ Contrasts (Holm α=0.05): PageIndex main effect, BM25 main effect, CodeGraph mai
 
 ### Extra merge arms (diagnostic; hard-candidate)
 
-| Arm id            | Behavior                                                                 |
-| ----------------- | ------------------------------------------------------------------------ |
-| `H-idf-pi-union`  | IDF top-k ∪ PageIndex hits — matches cheap-context product rule          |
-| `H-idf-pi-gated`  | RRF PageIndex only when `headingQualityScore(markdown) ≥ 0.35`           |
+| Arm id           | Behavior                                                        |
+| ---------------- | --------------------------------------------------------------- |
+| `H-idf-pi-union` | IDF top-k ∪ PageIndex hits — matches cheap-context product rule |
+| `H-idf-pi-gated` | RRF PageIndex only when `headingQualityScore(markdown) ≥ 0.35`  |
 
 Diagnostics (`D-*`): alone baselines, grep, whole-doc, structured ontology, DuckDB SQL — never decide defaults.
 
@@ -76,11 +76,11 @@ node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
 
 GHA PR triggers:
 
-| Sentinel file                               | Corpus          | Limit | Trials | Extra arms |
-| ------------------------------------------- | --------------- | ----- | ------ | ---------- |
-| `.run-agent-lite`                           | freeze-candidate | 24   | 1      | off        |
-| `.run-hard-agent-lite`                      | hard-candidate  | 24    | 1      | on         |
-| `.run-hard-agent-full`                      | hard-candidate  | full  | 3      | on         |
+| Sentinel file          | Corpus           | Limit | Trials | Extra arms |
+| ---------------------- | ---------------- | ----- | ------ | ---------- |
+| `.run-agent-lite`      | freeze-candidate | 24    | 1      | off        |
+| `.run-hard-agent-lite` | hard-candidate   | 24    | 1      | on         |
+| `.run-hard-agent-full` | hard-candidate   | full  | 3      | on         |
 
 See `RUN_HARD_AGENT_FULL.md` to re-trigger after OpenRouter credits are topped up.
 Agent-lite **checkpoints** each cell to `results/agent-factorial/agent-answers.jsonl` and
@@ -92,20 +92,20 @@ failed with 402 after ~4700/4830 cells despite `limit_remaining≈$50`.
 
 ## Preconditions
 
-| Item                                                    | Status                                              |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`)              | Landed                                              |
-| `read_around`                                           | Landed                                              |
-| Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed                                              |
-| Offline retrieval factorial runner                      | Landed (+ union/gated on hard-candidate)            |
-| Displacement check                                      | Landed                                              |
-| Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)    |
-| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline + full agent-lite discriminative   |
-| Human freeze (`pageindex-ab-v1`)                        | **Not started**                                     |
-| Full hard agent-lite × 3 trials                         | **Landed** run 36522240396 (keep `H-idf`)           |
-| Full OpenCode × clawql-inference                        | Not yet (cost)                                      |
-| Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only)   |
-| Memory-stack post correction on live site               | Draft in-repo                                       |
+| Item                                                    | Status                                            |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`)              | Landed                                            |
+| `read_around`                                           | Landed                                            |
+| Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed                                            |
+| Offline retrieval factorial runner                      | Landed (+ union/gated on hard-candidate)          |
+| Displacement check                                      | Landed                                            |
+| Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)  |
+| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline + full agent-lite discriminative |
+| Human freeze (`pageindex-ab-v1`)                        | **Not started**                                   |
+| Full hard agent-lite × 3 trials                         | **Landed** 36522240396 / confirm 36524273079      |
+| Full OpenCode × clawql-inference                        | Not yet (cost)                                    |
+| Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only) |
+| Memory-stack post correction on live site               | Draft in-repo                                     |
 
 ## Industry claim track (separate)
 

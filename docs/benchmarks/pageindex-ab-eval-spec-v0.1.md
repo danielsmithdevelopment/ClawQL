@@ -230,16 +230,16 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 Draft + scaled hard-candidate signals (**not spent freeze** — human second-pass still required). **Keep today's `H-idf` default.**
 
-| Field                | Easy synthetic           | Hard offline (n=161) | Hard agent-lite n=24×1 | Hard agent-lite **n=161×3** (run 36522240396) |
-| -------------------- | ------------------------ | -------------------- | ---------------------- | --------------------------------------------- |
-| PageIndex (RRF)      | 0.0 (ceiling)            | −0.006 overall\*     | −0.125 (underpowered)  | **−0.078** (clear; displacement)              |
-| Union vs today       | n/a                      | +0.025               | n/a                    | **+0.019** (`H-idf-pi-union` 0.845)           |
-| Gated vs today       | n/a                      | +0.025               | n/a                    | **+0.006** (`H-idf-pi-gated` 0.832)           |
-| BM25 effect          | 0.0                      | +0.006               | 0.0                    | +0.003 (flat)                                 |
-| CodeGraph effect     | 0.0 (untested‡)          | 0.0                  | 0.0                    | 0.0 (still proxy/ceilinged)                   |
-| Expected new default | n/a                      | keep `H-idf`         | keep `H-idf`           | **keep `H-idf`**                              |
-| Cost                 | ~$0.008                  | $0                   | ~$0.015                | ~$0.49 flash-lite                             |
-| Recorded by / date   | cloud-agent / 2026-09-29 | same                 | same                   | same                                          |
+| Field                | Easy synthetic           | Hard offline (n=161) | Hard agent-lite n=24×1 | Hard agent-lite **n=161×3** (36522240396; confirm 36524273079) |
+| -------------------- | ------------------------ | -------------------- | ---------------------- | -------------------------------------------------------------- |
+| PageIndex (RRF)      | 0.0 (ceiling)            | −0.006 overall\*     | −0.125 (underpowered)  | **−0.078** (clear; displacement)                               |
+| Union vs today       | n/a                      | +0.025               | n/a                    | **+0.019** (`H-idf-pi-union` 0.845)                            |
+| Gated vs today       | n/a                      | +0.025               | n/a                    | **+0.006** (`H-idf-pi-gated` 0.832)                            |
+| BM25 effect          | 0.0                      | +0.006               | 0.0                    | +0.003 (flat)                                                  |
+| CodeGraph effect     | 0.0 (untested‡)          | 0.0                  | 0.0                    | 0.0 (still proxy/ceilinged)                                    |
+| Expected new default | n/a                      | keep `H-idf`         | keep `H-idf`           | **keep `H-idf`**                                               |
+| Cost                 | ~$0.008                  | $0                   | ~$0.015                | ~$0.49 flash-lite                                              |
+| Recorded by / date   | cloud-agent / 2026-09-29 | same                 | same                   | same (+credits-restored confirm)                               |
 
 \*Hard offline by stratum (`H-idf`→`H-idf-pi` RRF): well_structured 0.631→0.692; converted_pdf 0.875→0.594; weak 0.875→1.0.
 
@@ -253,12 +253,12 @@ Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass sti
 
 ## Status
 
-| Item                  | State                                                       |
-| --------------------- | ----------------------------------------------------------- |
-| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
-| Factorial + contrasts | Frozen in this text                                         |
-| Harness scaffold      | v0.2 + union/gated + displacement + checkpoint/resume GHA   |
-| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
-| Corpus / questions    | Hard-candidate landed; human freeze not spent               |
-| Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scaled agent-lite     | **Landed** 161×10×3 (run 36522240396) — keep `H-idf`        |
+| Item                  | State                                                                 |
+| --------------------- | --------------------------------------------------------------------- |
+| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported           |
+| Factorial + contrasts | Frozen in this text                                                   |
+| Harness scaffold      | v0.2 + union/gated + displacement + checkpoint/resume GHA             |
+| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                                 |
+| Corpus / questions    | Hard-candidate landed; human freeze not spent                         |
+| Memory-stack post fix | Correction draft in-repo; live site pending                           |
+| Scaled agent-lite     | **Landed** 161×10×3 (36522240396; confirm 36524273079) — keep `H-idf` |
