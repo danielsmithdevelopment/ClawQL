@@ -230,14 +230,14 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 Draft signals (**not confirmatory** — hard-candidate preferred over easy synthetic):
 
-| Field                | Easy synthetic agent-lite | Hard offline (n=161) | Hard agent-lite (n=24) |
-| -------------------- | ------------------------- | -------------------- | ---------------------- |
-| PageIndex effect     | 0.0 (ceiling 0.958)       | −0.006 overall\*     | **−0.125**             |
-| BM25 effect          | 0.0                       | +0.006               | 0.0                    |
-| CodeGraph effect     | 0.0                       | 0.0                  | 0.0                    |
-| Expected new default | n/a                       | keep `H-idf` for now | keep `H-idf` for now   |
+| Field                | Easy synthetic agent-lite | Hard offline (n=161) | Hard agent-lite (n=24)    |
+| -------------------- | ------------------------- | -------------------- | ------------------------- |
+| PageIndex effect     | 0.0 (ceiling 0.958)       | −0.006 overall\*     | **−0.125**                |
+| BM25 effect          | 0.0                       | +0.006               | 0.0                       |
+| CodeGraph effect     | 0.0                       | 0.0                  | 0.0                       |
+| Expected new default | n/a                       | keep `H-idf` for now | keep `H-idf` for now      |
 | Cost                 | ~$0.008                   | $0                   | ~$0.015 (run 36516156879) |
-| Recorded by / date   | cloud-agent / 2026-09-29  | same                 | same                   |
+| Recorded by / date   | cloud-agent / 2026-09-29  | same                 | same                      |
 
 \*Hard offline by stratum (`H-idf`→`H-idf-pi`): well_structured 0.631→0.692; converted_pdf 0.875→0.594; weak 0.875→1.0.
 
@@ -245,12 +245,12 @@ Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass sti
 
 ## Status
 
-| Item                  | State                                                       |
-| --------------------- | ----------------------------------------------------------- |
-| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
-| Factorial + contrasts | Frozen in this text                                         |
-| Harness scaffold      | v0.2 arms + offline factorial + GHA                         |
-| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
+| Item                  | State                                                                |
+| --------------------- | -------------------------------------------------------------------- |
+| Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported          |
+| Factorial + contrasts | Frozen in this text                                                  |
+| Harness scaffold      | v0.2 arms + offline factorial + GHA                                  |
+| BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                                |
 | Corpus / questions    | Hard-candidate (RFCs+long synthetics) landed; human freeze not spent |
-| Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scored run            | Blocked on human freeze; cheap OpenRouter path proven       |
+| Memory-stack post fix | Correction draft in-repo; live site pending                          |
+| Scored run            | Blocked on human freeze; cheap OpenRouter path proven                |
