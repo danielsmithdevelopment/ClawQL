@@ -1,0 +1,260 @@
+{
+  "tag": "pageindex-ab-v1-candidate",
+  "created_at": "2026-09-29T00:00:00Z",
+  "harness_commit": "43942eae868106086ecf82b01f3c121b7149b9fe",
+  "spec_path": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
+  "spec_sha256": "176e3af01c4e2b7baa408ed39abac18b96fcee75e5d9508e0a485b88b3b48a7d",
+  "model_primary": "openrouter/deepseek/deepseek-chat",
+  "documents": [
+    {
+      "id": "ws-alpha-governance",
+      "stratum": "well_structured",
+      "path": "docs/ws-alpha-governance.md",
+      "sha256": "2ea9631e68665255e2f40f800c4e995a39346d49ba06bc51acfc1919a30c126d",
+      "token_estimate": 373,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-beta-reporting",
+      "stratum": "well_structured",
+      "path": "docs/ws-beta-reporting.md",
+      "sha256": "97df062bb43404018a620a50705509de637c09d269eac370dd36e18e3c044cea",
+      "token_estimate": 372,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-gamma-custody",
+      "stratum": "well_structured",
+      "path": "docs/ws-gamma-custody.md",
+      "sha256": "51dadf1bcf4499ffd29ebccecd54255f712582058956b73fcf847ad0d5986bf9",
+      "token_estimate": 373,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-delta-privacy",
+      "stratum": "well_structured",
+      "path": "docs/ws-delta-privacy.md",
+      "sha256": "19f2e48a33592723a2ef273b0e21acbc5ed7083eb2af3ea8b373796db3d8e43b",
+      "token_estimate": 373,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-epsilon-markets",
+      "stratum": "well_structured",
+      "path": "docs/ws-epsilon-markets.md",
+      "sha256": "e59b4c7cfb60bc39c8a326c2043ecb7d19103b633dbbf370bf298e30457357c1",
+      "token_estimate": 371,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-zeta-ops",
+      "stratum": "well_structured",
+      "path": "docs/ws-zeta-ops.md",
+      "sha256": "ca0c166e0e09267ba1ff638516a2d8ea8efa8538e137c3341c8e5d8c5aa99a99",
+      "token_estimate": 373,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-eta-risk",
+      "stratum": "well_structured",
+      "path": "docs/ws-eta-risk.md",
+      "sha256": "2175a08683a8484db8a0ed9c37d9230b411e79998f1b73d95f0b280a48afb74c",
+      "token_estimate": 370,
+      "fits_arm_d": true
+    },
+    {
+      "id": "ws-theta-audit",
+      "stratum": "well_structured",
+      "path": "docs/ws-theta-audit.md",
+      "sha256": "e5a4dfabb23e4ee4b7ff1a831d9e5158c7cb6cb8798021efb0a34e8d02003927",
+      "token_estimate": 373,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-meridian-credit",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-meridian-credit.md",
+      "sha256": "398ec23943522e1b4741a49470887ec441d089392b2e51d4381535d45c2585f8",
+      "token_estimate": 179,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-northwind-facility",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-northwind-facility.md",
+      "sha256": "937f8bceca103fb8f4b58e44a8e71599a94a53dd6ce00c3f08fd951e246d3c5f",
+      "token_estimate": 180,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-redwood-termloan",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-redwood-termloan.md",
+      "sha256": "7111a3f8c31d06b43c5993b8fc0387820e14af70c9465bdae0058009ce924305",
+      "token_estimate": 177,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-harbor-revolver",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-harbor-revolver.md",
+      "sha256": "fc471c406a99ddabdcfed9cd345d1d0b485a4e3f8a080e29ba47b5c2fb0d1468",
+      "token_estimate": 178,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-summit-bridge",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-summit-bridge.md",
+      "sha256": "cb367d8bca954dfd6ffb2c0a1d2edeacb34826656c9000c93af3d95f653b898e",
+      "token_estimate": 177,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-cascade-abs",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-cascade-abs.md",
+      "sha256": "85f35849ac47d88afec3bafa5d25fc9e02c61df683cd851ce1d21b9086a98ab5",
+      "token_estimate": 178,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-prairie-mezz",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-prairie-mezz.md",
+      "sha256": "794a24995fc1147213b6d408f99731028a69ba24e588da58a65e3908dcfe662b",
+      "token_estimate": 178,
+      "fits_arm_d": true
+    },
+    {
+      "id": "pdf-lakeside-capex",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-lakeside-capex.md",
+      "sha256": "a06d576646403899a1643d9900a77ae2ee6fa884a1b7d6e7315cf0a1effd1e43",
+      "token_estimate": 179,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-hearing-markets",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-hearing-markets.md",
+      "sha256": "69d6163e05b2f6de643cb455e6d74a1e3d918d34901dc163df95b7ef3b35c991",
+      "token_estimate": 125,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-standup-platform",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-standup-platform.md",
+      "sha256": "437bc056583820e74991d0c8e3aa2468877339e88343bbb49be9efb02ee4e93d",
+      "token_estimate": 124,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-townhall-ops",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-townhall-ops.md",
+      "sha256": "25dd3c8ca2242fdcdf3ca9a77b470daa5a154e616ba7977775b7143c6c1c1001",
+      "token_estimate": 123,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-debrief-clearing",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-debrief-clearing.md",
+      "sha256": "dc27364d3ab17c76552fe20e123459455d28ffe8e4836ecd76bd9c3ab907a0af",
+      "token_estimate": 124,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-panel-liquidity",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-panel-liquidity.md",
+      "sha256": "9bea5a75ee3ece907c3f3e45d7239fc727838d1415c31fe7e613a560bedaaa45",
+      "token_estimate": 125,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-interview-risk",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-interview-risk.md",
+      "sha256": "0115945f85d65a9c50113bb9bd4fd190a776578028d03c2e17aae468fa192218",
+      "token_estimate": 123,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-workshop-latency",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-workshop-latency.md",
+      "sha256": "807d5edfa27ce49c28af7effa79a5ac4024f7c84f66d5adb1b598fdbdd73d03f",
+      "token_estimate": 124,
+      "fits_arm_d": true
+    },
+    {
+      "id": "wk-briefing-cyber",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-briefing-cyber.md",
+      "sha256": "ae1da2cb04051d8adc78043bc35a0af7d11d4ae9bd733c3fbb7d35b4c93d9caa",
+      "token_estimate": 124,
+      "fits_arm_d": true
+    }
+  ],
+  "repos": [
+    {
+      "id": "tiny-calc",
+      "path": "code/tiny-calc",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-ledger",
+      "path": "code/tiny-ledger",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-router",
+      "path": "code/tiny-router",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-parser",
+      "path": "code/tiny-parser",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-cache",
+      "path": "code/tiny-cache",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-queue",
+      "path": "code/tiny-queue",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-auth",
+      "path": "code/tiny-auth",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-metrics",
+      "path": "code/tiny-metrics",
+      "stratum": "code"
+    }
+  ],
+  "questions_path": "keys.jsonl",
+  "questions_sha256": "0eef81afda5092d9be8075df265f4d46aa797719ac6945f514776f37afe9dfd7",
+  "decision_rules_version": "0.2",
+  "spent": false,
+  "notes": "Synthetic freeze-candidate for offline factorial. Replace with Docling PDFs + second-annotator keys before confirmatory scored run. Never cite contaminated-smoke.",
+  "predictions": {
+    "pageindex_effect": 0.1067,
+    "bm25_effect": 0,
+    "codegraph_effect": 0,
+    "expected_new_default": "H-idf-pi (offline candidate only; agent matrix pending)",
+    "recorded_by": "cloud-agent",
+    "recorded_at": "2026-09-29T02:00:00Z",
+    "rationale": "Offline extractive factorial on synthetic freeze-candidate: PI +~0.11, BM25 0, CG proxy 0. Contaminated-smoke showed same direction. Not confirmatory.",
+    "offline_source": "results/freeze-candidate/pilot-report.json",
+    "status": "draft_offline_not_confirmatory"
+  }
+}

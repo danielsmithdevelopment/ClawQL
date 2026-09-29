@@ -1,0 +1,31 @@
+{
+  "documents": [
+    {
+      "id": "rfc9110",
+      "stratum": "well_structured",
+      "path": "corpus/seed/rfc9110.txt",
+      "sha256": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt",
+      "bytes": 502941,
+      "seed_only": true
+    },
+    {
+      "id": "rfc8259",
+      "stratum": "well_structured",
+      "path": "corpus/seed/rfc8259.txt",
+      "sha256": "61a5378f4255c720beb2a4b4a63b29540147c140f36988bf086291989b4cd2d7",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc8259.txt",
+      "bytes": 28360,
+      "seed_only": true
+    },
+    {
+      "id": "rfc6749",
+      "stratum": "well_structured",
+      "path": "corpus/seed/rfc6749.txt",
+      "sha256": "f204fc8661d6c92d2ec6e0b54808f961a9ad26e792f57f312d9528335519bd71",
+      "source_url": "https://www.rfc-editor.org/rfc/rfc6749.txt",
+      "bytes": 163498,
+      "seed_only": true
+    }
+  ]
+}
