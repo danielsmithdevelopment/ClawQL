@@ -251,4 +251,4 @@ Agent-lite used retrieve→one-shot `google/gemini-2.5-flash-lite`; synthetic co
 | BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
 | Corpus / questions    | Freeze-candidate generated; human freeze not spent          |
 | Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scored run            | Blocked on human freeze + OpenRouter agent matrix           |
+| Scored run            | Blocked on harder human freeze (OpenRouter path proven)     |

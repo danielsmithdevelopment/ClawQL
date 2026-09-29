@@ -45,42 +45,23 @@ python3 benchmarks/pageindex-ab/scripts/offline_ranker_compare.py
 # Contaminated-smoke (NEVER cite)
 node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
 
-# Synthetic freeze-candidate factorial (not spent)
-python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
-node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus freeze-candidate
+# Hard candidate (preferred; Harvey/ExtractBench excluded)
+python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
+node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus hard-candidate
 ```
 
-Optional public RFC seeds:
-
-```bash
-python3 benchmarks/pageindex-ab/scripts/fetch_public_corpus.py
-```
-
-Agent-lite factorial (cheap OpenRouter path — retrieval + one completion per cell):
+Agent-lite (cheap OpenRouter — retrieve → one completion):
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-…
-export PAGEINDEX_AB_MODEL=google/gemini-2.5-flash-lite   # default
-export PAGEINDEX_AB_LIMIT=24                             # stratified sample
-export PAGEINDEX_AB_TRIALS=1
+export PAGEINDEX_AB_CORPUS=hard-candidate
+export PAGEINDEX_AB_MODEL=google/gemini-2.5-flash-lite
+export PAGEINDEX_AB_LIMIT=24
 node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
-# → results/agent-factorial/agent-report.json
 ```
 
-GHA (uses repo `OPENROUTER_API_KEY` secret):
-
-Until `pageindex-ab.yml` is on the default branch, trigger agent-lite by
-touching `benchmarks/pageindex-ab/.run-agent-lite` on a PR (path filter).
-
-After it lands on default:
-
-```bash
-gh workflow run pageindex-ab.yml \
-  -f mode=agent-factorial \
-  -f model=google/gemini-2.5-flash-lite \
-  -f limit=24 \
-  -f trials=1
-```
+GHA: touch `benchmarks/pageindex-ab/.run-hard-agent-lite` on the PR
+(until `pageindex-ab.yml` is on the default branch).
 
 ## Preconditions
 
