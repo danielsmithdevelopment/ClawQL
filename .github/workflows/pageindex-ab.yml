@@ -36,11 +36,12 @@ on:
         type: string
         default: google/gemini-2.5-flash-lite
   pull_request:
+    # Only sentinel touches start agent spend. Workflow-file edits alone must not
+    # burn OpenRouter credits (or fail CI when the account is empty).
     paths:
       - "benchmarks/pageindex-ab/.run-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-full"
-      - ".github/workflows/pageindex-ab.yml"
 
 permissions:
   contents: read
@@ -145,6 +146,7 @@ jobs:
               echo "trials=3"
               echo "extra_arms=1"
               echo "run_displacement=1"
+              echo "run_agent=1"
             elif [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
               echo "name=hard-candidate"
               echo "builder=build_hard_candidate.py"
@@ -152,17 +154,26 @@ jobs:
               echo "trials=1"
               echo "extra_arms=1"
               echo "run_displacement=1"
-            else
+              echo "run_agent=1"
+            elif [ -f benchmarks/pageindex-ab/.run-agent-lite ]; then
               echo "name=freeze-candidate"
               echo "builder=build_freeze_candidate.py"
               echo "limit=24"
               echo "trials=1"
               echo "extra_arms=0"
               echo "run_displacement=0"
-            fi
-            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "run_agent=1"
+            elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
               echo "limit=${{ inputs.limit }}"
               echo "trials=${{ inputs.trials }}"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+              echo "run_agent=1"
+            else
+              echo "::error::No pageindex-ab run sentinel; refusing to spend OpenRouter credits"
+              exit 1
             fi
           } >> "$GITHUB_OUTPUT"
       - name: Build candidate corpus
@@ -173,7 +184,7 @@ jobs:
         if: ${{ steps.corpus.outputs.run_displacement == '1' }}
         run: node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
       - name: Resume prior agent-answers checkpoint
-        if: ${{ steps.corpus.outputs.name == 'hard-candidate' }}
+        if: ${{ steps.corpus.outputs.run_agent == '1' && steps.corpus.outputs.name == 'hard-candidate' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -197,6 +208,7 @@ jobs:
             fi
           fi
       - name: Agent-lite factorial
+        if: ${{ steps.corpus.outputs.run_agent == '1' }}
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PAGEINDEX_AB_CORPUS: ${{ steps.corpus.outputs.name }}
