@@ -1,0 +1,94 @@
+{
+  "document_id": "rfc8615",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-m-nottingham",
+      "title": "Internet Engineering Task Force (IETF)                     M. Nottingham"
+    },
+    {
+      "id": "sec-1-introduction-2",
+      "title": "1 Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2"
+    },
+    {
+      "id": "sec-2-notational-conventions-3",
+      "title": "2 Notational Conventions  . . . . . . . . . . . . . . . . . . .   3"
+    },
+    {
+      "id": "sec-3-well-known-uris-3",
+      "title": "3 Well-Known URIs . . . . . . . . . . . . . . . . . . . . . . .   3"
+    },
+    {
+      "id": "sec-4-security-considerations-5",
+      "title": "4 Security Considerations . . . . . . . . . . . . . . . . . . .   5"
+    },
+    {
+      "id": "sec-5-iana-considerations-8",
+      "title": "5 IANA Considerations . . . . . . . . . . . . . . . . . . . . .   8"
+    },
+    {
+      "id": "sec-6-references-9",
+      "title": "6 References  . . . . . . . . . . . . . . . . . . . . . . . . .   9"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-notational-conventions",
+      "title": "2 Notational Conventions"
+    },
+    {
+      "id": "sec-3-well-known-uris",
+      "title": "3 Well-Known URIs"
+    },
+    {
+      "id": "sec-3-1-registering-well-known-uris",
+      "title": "3.1 Registering Well-Known URIs"
+    },
+    {
+      "id": "sec-4-security-considerations",
+      "title": "4 Security Considerations"
+    },
+    {
+      "id": "sec-4-1-protecting-well-known-resources",
+      "title": "4.1 Protecting Well-Known Resources"
+    },
+    {
+      "id": "sec-4-2-interaction-with-web-browsing",
+      "title": "4.2 Interaction with Web Browsing"
+    },
+    {
+      "id": "sec-4-3-scoping-applications",
+      "title": "4.3 Scoping Applications"
+    },
+    {
+      "id": "sec-4-4-hidden-capabilities",
+      "title": "4.4 Hidden Capabilities"
+    },
+    {
+      "id": "sec-5-iana-considerations",
+      "title": "5 IANA Considerations"
+    },
+    {
+      "id": "sec-5-1-the-well-known-uri-registry",
+      "title": "5.1 The Well-Known URI Registry"
+    },
+    {
+      "id": "sec-5-2-the-uniform-resource-identifier-uri-schemes-registry",
+      "title": "5.2 The Uniform Resource Identifier (URI) Schemes Registry"
+    },
+    {
+      "id": "sec-6-references",
+      "title": "6 References"
+    },
+    {
+      "id": "sec-6-1-normative-references",
+      "title": "6.1 Normative References"
+    },
+    {
+      "id": "sec-6-2-informative-references",
+      "title": "6.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc8615.txt"
+}

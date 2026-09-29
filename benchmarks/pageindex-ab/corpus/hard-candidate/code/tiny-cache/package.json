@@ -1,0 +1,5 @@
+{
+  "name": "tiny-cache",
+  "type": "module",
+  "private": true
+}

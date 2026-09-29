@@ -1,0 +1,450 @@
+{
+  "document_id": "rfc6749",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-d-hardt-ed",
+      "title": "Internet Engineering Task Force (IETF)                     D. Hardt, Ed."
+    },
+    {
+      "id": "sec-1-introduction-4",
+      "title": "1 Introduction ....................................................4"
+    },
+    {
+      "id": "sec-2-client-registration-13",
+      "title": "2 Client Registration ............................................13"
+    },
+    {
+      "id": "sec-3-protocol-endpoints-18",
+      "title": "3 Protocol Endpoints .............................................18"
+    },
+    {
+      "id": "sec-4-obtaining-authorization-23",
+      "title": "4 Obtaining Authorization ........................................23"
+    },
+    {
+      "id": "sec-5-issuing-an-access-token-43",
+      "title": "5 Issuing an Access Token ........................................43"
+    },
+    {
+      "id": "sec-6-refreshing-an-access-token-47",
+      "title": "6 Refreshing an Access Token .....................................47"
+    },
+    {
+      "id": "sec-7-accessing-protected-resources-48",
+      "title": "7 Accessing Protected Resources ..................................48"
+    },
+    {
+      "id": "sec-8-extensibility-50",
+      "title": "8 Extensibility ..................................................50"
+    },
+    {
+      "id": "sec-9-native-applications-52",
+      "title": "9 Native Applications ............................................52"
+    },
+    {
+      "id": "sec-10-security-considerations-53",
+      "title": "10 Security Considerations .......................................53"
+    },
+    {
+      "id": "sec-11-iana-considerations-62",
+      "title": "11 IANA Considerations ...........................................62"
+    },
+    {
+      "id": "sec-12-references-68",
+      "title": "12 References ....................................................68"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-roles",
+      "title": "1.1 Roles"
+    },
+    {
+      "id": "sec-1-2-protocol-flow",
+      "title": "1.2 Protocol Flow"
+    },
+    {
+      "id": "sec-1-3-authorization-grant",
+      "title": "1.3 Authorization Grant"
+    },
+    {
+      "id": "sec-1-3-1-authorization-code",
+      "title": "1.3.1 Authorization Code"
+    },
+    {
+      "id": "sec-1-3-2-implicit",
+      "title": "1.3.2 Implicit"
+    },
+    {
+      "id": "sec-1-3-3-resource-owner-password-credentials",
+      "title": "1.3.3 Resource Owner Password Credentials"
+    },
+    {
+      "id": "sec-1-3-4-client-credentials",
+      "title": "1.3.4 Client Credentials"
+    },
+    {
+      "id": "sec-1-4-access-token",
+      "title": "1.4 Access Token"
+    },
+    {
+      "id": "sec-1-5-refresh-token",
+      "title": "1.5 Refresh Token"
+    },
+    {
+      "id": "sec-1-6-tls-version",
+      "title": "1.6 TLS Version"
+    },
+    {
+      "id": "sec-1-7-http-redirections",
+      "title": "1.7 HTTP Redirections"
+    },
+    {
+      "id": "sec-1-8-interoperability",
+      "title": "1.8 Interoperability"
+    },
+    {
+      "id": "sec-1-9-notational-conventions",
+      "title": "1.9 Notational Conventions"
+    },
+    {
+      "id": "sec-2-client-registration",
+      "title": "2 Client Registration"
+    },
+    {
+      "id": "sec-2-1-client-types",
+      "title": "2.1 Client Types"
+    },
+    {
+      "id": "sec-2-2-client-identifier",
+      "title": "2.2 Client Identifier"
+    },
+    {
+      "id": "sec-2-3-client-authentication",
+      "title": "2.3 Client Authentication"
+    },
+    {
+      "id": "sec-2-3-1-client-password",
+      "title": "2.3.1 Client Password"
+    },
+    {
+      "id": "sec-2-3-2-other-authentication-methods",
+      "title": "2.3.2 Other Authentication Methods"
+    },
+    {
+      "id": "sec-2-4-unregistered-clients",
+      "title": "2.4 Unregistered Clients"
+    },
+    {
+      "id": "sec-3-protocol-endpoints",
+      "title": "3 Protocol Endpoints"
+    },
+    {
+      "id": "sec-3-1-authorization-endpoint",
+      "title": "3.1 Authorization Endpoint"
+    },
+    {
+      "id": "sec-3-1-1-response-type",
+      "title": "3.1.1 Response Type"
+    },
+    {
+      "id": "sec-3-1-2-redirection-endpoint",
+      "title": "3.1.2 Redirection Endpoint"
+    },
+    {
+      "id": "sec-3-1-2-1-endpoint-request-confidentiality",
+      "title": "3.1.2.1 Endpoint Request Confidentiality"
+    },
+    {
+      "id": "sec-3-1-2-2-registration-requirements",
+      "title": "3.1.2.2 Registration Requirements"
+    },
+    {
+      "id": "sec-3-1-2-3-dynamic-configuration",
+      "title": "3.1.2.3 Dynamic Configuration"
+    },
+    {
+      "id": "sec-3-1-2-4-invalid-endpoint",
+      "title": "3.1.2.4 Invalid Endpoint"
+    },
+    {
+      "id": "sec-3-1-2-5-endpoint-content",
+      "title": "3.1.2.5 Endpoint Content"
+    },
+    {
+      "id": "sec-3-2-token-endpoint",
+      "title": "3.2 Token Endpoint"
+    },
+    {
+      "id": "sec-3-2-1-client-authentication",
+      "title": "3.2.1 Client Authentication"
+    },
+    {
+      "id": "sec-3-3-access-token-scope",
+      "title": "3.3 Access Token Scope"
+    },
+    {
+      "id": "sec-4-obtaining-authorization",
+      "title": "4 Obtaining Authorization"
+    },
+    {
+      "id": "sec-4-1-authorization-code-grant",
+      "title": "4.1 Authorization Code Grant"
+    },
+    {
+      "id": "sec-4-1-1-authorization-request",
+      "title": "4.1.1 Authorization Request"
+    },
+    {
+      "id": "sec-4-1-2-authorization-response",
+      "title": "4.1.2 Authorization Response"
+    },
+    {
+      "id": "sec-4-1-2-1-error-response",
+      "title": "4.1.2.1 Error Response"
+    },
+    {
+      "id": "sec-4-1-3-access-token-request",
+      "title": "4.1.3 Access Token Request"
+    },
+    {
+      "id": "sec-4-1-4-access-token-response",
+      "title": "4.1.4 Access Token Response"
+    },
+    {
+      "id": "sec-4-2-implicit-grant",
+      "title": "4.2 Implicit Grant"
+    },
+    {
+      "id": "sec-4-2-1-authorization-request",
+      "title": "4.2.1 Authorization Request"
+    },
+    {
+      "id": "sec-4-2-2-access-token-response",
+      "title": "4.2.2 Access Token Response"
+    },
+    {
+      "id": "sec-4-2-2-1-error-response",
+      "title": "4.2.2.1 Error Response"
+    },
+    {
+      "id": "sec-4-3-resource-owner-password-credentials-grant",
+      "title": "4.3 Resource Owner Password Credentials Grant"
+    },
+    {
+      "id": "sec-4-3-1-authorization-request-and-response",
+      "title": "4.3.1 Authorization Request and Response"
+    },
+    {
+      "id": "sec-4-3-2-access-token-request",
+      "title": "4.3.2 Access Token Request"
+    },
+    {
+      "id": "sec-4-3-3-access-token-response",
+      "title": "4.3.3 Access Token Response"
+    },
+    {
+      "id": "sec-4-4-client-credentials-grant",
+      "title": "4.4 Client Credentials Grant"
+    },
+    {
+      "id": "sec-4-4-1-authorization-request-and-response",
+      "title": "4.4.1 Authorization Request and Response"
+    },
+    {
+      "id": "sec-4-4-2-access-token-request",
+      "title": "4.4.2 Access Token Request"
+    },
+    {
+      "id": "sec-4-4-3-access-token-response",
+      "title": "4.4.3 Access Token Response"
+    },
+    {
+      "id": "sec-4-5-extension-grants",
+      "title": "4.5 Extension Grants"
+    },
+    {
+      "id": "sec-5-issuing-an-access-token",
+      "title": "5 Issuing an Access Token"
+    },
+    {
+      "id": "sec-5-1-successful-response",
+      "title": "5.1 Successful Response"
+    },
+    {
+      "id": "sec-5-2-error-response",
+      "title": "5.2 Error Response"
+    },
+    {
+      "id": "sec-6-refreshing-an-access-token",
+      "title": "6 Refreshing an Access Token"
+    },
+    {
+      "id": "sec-7-accessing-protected-resources",
+      "title": "7 Accessing Protected Resources"
+    },
+    {
+      "id": "sec-7-1-access-token-types",
+      "title": "7.1 Access Token Types"
+    },
+    {
+      "id": "sec-7-2-error-response",
+      "title": "7.2 Error Response"
+    },
+    {
+      "id": "sec-8-extensibility",
+      "title": "8 Extensibility"
+    },
+    {
+      "id": "sec-8-1-defining-access-token-types",
+      "title": "8.1 Defining Access Token Types"
+    },
+    {
+      "id": "sec-8-2-defining-new-endpoint-parameters",
+      "title": "8.2 Defining New Endpoint Parameters"
+    },
+    {
+      "id": "sec-8-3-defining-new-authorization-grant-types",
+      "title": "8.3 Defining New Authorization Grant Types"
+    },
+    {
+      "id": "sec-8-4-defining-new-authorization-endpoint-response-types",
+      "title": "8.4 Defining New Authorization Endpoint Response Types"
+    },
+    {
+      "id": "sec-8-5-defining-additional-error-codes",
+      "title": "8.5 Defining Additional Error Codes"
+    },
+    {
+      "id": "sec-9-native-applications",
+      "title": "9 Native Applications"
+    },
+    {
+      "id": "sec-10-security-considerations",
+      "title": "10 Security Considerations"
+    },
+    {
+      "id": "sec-10-1-client-authentication",
+      "title": "10.1 Client Authentication"
+    },
+    {
+      "id": "sec-10-2-client-impersonation",
+      "title": "10.2 Client Impersonation"
+    },
+    {
+      "id": "sec-10-3-access-tokens",
+      "title": "10.3 Access Tokens"
+    },
+    {
+      "id": "sec-10-4-refresh-tokens",
+      "title": "10.4 Refresh Tokens"
+    },
+    {
+      "id": "sec-10-5-authorization-codes",
+      "title": "10.5 Authorization Codes"
+    },
+    {
+      "id": "sec-10-6-authorization-code-redirection-uri-manipulation",
+      "title": "10.6 Authorization Code Redirection URI Manipulation"
+    },
+    {
+      "id": "sec-10-7-resource-owner-password-credentials",
+      "title": "10.7 Resource Owner Password Credentials"
+    },
+    {
+      "id": "sec-10-8-request-confidentiality",
+      "title": "10.8 Request Confidentiality"
+    },
+    {
+      "id": "sec-10-9-ensuring-endpoint-authenticity",
+      "title": "10.9 Ensuring Endpoint Authenticity"
+    },
+    {
+      "id": "sec-10-10-credentials-guessing-attacks",
+      "title": "10.10 Credentials-Guessing Attacks"
+    },
+    {
+      "id": "sec-10-11-phishing-attacks",
+      "title": "10.11 Phishing Attacks"
+    },
+    {
+      "id": "sec-10-12-cross-site-request-forgery",
+      "title": "10.12 Cross-Site Request Forgery"
+    },
+    {
+      "id": "sec-10-13-clickjacking",
+      "title": "10.13 Clickjacking"
+    },
+    {
+      "id": "sec-10-14-code-injection-and-input-validation",
+      "title": "10.14 Code Injection and Input Validation"
+    },
+    {
+      "id": "sec-10-15-open-redirectors",
+      "title": "10.15 Open Redirectors"
+    },
+    {
+      "id": "sec-10-16-misuse-of-access-token-to-impersonate-resource-owner-in-implicit",
+      "title": "10.16 Misuse of Access Token to Impersonate Resource Owner in Implicit"
+    },
+    {
+      "id": "sec-11-iana-considerations",
+      "title": "11 IANA Considerations"
+    },
+    {
+      "id": "sec-11-1-oauth-access-token-types-registry",
+      "title": "11.1 OAuth Access Token Types Registry"
+    },
+    {
+      "id": "sec-11-1-1-registration-template",
+      "title": "11.1.1 Registration Template"
+    },
+    {
+      "id": "sec-11-2-oauth-parameters-registry",
+      "title": "11.2 OAuth Parameters Registry"
+    },
+    {
+      "id": "sec-11-2-1-registration-template",
+      "title": "11.2.1 Registration Template"
+    },
+    {
+      "id": "sec-11-2-2-initial-registry-contents",
+      "title": "11.2.2 Initial Registry Contents"
+    },
+    {
+      "id": "sec-11-3-oauth-authorization-endpoint-response-types-registry",
+      "title": "11.3 OAuth Authorization Endpoint Response Types Registry"
+    },
+    {
+      "id": "sec-11-3-1-registration-template",
+      "title": "11.3.1 Registration Template"
+    },
+    {
+      "id": "sec-11-3-2-initial-registry-contents",
+      "title": "11.3.2 Initial Registry Contents"
+    },
+    {
+      "id": "sec-11-4-oauth-extensions-error-registry",
+      "title": "11.4 OAuth Extensions Error Registry"
+    },
+    {
+      "id": "sec-11-4-1-registration-template",
+      "title": "11.4.1 Registration Template"
+    },
+    {
+      "id": "sec-12-references",
+      "title": "12 References"
+    },
+    {
+      "id": "sec-12-1-normative-references",
+      "title": "12.1 Normative References"
+    },
+    {
+      "id": "sec-12-2-informative-references",
+      "title": "12.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc6749.txt"
+}

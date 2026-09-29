@@ -148,6 +148,7 @@ def main() -> int:
     must_exist(ROOT / "fixtures" / "contaminated-smoke" / "docs" / "well-structured-agency-rulebook.md")
     must_exist(ROOT / "scripts" / "run_retrieval_pilot.mjs")
     must_exist(ROOT / "scripts" / "build_freeze_candidate.py")
+    must_exist(ROOT / "scripts" / "build_hard_candidate.py")
     must_exist(ROOT / "scripts" / "run_agent_factorial.mjs")
 
     # Build freeze-candidate if missing, then check counts

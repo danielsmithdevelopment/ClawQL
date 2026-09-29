@@ -126,6 +126,15 @@ function resolveCorpus(corpus) {
       codeDir: join(ROOT, "fixtures", "contaminated-smoke", "code"),
     };
   }
+  if (corpus === "hard-candidate") {
+    return {
+      tag: "pageindex-ab-v1-hard-candidate",
+      warning: "Hard candidate (RFCs + long synthetics) — not spent",
+      keysPath: join(ROOT, "corpus", "hard-candidate", "keys.jsonl"),
+      docsDir: join(ROOT, "corpus", "hard-candidate", "docs"),
+      codeDir: join(ROOT, "corpus", "hard-candidate", "code"),
+    };
+  }
   return {
     tag: "pageindex-ab-v1-candidate",
     warning: "Synthetic freeze-candidate — not spent",

@@ -16,18 +16,19 @@ benchmarks/pageindex-ab/
   scripts/                # grade, bootstrap, McNemar, pilots, freeze-candidate builder
   design/read-around.md
   fixtures/contaminated-smoke/
-  corpus/freeze-candidate/  # synthetic candidate (not spent)
+  corpus/hard-candidate/    # RFCs + long synthetics (preferred; not spent)
+  corpus/freeze-candidate/  # easy synthetic (ceilinged)
   questions/                # frozen JSONL lands here
 ```
 
 ## Confirmatory factorial
 
-| | PI off | PI on |
-| --- | --- | --- |
-| **IDF, CG off** | `H-idf` (today) | `H-idf-pi` |
-| **BM25, CG off** | `H-bm25` | `H-bm25-pi` |
-| **IDF, CG on** | `H-idf-cg` | `H-idf-pi-cg` |
-| **BM25, CG on** | `H-bm25-cg` | `H-bm25-pi-cg` |
+|                  | PI off          | PI on          |
+| ---------------- | --------------- | -------------- |
+| **IDF, CG off**  | `H-idf` (today) | `H-idf-pi`     |
+| **BM25, CG off** | `H-bm25`        | `H-bm25-pi`    |
+| **IDF, CG on**   | `H-idf-cg`      | `H-idf-pi-cg`  |
+| **BM25, CG on**  | `H-bm25-cg`     | `H-bm25-pi-cg` |
 
 Contrasts (Holm α=0.05): PageIndex main effect, BM25 main effect, CodeGraph main effect, combination vs `H-idf`.
 
@@ -83,17 +84,19 @@ gh workflow run pageindex-ab.yml \
 
 ## Preconditions
 
-| Item | Status |
-| --- | --- |
-| BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`) | Landed |
-| `read_around` | Landed |
-| Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed |
-| Offline retrieval factorial runner | Landed |
-| Synthetic freeze-candidate (24 docs + 8 repos + keys) | Landed |
-| Human freeze (`pageindex-ab-v1`) + Docling PDFs | **Not started** |
-| Agent-lite (flash-lite, n=24, GHA) | Landed — all arms 0.958, contrasts 0 (~$0.008) |
-| Full OpenCode × clawql-inference | Not yet (cost) |
-| Memory-stack post correction on live site | Draft in-repo |
+| Item                                                    | Status                                              |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`)              | Landed                                              |
+| `read_around`                                           | Landed                                              |
+| Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed                                              |
+| Offline retrieval factorial runner                      | Landed                                              |
+| Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)    |
+| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline PI helps RFCs, hurts converted-PDF |
+| Human freeze (`pageindex-ab-v1`)                        | **Not started**                                     |
+| Agent-lite on hard-candidate                            | In progress via GHA                                 |
+| Full OpenCode × clawql-inference                        | Not yet (cost)                                      |
+| Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only)   |
+| Memory-stack post correction on live site               | Draft in-repo                                       |
 
 ## Industry claim track (separate)
 

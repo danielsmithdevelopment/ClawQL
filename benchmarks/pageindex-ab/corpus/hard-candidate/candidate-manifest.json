@@ -1,0 +1,209 @@
+{
+  "tag": "pageindex-ab-v1-hard-candidate",
+  "created_at": "2026-09-29T03:10:00Z",
+  "harness_commit": "a6f1bdc55b76be1955efb9824ab900ec8b0afc1f",
+  "spec_path": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
+  "spec_sha256": "b3189bdeaf98bb1eb8c2d326cc1729a7ac6c690fd98f255892cfb7c4d5edd351",
+  "model_primary": "google/gemini-2.5-flash-lite",
+  "documents": [
+    {
+      "id": "rfc8259",
+      "stratum": "well_structured",
+      "path": "docs/rfc8259.md",
+      "sha256": "03f576f160fa126ad2c3528e087eb23ed19aadcf91da16b967109fa672c7c170",
+      "token_estimate": 7127,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc8259.txt"
+    },
+    {
+      "id": "rfc6749",
+      "stratum": "well_structured",
+      "path": "docs/rfc6749.md",
+      "sha256": "b2d21dec05a4a2b28b6346125845377b0e7d85b56893e98b198254cef7daf2b6",
+      "token_estimate": 40980,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc6749.txt"
+    },
+    {
+      "id": "rfc7519",
+      "stratum": "well_structured",
+      "path": "docs/rfc7519.md",
+      "sha256": "e521fe641a2ed37f3a6fb5773452295adae7ddace8f41467355845be2853dd2a",
+      "token_estimate": 15806,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7519.txt"
+    },
+    {
+      "id": "rfc7636",
+      "stratum": "well_structured",
+      "path": "docs/rfc7636.md",
+      "sha256": "49869211e75661d0c64be2a7f440a0d428bd139db71ac0f3f08530830274bbe2",
+      "token_estimate": 9915,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7636.txt"
+    },
+    {
+      "id": "rfc7807",
+      "stratum": "well_structured",
+      "path": "docs/rfc7807.md",
+      "sha256": "6091470aafb714d95f7d0c17c69a4d95b0710a3cfdb773be24845eec494019e6",
+      "token_estimate": 7831,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc7807.txt"
+    },
+    {
+      "id": "rfc8615",
+      "stratum": "well_structured",
+      "path": "docs/rfc8615.md",
+      "sha256": "5b1537c78bd7a93d5400189f6e7699420d26add950b8f355a30df6f2b4d91383",
+      "token_estimate": 6747,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc8615.txt"
+    },
+    {
+      "id": "rfc9110",
+      "stratum": "well_structured",
+      "path": "docs/rfc9110.md",
+      "sha256": "d9c42e2a6aa664fee0582a70b7f0d2259b8cf0e2e99c625b694f2e1f9e477e20",
+      "token_estimate": 125956,
+      "fits_arm_d": false,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt"
+    },
+    {
+      "id": "rfc9205",
+      "stratum": "well_structured",
+      "path": "docs/rfc9205.md",
+      "sha256": "6b77abb4e90ef3e85969893ed72fde15e5bd32b4f4bfe4ac2b38cc4a2ce9f618",
+      "token_estimate": 17265,
+      "fits_arm_d": true,
+      "source_url": "https://www.rfc-editor.org/rfc/rfc9205.txt"
+    },
+    {
+      "id": "pdf-long-meridian-credit",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-meridian-credit.md",
+      "sha256": "63c97576214ca9c0e502b84618f7753f1b8a232126bf97b7c643d4717df5fbb3",
+      "token_estimate": 3315,
+      "fits_arm_d": false
+    },
+    {
+      "id": "pdf-long-northwind-indenture",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-northwind-indenture.md",
+      "sha256": "66867ba42ff8708b2aec51c2bd2a1522959232003658b0f82375d5c3221596dd",
+      "token_estimate": 3364,
+      "fits_arm_d": false
+    },
+    {
+      "id": "pdf-long-harbor-revolver",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-harbor-revolver.md",
+      "sha256": "49ed7394cf2c70a8a30f114b1b283a18df80d064ba5ced334499ac4d047df56d",
+      "token_estimate": 3314,
+      "fits_arm_d": false
+    },
+    {
+      "id": "pdf-long-cascade-term",
+      "stratum": "converted_pdf",
+      "path": "docs/pdf-long-cascade-term.md",
+      "sha256": "31cd1ac22a618058f3c93655a5433065f54dfbd7128e485259088759920d0a4d",
+      "token_estimate": 3275,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-clearing-hearing",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-clearing-hearing.md",
+      "sha256": "e09c451d66f83164e5696282023030fd100ca5c29c47f986d797898688681a2d",
+      "token_estimate": 2718,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-latency-workshop",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-latency-workshop.md",
+      "sha256": "d604221dc876afc5b454ef8af6987cf5d66561c9add497a31c1d43ccc2dfcd4c",
+      "token_estimate": 2716,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-cyber-briefing",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-cyber-briefing.md",
+      "sha256": "ae577843bbe082d388f588d28a88216db53d9c49af170ee71bd014cf8f859201",
+      "token_estimate": 2717,
+      "fits_arm_d": false
+    },
+    {
+      "id": "wk-long-liquidity-panel",
+      "stratum": "weakly_structured",
+      "path": "docs/wk-long-liquidity-panel.md",
+      "sha256": "f30b897dd2b6015bc846dd822f7403af8491ea7f2b5088a73cf2b534c7319633",
+      "token_estimate": 2719,
+      "fits_arm_d": false
+    }
+  ],
+  "repos": [
+    {
+      "id": "tiny-calc",
+      "path": "code/tiny-calc",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-ledger",
+      "path": "code/tiny-ledger",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-router",
+      "path": "code/tiny-router",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-parser",
+      "path": "code/tiny-parser",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-cache",
+      "path": "code/tiny-cache",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-queue",
+      "path": "code/tiny-queue",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-auth",
+      "path": "code/tiny-auth",
+      "stratum": "code"
+    },
+    {
+      "id": "tiny-metrics",
+      "path": "code/tiny-metrics",
+      "stratum": "code"
+    }
+  ],
+  "questions_path": "keys.jsonl",
+  "questions_sha256": "3465f250ef0539a8f179812638965c7876b929229dc7bee8971779241a783112",
+  "decision_rules_version": "0.2",
+  "spent": false,
+  "notes": "Hard candidate: public RFCs + long synthetics. Harvey LAB and ExtractBench fixtures excluded. Not spent.",
+  "exclusions": [
+    "harvey-labs",
+    "extractbench",
+    "contaminated-smoke"
+  ],
+  "predictions": {
+    "pageindex_effect": -0.0062,
+    "bm25_effect": 0.0062,
+    "codegraph_effect": 0,
+    "by_stratum_note": "PI helps well_structured (+0.06) and weak (+0.125); hurts converted_pdf (-0.28)",
+    "expected_new_default": "no flip yet \u2014 PI tradeoff across strata; agent-lite pending",
+    "recorded_by": "cloud-agent",
+    "recorded_at": "2026-09-29T03:15:00Z",
+    "status": "draft_offline_hard_candidate",
+    "offline_source": "results/hard-candidate/pilot-report.json"
+  }
+}

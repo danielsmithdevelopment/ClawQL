@@ -10,7 +10,15 @@
  * emit answer-contract JSONL, and print citation / contrast metrics.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync, existsSync, readdirSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  existsSync,
+  readdirSync,
+} from "node:fs";
 import { join, dirname } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -68,6 +76,17 @@ function resolveCorpus(corpus) {
       docsDir: join(base, "docs"),
       codeDir: join(base, "code"),
       outDir: join(ROOT, "results", "freeze-candidate"),
+    };
+  }
+  if (corpus === "hard-candidate") {
+    const base = join(ROOT, "corpus", "hard-candidate");
+    return {
+      tag: "pageindex-ab-v1-hard-candidate",
+      warning: "Hard candidate (RFCs + long synthetics) — not spent; Harvey/ExtractBench excluded",
+      keysPath: join(base, "keys.jsonl"),
+      docsDir: join(base, "docs"),
+      codeDir: join(base, "code"),
+      outDir: join(ROOT, "results", "hard-candidate"),
     };
   }
   throw new Error(`unknown --corpus ${corpus}`);
@@ -252,7 +271,9 @@ async function main() {
   const { corpus } = parseArgs(process.argv);
   const cfg = resolveCorpus(corpus);
   if (!existsSync(cfg.keysPath)) {
-    throw new Error(`keys missing: ${cfg.keysPath} (run build_freeze_candidate.py for freeze-candidate)`);
+    throw new Error(
+      `keys missing: ${cfg.keysPath} (run build_freeze_candidate.py for freeze-candidate)`
+    );
   }
   mkdirSync(cfg.outDir, { recursive: true });
   const keys = loadJsonl(cfg.keysPath);

@@ -33,6 +33,7 @@ on:
   pull_request:
     paths:
       - "benchmarks/pageindex-ab/.run-agent-lite"
+      - "benchmarks/pageindex-ab/.run-hard-agent-lite"
       - ".github/workflows/pageindex-ab.yml"
 
 permissions:
@@ -119,12 +120,24 @@ jobs:
           npm run build -w clawql-merkle -w clawql-core -w clawql-audit
           -w clawql-auth -w clawql-pageindex -w clawql-codegraph
           -w clawql-api -w clawql-memory
-      - name: Build freeze-candidate
-        run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
+      - name: Select corpus
+        id: corpus
+        run: |
+          if [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
+            echo "name=hard-candidate" >> "$GITHUB_OUTPUT"
+            echo "builder=build_hard_candidate.py" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=freeze-candidate" >> "$GITHUB_OUTPUT"
+            echo "builder=build_freeze_candidate.py" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build candidate corpus
+        run: python3 "benchmarks/pageindex-ab/scripts/${{ steps.corpus.outputs.builder }}"
+      - name: Offline factorial (candidate)
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus ${{ steps.corpus.outputs.name }}
       - name: Agent-lite factorial (cheap)
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          PAGEINDEX_AB_CORPUS: freeze-candidate
+          PAGEINDEX_AB_CORPUS: ${{ steps.corpus.outputs.name }}
           PAGEINDEX_AB_MODE: agent-lite
           PAGEINDEX_AB_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.model || 'google/gemini-2.5-flash-lite' }}
           PAGEINDEX_AB_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || 24 }}
@@ -138,4 +151,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pageindex-ab-agent-factorial
-          path: benchmarks/pageindex-ab/results/agent-factorial/
+          path: |
+            benchmarks/pageindex-ab/results/agent-factorial/
+            benchmarks/pageindex-ab/results/hard-candidate/
+            benchmarks/pageindex-ab/results/freeze-candidate/

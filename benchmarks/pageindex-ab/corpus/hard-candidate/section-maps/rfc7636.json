@@ -1,0 +1,174 @@
+{
+  "document_id": "rfc7636",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-n-sakimura-ed",
+      "title": "Internet Engineering Task Force (IETF)                  N. Sakimura, Ed."
+    },
+    {
+      "id": "sec-1-introduction-3",
+      "title": "1 Introduction ....................................................3"
+    },
+    {
+      "id": "sec-2-notational-conventions-6",
+      "title": "2 Notational Conventions ..........................................6"
+    },
+    {
+      "id": "sec-3-terminology-7",
+      "title": "3 Terminology .....................................................7"
+    },
+    {
+      "id": "sec-4-protocol-8",
+      "title": "4 Protocol ........................................................8"
+    },
+    {
+      "id": "sec-5-compatibility-11",
+      "title": "5 Compatibility ..................................................11"
+    },
+    {
+      "id": "sec-6-iana-considerations-11",
+      "title": "6 IANA Considerations ............................................11"
+    },
+    {
+      "id": "sec-7-security-considerations-13",
+      "title": "7 Security Considerations ........................................13"
+    },
+    {
+      "id": "sec-8-references-15",
+      "title": "8 References .....................................................15"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-the-attacker-manages-to-register-a-malicious-application-on-the",
+      "title": "1 The attacker manages to register a malicious application on the"
+    },
+    {
+      "id": "sec-2-the-oauth-2-0-authorization-code-grant-is-used",
+      "title": "2 The OAuth 2.0 authorization code grant is used."
+    },
+    {
+      "id": "sec-3-the-attacker-has-access-to-the-oauth-2-0-rfc6749-client-id-and",
+      "title": "3 The attacker has access to the OAuth 2.0 [RFC6749] \"client_id\" and"
+    },
+    {
+      "id": "sec-4-either-one-of-the-following-condition-is-met",
+      "title": "4 Either one of the following condition is met:"
+    },
+    {
+      "id": "sec-1-1-protocol-flow",
+      "title": "1.1 Protocol Flow"
+    },
+    {
+      "id": "sec-2-notational-conventions",
+      "title": "2 Notational Conventions"
+    },
+    {
+      "id": "sec-3-terminology",
+      "title": "3 Terminology"
+    },
+    {
+      "id": "sec-3-1-abbreviations",
+      "title": "3.1 Abbreviations"
+    },
+    {
+      "id": "sec-4-protocol",
+      "title": "4 Protocol"
+    },
+    {
+      "id": "sec-4-1-client-creates-a-code-verifier",
+      "title": "4.1 Client Creates a Code Verifier"
+    },
+    {
+      "id": "sec-4-2-client-creates-the-code-challenge",
+      "title": "4.2 Client Creates the Code Challenge"
+    },
+    {
+      "id": "sec-4-3-client-sends-the-code-challenge-with-the-authorization-request",
+      "title": "4.3 Client Sends the Code Challenge with the Authorization Request"
+    },
+    {
+      "id": "sec-4-4-server-returns-the-code",
+      "title": "4.4 Server Returns the Code"
+    },
+    {
+      "id": "sec-4-4-1-error-response",
+      "title": "4.4.1 Error Response"
+    },
+    {
+      "id": "sec-4-5-client-sends-the-authorization-code-and-the-code-verifier-to-the",
+      "title": "4.5 Client Sends the Authorization Code and the Code Verifier to the"
+    },
+    {
+      "id": "sec-4-6-server-verifies-code-verifier-before-returning-the-tokens",
+      "title": "4.6 Server Verifies code_verifier before Returning the Tokens"
+    },
+    {
+      "id": "sec-5-compatibility",
+      "title": "5 Compatibility"
+    },
+    {
+      "id": "sec-6-iana-considerations",
+      "title": "6 IANA Considerations"
+    },
+    {
+      "id": "sec-6-1-oauth-parameters-registry",
+      "title": "6.1 OAuth Parameters Registry"
+    },
+    {
+      "id": "sec-6-2-pkce-code-challenge-method-registry",
+      "title": "6.2 PKCE Code Challenge Method Registry"
+    },
+    {
+      "id": "sec-6-2-1-registration-template",
+      "title": "6.2.1 Registration Template"
+    },
+    {
+      "id": "sec-6-2-2-initial-registry-contents",
+      "title": "6.2.2 Initial Registry Contents"
+    },
+    {
+      "id": "sec-7-security-considerations",
+      "title": "7 Security Considerations"
+    },
+    {
+      "id": "sec-7-1-entropy-of-the-code-verifier",
+      "title": "7.1 Entropy of the code_verifier"
+    },
+    {
+      "id": "sec-7-2-protection-against-eavesdroppers",
+      "title": "7.2 Protection against Eavesdroppers"
+    },
+    {
+      "id": "sec-7-3-salting-the-code-challenge",
+      "title": "7.3 Salting the code_challenge"
+    },
+    {
+      "id": "sec-7-4-oauth-security-considerations",
+      "title": "7.4 OAuth Security Considerations"
+    },
+    {
+      "id": "sec-7-5-tls-security-considerations",
+      "title": "7.5 TLS Security Considerations"
+    },
+    {
+      "id": "sec-8-references",
+      "title": "8 References"
+    },
+    {
+      "id": "sec-8-1-normative-references",
+      "title": "8.1 Normative References"
+    },
+    {
+      "id": "sec-8-2-informative-references",
+      "title": "8.2 Informative References"
+    },
+    {
+      "id": "sec-1600-amphitheatre-parkway",
+      "title": "1600 Amphitheatre Parkway"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7636.txt"
+}

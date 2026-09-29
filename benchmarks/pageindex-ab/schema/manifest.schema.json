@@ -19,7 +19,11 @@
   "properties": {
     "tag": {
       "type": "string",
-      "enum": ["pageindex-ab-v1", "pageindex-ab-v1-candidate"]
+      "enum": [
+        "pageindex-ab-v1",
+        "pageindex-ab-v1-candidate",
+        "pageindex-ab-v1-hard-candidate"
+      ]
     },
     "created_at": { "type": "string", "format": "date-time" },
     "harness_commit": { "type": "string", "minLength": 7 },
