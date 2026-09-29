@@ -1,0 +1,7 @@
+# Touch/edit this file to trigger GHA agent-factorial on hard-candidate:
+# full corpus (PAGEINDEX_AB_LIMIT=0), 3 trials, union + heading-gated extra arms,
+# plus offline displacement check.
+#
+# Approximate cost: ~161 questions × 10 arms × 3 trials ≈ 4.8k flash-lite calls (~$0.30–0.40).
+# Do not decide product defaults from n=24 / 1-trial samples.
+trigger: 2026-09-29Tdisplacement-union-gated-full

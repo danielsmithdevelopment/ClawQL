@@ -228,18 +228,28 @@ Draft correction copy: [`agent-memory-stack-corrections.md`](../gtm/pragmaticvec
 
 ## Predictions (fill before scored run)
 
-Draft signals (**not confirmatory** — hard-candidate preferred over easy synthetic):
+Draft signals (**not confirmatory** — hard-candidate preferred over easy synthetic). **Keep today's `H-idf` default** until a scaled run clears a contrast.
 
-| Field                | Easy synthetic agent-lite | Hard offline (n=161) | Hard agent-lite (n=24) |
-| -------------------- | ------------------------- | -------------------- | ---------------------- |
-| PageIndex effect     | 0.0 (ceiling 0.958)       | −0.006 overall\*     | **−0.125**             |
-| BM25 effect          | 0.0                       | +0.006               | 0.0                    |
-| CodeGraph effect     | 0.0                       | 0.0                  | 0.0                    |
-| Expected new default | n/a                       | keep `H-idf` for now | keep `H-idf` for now   |
-| Cost                 | ~$0.008                   | $0                   | ~$0.015 (run 36516156879) |
-| Recorded by / date   | cloud-agent / 2026-09-29  | same                 | same                   |
+| Field                | Easy synthetic agent-lite | Hard offline (n=161) | Hard agent-lite (n=24, 1 trial) |
+| -------------------- | ------------------------- | -------------------- | ------------------------------- |
+| PageIndex effect     | 0.0 (ceiling 0.958)       | −0.006 overall\*     | −0.125 (underpowered†)          |
+| BM25 effect          | 0.0                       | +0.006               | 0.0                             |
+| CodeGraph effect     | 0.0 (untested‡)           | 0.0 (ceiling)        | 0.0 (ceiling)                   |
+| Expected new default | n/a                       | keep `H-idf`         | keep `H-idf`                    |
+| Cost                 | ~$0.008                   | $0                   | ~$0.015 (run 36516156879)       |
+| Recorded by / date   | cloud-agent / 2026-09-29  | same                 | same                            |
 
-\*Hard offline by stratum (`H-idf`→`H-idf-pi`): well_structured 0.631→0.692; converted_pdf 0.875→0.594; weak 0.875→1.0.
+\*Hard offline by stratum (`H-idf`→`H-idf-pi` RRF same-size top-k): well_structured 0.631→0.692; converted_pdf 0.875→0.594; weak 0.875→1.0. Net converted_pdf drop is the real offline signal (28→19 of 32); RFCs/transcripts gain ~4 each where headings help.
+
+†Agent-lite −12.5 points ≈ 3/24 questions, one trial; four PI arms move together → one comparison. Exact binomial under all-against-PI is p≈0.25 — consistent with noise, **not** a clear negative. Do not decide from n=24.
+
+‡Code stratum scored 1.000 on every arm (tiny-repo ceiling); CG arm is a file-ranker proxy, not native CodeGraph. Untested, not zero.
+
+**Product-rule mismatch:** confirmatory PI arms RRF-merge into the same top-k, so every PI promotion displaces an IDF hit. That fits expensive-context budgets; the stated cheap-context rule wants **union** (IDF top-k ∪ PI hits). Displacement check + `H-idf-pi-union` / `H-idf-pi-gated` are the next offline/agent arms.
+
+**Displacement check (offline, landed):** Of 13 converted_pdf IDF→RRF losses, **13/13** had gold in IDF top-k and lost it after same-size merge (`fraction_losses_displaced=1`). Union recovers **13/13**; heading-gated PI (threshold 0.35) correctly stays off on converted_pdf and keeps **13/13**. Offline overall: `H-idf` 0.801 → RRF-PI 0.795 → **union 0.826 / gated 0.826**. RFC/`well_structured` H-idf misses: **15/15 retrieval** (gold never in top-k), 0 extraction.
+
+**Next run:** full hard set × confirmatory+extra arms × 3 trials via `.run-hard-agent-full` (~$0.30–0.40 flash-lite).
 
 Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass still required before spent `pageindex-ab-v1`.
 
@@ -249,8 +259,8 @@ Harvey LAB / ExtractBench remain excluded from the freeze. Human second-pass sti
 | --------------------- | ----------------------------------------------------------- |
 | Decision philosophy   | Frozen in v0.2: task completion only; cost/latency reported |
 | Factorial + contrasts | Frozen in this text                                         |
-| Harness scaffold      | v0.2 arms + offline factorial + GHA                         |
+| Harness scaffold      | v0.2 + union/gated extra arms + displacement check + GHA    |
 | BM25 implementation   | Landed (`CLAWQL_MEMORY_VAULT_RANKER`)                       |
 | Corpus / questions    | Hard-candidate (RFCs+long synthetics) landed; human freeze not spent |
 | Memory-stack post fix | Correction draft in-repo; live site pending                 |
-| Scored run            | Blocked on human freeze; cheap OpenRouter path proven       |
+| Scored run            | Blocked on human freeze; scale before concluding            |

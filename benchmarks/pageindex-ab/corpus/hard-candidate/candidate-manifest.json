@@ -198,13 +198,15 @@
   "predictions": {
     "pageindex_effect_offline": -0.0062,
     "pageindex_effect_agent_lite": -0.125,
+    "pageindex_agent_lite_note": "underpowered: 3/24 questions, 1 trial, p\approx0.25 — noise not clear negative",
     "bm25_effect_offline": 0.0062,
     "bm25_effect_agent_lite": 0.0,
     "codegraph_effect": 0.0,
-    "expected_new_default": "keep H-idf (today); PI not default-on from this hard-candidate sample",
+    "codegraph_note": "untested — code stratum ceilinged; file-ranker proxy not native CG",
+    "expected_new_default": "keep H-idf (today); no addition proven helpful yet",
     "recorded_by": "cloud-agent",
     "recorded_at": "2026-09-29T03:26:00Z",
-    "status": "draft_hard_candidate_agent_lite",
+    "status": "draft_hard_candidate_awaiting_displacement_and_full_scale",
     "agent_lite": {
       "run_url": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36516156879",
       "model": "google/gemini-2.5-flash-lite",
@@ -215,6 +217,6 @@
       "completion_tokens": 7106,
       "cost_estimate_usd": 0.0147
     },
-    "notes": "PI hurts overall on hard-candidate agent-lite (\u22120.125). Offline showed PI help on RFCs/weak but harm on converted_pdf. Not confirmatory freeze."
+    "notes": "Keep H-idf. Agent-lite PI \u22120.125 is underpowered. Offline converted_pdf 0.875\u21920.594 is the real signal (likely RRF displacement). Next: displacement check, then full hard \u00d73 with union + heading-gated PI."
   }
 }

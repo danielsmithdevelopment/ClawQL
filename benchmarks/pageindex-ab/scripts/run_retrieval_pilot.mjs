@@ -5,44 +5,56 @@
  * Modes:
  *   --corpus contaminated-smoke   (default; NEVER cite for product decisions)
  *   --corpus freeze-candidate     (synthetic candidate; not spent freeze)
+ *   --corpus hard-candidate       (RFCs + long synthetics; preferred)
  *
- * For each confirmatory arm × question, retrieve top section ids (or code paths),
- * emit answer-contract JSONL, and print citation / contrast metrics.
+ * Confirmatory arms: 2×2×2 ranker × PageIndex(RRF) × CodeGraph.
+ * Extra diagnostic arms (hard-candidate): union merge + heading-gated PI.
  */
 
 import {
   readFileSync,
   writeFileSync,
   mkdirSync,
-  mkdtempSync,
-  rmSync,
   existsSync,
-  readdirSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { pageindexBuildTree, pageindexTraverse } from "clawql-pageindex/mcp";
-import {
-  buildVaultRankerStats,
-  resolveVaultRankerModeEffect,
-  scoreWithVaultRanker,
-} from "clawql-memory/recall/vault-ranker";
-import { splitMarkdownSections } from "clawql-memory/recall/read-around";
-import { Effect } from "effect";
+import { retrieveForArm } from "./retrieval_helpers.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
-const ARMS = [
+/** Confirmatory 2×2×2 — PageIndex uses same-size RRF merge. */
+const CONFIRMATORY_ARMS = [
   { id: "H-idf", ranker: "idf", pageindex: false, codegraph: false },
-  { id: "H-idf-pi", ranker: "idf", pageindex: true, codegraph: false },
+  { id: "H-idf-pi", ranker: "idf", pageindex: true, codegraph: false, piMerge: "rrf" },
   { id: "H-bm25", ranker: "bm25", pageindex: false, codegraph: false },
-  { id: "H-bm25-pi", ranker: "bm25", pageindex: true, codegraph: false },
+  { id: "H-bm25-pi", ranker: "bm25", pageindex: true, codegraph: false, piMerge: "rrf" },
   { id: "H-idf-cg", ranker: "idf", pageindex: false, codegraph: true },
   { id: "H-bm25-cg", ranker: "bm25", pageindex: false, codegraph: true },
-  { id: "H-idf-pi-cg", ranker: "idf", pageindex: true, codegraph: true },
-  { id: "H-bm25-pi-cg", ranker: "bm25", pageindex: true, codegraph: true },
+  { id: "H-idf-pi-cg", ranker: "idf", pageindex: true, codegraph: true, piMerge: "rrf" },
+  { id: "H-bm25-pi-cg", ranker: "bm25", pageindex: true, codegraph: true, piMerge: "rrf" },
+];
+
+/** Extra arms matching cheap-context product rule + heading gate. */
+const EXTRA_ARMS = [
+  {
+    id: "H-idf-pi-union",
+    ranker: "idf",
+    pageindex: true,
+    codegraph: false,
+    piMerge: "union",
+    role: "diagnostic",
+  },
+  {
+    id: "H-idf-pi-gated",
+    ranker: "idf",
+    pageindex: true,
+    codegraph: false,
+    piMerge: "rrf",
+    piGated: true,
+    role: "diagnostic",
+  },
 ];
 
 function parseArgs(argv) {
@@ -65,6 +77,7 @@ function resolveCorpus(corpus) {
       docsDir: join(base, "docs"),
       codeDir: join(base, "code"),
       outDir: join(ROOT, "results", "contaminated-smoke"),
+      includeExtra: false,
     };
   }
   if (corpus === "freeze-candidate") {
@@ -76,6 +89,7 @@ function resolveCorpus(corpus) {
       docsDir: join(base, "docs"),
       codeDir: join(base, "code"),
       outDir: join(ROOT, "results", "freeze-candidate"),
+      includeExtra: false,
     };
   }
   if (corpus === "hard-candidate") {
@@ -87,6 +101,7 @@ function resolveCorpus(corpus) {
       docsDir: join(base, "docs"),
       codeDir: join(base, "code"),
       outDir: join(ROOT, "results", "hard-candidate"),
+      includeExtra: true,
     };
   }
   throw new Error(`unknown --corpus ${corpus}`);
@@ -136,137 +151,6 @@ function extractAnswer(text, key) {
   return { answer: "", not_found: true };
 }
 
-function rankSectionsVault(markdown, query, rankerMode) {
-  const sections = splitMarkdownSections(markdown);
-  const texts = sections.map((s) => s.content);
-  const stats = buildVaultRankerStats(texts, rankerMode);
-  return sections
-    .map((s) => ({
-      id: s.id,
-      title: s.title,
-      score: scoreWithVaultRanker(query, s.content, stats),
-      content: s.content,
-    }))
-    .sort((a, b) => b.score - a.score);
-}
-
-async function rankSectionsPageindex(docId, markdown, query, storagePath) {
-  await pageindexBuildTree({ docId, markdown, storagePath });
-  const hits = await pageindexTraverse({ docId, query, limit: 8, storagePath });
-  const sections = splitMarkdownSections(markdown);
-  const byTitle = new Map(sections.map((s) => [s.title.toLowerCase(), s]));
-  const ranked = [];
-  for (const h of hits.hits || hits || []) {
-    const title = (h.title || "").toLowerCase();
-    const sec = byTitle.get(title);
-    if (sec) {
-      ranked.push({
-        id: sec.id,
-        title: sec.title,
-        score: h.score ?? 1,
-        content: sec.content,
-      });
-    }
-  }
-  const seen = new Set();
-  return ranked.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
-}
-
-function rrfMerge(lists, k = 60) {
-  const scores = new Map();
-  for (const list of lists) {
-    list.forEach((item, i) => {
-      const add = 1 / (k + i + 1);
-      scores.set(item.id, (scores.get(item.id) || 0) + add);
-    });
-  }
-  const byId = new Map();
-  for (const list of lists) for (const item of list) byId.set(item.id, item);
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([id, score]) => ({ ...byId.get(id), score }));
-}
-
-function listCodeFiles(repoRoot) {
-  const out = [];
-  function walk(dir, prefix = "") {
-    if (!existsSync(dir)) return;
-    for (const ent of readdirSync(dir, { withFileTypes: true })) {
-      const rel = prefix ? `${prefix}/${ent.name}` : ent.name;
-      if (ent.isDirectory()) walk(join(dir, ent.name), rel);
-      else if (/\.(ts|js|tsx|jsx|py|go|rs|java)$/.test(ent.name)) out.push(rel);
-    }
-  }
-  walk(repoRoot);
-  return out;
-}
-
-function rankCodeFiles(codeDir, documentId, query, ranker) {
-  const root = join(codeDir, documentId);
-  const files = listCodeFiles(root);
-  const docs = files.map((f) => ({
-    id: f.startsWith("src/") || f.startsWith("test/") ? f : f,
-    content: readFileSync(join(root, f), "utf8"),
-  }));
-  process.env.CLAWQL_MEMORY_VAULT_RANKER = ranker;
-  const mode = Effect.runSync(resolveVaultRankerModeEffect());
-  const stats = buildVaultRankerStats(
-    docs.map((d) => d.content),
-    mode
-  );
-  return docs
-    .map((d) => ({
-      id: d.id,
-      title: d.id,
-      score: scoreWithVaultRanker(query, d.content, stats),
-      content: d.content,
-    }))
-    .sort((a, b) => b.score - a.score);
-}
-
-function resolveDocPath(docsDir, documentId) {
-  const direct = join(docsDir, `${documentId}.md`);
-  if (existsSync(direct)) return direct;
-  return null;
-}
-
-async function retrieveForArm(cfg, arm, key) {
-  if (key.stratum === "code") {
-    process.env.CLAWQL_MEMORY_VAULT_RANKER = arm.ranker;
-    const ranked = rankCodeFiles(cfg.codeDir, key.document_id, key.question, arm.ranker);
-    return ranked.slice(0, 3);
-  }
-
-  const docIds =
-    key.related_document_ids && key.related_document_ids.length
-      ? key.related_document_ids
-      : [key.document_id];
-
-  const lists = [];
-  for (const docId of docIds) {
-    const path = resolveDocPath(cfg.docsDir, docId);
-    if (!path) continue;
-    const markdown = readFileSync(path, "utf8");
-    process.env.CLAWQL_MEMORY_VAULT_RANKER = arm.ranker;
-    const vaultRanked = rankSectionsVault(markdown, key.question, arm.ranker);
-    let ranked = vaultRanked;
-    if (arm.pageindex) {
-      const tmp = mkdtempSync(join(tmpdir(), "piab-pi-"));
-      const storagePath = join(tmp, "pageindex.db.json");
-      try {
-        const piRanked = await rankSectionsPageindex(docId, markdown, key.question, storagePath);
-        ranked = rrfMerge([vaultRanked, piRanked]);
-      } finally {
-        rmSync(tmp, { recursive: true, force: true });
-      }
-    }
-    lists.push(ranked);
-  }
-  if (!lists.length) return [];
-  if (lists.length === 1) return lists[0].slice(0, 3);
-  return rrfMerge(lists).slice(0, 5);
-}
-
 async function main() {
   const { corpus } = parseArgs(process.argv);
   const cfg = resolveCorpus(corpus);
@@ -277,6 +161,9 @@ async function main() {
   }
   mkdirSync(cfg.outDir, { recursive: true });
   const keys = loadJsonl(cfg.keysPath);
+  const ARMS = cfg.includeExtra
+    ? [...CONFIRMATORY_ARMS, ...EXTRA_ARMS]
+    : CONFIRMATORY_ARMS;
   const allAnswers = [];
   const perArm = {};
 
@@ -366,6 +253,17 @@ async function main() {
       codegraph_main_effect: mean(cgOn) - mean(cgOff),
       combination_vs_today:
         summaries["H-bm25-pi-cg"].strict_accuracy - summaries["H-idf"].strict_accuracy,
+      // Diagnostic (not confirmatory Holms): union / gated vs today
+      ...(summaries["H-idf-pi-union"]
+        ? {
+            union_vs_today:
+              summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf"].strict_accuracy,
+            gated_vs_today:
+              summaries["H-idf-pi-gated"].strict_accuracy - summaries["H-idf"].strict_accuracy,
+            union_vs_rrf_pi:
+              summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf-pi"].strict_accuracy,
+          }
+        : {}),
     },
   };
 

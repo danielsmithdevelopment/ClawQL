@@ -48,6 +48,12 @@ def main() -> int:
     assert arms.get("philosophy", {}).get("latency_gates") is False
     assert arms.get("philosophy", {}).get("token_cost_gates") is False
     assert len(arms.get("confirmatory_contrasts") or []) >= 4
+    extra = arms.get("extra_merge_arms") or []
+    extra_ids = {a["id"] for a in extra}
+    for needed in ("H-idf-pi-union", "H-idf-pi-gated"):
+        assert needed in extra_ids, f"missing extra merge arm {needed}"
+    must_exist(SCRIPTS / "run_displacement_check.mjs")
+    must_exist(SCRIPTS / "retrieval_helpers.mjs")
 
     for name in ("answer-contract", "question", "manifest"):
         load_json(ROOT / "schema" / f"{name}.schema.json")

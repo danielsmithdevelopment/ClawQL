@@ -155,6 +155,30 @@
     }
   ],
   "holm_alpha": 0.05,
+  "extra_merge_arms": [
+    {
+      "id": "H-idf-pi-union",
+      "label": "+PageIndex union (IDF top-k ∪ PI hits)",
+      "ranker": "idf",
+      "pageindex": true,
+      "pageindex_merge": "union",
+      "codegraph": false,
+      "role": "diagnostic",
+      "notes": "Matches cheap-context product rule: PI supplements IDF without same-size displacement."
+    },
+    {
+      "id": "H-idf-pi-gated",
+      "label": "+PageIndex gated on heading quality",
+      "ranker": "idf",
+      "pageindex": true,
+      "pageindex_merge": "rrf",
+      "pageindex_gated": true,
+      "heading_quality_threshold": 0.35,
+      "codegraph": false,
+      "role": "diagnostic",
+      "notes": "Enable RRF PageIndex only when headingQualityScore(markdown) >= threshold."
+    }
+  ],
   "diagnostic_arms": [
     {
       "id": "D-pageindex",

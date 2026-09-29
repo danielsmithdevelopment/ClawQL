@@ -6,14 +6,16 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Gates:** strict accuracy / task completion only. Latency, tokens, and $ are reported — never decisive.
 
+**Current lean (not confirmatory):** keep `H-idf`. Nothing yet shows an addition improving it. Agent-lite PI −12.5 (n=24, 1 trial) is underpowered; the offline converted_pdf drop is the real signal and looks like same-size RRF displacement.
+
 ## Layout
 
 ```
 benchmarks/pageindex-ab/
   README.md
-  arms/arms.json          # 8 confirmatory (2×2×2) + diagnostics
+  arms/arms.json          # 8 confirmatory (2×2×2) + union/gated extras + diagnostics
   schema/                 # answer / question / manifest
-  scripts/                # grade, bootstrap, McNemar, pilots, freeze-candidate builder
+  scripts/                # grade, bootstrap, McNemar, pilots, displacement, builders
   design/read-around.md
   fixtures/contaminated-smoke/
   corpus/hard-candidate/    # RFCs + long synthetics (preferred; not spent)
@@ -23,14 +25,21 @@ benchmarks/pageindex-ab/
 
 ## Confirmatory factorial
 
-|                  | PI off          | PI on          |
-| ---------------- | --------------- | -------------- |
-| **IDF, CG off**  | `H-idf` (today) | `H-idf-pi`     |
-| **BM25, CG off** | `H-bm25`        | `H-bm25-pi`    |
-| **IDF, CG on**   | `H-idf-cg`      | `H-idf-pi-cg`  |
-| **BM25, CG on**  | `H-bm25-cg`     | `H-bm25-pi-cg` |
+|                  | PI off          | PI on (RRF same-size top-k) |
+| ---------------- | --------------- | --------------------------- |
+| **IDF, CG off**  | `H-idf` (today) | `H-idf-pi`                  |
+| **BM25, CG off** | `H-bm25`        | `H-bm25-pi`                 |
+| **IDF, CG on**   | `H-idf-cg`      | `H-idf-pi-cg`               |
+| **BM25, CG on**  | `H-bm25-cg`     | `H-bm25-pi-cg`              |
 
 Contrasts (Holm α=0.05): PageIndex main effect, BM25 main effect, CodeGraph main effect, combination vs `H-idf`.
+
+### Extra merge arms (diagnostic; hard-candidate)
+
+| Arm id            | Behavior                                                                 |
+| ----------------- | ------------------------------------------------------------------------ |
+| `H-idf-pi-union`  | IDF top-k ∪ PageIndex hits — matches cheap-context product rule          |
+| `H-idf-pi-gated`  | RRF PageIndex only when `headingQualityScore(markdown) ≥ 0.35`           |
 
 Diagnostics (`D-*`): alone baselines, grep, whole-doc, structured ontology, DuckDB SQL — never decide defaults.
 
@@ -48,6 +57,9 @@ node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminat
 # Hard candidate (preferred; Harvey/ExtractBench excluded)
 python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
 node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus hard-candidate
+
+# Free displacement check (converted_pdf gold-in-IDF-before-merge?)
+node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
 ```
 
 Agent-lite (cheap OpenRouter — retrieve → one completion):
@@ -56,12 +68,21 @@ Agent-lite (cheap OpenRouter — retrieve → one completion):
 export OPENROUTER_API_KEY=sk-or-…
 export PAGEINDEX_AB_CORPUS=hard-candidate
 export PAGEINDEX_AB_MODEL=google/gemini-2.5-flash-lite
-export PAGEINDEX_AB_LIMIT=24
+export PAGEINDEX_AB_LIMIT=0          # 0 = full corpus
+export PAGEINDEX_AB_TRIALS=3
+export PAGEINDEX_AB_EXTRA_ARMS=1     # union + gated
 node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
 ```
 
-GHA: touch `benchmarks/pageindex-ab/.run-hard-agent-lite` on the PR
-(until `pageindex-ab.yml` is on the default branch).
+GHA PR triggers:
+
+| Sentinel file                               | Corpus          | Limit | Trials | Extra arms |
+| ------------------------------------------- | --------------- | ----- | ------ | ---------- |
+| `.run-agent-lite`                           | freeze-candidate | 24   | 1      | off        |
+| `.run-hard-agent-lite`                      | hard-candidate  | 24    | 1      | on         |
+| `.run-hard-agent-full`                      | hard-candidate  | full  | 3      | on         |
+
+(Until `pageindex-ab.yml` is on the default branch, touch a sentinel on the PR path.)
 
 ## Preconditions
 
@@ -70,11 +91,12 @@ GHA: touch `benchmarks/pageindex-ab/.run-hard-agent-lite` on the PR
 | BM25 ranker (`CLAWQL_MEMORY_VAULT_RANKER`)              | Landed                                              |
 | `read_around`                                           | Landed                                              |
 | Contaminated-smoke pilot (3 docs + tiny-calc + 20 keys) | Landed                                              |
-| Offline retrieval factorial runner                      | Landed                                              |
+| Offline retrieval factorial runner                      | Landed (+ union/gated on hard-candidate)            |
+| Displacement check                                      | Landed                                              |
 | Easy freeze-candidate                                   | Landed (agent-lite ceiling — not discriminative)    |
-| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline + agent-lite discriminative        |
+| Hard-candidate (8 RFCs + long synthetics)               | Landed — offline discriminative; agent-lite n=24 underpowered |
 | Human freeze (`pageindex-ab-v1`)                        | **Not started**                                     |
-| Agent-lite on hard-candidate                            | Landed — PI **−0.125** (~$0.015, flash-lite n=24)   |
+| Full hard agent-lite × 3 trials                         | Next (`.run-hard-agent-full`)                       |
 | Full OpenCode × clawql-inference                        | Not yet (cost)                                      |
 | Harvey / ExtractBench in freeze                         | **Excluded** (diagnostics / parallel tracks only)   |
 | Memory-stack post correction on live site               | Draft in-repo                                       |

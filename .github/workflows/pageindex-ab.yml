@@ -3,8 +3,13 @@
 # - Agent-lite factorial: OPENROUTER_API_KEY + cheap flash-lite
 #
 # Note: workflow_dispatch only works after this file lands on the default branch.
-# Until then, push a change to benchmarks/pageindex-ab/.run-agent-lite to trigger
+# Until then, push a change to benchmarks/pageindex-ab/.run-* to trigger
 # agent-factorial from a PR head (uses the branch workflow file).
+#
+# Sentinels (PR path):
+#   .run-agent-lite       → freeze-candidate, limit=24, trials=1
+#   .run-hard-agent-lite  → hard-candidate, limit=24, trials=1
+#   .run-hard-agent-full  → hard-candidate, full corpus (limit=0), trials=3, +extra arms
 
 name: PageIndex A/B (memory stack default-route)
 
@@ -23,7 +28,7 @@ on:
         type: number
         default: 1
       limit:
-        description: Stratified question sample size (agent-lite; keep low for cost)
+        description: Stratified question sample size (0 = full corpus)
         type: number
         default: 24
       model:
@@ -34,6 +39,7 @@ on:
     paths:
       - "benchmarks/pageindex-ab/.run-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-lite"
+      - "benchmarks/pageindex-ab/.run-hard-agent-full"
       - ".github/workflows/pageindex-ab.yml"
 
 permissions:
@@ -79,7 +85,7 @@ jobs:
   agent-factorial:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial') || github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -120,28 +126,51 @@ jobs:
           npm run build -w clawql-merkle -w clawql-core -w clawql-audit
           -w clawql-auth -w clawql-pageindex -w clawql-codegraph
           -w clawql-api -w clawql-memory
-      - name: Select corpus
+      - name: Select corpus and scale
         id: corpus
         run: |
-          if [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
+          if [ -f benchmarks/pageindex-ab/.run-hard-agent-full ]; then
             echo "name=hard-candidate" >> "$GITHUB_OUTPUT"
             echo "builder=build_hard_candidate.py" >> "$GITHUB_OUTPUT"
+            echo "limit=0" >> "$GITHUB_OUTPUT"
+            echo "trials=3" >> "$GITHUB_OUTPUT"
+            echo "extra_arms=1" >> "$GITHUB_OUTPUT"
+            echo "run_displacement=1" >> "$GITHUB_OUTPUT"
+          elif [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
+            echo "name=hard-candidate" >> "$GITHUB_OUTPUT"
+            echo "builder=build_hard_candidate.py" >> "$GITHUB_OUTPUT"
+            echo "limit=24" >> "$GITHUB_OUTPUT"
+            echo "trials=1" >> "$GITHUB_OUTPUT"
+            echo "extra_arms=1" >> "$GITHUB_OUTPUT"
+            echo "run_displacement=1" >> "$GITHUB_OUTPUT"
           else
             echo "name=freeze-candidate" >> "$GITHUB_OUTPUT"
             echo "builder=build_freeze_candidate.py" >> "$GITHUB_OUTPUT"
+            echo "limit=24" >> "$GITHUB_OUTPUT"
+            echo "trials=1" >> "$GITHUB_OUTPUT"
+            echo "extra_arms=0" >> "$GITHUB_OUTPUT"
+            echo "run_displacement=0" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "limit=${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
+            echo "trials=${{ inputs.trials }}" >> "$GITHUB_OUTPUT"
           fi
       - name: Build candidate corpus
         run: python3 "benchmarks/pageindex-ab/scripts/${{ steps.corpus.outputs.builder }}"
       - name: Offline factorial (candidate)
         run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus ${{ steps.corpus.outputs.name }}
-      - name: Agent-lite factorial (cheap)
+      - name: Displacement check (hard-candidate)
+        if: ${{ steps.corpus.outputs.run_displacement == '1' }}
+        run: node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
+      - name: Agent-lite factorial
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           PAGEINDEX_AB_CORPUS: ${{ steps.corpus.outputs.name }}
           PAGEINDEX_AB_MODE: agent-lite
           PAGEINDEX_AB_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.model || 'google/gemini-2.5-flash-lite' }}
-          PAGEINDEX_AB_LIMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.limit || 24 }}
-          PAGEINDEX_AB_TRIALS: ${{ github.event_name == 'workflow_dispatch' && inputs.trials || 1 }}
+          PAGEINDEX_AB_LIMIT: ${{ steps.corpus.outputs.limit }}
+          PAGEINDEX_AB_TRIALS: ${{ steps.corpus.outputs.trials }}
+          PAGEINDEX_AB_EXTRA_ARMS: ${{ steps.corpus.outputs.extra_arms }}
           PAGEINDEX_AB_CONCURRENCY: "4"
           CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
           CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab

@@ -4,35 +4,21 @@
  *
  * Cost posture (default):
  *   - Model: google/gemini-2.5-flash-lite (override with PAGEINDEX_AB_MODEL)
- *   - Stratified sample: PAGEINDEX_AB_LIMIT (default 24)
+ *   - Stratified sample: PAGEINDEX_AB_LIMIT (default 24; 0 = full corpus)
  *   - Mode: retrieval → single LLM completion (not full OpenCode tool loops)
  *   - Trials: PAGEINDEX_AB_TRIALS (default 1)
+ *   - Extra arms (union + heading-gated PI): PAGEINDEX_AB_EXTRA_ARMS=1
+ *     (auto-on for hard-candidate)
  *
  * Full OpenCode × clawql-inference matrix remains a follow-up (PAGEINDEX_AB_MODE=opencode).
  *
  * Exit codes: 0 ok · 2 missing key/keys · 3 OpenRouter/API failure · 4 unsupported mode
  */
 
-import {
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  mkdtempSync,
-  rmSync,
-  readdirSync,
-} from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { pageindexBuildTree, pageindexTraverse } from "clawql-pageindex/mcp";
-import {
-  buildVaultRankerStats,
-  resolveVaultRankerModeEffect,
-  scoreWithVaultRanker,
-} from "clawql-memory/recall/vault-ranker";
-import { splitMarkdownSections } from "clawql-memory/recall/read-around";
-import { Effect } from "effect";
+import { retrieveForArm } from "./retrieval_helpers.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -42,22 +28,44 @@ const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
 const DEFAULT_LIMIT = 24;
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-const ARMS = [
+const CONFIRMATORY_ARMS = [
   { id: "H-idf", ranker: "idf", pageindex: false, codegraph: false },
-  { id: "H-idf-pi", ranker: "idf", pageindex: true, codegraph: false },
+  { id: "H-idf-pi", ranker: "idf", pageindex: true, codegraph: false, piMerge: "rrf" },
   { id: "H-bm25", ranker: "bm25", pageindex: false, codegraph: false },
-  { id: "H-bm25-pi", ranker: "bm25", pageindex: true, codegraph: false },
+  { id: "H-bm25-pi", ranker: "bm25", pageindex: true, codegraph: false, piMerge: "rrf" },
   { id: "H-idf-cg", ranker: "idf", pageindex: false, codegraph: true },
   { id: "H-bm25-cg", ranker: "bm25", pageindex: false, codegraph: true },
-  { id: "H-idf-pi-cg", ranker: "idf", pageindex: true, codegraph: true },
-  { id: "H-bm25-pi-cg", ranker: "bm25", pageindex: true, codegraph: true },
+  { id: "H-idf-pi-cg", ranker: "idf", pageindex: true, codegraph: true, piMerge: "rrf" },
+  { id: "H-bm25-pi-cg", ranker: "bm25", pageindex: true, codegraph: true, piMerge: "rrf" },
 ];
 
-function envInt(name, fallback) {
+const EXTRA_ARMS = [
+  {
+    id: "H-idf-pi-union",
+    ranker: "idf",
+    pageindex: true,
+    codegraph: false,
+    piMerge: "union",
+    role: "diagnostic",
+  },
+  {
+    id: "H-idf-pi-gated",
+    ranker: "idf",
+    pageindex: true,
+    codegraph: false,
+    piMerge: "rrf",
+    piGated: true,
+    role: "diagnostic",
+  },
+];
+
+function envInt(name, fallback, { allowZero = false } = {}) {
   const raw = process.env[name];
   if (raw == null || raw === "") return fallback;
   const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+  if (!Number.isFinite(n)) return fallback;
+  if (allowZero && n === 0) return 0;
+  return n > 0 ? Math.floor(n) : fallback;
 }
 
 function loadJsonl(path) {
@@ -124,6 +132,7 @@ function resolveCorpus(corpus) {
       keysPath: join(ROOT, "fixtures", "contaminated-smoke", "pilot-keys.jsonl"),
       docsDir: join(ROOT, "fixtures", "contaminated-smoke", "docs"),
       codeDir: join(ROOT, "fixtures", "contaminated-smoke", "code"),
+      includeExtraDefault: false,
     };
   }
   if (corpus === "hard-candidate") {
@@ -133,6 +142,7 @@ function resolveCorpus(corpus) {
       keysPath: join(ROOT, "corpus", "hard-candidate", "keys.jsonl"),
       docsDir: join(ROOT, "corpus", "hard-candidate", "docs"),
       codeDir: join(ROOT, "corpus", "hard-candidate", "code"),
+      includeExtraDefault: true,
     };
   }
   return {
@@ -141,127 +151,8 @@ function resolveCorpus(corpus) {
     keysPath: join(ROOT, "corpus", "freeze-candidate", "keys.jsonl"),
     docsDir: join(ROOT, "corpus", "freeze-candidate", "docs"),
     codeDir: join(ROOT, "corpus", "freeze-candidate", "code"),
+    includeExtraDefault: false,
   };
-}
-
-function rankSectionsVault(markdown, query, rankerMode) {
-  const sections = splitMarkdownSections(markdown);
-  const texts = sections.map((s) => s.content);
-  const stats = buildVaultRankerStats(texts, rankerMode);
-  return sections
-    .map((s) => ({
-      id: s.id,
-      title: s.title,
-      score: scoreWithVaultRanker(query, s.content, stats),
-      content: s.content,
-    }))
-    .sort((a, b) => b.score - a.score);
-}
-
-async function rankSectionsPageindex(docId, markdown, query, storagePath) {
-  await pageindexBuildTree({ docId, markdown, storagePath });
-  const hits = await pageindexTraverse({ docId, query, limit: 8, storagePath });
-  const sections = splitMarkdownSections(markdown);
-  const byTitle = new Map(sections.map((s) => [s.title.toLowerCase(), s]));
-  const ranked = [];
-  for (const h of hits.hits || hits || []) {
-    const title = (h.title || "").toLowerCase();
-    const sec = byTitle.get(title);
-    if (sec) {
-      ranked.push({
-        id: sec.id,
-        title: sec.title,
-        score: h.score ?? 1,
-        content: sec.content,
-      });
-    }
-  }
-  const seen = new Set();
-  return ranked.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
-}
-
-function rrfMerge(lists, k = 60) {
-  const scores = new Map();
-  for (const list of lists) {
-    list.forEach((item, i) => {
-      scores.set(item.id, (scores.get(item.id) || 0) + 1 / (k + i + 1));
-    });
-  }
-  const byId = new Map();
-  for (const list of lists) for (const item of list) byId.set(item.id, item);
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([id, score]) => ({ ...byId.get(id), score }));
-}
-
-function listCodeFiles(repoRoot) {
-  const out = [];
-  function walk(dir, prefix = "") {
-    if (!existsSync(dir)) return;
-    for (const ent of readdirSync(dir, { withFileTypes: true })) {
-      const rel = prefix ? `${prefix}/${ent.name}` : ent.name;
-      if (ent.isDirectory()) walk(join(dir, ent.name), rel);
-      else if (/\.(ts|js|tsx|jsx)$/.test(ent.name)) out.push(rel);
-    }
-  }
-  walk(repoRoot);
-  return out;
-}
-
-function rankCodeFiles(codeDir, documentId, query, ranker) {
-  const root = join(codeDir, documentId);
-  const files = listCodeFiles(root);
-  const docs = files.map((f) => ({
-    id: f,
-    content: readFileSync(join(root, f), "utf8"),
-  }));
-  process.env.CLAWQL_MEMORY_VAULT_RANKER = ranker;
-  const mode = Effect.runSync(resolveVaultRankerModeEffect());
-  const stats = buildVaultRankerStats(
-    docs.map((d) => d.content),
-    mode
-  );
-  return docs
-    .map((d) => ({
-      id: d.id,
-      title: d.id,
-      score: scoreWithVaultRanker(query, d.content, stats),
-      content: d.content,
-    }))
-    .sort((a, b) => b.score - a.score);
-}
-
-async function retrieveForArm(cfg, arm, key) {
-  if (key.stratum === "code") {
-    return rankCodeFiles(cfg.codeDir, key.document_id, key.question, arm.ranker).slice(0, 3);
-  }
-  const docIds =
-    key.related_document_ids && key.related_document_ids.length
-      ? key.related_document_ids
-      : [key.document_id];
-  const lists = [];
-  for (const docId of docIds) {
-    const path = join(cfg.docsDir, `${docId}.md`);
-    if (!existsSync(path)) continue;
-    const markdown = readFileSync(path, "utf8");
-    process.env.CLAWQL_MEMORY_VAULT_RANKER = arm.ranker;
-    const vaultRanked = rankSectionsVault(markdown, key.question, arm.ranker);
-    let ranked = vaultRanked;
-    if (arm.pageindex) {
-      const tmp = mkdtempSync(join(tmpdir(), "piab-agent-"));
-      const storagePath = join(tmp, "pageindex.db.json");
-      try {
-        const piRanked = await rankSectionsPageindex(docId, markdown, key.question, storagePath);
-        ranked = rrfMerge([vaultRanked, piRanked]);
-      } finally {
-        rmSync(tmp, { recursive: true, force: true });
-      }
-    }
-    lists.push(ranked);
-  }
-  if (!lists.length) return [];
-  if (lists.length === 1) return lists[0].slice(0, 3);
-  return rrfMerge(lists).slice(0, 5);
 }
 
 function buildPrompt(key, top) {
@@ -354,9 +245,9 @@ function gradeRow(key, row) {
   return { ok: textOk && citeOk, cite };
 }
 
-async function runAgentLite({ apiKey, model, cfg, keys, trials, concurrency }) {
+async function runAgentLite({ apiKey, model, cfg, keys, trials, concurrency, arms }) {
   const cells = [];
-  for (const arm of ARMS) {
+  for (const arm of arms) {
     for (const key of keys) {
       for (let trial = 1; trial <= trials; trial++) {
         cells.push({ arm, key, trial });
@@ -397,7 +288,7 @@ async function runAgentLite({ apiKey, model, cfg, keys, trials, concurrency }) {
 
   // Aggregate trials by majority for grading (trial=1 → identity)
   const summaries = {};
-  for (const arm of ARMS) {
+  for (const arm of arms) {
     let strict = 0;
     let citeSum = 0;
     let n = 0;
@@ -431,16 +322,26 @@ async function runAgentLite({ apiKey, model, cfg, keys, trials, concurrency }) {
   const cgOff = ["H-idf", "H-bm25", "H-idf-pi", "H-bm25-pi"];
   const mean = (ids) => ids.reduce((s, id) => s + summaries[id].strict_accuracy, 0) / ids.length;
 
+  const contrasts = {
+    pageindex_main_effect: mean(piOn) - mean(piOff),
+    bm25_main_effect: mean(bm25) - mean(idf),
+    codegraph_main_effect: mean(cgOn) - mean(cgOff),
+    combination_vs_today:
+      summaries["H-bm25-pi-cg"].strict_accuracy - summaries["H-idf"].strict_accuracy,
+  };
+  if (summaries["H-idf-pi-union"]) {
+    contrasts.union_vs_today =
+      summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf"].strict_accuracy;
+    contrasts.gated_vs_today =
+      summaries["H-idf-pi-gated"].strict_accuracy - summaries["H-idf"].strict_accuracy;
+    contrasts.union_vs_rrf_pi =
+      summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf-pi"].strict_accuracy;
+  }
+
   return {
     answers,
     summaries,
-    contrasts: {
-      pageindex_main_effect: mean(piOn) - mean(piOff),
-      bm25_main_effect: mean(bm25) - mean(idf),
-      codegraph_main_effect: mean(cgOn) - mean(cgOff),
-      combination_vs_today:
-        summaries["H-bm25-pi-cg"].strict_accuracy - summaries["H-idf"].strict_accuracy,
-    },
+    contrasts,
     usage: { prompt_tokens: promptTokens, completion_tokens: completionTokens },
   };
 }
@@ -451,7 +352,7 @@ async function main() {
   const corpus = process.env.PAGEINDEX_AB_CORPUS || "freeze-candidate";
   const mode = (process.env.PAGEINDEX_AB_MODE || "agent-lite").toLowerCase();
   const model = process.env.PAGEINDEX_AB_MODEL || DEFAULT_MODEL;
-  const limit = envInt("PAGEINDEX_AB_LIMIT", DEFAULT_LIMIT);
+  const limit = envInt("PAGEINDEX_AB_LIMIT", DEFAULT_LIMIT, { allowZero: true });
   const trials = envInt("PAGEINDEX_AB_TRIALS", envInt("OPENBENCH_TRIALS", 1));
   const concurrency = envInt("PAGEINDEX_AB_CONCURRENCY", 4);
   const cfg = resolveCorpus(corpus);
@@ -495,7 +396,13 @@ async function main() {
 
   const allKeys = loadJsonl(cfg.keysPath);
   const keys = sampleKeys(allKeys, limit);
-  const nCells = keys.length * ARMS.length * trials;
+  const extraEnv = (process.env.PAGEINDEX_AB_EXTRA_ARMS || "").trim();
+  const includeExtra =
+    extraEnv === "1" ||
+    extraEnv.toLowerCase() === "true" ||
+    (extraEnv === "" && Boolean(cfg.includeExtraDefault));
+  const arms = includeExtra ? [...CONFIRMATORY_ARMS, ...EXTRA_ARMS] : CONFIRMATORY_ARMS;
+  const nCells = keys.length * arms.length * trials;
 
   console.error(
     JSON.stringify({
@@ -504,17 +411,20 @@ async function main() {
       model,
       corpus: cfg.tag,
       n_questions: keys.length,
-      n_arms: ARMS.length,
+      n_arms: arms.length,
+      arm_ids: arms.map((a) => a.id),
       trials,
       n_cells: nCells,
       concurrency,
-      cost_note: "flash-lite + single completion per cell; keep PAGEINDEX_AB_LIMIT small",
+      include_extra_arms: includeExtra,
+      cost_note:
+        "flash-lite + single completion per cell; PAGEINDEX_AB_LIMIT=0 runs full corpus",
     })
   );
 
   let result;
   try {
-    result = await runAgentLite({ apiKey, model, cfg, keys, trials, concurrency });
+    result = await runAgentLite({ apiKey, model, cfg, keys, trials, concurrency, arms });
   } catch (err) {
     const report = {
       ok: false,
