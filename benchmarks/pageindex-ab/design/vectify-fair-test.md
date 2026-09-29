@@ -1,16 +1,18 @@
 # VectifyAI PageIndex fair test (freeze-critical)
 
-**Status:** **ran** — Track A **tie** (Net=4 < 5) → **purge** (no Vectify port). Decision: [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
+**Status:** **ran** — Track A **tie** (Net=4 < 5) → **purge** ClawQL PageIndex product surface; **no Vectify port**. Decision: [`vectify-fair-decision.json`](vectify-fair-decision.json) ([GHA 36599931555](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36599931555)).  
+**Post-8.0:** Vectify-style redesign (LLM summaries + strong tree nav) on a **larger fresh hard set** — [`docs/backlog/post-8.0-vectify-pageindex.md`](../../../docs/backlog/post-8.0-vectify-pageindex.md). These 12 RFC keys are **spent**.  
+**Track B:** last lever for the **8** still-unsolved deep misses (grep+read); if that fails, inspect those keys.  
 **Freeze:** 2026-10-15
 
 ## Gap
 
-ClawQL’s shipped `pageindex_*` / hybrid RRF path is a **deterministic heading tree + lexical merge**. That is **not** how VectifyAI designed PageIndex. Their product is:
+ClawQL’s shipped `pageindex_*` / hybrid RRF path was a **deterministic heading tree + lexical merge**. That is **not** how VectifyAI designed PageIndex. Their product is:
 
 1. **Index:** tree with **LLM-written node summaries**
 2. **Retrieve:** a **strong model navigates** the tree (reasoning, not similarity)
 
-Judging `pageindex_*` only on our ranker-mode A/B would purge (or keep) the wrong thing. The fair test uses **their MIT implementation as-is** — no ClawQL port until it wins under the rules below.
+Judging `pageindex_*` only on our ranker-mode A/B would purge (or keep) the wrong thing. The fair test used **their MIT implementation as-is**. Result: **tie** → purge current surface; do **not** port Vectify into 8.0.
 
 ## Cohorts
 
@@ -69,14 +71,15 @@ Upstream local `submit_document` is PDF-only. Prefer official IETF bytes so a lo
 
 Live / GHA default: `--pdf-source ietf` (tries 1 then 2). Do not score a run that fell back to `bridge` for any doc in the cohort without noting it in the decision artifact.
 
-## How Track A and Track B combine (locked)
+## How Track A and Track B combine (locked — A settled)
 
-| Track A (Vectify vs qrewrite) | Track B (ClawQL agent loop vs grep) | Action at freeze |
-| ----------------------------- | ----------------------------------- | ---------------- |
-| Vectify **beats** | ClawQL `pageindex_*` **loses** | **Purge** current tools at 8.0.0; rebuild on Vectify’s design **after** 8.0.0; ship only once proven |
-| Vectify **loses** or **tie** | loses or tie | **Purge**, done |
-| any | ClawQL `pageindex_*` **beats** grep | **Keep opt-in** (`CLAWQL_ENABLE_PAGEINDEX=1`) |
-| Vectify beats | ClawQL also beats | Keep opt-in; still consider porting Vectify design as upgrade path |
+| Track A (Vectify vs qrewrite) | Track B | Action at freeze |
+| ----------------------------- | ------- | ---------------- |
+| **Tie (done, Net=4)** | — | **Purge** ClawQL `pageindex_*` / hybrid / flags; **no Vectify port** in 8.0 |
+| — | Grep+read on **8** remaining `tag: T` misses | Last lever; on failure → inspect keys |
+| — | `codegraph_*` vs grep | Independent of Vectify |
+
+**8 deep misses still unsolved** (every method including Vectify): `hc-rfc-08-q03`, `hc-rfc-05-q02`, `hc-rfc-01-q02`, `hc-rfc-01-q03`, `hc-rfc-04-q02`, `hc-rfc-03-q03`, `hc-rfc-03-q02`, `hc-rfc-07-q03`.
 
 `codegraph_*` is decided only by Track B (grep-insoluble jobs), independent of Vectify.
 
@@ -121,6 +124,6 @@ python3 benchmarks/pageindex-ab/scripts/decide_vectify_fair_test.py \
 
 | Track | Work | Blocks |
 | ----- | ---- | ------ |
-| **A (parallel)** | This fair test (misses + no-harm) | Port-vs-purge for PageIndex *design* |
-| **B (parallel)** | Strong-model agent loop vs grep — [agent-loop-freeze.md](agent-loop-freeze.md) | Catalog keep / purge |
+| **A (done)** | This fair test → tie / purge / no port | PageIndex product surface purged |
+| **B (last lever)** | Grep+read agent loop on 8 remaining misses — [agent-loop-freeze.md](agent-loop-freeze.md) | Miss recovery / key hygiene; codegraph prove |
 | **C (can lag)** | k-sweep + union matched-k | Default k / union confound only |

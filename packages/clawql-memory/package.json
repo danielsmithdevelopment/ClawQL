@@ -135,7 +135,6 @@
     "clawql-api": "0.1.0",
     "clawql-codegraph": "0.1.0",
     "clawql-core": "0.1.0",
-    "clawql-pageindex": "0.1.0",
     "effect": "^3.21.4",
     "fflate": "^0.8.2",
     "pg": "^8.21.0",

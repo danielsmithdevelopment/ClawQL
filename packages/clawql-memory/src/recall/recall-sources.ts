@@ -2,7 +2,7 @@
  * memory_recall source selection and normalized multi-source hit/followUp helpers.
  */
 
-export const MEMORY_RECALL_SOURCES = ["vault", "vector", "codegraph", "pageindex", "onyx"] as const;
+export const MEMORY_RECALL_SOURCES = ["vault", "vector", "codegraph", "onyx"] as const;
 
 export type MemoryRecallSource = (typeof MEMORY_RECALL_SOURCES)[number];
 
@@ -35,14 +35,6 @@ export function envFlagTruthy(key: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-/** Env-gated hybrid pageindex merge into memory_recall defaults. */
-export function hybridPageIndexRecallEnabled(): boolean {
-  return (
-    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX") ||
-    envFlagTruthy("CLAWQL_MEMORY_RECALL_HYBRID")
-  );
-}
-
 /** Env-gated hybrid Onyx merge into memory_recall defaults. */
 export function hybridOnyxRecallEnabled(): boolean {
   return (
@@ -71,7 +63,6 @@ export function resolveMemoryRecallSources(input: {
   ) {
     s.add("codegraph");
   }
-  if (hybridPageIndexRecallEnabled()) s.add("pageindex");
   if (hybridOnyxRecallEnabled()) s.add("onyx");
   return s;
 }

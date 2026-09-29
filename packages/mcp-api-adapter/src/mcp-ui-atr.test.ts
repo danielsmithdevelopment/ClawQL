@@ -14,14 +14,13 @@ const tools: ListedMcpTool[] = [
   { name: "memory_ingest", inputSchema: { type: "object", properties: {} } },
   { name: "cache", inputSchema: { type: "object", properties: {} } },
   { name: "audit", inputSchema: { type: "object", properties: {} } },
-  { name: "pageindex_build_tree", inputSchema: { type: "object", properties: {} } },
   { name: "ouroboros_run_evolutionary_loop", inputSchema: { type: "object", properties: {} } },
 ];
 
 describe("mcp-ui-atr", () => {
   it("identifies internal tool prefixes", () => {
     expect(isInternalToolName("ouroboros_run_evolutionary_loop")).toBe(true);
-    expect(isInternalToolName("pageindex_build_tree")).toBe(true);
+    expect(isInternalToolName("pageindex_build_tree")).toBe(false);
     expect(isInternalToolName("memory_recall")).toBe(false);
   });
 
@@ -39,7 +38,6 @@ describe("mcp-ui-atr", () => {
     const names = filterToolsForAtr(tools, atr, true).map((t) => t.name).sort();
     expect(names).toEqual(["memory_ingest", "memory_recall", "search"]);
     expect(isToolAuthorizedForAtr("ouroboros_run_evolutionary_loop", atr)).toBe(false);
-    expect(isToolAuthorizedForAtr("pageindex_build_tree", atr)).toBe(false);
     expect(isToolAuthorizedForAtr("execute", atr)).toBe(false);
   });
 
@@ -47,20 +45,13 @@ describe("mcp-ui-atr", () => {
     const atr = {
       sub: "dev",
       scope: ["search"],
-      tools: ["pageindex_build_tree"],
+      tools: ["ouroboros_run_evolutionary_loop"],
     };
     expect(isToolAuthorizedForAtr("search", atr)).toBe(true);
-    expect(isToolAuthorizedForAtr("pageindex_build_tree", atr)).toBe(true);
-    expect(isToolAuthorizedForAtr("ouroboros_run_evolutionary_loop", atr)).toBe(false);
+    expect(isToolAuthorizedForAtr("ouroboros_run_evolutionary_loop", atr)).toBe(true);
   });
 
-  it("family scopes pageindex / ouroboros grant internal prefixes", () => {
-    expect(
-      isToolAuthorizedForAtr("pageindex_build_tree", {
-        sub: "x",
-        scope: ["pageindex"],
-      })
-    ).toBe(true);
+  it("family scope ouroboros grants internal prefixes", () => {
     expect(
       isToolAuthorizedForAtr("ouroboros_run_evolutionary_loop", {
         sub: "x",

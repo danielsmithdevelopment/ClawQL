@@ -29,7 +29,6 @@ required = [
     "TIKA_BASE_URL",
     "GOTENBERG_BASE_URL",
     "PAPERLESS_BASE_URL",
-    "CLAWQL_ENABLE_PAGEINDEX",
 ]
 for needle in required:
     if needle not in text:

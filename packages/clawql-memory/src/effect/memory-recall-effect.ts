@@ -37,7 +37,6 @@ import {
   recallCodeGraphSupplementPack,
   type CodeGraphRecallHit,
 } from "../recall/codegraph-recall.js";
-import { recallPageIndexSupplement } from "../recall/pageindex-recall.js";
 import { recallOnyxSupplement } from "../recall/onyx-recall.js";
 import {
   catalogCandidatePaths,
@@ -197,7 +196,6 @@ export function executeMemoryRecallCoreEffect(
     const wantVault = sources.has("vault");
     const wantVector = sources.has("vector");
     const wantCodeGraph = sources.has("codegraph");
-    const wantPageIndex = sources.has("pageindex");
     const wantOnyx = sources.has("onyx");
 
     const limit =
@@ -569,18 +567,6 @@ export function executeMemoryRecallCoreEffect(
       if (pack.codeGraphHits.length > 0) codeGraphHits = pack.codeGraphHits;
       normalizedHits.push(...pack.hits);
       followUps.push(...pack.followUps);
-    }
-
-    if (wantPageIndex) {
-      const pi = yield* memoryFromPromise(() =>
-        recallPageIndexSupplement({
-          query,
-          limit: envInt("CLAWQL_MEMORY_RECALL_PAGEINDEX_LIMIT", 8),
-        })
-      );
-      if (pi.skipped) sourceNotes.pageindex = pi.skipped;
-      normalizedHits.push(...pi.hits);
-      followUps.push(...pi.followUps);
     }
 
     if (wantOnyx) {

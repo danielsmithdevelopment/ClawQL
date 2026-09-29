@@ -27,13 +27,6 @@ function wantEmbeddingsRebuild(effective: MemoryIngestInput): boolean {
   );
 }
 
-function wantPageIndexRebuild(effective: MemoryIngestInput): boolean {
-  return (
-    effective.rebuild?.pageindex === true ||
-    process.env.CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX?.trim() === "1"
-  );
-}
-
 /**
  * Vault write + post-sync / rebuild as Effect.gen.
  * fs / Presidio stay behind {@link memoryFromPromise}; db sync via {@link MemoryDbService}.
@@ -89,23 +82,6 @@ export function executeMemoryIngestCoreEffect(
     }
 
     yield* vaultProviderIndexEffect(vault);
-
-    if (wantPageIndexRebuild(effective) && result.path) {
-      rebuild.pageindex = yield* memoryFromPromise(async () => {
-        try {
-          const { pageindexBuildFromVaultPath } = await import("../recall/pageindex-recall.js");
-          const docId = result.path!.replace(/^Memory\//, "").replace(/\.md$/i, "");
-          return await pageindexBuildFromVaultPath({
-            docId,
-            vaultRelativePath: result.path!,
-          });
-        } catch (e) {
-          return {
-            error: e instanceof Error ? e.message : String(e),
-          };
-        }
-      });
-    }
 
     yield* memoryFromPromise(async () => {
       const { runAfterIngestVaultSync } = await import("../sync/vault-sync-hooks.js");

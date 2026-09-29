@@ -59,7 +59,7 @@ When **`CLAWQL_ENABLE_MEMORY=0`** (or the Operator CRD omits the memory Layer), 
 
 | Plugin               | MCP tools                                              | Notes                                                                                         |
 | -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| **MemoryPlugin**     | `memory_ingest`, `memory_recall`, `pageindex_*`        | PageIndex via `clawql-pageindex`; hide with `CLAWQL_ENABLE_PAGEINDEX=0`                       |
+| **MemoryPlugin**     | `memory_ingest`, `memory_recall`, `read_around`, optional `codegraph_*` | PageIndex purged in 8.0; CodeGraph opt-in via `CLAWQL_ENABLE_CODEGRAPH=1` |
 | **DocumentsPlugin**  | `ingest_external_knowledge`, optional Onyx / IDP tools | Bulk Markdown + URL ingest; IDP runner when enabled                                           |
 | **AutomationPlugin** | `schedule`, `notify`, `workflow`, `argocd` (opt-in)    | Schedule worker starts in `onRegister`; notify uses execute path for Slack `chat_postMessage` |
 

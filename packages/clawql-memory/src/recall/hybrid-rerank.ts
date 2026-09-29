@@ -1,6 +1,6 @@
 /**
  * Reciprocal Rank Fusion across multi-source memory_recall hits.
- * Merges vault/vector/link/codegraph/pageindex/onyx lists into one ranked list
+ * Merges vault/vector/link/codegraph/onyx lists into one ranked list
  * without requiring calibrated cross-source scores (agent-memory-stack composition).
  */
 

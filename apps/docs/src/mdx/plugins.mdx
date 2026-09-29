@@ -68,7 +68,7 @@ plugins: [
 
 PanguardProxyPlugin, // kind: mcp-proxy — policy chokepoint, no new tools
 
-MemoryPlugin, // memory*\* + pageindex*\* when enabled
+MemoryPlugin, // memory*\* + optional codegraph*\*
 
 DocumentsPlugin, // ingest_external_knowledge when enabled
 
@@ -92,9 +92,9 @@ Notes
 
 MemoryPlugin
 
-memory*ingest, memory_recall, pageindex*\*
+memory*ingest, memory_recall
 
-PageIndex via clawql-pageindex; hide with CLAWQL_ENABLE_PAGEINDEX=0
+Default on with memory tier; pageindex*\* removed in 8.0
 
 DocumentsPlugin
 

@@ -553,7 +553,7 @@ export const optionalToolsHubCards: Array<ReferenceCard> = [
     href: '/learn/memory',
     name: 'clawql-memory',
     description:
-      'Durable memory_ingest / memory_recall, PageIndex, and optional code graph.',
+      'Durable memory_ingest / memory_recall and optional code graph.',
     icon: ChatBubbleIcon,
   }),
 ]

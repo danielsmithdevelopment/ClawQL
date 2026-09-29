@@ -10,7 +10,7 @@
 | Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                                  |
 | In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                             |
 | Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                             |
-| `pageindex_*` tools default **on**       | **Off** until opted in           | `CLAWQL_ENABLE_PAGEINDEX=1` (prove-or-purge by 2026-10-15; see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)) |
+| `pageindex_*` tools / hybrid PageIndex   | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_PAGEINDEX`, `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX`, and `pageindex.db.json` sync — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) |
 | `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                |
 
 Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.

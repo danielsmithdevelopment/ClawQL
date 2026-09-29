@@ -18,7 +18,7 @@ ClawQL is mid-flight on a **strangler extraction** from the root `clawql-mcp` pa
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `clawql-core`       | Audit ring buffer, cache helpers, Merkle + Cuckoo, `Plugin` types, shared errors                                                                                                                                                                            |
 | `clawql-auth`       | Gateway auth (`noAuth` / `apiKey`, ATR claims) + upstream provider credential headers (AWS SigV4, env JSON)                                                                                                                                                 |
-| `clawql-pageindex`  | Standalone MIT vectorless hierarchical indexing — build/traverse/synthesize MCP helpers                                                                                                                                                                     |
+| `clawql-pageindex`  | **Removed in 8.0** — heading-tree product surface purged; see [post-8.0 Vectify backlog](../backlog/post-8.0-vectify-pageindex.md)                                                                                                                          |
 | `clawql-api`        | Spec load/search, REST/GraphQL/gRPC execute, provider registry, `createClawQLApi()`, Panguard proxy plugin, Presidio gateway hooks                                                                                                                          |
 | `clawql-memory`     | Vault I/O, `memory.db`, embeddings, ingest/recall, enterprise citations                                                                                                                                                                                     |
 | `clawql-documents`  | `ingest_external_knowledge`, **`DEFAULT_IDP_PIPELINE`**, **`run_idp_pipeline`** ([#307](https://github.com/danielsmithdevelopment/ClawQL/issues/307)), **`classify_document`** / **`extract_document`**; bundled IDP merge (**8 vendors** via `clawql-api`) |
@@ -52,7 +52,7 @@ ClawQL/
 ├── packages/
 │   ├── clawql-core/
 │   ├── clawql-auth/
-│   ├── clawql-pageindex/
+│   ├── ~~clawql-pageindex/~~ (removed 8.0)
 │   ├── clawql-api/
 │   ├── clawql-memory/
 │   ├── clawql-documents/
@@ -66,7 +66,7 @@ ClawQL/
 └── providers/                    # bundled OpenAPI / GraphQL specs (on disk, not a package)
 ```
 
-**Build order** (root `package.json` `build` script): `clawql-core` → `clawql-auth` → `clawql-pageindex` → `clawql-api` → `clawql-memory` → … → root `tsc`.
+**Build order** (root `package.json` `build` script): `clawql-core` → `clawql-auth` → `clawql-api` → `clawql-memory` → … → root `tsc` (`clawql-pageindex` removed in 8.0).
 
 ---
 
@@ -86,7 +86,7 @@ Agent (stdio / HTTP / gRPC)
         │                              ▼
         │                    packages/clawql-api (execute-core, spec-loader, …)
         │
-        ├── memory_ingest / memory_recall / pageindex_* ──► clawql-memory (+ clawql-pageindex)
+        ├── memory_ingest / memory_recall / read_around ──► clawql-memory
         ├── ingest_external_knowledge ──► clawql-documents
         ├── schedule / notify ──► clawql-automation (+ configureNotifyDeps from mcp/tools.ts)
         └── cache / audit ──► clawql-core (via shims)
@@ -214,7 +214,7 @@ interface Plugin {
 
 - **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
-- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` and `pageindex_*` tools via `makeMemoryLayer()` when `CLAWQL_ENABLE_MEMORY` is on (default); hide PageIndex only with `CLAWQL_ENABLE_PAGEINDEX=0`.
+- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` / `read_around` (and optional `codegraph_*`) when `CLAWQL_ENABLE_MEMORY` is on (default). PageIndex tools removed in 8.0.
 - **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/composition/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
@@ -284,7 +284,7 @@ These vision items are **not** done by package extraction alone:
 | Vision item                                   | Status                                                                                                                                                                                                 |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`/`oidc`, ATR claims, provider headers; Effect services (`OidcAuthService`, `GatewayAuthService`, `StepUpStoreService`, `AwsSigV4Service`, `AuthLive`); HTTP MCP middleware |
-| `clawql-pageindex`                            | ✅ MIT package + `pageindex_*` MCP tools (default on; `CLAWQL_ENABLE_PAGEINDEX=0` to hide)                                                                                                             |
+| `clawql-pageindex`                            | ❌ **Removed in 8.0** (purge inventory / Track A)                                                                                                                                                     |
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                                                                                                                                |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                                                                                                                                  |
 | Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                                                                                                                                |
@@ -334,7 +334,7 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-audit`      | `clawql-audit`      | 8.0.0       |
 | `packages/clawql-agents`     | `clawql-agents`     | 8.0.0       |
 | `packages/clawql-auth`       | `clawql-auth`       | 8.0.0       |
-| `packages/clawql-pageindex`  | `clawql-pageindex`  | 8.0.0 (MIT) |
+| ~~`packages/clawql-pageindex`~~ | ~~`clawql-pageindex`~~ | **removed 8.0** |
 | `packages/clawql-codegraph`  | `clawql-codegraph`  | 8.0.0       |
 | `packages/clawql-api`        | `clawql-api`        | 8.0.0       |
 | `packages/clawql-memory`     | `clawql-memory`     | 8.0.0       |

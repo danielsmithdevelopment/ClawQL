@@ -13,17 +13,10 @@ import {
   codegraphSync,
   codegraphSyncGraphify,
 } from "clawql-codegraph/mcp";
-import {
-  executePageindexBuildTreeEffect,
-  executePageindexGetContentEffect,
-  executePageindexSynthesizeEffect,
-  executePageindexTraverseEffect,
-} from "../effect/pageindex-effect.js";
 import { logMcpToolShape } from "clawql-api/mcp/tool-shape-log";
 import { runMemoryIngest } from "../ingest/ingest.js";
 import { runMemoryRecall } from "../recall/recall.js";
 import { codeGraphEnabled, defaultCodeGraphRoot } from "../recall/codegraph-recall.js";
-import { pageIndexEnabled } from "../recall/pageindex-enabled.js";
 import { executeReadAroundEffect, type ReadAroundInput } from "../recall/read-around.js";
 import {
   decodeMemoryIngestInput,
@@ -42,32 +35,6 @@ export const MEMORY_PLUGIN_ID = "clawql-memory";
 export const memoryIngestToolSchema = memoryIngestToolZodShape;
 /** @deprecated Prefer {@link memoryRecallToolZodShape} — MCP SDK listing only. */
 export const memoryRecallToolSchema = memoryRecallToolZodShape;
-
-export const pageindexBuildTreeToolSchema = {
-  docId: z.string().min(1).describe("Stable document id for the PageIndex tree."),
-  markdown: z.string().describe("Markdown source (heading hierarchy becomes the tree)."),
-  storagePath: z.string().optional().describe("Optional JSON storage path override."),
-};
-
-export const pageindexTraverseToolSchema = {
-  docId: z.string().min(1),
-  query: z.string().min(1),
-  limit: z.number().int().positive().optional(),
-  storagePath: z.string().optional(),
-};
-
-export const pageindexSynthesizeToolSchema = {
-  docId: z.string().min(1),
-  query: z.string().min(1),
-  tokenBudget: z.number().int().positive().optional(),
-  storagePath: z.string().optional(),
-};
-
-export const pageindexGetContentToolSchema = {
-  docId: z.string().min(1),
-  nodeId: z.string().min(1),
-  storagePath: z.string().optional(),
-};
 
 export const readAroundToolSchema = {
   path: z.string().optional().describe("Vault-relative Markdown path (e.g. Memory/handbook.md)."),
@@ -227,7 +194,6 @@ export async function handleMemoryIngestToolInput(
     ),
     wikilinkCount: parsed.wikilinks?.length ?? 0,
     hasSessionId: Boolean(parsed.sessionId?.trim()),
-    rebuildPageindex: parsed.rebuild?.pageindex,
     rebuildEmbeddings: parsed.rebuild?.embeddings,
     ok: result.ok,
     skipped: result.skipped,
@@ -383,12 +349,12 @@ async function handleCodegraphSyncGraphify(args: unknown): Promise<{
   };
 }
 
-/** Registers `memory_ingest`, `memory_recall`, and optional PageIndex/CodeGraph MCP tools. */
+/** Registers `memory_ingest`, `memory_recall`, and optional CodeGraph MCP tools. */
 export function createMemoryPlugin(): ProviderPlugin {
   return defineRegisteringProviderPlugin({
     id: MEMORY_PLUGIN_ID,
     version: "0.1.0",
-    description: "ClawQL memory vault ingest/recall and optional PageIndex/CodeGraph tools",
+    description: "ClawQL memory vault ingest/recall and optional CodeGraph tools",
     register: (api) =>
       Effect.gen(function* () {
         yield* api.registerMcpTool({
@@ -406,29 +372,6 @@ export function createMemoryPlugin(): ProviderPlugin {
           schema: readAroundToolSchema,
           handler: (args) => handleReadAroundToolInput(args),
         });
-
-        if (pageIndexEnabled()) {
-          yield* api.registerMcpTool({
-            name: "pageindex_build_tree",
-            schema: pageindexBuildTreeToolSchema,
-            handler: (args) => Effect.runPromise(executePageindexBuildTreeEffect(args)),
-          });
-          yield* api.registerMcpTool({
-            name: "pageindex_traverse",
-            schema: pageindexTraverseToolSchema,
-            handler: (args) => Effect.runPromise(executePageindexTraverseEffect(args)),
-          });
-          yield* api.registerMcpTool({
-            name: "pageindex_synthesize",
-            schema: pageindexSynthesizeToolSchema,
-            handler: (args) => Effect.runPromise(executePageindexSynthesizeEffect(args)),
-          });
-          yield* api.registerMcpTool({
-            name: "pageindex_get_content",
-            schema: pageindexGetContentToolSchema,
-            handler: (args) => Effect.runPromise(executePageindexGetContentEffect(args)),
-          });
-        }
 
         if (codeGraphEnabled()) {
           yield* api.registerMcpTool({

@@ -28,7 +28,7 @@ export type MemoryRecallInput = {
   /** Minimum keyword score to seed recall (default from CLAWQL_MEMORY_RECALL_MIN_SCORE). */
   minScore?: number;
   /**
-   * Which backends to query: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`.
+   * Which backends to query: `vault` | `vector` | `codegraph` | `onyx`.
    * Omit for defaults (vault + vector; plus hybrid env flags / includeCodeGraph).
    * Ignored when `schema` + `filters` select structured ontology recall.
    */
@@ -75,7 +75,6 @@ export {
   MEMORY_RECALL_SOURCES,
   resolveMemoryRecallSources,
   mapVaultResultToNormalizedHit,
-  hybridPageIndexRecallEnabled,
   hybridOnyxRecallEnabled,
 } from "./recall-sources.js";
 import type {
@@ -92,7 +91,7 @@ export type MemoryRecallResult = {
   /** Structural code symbol hits when codegraph source is enabled. */
   codeGraphHits?: CodeGraphRecallHit[];
   /**
-   * Normalized multi-source hits (vault, vector, link, codegraph, pageindex, onyx).
+   * Normalized multi-source hits (vault, vector, link, codegraph, onyx).
    * Prefer this for new agent workflows; `results` / `codeGraphHits` remain for compatibility.
    */
   hits?: NormalizedRecallHit[];

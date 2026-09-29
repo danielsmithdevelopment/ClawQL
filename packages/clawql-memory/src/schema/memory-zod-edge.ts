@@ -14,7 +14,6 @@ import {
   MEMORY_INGEST_INSIGHTS_DESCRIPTION,
   MEMORY_INGEST_REBUILD_DESCRIPTION,
   MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION,
-  MEMORY_INGEST_REBUILD_PAGEINDEX_DESCRIPTION,
   MEMORY_INGEST_RESOURCE_DESCRIPTION,
   MEMORY_INGEST_SESSION_ID_DESCRIPTION,
   MEMORY_INGEST_TAGS_DESCRIPTION,
@@ -106,7 +105,6 @@ export const memoryIngestToolZodShape = {
   append: z.boolean().optional().describe(MEMORY_INGEST_APPEND_DESCRIPTION),
   rebuild: z
     .object({
-      pageindex: z.boolean().optional().describe(MEMORY_INGEST_REBUILD_PAGEINDEX_DESCRIPTION),
       embeddings: z.boolean().optional().describe(MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION),
     })
     .optional()
@@ -128,7 +126,7 @@ export const memoryRecallToolZodShape = {
   includeCodeGraph: z.boolean().optional().describe(MEMORY_RECALL_INCLUDE_CODEGRAPH_DESCRIPTION),
   codeGraphId: z.string().optional().describe(MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION),
   sources: z
-    .array(z.enum(["vault", "vector", "codegraph", "pageindex", "onyx"]))
+    .array(z.enum(["vault", "vector", "codegraph", "onyx"]))
     .min(1)
     .optional()
     .describe(MEMORY_RECALL_SOURCES_DESCRIPTION),

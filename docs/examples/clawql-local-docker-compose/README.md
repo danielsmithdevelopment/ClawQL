@@ -1,6 +1,6 @@
 # Tier 1 Docker Compose
 
-Local full stack: **ClawQL MCP (HTTP)** + **Tika** + **Gotenberg** + **Paperless NGX** + **Redis** + **Postgres**, with vault memory and PageIndex enabled by default.
+Local full stack: **ClawQL MCP (HTTP)** + **Tika** + **Gotenberg** + **Paperless NGX** + **Redis** + **Postgres**, with vault memory enabled by default.
 
 Tracking: [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) · Design: [`docs/design/operator-target-architecture.md`](../../design/operator-target-architecture.md) §1.
 

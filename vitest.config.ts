@@ -46,7 +46,6 @@ export default defineConfig({
       "packages/openbench-dataset/src/**/*.test.ts",
       "packages/clawql-payments/src/**/*.test.ts",
       "packages/clawql-release/src/**/*.test.ts",
-      "packages/clawql-pageindex/src/**/*.test.ts",
       "packages/panguard-mcp-bridge/src/**/*.test.ts",
       "packages/clawql-harness/src/**/*.test.ts",
       "packages/clawql-web/src/**/*.test.ts",

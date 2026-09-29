@@ -50,7 +50,7 @@ Publishing `clawql-api@8.0.0` when nothing was ever on npm would falsely imply s
 | `clawql-analytics`     | Product analytics (PostHog bridge)                                                 |
 | `clawql-tee`           | Simulated TEE signing                                                              |
 | `clawql-agents`        | Agent adapters (Cline, etc.)                                                       |
-| `clawql-pageindex`     | PageIndex MCP                                                                      |
+| ~~`clawql-pageindex`~~ | **Removed in 8.0**                                                                 |
 | `clawql-codegraph`     | Code graph indexer                                                                 |
 | `clawql-api`           | Composition root, search/execute                                                   |
 | `clawql-memory`        | Vault / memory MCP                                                                 |

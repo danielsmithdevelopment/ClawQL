@@ -87,10 +87,10 @@ export const pluginRegistryEntries: PluginRegistryEntry[] = [
     category: 'horizontal',
     status: 'default-on',
     package: 'clawql-memory',
-    tools: ['memory_ingest', 'memory_recall', 'pageindex_*', 'codegraph_*'],
+    tools: ['memory_ingest', 'memory_recall', 'codegraph_*'],
     enable: 'CLAWQL_ENABLE_MEMORY=0 to omit',
     href: '/plugins/memory',
-    keywords: ['vault', 'obsidian', 'pageindex', 'building block', 'preset'],
+    keywords: ['vault', 'obsidian', 'building block', 'preset'],
   },
   {
     id: 'clawql-codegraph',

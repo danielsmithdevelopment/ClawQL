@@ -18,11 +18,13 @@ If the LLM rewrite recovers most of the 12 deep misses without no-harm regressio
 
 **Live fair-test result (2026-09-29):** scored arm on both cohorts with `claude-sonnet-4.6` + shared finalize + 3-trial majority → **0/12** misses recovered, **12/15** no-harm. **Not** a default-path candidate from this run ([`vectify-fair-decision.json`](vectify-fair-decision.json)).
 
+**One-line check (no retest):** the scored arm **keeps the original question** via `ranked_lists.insert(0, rank_sections(original…))` in `run_query_rewrite_cohort.py`. Despite that, union pollution still yielded 0/12 misses + 12/15 no-harm — close default-path rewrite from this evidence; **still not default-path**.
+
 ## Suggested spend order (updated for freeze)
 
 1. **Re-score** on 150 keys (free; filter saved cells) — done (`design/agent-rescore-150.json`).
-2. **Track A (parallel, now):** this arm on the [12 deep RFC misses](deep-rfc-misses.json) **side-by-side** with [Vectify fair test](vectify-fair-test.md) (`run_query_rewrite_cohort.py` + `run_vectify_fair_test.py`).
-3. **Track B (parallel, schedule now):** strong-model [agent loop](agent-loop-freeze.md) — ClawQL `pageindex_*` + `codegraph_*` vs grep (prove-or-purge).
+2. **Track A (done):** fair test + this arm → tie / no port / no default rewrite ([`vectify-fair-decision.json`](vectify-fair-decision.json)).
+3. **Track B (last lever):** strong-model [agent loop](agent-loop-freeze.md) — grep+read on the **8** deep misses still unsolved (incl. by Vectify); if that fails, inspect those keys.
 4. **Track C (can lag):** k-sweep `{3,6,10}` + union matched-k (~$0.50) — union confound only; not freeze-gating for catalog purge.
 
 ## Not this arm

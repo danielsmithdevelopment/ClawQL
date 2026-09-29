@@ -13,7 +13,7 @@ describe("MemoryIngestInputSchema", () => {
         correlationId: "c1",
         insights: "ok",
         enterpriseCitations: [{ title: "A", url: "https://example.com" }],
-        rebuild: { pageindex: true, embeddings: false },
+        rebuild: { embeddings: false },
         toolOutputs: ["a", "b"],
       })
     );
@@ -25,7 +25,7 @@ describe("MemoryIngestInputSchema", () => {
       correlationId: "c1",
       insights: "ok",
       enterpriseCitations: [{ title: "A", url: "https://example.com" }],
-      rebuild: { pageindex: true, embeddings: false },
+      rebuild: { embeddings: false },
       toolOutputs: ["a", "b"],
     });
   });

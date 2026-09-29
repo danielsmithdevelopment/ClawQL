@@ -23,10 +23,10 @@ Agents lose context when the MCP server restarts or Kubernetes reschedules a pod
 ## Core Design Principles
 
 - **Markdown as source of truth** — Notes live under `Memory/` as plain `.md` with YAML frontmatter. Humans can open the vault in Obsidian or any editor. Derived indexes cite back into this canon.
-- **One job per layer** — Wikilinks/`memory.db` for explicit graph; embeddings for fuzzy semantics; PageIndex for heading trees; codegraph for source structure; Onyx for external enterprise search.
+- **One job per layer** — Wikilinks/`memory.db` for explicit graph; embeddings for fuzzy semantics; codegraph for source structure; Onyx for external enterprise search.
 - **Hybrid retrieval facade** — `memory_recall` with optional `sources` returns normalized `hits[]` and specialist `followUps`; deep tools stay typed.
 - **Ontology structured filters** — for exact field predicates (`schema` + `filters` → `ontology.db` via clawql-ontology), not semantic similarity. See [memory_recall structured filters](/specs/memory/memory-recall-structured-filter).
-- **Derived indexes are disposable** — `memory.db`, embeddings, and PageIndex rebuild from Markdown; they are not the canonical store.
+- **Derived indexes are disposable** — `memory.db` and embeddings rebuild from Markdown; they are not the canonical store.
 - **Governance where it matters** — Optional Presidio redaction at the gateway, vault path allowlists, and team sync that never uploads API secrets. Full ATRClaims filtering on every recall and WORM on every memory mutation are **roadmap** (see [DAOS Layer 3](https://docs.clawql.com/ouroboros/daos)).
 - **Fail-closed sync** — Team sync failures are logged but do not block ingest/recall locally.
 
@@ -50,10 +50,6 @@ Parses `[[links]]` into a queryable SQLite graph (`wikilink_edge` and `vault_chu
 
 Creates vector representations of vault chunks for similarity search inside `memory_recall` when `CLAWQL_VECTOR_BACKEND` and an embedding API key are configured. The fuzzy semantic retrieval layer that surfaces relevant content when no explicit wikilinks or structural paths exist. Stored in `memory.db` BLOBs and/or pgvector depending on backend.
 
-### PageIndex
-
-Generates a hierarchical heading tree (`pageindex.db.json`) for section-level addressing via `pageindex_build_tree`, then supports traversal, synthesis, and content retrieval. The deterministic, vectorless navigation and token-budget synthesis layer built directly on the vault's document structure.
-
 ### clawql-codegraph
 
 Parses source with the **TypeScript compiler** (TS/JS) and **tree-sitter WASM** (30+ languages: Python, Go, Rust, Java, C/C++, C#, Ruby, …). Preferred ingestion: `codegraph_sync` (index → Louvain → report → vault). TS/JS gets enclosing-scope calls, heritage/exports, cross-file linking, React/Next tags, plus **`codegraph_explore`** / **`codegraph_impact`**. Optional Graphify `graph.json` import — **no Python**.
@@ -72,7 +68,7 @@ When vault notes carry machine-readable fields (for example legal `CLAWQL_*` tag
 | ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | Start with `memory_recall` (+ `sources` when needed)                          | One facade → normalized `hits[]` + specialist `followUps`       |
 | Use `schema` + `filters` for “all X where field ≥ N” tasks                    | Ontology index — exact set, not semantic near-misses            |
-| Open `pageindex_*` / `codegraph_*` / Onyx specialists when `followUps` say so | Deep path, tree walk, and filtered enterprise search stay typed |
+| Open `codegraph_*` / Onyx specialists when `followUps` say so                 | Deep path and filtered enterprise search stay typed             |
 | Write once with `memory_ingest`; use `rebuild` for derived indexes            | Never paste the same prose into five stores                     |
 
 ---
@@ -86,21 +82,19 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`         |
 | Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)           |
 | Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres      |
-| PageIndex   | Vectorless hierarchical tree                   | `clawql-pageindex` + `pageindex_*`                        |
 | Code graph  | Structural AST / import-call graph over source | `clawql-codegraph` + `codegraph_sync` (opt-in; TS-native) |
 | Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations                 |
 
-**Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured). Optional `rebuild.pageindex` refreshes the heading tree for that note.
+**Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured).
 
-**Recall path:** `memory_recall` can query `sources`: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`. Returns normalized `hits[]`, specialist `followUps`, and legacy `results` / `codeGraphHits`.
+**Recall path:** `memory_recall` can query `sources`: `vault` | `vector` | `codegraph` | `onyx`. Returns normalized `hits[]`, specialist `followUps`, and legacy `results` / `codeGraphHits`. (**PageIndex removed in 8.0.**)
 
 **Team sync (optional):** pushes and pulls the `Memory/` tree via object storage. `memory.db` is rebuilt locally after pull. Code graph storage is local unless you sync `codegraph.db.json` yourself.
 
 | Flow                    | Reads from                                                | Writes to                                          |
 | ----------------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| `memory_ingest`         | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db` (+ optional PageIndex) |
-| `memory_recall`         | Vault, `memory.db`, optional codegraph / PageIndex / Onyx | (read-only)                                        |
-| `pageindex_build_tree`  | `Memory/*.md`                                             | `pageindex.db.json`                                |
+| `memory_ingest`         | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db`                        |
+| `memory_recall`         | Vault, `memory.db`, optional codegraph / Onyx             | (read-only)                                        |
 | `codegraph_index`       | Repo source tree                                          | `codegraph.db.json`                                |
 | `codegraph_sync`        | Native index + Louvain + report                           | `codegraph-out/*` + vault architecture report      |
 | `knowledge_search_onyx` | External Onyx                                             | (read); cite into vault via ingest                 |
@@ -117,10 +111,6 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | `memory_ingest`             | Write or append structured insights, wikilinks, optional tool output |
 | `memory_recall`             | Multi-source recall (`sources` → `hits[]` + `followUps`)             |
 | `memory_sync`               | Team sync pull/push when object storage is configured                |
-| `pageindex_build_tree`      | Build a hierarchical index from Markdown                             |
-| `pageindex_traverse`        | Walk the tree under a token budget                                   |
-| `pageindex_synthesize`      | Merge selected nodes into agent context                              |
-| `pageindex_get_content`     | Read a indexed node's body                                           |
 | `codegraph_index`           | Build structural code graph from repo root (opt-in)                  |
 | `codegraph_sync`            | Native index → Louvain → vault architecture report                   |
 | `codegraph_explore`         | One-shot explain + neighbors + blast radius (agent-efficient)        |
@@ -133,11 +123,11 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 | `codegraph_explain`         | Summarize a symbol and its neighborhood                              |
 | `codegraph_subgraph`        | BFS subgraph around a seed query                                     |
 
-Default on for vault + PageIndex; hide all memory + PageIndex tools with `CLAWQL_ENABLE_MEMORY=0`. Hide PageIndex only with `CLAWQL_ENABLE_PAGEINDEX=0`. Register code graph tools with `CLAWQL_ENABLE_CODEGRAPH=1`. Requires a writable `CLAWQL_OBSIDIAN_VAULT_PATH` for vault I/O; code graph additionally needs `CLAWQL_CODEGRAPH_ROOT` and `CLAWQL_CODEGRAPH_PATH`.
+Default on for vault memory; hide with `CLAWQL_ENABLE_MEMORY=0`. Register code graph tools with `CLAWQL_ENABLE_CODEGRAPH=1`. (**`pageindex_*` / `CLAWQL_ENABLE_PAGEINDEX` removed in 8.0.**) Requires a writable `CLAWQL_OBSIDIAN_VAULT_PATH` for vault I/O; code graph additionally needs `CLAWQL_CODEGRAPH_ROOT` and `CLAWQL_CODEGRAPH_PATH`.
 
 ### `memory_recall` Sources
 
-Pass `sources`: `vault` | `vector` | `codegraph` | `pageindex` | `onyx`. Defaults (when omitted): vault + vector, plus hybrid env flags. Response includes normalized `hits[]`, specialist `followUps`, and legacy `results` / `codeGraphHits`.
+Pass `sources`: `vault` | `vector` | `codegraph` | `onyx`. Defaults (when omitted): vault + vector, plus hybrid env flags. Response includes normalized `hits[]`, specialist `followUps`, and legacy `results` / `codeGraphHits`.
 
 ---
 
@@ -253,11 +243,9 @@ Stable `title` + wikilinks turn isolated session notes into a navigable web agen
 
 Hits include `reason`: `"keyword"`, `"link"`, or `"vector"`. Tune `limit`, `maxDepth`, `minScore`, and `CLAWQL_MEMORY_RECALL_*` env vars.
 
-**PageIndex** complements vectors: hierarchical traverse + synthesize gives deterministic, token-budgeted context without embeddings — useful when you want stable section addresses.
-
 **Code graph** complements vault narrative: AST-derived imports and calls give precise architecture traces without pasting entire repos. Enable hybrid recall (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1`) to merge vault hits and symbol matches in one `memory_recall` call.
 
-**Roadmap:** unified hybrid ranking score across exact PageIndex hits, cosine similarity, graph proximity, and code-graph symbol relevance with ATRClaims classification filters on each node.
+**Roadmap:** unified hybrid ranking across cosine similarity, graph proximity, and code-graph symbol relevance with ATRClaims classification filters on each node. (Vectify-style hierarchical redesign is [post-8.0 backlog](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/backlog/post-8.0-vectify-pageindex.md) — not a live Layer 3.)
 
 ---
 
@@ -265,12 +253,12 @@ Hits include `reason`: `"keyword"`, `"link"`, or `"vector"`. Tune `limit`, `maxD
 
 Team sync shares Markdown — not secrets — via object storage:
 
-| Path                                                | Synced?                              |
-| --------------------------------------------------- | ------------------------------------ |
-| `Memory/`                                           | Yes — team notes for `memory_recall` |
-| `sources/`, `pageindex.db.json`, `Dashboard/chats/` | Yes (optional)                       |
-| `vault/providers.json`, API secrets                 | Never                                |
-| `memory.db`                                         | No — rebuilt locally after pull      |
+| Path                                | Synced?                              |
+| ----------------------------------- | ------------------------------------ |
+| `Memory/`                           | Yes — team notes for `memory_recall` |
+| `sources/`, `Dashboard/chats/`      | Yes (optional)                       |
+| `vault/providers.json`, API secrets | Never                                |
+| `memory.db`                         | No — rebuilt locally after pull      |
 
 **CLI:** `clawql sync init`, `push`, `pull`, `status` — providers R2 (default), S3, GCS. **MCP:** `memory_sync` with `direction`: `auto` (pull then push), `pull`, or `push`.
 
@@ -318,7 +306,7 @@ Long sessions can exhaust context windows. The DAOS design adds a pruning engine
 - **Causal lock** — Turns before pending high-impact actions cannot be pruned
 - **Pre-pruning snapshot** — Bit-perfect encrypted snapshot to cold storage before distillation; WORM audit of the event
 
-**Practical substitute today:** agents `memory_ingest` checkpoints before context fills up, and use `pageindex_traverse` / `memory_recall` instead of carrying full transcripts. See [DAOS § Memory pruning](https://docs.clawql.com/ouroboros/daos) and [Build plan P2-A](https://docs.clawql.com/ouroboros/build-plan).
+**Practical substitute today:** agents `memory_ingest` checkpoints before context fills up, and use `memory_recall` / `read_around` instead of carrying full transcripts. See [DAOS § Memory pruning](https://docs.clawql.com/ouroboros/daos) and [Build plan P2-A](https://docs.clawql.com/ouroboros/build-plan).
 
 ---
 
