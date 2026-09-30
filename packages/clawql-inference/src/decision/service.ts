@@ -136,13 +136,18 @@ function extrasKeyForUseSite(useSiteId: string): string {
 }
 
 function candidatesFromChoice(q: DecisionChoiceQuestion): FastDecisionCandidate[] {
-  return q.options.map((o) => ({
-    candidateId: o.id,
-    features: {
-      label: o.id,
-      description: o.description ?? o.id,
-    },
-  }));
+  return q.options.map((o) => {
+    const text = o.description?.trim() || o.id;
+    return {
+      candidateId: o.id,
+      features: {
+        // Prefer human description for scoring (heuristic overlap + GLiNER labels).
+        label: text,
+        description: text,
+        name: o.id,
+      },
+    };
+  });
 }
 
 function noulCandidates(statement: string): FastDecisionCandidate[] {
