@@ -1,0 +1,10 @@
+{
+  "ok": false,
+  "blockers": [
+    {
+      "code": "missing_openrouter",
+      "message": "OPENROUTER_API_KEY is required for Track B live spend",
+      "remedy": "Add the secret to the Cloud Agent environment, then re-run without --dry-run"
+    }
+  ]
+}
