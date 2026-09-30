@@ -63,7 +63,7 @@ Full oracle golds: [`codegraph-prove-keys.oracle.json`](codegraph-prove-keys.ora
 - [ ] Spot-check oracle `impacted_names` / explore primary (or `npm run test:dogfood -w clawql-codegraph`).
 - [ ] Confirm no-harm keys stay intentionally grep-easy ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)).
 - [x] Sign [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) CodeGraph row (`HUMAN_PASS_RESULT.json` passed).
-- [ ] Live spend: `OPENROUTER_API_KEY=… node …/run_agent_loop_freeze.mjs --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph` (tool loop wired; blocked until key is in the environment).
+- [ ] Live spend via GHA sentinel `.run-agent-loop-freeze` (`pageindex-ab.yml` → `secrets.OPENROUTER_API_KEY`); remove sentinel after the run.
 
 ## Signer
 

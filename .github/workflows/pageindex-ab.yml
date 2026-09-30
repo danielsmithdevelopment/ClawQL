@@ -11,6 +11,7 @@
 #   .run-hard-agent-lite  → hard-candidate, limit=24, trials=1
 #   .run-hard-agent-full  → hard-candidate, full corpus (limit=0), trials=3, +extra arms
 #   .run-vectify-fair     → VectifyAI fair test (12 misses + 15 no-harm; OPENROUTER_API_KEY)
+#   .run-agent-loop-freeze → Track B CodeGraph additive spend (Sonnet; OPENROUTER_API_KEY)
 #   .run-rerank-grid      → model-scored k∈{10,20}×±rerank (flash-lite + Sonnet subset)
 #   .run-gap-diagnose     → flash-lite gold@10 gap taxonomy (per-row answers; cheap)
 #
@@ -24,12 +25,13 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: offline-pilot / agent-factorial / vectify-fair
+        description: offline-pilot / agent-factorial / vectify-fair / agent-loop-freeze
         type: choice
         options:
           - offline-pilot
           - agent-factorial
           - vectify-fair
+          - agent-loop-freeze
         default: offline-pilot
       trials:
         description: Trials per question (agent mode)
@@ -63,6 +65,7 @@ on:
       - "benchmarks/pageindex-ab/.run-hard-agent-lite"
       - "benchmarks/pageindex-ab/.run-hard-agent-full"
       - "benchmarks/pageindex-ab/.run-vectify-fair"
+      - "benchmarks/pageindex-ab/.run-agent-loop-freeze"
       - "benchmarks/pageindex-ab/.run-rerank-grid"
       - "benchmarks/pageindex-ab/.run-gap-diagnose"
 
@@ -374,6 +377,98 @@ jobs:
           name: pageindex-ab-vectify-fair
           path: |
             benchmarks/pageindex-ab/results/vectify-fair/
+
+  # Track B: CodeGraph additive agent-loop freeze (grep+codegraph vs grep).
+  # Trigger: PR sentinel .run-agent-loop-freeze OR workflow_dispatch mode=agent-loop-freeze.
+  # Uses secrets.OPENROUTER_API_KEY (same as every other pageindex-ab spend).
+  # Remove sentinel after the run lands.
+  agent-loop-freeze:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-loop-freeze') || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    # Frontier × 18 Q × 3 arms × tool loops
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          elif [ -f benchmarks/pageindex-ab/.run-agent-loop-freeze ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-agent-loop-freeze sentinel; skipping Track B spend"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for agent-loop-freeze"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-api -w clawql-memory
+      - name: Resolve Track B model
+        if: ${{ steps.gate.outputs.run == '1' }}
+        id: trackb
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "model=${{ inputs.fair_model }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Track B additive agent-loop spend
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
+          VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B
+        run: |
+          node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
+            --cohort codegraph-prove \
+            --model "$PAGEINDEX_AB_AGENT_MODEL" \
+            --arms A-no-tools,A-grep,A-codegraph \
+            --out benchmarks/pageindex-ab/results/agent-loop-freeze/
+      - name: Decide CodeGraph beat / tie / purge
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: |
+          node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
+            benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl \
+            benchmarks/pageindex-ab/design/codegraph-beat-decision.json
+      - name: Upload Track B artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-agent-loop-freeze
+          path: |
+            benchmarks/pageindex-ab/results/agent-loop-freeze/
+            benchmarks/pageindex-ab/design/codegraph-beat-decision.json
 
   # Track C: model-scored k∈{10,20} × ±rerank (flash-lite + Sonnet subset).
   # Trigger: PR sentinel .run-rerank-grid. Uses committed candidates + bakeoff ranks.

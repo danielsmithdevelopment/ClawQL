@@ -1,0 +1,3 @@
+# Sentinel: trigger Track B CodeGraph additive spend via pageindex-ab.yml.
+# Uses secrets.OPENROUTER_API_KEY in GitHub Actions (same as every other spend).
+# Remove this file after the run lands (paths filter re-fires on every PR push).
