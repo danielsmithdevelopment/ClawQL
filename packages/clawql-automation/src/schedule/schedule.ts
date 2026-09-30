@@ -27,6 +27,7 @@ import {
   loadStoredProjection,
   loadStoredProjectionJson,
   prepareProjectionForStore,
+  ProjectionKeyError,
 } from "./projection-store.js";
 
 export {
