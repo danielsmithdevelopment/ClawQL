@@ -1,0 +1,391 @@
+{
+  "tag": "pageindex-ab-rerank-bakeoff-v1",
+  "generated_at": "2026-09-30T01:45:00Z",
+  "candidates": "benchmarks/pageindex-ab/design/rerank-candidates.jsonl",
+  "device": "cpu",
+  "batch_size": 4,
+  "max_length": 512,
+  "pool": "keyword_topN \u222a vector_topN (N from export; default 100)",
+  "models_requested": [
+    "gte",
+    "bge"
+  ],
+  "model_registry": {
+    "bge": {
+      "hf": "BAAI/bge-reranker-v2-m3",
+      "size": "~568M",
+      "role": "lightweight baseline",
+      "deploy": "CPU laptop OK"
+    },
+    "gte": {
+      "hf": "Alibaba-NLP/gte-reranker-modernbert-base",
+      "size": "149M",
+      "role": "small high-quality candidate",
+      "deploy": "CPU laptop OK",
+      "trust_remote_code": true
+    },
+    "qwen4b": {
+      "hf": "Qwen/Qwen3-Reranker-4B",
+      "size": "4B",
+      "role": "open-weight standard (code-strong)",
+      "deploy": "GPU (e.g. 5090) required in practice"
+    },
+    "qwen8b": {
+      "hf": "Qwen/Qwen3-Reranker-8B",
+      "size": "8B",
+      "role": "larger open-weight optional",
+      "deploy": "GPU required"
+    }
+  },
+  "baselines": {
+    "tune": {
+      "keyword": {
+        "n": 156,
+        "pool_has_gold_rate": 1.0,
+        "recall_at_10": 0.6346153846153846,
+        "recall_at_20": 0.782051282051282,
+        "recall_at_100": 0.9807692307692307,
+        "mean_rank": 17.692307692307693,
+        "by_stratum": {
+          "code": {
+            "n": 14,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 92,
+            "recall_at_10": 0.3804347826086957,
+            "recall_at_20": 0.6304347826086957
+          }
+        }
+      },
+      "vector": {
+        "n": 156,
+        "pool_has_gold_rate": 1.0,
+        "recall_at_10": 0.5985915492957746,
+        "recall_at_20": 0.7112676056338029,
+        "recall_at_100": 0.9788732394366197,
+        "mean_rank": 19.64788732394366,
+        "by_stratum": {
+          "code": {
+            "n": 14,
+            "recall_at_10": null,
+            "recall_at_20": null
+          },
+          "converted_pdf": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 92,
+            "recall_at_10": 0.3804347826086957,
+            "recall_at_20": 0.5543478260869565
+          }
+        }
+      },
+      "union_no_rerank": {
+        "n": 156,
+        "pool_has_gold_rate": 1.0,
+        "recall_at_10": 0.6346153846153846,
+        "recall_at_20": 0.782051282051282,
+        "recall_at_100": 0.9807692307692307,
+        "mean_rank": 17.025641025641026,
+        "by_stratum": {
+          "code": {
+            "n": 14,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 92,
+            "recall_at_10": 0.3804347826086957,
+            "recall_at_20": 0.6304347826086957
+          }
+        }
+      }
+    },
+    "holdout": {
+      "keyword": {
+        "n": 106,
+        "pool_has_gold_rate": 0.9811320754716981,
+        "recall_at_10": 0.6792452830188679,
+        "recall_at_20": 0.7641509433962265,
+        "recall_at_100": 0.9622641509433962,
+        "mean_rank": 18.933962264150942,
+        "by_stratum": {
+          "code": {
+            "n": 10,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 62,
+            "recall_at_10": 0.45161290322580644,
+            "recall_at_20": 0.5967741935483871
+          }
+        }
+      },
+      "vector": {
+        "n": 106,
+        "pool_has_gold_rate": 0.9811320754716981,
+        "recall_at_10": 0.6145833333333334,
+        "recall_at_20": 0.75,
+        "recall_at_100": 0.9583333333333334,
+        "mean_rank": 19.25,
+        "by_stratum": {
+          "code": {
+            "n": 10,
+            "recall_at_10": null,
+            "recall_at_20": null
+          },
+          "converted_pdf": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 62,
+            "recall_at_10": 0.4032258064516129,
+            "recall_at_20": 0.6129032258064516
+          }
+        }
+      },
+      "union_no_rerank": {
+        "n": 106,
+        "pool_has_gold_rate": 0.9811320754716981,
+        "recall_at_10": 0.6923076923076923,
+        "recall_at_20": 0.7788461538461539,
+        "recall_at_100": 0.9807692307692307,
+        "mean_rank": 14.471153846153847,
+        "by_stratum": {
+          "code": {
+            "n": 10,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 62,
+            "recall_at_10": 0.4666666666666667,
+            "recall_at_20": 0.6166666666666667
+          }
+        }
+      }
+    }
+  },
+  "rerankers": {
+    "gte": {
+      "meta": {
+        "hf": "Alibaba-NLP/gte-reranker-modernbert-base",
+        "size": "149M",
+        "role": "small high-quality candidate",
+        "deploy": "CPU laptop OK",
+        "trust_remote_code": true
+      },
+      "elapsed_sec": 1348.1670849323273,
+      "tune": {
+        "n": 156,
+        "pool_has_gold_rate": 1.0,
+        "recall_at_10": 0.5897435897435898,
+        "recall_at_20": 0.7371794871794872,
+        "recall_at_100": 0.9615384615384616,
+        "mean_rank": 20.5,
+        "by_stratum": {
+          "code": {
+            "n": 14,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 92,
+            "recall_at_10": 0.30434782608695654,
+            "recall_at_20": 0.5543478260869565
+          }
+        }
+      },
+      "holdout": {
+        "n": 106,
+        "pool_has_gold_rate": 0.9811320754716981,
+        "recall_at_10": 0.6826923076923077,
+        "recall_at_20": 0.7596153846153846,
+        "recall_at_100": 0.9807692307692307,
+        "mean_rank": 15.826923076923077,
+        "by_stratum": {
+          "code": {
+            "n": 10,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 62,
+            "recall_at_10": 0.45,
+            "recall_at_20": 0.5833333333333334
+          }
+        }
+      }
+    },
+    "bge": {
+      "meta": {
+        "hf": "BAAI/bge-reranker-v2-m3",
+        "size": "~568M",
+        "role": "lightweight baseline",
+        "deploy": "CPU laptop OK"
+      },
+      "elapsed_sec": 4377.879662513733,
+      "tune": {
+        "n": 156,
+        "pool_has_gold_rate": 1.0,
+        "recall_at_10": 0.5961538461538461,
+        "recall_at_20": 0.7115384615384616,
+        "recall_at_100": 0.9871794871794872,
+        "mean_rank": 17.628205128205128,
+        "by_stratum": {
+          "code": {
+            "n": 14,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 25,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 92,
+            "recall_at_10": 0.31521739130434784,
+            "recall_at_20": 0.5108695652173914
+          }
+        }
+      },
+      "holdout": {
+        "n": 106,
+        "pool_has_gold_rate": 0.9811320754716981,
+        "recall_at_10": 0.6826923076923077,
+        "recall_at_20": 0.7884615384615384,
+        "recall_at_100": 0.9903846153846154,
+        "mean_rank": 13.89423076923077,
+        "by_stratum": {
+          "code": {
+            "n": 10,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "converted_pdf": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "weakly_structured": {
+            "n": 17,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0
+          },
+          "well_structured": {
+            "n": 62,
+            "recall_at_10": 0.45,
+            "recall_at_20": 0.6333333333333333
+          }
+        }
+      }
+    }
+  },
+  "recommendation": {
+    "winner": null,
+    "hf": "BAAI/bge-reranker-v2-m3",
+    "deploy": "CPU laptop OK",
+    "tune_recall_at_10": 0.5961538461538461,
+    "holdout_recall_at_10": 0.6826923076923077,
+    "tune_lift_vs_keyword_r10": -0.038461538461538436,
+    "holdout_lift_vs_keyword_r10": 0.0034470246734398247,
+    "product_default": "Prefer gte (149M) as CPU default if within 2pp of winner; offer qwen4b where GPU available.",
+    "fusion_note": "Reranking keyword\u222avector union makes a separate RRF fusion switch unnecessary for this failure mode \u2014 purge-inventory candidate.",
+    "next": [
+      "Qwen3-Reranker-4B bakeoff on GPU (same candidates file)",
+      "Optional: gte/bge with max_seq_length 2048+ if CPU budget allows",
+      "Model-scored grid k\u2208{10,20}\u00d7\u00b1rerank once a winner exists (or norerank-only to confirm k=20)"
+    ],
+    "ship_rerank": false,
+    "verdict": "no_ship_gte_bge",
+    "rationale": "Neither gte nor bge beats keyword recall@10 on tune (\u22124.5pp / \u22123.8pp). They knock more golds out of top-10 than they rescue, mainly on well_structured RFCs. Keep keyword top-k; keep TOP_K_DOC=20. Try Qwen3-Reranker-4B on GPU before concluding rerank fails."
+  },
+  "models_ran": [
+    "gte",
+    "bge"
+  ],
+  "models_skipped": {}
+}
