@@ -17,7 +17,6 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { pageindexBuildTree, pageindexTraverse } from "clawql-pageindex/mcp";
 import {
   buildVaultRankerStats,
   resolveVaultRankerModeEffect,
@@ -25,6 +24,22 @@ import {
 } from "clawql-memory/recall/vault-ranker";
 import { splitMarkdownSections } from "clawql-memory/recall/read-around";
 import { Effect } from "effect";
+
+/** Optional — clawql-pageindex was purged in 8.0; H-idf / vault arms still run. */
+let pageindexBuildTree = null;
+let pageindexTraverse = null;
+let pageindexLoadError = null;
+try {
+  const pi = await import("clawql-pageindex/mcp");
+  pageindexBuildTree = pi.pageindexBuildTree;
+  pageindexTraverse = pi.pageindexTraverse;
+} catch (err) {
+  pageindexLoadError = err;
+}
+
+export function pageindexAvailable() {
+  return Boolean(pageindexBuildTree && pageindexTraverse);
+}
 
 export const TOP_K_DOC = 3;
 export const TOP_K_MULTI = 5;
@@ -45,6 +60,11 @@ export function rankSectionsVault(markdown, query, rankerMode) {
 }
 
 export async function rankSectionsPageindex(docId, markdown, query, storagePath) {
+  if (!pageindexAvailable()) {
+    throw new Error(
+      `clawql-pageindex unavailable (purged): ${pageindexLoadError?.message || "import failed"}`,
+    );
+  }
   await pageindexBuildTree({ docId, markdown, storagePath });
   const hits = await pageindexTraverse({ docId, query, limit: 8, storagePath });
   const sections = splitMarkdownSections(markdown);

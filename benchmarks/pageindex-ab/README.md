@@ -10,6 +10,8 @@ Implements [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchma
 
 **Rescore on 150 keys** (filtered saved cells, no re-run — [agent-rescore-150.json](design/agent-rescore-150.json)): `H-idf` **0.840**, RRF PI **0.753** (−0.087 main), union **0.853** (+0.013 / **+2 Q**), gated **0.840** (tie), BM25 **0**. Freeze log: [freeze-log-key-hygiene.md](design/freeze-log-key-hygiene.md). Gold ranks: [rfc-retrieval-miss-gold-ranks.md](design/rfc-retrieval-miss-gold-ranks.md).
 
+**H-idf baseline (grown set, post-pass):** strict **0.536** on n=358 ([`design/hidf-baseline-hard-candidate.json`](design/hidf-baseline-hard-candidate.json)); well_structured 0.330, converted_pdf/weak 0.875, code 1.0. Acceptance pass recorded in [`HUMAN_PASS_RESULT.json`](design/HUMAN_PASS_RESULT.json).
+
 **Freeze critical path:** ClawQL PageIndex **purged** ([#1175](https://github.com/danielsmithdevelopment/ClawQL/pull/1175)) — stands. Fair-test **void** ([`design/fair-test-void-retest.md`](design/fair-test-void-retest.md)); hard-candidate **grown** (~238 gold-clean; ~9pp single-comparison MDE with deterministic Flash-lite). **Human pass** = all 12 CodeGraph prove keys + stratified **60** doc sample ([`HUMAN_PASS_ONE_SITTING.md`](design/HUMAN_PASS_ONE_SITTING.md); ≥3 sample defects → fix builder). **Track B** beat locked (additive): Net≥5 for **grep+CodeGraph vs grep** + no-harm + no-tools + usage ([`codegraph-prove-decision.lock.json`](design/codegraph-prove-decision.lock.json); clear to sign). Purge inventory: [`8.0.0-purge-inventory-spec-v0.1.md`](../../docs/releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 ## Layout

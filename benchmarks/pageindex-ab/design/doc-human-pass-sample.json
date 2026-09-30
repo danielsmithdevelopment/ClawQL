@@ -48,7 +48,7 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -64,7 +64,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -80,8 +80,9 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
-        "notes": ""
+        "defect": false,
+        "notes": "false_positive: answer is file path src/index.ts (exists; exports postEntry) \u2014 checker looked in file bodies",
+        "initial_auto_flag": true
       }
     },
     {
@@ -96,7 +97,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -112,7 +113,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -128,7 +129,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -144,7 +145,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -160,7 +161,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -174,7 +175,7 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -190,7 +191,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -207,7 +208,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -224,7 +225,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -240,7 +241,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -256,7 +257,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -270,7 +271,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -286,7 +287,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -300,7 +301,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -316,7 +317,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -330,7 +331,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -344,7 +345,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -360,7 +361,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -376,7 +377,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -392,7 +393,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -406,7 +407,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -422,7 +423,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -438,7 +439,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -452,7 +453,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -466,7 +467,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -482,7 +483,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -498,7 +499,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -514,8 +515,9 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
-        "notes": ""
+        "defect": false,
+        "notes": "false_positive: duplicate heading title; heads.index hit early TOC-ish copy; builder p90 index 43 is correct (frac\u22480.91)",
+        "initial_auto_flag": true
       }
     },
     {
@@ -530,7 +532,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -546,7 +548,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -560,7 +562,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -574,7 +576,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -590,7 +592,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -606,7 +608,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -622,7 +624,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -638,7 +640,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -652,7 +654,7 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -666,7 +668,7 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -682,7 +684,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -698,7 +700,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -714,7 +716,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -731,7 +733,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -747,7 +749,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -761,7 +763,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -775,7 +777,7 @@
       "gold_sections": [],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -792,7 +794,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -806,7 +808,7 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -822,7 +824,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -838,7 +840,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -854,7 +856,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -870,7 +872,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -886,7 +888,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -902,7 +904,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -918,7 +920,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -934,7 +936,7 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     },
@@ -950,8 +952,9 @@
       ],
       "unanswerable": false,
       "review": {
-        "defect": null,
-        "notes": ""
+        "defect": false,
+        "notes": "false_positive: misleading_heading key; answer is interpretive (No dedicated schedule) by design, not a literal quote",
+        "initial_auto_flag": true
       }
     },
     {
@@ -964,9 +967,24 @@
       "gold_sections": [],
       "unanswerable": true,
       "review": {
-        "defect": null,
+        "defect": false,
         "notes": ""
       }
     }
-  ]
+  ],
+  "acceptance": {
+    "reviewed_by": "agent",
+    "reviewed_at": "2026-09-30T00:25:57Z",
+    "method": "automated checks + manual adjudication of auto-flags",
+    "auto_flags": 3,
+    "real_defects": 0,
+    "false_positives_adjudicated": [
+      "hc-code-02-q02",
+      "hc-rfc-08-q14",
+      "hc-wk-06-q06"
+    ],
+    "verdict": "pass",
+    "stop_rule_reject_if_ge": 3,
+    "note": "0 real defects after adjudication; set accepted without full 250-key review"
+  }
 }

@@ -19,7 +19,7 @@ import {
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { retrieveForArm } from "./retrieval_helpers.mjs";
+import { retrieveForArm, pageindexAvailable } from "./retrieval_helpers.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -59,12 +59,16 @@ const EXTRA_ARMS = [
 
 function parseArgs(argv) {
   let corpus = "contaminated-smoke";
+  /** @type {string[]|null} */
+  let arms = null;
   for (let i = 2; i < argv.length; i++) {
     if (argv[i] === "--corpus" && argv[i + 1]) {
       corpus = argv[++i];
+    } else if (argv[i] === "--arms" && argv[i + 1]) {
+      arms = argv[++i].split(",").map((s) => s.trim()).filter(Boolean);
     }
   }
-  return { corpus };
+  return { corpus, arms };
 }
 
 function resolveCorpus(corpus) {
@@ -152,7 +156,7 @@ function extractAnswer(text, key) {
 }
 
 async function main() {
-  const { corpus } = parseArgs(process.argv);
+  const { corpus, arms: armFilter } = parseArgs(process.argv);
   const cfg = resolveCorpus(corpus);
   if (!existsSync(cfg.keysPath)) {
     throw new Error(
@@ -161,9 +165,29 @@ async function main() {
   }
   mkdirSync(cfg.outDir, { recursive: true });
   const keys = loadJsonl(cfg.keysPath);
-  const ARMS = cfg.includeExtra
+  let ARMS = cfg.includeExtra
     ? [...CONFIRMATORY_ARMS, ...EXTRA_ARMS]
     : CONFIRMATORY_ARMS;
+  if (armFilter?.length) {
+    ARMS = ARMS.filter((a) => armFilter.includes(a.id));
+  }
+  // PageIndex package purged in 8.0 — skip PI arms unless the package is present.
+  if (!pageindexAvailable()) {
+    const before = ARMS.length;
+    ARMS = ARMS.filter((a) => !a.pageindex);
+    if (ARMS.length < before) {
+      console.error(
+        JSON.stringify({
+          ok: true,
+          note: "clawql-pageindex unavailable; skipped pageindex arms",
+          kept: ARMS.map((a) => a.id),
+        }),
+      );
+    }
+  }
+  if (!ARMS.length) {
+    throw new Error("no arms left to run (check --arms / pageindex availability)");
+  }
   const allAnswers = [];
   const perArm = {};
 
@@ -239,29 +263,38 @@ async function main() {
   const idf = ["H-idf", "H-idf-pi", "H-idf-cg", "H-idf-pi-cg"];
   const cgOn = ["H-idf-cg", "H-bm25-cg", "H-idf-pi-cg", "H-bm25-pi-cg"];
   const cgOff = ["H-idf", "H-bm25", "H-idf-pi", "H-bm25-pi"];
-  const mean = (ids) => ids.reduce((s, id) => s + summaries[id].strict_accuracy, 0) / ids.length;
+  const present = (ids) => ids.filter((id) => summaries[id]);
+  const mean = (ids) => {
+    const ids2 = present(ids);
+    if (!ids2.length) return null;
+    return ids2.reduce((s, id) => s + summaries[id].strict_accuracy, 0) / ids2.length;
+  };
+  const diff = (a, b) =>
+    a != null && b != null && summaries[a] && summaries[b]
+      ? summaries[a].strict_accuracy - summaries[b].strict_accuracy
+      : null;
 
   const report = {
     tag: cfg.tag,
     warning: cfg.warning,
     n_questions: keys.length,
+    arms_run: Object.keys(summaries),
+    pageindex_available: pageindexAvailable(),
     summaries,
     by_stratum: byStratum,
     contrasts: {
-      pageindex_main_effect: mean(piOn) - mean(piOff),
-      bm25_main_effect: mean(bm25) - mean(idf),
-      codegraph_main_effect: mean(cgOn) - mean(cgOff),
-      combination_vs_today:
-        summaries["H-bm25-pi-cg"].strict_accuracy - summaries["H-idf"].strict_accuracy,
+      pageindex_main_effect:
+        mean(piOn) != null && mean(piOff) != null ? mean(piOn) - mean(piOff) : null,
+      bm25_main_effect: mean(bm25) != null && mean(idf) != null ? mean(bm25) - mean(idf) : null,
+      codegraph_main_effect:
+        mean(cgOn) != null && mean(cgOff) != null ? mean(cgOn) - mean(cgOff) : null,
+      combination_vs_today: diff("H-bm25-pi-cg", "H-idf"),
       // Diagnostic (not confirmatory Holms): union / gated vs today
-      ...(summaries["H-idf-pi-union"]
+      ...(summaries["H-idf-pi-union"] && summaries["H-idf"]
         ? {
-            union_vs_today:
-              summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf"].strict_accuracy,
-            gated_vs_today:
-              summaries["H-idf-pi-gated"].strict_accuracy - summaries["H-idf"].strict_accuracy,
-            union_vs_rrf_pi:
-              summaries["H-idf-pi-union"].strict_accuracy - summaries["H-idf-pi"].strict_accuracy,
+            union_vs_today: diff("H-idf-pi-union", "H-idf"),
+            gated_vs_today: diff("H-idf-pi-gated", "H-idf"),
+            union_vs_rrf_pi: diff("H-idf-pi-union", "H-idf-pi"),
           }
         : {}),
     },
