@@ -1,37 +1,27 @@
-# Human pass required — hard-candidate (grown)
+# Human pass — hard-candidate (acceptance sample)
 
-**Status:** regenerated 2026-09-29 with TOC/list-filtered `rfc_to_markdown` + **grown** gold-section ladder (16 RFCs, depth keys).  
-**Machine gate:** `python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py` → `keys_flagged_defective: 0`, `map_artifact_section_count: 0`, `keys_with_gold_clean` ≥ 190 (currently **238**).  
-**Do both human passes in one sitting:** [`../../design/HUMAN_PASS_ONE_SITTING.md`](../../design/HUMAN_PASS_ONE_SITTING.md) (this set + CodeGraph prove keys).  
-**Do not freeze or spend confirmatory runs until this checklist is signed.**
+**Status:** regenerated + grown 2026-09-29 (TOC/list filter; ~238 gold-clean keys).  
+**Machine gate:** `flag_artifact_gold_keys.py` → defective **0**, map ghosts **0**.  
+**Do not review all keys.** Use the stratified sample protocol in [`../../design/HUMAN_PASS_ONE_SITTING.md`](../../design/HUMAN_PASS_ONE_SITTING.md).
 
-## Why grow before signing
+## Realistic review (same sitting as CodeGraph)
 
-n≈72 gold-section keys only detects **~13pp** effects on a single comparison — enough to confirm a large k-sweep gain, not a subtle default change. With the builder fixed, more candidates are cheap; the human pass is the bottleneck. This grown set targets **~8pp** detectability so a k-sweep can change the default if the effect is real.
-
-Prior pre-rebuild set (11 rule drops + TOC/list gold defects) is **untrusted** — do not patch it.
-
-## Checklist
-
-- [ ] Spot-check every RFC `section_lookup` / `buried_detail` / depth-ladder key: gold title is a real body heading; ~60% / depth-% keys sit near that percentile among **filtered** headings.
-- [ ] Spot-check 20+ `exact_term` / other types: answer appears in doc; not cite-impossible.
-- [ ] Confirm no TOC leader-dot titles / postal-junk headings (`48155 Münster`) in `section-maps/rfc*.json`.
-- [ ] Re-run `flag_artifact_gold_keys.py` after any manual key edits (must stay at 0 flagged; gold-clean ≥ 190).
-- [ ] Sign CodeGraph prove keys the **same sitting** ([`codegraph-prove-keys.md`](../../design/codegraph-prove-keys.md)).
-- [ ] Only then: offline `H-idf` baseline on the **clean** key set; k-sweep `{3,6,10}`; any fair-test / Vectify retest on a **new** validated cohort (do not reuse spent void IDs as proof).
-
-## Commands
+| Step | Action |
+| ---- | ------ |
+| 1 | Review **all 12** CodeGraph prove keys ([`codegraph-prove-keys.md`](../../design/codegraph-prove-keys.md)) — confirm single grep fails |
+| 2 | Review the **60** rows in [`doc-human-pass-sample.json`](../../design/doc-human-pass-sample.json) |
+| 3 | If **≥3** sample defects → **stop**, fix builder, re-sample — **do not sign** |
+| 4 | If ≤2 defects and flagger still 0 → sign [`HUMAN_PASS_ONE_SITTING.md`](../../design/HUMAN_PASS_ONE_SITTING.md) |
 
 ```bash
 python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py
-# Vault ghosts (operator Memory + optional contaminated proxy):
-python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
-# After human edits + approval:
-# node benchmarks/pageindex-ab/scripts/...  # H-idf re-rank (cheap)
+python3 benchmarks/pageindex-ab/scripts/sample_doc_human_pass.py --n 60 --seed 20261015
 ```
+
+## Power note
+
+n≈238 gold-clean keys: independent-trials rough MDE ~8pp; with **deterministic** Flash-lite answers, single-comparison detectable difference is closer to **~9pp** — still inside k-sweep needs for a large default change.
 
 ## Signer
 
-| Role | Name | Date |
-| ---- | ---- | ---- |
-| Human pass (doc keys) | | |
+Sign on [`HUMAN_PASS_ONE_SITTING.md`](../../design/HUMAN_PASS_ONE_SITTING.md) (session row). Do not duplicate a full-set checklist here.

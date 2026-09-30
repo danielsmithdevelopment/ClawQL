@@ -32,7 +32,7 @@ MANIFEST = OUT / "candidate-manifest.json"
 SEED = ROOT / "corpus" / "seed"
 
 # Public RFCs — well_structured. Prefer mid-size for CI; 9110 is large.
-# Expanded 2026-09-29 so gold-section n can support ~8pp k-sweep effects (not only ~13pp).
+# Expanded 2026-09-29 so gold-section n can support ~9pp k-sweep effects (not only ~13pp).
 RFC_URLS = [
     ("rfc8259", "https://www.rfc-editor.org/rfc/rfc8259.txt"),  # JSON ~28KB
     ("rfc6749", "https://www.rfc-editor.org/rfc/rfc6749.txt"),  # OAuth ~160KB
@@ -1014,8 +1014,8 @@ def main() -> int:
         ),
         "exclusions": ["harvey-labs", "extractbench", "contaminated-smoke"],
         "power_note": (
-            "Single-comparison rough MDE: n≈72 → ~13pp; n≈190 → ~8pp. "
-            "Grow before signing if k-sweep may change the default."
+            "Single-comparison rough MDE: n≈72 → ~13pp; n≈190+ → ~8pp independent-trials, "
+            "~9pp with deterministic Flash-lite. Grow before signing if k-sweep may change the default."
         ),
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -1026,7 +1026,7 @@ def main() -> int:
 Public IETF RFCs (well-structured) + long synthetic Docling/weak docs + 8 tiny repos.
 
 **Grown 2026-09-29** for k-sweep power: machine keys with `gold_sections` ≈ **{gold_n}**
-(target ≥190 so an ~8pp effect is detectable; n=72 only sees ~13pp).
+(target ≥190 so an ~9pp deterministic single-comparison effect is detectable; n=72 only sees ~13pp).
 
 | Gate | Status |
 | ---- | ------ |

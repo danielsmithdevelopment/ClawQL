@@ -299,5 +299,5 @@
     "extractbench",
     "contaminated-smoke"
   ],
-  "power_note": "Single-comparison rough MDE: n\u224872 \u2192 ~13pp; n\u2248190 \u2192 ~8pp. Grow before signing if k-sweep may change the default."
+  "power_note": "Single-comparison rough MDE: n\u224872 \u2192 ~13pp; n\u2248190+ \u2192 ~8pp independent-trials, ~9pp with deterministic Flash-lite. Grow before signing if k-sweep may change the default."
 }

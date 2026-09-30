@@ -3,7 +3,7 @@
 Public IETF RFCs (well-structured) + long synthetic Docling/weak docs + 8 tiny repos.
 
 **Grown 2026-09-29** for k-sweep power: machine keys with `gold_sections` ≈ **262**
-(target ≥190 so an ~8pp effect is detectable; n=72 only sees ~13pp).
+(target ≥190 so an ~9pp deterministic single-comparison effect is detectable; n=72 only sees ~13pp).
 
 | Gate | Status |
 | ---- | ------ |
