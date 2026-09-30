@@ -28,7 +28,7 @@ Producer → signed delivery coverage lives in `packages/clawql-mcp-events/src/p
 
 ## Status
 
-| Environment | Result |
-| --- | --- |
-| Package / producer E2E (this repo CI) | Automated — see vitest |
-| Live ChatGPT plugin UI | **Operator-run** — requires OpenAI plugin credentials not available in Cloud Agent VMs |
+| Environment                           | Result                                                                                 |
+| ------------------------------------- | -------------------------------------------------------------------------------------- |
+| Package / producer E2E (this repo CI) | Automated — see vitest                                                                 |
+| Live ChatGPT plugin UI                | **Operator-run** — requires OpenAI plugin credentials not available in Cloud Agent VMs |

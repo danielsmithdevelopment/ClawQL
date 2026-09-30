@@ -36,13 +36,13 @@ JSON-RPC error **`-32015`** (`CallbackEndpointError`) with `data.reason` (`chall
 
 ## 4. Event catalog (built-in — advertised only when producers are live)
 
-| Name | Description | Producer (wired) | Filters |
-| --- | --- | --- | --- |
-| `document.processed` | IDP / document pipeline finished | `clawql-documents` IDP effect + NATS dispatch path | `document_id?` |
-| `hook.blocked` | Policy / ATR / hook blocked a call | `src/mcp/mcp-tool-wrap.ts` blocked branch | `tool?` |
-| `budget.exhausted` | Inference virtual-key budget exceeded | `clawql-inference` `validateVirtualKey` | `budget_id?` |
-| `mandate.completed` | Schedule job run completed | `clawql-automation` `executeTriggerForJob` | `mandate_id?` |
-| `clawql.notification` | Slack notify success | `clawql-automation` notify effect | `channel?` |
+| Name                  | Description                           | Producer (wired)                                   | Filters        |
+| --------------------- | ------------------------------------- | -------------------------------------------------- | -------------- |
+| `document.processed`  | IDP / document pipeline finished      | `clawql-documents` IDP effect + NATS dispatch path | `document_id?` |
+| `hook.blocked`        | Policy / ATR / hook blocked a call    | `src/mcp/mcp-tool-wrap.ts` blocked branch          | `tool?`        |
+| `budget.exhausted`    | Inference virtual-key budget exceeded | `clawql-inference` `validateVirtualKey`            | `budget_id?`   |
+| `mandate.completed`   | Schedule job run completed            | `clawql-automation` `executeTriggerForJob`         | `mandate_id?`  |
+| `clawql.notification` | Slack notify success                  | `clawql-automation` notify effect                  | `channel?`     |
 
 **Deferred (not in `events/list`):** `stream.changed` — requires `clawql-streams` / change-detection producers. Kept in `DEFERRED_MCP_EVENT_CATALOG` only.
 
@@ -50,12 +50,12 @@ All advertised events support `delivery: ["webhook"]` only.
 
 ## 4b. Enterprise outbound controls
 
-| Control | Env | Default |
-| --- | --- | --- |
-| Callback host allowlist | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`) | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
-| PII redaction | `CLAWQL_MCP_EVENTS_REDACT_PII` | on — runs `gatewayRedactPayload` before delivery |
-| Max subscriptions / principal | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL` | `25` |
-| Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL` | `60` |
+| Control                             | Env                                                               | Default                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Callback host allowlist             | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`) | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
+| PII redaction                       | `CLAWQL_MCP_EVENTS_REDACT_PII`                                    | on — runs `gatewayRedactPayload` before delivery                        |
+| Max subscriptions / principal       | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
+| Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
 
 ## 5. Subscription identity & durability
 
