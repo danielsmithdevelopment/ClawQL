@@ -1,7 +1,7 @@
 {
   "tag": "codegraph-no-harm-v1",
   "locked_with": "design/codegraph-prove-decision.lock.json",
-  "purpose": "Grep-solvable keys — CodeGraph must not regress easy questions (Vectify-style no-harm).",
+  "purpose": "Grep-solvable keys — adding CodeGraph tools must not distract the agent on easy questions (Vectify-style no-harm). Not a test of whether CodeGraph can replace grep.",
   "repo": "danielsmithdevelopment/ClawQL",
   "roots": [
     "packages/clawql-codegraph/src",
@@ -10,7 +10,7 @@
     "packages/clawql-api/src"
   ],
   "n": 6,
-  "pass_rule": "A-codegraph correct >= 5 of 6 (allow one flake); else no-harm fail => tie => purge",
+  "pass_rule": "A-codegraph (grep+CodeGraph treatment) correct >= 5 of 6 (allow one flake); else no-harm fail => tie => purge",
   "keys": [
     {
       "id": "cg-harm-01",

@@ -7,17 +7,19 @@
 **No-harm cohort:** [`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json) (6 grep-solvable; not in Net)  
 **Default if unsigned by 2026-10-15:** `codegraph_*` leaves the 8.0.0 bundle.
 
-## Locked beat (same shape as Vectify)
+## Locked beat (additive — same shape as Vectify)
+
+**Product question:** does adding `codegraph_*` improve today’s default (grep + read)?
 
 | Outcome | Condition | Freeze action |
 | ------- | --------- | ------------- |
-| **CodeGraph beats** | Net \(\ge 5\) on these 12 **and** no-harm \(\ge 5/6\) | Keep opt-in candidate |
+| **CodeGraph beats** | Net \(\ge 5\) on these 12 (**grep+CodeGraph** vs grep) **and** no-harm \(\ge 5/6\) | Keep opt-in candidate |
 | **Tie** | Net \(\in [-4,+4]\) **or** no-harm fail | **Purge** (leave bundle) |
 | **Grep beats** | Net \(\le -5\) | Purge |
 
-Arms every spend: `A-no-tools` (memory baseline — public repo), `A-grep`, `A-codegraph` (no grep on the treatment arm).
+Arms every spend: `A-no-tools`, `A-grep` (control), `A-codegraph` = **grep + codegraph_*** (treatment). Optional diagnostic: `A-codegraph-only` (no grep) — never decides freeze. Record `used_codegraph` on the treatment arm.
 
-**Caveat:** n=12 on one TypeScript monorepo is home turf. The margin + no-harm + no-tools exist so a thin home-turf win cannot keep the tools.
+**Caveat:** n=12 on one TypeScript monorepo is home turf. The margin + no-harm + no-tools + usage exist so a thin home-turf win cannot keep the tools.
 
 ## Requirements
 
@@ -61,7 +63,7 @@ Full oracle golds: [`codegraph-prove-keys.oracle.json`](codegraph-prove-keys.ora
 - [ ] Spot-check oracle `impacted_names` / explore primary (or `npm run test:dogfood -w clawql-codegraph`).
 - [ ] Confirm no-harm keys stay intentionally grep-easy ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)).
 - [ ] Sign [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) CodeGraph row.
-- [ ] Only then schedule `run_agent_loop_freeze.mjs` with arms `A-no-tools,A-grep,A-codegraph`.
+- [ ] Only then schedule `run_agent_loop_freeze.mjs` with arms `A-no-tools,A-grep,A-codegraph` (additive treatment; optional `A-codegraph-only` diagnostic).
 
 ## Signer
 

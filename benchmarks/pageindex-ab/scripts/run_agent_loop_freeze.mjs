@@ -2,14 +2,15 @@
 /**
  * Strong-model agent-loop freeze scaffold (Track B).
  *
- * Proves codegraph_* vs grep (+ no-tools memory baseline) under the locked
- * decision rule in design/codegraph-prove-decision.lock.json.
- * Full tool loop lands when ClawQL MCP + OPENROUTER_API_KEY are wired;
- * this entrypoint validates cohort/arms and writes a schedule manifest.
+ * Product question: does adding codegraph_* improve today's default (grep)?
+ * Treatment A-codegraph = grep + codegraph_* (additive). Optional diagnostic
+ * A-codegraph-only has no grep. See design/codegraph-prove-decision.lock.json.
  *
  * Usage:
  *   node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs --dry-run \
  *     --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph
+ *   # optional diagnostic:
+ *   #   --arms A-no-tools,A-grep,A-codegraph,A-codegraph-only
  */
 
 import fs from "node:fs";
@@ -67,8 +68,18 @@ function loadCodegraphCohorts() {
 const ARM_TOOLS = {
   "A-no-tools": [],
   "A-grep": ["grep", "read_around"],
-  // Treatment arm: no grep (locked) — codegraph must carry the prove jobs.
+  // Treatment (beat arm): additive — today's default PLUS codegraph_*.
   "A-codegraph": [
+    "grep",
+    "read_around",
+    "codegraph_explore",
+    "codegraph_impact",
+    "codegraph_neighbors",
+    "codegraph_path",
+    "codegraph_query",
+  ],
+  // Diagnostic only — "can CodeGraph replace grep?" Never decides freeze.
+  "A-codegraph-only": [
     "codegraph_explore",
     "codegraph_impact",
     "codegraph_neighbors",
@@ -83,6 +94,18 @@ const ARM_TOOLS = {
     "read_around",
   ],
 };
+
+const CODEGRAPH_TOOL_NAMES = [
+  "codegraph_explore",
+  "codegraph_impact",
+  "codegraph_neighbors",
+  "codegraph_path",
+  "codegraph_query",
+  "codegraph_explain",
+  "codegraph_subgraph",
+  "codegraph_index",
+  "codegraph_sync",
+];
 
 function main() {
   const args = parseArgs(process.argv);
@@ -111,14 +134,30 @@ function main() {
     return;
   }
 
+  // Treatment must include grep (additive). Reject stale CodeGraph-only configs
+  // that reuse the A-codegraph id without grep.
+  const treatmentTools = ARM_TOOLS["A-codegraph"] || [];
+  if (!treatmentTools.includes("grep") || !treatmentTools.some((t) => t.startsWith("codegraph_"))) {
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: "A-codegraph treatment arm must include both grep and codegraph_* tools (additive).",
+      }),
+    );
+    process.exitCode = 2;
+    return;
+  }
+
   const manifest = {
     suite: "agent-loop-freeze",
     status: args.dryRun ? "scheduled-dry-run" : "scaffold-needs-mcp",
     freeze: "2026-10-15",
     track: "B",
+    product_question: lock.product_question,
     design: "benchmarks/pageindex-ab/design/agent-loop-freeze.md",
     decision_lock: "benchmarks/pageindex-ab/design/codegraph-prove-decision.lock.json",
     decision_lock_status: lock.status,
+    clear_to_sign: lock.clear_to_sign === true,
     beat: lock.beat,
     corpus: args.corpus,
     cohort: args.cohort,
@@ -131,19 +170,41 @@ function main() {
     model: args.model,
     arms: args.arms.map((id) => ({
       id,
+      role:
+        id === "A-codegraph"
+          ? "treatment"
+          : id === "A-grep"
+            ? "control"
+            : id === "A-codegraph-only"
+              ? "diagnostic"
+              : id === "A-no-tools"
+                ? "baseline"
+                : "other",
       tools: ARM_TOOLS[id] || [],
-      setup: id === "A-codegraph" ? ["codegraph_sync"] : [],
+      setup:
+        id === "A-codegraph" || id === "A-codegraph-only" ? ["codegraph_sync"] : [],
+      counts_toward_net: id === "A-grep" || id === "A-codegraph",
     })),
+    usage_evidence: {
+      arm: "A-codegraph",
+      codegraph_tool_names: CODEGRAPH_TOOL_NAMES,
+      record_per_question: [
+        "codegraph_tool_calls",
+        "codegraph_tools_used",
+        "used_codegraph",
+      ],
+      note: "If treatment has grep+CodeGraph and used_codegraph is usually false, that answers the purpose question on its own.",
+    },
     decision:
-      "Keep codegraph_* only if Net>=5 on prove keys AND no-harm pass; Net in [-4,+4] or no-harm fail => purge. Report A-no-tools (memory) rates.",
+      "Keep codegraph_* only if Net>=5 (grep+CodeGraph vs grep) AND no-harm pass; tie/no-harm fail => purge. Report usage (used_codegraph) and A-no-tools rates. A-codegraph-only is diagnostic only.",
     parallel_with: [
       "benchmarks/pageindex-ab/design/vectify-fair-test.md",
       "benchmarks/pageindex-ab/design/HUMAN_PASS_ONE_SITTING.md",
     ],
     has_openrouter: Boolean(process.env.OPENROUTER_API_KEY),
     next: args.dryRun
-      ? "Human-pass first (HUMAN_PASS_ONE_SITTING.md); then live spend once MCP tool loop is wired."
-      : "Wire ClawQL MCP tool loop (not implemented in this scaffold).",
+      ? "Human-pass first (HUMAN_PASS_ONE_SITTING.md; clear_to_sign); then live spend once MCP tool loop is wired."
+      : "Wire ClawQL MCP tool loop (not implemented in this scaffold). Record used_codegraph per treatment question.",
   };
 
   fs.mkdirSync(args.out, { recursive: true });

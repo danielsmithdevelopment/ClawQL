@@ -9,15 +9,18 @@
 
 Machine gates (already green): hard-candidate `keys_flagged_defective=0`, `map_artifact_section_count=0`, `keys_with_gold_clean=238`.
 
-## CodeGraph decision rule (locked — read before signing)
+## CodeGraph decision rule (locked — clear to sign)
 
-Canonical: [`codegraph-prove-decision.lock.json`](codegraph-prove-decision.lock.json) · narrative: [`agent-loop-freeze.md`](agent-loop-freeze.md).
+Canonical: [`codegraph-prove-decision.lock.json`](codegraph-prove-decision.lock.json) (`clear_to_sign: true`) · narrative: [`agent-loop-freeze.md`](agent-loop-freeze.md).
 
-- **Margin:** Net \(\ge 5\) (CodeGraph-correct / grep-wrong) on the 12 prove keys; anything less is a **tie → purge**.
-- **No-harm:** 6 grep-solvable keys ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)); CodeGraph must score \(\ge 5/6\) or the run is treated as tie → purge.
-- **No-tools arm:** same model, no tools — measures memorization of the public ClawQL repo. Required report; does not rescue a weak Net.
+- **Product question:** does **adding** CodeGraph improve today’s default (grep)? Treatment = **grep + CodeGraph**.
+- **Margin:** Net \(\ge 5\) (treatment-correct / grep-only-wrong) on the 12 prove keys; anything less is a **tie → purge**.
+- **No-harm:** 6 grep-solvable keys; treatment must score \(\ge 5/6\) (extra tools must not distract on easy questions).
+- **Usage:** record whether the treatment arm actually calls `codegraph_*`; ignoring CodeGraph when both are available is evidence on its own.
+- **No-tools arm:** memory baseline on the public repo. Required report; does not rescue a weak Net.
+- **Diagnostic:** optional `A-codegraph-only` (no grep) — never decides freeze.
 
-Twelve keys on one TypeScript repo is **home turf** — the locked margin + no-harm + no-tools exist so a thin win cannot keep the tools.
+Twelve keys on one TypeScript repo is **home turf** — the locked margin + no-harm + no-tools + usage exist so a thin win cannot keep the tools.
 
 ## Doc sample (acceptance sampling)
 
@@ -53,7 +56,7 @@ Rough MDE for n≈238 gold-clean keys was ~8pp under an independent-trials sketc
 4. [ ] Review the **60** sample rows in [`doc-human-pass-sample.json`](doc-human-pass-sample.json). Tally defects.
 5. [ ] If defects ≥3: stop; open a builder fix; do **not** sign. Else continue.
 6. [ ] Re-run `python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py` → must stay 0/0.
-7. [ ] Sign below. Same day after sign: cheap `H-idf` + schedule k-sweep; schedule Track B only with arms `A-no-tools,A-grep,A-codegraph`.
+7. [ ] Sign below. Same day after sign: cheap `H-idf` + schedule k-sweep; schedule Track B with arms `A-no-tools,A-grep,A-codegraph` (additive; optional `A-codegraph-only` diagnostic).
 
 ## Signer
 

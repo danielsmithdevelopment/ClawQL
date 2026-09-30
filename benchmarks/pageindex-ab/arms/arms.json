@@ -225,14 +225,35 @@
     },
     {
       "id": "A-codegraph",
-      "label": "Strong-model agent loop — codegraph vs grep-insoluble jobs",
+      "label": "Strong-model agent loop — grep + CodeGraph (additive treatment)",
+      "allowed_tools": [
+        "grep",
+        "read_around",
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "codegraph_query"
+      ],
+      "setup": ["codegraph_sync"],
+      "role": "treatment",
+      "notes": "Beat arm vs A-grep. Record used_codegraph per question. See codegraph-prove-decision.lock.json.",
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
+      "id": "A-codegraph-only",
+      "label": "Diagnostic — CodeGraph without grep (does not decide freeze)",
       "allowed_tools": [
         "codegraph_explore",
         "codegraph_impact",
         "codegraph_neighbors",
         "codegraph_path",
-        "grep"
+        "codegraph_query",
+        "read_around"
       ],
+      "setup": ["codegraph_sync"],
+      "role": "diagnostic",
+      "notes": "Optional. Answers 'can CodeGraph replace grep?' — never keep/purge.",
       "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
     },
     {
