@@ -30,9 +30,7 @@ export type InferenceAuditEntry = {
   summary: string;
   correlationId?: string;
   payload:
-    | ModelEscalationAuditPayload
-    | AgentCoordinationAuditPayload
-    | MemoryEnrichmentAuditPayload;
+    ModelEscalationAuditPayload | AgentCoordinationAuditPayload | MemoryEnrichmentAuditPayload;
 };
 
 /** Memory IDs / scope only — never vault body text (Evidence tab join). */

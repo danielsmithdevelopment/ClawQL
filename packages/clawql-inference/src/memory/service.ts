@@ -68,10 +68,7 @@ export class MemoryGatewayService extends Context.Tag("clawql/inference/MemoryGa
       slug: string,
       scope?: string
     ) => Effect.Effect<MemoryGetResult | MemoryEraseResult>;
-    readonly erase: (
-      slug: string,
-      scope?: string
-    ) => Effect.Effect<MemoryEraseResult>;
+    readonly erase: (slug: string, scope?: string) => Effect.Effect<MemoryEraseResult>;
   }
 >() {}
 
@@ -84,12 +81,18 @@ function requireVault(): string {
 }
 
 function slugFromPath(relPath: string): string {
-  const base = relPath.replace(/^Memory\//, "").replace(/\.md$/i, "").replace(/\.cqk$/i, "");
+  const base = relPath
+    .replace(/^Memory\//, "")
+    .replace(/\.md$/i, "")
+    .replace(/\.cqk$/i, "");
   return base || relPath;
 }
 
 function resolveMemoryRelPath(slug: string, scope?: string): string {
-  const cleaned = slug.trim().replace(/^\/+/, "").replace(/\.(md|cqk)$/i, "");
+  const cleaned = slug
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/\.(md|cqk)$/i, "");
   if (cleaned.split("/").some((p) => p === "..")) {
     throw new Error("Invalid memory slug");
   }
@@ -272,10 +275,7 @@ export function runMemoryGatewayGet(
   );
 }
 
-export function runMemoryGatewayErase(
-  slug: string,
-  scope?: string
-): Promise<MemoryEraseResult> {
+export function runMemoryGatewayErase(slug: string, scope?: string): Promise<MemoryEraseResult> {
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* MemoryGatewayService;

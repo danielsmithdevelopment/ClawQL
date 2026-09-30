@@ -7,10 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runMemoryIngest } from "../ingest/ingest.js";
-import {
-  memoryContentRecoverableFromStores,
-  runMemoryErase,
-} from "./erase.js";
+import { memoryContentRecoverableFromStores, runMemoryErase } from "./erase.js";
 import { openOntologyDb, withOntologyWriteLock } from "../ontology/ontology-db.js";
 import { registerMemoryWormSink, type MemoryWormEvent } from "../okf/worm-events.js";
 
