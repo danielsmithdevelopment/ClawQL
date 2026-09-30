@@ -810,6 +810,18 @@ async function executeTriggerForJob(
     );
     trimRunsForJob(db, job.id, getScheduleHistoryLimit());
   }
+  try {
+    const { emitMandateCompleted } = await import("clawql-mcp-events");
+    emitMandateCompleted({
+      mandate_id: job.id,
+      status: outcome.status,
+      summary: outcome.ok
+        ? `schedule job ${job.id} ok (${outcome.latency_ms ?? 0}ms)`
+        : (outcome.error_text ?? `schedule job ${job.id} ${outcome.status}`),
+    });
+  } catch {
+    /* mcp-events optional */
+  }
   return { ...run, ok: outcome.ok };
 }
 

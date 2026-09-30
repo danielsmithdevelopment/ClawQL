@@ -113,7 +113,8 @@ describe("clawql-mcp-events", () => {
       }),
       { store: createMemorySubscriptionStore() }
     );
-    expect(result.events.some((e) => e.name === "stream.changed")).toBe(true);
+    expect(result.events.some((e) => e.name === "stream.changed")).toBe(false);
+    expect(result.events.some((e) => e.name === "document.processed")).toBe(true);
     expect(result.events.every((e) => e.delivery.includes("webhook"))).toBe(true);
   });
 

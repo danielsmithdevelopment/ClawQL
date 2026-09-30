@@ -19,6 +19,13 @@ import {
   defaultFeedbackLoopDetector,
   FeedbackLoopDetector,
 } from "./feedback-loop.js";
+import {
+  assertCallbackAllowlisted,
+  DeliveryRateLimiter,
+  readEnterpriseEventsPolicy,
+  type EnterpriseEventsPolicy,
+} from "./enterprise.js";
+import { gatewayRedactPayload } from "clawql-api";
 import { screenEventPayload } from "./screen.js";
 import { validateWhsecSecret } from "./secret.js";
 import {
@@ -56,6 +63,8 @@ export type McpEventsConfig = {
   wormAppend?: WormAppend;
   defaultTtlMs?: number;
   allowNonExpiring?: boolean;
+  enterprise?: EnterpriseEventsPolicy;
+  rateLimiter?: DeliveryRateLimiter;
 };
 
 function matchesFilters(
@@ -121,6 +130,11 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
   const wormAppend = config.wormAppend;
   const defaultTtlMs = config.defaultTtlMs ?? DEFAULT_TTL_MS;
   const allowNonExpiring = config.allowNonExpiring ?? false;
+  const enterprise =
+    config.enterprise ?? Effect.runSync(readEnterpriseEventsPolicy());
+  const rateLimiter =
+    config.rateLimiter ??
+    new DeliveryRateLimiter(enterprise.maxDeliveriesPerMinutePerPrincipal);
 
   const audit = (type: string, payload: Record<string, unknown>) =>
     Effect.tryPromise({
@@ -188,7 +202,8 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
         }
         const secret = yield* validateWhsecSecret(secretRaw);
         const policy = yield* readCallbackUrlPolicy();
-        yield* assertSafeCallbackUrl(params.delivery.url, policy);
+        const safeUrl = yield* assertSafeCallbackUrl(params.delivery.url, policy);
+        yield* assertCallbackAllowlisted(safeUrl, enterprise.callbackAllowlist);
 
         const id = deriveSubscriptionId({
           principal: params.principal,
@@ -197,12 +212,24 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
           arguments: args,
         });
 
+        const existing = yield* store.findByIdentity(id);
+        if (!existing) {
+          const all = yield* store.list();
+          const countForPrincipal = all.filter((s) => s.principal === params.principal).length;
+          if (countForPrincipal >= enterprise.maxSubscriptionsPerPrincipal) {
+            return yield* Effect.fail(
+              new UnauthorizedEventError({
+                message: `Subscription cap reached (${enterprise.maxSubscriptionsPerPrincipal} per principal)`,
+              })
+            );
+          }
+        }
+
         const ttl = resolveTtlMs(params.ttlMs, defaultTtlMs, allowNonExpiring);
         const now = new Date();
         const refreshBefore =
           ttl == null ? null : new Date(now.getTime() + ttl).toISOString();
 
-        const existing = yield* store.findByIdentity(id);
         let previousSecret: string | undefined;
         let previousSecretExpiresAt: string | undefined;
         if (existing && existing.secret !== secret) {
@@ -268,13 +295,19 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
     emit: (event) =>
       Effect.gen(function* () {
         const screenedData = yield* screenEventPayload(event.data);
-        const screened: DeliverableEvent = { ...event, data: screenedData };
+        const redactedData = enterprise.redactPii
+          ? ((yield* Effect.tryPromise({
+              try: () => gatewayRedactPayload(screenedData),
+              catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+            }).pipe(Effect.orElseSucceed(() => screenedData))) as Record<string, unknown>)
+          : screenedData;
+        const screened: DeliverableEvent = { ...event, data: redactedData };
         const all = yield* store.list();
         const matches = all.filter(
           (s: StoredSubscription) =>
             s.verified &&
             s.name === screened.name &&
-            matchesFilters(s.arguments, screenedData)
+            matchesFilters(s.arguments, redactedData)
         );
 
         const outcomes: DeliveryOutcome[] = [];
@@ -299,6 +332,22 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
               attempts: 0,
               stopped: true,
               reason: "access_revoked",
+            });
+            continue;
+          }
+
+          if (!rateLimiter.tryConsume(sub.principal)) {
+            yield* audit("mcp_events.rate_limited", {
+              id: sub.id,
+              principal: sub.principal,
+              eventId: screened.eventId,
+            });
+            outcomes.push({
+              accepted: false,
+              status: 429,
+              attempts: 0,
+              stopped: false,
+              reason: "rate_limited",
             });
             continue;
           }

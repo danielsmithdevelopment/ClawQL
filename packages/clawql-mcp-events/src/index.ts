@@ -1,4 +1,4 @@
-export { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
+export { BUILTIN_MCP_EVENT_CATALOG, DEFERRED_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
 export { canonicalJson } from "./canonical-json.js";
 export {
   assertSafeCallbackUrl,
@@ -12,6 +12,13 @@ export {
 } from "./delivery.js";
 export { isMcpEventsEnabled, isMcpEventsEnabledSync } from "./enabled.js";
 export {
+  assertCallbackAllowlisted,
+  DeliveryRateLimiter,
+  hostMatchesAllowlist,
+  readEnterpriseEventsPolicy,
+} from "./enterprise.js";
+export type { EnterpriseEventsPolicy } from "./enterprise.js";
+export {
   CALLBACK_ENDPOINT_ERROR_CODE,
   CallbackEndpointError,
   InvalidEventError,
@@ -23,6 +30,24 @@ export {
   handleMcpEventsJsonRpc,
   isMcpEventsJsonRpc,
 } from "./jsonrpc.js";
+export {
+  emitMcpEvent,
+  emitMcpEventBestEffort,
+  getMcpEventsProcessEmitter,
+  setMcpEventsProcessEmitter,
+} from "./process-bridge.js";
+export {
+  emitBudgetExhausted,
+  emitBudgetExhaustedAwait,
+  emitClawqlNotification,
+  emitClawqlNotificationAwait,
+  emitDocumentProcessed,
+  emitDocumentProcessedAwait,
+  emitHookBlocked,
+  emitHookBlockedAwait,
+  emitMandateCompleted,
+  emitMandateCompletedAwait,
+} from "./producers.js";
 export { screenEventPayload, screenUserText } from "./screen.js";
 export { generateWhsecSecret, generateWhsecSecretSync, validateWhsecSecret } from "./secret.js";
 export {

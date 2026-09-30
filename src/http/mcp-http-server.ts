@@ -208,6 +208,12 @@ export type CreateMcpHttpAppOptions = {
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
   configureHitlTransportDeps();
   registerMcpX402TransportHooks();
+  try {
+    const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
+    configureMcpEventsProcessEmitter();
+  } catch {
+    /* mcp-events optional in slim test hosts */
+  }
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
@@ -794,6 +800,8 @@ export async function startMcpHttpServer(): Promise<void> {
     await import("../composition/clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
   await ensureClawqlApi();
+  const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
+  configureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");
   await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();

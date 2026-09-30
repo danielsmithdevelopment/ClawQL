@@ -1,7 +1,10 @@
 import type { McpEventDefinition } from "./types.js";
 
-/** Built-in ClawQL event catalog for MCP Events 8.0.0. */
-export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
+/**
+ * Deferred until clawql-streams / change-detection producers ship.
+ * Do not advertise — vapor without a live emit path.
+ */
+export const DEFERRED_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "stream.changed",
     description:
@@ -30,6 +33,13 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
       additionalProperties: false,
     },
   },
+] as const;
+
+/**
+ * Advertised MCP Events — each entry has a live producer wired in 8.0.0.
+ * @see producers.ts
+ */
+export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "document.processed",
     description: "A document finished IDP / document pipeline processing.",
@@ -102,12 +112,13 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   },
   {
     name: "mandate.completed",
-    description: "A mandate or scheduled automation run completed.",
+    description:
+      "A schedule / mandate automation run completed (ClawQL schedule job id as mandate_id).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
       properties: {
-        mandate_id: { type: "string", description: "Optional mandate id filter." },
+        mandate_id: { type: "string", description: "Optional mandate / schedule job id filter." },
       },
       additionalProperties: false,
     },
@@ -124,7 +135,7 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   },
   {
     name: "clawql.notification",
-    description: "Synthetic ClawQL notification for demos and tests.",
+    description: "ClawQL notification (Slack notify success and synthetic demos).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
