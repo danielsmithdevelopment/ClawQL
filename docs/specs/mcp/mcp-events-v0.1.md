@@ -112,4 +112,4 @@ At-rest AES-256-GCM for schedule projections requires a key from the environment
 
 - Package: subscribe/deliver/unsubscribe, challenge `-32015`, SSRF, allowlist, 410, revoke, feedback loop, **per-event producer → signed delivery**.
 - Schedule: `detectProjectedChange` / `detectSyntheticBodyChange` baseline vs change; volatile-field immunity; capped diffs.
-- **Blocking release gate:** ChatGPT live pass — [`mcp-events-chatgpt-checklist.md`](./mcp-events-chatgpt-checklist.md) and [`docs/release/v8.0.0-checklist.md`](../../release/v8.0.0-checklist.md).
+- **Blocking release gate:** ChatGPT live pass — [`mcp-events-chatgpt-checklist.md`](./mcp-events-chatgpt-checklist.md) (per-event real trigger + delivery for all seven events, including `stream.changed` precision/negative and `schedule.paused` + Reconnect sources) and [`docs/release/v8.0.0-checklist.md`](../../release/v8.0.0-checklist.md).
