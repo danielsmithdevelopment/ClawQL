@@ -267,11 +267,16 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
 
   const answersPath = path.join(args.out, "answers.jsonl");
   const done = new Set();
+  // Drop incomplete/error rows (esp. OpenRouter 402) so resume retries them.
   if (fs.existsSync(answersPath)) {
+    const kept = [];
     for (const line of fs.readFileSync(answersPath, "utf8").split("\n").filter(Boolean)) {
       const r = JSON.parse(line);
+      if (r.error) continue;
+      kept.push(line);
       done.add(`${r.arm}\t${r.question_id}`);
     }
+    fs.writeFileSync(answersPath, kept.length ? kept.join("\n") + "\n" : "");
   }
 
   const cells = [];

@@ -441,6 +441,30 @@ jobs:
           else
             echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
           fi
+      - name: Resume prior Track B answers checkpoint
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p benchmarks/pageindex-ab/results/agent-loop-freeze
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          id="$(gh run list --workflow "PageIndex A/B (memory stack default-route)" \
+            --branch "$branch" --limit 15 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion == "failure" or .conclusion == "success")][0].databaseId // empty' || true)"
+          echo "prior_run_id=${id:-none}"
+          if [ -n "$id" ]; then
+            rm -rf /tmp/piab-trackb-resume
+            if gh run download "$id" -n pageindex-ab-agent-loop-freeze -D /tmp/piab-trackb-resume; then
+              src="$(find /tmp/piab-trackb-resume -name answers.jsonl -print -quit || true)"
+              if [ -n "$src" ]; then
+                cp "$src" benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl
+                echo "resumed_lines=$(wc -l < benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl)"
+              else
+                echo "no answers.jsonl in prior artifact"
+              fi
+            fi
+          fi
       - name: Track B additive agent-loop spend
         if: ${{ steps.gate.outputs.run == '1' }}
         env:
