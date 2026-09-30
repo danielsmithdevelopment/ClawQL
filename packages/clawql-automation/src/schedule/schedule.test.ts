@@ -230,4 +230,158 @@ describe("handleScheduleToolInput", () => {
       }
     );
   });
+
+  it("projects watch_fields and stores last_projection; ignores volatile-only churn", async () => {
+    let call = 0;
+    await withFetchServer(
+      async () => {
+        call++;
+        const body =
+          call === 1
+            ? {
+                generated_at: "t1",
+                request_id: "r1",
+                items: [{ id: 1, title: "A", state: "open" }],
+              }
+            : call === 2
+              ? {
+                  generated_at: "t2",
+                  request_id: "r2",
+                  items: [{ id: 1, title: "A", state: "open" }],
+                }
+              : {
+                  generated_at: "t3",
+                  request_id: "r3",
+                  items: [{ id: 1, title: "A", state: "closed" }],
+                };
+        return new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ETag: `"v${call}"` },
+        });
+      },
+      async (origin) => {
+        process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES = origin;
+        const created = await handleScheduleToolInput({
+          operation: "create",
+          schedule: { frequency: { type: "interval", seconds: 300 } },
+          action: {
+            kind: "synthetic",
+            synthetic_test: {
+              name: "prs",
+              request: { method: "GET", url: `${origin}/prs` },
+              assert: { status_in: [200] },
+              change_detection: {
+                watch_fields: ["items.id", "items.title", "items.state"],
+                array_sort_keys: { items: "id" },
+              },
+            },
+          },
+        });
+        const jobId = (JSON.parse(created.content[0]!.text) as { job: { id: string } }).job.id;
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const after1 = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as {
+          job: {
+            change_detection_state: {
+              last_hash: string;
+              last_projection: { items: Array<{ state: string }> };
+              last_etag: string;
+            };
+          };
+        };
+        expect(after1.job.change_detection_state.last_projection.items[0]!.state).toBe("open");
+        expect(after1.job.change_detection_state.last_etag).toBe('"v1"');
+        const hash1 = after1.job.change_detection_state.last_hash;
+
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const after2 = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as { job: { change_detection_state: { last_hash: string } } };
+        expect(after2.job.change_detection_state.last_hash).toBe(hash1);
+
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const after3 = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as {
+          job: {
+            change_detection_state: {
+              last_hash: string;
+              last_projection: { items: Array<{ state: string }> };
+            };
+          };
+        };
+        expect(after3.job.change_detection_state.last_hash).not.toBe(hash1);
+        expect(after3.job.change_detection_state.last_projection.items[0]!.state).toBe("closed");
+      }
+    );
+  });
+
+  it("sends If-None-Match and treats 304 as unchanged; backs off on 429 Retry-After", async () => {
+    const seenHeaders: Array<string | null> = [];
+    let mode: "etag" | "429" = "etag";
+    await withFetchServer(
+      async (req) => {
+        seenHeaders.push(req.headers.get("if-none-match"));
+        if (mode === "429") {
+          return new Response("slow down", {
+            status: 429,
+            headers: { "Retry-After": "120" },
+          });
+        }
+        if (req.headers.get("if-none-match") === '"abc"') {
+          return new Response(null, { status: 304, headers: { ETag: '"abc"' } });
+        }
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ETag: '"abc"' },
+        });
+      },
+      async (origin) => {
+        process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES = origin;
+        const created = await handleScheduleToolInput({
+          operation: "create",
+          schedule: { frequency: { type: "interval", seconds: 300 } },
+          action: {
+            kind: "synthetic",
+            synthetic_test: {
+              name: "conditional",
+              request: { method: "GET", url: `${origin}/res` },
+              assert: { status_in: [200, 304] },
+              change_detection: { watch_fields: ["ok"] },
+            },
+          },
+        });
+        const jobId = (JSON.parse(created.content[0]!.text) as { job: { id: string } }).job.id;
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        expect(seenHeaders[0]).toBeNull();
+        expect(seenHeaders[1]).toBe('"abc"');
+        const mid = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as {
+          job: {
+            runs: Array<{ http_status: number }>;
+            change_detection_state: { backoff_until: string | null };
+          };
+        };
+        expect(mid.job.runs[0]!.http_status).toBe(304);
+
+        mode = "429";
+        const trig = await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const trigBody = JSON.parse(trig.content[0]!.text) as {
+          ok: boolean;
+          run: { http_status: number };
+        };
+        expect(trigBody.ok).toBe(false);
+        expect(trigBody.run.http_status).toBe(429);
+        const after429 = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as { job: { change_detection_state: { backoff_until: string | null } } };
+        expect(after429.job.change_detection_state.backoff_until).toBeTruthy();
+        const until = Date.parse(after429.job.change_detection_state.backoff_until!);
+        expect(until).toBeGreaterThan(Date.now() + 60_000);
+      }
+    );
+  });
 });

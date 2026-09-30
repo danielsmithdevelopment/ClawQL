@@ -11,7 +11,7 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "stream.changed",
     description:
-      "A polled API / schedule synthetic topic body changed (hash change detection). Filter by topic (schedule job id).",
+      "A polled API / schedule synthetic topic projection changed. Prefer action.change_detection.watch_fields so only meaningful fields are hashed. Filter by topic (schedule job id).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
@@ -30,7 +30,37 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
         topic: { type: "string" },
         summary: { type: "string" },
         changed_at: { type: "string" },
-        cursor: { type: "string" },
+        cursor: { type: "string", description: "Projection hash (opaque cursor)." },
+        diff: {
+          type: "object",
+          description: "Capped projection diff vs previous snapshot.",
+          properties: {
+            added: { type: "array", items: {} },
+            removed: { type: "array", items: {} },
+            changed: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  path: { type: "string" },
+                  before: {},
+                  after: {},
+                },
+              },
+            },
+            truncated: { type: "boolean" },
+          },
+        },
+        watch_fields: {
+          type: "array",
+          items: { type: "string" },
+          description: "Fields that were projected for this change.",
+        },
+        projection_tool: {
+          type: "string",
+          description:
+            "MCP tool to re-read the full stored projection (schedule get → change_detection_state.last_projection).",
+        },
       },
       required: ["topic", "summary", "changed_at"],
       additionalProperties: false,

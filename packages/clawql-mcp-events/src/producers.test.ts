@@ -98,12 +98,22 @@ describe("MCP Events producers (no vapor)", () => {
       trigger: () =>
         emitStreamChangedAwait({
           topic: "job_stream_1",
-          summary: "body changed",
+          summary: "1 changed",
           cursor: "abc",
+          diff: {
+            added: [],
+            removed: [],
+            changed: [{ path: "state", before: "open", after: "closed" }],
+            truncated: false,
+          },
+          watch_fields: ["title", "state"],
+          projection_tool: "schedule",
         }),
       expectData: (d) => {
         expect(d.topic).toBe("job_stream_1");
-        expect(d.summary).toBe("body changed");
+        expect(d.summary).toBe("1 changed");
+        expect(d.diff).toBeTruthy();
+        expect(d.projection_tool).toBe("schedule");
       },
     },
     {

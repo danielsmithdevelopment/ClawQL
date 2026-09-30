@@ -11,6 +11,16 @@ export function emitStreamChanged(input: {
   summary: string;
   changed_at?: string;
   cursor?: string;
+  /** Capped projection diff (added / removed / changed). */
+  diff?: {
+    added: unknown[];
+    removed: unknown[];
+    changed: Array<{ path: string; before: unknown; after: unknown }>;
+    truncated: boolean;
+  };
+  watch_fields?: string[];
+  /** MCP tool name to re-read the full stored projection (schedule get). */
+  projection_tool?: string;
 }): void {
   emitMcpEventBestEffort({
     name: "stream.changed",
@@ -19,6 +29,9 @@ export function emitStreamChanged(input: {
       summary: input.summary,
       changed_at: input.changed_at ?? new Date().toISOString(),
       ...(input.cursor ? { cursor: input.cursor } : {}),
+      ...(input.diff ? { diff: input.diff } : {}),
+      ...(input.watch_fields?.length ? { watch_fields: input.watch_fields } : {}),
+      ...(input.projection_tool ? { projection_tool: input.projection_tool } : {}),
     },
   });
 }
@@ -106,6 +119,14 @@ export async function emitStreamChangedAwait(input: {
   summary: string;
   changed_at?: string;
   cursor?: string;
+  diff?: {
+    added: unknown[];
+    removed: unknown[];
+    changed: Array<{ path: string; before: unknown; after: unknown }>;
+    truncated: boolean;
+  };
+  watch_fields?: string[];
+  projection_tool?: string;
 }): Promise<readonly DeliveryOutcome[]> {
   return emitMcpEvent({
     name: "stream.changed",
@@ -114,6 +135,9 @@ export async function emitStreamChangedAwait(input: {
       summary: input.summary,
       changed_at: input.changed_at ?? new Date().toISOString(),
       ...(input.cursor ? { cursor: input.cursor } : {}),
+      ...(input.diff ? { diff: input.diff } : {}),
+      ...(input.watch_fields?.length ? { watch_fields: input.watch_fields } : {}),
+      ...(input.projection_tool ? { projection_tool: input.projection_tool } : {}),
     },
   });
 }

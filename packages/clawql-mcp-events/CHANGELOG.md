@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Rename public event names before lock-in: `mandate.completed` → `schedule.completed`, `clawql.notification` → `notification.sent`.
-- Advertise + wire `stream.changed` via schedule synthetic body-hash change detection (any polled HTTPS API → MCP event).
+- Advertise + wire `stream.changed` via schedule **projection-based** change detection (`watch_fields`, canonicalize, conditional GET / 304, capped `diff`, 429/`Retry-After` backoff).
 - ChatGPT live pass is a **blocking** v8.0.0 release gate (`docs/release/v8.0.0-checklist.md`).
 - Drop vapor / wire live producers; enterprise allowlist, PII redact, caps.
 

@@ -9,7 +9,7 @@
 
 Advertise `capabilities.events` and implement `events/list`, `events/subscribe`, and `events/unsubscribe` on the same authenticated MCP endpoint as tools. ClawQL turns existing internal signals into MCP Events so ChatGPT and other clients can subscribe via webhooks.
 
-**Distinctive angle:** schedule synthetic HTTP polls with body-hash change detection emit `stream.changed`, so **any HTTPS API ClawQL can poll becomes an MCP event source** without native webhooks. Full `clawql-streams` / agent wake loops remain follow-on; the headline change-detection path ships in 8.0.0 via schedule.
+**Distinctive angle:** schedule synthetic HTTP polls with **projection-based** change detection emit `stream.changed`, so **any HTTPS API ClawQL can poll becomes an MCP event source** without native webhooks. Subscriptions name `watch_fields` (same idea as execute field projection), canonicalize before hashing, send conditional GETs when validators exist, include a capped diff in the event, and back off on upstream `429` / `Retry-After`. Full `clawql-streams` / agent wake loops remain follow-on.
 
 ## 2. Scope (8.0.0)
 
@@ -20,7 +20,7 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 | Webhook delivery + challenge (Standard Webhooks)                   | `gap` / `terminated` control notifications            |
 | Durable subscription store (JSON file)                             | Postgres-backed multi-replica store                   |
 | Live event catalog (six events)                                    | Dynamic OpenAPI-derived event schemas                 |
-| Schedule body-hash → `stream.changed`                              | NATS / WebSocket native stream sources                |
+| Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS / WebSocket native stream sources                |
 | SSRF-hardened callbacks + enterprise allowlist / PII redact / caps | Custom connect-to-IP TLS agent (stretch)              |
 | Access recheck + instruction screening + feedback-loop detector    | Full Panguard ATR integration (host wires)            |
 | WORM append hooks (optional host)                                  | Mandatory dual-ack WORM                               |
@@ -39,14 +39,14 @@ JSON-RPC error **`-32015`** (`CallbackEndpointError`) with `data.reason` (`chall
 
 Naming: `<noun>.<past-participle>`. Reserve `mandate.*` for fleet mandates if they ship later.
 
-| Name                 | Description                              | Producer (wired)                                     | Filters                             |
-| -------------------- | ---------------------------------------- | ---------------------------------------------------- | ----------------------------------- |
-| `stream.changed`     | Polled synthetic topic body hash changed | Schedule job run change-detection (`last_body_hash`) | `topic` (required; schedule job id) |
-| `document.processed` | IDP / document pipeline finished         | `clawql-documents` IDP effect                        | `document_id?`                      |
-| `hook.blocked`       | Policy / ATR / hook blocked a call       | `src/mcp/mcp-tool-wrap.ts` blocked branch            | `tool?`                             |
-| `budget.exhausted`   | Inference virtual-key budget exceeded    | `clawql-inference` `validateVirtualKey`              | `budget_id?`                        |
-| `schedule.completed` | Schedule job run completed               | `clawql-automation` `executeTriggerForJob`           | `schedule_id?`                      |
-| `notification.sent`  | Slack notify success                     | `clawql-automation` notify effect                    | `channel?`                          |
+| Name                 | Description                                         | Producer (wired)                                                                                           | Filters                             |
+| -------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `stream.changed`     | Polled synthetic topic **projection** changed       | Schedule job run change-detection (`watch_fields` → hash + capped `diff`; `schedule` get for full snapshot) | `topic` (required; schedule job id) |
+| `document.processed` | IDP / document pipeline finished                    | `clawql-documents` IDP effect                                                                              | `document_id?`                      |
+| `hook.blocked`       | Policy / ATR / hook blocked a call                  | `src/mcp/mcp-tool-wrap.ts` blocked branch                                                                  | `tool?`                             |
+| `budget.exhausted`   | Inference virtual-key budget exceeded               | `clawql-inference` `validateVirtualKey`                                                                    | `budget_id?`                        |
+| `schedule.completed` | Schedule job run completed                          | `clawql-automation` `executeTriggerForJob`                                                                 | `schedule_id?`                      |
+| `notification.sent`  | Slack notify success                                | `clawql-automation` notify effect                                                                          | `channel?`                          |
 
 All support `delivery: ["webhook"]` only.
 
@@ -58,6 +58,16 @@ All support `delivery: ["webhook"]` only.
 | PII redaction                       | `CLAWQL_MCP_EVENTS_REDACT_PII`                                    | on — runs `gatewayRedactPayload` before delivery                        |
 | Max subscriptions / principal       | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
 | Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
+
+## 4c. `stream.changed` precision (schedule)
+
+False alarms from volatile fields (timestamps, request IDs, rate-limit counters, unstable array order) are avoided by:
+
+1. **`action.synthetic_test.change_detection.watch_fields`** — project then hash (required for precise detection; omit only when whole-body-minus-defaults is acceptable).
+2. **`exclude_paths` / `array_sort_keys` / canonical key order** before hashing.
+3. **Conditional requests** — store `ETag` / `Last-Modified`; send `If-None-Match` / `If-Modified-Since` on GET (304 = no change).
+4. **Capped `diff`** in the event payload (`added` / `removed` / `changed`, truncated); full projection via `schedule` get → `change_detection_state.last_projection` (screened + size-capped retention).
+5. **429 backoff** — honor `Retry-After` (default 60s) via `backoff_until`; polls use the subscriber’s credentials.
 
 ## 5. Subscription identity & durability
 
@@ -91,5 +101,5 @@ All support `delivery: ["webhook"]` only.
 ## 8. Tests
 
 - Package: subscribe/deliver/unsubscribe, challenge `-32015`, SSRF, allowlist, 410, revoke, feedback loop, **per-event producer → signed delivery**.
-- Schedule: `detectSyntheticBodyChange` baseline vs change.
+- Schedule: `detectProjectedChange` / `detectSyntheticBodyChange` baseline vs change; volatile-field immunity; capped diffs.
 - **Blocking release gate:** ChatGPT live pass — [`mcp-events-chatgpt-checklist.md`](./mcp-events-chatgpt-checklist.md) and [`docs/release/v8.0.0-checklist.md`](../../release/v8.0.0-checklist.md).

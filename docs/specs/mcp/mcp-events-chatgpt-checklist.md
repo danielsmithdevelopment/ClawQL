@@ -16,7 +16,7 @@ This pass is a **hard release gate**. Do **not** tag or publish `clawql-mcp@8.0.
 8. [ ] Filtered subscription: trigger a non-matching event — **not** delivered.
 9. [ ] Stop monitoring in ChatGPT → `events/unsubscribe` → further producers do not deliver.
 10. [ ] With allowlist set, a non-allowlisted callback URL is rejected (`-32015` / `allowlist_blocked`).
-11. [ ] `stream.changed`: schedule a synthetic poll, change upstream body between ticks, confirm ChatGPT receives the event for that job `topic`.
+11. [ ] `stream.changed`: schedule a synthetic poll with `change_detection.watch_fields`, change a watched field between ticks (volatile-only churn must not fire), confirm ChatGPT receives the event with a capped `diff` for that job `topic`.
 
 ## Protocol smoke (CI — not a substitute for this gate)
 

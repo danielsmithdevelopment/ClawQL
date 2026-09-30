@@ -4,7 +4,7 @@
  * for cron/interval/one-shot due execution.
  */
 
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve as resolvePath } from "node:path";
@@ -13,6 +13,26 @@ import initSqlJs, { type Database } from "sql.js";
 import { z } from "zod";
 import { startScheduleWorkerFiberEffect } from "../effect/schedule-worker-effect.js";
 import { executeNotifySlackCore } from "../notify/notify.js";
+import {
+  DEFAULT_RATE_LIMIT_BACKOFF_MS,
+  detectProjectedChange,
+  parseRetryAfterMs,
+  serializeProjectionForStore,
+  summarizeDiff,
+  type ChangeDetectionConfig,
+} from "./change-detect.js";
+
+export {
+  detectProjectedChange,
+  canonicalizeForHash,
+  projectByWatchFields,
+  diffProjections,
+  hashProjection,
+  parseRetryAfterMs,
+  serializeProjectionForStore,
+  DEFAULT_RATE_LIMIT_BACKOFF_MS,
+} from "./change-detect.js";
+export type { ChangeDetectionConfig, ProjectionDiff } from "./change-detect.js";
 
 type Frequency =
   | { type: "cron"; expression: string }
@@ -37,6 +57,8 @@ type SyntheticTest = {
     latency_ms_max?: number;
     body_contains?: string;
   };
+  /** Precise stream.changed detection — project + hash watched fields. */
+  change_detection?: ChangeDetectionConfig;
 };
 
 type JobAction = {
@@ -71,9 +93,13 @@ type TriggerOutcome = {
   http_status: number | null;
   error_text: string | null;
   response_excerpt: string | null;
+  etag?: string | null;
+  last_modified?: string | null;
+  not_modified?: boolean;
+  retry_after_ms?: number | null;
 };
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 let scheduleWorkerStop: (() => void) | null = null;
 const cronMinuteRunCache = new Map<string, string>();
@@ -253,6 +279,18 @@ function migrate(db: Database): void {
       [nowIso()]
     );
   }
+  if (currentSchemaVersion(db) < 3) {
+    db.exec(`
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_projection_json TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_etag TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_modified TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN backoff_until TEXT;
+    `);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (3, 'schedule_change_detect_v3', ?)",
+      [nowIso()]
+    );
+  }
 }
 
 async function openOrCreateDb(absDbPath: string): Promise<Database> {
@@ -327,6 +365,14 @@ const actionSchema = z.object({
         status_in: z.array(z.number().int().min(100).max(599)).min(1).max(20).optional(),
         latency_ms_max: z.number().int().positive().optional(),
         body_contains: z.string().max(4000).optional(),
+      })
+      .optional(),
+    change_detection: z
+      .object({
+        watch_fields: z.array(z.string().min(1).max(200)).min(1).max(40),
+        exclude_paths: z.array(z.string().min(1).max(200)).max(40).optional(),
+        array_sort_keys: z.record(z.string(), z.string().min(1).max(64)).optional(),
+        conditional_requests: z.boolean().optional(),
       })
       .optional(),
   }),
@@ -506,48 +552,109 @@ function getRunsForJob(db: Database, jobId: string, runsLimit: number): Schedule
   return out;
 }
 
-function hashSyntheticBody(excerpt: string | null): string {
-  return createHash("sha256")
-    .update(excerpt ?? "")
-    .digest("hex");
-}
+type JobChangeState = {
+  last_body_hash: string | null;
+  last_projection_json: string | null;
+  last_etag: string | null;
+  last_modified: string | null;
+  backoff_until: string | null;
+};
 
-function getJobLastBodyHash(db: Database, jobId: string): string | null {
-  const stmt = db.prepare(`SELECT last_body_hash FROM clawql_schedule_jobs WHERE id = ?`);
+function getJobChangeState(db: Database, jobId: string): JobChangeState {
+  const stmt = db.prepare(
+    `SELECT last_body_hash, last_projection_json, last_etag, last_modified, backoff_until
+     FROM clawql_schedule_jobs WHERE id = ?`
+  );
   stmt.bind([jobId]);
-  let hash: string | null = null;
-  if (stmt.step()) {
-    const row = stmt.getAsObject() as { last_body_hash?: string | null };
-    hash = typeof row.last_body_hash === "string" ? row.last_body_hash : null;
+  const empty: JobChangeState = {
+    last_body_hash: null,
+    last_projection_json: null,
+    last_etag: null,
+    last_modified: null,
+    backoff_until: null,
+  };
+  if (!stmt.step()) {
+    stmt.free();
+    return empty;
   }
+  const row = stmt.getAsObject() as Record<string, unknown>;
   stmt.free();
-  return hash;
+  const asStr = (v: unknown): string | null => (typeof v === "string" && v.length ? v : null);
+  return {
+    last_body_hash: asStr(row.last_body_hash),
+    last_projection_json: asStr(row.last_projection_json),
+    last_etag: asStr(row.last_etag),
+    last_modified: asStr(row.last_modified),
+    backoff_until: asStr(row.backoff_until),
+  };
 }
 
-function setJobLastBodyHash(db: Database, jobId: string, hash: string): void {
-  db.run(`UPDATE clawql_schedule_jobs SET last_body_hash = ?, updated_at = ? WHERE id = ?`, [
-    hash,
-    nowIso(),
-    jobId,
-  ]);
+function setJobChangeState(
+  db: Database,
+  jobId: string,
+  patch: Partial<JobChangeState>
+): void {
+  const cur = getJobChangeState(db, jobId);
+  const next: JobChangeState = {
+    last_body_hash:
+      patch.last_body_hash !== undefined ? patch.last_body_hash : cur.last_body_hash,
+    last_projection_json:
+      patch.last_projection_json !== undefined
+        ? patch.last_projection_json
+        : cur.last_projection_json,
+    last_etag: patch.last_etag !== undefined ? patch.last_etag : cur.last_etag,
+    last_modified:
+      patch.last_modified !== undefined ? patch.last_modified : cur.last_modified,
+    backoff_until:
+      patch.backoff_until !== undefined ? patch.backoff_until : cur.backoff_until,
+  };
+  db.run(
+    `UPDATE clawql_schedule_jobs
+     SET last_body_hash = ?, last_projection_json = ?, last_etag = ?, last_modified = ?,
+         backoff_until = ?, updated_at = ?
+     WHERE id = ?`,
+    [
+      next.last_body_hash,
+      next.last_projection_json,
+      next.last_etag,
+      next.last_modified,
+      next.backoff_until,
+      nowIso(),
+      jobId,
+    ]
+  );
+}
+
+function jobInBackoff(db: Database, jobId: string, now = new Date()): boolean {
+  const state = getJobChangeState(db, jobId);
+  if (!state.backoff_until) return false;
+  const until = Date.parse(state.backoff_until);
+  if (!Number.isFinite(until)) return false;
+  return now.getTime() < until;
 }
 
 /**
- * Detect body change vs last stored hash. First observation establishes baseline (no change).
- * Exported for unit tests.
+ * Legacy whole-body hash helper — prefer {@link detectProjectedChange}.
+ * Still applies default volatile-path stripping when no watch_fields are set.
+ * Exported for unit tests / backward compatibility.
  */
 export function detectSyntheticBodyChange(
   previousHash: string | null,
   excerpt: string | null
 ): { changed: boolean; hash: string; baseline: boolean } {
-  const hash = hashSyntheticBody(excerpt);
-  if (previousHash == null) {
-    return { changed: false, hash, baseline: true };
-  }
-  return { changed: previousHash !== hash, hash, baseline: false };
+  const result = detectProjectedChange({
+    previousHash,
+    previousProjectionJson: null,
+    responseBody: excerpt,
+    config: undefined,
+  });
+  return { changed: result.changed, hash: result.hash, baseline: result.baseline };
 }
 
-async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutcome> {
+async function runSyntheticCheck(
+  synthetic: SyntheticTest,
+  validators?: { etag?: string | null; last_modified?: string | null }
+): Promise<TriggerOutcome> {
   const method = synthetic.request.method.trim().toUpperCase();
   const targetValidation = validateSyntheticTarget(synthetic.request.url);
   if (!targetValidation.ok) {
@@ -578,6 +685,19 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
     10
   );
 
+  const useConditional =
+    (method === "GET" || method === "HEAD") &&
+    synthetic.change_detection?.conditional_requests !== false &&
+    Boolean(validators?.etag || validators?.last_modified);
+
+  const headers: Record<string, string> = {
+    ...(synthetic.request.headers ?? {}),
+  };
+  if (useConditional) {
+    if (validators?.etag) headers["If-None-Match"] = validators.etag;
+    if (validators?.last_modified) headers["If-Modified-Since"] = validators.last_modified;
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   const start = Date.now();
@@ -588,14 +708,15 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
     while (true) {
       response = await fetch(currentUrl, {
         method,
-        headers: synthetic.request.headers,
-        body: synthetic.request.body ?? undefined,
+        headers,
+        body: method === "GET" || method === "HEAD" ? undefined : (synthetic.request.body ?? undefined),
         signal: controller.signal,
         redirect: "manual",
       });
       if (
         response.status >= 300 &&
         response.status < 400 &&
+        response.status !== 304 &&
         response.headers.get("location") &&
         redirects < maxRedirects
       ) {
@@ -606,12 +727,48 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
       break;
     }
     const latency = Date.now() - start;
+    const status = response!.status;
+    const etag = response!.headers.get("etag");
+    const lastModified = response!.headers.get("last-modified");
+    const retryAfterMs =
+      status === 429 ? parseRetryAfterMs(response!.headers.get("retry-after")) : null;
+
+    if (status === 304) {
+      return {
+        ok: true,
+        status: "pass",
+        latency_ms: latency,
+        http_status: 304,
+        error_text: null,
+        response_excerpt: null,
+        etag: etag ?? validators?.etag ?? null,
+        last_modified: lastModified ?? validators?.last_modified ?? null,
+        not_modified: true,
+        retry_after_ms: null,
+      };
+    }
+
+    if (status === 429) {
+      return {
+        ok: false,
+        status: "fail",
+        latency_ms: latency,
+        http_status: 429,
+        error_text: "upstream rate limited (429)",
+        response_excerpt: null,
+        etag: etag ?? validators?.etag ?? null,
+        last_modified: lastModified ?? validators?.last_modified ?? null,
+        not_modified: false,
+        retry_after_ms: retryAfterMs ?? DEFAULT_RATE_LIMIT_BACKOFF_MS,
+      };
+    }
+
     const raw = await response!.text();
     const excerpt = raw.slice(0, maxResponseBytes);
 
     let pass = true;
     const statusIn = synthetic.assert?.status_in;
-    if (statusIn?.length && !statusIn.includes(response!.status)) {
+    if (statusIn?.length && !statusIn.includes(status)) {
       pass = false;
     }
     const latencyMax = synthetic.assert?.latency_ms_max;
@@ -627,9 +784,13 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
       ok: pass,
       status: pass ? "pass" : "fail",
       latency_ms: latency,
-      http_status: response!.status,
+      http_status: status,
       error_text: pass ? null : "assertion failed",
       response_excerpt: excerpt,
+      etag: etag ?? null,
+      last_modified: lastModified ?? null,
+      not_modified: false,
+      retry_after_ms: null,
     };
   } catch (error: unknown) {
     return {
@@ -742,6 +903,7 @@ function cronMatchesUtc(expression: string, at: Date): boolean {
 
 function shouldRunJobNow(db: Database, job: ScheduleJobRow, now: Date): boolean {
   if (!job.enabled) return false;
+  if (jobInBackoff(db, job.id, now)) return false;
   if (job.frequency.type === "interval") {
     const latest = latestRunForJob(db, job.id);
     if (!latest) return true;
@@ -828,7 +990,11 @@ async function executeTriggerForJob(
   opts: { dryRun: boolean; triggeredAt?: string }
 ): Promise<ScheduleRunRow & { ok: boolean }> {
   const synthetic = actionSchema.parse(job.action).synthetic_test;
-  const outcome = await runSyntheticCheck(synthetic);
+  const changeState = getJobChangeState(db, job.id);
+  const outcome = await runSyntheticCheck(synthetic, {
+    etag: changeState.last_etag,
+    last_modified: changeState.last_modified,
+  });
   const runId = randomUUID();
   const triggeredAt = opts.triggeredAt ?? nowIso();
   const run: ScheduleRunRow = {
@@ -859,28 +1025,70 @@ async function executeTriggerForJob(
       ]
     );
     trimRunsForJob(db, job.id, getScheduleHistoryLimit());
+
+    if (outcome.http_status === 429 && outcome.retry_after_ms) {
+      const until = new Date(Date.now() + outcome.retry_after_ms).toISOString();
+      setJobChangeState(db, job.id, { backoff_until: until });
+    } else if (outcome.http_status !== 429 && changeState.backoff_until) {
+      setJobChangeState(db, job.id, { backoff_until: null });
+    }
+
+    if (outcome.http_status === 429) {
+      /* honor Retry-After; do not advance projection baseline */
+    } else if (outcome.not_modified) {
+      setJobChangeState(db, job.id, {
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+    } else if (outcome.response_excerpt != null) {
+      const detection = detectProjectedChange({
+        previousHash: changeState.last_body_hash,
+        previousProjectionJson: changeState.last_projection_json,
+        responseBody: outcome.response_excerpt,
+        config: synthetic.change_detection,
+        notModified: false,
+      });
+      const storedProjection = serializeProjectionForStore(detection.projection);
+      setJobChangeState(db, job.id, {
+        last_body_hash: detection.hash,
+        last_projection_json: storedProjection,
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+      if (detection.changed && detection.diff) {
+        try {
+          const { emitStreamChanged } = await import("clawql-mcp-events");
+          const watch = synthetic.change_detection?.watch_fields;
+          emitStreamChanged({
+            topic: job.id,
+            summary: `Synthetic topic ${synthetic.name}: ${summarizeDiff(detection.diff)}`,
+            cursor: detection.hash,
+            diff: detection.diff,
+            ...(watch?.length ? { watch_fields: watch } : {}),
+            projection_tool: "schedule",
+          });
+        } catch {
+          /* mcp-events optional */
+        }
+      }
+    } else if (outcome.etag || outcome.last_modified) {
+      setJobChangeState(db, job.id, {
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+    }
   }
   try {
-    const { emitScheduleCompleted, emitStreamChanged } = await import("clawql-mcp-events");
+    const { emitScheduleCompleted } = await import("clawql-mcp-events");
     emitScheduleCompleted({
       schedule_id: job.id,
       status: outcome.status,
       summary: outcome.ok
-        ? `schedule job ${job.id} ok (${outcome.latency_ms ?? 0}ms)`
+        ? outcome.not_modified
+          ? `schedule job ${job.id} not modified (304)`
+          : `schedule job ${job.id} ok (${outcome.latency_ms ?? 0}ms)`
         : (outcome.error_text ?? `schedule job ${job.id} ${outcome.status}`),
     });
-    if (!opts.dryRun) {
-      const previous = getJobLastBodyHash(db, job.id);
-      const detection = detectSyntheticBodyChange(previous, outcome.response_excerpt);
-      setJobLastBodyHash(db, job.id, detection.hash);
-      if (detection.changed) {
-        emitStreamChanged({
-          topic: job.id,
-          summary: `Synthetic topic ${job.action.synthetic_test.name} body changed`,
-          cursor: detection.hash,
-        });
-      }
-    }
   } catch {
     /* mcp-events optional */
   }
@@ -1045,12 +1253,28 @@ export async function dispatchScheduleOperation(
       if (!job) {
         return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
       }
+      const change = getJobChangeState(db, job.id);
+      let last_projection: unknown = null;
+      if (change.last_projection_json) {
+        try {
+          last_projection = JSON.parse(change.last_projection_json);
+        } catch {
+          last_projection = null;
+        }
+      }
       return jsonResponse({
         ok: true,
         operation: "get",
         job: {
           ...job,
           schedule: { frequency: job.frequency },
+          change_detection_state: {
+            last_hash: change.last_body_hash,
+            last_etag: change.last_etag,
+            last_modified: change.last_modified,
+            backoff_until: change.backoff_until,
+            last_projection,
+          },
           ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
         },
       });
