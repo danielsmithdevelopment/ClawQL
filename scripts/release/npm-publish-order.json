@@ -25,6 +25,7 @@
     "clawql-ouroboros",
     "clawql-harness",
     "clawql-observability",
+    "clawql-chatgpt-extensions",
     "clawql-operator",
     "clawql-mcp"
   ],
@@ -48,6 +49,7 @@
     "clawql-web before clawql-documents (documents depends on web for IDP URL fetch).",
     "clawql-payments before clawql-inference (inference depends on payments for entitlements/credits).",
     "clawql-harness after clawql-ouroboros (Ouroboros harness plugin imports convergence patterns).",
+    "clawql-chatgpt-extensions after clawql-api (and clawql-core) — ChatGPT MCP Extensions host surface; clawql-mcp depends on it.",
     "clawql-tee after clawql-auth (TEE signing bridge depends on IdJagAssertionSigner types).",
     "npm publish replaces workspace:* with concrete versions in published package.json.",
     "clawql-tee after clawql-auth (optional peer; ID-JAG TEE bridge).",

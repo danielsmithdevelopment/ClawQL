@@ -44,6 +44,7 @@ import {
   executeOutputFields,
   projectRestByFields,
 } from "clawql-api";
+import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
 import { getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
 import { handleCacheToolInput } from "./clawql-cache.js";
@@ -208,6 +209,22 @@ export function registerTools(server: McpServer) {
   registerPluginMcpTools(server);
   for (const tool of getClawqlApi().listMcpTools()) {
     registeredNames.push(tool.name);
+  }
+
+  if (resolvePluginCompositionFlags().enableChatgptExtensions) {
+    // ChatGPT-only surfaces: settings always; UI tools when host supports MCP Apps.
+    // Non-ChatGPT clients still connect — UI tools use app-only visibility / capability omit.
+    const attached = attachChatgptExtensions(server);
+    if (attached.attached) {
+      registeredNames.push(
+        "clawql_settings_read",
+        "clawql_settings_update",
+        "clawql_mentions_search",
+        "clawql_evidence",
+        "clawql_console",
+        "clawql_open_file"
+      );
+    }
   }
 
   if (resolvePluginCompositionFlags().enableMemory) {

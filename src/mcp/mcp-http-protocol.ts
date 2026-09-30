@@ -55,6 +55,8 @@ export function buildHttpDiscoverResponse(input: {
   serverVersion?: string;
   clientInfo?: { name?: string; version?: string };
   clientCapabilities?: Record<string, unknown>;
+  /** OpenAI / ChatGPT extension capabilities (e.g. openai/settings). */
+  extensions?: Record<string, unknown>;
 }): Record<string, unknown> {
   const stateless = isStatelessProtocolVersion(input.protocolVersion);
   return {
@@ -71,6 +73,9 @@ export function buildHttpDiscoverResponse(input: {
       stateless,
       mrtr: true,
       protocolVersions: [...SUPPORTED_PROTOCOL_VERSIONS],
+      ...(input.extensions && Object.keys(input.extensions).length > 0
+        ? { extensions: input.extensions }
+        : {}),
     },
     stateless,
     ...(input.clientInfo ? { clientInfo: input.clientInfo } : {}),
