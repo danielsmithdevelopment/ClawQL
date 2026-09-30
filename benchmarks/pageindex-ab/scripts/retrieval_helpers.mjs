@@ -42,11 +42,11 @@ export function pageindexAvailable() {
 }
 
 /**
- * Raised 3→20 after offline k-sweep (design/k-sweep-hidf.md): strict +22.1pp, gold +29.0pp.
- * Interim ship — ranking fixes (contextual headers / rerank) are complementary; see
- * design/gold-rank-diagnostics.md.
+ * Model-scored k-grid (design/rerank-model-grid.json): norerank flash/Sonnet flat
+ * k10→k20 — do not ship 20. Lock at 10 (best among model-scored ks; offline still
+ * preferred 10 over 3). MaxP/rerank work continues separately.
  */
-export const TOP_K_DOC = 20;
+export const TOP_K_DOC = 10;
 export const TOP_K_MULTI = 5;
 export const HEADING_QUALITY_THRESHOLD = 0.35;
 
