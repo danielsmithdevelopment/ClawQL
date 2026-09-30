@@ -135,6 +135,22 @@ export async function upsertPostgresChunkVectors(
   }
 }
 
+/** Erase pgvector rows for document paths (no-op when postgres backend unset). */
+export async function deletePostgresChunkVectorsByPaths(paths: string[]): Promise<void> {
+  const p = getPostgresVectorPool();
+  if (!p || paths.length === 0) return;
+  const client = await p.connect();
+  try {
+    await ensurePgVectorSchema(client);
+    await client.query(
+      `DELETE FROM clawql_memory_chunk_vector WHERE document_path = ANY($1::text[])`,
+      [paths]
+    );
+  } finally {
+    client.release();
+  }
+}
+
 function toVectorLiteral(v: Float32Array): string {
   return `[${Array.from(v).join(",")}]`;
 }

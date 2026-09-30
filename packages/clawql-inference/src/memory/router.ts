@@ -7,6 +7,7 @@ import type { MemoryIngestInput } from "clawql-memory/ingest/ingest";
 import type { MemoryRecallInput } from "clawql-memory/recall/recall";
 import type { VirtualKeyRequest } from "../api/auth.js";
 import { sendOpenAiError } from "../api/openai-errors.js";
+import { resolveMemoryScope } from "./scope.js";
 import {
   runMemoryGatewayErase,
   runMemoryGatewayGet,
@@ -46,9 +47,8 @@ function parseIngestBody(body: unknown): MemoryIngestInput | { error: string } {
     correlationId: typeof b.correlationId === "string" ? b.correlationId : undefined,
     agentId: typeof b.agentId === "string" ? b.agentId : undefined,
     append: typeof b.append === "boolean" ? b.append : undefined,
-    tags: Array.isArray(b.tags)
-      ? b.tags.filter((x): x is string => typeof x === "string")
-      : undefined,
+    tags: Array.isArray(b.tags) ? b.tags.filter((x): x is string => typeof x === "string") : undefined,
+    folder: typeof b.folder === "string" ? b.folder : undefined,
   };
 }
 
@@ -65,9 +65,7 @@ function parseSearchBody(body: unknown): MemoryRecallInput | { error: string } {
     includeCodeGraph: typeof b.includeCodeGraph === "boolean" ? b.includeCodeGraph : undefined,
     codeGraphId: typeof b.codeGraphId === "string" ? b.codeGraphId : undefined,
     sources: Array.isArray(b.sources)
-      ? (b.sources.filter(
-          (x): x is string => typeof x === "string"
-        ) as MemoryRecallInput["sources"])
+      ? (b.sources.filter((x): x is string => typeof x === "string") as MemoryRecallInput["sources"])
       : undefined,
     schema: typeof b.schema === "string" ? b.schema : undefined,
     filters:
@@ -75,6 +73,10 @@ function parseSearchBody(body: unknown): MemoryRecallInput | { error: string } {
         ? (b.filters as MemoryRecallInput["filters"])
         : undefined,
   };
+}
+
+function scopeFromReq(req: VirtualKeyRequest): string | undefined {
+  return resolveMemoryScope(req.virtualKey);
 }
 
 export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): express.Router {
@@ -85,8 +87,8 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
   const get = options.get ?? runMemoryGatewayGet;
   const erase = options.erase ?? runMemoryGatewayErase;
 
-  router.get("/memory", async (_req: Request, res: Response) => {
-    const result = await list();
+  router.get("/memory", async (req: VirtualKeyRequest, res: Response) => {
+    const result = await list(scopeFromReq(req));
     if (!result.ok) {
       sendOpenAiError(res, 503, result.error, "server_error");
       return;
@@ -103,6 +105,10 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
       sendOpenAiError(res, 400, parsed.error, "invalid_request_error");
       return;
     }
+    const scope = scopeFromReq(req);
+    if (scope && !parsed.folder) {
+      parsed.folder = scope;
+    }
     if (req.virtualKey?.team && !parsed.agentId) {
       parsed.agentId = `vk:${req.virtualKey.team}`;
     }
@@ -114,13 +120,13 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
     res.status(result.skipped ? 200 : 201).json({ object: "clawql.memory.ingest", ...result });
   });
 
-  router.post("/memory/search", async (req: Request, res: Response) => {
+  router.post("/memory/search", async (req: VirtualKeyRequest, res: Response) => {
     const parsed = parseSearchBody(req.body);
     if ("error" in parsed) {
       sendOpenAiError(res, 400, parsed.error, "invalid_request_error");
       return;
     }
-    const result = await search(parsed);
+    const result = await search(parsed, scopeFromReq(req));
     if (!result.ok) {
       sendOpenAiError(res, 502, result.error ?? "search failed", "server_error");
       return;
@@ -128,10 +134,10 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
     res.json({ object: "clawql.memory.search", ...result });
   });
 
-  router.get("/memory/:slug", async (req: Request, res: Response) => {
+  router.get("/memory/:slug", async (req: VirtualKeyRequest, res: Response) => {
     const raw = req.params.slug;
     const slug = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "");
-    const result = await get(slug);
+    const result = await get(slug, scopeFromReq(req));
     if (!result.ok) {
       sendOpenAiError(res, result.status ?? 502, result.error, "invalid_request_error");
       return;
@@ -139,10 +145,10 @@ export function createMemoryRouter(options: CreateMemoryRouterOptions = {}): exp
     res.json({ object: "clawql.memory", ...result });
   });
 
-  router.delete("/memory/:slug", async (req: Request, res: Response) => {
+  router.delete("/memory/:slug", async (req: VirtualKeyRequest, res: Response) => {
     const raw = req.params.slug;
     const slug = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "");
-    const result = await erase(slug);
+    const result = await erase(slug, scopeFromReq(req));
     if (!result.ok) {
       sendOpenAiError(res, result.status, result.error, "invalid_request_error");
       return;

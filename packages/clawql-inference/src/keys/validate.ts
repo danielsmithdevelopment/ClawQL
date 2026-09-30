@@ -68,6 +68,8 @@ export function validateVirtualKey(
       id: key.id,
       team: key.team,
       budgetUsd: key.budgetUsd,
+      memoryEnrichment: key.memoryEnrichment === true,
+      memoryScope: key.memoryScope?.trim() || key.team,
     },
   };
 }

@@ -219,6 +219,36 @@ async function persistDb(db: Database, absDbPath: string): Promise<void> {
   invalidateMemoryDbArtifactCaches(absDbPath);
 }
 
+/**
+ * Delete one vault document and its chunks / outbound wikilink edges from memory.db.
+ * No-op when memory.db sync is disabled or the DB file is missing.
+ */
+export async function deleteDocumentFromMemoryDb(
+  vaultRoot: string,
+  documentPath: string
+): Promise<{ deleted: boolean }> {
+  if (!memoryDbSyncEnabled()) return { deleted: false };
+  const absDb = resolveMemoryDatabasePath(vaultRoot);
+  let db: Database;
+  try {
+    db = await openOrCreateDb(absDb);
+  } catch {
+    return { deleted: false };
+  }
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    const path = documentPath.replace(/\\/g, "/");
+    db.run("DELETE FROM wikilink_edge WHERE from_path = ?", [path]);
+    db.run("DELETE FROM vault_chunk WHERE document_path = ?", [path]);
+    db.run("DELETE FROM vault_document WHERE path = ?", [path]);
+    await persistDb(db, absDb);
+    return { deleted: true };
+  } finally {
+    db.close();
+  }
+}
+
 /** `mtimeMs` + `size` — invalidates when `persistDb` rewrites the file. */
 async function memoryDbFileSignature(absDbPath: string): Promise<string | null> {
   try {

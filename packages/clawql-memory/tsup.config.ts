@@ -12,6 +12,7 @@ const library = defineConfig({
     "ingest/hashes": "src/ingest/hashes.ts",
     "ingest/enterprise-citations": "src/ingest/enterprise-citations.ts",
     "ingest/ingest": "src/ingest/ingest.ts",
+    "erase/erase": "src/erase/erase.ts",
     "recall/pageindex-recall": "src/recall/pageindex-recall.ts",
     "recall/pageindex-enabled": "src/recall/pageindex-enabled.ts",
     "recall/codegraph-recall": "src/recall/codegraph-recall.ts",

@@ -6,12 +6,12 @@
 
 ## Ladder
 
-| Rung | Surface                 | Client switch                           |
-| ---- | ----------------------- | --------------------------------------- |
-| 1    | `/v1` OpenAI-compatible | `OPENAI_BASE_URL=…/v1`                  |
-| 2    | `/mcp`                  | same host `/mcp` (proxy → MCP upstream) |
-| 3    | `/memory`               | REST + opt-in chat enrichment           |
-| 4    | `/decision`             | canonical; `/v1/systemone` alias        |
+| Rung | Surface | Client switch |
+| --- | --- | --- |
+| 1 | `/v1` OpenAI-compatible | `OPENAI_BASE_URL=…/v1` |
+| 2 | `/mcp` | same host `/mcp` (proxy → MCP upstream) |
+| 3 | `/memory` | REST + opt-in chat enrichment |
+| 4 | `/decision` | canonical; `/v1/systemone` alias |
 
 Shared virtual key, budgets, WORM/audit identity across rungs.
 
@@ -26,11 +26,17 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 
 ## `/memory`
 
-| Mode       | Behavior                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| REST       | `POST /memory/ingest`, `POST /memory/search`, `GET /memory`, `GET /memory/:slug`, `DELETE /memory/:slug` (erasure) — thin façade over `clawql-memory`                                                                                                                                                                          |
-| Enrichment | Opt-in per virtual key env / `x-clawql-memory-enrich: 1` on `/v1/chat/completions`. Selective inject into a marked system block; response headers list memory IDs. **Default off.** Store down → forward without memory. Screen/redact fail → **fail closed** (no unscreened inject). Capture from traffic **off by default**. |
-| MCP        | Existing `memory_recall` / `memory_ingest` via `/mcp`                                                                                                                                                                                                                                                                          |
+| Mode | Behavior |
+| --- | --- |
+| REST | `POST /memory/ingest`, `POST /memory/search`, `GET /memory`, `GET /memory/:slug`, `DELETE /memory/:slug` (erasure) — thin façade over `clawql-memory` |
+| Enrichment | Opt-in. **Virtual-key policy outranks** `x-clawql-memory-enrich` / `CLAWQL_INFERENCE_MEMORY_ENRICH`: the header only works when the key has `memoryEnrichment: true`. Enrichment reads only `Memory/<scope>/` (`memoryScope` or `team`). Response `x-clawql-memory-ids` lists injected paths; WORM audit records those IDs + scope (never body text) for the Evidence tab. **Default off.** Store down → forward without memory. Screen/redact fail → **fail closed**. Capture from traffic **off by default**. |
+| Erasure | `DELETE /memory/:slug` removes the vault note **and** derived copies in `memory.db`, pgvector, and `ontology.db`. WORM appends `MEMORY_RETRACTED` with path + content hash only (never body). Historical training export files on operator disk are out of band; new exports must not re-materialize deleted bodies (manifests hold `vaultRef`/hash only). |
+| MCP | Existing `memory_recall` / `memory_ingest` via `/mcp` |
+
+## `/decision` System One
+
+- Supported question types: `choice`, `noul`
+- `score` → **400** with an explicit “not supported yet” message on both `/decision` and `/v1/systemone` (no silent failure)
 
 ## `/mcp`
 

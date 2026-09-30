@@ -26,10 +26,22 @@ export type AgentCoordinationAuditPayload = {
 export type InferenceAuditEntry = {
   ts: string;
   category: InferenceAuditCategory;
-  action: "model_escalation" | "agent_coordination";
+  action: "model_escalation" | "agent_coordination" | "memory_enrichment";
   summary: string;
   correlationId?: string;
-  payload: ModelEscalationAuditPayload | AgentCoordinationAuditPayload;
+  payload:
+    | ModelEscalationAuditPayload
+    | AgentCoordinationAuditPayload
+    | MemoryEnrichmentAuditPayload;
+};
+
+/** Memory IDs / scope only — never vault body text (Evidence tab join). */
+export type MemoryEnrichmentAuditPayload = {
+  event: "memory_enrichment";
+  memoryIds: string[];
+  memoryScope?: string;
+  virtualKeyId?: string;
+  team?: string;
 };
 
 export function buildModelEscalationAuditEntry(input: {
@@ -79,6 +91,31 @@ export function buildAgentCoordinationAuditEntry(input: {
       driftCombined: input.driftCombined,
       failureCount: input.signals.length,
       triggers: input.signals,
+    },
+  };
+}
+
+export function buildMemoryEnrichmentAuditEntry(input: {
+  memoryIds: readonly string[];
+  memoryScope?: string;
+  virtualKeyId?: string;
+  team?: string;
+  correlationId?: string;
+}): InferenceAuditEntry {
+  const ids = [...input.memoryIds];
+  const summary = `Memory enrichment injected ${ids.length} note(s)${input.memoryScope ? ` scope=${input.memoryScope}` : ""}`;
+  return {
+    ts: new Date().toISOString(),
+    category: "inference",
+    action: "memory_enrichment",
+    summary,
+    correlationId: input.correlationId,
+    payload: {
+      event: "memory_enrichment",
+      memoryIds: ids,
+      memoryScope: input.memoryScope,
+      virtualKeyId: input.virtualKeyId,
+      team: input.team,
     },
   };
 }

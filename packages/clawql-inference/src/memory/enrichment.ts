@@ -2,31 +2,71 @@
  * Opt-in chat enrichment via vault memory (default off).
  * Spec: docs/specs/inference/gateway-ladder-v0.1.md
  *
+ * - Virtual-key policy outranks `x-clawql-memory-enrich` / env
+ * - Scoped to caller's Memory/<scope>/ only
  * - Store down → forward without memory
  * - Screen/redact fail → fail closed
- * - Capture from traffic → off (not implemented)
+ * - Injected memory IDs → response header + WORM audit (refs only)
  */
 
 import type { Request } from "express";
 import type { ChatMessage } from "../gateway.js";
+import type { VirtualKeyContext } from "../keys/types.js";
+import { keysEnforcementActive } from "../keys/store.js";
+import {
+  buildMemoryEnrichmentAuditEntry,
+  type MemoryEnrichmentAuditPayload,
+} from "../audit/events.js";
+import { appendInferenceAuditToProcessWorm } from "../audit/process-worm.js";
+import { pathInMemoryScope, resolveMemoryScope } from "./scope.js";
 import { runMemoryGatewaySearch } from "./service.js";
+
+export { pathInMemoryScope, resolveMemoryScope } from "./scope.js";
 
 export const MEMORY_CONTEXT_BEGIN = "<!-- clawql-memory-context -->";
 export const MEMORY_CONTEXT_END = "<!-- /clawql-memory-context -->";
 
 export type MemoryEnrichDecision =
-  | { readonly kind: "skip" }
+  | { readonly kind: "skip"; readonly reason?: string }
   | { readonly kind: "inject"; readonly messages: ChatMessage[]; readonly memoryIds: string[] }
   | { readonly kind: "fail_closed"; readonly error: string };
 
-/** Env or header opt-in. Default off. */
-export function memoryEnrichmentRequested(
-  req: Request,
-  env: NodeJS.ProcessEnv = process.env
-): boolean {
-  if (env.CLAWQL_INFERENCE_MEMORY_ENRICH?.trim() === "1") return true;
+function headerWantsEnrichment(req: Request): boolean {
   const header = req.header("x-clawql-memory-enrich")?.trim();
   return header === "1" || header?.toLowerCase() === "true";
+}
+
+/**
+ * Resolve whether enrichment may run.
+ * Key policy outranks header/env: when a virtual key is present (or keys are
+ * enforced), enrichment requires `memoryEnrichment: true` on that key.
+ */
+export function memoryEnrichmentAllowed(opts: {
+  req: Request;
+  env?: NodeJS.ProcessEnv;
+  virtualKey?: VirtualKeyContext;
+}): boolean {
+  const env = opts.env ?? process.env;
+  const clientWants =
+    headerWantsEnrichment(opts.req) || env.CLAWQL_INFERENCE_MEMORY_ENRICH?.trim() === "1";
+  if (!clientWants) return false;
+
+  const keysOn = keysEnforcementActive(env);
+  if (keysOn || opts.virtualKey) {
+    // Policy must explicitly grant; undefined/false → forbid (header cannot override).
+    return opts.virtualKey?.memoryEnrichment === true;
+  }
+  // Keys off and no key context — env/header opt-in only.
+  return true;
+}
+
+/** @deprecated Prefer {@link memoryEnrichmentAllowed} — kept for older tests. */
+export function memoryEnrichmentRequested(
+  req: Request,
+  env: NodeJS.ProcessEnv = process.env,
+  virtualKey?: VirtualKeyContext
+): boolean {
+  return memoryEnrichmentAllowed({ req, env, virtualKey });
 }
 
 function lastUserQuery(messages: ChatMessage[]): string {
@@ -48,47 +88,49 @@ function buildMemoryBlock(snippets: Array<{ path: string; snippet: string }>): s
 }
 
 /**
- * When enrichment is requested, recall and inject a marked system block.
+ * When enrichment is requested + allowed, recall scoped notes and inject a marked system block.
  * Vault unset / recall soft-fail → skip (store down). Hard redact/screen errors → fail closed.
  */
 export async function maybeEnrichMessages(opts: {
   messages: ChatMessage[];
   req: Request;
   env?: NodeJS.ProcessEnv;
+  virtualKey?: VirtualKeyContext;
+  correlationId?: string;
   /** Injected for tests. */
   search?: typeof runMemoryGatewaySearch;
+  /** Injected for tests. */
+  audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
 }): Promise<MemoryEnrichDecision> {
   const env = opts.env ?? process.env;
-  if (!memoryEnrichmentRequested(opts.req, env)) {
-    return { kind: "skip" };
+  if (!memoryEnrichmentAllowed({ req: opts.req, env, virtualKey: opts.virtualKey })) {
+    return { kind: "skip", reason: "not_allowed" };
   }
 
   if (!env.CLAWQL_OBSIDIAN_VAULT_PATH?.trim()) {
-    // Store down — forward without memory
-    return { kind: "skip" };
+    return { kind: "skip", reason: "store_down" };
   }
 
   const query = lastUserQuery(opts.messages);
   if (!query) {
-    return { kind: "skip" };
+    return { kind: "skip", reason: "no_query" };
   }
 
+  const scope = resolveMemoryScope(opts.virtualKey);
   const search = opts.search ?? runMemoryGatewaySearch;
   let result: Awaited<ReturnType<typeof runMemoryGatewaySearch>>;
   try {
-    result = await search({ query, limit: 5, maxDepth: 1 });
-  } catch (e) {
-    // Unexpected throw after soft-fail wrapper → treat as store down
-    return { kind: "skip" };
+    result = await search({ query, limit: 20, maxDepth: 1 });
+  } catch {
+    return { kind: "skip", reason: "store_down" };
   }
 
   if (!result.ok) {
     const err = result.error ?? "memory recall failed";
-    // Screen/redact style failures fail closed; missing vault / soft errors skip
     if (/presidio|redact|screen|policy|blocked/i.test(err)) {
       return { kind: "fail_closed", error: err };
     }
-    return { kind: "skip" };
+    return { kind: "skip", reason: "store_down" };
   }
 
   const hits = result.hits?.length
@@ -100,18 +142,23 @@ export async function maybeEnrichMessages(opts: {
         score: r.score,
       }));
 
-  if (hits.length === 0) {
-    return { kind: "skip" };
+  const scoped = hits.filter((h) => {
+    const path = ("path" in h && typeof h.path === "string" ? h.path : h.id) || "";
+    if (!scope) return true;
+    return pathInMemoryScope(path, scope);
+  });
+
+  if (scoped.length === 0) {
+    return { kind: "skip", reason: "no_scoped_hits" };
   }
 
-  const snippets = hits.slice(0, 5).map((h) => ({
+  const snippets = scoped.slice(0, 5).map((h) => ({
     path: ("path" in h && typeof h.path === "string" ? h.path : h.id) || "memory",
     snippet: typeof h.snippet === "string" ? h.snippet.slice(0, 800) : "",
   }));
   const memoryIds = snippets.map((s) => s.path);
   const block = buildMemoryBlock(snippets);
 
-  // Prefer replacing an existing marked system block; else prepend a system message.
   const markedIdx = opts.messages.findIndex(
     (m) => m.role === "system" && m.content.includes(MEMORY_CONTEXT_BEGIN)
   );
@@ -130,6 +177,32 @@ export async function maybeEnrichMessages(opts: {
     );
   } else {
     messages = [{ role: "system", content: block }, ...opts.messages];
+  }
+
+  const auditPayload = {
+    event: "memory_enrichment" as const,
+    memoryIds,
+    memoryScope: scope,
+    virtualKeyId: opts.virtualKey?.id,
+    team: opts.virtualKey?.team,
+    correlationId: opts.correlationId,
+  };
+  try {
+    if (opts.audit) {
+      await opts.audit(auditPayload);
+    } else {
+      await appendInferenceAuditToProcessWorm(
+        buildMemoryEnrichmentAuditEntry({
+          memoryIds,
+          memoryScope: scope,
+          virtualKeyId: opts.virtualKey?.id,
+          team: opts.virtualKey?.team,
+          correlationId: opts.correlationId,
+        })
+      );
+    }
+  } catch {
+    /* audit must not fail the completion */
   }
 
   return { kind: "inject", messages, memoryIds };

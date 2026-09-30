@@ -19,16 +19,30 @@ export type CreateDecisionRouterOptions = {
   decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
 };
 
-function parseQuestions(raw: unknown): DecisionQuestion[] | null {
-  if (!Array.isArray(raw) || raw.length === 0) return null;
+function parseQuestions(raw: unknown): DecisionQuestion[] | { error: string } {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return { error: "questions must be a non-empty array of choice|noul items" };
+  }
   const out: DecisionQuestion[] = [];
   for (const item of raw) {
-    if (!item || typeof item !== "object") return null;
+    if (!item || typeof item !== "object") {
+      return { error: "questions must be a non-empty array of choice|noul items" };
+    }
     const q = item as Record<string, unknown>;
     const name = typeof q.name === "string" ? q.name.trim() : "";
-    if (!name) return null;
+    if (!name) {
+      return { error: "each question requires a name" };
+    }
+    if (q.type === "score") {
+      return {
+        error:
+          "System One question type 'score' is not supported yet on /decision or /v1/systemone; use choice or noul",
+      };
+    }
     if (q.type === "choice") {
-      if (!Array.isArray(q.options) || q.options.length === 0) return null;
+      if (!Array.isArray(q.options) || q.options.length === 0) {
+        return { error: "choice questions require a non-empty options array" };
+      }
       const options = q.options.map((o) => {
         if (!o || typeof o !== "object") return null;
         const opt = o as Record<string, unknown>;
@@ -39,7 +53,9 @@ function parseQuestions(raw: unknown): DecisionQuestion[] | null {
           description: typeof opt.description === "string" ? opt.description : undefined,
         };
       });
-      if (options.some((o) => o === null)) return null;
+      if (options.some((o) => o === null)) {
+        return { error: "choice options require an id" };
+      }
       out.push({
         type: "choice",
         name,
@@ -49,12 +65,15 @@ function parseQuestions(raw: unknown): DecisionQuestion[] | null {
     }
     if (q.type === "noul") {
       const statement = typeof q.statement === "string" ? q.statement.trim() : "";
-      if (!statement) return null;
+      if (!statement) {
+        return { error: "noul questions require a statement" };
+      }
       out.push({ type: "noul", name, statement });
       continue;
     }
-    // score deferred per gateway-ladder spec
-    return null;
+    return {
+      error: `unsupported question type '${String(q.type)}'; only choice and noul are supported`,
+    };
   }
   return out;
 }
@@ -68,8 +87,8 @@ function parseDecisionBody(
   const state = typeof b.state === "string" ? b.state.trim() : "";
   if (!state) return { error: "state is required" };
   const questions = parseQuestions(b.questions);
-  if (!questions) {
-    return { error: "questions must be a non-empty array of choice|noul items" };
+  if ("error" in questions) {
+    return { error: questions.error };
   }
   const escalation =
     b.escalation && typeof b.escalation === "object"

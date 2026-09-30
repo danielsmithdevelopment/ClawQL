@@ -382,7 +382,13 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
     };
 
     try {
-      const enrich = await maybeEnrichMessages({ messages, req, env });
+      const enrich = await maybeEnrichMessages({
+        messages,
+        req,
+        env,
+        virtualKey: keyContext,
+        correlationId,
+      });
       if (enrich.kind === "fail_closed") {
         sendOpenAiError(res, 502, enrich.error, "server_error");
         return;

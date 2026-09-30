@@ -10,7 +10,7 @@ import { createMemoryRouter } from "./router.js";
 import {
   MEMORY_CONTEXT_BEGIN,
   maybeEnrichMessages,
-  memoryEnrichmentRequested,
+  memoryEnrichmentAllowed,
 } from "./enrichment.js";
 import type { ChatMessage } from "../gateway.js";
 
@@ -60,17 +60,46 @@ async function httpJson(
   });
 }
 
-describe("memoryEnrichmentRequested", () => {
-  it("defaults off; header or env opt-in", () => {
-    const req = {
-      header: (name: string) => (name === "x-clawql-memory-enrich" ? undefined : undefined),
-    } as Parameters<typeof memoryEnrichmentRequested>[0];
-    expect(memoryEnrichmentRequested(req, {})).toBe(false);
-    expect(memoryEnrichmentRequested(req, { CLAWQL_INFERENCE_MEMORY_ENRICH: "1" })).toBe(true);
+describe("memoryEnrichmentAllowed", () => {
+  it("defaults off; key policy outranks header", () => {
+    const reqOff = {
+      header: () => undefined,
+    } as Parameters<typeof memoryEnrichmentAllowed>[0]["req"];
+    expect(memoryEnrichmentAllowed({ req: reqOff, env: {} })).toBe(false);
+
     const reqOn = {
       header: (name: string) => (name === "x-clawql-memory-enrich" ? "1" : undefined),
-    } as Parameters<typeof memoryEnrichmentRequested>[0];
-    expect(memoryEnrichmentRequested(reqOn, {})).toBe(true);
+    } as Parameters<typeof memoryEnrichmentAllowed>[0]["req"];
+
+    // Keys off, no virtual key → header works
+    expect(memoryEnrichmentAllowed({ req: reqOn, env: {} })).toBe(true);
+
+    // Key present without grant → header cannot enable
+    expect(
+      memoryEnrichmentAllowed({
+        req: reqOn,
+        env: {},
+        virtualKey: { id: "vk_1", team: "eng", memoryEnrichment: false, memoryScope: "eng" },
+      })
+    ).toBe(false);
+
+    // Key grants enrichment → header works
+    expect(
+      memoryEnrichmentAllowed({
+        req: reqOn,
+        env: {},
+        virtualKey: { id: "vk_1", team: "eng", memoryEnrichment: true, memoryScope: "eng" },
+      })
+    ).toBe(true);
+
+    // Env alone cannot bypass key forbid
+    expect(
+      memoryEnrichmentAllowed({
+        req: reqOff,
+        env: { CLAWQL_INFERENCE_MEMORY_ENRICH: "1" },
+        virtualKey: { id: "vk_1", team: "eng", memoryEnrichment: false },
+      })
+    ).toBe(false);
   });
 });
 
@@ -88,34 +117,60 @@ describe("maybeEnrichMessages", () => {
     expect(decision.kind).toBe("skip");
   });
 
-  it("injects marked system block and memory ids", async () => {
+  it("injects scoped notes only, audits memory ids (no body), returns ids", async () => {
     const messages: ChatMessage[] = [{ role: "user", content: "github" }];
     const req = {
       header: () => "1",
     } as Parameters<typeof maybeEnrichMessages>[0]["req"];
+    const audited: unknown[] = [];
     const decision = await maybeEnrichMessages({
       messages,
       req,
       env: { CLAWQL_OBSIDIAN_VAULT_PATH: "/tmp/vault" },
+      virtualKey: {
+        id: "vk_eng",
+        team: "eng",
+        memoryEnrichment: true,
+        memoryScope: "eng",
+      },
+      correlationId: "corr-1",
+      audit: async (p) => {
+        audited.push(p);
+      },
       search: async () => ({
         ok: true,
         query: "github",
         results: [
           {
-            path: "Memory/github.md",
+            path: "Memory/eng/github.md",
             score: 3,
             depth: 0,
             reason: "keyword" as const,
-            snippet: "github merge notes",
+            snippet: "eng github notes",
+          },
+          {
+            path: "Memory/other/secret.md",
+            score: 9,
+            depth: 0,
+            reason: "keyword" as const,
+            snippet: "other team secret",
           },
         ],
       }),
     });
     expect(decision.kind).toBe("inject");
     if (decision.kind !== "inject") return;
-    expect(decision.memoryIds).toEqual(["Memory/github.md"]);
-    expect(decision.messages[0]?.role).toBe("system");
+    expect(decision.memoryIds).toEqual(["Memory/eng/github.md"]);
     expect(decision.messages[0]?.content).toContain(MEMORY_CONTEXT_BEGIN);
+    expect(decision.messages[0]?.content).not.toContain("other team secret");
+    expect(audited).toHaveLength(1);
+    expect(audited[0]).toMatchObject({
+      event: "memory_enrichment",
+      memoryIds: ["Memory/eng/github.md"],
+      memoryScope: "eng",
+      virtualKeyId: "vk_eng",
+    });
+    expect(JSON.stringify(audited[0])).not.toContain("eng github notes");
   });
 
   it("fail-closes on redact/screen errors", async () => {
@@ -146,7 +201,8 @@ describe("createMemoryRouter", () => {
     app.use(
       createMemoryRouter({
         ingest: async (input) => {
-          const path = `Memory/${input.title.toLowerCase().replace(/\s+/g, "-")}.md`;
+          const folder = input.folder ? `${input.folder}/` : "";
+          const path = `Memory/${folder}${input.title.toLowerCase().replace(/\s+/g, "-")}.md`;
           notes.set(path, input.insights ?? "");
           return { ok: true, path };
         },
@@ -175,16 +231,22 @@ describe("createMemoryRouter", () => {
         get: async (slug) => {
           const path = slug.startsWith("Memory/") ? slug : `Memory/${slug}.md`;
           const content = notes.get(path);
-          if (!content && content !== "") {
+          if (content === undefined) {
             return { ok: false as const, error: "not found", status: 404 };
           }
-          return { ok: true as const, path, slug, content: content ?? "" };
+          return { ok: true as const, path, slug, content };
         },
         erase: async (slug) => {
           const path = slug.startsWith("Memory/") ? slug : `Memory/${slug}.md`;
           if (!notes.has(path)) return { ok: false as const, error: "not found", status: 404 };
           notes.delete(path);
-          return { ok: true as const, path, erased: true as const };
+          return {
+            ok: true as const,
+            path,
+            erased: true as const,
+            contentHash: "abc",
+            erasedStores: { vault: true, memoryDb: true, pgvector: true, ontology: true },
+          };
         },
       })
     );
@@ -220,6 +282,7 @@ describe("createMemoryRouter", () => {
       const erased = await httpJson(`${base}/memory/hello-world`, { method: "DELETE" });
       expect(erased.status).toBe(200);
       expect((erased.body as { erased: boolean }).erased).toBe(true);
+      expect((erased.body as { erasedStores?: unknown }).erasedStores).toBeTruthy();
 
       const gone = await httpJson(`${base}/memory/hello-world`);
       expect(gone.status).toBe(404);

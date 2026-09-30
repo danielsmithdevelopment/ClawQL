@@ -114,7 +114,9 @@ export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-regis
 export {
   buildModelEscalationAuditEntry,
   buildAgentCoordinationAuditEntry,
+  buildMemoryEnrichmentAuditEntry,
   type InferenceAuditEntry,
+  type MemoryEnrichmentAuditPayload,
 } from "./audit/events.js";
 export {
   appendInferenceAuditToProcessWorm,

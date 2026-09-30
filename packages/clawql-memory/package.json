@@ -51,6 +51,11 @@
       "import": "./dist/ingest/ingest.js",
       "require": "./dist/ingest/ingest.cjs"
     },
+    "./erase/erase": {
+      "types": "./dist/erase/erase.d.ts",
+      "import": "./dist/erase/erase.js",
+      "require": "./dist/erase/erase.cjs"
+    },
     "./recall/recall": {
       "types": "./dist/recall/recall.d.ts",
       "import": "./dist/recall/recall.js",

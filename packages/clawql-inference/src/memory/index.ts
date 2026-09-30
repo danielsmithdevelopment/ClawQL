@@ -15,8 +15,11 @@ export { createMemoryRouter, type CreateMemoryRouterOptions } from "./router.js"
 
 export {
   memoryEnrichmentRequested,
+  memoryEnrichmentAllowed,
   maybeEnrichMessages,
   MEMORY_CONTEXT_BEGIN,
   MEMORY_CONTEXT_END,
   type MemoryEnrichDecision,
 } from "./enrichment.js";
+
+export { resolveMemoryScope, pathInMemoryScope } from "./scope.js";

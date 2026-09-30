@@ -122,7 +122,7 @@ describe("decision gateway", () => {
     }
   });
 
-  it("rejects score questions and empty body", async () => {
+  it("rejects score questions with an explicit 400", async () => {
     const app = express();
     app.use(express.json());
     app.use(createDecisionRouter());
@@ -133,14 +133,18 @@ describe("decision gateway", () => {
     if (!address || typeof address === "string") throw new Error("expected port");
 
     try {
-      const bad = await httpJson(`http://127.0.0.1:${address.port}/decision`, {
-        method: "POST",
-        body: JSON.stringify({
-          state: "x",
-          questions: [{ type: "score", name: "s", levels: ["a", "b"] }],
-        }),
-      });
-      expect(bad.status).toBe(400);
+      for (const path of ["/decision", "/v1/systemone"] as const) {
+        const bad = await httpJson(`http://127.0.0.1:${address.port}${path}`, {
+          method: "POST",
+          body: JSON.stringify({
+            state: "x",
+            questions: [{ type: "score", name: "s", levels: ["a", "b"] }],
+          }),
+        });
+        expect(bad.status).toBe(400);
+        const err = bad.body as { error?: { message?: string } };
+        expect(err.error?.message ?? JSON.stringify(bad.body)).toMatch(/score.*not supported/i);
+      }
 
       const empty = await httpJson(`http://127.0.0.1:${address.port}/decision`, {
         method: "POST",
