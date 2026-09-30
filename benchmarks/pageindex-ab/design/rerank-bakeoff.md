@@ -32,7 +32,11 @@ Cross-encoders scored opening boilerplate on long RFC sections; keyword saw the 
 node benchmarks/pageindex-ab/scripts/export_rerank_candidates.mjs --pool 100 --max-chars 100000
 ```
 
-## Fixes to try on **tune only** (after k-grid lands)
+## MaxP judgment (locked)
+
+Judge MaxP by **model-scored accuracy at k=10** and **gold list position** (mean/median rank), not recall@10 alone. See [`gap-gold10-diagnose.md`](gap-gold10-diagnose.md).
+
+## Fixes to try on **tune only** (after gap diagnose + k-grid)
 
 ```bash
 # MaxP + heading path + light keyword blend (example — pick on tune)

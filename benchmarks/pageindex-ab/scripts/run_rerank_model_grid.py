@@ -140,6 +140,7 @@ def run_cell(
     strict = 0
     gold_hits = 0
     errors = 0
+    per_rows: list[dict[str, Any]] = []
 
     def one(job):
         row, top, gold_hit = job
@@ -150,22 +151,47 @@ def run_cell(
                 model=model,
                 question_type=row.get("question_type"),
             )
-            ans_ok = grade(fin.get("answer", ""), bool(fin.get("not_found")), row)
-            return ans_ok, ans_ok and gold_hit, gold_hit, None
+            answer = str(fin.get("answer") or "")
+            not_found = bool(fin.get("not_found"))
+            ans_ok = grade(answer, not_found, row)
+            return {
+                "id": row["id"],
+                "stratum": row.get("stratum"),
+                "split": row.get("split"),
+                "answer": answer,
+                "not_found": not_found,
+                "answer_ok": ans_ok,
+                "strict_ok": ans_ok and gold_hit,
+                "gold_hit": gold_hit,
+                "top_ids": [c["id"] for c in top],
+                "error": None,
+            }
         except Exception as e:  # noqa: BLE001
-            return False, False, gold_hit, str(e)[:200]
+            return {
+                "id": row["id"],
+                "stratum": row.get("stratum"),
+                "split": row.get("split"),
+                "answer": "",
+                "not_found": True,
+                "answer_ok": False,
+                "strict_ok": False,
+                "gold_hit": gold_hit,
+                "top_ids": [c["id"] for c in top],
+                "error": str(e)[:200],
+            }
 
     with ThreadPoolExecutor(max_workers=concurrency) as ex:
         futs = [ex.submit(one, j) for j in jobs]
         for fut in as_completed(futs):
-            ans_ok, st, gh, err = fut.result()
-            if err:
+            rec = fut.result()
+            per_rows.append(rec)
+            if rec.get("error"):
                 errors += 1
-            if ans_ok:
+            if rec["answer_ok"]:
                 ok += 1
-            if st:
+            if rec["strict_ok"]:
                 strict += 1
-            if gh:
+            if rec["gold_hit"]:
                 gold_hits += 1
 
     n = len(rows)
@@ -178,6 +204,7 @@ def run_cell(
         "k": k,
         "rerank": use_rerank,
         "model": model,
+        "rows": per_rows,
     }
 
 
@@ -243,12 +270,14 @@ def main() -> int:
         "recommendation": None,
     }
 
+    all_row_dumps: list[dict[str, Any]] = []
+
     # Flash-lite full grid
     for k in ks:
         for use_rr in (False, True):
             name = f"k{k}_{'rerank' if use_rr else 'norerank'}_flash"
             print(f"[grid] {name} n={len(rows)}", file=sys.stderr)
-            report["cells"][name] = run_cell(
+            cell = run_cell(
                 rows,
                 ranks_by_id,
                 k=k,
@@ -257,6 +286,9 @@ def main() -> int:
                 model=args.flash_model,
                 concurrency=args.concurrency,
             )
+            for rec in cell.pop("rows", []):
+                all_row_dumps.append({"cell": name, **rec})
+            report["cells"][name] = cell
 
     # Sonnet subset
     if args.sonnet_n > 0:
@@ -268,7 +300,7 @@ def main() -> int:
             for use_rr in (False, True):
                 name = f"k{k}_{'rerank' if use_rr else 'norerank'}_sonnet"
                 print(f"[grid] {name} n={len(sub)}", file=sys.stderr)
-                sonnet_cells[name] = run_cell(
+                cell = run_cell(
                     sub,
                     ranks_by_id,
                     k=k,
@@ -277,6 +309,9 @@ def main() -> int:
                     model=args.sonnet_model,
                     concurrency=min(args.concurrency, 2),
                 )
+                for rec in cell.pop("rows", []):
+                    all_row_dumps.append({"cell": name, **rec})
+                sonnet_cells[name] = cell
         report["sonnet_subset"] = {
             "n": len(sub),
             "seed": args.sonnet_seed,
@@ -313,9 +348,15 @@ def main() -> int:
     }
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    rows_out = args.out.with_name(args.out.stem + "-rows.jsonl")
+    rows_out.write_text("\n".join(json.dumps(r) for r in all_row_dumps) + "\n")
+    report["rows_path"] = str(rows_out)
     args.out.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
-    print(json.dumps({"ok": True, "wrote": str(args.out)}), file=sys.stderr)
+    print(
+        json.dumps({"ok": True, "wrote": str(args.out), "rows": str(rows_out)}),
+        file=sys.stderr,
+    )
     return 0
 
 

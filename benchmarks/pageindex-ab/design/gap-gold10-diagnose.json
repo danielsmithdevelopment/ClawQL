@@ -1,0 +1,24 @@
+{
+  "tag": "pageindex-ab-gap-gold10-diagnose-v1",
+  "generated_at": "2026-09-30T04:04:45Z",
+  "offline": {
+    "n_gold_at_k": 171,
+    "k": 10,
+    "ans_in_evidence_window_rate": 0.9298245614035088,
+    "ans_in_gold_section_rate": 0.9532163742690059,
+    "gold_window_counts": {
+      "in": 158,
+      "fully_out": 7,
+      "partial": 6
+    },
+    "note": "If ans_in_evidence \u2248 1 but model accuracy \u226a that, the gap is reading/grading, not retrieval. 24k evidence truncate only explains gold_window=fully_out|partial."
+  },
+  "model": {
+    "skipped": true,
+    "reason": "offline_only or missing OPENROUTER_API_KEY"
+  },
+  "failure_classes": null,
+  "sample_wrong": [],
+  "maxp_metric_note": "Judge MaxP by model-scored accuracy and mean/median gold rank (position), not recall@10 alone \u2014 position affects mid-context reading.",
+  "rows_path": "benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl"
+}

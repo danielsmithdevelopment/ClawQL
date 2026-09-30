@@ -12,6 +12,7 @@
 #   .run-hard-agent-full  → hard-candidate, full corpus (limit=0), trials=3, +extra arms
 #   .run-vectify-fair     → VectifyAI fair test (12 misses + 15 no-harm; OPENROUTER_API_KEY)
 #   .run-rerank-grid      → model-scored k∈{10,20}×±rerank (flash-lite + Sonnet subset)
+#   .run-gap-diagnose     → flash-lite gold@10 gap taxonomy (per-row answers; cheap)
 #
 # Important: GitHub PR `paths` uses a three-dot tip-vs-base diff. A sentinel that
 # remains on the branch re-fires this workflow on *every* PR push. Remove the
