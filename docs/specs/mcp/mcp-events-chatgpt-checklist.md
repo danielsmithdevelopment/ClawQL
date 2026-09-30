@@ -29,11 +29,11 @@ Producer → signed delivery coverage: `packages/clawql-mcp-events/src/producers
 
 ## Sign-off
 
-| Field | Value |
-| --- | --- |
-| Operator | |
-| Date (UTC) | |
-| ClawQL MCP version / commit | |
-| ChatGPT plugin / workspace | |
-| Result | PASS / FAIL |
-| Notes | |
+| Field                       | Value       |
+| --------------------------- | ----------- |
+| Operator                    |             |
+| Date (UTC)                  |             |
+| ClawQL MCP version / commit |             |
+| ChatGPT plugin / workspace  |             |
+| Result                      | PASS / FAIL |
+| Notes                       |             |

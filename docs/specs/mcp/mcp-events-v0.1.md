@@ -13,17 +13,17 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 
 ## 2. Scope (8.0.0)
 
-| In | Out (follow-on) |
-| --- | --- |
-| Discover `events: {}` on HTTP + gRPC | Full `clawql-streams` / `stream_subscribe` agent loop |
-| `events/list` · `subscribe` · `unsubscribe` | Polling / streaming MCP delivery modes |
-| Webhook delivery + challenge (Standard Webhooks) | `gap` / `terminated` control notifications |
-| Durable subscription store (JSON file) | Postgres-backed multi-replica store |
-| Live event catalog (six events) | Dynamic OpenAPI-derived event schemas |
-| Schedule body-hash → `stream.changed` | NATS / WebSocket native stream sources |
-| SSRF-hardened callbacks + enterprise allowlist / PII redact / caps | Custom connect-to-IP TLS agent (stretch) |
-| Access recheck + instruction screening + feedback-loop detector | Full Panguard ATR integration (host wires) |
-| WORM append hooks (optional host) | Mandatory dual-ack WORM |
+| In                                                                 | Out (follow-on)                                       |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
+| Discover `events: {}` on HTTP + gRPC                               | Full `clawql-streams` / `stream_subscribe` agent loop |
+| `events/list` · `subscribe` · `unsubscribe`                        | Polling / streaming MCP delivery modes                |
+| Webhook delivery + challenge (Standard Webhooks)                   | `gap` / `terminated` control notifications            |
+| Durable subscription store (JSON file)                             | Postgres-backed multi-replica store                   |
+| Live event catalog (six events)                                    | Dynamic OpenAPI-derived event schemas                 |
+| Schedule body-hash → `stream.changed`                              | NATS / WebSocket native stream sources                |
+| SSRF-hardened callbacks + enterprise allowlist / PII redact / caps | Custom connect-to-IP TLS agent (stretch)              |
+| Access recheck + instruction screening + feedback-loop detector    | Full Panguard ATR integration (host wires)            |
+| WORM append hooks (optional host)                                  | Mandatory dual-ack WORM                               |
 
 ## 3. Methods
 
@@ -39,25 +39,25 @@ JSON-RPC error **`-32015`** (`CallbackEndpointError`) with `data.reason` (`chall
 
 Naming: `<noun>.<past-participle>`. Reserve `mandate.*` for fleet mandates if they ship later.
 
-| Name | Description | Producer (wired) | Filters |
-| --- | --- | --- | --- |
-| `stream.changed` | Polled synthetic topic body hash changed | Schedule job run change-detection (`last_body_hash`) | `topic` (required; schedule job id) |
-| `document.processed` | IDP / document pipeline finished | `clawql-documents` IDP effect | `document_id?` |
-| `hook.blocked` | Policy / ATR / hook blocked a call | `src/mcp/mcp-tool-wrap.ts` blocked branch | `tool?` |
-| `budget.exhausted` | Inference virtual-key budget exceeded | `clawql-inference` `validateVirtualKey` | `budget_id?` |
-| `schedule.completed` | Schedule job run completed | `clawql-automation` `executeTriggerForJob` | `schedule_id?` |
-| `notification.sent` | Slack notify success | `clawql-automation` notify effect | `channel?` |
+| Name                 | Description                              | Producer (wired)                                     | Filters                             |
+| -------------------- | ---------------------------------------- | ---------------------------------------------------- | ----------------------------------- |
+| `stream.changed`     | Polled synthetic topic body hash changed | Schedule job run change-detection (`last_body_hash`) | `topic` (required; schedule job id) |
+| `document.processed` | IDP / document pipeline finished         | `clawql-documents` IDP effect                        | `document_id?`                      |
+| `hook.blocked`       | Policy / ATR / hook blocked a call       | `src/mcp/mcp-tool-wrap.ts` blocked branch            | `tool?`                             |
+| `budget.exhausted`   | Inference virtual-key budget exceeded    | `clawql-inference` `validateVirtualKey`              | `budget_id?`                        |
+| `schedule.completed` | Schedule job run completed               | `clawql-automation` `executeTriggerForJob`           | `schedule_id?`                      |
+| `notification.sent`  | Slack notify success                     | `clawql-automation` notify effect                    | `channel?`                          |
 
 All support `delivery: ["webhook"]` only.
 
 ## 4b. Enterprise outbound controls
 
-| Control | Env | Default |
-| --- | --- | --- |
-| Callback host allowlist | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`) | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
-| PII redaction | `CLAWQL_MCP_EVENTS_REDACT_PII` | on — runs `gatewayRedactPayload` before delivery |
-| Max subscriptions / principal | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL` | `25` |
-| Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL` | `60` |
+| Control                             | Env                                                               | Default                                                                 |
+| ----------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Callback host allowlist             | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`) | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
+| PII redaction                       | `CLAWQL_MCP_EVENTS_REDACT_PII`                                    | on — runs `gatewayRedactPayload` before delivery                        |
+| Max subscriptions / principal       | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
+| Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
 
 ## 5. Subscription identity & durability
 
