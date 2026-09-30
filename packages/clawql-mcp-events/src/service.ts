@@ -25,6 +25,14 @@ import {
   readEnterpriseEventsPolicy,
   type EnterpriseEventsPolicy,
 } from "./enterprise.js";
+import {
+  createCoalesceState,
+  dropPendingForSubscription,
+  flushReadyPending,
+  markDelivered,
+  takeOrHoldDelivery,
+} from "./coalesce.js";
+import { notifyStreamTopicReleased } from "./lifecycle.js";
 import { gatewayRedactPayload } from "clawql-api";
 import { screenEventPayload } from "./screen.js";
 import { validateWhsecSecret } from "./secret.js";
@@ -67,6 +75,11 @@ export type McpEventsConfig = {
   rateLimiter?: DeliveryRateLimiter;
 };
 
+function topicFromSubscription(sub: StoredSubscription): string | null {
+  const t = sub.arguments?.topic;
+  return typeof t === "string" && t.trim() ? t.trim() : null;
+}
+
 function matchesFilters(
   filters: Record<string, unknown>,
   data: Record<string, unknown>
@@ -106,6 +119,8 @@ export class McpEventsService extends Context.Tag("clawql/McpEventsService")<
     readonly emit: (
       event: DeliverableEvent
     ) => Effect.Effect<readonly DeliveryOutcome[]>;
+    /** Flush coalesced stream.changed deliveries that have waited out the min interval. */
+    readonly flushCoalesced: () => Effect.Effect<readonly DeliveryOutcome[]>;
     readonly getSubscription: (
       id: string
     ) => Effect.Effect<StoredSubscription | undefined>;
@@ -135,6 +150,7 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
   const rateLimiter =
     config.rateLimiter ??
     new DeliveryRateLimiter(enterprise.maxDeliveriesPerMinutePerPrincipal);
+  const coalesce = createCoalesceState(enterprise.coalesceIntervalMs);
 
   const audit = (type: string, payload: Record<string, unknown>) =>
     Effect.tryPromise({
@@ -143,6 +159,95 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
       },
       catch: () => undefined,
     }).pipe(Effect.catchAll(() => Effect.void));
+
+  const deliverOne = (
+    sub: StoredSubscription,
+    screened: DeliverableEvent
+  ): Effect.Effect<DeliveryOutcome> =>
+    Effect.gen(function* () {
+      const looping = yield* feedback.wouldLoop(sub.id, screened.name);
+      if (looping) {
+        yield* audit("mcp_events.feedback_loop", {
+          id: sub.id,
+          name: screened.name,
+          eventId: screened.eventId,
+        });
+        return {
+          accepted: false,
+          status: 0,
+          attempts: 0,
+          stopped: true,
+          reason: "feedback_loop",
+        } satisfies DeliveryOutcome;
+      }
+
+      const outcome = yield* sendSignedEvent(sub, screened, webhookFetch);
+      yield* feedback.record({
+        subscriptionId: sub.id,
+        eventName: screened.name,
+        at: Date.now(),
+      });
+      yield* audit("mcp_events.delivery", {
+        id: sub.id,
+        eventId: screened.eventId,
+        name: screened.name,
+        accepted: outcome.accepted,
+        status: outcome.status,
+        attempts: outcome.attempts,
+        reason: outcome.reason,
+        coalesced_count: screened.data.coalesced_count,
+      });
+      if (outcome.reason === "gone") {
+        dropPendingForSubscription(coalesce, sub.id);
+        yield* store.remove(sub.id);
+        const topic = topicFromSubscription(sub);
+        if (topic && sub.name === "stream.changed") {
+          notifyStreamTopicReleased(topic, "gone");
+        }
+      }
+      return outcome;
+    });
+
+  const flushCoalescedInternal = (): Effect.Effect<readonly DeliveryOutcome[]> =>
+    Effect.gen(function* () {
+      const ready = flushReadyPending(coalesce, {
+        canDeliver: () => true,
+      });
+      const outcomes: DeliveryOutcome[] = [];
+      const all = yield* store.list();
+      const byId = new Map(all.map((s) => [s.id, s]));
+      for (const item of ready) {
+        const sub = byId.get(item.subscriptionId);
+        if (!sub) {
+          dropPendingForSubscription(coalesce, item.subscriptionId);
+          continue;
+        }
+        if (!rateLimiter.tryConsume(sub.principal)) {
+          coalesce.pending.set(item.subscriptionId, {
+            event: item.event,
+            firstAt: Date.now() - enterprise.coalesceIntervalMs,
+            lastAt: Date.now(),
+            mergedCount:
+              typeof item.event.data.coalesced_count === "number"
+                ? item.event.data.coalesced_count
+                : 1,
+          });
+          coalesce.lastDeliveredAt.delete(item.subscriptionId);
+          outcomes.push({
+            accepted: false,
+            status: 429,
+            attempts: 0,
+            stopped: false,
+            reason: "rate_limited_coalesced",
+          });
+          continue;
+        }
+        const outcome = yield* deliverOne(sub, item.event);
+        if (outcome.accepted) markDelivered(coalesce, item.subscriptionId);
+        outcomes.push(outcome);
+      }
+      return outcomes;
+    });
 
   return McpEventsService.of({
     list: (_params) =>
@@ -282,12 +387,17 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
         });
         const existing = yield* store.findByIdentity(id);
         if (existing && existing.principal === params.principal) {
+          dropPendingForSubscription(coalesce, id);
           yield* store.remove(id);
           yield* audit("mcp_events.unsubscribe", {
             id,
             principal: params.principal,
             name: params.name,
           });
+          if (existing.name === "stream.changed") {
+            const topic = topicFromSubscription(existing);
+            if (topic) notifyStreamTopicReleased(topic, "unsubscribe");
+          }
         }
         return {};
       }),
@@ -324,8 +434,13 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
             catch: (e) => (e instanceof Error ? e : new Error(String(e))),
           }).pipe(Effect.orElseSucceed(() => false));
           if (!stillAllowed) {
+            dropPendingForSubscription(coalesce, sub.id);
             yield* store.remove(sub.id);
             yield* audit("mcp_events.access_revoked", { id: sub.id });
+            if (sub.name === "stream.changed") {
+              const topic = topicFromSubscription(sub);
+              if (topic) notifyStreamTopicReleased(topic, "access_revoked");
+            }
             outcomes.push({
               accepted: false,
               status: 0,
@@ -333,6 +448,49 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
               stopped: true,
               reason: "access_revoked",
             });
+            continue;
+          }
+
+          const rateOk = rateLimiter.wouldAllow(sub.principal);
+          const coalesceable =
+            screened.name === "stream.changed" &&
+            (enterprise.coalesceIntervalMs > 0 || !rateOk);
+
+          if (coalesceable) {
+            const toSend = takeOrHoldDelivery(coalesce, sub.id, screened, {
+              rateLimited: !rateOk,
+            });
+            if (!toSend) {
+              yield* audit("mcp_events.coalesced", {
+                id: sub.id,
+                principal: sub.principal,
+                eventId: screened.eventId,
+                rate_limited: !rateOk,
+              });
+              outcomes.push({
+                accepted: false,
+                status: 0,
+                attempts: 0,
+                stopped: false,
+                reason: rateOk ? "coalesced" : "rate_limited_coalesced",
+              });
+              continue;
+            }
+            if (!rateLimiter.tryConsume(sub.principal)) {
+              // Race: capacity vanished; hold for later flush
+              takeOrHoldDelivery(coalesce, sub.id, toSend, { rateLimited: true });
+              outcomes.push({
+                accepted: false,
+                status: 0,
+                attempts: 0,
+                stopped: false,
+                reason: "rate_limited_coalesced",
+              });
+              continue;
+            }
+            const outcome = yield* deliverOne(sub, toSend);
+            if (outcome.accepted) markDelivered(coalesce, sub.id);
+            outcomes.push(outcome);
             continue;
           }
 
@@ -352,45 +510,15 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
             continue;
           }
 
-          const looping = yield* feedback.wouldLoop(sub.id, screened.name);
-          if (looping) {
-            yield* audit("mcp_events.feedback_loop", {
-              id: sub.id,
-              name: screened.name,
-              eventId: screened.eventId,
-            });
-            outcomes.push({
-              accepted: false,
-              status: 0,
-              attempts: 0,
-              stopped: true,
-              reason: "feedback_loop",
-            });
-            continue;
-          }
-
-          const outcome = yield* sendSignedEvent(sub, screened, webhookFetch);
-          yield* feedback.record({
-            subscriptionId: sub.id,
-            eventName: screened.name,
-            at: Date.now(),
-          });
-          yield* audit("mcp_events.delivery", {
-            id: sub.id,
-            eventId: screened.eventId,
-            name: screened.name,
-            accepted: outcome.accepted,
-            status: outcome.status,
-            attempts: outcome.attempts,
-            reason: outcome.reason,
-          });
-          if (outcome.reason === "gone") {
-            yield* store.remove(sub.id);
-          }
-          outcomes.push(outcome);
+          outcomes.push(yield* deliverOne(sub, screened));
         }
+
+        const flushed = yield* flushCoalescedInternal();
+        outcomes.push(...flushed);
         return outcomes;
       }),
+
+    flushCoalesced: () => flushCoalescedInternal(),
 
     getSubscription: (id) => store.get(id),
   });

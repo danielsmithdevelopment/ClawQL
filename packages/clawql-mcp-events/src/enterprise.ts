@@ -8,6 +8,12 @@ export type EnterpriseEventsPolicy = {
   maxDeliveriesPerMinutePerPrincipal: number;
   /** When true, run gateway PII redaction on payloads before delivery. Default true. */
   redactPii: boolean;
+  /**
+   * Per-subscription minimum ms between stream.changed deliveries.
+   * Changes inside the window (or while rate-limited) coalesce into one event.
+   * Default: max(1000, ceil(60000 / maxDeliveriesPerMinute)).
+   */
+  coalesceIntervalMs: number;
 };
 
 export function readEnterpriseEventsPolicy(
@@ -31,11 +37,21 @@ export function readEnterpriseEventsPolicy(
     );
     const redactRaw = env.CLAWQL_MCP_EVENTS_REDACT_PII?.trim().toLowerCase();
     const redactPii = !(redactRaw === "0" || redactRaw === "false" || redactRaw === "no");
+    const maxDeliveriesPerMinutePerPrincipal =
+      Number.isFinite(maxDel) && maxDel > 0 ? maxDel : 60;
+    const coalesceRaw = Number.parseInt(
+      env.CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS?.trim() ?? "",
+      10
+    );
+    const coalesceIntervalMs = Number.isFinite(coalesceRaw) && coalesceRaw >= 0
+      ? coalesceRaw
+      : Math.max(1000, Math.ceil(60_000 / maxDeliveriesPerMinutePerPrincipal));
     return {
       callbackAllowlist,
       maxSubscriptionsPerPrincipal: Number.isFinite(maxSub) && maxSub > 0 ? maxSub : 25,
-      maxDeliveriesPerMinutePerPrincipal: Number.isFinite(maxDel) && maxDel > 0 ? maxDel : 60,
+      maxDeliveriesPerMinutePerPrincipal,
       redactPii,
+      coalesceIntervalMs,
     };
   });
 }
@@ -76,6 +92,13 @@ export class DeliveryRateLimiter {
   private readonly hits = new Map<string, number[]>();
 
   constructor(private readonly maxPerMinute: number) {}
+
+  /** True when the principal still has capacity this minute (does not consume). */
+  wouldAllow(principal: string, now = Date.now()): boolean {
+    const windowStart = now - 60_000;
+    const prev = (this.hits.get(principal) ?? []).filter((t) => t >= windowStart);
+    return prev.length < this.maxPerMinute;
+  }
 
   /** Returns false when the principal is over the per-minute delivery cap. */
   tryConsume(principal: string, now = Date.now()): boolean {

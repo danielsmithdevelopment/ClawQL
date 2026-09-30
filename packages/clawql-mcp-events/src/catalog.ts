@@ -61,6 +61,10 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
           description:
             "MCP tool to re-read the full stored projection (schedule get → change_detection_state.last_projection).",
         },
+        coalesced_count: {
+          type: "integer",
+          description: "When >1, this delivery merged multiple changes within the coalesce interval.",
+        },
       },
       required: ["topic", "summary", "changed_at"],
       additionalProperties: false,

@@ -8,6 +8,7 @@ import {
   McpEventsService,
   McpEventsServiceLive,
   setMcpEventsProcessEmitter,
+  setStreamTopicReleasedHandler,
   type DeliverableEvent,
 } from "clawql-mcp-events";
 
@@ -15,6 +16,7 @@ import {
 export function configureMcpEventsProcessEmitter(): void {
   if (!isMcpEventsEnabledSync()) {
     setMcpEventsProcessEmitter(null);
+    setStreamTopicReleasedHandler(null);
     return;
   }
   setMcpEventsProcessEmitter(async (event: DeliverableEvent) =>
@@ -25,4 +27,14 @@ export function configureMcpEventsProcessEmitter(): void {
       }).pipe(Effect.provide(McpEventsServiceLive))
     )
   );
+  setStreamTopicReleasedHandler(async (topic) => {
+    try {
+      const { clearScheduleProjectionForTopic } = await import(
+        "clawql-automation/schedule/schedule"
+      );
+      await clearScheduleProjectionForTopic(topic);
+    } catch {
+      /* schedule optional */
+    }
+  });
 }

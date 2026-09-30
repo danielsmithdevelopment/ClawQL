@@ -58,6 +58,9 @@ All support `delivery: ["webhook"]` only.
 | PII redaction                       | `CLAWQL_MCP_EVENTS_REDACT_PII`                                    | on — runs `gatewayRedactPayload` before delivery                        |
 | Max subscriptions / principal       | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
 | Max deliveries / minute / principal | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
+| Coalesce interval (`stream.changed`) | `CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`                          | `ceil(60000 / maxDeliveries)` (min 1s)                                  |
+| Projection at-rest key              | `CLAWQL_SCHEDULE_PROJECTION_KEY` (64 hex) or auto file beside DB  | generated                                                               |
+| Auth-failure pause threshold        | `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`                          | `3`                                                                     |
 
 ## 4c. `stream.changed` precision (schedule)
 
@@ -66,8 +69,10 @@ False alarms from volatile fields (timestamps, request IDs, rate-limit counters,
 1. **`action.synthetic_test.change_detection.watch_fields`** — project then hash (required for precise detection; omit only when whole-body-minus-defaults is acceptable).
 2. **`exclude_paths` / `array_sort_keys` / canonical key order** before hashing.
 3. **Conditional requests** — store `ETag` / `Last-Modified`; send `If-None-Match` / `If-Modified-Since` on GET (304 = no change).
-4. **Capped `diff`** in the event payload (`added` / `removed` / `changed`, truncated); full projection via `schedule` get → `change_detection_state.last_projection` (screened + size-capped retention).
+4. **Capped `diff`** in the event payload (`added` / `removed` / `changed`, truncated); full projection via `schedule` get → `change_detection_state.last_projection` (screened + gateway-redacted + AES-256-GCM at rest; deleted when the schedule job is deleted or the `stream.changed` subscription for that `topic` ends).
 5. **429 backoff** — honor `Retry-After` (default 60s) via `backoff_until`; polls use the subscriber’s credentials.
+6. **Delivery coalescing** — per-subscription min interval (`CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`, default ≈ `ceil(60s / maxDeliveriesPerMinute)`) merges busy-feed changes into one event with a combined `diff` / `coalesced_count` instead of silently dropping under the delivery cap.
+7. **Upstream auth pause** — after N consecutive `401`/`403` (default 3, `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`), auto-polls pause (`poll_pause_reason=upstream_auth`), log to console, and append to the MCP `audit` ring (Evidence). Manual `schedule` trigger retries and clears the pause on success. ChatGPT does not support `terminated` notices.
 
 ## 5. Subscription identity & durability
 

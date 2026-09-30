@@ -384,4 +384,91 @@ describe("handleScheduleToolInput", () => {
       }
     );
   });
+
+  it("pauses polling after consecutive upstream auth failures", async () => {
+    let calls = 0;
+    await withFetchServer(
+      async () => {
+        calls++;
+        return new Response("nope", { status: 401 });
+      },
+      async (origin) => {
+        process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES = origin;
+        process.env.CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD = "3";
+        const created = await handleScheduleToolInput({
+          operation: "create",
+          schedule: { frequency: { type: "interval", seconds: 300 } },
+          action: {
+            kind: "synthetic",
+            synthetic_test: {
+              name: "auth",
+              request: { method: "GET", url: `${origin}/secure` },
+              assert: { status_in: [200] },
+            },
+          },
+        });
+        const jobId = (JSON.parse(created.content[0]!.text) as { job: { id: string } }).job.id;
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        expect(calls).toBe(3);
+        const got = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as {
+          job: {
+            change_detection_state: {
+              poll_pause_reason: string | null;
+              auth_failure_count: number;
+            };
+          };
+        };
+        expect(got.job.change_detection_state.poll_pause_reason).toBe("upstream_auth");
+        expect(got.job.change_detection_state.auth_failure_count).toBe(3);
+        const fired = await runScheduleWorkerTick(new Date());
+        expect(fired).toBe(0);
+        expect(calls).toBe(3);
+      }
+    );
+  });
+
+  it("encrypts last_projection at rest", async () => {
+    process.env.CLAWQL_SCHEDULE_PROJECTION_KEY = "b".repeat(64);
+    await withFetchServer(
+      async () =>
+        new Response(JSON.stringify({ ok: true, title: "x" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      async (origin) => {
+        process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES = origin;
+        const created = await handleScheduleToolInput({
+          operation: "create",
+          schedule: { frequency: { type: "interval", seconds: 300 } },
+          action: {
+            kind: "synthetic",
+            synthetic_test: {
+              name: "enc",
+              request: { method: "GET", url: `${origin}/x` },
+              assert: { status_in: [200] },
+              change_detection: { watch_fields: ["ok", "title"] },
+            },
+          },
+        });
+        const jobId = (JSON.parse(created.content[0]!.text) as { job: { id: string } }).job.id;
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const got = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as {
+          job: {
+            change_detection_state: {
+              last_projection: { ok: boolean; title: string };
+              projection_encrypted: boolean;
+            };
+          };
+        };
+        expect(got.job.change_detection_state.projection_encrypted).toBe(true);
+        expect(got.job.change_detection_state.last_projection).toEqual({ ok: true, title: "x" });
+      }
+    );
+  });
 });

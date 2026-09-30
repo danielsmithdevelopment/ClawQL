@@ -197,6 +197,7 @@ describe("MCP Events producers (no vapor)", () => {
         maxSubscriptionsPerPrincipal: 25,
         maxDeliveriesPerMinutePerPrincipal: 120,
         redactPii: false,
+        coalesceIntervalMs: 0,
       };
       const layer = McpEventsServiceLayer({ store, enterprise });
 
@@ -272,6 +273,7 @@ describe("MCP Events producers (no vapor)", () => {
               maxSubscriptionsPerPrincipal: 25,
               maxDeliveriesPerMinutePerPrincipal: 60,
               redactPii: false,
+              coalesceIntervalMs: 0,
             },
           }
         )

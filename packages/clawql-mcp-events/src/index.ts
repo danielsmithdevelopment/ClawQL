@@ -37,6 +37,21 @@ export {
   setMcpEventsProcessEmitter,
 } from "./process-bridge.js";
 export {
+  getStreamTopicReleasedHandler,
+  notifyStreamTopicReleased,
+  setStreamTopicReleasedHandler,
+} from "./lifecycle.js";
+export type { StreamTopicReleasedHandler } from "./lifecycle.js";
+export {
+  createCoalesceState,
+  mergeStreamChangedDiffs,
+  mergeStreamChangedEvents,
+  takeOrHoldDelivery,
+  flushReadyPending,
+  markDelivered,
+} from "./coalesce.js";
+export type { CoalesceState, StreamChangedDiff } from "./coalesce.js";
+export {
   emitBudgetExhausted,
   emitBudgetExhaustedAwait,
   emitDocumentProcessed,

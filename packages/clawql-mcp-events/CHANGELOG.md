@@ -4,6 +4,9 @@
 
 - Rename public event names before lock-in: `mandate.completed` → `schedule.completed`, `clawql.notification` → `notification.sent`.
 - Advertise + wire `stream.changed` via schedule **projection-based** change detection (`watch_fields`, canonicalize, conditional GET / 304, capped `diff`, 429/`Retry-After` backoff).
+- Projection snapshots: screen + gateway redact + AES-256-GCM at rest; delete on schedule delete / `stream.changed` unsubscribe.
+- Per-subscription coalesce interval merges busy-feed diffs instead of dropping under the delivery cap.
+- Consecutive upstream `401`/`403` pauses auto-polls and surfaces via console + MCP `audit` (Evidence).
 - ChatGPT live pass is a **blocking** v8.0.0 release gate (`docs/release/v8.0.0-checklist.md`).
 - Drop vapor / wire live producers; enterprise allowlist, PII redact, caps.
 
