@@ -1,9 +1,9 @@
 """Classify hard-candidate question templates for eval hygiene.
 
-Depth/position templates ask where a heading sits in the document. A retrieved
-section body does not contain that fact, so gold@k → answer curves on these
-keys measure composition/heuristics, not reading. Always report position
-curves split by depth vs content; judge MaxP on content keys only.
+Depth/position templates are RETIRED from the builder (evidence headers made
+them answerable, but users rarely ask where a heading sits). Detectors remain
+so legacy JSONL / spent runs still split correctly. Judge MaxP on content keys
+only; pair hard + no-harm cohorts (overlap gate), not keyword-rank gates.
 """
 
 from __future__ import annotations
@@ -113,10 +113,10 @@ def position_curves_by_question_class(
 
     return {
         "note": (
-            "Depth/position templates are not answerable from section text alone; "
-            "their rank→accuracy curve is not a reading/position effect. "
-            "Judge MaxP on content (and optionally code_export) only; always report "
-            "curves split by question_eval_class."
+            "Depth/position templates are retired from the builder; legacy rows still "
+            "classify here. Judge MaxP on content (and optionally code_export) only; "
+            "always report curves split by question_eval_class. Hard keys use "
+            "overlap_gold < 0.3 + no-harm pairing — never keyword-rank gates."
         ),
         "by_class": {k: summarize(v) for k, v in sorted(buckets.items())},
         "content_only": summarize(buckets.get("content", [])),

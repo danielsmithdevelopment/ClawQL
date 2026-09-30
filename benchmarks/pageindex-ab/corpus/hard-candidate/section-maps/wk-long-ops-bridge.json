@@ -4,6 +4,22 @@
     {
       "id": "sec-ops-bridge-transcript-feed-lag-synthetic",
       "title": "Ops Bridge Transcript \u2014 Feed Lag (synthetic)"
+    },
+    {
+      "id": "sec-opening-remarks",
+      "title": "Opening remarks"
+    },
+    {
+      "id": "sec-witness-testimony",
+      "title": "Witness testimony"
+    },
+    {
+      "id": "sec-collateral-discussion",
+      "title": "Collateral discussion"
+    },
+    {
+      "id": "sec-closing",
+      "title": "Closing"
     }
   ]
 }

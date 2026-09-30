@@ -1,7 +1,7 @@
 {
   "tag": "pageindex-ab-v1-hard-candidate",
   "created_at": "2026-09-29T03:10:00Z",
-  "harness_commit": "9c98018df99955403283870f1d1fc83e1be8a2bf",
+  "harness_commit": "e0da7248dac55b82733e4d66424f710efb0794bd",
   "spec_path": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
   "spec_sha256": "7b41b613cbec2ef523114d07ee9ffae276324d09b32a9b65d67814b2374dd7d0",
   "model_primary": "google/gemini-2.5-flash-lite",
@@ -202,48 +202,48 @@
       "id": "wk-long-clearing-hearing",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-clearing-hearing.md",
-      "sha256": "e09c451d66f83164e5696282023030fd100ca5c29c47f986d797898688681a2d",
-      "token_estimate": 2718,
+      "sha256": "32e7df3fea47cc508cb310a6f95475c2171d1f3559d749563634cb118335f67d",
+      "token_estimate": 1161,
       "fits_arm_d": false
     },
     {
       "id": "wk-long-latency-workshop",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-latency-workshop.md",
-      "sha256": "d604221dc876afc5b454ef8af6987cf5d66561c9add497a31c1d43ccc2dfcd4c",
-      "token_estimate": 2716,
+      "sha256": "cc83a347b8f8300aec4d99541a5ccad3c80f87b12d0800a2253b175d1ca2142e",
+      "token_estimate": 1159,
       "fits_arm_d": false
     },
     {
       "id": "wk-long-cyber-briefing",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-cyber-briefing.md",
-      "sha256": "ae577843bbe082d388f588d28a88216db53d9c49af170ee71bd014cf8f859201",
-      "token_estimate": 2717,
+      "sha256": "52ba8c478801b414387378cb6cc23053d226fca7103960f7b897e228f50a2026",
+      "token_estimate": 1160,
       "fits_arm_d": false
     },
     {
       "id": "wk-long-liquidity-panel",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-liquidity-panel.md",
-      "sha256": "f30b897dd2b6015bc846dd822f7403af8491ea7f2b5088a73cf2b534c7319633",
-      "token_estimate": 2719,
+      "sha256": "940c3c7d8b7883fd1696f47a3472e5cc1e61be6e54fe8201ffdf50c3fd44859d",
+      "token_estimate": 1162,
       "fits_arm_d": false
     },
     {
       "id": "wk-long-settlement-debrief",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-settlement-debrief.md",
-      "sha256": "1bd2514aa4d2c97667be9042283e0124caae44c72db5ef6e04de2fa8211b8153",
-      "token_estimate": 2717,
+      "sha256": "369125be173a827d0b32bfd5b870dac3e09a3605a57a48b453983fd5ac5ecbfa",
+      "token_estimate": 1160,
       "fits_arm_d": false
     },
     {
       "id": "wk-long-ops-bridge",
       "stratum": "weakly_structured",
       "path": "docs/wk-long-ops-bridge.md",
-      "sha256": "77fa126e2a71520dbd7bab28506705ca5a9ab31ee07af69fcfeafb949efbe502",
-      "token_estimate": 2714,
+      "sha256": "b4955e46fb4e9091e4e374670f1910462c194ac695cb90380da0ca63a01ce070",
+      "token_estimate": 1157,
       "fits_arm_d": false
     }
   ],
@@ -290,14 +290,14 @@
     }
   ],
   "questions_path": "keys.jsonl",
-  "questions_sha256": "5faa058100a1702f2de5074d603a1bbbfccdcc33d5b5e1a91c5a6db071ad5a0c",
+  "questions_sha256": "fa9e05c0777c13cbae81198c21013d057d39c149679b934153bf5601977bdfe6",
   "decision_rules_version": "0.2",
   "spent": false,
-  "notes": "Hard candidate REBUILT 2026-09-29 (TOC/list filter) then GROWN for k-sweep power (\u2265~190 gold-section keys target; 72 only detects ~13pp effects). Human pass required (HUMAN_PASS.md) before H-idf / freeze spend. Harvey LAB and ExtractBench fixtures excluded. Not spent.",
+  "notes": "Hard candidate REBUILT 2026-09-30: depth/position templates RETIRED; content keys only. Soft content keys still high-overlap \u2014 MaxP/k/rerank decided on EnterpriseRAG-Bench (+ LongMemEval-S vault), not this set. Human pass required (HUMAN_PASS.md) before H-idf / freeze spend. Harvey LAB and ExtractBench fixtures excluded. Not spent.",
   "exclusions": [
     "harvey-labs",
     "extractbench",
     "contaminated-smoke"
   ],
-  "power_note": "Single-comparison rough MDE: n\u224872 \u2192 ~13pp; n\u2248190+ \u2192 ~8pp independent-trials, ~9pp with deterministic Flash-lite. Grow before signing if k-sweep may change the default."
+  "power_note": "Depth templates removed (evidence headers made them answerable but they do not measure document reading). Gold-section n\u2248162 is content-only; do not grow depth ladders back for k-sweep power \u2014 use EnterpriseRAG-Bench."
 }

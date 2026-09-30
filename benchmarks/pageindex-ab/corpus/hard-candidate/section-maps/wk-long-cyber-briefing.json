@@ -4,6 +4,22 @@
     {
       "id": "sec-cyber-briefing-transcript-vendor-incident-synthetic",
       "title": "Cyber Briefing Transcript \u2014 Vendor Incident (synthetic)"
+    },
+    {
+      "id": "sec-opening-remarks",
+      "title": "Opening remarks"
+    },
+    {
+      "id": "sec-witness-testimony",
+      "title": "Witness testimony"
+    },
+    {
+      "id": "sec-collateral-discussion",
+      "title": "Collateral discussion"
+    },
+    {
+      "id": "sec-closing",
+      "title": "Closing"
     }
   ]
 }

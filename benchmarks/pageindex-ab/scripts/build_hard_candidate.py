@@ -487,35 +487,6 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "notes": "answer in header/status block",
         },
         {
-            "id": f"{base}-q02",
-            "document_id": doc_id,
-            "stratum": "well_structured",
-            "question_type": "section_lookup",
-            "question": f"What is the first numbered section heading in {doc_id}?",
-            "normalized_answer": facts["first_section"],
-            "accepted_variants": [facts["first_section"].split(" ", 1)[-1][:40]],
-            "gold_sections": [slug_section(facts["first_section"])],
-            "unanswerable": False,
-            # Not answerable from a retrieved section body alone (needs doc order).
-            "depth_position_template": True,
-            "exclude_from_recall_scoring": True,
-            "notes": "depth_position_template: first numbered heading — exclude from recall@k",
-        },
-        {
-            "id": f"{base}-q03",
-            "document_id": doc_id,
-            "stratum": "well_structured",
-            "question_type": "buried_detail",
-            "question": f"Which mid-document section heading appears near 60% depth in {doc_id}?",
-            "normalized_answer": facts["buried_section"],
-            "accepted_variants": [facts["buried_section"][:48]],
-            "gold_sections": [slug_section(facts["buried_section"])],
-            "unanswerable": False,
-            "depth_position_template": True,
-            "exclude_from_recall_scoring": True,
-            "notes": "depth_position_template: mid ~60% — exclude from recall@k",
-        },
-        {
             "id": f"{base}-q04",
             "document_id": doc_id,
             "stratum": "well_structured",
@@ -571,14 +542,10 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "notes": "header metadata; gold_sections empty by design (status block)",
         }
     )
-    # Content gold-section keys (restore power after excluding depth templates from recall).
-    seen_gold: set[str] = {
-        slug_section(facts["first_section"]),
-        slug_section(facts["buried_section"]),
-    }
+    # Content gold-section keys only. Depth/position templates RETIRED: users rarely
+    # ask where a heading sits; evidence headers make them answerable but they still
+    # inflate recall@k / MaxP without measuring document reading.
     qn = 9
-    # Ask for the heading title of a mid section — answerable from the section header
-    # in evidence (not from %-depth). Distinct from depth_position_template.
     mid = facts.get("buried_section") or ""
     if mid:
         keys.append(
@@ -595,14 +562,12 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "accepted_variants": [mid[:48], mid.split(" ", 1)[-1][:40]],
                 "gold_sections": [slug_section(mid)],
                 "unanswerable": False,
-                "notes": "content: heading text recoverable from retrieved section header",
+                "notes": "content: heading text from retrieved section header",
             }
         )
         qn += 1
-    # Normative MUST/SHALL snippet — content fact when present in body.
     snip = (facts.get("normative_snippet") or "").strip()
     if snip and len(snip) >= 20:
-        # Pin gold to first section (snippets are usually early); still answerable from text.
         gid = slug_section(facts["first_section"])
         keys.append(
             {
@@ -631,88 +596,12 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "question_type": "exact_term",
                 "question": f"Which RFC numbers does {doc_id} list under Obsoletes?",
                 "normalized_answer": facts["obsoletes"],
-                "accepted_variants": [x.strip() for x in facts["obsoletes"].split(",") if x.strip()],
+                "accepted_variants": [
+                    x.strip() for x in facts["obsoletes"].split(",") if x.strip()
+                ],
                 "gold_sections": [],
                 "unanswerable": False,
                 "notes": "content: header Obsoletes line",
-            }
-        )
-        qn += 1
-
-    # Depth/position ladder — kept for an optional *structural* track only.
-    # Excluded from recall@k / MaxP content scoring (not answerable from section text).
-    # To score these, rebuild with section number + percent-through-doc in each header.
-    for label, title in (facts.get("depth_sections") or {}).items():
-        gid = slug_section(title)
-        if gid in seen_gold:
-            continue
-        seen_gold.add(gid)
-        pct = label.replace("p", "")
-        keys.append(
-            {
-                "id": f"{base}-q{qn:02d}",
-                "document_id": doc_id,
-                "stratum": "well_structured",
-                "question_type": "section_lookup",
-                "question": (
-                    f"Which body section heading appears near {pct}% depth "
-                    f"(among filtered headings) in {doc_id}?"
-                ),
-                "normalized_answer": title,
-                "accepted_variants": [title[:48], title.split(" ", 1)[-1][:40]],
-                "gold_sections": [gid],
-                "unanswerable": False,
-                "depth_position_template": True,
-                "exclude_from_recall_scoring": True,
-                "notes": (
-                    f"depth_position_template: depth ladder {label}; "
-                    "EXCLUDE from recall — needs section#/% metadata in headers for a "
-                    "separate structural track"
-                ),
-            }
-        )
-        qn += 1
-    last = facts.get("last_section") or ""
-    if last:
-        gid = slug_section(last)
-        if gid not in seen_gold:
-            seen_gold.add(gid)
-            keys.append(
-                {
-                    "id": f"{base}-q{qn:02d}",
-                    "document_id": doc_id,
-                    "stratum": "well_structured",
-                    "question_type": "section_lookup",
-                    "question": f"What is the last numbered body section heading in {doc_id}?",
-                    "normalized_answer": last,
-                    "accepted_variants": [last[:48], last.split(" ", 1)[-1][:40]],
-                    "gold_sections": [gid],
-                    "unanswerable": False,
-                    "depth_position_template": True,
-                    "exclude_from_recall_scoring": True,
-                    "notes": "depth_position_template: last filtered heading — exclude from recall",
-                }
-            )
-            qn += 1
-    early = (facts.get("depth_sections") or {}).get("p20") or facts["first_section"]
-    late = (facts.get("depth_sections") or {}).get("p80") or facts.get("last_section")
-    if early and late and slug_section(early) != slug_section(late):
-        keys.append(
-            {
-                "id": f"{base}-q{qn:02d}",
-                "document_id": doc_id,
-                "stratum": "well_structured",
-                "question_type": "cross_section",
-                "question": (
-                    f"Name the ~20% depth and ~80% depth body section headings in {doc_id}."
-                ),
-                "normalized_answer": f"{early}; {late}",
-                "accepted_variants": [early[:48], late[:48]],
-                "gold_sections": [slug_section(early), slug_section(late)],
-                "unanswerable": False,
-                "depth_position_template": True,
-                "exclude_from_recall_scoring": True,
-                "notes": "depth_position_template: early/late — exclude from recall",
             }
         )
     return keys
@@ -811,8 +700,8 @@ def pdf_keys(spec: dict, i: int) -> list[dict]:
             "gold_sections": [],
             "unanswerable": True,
         },
-        # Paraphrased / cross-section hard candidates — must pass hard_content_key_gate
-        # (keyword gold rank > 10) on rebuild; drop if the gate rejects.
+        # Paraphrased / cross-section candidates — hard cohort only if overlap_gold < 0.3
+        # (hard_content_key_gate v2); always score alongside a no-harm easy cohort.
         {
             "id": f"{base}-q09",
             "document_id": doc_id,
@@ -827,7 +716,7 @@ def pdf_keys(spec: dict, i: int) -> list[dict]:
             "gold_sections": ["sec-schedules"],
             "unanswerable": False,
             "hard_content_candidate": True,
-            "notes": "paraphrase of margin; accept only if kw gold rank > 10",
+            "notes": "paraphrase of margin; hard iff overlap_gold < 0.3 (not kw-rank)",
         },
         {
             "id": f"{base}-q10",
@@ -843,7 +732,7 @@ def pdf_keys(spec: dict, i: int) -> list[dict]:
             "gold_sections": ["sec-article-i-definitions", "sec-schedules"],
             "unanswerable": False,
             "hard_content_candidate": True,
-            "notes": "cross-section paraphrase; accept only if kw gold rank > 10",
+            "notes": "cross-section paraphrase; hard iff overlap_gold < 0.3 (not kw-rank)",
         },
     ]
 
@@ -954,7 +843,7 @@ def weak_keys(spec: dict, gold: list[str], i: int) -> list[dict]:
             "gold_sections": ["sec-witness-testimony"],
             "unanswerable": False,
             "hard_content_candidate": True,
-            "notes": "paraphrase of severity; accept only if kw gold rank > 10",
+            "notes": "paraphrase of severity; hard iff overlap_gold < 0.3 (not kw-rank)",
         },
         {
             "id": f"{base}-q10",
@@ -970,7 +859,7 @@ def weak_keys(spec: dict, gold: list[str], i: int) -> list[dict]:
             "gold_sections": ["sec-witness-testimony", "sec-closing"],
             "unanswerable": False,
             "hard_content_candidate": True,
-            "notes": "cross-section paraphrase; accept only if kw gold rank > 10",
+            "notes": "cross-section paraphrase; hard iff overlap_gold < 0.3 (not kw-rank)",
         },
     ]
 
@@ -1066,7 +955,7 @@ def main() -> int:
             for t in re.findall(r"^#{1,4}\s+(.+)$", md, re.M)
             if not is_artifact_heading_title(t)
         ]
-        # Keep every filtered heading in the map so depth-ladder golds resolve.
+        # Keep every filtered heading so content golds (section_lookup) resolve.
         sections = [{"id": slug_section(t), "title": t} for t in heads]
         (MAPS / f"{doc_id}.json").write_text(
             json.dumps({"document_id": doc_id, "sections": sections, "source_url": url}, indent=2)
@@ -1176,15 +1065,17 @@ def main() -> int:
         "decision_rules_version": "0.2",
         "spent": False,
         "notes": (
-            "Hard candidate REBUILT 2026-09-29 (TOC/list filter) then GROWN for k-sweep "
-            "power (≥~190 gold-section keys target; 72 only detects ~13pp effects). "
+            "Hard candidate REBUILT 2026-09-30: depth/position templates RETIRED; "
+            "content keys only. Soft content keys still high-overlap — MaxP/k/rerank "
+            "decided on EnterpriseRAG-Bench (+ LongMemEval-S vault), not this set. "
             "Human pass required (HUMAN_PASS.md) before H-idf / freeze spend. "
             "Harvey LAB and ExtractBench fixtures excluded. Not spent."
         ),
         "exclusions": ["harvey-labs", "extractbench", "contaminated-smoke"],
         "power_note": (
-            "Single-comparison rough MDE: n≈72 → ~13pp; n≈190+ → ~8pp independent-trials, "
-            "~9pp with deterministic Flash-lite. Grow before signing if k-sweep may change the default."
+            "Depth templates removed (evidence headers made them answerable but they "
+            "do not measure document reading). Gold-section n≈162 is content-only; "
+            "do not grow depth ladders back for k-sweep power — use EnterpriseRAG-Bench."
         ),
     }
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -1194,12 +1085,12 @@ def main() -> int:
 
 Public IETF RFCs (well-structured) + long synthetic Docling/weak docs + 8 tiny repos.
 
-**Grown 2026-09-29** for k-sweep power: machine keys with `gold_sections` ≈ **{gold_n}**
-(target ≥190 so an ~9pp deterministic single-comparison effect is detectable; n=72 only sees ~13pp).
+**2026-09-30:** depth/position templates **retired**. Machine keys with `gold_sections` ≈ **{gold_n}** (content-only). MaxP / k / rerank headroom → **EnterpriseRAG-Bench** (+ LongMemEval-S for vault); see [`next-hard-content-set.md`](../../design/next-hard-content-set.md).
 
 | Gate | Status |
 | ---- | ------ |
 | `flag_artifact_gold_keys.py` | Must stay **0** defective / **0** map artifacts |
+| Hard/no-harm overlap gate | `hard_content_key_gate.py` (overlap &lt; 0.3 / ≥ 0.6) — not kw-rank |
 | Human pass | **Required** — [`HUMAN_PASS.md`](HUMAN_PASS.md) + [unified freeze sitting](../../design/HUMAN_PASS_ONE_SITTING.md) |
 | Confirmatory spend / freeze | Blocked until human pass |
 
@@ -1207,6 +1098,7 @@ Harvey LAB and ExtractBench fixtures are excluded by design.
 
 ```bash
 python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py
+python3 benchmarks/pageindex-ab/scripts/hard_content_key_gate.py
 python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py   # regenerate from corpus/seed
 ```
 """,

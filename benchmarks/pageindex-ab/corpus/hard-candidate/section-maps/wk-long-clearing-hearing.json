@@ -4,6 +4,22 @@
     {
       "id": "sec-committee-hearing-transcript-clearing-outage-synthetic",
       "title": "Committee Hearing Transcript \u2014 Clearing Outage (synthetic)"
+    },
+    {
+      "id": "sec-opening-remarks",
+      "title": "Opening remarks"
+    },
+    {
+      "id": "sec-witness-testimony",
+      "title": "Witness testimony"
+    },
+    {
+      "id": "sec-collateral-discussion",
+      "title": "Collateral discussion"
+    },
+    {
+      "id": "sec-closing",
+      "title": "Closing"
     }
   ]
 }
