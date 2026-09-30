@@ -589,24 +589,17 @@ function getJobChangeState(db: Database, jobId: string): JobChangeState {
   };
 }
 
-function setJobChangeState(
-  db: Database,
-  jobId: string,
-  patch: Partial<JobChangeState>
-): void {
+function setJobChangeState(db: Database, jobId: string, patch: Partial<JobChangeState>): void {
   const cur = getJobChangeState(db, jobId);
   const next: JobChangeState = {
-    last_body_hash:
-      patch.last_body_hash !== undefined ? patch.last_body_hash : cur.last_body_hash,
+    last_body_hash: patch.last_body_hash !== undefined ? patch.last_body_hash : cur.last_body_hash,
     last_projection_json:
       patch.last_projection_json !== undefined
         ? patch.last_projection_json
         : cur.last_projection_json,
     last_etag: patch.last_etag !== undefined ? patch.last_etag : cur.last_etag,
-    last_modified:
-      patch.last_modified !== undefined ? patch.last_modified : cur.last_modified,
-    backoff_until:
-      patch.backoff_until !== undefined ? patch.backoff_until : cur.backoff_until,
+    last_modified: patch.last_modified !== undefined ? patch.last_modified : cur.last_modified,
+    backoff_until: patch.backoff_until !== undefined ? patch.backoff_until : cur.backoff_until,
   };
   db.run(
     `UPDATE clawql_schedule_jobs
@@ -709,7 +702,8 @@ async function runSyntheticCheck(
       response = await fetch(currentUrl, {
         method,
         headers,
-        body: method === "GET" || method === "HEAD" ? undefined : (synthetic.request.body ?? undefined),
+        body:
+          method === "GET" || method === "HEAD" ? undefined : (synthetic.request.body ?? undefined),
         signal: controller.signal,
         redirect: "manual",
       });

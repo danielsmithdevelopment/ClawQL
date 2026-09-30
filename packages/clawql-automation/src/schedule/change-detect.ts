@@ -281,10 +281,13 @@ export function diffProjections(before: unknown, after: unknown): ProjectionDiff
     if (useIdentity) {
       for (const [id, item] of afterMap) {
         if (!budget()) return;
-        if (!beforeMap.has(id)) added.push(pathPrefix ? { path: `${pathPrefix}/${id}`, item } : item);
+        if (!beforeMap.has(id))
+          added.push(pathPrefix ? { path: `${pathPrefix}/${id}`, item } : item);
         else {
           const prev = beforeMap.get(id);
-          if (JSON.stringify(canonicalizeForHash(prev)) !== JSON.stringify(canonicalizeForHash(item))) {
+          if (
+            JSON.stringify(canonicalizeForHash(prev)) !== JSON.stringify(canonicalizeForHash(item))
+          ) {
             changed.push({
               path: pathPrefix ? `${pathPrefix}/${id}` : id,
               before: prev,
@@ -301,7 +304,10 @@ export function diffProjections(before: unknown, after: unknown): ProjectionDiff
       }
       return;
     }
-    if (JSON.stringify(canonicalizeForHash(beforeArr)) !== JSON.stringify(canonicalizeForHash(afterArr))) {
+    if (
+      JSON.stringify(canonicalizeForHash(beforeArr)) !==
+      JSON.stringify(canonicalizeForHash(afterArr))
+    ) {
       if (budget()) {
         changed.push({ path: pathPrefix || "$", before: beforeArr, after: afterArr });
       }
@@ -349,11 +355,19 @@ export function diffProjections(before: unknown, after: unknown): ProjectionDiff
         const nested = diffProjections(b[k], a[k]);
         for (const item of nested.added) {
           if (!budget()) break;
-          added.push(typeof item === "object" && item && !Array.isArray(item) ? { path: k, ...(item as object) } : { path: k, item });
+          added.push(
+            typeof item === "object" && item && !Array.isArray(item)
+              ? { path: k, ...(item as object) }
+              : { path: k, item }
+          );
         }
         for (const item of nested.removed) {
           if (!budget()) break;
-          removed.push(typeof item === "object" && item && !Array.isArray(item) ? { path: k, ...(item as object) } : { path: k, item });
+          removed.push(
+            typeof item === "object" && item && !Array.isArray(item)
+              ? { path: k, ...(item as object) }
+              : { path: k, item }
+          );
         }
         for (const c of nested.changed) {
           if (!budget()) break;

@@ -13,17 +13,17 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 
 ## 2. Scope (8.0.0)
 
-| In                                                                 | Out (follow-on)                                       |
-| ------------------------------------------------------------------ | ----------------------------------------------------- |
-| Discover `events: {}` on HTTP + gRPC                               | Full `clawql-streams` / `stream_subscribe` agent loop |
-| `events/list` · `subscribe` · `unsubscribe`                        | Polling / streaming MCP delivery modes                |
-| Webhook delivery + challenge (Standard Webhooks)                   | `gap` / `terminated` control notifications            |
-| Durable subscription store (JSON file)                             | Postgres-backed multi-replica store                   |
-| Live event catalog (six events)                                    | Dynamic OpenAPI-derived event schemas                 |
+| In                                                                                        | Out (follow-on)                                       |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Discover `events: {}` on HTTP + gRPC                                                      | Full `clawql-streams` / `stream_subscribe` agent loop |
+| `events/list` · `subscribe` · `unsubscribe`                                               | Polling / streaming MCP delivery modes                |
+| Webhook delivery + challenge (Standard Webhooks)                                          | `gap` / `terminated` control notifications            |
+| Durable subscription store (JSON file)                                                    | Postgres-backed multi-replica store                   |
+| Live event catalog (six events)                                                           | Dynamic OpenAPI-derived event schemas                 |
 | Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS / WebSocket native stream sources                |
-| SSRF-hardened callbacks + enterprise allowlist / PII redact / caps | Custom connect-to-IP TLS agent (stretch)              |
-| Access recheck + instruction screening + feedback-loop detector    | Full Panguard ATR integration (host wires)            |
-| WORM append hooks (optional host)                                  | Mandatory dual-ack WORM                               |
+| SSRF-hardened callbacks + enterprise allowlist / PII redact / caps                        | Custom connect-to-IP TLS agent (stretch)              |
+| Access recheck + instruction screening + feedback-loop detector                           | Full Panguard ATR integration (host wires)            |
+| WORM append hooks (optional host)                                                         | Mandatory dual-ack WORM                               |
 
 ## 3. Methods
 
@@ -39,14 +39,14 @@ JSON-RPC error **`-32015`** (`CallbackEndpointError`) with `data.reason` (`chall
 
 Naming: `<noun>.<past-participle>`. Reserve `mandate.*` for fleet mandates if they ship later.
 
-| Name                 | Description                                         | Producer (wired)                                                                                           | Filters                             |
-| -------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `stream.changed`     | Polled synthetic topic **projection** changed       | Schedule job run change-detection (`watch_fields` → hash + capped `diff`; `schedule` get for full snapshot) | `topic` (required; schedule job id) |
-| `document.processed` | IDP / document pipeline finished                    | `clawql-documents` IDP effect                                                                              | `document_id?`                      |
-| `hook.blocked`       | Policy / ATR / hook blocked a call                  | `src/mcp/mcp-tool-wrap.ts` blocked branch                                                                  | `tool?`                             |
-| `budget.exhausted`   | Inference virtual-key budget exceeded               | `clawql-inference` `validateVirtualKey`                                                                    | `budget_id?`                        |
-| `schedule.completed` | Schedule job run completed                          | `clawql-automation` `executeTriggerForJob`                                                                 | `schedule_id?`                      |
-| `notification.sent`  | Slack notify success                                | `clawql-automation` notify effect                                                                          | `channel?`                          |
+| Name                 | Description                                   | Producer (wired)                                                                                            | Filters                             |
+| -------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `stream.changed`     | Polled synthetic topic **projection** changed | Schedule job run change-detection (`watch_fields` → hash + capped `diff`; `schedule` get for full snapshot) | `topic` (required; schedule job id) |
+| `document.processed` | IDP / document pipeline finished              | `clawql-documents` IDP effect                                                                               | `document_id?`                      |
+| `hook.blocked`       | Policy / ATR / hook blocked a call            | `src/mcp/mcp-tool-wrap.ts` blocked branch                                                                   | `tool?`                             |
+| `budget.exhausted`   | Inference virtual-key budget exceeded         | `clawql-inference` `validateVirtualKey`                                                                     | `budget_id?`                        |
+| `schedule.completed` | Schedule job run completed                    | `clawql-automation` `executeTriggerForJob`                                                                  | `schedule_id?`                      |
+| `notification.sent`  | Slack notify success                          | `clawql-automation` notify effect                                                                           | `channel?`                          |
 
 All support `delivery: ["webhook"]` only.
 
