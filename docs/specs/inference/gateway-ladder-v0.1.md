@@ -6,12 +6,12 @@
 
 ## Ladder
 
-| Rung | Surface | Client switch |
-| --- | --- | --- |
-| 1 | `/v1` OpenAI-compatible | `OPENAI_BASE_URL=…/v1` |
-| 2 | `/mcp` | same host `/mcp` (proxy → MCP upstream) |
-| 3 | `/memory` | REST + opt-in chat enrichment |
-| 4 | `/decision` | canonical; `/v1/systemone` alias |
+| Rung | Surface                 | Client switch                           |
+| ---- | ----------------------- | --------------------------------------- |
+| 1    | `/v1` OpenAI-compatible | `OPENAI_BASE_URL=…/v1`                  |
+| 2    | `/mcp`                  | same host `/mcp` (proxy → MCP upstream) |
+| 3    | `/memory`               | REST + opt-in chat enrichment           |
+| 4    | `/decision`             | canonical; `/v1/systemone` alias        |
 
 Shared virtual key, budgets, WORM/audit identity across rungs.
 
@@ -26,11 +26,11 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 
 ## `/memory`
 
-| Mode | Behavior |
-| --- | --- |
-| REST | `POST /memory/ingest`, `POST /memory/search`, `GET /memory`, `GET /memory/:slug`, `DELETE /memory/:slug` (erasure) — thin façade over `clawql-memory` |
+| Mode       | Behavior                                                                                                                                                                                                                                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| REST       | `POST /memory/ingest`, `POST /memory/search`, `GET /memory`, `GET /memory/:slug`, `DELETE /memory/:slug` (erasure) — thin façade over `clawql-memory`                                                                                                                                                                          |
 | Enrichment | Opt-in per virtual key env / `x-clawql-memory-enrich: 1` on `/v1/chat/completions`. Selective inject into a marked system block; response headers list memory IDs. **Default off.** Store down → forward without memory. Screen/redact fail → **fail closed** (no unscreened inject). Capture from traffic **off by default**. |
-| MCP | Existing `memory_recall` / `memory_ingest` via `/mcp` |
+| MCP        | Existing `memory_recall` / `memory_ingest` via `/mcp`                                                                                                                                                                                                                                                                          |
 
 ## `/mcp`
 

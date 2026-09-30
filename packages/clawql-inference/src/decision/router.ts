@@ -59,7 +59,10 @@ function parseQuestions(raw: unknown): DecisionQuestion[] | null {
   return out;
 }
 
-function parseDecisionBody(body: unknown, vk?: VirtualKeyRequest["virtualKey"]): DecisionRequest | { error: string } {
+function parseDecisionBody(
+  body: unknown,
+  vk?: VirtualKeyRequest["virtualKey"]
+): DecisionRequest | { error: string } {
   if (!body || typeof body !== "object") return { error: "JSON body required" };
   const b = body as Record<string, unknown>;
   const state = typeof b.state === "string" ? b.state.trim() : "";

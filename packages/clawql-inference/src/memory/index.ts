@@ -11,10 +11,7 @@ export {
   type MemoryEraseResult,
 } from "./service.js";
 
-export {
-  createMemoryRouter,
-  type CreateMemoryRouterOptions,
-} from "./router.js";
+export { createMemoryRouter, type CreateMemoryRouterOptions } from "./router.js";
 
 export {
   memoryEnrichmentRequested,

@@ -46,7 +46,9 @@ function parseIngestBody(body: unknown): MemoryIngestInput | { error: string } {
     correlationId: typeof b.correlationId === "string" ? b.correlationId : undefined,
     agentId: typeof b.agentId === "string" ? b.agentId : undefined,
     append: typeof b.append === "boolean" ? b.append : undefined,
-    tags: Array.isArray(b.tags) ? b.tags.filter((x): x is string => typeof x === "string") : undefined,
+    tags: Array.isArray(b.tags)
+      ? b.tags.filter((x): x is string => typeof x === "string")
+      : undefined,
   };
 }
 
@@ -63,7 +65,9 @@ function parseSearchBody(body: unknown): MemoryRecallInput | { error: string } {
     includeCodeGraph: typeof b.includeCodeGraph === "boolean" ? b.includeCodeGraph : undefined,
     codeGraphId: typeof b.codeGraphId === "string" ? b.codeGraphId : undefined,
     sources: Array.isArray(b.sources)
-      ? (b.sources.filter((x): x is string => typeof x === "string") as MemoryRecallInput["sources"])
+      ? (b.sources.filter(
+          (x): x is string => typeof x === "string"
+        ) as MemoryRecallInput["sources"])
       : undefined,
     schema: typeof b.schema === "string" ? b.schema : undefined,
     filters:

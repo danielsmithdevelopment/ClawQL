@@ -26,7 +26,11 @@ function closeHttpServer(server: Server): Promise<void> {
 async function httpJson(
   url: string,
   init?: { method?: string; body?: string; headers?: Record<string, string> }
-): Promise<{ status: number; body: unknown; headers: Record<string, string | string[] | undefined> }> {
+): Promise<{
+  status: number;
+  body: unknown;
+  headers: Record<string, string | string[] | undefined>;
+}> {
   return new Promise((resolve, reject) => {
     const headers: Record<string, string> = { ...init?.headers };
     if (init?.body) headers["Content-Type"] = "application/json";
@@ -150,7 +154,9 @@ describe("createMemoryRouter", () => {
           ok: true,
           query: input.query,
           results: [...notes.entries()]
-            .filter(([p]) => p.includes(input.query.toLowerCase()) || notes.get(p)?.includes(input.query))
+            .filter(
+              ([p]) => p.includes(input.query.toLowerCase()) || notes.get(p)?.includes(input.query)
+            )
             .map(([path, snippet]) => ({
               path,
               score: 1,

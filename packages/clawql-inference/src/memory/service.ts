@@ -16,10 +16,7 @@ import {
   type MemoryRecallResult,
 } from "clawql-memory/recall/recall";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
-import {
-  listVaultMarkdownRelPaths,
-  readVaultTextFile,
-} from "clawql-memory/recall/recall";
+import { listVaultMarkdownRelPaths, readVaultTextFile } from "clawql-memory/recall/recall";
 import { resolveVaultPath } from "clawql-memory/vault/utils";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
 
@@ -44,7 +41,9 @@ export class MemoryGatewayService extends Context.Tag("clawql/inference/MemoryGa
   {
     readonly ingest: (input: MemoryIngestInput) => Effect.Effect<MemoryIngestResult>;
     readonly search: (input: MemoryRecallInput) => Effect.Effect<MemoryRecallResult>;
-    readonly list: () => Effect.Effect<{ ok: true; entries: MemoryListEntry[] } | { ok: false; error: string }>;
+    readonly list: () => Effect.Effect<
+      { ok: true; entries: MemoryListEntry[] } | { ok: false; error: string }
+    >;
     readonly get: (slug: string) => Effect.Effect<MemoryGetResult | MemoryEraseResult>;
     readonly erase: (slug: string) => Effect.Effect<MemoryEraseResult>;
   }
@@ -109,9 +108,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
         };
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(
-      Effect.catchAll((e) => Effect.succeed({ ok: false as const, error: e.message }))
-    ),
+    }).pipe(Effect.catchAll((e) => Effect.succeed({ ok: false as const, error: e.message }))),
 
   get: (slug) =>
     Effect.tryPromise({
@@ -191,9 +188,7 @@ export function runMemoryGatewayList(): Promise<
   );
 }
 
-export function runMemoryGatewayGet(
-  slug: string
-): Promise<MemoryGetResult | MemoryEraseResult> {
+export function runMemoryGatewayGet(slug: string): Promise<MemoryGetResult | MemoryEraseResult> {
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* MemoryGatewayService;

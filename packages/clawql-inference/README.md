@@ -63,19 +63,19 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 
 **Endpoints** (OpenAI-compatible + gateway ladder):
 
-| Method   | Path                   | Notes                                                                 |
-| -------- | ---------------------- | --------------------------------------------------------------------- |
-| `GET`    | `/healthz`             | Liveness                                                              |
-| `GET`    | `/v1/models`           | Credentialed catalog + tier map + Ollama tags                         |
-| `GET`    | `/v1/models/:id`       | Single model                                                          |
-| `POST`   | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE                 |
-| `POST`   | `/decision`            | Fast Decision (System One `choice`/`noul`); canonical                 |
-| `POST`   | `/v1/systemone`        | Alias of `/decision`                                                  |
-| `POST`   | `/memory/ingest`       | Vault ingest façade                                                   |
-| `POST`   | `/memory/search`       | Vault recall façade                                                   |
-| `GET`    | `/memory`              | List Memory notes                                                     |
-| `GET`    | `/memory/:slug`        | Read note                                                             |
-| `DELETE` | `/memory/:slug`        | Erasure                                                               |
+| Method   | Path                   | Notes                                                 |
+| -------- | ---------------------- | ----------------------------------------------------- |
+| `GET`    | `/healthz`             | Liveness                                              |
+| `GET`    | `/v1/models`           | Credentialed catalog + tier map + Ollama tags         |
+| `GET`    | `/v1/models/:id`       | Single model                                          |
+| `POST`   | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
+| `POST`   | `/decision`            | Fast Decision (System One `choice`/`noul`); canonical |
+| `POST`   | `/v1/systemone`        | Alias of `/decision`                                  |
+| `POST`   | `/memory/ingest`       | Vault ingest façade                                   |
+| `POST`   | `/memory/search`       | Vault recall façade                                   |
+| `GET`    | `/memory`              | List Memory notes                                     |
+| `GET`    | `/memory/:slug`        | Read note                                             |
+| `DELETE` | `/memory/:slug`        | Erasure                                               |
 
 Opt-in chat enrichment: set `CLAWQL_INFERENCE_MEMORY_ENRICH=1` or send
 `x-clawql-memory-enrich: 1` on `/v1/chat/completions` (default **off**; store-down

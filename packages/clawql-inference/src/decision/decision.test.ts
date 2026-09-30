@@ -8,10 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createInferenceHttpApp } from "../api/server.js";
 import { ConfiguredInferenceGateway } from "../gateway.js";
 import { createOpenAiAdapter } from "../plugin/adapters/openai.js";
-import {
-  resetDecisionRuntime,
-  useHeuristicDecisionStackForTests,
-} from "./service.js";
+import { resetDecisionRuntime, useHeuristicDecisionStackForTests } from "./service.js";
 import { createDecisionRouter } from "./router.js";
 import express from "express";
 

@@ -44,13 +44,7 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
     res.json({
       object: "clawql-inference",
       openai_compatible: true,
-      endpoints: [
-        "/v1/chat/completions",
-        "/v1/models",
-        "/v1/systemone",
-        "/decision",
-        "/memory",
-      ],
+      endpoints: ["/v1/chat/completions", "/v1/models", "/v1/systemone", "/decision", "/memory"],
       ladder: ["/v1", "/mcp", "/memory", "/decision"],
     });
   });
