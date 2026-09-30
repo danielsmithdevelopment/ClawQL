@@ -40,20 +40,17 @@ Depth rank-1 accuracy **0.00** falsifies “model answers the top section when t
 
 ## Revised verdict
 
-1. **Do not tune MaxP for the overall position curve** — that curve is the depth template.
-2. **Fix or down-weight depth/position questions** before using them as a reading signal:
-   - Prefer: put section number + percent-through-doc in each section header so the question is answerable from retrieved text, **or**
-   - Down-weight / exclude the template (real users rarely ask where a heading sits).
-3. **Judge MaxP on `content` keys only** (model accuracy + gold rank). Optionally track `code_export` separately (systematic distractor, n=8).
-4. **Always report** `position_by_question_class` (depth vs content vs code_export) so a template cannot pass for a reading effect.
-
-Helper: `benchmarks/pageindex-ab/scripts/question_templates.py`. Grid cells attach the split automatically. Builder tags new keys with `depth_position_template: true`.
+1. Bottleneck for **content** is still **retrieval**, not reading: 100/100 content gold@10 answered correctly. Rank-1 depth went **0/5** — not a top-section heuristic.
+2. Offline k-grid re-slice (`recall-by-question-class.md`): content R@3=R@10=R@20=**1.0**. Pooled 0.65→0.77 climb is **depth-only**. **k=10 lock stands** for content (no k=20 lift).
+3. **Exclude depth/position from recall scoring.** Optional separate structural track with section#/% in headers. Builder adds more content keys to restore power.
+4. **Code-export** 0/8: section `id`/`title` are paths, but evidence omitted them — model only saw `from "../src/core.js"`. Fixed via `formatSectionEvidence` (`// file: path`). Product bug if agents get code without paths.
+5. **Always report** curves by `question_eval_class`.
 
 ## MaxP metrics (locked)
 
-- Primary: flash model-scored **content** answer accuracy at k=10 + mean/median content gold rank.  
-- Report: full + per-`question_eval_class` position curves every run.  
-- Do **not** use recall@10 alone, and do **not** use the pooled rank→accuracy curve as a reading proof.
+- Primary: **content recall@10** + **content model accuracy** (lift golds into top-10 — on this set content is already saturated at ≤3, so grow harder content keys).
+- Secondary: position-within-10 only after content recall has headroom.
+- Exclude `depth_position` from recall. Publish `position_by_question_class` every run.
 
 ## Commands
 

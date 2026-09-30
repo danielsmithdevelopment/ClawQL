@@ -479,7 +479,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "unanswerable": False,
             # Not answerable from a retrieved section body alone (needs doc order).
             "depth_position_template": True,
-            "notes": "depth_position_template: first numbered heading",
+            "exclude_from_recall_scoring": True,
+            "notes": "depth_position_template: first numbered heading — exclude from recall@k",
         },
         {
             "id": f"{base}-q03",
@@ -492,7 +493,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "gold_sections": [slug_section(facts["buried_section"])],
             "unanswerable": False,
             "depth_position_template": True,
-            "notes": "depth_position_template: mid ~60% (mis-typed as buried_detail historically)",
+            "exclude_from_recall_scoring": True,
+            "notes": "depth_position_template: mid ~60% — exclude from recall@k",
         },
         {
             "id": f"{base}-q04",
@@ -504,6 +506,7 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "accepted_variants": [facts["category"]],
             "gold_sections": [],
             "unanswerable": False,
+            "notes": "header metadata content key",
         },
         # q05 MUST/SHALL quote removed: empty gold_sections → cite-impossible for every arm.
         {
@@ -549,13 +552,77 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "notes": "header metadata; gold_sections empty by design (status block)",
         }
     )
-    # Extra gold-section keys (depth ladder + last) — grow n for k-sweep power.
-    # Deduplicate when sparse heading lists collapse multiple fracs onto one title.
+    # Content gold-section keys (restore power after excluding depth templates from recall).
     seen_gold: set[str] = {
         slug_section(facts["first_section"]),
         slug_section(facts["buried_section"]),
     }
     qn = 9
+    # Ask for the heading title of a mid section — answerable from the section header
+    # in evidence (not from %-depth). Distinct from depth_position_template.
+    mid = facts.get("buried_section") or ""
+    if mid:
+        keys.append(
+            {
+                "id": f"{base}-q{qn:02d}",
+                "document_id": doc_id,
+                "stratum": "well_structured",
+                "question_type": "section_lookup",
+                "question": (
+                    f"In {doc_id}, what is the full heading text of the section whose "
+                    f"slug is {slug_section(mid)}?"
+                ),
+                "normalized_answer": mid,
+                "accepted_variants": [mid[:48], mid.split(" ", 1)[-1][:40]],
+                "gold_sections": [slug_section(mid)],
+                "unanswerable": False,
+                "notes": "content: heading text recoverable from retrieved section header",
+            }
+        )
+        qn += 1
+    # Normative MUST/SHALL snippet — content fact when present in body.
+    snip = (facts.get("normative_snippet") or "").strip()
+    if snip and len(snip) >= 20:
+        # Pin gold to first section (snippets are usually early); still answerable from text.
+        gid = slug_section(facts["first_section"])
+        keys.append(
+            {
+                "id": f"{base}-q{qn:02d}",
+                "document_id": doc_id,
+                "stratum": "well_structured",
+                "question_type": "exact_term",
+                "question": (
+                    f"Quote the early normative requirement in {doc_id} that begins with "
+                    f"{snip.split()[0]} (first ~12 words)."
+                ),
+                "normalized_answer": snip[:120],
+                "accepted_variants": [snip[:60], snip.split(",", 1)[0][:40]],
+                "gold_sections": [gid] if gid else [],
+                "unanswerable": False,
+                "notes": "content: normative snippet from body text",
+            }
+        )
+        qn += 1
+    if facts.get("obsoletes"):
+        keys.append(
+            {
+                "id": f"{base}-q{qn:02d}",
+                "document_id": doc_id,
+                "stratum": "well_structured",
+                "question_type": "exact_term",
+                "question": f"Which RFC numbers does {doc_id} list under Obsoletes?",
+                "normalized_answer": facts["obsoletes"],
+                "accepted_variants": [x.strip() for x in facts["obsoletes"].split(",") if x.strip()],
+                "gold_sections": [],
+                "unanswerable": False,
+                "notes": "content: header Obsoletes line",
+            }
+        )
+        qn += 1
+
+    # Depth/position ladder — kept for an optional *structural* track only.
+    # Excluded from recall@k / MaxP content scoring (not answerable from section text).
+    # To score these, rebuild with section number + percent-through-doc in each header.
     for label, title in (facts.get("depth_sections") or {}).items():
         gid = slug_section(title)
         if gid in seen_gold:
@@ -577,9 +644,11 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "gold_sections": [gid],
                 "unanswerable": False,
                 "depth_position_template": True,
+                "exclude_from_recall_scoring": True,
                 "notes": (
                     f"depth_position_template: depth ladder {label}; "
-                    "gold pinned to filtered heading — not answerable from section text alone"
+                    "EXCLUDE from recall — needs section#/% metadata in headers for a "
+                    "separate structural track"
                 ),
             }
         )
@@ -601,11 +670,11 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                     "gold_sections": [gid],
                     "unanswerable": False,
                     "depth_position_template": True,
-                    "notes": "depth_position_template: last filtered heading",
+                    "exclude_from_recall_scoring": True,
+                    "notes": "depth_position_template: last filtered heading — exclude from recall",
                 }
             )
             qn += 1
-    # Cross-section between early and late body headings when distinct.
     early = (facts.get("depth_sections") or {}).get("p20") or facts["first_section"]
     late = (facts.get("depth_sections") or {}).get("p80") or facts.get("last_section")
     if early and late and slug_section(early) != slug_section(late):
@@ -623,7 +692,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "gold_sections": [slug_section(early), slug_section(late)],
                 "unanswerable": False,
                 "depth_position_template": True,
-                "notes": "depth_position_template: cross-section early/late filtered headings",
+                "exclude_from_recall_scoring": True,
+                "notes": "depth_position_template: early/late — exclude from recall",
             }
         )
     return keys
@@ -845,7 +915,10 @@ def code_keys(name: str, fn: str, marker: str, i: int) -> list[dict]:
             "accepted_variants": ["index.ts", "src/index.ts"],
             "gold_sections": ["src/index.ts"],
             "unanswerable": False,
-            "notes": "code stratum",
+            "notes": (
+                "code stratum — requires file path in retrieved chunk evidence "
+                "(// file: …); body alone shows relative imports, not the exporting file"
+            ),
         },
         {
             "id": f"{base}-q03",

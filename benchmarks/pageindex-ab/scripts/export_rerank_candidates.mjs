@@ -26,7 +26,7 @@ import {
   rankDocumentsByChunkSimilarity,
   DEFAULT_LOCAL_EMBEDDING_MODEL,
 } from "clawql-memory/embedding/embedding";
-import { rankCodeFiles } from "./retrieval_helpers.mjs";
+import { formatSectionEvidence, rankCodeFiles } from "./retrieval_helpers.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -230,7 +230,9 @@ async function main() {
         ).map((r) => ({
           id: r.id,
           title: r.title || r.id,
+          heading_path: r.id,
           score: r.score,
+          // rankCodeFiles already path-prefixes; keep as text for finalize.
           text: r.content || "",
         }));
       } else if (sections) {
@@ -261,7 +263,11 @@ async function main() {
               title: s?.title,
               heading_path: s?.heading_path || s?.title,
               score: r.score,
-              text: s?.content || "",
+              text: formatSectionEvidence({
+                id,
+                title: s?.heading_path || s?.title || id,
+                content: s?.content || "",
+              }),
             };
           });
         }
@@ -304,7 +310,14 @@ async function main() {
           id: c.id,
           title: c.title,
           heading_path: c.heading_path || c.title,
-          text: clip(c.text || "", args.maxChars),
+          text: clip(
+            formatSectionEvidence({
+              id: c.id,
+              title: c.heading_path || c.title || c.id,
+              content: c.text || "",
+            }),
+            args.maxChars,
+          ),
           kw_rank: c.kw_rank,
           vec_rank: c.vec_rank,
           sources: c.sources,

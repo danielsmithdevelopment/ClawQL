@@ -404,6 +404,7 @@ async function main() {
     const perK = {};
     for (const k of args.ks) {
       const top = ranked.slice(0, k);
+      // content from rankCodeFiles / rankSectionsVault already includes path/title headers
       const blob = top.map((t) => t.content || "").join("\n\n");
       const goldHit = gold.size === 0 ? null : [...gold].some((g) => top.some((t) => t.id === g));
       perK[k] = { blob, goldHit, topIds: top.map((t) => t.id) };

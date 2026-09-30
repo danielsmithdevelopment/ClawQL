@@ -7,11 +7,17 @@
 
 ## Verdict
 
-Offline extract still shows a steep retrieval-depth curve (gold@3 **0.485** → @20 **0.775**; offline strict **+22.1pp** to k=20). **Model-scored norerank** (flash-lite full gold set + Sonnet n=60) is **flat k=10→20** (flash strict 0.294 → 0.290; Sonnet 0.367 → 0.367) even while gold_recall climbs. The model does not convert the extra sections into answers — long-context dilution.
+**`TOP_K_DOC = 10` still locked — now for the right reason.** Free re-slice by question class ([`recall-by-question-class.md`](recall-by-question-class.md)):
 
-**Default:** `TOP_K_DOC = 10` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs). Do **not** ship 20. Ranking fixes (MaxP / Qwen3-4B) remain the path to use deeper pools without stuffing the context window.
+| class | R@10 | R@20 | lift |
+| ----- | ---- | ---- | ---- |
+| content | **1.000** | **1.000** | 0 |
+| depth_position | 0.409 | 0.617 | +21pp |
+| pooled (legacy) | 0.653 | 0.775 | +12pp |
 
-> Offline scores show the answer **reaches** context, not that a model **uses** it. The model grid was the ship gate — and it vetoed 20.
+Content recall is already saturated at k≤3; the pooled climb is depth templates (excluded from recall scoring). Content model accuracy when gold ∈ top-10 is ~100%. k=20 cannot help content on this set.
+
+**Default:** `TOP_K_DOC = 10` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs). MaxP: content recall@10 + content model accuracy (grow harder content keys — no headroom on current content ranks).
 
 ## Results (H-idf, offline extractAnswer)
 

@@ -27,6 +27,10 @@ def is_depth_position_template(question_or_row: str | dict[str, Any]) -> bool:
     if isinstance(question_or_row, dict):
         if question_or_row.get("depth_position_template") is True:
             return True
+        if question_or_row.get("exclude_from_recall_scoring") is True and (
+            "depth" in str(question_or_row.get("notes") or "").lower()
+        ):
+            return True
         q = str(question_or_row.get("question") or "")
         notes = str(question_or_row.get("notes") or "")
         if "depth_position_template" in notes or "depth ladder" in notes:
@@ -36,6 +40,15 @@ def is_depth_position_template(question_or_row: str | dict[str, Any]) -> bool:
     else:
         q = str(question_or_row or "")
     return any(p.search(q) for p in DEPTH_POSITION_PATTERNS)
+
+
+def counts_for_recall_scoring(row: dict[str, Any]) -> bool:
+    """False for depth/position templates — they measure doc-position metadata, not recall."""
+    if row.get("exclude_from_recall_scoring") is True:
+        return False
+    if is_depth_position_template(row):
+        return False
+    return True
 
 
 def is_code_export_template(question_or_row: str | dict[str, Any]) -> bool:

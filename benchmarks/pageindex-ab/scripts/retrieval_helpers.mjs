@@ -42,13 +42,33 @@ export function pageindexAvailable() {
 }
 
 /**
- * Model-scored k-grid (design/rerank-model-grid.json): norerank flash/Sonnet flat
- * k10→k20 — do not ship 20. Lock at 10 (best among model-scored ks; offline still
- * preferred 10 over 3). MaxP/rerank work continues separately.
+ * TOP_K_DOC locked at 10 for *content* keys (see design/recall-by-question-class.md).
+ * Pooled k20 recall climb was depth/position templates only; content R@3 already 1.0.
+ * Judge MaxP by content recall@10 + content model accuracy — not position-within-10.
  */
 export const TOP_K_DOC = 10;
 export const TOP_K_MULTI = 5;
 export const HEADING_QUALITY_THRESHOLD = 0.35;
+
+/**
+ * Agents (and finalize) must see section identity. Code files especially: without a
+ * path header, "which file exports X?" is unanswerable from body text alone.
+ */
+export function formatSectionEvidence(section) {
+  const id = section?.id || "";
+  const title = section?.title || section?.heading_path || id;
+  const body = section?.content || section?.text || "";
+  const header = title || id;
+  if (!header) return body;
+  if (body.startsWith(`### ${header}`) || body.startsWith(`// file: ${header}`)) {
+    return body;
+  }
+  // Prefer markdown heading for docs; file comment for path-like ids (src/...).
+  if (id.includes("/") || /\.(ts|js|tsx|jsx|py|go|rs)$/i.test(id)) {
+    return `// file: ${id}\n${body}`;
+  }
+  return `### ${header}\n\n${body}`;
+}
 
 export function rankSectionsVault(markdown, query, rankerMode) {
   const sections = splitMarkdownSections(markdown);
@@ -59,7 +79,7 @@ export function rankSectionsVault(markdown, query, rankerMode) {
       id: s.id,
       title: s.title,
       score: scoreWithVaultRanker(query, s.content, stats),
-      content: s.content,
+      content: formatSectionEvidence(s),
     }))
     .sort((a, b) => b.score - a.score);
 }
@@ -83,7 +103,7 @@ export async function rankSectionsPageindex(docId, markdown, query, storagePath)
         id: sec.id,
         title: sec.title,
         score: h.score ?? 1,
-        content: sec.content,
+        content: formatSectionEvidence(sec),
       });
     }
   }
@@ -171,20 +191,22 @@ export function rankCodeFiles(codeDir, documentId, query, ranker) {
   const files = listCodeFiles(root);
   const docs = files.map((f) => ({
     id: f,
-    content: readFileSync(join(root, f), "utf8"),
+    // Rank on raw file bytes; expose path in the evidence payload.
+    raw: readFileSync(join(root, f), "utf8"),
   }));
   process.env.CLAWQL_MEMORY_VAULT_RANKER = ranker;
   const mode = Effect.runSync(resolveVaultRankerModeEffect());
   const stats = buildVaultRankerStats(
-    docs.map((d) => d.content),
+    docs.map((d) => d.raw),
     mode
   );
   return docs
     .map((d) => ({
       id: d.id,
       title: d.id,
-      score: scoreWithVaultRanker(query, d.content, stats),
-      content: d.content,
+      heading_path: d.id,
+      score: scoreWithVaultRanker(query, d.raw, stats),
+      content: formatSectionEvidence({ id: d.id, title: d.id, content: d.raw }),
     }))
     .sort((a, b) => b.score - a.score);
 }

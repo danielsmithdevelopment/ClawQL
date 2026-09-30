@@ -41,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fair_test_common import finalize_answer  # noqa: E402
 from question_templates import (  # noqa: E402
+    counts_for_recall_scoring,
     position_curves_by_question_class,
     question_eval_class,
 )
@@ -116,8 +117,23 @@ def rerank_topk_from_ranks(
     return keyword_topk(row["candidates"], k)
 
 
+def format_section_evidence(c: dict[str, Any]) -> str:
+    """Mirror retrieval_helpers.formatSectionEvidence — path/title must reach the model."""
+    sid = str(c.get("id") or "")
+    title = str(c.get("heading_path") or c.get("title") or sid)
+    body = str(c.get("text") or c.get("content") or "")
+    header = title or sid
+    if not header:
+        return body
+    if body.startswith(f"### {header}") or body.startswith(f"// file: {header}"):
+        return body
+    if "/" in sid or sid.endswith((".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs")):
+        return f"// file: {sid}\n{body}"
+    return f"### {header}\n\n{body}"
+
+
 def evidence_blob(cands: list[dict[str, Any]]) -> str:
-    return "\n\n".join(c.get("text") or "" for c in cands)[:24000]
+    return "\n\n".join(format_section_evidence(c) for c in cands)[:24000]
 
 
 def run_cell(
@@ -143,6 +159,10 @@ def run_cell(
     ok = 0
     strict = 0
     gold_hits = 0
+    content_ok = 0
+    content_n = 0
+    content_gold_hits = 0
+    content_gold_n = 0
     errors = 0
     per_rows: list[dict[str, Any]] = []
 
@@ -162,7 +182,6 @@ def run_cell(
             rank_rec = ranks_by_id.get(row["id"]) or {}
             kw_gold_rank = rank_rec.get("rank_keyword")
             if kw_gold_rank is None:
-                # Fallback: position within this cell's top list
                 kw_gold_rank = next(
                     (i + 1 for i, c in enumerate(top) if c["id"] in gold_ids),
                     None,
@@ -175,7 +194,9 @@ def run_cell(
                 "question_type": row.get("question_type"),
                 "notes": row.get("notes"),
                 "depth_position_template": row.get("depth_position_template"),
+                "exclude_from_recall_scoring": row.get("exclude_from_recall_scoring"),
                 "question_eval_class": question_eval_class(row),
+                "counts_for_recall": counts_for_recall_scoring(row),
                 "kw_gold_rank": kw_gold_rank,
                 "answer": answer,
                 "not_found": not_found,
@@ -194,7 +215,9 @@ def run_cell(
                 "question_type": row.get("question_type"),
                 "notes": row.get("notes"),
                 "depth_position_template": row.get("depth_position_template"),
+                "exclude_from_recall_scoring": row.get("exclude_from_recall_scoring"),
                 "question_eval_class": question_eval_class(row),
+                "counts_for_recall": counts_for_recall_scoring(row),
                 "kw_gold_rank": row.get("kw_gold_rank"),
                 "answer": "",
                 "not_found": True,
@@ -218,6 +241,14 @@ def run_cell(
                 strict += 1
             if rec["gold_hit"]:
                 gold_hits += 1
+            if rec.get("question_eval_class") == "content":
+                content_n += 1
+                if rec["answer_ok"]:
+                    content_ok += 1
+                if rec.get("counts_for_recall") and (rec.get("kw_gold_rank") is not None):
+                    content_gold_n += 1
+                    if rec["gold_hit"]:
+                        content_gold_hits += 1
 
     n = len(rows)
     return {
@@ -225,6 +256,12 @@ def run_cell(
         "answer_accuracy": ok / n if n else None,
         "strict_accuracy": strict / n if n else None,
         "gold_recall": gold_hits / n if n else None,
+        "gold_recall_legacy_pooled": gold_hits / n if n else None,
+        "content_answer_accuracy": content_ok / content_n if content_n else None,
+        "content_gold_recall": (
+            content_gold_hits / content_gold_n if content_gold_n else None
+        ),
+        "content_n": content_n,
         "errors": errors,
         "k": k,
         "rerank": use_rerank,
@@ -363,14 +400,14 @@ def main() -> int:
         "flash_rerank_lift_k20": lift20,
         "rerank_arms": "bug_reproduction_if_512_cap_ranks — not the rerank ship decision",
         "rerank_next": (
-            "MaxP/blend/heading-path (or Qwen3-4B) on tune with full-text candidates; "
-            "judge on CONTENT keys only (exclude depth_position templates); "
-            "confirm on fresh builder keys — not holdout."
+            "MaxP on tune: optimize content recall@10 + content model accuracy "
+            "(not position-within-10). Exclude depth_position from recall. "
+            "Confirm on fresh builder keys — not holdout."
         ),
         "note": (
-            "Ship TOP_K_DOC from norerank k10 vs k20 under model grade. "
-            "Ignore ±rerank as a verdict until a non-truncated bakeoff wins tune. "
-            "Always report position curves by question_eval_class."
+            "Ship TOP_K_DOC from CONTENT recall/accuracy k10 vs k20 (see "
+            "recall-by-question-class.md). Pooled curves are depth-contaminated. "
+            "Ignore ±rerank as a verdict until a non-truncated bakeoff wins tune."
         ),
     }
 
@@ -389,8 +426,9 @@ def main() -> int:
         content = (cell["position_by_question_class"].get("content_only") or {})
         cell["content_answer_accuracy"] = content.get("answer_accuracy")
     report["maxp_metric_note"] = (
-        "Judge MaxP by model-scored accuracy + gold rank on content keys only; "
-        "publish position_by_question_class every run."
+        "Judge MaxP by content recall@10 + content model accuracy. "
+        "Exclude depth_position from recall. Position-within-10 is secondary when "
+        "content golds already sit at rank ≤2. Publish position_by_question_class every run."
     )
     args.out.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

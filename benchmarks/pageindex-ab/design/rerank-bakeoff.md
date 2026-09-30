@@ -77,11 +77,13 @@ gte/bge knocked more golds out of top-10 than they rescued (RFC stratum). Under 
 
 Gold_recall still climbs (flash 0.65→0.77) but answer accuracy does not. Sentinel removed.
 
-## MaxP judgment (from gap-gold10 diagnose — revised)
+## MaxP judgment (revised again)
 
-The pooled rank→accuracy curve (0.95 at rank 1 → ~0.1 below) was a **depth-template composition artifact**, not a reading/position effect. Depth/position keys are flat (~0.17; rank-1 = 0). Content keys are **1.0** at ranks 1–2.
-
-**Judge MaxP on content keys only** (model accuracy + gold rank at k=10). Always publish `position_by_question_class`. See `gap-gold10-diagnose.md` and `scripts/question_templates.py`.
+- Pooled position curve and pooled R@10→R@20 climb were **depth-template artifacts**.
+- Content: R@3=R@10=R@20=**1.0**; model answers **100/100** when gold ∈ top-10 → retrieval still the lever; **k=10 lock stands**.
+- **MaxP primary metrics:** content recall@10 + content model accuracy (not position-within-10 on a saturated set).
+- Exclude depth from recall. Code chunks must carry `// file: path` in evidence (`formatSectionEvidence`).
+- See `recall-by-question-class.md`, `gap-gold10-diagnose.md`.
 
 ## Scripts
 

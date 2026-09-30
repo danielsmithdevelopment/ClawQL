@@ -80,10 +80,24 @@ def keyword_topk(cands: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
     )[:k]
 
 
+def format_section_evidence(c: dict[str, Any]) -> str:
+    sid = str(c.get("id") or "")
+    title = str(c.get("heading_path") or c.get("title") or sid)
+    body = str(c.get("text") or c.get("content") or "")
+    header = title or sid
+    if not header:
+        return body
+    if body.startswith(f"### {header}") or body.startswith(f"// file: {header}"):
+        return body
+    if "/" in sid or sid.endswith((".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs")):
+        return f"// file: {sid}\n{body}"
+    return f"### {header}\n\n{body}"
+
+
 def evidence_and_gold_visibility(
     top: list[dict[str, Any]], gold: set[str], limit: int = EVIDENCE_LIMIT
 ) -> dict[str, Any]:
-    parts = [c.get("text") or "" for c in top]
+    parts = [format_section_evidence(c) for c in top]
     full = "\n\n".join(parts)
     truncated = full[:limit]
     pos = 0
