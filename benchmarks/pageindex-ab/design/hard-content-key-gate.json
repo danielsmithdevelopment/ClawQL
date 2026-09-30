@@ -1,611 +1,991 @@
 {
-  "tag": "pageindex-ab-hard-content-key-gate-v1",
-  "min_gold_rank": 11,
+  "tag": "pageindex-ab-hard-content-key-gate-v2",
+  "generated_at": "2026-09-30T05:48:51Z",
+  "max_hard_overlap": 0.3,
+  "min_easy_overlap": 0.6,
   "n_content": 100,
-  "n_pass": 0,
-  "n_fail": 100,
-  "pass_rate": 0.0,
-  "note": "Current builder content keys nearly all fail this gate (kw rank \u226410). New paraphrased / cross-section / call-store keys must pass before MaxP.",
+  "n_hard": 6,
+  "n_no_harm": 68,
+  "n_mid": 26,
+  "hard_ids": [
+    "hc-wk-01-q06",
+    "hc-wk-02-q06",
+    "hc-wk-03-q06",
+    "hc-wk-04-q06",
+    "hc-wk-05-q06",
+    "hc-wk-06-q06"
+  ],
+  "no_harm_ids": [
+    "hc-pdf-01-q01",
+    "hc-pdf-01-q02",
+    "hc-pdf-01-q04",
+    "hc-pdf-01-q05",
+    "hc-pdf-01-q07",
+    "hc-pdf-02-q01",
+    "hc-pdf-02-q02",
+    "hc-pdf-02-q04",
+    "hc-pdf-02-q05",
+    "hc-pdf-02-q07",
+    "hc-pdf-03-q01",
+    "hc-pdf-03-q02",
+    "hc-pdf-03-q04",
+    "hc-pdf-03-q05",
+    "hc-pdf-03-q07",
+    "hc-pdf-04-q01",
+    "hc-pdf-04-q02",
+    "hc-pdf-04-q04",
+    "hc-pdf-04-q05",
+    "hc-pdf-04-q07",
+    "hc-pdf-05-q01",
+    "hc-pdf-05-q02",
+    "hc-pdf-05-q04",
+    "hc-pdf-05-q05",
+    "hc-pdf-05-q07",
+    "hc-pdf-06-q01",
+    "hc-pdf-06-q02",
+    "hc-pdf-06-q04",
+    "hc-pdf-06-q05",
+    "hc-pdf-06-q07",
+    "hc-wk-01-q01",
+    "hc-wk-01-q02",
+    "hc-wk-01-q04",
+    "hc-wk-01-q05",
+    "hc-wk-01-q07",
+    "hc-wk-02-q01",
+    "hc-wk-02-q02",
+    "hc-wk-02-q04",
+    "hc-wk-02-q05",
+    "hc-wk-02-q07",
+    "hc-wk-03-q01",
+    "hc-wk-03-q02",
+    "hc-wk-03-q04",
+    "hc-wk-03-q05",
+    "hc-wk-03-q07",
+    "hc-wk-04-q01",
+    "hc-wk-04-q02",
+    "hc-wk-04-q04",
+    "hc-wk-04-q05",
+    "hc-wk-04-q07",
+    "hc-wk-05-q01",
+    "hc-wk-05-q02",
+    "hc-wk-05-q04",
+    "hc-wk-05-q05",
+    "hc-wk-05-q07",
+    "hc-wk-06-q01",
+    "hc-wk-06-q02",
+    "hc-wk-06-q04",
+    "hc-wk-06-q05",
+    "hc-wk-06-q07",
+    "hc-code-01-q01",
+    "hc-code-02-q01",
+    "hc-code-03-q01",
+    "hc-code-04-q01",
+    "hc-code-05-q01",
+    "hc-code-06-q01",
+    "hc-code-07-q01",
+    "hc-code-08-q01"
+  ],
+  "note": "Hard = low question\u2194gold word overlap (method-independent). No-harm = high overlap easy keys \u2014 MaxP/rerank must not regress these. Do not gate on keyword rank (biases the set against keyword). Primary MaxP path: EnterpriseRAG-Bench; LongMemEval-S for vault; homegrown paraphrases are backstop only.",
   "rows": [
     {
       "id": "hc-pdf-01-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-01-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-01-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-01-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-01-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-01-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_5_below_11",
-      "kw_gold_rank": 5
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-01-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-pdf-02-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-02-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-02-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-02-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-02-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-02-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_3_below_11",
-      "kw_gold_rank": 3
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-02-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-pdf-03-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-03-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-03-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-03-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-03-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-03-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_5_below_11",
-      "kw_gold_rank": 5
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-03-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-pdf-04-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-04-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-04-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-04-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-04-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-04-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_5_below_11",
-      "kw_gold_rank": 5
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-04-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-pdf-05-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-05-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-05-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-05-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-05-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-05-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_5_below_11",
-      "kw_gold_rank": 5
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-05-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-pdf-06-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-06-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.833>=0.6",
+      "overlap_gold": 0.8333333333333334
     },
     {
       "id": "hc-pdf-06-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-06-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-06-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-pdf-06-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_3_below_11",
-      "kw_gold_rank": 3
+      "stratum": "converted_pdf",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.333_between_bands",
+      "overlap_gold": 0.3333333333333333
     },
     {
       "id": "hc-pdf-06-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "converted_pdf",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-01-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-01-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-01-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-01-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-01-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-01-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-01-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-02-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-02-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-02-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-02-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-02-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-02-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-02-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-03-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-03-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-03-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-03-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-03-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-03-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-03-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-04-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-04-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-04-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-04-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-04-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-04-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-04-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-05-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-05-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-05-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-05-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-05-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-05-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-05-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-06-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.714>=0.6",
+      "overlap_gold": 0.7142857142857143
     },
     {
       "id": "hc-wk-06-q02",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-wk-06-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.500_between_bands",
+      "overlap_gold": 0.5
     },
     {
       "id": "hc-wk-06-q04",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-06-q05",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.667>=0.6",
+      "overlap_gold": 0.6666666666666666
     },
     {
       "id": "hc-wk-06-q06",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "hard",
+      "ok_hard": true,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.167<0.3",
+      "overlap_gold": 0.16666666666666666
     },
     {
       "id": "hc-wk-06-q07",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "weakly_structured",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=1.000>=0.6",
+      "overlap_gold": 1.0
     },
     {
       "id": "hc-code-01-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-01-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-02-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-02-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-03-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-03-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-04-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-04-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-05-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-05-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-06-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-06-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-07-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-07-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     },
     {
       "id": "hc-code-08-q01",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "no_harm",
+      "ok_hard": false,
+      "ok_no_harm": true,
+      "reason": "overlap_gold=0.750>=0.6",
+      "overlap_gold": 0.75
     },
     {
       "id": "hc-code-08-q03",
-      "ok": false,
-      "reason": "kw_gold_rank_1_below_11",
-      "kw_gold_rank": 1
+      "stratum": "code",
+      "cohort": "mid",
+      "ok_hard": false,
+      "ok_no_harm": false,
+      "reason": "overlap_gold=0.400_between_bands",
+      "overlap_gold": 0.4
     }
   ]
 }
