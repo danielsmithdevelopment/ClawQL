@@ -61,14 +61,26 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
   -d '{"model":"openrouter/deepseek/deepseek-chat","messages":[{"role":"user","content":"hi"}]}'
 ```
 
-**Endpoints** (OpenAI-compatible):
+**Endpoints** (OpenAI-compatible + gateway ladder):
 
-| Method | Path                   | Notes                                                 |
-| ------ | ---------------------- | ----------------------------------------------------- |
-| `GET`  | `/healthz`             | Liveness                                              |
-| `GET`  | `/v1/models`           | Credentialed catalog + tier map + Ollama tags         |
-| `GET`  | `/v1/models/:id`       | Single model                                          |
-| `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
+| Method   | Path                   | Notes                                                                 |
+| -------- | ---------------------- | --------------------------------------------------------------------- |
+| `GET`    | `/healthz`             | Liveness                                                              |
+| `GET`    | `/v1/models`           | Credentialed catalog + tier map + Ollama tags                         |
+| `GET`    | `/v1/models/:id`       | Single model                                                          |
+| `POST`   | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE                 |
+| `POST`   | `/decision`            | Fast Decision (System One `choice`/`noul`); canonical                 |
+| `POST`   | `/v1/systemone`        | Alias of `/decision`                                                  |
+| `POST`   | `/memory/ingest`       | Vault ingest façade                                                   |
+| `POST`   | `/memory/search`       | Vault recall façade                                                   |
+| `GET`    | `/memory`              | List Memory notes                                                     |
+| `GET`    | `/memory/:slug`        | Read note                                                             |
+| `DELETE` | `/memory/:slug`        | Erasure                                                               |
+
+Opt-in chat enrichment: set `CLAWQL_INFERENCE_MEMORY_ENRICH=1` or send
+`x-clawql-memory-enrich: 1` on `/v1/chat/completions` (default **off**; store-down
+forwards without memory; screen/redact failures fail closed). Spec:
+[`docs/specs/inference/gateway-ladder-v0.1.md`](../../docs/specs/inference/gateway-ladder-v0.1.md).
 
 ```bash
 # Same request shape as OpenAI — bare model id works
@@ -80,6 +92,11 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 curl -N http://127.0.0.1:8080/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}'
+
+# Decision (System One)
+curl -s http://127.0.0.1:8080/decision \
+  -H 'Content-Type: application/json' \
+  -d '{"state":"merge the PR","useSiteId":"search_provider_tool_routing","questions":[{"type":"choice","name":"tool","options":[{"id":"github.pulls.merge","description":"merge pull request"},{"id":"slack.chat.post","description":"post message"}]}]}'
 ```
 
 Set `X-Correlation-Id` on requests for WORM lineage; echoed on responses.

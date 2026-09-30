@@ -9,6 +9,8 @@ import { composeDefaultProviderPlugins } from "../plugin/compose.js";
 import type { ProviderRegistry } from "../providers/types.js";
 import { createVirtualKeyAuthMiddleware } from "./auth.js";
 import { createOpenAiCompatRouter } from "./openai-compat.js";
+import { createDecisionRouter } from "../decision/router.js";
+import { createMemoryRouter } from "../memory/router.js";
 import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js";
 import { createInferenceStore } from "../store/create.js";
 import type { InferenceStore } from "../store/types.js";
@@ -42,7 +44,14 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
     res.json({
       object: "clawql-inference",
       openai_compatible: true,
-      endpoints: ["/v1/chat/completions", "/v1/models"],
+      endpoints: [
+        "/v1/chat/completions",
+        "/v1/models",
+        "/v1/systemone",
+        "/decision",
+        "/memory",
+      ],
+      ladder: ["/v1", "/mcp", "/memory", "/decision"],
     });
   });
   attachPaymentsWellKnownRoutes(app, { serverName: "ClawQL Inference" });
@@ -53,6 +62,8 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
   app.use(createVirtualKeyAuthMiddleware({ env }));
   // Pass store explicitly so tool-calling passthrough (OpenBench / OpenCode) still records.
   app.use(createOpenAiCompatRouter({ gateway, registry, env, store }));
+  app.use(createDecisionRouter({ env }));
+  app.use(createMemoryRouter({ env }));
   return app;
 }
 
