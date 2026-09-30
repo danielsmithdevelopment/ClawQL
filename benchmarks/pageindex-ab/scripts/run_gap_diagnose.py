@@ -129,11 +129,11 @@ def classify_model_failure(
 
     Classes (user taxonomy):
       grader_reject          — near-correct wording/format; strict string grade fails
-      cite_mismatch          — answer grades ok without gold, or model answer lives in
-                               a non-gold top section (different/extra valid section)
+      cite_mismatch          — answer grades ok without gold in top-k (rare here)
       not_found_despite_gold — abstain though answer string is in the evidence window
-      genuinely_wrong        — incorrect content
+      genuinely_wrong        — incorrect content (incl. distractor-section reads)
     """
+    del ans_in_nongold_section, ans_in_gold_section  # row flags only; not a separate class
     if ans_ok and gold_hit:
         return None  # success
     if ans_ok and not gold_hit:
@@ -150,9 +150,6 @@ def classify_model_failure(
     a_toks = set(ans.split())
     if g_toks and len(g_toks & a_toks) / len(g_toks) >= 0.6:
         return "grader_reject"
-    # Distractor-section reads (answer text only in non-gold top section) stay
-    # genuinely_wrong — not cite_mismatch. True cite_mismatch is ans_ok∧¬gold_hit.
-    _ = (ans_in_nongold_section, ans_in_gold_section)  # used by callers for row flags
     return "genuinely_wrong"
 
 
