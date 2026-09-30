@@ -28,4 +28,22 @@ describe("mcp-http-protocol", () => {
     expect(r.stateless).toBe(true);
     expect((r.capabilities as { mrtr: boolean }).mrtr).toBe(true);
   });
+
+  it("advertises openai/settings extensions when provided", () => {
+    const r = buildHttpDiscoverResponse({
+      protocolVersion: MCP_PROTOCOL_VERSION_2026_07_28,
+      extensions: {
+        "openai/settings": {
+          readTool: "clawql_settings_read",
+          updateTool: "clawql_settings_update",
+        },
+      },
+    });
+    expect((r.capabilities as { extensions: Record<string, unknown> }).extensions).toEqual({
+      "openai/settings": {
+        readTool: "clawql_settings_read",
+        updateTool: "clawql_settings_update",
+      },
+    });
+  });
 });

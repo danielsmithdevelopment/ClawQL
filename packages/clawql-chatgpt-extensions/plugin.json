@@ -1,0 +1,10 @@
+{
+  "name": "clawql",
+  "version": "0.1.0",
+  "description": "ClawQL — governed MCP for API search, execute, memory, and ontology",
+  "extensions": {
+    "com.openai": {
+      "onboardingSkill": "./skills/setup/SKILL.md"
+    }
+  }
+}

@@ -18,6 +18,7 @@ import { makeSandboxLayer } from "clawql-sandbox/plugin";
 import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import { makeObservabilityLayer } from "clawql-observability/plugin";
+import { makeChatgptExtensionsLayer } from "clawql-chatgpt-extensions/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -86,6 +87,9 @@ export function composeHorizontalPluginLayersStatic(
   }
   if (flags.enableObservability) {
     layers.push(makeObservabilityLayer());
+  }
+  if (flags.enableChatgptExtensions) {
+    layers.push(makeChatgptExtensionsLayer());
   }
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));

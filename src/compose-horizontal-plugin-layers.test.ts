@@ -3,6 +3,7 @@ import { MEMORY_PLUGIN_ID } from "clawql-memory/plugin";
 import { SANDBOX_PLUGIN_ID } from "clawql-sandbox/plugin";
 import { DATA_PLUGIN_ID } from "clawql-data/plugin";
 import { OBSERVABILITY_PLUGIN_ID } from "clawql-observability/plugin";
+import { CHATGPT_EXTENSIONS_PLUGIN_ID } from "clawql-chatgpt-extensions/plugin";
 import { createClawQLApi } from "clawql-api";
 import {
   composeHorizontalPluginLayers,
@@ -30,6 +31,7 @@ const baseFlags = {
   enableAnydoc: false,
   enableLangfuseEval: false,
   enableObservability: false,
+  enableChatgptExtensions: false,
   enableGrpc: false,
   enableGrpcReflection: false,
   externalIngestPreview: false,
@@ -87,6 +89,15 @@ describe("composeHorizontalPluginLayers", () => {
     expect(api.registry.list().some((p) => p.id === OBSERVABILITY_PLUGIN_ID)).toBe(true);
     expect(api.listMcpTools().some((t) => t.name === "observability_health")).toBe(true);
     expect(api.listMcpTools().some((t) => t.name === "observability_alerts")).toBe(true);
+  });
+
+  it("registers chatgpt-extensions plugin marker when enabled", () => {
+    const layers = composeHorizontalPluginLayers({
+      ...baseFlags,
+      enableChatgptExtensions: true,
+    });
+    const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
+    expect(api.registry.list().some((p) => p.id === CHATGPT_EXTENSIONS_PLUGIN_ID)).toBe(true);
   });
 });
 

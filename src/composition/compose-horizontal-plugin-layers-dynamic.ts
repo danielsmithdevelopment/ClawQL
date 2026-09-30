@@ -115,6 +115,13 @@ export function composeHorizontalPluginLayersDynamicEffect(
       layers.push(mod.makeObservabilityLayer());
     }
 
+    if (flags.enableChatgptExtensions) {
+      const mod = yield* loadPlugin<{ makeChatgptExtensionsLayer: () => HorizLayer }>(
+        "clawql-chatgpt-extensions/plugin"
+      );
+      layers.push(mod.makeChatgptExtensionsLayer());
+    }
+
     if (flags.enableOntology) {
       const mod = yield* loadPlugin<{
         makeOntologyLayer: (opts: { enableWrites: boolean }) => HorizLayer;

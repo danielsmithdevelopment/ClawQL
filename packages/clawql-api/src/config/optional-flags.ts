@@ -100,6 +100,11 @@ const rawOptionalFlagsSchema = z.object({
   /** Optional API key for `/observability/*` HTTP routes (`Authorization: ApiKey …`). */
   CLAWQL_OBSERVABILITY_API_KEY: z.string().optional(),
   /**
+   * ChatGPT MCP Extensions (mentions, settings, mandate forms, Evidence, console, .cqe/.cqk).
+   * Default **on** — set `0` / `false` / `no` to disable. Capability detection still gates per client.
+   */
+  CLAWQL_ENABLE_CHATGPT_EXTENSIONS: z.string().optional(),
+  /**
    * Bundled Google Cloud manifest (50 Discovery APIs). Default **false** — opt in with `1` / `true` / `yes`.
    * Adds GCP to the **default install stack**; explicit `CLAWQL_PROVIDER=google` or `CLAWQL_BUNDLED_PROVIDERS=google` still loads GCP.
    * Does **not** gate **`all-providers`** (that preset always includes Google).
@@ -223,6 +228,10 @@ export type ClawqlOptionalToolFlags = {
    */
   enableObservability: boolean;
   /**
+   * ChatGPT MCP Extensions (`clawql-chatgpt-extensions`). Default **true** — set **`CLAWQL_ENABLE_CHATGPT_EXTENSIONS=0`** to disable.
+   */
+  enableChatgptExtensions: boolean;
+  /**
    * Adds Google Cloud to the **default install stack**. Default **false** (opt in).
    */
   enableGoogle: boolean;
@@ -282,6 +291,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
     enableObservability: envTruthy(raw.CLAWQL_ENABLE_OBSERVABILITY),
+    enableChatgptExtensions: envTruthyWithDefault(raw.CLAWQL_ENABLE_CHATGPT_EXTENSIONS, true),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
     enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
@@ -340,6 +350,7 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableAnydoc: false,
     enableLangfuseEval: false,
     enableObservability: false,
+    enableChatgptExtensions: true,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
