@@ -1,0 +1,1 @@
+Trigger model-scored k∈{10,20}×±rerank grid (flash-lite + Sonnet n=60). Remove after run lands.

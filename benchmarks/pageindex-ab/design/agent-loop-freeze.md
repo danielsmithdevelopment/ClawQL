@@ -32,7 +32,7 @@ Twelve prove keys on **one TypeScript monorepo** (ClawQL) is a **small test on C
 | ----- | ---- | ------- |
 | **A (done)** | [Vectify fair test](vectify-fair-test.md) | Tie → purge; Vectify design → [post-8.0 backlog](../../../docs/backlog/post-8.0-vectify-pageindex.md) |
 | **B (this doc)** | grep+CodeGraph vs grep (+ no-tools / no-harm / usage) | Keep opt-in or leave bundle at freeze |
-| **C (done + next)** | k-sweep → [`k-sweep-hidf.md`](k-sweep-hidf.md); gold-rank diag → [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md) | **Ship `TOP_K_DOC=20` interim.** Ranking: rerank dominates (gold@50≈0.87); heading-path context no-ship; next = cross-encoder top-50→10/20 |
+| **C (in flight)** | k=20 interim; diag; bakeoff → [`rerank-bakeoff.md`](rerank-bakeoff.md) | Keep keyword+k=20. gte/bge@512 no-ship (truncation). **Next:** model-scored k-grid (GHA); then MaxP/blend/Qwen3-4B |
 
 ## Cohorts
 

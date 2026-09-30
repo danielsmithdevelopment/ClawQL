@@ -413,14 +413,15 @@ jobs:
         run: |
           test -f benchmarks/pageindex-ab/design/rerank-candidates.jsonl
           test -f benchmarks/pageindex-ab/design/rerank-bakeoff-ranks.jsonl
-          WINNER=$(python3 -c "import json; print(json.load(open('benchmarks/pageindex-ab/design/rerank-bakeoff.json')).get('recommendation',{}).get('winner','gte'))")
-          echo "reranker=$WINNER"
+          RERANKER=$(python3 -c "import json; r=json.load(open('benchmarks/pageindex-ab/design/rerank-bakeoff.json')).get('recommendation',{}); print(r.get('winner') or r.get('best_tag') or 'gte')")
+          echo "reranker=$RERANKER"
           python3 benchmarks/pageindex-ab/scripts/run_rerank_model_grid.py \
             --candidates benchmarks/pageindex-ab/design/rerank-candidates.jsonl \
             --ranks benchmarks/pageindex-ab/design/rerank-bakeoff-ranks.jsonl \
-            --reranker "$WINNER" \
+            --reranker "$RERANKER" \
             --sonnet-n 60 \
             --out benchmarks/pageindex-ab/design/rerank-model-grid.json
+
       - name: Upload rerank-grid artifacts
         if: ${{ always() && steps.gate.outputs.run == '1' }}
         uses: actions/upload-artifact@v4

@@ -151,34 +151,135 @@ def load_cross_encoder(model_key: str, device: str):
     return model, meta
 
 
+def split_passages(text: str, *, size: int, stride: int) -> list[str]:
+    """Overlapping char windows for MaxP (passage-level) scoring."""
+    t = text or ""
+    if len(t) <= size:
+        return [t] if t else [""]
+    out: list[str] = []
+    i = 0
+    while i < len(t):
+        out.append(t[i : i + size])
+        if i + size >= len(t):
+            break
+        i += max(1, stride)
+    return out or [""]
+
+
+def candidate_text(c: dict[str, Any], *, heading_path: bool) -> str:
+    body = c.get("text") or ""
+    if not heading_path:
+        return body
+    # Prefer explicit header/path fields from export; fall back to title.
+    header = c.get("heading_path") or c.get("header") or c.get("title") or ""
+    if not header:
+        return body
+    # Avoid double-prefix if export already inlined "title\\n\\nbody".
+    if body.startswith(str(header)):
+        return f"[Section: {header}]\n\n{body}"
+    return f"[Section: {header}]\n\n{body}"
+
+
+def minmax_norm(xs: list[float]) -> list[float]:
+    if not xs:
+        return []
+    lo, hi = min(xs), max(xs)
+    if hi - lo < 1e-12:
+        return [0.5 for _ in xs]
+    return [(x - lo) / (hi - lo) for x in xs]
+
+
 def rerank_rows(
     rows: list[dict[str, Any]],
     model,
     model_key: str,
     batch_size: int,
     max_length: int,
+    *,
+    maxp: bool = False,
+    passage_chars: int = 900,
+    passage_stride: int = 450,
+    blend: float = 0.0,
+    heading_path: bool = False,
 ) -> None:
+    """
+    Score candidates with a cross-encoder.
+
+    maxp: split each candidate into overlapping passages; section score = max passage
+          (standard long-doc fix when max_seq_length truncates).
+    blend: final = blend * norm(rerank) + (1-blend) * norm(keyword_rank_signal).
+           keyword signal = 1/kw_rank (missing kw_rank → 0). Tuned on tune split.
+    heading_path: prepend [Section: …] so truncated/mid passages keep topic.
+    """
     rank_key = f"rank_{model_key}"
     if hasattr(model, "max_seq_length"):
         model.max_seq_length = max_length
     elif hasattr(model, "max_length"):
         model.max_length = max_length
 
+    tag = model_key
+    extras = []
+    if maxp:
+        extras.append("maxp")
+    if blend > 0:
+        extras.append(f"blend{blend:g}")
+    if heading_path:
+        extras.append("hdr")
+    if extras:
+        tag = f"{model_key}_" + "_".join(extras)
+        rank_key = f"rank_{tag}"
+
     for i, r in enumerate(rows):
-        pairs = [(r["question"], c["text"]) for c in r["candidates"]]
-        if not pairs:
+        cands = r["candidates"]
+        if not cands:
             r[rank_key] = None
             continue
-        scores = model.predict(pairs, batch_size=batch_size, show_progress_bar=False)
-        # numpy or list
-        scored = list(zip(r["candidates"], scores))
+
+        # Build (cand_index, pair) list — MaxP expands to many pairs per cand.
+        pair_owners: list[int] = []
+        pairs: list[tuple[str, str]] = []
+        for ci, c in enumerate(cands):
+            text = candidate_text(c, heading_path=heading_path)
+            chunks = (
+                split_passages(text, size=passage_chars, stride=passage_stride)
+                if maxp
+                else [text]
+            )
+            for ch in chunks:
+                pair_owners.append(ci)
+                pairs.append((r["question"], ch))
+
+        raw_scores = model.predict(pairs, batch_size=batch_size, show_progress_bar=False)
+        # MaxP: best passage per candidate
+        best = [-1e30] * len(cands)
+        for owner, sc in zip(pair_owners, raw_scores):
+            best[owner] = max(best[owner], float(sc))
+
+        if blend > 0:
+            rr_n = minmax_norm(best)
+            kw_raw = [
+                (1.0 / c["kw_rank"]) if c.get("kw_rank") else 0.0 for c in cands
+            ]
+            kw_n = minmax_norm(kw_raw)
+            final = [
+                blend * a + (1.0 - blend) * b for a, b in zip(rr_n, kw_n)
+            ]
+        else:
+            final = best
+
+        scored = list(zip(cands, final))
         scored.sort(key=lambda x: float(x[1]), reverse=True)
         ordered_ids = [c["id"] for c, _ in scored]
         r[rank_key] = best_gold_rank(ordered_ids, r["gold_sections"])
-        r[f"top10_{model_key}"] = ordered_ids[:10]
-        r[f"top20_{model_key}"] = ordered_ids[:20]
+        r[f"top10_{tag}"] = ordered_ids[:10]
+        r[f"top20_{tag}"] = ordered_ids[:20]
+        # Keep model_key alias when no extras (back-compat with model grid)
+        if tag == model_key:
+            pass
+        else:
+            r[f"rank_{model_key}"] = r[rank_key]  # optional mirror
         if (i + 1) % 10 == 0 or i + 1 == len(rows):
-            print(f"[{model_key}] {i + 1}/{len(rows)}", file=sys.stderr)
+            print(f"[{tag}] {i + 1}/{len(rows)}", file=sys.stderr)
 
 
 def pick_winner(tune_summaries: dict[str, dict[str, Any]], model_keys: list[str]) -> str:
@@ -212,7 +313,31 @@ def main() -> int:
     )
     ap.add_argument("--device", default="cpu", help="cpu | cuda | mps")
     ap.add_argument("--batch-size", type=int, default=8)
-    ap.add_argument("--max-length", type=int, default=512)
+    ap.add_argument(
+        "--max-length",
+        type=int,
+        default=512,
+        help="CrossEncoder max_seq_length. Default 512 truncates long RFC sections — "
+        "likely cause of well_structured damage. Use MaxP or raise (gte supports 8192).",
+    )
+    ap.add_argument(
+        "--maxp",
+        action="store_true",
+        help="MaxP: score overlapping passages; section score = max passage score",
+    )
+    ap.add_argument("--passage-chars", type=int, default=900)
+    ap.add_argument("--passage-stride", type=int, default=450)
+    ap.add_argument(
+        "--blend",
+        type=float,
+        default=0.0,
+        help="Blend weight on norm(rerank); (1-blend) on norm(1/kw_rank). Try 0.3–0.5 on tune.",
+    )
+    ap.add_argument(
+        "--heading-path",
+        action="store_true",
+        help="Prefix [Section: title/path] so truncated passages keep topic",
+    )
     ap.add_argument(
         "--out",
         type=Path,
@@ -265,18 +390,49 @@ def main() -> int:
             print(f"[skip] {key}: {e}", file=sys.stderr)
             continue
         t0 = time.time()
-        rerank_rows(rows, model, key, args.batch_size, args.max_length)
+        rerank_rows(
+            rows,
+            model,
+            key,
+            args.batch_size,
+            args.max_length,
+            maxp=args.maxp,
+            passage_chars=args.passage_chars,
+            passage_stride=args.passage_stride,
+            blend=args.blend,
+            heading_path=args.heading_path,
+        )
         elapsed = time.time() - t0
         del model
-        ran.append(key)
-        report["rerankers"][key] = {
+        tag = key
+        extras = []
+        if args.maxp:
+            extras.append("maxp")
+        if args.blend > 0:
+            extras.append(f"blend{args.blend:g}")
+        if args.heading_path:
+            extras.append("hdr")
+        if extras:
+            tag = f"{key}_" + "_".join(extras)
+        ran.append(tag)
+        report["rerankers"][tag] = {
             "meta": meta,
+            "base_model": key,
+            "maxp": args.maxp,
+            "blend": args.blend,
+            "heading_path": args.heading_path,
+            "max_length": args.max_length,
             "elapsed_sec": elapsed,
-            "tune": summarize([r for r in rows if r["split"] == "tune"], f"rank_{key}"),
+            "tune": summarize([r for r in rows if r["split"] == "tune"], f"rank_{tag}"),
             "holdout": summarize(
-                [r for r in rows if r["split"] == "holdout"], f"rank_{key}"
+                [r for r in rows if r["split"] == "holdout"], f"rank_{tag}"
             ),
         }
+        report["truncation_note"] = (
+            f"CrossEncoder max_seq_length={args.max_length}. "
+            "Prior no-ship run used 512 — long RFC sections are scored on opening "
+            "boilerplate. Prefer --maxp or higher --max-length (gte: 8192)."
+        )
 
     report["models_ran"] = ran
     report["models_skipped"] = skipped
@@ -287,28 +443,36 @@ def main() -> int:
         w_tune = report["rerankers"][winner]["tune"]
         w_hold = report["rerankers"][winner]["holdout"]
         kw_tune = report["baselines"]["tune"]["keyword"]["recall_at_10"] or 0
+        lift = (w_tune.get("recall_at_10") or 0) - kw_tune
+        base_key = report["rerankers"][winner].get("base_model") or winner.split("_")[0]
+        meta = MODEL_REGISTRY.get(base_key, {})
         report["recommendation"] = {
-            "winner": winner,
-            "hf": MODEL_REGISTRY[winner]["hf"],
-            "deploy": MODEL_REGISTRY[winner]["deploy"],
+            "winner": winner if lift >= 0.02 else None,
+            "ship_rerank": lift >= 0.07,
+            "best_tag": winner,
+            "hf": meta.get("hf"),
+            "deploy": meta.get("deploy"),
             "tune_recall_at_10": w_tune.get("recall_at_10"),
             "holdout_recall_at_10": w_hold.get("recall_at_10"),
-            "tune_lift_vs_keyword_r10": (w_tune.get("recall_at_10") or 0) - kw_tune,
+            "tune_lift_vs_keyword_r10": lift,
             "holdout_lift_vs_keyword_r10": (w_hold.get("recall_at_10") or 0)
             - (report["baselines"]["holdout"]["keyword"]["recall_at_10"] or 0),
             "product_default": (
-                "Prefer gte (149M) as CPU default if within 2pp of winner; "
-                "offer qwen4b where GPU available."
-                if winner != "gte" and "gte" in ran
-                else f"Default to {winner} ({MODEL_REGISTRY[winner]['deploy']})."
+                f"Ship {winner} ({meta.get('deploy')})."
+                if lift >= 0.07
+                else "Keep keyword top-k; do not ship this rerank config (tune lift < 7pp)."
             ),
             "fusion_note": (
                 "Reranking keyword∪vector union makes a separate RRF fusion switch "
                 "unnecessary for this failure mode — purge-inventory candidate."
             ),
+            "truncation_hypothesis": (
+                "If max_length=512 and well_structured regresses, re-run with --maxp "
+                "and/or --blend 0.4 --heading-path, or Qwen3-4B (32k) on GPU."
+            ),
             "next": (
                 "Model-scored grid: k∈{10,20} × ±rerank on flash-lite + Sonnet subset "
-                "(run_rerank_model_grid.py / GHA)."
+                "(run_rerank_model_grid.py / GHA .run-rerank-grid)."
             ),
         }
 

@@ -381,11 +381,13 @@
     ],
     "ship_rerank": false,
     "verdict": "no_ship_gte_bge",
-    "rationale": "Neither gte nor bge beats keyword recall@10 on tune (\u22124.5pp / \u22123.8pp). They knock more golds out of top-10 than they rescue, mainly on well_structured RFCs. Keep keyword top-k; keep TOP_K_DOC=20. Try Qwen3-Reranker-4B on GPU before concluding rerank fails."
+    "rationale": "Neither gte nor bge beats keyword recall@10 on tune (\u22124.5pp / \u22123.8pp). They knock more golds out of top-10 than they rescue, mainly on well_structured RFCs. Keep keyword top-k; keep TOP_K_DOC=20. Try Qwen3-Reranker-4B on GPU before concluding rerank fails.",
+    "best_tag": "bge"
   },
   "models_ran": [
     "gte",
     "bge"
   ],
-  "models_skipped": {}
+  "models_skipped": {},
+  "truncation_note": "Confirmed: bakeoff used max_seq_length=512. well_structured golds often >2k chars; converted_pdf short + unscathed. Re-run with --maxp/--blend/--heading-path or Qwen3-4B 32k."
 }

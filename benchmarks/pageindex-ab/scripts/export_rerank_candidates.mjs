@@ -39,7 +39,8 @@ function parseArgs(argv) {
     tuneFrac: 0.6,
     seed: 20261015,
     skipVector: false,
-    maxChars: 2000,
+    // Default uncapped for MaxP / long-context rerankers; use --max-chars 2000 for lean exports.
+    maxChars: 100_000,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -48,6 +49,7 @@ function parseArgs(argv) {
     else if (a === "--out" && argv[i + 1]) out.outDir = argv[++i];
     else if (a === "--seed" && argv[i + 1]) out.seed = Number(argv[++i]);
     else if (a === "--tune-frac" && argv[i + 1]) out.tuneFrac = Number(argv[++i]);
+    else if (a === "--max-chars" && argv[i + 1]) out.maxChars = Number(argv[++i]);
   }
   return out;
 }
@@ -92,6 +94,21 @@ function stratifiedSplit(keys, tuneFrac, seed) {
   return tuneIds;
 }
 
+function withHeadingPaths(sections, docId) {
+  const docTitle = String(docId).match(/^rfc(\d+)$/i)
+    ? `RFC ${RegExp.$1}`
+    : String(docId).replace(/[-_]/g, " ");
+  const stack = [];
+  return sections.map((s) => {
+    if (s.id !== "sec-preamble" && s.level > 0) {
+      while (stack.length && stack[stack.length - 1].level >= s.level) stack.pop();
+      stack.push({ level: s.level, title: s.title });
+    }
+    const heading_path = [docTitle, ...stack.map((x) => x.title)].filter(Boolean).join(" › ");
+    return { ...s, heading_path };
+  });
+}
+
 function rankKeyword(sections, query) {
   const texts = sections.map((s) => s.content || "");
   const stats = buildVaultRankerStats(texts, "idf");
@@ -99,6 +116,7 @@ function rankKeyword(sections, query) {
     .map((s, i) => ({
       id: s.id,
       title: s.title,
+      heading_path: s.heading_path || s.title,
       score: scoreWithVaultRanker(query, texts[i], stats),
       text: s.content || "",
     }))
@@ -116,6 +134,7 @@ function unionPool(kwList, vecList, pool) {
     out.push({
       id: item.id,
       title: item.title,
+      heading_path: item.heading_path || item.title,
       text: item.text,
       kw_rank: kwTop.findIndex((x) => x.id === item.id) + 1,
       vec_rank: null,
@@ -134,6 +153,7 @@ function unionPool(kwList, vecList, pool) {
     out.push({
       id: item.id,
       title: item.title,
+      heading_path: item.heading_path || item.title,
       text: item.text,
       kw_rank: null,
       vec_rank: vr,
@@ -182,7 +202,7 @@ async function main() {
       const path = join(args.corpus, "docs", `${docId}.md`);
       if (!existsSync(path)) continue;
       const md = readFileSync(path, "utf8");
-      sections = splitMarkdownSections(md);
+      sections = withHeadingPaths(splitMarkdownSections(md), docId);
       if (!args.skipVector && sections.length) {
         process.stderr.write(`\rembed ${di}/${byDoc.size} ${docId} n=${sections.length}   `);
         if (!vecCache.has(docId)) {
@@ -239,6 +259,7 @@ async function main() {
             return {
               id,
               title: s?.title,
+              heading_path: s?.heading_path || s?.title,
               score: r.score,
               text: s?.content || "",
             };
@@ -282,10 +303,8 @@ async function main() {
         candidates: pool.map((c) => ({
           id: c.id,
           title: c.title,
-          text: clip(
-            `${c.title || ""}\n\n${c.text || ""}`.trim(),
-            args.maxChars,
-          ),
+          heading_path: c.heading_path || c.title,
+          text: clip(c.text || "", args.maxChars),
           kw_rank: c.kw_rank,
           vec_rank: c.vec_rank,
           sources: c.sources,

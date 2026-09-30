@@ -11,7 +11,28 @@
 3. Models: `bge` / `gte` / `qwen4b` (see registry in `run_rerank_bakeoff.py`).
 4. Model-scored grid (k∈{10,20} × ±rerank) still pending OpenRouter — see `run_rerank_model_grid.py` + GHA `.run-rerank-grid`.
 
-## Offline results (CPU, max_seq_length=512)
+## Truncation confirmed (likely root cause)
+
+| Evidence | Value |
+| -------- | ----- |
+| Bakeoff `--max-length` | **512** tokens (CrossEncoder default in harness) |
+| Prior export clip | 2000 chars |
+| well_structured cand p90 | 2000 chars (33% at clip); **55/168** golds clipped |
+| converted_pdf mean | ~379 chars — short; strata stayed at r@10=1.0 |
+| Damage locus | well_structured only (RFCs) |
+
+Cross-encoders scored opening boilerplate on long RFC sections while keyword saw the whole section. That matches “hurt > help” on RFCs, not “rerankers wrong for this data.”
+
+**Fixes wired in `run_rerank_bakeoff.py` (tune next, after model-scored k-grid):**
+- `--maxp` — overlapping passages, section score = max (MaxP)
+- `--blend 0.4` — keep keyword hits while rescuing rerank finds
+- `--heading-path` — `[Section: Doc › …]` prefix for truncated passages
+- `--max-length 2048+` (gte supports 8192) or **Qwen3-4B 32k on 5090 / hosted Cohere·Voyage**
+
+Re-export candidates with full section text before MaxP:  
+`node …/export_rerank_candidates.mjs --pool 100` (default `--max-chars 100000`).
+
+## Offline results (CPU, max_seq_length=512) — baseline no-ship
 
 | Method | tune@10 | hold@10 | tune@20 | hold@20 |
 | ------ | ------- | ------- | ------- | ------- |
