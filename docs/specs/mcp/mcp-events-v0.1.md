@@ -9,20 +9,20 @@
 
 Advertise `capabilities.events` and implement `events/list`, `events/subscribe`, and `events/unsubscribe` on the same authenticated MCP endpoint as tools. ClawQL turns existing internal signals (stream/topic changes, document processed, hook blocked, budget exhausted, mandate completed) into MCP Events so ChatGPT and other clients can subscribe via webhooks.
 
-**Distinctive angle:** most MCP servers emit events only from their own app. ClawQL can surface events from *any* API it already wraps (including APIs without native webhooks) once Streams/poll sources feed the emitter.
+**Distinctive angle:** most MCP servers emit events only from their own app. ClawQL can surface events from _any_ API it already wraps (including APIs without native webhooks) once Streams/poll sources feed the emitter.
 
 ## 2. Scope (8.0.0)
 
-| In | Out (follow-on) |
-| --- | --- |
-| Discover `events: {}` on HTTP + gRPC | Full `clawql-streams` / `stream_subscribe` package |
-| `events/list` · `subscribe` · `unsubscribe` | Polling / streaming delivery modes |
-| Webhook delivery + challenge (Standard Webhooks) | `gap` / `terminated` control notifications |
-| Durable subscription store (JSON file) | Postgres-backed multi-replica store |
-| Built-in event catalog | Dynamic OpenAPI-derived event schemas |
-| SSRF-hardened callbacks (HTTPS, no redirects, private IPs blocked) | Custom connect-to-IP TLS agent (stretch) |
-| Access recheck hook + payload screening + feedback-loop detector | Full Panguard ATR integration (host wires) |
-| WORM append hooks (optional host) | Mandatory dual-ack WORM |
+| In                                                                 | Out (follow-on)                                    |
+| ------------------------------------------------------------------ | -------------------------------------------------- |
+| Discover `events: {}` on HTTP + gRPC                               | Full `clawql-streams` / `stream_subscribe` package |
+| `events/list` · `subscribe` · `unsubscribe`                        | Polling / streaming delivery modes                 |
+| Webhook delivery + challenge (Standard Webhooks)                   | `gap` / `terminated` control notifications         |
+| Durable subscription store (JSON file)                             | Postgres-backed multi-replica store                |
+| Built-in event catalog                                             | Dynamic OpenAPI-derived event schemas              |
+| SSRF-hardened callbacks (HTTPS, no redirects, private IPs blocked) | Custom connect-to-IP TLS agent (stretch)           |
+| Access recheck hook + payload screening + feedback-loop detector   | Full Panguard ATR integration (host wires)         |
+| WORM append hooks (optional host)                                  | Mandatory dual-ack WORM                            |
 
 ## 3. Methods
 
@@ -36,14 +36,14 @@ JSON-RPC error **`-32015`** (`CallbackEndpointError`) with `data.reason` (`chall
 
 ## 4. Event catalog (built-in)
 
-| Name | Description | Filters (`inputSchema`) |
-| --- | --- | --- |
-| `stream.changed` | Polled/API topic change detection fired | `topic` (required) |
-| `document.processed` | IDP / document pipeline completed | `document_id?` |
-| `hook.blocked` | Policy / ATR / hook blocked a call | `tool?` |
-| `budget.exhausted` | Inference / spend budget exhausted | `budget_id?` |
-| `mandate.completed` | Mandate / scheduled automation finished | `mandate_id?` |
-| `clawql.notification` | Synthetic host notification (tests / demos) | `channel?` |
+| Name                  | Description                                 | Filters (`inputSchema`) |
+| --------------------- | ------------------------------------------- | ----------------------- |
+| `stream.changed`      | Polled/API topic change detection fired     | `topic` (required)      |
+| `document.processed`  | IDP / document pipeline completed           | `document_id?`          |
+| `hook.blocked`        | Policy / ATR / hook blocked a call          | `tool?`                 |
+| `budget.exhausted`    | Inference / spend budget exhausted          | `budget_id?`            |
+| `mandate.completed`   | Mandate / scheduled automation finished     | `mandate_id?`           |
+| `clawql.notification` | Synthetic host notification (tests / demos) | `channel?`              |
 
 All support `delivery: ["webhook"]` only (ChatGPT integration).
 
