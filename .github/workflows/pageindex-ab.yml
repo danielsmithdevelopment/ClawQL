@@ -418,6 +418,17 @@ jobs:
             cat /tmp/or-key.json || true
             exit 1
           fi
+          # Surface remaining/usage without printing secrets.
+          node -e '
+            const d=JSON.parse(require("fs").readFileSync("/tmp/or-key.json","utf8"));
+            const data=d.data||d;
+            const pick=(o,ks)=>ks.reduce((a,k)=>a??o?.[k],undefined);
+            console.log(JSON.stringify({
+              limit_remaining: pick(data,["limit_remaining","limitRemaining"]),
+              usage: pick(data,["usage","usage_daily"]),
+              is_free_tier: pick(data,["is_free_tier","isFreeTier"]),
+            }));
+          ' || true
       - uses: actions/setup-node@v4
         if: ${{ steps.gate.outputs.run == '1' }}
         with:

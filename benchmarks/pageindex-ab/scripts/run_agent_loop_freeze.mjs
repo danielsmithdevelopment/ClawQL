@@ -129,6 +129,20 @@ function gradeAnswer(key, answer) {
   return false;
 }
 
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isInFlightBudget402(status, text) {
+  if (status !== 402) return false;
+  const s = String(text || "").toLowerCase();
+  return (
+    s.includes("in_flight_budget") ||
+    s.includes("in-flight") ||
+    s.includes("retry after in-flight")
+  );
+}
+
 async function openRouterChat({ apiKey, model, messages, tools }) {
   const body = {
     model: model.startsWith("openrouter/") ? model.slice("openrouter/".length) : model,
@@ -141,23 +155,43 @@ async function openRouterChat({ apiKey, model, messages, tools }) {
   } else {
     body.response_format = { type: "json_object" };
   }
-  const res = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": process.env.CLAWQL_OPENROUTER_HTTP_REFERER || "https://clawql.com",
-      "X-Title": process.env.CLAWQL_OPENROUTER_APP_TITLE || "ClawQL Track B agent-loop",
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  if (!res.ok) {
+  const maxAttempts = Number(process.env.PAGEINDEX_AB_OR_402_RETRIES || 6);
+  let backoffMs = Number(process.env.PAGEINDEX_AB_OR_402_BACKOFF_MS || 60_000);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.CLAWQL_OPENROUTER_HTTP_REFERER || "https://clawql.com",
+        "X-Title": process.env.CLAWQL_OPENROUTER_APP_TITLE || "ClawQL Track B agent-loop",
+      },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    if (res.ok) return JSON.parse(text);
+
+    if (isInFlightBudget402(res.status, text) && attempt < maxAttempts) {
+      const hdr = res.headers.get("retry-after");
+      const waitSec = hdr && Number(hdr) > 0 ? Number(hdr) : Math.ceil(backoffMs / 1000);
+      console.error(
+        JSON.stringify({
+          openrouter_retry: true,
+          reason: "in_flight_budget_exhausted",
+          attempt,
+          maxAttempts,
+          wait_sec: waitSec,
+        })
+      );
+      await sleep(waitSec * 1000);
+      backoffMs = Math.min(backoffMs * 2, 300_000);
+      continue;
+    }
+
     const err = new Error(`OpenRouter ${res.status}: ${text.slice(0, 400)}`);
     err.status = res.status;
     throw err;
   }
-  return JSON.parse(text);
 }
 
 async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {

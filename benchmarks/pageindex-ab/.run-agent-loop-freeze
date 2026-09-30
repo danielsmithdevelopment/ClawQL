@@ -2,3 +2,5 @@
 # Uses secrets.OPENROUTER_API_KEY in GitHub Actions (same as every other spend).
 # Remove this file after the run lands (paths filter re-fires on every PR push).
 2026-09-30T11:47:29Z
+
+# re-fire: 402 in-flight backoff + resume (6 cells kept)
