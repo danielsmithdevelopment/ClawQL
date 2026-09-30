@@ -4,3 +4,5 @@
 2026-09-30T11:47:29Z
 
 # re-fire: 402 in-flight backoff + resume (6 cells kept)
+
+# re-fire: set max_tokens (402 was uncapped 65536 reserve, not empty wallet)

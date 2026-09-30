@@ -144,10 +144,16 @@ function isInFlightBudget402(status, text) {
 }
 
 async function openRouterChat({ apiKey, model, messages, tools }) {
+  // Cap max_tokens: OpenRouter reserves the full budget up-front. Uncapped
+  // defaults (65536) 402 even when limit_remaining is healthy ("can only afford N").
+  const maxTokens = Number(
+    process.env.PAGEINDEX_AB_AGENT_MAX_TOKENS || (tools?.length ? 4096 : 1024)
+  );
   const body = {
     model: model.startsWith("openrouter/") ? model.slice("openrouter/".length) : model,
     messages,
     temperature: 0,
+    max_tokens: maxTokens,
   };
   if (tools?.length) {
     body.tools = tools;
