@@ -204,7 +204,11 @@ def main() -> int:
             "No-harm = high overlap easy keys — MaxP/rerank must not regress these. "
             "Do not gate on keyword rank (biases the set against keyword). "
             "Primary MaxP path: EnterpriseRAG-Bench; LongMemEval-S for vault; "
-            "homegrown paraphrases are backstop only."
+            "homegrown paraphrases are backstop only. "
+            "Ignore a hard cohort that is one template on one doc type "
+            "(e.g. all hc-wk-*-q06) — that is not general retrieval difficulty. "
+            "Backstop paraphraser: generate from summary or topic+answer, "
+            "never raw gold section text; check answerability afterward."
         ),
         "rows": checked,
     }

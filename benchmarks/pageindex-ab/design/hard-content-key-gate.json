@@ -1,6 +1,6 @@
 {
   "tag": "pageindex-ab-hard-content-key-gate-v2",
-  "generated_at": "2026-09-30T05:48:51Z",
+  "generated_at": "2026-09-30T05:56:18Z",
   "max_hard_overlap": 0.3,
   "min_easy_overlap": 0.6,
   "n_content": 100,
@@ -85,7 +85,7 @@
     "hc-code-07-q01",
     "hc-code-08-q01"
   ],
-  "note": "Hard = low question\u2194gold word overlap (method-independent). No-harm = high overlap easy keys \u2014 MaxP/rerank must not regress these. Do not gate on keyword rank (biases the set against keyword). Primary MaxP path: EnterpriseRAG-Bench; LongMemEval-S for vault; homegrown paraphrases are backstop only.",
+  "note": "Hard = low question\u2194gold word overlap (method-independent). No-harm = high overlap easy keys \u2014 MaxP/rerank must not regress these. Do not gate on keyword rank (biases the set against keyword). Primary MaxP path: EnterpriseRAG-Bench; LongMemEval-S for vault; homegrown paraphrases are backstop only. Ignore a hard cohort that is one template on one doc type (e.g. all hc-wk-*-q06) \u2014 that is not general retrieval difficulty. Backstop paraphraser: generate from summary or topic+answer, never raw gold section text; check answerability afterward.",
   "rows": [
     {
       "id": "hc-pdf-01-q01",

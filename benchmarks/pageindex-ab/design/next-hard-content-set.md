@@ -32,7 +32,9 @@
 
 Outputs: [`hard-content-key-gate.json`](hard-content-key-gate.json), [`maxp-hard-and-no-harm-cohorts.json`](maxp-hard-and-no-harm-cohorts.json).
 
-**Current candidate snapshot (v2 gate on `rerank-candidates.jsonl`):** n_content=100 → **6 hard** / **68 no-harm** / 26 mid. The 6 hard IDs are all `hc-wk-*-q06` (misleading-heading); builder paraphrases (q09/q10) did **not** clear overlap &lt; 0.3. Homegrown hard set is too thin to decide MaxP — another reason external benches go first.
+**Current candidate snapshot (v2 gate on `rerank-candidates.jsonl`):** n_content=100 → **6 hard** / **68 no-harm** / 26 mid. Builder paraphrases (q09/q10) did **not** clear overlap &lt; 0.3 — the builder cannot produce a usable hard set today.
+
+**Do not read the 6 hard keys as retrieval difficulty.** All six are one template (`hc-wk-*-q06`, misleading-heading) on one doc type. Growing that pattern would still measure a single question shape, not hard content retrieval in general. Leave MaxP until **EnterpriseRAG-Bench**.
 
 ## Retired: depth / position templates
 
@@ -40,11 +42,12 @@ Evidence headers (`§{n}` + percent through document) made depth questions answe
 
 ## Backstop builder tips (after external benches)
 
-1. Paraphrase away from gold wording until `overlap_gold < 0.3`.
+1. **Isolate the paraphraser from gold wording.** If the generator sees the full section text, it copies tokens and fails the overlap gate. Feed only a short section summary, or topic + answer; never the raw gold body. Check answerability against the full section afterward (model or human), then run `hard_content_key_gate.py`.
 2. Cross-section questions whose answer needs two sections.
 3. Call-store mining — scrubbed real `memory_recall` queries with labeled golds.
+4. Always pair accepted hard keys with a no-harm cohort; hard-only lifts do not count.
 
-Until hard + no-harm cohorts exist (or external benches are wired), **do not** use content accuracy on the soft set to judge MaxP.
+Until EnterpriseRAG-Bench (or a real multi-template hard + no-harm set) exists, **do not** use content accuracy on the soft set to judge MaxP.
 
 ## Product evidence headers (shipped)
 

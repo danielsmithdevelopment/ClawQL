@@ -19,6 +19,8 @@ Content questions share most content words with their gold sections (mean overla
 ## Next keys
 
 1. Run **EnterpriseRAG-Bench** / **LongMemEval-S** before building more paraphrases.
-2. If paraphrasing: aim for `overlap_gold < 0.3` and always pair with a no-harm cohort.
+2. If paraphrasing (backstop): generate from a short summary or topic+answer — **not** the full gold section text — then verify answerability on the full section; accept only if `overlap_gold < 0.3` and pair with a no-harm cohort.
 3. Cross-section questions needing two sections.
 4. Scrubbed real `memory_recall` queries from the call store.
+
+The gate’s 6 “hard” hits on the soft set are all one template (`wk-*-q06`) — ignore them as a MaxP signal.
