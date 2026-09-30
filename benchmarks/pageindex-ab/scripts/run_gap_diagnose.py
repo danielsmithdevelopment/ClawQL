@@ -35,6 +35,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fair_test_common import finalize_answer  # noqa: E402
+from question_templates import (  # noqa: E402
+    is_depth_position_template,
+    position_curves_by_question_class,
+    question_eval_class,
+)
 
 EVIDENCE_LIMIT = 24000
 
@@ -279,8 +284,9 @@ def main() -> int:
         "failure_classes": None,
         "sample_wrong": [],
         "maxp_metric_note": (
-            "Judge MaxP by model-scored accuracy and mean/median gold rank (position), "
-            "not recall@10 alone — position affects mid-context reading."
+            "Judge MaxP by model-scored accuracy + gold rank on CONTENT keys only "
+            "(exclude depth_position templates). Always report position curves by "
+            "question_eval_class — pooled rank→accuracy can be a template artifact."
         ),
     }
 
@@ -397,11 +403,20 @@ def main() -> int:
         }
         for r in sample
     ]
+    for r in out_rows:
+        r["question_eval_class"] = question_eval_class(r)
+        r["is_depth_position_template"] = is_depth_position_template(r)
+    report["position_by_question_class"] = position_curves_by_question_class(out_rows)
+    depth = (report["position_by_question_class"].get("by_class") or {}).get(
+        "depth_position"
+    ) or {}
+    content = report["position_by_question_class"].get("content_only") or {}
     report["implication"] = (
-        "If grader_reject + cite dominate → semantic judge + re-score saved rows. "
-        "If not_found/genuinely_wrong dominate → answering/position fixes "
-        "(best-first already used; quote-then-answer; second-pass full read). "
-        "MaxP judged by model accuracy + gold rank position, not recall@10 alone."
+        "Split position curves by question_eval_class before treating rank→accuracy "
+        "as a reading effect. Depth/position templates are not answerable from section "
+        "text — fix/down-weight them; judge MaxP on content keys only. "
+        f"content_acc={content.get('answer_accuracy')} "
+        f"depth_acc={depth.get('answer_accuracy')}."
     )
 
     rows_path.write_text("\n".join(json.dumps(r) for r in out_rows) + "\n")

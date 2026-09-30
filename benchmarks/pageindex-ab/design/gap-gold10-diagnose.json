@@ -669,14 +669,14 @@
       "failure_subclass": "distractor_section"
     }
   ],
-  "maxp_metric_note": "Judge MaxP by model-scored accuracy and mean/median gold rank (position), not recall@10 alone \u2014 position affects mid-context reading.",
+  "maxp_metric_note": "Judge MaxP by model-scored accuracy + mean/median gold rank on CONTENT keys only (exclude depth_position templates). Always publish position curves by question_eval_class so a template cannot pass for a reading effect.",
   "failure_class_rates": {
     "correct": 0.6491228070175439,
     "genuinely_wrong": 0.3391812865497076,
     "not_found_answer_missing": 0.005847953216374269,
     "grader_reject": 0.005847953216374269
   },
-  "implication": "Reading failures dominate (~97% of gold@10 wrongs). Grader reject is negligible (1/60). Answering step is the lever: raise gold position (MaxP), quote-then-answer, second-pass full read of top sections. Do NOT prioritize a semantic judge first.",
+  "implication": "Depth/position templates (not reading) drove the apparent position effect. Fix or down-weight those questions; judge MaxP on content keys only. Always report position curves split by question_eval_class.",
   "rows_path": "benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl",
   "failure_taxonomy_note": "Heuristic cite_mismatch (answer text only in non-gold top section) was folded into genuinely_wrong/distractor_section: those answers are wrong content from distractors, not right answers rejected for citation. True grader_reject\u22480.",
   "reclass_among_wrong": {
@@ -735,5 +735,181 @@
     "median_gold_rank_wrong": 4.5,
     "note": "Rank-1 gold \u2192 ~0.95 answer accuracy; rank\u22653 collapses. MaxP must be judged by model accuracy + gold position, not recall@10 alone."
   },
-  "verdict": "Reading failures dominate (~97% of gold@10 wrongs). Grader reject is negligible (1/60). Answering step is the lever: raise gold position (MaxP), quote-then-answer, second-pass full read of top sections. Do NOT prioritize a semantic judge first."
+  "verdict": "Depth/position templates (not reading) drove the apparent position effect. Fix or down-weight those questions; judge MaxP on content keys only. Always report position curves split by question_eval_class.",
+  "position_by_question_class": {
+    "note": "Depth/position templates are not answerable from section text alone; their rank\u2192accuracy curve is not a reading/position effect. Judge MaxP on content (and optionally code_export) only; always report curves split by question_eval_class.",
+    "by_class": {
+      "code_export": {
+        "n": 8,
+        "answer_accuracy": 0.0,
+        "accuracy_by_kw_gold_rank": {
+          "3": {
+            "n": 8,
+            "answer_accuracy": 0.0
+          }
+        },
+        "mean_gold_rank_correct": null,
+        "mean_gold_rank_wrong": 3.0
+      },
+      "content": {
+        "n": 100,
+        "answer_accuracy": 1.0,
+        "accuracy_by_kw_gold_rank": {
+          "1": {
+            "n": 94,
+            "answer_accuracy": 1.0
+          },
+          "2": {
+            "n": 6,
+            "answer_accuracy": 1.0
+          }
+        },
+        "mean_gold_rank_correct": 1.06,
+        "mean_gold_rank_wrong": null
+      },
+      "depth_position": {
+        "n": 63,
+        "answer_accuracy": 0.1746031746031746,
+        "accuracy_by_kw_gold_rank": {
+          "1": {
+            "n": 5,
+            "answer_accuracy": 0.0
+          },
+          "2": {
+            "n": 8,
+            "answer_accuracy": 0.125
+          },
+          "3": {
+            "n": 6,
+            "answer_accuracy": 0.5
+          },
+          "4": {
+            "n": 8,
+            "answer_accuracy": 0.125
+          },
+          "5": {
+            "n": 5,
+            "answer_accuracy": 0.0
+          },
+          "6": {
+            "n": 9,
+            "answer_accuracy": 0.1111111111111111
+          },
+          "7": {
+            "n": 7,
+            "answer_accuracy": 0.14285714285714285
+          },
+          "8": {
+            "n": 5,
+            "answer_accuracy": 0.6
+          },
+          "9": {
+            "n": 5,
+            "answer_accuracy": 0.2
+          },
+          "10": {
+            "n": 5,
+            "answer_accuracy": 0.0
+          }
+        },
+        "mean_gold_rank_correct": 5.545454545454546,
+        "mean_gold_rank_wrong": 5.25
+      }
+    },
+    "content_only": {
+      "n": 100,
+      "answer_accuracy": 1.0,
+      "accuracy_by_kw_gold_rank": {
+        "1": {
+          "n": 94,
+          "answer_accuracy": 1.0
+        },
+        "2": {
+          "n": 6,
+          "answer_accuracy": 1.0
+        }
+      },
+      "mean_gold_rank_correct": 1.06,
+      "mean_gold_rank_wrong": null
+    }
+  },
+  "position_effect_revised": {
+    "finding": "Overall steep rank\u2192accuracy curve was a composition artifact: rank-1 pool is 94/99 content (all correct) + 5 depth (all wrong). Depth-template curve is flat (~0.17; rank-1 = 0.00). Content excl. code_export is 1.0 at ranks 1\u20132.",
+    "depth_position": {
+      "n": 63,
+      "answer_accuracy": 0.1746031746031746,
+      "accuracy_by_kw_gold_rank": {
+        "1": {
+          "n": 5,
+          "answer_accuracy": 0.0
+        },
+        "2": {
+          "n": 8,
+          "answer_accuracy": 0.125
+        },
+        "3": {
+          "n": 6,
+          "answer_accuracy": 0.5
+        },
+        "4": {
+          "n": 8,
+          "answer_accuracy": 0.125
+        },
+        "5": {
+          "n": 5,
+          "answer_accuracy": 0.0
+        },
+        "6": {
+          "n": 9,
+          "answer_accuracy": 0.1111111111111111
+        },
+        "7": {
+          "n": 7,
+          "answer_accuracy": 0.14285714285714285
+        },
+        "8": {
+          "n": 5,
+          "answer_accuracy": 0.6
+        },
+        "9": {
+          "n": 5,
+          "answer_accuracy": 0.2
+        },
+        "10": {
+          "n": 5,
+          "answer_accuracy": 0.0
+        }
+      },
+      "mean_gold_rank_correct": 5.545454545454546,
+      "mean_gold_rank_wrong": 5.25
+    },
+    "content": {
+      "n": 100,
+      "answer_accuracy": 1.0,
+      "accuracy_by_kw_gold_rank": {
+        "1": {
+          "n": 94,
+          "answer_accuracy": 1.0
+        },
+        "2": {
+          "n": 6,
+          "answer_accuracy": 1.0
+        }
+      },
+      "mean_gold_rank_correct": 1.06,
+      "mean_gold_rank_wrong": null
+    },
+    "code_export": {
+      "n": 8,
+      "answer_accuracy": 0.0,
+      "accuracy_by_kw_gold_rank": {
+        "3": {
+          "n": 8,
+          "answer_accuracy": 0.0
+        }
+      },
+      "mean_gold_rank_correct": null,
+      "mean_gold_rank_wrong": 3.0
+    }
+  }
 }

@@ -477,6 +477,9 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "accepted_variants": [facts["first_section"].split(" ", 1)[-1][:40]],
             "gold_sections": [slug_section(facts["first_section"])],
             "unanswerable": False,
+            # Not answerable from a retrieved section body alone (needs doc order).
+            "depth_position_template": True,
+            "notes": "depth_position_template: first numbered heading",
         },
         {
             "id": f"{base}-q03",
@@ -488,6 +491,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
             "accepted_variants": [facts["buried_section"][:48]],
             "gold_sections": [slug_section(facts["buried_section"])],
             "unanswerable": False,
+            "depth_position_template": True,
+            "notes": "depth_position_template: mid ~60% (mis-typed as buried_detail historically)",
         },
         {
             "id": f"{base}-q04",
@@ -571,7 +576,11 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "accepted_variants": [title[:48], title.split(" ", 1)[-1][:40]],
                 "gold_sections": [gid],
                 "unanswerable": False,
-                "notes": f"depth ladder {label}; gold pinned to filtered heading",
+                "depth_position_template": True,
+                "notes": (
+                    f"depth_position_template: depth ladder {label}; "
+                    "gold pinned to filtered heading — not answerable from section text alone"
+                ),
             }
         )
         qn += 1
@@ -591,7 +600,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                     "accepted_variants": [last[:48], last.split(" ", 1)[-1][:40]],
                     "gold_sections": [gid],
                     "unanswerable": False,
-                    "notes": "last filtered heading",
+                    "depth_position_template": True,
+                    "notes": "depth_position_template: last filtered heading",
                 }
             )
             qn += 1
@@ -612,7 +622,8 @@ def rfc_keys(doc_id: str, facts: dict, i: int) -> list[dict]:
                 "accepted_variants": [early[:48], late[:48]],
                 "gold_sections": [slug_section(early), slug_section(late)],
                 "unanswerable": False,
-                "notes": "cross-section early/late filtered headings",
+                "depth_position_template": True,
+                "notes": "depth_position_template: cross-section early/late filtered headings",
             }
         )
     return keys

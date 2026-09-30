@@ -40,6 +40,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fair_test_common import finalize_answer  # noqa: E402
+from question_templates import (  # noqa: E402
+    position_curves_by_question_class,
+    question_eval_class,
+)
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -154,10 +158,25 @@ def run_cell(
             answer = str(fin.get("answer") or "")
             not_found = bool(fin.get("not_found"))
             ans_ok = grade(answer, not_found, row)
+            gold_ids = set(row.get("gold_sections") or [])
+            rank_rec = ranks_by_id.get(row["id"]) or {}
+            kw_gold_rank = rank_rec.get("rank_keyword")
+            if kw_gold_rank is None:
+                # Fallback: position within this cell's top list
+                kw_gold_rank = next(
+                    (i + 1 for i, c in enumerate(top) if c["id"] in gold_ids),
+                    None,
+                )
             return {
                 "id": row["id"],
                 "stratum": row.get("stratum"),
                 "split": row.get("split"),
+                "question": row.get("question"),
+                "question_type": row.get("question_type"),
+                "notes": row.get("notes"),
+                "depth_position_template": row.get("depth_position_template"),
+                "question_eval_class": question_eval_class(row),
+                "kw_gold_rank": kw_gold_rank,
                 "answer": answer,
                 "not_found": not_found,
                 "answer_ok": ans_ok,
@@ -171,6 +190,12 @@ def run_cell(
                 "id": row["id"],
                 "stratum": row.get("stratum"),
                 "split": row.get("split"),
+                "question": row.get("question"),
+                "question_type": row.get("question_type"),
+                "notes": row.get("notes"),
+                "depth_position_template": row.get("depth_position_template"),
+                "question_eval_class": question_eval_class(row),
+                "kw_gold_rank": row.get("kw_gold_rank"),
                 "answer": "",
                 "not_found": True,
                 "answer_ok": False,
@@ -339,11 +364,13 @@ def main() -> int:
         "rerank_arms": "bug_reproduction_if_512_cap_ranks — not the rerank ship decision",
         "rerank_next": (
             "MaxP/blend/heading-path (or Qwen3-4B) on tune with full-text candidates; "
+            "judge on CONTENT keys only (exclude depth_position templates); "
             "confirm on fresh builder keys — not holdout."
         ),
         "note": (
             "Ship TOP_K_DOC from norerank k10 vs k20 under model grade. "
-            "Ignore ±rerank as a verdict until a non-truncated bakeoff wins tune."
+            "Ignore ±rerank as a verdict until a non-truncated bakeoff wins tune. "
+            "Always report position curves by question_eval_class."
         ),
     }
 
@@ -351,6 +378,20 @@ def main() -> int:
     rows_out = args.out.with_name(args.out.stem + "-rows.jsonl")
     rows_out.write_text("\n".join(json.dumps(r) for r in all_row_dumps) + "\n")
     report["rows_path"] = str(rows_out)
+    # Per-cell content-only + depth splits (k10 norerank flash is the MaxP baseline cell)
+    for cell_name, cell in list(report["cells"].items()):
+        cell_rows = [r for r in all_row_dumps if r.get("cell") == cell_name]
+        # Enrich ranks from bakeoff when missing
+        for r in cell_rows:
+            if r.get("kw_gold_rank") is None and r["id"] in ranks_by_id:
+                r["kw_gold_rank"] = ranks_by_id[r["id"]].get("rank_keyword")
+        cell["position_by_question_class"] = position_curves_by_question_class(cell_rows)
+        content = (cell["position_by_question_class"].get("content_only") or {})
+        cell["content_answer_accuracy"] = content.get("answer_accuracy")
+    report["maxp_metric_note"] = (
+        "Judge MaxP by model-scored accuracy + gold rank on content keys only; "
+        "publish position_by_question_class every run."
+    )
     args.out.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
     print(
