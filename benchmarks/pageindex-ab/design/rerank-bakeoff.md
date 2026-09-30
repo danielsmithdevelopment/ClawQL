@@ -77,6 +77,10 @@ gte/bge knocked more golds out of top-10 than they rescued (RFC stratum). Under 
 
 Gold_recall still climbs (flash 0.65→0.77) but answer accuracy does not. Sentinel removed.
 
+## MaxP judgment (from gap-gold10 diagnose)
+
+Gap taxonomy: **reading failures dominate** (~97% of gold@10 wrongs); grader_reject ≈ 0. Gold at rank 1 → **0.95** answer accuracy; rank ≥3 collapses. Measure MaxP by **model-scored accuracy + mean/median gold rank** at fixed k=10 — not recall@10 alone. See `gap-gold10-diagnose.md`.
+
 ## Scripts
 
 | Script | Job |

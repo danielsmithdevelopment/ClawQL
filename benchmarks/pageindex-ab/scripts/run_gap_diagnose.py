@@ -150,9 +150,9 @@ def classify_model_failure(
     a_toks = set(ans.split())
     if g_toks and len(g_toks & a_toks) / len(g_toks) >= 0.6:
         return "grader_reject"
-    # Model produced text that appears in a non-gold retrieved section (alt citation)
-    if ans_in_nongold_section and not ans_in_gold_section:
-        return "cite_mismatch"
+    # Distractor-section reads (answer text only in non-gold top section) stay
+    # genuinely_wrong — not cite_mismatch. True cite_mismatch is ans_ok∧¬gold_hit.
+    _ = (ans_in_nongold_section, ans_in_gold_section)  # used by callers for row flags
     return "genuinely_wrong"
 
 

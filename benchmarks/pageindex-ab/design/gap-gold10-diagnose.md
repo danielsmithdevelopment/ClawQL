@@ -1,9 +1,9 @@
 # Track C — gold@10 ∩ wrong: retrieval→answer gap
 
-**Status:** offline diagnosis done; model failure taxonomy via GHA `.run-gap-diagnose`  
+**Status:** done (flash-lite finalize on 171 gold@10 keys; rows persisted)  
 **Why:** Model-scored k=10 has gold_recall ≈ **0.65** but flash answer ≈ **0.29** / Sonnet ≈ **0.37**. Bottleneck moved past retrieval.
 
-## Offline (no spend) — already decisive on “is the answer in context?”
+## Offline (no spend) — answer already in context
 
 Among **171** keys with keyword gold rank ≤ 10:
 
@@ -15,40 +15,49 @@ Among **171** keys with keyword gold rank ≤ 10:
 | Gold fully truncated out of window | 7 (all well_structured) |
 | Gold partially truncated | 6 |
 
-So for ~93% of gold@10 keys the literal answer is in the prompt the model sees. **Evidence truncation is not the main gap** (it explains ≤8%). The remaining miss is reading and/or grading.
+Evidence truncation explains ≤8%. Prior grid artifact was aggregates-only (~4KB) — taxonomy needed this flash re-finalize; rows are now in `gap-gold10-diagnose-rows.jsonl`.
 
-The prior grid artifact (`pageindex-ab-rerank-grid`, 4KB) saved **aggregates only** — confirmed no per-question answers in cells. So grader_reject vs `not_found` vs genuinely_wrong needs one cheap flash re-score on these 171 keys (sentinel `.run-gap-diagnose`). That is diagnostic spend, not MaxP; row dumps (`*-rows.jsonl`) make a later semantic judge free.
+## Model taxonomy (flash-lite, gold@10 only)
 
-## Failure classes (model pass — fill from `gap-gold10-diagnose.json`)
+Among gold@10, flash answer accuracy = **0.649** (111/171). The 60 wrongs break down:
 
-| Class | Meaning | If dominant → |
-| ----- | ------- | ------------- |
-| `grader_reject` | Near-correct / contains gold wording; strict string grade fails | Semantic judge; re-score **saved rows** |
-| `not_found_despite_gold` | Model abstains though answer is in evidence | Quote-then-answer; second-pass full read of top sections |
-| `genuinely_wrong` | Wrong answer | Same answering fixes; check position of gold in list |
-| `cite_mismatch` | Answer ok, gold not cited | Grader / multi-valid-section |
+| Class | n | % of wrongs | Meaning |
+| ----- | - | ----------- | ------- |
+| `genuinely_wrong` (distractor section) | 52 | **86.7%** | Model answered with a heading/path from another top-10 section |
+| `genuinely_wrong` (other) | 6 | 10.0% | Wrong without clean distractor match |
+| `grader_reject` | 1 | 1.7% | Near-correct wording; strict string grade fails |
+| `not_found_*` | 1 | 1.7% | Abstain (gold truncated out of window) |
+| true cite_mismatch (right ans, bad cite) | 0 | 0% | Finalize has no citation field; ans_ok path unused here |
 
-## Answering-step fixes (if reading failures dominate)
+**Verdict: reading failures dominate (~97%). Grader is not the bottleneck.** Sonnet’s 0.37 overall does not imply grader softness on this slice — when gold is in top-10, flash already converts 65%, and almost every miss is a wrong section heading (especially RFC depth/% `section_lookup` on `well_structured`).
 
-1. **Best-first order** — already keyword score order; keep (and improve rank via MaxP).
-2. **Quote evidence before answering** — finalize prompt change.
-3. **Second pass** — re-read top 1–3 sections in full when first pass is `not_found` or low confidence.
+### Position effect (drives MaxP metric)
 
-k=20 not helping fits mid-context dilution: extra sections push gold toward the middle of a long blob.
+| Gold kw rank | n | Answer accuracy |
+| ------------ | - | --------------- |
+| 1 | 99 | **0.949** |
+| 2 | 14 | 0.500 |
+| 3 | 14 | 0.214 |
+| 4–10 | 44 | ~0.11 |
 
-## MaxP judgment (changed)
+Mean gold rank: correct **1.50** vs wrong **4.95**. Raising gold toward position 1 converts answers even at fixed k=10.
 
-Measure MaxP by:
+Stratum: `converted_pdf` / `weakly_structured` perfect on this slice; `well_structured` only **0.175** (depth/% heading questions).
 
-1. **Model-scored accuracy** (flash, same finalize) at fixed k=10  
-2. **Gold rank / position** in the list (mean/median)  
+## Implication → next lever
 
-not by recall@10 alone. Higher gold position can improve answers even when recall@10 is unchanged.
+1. **Do not** prioritize a semantic judge / re-grade first (grader_reject ≈ 0).  
+2. **Answering step** is the lever:
+   - **MaxP / better ranking** to put gold first (largest measured effect).  
+   - Quote evidence before answering.  
+   - Second pass: full-read top 1–3 when first pass looks like a distractor heading.  
+3. **Judge MaxP** by model-scored accuracy **and** mean/median gold rank — not recall@10 alone.
 
 ## Eval hygiene
 
-- Classify on the gold@10 wrong sample; do not retune MaxP against holdout.  
-- Persist per-row grid/diagnose JSONL (`*-rows.jsonl`) so a semantic judge can re-score without re-calling the model.
+- Sample and ranks computed on tune+holdout gold@10 for diagnosis only; do not retune MaxP against holdout.  
+- Per-row JSONL kept so a judge can still re-score later without re-calling the model.  
+- Sentinel `.run-gap-diagnose` removed after landing.
 
 ## Commands
 
