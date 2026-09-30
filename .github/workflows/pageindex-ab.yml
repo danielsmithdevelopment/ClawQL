@@ -373,8 +373,9 @@ jobs:
           path: |
             benchmarks/pageindex-ab/results/vectify-fair/
 
-  # Track C: model-scored k∈{10,20} × ±rerank confirmation (flash-lite + Sonnet subset).
+  # Track C: model-scored k∈{10,20} × ±rerank (flash-lite + Sonnet subset).
   # Trigger: PR sentinel .run-rerank-grid. Uses committed candidates + bakeoff ranks.
+  # Read: norerank k10 vs k20 decides TOP_K_DOC; ±rerank is 512-cap bug repro only.
   # Remove sentinel after the run lands.
   rerank-grid:
     if: ${{ github.event_name == 'pull_request' }}

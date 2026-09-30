@@ -389,5 +389,12 @@
     "bge"
   ],
   "models_skipped": {},
-  "truncation_note": "Confirmed: bakeoff used max_seq_length=512. well_structured golds often >2k chars; converted_pdf short + unscathed. Re-run with --maxp/--blend/--heading-path or Qwen3-4B 32k."
+  "truncation_note": "Confirmed: bakeoff max_seq_length=512 + prior export 2k clip. MaxP requires full section text \u2014 re-export with --max-chars 100000 before MaxP pass.",
+  "eval_hygiene": {
+    "grid_rerank_arms": "bug_reproduction_only \u2014 still 512-cap ranks; do not use as ship/no-ship for rerank",
+    "grid_decides": "k=20 vs k=10 under model-scored finalize (norerank cells)",
+    "maxp_tune_split": "tune only",
+    "maxp_confirm": "fresh builder keys + human sample \u2014 NOT the holdout (already seen in first bakeoff)",
+    "holdout_status": "contaminated_for_rerank_tuning \u2014 one-shot bakeoff peek only"
+  }
 }

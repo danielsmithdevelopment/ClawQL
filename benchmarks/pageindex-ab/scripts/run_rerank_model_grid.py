@@ -4,12 +4,18 @@ Model-scored confirmation grid: k ∈ {10,20} × ±rerank.
 
 Uses shared finalize_answer (flash-lite on all keys; optional Sonnet subset).
 Requires OPENROUTER_API_KEY. Candidate pools from export_rerank_candidates.mjs;
-reranked order from rerank-bakeoff-ranks.jsonl (top10_* / rebuild from candidates
-+ CrossEncoder) OR --rerank-model for live rerank.
+reranked order from rerank-bakeoff-ranks.jsonl.
+
+How to read results (locked):
+  - norerank k=10 vs k=20  →  ship gate for TOP_K_DOC (the decision this grid makes)
+  - ±rerank arms           →  bug reproduction if ranks came from a 512-cap bakeoff;
+                              do NOT treat as the rerank ship/no-ship verdict.
+                              Rerank is settled later by MaxP/blend/Qwen on tune,
+                              confirmed on fresh keys (not the peeked holdout).
 
 Grid cells:
   - k10_norerank, k20_norerank  (keyword top-k only — today's path at that k)
-  - k10_rerank,   k20_rerank    (cross-encoder over kw∪vec pool → top-k)
+  - k10_rerank,   k20_rerank    (cross-encoder order from bakeoff ranks → top-k)
 
 Usage:
   export OPENROUTER_API_KEY=…
@@ -286,15 +292,23 @@ def main() -> int:
     lift10 = strict("k10_rerank_flash") - strict("k10_norerank_flash")
     lift20 = strict("k20_rerank_flash") - strict("k20_norerank_flash")
     k20_vs_k10 = strict("k20_norerank_flash") - strict("k10_norerank_flash")
+    # Ship top-k from norerank cells only. Rerank lifts here are truncation repro
+    # when using 512-cap bakeoff ranks — not a product verdict.
+    ship_20 = k20_vs_k10 >= 0.07 or strict("k20_norerank_flash") >= strict("k10_norerank_flash") + 0.05
     report["recommendation"] = {
+        "flash_k20_vs_k10_norerank": k20_vs_k10,
+        "ship_top_k": 20 if ship_20 else 10,
+        "ship_top_k_metric": "norerank_flash_strict",
         "flash_rerank_lift_k10": lift10,
         "flash_rerank_lift_k20": lift20,
-        "flash_k20_vs_k10_norerank": k20_vs_k10,
-        "ship_top_k": 20 if k20_vs_k10 >= 0.07 or strict("k20_rerank_flash") >= strict("k10_rerank_flash") + 0.05 else 10,
-        "ship_rerank": lift10 >= 0.07 or lift20 >= 0.07,
+        "rerank_arms": "bug_reproduction_if_512_cap_ranks — not the rerank ship decision",
+        "rerank_next": (
+            "MaxP/blend/heading-path (or Qwen3-4B) on tune with full-text candidates; "
+            "confirm on fresh builder keys — not holdout."
+        ),
         "note": (
-            "Confirm interim TOP_K_DOC=20 if k20 beats k10 by ~7pp under model grade; "
-            "ship reranker if ±rerank lift ≥~7pp on flash-lite."
+            "Ship TOP_K_DOC from norerank k10 vs k20 under model grade. "
+            "Ignore ±rerank as a verdict until a non-truncated bakeoff wins tune."
         ),
     }
 

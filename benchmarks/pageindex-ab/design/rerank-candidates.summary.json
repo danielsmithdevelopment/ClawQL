@@ -1,6 +1,6 @@
 {
   "tag": "pageindex-ab-rerank-candidates-v1",
-  "generated_at": "2026-09-30T01:43:09.739Z",
+  "generated_at": "2026-09-30T03:39:09.560Z",
   "pool_per_retriever": 100,
   "n": 262,
   "tune_n": 156,
