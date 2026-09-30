@@ -29,9 +29,8 @@ export function configureMcpEventsProcessEmitter(): void {
   );
   setStreamTopicReleasedHandler(async (topic) => {
     try {
-      const { clearScheduleProjectionForTopic } = await import(
-        "clawql-automation/schedule/schedule"
-      );
+      const { clearScheduleProjectionForTopic } =
+        await import("clawql-automation/schedule/schedule");
       await clearScheduleProjectionForTopic(topic);
     } catch {
       /* schedule optional */

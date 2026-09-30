@@ -6,10 +6,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import {
-  MAX_PROJECTION_STORE_BYTES,
-  screenStoredText,
-} from "./change-detect.js";
+import { MAX_PROJECTION_STORE_BYTES, screenStoredText } from "./change-detect.js";
 
 const ENC_PREFIX = "enc1.";
 

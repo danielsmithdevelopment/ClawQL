@@ -635,13 +635,9 @@ function setJobChangeState(db: Database, jobId: string, patch: Partial<JobChange
     last_modified: patch.last_modified !== undefined ? patch.last_modified : cur.last_modified,
     backoff_until: patch.backoff_until !== undefined ? patch.backoff_until : cur.backoff_until,
     auth_failure_count:
-      patch.auth_failure_count !== undefined
-        ? patch.auth_failure_count
-        : cur.auth_failure_count,
+      patch.auth_failure_count !== undefined ? patch.auth_failure_count : cur.auth_failure_count,
     poll_pause_reason:
-      patch.poll_pause_reason !== undefined
-        ? patch.poll_pause_reason
-        : cur.poll_pause_reason,
+      patch.poll_pause_reason !== undefined ? patch.poll_pause_reason : cur.poll_pause_reason,
   };
   db.run(
     `UPDATE clawql_schedule_jobs
@@ -1111,8 +1107,7 @@ async function executeTriggerForJob(
       setJobChangeState(db, job.id, { backoff_until: null });
     }
 
-    const authFail =
-      outcome.http_status === 401 || outcome.http_status === 403;
+    const authFail = outcome.http_status === 401 || outcome.http_status === 403;
     if (authFail) {
       const failures = changeState.auth_failure_count + 1;
       const threshold = getAuthFailureThreshold();
@@ -1141,9 +1136,7 @@ async function executeTriggerForJob(
         last_modified: outcome.last_modified ?? changeState.last_modified,
       });
     } else if (outcome.response_excerpt != null) {
-      const previousProjectionJson = loadStoredProjectionJson(
-        changeState.last_projection_json
-      );
+      const previousProjectionJson = loadStoredProjectionJson(changeState.last_projection_json);
       const detection = detectProjectedChange({
         previousHash: changeState.last_body_hash,
         previousProjectionJson,
