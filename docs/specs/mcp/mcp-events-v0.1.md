@@ -19,7 +19,7 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 | `events/list` · `subscribe` · `unsubscribe`                                               | Polling / streaming MCP delivery modes                |
 | Webhook delivery + challenge (Standard Webhooks)                                          | `gap` / `terminated` control notifications            |
 | Durable subscription store (JSON file)                                                    | Postgres-backed multi-replica store                   |
-| Live event catalog (six events)                                                           | Dynamic OpenAPI-derived event schemas                 |
+| Live event catalog (seven events)                                                         | Dynamic OpenAPI-derived event schemas                 |
 | Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS / WebSocket native stream sources                |
 | SSRF-hardened callbacks + enterprise allowlist / PII redact / caps                        | Custom connect-to-IP TLS agent (stretch)              |
 | Access recheck + instruction screening + feedback-loop detector                           | Full Panguard ATR integration (host wires)            |
@@ -46,6 +46,7 @@ Naming: `<noun>.<past-participle>`. Reserve `mandate.*` for fleet mandates if th
 | `hook.blocked`       | Policy / ATR / hook blocked a call            | `src/mcp/mcp-tool-wrap.ts` blocked branch                                                                   | `tool?`                             |
 | `budget.exhausted`   | Inference virtual-key budget exceeded         | `clawql-inference` `validateVirtualKey`                                                                     | `budget_id?`                        |
 | `schedule.completed` | Schedule job run completed                    | `clawql-automation` `executeTriggerForJob`                                                                  | `schedule_id?`                      |
+| `schedule.paused`    | Schedule synthetic poll paused (e.g. auth)    | `clawql-automation` auth-failure threshold → `emitSchedulePaused`                                           | `schedule_id?`, `reason?`           |
 | `notification.sent`  | Slack notify success                          | `clawql-automation` notify effect                                                                           | `channel?`                          |
 
 All support `delivery: ["webhook"]` only.
@@ -59,7 +60,7 @@ All support `delivery: ["webhook"]` only.
 | Max subscriptions / principal        | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
 | Max deliveries / minute / principal  | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
 | Coalesce interval (`stream.changed`) | `CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`                          | `ceil(60000 / maxDeliveries)` (min 1s)                                  |
-| Projection at-rest key               | `CLAWQL_SCHEDULE_PROJECTION_KEY` (64 hex) or auto file beside DB  | generated                                                               |
+| Projection at-rest key               | `CLAWQL_SCHEDULE_PROJECTION_KEY` or `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY` (env / Vault) | **Required in production** (fail-closed). Dev-only: auto file beside DB |
 | Auth-failure pause threshold         | `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`                          | `3`                                                                     |
 
 ## 4c. `stream.changed` precision (schedule)
@@ -72,7 +73,11 @@ False alarms from volatile fields (timestamps, request IDs, rate-limit counters,
 4. **Capped `diff`** in the event payload (`added` / `removed` / `changed`, truncated); full projection via `schedule` get → `change_detection_state.last_projection` (screened + gateway-redacted + AES-256-GCM at rest; deleted when the schedule job is deleted or the `stream.changed` subscription for that `topic` ends).
 5. **429 backoff** — honor `Retry-After` (default 60s) via `backoff_until`; polls use the subscriber’s credentials.
 6. **Delivery coalescing** — per-subscription min interval (`CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`, default ≈ `ceil(60s / maxDeliveriesPerMinute)`) merges busy-feed changes into one event with a combined `diff` / `coalesced_count` instead of silently dropping under the delivery cap.
-7. **Upstream auth pause** — after N consecutive `401`/`403` (default 3, `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`), auto-polls pause (`poll_pause_reason=upstream_auth`), log to console, and append to the MCP `audit` ring (Evidence). Manual `schedule` trigger retries and clears the pause on success. ChatGPT does not support `terminated` notices.
+7. **Upstream auth pause** — after N consecutive `401`/`403` (default 3, `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`), auto-polls pause (`poll_pause_reason=upstream_auth`), emit **`schedule.paused`** (so automations can prompt re-auth), log + MCP `audit` ring (Evidence). ClawQL console lists paused jobs via `schedule` `list` + `paused_only: true` and clears the pause with **Reconnect sources** → `schedule` operation `reconnect` (clear pause + immediate re-poll). ChatGPT does not support `terminated` notices.
+
+### Production projection keys
+
+At-rest AES-256-GCM for schedule projections requires a key from the environment or Vault (`CLAWQL_SCHEDULE_PROJECTION_KEY` or `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY`). **Do not** keep the key beside the schedule database in production — anyone who copies that disk gets ciphertext and key together. When `NODE_ENV=production` / `CLAWQL_ENV=production|prod` (or `CLAWQL_SCHEDULE_PROJECTION_KEY_STRICT=1`), missing env/Vault key **fail-closes** schedule worker startup. Development may auto-generate a file-beside-DB key with a loud warning.
 
 ## 5. Subscription identity & durability
 

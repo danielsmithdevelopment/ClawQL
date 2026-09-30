@@ -22,6 +22,7 @@ import {
   type ChangeDetectionConfig,
 } from "./change-detect.js";
 import {
+  assertScheduleProjectionKeyConfigured,
   isEncryptedProjectionBlob,
   loadStoredProjection,
   loadStoredProjectionJson,
@@ -43,6 +44,10 @@ export {
   prepareProjectionForStore,
   loadStoredProjection,
   isEncryptedProjectionBlob,
+  assertScheduleProjectionKeyConfigured,
+  ProjectionKeyError,
+  isProductionProjectionEnv,
+  readConfiguredProjectionKeyRaw,
 } from "./projection-store.js";
 
 type Frequency =
@@ -401,9 +406,11 @@ const actionSchema = z.object({
 
 export const scheduleToolSchema = {
   operation: z
-    .enum(["create", "list", "get", "delete", "trigger"])
-    .describe("create | list | get | delete | trigger scheduled jobs."),
-  job_id: z.string().max(128).optional().describe("Required for get/delete/trigger."),
+    .enum(["create", "list", "get", "delete", "trigger", "reconnect"])
+    .describe(
+      "create | list | get | delete | trigger | reconnect (ClawQL console Reconnect sources — clear auth pause and re-poll)."
+    ),
+  job_id: z.string().max(128).optional().describe("Required for get/delete/trigger/reconnect."),
   schedule: z.object({ frequency: frequencySchema }).optional(),
   action: actionSchema.optional(),
   enabled: z.boolean().optional().describe("For create: defaults true."),
@@ -415,6 +422,10 @@ export const scheduleToolSchema = {
     .boolean()
     .optional()
     .describe("For list/get: include recent run history (default true for get, false for list)."),
+  paused_only: z
+    .boolean()
+    .optional()
+    .describe("For list: only jobs with poll_pause_reason set (console paused sources)."),
   limit: z.number().int().min(1).max(200).optional().describe("For list: max jobs (default 50)."),
   runs_limit: z
     .number()
@@ -447,7 +458,12 @@ const scheduleInputSchema = z.object(scheduleToolSchema).superRefine((data, ctx)
       }
     }
   }
-  if (data.operation === "get" || data.operation === "delete" || data.operation === "trigger") {
+  if (
+    data.operation === "get" ||
+    data.operation === "delete" ||
+    data.operation === "trigger" ||
+    data.operation === "reconnect"
+  ) {
     if (!data.job_id || !data.job_id.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires job_id` });
     }
@@ -692,7 +708,7 @@ function jobPollPaused(db: Database, jobId: string): string | null {
 }
 
 function surfaceScheduleAuthPause(jobId: string, name: string, failures: number): void {
-  const summary = `Paused schedule poll ${jobId} (${name}) after ${failures} consecutive upstream auth failures (401/403). Fix credentials then trigger the job to resume.`;
+  const summary = `Paused schedule poll ${jobId} (${name}) after ${failures} consecutive upstream auth failures (401/403). Fix credentials then use schedule reconnect (ClawQL console Reconnect sources).`;
   console.error(`[clawql-schedule] ${summary}`);
   try {
     appendWorkflowAudit({
@@ -702,6 +718,19 @@ function surfaceScheduleAuthPause(jobId: string, name: string, failures: number)
     });
   } catch {
     /* audit optional outside MCP process */
+  }
+  try {
+    void import("clawql-mcp-events").then(({ emitSchedulePaused }) => {
+      emitSchedulePaused({
+        schedule_id: jobId,
+        reason: "upstream_auth",
+        summary,
+        name,
+        auth_failure_count: failures,
+      });
+    });
+  } catch {
+    /* mcp-events optional */
   }
 }
 
@@ -1262,6 +1291,10 @@ export async function runScheduleWorkerTick(now = new Date()): Promise<number> {
 
 export function startScheduleWorker(): void {
   if (scheduleWorkerStop) return;
+  const keyCheck = assertScheduleProjectionKeyConfigured();
+  if (!keyCheck.ok) {
+    throw new ProjectionKeyError(keyCheck.reason);
+  }
   const pollMs = getSchedulePollMs();
   const handle = Effect.runSync(
     startScheduleWorkerFiberEffect(() => runScheduleWorkerTick(), pollMs)
@@ -1323,11 +1356,20 @@ export async function dispatchScheduleOperation(
       const limit = parsed.limit ?? 50;
       const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
       const includeRuns = parsed.include_runs === true;
+      const pausedOnly = parsed.paused_only === true;
       const stmt = db.prepare(
-        `SELECT id, frequency_json, action_json, enabled, created_at, updated_at
-           FROM clawql_schedule_jobs
-           ORDER BY created_at DESC
-           LIMIT ?`
+        pausedOnly
+          ? `SELECT id, frequency_json, action_json, enabled, created_at, updated_at,
+                    auth_failure_count, poll_pause_reason
+               FROM clawql_schedule_jobs
+               WHERE poll_pause_reason IS NOT NULL AND trim(poll_pause_reason) != ''
+               ORDER BY created_at DESC
+               LIMIT ?`
+          : `SELECT id, frequency_json, action_json, enabled, created_at, updated_at,
+                    auth_failure_count, poll_pause_reason
+               FROM clawql_schedule_jobs
+               ORDER BY created_at DESC
+               LIMIT ?`
       );
       stmt.bind([limit]);
       const jobs: Array<Record<string, unknown>> = [];
@@ -1339,7 +1381,13 @@ export async function dispatchScheduleOperation(
           enabled: number;
           created_at: string;
           updated_at: string;
+          auth_failure_count: number | null;
+          poll_pause_reason: string | null;
         };
+        const pauseReason =
+          typeof row.poll_pause_reason === "string" && row.poll_pause_reason.length > 0
+            ? row.poll_pause_reason
+            : null;
         const job: Record<string, unknown> = {
           id: row.id,
           schedule: { frequency: safeJsonParse<Frequency>(row.frequency_json) },
@@ -1347,12 +1395,23 @@ export async function dispatchScheduleOperation(
           enabled: Number(row.enabled) === 1,
           created_at: row.created_at,
           updated_at: row.updated_at,
+          poll_pause_reason: pauseReason,
+          auth_failure_count: Number(row.auth_failure_count ?? 0),
+          /** Console "Reconnect sources" → schedule operation reconnect */
+          reconnect_available: pauseReason != null,
+          reconnect_operation: pauseReason != null ? "reconnect" : null,
         };
         if (includeRuns) job.runs = getRunsForJob(db, row.id, runsLimit);
         jobs.push(job);
       }
       stmt.free();
-      return jsonResponse({ ok: true, operation: "list", jobs });
+      return jsonResponse({
+        ok: true,
+        operation: "list",
+        paused_only: pausedOnly,
+        reconnect_sources_action: "reconnect",
+        jobs,
+      });
     }
     case "get": {
       const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
@@ -1378,6 +1437,9 @@ export async function dispatchScheduleOperation(
             projection_encrypted: isEncryptedProjectionBlob(change.last_projection_json),
             auth_failure_count: change.auth_failure_count,
             poll_pause_reason: change.poll_pause_reason,
+            reconnect_available: change.poll_pause_reason != null,
+            reconnect_operation:
+              change.poll_pause_reason != null ? "reconnect" : null,
           },
           ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
         },
@@ -1411,6 +1473,36 @@ export async function dispatchScheduleOperation(
         ok: run.ok,
         operation: "trigger",
         job_id: job.id,
+        run,
+      });
+    }
+    case "reconnect": {
+      // ClawQL console "Reconnect sources" — clear auth pause and re-poll immediately.
+      const job = getJobById(db, parsed.job_id!);
+      if (!job) {
+        return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
+      }
+      const prior = getJobChangeState(db, job.id);
+      const wasPaused = prior.poll_pause_reason != null;
+      setJobChangeState(db, job.id, {
+        auth_failure_count: 0,
+        poll_pause_reason: null,
+        backoff_until: null,
+      });
+      const run = await executeTriggerForJob(db, job, { dryRun: parsed.dry_run === true });
+      if (!run.dry_run) {
+        await persistDb(db, absDbPath);
+        await maybeSendScheduleNotification(job, run);
+      }
+      const after = getJobChangeState(db, job.id);
+      return jsonResponse({
+        ok: run.ok,
+        operation: "reconnect",
+        reconnect_sources: true,
+        job_id: job.id,
+        was_paused: wasPaused,
+        prior_pause_reason: prior.poll_pause_reason,
+        poll_pause_reason: after.poll_pause_reason,
         run,
       });
     }

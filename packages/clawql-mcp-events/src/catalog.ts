@@ -166,6 +166,43 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
     },
   },
   {
+    name: "schedule.paused",
+    description:
+      "A schedule synthetic poll was paused (e.g. consecutive upstream 401/403). ChatGPT does not support terminated notices — subscribe so automations can prompt re-auth. Reconnect via schedule operation reconnect (ClawQL console Reconnect sources).",
+    delivery: ["webhook"],
+    inputSchema: {
+      type: "object",
+      properties: {
+        schedule_id: {
+          type: "string",
+          description: "Optional schedule job id filter.",
+        },
+        reason: {
+          type: "string",
+          description: "Optional pause reason filter (e.g. upstream_auth).",
+        },
+      },
+      additionalProperties: false,
+    },
+    payloadSchema: {
+      type: "object",
+      properties: {
+        schedule_id: { type: "string" },
+        reason: { type: "string" },
+        summary: { type: "string" },
+        name: { type: "string" },
+        auth_failure_count: { type: "integer" },
+        paused_at: { type: "string" },
+        reconnect_operation: {
+          type: "string",
+          description: "MCP schedule operation to clear the pause (reconnect).",
+        },
+      },
+      required: ["schedule_id", "reason", "summary", "paused_at"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "notification.sent",
     description: "A ClawQL notification was sent (Slack notify success).",
     delivery: ["webhook"],

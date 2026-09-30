@@ -62,6 +62,8 @@ export {
   emitNotificationSentAwait,
   emitScheduleCompleted,
   emitScheduleCompletedAwait,
+  emitSchedulePaused,
+  emitSchedulePausedAwait,
   emitStreamChanged,
   emitStreamChangedAwait,
 } from "./producers.js";

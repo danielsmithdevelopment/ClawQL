@@ -419,13 +419,116 @@ describe("handleScheduleToolInput", () => {
             change_detection_state: {
               poll_pause_reason: string | null;
               auth_failure_count: number;
+              reconnect_available: boolean;
+              reconnect_operation: string | null;
             };
           };
         };
         expect(got.job.change_detection_state.poll_pause_reason).toBe("upstream_auth");
         expect(got.job.change_detection_state.auth_failure_count).toBe(3);
+        expect(got.job.change_detection_state.reconnect_available).toBe(true);
+        expect(got.job.change_detection_state.reconnect_operation).toBe("reconnect");
         const fired = await runScheduleWorkerTick(new Date());
         expect(fired).toBe(0);
+        expect(calls).toBe(3);
+
+        const pausedList = JSON.parse(
+          (
+            await handleScheduleToolInput({
+              operation: "list",
+              paused_only: true,
+            })
+          ).content[0]!.text
+        ) as {
+          paused_only: boolean;
+          reconnect_sources_action: string;
+          jobs: Array<{
+            id: string;
+            poll_pause_reason: string | null;
+            reconnect_available: boolean;
+            reconnect_operation: string | null;
+          }>;
+        };
+        expect(pausedList.paused_only).toBe(true);
+        expect(pausedList.reconnect_sources_action).toBe("reconnect");
+        expect(pausedList.jobs).toHaveLength(1);
+        expect(pausedList.jobs[0]!.id).toBe(jobId);
+        expect(pausedList.jobs[0]!.reconnect_available).toBe(true);
+
+        const reconn = JSON.parse(
+          (
+            await handleScheduleToolInput({
+              operation: "reconnect",
+              job_id: jobId,
+            })
+          ).content[0]!.text
+        ) as {
+          ok: boolean;
+          operation: string;
+          reconnect_sources: boolean;
+          was_paused: boolean;
+          prior_pause_reason: string | null;
+        };
+        expect(reconn.operation).toBe("reconnect");
+        expect(reconn.reconnect_sources).toBe(true);
+        expect(reconn.was_paused).toBe(true);
+        expect(reconn.prior_pause_reason).toBe("upstream_auth");
+        expect(calls).toBe(4); // one reconnect poll
+      }
+    );
+  });
+
+  it("reconnect clears pause and resumes when credentials work", async () => {
+    let mode: "401" | "200" = "401";
+    let calls = 0;
+    await withFetchServer(
+      async () => {
+        calls++;
+        if (mode === "401") return new Response("nope", { status: 401 });
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+      async (origin) => {
+        process.env.CLAWQL_SCHEDULE_URL_ALLOWLIST_PREFIXES = origin;
+        process.env.CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD = "2";
+        const created = await handleScheduleToolInput({
+          operation: "create",
+          schedule: { frequency: { type: "interval", seconds: 300 } },
+          action: {
+            kind: "synthetic",
+            synthetic_test: {
+              name: "reauth",
+              request: { method: "GET", url: `${origin}/secure` },
+              assert: { status_in: [200] },
+            },
+          },
+        });
+        const jobId = (JSON.parse(created.content[0]!.text) as { job: { id: string } }).job.id;
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        await handleScheduleToolInput({ operation: "trigger", job_id: jobId });
+        const paused = JSON.parse(
+          (await handleScheduleToolInput({ operation: "get", job_id: jobId })).content[0]!.text
+        ) as { job: { change_detection_state: { poll_pause_reason: string | null } } };
+        expect(paused.job.change_detection_state.poll_pause_reason).toBe("upstream_auth");
+
+        mode = "200";
+        const reconn = JSON.parse(
+          (
+            await handleScheduleToolInput({
+              operation: "reconnect",
+              job_id: jobId,
+            })
+          ).content[0]!.text
+        ) as {
+          ok: boolean;
+          poll_pause_reason: string | null;
+          was_paused: boolean;
+        };
+        expect(reconn.ok).toBe(true);
+        expect(reconn.was_paused).toBe(true);
+        expect(reconn.poll_pause_reason).toBeNull();
         expect(calls).toBe(3);
       }
     );

@@ -10,6 +10,7 @@ import {
   emitHookBlockedAwait,
   emitNotificationSentAwait,
   emitScheduleCompletedAwait,
+  emitSchedulePausedAwait,
   emitStreamChangedAwait,
 } from "./producers.js";
 import { setMcpEventsProcessEmitter } from "./process-bridge.js";
@@ -73,9 +74,11 @@ describe("MCP Events producers (no vapor)", () => {
   it("advertises stream.changed and has empty deferred catalog", () => {
     expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "stream.changed")).toBe(true);
     expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "schedule.completed")).toBe(true);
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "schedule.paused")).toBe(true);
     expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "notification.sent")).toBe(true);
     expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "mandate.completed")).toBe(false);
     expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "clawql.notification")).toBe(false);
+    expect(BUILTIN_MCP_EVENT_CATALOG).toHaveLength(7);
     expect(DEFERRED_MCP_EVENT_CATALOG).toHaveLength(0);
   });
 
@@ -169,6 +172,24 @@ describe("MCP Events producers (no vapor)", () => {
       expectData: (d) => {
         expect(d.schedule_id).toBe("job_1");
         expect(d.status).toBe("ok");
+      },
+    },
+    {
+      name: "schedule.paused",
+      subscribeArgs: { schedule_id: "job_paused_1", reason: "upstream_auth" },
+      trigger: () =>
+        emitSchedulePausedAwait({
+          schedule_id: "job_paused_1",
+          reason: "upstream_auth",
+          summary: "Paused after auth failures",
+          name: "poll-a",
+          auth_failure_count: 3,
+        }),
+      expectData: (d) => {
+        expect(d.schedule_id).toBe("job_paused_1");
+        expect(d.reason).toBe("upstream_auth");
+        expect(d.reconnect_operation).toBe("reconnect");
+        expect(d.paused_at).toBeTruthy();
       },
     },
     {

@@ -1,6 +1,10 @@
 /**
  * At-rest encryption + retention helpers for schedule projection snapshots.
  * Snapshots are third-party data: screen, redact like delivered diffs, encrypt, delete with lifecycle.
+ *
+ * Production: key MUST come from env / Vault (`CLAWQL_SCHEDULE_PROJECTION_KEY` or
+ * `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY`). Auto-generated keys beside the DB are
+ * development-only — colocated ciphertext + key defeats encryption.
  */
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
@@ -9,6 +13,14 @@ import { dirname, join } from "node:path";
 import { MAX_PROJECTION_STORE_BYTES, screenStoredText } from "./change-detect.js";
 
 const ENC_PREFIX = "enc1.";
+
+export class ProjectionKeyError extends Error {
+  readonly code = "SCHEDULE_PROJECTION_KEY_MISSING" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "ProjectionKeyError";
+  }
+}
 
 function screenStoredValue(value: unknown): unknown {
   if (typeof value === "string") return screenStoredText(value);
@@ -23,12 +35,38 @@ function screenStoredValue(value: unknown): unknown {
   return value;
 }
 
-function resolveKeyMaterial(env: NodeJS.ProcessEnv = process.env): Buffer {
-  const raw = env.CLAWQL_SCHEDULE_PROJECTION_KEY?.trim();
-  if (raw) {
-    if (/^[0-9a-fA-F]{64}$/.test(raw)) return Buffer.from(raw, "hex");
-    return createHash("sha256").update(raw, "utf8").digest();
-  }
+export function isProductionProjectionEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const node = env.NODE_ENV?.trim().toLowerCase();
+  const claw = env.CLAWQL_ENV?.trim().toLowerCase();
+  return node === "production" || claw === "production" || claw === "prod";
+}
+
+export function isProjectionKeyStrict(env: NodeJS.ProcessEnv = process.env): boolean {
+  if (isProductionProjectionEnv(env)) return true;
+  const raw = env.CLAWQL_SCHEDULE_PROJECTION_KEY_STRICT?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+/** Env / Vault-style secret material (never a file beside the schedule DB). */
+export function readConfiguredProjectionKeyRaw(
+  env: NodeJS.ProcessEnv = process.env
+): string | null {
+  const direct = env.CLAWQL_SCHEDULE_PROJECTION_KEY?.trim();
+  if (direct) return direct;
+  // Env secret-store convention (CLAWQL_SECRET_<PATH>)
+  const viaSecret = env.CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY?.trim();
+  if (viaSecret) return viaSecret;
+  return null;
+}
+
+function materializeKey(raw: string): Buffer {
+  if (/^[0-9a-fA-F]{64}$/.test(raw)) return Buffer.from(raw, "hex");
+  return createHash("sha256").update(raw, "utf8").digest();
+}
+
+let warnedDevFileKey = false;
+
+function resolveDevFileKey(env: NodeJS.ProcessEnv): Buffer {
   const dbPath = env.CLAWQL_SCHEDULE_DB_PATH?.trim();
   const keyPath = dbPath
     ? join(dirname(dbPath), "projection.key")
@@ -36,19 +74,79 @@ function resolveKeyMaterial(env: NodeJS.ProcessEnv = process.env): Buffer {
   try {
     if (existsSync(keyPath)) {
       const existing = readFileSync(keyPath, "utf8").trim();
-      if (/^[0-9a-fA-F]{64}$/.test(existing)) return Buffer.from(existing, "hex");
+      if (/^[0-9a-fA-F]{64}$/.test(existing)) {
+        if (!warnedDevFileKey) {
+          warnedDevFileKey = true;
+          console.warn(
+            `[clawql-schedule] Using development projection key file at ${keyPath}. ` +
+              `In production set CLAWQL_SCHEDULE_PROJECTION_KEY (or CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY / Vault).`
+          );
+        }
+        return Buffer.from(existing, "hex");
+      }
     }
   } catch {
-    /* fall through to create */
+    /* fall through */
   }
   const key = randomBytes(32);
   try {
     mkdirSync(dirname(keyPath), { recursive: true });
     writeFileSync(keyPath, key.toString("hex"), { mode: 0o600 });
   } catch {
-    /* in-memory only for this process if filesystem unwritable */
+    /* in-memory only */
+  }
+  if (!warnedDevFileKey) {
+    warnedDevFileKey = true;
+    console.warn(
+      `[clawql-schedule] Generated development projection key at ${keyPath}. ` +
+        `Do not use file-beside-DB keys in production — set CLAWQL_SCHEDULE_PROJECTION_KEY.`
+    );
   }
   return key;
+}
+
+/**
+ * Resolve AES key material.
+ * @throws {ProjectionKeyError} in production / strict mode when no env/Vault key is configured.
+ */
+export function resolveKeyMaterial(env: NodeJS.ProcessEnv = process.env): Buffer {
+  const configured = readConfiguredProjectionKeyRaw(env);
+  if (configured) return materializeKey(configured);
+
+  if (isProjectionKeyStrict(env)) {
+    throw new ProjectionKeyError(
+      "CLAWQL_SCHEDULE_PROJECTION_KEY (or CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY) is required in production. " +
+        "Refusing file-beside-DB keys — ciphertext and key on the same disk are not encryption."
+    );
+  }
+  return resolveDevFileKey(env);
+}
+
+/**
+ * Boot / worker guard. Fail closed when strict; otherwise warn once if only file keys would be used.
+ */
+export function assertScheduleProjectionKeyConfigured(
+  env: NodeJS.ProcessEnv = process.env
+): { ok: true; source: "env" | "dev_file" } | { ok: false; reason: string } {
+  if (readConfiguredProjectionKeyRaw(env)) {
+    return { ok: true, source: "env" };
+  }
+  const reason =
+    "CLAWQL_SCHEDULE_PROJECTION_KEY (or CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY) not set — " +
+    "projection snapshots cannot be encrypted safely in production (key must not sit beside the DB)";
+  if (isProjectionKeyStrict(env)) {
+    console.error(`[clawql-schedule] FATAL: ${reason}`);
+    return { ok: false, reason };
+  }
+  console.warn(
+    `[clawql-schedule] WARNING: ${reason}. Development file-beside-DB key fallback is active.`
+  );
+  return { ok: true, source: "dev_file" };
+}
+
+/** Reset one-shot warn flag (tests). */
+export function resetProjectionKeyWarnForTests(): void {
+  warnedDevFileKey = false;
 }
 
 /** Encrypt UTF-8 JSON for SQLite at-rest storage (AES-256-GCM). */

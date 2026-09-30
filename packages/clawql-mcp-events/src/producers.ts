@@ -98,6 +98,30 @@ export function emitScheduleCompleted(input: {
   });
 }
 
+export function emitSchedulePaused(input: {
+  schedule_id: string;
+  reason: string;
+  summary: string;
+  name?: string;
+  auth_failure_count?: number;
+  paused_at?: string;
+}): void {
+  emitMcpEventBestEffort({
+    name: "schedule.paused",
+    data: {
+      schedule_id: input.schedule_id,
+      reason: input.reason,
+      summary: input.summary,
+      paused_at: input.paused_at ?? new Date().toISOString(),
+      reconnect_operation: "reconnect",
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.auth_failure_count != null
+        ? { auth_failure_count: input.auth_failure_count }
+        : {}),
+    },
+  });
+}
+
 export function emitNotificationSent(input: {
   text: string;
   channel?: string;
@@ -200,6 +224,30 @@ export async function emitScheduleCompletedAwait(input: {
       schedule_id: input.schedule_id,
       status: input.status,
       ...(input.summary ? { summary: input.summary } : {}),
+    },
+  });
+}
+
+export async function emitSchedulePausedAwait(input: {
+  schedule_id: string;
+  reason: string;
+  summary: string;
+  name?: string;
+  auth_failure_count?: number;
+  paused_at?: string;
+}): Promise<readonly DeliveryOutcome[]> {
+  return emitMcpEvent({
+    name: "schedule.paused",
+    data: {
+      schedule_id: input.schedule_id,
+      reason: input.reason,
+      summary: input.summary,
+      paused_at: input.paused_at ?? new Date().toISOString(),
+      reconnect_operation: "reconnect",
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.auth_failure_count != null
+        ? { auth_failure_count: input.auth_failure_count }
+        : {}),
     },
   });
 }

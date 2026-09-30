@@ -8,7 +8,7 @@ This pass is a **hard release gate**. Do **not** tag or publish `clawql-mcp@8.0.
 
 1. [ ] Plugin page shows ClawQL **events** alongside tools after rescan.
 2. [ ] `server/discover` returns `capabilities.events: {}`.
-3. [ ] `events/list` returns all six live events: `stream.changed`, `document.processed`, `hook.blocked`, `budget.exhausted`, `schedule.completed`, `notification.sent` (no `mandate.completed` / `clawql.notification`).
+3. [ ] `events/list` returns all seven live events: `stream.changed`, `document.processed`, `hook.blocked`, `budget.exhausted`, `schedule.completed`, `schedule.paused`, `notification.sent` (no `mandate.completed` / `clawql.notification`).
 4. [ ] New chat: ask ChatGPT to subscribe to `notification.sent` (or another live event) and specify an action.
 5. [ ] Server receives `events/subscribe`; challenge verification succeeds (`2xx` + echoed challenge).
 6. [ ] Trigger the real producer (Slack `notify`, schedule tick with body change for `stream.changed`, IDP pipeline, blocked tool, or budget exceed).
