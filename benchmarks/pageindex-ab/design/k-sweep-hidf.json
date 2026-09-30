@@ -10,7 +10,7 @@
   ],
   "n_questions": 358,
   "n_with_gold": 262,
-  "detectable_pp_note": "With n=358, offline single-comparison differences of ~7–8pp are decisive (deterministic extractAnswer).",
+  "detectable_pp_note": "With n=358, offline single-comparison differences of ~7\u20138pp are decisive (deterministic extractAnswer).",
   "by_k": {
     "3": {
       "n": 358,
@@ -200,22 +200,22 @@
     "unanswerable_n": 36,
     "mode": "offline_extract_empty",
     "model": null,
-    "note": "Offline extractAnswer on empty evidence (always miss answerable keys). Set OPENROUTER_API_KEY + --llm-none for true memory baseline.",
+    "note": "Empty-evidence extractAnswer is 0 on answerable keys by construction and cannot rule out model memory. Do not use as anti-memory evidence.",
     "answer_accuracy": 0.1005586592178771,
     "answerable_accuracy": 0
   },
   "leakage_explanation": "When answer_accuracy > gold_recall / strict_accuracy, the gap is answers found in non-gold top-k sections (offline extract), not LLM memory. True training-memory needs --llm-none + OPENROUTER_API_KEY on H-none.",
-  "gold_curve_note": "Gold recall still climbing through k=20 (>+5pp vs k=10); ceiling not reached — consider k=40 in a follow-up if product context budget allows.",
+  "gold_curve_note": "Gold recall still climbing through k=20 (>+5pp vs k=10); ceiling not reached \u2014 consider k=40 in a follow-up if product context budget allows.",
   "recommendation": {
     "current_eval_top_k": 3,
     "suggested_eval_top_k": 20,
     "raise_default": true,
-    "applied": "TOP_K_DOC=20 in retrieval_helpers.mjs",
-    "metric": "strict_accuracy",
+    "applied": "TOP_K_DOC=20 in retrieval_helpers.mjs (interim ship; ranking fixes complementary)",
+    "metric": "offline_strict_accuracy",
     "max_strict_gain_vs_k3": 0.22067039106145248,
     "max_answer_gain_vs_k3": 0.13407821229050287,
     "max_gold_gain_vs_k3": 0.29007633587786263,
-    "rationale": "Strict accuracy rises 22.1pp from k=3 to k=20; recommend raising eval/default section top-k to 20."
+    "rationale": "Offline strict rises 22.1pp from k=3 to k=20; ship TOP_K_DOC=20 meanwhile. Confirm with --llm before treating as product accuracy. Ranking diagnostics next."
   },
   "exploratory_k40": {
     "gold_recall": 0.855,
@@ -223,7 +223,13 @@
     "strict_accuracy": 0.8715,
     "delta_strict_vs_k20": 0.0587,
     "delta_gold_vs_k20": 0.0802,
-    "note": "Incremental k20→40 strict +5.9pp is below ~7–8pp detection bar; keep default at 20. Gold still rising — revisit with LLM grade if context is free."
+    "note": "Incremental k20\u219240 strict +5.9pp is below ~7\u20138pp detection bar; keep default at 20. Gold still rising \u2014 revisit with LLM grade if context is free."
   },
-  "track_b": "CodeGraph prove keys signed; additive A-codegraph locked — settle before 2026-10-15 freeze."
+  "track_b": "CodeGraph prove keys signed; additive A-codegraph locked \u2014 settle before 2026-10-15 freeze.",
+  "scoring": "offline_extract",
+  "scoring_note": "Offline extractAnswer only \u2014 answer-in-context, not model use. Pilot strict 0.536 used the same offline path with different citeOk (citation F1>0 vs gold-id-in-top-k); 0.536 vs k=3 strict 0.592 is grading, not model vs extract.",
+  "context_explains_answers": {
+    "holds": true,
+    "explanation": "At every k, strict_accuracy \u2264 answer_accuracy. Correct grades remain explainable by retrieved text (including non-gold sections carrying the same fact). This is the leakage evidence \u2014 not H-none=0. True memory needs LLM finalize on empty evidence."
+  }
 }

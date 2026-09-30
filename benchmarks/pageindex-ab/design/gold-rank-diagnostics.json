@@ -1,0 +1,365 @@
+{
+  "tag": "pageindex-ab-gold-rank-diagnostics-v1",
+  "generated_at": "2026-09-30T01:17:36.128Z",
+  "corpus": "hard-candidate",
+  "n_with_gold": 262,
+  "split": {
+    "tune_frac": 0.6,
+    "seed": 20261015,
+    "tune_n": 156,
+    "holdout_n": 106,
+    "hygiene": "Signed set was used for k-sweep. Tune = development signal only. Confirm ranking fixes on holdout here, then on fresh builder keys + human sample before claiming a ship win."
+  },
+  "vector": {
+    "enabled": true,
+    "provider": "local",
+    "model": "Xenova/all-MiniLM-L6-v2"
+  },
+  "interim_default": {
+    "TOP_K_DOC": 20,
+    "note": "Ship k=20 meanwhile; ranking fixes improve what those 20 contain and help small-k clients."
+  },
+  "summaries": {
+    "tune": {
+      "split": "tune",
+      "n": 156,
+      "n_keyword_miss_at_10": 57,
+      "by_method": {
+        "keyword": {
+          "n": 156,
+          "recall_at_10": 0.6346153846153846,
+          "recall_at_50": 0.8782051282051282,
+          "recall_at_100": 0.9807692307692307,
+          "mean_rank": 17.692307692307693,
+          "median_rank": 4
+        },
+        "vector": {
+          "n": 142,
+          "recall_at_10": 0.5985915492957746,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.9788732394366197,
+          "mean_rank": 19.64788732394366,
+          "median_rank": 7.5
+        },
+        "rrf": {
+          "n": 142,
+          "recall_at_10": 0.6197183098591549,
+          "recall_at_50": 0.8450704225352113,
+          "recall_at_100": 0.9788732394366197,
+          "mean_rank": 19.47887323943662,
+          "median_rank": 7
+        },
+        "keyword_ctx": {
+          "n": 142,
+          "recall_at_10": 0.6056338028169014,
+          "recall_at_50": 0.8661971830985915,
+          "recall_at_100": 0.9788732394366197,
+          "mean_rank": 19.176056338028168,
+          "median_rank": 6
+        },
+        "vector_ctx": {
+          "n": 142,
+          "recall_at_10": 0.5915492957746479,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.971830985915493,
+          "mean_rank": 19.654929577464788,
+          "median_rank": 7
+        },
+        "rrf_ctx": {
+          "n": 142,
+          "recall_at_10": 0.6338028169014085,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.9788732394366197,
+          "mean_rank": 19.47887323943662,
+          "median_rank": 6.5
+        }
+      },
+      "miss_class_counts": {
+        "rerank": 32,
+        "deep_rerank": 8,
+        "other_rescue": 4,
+        "vector_rescue": 8,
+        "contextual_header_fix": 1,
+        "merge": 3,
+        "merge_helps": 1
+      },
+      "lifts_recall_at_10": {
+        "vector_vs_keyword_r10": -0.036023835319609954,
+        "rrf_vs_keyword_r10": -0.0148970747562297,
+        "keyword_ctx_vs_keyword_r10": -0.028981581798483202,
+        "rrf_ctx_vs_keyword_r10": -0.0008125677139760867
+      }
+    },
+    "holdout": {
+      "split": "holdout",
+      "n": 106,
+      "n_keyword_miss_at_10": 34,
+      "by_method": {
+        "keyword": {
+          "n": 106,
+          "recall_at_10": 0.6792452830188679,
+          "recall_at_50": 0.8867924528301887,
+          "recall_at_100": 0.9622641509433962,
+          "mean_rank": 18.933962264150942,
+          "median_rank": 3.5
+        },
+        "vector": {
+          "n": 96,
+          "recall_at_10": 0.6145833333333334,
+          "recall_at_50": 0.8854166666666666,
+          "recall_at_100": 0.9583333333333334,
+          "mean_rank": 19.25,
+          "median_rank": 5
+        },
+        "rrf": {
+          "n": 96,
+          "recall_at_10": 0.6458333333333334,
+          "recall_at_50": 0.8854166666666666,
+          "recall_at_100": 0.96875,
+          "mean_rank": 19.885416666666668,
+          "median_rank": 6
+        },
+        "keyword_ctx": {
+          "n": 96,
+          "recall_at_10": 0.6354166666666666,
+          "recall_at_50": 0.875,
+          "recall_at_100": 0.9583333333333334,
+          "mean_rank": 20.697916666666668,
+          "median_rank": 5
+        },
+        "vector_ctx": {
+          "n": 96,
+          "recall_at_10": 0.625,
+          "recall_at_50": 0.8958333333333334,
+          "recall_at_100": 0.9583333333333334,
+          "mean_rank": 19.333333333333332,
+          "median_rank": 5
+        },
+        "rrf_ctx": {
+          "n": 96,
+          "recall_at_10": 0.65625,
+          "recall_at_50": 0.8958333333333334,
+          "recall_at_100": 0.96875,
+          "mean_rank": 19.25,
+          "median_rank": 6
+        }
+      },
+      "miss_class_counts": {
+        "rerank": 24,
+        "vector_rescue": 3,
+        "other_rescue": 1,
+        "merge": 2,
+        "index_mismatch": 1,
+        "deep_rerank": 3
+      },
+      "lifts_recall_at_10": {
+        "vector_vs_keyword_r10": -0.06466194968553451,
+        "rrf_vs_keyword_r10": -0.033411949685534514,
+        "keyword_ctx_vs_keyword_r10": -0.043828616352201255,
+        "rrf_ctx_vs_keyword_r10": -0.022995283018867885
+      }
+    },
+    "all": {
+      "split": "all_signed_set_leak_risk",
+      "n": 262,
+      "n_keyword_miss_at_10": 91,
+      "by_method": {
+        "keyword": {
+          "n": 262,
+          "recall_at_10": 0.6526717557251909,
+          "recall_at_50": 0.8816793893129771,
+          "recall_at_100": 0.9732824427480916,
+          "mean_rank": 18.19465648854962,
+          "median_rank": 4
+        },
+        "vector": {
+          "n": 238,
+          "recall_at_10": 0.6050420168067226,
+          "recall_at_50": 0.8697478991596639,
+          "recall_at_100": 0.9705882352941176,
+          "mean_rank": 19.48739495798319,
+          "median_rank": 7
+        },
+        "rrf": {
+          "n": 238,
+          "recall_at_10": 0.6302521008403361,
+          "recall_at_50": 0.8613445378151261,
+          "recall_at_100": 0.9747899159663865,
+          "mean_rank": 19.642857142857142,
+          "median_rank": 6
+        },
+        "keyword_ctx": {
+          "n": 238,
+          "recall_at_10": 0.6176470588235294,
+          "recall_at_50": 0.8697478991596639,
+          "recall_at_100": 0.9705882352941176,
+          "mean_rank": 19.789915966386555,
+          "median_rank": 6
+        },
+        "vector_ctx": {
+          "n": 238,
+          "recall_at_10": 0.6050420168067226,
+          "recall_at_50": 0.8739495798319328,
+          "recall_at_100": 0.9663865546218487,
+          "mean_rank": 19.525210084033613,
+          "median_rank": 6
+        },
+        "rrf_ctx": {
+          "n": 238,
+          "recall_at_10": 0.6428571428571429,
+          "recall_at_50": 0.8739495798319328,
+          "recall_at_100": 0.9747899159663865,
+          "mean_rank": 19.386554621848738,
+          "median_rank": 6
+        }
+      },
+      "miss_class_counts": {
+        "rerank": 56,
+        "vector_rescue": 11,
+        "other_rescue": 5,
+        "deep_rerank": 11,
+        "merge": 5,
+        "contextual_header_fix": 1,
+        "index_mismatch": 1,
+        "merge_helps": 1
+      },
+      "lifts_recall_at_10": {
+        "vector_vs_keyword_r10": -0.04762973891846822,
+        "rrf_vs_keyword_r10": -0.022419654884854756,
+        "keyword_ctx_vs_keyword_r10": -0.035024696901661434,
+        "rrf_ctx_vs_keyword_r10": -0.009814612868047967
+      }
+    }
+  },
+  "recommendation": {
+    "next_fix": "cross_encoder_rerank",
+    "rationale": "On tune docs-only, keyword already has gold@50=0.866 and gold@100=0.979 while gold@10=0.599. Miss classes are mostly rerank (32) + deep_rerank (8). Deterministic heading-path contextual headers lift recall@10 by <1pp (not actionable). Vector/RRF alone do not beat keyword; merge burials are rare (3). A perfect top-50\u219210 reranker ceilings +26.8pp on tune docs \u2014 ship that path next.",
+    "contextual_headers": {
+      "tested": "deterministic doc-title \u203a heading-path prepend",
+      "tune_docs_lift_r10": 0.007042253521126751,
+      "holdout_docs_lift_r10": -0.01041666666666674,
+      "verdict": "no_ship \u2014 wash/regression vs keyword; LLM-written one-sentence context remains untested"
+    },
+    "merge_rrf": {
+      "verdict": "not_the_bottleneck",
+      "tune_merge_misses": 3,
+      "note": "CLAWQL_MEMORY_RECALL_HYBRID / RRF prove-or-remove can wait; section-level RRF does not bury many golds."
+    },
+    "order": [
+      "diagnostics (done)",
+      "contextual heading-path (tested \u2014 no ship)",
+      "cross-encoder rerank keyword top-50\u219210/20 (next; local 5090)",
+      "optional LLM contextual retrieval if deep misses remain",
+      "model-scored accuracy confirm; keep TOP_K_DOC=20 meanwhile"
+    ]
+  },
+  "rows_path": "gold-rank-diagnostics-rows.jsonl",
+  "summaries_docs_only": {
+    "tune": {
+      "n": 142,
+      "by_method": {
+        "keyword": {
+          "n": 142,
+          "recall_at_10": 0.5985915492957746,
+          "recall_at_50": 0.8661971830985915,
+          "recall_at_100": 0.9788732394366197
+        },
+        "vector": {
+          "n": 142,
+          "recall_at_10": 0.5985915492957746,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.9788732394366197
+        },
+        "rrf": {
+          "n": 142,
+          "recall_at_10": 0.6197183098591549,
+          "recall_at_50": 0.8450704225352113,
+          "recall_at_100": 0.9788732394366197
+        },
+        "keyword_ctx": {
+          "n": 142,
+          "recall_at_10": 0.6056338028169014,
+          "recall_at_50": 0.8661971830985915,
+          "recall_at_100": 0.9788732394366197
+        },
+        "vector_ctx": {
+          "n": 142,
+          "recall_at_10": 0.5915492957746479,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.971830985915493
+        },
+        "rrf_ctx": {
+          "n": 142,
+          "recall_at_10": 0.6338028169014085,
+          "recall_at_50": 0.8591549295774648,
+          "recall_at_100": 0.9788732394366197
+        }
+      },
+      "lifts_recall_at_10": {
+        "keyword_ctx_vs_keyword": 0.007042253521126751,
+        "vector_vs_keyword": 0.0,
+        "rrf_vs_keyword": 0.021126760563380254,
+        "rrf_ctx_vs_keyword": 0.03521126760563387
+      },
+      "perfect_rerank_ceiling": {
+        "top50_to_10": 0.8661971830985915,
+        "top100_to_10": 0.9788732394366197,
+        "delta_vs_r10_top50": 0.2676056338028169,
+        "delta_vs_r10_top100": 0.3802816901408451
+      }
+    },
+    "holdout": {
+      "n": 96,
+      "by_method": {
+        "keyword": {
+          "n": 96,
+          "recall_at_10": 0.6458333333333334,
+          "recall_at_50": 0.875,
+          "recall_at_100": 0.9583333333333334
+        },
+        "vector": {
+          "n": 96,
+          "recall_at_10": 0.6145833333333334,
+          "recall_at_50": 0.8854166666666666,
+          "recall_at_100": 0.9583333333333334
+        },
+        "rrf": {
+          "n": 96,
+          "recall_at_10": 0.6458333333333334,
+          "recall_at_50": 0.8854166666666666,
+          "recall_at_100": 0.96875
+        },
+        "keyword_ctx": {
+          "n": 96,
+          "recall_at_10": 0.6354166666666666,
+          "recall_at_50": 0.875,
+          "recall_at_100": 0.9583333333333334
+        },
+        "vector_ctx": {
+          "n": 96,
+          "recall_at_10": 0.625,
+          "recall_at_50": 0.8958333333333334,
+          "recall_at_100": 0.9583333333333334
+        },
+        "rrf_ctx": {
+          "n": 96,
+          "recall_at_10": 0.65625,
+          "recall_at_50": 0.8958333333333334,
+          "recall_at_100": 0.96875
+        }
+      },
+      "lifts_recall_at_10": {
+        "keyword_ctx_vs_keyword": -0.01041666666666674,
+        "vector_vs_keyword": -0.03125,
+        "rrf_vs_keyword": 0.0,
+        "rrf_ctx_vs_keyword": 0.01041666666666663
+      },
+      "perfect_rerank_ceiling": {
+        "top50_to_10": 0.875,
+        "top100_to_10": 0.9583333333333334,
+        "delta_vs_r10_top50": 0.22916666666666663,
+        "delta_vs_r10_top100": 0.3125
+      }
+    }
+  }
+}

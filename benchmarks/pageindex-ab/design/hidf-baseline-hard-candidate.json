@@ -64,8 +64,8 @@
       "keys_with_gold_clean": 238
     },
     "next": [
-      "k-sweep done — TOP_K_DOC=20 (see k-sweep-hidf.md)",
-      "H-none LLM memory arm when OPENROUTER_API_KEY available",
+      "TOP_K_DOC=20 interim (k-sweep-hidf.md)",
+      "cross-encoder rerank top-50→10/20 (gold-rank-diagnostics.md) — tune then holdout",
       "Track B spend when ready (additive CodeGraph; freeze 2026-10-15)"
     ]
   },

@@ -1,15 +1,18 @@
 # Track C — H-idf k-sweep (default top-k)
 
-**Status:** decided — **raise eval/default section top-k from 3 → 20**  
+**Status:** ship interim — **`TOP_K_DOC` 3 → 20** (offline); ranking fixes next  
 **Artifact:** [`k-sweep-hidf.json`](k-sweep-hidf.json)  
 **Runner:** `node benchmarks/pageindex-ab/scripts/run_k_sweep.mjs --ks 3,6,10,20`  
+**Scoring:** **offline extractAnswer** (answer string in retrieved text) — not model-scored  
 **Set:** hard-candidate, n=358 (262 with gold sections)
 
 ## Verdict
 
-Retrieval depth is the bottleneck. Gold@3 is only **0.485**; gold@20 is **0.775** (+29.0pp). Offline **strict** accuracy (answer ∩ gold-in-top-k, or unanswerable) rises **0.592 → 0.813** (+22.1pp). That clears the ~7–8pp detection bar on this set by a wide margin and beats every add-on previously tested (PageIndex, BM25, query rewrite).
+Retrieval depth is the bottleneck under today's keyword ranker. Gold@3 is only **0.485**; gold@20 is **0.775** (+29.0pp). Offline **strict** accuracy rises **0.592 → 0.813** (+22.1pp). That clears the ~7–8pp detection bar on this set and beats every add-on previously tested (PageIndex, BM25, query rewrite).
 
-**Default:** `TOP_K_DOC = 20` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs).
+**Default:** `TOP_K_DOC = 20` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs) — ship this meanwhile. Raising k works around weak ranking; fixing ranking (see [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md)) is the complementary, better long-term fix.
+
+> Offline scores show the answer **reaches** context, not that a model **uses** it. Confirm with model-scored finalize (`--llm`) before treating the +22pp as a product accuracy claim. Pilot H-idf strict **0.536** on this set used the same offline path with a slightly different citeOk (citation F1>0 vs gold-id-in-top-k) — both offline; the 0.536 vs 0.592 gap is grading, not model vs extract.
 
 ## Results (H-idf, offline extractAnswer)
 
@@ -20,39 +23,30 @@ Retrieval depth is the bottleneck. Gold@3 is only **0.485**; gold@20 is **0.775*
 | 10 | 0.653       | 0.872           | 0.723           | +13.1pp         | 53                   |
 | 20 | 0.775       | 0.916           | 0.813           | **+22.1pp**     | 37 (11%)             |
 
-Gold still climbs k=10→20 (+12.2pp). Exploratory **k=40**: gold ≈0.855, strict ≈0.872 (+5.9pp vs k=20) — under the single-step ~7–8pp bar; do not raise past 20 on that alone. Revisit if product context budget is free and an LLM-graded sweep confirms.
+Gold still climbs k=10→20 (+12.2pp). Exploratory **k=40**: gold ≈0.855, strict ≈0.872 (+5.9pp vs k=20) — under the single-step ~7–8pp bar; do not raise past 20 on that alone.
 
-## No-retrieval arm (H-none)
+## Context explains the answers (not H-none=0)
 
-| Mode | answer_accuracy | answerable_accuracy | Note |
-| ---- | --------------- | ------------------- | ---- |
-| Offline extract on empty evidence | 0.101 | **0.000** | Only the 36 unanswerable keys score (`not_found`) |
+At every k, **strict_accuracy ≤ answer_accuracy** (e.g. 0.592 vs 0.782 at k=3; 0.813 vs 0.916 at k=20). Strict requires gold-in-top-k (when gold exists) plus an answer match; answer_accuracy only needs the answer string in retrieved text. The persistent gap means graded-correct cases remain explainable by what was in context — including non-gold sections that carry the same fact (“leakage”).
 
-Offline H-none cannot measure LLM training memory. The earlier gap (answer_accuracy 0.536 pilot / 0.782 offline@k=3 vs gold_recall 0.485) is **section leakage** — the fact string appears in a non-gold top-k section — not model memory. True memory baseline needs `OPENROUTER_API_KEY` + `--llm-none` (flash-lite finalize on empty evidence). Until that runs, treat leakage as a gold/mapper hygiene signal, not as “the model already knew RFCs.”
-
-## Why accuracy beat gold@3 on the pilot
-
-Pilot H-idf strict was **0.536** with gold-in-top-3 ≈ **0.43**. Offline here: answer@3 **0.782** vs gold@3 **0.485**, with **68** leakage cases. Same story: duplicate facts across sections inflate answer-only grades. Strict (answer ∧ gold-in-top) is the metric that should drive top-k.
+Offline empty-evidence extract scores 0 on answerable keys **by construction** (no text to extract from) and **cannot** rule out model training memory. Do not cite H-none offline as anti-memory evidence. True memory measurement needs LLM finalize on empty evidence (`--llm-none` + OpenRouter).
 
 ## Recommendation lock
 
 | Field | Value |
 | ----- | ----- |
-| Current eval top-k | 3 |
-| Suggested eval / harness top-k | **20** |
-| Raise default | **yes** |
-| Metric | `strict_accuracy` |
+| Eval / harness top-k | **20** (interim ship) |
+| Metric that drove the raise | offline `strict_accuracy` |
 | Max strict gain vs k=3 | +22.1pp |
 | Max gold gain vs k=3 | +29.0pp |
-
-Cost is not a constraint on this harness. Product `memory_recall` still uses the caller `limit`; this change is the **pageindex-ab / vault-section** default used by pilots and displacement checks.
+| Next | gold-rank diagnostics → contextual headers → reranker (dev split; confirm holdout / fresh keys) |
 
 ## Track B (unchanged)
 
-All 12 CodeGraph prove keys remain grep-insoluble; additive `A-codegraph` (grep + CodeGraph) is locked. Settle live spend before the **2026-10-15** freeze — see [`codegraph-prove-decision.lock.json`](codegraph-prove-decision.lock.json) and [`agent-loop-freeze.md`](agent-loop-freeze.md).
+All 12 CodeGraph prove keys remain grep-insoluble; additive `A-codegraph` locked. Settle before **2026-10-15**.
 
 ## Follow-ups
 
-1. Run `--llm-none` when an OpenRouter key is available (true H-none memory arm).
-2. Optional LLM-graded k-sweep at k∈{10,20,40} if finalize quality diverges from extractAnswer.
-3. Track B spend (additive CodeGraph) on the locked prove + no-harm cohorts.
+1. [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md) — keyword / vector / RRF / contextual-header ranks + miss classes.
+2. Model-scored k-sweep (`--llm`) when OpenRouter is available.
+3. Track B spend (additive CodeGraph).

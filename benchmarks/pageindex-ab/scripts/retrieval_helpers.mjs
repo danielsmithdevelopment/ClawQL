@@ -41,7 +41,11 @@ export function pageindexAvailable() {
   return Boolean(pageindexBuildTree && pageindexTraverse);
 }
 
-/** Raised from 3→20 after k-sweep (design/k-sweep-hidf.md): strict +22.1pp, gold +29.0pp. */
+/**
+ * Raised 3→20 after offline k-sweep (design/k-sweep-hidf.md): strict +22.1pp, gold +29.0pp.
+ * Interim ship — ranking fixes (contextual headers / rerank) are complementary; see
+ * design/gold-rank-diagnostics.md.
+ */
 export const TOP_K_DOC = 20;
 export const TOP_K_MULTI = 5;
 export const HEADING_QUALITY_THRESHOLD = 0.35;
