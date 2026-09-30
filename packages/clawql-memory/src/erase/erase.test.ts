@@ -2,7 +2,7 @@
  * Full erase: vault + memory.db + ontology; content unrecoverable; WORM refs only.
  */
 
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
