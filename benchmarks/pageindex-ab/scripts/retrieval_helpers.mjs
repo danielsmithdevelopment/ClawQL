@@ -51,33 +51,74 @@ export const TOP_K_MULTI = 5;
 export const HEADING_QUALITY_THRESHOLD = 0.35;
 
 /**
- * Agents (and finalize) must see section identity. Code files especially: without a
- * path header, "which file exports X?" is unanswerable from body text alone.
+ * Agents (and finalize) must see section identity.
+ * - Code: `// file: path` — without it, "which file exports X?" is unanswerable.
+ * - Docs: `### {doc} · §{num} · {heading} · ~{pct}% through document`
+ *   cheap citation aid + enables structural/depth questions later.
  */
-export function formatSectionEvidence(section) {
+export function formatSectionEvidence(section, opts = {}) {
   const id = section?.id || "";
-  const title = section?.title || section?.heading_path || id;
+  const title = section?.title || section?.heading_path || "";
   const body = section?.content || section?.text || "";
-  const header = title || id;
-  if (!header) return body;
-  if (body.startsWith(`### ${header}`) || body.startsWith(`// file: ${header}`)) {
-    return body;
-  }
-  // Prefer markdown heading for docs; file comment for path-like ids (src/...).
+  const docTitle =
+    opts.docTitle || section?.docTitle || section?.document_title || "";
+  const sectionIndex =
+    opts.sectionIndex ?? section?.sectionIndex ?? section?.section_index;
+  const sectionCount =
+    opts.sectionCount ?? section?.sectionCount ?? section?.section_count;
+
   if (id.includes("/") || /\.(ts|js|tsx|jsx|py|go|rs)$/i.test(id)) {
-    return `// file: ${id}\n${body}`;
+    const line = `// file: ${id}`;
+    if (body.startsWith(line)) return body;
+    return `${line}\n${body}`;
   }
-  return `### ${header}\n\n${body}`;
+
+  const numMatch = String(title).match(/^(\d+(?:\.\d+)*)\b/);
+  const secNum = numMatch ? numMatch[1] : "";
+  let pct = "";
+  if (
+    typeof sectionIndex === "number" &&
+    typeof sectionCount === "number" &&
+    sectionCount > 0
+  ) {
+    pct = String(Math.round((100 * (sectionIndex + 0.5)) / sectionCount));
+  }
+  const parts = [];
+  if (docTitle) parts.push(docTitle);
+  if (secNum) parts.push(`§${secNum}`);
+  if (title) parts.push(title);
+  else if (id) parts.push(id);
+  if (pct) parts.push(`~${pct}% through document`);
+  const header = parts.join(" · ");
+  if (!header) return body;
+  const prefix = `### ${header}`;
+  if (body.startsWith(prefix)) return body;
+  return `${prefix}\n\n${body}`;
+}
+
+export function annotateSectionsForEvidence(sections, docTitle = "") {
+  const n = sections.length;
+  return sections.map((s, i) => ({
+    ...s,
+    docTitle: docTitle || s.docTitle || "",
+    sectionIndex: i,
+    sectionCount: n,
+  }));
 }
 
 export function rankSectionsVault(markdown, query, rankerMode) {
   const sections = splitMarkdownSections(markdown);
-  const texts = sections.map((s) => s.content);
+  const docTitle = sections.find((s) => s.level === 1)?.title || "";
+  const annotated = annotateSectionsForEvidence(sections, docTitle);
+  const texts = annotated.map((s) => s.content);
   const stats = buildVaultRankerStats(texts, rankerMode);
-  return sections
+  return annotated
     .map((s) => ({
       id: s.id,
       title: s.title,
+      docTitle: s.docTitle,
+      sectionIndex: s.sectionIndex,
+      sectionCount: s.sectionCount,
       score: scoreWithVaultRanker(query, s.content, stats),
       content: formatSectionEvidence(s),
     }))

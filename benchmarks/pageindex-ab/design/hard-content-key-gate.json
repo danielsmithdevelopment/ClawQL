@@ -1,0 +1,611 @@
+{
+  "tag": "pageindex-ab-hard-content-key-gate-v1",
+  "min_gold_rank": 11,
+  "n_content": 100,
+  "n_pass": 0,
+  "n_fail": 100,
+  "pass_rate": 0.0,
+  "note": "Current builder content keys nearly all fail this gate (kw rank \u226410). New paraphrased / cross-section / call-store keys must pass before MaxP.",
+  "rows": [
+    {
+      "id": "hc-pdf-01-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-01-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-01-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-01-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-01-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-01-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_5_below_11",
+      "kw_gold_rank": 5
+    },
+    {
+      "id": "hc-pdf-01-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-02-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_3_below_11",
+      "kw_gold_rank": 3
+    },
+    {
+      "id": "hc-pdf-02-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-03-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_5_below_11",
+      "kw_gold_rank": 5
+    },
+    {
+      "id": "hc-pdf-03-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-04-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_5_below_11",
+      "kw_gold_rank": 5
+    },
+    {
+      "id": "hc-pdf-04-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-05-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_5_below_11",
+      "kw_gold_rank": 5
+    },
+    {
+      "id": "hc-pdf-05-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-pdf-06-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_3_below_11",
+      "kw_gold_rank": 3
+    },
+    {
+      "id": "hc-pdf-06-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-01-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-02-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-03-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-04-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-05-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q02",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q04",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q05",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q06",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-wk-06-q07",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-01-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-01-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-02-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-02-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-03-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-03-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-04-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-04-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-05-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-05-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-06-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-06-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-07-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-07-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-08-q01",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    },
+    {
+      "id": "hc-code-08-q03",
+      "ok": false,
+      "reason": "kw_gold_rank_1_below_11",
+      "kw_gold_rank": 1
+    }
+  ]
+}

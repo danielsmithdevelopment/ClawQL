@@ -16,9 +16,10 @@ Upstream Vectify design: **LLM-written node summaries + strong-model tree naviga
 
 1. **Mapper fix** — done in builder + product `splitMarkdownSections`.
 2. **Flag every artifact gold** — `flag_artifact_gold_keys.py` (pre-rebuild caught 8 keys + 92 map ghosts; post-grow must stay at 0).
-3. **Grow then rebuild hard set** — machine done (**~238** gold-clean; ~9pp MDE with deterministic Flash-lite). **Human pass** = all 12 CodeGraph keys + stratified **60** doc sample ([one sitting](../../benchmarks/pageindex-ab/design/HUMAN_PASS_ONE_SITTING.md); ≥3 defects → fix builder).
-4. **Cheap `H-idf` re-run** on the **clean** key set only (after human pass).
-5. **Fresh fair-test cohort** — larger validated set; do not cite spent void IDs as proof. Pre-register beat rule for valid n.
+3. **Hard content keys (elevated)** — current content R@3=1.0 because questions copy gold wording ([`content-question-overlap.md`](../../benchmarks/pageindex-ab/design/content-question-overlap.md)). Next set: paraphrase + **kw gold rank > 10** gate, cross-section, or **EnterpriseRAG-Bench / LongMemEval-S**. See [`next-hard-content-set.md`](../../benchmarks/pageindex-ab/design/next-hard-content-set.md). Soft keys cannot judge MaxP/k.
+4. **Grow then rebuild hard set** — machine templates updated; **Human pass** = CodeGraph keys + stratified doc sample ([one sitting](../../benchmarks/pageindex-ab/design/HUMAN_PASS_ONE_SITTING.md); ≥3 defects → fix builder).
+5. **Cheap `H-idf` re-run** on the **clean hard** key set only (after human pass).
+6. **Fresh fair-test cohort** — larger validated set; do not cite spent void IDs as proof. Pre-register beat rule for valid n.
 
 ## Related
 

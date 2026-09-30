@@ -44,6 +44,7 @@ export {
   executeReadAroundEffect,
   splitMarkdownSections,
   readAroundFromMarkdown,
+  formatSectionEvidence,
 } from "../recall/read-around.js";
 export {
   memoryIngestProgram,

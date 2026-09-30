@@ -18,6 +18,12 @@ export type DocSection = {
   startOffset: number;
 };
 
+export type SectionEvidenceMeta = {
+  docTitle?: string;
+  sectionIndex?: number;
+  sectionCount?: number;
+};
+
 export type ReadAroundInput = {
   /** Vault-relative path or absolute path under the vault. */
   path?: string;
@@ -159,6 +165,43 @@ function truncateToBudget(text: string, tokenBudget: number): { text: string; tr
   return { text: text.slice(0, maxChars) + "\n…", truncated: true };
 }
 
+/**
+ * Prefix retrieved section bodies so agents see identity metadata.
+ * Code paths get `// file: …`; docs get doc title · §num · heading · ~pct%.
+ */
+export function formatSectionEvidence(
+  section: Pick<DocSection, "id" | "title" | "content">,
+  meta: SectionEvidenceMeta = {}
+): string {
+  const id = section.id || "";
+  const title = section.title || "";
+  const body = section.content || "";
+  if (id.includes("/") || /\.(ts|js|tsx|jsx|py|go|rs)$/i.test(id)) {
+    const line = `// file: ${id}`;
+    return body.startsWith(line) ? body : `${line}\n${body}`;
+  }
+  const numMatch = title.match(/^(\d+(?:\.\d+)*)\b/);
+  const secNum = numMatch?.[1] ?? "";
+  let pct = "";
+  if (
+    typeof meta.sectionIndex === "number" &&
+    typeof meta.sectionCount === "number" &&
+    meta.sectionCount > 0
+  ) {
+    pct = String(Math.round((100 * (meta.sectionIndex + 0.5)) / meta.sectionCount));
+  }
+  const parts: string[] = [];
+  if (meta.docTitle) parts.push(meta.docTitle);
+  if (secNum) parts.push(`§${secNum}`);
+  if (title) parts.push(title);
+  else if (id) parts.push(id);
+  if (pct) parts.push(`~${pct}% through document`);
+  const header = parts.join(" · ");
+  if (!header) return body;
+  const prefix = `### ${header}`;
+  return body.startsWith(prefix) ? body : `${prefix}\n\n${body}`;
+}
+
 export function selectSection(
   sections: DocSection[],
   input: Pick<ReadAroundInput, "sectionId" | "chunkText">
@@ -190,7 +233,14 @@ export function readAroundFromMarkdown(markdown: string, input: ReadAroundInput)
     };
   }
   const budget = input.tokenBudget ?? 1200;
-  const { text, truncated } = truncateToBudget(section.content, budget);
+  const docTitle = sections.find((s) => s.level === 1)?.title || "";
+  const sectionIndex = sections.findIndex((s) => s.id === section.id);
+  const headed = formatSectionEvidence(section, {
+    docTitle,
+    sectionIndex: sectionIndex >= 0 ? sectionIndex : undefined,
+    sectionCount: sections.length,
+  });
+  const { text, truncated } = truncateToBudget(headed, budget);
   return {
     ok: true,
     section_id: section.id,

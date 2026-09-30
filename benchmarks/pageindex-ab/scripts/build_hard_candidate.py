@@ -402,27 +402,46 @@ Schedule 1 lists subsidiary guarantors. The maximum aggregate principal of the L
 
 
 def write_long_weak(spec: dict) -> tuple[str, list[dict]]:
+    """Multi-section weak transcript so paraphrase keys can fail keyword@10."""
     title = spec["title"]
-    filler = "\n\n".join(
+    filler_a = "\n\n".join(
         f"[Speaker {i}] Discussed market structure topic {i} without stating severity codes, "
         f"cancel rates, or vendor names used in the gold key."
-        for i in range(1, 40)
+        for i in range(1, 20)
+    )
+    filler_b = "\n\n".join(
+        f"[Speaker {i}] Discussed clearing and settlement topic {i} without gold markers."
+        for i in range(20, 40)
     )
     body = f"""# {title}
 
+## Opening remarks
+
 [Chair] We convened after the incident. Opening remarks omit quantitative details.
 
-{filler}
+{filler_a}
+
+## Witness testimony
 
 [Witness {spec['witness']}] For the record, the incident severity code was **{spec['sev']}**.
 The maximum order cancel rate that morning reached **{spec['rate']}**.
 The outage began at **{spec['time_e']}** Eastern. The primary vendor implicated was **{spec['vendor']}**.
 
-{filler}
+## Collateral discussion
+
+{filler_b}
+
+## Closing
 
 [Speaker X] No executive compensation packages were discussed in this session.
 """
-    sections = [{"id": slug_section(title), "title": title}]
+    sections = [
+        {"id": slug_section(title), "title": title},
+        {"id": "sec-opening-remarks", "title": "Opening remarks"},
+        {"id": "sec-witness-testimony", "title": "Witness testimony"},
+        {"id": "sec-collateral-discussion", "title": "Collateral discussion"},
+        {"id": "sec-closing", "title": "Closing"},
+    ]
     return body, sections
 
 
@@ -792,6 +811,40 @@ def pdf_keys(spec: dict, i: int) -> list[dict]:
             "gold_sections": [],
             "unanswerable": True,
         },
+        # Paraphrased / cross-section hard candidates — must pass hard_content_key_gate
+        # (keyword gold rank > 10) on rebuild; drop if the gate rejects.
+        {
+            "id": f"{base}-q09",
+            "document_id": doc_id,
+            "stratum": "converted_pdf",
+            "question_type": "buried_detail",
+            "question": (
+                "After conversion noise, what spread over the benchmark rate is written "
+                "into the pricing schedule?"
+            ),
+            "normalized_answer": spec["margin"],
+            "accepted_variants": [spec["margin"].replace("%", "")],
+            "gold_sections": ["sec-schedules"],
+            "unanswerable": False,
+            "hard_content_candidate": True,
+            "notes": "paraphrase of margin; accept only if kw gold rank > 10",
+        },
+        {
+            "id": f"{base}-q10",
+            "document_id": doc_id,
+            "stratum": "converted_pdf",
+            "question_type": "cross_section",
+            "question": (
+                "Combine the definitions block and the schedules: name the obligated party "
+                "and the aggregate facility size."
+            ),
+            "normalized_answer": f"{spec['borrower']}; {spec['principal']}",
+            "accepted_variants": [spec["borrower"], spec["principal"]],
+            "gold_sections": ["sec-article-i-definitions", "sec-schedules"],
+            "unanswerable": False,
+            "hard_content_candidate": True,
+            "notes": "cross-section paraphrase; accept only if kw gold rank > 10",
+        },
     ]
 
 
@@ -873,7 +926,7 @@ def weak_keys(spec: dict, gold: list[str], i: int) -> list[dict]:
             "question": "Were executive compensation packages discussed?",
             "normalized_answer": "No",
             "accepted_variants": ["not discussed", "No"],
-            "gold_sections": gold,
+            "gold_sections": ["sec-closing"],
             "unanswerable": False,
         },
         {
@@ -886,6 +939,38 @@ def weak_keys(spec: dict, gold: list[str], i: int) -> list[dict]:
             "accepted_variants": [],
             "gold_sections": [],
             "unanswerable": True,
+        },
+        {
+            "id": f"{base}-q09",
+            "document_id": doc_id,
+            "stratum": "weakly_structured",
+            "question_type": "buried_detail",
+            "question": (
+                "In the testimony block, what classification did the named witness "
+                "put on the outage for the record?"
+            ),
+            "normalized_answer": spec["sev"],
+            "accepted_variants": [spec["sev"].lower()],
+            "gold_sections": ["sec-witness-testimony"],
+            "unanswerable": False,
+            "hard_content_candidate": True,
+            "notes": "paraphrase of severity; accept only if kw gold rank > 10",
+        },
+        {
+            "id": f"{base}-q10",
+            "document_id": doc_id,
+            "stratum": "weakly_structured",
+            "question_type": "cross_section",
+            "question": (
+                "From testimony plus closing: what outage class was logged, and were "
+                "executive pay packages part of the session?"
+            ),
+            "normalized_answer": f"{spec['sev']}; No",
+            "accepted_variants": [spec["sev"], "No", "not discussed"],
+            "gold_sections": ["sec-witness-testimony", "sec-closing"],
+            "unanswerable": False,
+            "hard_content_candidate": True,
+            "notes": "cross-section paraphrase; accept only if kw gold rank > 10",
         },
     ]
 
@@ -1029,7 +1114,7 @@ def main() -> int:
             json.dumps({"document_id": spec["id"], "sections": sections}, indent=2) + "\n",
             encoding="utf-8",
         )
-        gold = [sections[0]["id"]]
+        gold = ["sec-witness-testimony"]
         documents.append(
             {
                 "id": spec["id"],

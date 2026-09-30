@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatSectionEvidence,
   isArtifactHeadingTitle,
   readAroundFromMarkdown,
   splitMarkdownSections,
@@ -99,6 +100,37 @@ Validation steps follow.
     expect(r.ok).toBe(true);
     expect(r.content).toMatch(/orchid-77/);
     expect(r.section_id).toBe("sec-protocols");
+  });
+
+  it("prefixes evidence with doc title, heading, and percent position", () => {
+    const r = readAroundFromMarkdown(DOC, { sectionId: "sec-protocols", tokenBudget: 400 });
+    expect(r.ok).toBe(true);
+    expect(r.content).toMatch(/^### Handbook · Protocols · ~\d+% through document/);
+    expect(r.content).toMatch(/orchid-77/);
+  });
+
+  it("formatSectionEvidence prefixes code with // file: path", () => {
+    const out = formatSectionEvidence({
+      id: "src/index.ts",
+      title: "src/index.ts",
+      content: 'export { foo } from "./core.js";\n',
+    });
+    expect(out.startsWith("// file: src/index.ts\n")).toBe(true);
+    expect(out).toContain("export { foo }");
+  });
+
+  it("formatSectionEvidence includes section number when present in title", () => {
+    const out = formatSectionEvidence(
+      {
+        id: "sec-1-introduction",
+        title: "1 Introduction",
+        content: "JSON is a text format.\n",
+      },
+      { docTitle: "rfc8259", sectionIndex: 0, sectionCount: 10 }
+    );
+    expect(out.startsWith("### rfc8259 · §1 · 1 Introduction · ~5% through document")).toBe(
+      true
+    );
   });
 
   it("locates section from chunk text", () => {

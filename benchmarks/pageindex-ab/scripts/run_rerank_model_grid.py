@@ -120,16 +120,37 @@ def rerank_topk_from_ranks(
 def format_section_evidence(c: dict[str, Any]) -> str:
     """Mirror retrieval_helpers.formatSectionEvidence — path/title must reach the model."""
     sid = str(c.get("id") or "")
-    title = str(c.get("heading_path") or c.get("title") or sid)
+    title = str(c.get("title") or c.get("heading_path") or "")
     body = str(c.get("text") or c.get("content") or "")
-    header = title or sid
+    doc_title = str(c.get("docTitle") or c.get("document_title") or "")
+    if "/" in sid or sid.endswith((".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs")):
+        line = f"// file: {sid}"
+        return body if body.startswith(line) else f"{line}\n{body}"
+    import re
+
+    m = re.match(r"^(\d+(?:\.\d+)*)\b", title)
+    sec_num = m.group(1) if m else ""
+    idx = c.get("sectionIndex")
+    cnt = c.get("sectionCount")
+    pct = ""
+    if isinstance(idx, int) and isinstance(cnt, int) and cnt > 0:
+        pct = str(round(100 * (idx + 0.5) / cnt))
+    parts = []
+    if doc_title:
+        parts.append(doc_title)
+    if sec_num:
+        parts.append(f"§{sec_num}")
+    if title:
+        parts.append(title)
+    elif sid:
+        parts.append(sid)
+    if pct:
+        parts.append(f"~{pct}% through document")
+    header = " · ".join(parts)
     if not header:
         return body
-    if body.startswith(f"### {header}") or body.startswith(f"// file: {header}"):
-        return body
-    if "/" in sid or sid.endswith((".ts", ".js", ".tsx", ".jsx", ".py", ".go", ".rs")):
-        return f"// file: {sid}\n{body}"
-    return f"### {header}\n\n{body}"
+    prefix = f"### {header}"
+    return body if body.startswith(prefix) else f"{prefix}\n\n{body}"
 
 
 def evidence_blob(cands: list[dict[str, Any]]) -> str:
