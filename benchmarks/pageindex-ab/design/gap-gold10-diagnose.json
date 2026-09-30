@@ -1,6 +1,6 @@
 {
   "tag": "pageindex-ab-gap-gold10-diagnose-v1",
-  "generated_at": "2026-09-30T04:04:45Z",
+  "generated_at": "2026-09-30T04:08:34Z",
   "offline": {
     "n_gold_at_k": 171,
     "k": 10,
@@ -20,5 +20,6 @@
   "failure_classes": null,
   "sample_wrong": [],
   "maxp_metric_note": "Judge MaxP by model-scored accuracy and mean/median gold rank (position), not recall@10 alone \u2014 position affects mid-context reading.",
-  "rows_path": "benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl"
+  "rows_path": "/workspace/benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl",
+  "note_grid_cells": "Prior rerank-model-grid artifact saved aggregates only; per-row answers require this gap-diagnose pass (or a re-grid with *-rows.jsonl)."
 }

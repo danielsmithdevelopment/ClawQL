@@ -122,26 +122,58 @@ def classify_model_failure(
     ans_ok: bool,
     gold_hit: bool,
     ans_in_evidence: bool,
+    ans_in_gold_section: bool = False,
+    ans_in_nongold_section: bool = False,
 ) -> str | None:
+    """Map a gold@k row to a failure class (or None if answer+gold ok).
+
+    Classes (user taxonomy):
+      grader_reject          — near-correct wording/format; strict string grade fails
+      cite_mismatch          — answer grades ok without gold, or model answer lives in
+                               a non-gold top section (different/extra valid section)
+      not_found_despite_gold — abstain though answer string is in the evidence window
+      genuinely_wrong        — incorrect content
+    """
     if ans_ok and gold_hit:
         return None  # success
     if ans_ok and not gold_hit:
         return "cite_mismatch"
-    # Failed answer grade
     gold = normalize(key.get("normalized_answer") or "")
     ans = normalize(answer)
     variants = [normalize(v) for v in (key.get("accepted_variants") or []) if v]
     if not_found or not ans:
         return "not_found_despite_gold" if ans_in_evidence else "not_found_answer_missing"
-    # Looks like a near-miss / wording issue
+    # Near-miss / wording / format — grader rejected something that contains gold
     if gold and (gold in ans or ans in gold or any(v and (v in ans or ans in v) for v in variants)):
         return "grader_reject"
-    # Token overlap heuristic for soft grader_reject
     g_toks = set(gold.split())
     a_toks = set(ans.split())
     if g_toks and len(g_toks & a_toks) / len(g_toks) >= 0.6:
         return "grader_reject"
+    # Model produced text that appears in a non-gold retrieved section (alt citation)
+    if ans_in_nongold_section and not ans_in_gold_section:
+        return "cite_mismatch"
     return "genuinely_wrong"
+
+
+def diversify_wrong_sample(
+    wrong: list[dict[str, Any]], sample_n: int
+) -> list[dict[str, Any]]:
+    """Round-robin across failure_class then stratum so the 30–50 sample isn't one bucket."""
+    by_cls: dict[str, list[dict[str, Any]]] = {}
+    for r in wrong:
+        by_cls.setdefault(str(r.get("failure_class") or "other"), []).append(r)
+    for lst in by_cls.values():
+        lst.sort(key=lambda r: (r.get("stratum") or "", r.get("id") or ""))
+    out: list[dict[str, Any]] = []
+    keys = sorted(by_cls.keys())
+    idx = {k: 0 for k in keys}
+    while len(out) < sample_n and any(idx[k] < len(by_cls[k]) for k in keys):
+        for k in keys:
+            if idx[k] < len(by_cls[k]) and len(out) < sample_n:
+                out.append(by_cls[k][idx[k]])
+                idx[k] += 1
+    return out
 
 
 def main() -> int:
@@ -194,6 +226,9 @@ def main() -> int:
         gold = set(r.get("gold_sections") or [])
         vis = evidence_and_gold_visibility(top, gold)
         gold_text = "\n\n".join(c.get("text") or "" for c in top if c["id"] in gold)
+        nongold_text = "\n\n".join(
+            c.get("text") or "" for c in top if c["id"] not in gold
+        )
         ans_in_gold = bool(extract_in_text(gold_text, r))
         ans_in_ev = bool(extract_in_text(vis["truncated"], r))
         offline_rows.append(
@@ -214,6 +249,8 @@ def main() -> int:
                 "blob_chars": vis["blob_chars"],
                 "top_ids": [c["id"] for c in top],
                 "_evidence": vis["truncated"],
+                "_gold_text": gold_text,
+                "_nongold_text": nongold_text,
             }
         )
 
@@ -256,13 +293,24 @@ def main() -> int:
         os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
     ):
         # Persist offline rows without evidence blobs for size
-        slim = [{k: v for k, v in r.items() if k != "_evidence"} for r in offline_rows]
+        slim = [
+            {
+                k: v
+                for k, v in r.items()
+                if not k.startswith("_")
+            }
+            for r in offline_rows
+        ]
         rows_path.write_text("\n".join(json.dumps(x) for x in slim) + "\n")
         report["rows_path"] = str(rows_path)
         report["model"] = {
             "skipped": True,
             "reason": "offline_only or missing OPENROUTER_API_KEY",
         }
+        report["note_grid_cells"] = (
+            "Prior rerank-model-grid artifact saved aggregates only; per-row answers "
+            "require this gap-diagnose pass (or a re-grid with *-rows.jsonl)."
+        )
         args.out.write_text(json.dumps(report, indent=2) + "\n")
         print(json.dumps(report, indent=2))
         return 0
@@ -282,6 +330,13 @@ def main() -> int:
         not_found = bool(fin.get("not_found"))
         gold_hit = True  # filtered to gold@k
         ans_ok = grade(answer, not_found, r)
+        ans_norm = normalize(answer)
+        ans_in_gold_sec = bool(
+            ans_norm and ans_norm in normalize(r.get("_gold_text") or "")
+        )
+        ans_in_nongold = bool(
+            ans_norm and ans_norm in normalize(r.get("_nongold_text") or "")
+        )
         cls = classify_model_failure(
             key=r,
             answer=answer,
@@ -289,14 +344,18 @@ def main() -> int:
             ans_ok=ans_ok,
             gold_hit=gold_hit,
             ans_in_evidence=r["ans_in_evidence_window"],
+            ans_in_gold_section=ans_in_gold_sec,
+            ans_in_nongold_section=ans_in_nongold,
         )
         return {
-            **{k: v for k, v in r.items() if k != "_evidence"},
+            **{k: v for k, v in r.items() if not k.startswith("_")},
             "model": args.model,
             "model_answer": answer,
             "model_not_found": not_found,
             "answer_ok": ans_ok,
             "strict_ok": ans_ok and gold_hit,
+            "model_ans_in_gold_section": ans_in_gold_sec,
+            "model_ans_in_nongold_section": ans_in_nongold,
             "failure_class": cls,
         }
 
@@ -315,8 +374,7 @@ def main() -> int:
 
     n = len(out_rows)
     wrong = [r for r in out_rows if r["failure_class"] and r["failure_class"] != "correct"]
-    # Prefer diverse sample
-    sample = wrong[: args.sample]
+    sample = diversify_wrong_sample(wrong, args.sample)
     report["model"] = {
         "id": args.model,
         "n": n,

@@ -64,6 +64,7 @@ on:
       - "benchmarks/pageindex-ab/.run-hard-agent-full"
       - "benchmarks/pageindex-ab/.run-vectify-fair"
       - "benchmarks/pageindex-ab/.run-rerank-grid"
+      - "benchmarks/pageindex-ab/.run-gap-diagnose"
 
 concurrency:
   group: pageindex-ab-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -431,5 +432,57 @@ jobs:
           name: pageindex-ab-rerank-grid
           path: |
             benchmarks/pageindex-ab/design/rerank-model-grid.json
+            benchmarks/pageindex-ab/design/rerank-model-grid-rows.jsonl
             benchmarks/pageindex-ab/design/rerank-bakeoff.json
+
+  # Track C: gold@10 ∩ wrong taxonomy (flash-lite only; ~171 finalize calls).
+  # Trigger: .run-gap-diagnose. Remove sentinel after run lands.
+  gap-diagnose:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ -f benchmarks/pageindex-ab/.run-gap-diagnose ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-gap-diagnose sentinel; skipping gap diagnose"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for gap-diagnose"
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          python-version: "3.12"
+      - name: Gap diagnose (gold@10 flash finalize + classify)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab gap-diagnose
+        run: |
+          test -f benchmarks/pageindex-ab/design/rerank-candidates.jsonl
+          python3 benchmarks/pageindex-ab/scripts/run_gap_diagnose.py \
+            --model google/gemini-2.5-flash-lite \
+            --sample 50 \
+            --out benchmarks/pageindex-ab/design/gap-gold10-diagnose.json
+      - name: Upload gap-diagnose artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-gap-diagnose
+          path: |
+            benchmarks/pageindex-ab/design/gap-gold10-diagnose.json
+            benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl
 

@@ -17,7 +17,7 @@ Among **171** keys with keyword gold rank ≤ 10:
 
 So for ~93% of gold@10 keys the literal answer is in the prompt the model sees. **Evidence truncation is not the main gap** (it explains ≤8%). The remaining miss is reading and/or grading.
 
-The prior grid run only saved **aggregates**, not per-question answers — so grader_reject vs `not_found` vs genuinely_wrong needs one cheap flash re-score on these 171 keys (sentinel below). That is diagnostic spend, not MaxP.
+The prior grid artifact (`pageindex-ab-rerank-grid`, 4KB) saved **aggregates only** — confirmed no per-question answers in cells. So grader_reject vs `not_found` vs genuinely_wrong needs one cheap flash re-score on these 171 keys (sentinel `.run-gap-diagnose`). That is diagnostic spend, not MaxP; row dumps (`*-rows.jsonl`) make a later semantic judge free.
 
 ## Failure classes (model pass — fill from `gap-gold10-diagnose.json`)
 
