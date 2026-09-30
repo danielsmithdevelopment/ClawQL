@@ -1,6 +1,6 @@
 # Next hard content set (after saturation)
 
-**Status:** current hard-candidate **content** keys are too easy for keyword search  
+**Status:** current hard-candidate **content** keys are too easy (high question↔gold overlap)  
 **Evidence:** [`content-question-overlap.md`](content-question-overlap.md), [`recall-by-question-class.md`](recall-by-question-class.md)
 
 ## Diagnosis
@@ -9,25 +9,44 @@
 - Mean question↔gold token overlap ≈ **0.72** (exclusive-to-gold ≈ **0.49**). The builder copies section wording into questions; keyword retrieval is near-trivial.
 - More keys from the same templates will saturate the same way.
 
-## Build hard keys on purpose
+## Order of work (do not reverse)
 
-1. **Paraphrase gate** — `hard_content_key_gate.py`: accept a key only if keyword IDF ranks its gold **> 10**. Difficulty is a property of the key.
-2. **Cross-section** — questions whose answer needs two sections combined (not “% depth” structure).
-3. **Call-store mining** — sample real `memory_recall` queries, scrub PII, label golds. Real vocab mismatch.
+1. **External benchmarks first** — questions were not built around any one ClawQL retriever; keys are validated; scores are public.
+   - **EnterpriseRAG-Bench** — closest to ClawQL document recall / enterprise pitch; decide MaxP, reranking, and k here.
+   - **LongMemEval-S** — conversation memory / vault side.
+2. **Homegrown paraphrases only as backstop** — another human validation pass; do not lead with them.
 
-Until those land, **do not** use content accuracy on this set to judge MaxP.
+## Hard + no-harm gate (method-independent)
 
-## Or use external hard benchmarks
+`hard_content_key_gate.py` (v2) classifies content keys by **question↔gold word overlap**, not keyword rank:
 
-| Suite | Why |
-| ----- | --- |
-| **EnterpriseRAG-Bench** | Hard enterprise content Qs, larger corpora, published scores |
-| **LongMemEval-S** | Long-context memory; industry comparison path already noted in eval spec |
+| Cohort | Rule | Role |
+| ------ | ---- | ---- |
+| **hard** | `overlap_gold < 0.3` | Difficulty shared across methods (not keyword’s own misses) |
+| **no_harm** | `overlap_gold ≥ 0.6` | Easy keys; MaxP/rerank must not regress these (Vectify-style) |
+| mid | between bands | Neither cohort |
 
-Run MaxP / rerank / k on data with headroom; same runs give the industry comparison the A/B was meant to feed ([`pageindex-ab-eval-spec-v0.1.md`](../../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md) § industry).
+**Do not** accept keys because keyword ranks gold below 10 — that set is keyword’s failures, so vector/MaxP win by construction (same regression-to-the-mean trap as the 12 deep misses).
+
+**Decision rule:** MaxP / rerank / k wins only if **hard improves AND no-harm passes**. Hard-only lifts do not count.
+
+Outputs: [`hard-content-key-gate.json`](hard-content-key-gate.json), [`maxp-hard-and-no-harm-cohorts.json`](maxp-hard-and-no-harm-cohorts.json).
+
+**Current candidate snapshot (v2 gate on `rerank-candidates.jsonl`):** n_content=100 → **6 hard** / **68 no-harm** / 26 mid. The 6 hard IDs are all `hc-wk-*-q06` (misleading-heading); builder paraphrases (q09/q10) did **not** clear overlap &lt; 0.3. Homegrown hard set is too thin to decide MaxP — another reason external benches go first.
+
+## Retired: depth / position templates
+
+Evidence headers (`§{n}` + percent through document) made depth questions answerable, but users rarely ask where a heading sits. The builder no longer emits `depth_position_template` keys; detectors in `question_templates.py` remain for legacy rows only.
+
+## Backstop builder tips (after external benches)
+
+1. Paraphrase away from gold wording until `overlap_gold < 0.3`.
+2. Cross-section questions whose answer needs two sections.
+3. Call-store mining — scrubbed real `memory_recall` queries with labeled golds.
+
+Until hard + no-harm cohorts exist (or external benches are wired), **do not** use content accuracy on the soft set to judge MaxP.
 
 ## Product evidence headers (shipped)
 
 - Code: `// file: path` (regression in `format_section_evidence.test.mjs` + `read-around.test.ts`).
 - Docs (`read_around` + eval harness): `### {doc} · §{n} · {heading} · ~{pct}% through document`.
-- Enables the deferred structural/depth track without waiting on corpus rewrite.

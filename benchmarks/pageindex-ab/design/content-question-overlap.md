@@ -10,11 +10,15 @@ n=100. Mean overlap with gold section tokens: **0.718**. Exclusive-to-gold: **0.
 
 ## Verdict
 
-Content questions share most content words with their gold sections (mean overlap_gold=0.718). Keyword retrieval is near-trivial; more keys from the same builder will saturate the same way. Next keys must paraphrase and pass a kw-rank>10 gate, or move MaxP/k experiments to EnterpriseRAG-Bench / LongMemEval-S.
+Content questions share most content words with their gold sections (mean overlap_gold=0.718). Keyword retrieval is near-trivial; more keys from the same builder will saturate the same way.
+
+**Primary path for MaxP / k / rerank:** **EnterpriseRAG-Bench** (document recall) and **LongMemEval-S** (vault). Homegrown paraphrases are a backstop only.
+
+**Gate (backstop):** classify by method-independent overlap — hard if `overlap_gold < 0.3`, no-harm if `≥ 0.6`. Do **not** gate on keyword gold rank (biases the set against keyword). See [`next-hard-content-set.md`](next-hard-content-set.md) and `hard_content_key_gate.py`.
 
 ## Next keys
 
-1. Paraphrase away from section wording; **accept only if keyword gold rank > 10**.
-2. Cross-section questions needing two sections.
-3. Scrubbed real `memory_recall` queries from the call store.
-4. Or switch MaxP/k headroom tests to **EnterpriseRAG-Bench** / **LongMemEval-S**.
+1. Run **EnterpriseRAG-Bench** / **LongMemEval-S** before building more paraphrases.
+2. If paraphrasing: aim for `overlap_gold < 0.3` and always pair with a no-harm cohort.
+3. Cross-section questions needing two sections.
+4. Scrubbed real `memory_recall` queries from the call store.

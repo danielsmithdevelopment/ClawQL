@@ -36,7 +36,7 @@
       "mean_longest_phrase_toks": 2.142857142857143
     }
   },
-  "verdict": "Content questions share most content words with their gold sections (mean overlap_gold=0.718). Keyword retrieval is near-trivial; more keys from the same builder will saturate the same way. Next keys must paraphrase and pass a kw-rank>10 gate, or move MaxP/k experiments to EnterpriseRAG-Bench / LongMemEval-S.",
+  "verdict": "Content questions share most content words with their gold sections (mean overlap_gold=0.718). Keyword retrieval is near-trivial. Primary MaxP path: EnterpriseRAG-Bench + LongMemEval-S. Backstop gate: overlap_gold<0.3 hard + overlap>=0.6 no-harm (not keyword rank).",
   "rows": [
     {
       "id": "hc-pdf-01-q01",
