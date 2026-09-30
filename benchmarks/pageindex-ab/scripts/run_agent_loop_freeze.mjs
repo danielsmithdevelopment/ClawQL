@@ -1,25 +1,33 @@
 #!/usr/bin/env node
 /**
- * Strong-model agent-loop freeze scaffold (Track B).
+ * Strong-model agent-loop freeze (Track B).
  *
  * Product question: does adding codegraph_* improve today's default (grep)?
- * Treatment A-codegraph = grep + codegraph_* (additive). Optional diagnostic
- * A-codegraph-only has no grep. See design/codegraph-prove-decision.lock.json.
+ * Treatment A-codegraph = grep + codegraph_* (additive).
  *
  * Usage:
  *   node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs --dry-run \
  *     --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph
- *   # optional diagnostic:
- *   #   --arms A-no-tools,A-grep,A-codegraph,A-codegraph-only
+ *   OPENROUTER_API_KEY=… node …/run_agent_loop_freeze.mjs \
+ *     --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  ensureCodeGraph,
+  openAiToolsForArm,
+  runTool,
+  isCodegraphTool,
+  resolveRepoRoot,
+} from "./agent_loop_tools.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
+const REPO = resolveRepoRoot(__dirname);
 const LOCK_PATH = path.join(ROOT, "design", "codegraph-prove-decision.lock.json");
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 function parseArgs(argv) {
   const out = {
@@ -27,12 +35,13 @@ function parseArgs(argv) {
     corpus: "clawql-monorepo",
     cohort: "codegraph-prove",
     arms: ["A-no-tools", "A-grep", "A-codegraph"],
-    // Must match Track A VECTIFY_FAIR_MODEL (fair_test_common.FRONTIER_MODEL).
     model:
       process.env.PAGEINDEX_AB_AGENT_MODEL ||
       process.env.VECTIFY_FAIR_MODEL ||
       "anthropic/claude-sonnet-4.6",
     out: path.join(ROOT, "results", "agent-loop-freeze"),
+    maxToolCalls: 12,
+    limit: 0, // 0 = all
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -42,33 +51,15 @@ function parseArgs(argv) {
     else if (a === "--arms") out.arms = argv[++i].split(",").map((s) => s.trim());
     else if (a === "--model") out.model = argv[++i];
     else if (a === "--out") out.out = path.resolve(argv[++i]);
+    else if (a === "--limit") out.limit = Number(argv[++i]);
+    else if (a === "--max-tool-calls") out.maxToolCalls = Number(argv[++i]);
   }
   return out;
-}
-
-function loadDeepRfcIds() {
-  const p = path.join(ROOT, "design", "deep-rfc-misses.json");
-  const j = JSON.parse(fs.readFileSync(p, "utf8"));
-  return j.question_ids;
-}
-
-function loadCodegraphCohorts() {
-  const prove = JSON.parse(
-    fs.readFileSync(path.join(ROOT, "design", "codegraph-prove-keys.oracle.json"), "utf8"),
-  );
-  const noHarm = JSON.parse(
-    fs.readFileSync(path.join(ROOT, "design", "codegraph-no-harm-keys.json"), "utf8"),
-  );
-  return {
-    prove_ids: (prove.keys || []).map((k) => k.id),
-    no_harm_ids: (noHarm.keys || []).map((k) => k.id),
-  };
 }
 
 const ARM_TOOLS = {
   "A-no-tools": [],
   "A-grep": ["grep", "read_around"],
-  // Treatment (beat arm): additive — today's default PLUS codegraph_*.
   "A-codegraph": [
     "grep",
     "read_around",
@@ -78,19 +69,12 @@ const ARM_TOOLS = {
     "codegraph_path",
     "codegraph_query",
   ],
-  // Diagnostic only — "can CodeGraph replace grep?" Never decides freeze.
   "A-codegraph-only": [
     "codegraph_explore",
     "codegraph_impact",
     "codegraph_neighbors",
     "codegraph_path",
     "codegraph_query",
-    "read_around",
-  ],
-  "A-pageindex": [
-    "pageindex_traverse",
-    "pageindex_get_content",
-    "pageindex_synthesize",
     "read_around",
   ],
 };
@@ -107,19 +91,265 @@ const CODEGRAPH_TOOL_NAMES = [
   "codegraph_sync",
 ];
 
-function main() {
+function loadCodegraphCohorts() {
+  const prove = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "design", "codegraph-prove-keys.oracle.json"), "utf8")
+  );
+  const noHarm = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "design", "codegraph-no-harm-keys.json"), "utf8")
+  );
+  return {
+    prove_keys: prove.keys || [],
+    no_harm_keys: noHarm.keys || [],
+  };
+}
+
+function normalize(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s.\-/%]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function gradeAnswer(key, answer) {
+  const ans = normalize(answer);
+  if (!ans) return false;
+  if (key.normalized_answer) {
+    if (ans.includes(normalize(key.normalized_answer))) return true;
+  }
+  for (const v of key.accepted_variants || []) {
+    if (ans.includes(normalize(v))) return true;
+  }
+  // Prove keys: accept if ≥2 gold impacted names / files appear
+  const names = key.gold?.impacted_names || key.gold?.neighbor_names || [];
+  const files = key.gold?.files || [];
+  const hits = [...names, ...files].filter((x) => ans.includes(normalize(x)));
+  if (names.length || files.length) return hits.length >= Math.min(2, names.length || files.length || 1);
+  return false;
+}
+
+async function openRouterChat({ apiKey, model, messages, tools }) {
+  const body = {
+    model: model.startsWith("openrouter/") ? model.slice("openrouter/".length) : model,
+    messages,
+    temperature: 0,
+  };
+  if (tools?.length) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  } else {
+    body.response_format = { type: "json_object" };
+  }
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.CLAWQL_OPENROUTER_HTTP_REFERER || "https://clawql.com",
+      "X-Title": process.env.CLAWQL_OPENROUTER_APP_TITLE || "ClawQL Track B agent-loop",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    const err = new Error(`OpenRouter ${res.status}: ${text.slice(0, 400)}`);
+    err.status = res.status;
+    throw err;
+  }
+  return JSON.parse(text);
+}
+
+async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
+  const tools = openAiToolsForArm(ARM_TOOLS[armId] || []);
+  const system = [
+    "You answer questions about the ClawQL TypeScript monorepo.",
+    "Use tools when available. Prefer precise symbol/file names.",
+    'When done, reply with ONLY JSON: {"answer":"...","not_found":false}',
+  ].join(" ");
+  const messages = [
+    { role: "system", content: system },
+    { role: "user", content: key.question },
+  ];
+  const used = new Set();
+  let toolCalls = 0;
+
+  for (let turn = 0; turn < maxToolCalls + 2; turn++) {
+    const data = await openRouterChat({
+      apiKey,
+      model,
+      messages,
+      tools: tools.length ? tools : undefined,
+    });
+    const msg = data.choices?.[0]?.message;
+    if (!msg) throw new Error("empty OpenRouter message");
+    messages.push(msg);
+    const tcalls = msg.tool_calls || [];
+    if (!tcalls.length) {
+      let answer = msg.content || "";
+      try {
+        const j = JSON.parse(answer);
+        answer = j.answer ?? answer;
+      } catch {
+        /* plain text */
+      }
+      return {
+        answer,
+        used_codegraph: [...used].some(isCodegraphTool),
+        codegraph_tools_used: [...used].filter(isCodegraphTool),
+        tool_calls: toolCalls,
+      };
+    }
+    for (const tc of tcalls) {
+      toolCalls++;
+      const name = tc.function?.name || "";
+      used.add(name);
+      let args = {};
+      try {
+        args = JSON.parse(tc.function?.arguments || "{}");
+      } catch {
+        args = {};
+      }
+      const content = runTool(name, args, toolCtx);
+      messages.push({
+        role: "tool",
+        tool_call_id: tc.id,
+        content,
+      });
+    }
+    if (toolCalls >= maxToolCalls) {
+      messages.push({
+        role: "user",
+        content: 'Stop calling tools. Reply with JSON {"answer":"...","not_found":false} now.',
+      });
+    }
+  }
+  return {
+    answer: "",
+    used_codegraph: [...used].some(isCodegraphTool),
+    codegraph_tools_used: [...used].filter(isCodegraphTool),
+    tool_calls: toolCalls,
+    error: "max_turns",
+  };
+}
+
+async function runLive(args, lock, proveKeys, noHarmKeys) {
+  const apiKey = process.env.OPENROUTER_API_KEY || "";
+  if (!apiKey) {
+    const report = {
+      ok: false,
+      blockers: [
+        {
+          code: "missing_openrouter",
+          message: "OPENROUTER_API_KEY is required for Track B live spend",
+          remedy: "Add the secret to the Cloud Agent environment, then re-run without --dry-run",
+        },
+      ],
+    };
+    fs.writeFileSync(
+      path.join(args.out, "agent-blocker-report.json"),
+      JSON.stringify(report, null, 2) + "\n"
+    );
+    console.log(JSON.stringify(report, null, 2));
+    process.exitCode = 2;
+    return;
+  }
+
+  console.error(JSON.stringify({ indexing: true, roots: 4 }));
+  const { doc } = await ensureCodeGraph(REPO);
+  console.error(
+    JSON.stringify({ indexed: true, nodeCount: doc.nodeCount, edgeCount: doc.edgeCount })
+  );
+  const toolCtx = { repoRoot: REPO, doc };
+
+  let keys = [...proveKeys, ...noHarmKeys];
+  if (args.limit > 0) keys = keys.slice(0, args.limit);
+
+  const answersPath = path.join(args.out, "answers.jsonl");
+  const done = new Set();
+  if (fs.existsSync(answersPath)) {
+    for (const line of fs.readFileSync(answersPath, "utf8").split("\n").filter(Boolean)) {
+      const r = JSON.parse(line);
+      done.add(`${r.arm}\t${r.question_id}`);
+    }
+  }
+
+  const cells = [];
+  for (const arm of args.arms) {
+    for (const key of keys) {
+      const id = key.id;
+      if (done.has(`${arm}\t${id}`)) continue;
+      cells.push({ arm, key });
+    }
+  }
+  console.error(JSON.stringify({ cells: cells.length, resume_done: done.size, model: args.model }));
+
+  for (const cell of cells) {
+    process.stderr.write(`${cell.arm} ${cell.key.id} … `);
+    try {
+      const result = await runCell({
+        apiKey,
+        model: args.model,
+        armId: cell.arm,
+        key: cell.key,
+        toolCtx,
+        maxToolCalls: args.maxToolCalls,
+      });
+      const answer_ok = gradeAnswer(cell.key, result.answer);
+      const row = {
+        question_id: cell.key.id,
+        arm: cell.arm,
+        cohort: proveKeys.some((k) => k.id === cell.key.id) ? "prove" : "no_harm",
+        answer: result.answer,
+        answer_ok,
+        used_codegraph: result.used_codegraph,
+        codegraph_tools_used: result.codegraph_tools_used,
+        tool_calls: result.tool_calls,
+        model: args.model,
+      };
+      fs.appendFileSync(answersPath, JSON.stringify(row) + "\n");
+      process.stderr.write(`${answer_ok ? "ok" : "miss"} tools=${result.tool_calls}\n`);
+    } catch (err) {
+      process.stderr.write(`ERR ${err.message}\n`);
+      fs.appendFileSync(
+        answersPath,
+        JSON.stringify({
+          question_id: cell.key.id,
+          arm: cell.arm,
+          answer: "",
+          answer_ok: false,
+          error: String(err.message || err),
+          model: args.model,
+        }) + "\n"
+      );
+      if (String(err.message || "").includes("402") || String(err.message || "").includes("credit")) {
+        console.error(JSON.stringify({ fatal: "insufficient_credits" }));
+        process.exitCode = 5;
+        return;
+      }
+    }
+  }
+
+  // Auto-score beat
+  const { spawnSync } = await import("node:child_process");
+  const scored = spawnSync(
+    process.execPath,
+    [path.join(__dirname, "decide_codegraph_beat.mjs"), answersPath],
+    { encoding: "utf8" }
+  );
+  process.stdout.write(scored.stdout || "");
+  if (scored.status && scored.status !== 0 && scored.status !== 2) {
+    process.exitCode = scored.status;
+  }
+}
+
+async function main() {
   const args = parseArgs(process.argv);
   const lock = JSON.parse(fs.readFileSync(LOCK_PATH, "utf8"));
-
-  let proveIds = [];
-  let noHarmIds = [];
-  let questionIds = [];
-  if (args.cohort === "deep-rfc") {
-    questionIds = loadDeepRfcIds();
-  } else if (args.cohort === "codegraph-prove") {
-    ({ prove_ids: proveIds, no_harm_ids: noHarmIds } = loadCodegraphCohorts());
-    questionIds = [...proveIds, ...noHarmIds];
-  }
+  const { prove_keys: proveKeys, no_harm_keys: noHarmKeys } = loadCodegraphCohorts();
+  const proveIds = proveKeys.map((k) => k.id);
+  const noHarmIds = noHarmKeys.map((k) => k.id);
+  const questionIds = [...proveIds, ...noHarmIds];
 
   const requiredArms = ["A-no-tools", "A-grep", "A-codegraph"];
   const missing = requiredArms.filter((a) => !args.arms.includes(a));
@@ -128,29 +358,28 @@ function main() {
       JSON.stringify({
         ok: false,
         error: `codegraph-prove cohort requires arms ${requiredArms.join(",")}; missing ${missing.join(",")}`,
-      }),
+      })
     );
     process.exitCode = 2;
     return;
   }
 
-  // Treatment must include grep (additive). Reject stale CodeGraph-only configs
-  // that reuse the A-codegraph id without grep.
   const treatmentTools = ARM_TOOLS["A-codegraph"] || [];
   if (!treatmentTools.includes("grep") || !treatmentTools.some((t) => t.startsWith("codegraph_"))) {
     console.error(
       JSON.stringify({
         ok: false,
         error: "A-codegraph treatment arm must include both grep and codegraph_* tools (additive).",
-      }),
+      })
     );
     process.exitCode = 2;
     return;
   }
 
+  fs.mkdirSync(args.out, { recursive: true });
   const manifest = {
     suite: "agent-loop-freeze",
-    status: args.dryRun ? "scheduled-dry-run" : "scaffold-needs-mcp",
+    status: args.dryRun ? "scheduled-dry-run" : "live",
     freeze: "2026-10-15",
     track: "B",
     product_question: lock.product_question,
@@ -158,14 +387,15 @@ function main() {
     decision_lock: "benchmarks/pageindex-ab/design/codegraph-prove-decision.lock.json",
     decision_lock_status: lock.status,
     clear_to_sign: lock.clear_to_sign === true,
+    human_pass: "benchmarks/pageindex-ab/design/HUMAN_PASS_RESULT.json",
     beat: lock.beat,
     corpus: args.corpus,
     cohort: args.cohort,
-    n_prove: proveIds.length || undefined,
-    n_no_harm: noHarmIds.length || undefined,
+    n_prove: proveIds.length,
+    n_no_harm: noHarmIds.length,
     n: questionIds.length,
-    prove_ids: proveIds.length ? proveIds : undefined,
-    no_harm_ids: noHarmIds.length ? noHarmIds : undefined,
+    prove_ids: proveIds,
+    no_harm_ids: noHarmIds,
     question_ids: questionIds,
     model: args.model,
     arms: args.arms.map((id) => ({
@@ -181,47 +411,27 @@ function main() {
                 ? "baseline"
                 : "other",
       tools: ARM_TOOLS[id] || [],
-      setup:
-        id === "A-codegraph" || id === "A-codegraph-only" ? ["codegraph_sync"] : [],
+      setup: id === "A-codegraph" || id === "A-codegraph-only" ? ["codegraph_sync"] : [],
       counts_toward_net: id === "A-grep" || id === "A-codegraph",
     })),
     usage_evidence: {
       arm: "A-codegraph",
       codegraph_tool_names: CODEGRAPH_TOOL_NAMES,
-      record_per_question: [
-        "codegraph_tool_calls",
-        "codegraph_tools_used",
-        "used_codegraph",
-      ],
-      note: "If treatment has grep+CodeGraph and used_codegraph is usually false, that answers the purpose question on its own.",
+      record_per_question: ["codegraph_tool_calls", "codegraph_tools_used", "used_codegraph"],
     },
     decision:
-      "Keep codegraph_* only if Net>=5 (grep+CodeGraph vs grep) AND no-harm pass; tie/no-harm fail => purge. Report usage (used_codegraph) and A-no-tools rates. A-codegraph-only is diagnostic only.",
-    parallel_with: [
-      "benchmarks/pageindex-ab/design/vectify-fair-test.md",
-      "benchmarks/pageindex-ab/design/HUMAN_PASS_ONE_SITTING.md",
-    ],
+      "Keep codegraph_* only if Net>=5 (grep+CodeGraph vs grep) AND no-harm pass; tie/no-harm fail => purge.",
     has_openrouter: Boolean(process.env.OPENROUTER_API_KEY),
-    next: args.dryRun
-      ? "Human-pass first (HUMAN_PASS_ONE_SITTING.md; clear_to_sign); then live spend once MCP tool loop is wired."
-      : "Wire ClawQL MCP tool loop (not implemented in this scaffold). Record used_codegraph per treatment question.",
   };
-
-  fs.mkdirSync(args.out, { recursive: true });
   const outPath = path.join(args.out, "schedule-manifest.json");
   fs.writeFileSync(outPath, JSON.stringify(manifest, null, 2) + "\n");
-  console.log(JSON.stringify({ ok: true, wrote: outPath, manifest }, null, 2));
+  console.log(JSON.stringify({ ok: true, wrote: outPath, dryRun: args.dryRun }, null, 2));
 
-  if (!args.dryRun) {
-    console.error(
-      JSON.stringify({
-        ok: false,
-        error:
-          "Live agent-loop tool execution is not wired yet; use --dry-run to register the schedule, or extend this script with MCP execute.",
-      }),
-    );
-    process.exitCode = 3;
-  }
+  if (args.dryRun) return;
+  await runLive(args, lock, proveKeys, noHarmKeys);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(3);
+});

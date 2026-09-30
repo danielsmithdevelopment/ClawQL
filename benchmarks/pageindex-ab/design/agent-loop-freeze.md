@@ -94,19 +94,24 @@ See [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) — **clear to sign
 
 ## Runner
 
+Live tool loop is wired in-process (`agent_loop_tools.mjs`: `rg` grep, `read_around`, `clawql-codegraph`). Requires `OPENROUTER_API_KEY`. Human pass is **passed** (`HUMAN_PASS_RESULT.json`).
+
 ```bash
-# Dry-run schedule (no spend) — after human pass
-# Required arms for beat; append A-codegraph-only for diagnostic
+# Dry-run schedule (no spend)
 node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs --dry-run \
   --cohort codegraph-prove \
   --arms A-no-tools,A-grep,A-codegraph
 
-# Live — only after HUMAN_PASS_ONE_SITTING signed + lock file unchanged
-node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
+# Live — OPENROUTER_API_KEY required; resume-safe answers.jsonl
+OPENROUTER_API_KEY=… node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
   --cohort codegraph-prove \
   --model anthropic/claude-sonnet-4.6 \
   --arms A-no-tools,A-grep,A-codegraph \
   --out benchmarks/pageindex-ab/results/agent-loop-freeze/
+
+# Score beat (auto-run at end of live; can re-run)
+node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
+  benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl
 ```
 
 ## Related

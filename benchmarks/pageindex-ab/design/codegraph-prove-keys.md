@@ -62,8 +62,8 @@ Full oracle golds: [`codegraph-prove-keys.oracle.json`](codegraph-prove-keys.ora
 - [ ] For **each** of the 12: attempt one unique-string `grep` (+ read if needed). Reject any key that falls.
 - [ ] Spot-check oracle `impacted_names` / explore primary (or `npm run test:dogfood -w clawql-codegraph`).
 - [ ] Confirm no-harm keys stay intentionally grep-easy ([`codegraph-no-harm-keys.json`](codegraph-no-harm-keys.json)).
-- [ ] Sign [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) CodeGraph row.
-- [ ] Only then schedule `run_agent_loop_freeze.mjs` with arms `A-no-tools,A-grep,A-codegraph` (additive treatment; optional `A-codegraph-only` diagnostic).
+- [x] Sign [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) CodeGraph row (`HUMAN_PASS_RESULT.json` passed).
+- [ ] Live spend: `OPENROUTER_API_KEY=… node …/run_agent_loop_freeze.mjs --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph` (tool loop wired; blocked until key is in the environment).
 
 ## Signer
 

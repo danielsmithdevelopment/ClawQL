@@ -12,7 +12,7 @@
 ## Order of work (do not reverse)
 
 1. **External benchmarks first** — questions were not built around any one ClawQL retriever; keys are validated; scores are public.
-   - **EnterpriseRAG-Bench** — closest to ClawQL document recall / enterprise pitch; decide MaxP, reranking, and k here.
+   - **EnterpriseRAG-Bench** — closest to ClawQL document recall / enterprise pitch; decide MaxP, reranking, and k here. Harness: [`benchmarks/enterpriserag-bench/`](../../enterpriserag-bench/design/README.md) (Confluence + Google Drive slice; hard = semantic+intra_doc, no-harm = basic).
    - **LongMemEval-S** — conversation memory / vault side.
 2. **Homegrown paraphrases only as backstop** — another human validation pass; do not lead with them.
 
