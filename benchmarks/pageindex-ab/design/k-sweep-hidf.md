@@ -1,18 +1,17 @@
 # Track C — H-idf k-sweep (default top-k)
 
-**Status:** ship interim — **`TOP_K_DOC` 3 → 20** (offline); ranking fixes next  
-**Artifact:** [`k-sweep-hidf.json`](k-sweep-hidf.json)  
-**Runner:** `node benchmarks/pageindex-ab/scripts/run_k_sweep.mjs --ks 3,6,10,20`  
-**Scoring:** **offline extractAnswer** (answer string in retrieved text) — not model-scored  
-**Set:** hard-candidate, n=358 (262 with gold sections)
+**Status:** **`TOP_K_DOC` locked at 10** (model-scored grid) — offline had preferred 20; model grade did not follow  
+**Artifacts:** [`k-sweep-hidf.json`](k-sweep-hidf.json), [`rerank-model-grid.json`](rerank-model-grid.json)  
+**Runner:** offline `run_k_sweep.mjs`; model gate `run_rerank_model_grid.py` / GHA `.run-rerank-grid`  
+**Set:** hard-candidate (offline n=358; model grid n=262 with gold)
 
 ## Verdict
 
-Retrieval depth is the bottleneck under today's keyword ranker. Gold@3 is only **0.485**; gold@20 is **0.775** (+29.0pp). Offline **strict** accuracy rises **0.592 → 0.813** (+22.1pp). That clears the ~7–8pp detection bar on this set and beats every add-on previously tested (PageIndex, BM25, query rewrite).
+Offline extract still shows a steep retrieval-depth curve (gold@3 **0.485** → @20 **0.775**; offline strict **+22.1pp** to k=20). **Model-scored norerank** (flash-lite full gold set + Sonnet n=60) is **flat k=10→20** (flash strict 0.294 → 0.290; Sonnet 0.367 → 0.367) even while gold_recall climbs. The model does not convert the extra sections into answers — long-context dilution.
 
-**Default:** `TOP_K_DOC = 20` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs) — ship this meanwhile. Raising k works around weak ranking; fixing ranking (see [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md)) is the complementary, better long-term fix.
+**Default:** `TOP_K_DOC = 10` in [`retrieval_helpers.mjs`](../scripts/retrieval_helpers.mjs). Do **not** ship 20. Ranking fixes (MaxP / Qwen3-4B) remain the path to use deeper pools without stuffing the context window.
 
-> Offline scores show the answer **reaches** context, not that a model **uses** it. Confirm with model-scored finalize (`--llm`) before treating the +22pp as a product accuracy claim. Pilot H-idf strict **0.536** on this set used the same offline path with a slightly different citeOk (citation F1>0 vs gold-id-in-top-k) — both offline; the 0.536 vs 0.592 gap is grading, not model vs extract.
+> Offline scores show the answer **reaches** context, not that a model **uses** it. The model grid was the ship gate — and it vetoed 20.
 
 ## Results (H-idf, offline extractAnswer)
 
@@ -35,11 +34,10 @@ Offline empty-evidence extract scores 0 on answerable keys **by construction** (
 
 | Field | Value |
 | ----- | ----- |
-| Eval / harness top-k | **20** (interim ship) |
-| Metric that drove the raise | offline `strict_accuracy` |
-| Max strict gain vs k=3 | +22.1pp |
-| Max gold gain vs k=3 | +29.0pp |
-| Next | gold-rank diagnostics → contextual headers → reranker (dev split; confirm holdout / fresh keys) |
+| Eval / harness top-k | **10** (model-scored lock) |
+| Offline preferred | 20 (+22.1pp offline strict) — **overruled by model grade** |
+| Model norerank k20−k10 | flash **−0.4pp**; Sonnet **0pp** |
+| Next | MaxP/blend/hdr on tune (full-text candidates); confirm on fresh keys — see [`rerank-bakeoff.md`](rerank-bakeoff.md) |
 
 ## Track B (unchanged)
 

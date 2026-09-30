@@ -32,7 +32,7 @@ Twelve prove keys on **one TypeScript monorepo** (ClawQL) is a **small test on C
 | ----- | ---- | ------- |
 | **A (done)** | [Vectify fair test](vectify-fair-test.md) | Tie → purge; Vectify design → [post-8.0 backlog](../../../docs/backlog/post-8.0-vectify-pageindex.md) |
 | **B (this doc)** | grep+CodeGraph vs grep (+ no-tools / no-harm / usage) | Keep opt-in or leave bundle at freeze |
-| **C (in flight)** | k=20 interim; diag; bakeoff → [`rerank-bakeoff.md`](rerank-bakeoff.md) | Keep keyword+k=20. gte/bge@512 no-ship (truncation). **Next:** model-scored k-grid (GHA); then MaxP/blend/Qwen3-4B |
+| **C (locked)** | model k-grid → [`rerank-model-grid.json`](rerank-model-grid.json); bakeoff → [`rerank-bakeoff.md`](rerank-bakeoff.md) | **`TOP_K_DOC=10`** (model norerank flat k10→k20). MaxP/blend on tune next; confirm fresh keys |
 
 ## Cohorts
 

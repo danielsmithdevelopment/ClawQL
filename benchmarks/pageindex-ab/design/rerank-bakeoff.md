@@ -1,8 +1,8 @@
 # Track C — cross-encoder rerank bakeoff
 
-**Status:** truncation root cause confirmed; full-text candidates for MaxP; model k-grid in flight (GHA)  
-**Depends on:** [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md)  
-**Interim default:** keep `TOP_K_DOC=20` until model-scored **norerank** cells confirm ([`k-sweep-hidf.md`](k-sweep-hidf.md))
+**Status:** model k-grid landed — **lock `TOP_K_DOC=10`**; truncation fix path (MaxP) next on tune  
+**Depends on:** [`gold-rank-diagnostics.md`](gold-rank-diagnostics.md), [`rerank-model-grid.json`](rerank-model-grid.json)  
+**Default:** `TOP_K_DOC=10` ([`k-sweep-hidf.md`](k-sweep-hidf.md)) — model norerank vetoed 20
 
 ## Eval hygiene (locked)
 
@@ -62,14 +62,16 @@ Do **not** use holdout to choose among these. Confirm the chosen combo once on *
 
 gte/bge knocked more golds out of top-10 than they rescued (RFC stratum). Under the truncation hypothesis this is expected; MaxP / longer context / Qwen3-4B are the retests.
 
-## Model-scored k-grid (GHA `.run-rerank-grid`)
+## Model-scored k-grid (GHA — landed)
 
-| Cell | How to read it |
-| ---- | -------------- |
-| `k10_norerank_*` / `k20_norerank_*` | **Decides** whether to keep `TOP_K_DOC=20` under flash-lite (+ Sonnet subset) |
-| `k*_rerank_*` | Repro of 512-cap ranks from first bakeoff — informative, **not** the rerank ship decision |
+| Cell | flash strict | Sonnet strict (n=60) | Read |
+| ---- | ------------ | -------------------- | ---- |
+| k10_norerank | **0.294** | **0.367** | baseline |
+| k20_norerank | 0.290 | 0.367 | **no lift** → do not ship 20 |
+| k10_rerank (512-cap bge) | 0.309 | 0.283 | bug repro only |
+| k20_rerank (512-cap bge) | 0.336 | 0.333 | bug repro only |
 
-Remove the sentinel after the run lands.
+Gold_recall still climbs (flash 0.65→0.77) but answer accuracy does not. Sentinel removed.
 
 ## Scripts
 
