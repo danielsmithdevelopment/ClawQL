@@ -1,0 +1,94 @@
+{
+  "tag": "codegraph-no-harm-v1",
+  "locked_with": "design/codegraph-prove-decision.lock.json",
+  "purpose": "Grep-solvable keys — CodeGraph must not regress easy questions (Vectify-style no-harm).",
+  "repo": "danielsmithdevelopment/ClawQL",
+  "roots": [
+    "packages/clawql-codegraph/src",
+    "packages/clawql-memory/src",
+    "packages/clawql-core/src",
+    "packages/clawql-api/src"
+  ],
+  "n": 6,
+  "pass_rule": "A-codegraph correct >= 5 of 6 (allow one flake); else no-harm fail => tie => purge",
+  "keys": [
+    {
+      "id": "cg-harm-01",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "In packages/clawql-codegraph, which source file defines the exported function `impactAnalysis`?",
+      "normalized_answer": "graph/explore.ts",
+      "accepted_variants": [
+        "explore.ts",
+        "src/graph/explore.ts",
+        "packages/clawql-codegraph/src/graph/explore.ts"
+      ],
+      "why_grep_works": "Unique symbol name; one grep of impactAnalysis lands on the export in explore.ts."
+    },
+    {
+      "id": "cg-harm-02",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "Which file defines `splitMarkdownSections`?",
+      "normalized_answer": "recall/read-around.ts",
+      "accepted_variants": [
+        "read-around.ts",
+        "src/recall/read-around.ts",
+        "packages/clawql-memory/src/recall/read-around.ts"
+      ],
+      "why_grep_works": "Unique export; grep of the name is sufficient."
+    },
+    {
+      "id": "cg-harm-03",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "Which file defines `defineProviderPlugin`?",
+      "normalized_answer": "plugin/plugin-installer.ts",
+      "accepted_variants": [
+        "plugin-installer.ts",
+        "src/plugin/plugin-installer.ts",
+        "packages/clawql-core/src/plugin/plugin-installer.ts"
+      ],
+      "why_grep_works": "Unique helper name in clawql-core."
+    },
+    {
+      "id": "cg-harm-04",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "Which file defines `reciprocalRankFusion`?",
+      "normalized_answer": "recall/hybrid-rerank.ts",
+      "accepted_variants": [
+        "hybrid-rerank.ts",
+        "src/recall/hybrid-rerank.ts",
+        "packages/clawql-memory/src/recall/hybrid-rerank.ts"
+      ],
+      "why_grep_works": "Unique function name."
+    },
+    {
+      "id": "cg-harm-05",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "Which file defines the MCP handler function `codegraphImpact`?",
+      "normalized_answer": "mcp/handlers.ts",
+      "accepted_variants": [
+        "handlers.ts",
+        "src/mcp/handlers.ts",
+        "packages/clawql-codegraph/src/mcp/handlers.ts"
+      ],
+      "why_grep_works": "Unique handler export name."
+    },
+    {
+      "id": "cg-harm-06",
+      "job": "definition_file",
+      "grep_soluble": true,
+      "question": "Which file defines `bm25Score`?",
+      "normalized_answer": "recall/vault-ranker.ts",
+      "accepted_variants": [
+        "vault-ranker.ts",
+        "src/recall/vault-ranker.ts",
+        "packages/clawql-memory/src/recall/vault-ranker.ts"
+      ],
+      "why_grep_works": "Unique scoring helper name."
+    }
+  ]
+}

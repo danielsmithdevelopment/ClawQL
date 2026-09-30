@@ -1,0 +1,87 @@
+{
+  "locked_at": "2026-09-29T23:57:00Z",
+  "status": "locked_before_spend",
+  "freeze": "2026-10-15",
+  "caveat": "n=12 prove keys on one TypeScript monorepo (ClawQL) is a small test on CodeGraph home turf. Predeclared margin + no-harm + no-tools are required so a home-turf win cannot sneak past a weak bar.",
+  "model": "anthropic/claude-sonnet-4.6",
+  "repo": "danielsmithdevelopment/ClawQL",
+  "cohorts": {
+    "prove": {
+      "file": "design/codegraph-prove-keys.md",
+      "oracle": "design/codegraph-prove-keys.oracle.json",
+      "n": 12,
+      "job": "grep-insoluble impact/explore",
+      "counts_toward_net": true
+    },
+    "no_harm": {
+      "file": "design/codegraph-no-harm-keys.json",
+      "n": 6,
+      "job": "grep-solvable export/definition lookups",
+      "counts_toward_net": false,
+      "purpose": "CodeGraph must not make easy questions worse"
+    }
+  },
+  "arms": [
+    {
+      "id": "A-no-tools",
+      "tools": [],
+      "purpose": "ClawQL is public; measure how much the frontier model answers from memory alone"
+    },
+    {
+      "id": "A-grep",
+      "tools": ["grep", "read_around"],
+      "purpose": "Control — unique-string grep + read"
+    },
+    {
+      "id": "A-codegraph",
+      "tools": [
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "read_around"
+      ],
+      "purpose": "Treatment — codegraph_* (+ read as needed). Grep is NOT available on this arm."
+    }
+  ],
+  "beat": {
+    "metric": "answer_only_strict",
+    "unit": "question",
+    "definitions": {
+      "W": "#prove keys CodeGraph correct and grep wrong",
+      "L": "#prove keys grep correct and CodeGraph wrong",
+      "Net": "W - L"
+    },
+    "codegraph_beats": {
+      "net_ge": 5,
+      "and": "no_harm_pass"
+    },
+    "tie": {
+      "net_in": [-4, 4],
+      "meaning": "purge — codegraph_* leaves the 8.0.0 bundle"
+    },
+    "grep_beats": {
+      "net_le": -5,
+      "meaning": "purge"
+    },
+    "no_harm_pass": {
+      "required_for_win": true,
+      "rule": "On the 6 grep-solvable no-harm keys, A-codegraph answer-correct count >= 5 (allow one flake). Failure => treat as tie => purge.",
+      "also_report": [
+        "A-grep no-harm rate (expected ~6/6)",
+        "A-no-tools prove + no-harm rates (memory baseline; does not rescue CodeGraph)"
+      ]
+    },
+    "no_tools_reporting": {
+      "required": true,
+      "does_not_change_beat": true,
+      "note": "If A-no-tools already clears many prove keys, the Net vs grep overstates tool value — publish the rates; do not keep on memory alone."
+    }
+  },
+  "human_pass_gate": {
+    "doc": "design/HUMAN_PASS_ONE_SITTING.md",
+    "prove_keys": "review all 12; confirm single grep cannot answer each",
+    "doc_keys": "stratified random sample ~60; stop if >=3 defects and fix builder",
+    "sign_before_spend": true
+  }
+}
