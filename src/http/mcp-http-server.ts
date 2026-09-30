@@ -32,6 +32,13 @@ import {
   shouldUseStatelessHttpTransport,
 } from "../mcp/mcp-http-protocol.js";
 import { chatgptExtensionsDiscoverFragment } from "clawql-chatgpt-extensions";
+import {
+  handleMcpEventsJsonRpc,
+  isMcpEventsEnabledSync,
+  isMcpEventsJsonRpc,
+  McpEventsServiceLive,
+} from "clawql-mcp-events";
+import { Effect } from "effect";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   getVaultStartupStatus,
@@ -584,6 +591,50 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         id: body.id ?? null,
         result,
       });
+      return;
+    }
+
+    // MCP Events (ChatGPT / draft Events spec) — same authenticated endpoint as tools.
+    if (isMcpEventsJsonRpc(req.body)) {
+      if (!isMcpEventsEnabledSync()) {
+        const body = req.body as { id?: unknown };
+        res.status(200).json({
+          jsonrpc: "2.0",
+          id: body.id ?? null,
+          error: { code: -32601, message: "MCP Events disabled (CLAWQL_ENABLE_MCP_EVENTS=0)" },
+        });
+        return;
+      }
+      const body = req.body as {
+        id?: unknown;
+        method?: string;
+        params?: unknown;
+      };
+      const principal =
+        (typeof req.header("x-clawql-principal") === "string" &&
+          req.header("x-clawql-principal")?.trim()) ||
+        (typeof req.header("x-clawql-atr-sub") === "string" &&
+          req.header("x-clawql-atr-sub")?.trim()) ||
+        "anonymous";
+      try {
+        const rpc = await Effect.runPromise(
+          handleMcpEventsJsonRpc(
+            { jsonrpc: "2.0", id: body.id, method: body.method, params: body.params },
+            principal
+          ).pipe(Effect.provide(McpEventsServiceLive))
+        );
+        res.status(200).json(rpc);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] MCP Events error:", err);
+        res.status(200).json({
+          jsonrpc: "2.0",
+          id: body.id ?? null,
+          error: {
+            code: -32603,
+            message: err instanceof Error ? err.message : "Internal error",
+          },
+        });
+      }
       return;
     }
 

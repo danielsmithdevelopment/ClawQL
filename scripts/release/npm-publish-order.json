@@ -18,6 +18,7 @@
     "clawql-web",
     "clawql-documents",
     "clawql-automation",
+    "clawql-mcp-events",
     "clawql-payments",
     "clawql-inference",
     "clawql-ouroboros",

@@ -345,6 +345,7 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-harness`       | `clawql-harness`       | 0.1.0           |
 | `packages/clawql-tee`           | `clawql-tee`           | 8.0.0           |
 | `packages/clawql-automation`    | `clawql-automation`    | 8.0.0           |
+| `packages/clawql-mcp-events`    | `clawql-mcp-events`    | 0.1.0           |
 | `packages/clawql-sandbox`       | `clawql-sandbox`       | 8.0.0           |
 | `packages/clawql-inference`     | `clawql-inference`     | 8.0.0           |
 | `packages/clawql-payments`      | `clawql-payments`      | 8.0.0           |

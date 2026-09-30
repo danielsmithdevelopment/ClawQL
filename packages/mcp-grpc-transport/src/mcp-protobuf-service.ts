@@ -240,11 +240,16 @@ export function createMcpProtobufServiceImplementation(
           await bridge.run(async () => {
             /* ensure connected */
           });
+          const eventsFlag = process.env.CLAWQL_ENABLE_MCP_EVENTS?.trim().toLowerCase();
+          const eventsEnabled =
+            eventsFlag === undefined ||
+            !(eventsFlag === "0" || eventsFlag === "false" || eventsFlag === "no");
           const caps = {
             tools: {},
             resources: {},
             prompts: {},
             logging: {},
+            ...(eventsEnabled ? { events: {} } : {}),
             /** Stateless unary RPCs — no session affinity required. */
             stateless: isStatelessProtocolVersion(check.version),
             /** Multi-round-trip via resume_data / dependent_requests on RequestFields. */
