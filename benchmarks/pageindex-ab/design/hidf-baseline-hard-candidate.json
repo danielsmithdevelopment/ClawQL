@@ -64,9 +64,9 @@
       "keys_with_gold_clean": 238
     },
     "next": [
-      "offline H-idf baseline on hard-candidate",
-      "schedule k-sweep",
-      "Track B spend when ready"
+      "k-sweep done — TOP_K_DOC=20 (see k-sweep-hidf.md)",
+      "H-none LLM memory arm when OPENROUTER_API_KEY available",
+      "Track B spend when ready (additive CodeGraph; freeze 2026-10-15)"
     ]
   },
   "note": "Offline extractAnswer grade on grown hard-candidate after acceptance pass. PI arms skipped (package purged)."

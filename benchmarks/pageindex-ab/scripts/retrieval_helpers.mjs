@@ -41,7 +41,8 @@ export function pageindexAvailable() {
   return Boolean(pageindexBuildTree && pageindexTraverse);
 }
 
-export const TOP_K_DOC = 3;
+/** Raised from 3→20 after k-sweep (design/k-sweep-hidf.md): strict +22.1pp, gold +29.0pp. */
+export const TOP_K_DOC = 20;
 export const TOP_K_MULTI = 5;
 export const HEADING_QUALITY_THRESHOLD = 0.35;
 

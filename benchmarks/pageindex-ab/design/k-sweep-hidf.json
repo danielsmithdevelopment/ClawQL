@@ -1,0 +1,229 @@
+{
+  "tag": "pageindex-ab-k-sweep-v1",
+  "generated_at": "2026-09-30T00:44:48.959Z",
+  "arm": "H-idf",
+  "ks": [
+    3,
+    6,
+    10,
+    20
+  ],
+  "n_questions": 358,
+  "n_with_gold": 262,
+  "detectable_pp_note": "With n=358, offline single-comparison differences of ~7–8pp are decisive (deterministic extractAnswer).",
+  "by_k": {
+    "3": {
+      "n": 358,
+      "answer_accuracy": 0.7821229050279329,
+      "strict_accuracy": 0.5921787709497207,
+      "gold_recall": 0.4847328244274809,
+      "leakage_rate_of_answers": 0.24285714285714285,
+      "gold_and_answer": 119,
+      "leakage": 68,
+      "unanswerable_accuracy": 1,
+      "by_stratum": {
+        "well_structured": {
+          "n": 230,
+          "answer_accuracy": 0.6956521739130435,
+          "strict_accuracy": 0.4,
+          "gold_hit": 19,
+          "leakage": 68
+        },
+        "converted_pdf": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "weakly_structured": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "code": {
+          "n": 32,
+          "answer_accuracy": 0.75,
+          "strict_accuracy": 0.75,
+          "gold_hit": 24,
+          "leakage": 0
+        }
+      },
+      "gold_recall_n": 262,
+      "gold_hit": 127,
+      "delta_answer_vs_k3": 0,
+      "delta_strict_vs_k3": 0,
+      "delta_gold_vs_k3": 0
+    },
+    "6": {
+      "n": 358,
+      "answer_accuracy": 0.840782122905028,
+      "strict_accuracy": 0.6620111731843575,
+      "gold_recall": 0.5687022900763359,
+      "leakage_rate_of_answers": 0.21262458471760798,
+      "gold_and_answer": 141,
+      "leakage": 64,
+      "unanswerable_accuracy": 1,
+      "by_stratum": {
+        "well_structured": {
+          "n": 230,
+          "answer_accuracy": 0.7869565217391304,
+          "strict_accuracy": 0.508695652173913,
+          "gold_hit": 41,
+          "leakage": 64
+        },
+        "converted_pdf": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "weakly_structured": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "code": {
+          "n": 32,
+          "answer_accuracy": 0.75,
+          "strict_accuracy": 0.75,
+          "gold_hit": 24,
+          "leakage": 0
+        }
+      },
+      "gold_recall_n": 262,
+      "gold_hit": 149,
+      "delta_answer_vs_k3": 0.05865921787709505,
+      "delta_strict_vs_k3": 0.06983240223463683,
+      "delta_gold_vs_k3": 0.08396946564885499
+    },
+    "10": {
+      "n": 358,
+      "answer_accuracy": 0.8715083798882681,
+      "strict_accuracy": 0.723463687150838,
+      "gold_recall": 0.6526717557251909,
+      "leakage_rate_of_answers": 0.16987179487179488,
+      "gold_and_answer": 163,
+      "leakage": 53,
+      "unanswerable_accuracy": 1,
+      "by_stratum": {
+        "well_structured": {
+          "n": 230,
+          "answer_accuracy": 0.8347826086956521,
+          "strict_accuracy": 0.6043478260869565,
+          "gold_hit": 63,
+          "leakage": 53
+        },
+        "converted_pdf": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "weakly_structured": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "code": {
+          "n": 32,
+          "answer_accuracy": 0.75,
+          "strict_accuracy": 0.75,
+          "gold_hit": 24,
+          "leakage": 0
+        }
+      },
+      "gold_recall_n": 262,
+      "gold_hit": 171,
+      "delta_answer_vs_k3": 0.08938547486033521,
+      "delta_strict_vs_k3": 0.13128491620111726,
+      "delta_gold_vs_k3": 0.16793893129770998
+    },
+    "20": {
+      "n": 358,
+      "answer_accuracy": 0.9162011173184358,
+      "strict_accuracy": 0.8128491620111732,
+      "gold_recall": 0.7748091603053435,
+      "leakage_rate_of_answers": 0.11280487804878049,
+      "gold_and_answer": 195,
+      "leakage": 37,
+      "unanswerable_accuracy": 1,
+      "by_stratum": {
+        "well_structured": {
+          "n": 230,
+          "answer_accuracy": 0.9043478260869565,
+          "strict_accuracy": 0.7434782608695653,
+          "gold_hit": 95,
+          "leakage": 37
+        },
+        "converted_pdf": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "weakly_structured": {
+          "n": 48,
+          "answer_accuracy": 1,
+          "strict_accuracy": 1,
+          "gold_hit": 42,
+          "leakage": 0
+        },
+        "code": {
+          "n": 32,
+          "answer_accuracy": 0.75,
+          "strict_accuracy": 0.75,
+          "gold_hit": 24,
+          "leakage": 0
+        }
+      },
+      "gold_recall_n": 262,
+      "gold_hit": 203,
+      "delta_answer_vs_k3": 0.13407821229050287,
+      "delta_strict_vs_k3": 0.22067039106145248,
+      "delta_gold_vs_k3": 0.29007633587786263
+    }
+  },
+  "no_retrieval": {
+    "n": 358,
+    "answer_ok": 36,
+    "unanswerable_ok": 36,
+    "unanswerable_n": 36,
+    "mode": "offline_extract_empty",
+    "model": null,
+    "note": "Offline extractAnswer on empty evidence (always miss answerable keys). Set OPENROUTER_API_KEY + --llm-none for true memory baseline.",
+    "answer_accuracy": 0.1005586592178771,
+    "answerable_accuracy": 0
+  },
+  "leakage_explanation": "When answer_accuracy > gold_recall / strict_accuracy, the gap is answers found in non-gold top-k sections (offline extract), not LLM memory. True training-memory needs --llm-none + OPENROUTER_API_KEY on H-none.",
+  "gold_curve_note": "Gold recall still climbing through k=20 (>+5pp vs k=10); ceiling not reached — consider k=40 in a follow-up if product context budget allows.",
+  "recommendation": {
+    "current_eval_top_k": 3,
+    "suggested_eval_top_k": 20,
+    "raise_default": true,
+    "applied": "TOP_K_DOC=20 in retrieval_helpers.mjs",
+    "metric": "strict_accuracy",
+    "max_strict_gain_vs_k3": 0.22067039106145248,
+    "max_answer_gain_vs_k3": 0.13407821229050287,
+    "max_gold_gain_vs_k3": 0.29007633587786263,
+    "rationale": "Strict accuracy rises 22.1pp from k=3 to k=20; recommend raising eval/default section top-k to 20."
+  },
+  "exploratory_k40": {
+    "gold_recall": 0.855,
+    "answer_accuracy": 0.9441,
+    "strict_accuracy": 0.8715,
+    "delta_strict_vs_k20": 0.0587,
+    "delta_gold_vs_k20": 0.0802,
+    "note": "Incremental k20→40 strict +5.9pp is below ~7–8pp detection bar; keep default at 20. Gold still rising — revisit with LLM grade if context is free."
+  },
+  "track_b": "CodeGraph prove keys signed; additive A-codegraph locked — settle before 2026-10-15 freeze."
+}
