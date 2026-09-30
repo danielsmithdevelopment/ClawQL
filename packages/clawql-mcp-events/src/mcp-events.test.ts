@@ -85,13 +85,13 @@ describe("clawql-mcp-events", () => {
     const a = deriveSubscriptionId({
       principal: "user-1",
       url: "https://example.com/cb",
-      name: "clawql.notification",
+      name: "notification.sent",
       arguments: { channel: "x" },
     });
     const b = deriveSubscriptionId({
       principal: "user-1",
       url: "https://example.com/cb",
-      name: "clawql.notification",
+      name: "notification.sent",
       arguments: { channel: "x" },
     });
     expect(a).toBe(b);
@@ -113,7 +113,7 @@ describe("clawql-mcp-events", () => {
       }),
       { store: createMemorySubscriptionStore() }
     );
-    expect(result.events.some((e) => e.name === "stream.changed")).toBe(false);
+    expect(result.events.some((e) => e.name === "stream.changed")).toBe(true);
     expect(result.events.some((e) => e.name === "document.processed")).toBe(true);
     expect(result.events.every((e) => e.delivery.includes("webhook"))).toBe(true);
   });
@@ -130,7 +130,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.subscribe({
             principal: "alice",
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: { channel: "demo" },
             delivery: { mode: "webhook", url: receiver.url, secret },
           });
@@ -146,7 +146,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.subscribe({
             principal: "alice",
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: { channel: "demo" },
             delivery: { mode: "webhook", url: receiver.url, secret },
           });
@@ -157,7 +157,7 @@ describe("clawql-mcp-events", () => {
 
       const event: DeliverableEvent = {
         eventId: "evt_test_1",
-        name: "clawql.notification",
+        name: "notification.sent",
         timestamp: new Date().toISOString(),
         data: { channel: "demo", text: "hello from clawql" },
         cursor: null,
@@ -182,7 +182,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.unsubscribe({
             principal: "alice",
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: { channel: "demo" },
             delivery: { mode: "webhook", url: receiver.url },
           });
@@ -215,7 +215,7 @@ describe("clawql-mcp-events", () => {
             id: 1,
             method: "events/subscribe",
             params: {
-              name: "clawql.notification",
+              name: "notification.sent",
               arguments: {},
               delivery: { mode: "webhook", url: receiver.url, secret },
             },
@@ -247,7 +247,7 @@ describe("clawql-mcp-events", () => {
           id: 2,
           method: "events/subscribe",
           params: {
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: {},
             delivery: {
               mode: "webhook",
@@ -279,7 +279,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.subscribe({
             principal: "dave",
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: {},
             delivery: { mode: "webhook", url: receiver.url, secret },
           });
@@ -291,7 +291,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.emit({
             eventId: "evt_gone",
-            name: "clawql.notification",
+            name: "notification.sent",
             timestamp: new Date().toISOString(),
             data: { text: "bye" },
           });
@@ -307,7 +307,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.emit({
             eventId: "evt_gone2",
-            name: "clawql.notification",
+            name: "notification.sent",
             timestamp: new Date().toISOString(),
             data: { text: "bye2" },
           });
@@ -358,7 +358,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.subscribe({
             principal: "erin",
-            name: "clawql.notification",
+            name: "notification.sent",
             arguments: {},
             delivery: { mode: "webhook", url: receiver.url, secret },
           });
@@ -374,7 +374,7 @@ describe("clawql-mcp-events", () => {
           const svc = yield* McpEventsService;
           return yield* svc.emit({
             eventId: "evt_revoked",
-            name: "clawql.notification",
+            name: "notification.sent",
             timestamp: new Date().toISOString(),
             data: { text: "nope" },
           });

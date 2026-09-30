@@ -1,10 +1,27 @@
 /**
- * Typed producers for advertised MCP Events. Every catalog event (except deferred
- * stream.changed) must have a real caller of one of these helpers.
+ * Typed producers for advertised MCP Events. Every catalog event must have a
+ * real caller of one of these helpers.
  */
 
 import { emitMcpEvent, emitMcpEventBestEffort } from "./process-bridge.js";
 import type { DeliveryOutcome } from "./types.js";
+
+export function emitStreamChanged(input: {
+  topic: string;
+  summary: string;
+  changed_at?: string;
+  cursor?: string;
+}): void {
+  emitMcpEventBestEffort({
+    name: "stream.changed",
+    data: {
+      topic: input.topic,
+      summary: input.summary,
+      changed_at: input.changed_at ?? new Date().toISOString(),
+      ...(input.cursor ? { cursor: input.cursor } : {}),
+    },
+  });
+}
 
 export function emitDocumentProcessed(input: {
   document_id: string;
@@ -53,28 +70,28 @@ export function emitBudgetExhausted(input: {
   });
 }
 
-export function emitMandateCompleted(input: {
-  mandate_id: string;
+export function emitScheduleCompleted(input: {
+  schedule_id: string;
   status: string;
   summary?: string;
 }): void {
   emitMcpEventBestEffort({
-    name: "mandate.completed",
+    name: "schedule.completed",
     data: {
-      mandate_id: input.mandate_id,
+      schedule_id: input.schedule_id,
       status: input.status,
       ...(input.summary ? { summary: input.summary } : {}),
     },
   });
 }
 
-export function emitClawqlNotification(input: {
+export function emitNotificationSent(input: {
   text: string;
   channel?: string;
   url?: string;
 }): void {
   emitMcpEventBestEffort({
-    name: "clawql.notification",
+    name: "notification.sent",
     data: {
       text: input.text,
       ...(input.channel ? { channel: input.channel } : {}),
@@ -83,7 +100,24 @@ export function emitClawqlNotification(input: {
   });
 }
 
-/** Test helper: await delivery for one producer. */
+/** Test helpers: await delivery for one producer. */
+export async function emitStreamChangedAwait(input: {
+  topic: string;
+  summary: string;
+  changed_at?: string;
+  cursor?: string;
+}): Promise<readonly DeliveryOutcome[]> {
+  return emitMcpEvent({
+    name: "stream.changed",
+    data: {
+      topic: input.topic,
+      summary: input.summary,
+      changed_at: input.changed_at ?? new Date().toISOString(),
+      ...(input.cursor ? { cursor: input.cursor } : {}),
+    },
+  });
+}
+
 export async function emitDocumentProcessedAwait(input: {
   document_id: string;
   status: string;
@@ -131,28 +165,28 @@ export async function emitBudgetExhaustedAwait(input: {
   });
 }
 
-export async function emitMandateCompletedAwait(input: {
-  mandate_id: string;
+export async function emitScheduleCompletedAwait(input: {
+  schedule_id: string;
   status: string;
   summary?: string;
 }): Promise<readonly DeliveryOutcome[]> {
   return emitMcpEvent({
-    name: "mandate.completed",
+    name: "schedule.completed",
     data: {
-      mandate_id: input.mandate_id,
+      schedule_id: input.schedule_id,
       status: input.status,
       ...(input.summary ? { summary: input.summary } : {}),
     },
   });
 }
 
-export async function emitClawqlNotificationAwait(input: {
+export async function emitNotificationSentAwait(input: {
   text: string;
   channel?: string;
   url?: string;
 }): Promise<readonly DeliveryOutcome[]> {
   return emitMcpEvent({
-    name: "clawql.notification",
+    name: "notification.sent",
     data: {
       text: input.text,
       ...(input.channel ? { channel: input.channel } : {}),

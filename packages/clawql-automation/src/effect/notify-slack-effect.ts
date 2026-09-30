@@ -58,8 +58,8 @@ export function executeNotifySlackCoreEffect(
       try {
         const text = reshaped.content?.[0]?.text ?? "";
         if (text.includes('"error"') && !text.includes('"ok":true')) return;
-        const { emitClawqlNotification } = await import("clawql-mcp-events");
-        emitClawqlNotification({
+        const { emitNotificationSent } = await import("clawql-mcp-events");
+        emitNotificationSent({
           channel: params.channel,
           text: params.text,
         });

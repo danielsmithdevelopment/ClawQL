@@ -1,21 +1,24 @@
 import type { McpEventDefinition } from "./types.js";
 
 /**
- * Deferred until clawql-streams / change-detection producers ship.
- * Do not advertise — vapor without a live emit path.
+ * Advertised MCP Events — each entry has a live producer wired in 8.0.0.
+ * @see producers.ts
+ *
+ * Naming: `<noun>.<past-participle>` (document.processed, schedule.completed, …).
+ * Reserve `mandate.*` for fleet mandates if/when they ship.
  */
-export const DEFERRED_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
+export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "stream.changed",
     description:
-      "A polled API or stream topic changed (ClawQL change detection). Filter by topic id.",
+      "A polled API / schedule synthetic topic body changed (hash change detection). Filter by topic (schedule job id).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
       properties: {
         topic: {
           type: "string",
-          description: "Stream / topic id to monitor for changes.",
+          description: "Stream / topic id (ClawQL schedule job id) to monitor for changes.",
         },
       },
       required: ["topic"],
@@ -33,13 +36,6 @@ export const DEFERRED_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
       additionalProperties: false,
     },
   },
-] as const;
-
-/**
- * Advertised MCP Events — each entry has a live producer wired in 8.0.0.
- * @see producers.ts
- */
-export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "document.processed",
     description: "A document finished IDP / document pipeline processing.",
@@ -111,31 +107,33 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
     },
   },
   {
-    name: "mandate.completed",
-    description:
-      "A schedule / mandate automation run completed (ClawQL schedule job id as mandate_id).",
+    name: "schedule.completed",
+    description: "A ClawQL schedule job run completed (synthetic HTTP check).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
       properties: {
-        mandate_id: { type: "string", description: "Optional mandate / schedule job id filter." },
+        schedule_id: {
+          type: "string",
+          description: "Optional schedule job id filter.",
+        },
       },
       additionalProperties: false,
     },
     payloadSchema: {
       type: "object",
       properties: {
-        mandate_id: { type: "string" },
+        schedule_id: { type: "string" },
         status: { type: "string" },
         summary: { type: "string" },
       },
-      required: ["mandate_id", "status"],
+      required: ["schedule_id", "status"],
       additionalProperties: false,
     },
   },
   {
-    name: "clawql.notification",
-    description: "ClawQL notification (Slack notify success and synthetic demos).",
+    name: "notification.sent",
+    description: "A ClawQL notification was sent (Slack notify success).",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
@@ -156,6 +154,9 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
     },
   },
 ] as const;
+
+/** Empty — all 8.0.0 catalog events have live producers. Kept for future deferrals. */
+export const DEFERRED_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [] as const;
 
 export function findEventDefinition(
   name: string,

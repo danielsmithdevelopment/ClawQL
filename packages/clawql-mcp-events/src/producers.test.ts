@@ -6,10 +6,11 @@ import { BUILTIN_MCP_EVENT_CATALOG, DEFERRED_MCP_EVENT_CATALOG } from "./catalog
 import { hostMatchesAllowlist } from "./enterprise.js";
 import {
   emitBudgetExhaustedAwait,
-  emitClawqlNotificationAwait,
   emitDocumentProcessedAwait,
   emitHookBlockedAwait,
-  emitMandateCompletedAwait,
+  emitNotificationSentAwait,
+  emitScheduleCompletedAwait,
+  emitStreamChangedAwait,
 } from "./producers.js";
 import { setMcpEventsProcessEmitter } from "./process-bridge.js";
 import { generateWhsecSecretSync } from "./secret.js";
@@ -69,9 +70,13 @@ describe("MCP Events producers (no vapor)", () => {
     else process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = prevLocal;
   });
 
-  it("does not advertise deferred stream.changed", () => {
-    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "stream.changed")).toBe(false);
-    expect(DEFERRED_MCP_EVENT_CATALOG.some((e) => e.name === "stream.changed")).toBe(true);
+  it("advertises stream.changed and has empty deferred catalog", () => {
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "stream.changed")).toBe(true);
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "schedule.completed")).toBe(true);
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "notification.sent")).toBe(true);
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "mandate.completed")).toBe(false);
+    expect(BUILTIN_MCP_EVENT_CATALOG.some((e) => e.name === "clawql.notification")).toBe(false);
+    expect(DEFERRED_MCP_EVENT_CATALOG).toHaveLength(0);
   });
 
   it("allowlist matches exact and wildcard hosts", () => {
@@ -87,6 +92,20 @@ describe("MCP Events producers (no vapor)", () => {
     trigger: () => Promise<readonly { accepted: boolean }[]>;
     expectData: (data: Record<string, unknown>) => void;
   }> = [
+    {
+      name: "stream.changed",
+      subscribeArgs: { topic: "job_stream_1" },
+      trigger: () =>
+        emitStreamChangedAwait({
+          topic: "job_stream_1",
+          summary: "body changed",
+          cursor: "abc",
+        }),
+      expectData: (d) => {
+        expect(d.topic).toBe("job_stream_1");
+        expect(d.summary).toBe("body changed");
+      },
+    },
     {
       name: "document.processed",
       subscribeArgs: { document_id: "doc_live_1" },
@@ -129,24 +148,24 @@ describe("MCP Events producers (no vapor)", () => {
       },
     },
     {
-      name: "mandate.completed",
-      subscribeArgs: { mandate_id: "job_1" },
+      name: "schedule.completed",
+      subscribeArgs: { schedule_id: "job_1" },
       trigger: () =>
-        emitMandateCompletedAwait({
-          mandate_id: "job_1",
+        emitScheduleCompletedAwait({
+          schedule_id: "job_1",
           status: "ok",
           summary: "done",
         }),
       expectData: (d) => {
-        expect(d.mandate_id).toBe("job_1");
+        expect(d.schedule_id).toBe("job_1");
         expect(d.status).toBe("ok");
       },
     },
     {
-      name: "clawql.notification",
+      name: "notification.sent",
       subscribeArgs: { channel: "#ops" },
       trigger: () =>
-        emitClawqlNotificationAwait({
+        emitNotificationSentAwait({
           channel: "#ops",
           text: "hello ops",
         }),
@@ -163,15 +182,13 @@ describe("MCP Events producers (no vapor)", () => {
       const receiver = await startEchoReceiver();
       const secret = generateWhsecSecretSync();
       const store = createMemorySubscriptionStore();
-      const layer = McpEventsServiceLayer({
-        store,
-        enterprise: {
-          callbackAllowlist: [],
-          maxSubscriptionsPerPrincipal: 25,
-          maxDeliveriesPerMinutePerPrincipal: 120,
-          redactPii: false,
-        },
-      });
+      const enterprise = {
+        callbackAllowlist: [] as string[],
+        maxSubscriptionsPerPrincipal: 25,
+        maxDeliveriesPerMinutePerPrincipal: 120,
+        redactPii: false,
+      };
+      const layer = McpEventsServiceLayer({ store, enterprise });
 
       setMcpEventsProcessEmitter(async (event) =>
         Effect.runPromise(
@@ -193,18 +210,9 @@ describe("MCP Events producers (no vapor)", () => {
               delivery: { mode: "webhook", url: receiver.url, secret },
             });
           }),
-          {
-            store,
-            enterprise: {
-              callbackAllowlist: [],
-              maxSubscriptionsPerPrincipal: 25,
-              maxDeliveriesPerMinutePerPrincipal: 120,
-              redactPii: false,
-            },
-          }
+          { store, enterprise }
         );
 
-        // Filtered-out event must not deliver
         if (c.name === "document.processed") {
           await emitDocumentProcessedAwait({
             document_id: "other_doc",
@@ -242,7 +250,7 @@ describe("MCP Events producers (no vapor)", () => {
             const svc = yield* McpEventsService;
             return yield* svc.subscribe({
               principal: "tester",
-              name: "clawql.notification",
+              name: "notification.sent",
               arguments: {},
               delivery: { mode: "webhook", url: receiver.url, secret },
             });

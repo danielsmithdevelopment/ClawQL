@@ -2,10 +2,10 @@
 
 ## Unreleased
 
-- Drop `stream.changed` from advertised catalog until Streams producers exist (deferred catalog only).
-- Wire live producers: `document.processed`, `hook.blocked`, `budget.exhausted`, `mandate.completed`, `clawql.notification`.
-- Enterprise controls: callback allowlist, gateway PII redaction on payloads, per-principal subscription + delivery-rate caps.
-- Per-event producer → signed delivery tests; ChatGPT live checklist doc.
+- Rename public event names before lock-in: `mandate.completed` → `schedule.completed`, `clawql.notification` → `notification.sent`.
+- Advertise + wire `stream.changed` via schedule synthetic body-hash change detection (any polled HTTPS API → MCP event).
+- ChatGPT live pass is a **blocking** v8.0.0 release gate (`docs/release/v8.0.0-checklist.md`).
+- Drop vapor / wire live producers; enterprise allowlist, PII redact, caps.
 
 ## 0.1.0
 
@@ -15,6 +15,6 @@ First public release — MCP Events for ClawQL 8.0.0.
 - Standard Webhooks signing + callback challenge verification
 - SSRF-hardened HTTPS callbacks (no redirects, private addresses blocked)
 - Durable JSON subscription store; deterministic subscription IDs
-- Built-in catalog (live producers): `document.processed`, `hook.blocked`, `budget.exhausted`, `mandate.completed`, `clawql.notification`
+- Live catalog: `stream.changed`, `document.processed`, `hook.blocked`, `budget.exhausted`, `schedule.completed`, `notification.sent`
 - Access recheck, payload screening, feedback-loop detection hooks
 - Effect `McpEventsService` Tag + Layer

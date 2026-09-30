@@ -39,14 +39,16 @@ export {
 export {
   emitBudgetExhausted,
   emitBudgetExhaustedAwait,
-  emitClawqlNotification,
-  emitClawqlNotificationAwait,
   emitDocumentProcessed,
   emitDocumentProcessedAwait,
   emitHookBlocked,
   emitHookBlockedAwait,
-  emitMandateCompleted,
-  emitMandateCompletedAwait,
+  emitNotificationSent,
+  emitNotificationSentAwait,
+  emitScheduleCompleted,
+  emitScheduleCompletedAwait,
+  emitStreamChanged,
+  emitStreamChangedAwait,
 } from "./producers.js";
 export { screenEventPayload, screenUserText } from "./screen.js";
 export { generateWhsecSecret, generateWhsecSecretSync, validateWhsecSecret } from "./secret.js";

@@ -4,7 +4,7 @@
  * for cron/interval/one-shot due execution.
  */
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, isAbsolute, resolve as resolvePath } from "node:path";
@@ -73,7 +73,7 @@ type TriggerOutcome = {
   response_excerpt: string | null;
 };
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 let scheduleWorkerStop: (() => void) | null = null;
 const cronMinuteRunCache = new Map<string, string>();
@@ -241,6 +241,15 @@ function migrate(db: Database): void {
     `);
     db.run(
       "INSERT INTO schema_migrations (version, name, applied_at) VALUES (1, 'schedule_v1', ?)",
+      [nowIso()]
+    );
+  }
+  if (currentSchemaVersion(db) < 2) {
+    db.exec(`
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_body_hash TEXT;
+    `);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'schedule_body_hash_v2', ?)",
       [nowIso()]
     );
   }
@@ -495,6 +504,47 @@ function getRunsForJob(db: Database, jobId: string, runsLimit: number): Schedule
   }
   stmt.free();
   return out;
+}
+
+function hashSyntheticBody(excerpt: string | null): string {
+  return createHash("sha256")
+    .update(excerpt ?? "")
+    .digest("hex");
+}
+
+function getJobLastBodyHash(db: Database, jobId: string): string | null {
+  const stmt = db.prepare(`SELECT last_body_hash FROM clawql_schedule_jobs WHERE id = ?`);
+  stmt.bind([jobId]);
+  let hash: string | null = null;
+  if (stmt.step()) {
+    const row = stmt.getAsObject() as { last_body_hash?: string | null };
+    hash = typeof row.last_body_hash === "string" ? row.last_body_hash : null;
+  }
+  stmt.free();
+  return hash;
+}
+
+function setJobLastBodyHash(db: Database, jobId: string, hash: string): void {
+  db.run(`UPDATE clawql_schedule_jobs SET last_body_hash = ?, updated_at = ? WHERE id = ?`, [
+    hash,
+    nowIso(),
+    jobId,
+  ]);
+}
+
+/**
+ * Detect body change vs last stored hash. First observation establishes baseline (no change).
+ * Exported for unit tests.
+ */
+export function detectSyntheticBodyChange(
+  previousHash: string | null,
+  excerpt: string | null
+): { changed: boolean; hash: string; baseline: boolean } {
+  const hash = hashSyntheticBody(excerpt);
+  if (previousHash == null) {
+    return { changed: false, hash, baseline: true };
+  }
+  return { changed: previousHash !== hash, hash, baseline: false };
 }
 
 async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutcome> {
@@ -811,14 +861,26 @@ async function executeTriggerForJob(
     trimRunsForJob(db, job.id, getScheduleHistoryLimit());
   }
   try {
-    const { emitMandateCompleted } = await import("clawql-mcp-events");
-    emitMandateCompleted({
-      mandate_id: job.id,
+    const { emitScheduleCompleted, emitStreamChanged } = await import("clawql-mcp-events");
+    emitScheduleCompleted({
+      schedule_id: job.id,
       status: outcome.status,
       summary: outcome.ok
         ? `schedule job ${job.id} ok (${outcome.latency_ms ?? 0}ms)`
         : (outcome.error_text ?? `schedule job ${job.id} ${outcome.status}`),
     });
+    if (!opts.dryRun) {
+      const previous = getJobLastBodyHash(db, job.id);
+      const detection = detectSyntheticBodyChange(previous, outcome.response_excerpt);
+      setJobLastBodyHash(db, job.id, detection.hash);
+      if (detection.changed) {
+        emitStreamChanged({
+          topic: job.id,
+          summary: `Synthetic topic ${job.action.synthetic_test.name} body changed`,
+          cursor: detection.hash,
+        });
+      }
+    }
   } catch {
     /* mcp-events optional */
   }
