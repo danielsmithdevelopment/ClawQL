@@ -1,5 +1,5 @@
-# Track B freeze — resolved
+# Track B freeze — void, retest in progress
 
-See [`TRACK_B_RESULT.md`](TRACK_B_RESULT.md) and [`codegraph-beat-decision.json`](codegraph-beat-decision.json).
+See [`TRACK_B_VOID_RETEST.md`](TRACK_B_VOID_RETEST.md).
 
-Outcome: **`codegraph_beats`** / `keep_codegraph_opt_in` (Net=12, no-harm 6/6).
+Prior keep withdrawn. Retest path: ripgrep-hardened grep tool → offline smoke → A-grep no-harm gate ≥5/6 → paired 18×2 spend.

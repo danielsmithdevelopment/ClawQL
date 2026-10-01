@@ -36,6 +36,8 @@ function parseArgs(argv) {
     corpus: "clawql-monorepo",
     cohort: "codegraph-prove",
     arms: ["A-no-tools", "A-grep", "A-codegraph"],
+    /** prove | no_harm | all */
+    keys: "all",
     model:
       process.env.PAGEINDEX_AB_AGENT_MODEL ||
       process.env.VECTIFY_FAIR_MODEL ||
@@ -50,6 +52,7 @@ function parseArgs(argv) {
     else if (a === "--corpus") out.corpus = argv[++i];
     else if (a === "--cohort") out.cohort = argv[++i];
     else if (a === "--arms") out.arms = argv[++i].split(",").map((s) => s.trim());
+    else if (a === "--keys") out.keys = argv[++i];
     else if (a === "--model") out.model = argv[++i];
     else if (a === "--out") out.out = path.resolve(argv[++i]);
     else if (a === "--limit") out.limit = Number(argv[++i]);
@@ -217,6 +220,7 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
   ];
   const used = new Set();
   let toolCalls = 0;
+  const tool_trace = [];
   const usage = {
     prompt_tokens: 0,
     completion_tokens: 0,
@@ -256,6 +260,8 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
         used_codegraph: [...used].some(isCodegraphTool),
         codegraph_tools_used: [...used].filter(isCodegraphTool),
         tool_calls: toolCalls,
+        tool_trace,
+        tools_offered: (ARM_TOOLS[armId] || []).slice(),
         usage,
       };
     }
@@ -275,6 +281,14 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
       } catch (toolErr) {
         content = `error: ${String(toolErr.message || toolErr)}`;
       }
+      tool_trace.push({
+        name,
+        args,
+        result_head: String(content).slice(0, 500),
+        is_error:
+          String(content).startsWith("error:") ||
+          String(content).startsWith("(no matches"),
+      });
       messages.push({
         role: "tool",
         tool_call_id: tc.id,
@@ -293,12 +307,14 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
     used_codegraph: [...used].some(isCodegraphTool),
     codegraph_tools_used: [...used].filter(isCodegraphTool),
     tool_calls: toolCalls,
+    tool_trace,
+    tools_offered: (ARM_TOOLS[armId] || []).slice(),
     usage,
     error: "max_turns",
   };
 }
 
-async function runLive(args, lock, proveKeys, noHarmKeys) {
+async function runLive(args, lock, proveKeysIn, noHarmKeysIn) {
   const apiKey = process.env.OPENROUTER_API_KEY || "";
   if (!apiKey) {
     const report = {
@@ -320,12 +336,28 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
     return;
   }
 
-  console.error(JSON.stringify({ indexing: true, roots: 4 }));
+  let proveKeys = proveKeysIn;
+  let noHarmKeys = noHarmKeysIn;
+  if (args.keys === "prove") noHarmKeys = [];
+  else if (args.keys === "no_harm") proveKeys = [];
+
+  console.error(JSON.stringify({ indexing: true, roots: 4, repoRoot: REPO, keys: args.keys }));
   const { doc } = await ensureCodeGraph(REPO);
   console.error(
     JSON.stringify({ indexed: true, nodeCount: doc.nodeCount, edgeCount: doc.edgeCount })
   );
   const toolCtx = { repoRoot: REPO, doc };
+
+  // Sanity: grep must be spawnable before spending.
+  {
+    const probe = runTool("grep", { pattern: "impactAnalysis", max_matches: 3 }, toolCtx);
+    console.error(JSON.stringify({ grep_probe: probe.slice(0, 200) }));
+    if (probe.startsWith("error:")) {
+      console.error(JSON.stringify({ fatal: "grep_tool_broken", detail: probe }));
+      process.exitCode = 4;
+      return;
+    }
+  }
 
   const answersPath = path.join(args.out, "answers.jsonl");
   const done = new Set();
@@ -397,6 +429,8 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
         used_codegraph: result.used_codegraph,
         codegraph_tools_used: result.codegraph_tools_used,
         tool_calls: result.tool_calls,
+        tools_offered: result.tools_offered || [],
+        tool_trace: result.tool_trace || [],
         usage: result.usage || null,
         model: args.model,
       };
@@ -451,9 +485,15 @@ async function main() {
   const noHarmIds = noHarmKeys.map((k) => k.id);
   const questionIds = [...proveIds, ...noHarmIds];
 
+  // Full freeze requires all three arms; smoke/retest may pass a subset via --arms.
   const requiredArms = ["A-no-tools", "A-grep", "A-codegraph"];
   const missing = requiredArms.filter((a) => !args.arms.includes(a));
-  if (args.cohort === "codegraph-prove" && missing.length) {
+  const allowSubset =
+    process.env.PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET === "1" ||
+    args.keys === "no_harm" ||
+    args.arms.join(",") === "A-grep,A-codegraph" ||
+    args.arms.join(",") === "A-grep";
+  if (args.cohort === "codegraph-prove" && missing.length && !allowSubset) {
     console.error(
       JSON.stringify({
         ok: false,

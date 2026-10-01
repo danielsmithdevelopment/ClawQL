@@ -185,19 +185,42 @@ export function runTool(name, args, ctx) {
   const { repoRoot, doc } = ctx;
   if (name === "grep") {
     const pattern = String(args.pattern || "");
+    if (!pattern) return "error: grep requires pattern";
     const max = Number(args.max_matches || 40);
-    const rgArgs = ["-n", "--no-heading", "-S", pattern, ...ROOTS];
-    if (args.glob) rgArgs.unshift("-g", String(args.glob));
+    // Prefer caller paths; default to the four Track B packages (exist under repoRoot).
+    const searchRoots = Array.isArray(args.paths) && args.paths.length
+      ? args.paths.map(String)
+      : ROOTS;
+    for (const root of searchRoots) {
+      const abs = path.isAbsolute(root) ? root : path.join(repoRoot, root);
+      if (!fs.existsSync(abs)) {
+        return `error: grep search root missing: ${root} (repoRoot=${repoRoot})`;
+      }
+    }
+    const rgArgs = ["-n", "--no-heading", "-S", "--", pattern, ...searchRoots];
+    if (args.glob) rgArgs.splice(0, 0, "-g", String(args.glob));
     const r = spawnSync("rg", rgArgs, {
       cwd: repoRoot,
       encoding: "utf8",
       maxBuffer: 4 * 1024 * 1024,
     });
-    const lines = (r.stdout || r.stderr || "")
+    if (r.error) {
+      return `error: failed to spawn rg (${r.error.message}). Is ripgrep installed on PATH?`;
+    }
+    // rg exit 0 = matches, 1 = no matches, 2 = error
+    if (r.status === 2 || (r.status !== 0 && r.status !== 1)) {
+      return clip(
+        `error: rg exit ${r.status}\n${r.stderr || r.stdout || "(no stderr)"}`
+      );
+    }
+    const lines = String(r.stdout || "")
       .split("\n")
       .filter(Boolean)
       .slice(0, max);
-    return clip(lines.join("\n") || "(no matches)");
+    if (!lines.length) {
+      return `(no matches for ${JSON.stringify(pattern)} under ${searchRoots.join(", ")})`;
+    }
+    return clip(lines.join("\n"));
   }
   if (name === "read_around") {
     let p = String(args.path || "");

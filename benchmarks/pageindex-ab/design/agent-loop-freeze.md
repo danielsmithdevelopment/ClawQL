@@ -102,6 +102,8 @@ Live tool loop is wired in-process (`agent_loop_tools.mjs`: `rg` grep, `read_aro
 
 **Memory baseline:** publish `A-no-tools` rates beside the beat (`memory_baseline` in the decision JSON). Keys the frontier model already knows shrink room for Net≥5. **Does not change** the locked keep/purge rule.
 
+**Void precedent:** if `A-grep` fails its own no-harm solvability gate (~6/6), the beat is **void, retest** — not a keep — same as Vectify defective keys ([`TRACK_B_VOID_RETEST.md`](TRACK_B_VOID_RETEST.md)).
+
 ```bash
 # Size eval key limit from finished cells (artifact answers.jsonl)
 node benchmarks/pageindex-ab/scripts/estimate_track_b_eval_key_limit.mjs /path/to/answers.jsonl

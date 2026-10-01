@@ -449,6 +449,13 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+      - name: Ensure ripgrep
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: |
+          if ! command -v rg >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+          fi
+          rg --version
       - name: Install
         if: ${{ steps.gate.outputs.run == '1' }}
         run: npm ci --ignore-scripts
@@ -467,51 +474,62 @@ jobs:
           else
             echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
           fi
-      - name: Resume prior Track B answers checkpoint
+          # Fresh retest dir — do NOT resume the voided broken-grep run.
+          echo "out=benchmarks/pageindex-ab/results/agent-loop-freeze-retest" >> "$GITHUB_OUTPUT"
+      - name: Offline smoke — grep sees no-harm gold files
         if: ${{ steps.gate.outputs.run == '1' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p benchmarks/pageindex-ab/results/agent-loop-freeze
-          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          id="$(gh run list --workflow "PageIndex A/B (memory stack default-route)" \
-            --branch "$branch" --limit 15 \
-            --json databaseId,conclusion \
-            --jq '[.[] | select(.conclusion == "failure" or .conclusion == "success")][0].databaseId // empty' || true)"
-          echo "prior_run_id=${id:-none}"
-          if [ -n "$id" ]; then
-            rm -rf /tmp/piab-trackb-resume
-            if gh run download "$id" -n pageindex-ab-agent-loop-freeze -D /tmp/piab-trackb-resume; then
-              src="$(find /tmp/piab-trackb-resume -name answers.jsonl -print -quit || true)"
-              if [ -n "$src" ]; then
-                cp "$src" benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl
-                echo "resumed_lines=$(wc -l < benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl)"
-              else
-                echo "no answers.jsonl in prior artifact"
-              fi
-            fi
-          fi
-      - name: Track B additive agent-loop spend
+        run: node benchmarks/pageindex-ab/scripts/smoke_grep_no_harm.mjs
+      - name: Gate — A-grep alone on no-harm (must be ≥5/6)
         if: ${{ steps.gate.outputs.run == '1' }}
+        id: grepgate
         env:
-          # OPENROUTER_API_KEY set in Require step (Track B key preferred).
           PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
           VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
           CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
-          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B grep-gate
+          PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET: "1"
         run: |
+          OUT="${{ steps.trackb.outputs.out }}"
+          mkdir -p "$OUT/grep-no-harm-gate"
           node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
             --cohort codegraph-prove \
             --model "$PAGEINDEX_AB_AGENT_MODEL" \
-            --arms A-no-tools,A-grep,A-codegraph \
-            --out benchmarks/pageindex-ab/results/agent-loop-freeze/
+            --arms A-grep \
+            --keys no_harm \
+            --out "$OUT/grep-no-harm-gate/"
+          node -e '
+            const fs=require("fs");
+            const p=process.argv[1];
+            const rows=fs.readFileSync(p,"utf8").split("\n").filter(Boolean).map(JSON.parse).filter(r=>!r.error);
+            const n=rows.length, ok=rows.filter(r=>r.answer_ok).length;
+            console.log(JSON.stringify({n, ok, rate: n?ok/n:null, min_ok:5},null,2));
+            if (ok < 5) { console.error("A-grep no-harm gate failed — instrument still broken"); process.exit(2); }
+          ' "$OUT/grep-no-harm-gate/answers.jsonl"
+      - name: Track B retest — paired A-grep + A-codegraph (18×2)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
+          VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B retest
+          PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET: "1"
+        run: |
+          OUT="${{ steps.trackb.outputs.out }}"
+          mkdir -p "$OUT/paired"
+          node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
+            --cohort codegraph-prove \
+            --model "$PAGEINDEX_AB_AGENT_MODEL" \
+            --arms A-grep,A-codegraph \
+            --keys all \
+            --out "$OUT/paired/"
       - name: Decide CodeGraph beat / tie / purge
-        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        if: ${{ always() && steps.gate.outputs.run == '1' && steps.grepgate.outcome == 'success' }}
         id: beat
         run: |
           set +e
+          OUT="${{ steps.trackb.outputs.out }}/paired"
           node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
-            benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl \
+            "$OUT/answers.jsonl" \
             benchmarks/pageindex-ab/design/codegraph-beat-decision.json
           code=$?
           echo "exit=$code" >> "$GITHUB_OUTPUT"
@@ -520,7 +538,6 @@ jobs:
             echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
             echo "Track B outcome=$outcome (decide exit $code)"
           fi
-          # Exit 2 = incomplete (resume later). Exit 0 = terminal beat. Other = hard fail.
           if [ "$code" -eq 2 ]; then
             echo "::warning::Track B decision incomplete — resume after fixing failed cells"
             exit 0
@@ -530,9 +547,9 @@ jobs:
         if: ${{ always() && steps.gate.outputs.run == '1' }}
         uses: actions/upload-artifact@v4
         with:
-          name: pageindex-ab-agent-loop-freeze
+          name: pageindex-ab-agent-loop-freeze-retest
           path: |
-            benchmarks/pageindex-ab/results/agent-loop-freeze/
+            benchmarks/pageindex-ab/results/agent-loop-freeze-retest/
             benchmarks/pageindex-ab/design/codegraph-beat-decision.json
 
   # Track C: model-scored k∈{10,20} × ±rerank (flash-lite + Sonnet subset).
