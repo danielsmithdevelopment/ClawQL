@@ -103,6 +103,7 @@
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-documents": "0.1.0",
+    "clawql-mcp-events": "0.1.0",
     "clawql-memory": "0.1.0",
     "effect": "^3.21.4",
     "nats": "^2.29.3",

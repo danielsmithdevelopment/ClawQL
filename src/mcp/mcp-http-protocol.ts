@@ -10,6 +10,7 @@ import {
   isStatelessProtocolVersion,
   isSupportedProtocolVersion,
 } from "mcp-grpc-transport";
+import { isMcpEventsEnabledSync } from "clawql-mcp-events";
 
 export {
   LATEST_PROTOCOL_VERSION,
@@ -57,19 +58,23 @@ export function buildHttpDiscoverResponse(input: {
   clientCapabilities?: Record<string, unknown>;
   /** OpenAI / ChatGPT extension capabilities (e.g. openai/settings). */
   extensions?: Record<string, unknown>;
+  /** Override MCP Events advertisement (default: CLAWQL_ENABLE_MCP_EVENTS). */
+  enableEvents?: boolean;
 }): Record<string, unknown> {
   const stateless = isStatelessProtocolVersion(input.protocolVersion);
+  const enableEvents = input.enableEvents ?? isMcpEventsEnabledSync();
   return {
     protocolVersion: input.protocolVersion,
     serverInfo: {
       name: input.serverName ?? "clawql-mcp",
-      version: input.serverVersion ?? "7.1.0",
+      version: input.serverVersion ?? "8.0.0",
     },
     capabilities: {
       tools: {},
       resources: {},
       prompts: {},
       logging: {},
+      ...(enableEvents ? { events: {} } : {}),
       stateless,
       mrtr: true,
       protocolVersions: [...SUPPORTED_PROTOCOL_VERSIONS],

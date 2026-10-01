@@ -296,7 +296,7 @@ export function runIdpPipelineEffect(
       : Math.max(0, completedThrough);
     const dashboard_steps = pipelineStepsForDashboard(pipeline, dashboardCompletedThrough);
 
-    return {
+    const result = {
       ok: pipelineSucceeded,
       dry_run: dryRun,
       correlation_id: input.correlation_id,
@@ -306,5 +306,27 @@ export function runIdpPipelineEffect(
       hops,
       dashboard_steps,
     } satisfies RunIdpPipelineResult;
+
+    yield* documentsFromPromise(async () => {
+      try {
+        const { emitDocumentProcessed } = await import("clawql-mcp-events");
+        const documentId =
+          (typeof input.document_path === "string" && input.document_path.trim()) ||
+          (typeof input.document_url === "string" && input.document_url.trim()) ||
+          input.correlation_id ||
+          "unknown";
+        emitDocumentProcessed({
+          document_id: documentId,
+          status: pipelineSucceeded ? "completed" : "failed",
+          summary: pipelineSucceeded
+            ? `IDP pipeline completed through hop ${completedThrough}`
+            : (fatalError ?? "pipeline failed"),
+        });
+      } catch {
+        /* mcp-events optional */
+      }
+    });
+
+    return result;
   });
 }

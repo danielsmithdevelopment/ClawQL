@@ -131,6 +131,17 @@ export function wrapRegisteredMcpToolHandler<TArgs extends unknown[], TResult>(
       const blocked = clawqlPolicyBlockMessage(err);
       if (blocked) {
         await Effect.runPromise(emitPanguardDenyTelemetryEffect(toolName, blocked));
+        try {
+          const { emitHookBlocked } = await import("clawql-mcp-events");
+          const mcpCtxBlocked = getMcpRequestContext();
+          emitHookBlocked({
+            tool: toolName,
+            reason: blocked,
+            session_id: mcpCtxBlocked?.sessionId,
+          });
+        } catch {
+          /* mcp-events optional at edge */
+        }
         const result = {
           content: [{ type: "text" as const, text: blocked }],
           isError: true,
