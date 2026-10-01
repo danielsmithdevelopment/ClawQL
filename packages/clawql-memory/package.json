@@ -56,6 +56,11 @@
       "import": "./dist/erase/erase.js",
       "require": "./dist/erase/erase.cjs"
     },
+    "./crypto/shred": {
+      "types": "./dist/crypto/shred.d.ts",
+      "import": "./dist/crypto/shred.js",
+      "require": "./dist/crypto/shred.cjs"
+    },
     "./recall/recall": {
       "types": "./dist/recall/recall.d.ts",
       "import": "./dist/recall/recall.js",

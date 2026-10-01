@@ -1,6 +1,7 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { buildInferenceRecord } from "../store/types.js";
-import { matchesExportFilter } from "./filter.js";
+import { filterRecordsForExport, matchesExportFilter, recordHitsErasureDenyList } from "./filter.js";
 import { formatExportLine } from "./format.js";
 import { sha256Hex } from "./manifest.js";
 
@@ -43,6 +44,27 @@ describe("export filter", () => {
     expect(matchesExportFilter(slow, { maxLatencyMs: 5000 })).toBe(false);
     expect(matchesExportFilter(sampleRecord(), { minTokenEfficiency: 0.3 })).toBe(true);
     expect(matchesExportFilter(sampleRecord(), { minTokenEfficiency: 0.9 })).toBe(false);
+  });
+
+  it("excludes records whose content hash is on the erasure deny-list", () => {
+    const erasedBody = "erased vault note body that must not reappear";
+    const hash = createHash("sha256").update(erasedBody, "utf8").digest("hex");
+    const denied = sampleRecord({
+      messages: [{ role: "user", content: erasedBody }],
+      response: "ok",
+    });
+    const allowed = sampleRecord({
+      messages: [{ role: "user", content: "unrelated prompt" }],
+      response: "ok",
+    });
+    const deny = new Set([hash]);
+    expect(recordHitsErasureDenyList(denied, deny)).toBe(true);
+    expect(recordHitsErasureDenyList(allowed, deny)).toBe(false);
+    expect(matchesExportFilter(denied, {}, { erasedContentHashes: deny })).toBe(false);
+    expect(matchesExportFilter(allowed, {}, { erasedContentHashes: deny })).toBe(true);
+    const filtered = filterRecordsForExport([denied, allowed], {}, { erasedContentHashes: deny });
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.messages[0]?.content).toBe("unrelated prompt");
   });
 });
 

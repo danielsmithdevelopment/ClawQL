@@ -2,7 +2,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createInferenceStore } from "../store/create.js";
 import type { EvaluatorVerdict, InferenceRecord } from "../store/types.js";
-import { filterRecordsForExport, type OkfTrustLookup } from "./filter.js";
+import {
+  filterRecordsForExport,
+  type ExportFilterOptions,
+  type OkfTrustLookup,
+} from "./filter.js";
 import { formatExportLine } from "./format.js";
 import { buildDatasetManifest, buildSampleLines } from "./manifest.js";
 import { writePortalBundle } from "./portal-bundle.js";
@@ -32,6 +36,8 @@ export type RunInferenceExportOptions = {
   vaultPath?: string;
   baseModel?: string;
   env?: NodeJS.ProcessEnv;
+  /** Override erased content hashes (tests). When unset, loaded from vault deny-list. */
+  erasedContentHashes?: ReadonlySet<string>;
 };
 
 function parseDate(raw: string | undefined): Date | undefined {
@@ -53,6 +59,21 @@ async function loadOkfLookup(
     );
   }
   return loadOkfTrustByCorrelationIdFromVault(vault);
+}
+
+async function loadErasureDenyHashesForExport(
+  options: RunInferenceExportOptions
+): Promise<ReadonlySet<string> | undefined> {
+  if (options.erasedContentHashes) return options.erasedContentHashes;
+  const { resolveVaultPathForExport } = await import("./okf-vault-join.js");
+  const vault = resolveVaultPathForExport(options.vaultPath, options.env ?? process.env);
+  if (!vault) return undefined;
+  try {
+    const { loadErasureDenyHashes } = await import("clawql-memory/crypto/shred");
+    return await loadErasureDenyHashes(vault);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function runInferenceExport(
@@ -82,7 +103,16 @@ export async function runInferenceExport(
   };
 
   const okfLookup = await loadOkfLookup(options);
-  const records = filterRecordsForExport(await store.list({ limit: undefined }), filter, okfLookup);
+  const erasedContentHashes = await loadErasureDenyHashesForExport(options);
+  const filterOpts: ExportFilterOptions = {
+    okfByCorrelation: okfLookup,
+    erasedContentHashes,
+  };
+  const records = filterRecordsForExport(
+    await store.list({ limit: undefined }),
+    filter,
+    filterOpts
+  );
   const format = options.format ?? "openai-jsonl";
   const piiMode = resolvePiiScrubMode(options.noPiiScrub);
 
@@ -143,12 +173,16 @@ export async function exportRecords(input: {
   format?: ExportFormat;
   filter?: ExportFilter;
   okfByCorrelation?: OkfTrustLookup;
+  erasedContentHashes?: ReadonlySet<string>;
   noPiiScrub?: boolean;
   writeManifest?: boolean;
   baseModel?: string;
   vaultRef?: string;
 }): Promise<RunExportResult> {
-  const records = filterRecordsForExport(input.records, input.filter ?? {}, input.okfByCorrelation);
+  const records = filterRecordsForExport(input.records, input.filter ?? {}, {
+    okfByCorrelation: input.okfByCorrelation,
+    erasedContentHashes: input.erasedContentHashes,
+  });
   const format = input.format ?? "openai-jsonl";
   const piiMode = resolvePiiScrubMode(input.noPiiScrub);
   const lineFormat: ExportFormat = format === "portal-bundle" ? "openai-jsonl" : format;

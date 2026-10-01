@@ -35,7 +35,9 @@ export type MemoryGetResult = {
 export type MemoryEraseResult =
   | {
       readonly ok: true;
+      /** Request path (caller already knows it); WORM stores pathId only. */
       readonly path: string;
+      readonly pathId?: string;
       readonly erased: true;
       readonly contentHash?: string;
       readonly erasedStores?: {
@@ -43,7 +45,10 @@ export type MemoryEraseResult =
         memoryDb: boolean;
         pgvector: boolean;
         ontology: boolean;
+        cryptoKey?: boolean;
+        pathMap?: boolean;
       };
+      readonly denyListUpdated?: boolean;
       readonly exportNote?: string;
     }
   | { readonly ok: false; readonly error: string; readonly status: number };
@@ -210,10 +215,12 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
         }
         return {
           ok: true as const,
-          path: result.path ?? rel,
+          path: rel,
+          pathId: result.pathId,
           erased: true as const,
           contentHash: result.contentHash,
           erasedStores: result.erased,
+          denyListUpdated: result.denyListUpdated,
           exportNote: result.exportNote,
         };
       },

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { InferenceRecord } from "../store/types.js";
 import type { ExportFilter } from "./types.js";
 
@@ -11,11 +12,56 @@ export type OkfTrustLookup = Map<
   }
 >;
 
+export type ExportFilterOptions = {
+  okfByCorrelation?: OkfTrustLookup;
+  /**
+   * SHA-256 hex digests of erased vault plaintext (from `.clawql/erasure-deny.json`).
+   * Records whose message/response content hashes match are excluded so erased
+   * content never reappears in a future training set.
+   */
+  erasedContentHashes?: ReadonlySet<string>;
+};
+
+function sha256Hex(text: string): string {
+  return createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+/** True when any message/response body hashes to an erased content digest. */
+export function recordHitsErasureDenyList(
+  record: InferenceRecord,
+  erasedContentHashes: ReadonlySet<string>
+): boolean {
+  if (erasedContentHashes.size === 0) return false;
+  const blobs: string[] = [];
+  for (const m of record.messages) {
+    if (typeof m.content === "string" && m.content.length > 0) blobs.push(m.content);
+  }
+  if (record.response) blobs.push(record.response);
+  for (const blob of blobs) {
+    if (erasedContentHashes.has(sha256Hex(blob))) return true;
+    // Manifest / lineage references may embed `sha256:<hash>` without the body.
+    for (const hash of erasedContentHashes) {
+      if (blob.includes(hash) || blob.includes(`sha256:${hash}`)) return true;
+    }
+  }
+  return false;
+}
+
 export function matchesExportFilter(
   record: InferenceRecord,
   filter: ExportFilter,
-  okfByCorrelation?: OkfTrustLookup
+  okfByCorrelationOrOpts?: OkfTrustLookup | ExportFilterOptions
 ): boolean {
+  const opts: ExportFilterOptions =
+    okfByCorrelationOrOpts instanceof Map
+      ? { okfByCorrelation: okfByCorrelationOrOpts }
+      : (okfByCorrelationOrOpts ?? {});
+  const okfByCorrelation = opts.okfByCorrelation;
+
+  if (opts.erasedContentHashes && recordHitsErasureDenyList(record, opts.erasedContentHashes)) {
+    return false;
+  }
+
   if (filter.modelId && record.modelId !== filter.modelId) return false;
   if (filter.provider && record.provider !== filter.provider) return false;
   if (filter.tier && record.tier !== filter.tier) return false;
@@ -52,7 +98,7 @@ export function matchesExportFilter(
 export function filterRecordsForExport(
   records: InferenceRecord[],
   filter: ExportFilter,
-  okfByCorrelation?: OkfTrustLookup
+  okfByCorrelationOrOpts?: OkfTrustLookup | ExportFilterOptions
 ): InferenceRecord[] {
-  return records.filter((r) => matchesExportFilter(r, filter, okfByCorrelation));
+  return records.filter((r) => matchesExportFilter(r, filter, okfByCorrelationOrOpts));
 }

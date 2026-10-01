@@ -39,6 +39,12 @@ export {
 export { MemoryIngestService, memoryIngestLiveLayer } from "./memory-ingest-service.js";
 export { MemoryRecallService, memoryRecallLiveLayer } from "./memory-recall-service.js";
 export {
+  MemoryCryptoShredService,
+  MemoryCryptoShredLive,
+  memoryCryptoShredLiveLayer,
+  memoryCryptoShredLiveService,
+} from "./memory-crypto-shred-service.js";
+export {
   memoryIngestProgram,
   memoryRecallProgram,
   memoryServicesLiveLayer,
