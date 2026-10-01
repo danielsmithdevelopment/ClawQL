@@ -1,0 +1,8 @@
+# Large benchmark corpus — download via scripts/download_slices.py
+data/docs/
+data/*.zip
+data/questions.jsonl
+__pycache__/
+*.pyc
+.cache/
+data/slice-manifest.json

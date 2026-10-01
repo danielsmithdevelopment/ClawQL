@@ -1,0 +1,197 @@
+{
+  "tag": "pageindex-ab-recall-by-question-class-v1",
+  "generated_at": "2026-09-30T04:35:52Z",
+  "n_keys": 262,
+  "class_counts": {
+    "code_export": 8,
+    "content": 100,
+    "depth_position": 154
+  },
+  "curves": {
+    "all_legacy_pooled": {
+      "n": 262,
+      "by_k": {
+        "3": {
+          "hits": 127,
+          "n": 262,
+          "recall": 0.4847328244274809
+        },
+        "5": {
+          "hits": 140,
+          "n": 262,
+          "recall": 0.5343511450381679
+        },
+        "10": {
+          "hits": 171,
+          "n": 262,
+          "recall": 0.6526717557251909
+        },
+        "20": {
+          "hits": 203,
+          "n": 262,
+          "recall": 0.7748091603053435
+        },
+        "50": {
+          "hits": 231,
+          "n": 262,
+          "recall": 0.8816793893129771
+        },
+        "100": {
+          "hits": 255,
+          "n": 262,
+          "recall": 0.9732824427480916
+        }
+      }
+    },
+    "content": {
+      "n": 100,
+      "by_k": {
+        "3": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        },
+        "5": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        },
+        "10": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        },
+        "20": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        },
+        "50": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        },
+        "100": {
+          "hits": 100,
+          "n": 100,
+          "recall": 1.0
+        }
+      }
+    },
+    "depth_position": {
+      "n": 154,
+      "by_k": {
+        "3": {
+          "hits": 19,
+          "n": 154,
+          "recall": 0.12337662337662338
+        },
+        "5": {
+          "hits": 32,
+          "n": 154,
+          "recall": 0.2077922077922078
+        },
+        "10": {
+          "hits": 63,
+          "n": 154,
+          "recall": 0.4090909090909091
+        },
+        "20": {
+          "hits": 95,
+          "n": 154,
+          "recall": 0.6168831168831169
+        },
+        "50": {
+          "hits": 123,
+          "n": 154,
+          "recall": 0.7987012987012987
+        },
+        "100": {
+          "hits": 147,
+          "n": 154,
+          "recall": 0.9545454545454546
+        }
+      }
+    },
+    "code_export": {
+      "n": 8,
+      "by_k": {
+        "3": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        },
+        "5": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        },
+        "10": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        },
+        "20": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        },
+        "50": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        },
+        "100": {
+          "hits": 8,
+          "n": 8,
+          "recall": 1.0
+        }
+      }
+    },
+    "content_plus_code_export": {
+      "n": 108,
+      "by_k": {
+        "3": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        },
+        "5": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        },
+        "10": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        },
+        "20": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        },
+        "50": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        },
+        "100": {
+          "hits": 108,
+          "n": 108,
+          "recall": 1.0
+        }
+      }
+    }
+  },
+  "verdict": {
+    "content_recall_k10": 1.0,
+    "content_recall_k20": 1.0,
+    "content_k20_lift": 0.0,
+    "depth_recall_k10": 0.4090909090909091,
+    "depth_recall_k20": 0.6168831168831169,
+    "pooled_k20_lift": 0.12213740458015265,
+    "ship_top_k_content": 10,
+    "note": "Depth/position templates excluded from MaxP / TOP_K_DOC content decision. Pooled R@10\u2192R@20 climb is depth-only when content is already saturated. Prior model k=10 lock stands for content if content R@20 lift < 5pp. MaxP: content recall@10 + content model accuracy (not position within top-10)."
+  }
+}

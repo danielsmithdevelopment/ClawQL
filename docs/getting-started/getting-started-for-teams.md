@@ -68,7 +68,6 @@ Ontology entity definitions and static knowledge belong in Git (small, PR-review
 | `Memory/`                   | Yes — team Markdown notes for `memory_recall` |
 | `sources/` + `sources.json` | Yes — custom integrations                     |
 | `Dashboard/chats/`          | Yes — optional agent chat threads             |
-| `pageindex.db.json`         | Yes — PageIndex trees                         |
 | `vault/providers.json`      | Never — API secrets stay local                |
 | `memory.db`                 | No — rebuilt locally after pull               |
 

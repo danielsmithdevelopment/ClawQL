@@ -1,0 +1,672 @@
+# Memory stack default-route A/B (pageindex-ab)
+# - Offline retrieval pilot: no secrets
+# - Agent-lite factorial: OPENROUTER_API_KEY + cheap flash-lite
+#
+# Note: workflow_dispatch only works after this file lands on the default branch.
+# Until then, push a change to benchmarks/pageindex-ab/.run-* to trigger
+# agent-factorial from a PR head (uses the branch workflow file).
+#
+# Sentinels (PR path):
+#   .run-agent-lite       → freeze-candidate, limit=24, trials=1
+#   .run-hard-agent-lite  → hard-candidate, limit=24, trials=1
+#   .run-hard-agent-full  → hard-candidate, full corpus (limit=0), trials=3, +extra arms
+#   .run-vectify-fair     → VectifyAI fair test (12 misses + 15 no-harm; OPENROUTER_API_KEY)
+#   .run-agent-loop-freeze → Track B CodeGraph additive spend (Sonnet; OPENROUTER_API_KEY)
+#   .run-rerank-grid      → model-scored k∈{10,20}×±rerank (flash-lite + Sonnet subset)
+#   .run-gap-diagnose     → flash-lite gold@10 gap taxonomy (per-row answers; cheap)
+#
+# Important: GitHub PR `paths` uses a three-dot tip-vs-base diff. A sentinel that
+# remains on the branch re-fires this workflow on *every* PR push. Remove the
+# sentinel after the run lands. Concurrency cancels superseded in-flight spends.
+
+name: PageIndex A/B (memory stack default-route)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: offline-pilot / agent-factorial / vectify-fair / agent-loop-freeze
+        type: choice
+        options:
+          - offline-pilot
+          - agent-factorial
+          - vectify-fair
+          - agent-loop-freeze
+        default: offline-pilot
+      trials:
+        description: Trials per question (agent mode)
+        type: number
+        default: 1
+      limit:
+        description: Stratified question sample size (0 = full corpus)
+        type: number
+        default: 24
+      model:
+        description: OpenRouter model id (agent-lite default; vectify uses fair_model)
+        type: string
+        default: google/gemini-2.5-flash-lite
+      fair_model:
+        description: Shared frontier model for Vectify chat + query-rewrite + Track B
+        type: string
+        default: anthropic/claude-sonnet-4.6
+      index_model:
+        description: Vectify index/summary model (may be cheaper)
+        type: string
+        default: openai/gpt-4o-mini
+      fair_trials:
+        description: Trials per question (majority vote)
+        type: number
+        default: 3
+  pull_request:
+    # Only sentinel touches start agent spend. Workflow-file edits alone must not
+    # burn OpenRouter credits (or fail CI when the account is empty).
+    paths:
+      - "benchmarks/pageindex-ab/.run-agent-lite"
+      - "benchmarks/pageindex-ab/.run-hard-agent-lite"
+      - "benchmarks/pageindex-ab/.run-hard-agent-full"
+      - "benchmarks/pageindex-ab/.run-vectify-fair"
+      - "benchmarks/pageindex-ab/.run-agent-loop-freeze"
+      - "benchmarks/pageindex-ab/.run-rerank-grid"
+      - "benchmarks/pageindex-ab/.run-gap-diagnose"
+
+concurrency:
+  group: pageindex-ab-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  offline-pilot:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'offline-pilot' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        # Same dep order as ci.yml unit-test job (memory DTS needs these).
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth
+          -w clawql-api -w clawql-memory
+      - name: Validate scaffold
+        run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
+      - name: Offline ranker compare
+        run: python3 benchmarks/pageindex-ab/scripts/offline_ranker_compare.py
+      - name: Retrieval pilot (contaminated-smoke)
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus contaminated-smoke
+      - name: Build freeze-candidate
+        run: python3 benchmarks/pageindex-ab/scripts/build_freeze_candidate.py
+      - name: Offline factorial (freeze-candidate)
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus freeze-candidate
+      - name: Upload pilot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-offline
+          path: |
+            benchmarks/pageindex-ab/results/contaminated-smoke/
+            benchmarks/pageindex-ab/results/freeze-candidate/
+
+  agent-factorial:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-factorial') || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      # Decide spend before npm/OpenRouter so a missing/removed sentinel is a no-op green check.
+      - name: Select corpus and scale
+        id: corpus
+        run: |
+          {
+            if [ -f benchmarks/pageindex-ab/.run-hard-agent-full ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
+              echo "limit=0"
+              echo "trials=3"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+              echo "run_agent=1"
+            elif [ -f benchmarks/pageindex-ab/.run-hard-agent-lite ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
+              echo "limit=24"
+              echo "trials=1"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+              echo "run_agent=1"
+            elif [ -f benchmarks/pageindex-ab/.run-agent-lite ]; then
+              echo "name=freeze-candidate"
+              echo "builder=build_freeze_candidate.py"
+              echo "limit=24"
+              echo "trials=1"
+              echo "extra_arms=0"
+              echo "run_displacement=0"
+              echo "run_agent=1"
+            elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "name=hard-candidate"
+              echo "builder=build_hard_candidate.py"
+              echo "limit=${{ inputs.limit }}"
+              echo "trials=${{ inputs.trials }}"
+              echo "extra_arms=1"
+              echo "run_displacement=1"
+              echo "run_agent=1"
+            else
+              # Do not write ::notice:: into GITHUB_OUTPUT (invalid format).
+              echo "No pageindex-ab agent sentinel on tip; skipping agent spend" >&2
+              echo "name=none"
+              echo "builder=none"
+              echo "limit=0"
+              echo "trials=0"
+              echo "extra_arms=0"
+              echo "run_displacement=0"
+              echo "run_agent=0"
+            fi
+          } >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Require OpenRouter
+        if: ${{ steps.corpus.outputs.run_agent == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for agent-factorial"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d=json.load(open("/tmp/or-key.json"))
+          data=d.get("data") or d
+          rem=data.get("limit_remaining")
+          usage=data.get("usage")
+          limit=data.get("limit")
+          print(f"limit={limit}")
+          print(f"usage={usage}")
+          print(f"limit_remaining={rem}")
+          print(
+              "note=limit_remaining is the key spend cap, not prepaid account credits; "
+              "402 insufficient credits can still occur when credits are empty"
+          )
+          if rem is not None and float(rem) <= 0:
+              raise SystemExit("OpenRouter key spend limit exhausted")
+          PY
+      - name: Install
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        # Same dep order as ci.yml unit-test job (memory DTS needs these).
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth
+          -w clawql-api -w clawql-memory
+      - name: Build candidate corpus
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        run: python3 "benchmarks/pageindex-ab/scripts/${{ steps.corpus.outputs.builder }}"
+      - name: Offline factorial (candidate)
+        if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
+        run: node benchmarks/pageindex-ab/scripts/run_retrieval_pilot.mjs --corpus ${{ steps.corpus.outputs.name }}
+      - name: Displacement check (hard-candidate)
+        if: ${{ steps.corpus.outputs.run_displacement == '1' }}
+        run: node benchmarks/pageindex-ab/scripts/run_displacement_check.mjs --corpus hard-candidate
+      - name: Resume prior agent-answers checkpoint
+        if: ${{ steps.corpus.outputs.run_agent == '1' && steps.corpus.outputs.name == 'hard-candidate' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p benchmarks/pageindex-ab/results/agent-factorial
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          id="$(gh run list --workflow "PageIndex A/B (memory stack default-route)" \
+            --branch "$branch" --limit 15 \
+            --json databaseId,conclusion \
+            --jq '[.[] | select(.conclusion == "failure" or .conclusion == "success")][0].databaseId // empty' || true)"
+          echo "prior_run_id=${id:-none}"
+          if [ -n "$id" ]; then
+            rm -rf /tmp/piab-resume
+            if gh run download "$id" -n pageindex-ab-agent-factorial -D /tmp/piab-resume; then
+              src="$(find /tmp/piab-resume -name agent-answers.jsonl -print -quit || true)"
+              if [ -n "$src" ]; then
+                cp "$src" benchmarks/pageindex-ab/results/agent-factorial/agent-answers.jsonl
+                echo "resumed_lines=$(wc -l < benchmarks/pageindex-ab/results/agent-factorial/agent-answers.jsonl)"
+              else
+                echo "no agent-answers.jsonl in prior artifact (pre-checkpoint failure)"
+              fi
+            fi
+          fi
+      - name: Agent-lite factorial
+        if: ${{ steps.corpus.outputs.run_agent == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          PAGEINDEX_AB_CORPUS: ${{ steps.corpus.outputs.name }}
+          PAGEINDEX_AB_MODE: agent-lite
+          PAGEINDEX_AB_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.model || 'google/gemini-2.5-flash-lite' }}
+          PAGEINDEX_AB_LIMIT: ${{ steps.corpus.outputs.limit }}
+          PAGEINDEX_AB_TRIALS: ${{ steps.corpus.outputs.trials }}
+          PAGEINDEX_AB_EXTRA_ARMS: ${{ steps.corpus.outputs.extra_arms }}
+          PAGEINDEX_AB_CONCURRENCY: "4"
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab
+        run: node benchmarks/pageindex-ab/scripts/run_agent_factorial.mjs
+      - name: Upload agent artifacts
+        if: ${{ always() && (steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-agent-factorial
+          path: |
+            benchmarks/pageindex-ab/results/agent-factorial/
+            benchmarks/pageindex-ab/results/hard-candidate/
+            benchmarks/pageindex-ab/results/freeze-candidate/
+
+  # Track A: VectifyAI fair test vs query-rewrite (answer-only; Net≥5 + no-harm).
+  # Trigger: PR sentinel .run-vectify-fair OR workflow_dispatch mode=vectify-fair.
+  # Uses secrets.OPENROUTER_API_KEY (same as agent-lite). Remove sentinel after run.
+  vectify-fair:
+    # hashFiles is steps-only — gate spend in the first step (same pattern as agent-factorial).
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'vectify-fair') || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    # Frontier × 27 Q × 2 arms × 3 trials + indexing
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          elif [ -f benchmarks/pageindex-ab/.run-vectify-fair ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-vectify-fair sentinel; skipping Vectify fair-test spend"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for vectify-fair"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          python-version: "3.12"
+      - name: Install pageindex SDK
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: pip install -U "pageindex>=0.2.20"
+      - name: Build hard-candidate corpus
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: python3 benchmarks/pageindex-ab/scripts/build_hard_candidate.py
+      - name: Resolve fair-test knobs
+        if: ${{ steps.gate.outputs.run == '1' }}
+        id: fair
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            {
+              echo "model=${{ inputs.fair_model }}"
+              echo "index_model=${{ inputs.index_model }}"
+              echo "trials=${{ inputs.fair_trials }}"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "model=anthropic/claude-sonnet-4.6"
+              echo "index_model=openai/gpt-4o-mini"
+              echo "trials=3"
+            } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Vectify arm (IETF docs + shared finalize + majority)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.fair.outputs.model }}
+          VECTIFY_INDEX_MODEL: ${{ steps.fair.outputs.index_model }}
+        run: |
+          python3 benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py \
+            --cohort both \
+            --pdf-source ietf \
+            --trials "${{ steps.fair.outputs.trials }}" \
+            --chat-model "$VECTIFY_FAIR_MODEL" \
+            --index-model "$VECTIFY_INDEX_MODEL" \
+            --out benchmarks/pageindex-ab/results/vectify-fair/
+      - name: Query-rewrite arm (same frontier + finalize + no-harm)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          VECTIFY_FAIR_MODEL: ${{ steps.fair.outputs.model }}
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.fair.outputs.model }}
+        run: |
+          python3 benchmarks/pageindex-ab/scripts/run_query_rewrite_cohort.py \
+            --cohort both \
+            --trials "${{ steps.fair.outputs.trials }}" \
+            --model "$VECTIFY_FAIR_MODEL" \
+            --out benchmarks/pageindex-ab/results/vectify-fair/
+      - name: Decide beat / tie / purge
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: |
+          python3 benchmarks/pageindex-ab/scripts/decide_vectify_fair_test.py \
+            --dir benchmarks/pageindex-ab/results/vectify-fair/
+      - name: Upload vectify-fair artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-vectify-fair
+          path: |
+            benchmarks/pageindex-ab/results/vectify-fair/
+
+  # Track B: CodeGraph additive agent-loop freeze (grep+codegraph vs grep).
+  # Trigger: PR sentinel .run-agent-loop-freeze OR workflow_dispatch mode=agent-loop-freeze.
+  # Prefer dedicated eval key secrets.OPENROUTER_API_KEY_TRACK_B (own spending limit);
+  # falls back to secrets.OPENROUTER_API_KEY. See design/TRACK_B_EVAL_KEY.md.
+  # Remove sentinel after the run lands.
+  agent-loop-freeze:
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-loop-freeze') || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    # Frontier × 18 Q × 3 arms × tool loops
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          elif [ -f benchmarks/pageindex-ab/.run-agent-loop-freeze ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-agent-loop-freeze sentinel; skipping Track B spend"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter (Track B eval key preferred)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        id: orkey
+        env:
+          OPENROUTER_API_KEY_TRACK_B: ${{ secrets.OPENROUTER_API_KEY_TRACK_B }}
+          OPENROUTER_API_KEY_FALLBACK: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -n "$OPENROUTER_API_KEY_TRACK_B" ]; then
+            echo "key_source=OPENROUTER_API_KEY_TRACK_B" >> "$GITHUB_OUTPUT"
+            KEY="$OPENROUTER_API_KEY_TRACK_B"
+          elif [ -n "$OPENROUTER_API_KEY_FALLBACK" ]; then
+            echo "key_source=OPENROUTER_API_KEY" >> "$GITHUB_OUTPUT"
+            echo "::warning::OPENROUTER_API_KEY_TRACK_B unset; using shared OPENROUTER_API_KEY (collides with other spend limits)"
+            KEY="$OPENROUTER_API_KEY_FALLBACK"
+          else
+            echo "OPENROUTER_API_KEY_TRACK_B or OPENROUTER_API_KEY secret required for agent-loop-freeze"
+            exit 1
+          fi
+          # Mask + export for later steps without printing the value.
+          echo "::add-mask::$KEY"
+          echo "OPENROUTER_API_KEY=$KEY" >> "$GITHUB_ENV"
+          code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${KEY}" \
+            https://openrouter.ai/api/v1/key || true)
+          echo "openrouter_key_http=$code"
+          if [ "$code" != "200" ]; then
+            echo "::error::OpenRouter key probe failed HTTP $code"
+            cat /tmp/or-key.json || true
+            exit 1
+          fi
+          # Surface limit/usage fields only — not a substitute for Credits page balance.
+          node -e '
+            const d=JSON.parse(require("fs").readFileSync("/tmp/or-key.json","utf8"));
+            const data=d.data||d;
+            const pick=(o,ks)=>ks.reduce((a,k)=>a??o?.[k],undefined);
+            console.log(JSON.stringify({
+              key_probe_note: "limit_remaining is key accounting, not Credits wallet balance",
+              limit: pick(data,["limit"]),
+              limit_remaining: pick(data,["limit_remaining","limitRemaining"]),
+              usage: pick(data,["usage","usage_daily"]),
+              is_free_tier: pick(data,["is_free_tier","isFreeTier"]),
+            }));
+          ' || true
+      - uses: actions/setup-node@v4
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Ensure ripgrep
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: |
+          if ! command -v rg >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+          fi
+          rg --version
+      - name: Install
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: npm ci --ignore-scripts
+      - name: Build packages
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: >
+          npm run build -w clawql-merkle -w clawql-core -w clawql-audit
+          -w clawql-auth
+          -w clawql-api -w clawql-memory
+      - name: Resolve Track B model
+        if: ${{ steps.gate.outputs.run == '1' }}
+        id: trackb
+        run: |
+          {
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "model=${{ inputs.fair_model }}"
+            else
+              echo "model=anthropic/claude-sonnet-4.6"
+            fi
+            # Fresh retest dir — do NOT resume the voided broken-grep run.
+            echo "out=benchmarks/pageindex-ab/results/agent-loop-freeze-retest"
+          } >> "$GITHUB_OUTPUT"
+      - name: Offline smoke — grep sees no-harm gold files
+        if: ${{ steps.gate.outputs.run == '1' }}
+        run: node benchmarks/pageindex-ab/scripts/smoke_grep_no_harm.mjs
+      - name: Gate — A-grep alone on no-harm (must be ≥5/6)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        id: grepgate
+        env:
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
+          VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B grep-gate
+          PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET: "1"
+        run: |
+          OUT="${{ steps.trackb.outputs.out }}"
+          mkdir -p "$OUT/grep-no-harm-gate"
+          node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
+            --cohort codegraph-prove \
+            --model "$PAGEINDEX_AB_AGENT_MODEL" \
+            --arms A-grep \
+            --keys no_harm \
+            --out "$OUT/grep-no-harm-gate/"
+          node -e '
+            const fs=require("fs");
+            const p=process.argv[1];
+            const rows=fs.readFileSync(p,"utf8").split("\n").filter(Boolean).map(JSON.parse).filter(r=>!r.error);
+            const n=rows.length, ok=rows.filter(r=>r.answer_ok).length;
+            console.log(JSON.stringify({n, ok, rate: n?ok/n:null, min_ok:5},null,2));
+            if (ok < 5) { console.error("A-grep no-harm gate failed — instrument still broken"); process.exit(2); }
+          ' "$OUT/grep-no-harm-gate/answers.jsonl"
+      - name: Track B retest — paired A-grep + A-codegraph (18×2)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
+          VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab Track B retest
+          PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET: "1"
+        run: |
+          OUT="${{ steps.trackb.outputs.out }}"
+          mkdir -p "$OUT/paired"
+          node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs \
+            --cohort codegraph-prove \
+            --model "$PAGEINDEX_AB_AGENT_MODEL" \
+            --arms A-grep,A-codegraph \
+            --keys all \
+            --out "$OUT/paired/"
+      - name: Decide CodeGraph beat / tie / purge
+        if: ${{ always() && steps.gate.outputs.run == '1' && steps.grepgate.outcome == 'success' }}
+        id: beat
+        run: |
+          set +e
+          OUT="${{ steps.trackb.outputs.out }}/paired"
+          node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
+            "$OUT/answers.jsonl" \
+            benchmarks/pageindex-ab/design/codegraph-beat-decision.json
+          code=$?
+          {
+            echo "exit=$code"
+            if [ -f benchmarks/pageindex-ab/design/codegraph-beat-decision.json ]; then
+              outcome=$(node -e 'const d=require("./benchmarks/pageindex-ab/design/codegraph-beat-decision.json"); console.log(d.outcome||"")')
+              echo "outcome=$outcome"
+              echo "Track B outcome=$outcome (decide exit $code)" >&2
+            fi
+          } >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 2 ]; then
+            echo "::warning::Track B decision incomplete — resume after fixing failed cells"
+            exit 0
+          fi
+          exit "$code"
+      - name: Upload Track B artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-agent-loop-freeze-retest
+          path: |
+            benchmarks/pageindex-ab/results/agent-loop-freeze-retest/
+            benchmarks/pageindex-ab/design/codegraph-beat-decision.json
+
+  # Track C: model-scored k∈{10,20} × ±rerank (flash-lite + Sonnet subset).
+  # Trigger: PR sentinel .run-rerank-grid. Uses committed candidates + bakeoff ranks.
+  # Read: norerank k10 vs k20 decides TOP_K_DOC; ±rerank is 512-cap bug repro only.
+  # Remove sentinel after the run lands.
+  rerank-grid:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ -f benchmarks/pageindex-ab/.run-rerank-grid ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-rerank-grid sentinel; skipping model-scored rerank grid"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for rerank-grid"
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          python-version: "3.12"
+      - name: Model-scored k×±rerank grid
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab rerank-grid
+        run: |
+          test -f benchmarks/pageindex-ab/design/rerank-candidates.jsonl
+          test -f benchmarks/pageindex-ab/design/rerank-bakeoff-ranks.jsonl
+          RERANKER=$(python3 -c "import json; r=json.load(open('benchmarks/pageindex-ab/design/rerank-bakeoff.json')).get('recommendation',{}); print(r.get('winner') or r.get('best_tag') or 'gte')")
+          echo "reranker=$RERANKER"
+          python3 benchmarks/pageindex-ab/scripts/run_rerank_model_grid.py \
+            --candidates benchmarks/pageindex-ab/design/rerank-candidates.jsonl \
+            --ranks benchmarks/pageindex-ab/design/rerank-bakeoff-ranks.jsonl \
+            --reranker "$RERANKER" \
+            --sonnet-n 60 \
+            --out benchmarks/pageindex-ab/design/rerank-model-grid.json
+
+      - name: Upload rerank-grid artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-rerank-grid
+          path: |
+            benchmarks/pageindex-ab/design/rerank-model-grid.json
+            benchmarks/pageindex-ab/design/rerank-model-grid-rows.jsonl
+            benchmarks/pageindex-ab/design/rerank-bakeoff.json
+
+  # Track C: gold@10 ∩ wrong taxonomy (flash-lite only; ~171 finalize calls).
+  # Trigger: .run-gap-diagnose. Remove sentinel after run lands.
+  gap-diagnose:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decide whether to spend
+        id: gate
+        run: |
+          if [ -f benchmarks/pageindex-ab/.run-gap-diagnose ]; then
+            echo "run=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No .run-gap-diagnose sentinel; skipping gap diagnose"
+            echo "run=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require OpenRouter
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY secret required for gap-diagnose"
+            exit 1
+          fi
+      - uses: actions/setup-python@v5
+        if: ${{ steps.gate.outputs.run == '1' }}
+        with:
+          python-version: "3.12"
+      - name: Gap diagnose (gold@10 flash finalize + classify)
+        if: ${{ steps.gate.outputs.run == '1' }}
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com
+          CLAWQL_OPENROUTER_APP_TITLE: ClawQL pageindex-ab gap-diagnose
+        run: |
+          test -f benchmarks/pageindex-ab/design/rerank-candidates.jsonl
+          python3 benchmarks/pageindex-ab/scripts/run_gap_diagnose.py \
+            --model google/gemini-2.5-flash-lite \
+            --sample 50 \
+            --out benchmarks/pageindex-ab/design/gap-gold10-diagnose.json
+      - name: Upload gap-diagnose artifacts
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pageindex-ab-gap-diagnose
+          path: |
+            benchmarks/pageindex-ab/design/gap-gold10-diagnose.json
+            benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl

@@ -56,8 +56,6 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_OPENSEARCH_URL: z.string().optional(),
   CLAWQL_FIRECRAWL_API_KEY: z.string().optional(),
   CLAWQL_BROWSER_RUN_API_TOKEN: z.string().optional(),
-  /** Structural code graph MCP tools (`codegraph_*`). Default false — register with `CLAWQL_ENABLE_CODEGRAPH=1`. */
-  CLAWQL_ENABLE_CODEGRAPH: z.string().optional(),
   /** Enterprise Ontology fixture MCP tools (`get_contract`, …). Default false — `CLAWQL_ENABLE_ONTOLOGY=1`. */
   CLAWQL_ENABLE_ONTOLOGY: z.string().optional(),
   /**
@@ -179,10 +177,6 @@ export type ClawqlOptionalToolFlags = {
    */
   enableWeb: boolean;
   /**
-   * Structural code knowledge graph (`codegraph_*`) — Graphify-style AST indexing for TypeScript/JavaScript. Default false.
-   */
-  enableCodeGraph: boolean;
-  /**
    * Enterprise Ontology read tools (fixture-backed `get_contract`, relationship traversals, …). Default false.
    */
   enableOntology: boolean;
@@ -278,7 +272,6 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
     enableWeb: resolveEnableWeb(raw),
-    enableCodeGraph: envTruthy(raw.CLAWQL_ENABLE_CODEGRAPH),
     enableOntology:
       envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
     enableOntologyWrites: envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
@@ -338,7 +331,6 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableSandbox: false,
     enableData: false,
     enableWeb: false,
-    enableCodeGraph: false,
     enableOntology: false,
     enableOntologyWrites: false,
     enableHitlLabelStudio: false,

@@ -1,0 +1,65 @@
+{
+  "document_id": "ws-beta-reporting",
+  "sections": [
+    {
+      "id": "sec-1-purpose-and-scope",
+      "title": "1. Purpose and scope"
+    },
+    {
+      "id": "sec-2-defined-terms",
+      "title": "2. Defined terms"
+    },
+    {
+      "id": "sec-2-1-covered-entity",
+      "title": "2.1 Covered entity"
+    },
+    {
+      "id": "sec-2-2-protocol-identifier",
+      "title": "2.2 Protocol identifier"
+    },
+    {
+      "id": "sec-2-3-reporting-cycle",
+      "title": "2.3 Reporting cycle"
+    },
+    {
+      "id": "sec-3-filing-procedures",
+      "title": "3. Filing procedures"
+    },
+    {
+      "id": "sec-3-1-electronic-submission",
+      "title": "3.1 Electronic submission"
+    },
+    {
+      "id": "sec-3-2-late-filings",
+      "title": "3.2 Late filings"
+    },
+    {
+      "id": "sec-4-retention-and-audit",
+      "title": "4. Retention and audit"
+    },
+    {
+      "id": "sec-4-1-record-retention",
+      "title": "4.1 Record retention"
+    },
+    {
+      "id": "sec-4-2-audit-access",
+      "title": "4.2 Audit access"
+    },
+    {
+      "id": "sec-5-board-governance",
+      "title": "5. Board governance"
+    },
+    {
+      "id": "sec-5-1-board-composition",
+      "title": "5.1 Board composition"
+    },
+    {
+      "id": "sec-5-2-compensation-committee",
+      "title": "5.2 Compensation committee"
+    },
+    {
+      "id": "sec-6-cross-cutting-obligations",
+      "title": "6. Cross-cutting obligations"
+    }
+  ]
+}

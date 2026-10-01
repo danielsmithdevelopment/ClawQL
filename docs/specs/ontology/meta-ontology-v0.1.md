@@ -148,7 +148,7 @@ This feature landed on branch `cursor/meta-ontology-three-layer-4c7e` ([PR #963]
 | `packages/clawql-ontology/tsup.config.ts` | Kept main's `/^clawql-/` external pattern; added `sql.js` for Layer 3 meta store    |
 | `package-lock.json`                       | Regenerated via `npm install` after dependency merge                                |
 
-Dependency direction: `clawql-ontology` imports `clawql-memory/ontology` for dynamic recall sync; `clawql-memory` does **not** depend on `clawql-ontology`. CI `ontology-lint` builds `clawql-memory` (and `clawql-pageindex` / `clawql-codegraph`) before `clawql-ontology` so DTS resolves `clawql-memory/ontology`.
+Dependency direction: `clawql-ontology` imports `clawql-memory/ontology` for dynamic recall sync; `clawql-memory` does **not** depend on `clawql-ontology`. CI `ontology-lint` builds `clawql-memory` before `clawql-ontology` so DTS resolves `clawql-memory/ontology`. (`clawql-codegraph` removed in 8.0.)
 
 ## Open questions
 

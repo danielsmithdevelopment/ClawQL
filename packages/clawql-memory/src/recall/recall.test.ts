@@ -122,7 +122,6 @@ describe("memory-recall vault", () => {
     expect(r.ok).toBe(true);
     expect(r.sourcesUsed).toEqual(["vault"]);
     expect(r.hits?.every((h) => h.source === "vault" || h.source === "link")).toBe(true);
-    expect(r.codeGraphHits).toBeUndefined();
   });
 
   it("errors when vault unset", async () => {

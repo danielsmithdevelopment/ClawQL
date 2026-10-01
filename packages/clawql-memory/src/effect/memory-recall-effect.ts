@@ -5,8 +5,6 @@ import { listVaultMarkdownRelPaths, buildSlugToVaultPath } from "../vault/slug-i
 import { extractWikilinkTargets, stripVaultFrontmatter } from "../vault/markdown.js";
 import { isOkfRetracted, isOkfStale, parseVaultFrontmatter } from "../okf/frontmatter.js";
 import {
-  buildCorpusIdf,
-  keywordScore,
   mapVaultResultToNormalizedHit,
   resolveMemoryRecallSources,
   type MemoryRecallInput,
@@ -16,6 +14,12 @@ import {
   type RecallFollowUpHint,
   type RecallHit,
 } from "../recall/recall.js";
+import {
+  buildVaultRankerStatsEffect,
+  resolveVaultRankerModeEffect,
+  scoreWithVaultRanker,
+  type VaultRankerStats,
+} from "../recall/vault-ranker.js";
 import { MemoryError } from "./memory-errors.js";
 import { EmbeddingService } from "./embedding-service.js";
 import { MemoryDbService } from "./memory-db-service.js";
@@ -28,12 +32,6 @@ import {
   recallVectorPassEffect,
   recallWikilinkEdgesEffect,
 } from "./memory-recall-vector-effect.js";
-import {
-  hybridCodeGraphRecallEnabled,
-  recallCodeGraphSupplementPack,
-  type CodeGraphRecallHit,
-} from "../recall/codegraph-recall.js";
-import { recallPageIndexSupplement } from "../recall/pageindex-recall.js";
 import { recallOnyxSupplement } from "../recall/onyx-recall.js";
 import {
   catalogCandidatePaths,
@@ -182,8 +180,6 @@ export function executeMemoryRecallCoreEffect(
 
     const sources = resolveMemoryRecallSources({
       sources: input.sources,
-      includeCodeGraph: input.includeCodeGraph,
-      hybridCodeGraphEnabled: hybridCodeGraphRecallEnabled(),
     });
     const sourcesUsed = [...sources];
     const sourceNotes: Partial<Record<MemoryRecallSource, string>> = {};
@@ -192,8 +188,6 @@ export function executeMemoryRecallCoreEffect(
 
     const wantVault = sources.has("vault");
     const wantVector = sources.has("vector");
-    const wantCodeGraph = sources.has("codegraph");
-    const wantPageIndex = sources.has("pageindex");
     const wantOnyx = sources.has("onyx");
 
     const limit =
@@ -215,10 +209,10 @@ export function executeMemoryRecallCoreEffect(
     let vaultHits: RecallHit[] = [];
     let cuckooVectorChunksDropped: number | undefined;
     let recallArtifacts: RecallDbArtifacts | null = null;
-    let codeGraphHits: CodeGraphRecallHit[] | undefined;
     let indexSurvey: OkfIndexSurvey | undefined;
     let indexFirstBodyLoad = false;
     let bodiesLoaded = 0;
+    let vaultRankerMode: "idf" | "bm25" | undefined;
 
     if (wantVault || wantVector) {
       const useIndexFirst = indexFirstRecallEnabled();
@@ -286,8 +280,12 @@ export function executeMemoryRecallCoreEffect(
       bodiesLoaded = files.length;
       scannedFiles = restrictBodies ? mdFiles.length : files.length;
 
-      // Corpus IDF so ubiquitous tokens (shared vocabulary) do not bury distinctive matches.
-      const idf = wantVault ? buildCorpusIdf(corpusTexts) : undefined;
+      // Lexical ranker: IDF+log-TF (default) or Okapi BM25 via CLAWQL_MEMORY_VAULT_RANKER.
+      let rankerStats: VaultRankerStats | undefined;
+      if (wantVault) {
+        vaultRankerMode = yield* resolveVaultRankerModeEffect();
+        rankerStats = yield* buildVaultRankerStatsEffect(corpusTexts, vaultRankerMode);
+      }
       const catalogScoreByPath = new Map<string, number>();
       if (indexSurvey) {
         for (const h of indexSurvey.catalogHits) {
@@ -297,7 +295,7 @@ export function executeMemoryRecallCoreEffect(
       }
       for (const f of files) {
         const fm = parseVaultFrontmatter(f.text);
-        let score = wantVault && idf ? keywordScore(query, f.text, idf) : 0;
+        let score = wantVault && rankerStats ? scoreWithVaultRanker(query, f.text, rankerStats) : 0;
         if (wantVault) {
           const relNorm = f.rel.replace(/\\/g, "/");
           // Prefer OKF catalogs and ontology schema notes (essay Layer 6 / index-first recall).
@@ -391,12 +389,13 @@ export function executeMemoryRecallCoreEffect(
           corpusTexts.push(text);
           textByRel.set(p, text);
         }
-        // Recompute IDF + keyword scores over the expanded body set.
+        // Recompute lexical scores over the expanded body set.
         if (wantVault) {
-          const idf2 = buildCorpusIdf(corpusTexts);
+          const mode2 = vaultRankerMode ?? (yield* resolveVaultRankerModeEffect());
+          const stats2 = yield* buildVaultRankerStatsEffect(corpusTexts, mode2);
           for (const f of files) {
             const fm = parseVaultFrontmatter(f.text);
-            let score = keywordScore(query, f.text, idf2);
+            let score = scoreWithVaultRanker(query, f.text, stats2);
             const relNorm = f.rel.replace(/\\/g, "/");
             if (/(^|\/)index\.md$/i.test(relNorm)) score += 8;
             if (/ontology/i.test(relNorm) || /type:\s*["']?ontology_/i.test(f.text)) score += 5;
@@ -546,33 +545,6 @@ export function executeMemoryRecallCoreEffect(
       sourceNotes.vault = "vault source not requested";
     }
 
-    if (wantCodeGraph) {
-      const pack = yield* memoryFromPromise(() =>
-        recallCodeGraphSupplementPack({
-          query,
-          graphId: input.codeGraphId,
-          limit: envInt("CLAWQL_MEMORY_RECALL_CODEGRAPH_LIMIT", 8),
-          force: true,
-        })
-      );
-      if (pack.skipped) sourceNotes.codegraph = pack.skipped;
-      if (pack.codeGraphHits.length > 0) codeGraphHits = pack.codeGraphHits;
-      normalizedHits.push(...pack.hits);
-      followUps.push(...pack.followUps);
-    }
-
-    if (wantPageIndex) {
-      const pi = yield* memoryFromPromise(() =>
-        recallPageIndexSupplement({
-          query,
-          limit: envInt("CLAWQL_MEMORY_RECALL_PAGEINDEX_LIMIT", 8),
-        })
-      );
-      if (pi.skipped) sourceNotes.pageindex = pi.skipped;
-      normalizedHits.push(...pi.hits);
-      followUps.push(...pi.followUps);
-    }
-
     if (wantOnyx) {
       const ox = yield* memoryFromPromise(() =>
         recallOnyxSupplement({
@@ -606,6 +578,7 @@ export function executeMemoryRecallCoreEffect(
       hits: rankedHits,
       followUps: followUps.length > 0 ? dedupeFollowUps(followUps) : undefined,
       sourcesUsed,
+      vaultRanker: wantVault ? vaultRankerMode : undefined,
       sourceNotes: Object.keys(sourceNotes).length > 0 ? sourceNotes : undefined,
       truncated: wantVault || wantVector ? truncated : undefined,
       scannedFiles: wantVault || wantVector ? scannedFiles : undefined,
@@ -613,10 +586,6 @@ export function executeMemoryRecallCoreEffect(
       indexFirstBodyLoad: indexFirstBodyLoad || undefined,
       bodiesLoaded: wantVault || wantVector ? bodiesLoaded : undefined,
     };
-
-    if (codeGraphHits) {
-      result.codeGraphHits = codeGraphHits;
-    }
 
     if (wantVault || wantVector) {
       const merkleSnapshot = yield* recallMerkleSnapshotEffect(vault, recallArtifacts);

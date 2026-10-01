@@ -76,9 +76,9 @@ clawql-auth
 
 ✅ Shipped — gateway noAuth/apiKey, ATR claims, provider headers
 
-clawql-pageindex
+clawql-pageindex (removed 8.0 — see post-8.0 Vectify backlog)
 
-✅ Shipped — MIT package + pageindex\_\* MCP tools
+❌ Removed in 8.0 — heading-tree product surface purged; Vectify-style redesign → post-8.0 backlog
 
 clawql-inference
 
@@ -186,7 +186,7 @@ clawql-core — Foundational types, Plugin interface, Merkle/Cuckoo, audit ring 
 
 clawql-api — Intelligent gateway: search() / execute(), bundled + custom URL sources, REST/GraphQL/gRPC/MCP/CLI protocols, Panguard proxy plugin.
 
-clawql-memory — Vault, memory.db, ingest/recall, embeddings, optional pgvector. Memory 2.0: hybrid memory_recall.sources = vault | vector | codegraph | pageindex | onyx.
+clawql-memory — Vault, memory.db, ingest/recall, embeddings, optional pgvector. Memory 2.0: hybrid memory_recall.sources = vault | vector | codegraph | onyx.
 
 clawql-codegraph — Structural code graph (TypeScript compiler API + tree-sitter); symbol-level import/call graph; hybrid recall integration. Shipped in 7.1.
 
@@ -212,9 +212,7 @@ mcp-api-adapter (0.4.0) — Point at any MCP server (stdio / Streamable HTTP / g
 
 clawql-auth — Gateway modes, ATR claims, provider headers.
 
-clawql-pageindex — MIT package + pageindex\_\* tools.
-
-7.0 additions (still in place): custom sources + harness wrappers, install script, ClawQL Desktop, Tier 1 Compose, Presidio gateway hooks (opt-in), clawql-operator scaffold.
+7.0 additions (still in place): custom sources + harness wrappers, install script, ClawQL Desktop, Tier 1 Compose, Presidio gateway hooks (opt-in), clawql-operator scaffold. (clawql-pageindex / pageindex\_\* removed in 8.0.)
 
 Shipped CLI/surface in 7.1
 
@@ -232,7 +230,9 @@ Planned
 
 Vertical packages, the full Kubernetes Operator, and remaining horizontal packages (clawql-data, clawql-telemetry, clawql-printingpress, clawql-goose). mcp-api-adapter (MCP tools → OpenAPI REST on-ramp over gRPC — design). Layer 0 permanence production hardening (Arweave, Rift, Radicle primary). Specifications for not-yet-started packages are written and stable.
 
-Unreleased (post-7.1, on main): OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; mcp-api-adapter 0.4.0 any-MCP → OpenAPI+GraphQL+gRPC (in-repo).
+Post-8.0 backlog — Vectify-style PageIndex redesign: LLM node summaries + strong-model tree navigation on a larger fresh hard set (spent 12 RFC keys retired). Not a port of purged ClawQL heading-tree tools. See docs/backlog/post-8.0-vectify-pageindex.md.
+
+Unreleased (post-7.1, on main): OpenBench/BYOK hardening, Managed Edge Gateway production path, Layer 0 pipeline additional durability, Plugins IA, IDP GTM docs, sync ensure, Cloud Agent MCP fixes; mcp-api-adapter 0.4.0 any-MCP → OpenAPI+GraphQL+gRPC (in-repo). PageIndex product surface purged in 8.0.
 
 5. What Gets Built Next and Why
 
@@ -240,9 +240,9 @@ There are no fixed delivery dates. Priorities are determined by dependency order
 
 Phase 1: Core Stabilisation — complete (7.0.0)
 
-What: clawql-core, clawql-api, clawql-auth, clawql-documents, clawql-memory, clawql-pageindex, Tier 1 Compose, Presidio gateway hooks.
+What: clawql-core, clawql-api, clawql-auth, clawql-documents, clawql-memory, Tier 1 Compose, Presidio gateway hooks. (clawql-pageindex shipped in 7.x, purged in 8.0.)
 
-Exit criteria: ✅ Shipped — semver-stable horizontal packages, in-memory test layers, docs/examples/clawql-local-docker-compose, gateway auth, PageIndex MCP tools, Presidio redaction hooks.
+Exit criteria: ✅ Shipped — semver-stable horizontal packages, in-memory test layers, docs/examples/clawql-local-docker-compose, gateway auth, Presidio redaction hooks.
 
 Phase 1.1: Platform depth — complete (7.1.0)
 

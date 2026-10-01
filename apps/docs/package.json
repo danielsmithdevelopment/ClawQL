@@ -43,7 +43,7 @@
     "mdast-util-to-string": "^4.0.0",
     "mdx-annotations": "^0.1.4",
     "mermaid": "^11.16.1",
-    "next": "16.3.3",
+    "next": "16.3.6",
     "next-themes": "^0.4.6",
     "prettier-plugin-organize-imports": "^4.2.0",
     "react": "19.2.4",
@@ -88,7 +88,7 @@
     "form-data": "4.0.6",
     "js-yaml": "4.3.2",
     "ws": "8.21.0",
-    "basic-ftp": "5.3.1",
+    "basic-ftp": "6.2.1",
     "ip-address": "10.7.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
@@ -101,10 +101,10 @@
     "undici": "7.29.1",
     "@hono/node-server": "2.0.11",
     "fast-uri": "3.1.8",
-    "hono": "4.13.5",
+    "hono": "4.13.12",
     "body-parser": "2.3.0",
     "sharp": "0.35.4",
     "brace-expansion": "5.0.12",
-    "dompurify": "3.4.13"
+    "dompurify": "3.4.16"
   }
 }

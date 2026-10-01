@@ -1,0 +1,6 @@
+{
+  "tool_calls": [
+    { "name": "pageindex_traverse" },
+    { "name": "memory_recall" }
+  ]
+}

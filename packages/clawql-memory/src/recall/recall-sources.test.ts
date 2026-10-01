@@ -6,24 +6,11 @@ describe("resolveMemoryRecallSources", () => {
     expect([...resolveMemoryRecallSources({})].sort()).toEqual(["vault", "vector"]);
   });
 
-  it("adds codegraph when includeCodeGraph is true", () => {
-    const s = resolveMemoryRecallSources({ includeCodeGraph: true });
-    expect(s.has("codegraph")).toBe(true);
-    expect(s.has("vault")).toBe(true);
-  });
-
-  it("adds codegraph when hybrid env flag is on", () => {
-    const s = resolveMemoryRecallSources({ hybridCodeGraphEnabled: true });
-    expect(s.has("codegraph")).toBe(true);
-  });
-
   it("honors explicit sources list", () => {
     const s = resolveMemoryRecallSources({
-      sources: ["codegraph", "onyx"],
-      includeCodeGraph: true,
-      hybridCodeGraphEnabled: true,
+      sources: ["onyx"],
     });
-    expect([...s].sort()).toEqual(["codegraph", "onyx"]);
+    expect([...s].sort()).toEqual(["onyx"]);
   });
 });
 

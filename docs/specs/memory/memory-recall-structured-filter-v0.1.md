@@ -39,7 +39,7 @@ interface MemoryRecallParams {
   query: string;
   limit?: number; // default 10
   maxDepth?: number; // wikilink graph traversal depth
-  sources?: MemorySource[]; // vault | vector | codegraph | pageindex | onyx
+  sources?: MemorySource[]; // vault | vector | onyx (codegraph / pageindex removed in 8.0)
 
   // New — ontology filter extension
   schema?: OntologySchema; // "legal.Matter" | "legal.Client" | etc.
@@ -409,10 +409,10 @@ The `sources` parameter controls which backends contribute to a recall:
 | --------------- | ---------------------------- | ---------------------------- |
 | `["vault"]`     | Keyword search over Markdown | Ontology index               |
 | `["vector"]`    | Vector KNN                   | N/A (ignored for structured) |
-| `["codegraph"]` | Code structure graph         | N/A                          |
-| `["pageindex"]` | Hierarchical heading tree    | N/A                          |
 | `["onyx"]`      | External enterprise search   | N/A                          |
 | `undefined`     | All enabled sources          | Ontology index only          |
+
+`codegraph` and `pageindex` were removed from `sources` in 8.0 — see [purge inventory](../../releases/8.0.0-purge-inventory-spec-v0.1.md).
 
 When `schema` + `filters` are present, `sources` is effectively overridden to `["vault"]` and the ontology index path is used. Other sources are not queried — structured predicate evaluation is single-source by design.
 

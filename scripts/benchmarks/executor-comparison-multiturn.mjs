@@ -224,7 +224,6 @@ async function createClawqlClient() {
     CLAWQL_INSTANCE_SPEC_FILE: "",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
-    CLAWQL_ENABLE_PAGEINDEX: "0",
   };
   if (token) {
     env.CLAWQL_BEARER_TOKEN = token;

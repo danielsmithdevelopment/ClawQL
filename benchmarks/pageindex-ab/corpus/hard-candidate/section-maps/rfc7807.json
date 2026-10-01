@@ -1,0 +1,58 @@
+{
+  "document_id": "rfc7807",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-m-nottingham",
+      "title": "Internet Engineering Task Force (IETF)                     M. Nottingham"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-requirements",
+      "title": "2 Requirements"
+    },
+    {
+      "id": "sec-3-1-members-of-a-problem-details-object",
+      "title": "3.1 Members of a Problem Details Object"
+    },
+    {
+      "id": "sec-3-2-extension-members",
+      "title": "3.2 Extension Members"
+    },
+    {
+      "id": "sec-4-defining-new-problem-types",
+      "title": "4 Defining New Problem Types"
+    },
+    {
+      "id": "sec-4-1-example",
+      "title": "4.1 Example"
+    },
+    {
+      "id": "sec-4-2-predefined-problem-types",
+      "title": "4.2 Predefined Problem Types"
+    },
+    {
+      "id": "sec-5-security-considerations",
+      "title": "5 Security Considerations"
+    },
+    {
+      "id": "sec-6-iana-considerations",
+      "title": "6 IANA Considerations"
+    },
+    {
+      "id": "sec-7-references",
+      "title": "7 References"
+    },
+    {
+      "id": "sec-7-1-normative-references",
+      "title": "7.1 Normative References"
+    },
+    {
+      "id": "sec-7-2-informative-references",
+      "title": "7.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7807.txt"
+}

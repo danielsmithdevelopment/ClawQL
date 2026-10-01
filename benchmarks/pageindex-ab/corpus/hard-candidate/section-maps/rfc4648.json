@@ -1,0 +1,102 @@
+{
+  "document_id": "rfc4648",
+  "sections": [
+    {
+      "id": "sec-network-working-group-s-josefsson",
+      "title": "Network Working Group                                       S. Josefsson"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-conventions-used-in-this-document",
+      "title": "2 Conventions Used in This Document"
+    },
+    {
+      "id": "sec-3-implementation-discrepancies",
+      "title": "3 Implementation Discrepancies"
+    },
+    {
+      "id": "sec-3-1-line-feeds-in-encoded-data",
+      "title": "3.1 Line Feeds in Encoded Data"
+    },
+    {
+      "id": "sec-3-2-padding-of-encoded-data",
+      "title": "3.2 Padding of Encoded Data"
+    },
+    {
+      "id": "sec-3-3-interpretation-of-non-alphabet-characters-in-encoded-data",
+      "title": "3.3 Interpretation of Non-Alphabet Characters in Encoded Data"
+    },
+    {
+      "id": "sec-3-4-choosing-the-alphabet",
+      "title": "3.4 Choosing the Alphabet"
+    },
+    {
+      "id": "sec-3-5-canonical-encoding",
+      "title": "3.5 Canonical Encoding"
+    },
+    {
+      "id": "sec-4-base-64-encoding",
+      "title": "4 Base 64 Encoding"
+    },
+    {
+      "id": "sec-5-base-64-encoding-with-url-and-filename-safe-alphabet",
+      "title": "5 Base 64 Encoding with URL and Filename Safe Alphabet"
+    },
+    {
+      "id": "sec-6-base-32-encoding",
+      "title": "6 Base 32 Encoding"
+    },
+    {
+      "id": "sec-7-base-32-encoding-with-extended-hex-alphabet",
+      "title": "7 Base 32 Encoding with Extended Hex Alphabet"
+    },
+    {
+      "id": "sec-8-base-16-encoding",
+      "title": "8 Base 16 Encoding"
+    },
+    {
+      "id": "sec-9-illustrations-and-examples",
+      "title": "9 Illustrations and Examples"
+    },
+    {
+      "id": "sec-10-test-vectors",
+      "title": "10 Test Vectors"
+    },
+    {
+      "id": "sec-11-iso-c99-implementation-of-base64",
+      "title": "11 ISO C99 Implementation of Base64"
+    },
+    {
+      "id": "sec-12-security-considerations",
+      "title": "12 Security Considerations"
+    },
+    {
+      "id": "sec-13-changes-since-rfc-3548",
+      "title": "13 Changes Since RFC 3548"
+    },
+    {
+      "id": "sec-14-acknowledgements",
+      "title": "14 Acknowledgements"
+    },
+    {
+      "id": "sec-15-copying-conditions",
+      "title": "15 Copying Conditions"
+    },
+    {
+      "id": "sec-16-references",
+      "title": "16 References"
+    },
+    {
+      "id": "sec-16-1-normative-references",
+      "title": "16.1 Normative References"
+    },
+    {
+      "id": "sec-16-2-informative-references",
+      "title": "16.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc4648.txt"
+}

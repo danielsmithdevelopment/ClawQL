@@ -1,0 +1,73 @@
+{
+  "tag": "pageindex-ab-v1-hard-candidate",
+  "warning": "Hard candidate (RFCs + long synthetics) \u2014 not spent; Harvey/ExtractBench excluded",
+  "n_questions": 358,
+  "arms_run": [
+    "H-idf"
+  ],
+  "pageindex_available": false,
+  "summaries": {
+    "H-idf": {
+      "n": 358,
+      "strict_accuracy": 0.5363128491620112,
+      "mean_citation_f1": 0.23854748603351958
+    }
+  },
+  "by_stratum": {
+    "H-idf": {
+      "well_structured": {
+        "n": 230,
+        "strict_accuracy": 0.33043478260869563
+      },
+      "converted_pdf": {
+        "n": 48,
+        "strict_accuracy": 0.875
+      },
+      "weakly_structured": {
+        "n": 48,
+        "strict_accuracy": 0.875
+      },
+      "code": {
+        "n": 32,
+        "strict_accuracy": 1
+      }
+    }
+  },
+  "contrasts": {
+    "pageindex_main_effect": null,
+    "bm25_main_effect": null,
+    "codegraph_main_effect": null,
+    "combination_vs_today": null
+  },
+  "pass_gate": {
+    "status": "passed",
+    "reviewed_by": "agent",
+    "reviewed_at": "2026-09-30T00:24:00Z",
+    "codegraph_prove": {
+      "n": 12,
+      "grep_soluble": 0,
+      "all_need_graph": true,
+      "verdict": "pass",
+      "artifact": "/opt/cursor/artifacts/codegraph-grep-check.json"
+    },
+    "doc_sample": {
+      "n": 60,
+      "seed": 20261015,
+      "real_defects": 0,
+      "auto_flags_adjudicated_fp": 3,
+      "verdict": "pass",
+      "sample": "design/doc-human-pass-sample.json"
+    },
+    "flagger": {
+      "keys_flagged_defective": 0,
+      "map_artifact_section_count": 0,
+      "keys_with_gold_clean": 238
+    },
+    "next": [
+      "TOP_K_DOC=20 interim (k-sweep-hidf.md)",
+      "cross-encoder rerank top-50→10/20 (gold-rank-diagnostics.md) — tune then holdout",
+      "Track B spend when ready (additive CodeGraph; freeze 2026-10-15)"
+    ]
+  },
+  "note": "Offline extractAnswer grade on grown hard-candidate after acceptance pass. PI arms skipped (package purged)."
+}

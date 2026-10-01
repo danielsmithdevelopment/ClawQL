@@ -168,6 +168,7 @@ helm upgrade --install clawql ./manifests/charts/clawql-mcp \
 
 - **`/graphql`** is skipped when the catalog stub has no OpenAPI servers (empty default is healthz-safe).
 - Vectors remain mandatory for memory (shipped in **7.2.0**).
+- **Post-8.0.0 evidence headers (memory / eval):** retrieved section bodies now carry identity metadata for agents — code chunks as `// file: path`, markdown as `### {doc} · §{n} · {heading} · ~{pct}% through document` (`read_around` + pageindex-ab harness). Prevents “which file exports…?” failures when the path lived only in the section id.
 - Auth default remains **`noAuth`**; credits HATEOAS gate applies when `CLAWQL_AUTH_MODE=apiKey|oidc` (or explicit require flag).
 - `managedGateway.networkPolicy.enabled: true` only when `managedGateway.enabled=true` (default **off**).
 

@@ -64,8 +64,6 @@ export const MEMORY_INGEST_APPEND_DESCRIPTION =
   "When the page already exists, append a new section (default true). Set false to replace the file.";
 export const MEMORY_INGEST_REBUILD_DESCRIPTION =
   "Derived-index rebuilds after the canonical vault Markdown write.";
-export const MEMORY_INGEST_REBUILD_PAGEINDEX_DESCRIPTION =
-  "Rebuild PageIndex tree for the written vault note (or set CLAWQL_MEMORY_INGEST_REBUILD_PAGEINDEX=1).";
 export const MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION =
   "Ensure memory.db chunk/embedding sync after write (default on when memory.db enabled). Set false to skip.";
 
@@ -77,13 +75,9 @@ export const MEMORY_RECALL_MAX_DEPTH_DESCRIPTION =
   "How many wikilink hops to follow from keyword hits (default: CLAWQL_MEMORY_RECALL_MAX_DEPTH or 2).";
 export const MEMORY_RECALL_MIN_SCORE_DESCRIPTION =
   "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1).";
-export const MEMORY_RECALL_INCLUDE_CODEGRAPH_DESCRIPTION =
-  "When true, include codegraph source even if CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH is unset (same as sources including codegraph).";
-export const MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION =
-  "Code graph id for hybrid supplement (default from CLAWQL_CODEGRAPH_ID).";
 export const MEMORY_RECALL_SOURCES_DESCRIPTION =
   "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
-  "(CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH / _PAGEINDEX / _ONYX) or includeCodeGraph. " +
+  "(CLAWQL_MEMORY_RECALL_HYBRID_ONYX). " +
   "Returns normalized hits[] + followUps for specialist tools. " +
   "Ignored when schema + filters select structured ontology recall.";
 export const MEMORY_RECALL_SCHEMA_DESCRIPTION =
@@ -106,9 +100,6 @@ const EnterpriseCitationSchema = Schema.Struct({
 });
 
 const MemoryRebuildSchema = Schema.Struct({
-  pageindex: Schema.optional(
-    Schema.Boolean.annotations({ description: MEMORY_INGEST_REBUILD_PAGEINDEX_DESCRIPTION })
-  ),
   embeddings: Schema.optional(
     Schema.Boolean.annotations({ description: MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION })
   ),
@@ -254,12 +245,6 @@ export const MemoryRecallInputSchema = Schema.Struct({
     Schema.Number.pipe(Schema.greaterThanOrEqualTo(0)).annotations({
       description: MEMORY_RECALL_MIN_SCORE_DESCRIPTION,
     })
-  ),
-  includeCodeGraph: Schema.optional(
-    Schema.Boolean.annotations({ description: MEMORY_RECALL_INCLUDE_CODEGRAPH_DESCRIPTION })
-  ),
-  codeGraphId: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION })
   ),
   sources: Schema.optional(
     Schema.mutable(Schema.Array(MemoryRecallSourceSchema))

@@ -1,0 +1,202 @@
+{
+  "document_id": "rfc9205",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-m-nottingham",
+      "title": "Internet Engineering Task Force (IETF)                     M. Nottingham"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-is-http-being-used",
+      "title": "2 Is HTTP Being Used?"
+    },
+    {
+      "id": "sec-3-what-s-important-about-http",
+      "title": "3 What's Important About HTTP"
+    },
+    {
+      "id": "sec-4-best-practices-for-specifying-the-use-of-http",
+      "title": "4 Best Practices for Specifying the Use of HTTP"
+    },
+    {
+      "id": "sec-5-iana-considerations",
+      "title": "5 IANA Considerations"
+    },
+    {
+      "id": "sec-6-security-considerations",
+      "title": "6 Security Considerations"
+    },
+    {
+      "id": "sec-7-references",
+      "title": "7 References"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-notational-conventions",
+      "title": "1.1 Notational Conventions"
+    },
+    {
+      "id": "sec-2-is-http-being-used",
+      "title": "2 Is HTTP Being Used?"
+    },
+    {
+      "id": "sec-2-1-non-http-protocols",
+      "title": "2.1 Non-HTTP Protocols"
+    },
+    {
+      "id": "sec-3-what-s-important-about-http",
+      "title": "3 What's Important About HTTP"
+    },
+    {
+      "id": "sec-3-1-generic-semantics",
+      "title": "3.1 Generic Semantics"
+    },
+    {
+      "id": "sec-3-2-links",
+      "title": "3.2 Links"
+    },
+    {
+      "id": "sec-3-3-rich-functionality",
+      "title": "3.3 Rich Functionality"
+    },
+    {
+      "id": "sec-4-best-practices-for-specifying-the-use-of-http",
+      "title": "4 Best Practices for Specifying the Use of HTTP"
+    },
+    {
+      "id": "sec-4-1-specifying-the-use-of-http",
+      "title": "4.1 Specifying the Use of HTTP"
+    },
+    {
+      "id": "sec-4-2-specifying-server-behaviour",
+      "title": "4.2 Specifying Server Behaviour"
+    },
+    {
+      "id": "sec-4-3-specifying-client-behaviour",
+      "title": "4.3 Specifying Client Behaviour"
+    },
+    {
+      "id": "sec-4-4-specifying-urls",
+      "title": "4.4 Specifying URLs"
+    },
+    {
+      "id": "sec-4-4-1-discovering-an-application-s-urls",
+      "title": "4.4.1 Discovering an Application's URLs"
+    },
+    {
+      "id": "sec-4-4-2-considering-uri-schemes",
+      "title": "4.4.2 Considering URI Schemes"
+    },
+    {
+      "id": "sec-4-4-3-choosing-transport-ports",
+      "title": "4.4.3 Choosing Transport Ports"
+    },
+    {
+      "id": "sec-4-5-using-http-methods",
+      "title": "4.5 Using HTTP Methods"
+    },
+    {
+      "id": "sec-4-5-1-get",
+      "title": "4.5.1 GET"
+    },
+    {
+      "id": "sec-4-5-2-options",
+      "title": "4.5.2 OPTIONS"
+    },
+    {
+      "id": "sec-4-6-using-http-status-codes",
+      "title": "4.6 Using HTTP Status Codes"
+    },
+    {
+      "id": "sec-4-6-1-redirection",
+      "title": "4.6.1 Redirection"
+    },
+    {
+      "id": "sec-4-7-specifying-http-header-fields",
+      "title": "4.7 Specifying HTTP Header Fields"
+    },
+    {
+      "id": "sec-4-8-defining-message-content",
+      "title": "4.8 Defining Message Content"
+    },
+    {
+      "id": "sec-4-9-leveraging-http-caching",
+      "title": "4.9 Leveraging HTTP Caching"
+    },
+    {
+      "id": "sec-4-9-1-freshness",
+      "title": "4.9.1 Freshness"
+    },
+    {
+      "id": "sec-4-9-2-stale-responses",
+      "title": "4.9.2 Stale Responses"
+    },
+    {
+      "id": "sec-4-9-3-caching-and-application-semantics",
+      "title": "4.9.3 Caching and Application Semantics"
+    },
+    {
+      "id": "sec-4-9-4-varying-content-based-upon-the-request",
+      "title": "4.9.4 Varying Content Based Upon the Request"
+    },
+    {
+      "id": "sec-4-10-handling-application-state",
+      "title": "4.10 Handling Application State"
+    },
+    {
+      "id": "sec-4-11-making-multiple-requests",
+      "title": "4.11 Making Multiple Requests"
+    },
+    {
+      "id": "sec-4-12-client-authentication",
+      "title": "4.12 Client Authentication"
+    },
+    {
+      "id": "sec-4-13-coexisting-with-web-browsing",
+      "title": "4.13 Coexisting with Web Browsing"
+    },
+    {
+      "id": "sec-4-14-maintaining-application-boundaries",
+      "title": "4.14 Maintaining Application Boundaries"
+    },
+    {
+      "id": "sec-4-15-using-server-push",
+      "title": "4.15 Using Server Push"
+    },
+    {
+      "id": "sec-4-16-allowing-versioning-and-evolution",
+      "title": "4.16 Allowing Versioning and Evolution"
+    },
+    {
+      "id": "sec-5-iana-considerations",
+      "title": "5 IANA Considerations"
+    },
+    {
+      "id": "sec-6-security-considerations",
+      "title": "6 Security Considerations"
+    },
+    {
+      "id": "sec-6-1-privacy-considerations",
+      "title": "6.1 Privacy Considerations"
+    },
+    {
+      "id": "sec-7-references",
+      "title": "7 References"
+    },
+    {
+      "id": "sec-7-1-normative-references",
+      "title": "7.1 Normative References"
+    },
+    {
+      "id": "sec-7-2-informative-references",
+      "title": "7.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc9205.txt"
+}

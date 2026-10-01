@@ -1,0 +1,592 @@
+#!/usr/bin/env node
+/**
+ * Strong-model agent-loop freeze (Track B).
+ *
+ * Product question: does adding codegraph_* improve today's default (grep)?
+ * Treatment A-codegraph = grep + codegraph_* (additive).
+ *
+ * Usage:
+ *   node benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs --dry-run \
+ *     --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph
+ *   OPENROUTER_API_KEY=… node …/run_agent_loop_freeze.mjs \
+ *     --cohort codegraph-prove --arms A-no-tools,A-grep,A-codegraph
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  ensureCodeGraph,
+  openAiToolsForArm,
+  runTool,
+  isCodegraphTool,
+  resolveRepoRoot,
+} from "./agent_loop_tools.mjs";
+import { buildTrackBCellSchedule } from "./track_b_cell_schedule.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+const REPO = resolveRepoRoot(__dirname);
+const LOCK_PATH = path.join(ROOT, "design", "codegraph-prove-decision.lock.json");
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+function parseArgs(argv) {
+  const out = {
+    dryRun: false,
+    corpus: "clawql-monorepo",
+    cohort: "codegraph-prove",
+    arms: ["A-no-tools", "A-grep", "A-codegraph"],
+    /** prove | no_harm | all */
+    keys: "all",
+    model:
+      process.env.PAGEINDEX_AB_AGENT_MODEL ||
+      process.env.VECTIFY_FAIR_MODEL ||
+      "anthropic/claude-sonnet-4.6",
+    out: path.join(ROOT, "results", "agent-loop-freeze"),
+    maxToolCalls: 12,
+    limit: 0, // 0 = all
+  };
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--dry-run") out.dryRun = true;
+    else if (a === "--corpus") out.corpus = argv[++i];
+    else if (a === "--cohort") out.cohort = argv[++i];
+    else if (a === "--arms") out.arms = argv[++i].split(",").map((s) => s.trim());
+    else if (a === "--keys") out.keys = argv[++i];
+    else if (a === "--model") out.model = argv[++i];
+    else if (a === "--out") out.out = path.resolve(argv[++i]);
+    else if (a === "--limit") out.limit = Number(argv[++i]);
+    else if (a === "--max-tool-calls") out.maxToolCalls = Number(argv[++i]);
+  }
+  return out;
+}
+
+const ARM_TOOLS = {
+  "A-no-tools": [],
+  "A-grep": ["grep", "read_around"],
+  "A-codegraph": [
+    "grep",
+    "read_around",
+    "codegraph_explore",
+    "codegraph_impact",
+    "codegraph_neighbors",
+    "codegraph_path",
+    "codegraph_query",
+  ],
+  "A-codegraph-only": [
+    "codegraph_explore",
+    "codegraph_impact",
+    "codegraph_neighbors",
+    "codegraph_path",
+    "codegraph_query",
+    "read_around",
+  ],
+};
+
+const CODEGRAPH_TOOL_NAMES = [
+  "codegraph_explore",
+  "codegraph_impact",
+  "codegraph_neighbors",
+  "codegraph_path",
+  "codegraph_query",
+  "codegraph_explain",
+  "codegraph_subgraph",
+  "codegraph_index",
+  "codegraph_sync",
+];
+
+function loadCodegraphCohorts() {
+  const prove = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "design", "codegraph-prove-keys.oracle.json"), "utf8")
+  );
+  const noHarm = JSON.parse(
+    fs.readFileSync(path.join(ROOT, "design", "codegraph-no-harm-keys.json"), "utf8")
+  );
+  return {
+    prove_keys: prove.keys || [],
+    no_harm_keys: noHarm.keys || [],
+  };
+}
+
+function normalize(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s.\-/%]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function gradeAnswer(key, answer) {
+  const ans = normalize(answer);
+  if (!ans) return false;
+  if (key.normalized_answer) {
+    if (ans.includes(normalize(key.normalized_answer))) return true;
+  }
+  for (const v of key.accepted_variants || []) {
+    if (ans.includes(normalize(v))) return true;
+  }
+  // Prove keys: accept if ≥2 gold impacted names / files appear
+  const names = key.gold?.impacted_names || key.gold?.neighbor_names || [];
+  const files = key.gold?.files || [];
+  const hits = [...names, ...files].filter((x) => ans.includes(normalize(x)));
+  if (names.length || files.length) return hits.length >= Math.min(2, names.length || files.length || 1);
+  return false;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function isInFlightBudget402(status, text) {
+  if (status !== 402) return false;
+  const s = String(text || "").toLowerCase();
+  return (
+    s.includes("in_flight_budget") ||
+    s.includes("in-flight") ||
+    s.includes("retry after in-flight")
+  );
+}
+
+async function openRouterChat({ apiKey, model, messages, tools }) {
+  // Cap max_tokens: OpenRouter reserves the full budget up-front. Uncapped
+  // defaults (65536) 402 even when limit_remaining is healthy ("can only afford N").
+  const maxTokens = Number(
+    process.env.PAGEINDEX_AB_AGENT_MAX_TOKENS || (tools?.length ? 4096 : 1024)
+  );
+  const body = {
+    model: model.startsWith("openrouter/") ? model.slice("openrouter/".length) : model,
+    messages,
+    temperature: 0,
+    max_tokens: maxTokens,
+  };
+  if (tools?.length) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  } else {
+    body.response_format = { type: "json_object" };
+  }
+  const maxAttempts = Number(process.env.PAGEINDEX_AB_OR_402_RETRIES || 6);
+  let backoffMs = Number(process.env.PAGEINDEX_AB_OR_402_BACKOFF_MS || 60_000);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": process.env.CLAWQL_OPENROUTER_HTTP_REFERER || "https://clawql.com",
+        "X-Title": process.env.CLAWQL_OPENROUTER_APP_TITLE || "ClawQL Track B agent-loop",
+      },
+      body: JSON.stringify(body),
+    });
+    const text = await res.text();
+    if (res.ok) {
+      const data = JSON.parse(text);
+      return { data, usage: data.usage || null };
+    }
+
+    if (isInFlightBudget402(res.status, text) && attempt < maxAttempts) {
+      const hdr = res.headers.get("retry-after");
+      const waitSec = hdr && Number(hdr) > 0 ? Number(hdr) : Math.ceil(backoffMs / 1000);
+      console.error(
+        JSON.stringify({
+          openrouter_retry: true,
+          reason: "in_flight_budget_exhausted",
+          attempt,
+          maxAttempts,
+          wait_sec: waitSec,
+        })
+      );
+      await sleep(waitSec * 1000);
+      backoffMs = Math.min(backoffMs * 2, 300_000);
+      continue;
+    }
+
+    const err = new Error(`OpenRouter ${res.status}: ${text.slice(0, 400)}`);
+    err.status = res.status;
+    throw err;
+  }
+}
+
+async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
+  const tools = openAiToolsForArm(ARM_TOOLS[armId] || []);
+  const system = [
+    "You answer questions about the ClawQL TypeScript monorepo.",
+    "Use tools when available. Prefer precise symbol/file names.",
+    'When done, reply with ONLY JSON: {"answer":"...","not_found":false}',
+  ].join(" ");
+  const messages = [
+    { role: "system", content: system },
+    { role: "user", content: key.question },
+  ];
+  const used = new Set();
+  let toolCalls = 0;
+  const tool_trace = [];
+  const usage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+    turns: 0,
+  };
+  const addUsage = (u) => {
+    if (!u) return;
+    usage.prompt_tokens += Number(u.prompt_tokens || 0);
+    usage.completion_tokens += Number(u.completion_tokens || 0);
+    usage.total_tokens += Number(u.total_tokens || 0);
+    usage.turns += 1;
+  };
+
+  for (let turn = 0; turn < maxToolCalls + 2; turn++) {
+    const { data, usage: turnUsage } = await openRouterChat({
+      apiKey,
+      model,
+      messages,
+      tools: tools.length ? tools : undefined,
+    });
+    addUsage(turnUsage);
+    const msg = data.choices?.[0]?.message;
+    if (!msg) throw new Error("empty OpenRouter message");
+    messages.push(msg);
+    const tcalls = msg.tool_calls || [];
+    if (!tcalls.length) {
+      let answer = msg.content || "";
+      try {
+        const j = JSON.parse(answer);
+        answer = j.answer ?? answer;
+      } catch {
+        /* plain text */
+      }
+      return {
+        answer,
+        used_codegraph: [...used].some(isCodegraphTool),
+        codegraph_tools_used: [...used].filter(isCodegraphTool),
+        tool_calls: toolCalls,
+        tool_trace,
+        tools_offered: (ARM_TOOLS[armId] || []).slice(),
+        usage,
+      };
+    }
+    for (const tc of tcalls) {
+      toolCalls++;
+      const name = tc.function?.name || "";
+      used.add(name);
+      let args = {};
+      try {
+        args = JSON.parse(tc.function?.arguments || "{}");
+      } catch {
+        args = {};
+      }
+      let content;
+      try {
+        content = runTool(name, args, toolCtx);
+      } catch (toolErr) {
+        content = `error: ${String(toolErr.message || toolErr)}`;
+      }
+      tool_trace.push({
+        name,
+        args,
+        result_head: String(content).slice(0, 500),
+        is_error:
+          String(content).startsWith("error:") ||
+          String(content).startsWith("(no matches"),
+      });
+      messages.push({
+        role: "tool",
+        tool_call_id: tc.id,
+        content,
+      });
+    }
+    if (toolCalls >= maxToolCalls) {
+      messages.push({
+        role: "user",
+        content: 'Stop calling tools. Reply with JSON {"answer":"...","not_found":false} now.',
+      });
+    }
+  }
+  return {
+    answer: "",
+    used_codegraph: [...used].some(isCodegraphTool),
+    codegraph_tools_used: [...used].filter(isCodegraphTool),
+    tool_calls: toolCalls,
+    tool_trace,
+    tools_offered: (ARM_TOOLS[armId] || []).slice(),
+    usage,
+    error: "max_turns",
+  };
+}
+
+async function runLive(args, lock, proveKeysIn, noHarmKeysIn) {
+  const apiKey = process.env.OPENROUTER_API_KEY || "";
+  if (!apiKey) {
+    const report = {
+      ok: false,
+      blockers: [
+        {
+          code: "missing_openrouter",
+          message: "OPENROUTER_API_KEY is required for Track B live spend",
+          remedy: "Add the secret to the Cloud Agent environment, then re-run without --dry-run",
+        },
+      ],
+    };
+    fs.writeFileSync(
+      path.join(args.out, "agent-blocker-report.json"),
+      JSON.stringify(report, null, 2) + "\n"
+    );
+    console.log(JSON.stringify(report, null, 2));
+    process.exitCode = 2;
+    return;
+  }
+
+  let proveKeys = proveKeysIn;
+  let noHarmKeys = noHarmKeysIn;
+  if (args.keys === "prove") noHarmKeys = [];
+  else if (args.keys === "no_harm") proveKeys = [];
+
+  // clawql-codegraph was purged in 8.0.0 (Track B retest: tie_purge vs working grep).
+  // Only index when an arm actually needs codegraph_* tools — codegraph-free arms
+  // (A-no-tools, A-grep) must still run for archive/replay without ensureCodeGraph's
+  // "purged" error.
+  const needsCodeGraph = args.arms.some((a) => (ARM_TOOLS[a] || []).some(isCodegraphTool));
+  console.error(
+    JSON.stringify({ indexing: needsCodeGraph, roots: 4, repoRoot: REPO, keys: args.keys })
+  );
+  let doc;
+  if (needsCodeGraph) {
+    ({ doc } = await ensureCodeGraph(REPO));
+    console.error(
+      JSON.stringify({ indexed: true, nodeCount: doc.nodeCount, edgeCount: doc.edgeCount })
+    );
+  }
+  const toolCtx = { repoRoot: REPO, doc };
+
+  // Sanity: grep must be spawnable before spending.
+  {
+    const probe = runTool("grep", { pattern: "impactAnalysis", max_matches: 3 }, toolCtx);
+    console.error(JSON.stringify({ grep_probe: probe.slice(0, 200) }));
+    if (probe.startsWith("error:")) {
+      console.error(JSON.stringify({ fatal: "grep_tool_broken", detail: probe }));
+      process.exitCode = 4;
+      return;
+    }
+  }
+
+  const answersPath = path.join(args.out, "answers.jsonl");
+  const done = new Set();
+  // Drop incomplete/error rows (esp. OpenRouter 402) so resume retries them.
+  if (fs.existsSync(answersPath)) {
+    const kept = [];
+    for (const line of fs.readFileSync(answersPath, "utf8").split("\n").filter(Boolean)) {
+      const r = JSON.parse(line);
+      if (r.error) continue;
+      kept.push(line);
+      done.add(`${r.arm}\t${r.question_id}`);
+    }
+    fs.writeFileSync(answersPath, kept.length ? kept.join("\n") + "\n" : "");
+  }
+
+  // Beat pairs first (grep↔codegraph per key), then no-harm pairs, then no-tools.
+  const cells = buildTrackBCellSchedule({
+    proveKeys,
+    noHarmKeys,
+    arms: args.arms,
+    done,
+    limit: args.limit,
+  });
+  fs.writeFileSync(
+    path.join(args.out, "cells-schedule.json"),
+    JSON.stringify(
+      {
+        order: "prove_beat_pairs → no_harm_beat_pairs → no_tools_baseline → diagnostic",
+        resume_done: done.size,
+        pending: cells.map((c) => ({
+          phase: c.phase,
+          arm: c.arm,
+          question_id: c.key.id,
+          cohort: c.cohort,
+        })),
+      },
+      null,
+      2
+    ) + "\n"
+  );
+  console.error(
+    JSON.stringify({
+      cells: cells.length,
+      resume_done: done.size,
+      model: args.model,
+      schedule: "beat_pairs_first",
+    })
+  );
+
+  for (const cell of cells) {
+    process.stderr.write(`${cell.phase} ${cell.arm} ${cell.key.id} … `);
+    try {
+      const result = await runCell({
+        apiKey,
+        model: args.model,
+        armId: cell.arm,
+        key: cell.key,
+        toolCtx,
+        maxToolCalls: args.maxToolCalls,
+      });
+      const answer_ok = gradeAnswer(cell.key, result.answer);
+      const row = {
+        question_id: cell.key.id,
+        arm: cell.arm,
+        cohort: cell.cohort,
+        phase: cell.phase,
+        answer: result.answer,
+        answer_ok,
+        used_codegraph: result.used_codegraph,
+        codegraph_tools_used: result.codegraph_tools_used,
+        tool_calls: result.tool_calls,
+        tools_offered: result.tools_offered || [],
+        tool_trace: result.tool_trace || [],
+        usage: result.usage || null,
+        model: args.model,
+      };
+      fs.appendFileSync(answersPath, JSON.stringify(row) + "\n");
+      const u = result.usage;
+      process.stderr.write(
+        `${answer_ok ? "ok" : "miss"} tools=${result.tool_calls}` +
+          (u ? ` tok=${u.total_tokens}` : "") +
+          "\n"
+      );
+    } catch (err) {
+      process.stderr.write(`ERR ${err.message}\n`);
+      fs.appendFileSync(
+        answersPath,
+        JSON.stringify({
+          question_id: cell.key.id,
+          arm: cell.arm,
+          cohort: cell.cohort,
+          phase: cell.phase,
+          answer: "",
+          answer_ok: false,
+          error: String(err.message || err),
+          model: args.model,
+        }) + "\n"
+      );
+      if (String(err.message || "").includes("402") || String(err.message || "").includes("credit")) {
+        console.error(JSON.stringify({ fatal: "insufficient_credits" }));
+        process.exitCode = 5;
+        return;
+      }
+    }
+  }
+
+  // Auto-score beat
+  const { spawnSync } = await import("node:child_process");
+  const scored = spawnSync(
+    process.execPath,
+    [path.join(__dirname, "decide_codegraph_beat.mjs"), answersPath],
+    { encoding: "utf8" }
+  );
+  process.stdout.write(scored.stdout || "");
+  if (scored.status && scored.status !== 0 && scored.status !== 2) {
+    process.exitCode = scored.status;
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv);
+  const lock = JSON.parse(fs.readFileSync(LOCK_PATH, "utf8"));
+  const { prove_keys: proveKeys, no_harm_keys: noHarmKeys } = loadCodegraphCohorts();
+  const proveIds = proveKeys.map((k) => k.id);
+  const noHarmIds = noHarmKeys.map((k) => k.id);
+  const questionIds = [...proveIds, ...noHarmIds];
+
+  // Full freeze requires all three arms; smoke/retest may pass a subset via --arms.
+  const requiredArms = ["A-no-tools", "A-grep", "A-codegraph"];
+  const missing = requiredArms.filter((a) => !args.arms.includes(a));
+  const allowSubset =
+    process.env.PAGEINDEX_AB_TRACK_B_ALLOW_SUBSET === "1" ||
+    args.keys === "no_harm" ||
+    args.arms.join(",") === "A-grep,A-codegraph" ||
+    args.arms.join(",") === "A-grep";
+  if (args.cohort === "codegraph-prove" && missing.length && !allowSubset) {
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: `codegraph-prove cohort requires arms ${requiredArms.join(",")}; missing ${missing.join(",")}`,
+      })
+    );
+    process.exitCode = 2;
+    return;
+  }
+
+  const treatmentTools = ARM_TOOLS["A-codegraph"] || [];
+  if (!treatmentTools.includes("grep") || !treatmentTools.some((t) => t.startsWith("codegraph_"))) {
+    console.error(
+      JSON.stringify({
+        ok: false,
+        error: "A-codegraph treatment arm must include both grep and codegraph_* tools (additive).",
+      })
+    );
+    process.exitCode = 2;
+    return;
+  }
+
+  fs.mkdirSync(args.out, { recursive: true });
+  const manifest = {
+    suite: "agent-loop-freeze",
+    status: args.dryRun ? "scheduled-dry-run" : "live",
+    freeze: "2026-10-15",
+    track: "B",
+    product_question: lock.product_question,
+    design: "benchmarks/pageindex-ab/design/agent-loop-freeze.md",
+    decision_lock: "benchmarks/pageindex-ab/design/codegraph-prove-decision.lock.json",
+    decision_lock_status: lock.status,
+    clear_to_sign: lock.clear_to_sign === true,
+    human_pass: "benchmarks/pageindex-ab/design/HUMAN_PASS_RESULT.json",
+    beat: lock.beat,
+    corpus: args.corpus,
+    cohort: args.cohort,
+    n_prove: proveIds.length,
+    n_no_harm: noHarmIds.length,
+    n: questionIds.length,
+    prove_ids: proveIds,
+    no_harm_ids: noHarmIds,
+    question_ids: questionIds,
+    model: args.model,
+    arms: args.arms.map((id) => ({
+      id,
+      role:
+        id === "A-codegraph"
+          ? "treatment"
+          : id === "A-grep"
+            ? "control"
+            : id === "A-codegraph-only"
+              ? "diagnostic"
+              : id === "A-no-tools"
+                ? "baseline"
+                : "other",
+      tools: ARM_TOOLS[id] || [],
+      setup: id === "A-codegraph" || id === "A-codegraph-only" ? ["codegraph_sync"] : [],
+      counts_toward_net: id === "A-grep" || id === "A-codegraph",
+    })),
+    usage_evidence: {
+      arm: "A-codegraph",
+      codegraph_tool_names: CODEGRAPH_TOOL_NAMES,
+      record_per_question: ["codegraph_tool_calls", "codegraph_tools_used", "used_codegraph", "usage"],
+    },
+    cell_order: "prove_beat_pairs → no_harm_beat_pairs → no_tools_baseline → diagnostic",
+    decision:
+      "Keep codegraph_* only if Net>=5 (grep+CodeGraph vs grep) AND no-harm pass; tie/no-harm fail => purge.",
+    no_tools_reporting:
+      "Required alongside beat; does not change Net / no-harm keep-purge rule.",
+    has_openrouter: Boolean(process.env.OPENROUTER_API_KEY),
+    eval_key:
+      "Prefer secrets.OPENROUTER_API_KEY_TRACK_B (dedicated key limit). See design/TRACK_B_EVAL_KEY.md",
+  };
+  const outPath = path.join(args.out, "schedule-manifest.json");
+  fs.writeFileSync(outPath, JSON.stringify(manifest, null, 2) + "\n");
+  console.log(JSON.stringify({ ok: true, wrote: outPath, dryRun: args.dryRun }, null, 2));
+
+  if (args.dryRun) return;
+  await runLive(args, lock, proveKeys, noHarmKeys);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(3);
+});

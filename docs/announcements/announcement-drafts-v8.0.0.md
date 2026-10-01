@@ -8,6 +8,8 @@
 
 **Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
 
+**Breaking change — product surface purge:** 8.0 also removes two product surfaces evaluated and not kept: **ClawQL PageIndex** (`pageindex_*` tools, hybrid PageIndex recall) and **CodeGraph / Graphify** (`codegraph_*` tools (11), `CLAWQL_ENABLE_CODEGRAPH`, hybrid code-graph recall, the `clawql-codegraph` package, and the `code_change` vault-notes flywheel from [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)). Both lost their A/B retest against a working baseline (Vectify-style ranking and `grep` + `read_around`, respectively) — see [migrate-to-8.0](../getting-started/migrate-to-8.0.md), the [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md), and the [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) for conditions under which CodeGraph could return as an opt-in tool.
+
 ---
 
 ## 1) Medium / long blog post (draft)

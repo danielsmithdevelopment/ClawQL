@@ -75,7 +75,9 @@ Need enterprise-document evidence behind an action.
 
 ---
 
-## 6) Architecture Trace (Vault + Code Graph)
+## 6) Architecture Trace (Vault + grep)
+
+**8.0:** `clawql-codegraph` (`codegraph_*`, hybrid code graph recall) is removed — a strong-model Track B retest tied Net=0 vs working `grep` + `read_around`. See [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md).
 
 ### Use case
 
@@ -83,10 +85,8 @@ You need both narrative decisions in the vault and precise import/call relations
 
 ### Steps
 
-1. **`codegraph_index`** on the repo root (once per checkout), or **`codegraph_import_graphify`** from a Graphify export.
-2. **`memory_recall`** with hybrid enabled (`CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1` or `includeCodeGraph: true`).
-3. Use vault **`results[]`** for decisions and **`codeGraphHits`** for symbol locations.
-4. **`codegraph_path`** between two symbols when you need a concrete trace.
-5. **`memory_ingest`** the architecture conclusion with wikilinks.
+1. Use `search`/`execute` or shell `grep` to find symbol definitions and call sites, then **`read_around`** to pull context around each hit.
+2. Use vault **`results[]`** / **`hits[]`** from **`memory_recall`** for prior decisions on the same area.
+3. **`memory_ingest`** the architecture conclusion with wikilinks.
 
-See [Code graph plugin](../plugins/codegraph.md) and [Memory plugin](../plugins/memory.md).
+See [Memory plugin](../plugins/memory.md).

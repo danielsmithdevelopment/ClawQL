@@ -4,13 +4,16 @@
 
 ## Breaking defaults (read first)
 
-| Before 8.0                               | After 8.0                        | What to set                                                                                                            |
-| ---------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Bundled OpenAPI pack often loaded        | **Empty catalog** until opted in | `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm `providers.pack=default` |
-| Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                       |
-| In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                  |
-| Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                  |
-| `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                     |
+| Before 8.0                               | After 8.0                        | What to set                                                                                                                                                                                                                                                    |
+| ---------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bundled OpenAPI pack often loaded        | **Empty catalog** until opted in | `CLAWQL_PROVIDER=default` or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm `providers.pack=default`                                                                                                                                         |
+| Panguard proxy composed by default       | **Off** until opted in           | `CLAWQL_PANGUARD_PROXY_PLUGIN=1`                                                                                                                                                                                                                               |
+| In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                                                                                                                                                          |
+| Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                                                                                                                                                          |
+| `pageindex_*` tools / hybrid PageIndex   | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_PAGEINDEX`, `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX`, and `pageindex.db.json` sync — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)                                                                                  |
+| `codegraph_*` tools / Graphify import    | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_CODEGRAPH`, `CLAWQL_CODEGRAPH_*`, `CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, and `clawql-codegraph` — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) and [post-8.0 backlog](../backlog/post-8.0-codegraph-revisit.md) |
+| Section IDs from TOC / list “headings”   | **Filtered** in `read_around`    | See [Section artifact headings](#section-artifact-headings-toc--lists)                                                                                                                                                                                         |
+| `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                                                                                                                                             |
 
 Bare `clawql-mcp` after upgrade: `search` / `execute` / `cache` / `audit` / `skills_list` / `skills_get` — **no** GitHub/Slack/… ops and **no** tool-scope enforcement until you opt in.
 
@@ -105,6 +108,29 @@ export CLAWQL_PANGUARD_IN_PROCESS=1
 The Cloudflare Workers under [`infra/cloudflare/`](../../infra/cloudflare/README.md) are a **pre-8.0 parallel MCP** (hardcoded catalog, D1 audit, no `ProviderPlugin`). They **must** be updated to ClawQL **8.0.0** and the current plugin / empty-catalog / skills design before they are treated as a product surface.
 
 Canonical MCP remains Node `clawql-mcp` / Helm `manifests/charts/clawql-mcp`. Status and layout: [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md).
+
+## Section artifact headings (TOC / lists)
+
+Some converters promote **table-of-contents leader-dot lines** and **numbered list/procedure steps** to ATX Markdown headings. Those mint bogus `sec-*` IDs and can inflate or depress graded retrieval scores.
+
+**How common:** on a naive (unfiltered) TXT→MD convert of 16 public RFCs, **~17%** of promoted ATX headings were TOC/list artifacts (212 / 1262). That class of ghosts wrong-reasons retrieval and citation IDs. Operator Memory vaults that never ingested RFC-style converts may show **0** today — the filter still matters for the next contaminated ingest.
+
+**8.0 product behavior:** `splitMarkdownSections` / `read_around` **skip** those titles at read time for every vault document (existing included). No persisted section index is left behind — IDs are derived from current Markdown on each call. Combined with the optional re-section below, this improves real recall on contaminated vaults without waiting for re-ingest.
+
+**Scan / optional one-time vault cleanup:**
+
+```bash
+# Report artifact ATX headings in your vault (same rules as the product filter)
+python3 benchmarks/pageindex-ab/scripts/flag_artifact_gold_keys.py --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
+
+# Dry-run demote report
+node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH"
+
+# Rewrite: demote matching ## lines to plain text
+node scripts/dev/vault-resection-artifact-headings.mjs --vault "$CLAWQL_OBSIDIAN_VAULT_PATH" --write
+```
+
+Regression coverage: TOC + numbered-list + postal-junk cases in `packages/clawql-memory/src/recall/read-around.test.ts`. Scan notes: [`benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md`](../../benchmarks/pageindex-ab/design/vault-artifact-scan-summary.md).
 
 ## Docs
 

@@ -1,0 +1,310 @@
+{
+  "suite": "pageindex-ab",
+  "spec": "docs/benchmarks/pageindex-ab-eval-spec-v0.1.md",
+  "spec_version": "0.2",
+  "philosophy": {
+    "primary_gate": "strict_accuracy_task_completion",
+    "latency_gates": false,
+    "token_cost_gates": false,
+    "report_latency_tokens_cost": true
+  },
+  "budget": {
+    "max_tool_calls": 12,
+    "timeout_seconds": 180,
+    "max_retrieved_tokens": null,
+    "notes": "Retrieved tokens and $ are logged, never used to fail a cell."
+  },
+  "model_primary": "openrouter/deepseek/deepseek-chat",
+  "factors": {
+    "ranker": ["idf", "bm25"],
+    "pageindex": [false, true],
+    "codegraph": [false, true]
+  },
+  "confirmatory_arms": [
+    {
+      "id": "H-idf",
+      "label": "Today's default",
+      "ranker": "idf",
+      "pageindex": false,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector"],
+      "allowed_tools": ["memory_recall", "read_around"],
+      "role": "control"
+    },
+    {
+      "id": "H-idf-pi",
+      "label": "+PageIndex",
+      "ranker": "idf",
+      "pageindex": true,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector", "pageindex"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings"]
+    },
+    {
+      "id": "H-bm25",
+      "label": "+BM25",
+      "ranker": "bm25",
+      "pageindex": false,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector"],
+      "allowed_tools": ["memory_recall", "read_around"],
+      "setup": ["embeddings", "bm25_stats"],
+      "notes": "Requires CLAWQL_MEMORY_VAULT_RANKER=bm25 (to implement)."
+    },
+    {
+      "id": "H-bm25-pi",
+      "label": "+BM25 +PageIndex",
+      "ranker": "bm25",
+      "pageindex": true,
+      "codegraph": false,
+      "memory_recall_sources": ["vault", "vector", "pageindex"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings", "bm25_stats"]
+    },
+    {
+      "id": "H-idf-cg",
+      "label": "+CodeGraph",
+      "ranker": "idf",
+      "pageindex": false,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "codegraph"],
+      "allowed_tools": ["memory_recall", "read_around", "codegraph_query", "codegraph_impact"],
+      "setup": ["embeddings", "codegraph_sync"],
+      "notes": "Native builder default; Graphify is exploratory on code stratum only."
+    },
+    {
+      "id": "H-idf-pi-cg",
+      "label": "+PI +CG",
+      "ranker": "idf",
+      "pageindex": true,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "pageindex", "codegraph"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "codegraph_query",
+        "codegraph_impact"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings", "codegraph_sync"]
+    },
+    {
+      "id": "H-bm25-cg",
+      "label": "+BM25 +CG",
+      "ranker": "bm25",
+      "pageindex": false,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "codegraph"],
+      "allowed_tools": ["memory_recall", "read_around", "codegraph_query", "codegraph_impact"],
+      "setup": ["embeddings", "bm25_stats", "codegraph_sync"]
+    },
+    {
+      "id": "H-bm25-pi-cg",
+      "label": "Full candidate",
+      "ranker": "bm25",
+      "pageindex": true,
+      "codegraph": true,
+      "memory_recall_sources": ["vault", "vector", "pageindex", "codegraph"],
+      "allowed_tools": [
+        "memory_recall",
+        "read_around",
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "codegraph_query",
+        "codegraph_impact"
+      ],
+      "setup": ["pageindex_build_tree", "embeddings", "bm25_stats", "codegraph_sync"]
+    }
+  ],
+  "confirmatory_contrasts": [
+    {
+      "id": "pageindex_main_effect",
+      "description": "mean(PI on) - mean(PI off) across ranker × codegraph",
+      "holm": true
+    },
+    {
+      "id": "bm25_main_effect",
+      "description": "mean(BM25) - mean(IDF) across pageindex × codegraph",
+      "holm": true
+    },
+    {
+      "id": "codegraph_main_effect",
+      "description": "mean(CG on) - mean(CG off); primary power on code stratum; report doc noise",
+      "holm": true
+    },
+    {
+      "id": "combination_vs_today",
+      "description": "Best arm including every winning addition vs H-idf; must clear zero to ship new default",
+      "holm": true
+    }
+  ],
+  "holm_alpha": 0.05,
+  "extra_merge_arms": [
+    {
+      "id": "H-idf-pi-union",
+      "label": "+PageIndex union (IDF top-k ∪ PI hits)",
+      "ranker": "idf",
+      "pageindex": true,
+      "pageindex_merge": "union",
+      "codegraph": false,
+      "role": "diagnostic",
+      "notes": "Matches cheap-context product rule: PI supplements IDF without same-size displacement."
+    },
+    {
+      "id": "H-idf-pi-gated",
+      "label": "+PageIndex gated on heading quality",
+      "ranker": "idf",
+      "pageindex": true,
+      "pageindex_merge": "rrf",
+      "pageindex_gated": true,
+      "heading_quality_threshold": 0.35,
+      "codegraph": false,
+      "role": "diagnostic",
+      "notes": "Enable RRF PageIndex only when headingQualityScore(markdown) >= threshold."
+    }
+  ],
+  "diagnostic_arms": [
+    {
+      "id": "D-pageindex",
+      "label": "PageIndex alone",
+      "allowed_tools": ["pageindex_traverse", "pageindex_get_content", "pageindex_synthesize"],
+      "forbidden_tools": ["memory_recall"],
+      "setup": ["pageindex_build_tree"]
+    },
+    {
+      "id": "D-vectify-pi",
+      "label": "Upstream VectifyAI PageIndex (LLM summaries + strong tree nav)",
+      "external": true,
+      "runner": "benchmarks/pageindex-ab/scripts/run_vectify_fair_test.py",
+      "cohort": "benchmarks/pageindex-ab/design/deep-rfc-misses.json",
+      "compare_to": ["H-idf-qrewrite"],
+      "notes": "Fair test — not ClawQL RRF. MIT SDK local mode. See design/vectify-fair-test.md."
+    },
+    {
+      "id": "H-idf-qrewrite",
+      "label": "IDF + cheap query rewrite union",
+      "ranker": "idf",
+      "runner": "benchmarks/pageindex-ab/scripts/run_query_rewrite_cohort.py",
+      "cohort": "benchmarks/pageindex-ab/design/deep-rfc-misses.json",
+      "notes": "Side-by-side control for D-vectify-pi on the 12 deep RFC misses."
+    },
+    {
+      "id": "A-grep",
+      "label": "Strong-model agent loop — grep control",
+      "allowed_tools": ["grep", "read_around"],
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs",
+      "notes": "Freeze Track B control. See design/agent-loop-freeze.md."
+    },
+    {
+      "id": "A-pageindex",
+      "label": "Strong-model agent loop — ClawQL pageindex_*",
+      "allowed_tools": [
+        "pageindex_traverse",
+        "pageindex_get_content",
+        "pageindex_synthesize",
+        "read_around"
+      ],
+      "setup": ["pageindex_build_tree"],
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
+      "id": "A-codegraph",
+      "label": "Strong-model agent loop — grep + CodeGraph (additive treatment)",
+      "allowed_tools": [
+        "grep",
+        "read_around",
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "codegraph_query"
+      ],
+      "setup": ["codegraph_sync"],
+      "role": "treatment",
+      "notes": "Beat arm vs A-grep. Record used_codegraph per question. See codegraph-prove-decision.lock.json.",
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
+      "id": "A-codegraph-only",
+      "label": "Diagnostic — CodeGraph without grep (does not decide freeze)",
+      "allowed_tools": [
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "codegraph_query",
+        "read_around"
+      ],
+      "setup": ["codegraph_sync"],
+      "role": "diagnostic",
+      "notes": "Optional. Answers 'can CodeGraph replace grep?' — never keep/purge.",
+      "runner": "benchmarks/pageindex-ab/scripts/run_agent_loop_freeze.mjs"
+    },
+    {
+      "id": "D-vector",
+      "label": "Vector alone",
+      "memory_recall_sources": ["vector"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-idf",
+      "label": "IDF keyword alone",
+      "ranker": "idf",
+      "memory_recall_sources": ["vault"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-bm25",
+      "label": "BM25 keyword alone",
+      "ranker": "bm25",
+      "memory_recall_sources": ["vault"],
+      "allowed_tools": ["memory_recall", "read_around"]
+    },
+    {
+      "id": "D-grep",
+      "label": "Grep baseline",
+      "allowed_tools": ["grep", "read_range"],
+      "forbidden_tools": ["memory_recall", "pageindex_traverse"]
+    },
+    {
+      "id": "D-whole-doc",
+      "label": "Whole document",
+      "allowed_tools": [],
+      "requires_fits_arm_d": true
+    },
+    {
+      "id": "D-structured",
+      "label": "Ontology structured recall",
+      "allowed_tools": ["memory_recall"],
+      "notes": "schema+filters only; skips text layers. For cross-document list questions."
+    },
+    {
+      "id": "D-sql",
+      "label": "DuckDB clawql_sql",
+      "allowed_tools": ["data_query", "clawql_sql"],
+      "notes": "Document-extraction tables; not fused with ontology.db yet."
+    }
+  ],
+  "ship_rules": {
+    "addition_becomes_default_if": "confirmatory contrast CI excludes zero on strict accuracy",
+    "codegraph_document_harm": "if CG helps code but harms docs, default-on only in repo workspaces",
+    "new_omit_sources_default": "combination_vs_today must clear zero",
+    "never_gate_on": ["latency", "tokens", "dollars"]
+  }
+}

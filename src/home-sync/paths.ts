@@ -12,7 +12,6 @@ export const DEFAULT_SYNC_INCLUDE = [
   "sources",
   "sources.json",
   "Dashboard/chats",
-  "pageindex.db.json",
 ] as const;
 
 /** Never uploaded — rebuild locally or keep per-machine. */

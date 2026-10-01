@@ -1,3 +1,27 @@
+### 2026-09-29 — `pageindex-ab` preconditions: BM25 ranker + `read_around` (still no scored run)
+
+| Item                              | State                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_VAULT_RANKER=bm25` | Landed (default remains `idf`)                                             |
+| MCP `read_around`                 | Landed                                                                     |
+| Offline smoke                     | BM25 tops short-protocols; IDF tops long-boilerplate (length-norm differs) |
+| Next                              | Corpus (+ list + code strata) → freeze → scored run → 8.0.0 default flips  |
+
+### 2026-09-29 — `pageindex-ab` eval spec **v0.2** (task-completion factorial; no scored run)
+
+**Not a WIN/FAIL cell.** Reframe: does each addition (BM25, PageIndex, CodeGraph) improve today's omit-`sources` default? Latency/cost reported, never gates. Live [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) overclaims hybrid defaults — correction draft [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
+
+| Item    | State                                                                                       |
+| ------- | ------------------------------------------------------------------------------------------- |
+| Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)            |
+| Harness | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/) — 8 confirmatory + diagnostics |
+| Control | `H-idf` = vault IDF + vector                                                                |
+| Next    | Corpus (+ list + code strata) → freeze → scored run                                         |
+
+### 2026-09-28 — `pageindex-ab` eval spec v0.1 scaffold (superseded by v0.2)
+
+v0.1 used specialist/demote framing and token caps. Superseded by task-completion-only factorial.
+
 ### 2026-08-08 — B-7.2 + B-7.1-blind activated (pre-C&H)
 
 | Cell        | Task id                                   | Status                                                                                                                   |
