@@ -63,7 +63,8 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
         },
         coalesced_count: {
           type: "integer",
-          description: "When >1, this delivery merged multiple changes within the coalesce interval.",
+          description:
+            "When >1, this delivery merged multiple changes within the coalesce interval.",
         },
       },
       required: ["topic", "summary", "changed_at"],

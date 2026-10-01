@@ -1439,8 +1439,7 @@ export async function dispatchScheduleOperation(
             auth_failure_count: change.auth_failure_count,
             poll_pause_reason: change.poll_pause_reason,
             reconnect_available: change.poll_pause_reason != null,
-            reconnect_operation:
-              change.poll_pause_reason != null ? "reconnect" : null,
+            reconnect_operation: change.poll_pause_reason != null ? "reconnect" : null,
           },
           ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
         },

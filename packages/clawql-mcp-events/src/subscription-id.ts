@@ -21,8 +21,6 @@ export function deriveSubscriptionId(identity: SubscriptionIdentity): string {
   return `sub_${hex}`;
 }
 
-export function deriveSubscriptionIdEffect(
-  identity: SubscriptionIdentity
-): Effect.Effect<string> {
+export function deriveSubscriptionIdEffect(identity: SubscriptionIdentity): Effect.Effect<string> {
   return Effect.sync(() => deriveSubscriptionId(identity));
 }

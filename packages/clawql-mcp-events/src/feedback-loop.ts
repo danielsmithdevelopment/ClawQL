@@ -37,11 +37,7 @@ export class FeedbackLoopDetector {
    * True when the same subscription+event appears ≥ threshold times in the window
    * and at least one action fingerprint was recorded between deliveries.
    */
-  wouldLoop(
-    subscriptionId: string,
-    eventName: string,
-    threshold = 3
-  ): Effect.Effect<boolean> {
+  wouldLoop(subscriptionId: string, eventName: string, threshold = 3): Effect.Effect<boolean> {
     return Effect.sync(() => {
       const now = Date.now();
       const recent = this.entries.filter(

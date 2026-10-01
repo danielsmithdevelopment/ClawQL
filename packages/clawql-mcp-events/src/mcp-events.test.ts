@@ -8,19 +8,12 @@ import { FeedbackLoopDetector } from "./feedback-loop.js";
 import { handleMcpEventsJsonRpc } from "./jsonrpc.js";
 import { screenUserText } from "./screen.js";
 import { generateWhsecSecretSync } from "./secret.js";
-import {
-  McpEventsService,
-  McpEventsServiceLayer,
-  runMcpEventsEffect,
-} from "./service.js";
+import { McpEventsService, McpEventsServiceLayer, runMcpEventsEffect } from "./service.js";
 import { createMemorySubscriptionStore } from "./store.js";
 import { deriveSubscriptionId } from "./subscription-id.js";
 import type { DeliverableEvent } from "./types.js";
 
-function startEchoReceiver(opts?: {
-  failChallenge?: boolean;
-  statusOnEvent?: number;
-}): Promise<{
+function startEchoReceiver(opts?: { failChallenge?: boolean; statusOnEvent?: number }): Promise<{
   url: string;
   close: () => Promise<void>;
   events: unknown[];
@@ -61,8 +54,7 @@ function startEchoReceiver(opts?: {
       if (!addr || typeof addr === "string") throw new Error("no addr");
       resolve({
         url: `http://127.0.0.1:${addr.port}/callback`,
-        close: () =>
-          new Promise((r, j) => server.close((e) => (e ? j(e) : r()))),
+        close: () => new Promise((r, j) => server.close((e) => (e ? j(e) : r()))),
         events,
         secretsSeen,
       });
@@ -221,11 +213,7 @@ describe("clawql-mcp-events", () => {
             },
           },
           "bob"
-        ).pipe(
-          Effect.provide(
-            McpEventsServiceLayer({ store: createMemorySubscriptionStore() })
-          )
-        )
+        ).pipe(Effect.provide(McpEventsServiceLayer({ store: createMemorySubscriptionStore() })))
       );
       expect("error" in rpc).toBe(true);
       if ("error" in rpc) {
@@ -257,9 +245,7 @@ describe("clawql-mcp-events", () => {
           },
         },
         "carol"
-      ).pipe(
-        Effect.provide(McpEventsServiceLayer({ store: createMemorySubscriptionStore() }))
-      )
+      ).pipe(Effect.provide(McpEventsServiceLayer({ store: createMemorySubscriptionStore() })))
     );
     expect("error" in rpc).toBe(true);
     if ("error" in rpc) {

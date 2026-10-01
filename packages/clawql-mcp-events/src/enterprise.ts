@@ -37,15 +37,15 @@ export function readEnterpriseEventsPolicy(
     );
     const redactRaw = env.CLAWQL_MCP_EVENTS_REDACT_PII?.trim().toLowerCase();
     const redactPii = !(redactRaw === "0" || redactRaw === "false" || redactRaw === "no");
-    const maxDeliveriesPerMinutePerPrincipal =
-      Number.isFinite(maxDel) && maxDel > 0 ? maxDel : 60;
+    const maxDeliveriesPerMinutePerPrincipal = Number.isFinite(maxDel) && maxDel > 0 ? maxDel : 60;
     const coalesceRaw = Number.parseInt(
       env.CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS?.trim() ?? "",
       10
     );
-    const coalesceIntervalMs = Number.isFinite(coalesceRaw) && coalesceRaw >= 0
-      ? coalesceRaw
-      : Math.max(1000, Math.ceil(60_000 / maxDeliveriesPerMinutePerPrincipal));
+    const coalesceIntervalMs =
+      Number.isFinite(coalesceRaw) && coalesceRaw >= 0
+        ? coalesceRaw
+        : Math.max(1000, Math.ceil(60_000 / maxDeliveriesPerMinutePerPrincipal));
     return {
       callbackAllowlist,
       maxSubscriptionsPerPrincipal: Number.isFinite(maxSub) && maxSub > 0 ? maxSub : 25,

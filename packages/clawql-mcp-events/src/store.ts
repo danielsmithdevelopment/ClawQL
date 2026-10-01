@@ -66,9 +66,7 @@ export function createMemorySubscriptionStore(
   };
 }
 
-export function createFileSubscriptionStore(
-  path: string = defaultStorePath()
-): SubscriptionStore {
+export function createFileSubscriptionStore(path: string = defaultStorePath()): SubscriptionStore {
   let cache: Map<string, StoredSubscription> | null = null;
 
   const load = (): Effect.Effect<Map<string, StoredSubscription>> =>

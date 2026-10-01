@@ -1,24 +1,14 @@
 import { Context, Effect, Layer } from "effect";
 import { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
-import {
-  assertSafeCallbackUrl,
-  readCallbackUrlPolicy,
-} from "./callback-url.js";
+import { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
 import {
   createVerificationCache,
   sendSignedEvent,
   verifyCallbackChallenge,
   type VerificationCache,
 } from "./delivery.js";
-import {
-  CallbackEndpointError,
-  InvalidEventError,
-  UnauthorizedEventError,
-} from "./errors.js";
-import {
-  defaultFeedbackLoopDetector,
-  FeedbackLoopDetector,
-} from "./feedback-loop.js";
+import { CallbackEndpointError, InvalidEventError, UnauthorizedEventError } from "./errors.js";
+import { defaultFeedbackLoopDetector, FeedbackLoopDetector } from "./feedback-loop.js";
 import {
   assertCallbackAllowlisted,
   DeliveryRateLimiter,
@@ -80,10 +70,7 @@ function topicFromSubscription(sub: StoredSubscription): string | null {
   return typeof t === "string" && t.trim() ? t.trim() : null;
 }
 
-function matchesFilters(
-  filters: Record<string, unknown>,
-  data: Record<string, unknown>
-): boolean {
+function matchesFilters(filters: Record<string, unknown>, data: Record<string, unknown>): boolean {
   for (const [k, v] of Object.entries(filters)) {
     if (v == null || v === "") continue;
     if (data[k] !== v) return false;
@@ -106,9 +93,7 @@ function resolveTtlMs(
 export class McpEventsService extends Context.Tag("clawql/McpEventsService")<
   McpEventsService,
   {
-    readonly list: (
-      params: ListEventsParams
-    ) => Effect.Effect<ListEventsResult, never>;
+    readonly list: (params: ListEventsParams) => Effect.Effect<ListEventsResult, never>;
     readonly subscribe: (
       params: SubscribeParams
     ) => Effect.Effect<
@@ -116,20 +101,16 @@ export class McpEventsService extends Context.Tag("clawql/McpEventsService")<
       CallbackEndpointError | InvalidEventError | UnauthorizedEventError
     >;
     readonly unsubscribe: (params: UnsubscribeParams) => Effect.Effect<Record<string, never>>;
-    readonly emit: (
-      event: DeliverableEvent
-    ) => Effect.Effect<readonly DeliveryOutcome[]>;
+    readonly emit: (event: DeliverableEvent) => Effect.Effect<readonly DeliveryOutcome[]>;
     /** Flush coalesced stream.changed deliveries that have waited out the min interval. */
     readonly flushCoalesced: () => Effect.Effect<readonly DeliveryOutcome[]>;
-    readonly getSubscription: (
-      id: string
-    ) => Effect.Effect<StoredSubscription | undefined>;
+    readonly getSubscription: (id: string) => Effect.Effect<StoredSubscription | undefined>;
   }
 >() {}
 
-export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.Service<
-  typeof McpEventsService
-> {
+export function makeMcpEventsService(
+  config: McpEventsConfig = {}
+): Context.Tag.Service<typeof McpEventsService> {
   const catalog = config.catalog ?? BUILTIN_MCP_EVENT_CATALOG;
   const store = config.store ?? createMemorySubscriptionStore();
   const webhookFetch = config.webhookFetch ?? makeWebhookFetch();
@@ -137,19 +118,14 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
   const feedback = config.feedback ?? defaultFeedbackLoopDetector;
   const accessCheck =
     config.accessCheck ??
-    ((_input: {
-      principal: string;
-      eventName: string;
-      arguments: Record<string, unknown>;
-    }) => true);
+    ((_input: { principal: string; eventName: string; arguments: Record<string, unknown> }) =>
+      true);
   const wormAppend = config.wormAppend;
   const defaultTtlMs = config.defaultTtlMs ?? DEFAULT_TTL_MS;
   const allowNonExpiring = config.allowNonExpiring ?? false;
-  const enterprise =
-    config.enterprise ?? Effect.runSync(readEnterpriseEventsPolicy());
+  const enterprise = config.enterprise ?? Effect.runSync(readEnterpriseEventsPolicy());
   const rateLimiter =
-    config.rateLimiter ??
-    new DeliveryRateLimiter(enterprise.maxDeliveriesPerMinutePerPrincipal);
+    config.rateLimiter ?? new DeliveryRateLimiter(enterprise.maxDeliveriesPerMinutePerPrincipal);
   const coalesce = createCoalesceState(enterprise.coalesceIntervalMs);
 
   const audit = (type: string, payload: Record<string, unknown>) =>
@@ -332,8 +308,7 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
 
         const ttl = resolveTtlMs(params.ttlMs, defaultTtlMs, allowNonExpiring);
         const now = new Date();
-        const refreshBefore =
-          ttl == null ? null : new Date(now.getTime() + ttl).toISOString();
+        const refreshBefore = ttl == null ? null : new Date(now.getTime() + ttl).toISOString();
 
         let previousSecret: string | undefined;
         let previousSecretExpiresAt: string | undefined;
@@ -415,9 +390,7 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
         const all = yield* store.list();
         const matches = all.filter(
           (s: StoredSubscription) =>
-            s.verified &&
-            s.name === screened.name &&
-            matchesFilters(s.arguments, redactedData)
+            s.verified && s.name === screened.name && matchesFilters(s.arguments, redactedData)
         );
 
         const outcomes: DeliveryOutcome[] = [];
@@ -453,8 +426,7 @@ export function makeMcpEventsService(config: McpEventsConfig = {}): Context.Tag.
 
           const rateOk = rateLimiter.wouldAllow(sub.principal);
           const coalesceable =
-            screened.name === "stream.changed" &&
-            (enterprise.coalesceIntervalMs > 0 || !rateOk);
+            screened.name === "stream.changed" && (enterprise.coalesceIntervalMs > 0 || !rateOk);
 
           if (coalesceable) {
             const toSend = takeOrHoldDelivery(coalesce, sub.id, screened, {

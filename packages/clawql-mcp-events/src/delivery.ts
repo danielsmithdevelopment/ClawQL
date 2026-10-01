@@ -143,13 +143,7 @@ export function sendSignedEvent(
         Date.parse(subscription.previousSecretExpiresAt) > Date.now()
           ? subscription.previousSecret
           : undefined;
-      const signature = dualSign(
-        subscription.secret,
-        previousOk,
-        event.eventId,
-        signedAt,
-        body
-      );
+      const signature = dualSign(subscription.secret, previousOk, event.eventId, signedAt, body);
 
       const result = yield* webhookPostJson(
         webhookFetch,

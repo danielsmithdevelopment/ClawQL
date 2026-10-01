@@ -53,15 +53,15 @@ All support `delivery: ["webhook"]` only.
 
 ## 4b. Enterprise outbound controls
 
-| Control                              | Env                                                               | Default                                                                 |
-| ------------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Callback host allowlist              | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`) | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
-| PII redaction                        | `CLAWQL_MCP_EVENTS_REDACT_PII`                                    | on — runs `gatewayRedactPayload` before delivery                        |
-| Max subscriptions / principal        | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`               | `25`                                                                    |
-| Max deliveries / minute / principal  | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`       | `60`                                                                    |
-| Coalesce interval (`stream.changed`) | `CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`                          | `ceil(60000 / maxDeliveries)` (min 1s)                                  |
+| Control                              | Env                                                                                       | Default                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Callback host allowlist              | `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` (comma hosts / `*.suffix`)                         | empty = any public HTTPS (enterprises should set OpenAI receiver hosts) |
+| PII redaction                        | `CLAWQL_MCP_EVENTS_REDACT_PII`                                                            | on — runs `gatewayRedactPayload` before delivery                        |
+| Max subscriptions / principal        | `CLAWQL_MCP_EVENTS_MAX_SUBSCRIPTIONS_PER_PRINCIPAL`                                       | `25`                                                                    |
+| Max deliveries / minute / principal  | `CLAWQL_MCP_EVENTS_MAX_DELIVERIES_PER_MINUTE_PER_PRINCIPAL`                               | `60`                                                                    |
+| Coalesce interval (`stream.changed`) | `CLAWQL_MCP_EVENTS_COALESCE_INTERVAL_MS`                                                  | `ceil(60000 / maxDeliveries)` (min 1s)                                  |
 | Projection at-rest key               | `CLAWQL_SCHEDULE_PROJECTION_KEY` or `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY` (env / Vault) | **Required in production** (fail-closed). Dev-only: auto file beside DB |
-| Auth-failure pause threshold         | `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`                          | `3`                                                                     |
+| Auth-failure pause threshold         | `CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD`                                                  | `3`                                                                     |
 
 ## 4c. `stream.changed` precision (schedule)
 

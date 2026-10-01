@@ -115,9 +115,7 @@ export function emitSchedulePaused(input: {
       paused_at: input.paused_at ?? new Date().toISOString(),
       reconnect_operation: "reconnect",
       ...(input.name ? { name: input.name } : {}),
-      ...(input.auth_failure_count != null
-        ? { auth_failure_count: input.auth_failure_count }
-        : {}),
+      ...(input.auth_failure_count != null ? { auth_failure_count: input.auth_failure_count } : {}),
     },
   });
 }
@@ -245,9 +243,7 @@ export async function emitSchedulePausedAwait(input: {
       paused_at: input.paused_at ?? new Date().toISOString(),
       reconnect_operation: "reconnect",
       ...(input.name ? { name: input.name } : {}),
-      ...(input.auth_failure_count != null
-        ? { auth_failure_count: input.auth_failure_count }
-        : {}),
+      ...(input.auth_failure_count != null ? { auth_failure_count: input.auth_failure_count } : {}),
     },
   });
 }

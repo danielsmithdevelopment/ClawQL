@@ -20,9 +20,7 @@ export function makeWebhookFetch(
   policy?: CallbackUrlPolicy
 ): WebhookFetch {
   return async (url, init) => {
-    const pol =
-      policy ??
-      (await Effect.runPromise(readCallbackUrlPolicy()));
+    const pol = policy ?? (await Effect.runPromise(readCallbackUrlPolicy()));
     await Effect.runPromise(assertSafeCallbackUrl(url, pol));
     const signal = init.signal ?? AbortSignal.timeout(10_000);
     // codeql[js/request-forgery]: URL validated by assertSafeCallbackUrl (HTTPS + public hosts).

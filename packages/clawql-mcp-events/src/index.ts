@@ -1,9 +1,10 @@
-export { BUILTIN_MCP_EVENT_CATALOG, DEFERRED_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
-export { canonicalJson } from "./canonical-json.js";
 export {
-  assertSafeCallbackUrl,
-  readCallbackUrlPolicy,
-} from "./callback-url.js";
+  BUILTIN_MCP_EVENT_CATALOG,
+  DEFERRED_MCP_EVENT_CATALOG,
+  findEventDefinition,
+} from "./catalog.js";
+export { canonicalJson } from "./canonical-json.js";
+export { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
 export {
   createVerificationCache,
   sendSignedEvent,
@@ -26,10 +27,7 @@ export {
   UnauthorizedEventError,
 } from "./errors.js";
 export { FeedbackLoopDetector, defaultFeedbackLoopDetector } from "./feedback-loop.js";
-export {
-  handleMcpEventsJsonRpc,
-  isMcpEventsJsonRpc,
-} from "./jsonrpc.js";
+export { handleMcpEventsJsonRpc, isMcpEventsJsonRpc } from "./jsonrpc.js";
 export {
   emitMcpEvent,
   emitMcpEventBestEffort,

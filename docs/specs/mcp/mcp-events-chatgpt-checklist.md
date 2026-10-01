@@ -6,7 +6,7 @@ This pass is a **hard release gate**. Do **not** tag or publish `clawql-mcp@8.0.
 
 1. **Release candidate only.** Run this pass on the **exact signed OCI image** that will be tagged / promoted as `v8.0.0` (digest-pinned). A pass on a local/dev build, `latest`, or any other digest does **not** prove what ships. Record the digest in §0 and on the sign-off; after tag day, the published `v8.0.0` image digest must match.
 2. **Every advertised event** must get a **real producer trigger** and a **real ChatGPT webhook delivery**. CI producer tests are not a substitute. Protocol smoke (bottom) only proves wire format.
-3. **Evidence with every tick.** For each delivery (and each required negative), record **`eventId`** and the matching **WORM** entry so sign-off can be verified later — *verify us, don't trust us*. Do not tick Delivery without filling the evidence columns.
+3. **Evidence with every tick.** For each delivery (and each required negative), record **`eventId`** and the matching **WORM** entry so sign-off can be verified later — _verify us, don't trust us_. Do not tick Delivery without filling the evidence columns.
 
 **Prerequisite:** MCP protocol `2026-07-28`, `CLAWQL_ENABLE_MCP_EVENTS` not disabled, schedule + notify (+ IDP / inference as needed) enabled, WORM sink wired for MCP Events (`wormAppend` / host dual-write so `mcp_events.delivery` / `mcp_events.subscribe` land in the trail), and (for enterprise) `CLAWQL_MCP_EVENTS_CALLBACK_ALLOWLIST` including ChatGPT receiver hosts. Production-like runs must set `CLAWQL_SCHEDULE_PROJECTION_KEY` (or `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY`).
 
@@ -14,14 +14,14 @@ This pass is a **hard release gate**. Do **not** tag or publish `clawql-mcp@8.0.
 
 Deploy / point ChatGPT at the **RC image by digest**, not by a moving tag.
 
-| Field | Value (operator fills) |
-| ----- | ---------------------- |
-| Image reference (digest-pinned) | `ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:…` |
-| Image digest (`sha256:…`) | |
-| Cosign / signature verified (`cosign verify` or cluster Kyverno) | [ ] PASS |
-| Git commit SHA baked into / serving this image | |
-| Build / workflow run URL (that produced + signed this digest) | |
-| Confirmed: this digest is the artifact that will be tagged `v8.0.0` | [ ] |
+| Field                                                               | Value (operator fills)                               |
+| ------------------------------------------------------------------- | ---------------------------------------------------- |
+| Image reference (digest-pinned)                                     | `ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:…` |
+| Image digest (`sha256:…`)                                           |                                                      |
+| Cosign / signature verified (`cosign verify` or cluster Kyverno)    | [ ] PASS                                             |
+| Git commit SHA baked into / serving this image                      |                                                      |
+| Build / workflow run URL (that produced + signed this digest)       |                                                      |
+| Confirmed: this digest is the artifact that will be tagged `v8.0.0` | [ ]                                                  |
 
 How to capture (example):
 
@@ -49,16 +49,16 @@ For **each** row: subscribe → real trigger → ChatGPT delivery → fill **Eve
 - **Event ID** — MCP Events `eventId` (also Standard Webhooks `webhook-id` header on the delivery request). Same id is preserved across retries.
 - **WORM** — host trail entry for type `mcp_events.delivery` (and subscribe as `mcp_events.subscribe`) whose payload includes that `eventId`. Record `worm_ref` / entry hash / Merkle leaf id as your store exposes it. If WORM is missing for a delivery, the tick is incomplete — fix the sink and re-run that event.
 
-| Event | Subscribe args | Real trigger | Expect in `data` | Trigger | Delivery | Event ID | WORM (`mcp_events.delivery` / ref) |
-| ----- | -------------- | ------------ | ---------------- | ------- | -------- | -------- | ---------------------------------- |
-| `notification.sent` | optional `channel` | Slack `notify` success | `text`, `channel?` | [ ] | [ ] | | |
-| `schedule.completed` | optional `schedule_id` | `schedule` create + `trigger` (or tick) completes a run | `schedule_id`, `status` | [ ] | [ ] | | |
-| `document.processed` | optional `document_id` | IDP / documents pipeline completes | `document_id`, `status` | [ ] | [ ] | | |
-| `hook.blocked` | optional `tool` | Policy / ATR / hook blocks a tool call | `tool`, `reason` | [ ] | [ ] | | |
-| `budget.exhausted` | optional `budget_id` | Exhaust inference virtual-key budget | `budget_id`, `exhausted_at` | [ ] | [ ] | | |
-| `stream.changed` (positive) | **required** `topic` = job id | §C watched-field change | `topic`, capped `diff`, … | [ ] | [ ] | | |
-| `stream.changed` (volatile-only) | same `topic` | §C volatile-only change | **no** delivery | [ ] | n/a | `none (expected)` | window / query proving **no** `mcp_events.delivery` for this topic |
-| `schedule.paused` | optional `schedule_id` / `reason` | §D auth pause | `schedule_id`, `reason`, `paused_at`, `reconnect_operation` | [ ] | [ ] | | |
+| Event                            | Subscribe args                    | Real trigger                                            | Expect in `data`                                            | Trigger | Delivery | Event ID          | WORM (`mcp_events.delivery` / ref)                                 |
+| -------------------------------- | --------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- | ------- | -------- | ----------------- | ------------------------------------------------------------------ |
+| `notification.sent`              | optional `channel`                | Slack `notify` success                                  | `text`, `channel?`                                          | [ ]     | [ ]      |                   |                                                                    |
+| `schedule.completed`             | optional `schedule_id`            | `schedule` create + `trigger` (or tick) completes a run | `schedule_id`, `status`                                     | [ ]     | [ ]      |                   |                                                                    |
+| `document.processed`             | optional `document_id`            | IDP / documents pipeline completes                      | `document_id`, `status`                                     | [ ]     | [ ]      |                   |                                                                    |
+| `hook.blocked`                   | optional `tool`                   | Policy / ATR / hook blocks a tool call                  | `tool`, `reason`                                            | [ ]     | [ ]      |                   |                                                                    |
+| `budget.exhausted`               | optional `budget_id`              | Exhaust inference virtual-key budget                    | `budget_id`, `exhausted_at`                                 | [ ]     | [ ]      |                   |                                                                    |
+| `stream.changed` (positive)      | **required** `topic` = job id     | §C watched-field change                                 | `topic`, capped `diff`, …                                   | [ ]     | [ ]      |                   |                                                                    |
+| `stream.changed` (volatile-only) | same `topic`                      | §C volatile-only change                                 | **no** delivery                                             | [ ]     | n/a      | `none (expected)` | window / query proving **no** `mcp_events.delivery` for this topic |
+| `schedule.paused`                | optional `schedule_id` / `reason` | §D auth pause                                           | `schedule_id`, `reason`, `paused_at`, `reconnect_operation` | [ ]     | [ ]      |                   |                                                                    |
 
 Shared subscribe mechanics (once is enough if verified on the first subscription; re-check if a later event fails challenge):
 
@@ -104,17 +104,17 @@ Producer → signed delivery coverage: `packages/clawql-mcp-events/src/producers
 
 Sign-off is invalid unless §0 digest is filled, Cosign verified, and every Delivery / required-negative row in §B has Event ID + WORM evidence.
 
-| Field | Value |
-| ----- | ----- |
-| Operator | |
-| Date (UTC) | |
-| ChatGPT plugin / workspace | |
-| RC image digest (`sha256:…`) | *(must match §0)* |
-| Git commit SHA (image / server) | |
-| Build / workflow run URL | |
-| Result | PASS / FAIL |
-| Post-tag verification | [ ] Published `v8.0.0` image digest equals RC digest above |
-| Notes | |
+| Field                           | Value                                                      |
+| ------------------------------- | ---------------------------------------------------------- |
+| Operator                        |                                                            |
+| Date (UTC)                      |                                                            |
+| ChatGPT plugin / workspace      |                                                            |
+| RC image digest (`sha256:…`)    | _(must match §0)_                                          |
+| Git commit SHA (image / server) |                                                            |
+| Build / workflow run URL        |                                                            |
+| Result                          | PASS / FAIL                                                |
+| Post-tag verification           | [ ] Published `v8.0.0` image digest equals RC digest above |
+| Notes                           |                                                            |
 
 ### Evidence index (optional paste / link)
 

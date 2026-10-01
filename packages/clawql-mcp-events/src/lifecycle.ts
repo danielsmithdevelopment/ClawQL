@@ -10,9 +10,7 @@ export type StreamTopicReleasedHandler = (
 
 let topicReleasedHandler: StreamTopicReleasedHandler | null = null;
 
-export function setStreamTopicReleasedHandler(
-  handler: StreamTopicReleasedHandler | null
-): void {
+export function setStreamTopicReleasedHandler(handler: StreamTopicReleasedHandler | null): void {
   topicReleasedHandler = handler;
 }
 

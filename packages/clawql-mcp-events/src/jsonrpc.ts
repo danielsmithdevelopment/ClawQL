@@ -31,16 +31,12 @@ export function isMcpEventsJsonRpc(body: unknown): boolean {
   if (!body || typeof body !== "object" || Array.isArray(body)) return false;
   const method = (body as { method?: unknown }).method;
   return (
-    method === "events/list" ||
-    method === "events/subscribe" ||
-    method === "events/unsubscribe"
+    method === "events/list" || method === "events/subscribe" || method === "events/unsubscribe"
   );
 }
 
 function asRecord(v: unknown): Record<string, unknown> {
-  return v && typeof v === "object" && !Array.isArray(v)
-    ? (v as Record<string, unknown>)
-    : {};
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
 }
 
 /**

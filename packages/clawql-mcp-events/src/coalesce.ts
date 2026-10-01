@@ -44,9 +44,7 @@ function asDiff(data: Record<string, unknown>): StreamChangedDiff | null {
   return {
     added: Array.isArray(obj.added) ? obj.added : [],
     removed: Array.isArray(obj.removed) ? obj.removed : [],
-    changed: Array.isArray(obj.changed)
-      ? (obj.changed as StreamChangedDiff["changed"])
-      : [],
+    changed: Array.isArray(obj.changed) ? (obj.changed as StreamChangedDiff["changed"]) : [],
     truncated: Boolean(obj.truncated),
   };
 }
@@ -122,8 +120,7 @@ export function takeOrHoldDelivery(
   const existing = state.pending.get(subscriptionId);
   const merged = existing ? mergeStreamChangedEvents(existing.event, event) : event;
   const lastAt = state.lastDeliveredAt.get(subscriptionId) ?? 0;
-  const withinInterval =
-    state.minIntervalMs > 0 && now - lastAt < state.minIntervalMs;
+  const withinInterval = state.minIntervalMs > 0 && now - lastAt < state.minIntervalMs;
   const hold = opts.rateLimited || withinInterval;
 
   if (hold) {
@@ -134,9 +131,7 @@ export function takeOrHoldDelivery(
           data: {
             ...merged.data,
             coalesced_count:
-              typeof merged.data.coalesced_count === "number"
-                ? merged.data.coalesced_count
-                : 1,
+              typeof merged.data.coalesced_count === "number" ? merged.data.coalesced_count : 1,
           },
         };
     state.pending.set(subscriptionId, {
@@ -176,8 +171,7 @@ export function flushReadyPending(
   for (const [id, pending] of [...state.pending.entries()]) {
     const waited = now - pending.firstAt >= state.minIntervalMs;
     const sinceLast =
-      state.minIntervalMs <= 0 ||
-      now - (state.lastDeliveredAt.get(id) ?? 0) >= state.minIntervalMs;
+      state.minIntervalMs <= 0 || now - (state.lastDeliveredAt.get(id) ?? 0) >= state.minIntervalMs;
     if (!waited || !sinceLast) continue;
     if (!opts.canDeliver(id)) continue;
     state.pending.delete(id);

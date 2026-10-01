@@ -15,11 +15,7 @@ import {
 } from "./producers.js";
 import { setMcpEventsProcessEmitter } from "./process-bridge.js";
 import { generateWhsecSecretSync } from "./secret.js";
-import {
-  McpEventsService,
-  McpEventsServiceLayer,
-  runMcpEventsEffect,
-} from "./service.js";
+import { McpEventsService, McpEventsServiceLayer, runMcpEventsEffect } from "./service.js";
 import { createMemorySubscriptionStore } from "./store.js";
 
 function startEchoReceiver(): Promise<{
@@ -55,8 +51,7 @@ function startEchoReceiver(): Promise<{
       if (!addr || typeof addr === "string") throw new Error("no addr");
       resolve({
         url: `http://127.0.0.1:${addr.port}/callback`,
-        close: () =>
-          new Promise((r, j) => server.close((e) => (e ? j(e) : r()))),
+        close: () => new Promise((r, j) => server.close((e) => (e ? j(e) : r()))),
         events,
       });
     });
