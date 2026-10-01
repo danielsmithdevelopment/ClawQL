@@ -37,13 +37,13 @@ Each piece has one job. The vault is the only canonical store; everything else i
 
 Git-native vaults (`CLAWQL_MEMORY_BACKEND=git`) encrypt Memory notes with per-note keys (crypto-shredding). Erase destroys the key so history/R2 ciphertext is unreadable; WORM records opaque `pathId` + content hash only; erased hashes feed the inference export deny-list.
 
-| Env | Default | Role |
-| --- | --- | --- |
-| **`CLAWQL_MEMORY_BACKEND=git`** | off | Commit-on-ingest; enables crypto-shred by default |
+| Env                              | Default               | Role                                                |
+| -------------------------------- | --------------------- | --------------------------------------------------- |
+| **`CLAWQL_MEMORY_BACKEND=git`**  | off                   | Commit-on-ingest; enables crypto-shred by default   |
 | **`CLAWQL_MEMORY_CRYPTO_SHRED`** | on when backend=`git` | Force `1`/`0` to enable/disable per-note encryption |
-| **`.clawql/note-keys/`** | gitignored | Per-note AES keys — destroyed on erase |
-| **`.clawql/path-map.json`** | gitignored | Readable path ↔ opaque `pathId` (erasable) |
-| **`.clawql/erasure-deny.json`** | gitignored | Content hashes skipped by `clawql inference export` |
+| **`.clawql/note-keys/`**         | gitignored            | Per-note AES keys — destroyed on erase              |
+| **`.clawql/path-map.json`**      | gitignored            | Readable path ↔ opaque `pathId` (erasable)          |
+| **`.clawql/erasure-deny.json`**  | gitignored            | Content hashes skipped by `clawql inference export` |
 
 Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md#erasure-crypto-shredding) · [gateway ladder § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/inference/gateway-ladder-v0.1.md#erasure) · site: [Learn memory](https://docs.clawql.com/learn/memory).
 

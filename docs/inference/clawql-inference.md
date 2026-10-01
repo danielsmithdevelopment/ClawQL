@@ -141,14 +141,14 @@ Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `
 
 On the Managed Edge Gateway the same host exposes four rungs — `/v1` → `/mcp` → `/memory` → `/decision` — with shared virtual keys and WORM identity. Spec: **[gateway-ladder-v0.1.md](../specs/inference/gateway-ladder-v0.1.md)**.
 
-| Method   | Path             | Notes |
-| -------- | ---------------- | ----- |
-| `POST`   | `/decision`      | Fast Decision (System One `choice`/`noul`); canonical |
-| `POST`   | `/v1/systemone`  | Alias of `/decision`; `score` → explicit **400** |
-| `POST`   | `/memory/ingest` | Vault ingest façade |
-| `POST`   | `/memory/search` | Vault recall façade |
-| `GET`    | `/memory`        | List Memory notes (optionally scoped) |
-| `GET`    | `/memory/:slug`  | Read note |
+| Method   | Path             | Notes                                                                   |
+| -------- | ---------------- | ----------------------------------------------------------------------- |
+| `POST`   | `/decision`      | Fast Decision (System One `choice`/`noul`); canonical                   |
+| `POST`   | `/v1/systemone`  | Alias of `/decision`; `score` → explicit **400**                        |
+| `POST`   | `/memory/ingest` | Vault ingest façade                                                     |
+| `POST`   | `/memory/search` | Vault recall façade                                                     |
+| `GET`    | `/memory`        | List Memory notes (optionally scoped)                                   |
+| `GET`    | `/memory/:slug`  | Read note                                                               |
 | `DELETE` | `/memory/:slug`  | **Erasure** — vault + derived indexes + crypto-shred + export deny-list |
 
 **Erasure** destroys the working-tree note, purges `memory.db` / pgvector / `ontology.db`, and **crypto-shreds** the per-note encryption key so git history and R2 mirrors retain ciphertext only. WORM logs opaque `pathId` + content hash (never readable path or body). Erased content hashes land on `.clawql/erasure-deny.json`; export jobs skip them. Details: [gateway ladder § Erasure](../specs/inference/gateway-ladder-v0.1.md#erasure) · [memory-obsidian § Erasure](../memory/memory-obsidian.md#erasure-crypto-shredding).

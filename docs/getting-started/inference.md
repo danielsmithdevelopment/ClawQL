@@ -20,16 +20,16 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 
 ## What you get
 
-| Surface                    | Role                                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------------ |
-| **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                    |
-| **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                            |
-| **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                 |
+| Surface                    | Role                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                                |
+| **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                                        |
+| **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                             |
 | **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
-| **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                |
-| **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                       |
-| **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama |
-| **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend               |
+| **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                            |
+| **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                                   |
+| **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama             |
+| **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend                           |
 
 On a laptop this is your **Edge Agentic Gateway**. Later you can grow into a Managed Gateway or Dedicated Virtual Gateway without changing the client contract (`OPENAI_BASE_URL` + key).
 
