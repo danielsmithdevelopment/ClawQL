@@ -138,11 +138,9 @@ describe("runMemoryErase", () => {
       { maxBuffer: 8 * 1024 * 1024 }
     );
     expect(pickaxe).not.toContain(needle);
-    const { stdout: fullPatch } = await execFileAsync(
-      "git",
-      ["-C", dir, "log", "-p", "--all"],
-      { maxBuffer: 8 * 1024 * 1024 }
-    );
+    const { stdout: fullPatch } = await execFileAsync("git", ["-C", dir, "log", "-p", "--all"], {
+      maxBuffer: 8 * 1024 * 1024,
+    });
     expect(fullPatch).not.toContain(needle);
     expect(fullPatch).toContain("CLAWQL_ENCRYPTED_V1:");
 

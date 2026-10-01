@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { buildInferenceRecord } from "../store/types.js";
-import { filterRecordsForExport, matchesExportFilter, recordHitsErasureDenyList } from "./filter.js";
+import {
+  filterRecordsForExport,
+  matchesExportFilter,
+  recordHitsErasureDenyList,
+} from "./filter.js";
 import { formatExportLine } from "./format.js";
 import { sha256Hex } from "./manifest.js";
 

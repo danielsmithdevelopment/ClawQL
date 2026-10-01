@@ -93,14 +93,12 @@ export async function ensureClawqlMetaGitignored(vaultRoot: string): Promise<voi
   if (existing.split("\n").some((l) => l.trim() === line || l.trim() === CLAWQL_META_DIR)) {
     return;
   }
-  const next = existing.endsWith("\n") || existing === "" ? `${existing}${line}\n` : `${existing}\n${line}\n`;
+  const next =
+    existing.endsWith("\n") || existing === "" ? `${existing}${line}\n` : `${existing}\n${line}\n`;
   await writeFile(gi, next, "utf8");
 }
 
-export async function loadOrCreateNoteKey(
-  vaultRoot: string,
-  noteId: string
-): Promise<Buffer> {
+export async function loadOrCreateNoteKey(vaultRoot: string, noteId: string): Promise<Buffer> {
   await mkdir(noteKeysDir(vaultRoot), { recursive: true });
   const p = keyPath(vaultRoot, noteId);
   try {
@@ -133,11 +131,7 @@ export async function noteKeyExists(vaultRoot: string, noteId: string): Promise<
 }
 
 /** Encrypt plaintext → vault envelope (frontmatter + ciphertext). Keeps note_id stable. */
-export function encryptNoteBody(opts: {
-  plaintext: string;
-  noteId: string;
-  key: Buffer;
-}): string {
+export function encryptNoteBody(opts: { plaintext: string; noteId: string; key: Buffer }): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", opts.key, iv);
   const ct = Buffer.concat([cipher.update(opts.plaintext, "utf8"), cipher.final()]);
@@ -288,10 +282,7 @@ export async function appendErasureDeny(
     erasedAt: entry.erasedAt ?? new Date().toISOString(),
   };
   // Dedupe by contentHash
-  file.entries = [
-    ...file.entries.filter((e) => e.contentHash !== next.contentHash),
-    next,
-  ];
+  file.entries = [...file.entries.filter((e) => e.contentHash !== next.contentHash), next];
   await writeFile(denyListPath(vaultRoot), `${JSON.stringify(file, null, 2)}\n`, "utf8");
   return file;
 }
@@ -312,9 +303,7 @@ export async function loadErasureDenyFile(vaultRoot: string): Promise<ErasureDen
 }
 
 /** Effect: load deny hashes for a vault (export gate). */
-export function loadErasureDenyHashesEffect(
-  vaultRoot: string
-): Effect.Effect<ReadonlySet<string>> {
+export function loadErasureDenyHashesEffect(vaultRoot: string): Effect.Effect<ReadonlySet<string>> {
   return Effect.tryPromise({
     try: () => loadErasureDenyHashes(vaultRoot),
     catch: (e) => (e instanceof Error ? e : new Error(String(e))),

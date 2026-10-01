@@ -73,7 +73,8 @@ export function memoryCryptoShredLiveService(): Context.Tag.Service<MemoryCrypto
     decryptForRead: (vaultRoot, text, env) =>
       fromPromise(() => maybeDecryptVaultRead(vaultRoot, text, env)),
     destroyKey: (vaultRoot, noteId) => fromPromise(() => destroyNoteKey(vaultRoot, noteId)),
-    loadOrCreateKey: (vaultRoot, noteId) => fromPromise(() => loadOrCreateNoteKey(vaultRoot, noteId)),
+    loadOrCreateKey: (vaultRoot, noteId) =>
+      fromPromise(() => loadOrCreateNoteKey(vaultRoot, noteId)),
     lookupPath: (vaultRoot, path) => fromPromise(() => lookupPathMapByPath(vaultRoot, path)),
     deletePath: (vaultRoot, path) => fromPromise(() => deletePathMapEntry(vaultRoot, path)),
     appendDeny: (vaultRoot, entry) =>

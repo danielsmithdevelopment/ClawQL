@@ -2,11 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { createInferenceStore } from "../store/create.js";
 import type { EvaluatorVerdict, InferenceRecord } from "../store/types.js";
-import {
-  filterRecordsForExport,
-  type ExportFilterOptions,
-  type OkfTrustLookup,
-} from "./filter.js";
+import { filterRecordsForExport, type ExportFilterOptions, type OkfTrustLookup } from "./filter.js";
 import { formatExportLine } from "./format.js";
 import { buildDatasetManifest, buildSampleLines } from "./manifest.js";
 import { writePortalBundle } from "./portal-bundle.js";

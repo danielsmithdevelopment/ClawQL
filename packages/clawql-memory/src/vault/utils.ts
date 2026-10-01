@@ -5,10 +5,7 @@
 
 import { open, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
-import {
-  maybeDecryptVaultRead,
-  maybeEncryptForVaultWrite,
-} from "../crypto/shred.js";
+import { maybeDecryptVaultRead, maybeEncryptForVaultWrite } from "../crypto/shred.js";
 
 const LOCK_NAME = ".clawql-vault-write.lock";
 const LOCK_POLL_MS = 100;
@@ -98,9 +95,8 @@ export async function writeVaultTextFileAtomic(
   let priorNoteId: string | undefined;
   try {
     const prior = await readFile(p, "utf8");
-    const { extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } = await import(
-      "../crypto/shred.js"
-    );
+    const { extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
+      await import("../crypto/shred.js");
     if (isEncryptedVaultEnvelope(prior)) {
       priorNoteId = extractNoteIdFromEnvelope(prior);
     }

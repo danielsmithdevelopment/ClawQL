@@ -259,9 +259,8 @@ export async function memoryContentRecoverableFromStores(opts: {
   const { resolveMemoryDatabasePath } = await import("../db/memory-db.js");
   const { resolveOntologyDatabasePath } = await import("../ontology/ontology-db.js");
   const { resolveVaultPath } = await import("../vault/utils.js");
-  const { noteKeyExists, extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } = await import(
-    "../crypto/shred.js"
-  );
+  const { noteKeyExists, extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
+    await import("../crypto/shred.js");
 
   let vault = false;
   let rawOnDisk = "";
