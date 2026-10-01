@@ -32,11 +32,6 @@ import {
   recallVectorPassEffect,
   recallWikilinkEdgesEffect,
 } from "./memory-recall-vector-effect.js";
-import {
-  hybridCodeGraphRecallEnabled,
-  recallCodeGraphSupplementPack,
-  type CodeGraphRecallHit,
-} from "../recall/codegraph-recall.js";
 import { recallOnyxSupplement } from "../recall/onyx-recall.js";
 import {
   catalogCandidatePaths,
@@ -185,8 +180,6 @@ export function executeMemoryRecallCoreEffect(
 
     const sources = resolveMemoryRecallSources({
       sources: input.sources,
-      includeCodeGraph: input.includeCodeGraph,
-      hybridCodeGraphEnabled: hybridCodeGraphRecallEnabled(),
     });
     const sourcesUsed = [...sources];
     const sourceNotes: Partial<Record<MemoryRecallSource, string>> = {};
@@ -195,7 +188,6 @@ export function executeMemoryRecallCoreEffect(
 
     const wantVault = sources.has("vault");
     const wantVector = sources.has("vector");
-    const wantCodeGraph = sources.has("codegraph");
     const wantOnyx = sources.has("onyx");
 
     const limit =
@@ -217,7 +209,6 @@ export function executeMemoryRecallCoreEffect(
     let vaultHits: RecallHit[] = [];
     let cuckooVectorChunksDropped: number | undefined;
     let recallArtifacts: RecallDbArtifacts | null = null;
-    let codeGraphHits: CodeGraphRecallHit[] | undefined;
     let indexSurvey: OkfIndexSurvey | undefined;
     let indexFirstBodyLoad = false;
     let bodiesLoaded = 0;
@@ -554,21 +545,6 @@ export function executeMemoryRecallCoreEffect(
       sourceNotes.vault = "vault source not requested";
     }
 
-    if (wantCodeGraph) {
-      const pack = yield* memoryFromPromise(() =>
-        recallCodeGraphSupplementPack({
-          query,
-          graphId: input.codeGraphId,
-          limit: envInt("CLAWQL_MEMORY_RECALL_CODEGRAPH_LIMIT", 8),
-          force: true,
-        })
-      );
-      if (pack.skipped) sourceNotes.codegraph = pack.skipped;
-      if (pack.codeGraphHits.length > 0) codeGraphHits = pack.codeGraphHits;
-      normalizedHits.push(...pack.hits);
-      followUps.push(...pack.followUps);
-    }
-
     if (wantOnyx) {
       const ox = yield* memoryFromPromise(() =>
         recallOnyxSupplement({
@@ -610,10 +586,6 @@ export function executeMemoryRecallCoreEffect(
       indexFirstBodyLoad: indexFirstBodyLoad || undefined,
       bodiesLoaded: wantVault || wantVector ? bodiesLoaded : undefined,
     };
-
-    if (codeGraphHits) {
-      result.codeGraphHits = codeGraphHits;
-    }
 
     if (wantVault || wantVector) {
       const merkleSnapshot = yield* recallMerkleSnapshotEffect(vault, recallArtifacts);

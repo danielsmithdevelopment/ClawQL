@@ -214,7 +214,7 @@ interface Plugin {
 
 - **`PluginRegistry`** (`clawql-api`) — register plugins at `createClawQLApi()` startup; `onRegister` receives `ClawQLPluginRegistrationApi` with `registerMcpTool`.
 - **`PanguardProxyPlugin`** — first `mcp-proxy` plugin; `beforeCallTool` for policy/ATR chokepoint ([#272](https://github.com/danielsmithdevelopment/ClawQL/issues/272)).
-- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` / `read_around` (and optional `codegraph_*`) when `CLAWQL_ENABLE_MEMORY` is on (default). PageIndex tools removed in 8.0.
+- **`MemoryPlugin`** (`createMemoryPlugin` in `clawql-memory`) — registers `memory_ingest` / `memory_recall` / `read_around` when `CLAWQL_ENABLE_MEMORY` is on (default). PageIndex and CodeGraph tools both removed in 8.0.
 - **`DocumentsPlugin`** (`createDocumentsPlugin` in `clawql-documents`) — registers `ingest_external_knowledge` and optionally `knowledge_search_onyx` when documents/Onyx flags are on; composed from `src/composition/clawql-api-adapters.ts`.
 - **`McpProxyPipeline`** — wires registry into MCP tool path via `clawql-api-adapters.ts`.
 
@@ -254,7 +254,7 @@ From enablement §5.4 and the Effect plan §8:
 | Payments WORM `appendEntry` ring mirror                                          | ✅ Mirrors via `AuditService` (`paymentAuditLiveLayer` requires `AuditService`; runtime provides `AuditLive`)                                                                            |
 | `Plugin` / `PluginRegistry`                                                      | ✅ Effect `register` / `beforeCallTool`                                                                                                                                                  |
 | Extracted packages (`memory`, `documents`, `automation`, `sandbox`, `ouroboros`) | ✅ Native `Effect.gen` on tool hot paths (IO edges still `tryPromise`)                                                                                                                   |
-| `effect/Schema` at MCP boundaries                                                | 🚧 Core + memory + documents/Onyx MCP inputs decode via Effect Schema; thin Zod edges for MCP SDK listing. Next: automation → sandbox → ouroboros → pageindex/codegraph → registry types |
+| `effect/Schema` at MCP boundaries                                                | 🚧 Core + memory + documents/Onyx MCP inputs decode via Effect Schema; thin Zod edges for MCP SDK listing. Next: automation → sandbox → ouroboros → registry types (pageindex/codegraph both removed in 8.0) |
 | End state: no Zod in domain validation                                           | 🎯 Effect Schema everywhere in pipelines; Zod only as MCP SDK peer adapter (or gone after Standard Schema SDK upgrade)                                                                   |
 | Horizontal `Plugin` Layers                                                       | ✅ All tiers via `composeHorizontalPluginLayers()`; owned by ManagedRuntime Scope until `dispose`                                                                                        |
 | Operator dynamic Layer list from CRD                                             | ✅ `composeHorizontalPluginLayersFromTierSpec()` maps `ClawQLHorizontalTierSpec` → Layers                                                                                                |
@@ -335,7 +335,7 @@ These vision items are **not** done by package extraction alone:
 | `packages/clawql-agents`     | `clawql-agents`     | 8.0.0       |
 | `packages/clawql-auth`       | `clawql-auth`       | 8.0.0       |
 | ~~`packages/clawql-pageindex`~~ | ~~`clawql-pageindex`~~ | **removed 8.0** |
-| `packages/clawql-codegraph`  | `clawql-codegraph`  | 8.0.0       |
+| ~~`packages/clawql-codegraph`~~ | ~~`clawql-codegraph`~~ | **removed 8.0** |
 | `packages/clawql-api`        | `clawql-api`        | 8.0.0       |
 | `packages/clawql-memory`     | `clawql-memory`     | 8.0.0       |
 | `packages/clawql-ontology`   | `clawql-ontology`   | 8.0.0       |

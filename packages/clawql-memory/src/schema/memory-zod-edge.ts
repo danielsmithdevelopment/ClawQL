@@ -31,8 +31,6 @@ import {
   MEMORY_INGEST_SOURCES_DESCRIPTION,
   MEMORY_INGEST_WIKILINKS_DESCRIPTION,
   MEMORY_INGEST_WORM_REF_DESCRIPTION,
-  MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION,
-  MEMORY_RECALL_INCLUDE_CODEGRAPH_DESCRIPTION,
   MEMORY_RECALL_LIMIT_DESCRIPTION,
   MEMORY_RECALL_MAX_DEPTH_DESCRIPTION,
   MEMORY_RECALL_MIN_SCORE_DESCRIPTION,
@@ -123,10 +121,8 @@ export const memoryRecallToolZodShape = {
     .optional()
     .describe(MEMORY_RECALL_MAX_DEPTH_DESCRIPTION),
   minScore: z.number().min(0).optional().describe(MEMORY_RECALL_MIN_SCORE_DESCRIPTION),
-  includeCodeGraph: z.boolean().optional().describe(MEMORY_RECALL_INCLUDE_CODEGRAPH_DESCRIPTION),
-  codeGraphId: z.string().optional().describe(MEMORY_RECALL_CODE_GRAPH_ID_DESCRIPTION),
   sources: z
-    .array(z.enum(["vault", "vector", "codegraph", "onyx"]))
+    .array(z.enum(["vault", "vector", "onyx"]))
     .min(1)
     .optional()
     .describe(MEMORY_RECALL_SOURCES_DESCRIPTION),

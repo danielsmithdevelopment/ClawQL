@@ -341,11 +341,21 @@ async function runLive(args, lock, proveKeysIn, noHarmKeysIn) {
   if (args.keys === "prove") noHarmKeys = [];
   else if (args.keys === "no_harm") proveKeys = [];
 
-  console.error(JSON.stringify({ indexing: true, roots: 4, repoRoot: REPO, keys: args.keys }));
-  const { doc } = await ensureCodeGraph(REPO);
+  // clawql-codegraph was purged in 8.0.0 (Track B retest: tie_purge vs working grep).
+  // Only index when an arm actually needs codegraph_* tools — codegraph-free arms
+  // (A-no-tools, A-grep) must still run for archive/replay without ensureCodeGraph's
+  // "purged" error.
+  const needsCodeGraph = args.arms.some((a) => (ARM_TOOLS[a] || []).some(isCodegraphTool));
   console.error(
-    JSON.stringify({ indexed: true, nodeCount: doc.nodeCount, edgeCount: doc.edgeCount })
+    JSON.stringify({ indexing: needsCodeGraph, roots: 4, repoRoot: REPO, keys: args.keys })
   );
+  let doc;
+  if (needsCodeGraph) {
+    ({ doc } = await ensureCodeGraph(REPO));
+    console.error(
+      JSON.stringify({ indexed: true, nodeCount: doc.nodeCount, edgeCount: doc.edgeCount })
+    );
+  }
   const toolCtx = { repoRoot: REPO, doc };
 
   // Sanity: grep must be spawnable before spending.

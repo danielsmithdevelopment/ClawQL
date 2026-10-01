@@ -581,8 +581,7 @@ export const pluginsHubCards: Array<ReferenceCard> = [
   card({
     href: '/plugins/codegraph',
     name: 'Code graph',
-    description:
-      'codegraph_* — structural AST indexing, Graphify import, hybrid recall.',
+    description: 'Removed in 8.0.0 — see the post-8.0 CodeGraph backlog.',
     icon: ShapesIcon,
   }),
   card({

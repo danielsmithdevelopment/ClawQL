@@ -8,8 +8,6 @@ export {
   memoryIngestToolSchema,
   memoryRecallToolSchema,
   readAroundToolSchema,
-  codegraphSyncGraphifyToolSchema,
-  codegraphSyncToolSchema,
 } from "./memory-plugin.js";
 export {
   MemoryIngestInputSchema,

@@ -7,12 +7,12 @@ Retrieve relevant prior context before making changes or claims. Prefer **`memor
 - Start of a complex task.
 - User references previous work.
 - You need decisions/history not in current files.
-- Multi-source context: vault + vectors + codegraph + PageIndex + Onyx via `sources`.
+- Multi-source context: vault + vectors + Onyx via `sources` (PageIndex and CodeGraph were removed in 8.0.0 — see [post-8.0 purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)).
 
 ## Common Workflow
 
 1. Query with concrete terms (feature, incident code, component).
-2. Optionally set `sources`: `["vault","vector","codegraph","pageindex","onyx"]`.
+2. Optionally set `sources`: `["vault","vector","onyx"]`.
 3. Start with low `limit` (5-10).
 4. Increase `maxDepth` when wikilink context matters.
 5. Prefer normalized **`hits[]`**; keep using **`results`** if needed for vault-only paths.
@@ -26,32 +26,16 @@ Retrieve relevant prior context before making changes or claims. Prefer **`memor
 - Query: feature name + issue id + subsystem
 - Default sources (vault + vector)
 
-### Pattern B: Architecture + narrative
-
-```json
-{
-  "query": "AuthService billing path",
-  "sources": ["vault", "codegraph"],
-  "maxDepth": 2
-}
-```
-
-### Pattern C: Long-doc + enterprise
+### Pattern B: Long-doc + enterprise
 
 ```json
 {
   "query": "rate limit policy",
-  "sources": ["vault", "pageindex", "onyx"]
+  "sources": ["vault", "onyx"]
 }
 ```
 
-### Pattern D: Code structure + narrative
-
-1. Ensure repo is indexed (`codegraph_index` or Graphify import).
-2. `memory_recall` with `sources: ["vault","codegraph"]` (or includeCodeGraph / hybrid env).
-3. Use vault snippets for _why_ and codegraph hits for _where_ in source.
-
-### Pattern E: Exact field enumeration (ontology)
+### Pattern C: Exact field enumeration (ontology)
 
 Use when the question is a typed predicate, not a narrative search — e.g. “all matters with escrowPct ≥ 10 AND nonCompeteMonths > 18”.
 
@@ -72,8 +56,8 @@ Do **not** rely on keyword/vector recall for these tasks — near-misses fail ex
 ## Tips
 
 - Use multiple focused recalls rather than one broad query.
-- Distinguish vault/link hits from codegraph/pageindex/onyx in `hits[].source`.
-- Pair with `memory_ingest` + optional `rebuild.pageindex` after finishing work.
+- Distinguish vault/link hits from onyx in `hits[].source`.
+- Pair with `memory_ingest` after finishing work.
 
 ## Composed Workflow
 

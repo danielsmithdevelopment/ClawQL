@@ -2,7 +2,7 @@
  * memory_recall source selection and normalized multi-source hit/followUp helpers.
  */
 
-export const MEMORY_RECALL_SOURCES = ["vault", "vector", "codegraph", "onyx"] as const;
+export const MEMORY_RECALL_SOURCES = ["vault", "vector", "onyx"] as const;
 
 export type MemoryRecallSource = (typeof MEMORY_RECALL_SOURCES)[number];
 
@@ -46,23 +46,15 @@ export function hybridOnyxRecallEnabled(): boolean {
 /**
  * Resolve which sources to query.
  * - Explicit `sources` wins.
- * - Default (unset): vault + vector (as today) + optional hybrids from env / includeCodeGraph.
+ * - Default (unset): vault + vector (as today) + optional hybrids from env.
  */
 export function resolveMemoryRecallSources(input: {
   sources?: MemoryRecallSource[];
-  includeCodeGraph?: boolean;
-  hybridCodeGraphEnabled?: boolean;
 }): Set<MemoryRecallSource> {
   if (input.sources && input.sources.length > 0) {
     return new Set(input.sources.filter(isMemoryRecallSource));
   }
   const s = new Set<MemoryRecallSource>(["vault", "vector"]);
-  if (
-    input.includeCodeGraph === true ||
-    (input.includeCodeGraph !== false && input.hybridCodeGraphEnabled)
-  ) {
-    s.add("codegraph");
-  }
   if (hybridOnyxRecallEnabled()) s.add("onyx");
   return s;
 }
@@ -71,7 +63,7 @@ export function mapVaultResultToNormalizedHit(hit: {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector" | "codegraph" | "structured_predicate";
+  reason: "keyword" | "link" | "vector" | "structured_predicate";
   linkFrom?: string;
   snippet: string;
 }): NormalizedRecallHit {

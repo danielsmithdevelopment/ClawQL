@@ -93,7 +93,7 @@ jobs:
         # Same dep order as ci.yml unit-test job (memory DTS needs these).
         run: >
           npm run build -w clawql-merkle -w clawql-core -w clawql-audit
-          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-auth
           -w clawql-api -w clawql-memory
       - name: Validate scaffold
         run: python3 benchmarks/pageindex-ab/scripts/validate_scaffold.py
@@ -216,7 +216,7 @@ jobs:
         # Same dep order as ci.yml unit-test job (memory DTS needs these).
         run: >
           npm run build -w clawql-merkle -w clawql-core -w clawql-audit
-          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-auth
           -w clawql-api -w clawql-memory
       - name: Build candidate corpus
         if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
@@ -463,7 +463,7 @@ jobs:
         if: ${{ steps.gate.outputs.run == '1' }}
         run: >
           npm run build -w clawql-merkle -w clawql-core -w clawql-audit
-          -w clawql-auth -w clawql-pageindex -w clawql-codegraph
+          -w clawql-auth
           -w clawql-api -w clawql-memory
       - name: Resolve Track B model
         if: ${{ steps.gate.outputs.run == '1' }}

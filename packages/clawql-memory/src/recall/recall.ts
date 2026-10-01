@@ -28,15 +28,11 @@ export type MemoryRecallInput = {
   /** Minimum keyword score to seed recall (default from CLAWQL_MEMORY_RECALL_MIN_SCORE). */
   minScore?: number;
   /**
-   * Which backends to query: `vault` | `vector` | `codegraph` | `onyx`.
-   * Omit for defaults (vault + vector; plus hybrid env flags / includeCodeGraph).
+   * Which backends to query: `vault` | `vector` | `onyx`.
+   * Omit for defaults (vault + vector; plus hybrid env flags).
    * Ignored when `schema` + `filters` select structured ontology recall.
    */
   sources?: MemoryRecallSource[];
-  /** When true, include codegraph even if hybrid env flag is off (same as sources including codegraph). */
-  includeCodeGraph?: boolean;
-  /** Code graph id for hybrid supplement (default CLAWQL_CODEGRAPH_ID or repo name). */
-  codeGraphId?: string;
   /**
    * Ontology schema for structured predicate recall (requires `filters`).
    * Spec: docs/specs/memory/memory-recall-structured-filter-v0.1.md
@@ -52,18 +48,9 @@ export type RecallHit = {
   path: string;
   score: number;
   depth: number;
-  reason: "keyword" | "link" | "vector" | "codegraph" | "structured_predicate";
+  reason: "keyword" | "link" | "vector" | "structured_predicate";
   linkFrom?: string;
   snippet: string;
-};
-
-export type CodeGraphRecallHit = {
-  nodeId: string;
-  name: string;
-  kind: string;
-  filePath?: string;
-  score: number;
-  snippet?: string;
 };
 
 export type {
@@ -88,11 +75,9 @@ export type MemoryRecallResult = {
   query?: string;
   /** Vault-side hits (keyword / link / vector) — backward compatible. */
   results?: RecallHit[];
-  /** Structural code symbol hits when codegraph source is enabled. */
-  codeGraphHits?: CodeGraphRecallHit[];
   /**
-   * Normalized multi-source hits (vault, vector, link, codegraph, onyx).
-   * Prefer this for new agent workflows; `results` / `codeGraphHits` remain for compatibility.
+   * Normalized multi-source hits (vault, vector, link, onyx).
+   * Prefer this for new agent workflows; `results` remains for compatibility.
    */
   hits?: NormalizedRecallHit[];
   /** Specialist tool hints when deeper ops are useful. */

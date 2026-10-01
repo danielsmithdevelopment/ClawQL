@@ -1,8 +1,8 @@
 # Corrections: The Complete Agent Memory Stack
 
 **Live post:** [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/)  
-**Status:** correction draft for republish — **Layer 3 PageIndex removed from product in 8.0**; apply ASAP so the live post no longer presents PageIndex as an active stack layer.  
-**Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
+**Status:** correction draft for republish — **Layer 3 PageIndex and CodeGraph both removed from product in 8.0**; apply ASAP so the live post no longer presents either as an active stack layer.  
+**Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · [`docs/backlog/post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
 
 There is no in-repo full draft of this essay (only outbound links). Use this file as the edit brief for the live page.
 
@@ -12,17 +12,17 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 
 **Post says (approx.):** when `memory_recall` fires, it queries across active layers simultaneously and returns a unified list; ClawQL runs PageIndex and vector together and reranks.
 
-**Ship today (8.0):** omit-`sources` resolves to **`vault` + `vector` only**. CodeGraph and Onyx join that default set only when:
+**Ship today (8.0):** omit-`sources` resolves to **`vault` + `vector` only**. Onyx joins that default set only when:
 
-- `CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1` / `_ONYX`, or
+- `CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`, or
 - master `CLAWQL_MEMORY_RECALL_HYBRID=1`, or
 - the caller passes explicit `sources: [...]`.
 
-**PageIndex is removed in 8.0** (tools, hybrid flag, and `pageindex.db.json` sync). Do not describe it as a live layer. Hybrid PageIndex was opt-in since introduction ([#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653), [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) and measured harmful as a merge (−7.8 pts; 13/13 displaced). Track A fair test tied Net=4 → no Vectify port; see [post-8.0 Vectify backlog](../../backlog/post-8.0-vectify-pageindex.md).
+**PageIndex and CodeGraph are both removed in 8.0** (tools, hybrid flags, `pageindex.db.json` sync, and the `clawql-codegraph` package). Do not describe either as a live layer. Hybrid PageIndex was opt-in since introduction ([#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653), [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) and measured harmful as a merge (−7.8 pts; 13/13 displaced). Track A fair test tied Net=4 → no Vectify port; see [post-8.0 Vectify backlog](../../backlog/post-8.0-vectify-pageindex.md). CodeGraph's Track B retest tied Net=0 vs working grep → `tie_purge`; see [post-8.0 CodeGraph backlog](../../backlog/post-8.0-codegraph-revisit.md).
 
 **Suggested replacement prose:**
 
-> By default, `memory_recall` queries the OKF vault (keyword + wikilinks) and vector KNN. CodeGraph and Onyx are available via `sources` or hybrid env flags. ClawQL’s heading-tree PageIndex tools and hybrid PageIndex recall were removed in 8.0 after graded evals failed the ship bar; a Vectify-style redesign (LLM node summaries + strong tree nav) may return later as a new experiment on a fresh hard set — not as a revival of the purged surface.
+> By default, `memory_recall` queries the OKF vault (keyword + wikilinks) and vector KNN. Onyx is available via `sources` or a hybrid env flag. ClawQL's heading-tree PageIndex tools and hybrid PageIndex recall, and its structural CodeGraph tools, were removed in 8.0 after graded evals failed the ship bar; a Vectify-style redesign (LLM node summaries + strong tree nav) may return later as a new PageIndex experiment on a fresh hard set, and CodeGraph may be revisited on a large-monorepo cohort or with a local model — neither is a revival of the purged surface.
 
 ### 2. Do not present PageIndex as Layer 3 of the live stack
 
@@ -42,15 +42,17 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 
 ## Optional clarity edits
 
-- CodeGraph: native tree-sitter builder is default (`CLAWQL_CODEGRAPH_BACKEND=native`); Graphify is optional import — not required for the layer to exist ([#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793)).
-- Point readers at purge / backlog: [`8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md), [`post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md).
+- CodeGraph is removed in 8.0 (not just "native by default") — Track B retest tied Net=0 vs working grep ([#793](https://github.com/danielsmithdevelopment/ClawQL/pull/793) was the native-builder preference that preceded the purge).
+- Point readers at purge / backlog: [`8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md), [`post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md), [`post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md).
 
 ## Checklist before republish
 
 - [ ] Remove or rewrite "runs both simultaneously" as a present-tense default claim
 - [ ] **Remove Layer 3 PageIndex** from the live stack diagram / prose (or mark removed in 8.0)
+- [ ] **Remove CodeGraph** from the live stack diagram / prose (or mark removed in 8.0)
 - [ ] Delete LLM category-routing PageIndex section (or one historical footnote only)
 - [ ] Fix FTS5/BM25 wording to IDF+log-TF (BM25 was a wash candidate, not default)
-- [ ] Add one sentence: hybrid defaults are gated on measured task-completion gains; PageIndex hybrid failed that bar
+- [ ] Add one sentence: hybrid defaults are gated on measured task-completion gains; PageIndex hybrid and CodeGraph both failed that bar
 - [ ] Link OpenBench tooling WINs as "tools work," not "retrieval superiority"
 - [ ] Drop `CLAWQL_ENABLE_PAGEINDEX` / hybrid PageIndex / `pageindex_*` as operator guidance
+- [ ] Drop `CLAWQL_ENABLE_CODEGRAPH` / hybrid CodeGraph / `codegraph_*` as operator guidance

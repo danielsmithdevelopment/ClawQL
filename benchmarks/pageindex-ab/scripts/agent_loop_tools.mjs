@@ -6,17 +6,15 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  indexRepository,
-  impactAnalysis,
-  exploreGraph,
-  queryGraph,
-  getNeighbors,
-  shortestPath,
-} from "clawql-codegraph";
+
+// clawql-codegraph was purged in 8.0.0 (Track B retest: tie_purge vs working grep).
+// This module keeps codegraph_* tool defs for archive/replay of prior Track B
+// results, but the live path now returns a clear error instead of importing the
+// deleted package. See docs/backlog/post-8.0-codegraph-revisit.md.
+const CODEGRAPH_PURGED_ERROR =
+  "error: clawql-codegraph purged (8.0.0) — see docs/backlog/post-8.0-codegraph-revisit.md";
 
 const ROOTS = [
-  "packages/clawql-codegraph/src",
   "packages/clawql-memory/src",
   "packages/clawql-core/src",
   "packages/clawql-api/src",
@@ -26,43 +24,12 @@ export function resolveRepoRoot(fromDir) {
   return path.resolve(fromDir, "../../..");
 }
 
-async function mergeDocs(docs, repoRoot) {
-  const nodes = {};
-  const edges = [];
-  for (const d of docs) {
-    Object.assign(nodes, d.nodes);
-    edges.push(...d.edges);
-  }
-  const adjacency = {};
-  for (const e of edges) {
-    (adjacency[e.from] ??= []).push(e.to);
-  }
-  return {
-    graphId: "clawql-track-b",
-    rootPath: repoRoot,
-    builtAt: new Date().toISOString(),
-    nodeCount: Object.keys(nodes).length,
-    edgeCount: edges.length,
-    nodes,
-    edges,
-    adjacency,
-  };
-}
-
-export async function ensureCodeGraph(repoRoot) {
-  const absRoots = ROOTS.map((r) => path.join(repoRoot, r));
-  const docs = [];
-  for (const root of absRoots) {
-    const d = await indexRepository({
-      rootPath: root,
-      graphId: path.basename(path.dirname(root)),
-      maxFiles: 400,
-    });
-    if (d?.nodes) docs.push(d);
-  }
-  if (!docs.length) throw new Error("codegraph index produced no documents");
-  const doc = await mergeDocs(docs, repoRoot);
-  return { doc, graphId: "clawql-track-b", roots: absRoots };
+/**
+ * @deprecated clawql-codegraph was purged in 8.0.0. Always throws — kept so callers
+ * (run_agent_loop_freeze.mjs) get a clear diagnostic instead of a missing-module crash.
+ */
+export async function ensureCodeGraph(_repoRoot) {
+  throw new Error(CODEGRAPH_PURGED_ERROR);
 }
 
 export const TOOL_DEFS = {
@@ -182,7 +149,10 @@ function clip(s, n = 12000) {
 }
 
 export function runTool(name, args, ctx) {
-  const { repoRoot, doc } = ctx;
+  const { repoRoot } = ctx;
+  if (isCodegraphTool(name)) {
+    return CODEGRAPH_PURGED_ERROR;
+  }
   if (name === "grep") {
     const pattern = String(args.pattern || "");
     if (!pattern) return "error: grep requires pattern";
@@ -245,85 +215,6 @@ export function runTool(name, args, ctx) {
       .map((ln, i) => `${start + i}| ${ln}`)
       .join("\n");
     return clip(`// file: ${path.relative(repoRoot, p)}\n${body}`);
-  }
-  if (!doc) return "error: code graph not loaded";
-  if (name === "codegraph_query") {
-    const hits = queryGraph(doc, String(args.query || ""), Number(args.limit || 12));
-    return clip(
-      JSON.stringify(
-        (hits || []).map((h) => ({
-          nodeId: h.nodeId || h.node?.nodeId,
-          name: h.name || h.node?.name,
-          filePath: h.filePath || h.node?.filePath,
-          score: h.score,
-        })),
-        null,
-        2
-      )
-    );
-  }
-  if (name === "codegraph_impact") {
-    const r = impactAnalysis(
-      doc,
-      String(args.seedQuery || ""),
-      Number(args.depth || 2),
-      Number(args.limit || 24)
-    );
-    return clip(
-      JSON.stringify(
-        {
-          seedNodeId: r.seedNodeId,
-          impacted: (r.impacted || []).map((h) => ({
-            name: h.name,
-            filePath: h.filePath,
-            distance: h.distance,
-          })),
-          files: r.files,
-        },
-        null,
-        2
-      )
-    );
-  }
-  if (name === "codegraph_explore") {
-    const r = exploreGraph(doc, String(args.query || ""), {
-      impactDepth: Number(args.impactDepth || 2),
-    });
-    return clip(
-      JSON.stringify(
-        {
-          primary: r.primary?.node
-            ? {
-                name: r.primary.node.name,
-                filePath: r.primary.node.filePath,
-              }
-            : null,
-          neighbors: (r.neighbors || []).slice(0, 12).map((n) => n.name || n.node?.name),
-          impact: (r.impact?.impacted || []).slice(0, 12).map((h) => h.name),
-        },
-        null,
-        2
-      )
-    );
-  }
-  if (name === "codegraph_neighbors") {
-    const r = getNeighbors(doc, String(args.nodeId || ""), {
-      limit: Number(args.limit || 20),
-    });
-    return clip(JSON.stringify(r, null, 2));
-  }
-  if (name === "codegraph_path") {
-    const r = shortestPath(doc, String(args.from || ""), String(args.to || ""));
-    return clip(
-      JSON.stringify(
-        {
-          found: r.found,
-          path: (r.path || []).map((n) => n.name || n.nodeId),
-        },
-        null,
-        2
-      )
-    );
   }
   return `error: unknown tool ${name}`;
 }

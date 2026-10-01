@@ -4,23 +4,23 @@ Plugin ID: clawql-memory
 
 Package: packages/clawql-memory — MemoryPlugin
 
-Persists durable session knowledge to an Obsidian-compatible vault and recalls it across chats. The same plugin tier also registers optional code graph specialists. Agents should start with memory_recall (optionally with sources) and open specialist tools only when they need path/enterprise depth.
+Persists durable session knowledge to an Obsidian-compatible vault and recalls it across chats. Agents should start with memory_recall (optionally with sources) and open specialist tools only when they need enterprise depth.
 
-8.0: ClawQL PageIndex (pageindex_*, hybrid PageIndex, pageindex.db.json) is removed. See purge inventory and post-8.0 Vectify backlog.
+8.0: ClawQL PageIndex (pageindex_*, hybrid PageIndex, pageindex.db.json) and clawql-codegraph (codegraph_*, hybrid code graph) are removed. See purge inventory, post-8.0 Vectify backlog, and post-8.0 CodeGraph backlog.
 
 Memory 2.0 components
 
 Each piece has one job. The vault is the only canonical store; everything else is a derived index, a code index, an external peer, or the recall facade.
 
-ComponentUsed forUnique roleObsidian / VaultStore knowledge as Markdown + YAML frontmatter under Memory/Canonical core every derived index and query path references or cites back intoWikilinks + memory.dbParse [[links]] into SQLite (wikilink_edge, vault_chunk) on ingest; traverse on recallExplicit structured graph over the vault — link navigation without vectorsEmbeddingsVector representations of vault chunks for similarity in memory_recallFuzzy semantic retrieval when no wikilinks or structural paths existclawql-codegraphParse source (TS compiler API for TS/JS; tree-sitter WASM for Python/Go) → nodes/edges with confidence tagsDeterministic structural index over code, independent of the vaultOnyxknowledge_search_onyx / sources: [&quot;onyx&quot;]; optional enterpriseCitations on ingestExternal search peer — supplies org knowledge without ClawQL owning the corpus
+ComponentUsed forUnique roleObsidian / VaultStore knowledge as Markdown + YAML frontmatter under Memory/Canonical core every derived index and query path references or cites back intoWikilinks + memory.dbParse [[links]] into SQLite (wikilink_edge, vault_chunk) on ingest; traverse on recallExplicit structured graph over the vault — link navigation without vectorsEmbeddingsVector representations of vault chunks for similarity in memory_recallFuzzy semantic retrieval when no wikilinks or structural paths existOnyxknowledge_search_onyx / sources: [&quot;onyx&quot;]; optional enterpriseCitations on ingestExternal search peer — supplies org knowledge without ClawQL owning the corpus
 
-Write once, refresh indexes: memory_ingest always writes vault Markdown. Optional rebuild refreshes derived layers (memory.db/embeddings). Codegraph indexes code; Onyx stays a search peer (citations into the vault, not “ingest into Onyx”).
+Write once, refresh indexes: memory_ingest always writes vault Markdown. Optional rebuild refreshes derived layers (memory.db/embeddings). Onyx stays a search peer (citations into the vault, not “ingest into Onyx”).
 
 Agent habit: start with memory_recall (sources when needed) → follow followUps into specialists only when you need path / filtered enterprise search.
 
 MCP tools
 
-ToolPurposememory_ingestWrite structured insights, wikilinks, and optional verbatim tool output to the vaultmemory_recallMulti-source recall (sources) → hits[] + followUps; vault results keptcodegraph_indexBuild structural code graph from repo root (clawql-codegraph, opt-in)codegraph_import_graphifyImport Graphify graph.json (NetworkX node-link export)codegraph_queryFind symbols by name or concept in the code graphcodegraph_neighborsList inbound/outbound edges (imports, calls, contains)codegraph_pathShortest path between two symbols (Graphify-style trace)codegraph_explainSummarize a symbol and its neighborhoodcodegraph_subgraphBFS subgraph around a seed query
+ToolPurposememory_ingestWrite structured insights, wikilinks, and optional verbatim tool output to the vaultmemory_recallMulti-source recall (sources) → hits[] + followUps; vault results keptread_aroundRead a window of lines around a file position
 
 memory_recall sources
 
@@ -28,7 +28,7 @@ memory_recall sources
 
 &quot;query&quot;: &quot;AuthService rate limit&quot;,
 
-&quot;sources&quot;: [&quot;vault&quot;, &quot;vector&quot;, &quot;codegraph&quot;, &quot;onyx&quot;],
+&quot;sources&quot;: [&quot;vault&quot;, &quot;vector&quot;, &quot;onyx&quot;],
 
 &quot;limit&quot;: 10,
 
@@ -38,9 +38,9 @@ memory_recall sources
 
 CopyCopied!
 
-SourceWhat it contributesvaultKeyword + wikilink BFS over Obsidian MarkdownvectorEmbedding KNN seeds (when vector backend + API key configured)codegraphStructural symbol hits (codeGraphHits + normalized hits)onyxEnterprise citations via injected Onyx search
+SourceWhat it contributesvaultKeyword + wikilink BFS over Obsidian MarkdownvectorEmbedding KNN seeds (when vector backend + API key configured)onyxEnterprise citations via injected Onyx search
 
-Defaults when sources is omitted: vault + vector, plus hybrids from env (CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH, \_ONYX) or includeCodeGraph: true.
+Defaults when sources is omitted: vault + vector, plus hybrids from env (CLAWQL_MEMORY_RECALL_HYBRID_ONYX).
 
 Response:
 
@@ -48,7 +48,7 @@ results — vault-side hits (backward compatible)
 
 hits — normalized multi-source hits (source, id, score, snippet, …)
 
-followUps — specialist tool hints (codegraph_path, knowledge_search_onyx, …)
+followUps — specialist tool hints (knowledge_search_onyx, …)
 
 sourcesUsed / sourceNotes — what ran and skip reasons
 
@@ -74,15 +74,13 @@ FlagEffectrebuild.embeddingsRun memory.db / embedding sync (default on when memo
 
 Enable / disable
 
-EnvDefaultEffectCLAWQL*ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory + code graph toolsCLAWQL*ENABLE_CODEGRAPH=1offRegister codegraph*_ tools (structural code graph)CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH=1offDefault sources includes codegraphCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)
+EnvDefaultEffectCLAWQL*ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory toolsCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)
 
 Prerequisites
 
 Writable CLAWQL_OBSIDIAN_VAULT_PATH (Docker images often use /vault)
 
 Tools register even without a vault path, but vault I/O fails until the path is configured
-
-Code graph: CLAWQL_CODEGRAPH_ROOT + CLAWQL_CODEGRAPH_PATH
 
 Onyx in sources: CLAWQL_ENABLE_ONYX=1 + documents/onyx in merge; MCP wires search into memory
 
@@ -102,7 +100,7 @@ Learn more
 
 Lifelong guided traversal (P2 plan) — MAPF-inspired warm-start / receding-horizon / local-guidance recall
 
-Code graph plugin — Graphify import, tree-sitter languages, env reference
+Post-8.0 CodeGraph backlog — conditions for revisiting the removed code graph plugin
 
 clawql-memory (Memory 2.0)
 

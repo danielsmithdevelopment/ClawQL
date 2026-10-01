@@ -11,6 +11,7 @@
 | In-process ATR gating opt-in             | Still opt-in (unchanged)         | `CLAWQL_PANGUARD_IN_PROCESS=1` (+ block list / real policy as needed)                                                             |
 | Silent ungated tools if Panguard passive | **SECURITY WARNING** at boot     | Install any blocking enforcement provider, or set `CLAWQL_ALLOW_NO_ENFORCEMENT=1` only if intentional                             |
 | `pageindex_*` tools / hybrid PageIndex   | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_PAGEINDEX`, `CLAWQL_MEMORY_RECALL_HYBRID_PAGEINDEX`, and `pageindex.db.json` sync — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) |
+| `codegraph_*` tools / Graphify import    | **Removed** in 8.0               | Drop `CLAWQL_ENABLE_CODEGRAPH`, `CLAWQL_CODEGRAPH_*`, `CLAWQL_MEMORY_RECALL_HYBRID_CODEGRAPH`, and `clawql-codegraph` — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md) and [post-8.0 backlog](../backlog/post-8.0-codegraph-revisit.md) |
 | Section IDs from TOC / list “headings”   | **Filtered** in `read_around`    | See [Section artifact headings](#section-artifact-headings-toc--lists)                                                            |
 | `Plugin` + `beforeCallTool`              | **Deleted**                      | Author `ProviderPlugin` with `tools` / `hooks` / `defineRegisteringProviderPlugin`                                                |
 

@@ -3,6 +3,11 @@
  * Draft oracle golds for Track B CodeGraph prove keys on the ClawQL monorepo.
  * Indexes clawql-codegraph + clawql-memory + clawql-core (dogfood scope + core).
  * Writes design/codegraph-prove-keys.oracle.json (machine assist; human must sign).
+ *
+ * NON-FUNCTIONAL since 8.0.0: clawql-codegraph was purged (Track B retest:
+ * tie_purge vs working grep). Golds were already generated and committed under
+ * design/codegraph-prove-keys.oracle.json — this script is kept only as a historical
+ * record of how they were drafted. See docs/backlog/post-8.0-codegraph-revisit.md.
  */
 import path from "node:path";
 import { fileURLToPath } from "node:url";

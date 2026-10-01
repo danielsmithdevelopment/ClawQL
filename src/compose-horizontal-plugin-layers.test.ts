@@ -35,7 +35,6 @@ const baseFlags = {
   externalIngestPreview: false,
   enableVision: false,
   enableConeshare: false,
-  enableCodeGraph: false,
   enableOntology: false,
   enableOntologyWrites: false,
   enableGoogle: false,
