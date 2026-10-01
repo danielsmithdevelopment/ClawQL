@@ -8,7 +8,7 @@ and the `clawql-codegraph` package were purged in 8.0.0 — see
 ## Why it was purged
 
 Track B (the only lever still open for `codegraph_*`) ran a strong-model agent-loop
-retest pairing **A-grep** against **A-grep + codegraph_\*** on grep-insoluble real-repo
+retest pairing **A-grep** against **A-grep + codegraph\_\*** on grep-insoluble real-repo
 questions ([`agent-loop-freeze.md`](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md)).
 After fixing a broken A-grep baseline from the prior void run, the retest closed at
 **Net=0** beat vs the working grep baseline — `tie_purge`. CodeGraph's additive value over

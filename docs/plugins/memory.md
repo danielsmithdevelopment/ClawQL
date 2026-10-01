@@ -22,12 +22,12 @@ Persists durable session knowledge to an **Obsidian-compatible vault** and recal
 
 Each piece has one job. The vault is the only canonical store; everything else is a **derived index**, a **code index**, an **external peer**, or the **recall facade**.
 
-| Component                   | Used for                                                                                                        | Unique role                                                                                    |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Obsidian / Vault**        | Store knowledge as Markdown + YAML frontmatter under `Memory/`                                                  | **Canonical core** every derived index and query path references or cites back into            |
-| **Wikilinks + `memory.db`** | Parse `[[links]]` into SQLite (`wikilink_edge`, `vault_chunk`) on ingest; traverse on recall                    | **Explicit structured graph** over the vault — link navigation without vectors                 |
-| **Embeddings**              | Vector representations of vault chunks for similarity in `memory_recall`                                        | **Fuzzy semantic retrieval** when no wikilinks or structural paths exist                       |
-| **Onyx**                    | `knowledge_search_onyx` / `sources: ["onyx"]`; optional `enterpriseCitations` on ingest                         | **External search peer** — supplies org knowledge without ClawQL owning the corpus             |
+| Component                   | Used for                                                                                     | Unique role                                                                         |
+| --------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Obsidian / Vault**        | Store knowledge as Markdown + YAML frontmatter under `Memory/`                               | **Canonical core** every derived index and query path references or cites back into |
+| **Wikilinks + `memory.db`** | Parse `[[links]]` into SQLite (`wikilink_edge`, `vault_chunk`) on ingest; traverse on recall | **Explicit structured graph** over the vault — link navigation without vectors      |
+| **Embeddings**              | Vector representations of vault chunks for similarity in `memory_recall`                     | **Fuzzy semantic retrieval** when no wikilinks or structural paths exist            |
+| **Onyx**                    | `knowledge_search_onyx` / `sources: ["onyx"]`; optional `enterpriseCitations` on ingest      | **External search peer** — supplies org knowledge without ClawQL owning the corpus  |
 
 **Write once, refresh indexes:** `memory_ingest` always writes vault Markdown. Optional `rebuild` refreshes derived layers (memory.db/embeddings). Onyx stays a **search** peer (citations into the vault, not “ingest into Onyx”).
 
@@ -35,11 +35,11 @@ Each piece has one job. The vault is the only canonical store; everything else i
 
 ## MCP tools
 
-| Tool                            | Purpose                                                                              |
-| ------------------------------- | ------------------------------------------------------------------------------------ |
-| **`memory_ingest`**             | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
-| **`memory_recall`**             | Multi-source recall (`sources`) → `hits[]` + `followUps`; vault `results` kept       |
-| **`read_around`**               | Expand a path/chunk hit into the enclosing Markdown heading section                  |
+| Tool                | Purpose                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| **`memory_ingest`** | Write structured insights, wikilinks, and optional verbatim tool output to the vault |
+| **`memory_recall`** | Multi-source recall (`sources`) → `hits[]` + `followUps`; vault `results` kept       |
+| **`read_around`**   | Expand a path/chunk hit into the enclosing Markdown heading section                  |
 
 ## `memory_recall` sources
 
@@ -94,10 +94,10 @@ Each piece has one job. The vault is the only canonical store; everything else i
 ## Enable / disable
 
 | Env                                      | Default | Effect                                                       |
-| ----------------------------------------- | ------- | ------------------------------------------------------------ |
-| **`CLAWQL_ENABLE_MEMORY=0`**              | on      | Omit `MemoryPlugin` and hide memory tools                    |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`**  | off     | Default `sources` includes onyx (needs Onyx wired + enabled) |
-| **`CLAWQL_MEMORY_VAULT_RANKER`**          | `idf`   | Vault lexical ranker: `idf` or `bm25`                        |
+| ---------------------------------------- | ------- | ------------------------------------------------------------ |
+| **`CLAWQL_ENABLE_MEMORY=0`**             | on      | Omit `MemoryPlugin` and hide memory tools                    |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`** | off     | Default `sources` includes onyx (needs Onyx wired + enabled) |
+| **`CLAWQL_MEMORY_VAULT_RANKER`**         | `idf`   | Vault lexical ranker: `idf` or `bm25`                        |
 
 ## Prerequisites
 

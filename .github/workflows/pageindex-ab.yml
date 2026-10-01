@@ -670,4 +670,3 @@ jobs:
           path: |
             benchmarks/pageindex-ab/design/gap-gold10-diagnose.json
             benchmarks/pageindex-ab/design/gap-gold10-diagnose-rows.jsonl
-

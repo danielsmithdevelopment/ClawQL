@@ -75,9 +75,7 @@ export function isArtifactHeadingTitle(title: string): boolean {
     const top = Number.parseInt(m[1]!.split(".", 1)[0]!, 10);
     if (Number.isFinite(top) && top > 40) return true;
     const rest = m[2]!;
-    if (
-      /^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b/.test(rest)
-    ) {
+    if (/^(If|Verify|Create|The|A|An|When|For|Note|Ensure|Confirm|Check)\b/.test(rest)) {
       return true;
     }
   }

@@ -57,11 +57,11 @@ When **`CLAWQL_ENABLE_MEMORY=0`** (or the Operator CRD omits the memory Layer), 
 
 ### 3.1 MCP tools each horizontal plugin registers
 
-| Plugin               | MCP tools                                              | Notes                                                                                         |
-| -------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| **MemoryPlugin**     | `memory_ingest`, `memory_recall`, `read_around`         | PageIndex and CodeGraph (`codegraph_*`) purged in 8.0 — see [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) |
-| **DocumentsPlugin**  | `ingest_external_knowledge`, optional Onyx / IDP tools | Bulk Markdown + URL ingest; IDP runner when enabled                                           |
-| **AutomationPlugin** | `schedule`, `notify`, `workflow`, `argocd` (opt-in)    | Schedule worker starts in `onRegister`; notify uses execute path for Slack `chat_postMessage` |
+| Plugin               | MCP tools                                              | Notes                                                                                                                              |
+| -------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **MemoryPlugin**     | `memory_ingest`, `memory_recall`, `read_around`        | PageIndex and CodeGraph (`codegraph_*`) purged in 8.0 — see [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) |
+| **DocumentsPlugin**  | `ingest_external_knowledge`, optional Onyx / IDP tools | Bulk Markdown + URL ingest; IDP runner when enabled                                                                                |
+| **AutomationPlugin** | `schedule`, `notify`, `workflow`, `argocd` (opt-in)    | Schedule worker starts in `onRegister`; notify uses execute path for Slack `chat_postMessage`                                      |
 
 Core tools **`search`**, **`execute`**, **`cache`**, and **`audit`** stay in the gateway / core tier — not owned by these horizontal plugins.
 

@@ -60,12 +60,12 @@ When vault notes carry machine-readable fields (for example legal `CLAWQL_*` tag
 
 ### How Agents Should Use Them
 
-| Habit                                                                         | Why                                                             |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Start with `memory_recall` (+ `sources` when needed)                          | One facade → normalized `hits[]` + specialist `followUps`       |
-| Use `schema` + `filters` for “all X where field ≥ N” tasks                    | Ontology index — exact set, not semantic near-misses            |
-| Open Onyx specialists when `followUps` say so                                 | Filtered enterprise search stays typed                           |
-| Write once with `memory_ingest`; use `rebuild` for derived indexes            | Never paste the same prose into five stores                     |
+| Habit                                                              | Why                                                       |
+| ------------------------------------------------------------------ | --------------------------------------------------------- |
+| Start with `memory_recall` (+ `sources` when needed)               | One facade → normalized `hits[]` + specialist `followUps` |
+| Use `schema` + `filters` for “all X where field ≥ N” tasks         | Ontology index — exact set, not semantic near-misses      |
+| Open Onyx specialists when `followUps` say so                      | Filtered enterprise search stays typed                    |
+| Write once with `memory_ingest`; use `rebuild` for derived indexes | Never paste the same prose into five stores               |
 
 ---
 
@@ -73,12 +73,12 @@ When vault notes carry machine-readable fields (for example legal `CLAWQL_*` tag
 
 Today's shipped stack is a practical subset of the full Memory 2.0 design in the DAOS spec:
 
-| Component   | Shipped role                                   | Technology                                                |
-| ----------- | ---------------------------------------------- | --------------------------------------------------------- |
-| Vault       | Canonical Markdown notes                       | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`         |
-| Graph index | Wikilink edges + chunk rows                    | `memory.db` (`wikilink_edge`, `vault_chunk`, …)           |
-| Embeddings  | Optional vector leg in recall                  | OpenAI-compatible `/embeddings` + sqlite or postgres      |
-| Onyx        | External enterprise search peer                | `knowledge_search_onyx` + vault citations                 |
+| Component   | Shipped role                    | Technology                                           |
+| ----------- | ------------------------------- | ---------------------------------------------------- |
+| Vault       | Canonical Markdown notes        | `CLAWQL_OBSIDIAN_VAULT_PATH` → `Memory/<slug>.md`    |
+| Graph index | Wikilink edges + chunk rows     | `memory.db` (`wikilink_edge`, `vault_chunk`, …)      |
+| Embeddings  | Optional vector leg in recall   | OpenAI-compatible `/embeddings` + sqlite or postgres |
+| Onyx        | External enterprise search peer | `knowledge_search_onyx` + vault citations            |
 
 **Ingest path:** `memory_ingest` writes or appends vault notes → rescans → rebuilds `memory.db` (chunks + wikilink edges; embeddings when configured).
 
@@ -86,12 +86,12 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 
 **Team sync (optional):** pushes and pulls the `Memory/` tree via object storage. `memory.db` is rebuilt locally after pull.
 
-| Flow                    | Reads from                                                | Writes to                                          |
-| ----------------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| `memory_ingest`         | Agent JSON (+ optional Onyx citations)                    | `Memory/*.md` → `memory.db`                        |
-| `memory_recall`         | Vault, `memory.db`, optional Onyx                         | (read-only)                                        |
-| `knowledge_search_onyx` | External Onyx                                             | (read); cite into vault via ingest                 |
-| `memory_sync`           | Object bucket ↔ local vault                               | `Memory/` (and configured paths)                   |
+| Flow                    | Reads from                             | Writes to                          |
+| ----------------------- | -------------------------------------- | ---------------------------------- |
+| `memory_ingest`         | Agent JSON (+ optional Onyx citations) | `Memory/*.md` → `memory.db`        |
+| `memory_recall`         | Vault, `memory.db`, optional Onyx      | (read-only)                        |
+| `knowledge_search_onyx` | External Onyx                          | (read); cite into vault via ingest |
+| `memory_sync`           | Object bucket ↔ local vault            | `Memory/` (and configured paths)   |
 
 **Roadmap (DAOS):** separate encrypted blob vault, typed link ActionTypes, Merkle root on every node at ingest, and recall filtered by signed ATRClaims purpose.
 
@@ -99,12 +99,12 @@ Today's shipped stack is a practical subset of the full Memory 2.0 design in the
 
 ## MCP Tools and Enablement
 
-| Tool                        | Purpose                                                              |
-| --------------------------- | -------------------------------------------------------------------- |
-| `memory_ingest`             | Write or append structured insights, wikilinks, optional tool output |
-| `memory_recall`             | Multi-source recall (`sources` → `hits[]` + `followUps`)             |
-| `memory_sync`               | Team sync pull/push when object storage is configured                |
-| `read_around`               | Read a window of lines around a file position                        |
+| Tool            | Purpose                                                              |
+| --------------- | -------------------------------------------------------------------- |
+| `memory_ingest` | Write or append structured insights, wikilinks, optional tool output |
+| `memory_recall` | Multi-source recall (`sources` → `hits[]` + `followUps`)             |
+| `memory_sync`   | Team sync pull/push when object storage is configured                |
+| `read_around`   | Read a window of lines around a file position                        |
 
 Default on for vault memory; hide with `CLAWQL_ENABLE_MEMORY=0`. (**`pageindex_*` / `CLAWQL_ENABLE_PAGEINDEX` and `codegraph_*` / `CLAWQL_ENABLE_CODEGRAPH` removed in 8.0.**) Requires a writable `CLAWQL_OBSIDIAN_VAULT_PATH` for vault I/O.
 

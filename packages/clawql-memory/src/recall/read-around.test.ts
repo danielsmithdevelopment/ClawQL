@@ -24,9 +24,9 @@ Retention is 4.2 years.
 describe("read_around", () => {
   it("detects TOC / list-step artifact heading titles", () => {
     expect(isArtifactHeadingTitle("1 Introduction  . . . . . . . .   3")).toBe(true);
-    expect(isArtifactHeadingTitle("1 Introduction ....................................................3")).toBe(
-      true
-    );
+    expect(
+      isArtifactHeadingTitle("1 Introduction ....................................................3")
+    ).toBe(true);
     expect(
       isArtifactHeadingTitle('1 If the field value is "*", the condition is false if the origin')
     ).toBe(true);
@@ -128,9 +128,7 @@ Validation steps follow.
       },
       { docTitle: "rfc8259", sectionIndex: 0, sectionCount: 10 }
     );
-    expect(out.startsWith("### rfc8259 · §1 · 1 Introduction · ~5% through document")).toBe(
-      true
-    );
+    expect(out.startsWith("### rfc8259 · §1 · 1 Introduction · ~5% through document")).toBe(true);
   });
 
   it("locates section from chunk text", () => {

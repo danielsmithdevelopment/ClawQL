@@ -6,7 +6,7 @@ Package: packages/clawql-memory — MemoryPlugin
 
 Persists durable session knowledge to an Obsidian-compatible vault and recalls it across chats. Agents should start with memory_recall (optionally with sources) and open specialist tools only when they need enterprise depth.
 
-8.0: ClawQL PageIndex (pageindex_*, hybrid PageIndex, pageindex.db.json) and clawql-codegraph (codegraph_*, hybrid code graph) are removed. See purge inventory, post-8.0 Vectify backlog, and post-8.0 CodeGraph backlog.
+8.0: ClawQL PageIndex (pageindex*\*, hybrid PageIndex, pageindex.db.json) and clawql-codegraph (codegraph*\*, hybrid code graph) are removed. See purge inventory, post-8.0 Vectify backlog, and post-8.0 CodeGraph backlog.
 
 Memory 2.0 components
 
@@ -74,7 +74,7 @@ FlagEffectrebuild.embeddingsRun memory.db / embedding sync (default on when memo
 
 Enable / disable
 
-EnvDefaultEffectCLAWQL*ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory toolsCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)
+EnvDefaultEffectCLAWQL\*ENABLE_MEMORY=0onOmit MemoryPlugin and hide memory toolsCLAWQL_MEMORY_RECALL_HYBRID_ONYX=1offDefault sources includes onyx (needs Onyx wired + enabled)
 
 Prerequisites
 

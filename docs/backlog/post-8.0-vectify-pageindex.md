@@ -6,7 +6,7 @@
 
 ## Why elevated (and why not ship)
 
-On the void cohort’s 3 sound keys, Vectify went 2/3 with clean no-harm — the best *signal* in this effort, not a proof. Bad keys inflate scores as well as depress them. Retest only after mapper + **new** keys pass a human checklist.
+On the void cohort’s 3 sound keys, Vectify went 2/3 with clean no-harm — the best _signal_ in this effort, not a proof. Bad keys inflate scores as well as depress them. Retest only after mapper + **new** keys pass a human checklist.
 
 ## What
 

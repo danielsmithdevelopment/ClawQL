@@ -244,34 +244,34 @@ From enablement §5.4 and the Effect plan §8:
 
 **Workers / fibers:** schedule, Ouroboros seeds poller, and inference pipeline workers use daemon fibers + interruptible sleep (skip-if-busy `Ref`) instead of `setInterval`. Nested `Effect.runPromise` inside poller Effect.gen is removed (`OuroborosLoopService.run` is invoked as an Effect).
 
-| Area                                                                             | Status                                                                                                                                                                                   |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `effect` dependency                                                              | ✅ Pinned in `clawql-api`                                                                                                                                                                |
-| `SearchService` / `ExecuteService`                                               | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)`; cores use `Effect.withSpan` (`clawql.search` / `clawql.execute`)                                                                 |
-| Effect ↔ OTEL Tracer bridge                                                      | ✅ `@effect/opentelemetry` via `makeEffectOtelTracerLayer` + `attachActiveOtelParent` (nests under `mcp.tool.*` when OTLP enabled)                                                       |
-| `AuditLive` / MCP `audit`                                                        | ✅ Composed in `createClawQLApi()`; MCP `audit` via `runAuditOperation` → `AuditService` (parity with cache)                                                                             |
-| Workflow audit append                                                            | ✅ `appendWorkflowAuditEffect` → `AuditService`; sync façade provides `AuditLive` (no direct ring-buffer import in automation)                                                           |
-| Payments WORM `appendEntry` ring mirror                                          | ✅ Mirrors via `AuditService` (`paymentAuditLiveLayer` requires `AuditService`; runtime provides `AuditLive`)                                                                            |
-| `Plugin` / `PluginRegistry`                                                      | ✅ Effect `register` / `beforeCallTool`                                                                                                                                                  |
-| Extracted packages (`memory`, `documents`, `automation`, `sandbox`, `ouroboros`) | ✅ Native `Effect.gen` on tool hot paths (IO edges still `tryPromise`)                                                                                                                   |
+| Area                                                                             | Status                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `effect` dependency                                                              | ✅ Pinned in `clawql-api`                                                                                                                                                                                    |
+| `SearchService` / `ExecuteService`                                               | ✅ Live Layers; MCP uses `getClawqlApi().run(Effect…)`; cores use `Effect.withSpan` (`clawql.search` / `clawql.execute`)                                                                                     |
+| Effect ↔ OTEL Tracer bridge                                                      | ✅ `@effect/opentelemetry` via `makeEffectOtelTracerLayer` + `attachActiveOtelParent` (nests under `mcp.tool.*` when OTLP enabled)                                                                           |
+| `AuditLive` / MCP `audit`                                                        | ✅ Composed in `createClawQLApi()`; MCP `audit` via `runAuditOperation` → `AuditService` (parity with cache)                                                                                                 |
+| Workflow audit append                                                            | ✅ `appendWorkflowAuditEffect` → `AuditService`; sync façade provides `AuditLive` (no direct ring-buffer import in automation)                                                                               |
+| Payments WORM `appendEntry` ring mirror                                          | ✅ Mirrors via `AuditService` (`paymentAuditLiveLayer` requires `AuditService`; runtime provides `AuditLive`)                                                                                                |
+| `Plugin` / `PluginRegistry`                                                      | ✅ Effect `register` / `beforeCallTool`                                                                                                                                                                      |
+| Extracted packages (`memory`, `documents`, `automation`, `sandbox`, `ouroboros`) | ✅ Native `Effect.gen` on tool hot paths (IO edges still `tryPromise`)                                                                                                                                       |
 | `effect/Schema` at MCP boundaries                                                | 🚧 Core + memory + documents/Onyx MCP inputs decode via Effect Schema; thin Zod edges for MCP SDK listing. Next: automation → sandbox → ouroboros → registry types (pageindex/codegraph both removed in 8.0) |
-| End state: no Zod in domain validation                                           | 🎯 Effect Schema everywhere in pipelines; Zod only as MCP SDK peer adapter (or gone after Standard Schema SDK upgrade)                                                                   |
-| Horizontal `Plugin` Layers                                                       | ✅ All tiers via `composeHorizontalPluginLayers()`; owned by ManagedRuntime Scope until `dispose`                                                                                        |
-| Operator dynamic Layer list from CRD                                             | ✅ `composeHorizontalPluginLayersFromTierSpec()` maps `ClawQLHorizontalTierSpec` → Layers                                                                                                |
-| `MemoryIngestService` / vault post-sync                                          | ✅ Native `Effect.gen` stages prepare → vault write → `MemoryDbService` sync (no nested `runMemoryEffect`)                                                                               |
-| Memory `pageindex_*` tools                                                       | ✅ Native `Effect.gen` soft wrappers (storage IO via `memoryFromPromise`)                                                                                                                |
-| `DocumentsToolsService` IDP runner                                               | ✅ Native `Effect.gen` hop loop (skip/dry-run/execute+retry/Merkle/onHop); Promise façade kept for tests                                                                                 |
-| `DocumentsToolsService` classify / extract                                       | ✅ Native `Effect.gen` (resolve URL → heuristic sync \| HTTP POST → parse); Promise façades kept                                                                                         |
-| `DocumentsIngestService` external ingest                                         | ✅ Native `Effect.gen` prelude → prepare/fetch → write → `vaultWritePostSyncEffect` (no nested `runMemoryEffect`)                                                                        |
-| `knowledge_search_onyx`                                                          | ✅ Native `Effect.gen` loadSpec → gates → execute                                                                                                                                        |
-| `AutomationToolsService` notify                                                  | ✅ Native `Effect.gen` prelude → loadSpec → execute → reshape; schedule/workflow side-channels use `executeNotifySlackCore` (no nested runtime)                                          |
-| `AutomationToolsService` schedule / workflow                                     | ✅ Native `Effect.gen` (schedule: parse → open DB → dispatch → close; workflow: enabled → soft Zod → K8s/wait; wait via `Effect.sleep`)                                                  |
-| `AutomationToolsService` argocd                                                  | ✅ Native `Effect.gen` enabled → soft Zod → K8s CRD list/get/sync                                                                                                                        |
-| `hitl_enqueue_label_studio`                                                      | ✅ Native `Effect.gen` config/validate → HTTP import → NATS publish hook                                                                                                                 |
-| `SandboxExecService` sandbox_exec                                                | ✅ Native `Effect.gen` (parse backend → resolve probes → dispatch Kata/Docker/Seatbelt/bridge → shape); Promise façade kept                                                              |
-| Background workers (schedule / ouroboros poller / inference pipeline)            | ✅ Daemon fibers + `Effect.sleep` loops (skip-if-busy `Ref`); interruptible `stop()`; TestClock-covered                                                                                  |
-| ManagedRuntime `dispose` + process shutdown                                      | ✅ `ClawQLApiHandle.dispose` → plugin `teardownAll` + `runtime.dispose`; MCP registers `disposeClawqlApi` on SIGINT/SIGTERM                                                              |
-| Postgres / NATS `acquireRelease`                                                 | ✅ Scoped Effect helpers for Ouroboros + pgvector pools and NATS HITL consumer (singleton façades retained)                                                                              |
+| End state: no Zod in domain validation                                           | 🎯 Effect Schema everywhere in pipelines; Zod only as MCP SDK peer adapter (or gone after Standard Schema SDK upgrade)                                                                                       |
+| Horizontal `Plugin` Layers                                                       | ✅ All tiers via `composeHorizontalPluginLayers()`; owned by ManagedRuntime Scope until `dispose`                                                                                                            |
+| Operator dynamic Layer list from CRD                                             | ✅ `composeHorizontalPluginLayersFromTierSpec()` maps `ClawQLHorizontalTierSpec` → Layers                                                                                                                    |
+| `MemoryIngestService` / vault post-sync                                          | ✅ Native `Effect.gen` stages prepare → vault write → `MemoryDbService` sync (no nested `runMemoryEffect`)                                                                                                   |
+| Memory `pageindex_*` tools                                                       | ✅ Native `Effect.gen` soft wrappers (storage IO via `memoryFromPromise`)                                                                                                                                    |
+| `DocumentsToolsService` IDP runner                                               | ✅ Native `Effect.gen` hop loop (skip/dry-run/execute+retry/Merkle/onHop); Promise façade kept for tests                                                                                                     |
+| `DocumentsToolsService` classify / extract                                       | ✅ Native `Effect.gen` (resolve URL → heuristic sync \| HTTP POST → parse); Promise façades kept                                                                                                             |
+| `DocumentsIngestService` external ingest                                         | ✅ Native `Effect.gen` prelude → prepare/fetch → write → `vaultWritePostSyncEffect` (no nested `runMemoryEffect`)                                                                                            |
+| `knowledge_search_onyx`                                                          | ✅ Native `Effect.gen` loadSpec → gates → execute                                                                                                                                                            |
+| `AutomationToolsService` notify                                                  | ✅ Native `Effect.gen` prelude → loadSpec → execute → reshape; schedule/workflow side-channels use `executeNotifySlackCore` (no nested runtime)                                                              |
+| `AutomationToolsService` schedule / workflow                                     | ✅ Native `Effect.gen` (schedule: parse → open DB → dispatch → close; workflow: enabled → soft Zod → K8s/wait; wait via `Effect.sleep`)                                                                      |
+| `AutomationToolsService` argocd                                                  | ✅ Native `Effect.gen` enabled → soft Zod → K8s CRD list/get/sync                                                                                                                                            |
+| `hitl_enqueue_label_studio`                                                      | ✅ Native `Effect.gen` config/validate → HTTP import → NATS publish hook                                                                                                                                     |
+| `SandboxExecService` sandbox_exec                                                | ✅ Native `Effect.gen` (parse backend → resolve probes → dispatch Kata/Docker/Seatbelt/bridge → shape); Promise façade kept                                                                                  |
+| Background workers (schedule / ouroboros poller / inference pipeline)            | ✅ Daemon fibers + `Effect.sleep` loops (skip-if-busy `Ref`); interruptible `stop()`; TestClock-covered                                                                                                      |
+| ManagedRuntime `dispose` + process shutdown                                      | ✅ `ClawQLApiHandle.dispose` → plugin `teardownAll` + `runtime.dispose`; MCP registers `disposeClawqlApi` on SIGINT/SIGTERM                                                                                  |
+| Postgres / NATS `acquireRelease`                                                 | ✅ Scoped Effect helpers for Ouroboros + pgvector pools and NATS HITL consumer (singleton façades retained)                                                                                                  |
 
 **Hard rule — Effect everywhere:** production code that can be Effect-based **must** be, with **no "pure sync" carve-out**. Bare `async`/`Promise` domain APIs — and bare sync functions returning plain values (URL/HTML builders, sync crypto, env flag readers) — are not acceptable primary APIs when `Effect.sync` / `Context.Tag` + `Layer` can express them. Allowed non-Effect surfaces are only (1) forced Promise edges (Express / MCP SDK) as thin façades over `run*Effect` (with `Effect.runSync` only at that absolute host boundary), (2) types-only modules, and (3) `Effect.tryPromise` / `*FromPromise` at the absolute external IO edge **inside** Effect programs. See [`.cursor/rules/effect-ts-everywhere.mdc`](../../.cursor/rules/effect-ts-everywhere.mdc) and plan §7.
 
@@ -284,7 +284,7 @@ These vision items are **not** done by package extraction alone:
 | Vision item                                   | Status                                                                                                                                                                                                 |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `clawql-auth` package                         | ✅ Gateway `noAuth`/`apiKey`/`oidc`, ATR claims, provider headers; Effect services (`OidcAuthService`, `GatewayAuthService`, `StepUpStoreService`, `AwsSigV4Service`, `AuthLive`); HTTP MCP middleware |
-| `clawql-pageindex`                            | ❌ **Removed in 8.0** (purge inventory / Track A)                                                                                                                                                     |
+| `clawql-pageindex`                            | ❌ **Removed in 8.0** (purge inventory / Track A)                                                                                                                                                      |
 | Document pipeline (Tika → … → Paperless)      | 🚧 Vendors + `run_idp_pipeline` shipped; retries/Merkle per hop roadmap                                                                                                                                |
 | NATS / HITL in `clawql-automation`            | ✅ Shipped (JetStream publish + HITL resume consumer)                                                                                                                                                  |
 | Layer 0 immutable releases                    | 🚧 MVP (`clawql-release`); Arweave/Rift/Radicle roadmap                                                                                                                                                |
@@ -327,31 +327,31 @@ These vision items are **not** done by package extraction alone:
 
 **Model:** Each horizontal **`clawql-*`** package is a **separate publishable unit** at **`8.0.0`**, linked in the monorepo via matching semver (npm workspaces). **`clawql-mcp`** depends on them as normal registry dependencies — **not** `bundledDependencies`.
 
-| Package                      | npm name            | Version     |
-| ---------------------------- | ------------------- | ----------- |
-| `packages/clawql-merkle`     | `clawql-merkle`     | 8.0.0       |
-| `packages/clawql-core`       | `clawql-core`       | 8.0.0       |
-| `packages/clawql-audit`      | `clawql-audit`      | 8.0.0       |
-| `packages/clawql-agents`     | `clawql-agents`     | 8.0.0       |
-| `packages/clawql-auth`       | `clawql-auth`       | 8.0.0       |
+| Package                         | npm name               | Version         |
+| ------------------------------- | ---------------------- | --------------- |
+| `packages/clawql-merkle`        | `clawql-merkle`        | 8.0.0           |
+| `packages/clawql-core`          | `clawql-core`          | 8.0.0           |
+| `packages/clawql-audit`         | `clawql-audit`         | 8.0.0           |
+| `packages/clawql-agents`        | `clawql-agents`        | 8.0.0           |
+| `packages/clawql-auth`          | `clawql-auth`          | 8.0.0           |
 | ~~`packages/clawql-pageindex`~~ | ~~`clawql-pageindex`~~ | **removed 8.0** |
 | ~~`packages/clawql-codegraph`~~ | ~~`clawql-codegraph`~~ | **removed 8.0** |
-| `packages/clawql-api`        | `clawql-api`        | 8.0.0       |
-| `packages/clawql-memory`     | `clawql-memory`     | 8.0.0       |
-| `packages/clawql-ontology`   | `clawql-ontology`   | 8.0.0       |
-| `packages/clawql-documents`  | `clawql-documents`  | 8.0.0       |
-| `packages/clawql-web`        | `clawql-web`        | 8.0.0       |
-| `packages/clawql-data`       | `clawql-data`       | 8.0.0       |
-| `packages/clawql-harness`    | `clawql-harness`    | 0.1.0       |
-| `packages/clawql-tee`        | `clawql-tee`        | 8.0.0       |
-| `packages/clawql-automation` | `clawql-automation` | 8.0.0       |
-| `packages/clawql-sandbox`    | `clawql-sandbox`    | 8.0.0       |
-| `packages/clawql-inference`  | `clawql-inference`  | 8.0.0       |
-| `packages/clawql-payments`   | `clawql-payments`   | 8.0.0       |
-| `packages/clawql-ouroboros`  | `clawql-ouroboros`  | 8.0.0       |
-| `packages/clawql-operator`   | `clawql-operator`   | 8.0.0       |
-| `packages/clawql-release`    | `clawql-release`    | 8.0.0       |
-| Root                         | `clawql-mcp`        | 8.0.0       |
+| `packages/clawql-api`           | `clawql-api`           | 8.0.0           |
+| `packages/clawql-memory`        | `clawql-memory`        | 8.0.0           |
+| `packages/clawql-ontology`      | `clawql-ontology`      | 8.0.0           |
+| `packages/clawql-documents`     | `clawql-documents`     | 8.0.0           |
+| `packages/clawql-web`           | `clawql-web`           | 8.0.0           |
+| `packages/clawql-data`          | `clawql-data`          | 8.0.0           |
+| `packages/clawql-harness`       | `clawql-harness`       | 0.1.0           |
+| `packages/clawql-tee`           | `clawql-tee`           | 8.0.0           |
+| `packages/clawql-automation`    | `clawql-automation`    | 8.0.0           |
+| `packages/clawql-sandbox`       | `clawql-sandbox`       | 8.0.0           |
+| `packages/clawql-inference`     | `clawql-inference`     | 8.0.0           |
+| `packages/clawql-payments`      | `clawql-payments`      | 8.0.0           |
+| `packages/clawql-ouroboros`     | `clawql-ouroboros`     | 8.0.0           |
+| `packages/clawql-operator`      | `clawql-operator`      | 8.0.0           |
+| `packages/clawql-release`       | `clawql-release`       | 8.0.0           |
+| Root                            | `clawql-mcp`           | 8.0.0           |
 
 **Publish order:** [`scripts/release/npm-publish-order.json`](../../scripts/release/npm-publish-order.json) — dependencies before dependents; **`clawql-mcp` last**.
 

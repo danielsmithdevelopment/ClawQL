@@ -261,11 +261,11 @@ Draft + scaled hard-candidate signals (**not spent freeze** — human second-pas
 
 **Freeze critical path (parallel; k-sweep can lag):**
 
-| Track | Work | Spec |
-| ----- | ---- | ---- |
+| Track | Work                                                                                                                                                  | Spec                                                                              |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | **A** | Vectify vs query-rewrite (`anthropic/claude-sonnet-4.6` = Track B; shared finalize; 3-trial majority; Net≥5 + no-harm; IETF; GHA `.run-vectify-fair`) | [vectify-fair-test.md](../../benchmarks/pageindex-ab/design/vectify-fair-test.md) |
-| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
-| **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
+| **B** | Strong-model agent loop: ClawQL `pageindex_*` + `codegraph_*` vs grep                                                                                 | [agent-loop-freeze.md](../../benchmarks/pageindex-ab/design/agent-loop-freeze.md) |
+| **C** | k-sweep `{3,6,10}` + union matched-k — not freeze-gating                                                                                              | [query-rewrite-arm.md](../../benchmarks/pageindex-ab/design/query-rewrite-arm.md) |
 
 **Beat lock (A):** Net \(W-L \ge 5\) on 12 misses and no-harm ≥14/15; smaller Net = tie = purge. **Combine:** Vectify win + our lose → purge ours, port later; both lose → purge; our agent-loop wins → keep opt-in.
 
