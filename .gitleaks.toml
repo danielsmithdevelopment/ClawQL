@@ -23,5 +23,7 @@ paths = [
   # Public IETF RFCs used as pageindex-ab hard-candidate docs (OAuth examples etc.).
   '''(^|/)benchmarks/pageindex-ab/corpus/hard-candidate/docs/rfc''',
   '''(^|/)benchmarks/pageindex-ab/corpus/seed/rfc''',
+  # Rank/diagnostic fixtures quote the same RFC OAuth example tokens/section ids.
+  '''(^|/)benchmarks/pageindex-ab/design/''',
   '''\.test\.ts$''',
 ]
