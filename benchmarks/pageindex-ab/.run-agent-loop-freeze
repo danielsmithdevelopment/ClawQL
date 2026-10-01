@@ -1,5 +1,0 @@
-# Sentinel: Track B CodeGraph additive spend via pageindex-ab.yml
-# Prefer secrets.OPENROUTER_API_KEY_TRACK_B (dedicated key limit).
-# Remove after the run lands.
-
-# resume: retry A-grep cg-prove-08 after EISDIR fix
