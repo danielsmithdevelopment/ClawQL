@@ -38,7 +38,6 @@ import {
   isMcpEventsJsonRpc,
   McpEventsServiceLive,
 } from "clawql-mcp-events";
-import { Effect } from "effect";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   getVaultStartupStatus,
