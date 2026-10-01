@@ -262,18 +262,18 @@ export async function memoryContentRecoverableFromStores(opts: {
   const { noteKeyExists, extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
     await import("../crypto/shred.js");
 
-  let vault = false;
+  let vaultHit = false;
   let rawOnDisk = "";
   try {
     // Decrypted read — fails closed after shred.
     const body = await readVaultTextFile(opts.vaultRoot, opts.path);
-    vault = body.includes(opts.needle);
+    vaultHit = body.includes(opts.needle);
   } catch {
-    vault = false;
+    /* missing or key destroyed */
   }
   try {
     rawOnDisk = await readFile(resolveVaultPath(opts.vaultRoot, opts.path), "utf8");
-    if (rawOnDisk.includes(opts.needle)) vault = true;
+    if (rawOnDisk.includes(opts.needle)) vaultHit = true;
   } catch {
     /* deleted from working tree */
   }
@@ -286,7 +286,7 @@ export async function memoryContentRecoverableFromStores(opts: {
   noteId = noteId ?? mapped?.noteId;
   const keyDestroyed = noteId ? !(await noteKeyExists(opts.vaultRoot, noteId)) : true;
 
-  let memoryDb = false;
+  let memoryDbHit = false;
   try {
     const initSqlJs = (await import("sql.js")).default;
     const require = createRequire(import.meta.url);
@@ -301,21 +301,21 @@ export async function memoryContentRecoverableFromStores(opts: {
         `SELECT text FROM vault_chunk WHERE document_path = '${opts.path.replace(/'/g, "''")}'`
       );
       const texts = (rows[0]?.values ?? []).map((v) => String(v[0] ?? ""));
-      memoryDb = texts.some((t) => t.includes(opts.needle));
+      memoryDbHit = texts.some((t) => t.includes(opts.needle));
       const docs = db.exec(
         `SELECT path FROM vault_document WHERE path = '${opts.path.replace(/'/g, "''")}'`
       );
-      if ((docs[0]?.values?.length ?? 0) > 0 && !memoryDb) {
-        memoryDb = true;
+      if ((docs[0]?.values?.length ?? 0) > 0 && !memoryDbHit) {
+        memoryDbHit = true;
       }
     } finally {
       db.close();
     }
   } catch {
-    memoryDb = false;
+    /* no memory.db */
   }
 
-  let ontology = false;
+  let ontologyHit = false;
   try {
     const initSqlJs = (await import("sql.js")).default;
     const require = createRequire(import.meta.url);
@@ -332,7 +332,7 @@ export async function memoryContentRecoverableFromStores(opts: {
             `SELECT COUNT(*) FROM ${table} WHERE vault_note_path = '${opts.path.replace(/'/g, "''")}'`
           );
           const n = Number(rows[0]?.values?.[0]?.[0] ?? 0);
-          if (n > 0) ontology = true;
+          if (n > 0) ontologyHit = true;
         } catch {
           /* table may not exist */
         }
@@ -341,11 +341,10 @@ export async function memoryContentRecoverableFromStores(opts: {
       db.close();
     }
   } catch {
-    ontology = false;
+    /* no ontology.db */
   }
 
-  let gitHistory = false;
-  let r2Mirror = false;
+  let gitHistoryHit = false;
   try {
     const { stdout } = await execFileAsync(
       "git",
@@ -354,11 +353,12 @@ export async function memoryContentRecoverableFromStores(opts: {
     );
     // -S finds commits that introduce/remove the string; after crypto-shred the
     // commits only ever contained ciphertext, so needle must not appear.
-    gitHistory = stdout.includes(opts.needle);
+    gitHistoryHit = stdout.includes(opts.needle);
   } catch {
-    gitHistory = false;
+    /* not a git vault */
   }
 
+  let r2MirrorHit = false;
   try {
     // Simulate R2 = what a remote clone can read from objects without the keystore.
     const { stdout: showOut } = await execFileAsync(
@@ -372,11 +372,18 @@ export async function memoryContentRecoverableFromStores(opts: {
         ["-C", opts.vaultRoot, "log", "-p", "--all", "--", opts.path],
         { maxBuffer: 8 * 1024 * 1024 }
       );
-      r2Mirror = blob.includes(opts.needle);
+      r2MirrorHit = blob.includes(opts.needle);
     }
   } catch {
-    r2Mirror = false;
+    /* not a git vault */
   }
 
-  return { vault, memoryDb, ontology, gitHistory, r2Mirror, keyDestroyed };
+  return {
+    vault: vaultHit,
+    memoryDb: memoryDbHit,
+    ontology: ontologyHit,
+    gitHistory: gitHistoryHit,
+    r2Mirror: r2MirrorHit,
+    keyDestroyed,
+  };
 }

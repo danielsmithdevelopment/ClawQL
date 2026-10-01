@@ -75,12 +75,13 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | `POST`   | `/memory/search`       | Vault recall façade                                   |
 | `GET`    | `/memory`              | List Memory notes                                     |
 | `GET`    | `/memory/:slug`        | Read note                                             |
-| `DELETE` | `/memory/:slug`        | Erasure                                               |
+| `DELETE` | `/memory/:slug`        | Erasure (crypto-shred + deny-list; see ladder spec)   |
 
-Opt-in chat enrichment: set `CLAWQL_INFERENCE_MEMORY_ENRICH=1` or send
-`x-clawql-memory-enrich: 1` on `/v1/chat/completions` (default **off**; store-down
-forwards without memory; screen/redact failures fail closed). Spec:
-[`docs/specs/inference/gateway-ladder-v0.1.md`](../../docs/specs/inference/gateway-ladder-v0.1.md).
+Opt-in chat enrichment: virtual-key `memoryEnrichment` **outranks** `x-clawql-memory-enrich` /
+`CLAWQL_INFERENCE_MEMORY_ENRICH` (default **off**; store-down forwards without memory;
+screen/redact failures fail closed). Erasure crypto-shreds per-note keys so git/R2 history
+stays ciphertext-only; WORM uses opaque `pathId`; export skips erased content hashes.
+Spec: [`docs/specs/inference/gateway-ladder-v0.1.md`](../../docs/specs/inference/gateway-ladder-v0.1.md).
 
 ```bash
 # Same request shape as OpenAI — bare model id works

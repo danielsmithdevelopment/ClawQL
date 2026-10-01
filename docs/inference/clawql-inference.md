@@ -137,6 +137,24 @@ Disable layers via options: `{ semanticCache: false }`, `{ fallback: false }`, `
 | `GET`  | `/v1/models/:id`       | Single model                                          |
 | `POST` | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
 
+### Gateway ladder (8.0.0)
+
+On the Managed Edge Gateway the same host exposes four rungs — `/v1` → `/mcp` → `/memory` → `/decision` — with shared virtual keys and WORM identity. Spec: **[gateway-ladder-v0.1.md](../specs/inference/gateway-ladder-v0.1.md)**.
+
+| Method   | Path             | Notes |
+| -------- | ---------------- | ----- |
+| `POST`   | `/decision`      | Fast Decision (System One `choice`/`noul`); canonical |
+| `POST`   | `/v1/systemone`  | Alias of `/decision`; `score` → explicit **400** |
+| `POST`   | `/memory/ingest` | Vault ingest façade |
+| `POST`   | `/memory/search` | Vault recall façade |
+| `GET`    | `/memory`        | List Memory notes (optionally scoped) |
+| `GET`    | `/memory/:slug`  | Read note |
+| `DELETE` | `/memory/:slug`  | **Erasure** — vault + derived indexes + crypto-shred + export deny-list |
+
+**Erasure** destroys the working-tree note, purges `memory.db` / pgvector / `ontology.db`, and **crypto-shreds** the per-note encryption key so git history and R2 mirrors retain ciphertext only. WORM logs opaque `pathId` + content hash (never readable path or body). Erased content hashes land on `.clawql/erasure-deny.json`; export jobs skip them. Details: [gateway ladder § Erasure](../specs/inference/gateway-ladder-v0.1.md#erasure) · [memory-obsidian § Erasure](../memory/memory-obsidian.md#erasure-crypto-shredding).
+
+Opt-in chat enrichment: virtual-key `memoryEnrichment` **outranks** `x-clawql-memory-enrich` / `CLAWQL_INFERENCE_MEMORY_ENRICH` (default **off**).
+
 ### Request Headers
 
 | Header                                         | Purpose                            |
@@ -347,6 +365,8 @@ clawql inference export \
 | `portal-bundle`   | PorTAL task-latent + alignment (**staged**) |
 
 PII scrubbing (Presidio) is on by default. Every export writes a WORM dataset manifest (sample hashes, filter criteria, Merkle root, policy version).
+
+**Erasure deny-list:** when a vault note is erased, its content hash is appended to `.clawql/erasure-deny.json`. Export loads that deny-list (from `CLAWQL_OBSIDIAN_VAULT_PATH` / `--vault`) and **drops** records whose message or response body hashes match, so erased content never reappears in a future training set. Historical export files already on disk remain out of band — lineage shows which past exports and fine-tuned models included the content so those can be regenerated if required. See [gateway ladder § Erasure](../specs/inference/gateway-ladder-v0.1.md#erasure).
 
 ### Fine-Tune and Register
 

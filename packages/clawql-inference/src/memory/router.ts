@@ -2,7 +2,7 @@
  * Express router for /memory REST façade over clawql-memory.
  */
 
-import express, { type Request, type Response } from "express";
+import express, { type Response } from "express";
 import type { MemoryIngestInput } from "clawql-memory/ingest/ingest";
 import type { MemoryRecallInput } from "clawql-memory/recall/recall";
 import type { VirtualKeyRequest } from "../api/auth.js";

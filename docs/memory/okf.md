@@ -14,6 +14,7 @@ ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://okf.io)
 | **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                            |
 | **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                                     |
 | **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                          |
+| **Erase / retract**   | Full erase crypto-shreds the note and emits WORM `MEMORY_RETRACTED` with opaque `pathId` + content hash (never readable path/body). See [memory-obsidian § Erasure](./memory-obsidian.md#erasure-crypto-shredding). |
 
 ## Frontmatter contract (OKF v0.2)
 

@@ -328,12 +328,16 @@ Long sessions can exhaust context windows. The DAOS design adds a pruning engine
 | --------------------------------- | ------------------------------------------------------------------ | --------------------------------- |
 | Vault path + file roots allowlist | ✅ `CLAWQL_OBSIDIAN_VAULT_PATH`, `CLAWQL_MEMORY_INGEST_FILE_ROOTS` |                                   |
 | Opt-in Presidio at gateway        | ✅                                                                 | Mandatory on all memory writes    |
+| Crypto-shred erase (git vaults)   | ✅ Per-note AES keys; destroy on erase; opaque WORM `pathId`       | Cross-clone key escrow UX         |
+| Export erasure deny-list          | ✅ `.clawql/erasure-deny.json` checked by inference export         | Auto-scan past export manifests   |
 | `audit` ring buffer (Core)        | ✅ Ephemeral MCP breadcrumbs                                       | WORM per memory mutation          |
 | ATRClaims on recall/ingest        | Partial via gateway auth                                           | Per-node classification + purpose |
 | Merkle on vault nodes             | Optional `CLAWQL_MERKLE_*` artifacts in `memory.db`                | Per-node Merkle at ingest         |
 | Legal hold / prune gates          |                                                                    | Operator CRD + WORM hold bit      |
 
 Treat vault Markdown as sensitive if notes contain tokens or PII. Prefer redaction in prose and short-lived credentials.
+
+**Erasure:** when the vault is git-backed, Memory notes are encrypted at rest with a per-note key. `DELETE /memory/:slug` (or erase via the memory package) removes derived indexes and **destroys the key** so history and R2 mirrors keep ciphertext only. WORM records an opaque `pathId` + content hash — never the readable path or body. Erased hashes are denied from future training exports. Details in the repo: [memory-obsidian § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md#erasure-crypto-shredding) · [gateway ladder § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/inference/gateway-ladder-v0.1.md#erasure).
 
 ---
 
@@ -346,5 +350,6 @@ Treat vault Markdown as sensitive if notes contain tokens or PII. Prefer redacti
 - [Code graph plugin](https://docs.clawql.com/plugins/codegraph) — native sync, 30+ languages, explore/impact, optional Graphify import
 - [hybrid-memory-backends.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/hybrid-memory-backends.md)
 - [DAOS Unified Architecture § Layer 3](https://docs.clawql.com/ouroboros/daos) — full Memory 2.0 vision
+- [Gateway ladder erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/inference/gateway-ladder-v0.1.md#erasure) — crypto-shred, pathId WORM, export deny-list
 
 © Copyright 2026. All rights reserved. · [ClawQL on GitHub](https://github.com/danielsmithdevelopment/ClawQL)

@@ -195,8 +195,9 @@ export async function maybeEncryptForVaultWrite(
 export async function maybeDecryptVaultRead(
   vaultRoot: string,
   text: string,
-  env: NodeJS.ProcessEnv = process.env
+  _env: NodeJS.ProcessEnv = process.env
 ): Promise<string> {
+  void _env;
   if (!isEncryptedVaultEnvelope(text)) return text;
   const noteId = extractNoteIdFromEnvelope(text);
   if (!noteId) throw new Error("encrypted note missing note_id");

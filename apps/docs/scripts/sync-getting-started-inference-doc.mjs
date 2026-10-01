@@ -18,7 +18,8 @@ const srcRelative = path.join('docs', 'getting-started', 'inference.md')
 function findRepoRootWithDocs() {
   let dir = websiteRoot
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, 'docs'))) {
+    // Prefer the specific source file so we do not stop at apps/ (which has apps/docs/).
+    if (fs.existsSync(path.join(dir, srcRelative))) {
       return dir
     }
     const parent = path.dirname(dir)

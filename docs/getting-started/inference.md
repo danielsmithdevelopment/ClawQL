@@ -24,6 +24,9 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 | -------------------------- | ------------------------------------------------------------------------------------ |
 | **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                    |
 | **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                            |
+| **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                 |
+| **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
+| **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                |
 | **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                       |
 | **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama |
 | **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend               |
@@ -54,11 +57,13 @@ On a laptop this is your **Edge Agentic Gateway**. Later you can grow into a Man
 Pair with MCP when you want agents to **search / execute / remember** against your APIs and vault:
 
 ```text
-  Agent ──► /v1  (models)     clawql-inference
-       └──► /mcp (tools)      clawql-mcp-http  +  Memory/ vault
+  Agent ──► /v1        (models)      clawql-inference
+       ├──► /mcp       (tools)       clawql-mcp-http  +  Memory/ vault
+       ├──► /memory    (REST erase)  crypto-shred + export deny-list
+       └──► /decision  (Fast Decision / System One)
 ```
 
-Today those are often two local processes; the **product** is one Agentic Gateway. Managed offerings co-host them behind one hostname.
+Today those are often two local processes; the **product** is one Agentic Gateway ladder. Managed offerings co-host them behind one hostname. Spec: [gateway-ladder-v0.1.md](../specs/inference/gateway-ladder-v0.1.md).
 
 ## Pick your path
 

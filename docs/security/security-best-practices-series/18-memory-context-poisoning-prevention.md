@@ -78,6 +78,8 @@ This gives us the perfect solution to the GDPR right-to-erasure vs. WORM conflic
 
 Key deletion is irreversible — always confirm the GDPR request before executing. This satisfies Recital 26: data that cannot be attributed to an identified person is no longer personal data, while keeping the audit trail intact.
 
+**Shipped for git-native vault notes (8.0.0):** ClawQL Memory implements the same pattern as **per-note crypto-shredding** — AES-256-GCM keys under `.clawql/note-keys/`, destroyed on erase, so git history / R2 mirrors retain ciphertext only. WORM retract events store an opaque `pathId` (not the readable slug). See [memory-obsidian § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/memory/memory-obsidian.md#erasure-crypto-shredding) and [gateway ladder § Erasure](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/specs/inference/gateway-ladder-v0.1.md#erasure).
+
 ---
 
 Merkle-Tree Integrity
