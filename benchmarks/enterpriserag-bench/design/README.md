@@ -30,9 +30,9 @@ Artifacts: `results/retrieval-maxp-k.json` + `.md`. Corpus under `data/` is giti
 
 ## k / MaxP / rerank
 
-1. Offline keyword vs MaxP doc-recall@k on the slice (this harness).
-2. Cross-encoder rerank bakeoff (reuse pageindex-ab `run_rerank_bakeoff.py` patterns) if MaxP shows headroom.
-3. Answer-model spend only after retrieval headroom is clear.
+1. Offline keyword vs **lexical** MaxP doc-recall@k on the slice (this harness) — diagnostic only; a no-lift here is expected because MaxP’s job is how a **cross-encoder** scores long sections, not IDF over char windows.
+2. **Informative next run:** cross-encoder MaxP over full-text passages (Qwen3-4B or a hosted reranker; reuse pageindex-ab `run_rerank_bakeoff.py --maxp` patterns) on a candidate pool — whenever spend resumes.
+3. Answer-model spend only after CE MaxP headroom is clear under the hard+no-harm rule.
 4. **LongMemEval-S** separately for vault / conversation memory.
 
 ## Related
@@ -50,4 +50,4 @@ Confluence + GDrive slices · n_docs=20 189 · n_scored=144 (26 hard / 33 no-h
 | Lexical MaxP vs keyword | **no_hard_lift** (hard ΔR@10 ≈ −0.05; also regresses no-harm) |
 | k-sweep (all) | R@3≈0.77 → R@10≈0.86 → R@20≈0.91 |
 
-**Takeaway:** this corpus has real hard-set headroom. Char-window **lexical** MaxP is not enough — next MaxP try should be **cross-encoder** MaxP (pageindex-ab `run_rerank_bakeoff.py --maxp` pattern) on a candidate pool, not IDF over passages alone. Do not raise default k from this slice alone without the hard+no-harm rule.
+**Takeaway:** hard-set headroom is real; lexical MaxP no-lift is unsurprising. The decision-quality run is **CE MaxP over full-text passages** (Qwen3-4B or hosted reranker), not another lexical pass. Do not raise default k from this slice alone without the hard+no-harm rule.

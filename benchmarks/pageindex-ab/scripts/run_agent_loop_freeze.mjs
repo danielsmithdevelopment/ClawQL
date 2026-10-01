@@ -22,6 +22,7 @@ import {
   isCodegraphTool,
   resolveRepoRoot,
 } from "./agent_loop_tools.mjs";
+import { buildTrackBCellSchedule } from "./track_b_cell_schedule.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -175,7 +176,10 @@ async function openRouterChat({ apiKey, model, messages, tools }) {
       body: JSON.stringify(body),
     });
     const text = await res.text();
-    if (res.ok) return JSON.parse(text);
+    if (res.ok) {
+      const data = JSON.parse(text);
+      return { data, usage: data.usage || null };
+    }
 
     if (isInFlightBudget402(res.status, text) && attempt < maxAttempts) {
       const hdr = res.headers.get("retry-after");
@@ -213,14 +217,28 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
   ];
   const used = new Set();
   let toolCalls = 0;
+  const usage = {
+    prompt_tokens: 0,
+    completion_tokens: 0,
+    total_tokens: 0,
+    turns: 0,
+  };
+  const addUsage = (u) => {
+    if (!u) return;
+    usage.prompt_tokens += Number(u.prompt_tokens || 0);
+    usage.completion_tokens += Number(u.completion_tokens || 0);
+    usage.total_tokens += Number(u.total_tokens || 0);
+    usage.turns += 1;
+  };
 
   for (let turn = 0; turn < maxToolCalls + 2; turn++) {
-    const data = await openRouterChat({
+    const { data, usage: turnUsage } = await openRouterChat({
       apiKey,
       model,
       messages,
       tools: tools.length ? tools : undefined,
     });
+    addUsage(turnUsage);
     const msg = data.choices?.[0]?.message;
     if (!msg) throw new Error("empty OpenRouter message");
     messages.push(msg);
@@ -238,6 +256,7 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
         used_codegraph: [...used].some(isCodegraphTool),
         codegraph_tools_used: [...used].filter(isCodegraphTool),
         tool_calls: toolCalls,
+        usage,
       };
     }
     for (const tc of tcalls) {
@@ -269,6 +288,7 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
     used_codegraph: [...used].some(isCodegraphTool),
     codegraph_tools_used: [...used].filter(isCodegraphTool),
     tool_calls: toolCalls,
+    usage,
     error: "max_turns",
   };
 }
@@ -302,9 +322,6 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
   );
   const toolCtx = { repoRoot: REPO, doc };
 
-  let keys = [...proveKeys, ...noHarmKeys];
-  if (args.limit > 0) keys = keys.slice(0, args.limit);
-
   const answersPath = path.join(args.out, "answers.jsonl");
   const done = new Set();
   // Drop incomplete/error rows (esp. OpenRouter 402) so resume retries them.
@@ -319,18 +336,42 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
     fs.writeFileSync(answersPath, kept.length ? kept.join("\n") + "\n" : "");
   }
 
-  const cells = [];
-  for (const arm of args.arms) {
-    for (const key of keys) {
-      const id = key.id;
-      if (done.has(`${arm}\t${id}`)) continue;
-      cells.push({ arm, key });
-    }
-  }
-  console.error(JSON.stringify({ cells: cells.length, resume_done: done.size, model: args.model }));
+  // Beat pairs first (grep↔codegraph per key), then no-harm pairs, then no-tools.
+  const cells = buildTrackBCellSchedule({
+    proveKeys,
+    noHarmKeys,
+    arms: args.arms,
+    done,
+    limit: args.limit,
+  });
+  fs.writeFileSync(
+    path.join(args.out, "cells-schedule.json"),
+    JSON.stringify(
+      {
+        order: "prove_beat_pairs → no_harm_beat_pairs → no_tools_baseline → diagnostic",
+        resume_done: done.size,
+        pending: cells.map((c) => ({
+          phase: c.phase,
+          arm: c.arm,
+          question_id: c.key.id,
+          cohort: c.cohort,
+        })),
+      },
+      null,
+      2
+    ) + "\n"
+  );
+  console.error(
+    JSON.stringify({
+      cells: cells.length,
+      resume_done: done.size,
+      model: args.model,
+      schedule: "beat_pairs_first",
+    })
+  );
 
   for (const cell of cells) {
-    process.stderr.write(`${cell.arm} ${cell.key.id} … `);
+    process.stderr.write(`${cell.phase} ${cell.arm} ${cell.key.id} … `);
     try {
       const result = await runCell({
         apiKey,
@@ -344,16 +385,23 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
       const row = {
         question_id: cell.key.id,
         arm: cell.arm,
-        cohort: proveKeys.some((k) => k.id === cell.key.id) ? "prove" : "no_harm",
+        cohort: cell.cohort,
+        phase: cell.phase,
         answer: result.answer,
         answer_ok,
         used_codegraph: result.used_codegraph,
         codegraph_tools_used: result.codegraph_tools_used,
         tool_calls: result.tool_calls,
+        usage: result.usage || null,
         model: args.model,
       };
       fs.appendFileSync(answersPath, JSON.stringify(row) + "\n");
-      process.stderr.write(`${answer_ok ? "ok" : "miss"} tools=${result.tool_calls}\n`);
+      const u = result.usage;
+      process.stderr.write(
+        `${answer_ok ? "ok" : "miss"} tools=${result.tool_calls}` +
+          (u ? ` tok=${u.total_tokens}` : "") +
+          "\n"
+      );
     } catch (err) {
       process.stderr.write(`ERR ${err.message}\n`);
       fs.appendFileSync(
@@ -361,6 +409,8 @@ async function runLive(args, lock, proveKeys, noHarmKeys) {
         JSON.stringify({
           question_id: cell.key.id,
           arm: cell.arm,
+          cohort: cell.cohort,
+          phase: cell.phase,
           answer: "",
           answer_ok: false,
           error: String(err.message || err),
@@ -462,11 +512,16 @@ async function main() {
     usage_evidence: {
       arm: "A-codegraph",
       codegraph_tool_names: CODEGRAPH_TOOL_NAMES,
-      record_per_question: ["codegraph_tool_calls", "codegraph_tools_used", "used_codegraph"],
+      record_per_question: ["codegraph_tool_calls", "codegraph_tools_used", "used_codegraph", "usage"],
     },
+    cell_order: "prove_beat_pairs → no_harm_beat_pairs → no_tools_baseline → diagnostic",
     decision:
       "Keep codegraph_* only if Net>=5 (grep+CodeGraph vs grep) AND no-harm pass; tie/no-harm fail => purge.",
+    no_tools_reporting:
+      "Required alongside beat; does not change Net / no-harm keep-purge rule.",
     has_openrouter: Boolean(process.env.OPENROUTER_API_KEY),
+    eval_key:
+      "Prefer secrets.OPENROUTER_API_KEY_TRACK_B (dedicated key limit). See design/TRACK_B_EVAL_KEY.md",
   };
   const outPath = path.join(args.out, "schedule-manifest.json");
   fs.writeFileSync(outPath, JSON.stringify(manifest, null, 2) + "\n");

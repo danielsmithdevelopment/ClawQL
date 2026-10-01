@@ -96,9 +96,16 @@ See [`HUMAN_PASS_ONE_SITTING.md`](HUMAN_PASS_ONE_SITTING.md) — **clear to sign
 
 Live tool loop is wired in-process (`agent_loop_tools.mjs`: `rg` grep, `read_around`, `clawql-codegraph`). Human pass is **passed** (`HUMAN_PASS_RESULT.json`).
 
-**Spend path = GitHub Actions** (same as Vectify / agent-lite / gap-diagnose): `secrets.OPENROUTER_API_KEY` in [`.github/workflows/pageindex-ab.yml`](../../../.github/workflows/pageindex-ab.yml). Do **not** expect the Cloud Agent pod to hold the key.
+**Spend path = GitHub Actions** (same as Vectify / agent-lite / gap-diagnose): prefer dedicated **`secrets.OPENROUTER_API_KEY_TRACK_B`** (own key spending limit); falls back to `secrets.OPENROUTER_API_KEY`. See [`TRACK_B_EVAL_KEY.md`](TRACK_B_EVAL_KEY.md). Do **not** expect the Cloud Agent pod to hold the key.
+
+**Cell order:** prove beat pairs (`A-grep`→`A-codegraph` per key) → no-harm pairs → `A-no-tools` baseline. Mid-run stops then leave complete paired comparisons. Resume skips graded rows.
+
+**Memory baseline:** publish `A-no-tools` rates beside the beat (`memory_baseline` in the decision JSON). Keys the frontier model already knows shrink room for Net≥5. **Does not change** the locked keep/purge rule.
 
 ```bash
+# Size eval key limit from finished cells (artifact answers.jsonl)
+node benchmarks/pageindex-ab/scripts/estimate_track_b_eval_key_limit.mjs /path/to/answers.jsonl
+
 # Trigger Track B spend (PR sentinel — remove after the run lands)
 # Touch: benchmarks/pageindex-ab/.run-agent-loop-freeze
 # Or workflow_dispatch mode=agent-loop-freeze after the workflow is on default branch.

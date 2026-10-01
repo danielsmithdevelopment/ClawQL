@@ -380,7 +380,8 @@ jobs:
 
   # Track B: CodeGraph additive agent-loop freeze (grep+codegraph vs grep).
   # Trigger: PR sentinel .run-agent-loop-freeze OR workflow_dispatch mode=agent-loop-freeze.
-  # Uses secrets.OPENROUTER_API_KEY (same as every other pageindex-ab spend).
+  # Prefer dedicated eval key secrets.OPENROUTER_API_KEY_TRACK_B (own spending limit);
+  # falls back to secrets.OPENROUTER_API_KEY. See design/TRACK_B_EVAL_KEY.md.
   # Remove sentinel after the run lands.
   agent-loop-freeze:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.mode == 'agent-loop-freeze') || github.event_name == 'pull_request' }}
@@ -400,17 +401,29 @@ jobs:
             echo "::notice::No .run-agent-loop-freeze sentinel; skipping Track B spend"
             echo "run=0" >> "$GITHUB_OUTPUT"
           fi
-      - name: Require OpenRouter
+      - name: Require OpenRouter (Track B eval key preferred)
         if: ${{ steps.gate.outputs.run == '1' }}
+        id: orkey
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEY_TRACK_B: ${{ secrets.OPENROUTER_API_KEY_TRACK_B }}
+          OPENROUTER_API_KEY_FALLBACK: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
-          if [ -z "$OPENROUTER_API_KEY" ]; then
-            echo "OPENROUTER_API_KEY secret required for agent-loop-freeze"
+          if [ -n "$OPENROUTER_API_KEY_TRACK_B" ]; then
+            echo "key_source=OPENROUTER_API_KEY_TRACK_B" >> "$GITHUB_OUTPUT"
+            KEY="$OPENROUTER_API_KEY_TRACK_B"
+          elif [ -n "$OPENROUTER_API_KEY_FALLBACK" ]; then
+            echo "key_source=OPENROUTER_API_KEY" >> "$GITHUB_OUTPUT"
+            echo "::warning::OPENROUTER_API_KEY_TRACK_B unset; using shared OPENROUTER_API_KEY (collides with other spend limits)"
+            KEY="$OPENROUTER_API_KEY_FALLBACK"
+          else
+            echo "OPENROUTER_API_KEY_TRACK_B or OPENROUTER_API_KEY secret required for agent-loop-freeze"
             exit 1
           fi
+          # Mask + export for later steps without printing the value.
+          echo "::add-mask::$KEY"
+          echo "OPENROUTER_API_KEY=$KEY" >> "$GITHUB_ENV"
           code=$(curl -sS -o /tmp/or-key.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+            -H "Authorization: Bearer ${KEY}" \
             https://openrouter.ai/api/v1/key || true)
           echo "openrouter_key_http=$code"
           if [ "$code" != "200" ]; then
@@ -418,12 +431,14 @@ jobs:
             cat /tmp/or-key.json || true
             exit 1
           fi
-          # Surface remaining/usage without printing secrets.
+          # Surface limit/usage fields only — not a substitute for Credits page balance.
           node -e '
             const d=JSON.parse(require("fs").readFileSync("/tmp/or-key.json","utf8"));
             const data=d.data||d;
             const pick=(o,ks)=>ks.reduce((a,k)=>a??o?.[k],undefined);
             console.log(JSON.stringify({
+              key_probe_note: "limit_remaining is key accounting, not Credits wallet balance",
+              limit: pick(data,["limit"]),
               limit_remaining: pick(data,["limit_remaining","limitRemaining"]),
               usage: pick(data,["usage","usage_daily"]),
               is_free_tier: pick(data,["is_free_tier","isFreeTier"]),
@@ -479,7 +494,7 @@ jobs:
       - name: Track B additive agent-loop spend
         if: ${{ steps.gate.outputs.run == '1' }}
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # OPENROUTER_API_KEY set in Require step (Track B key preferred).
           PAGEINDEX_AB_AGENT_MODEL: ${{ steps.trackb.outputs.model }}
           VECTIFY_FAIR_MODEL: ${{ steps.trackb.outputs.model }}
           CLAWQL_OPENROUTER_HTTP_REFERER: https://clawql.com

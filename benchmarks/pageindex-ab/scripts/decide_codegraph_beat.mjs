@@ -40,7 +40,7 @@ function main() {
       .keys || []
     ).map((k) => k.id)
   );
-  const rows = loadJsonl(answersPath);
+  const rows = loadJsonl(answersPath).filter((r) => !r.error);
   const by = new Map(); // qid -> arm -> row
   for (const r of rows) {
     if (!by.has(r.question_id)) by.set(r.question_id, {});
@@ -56,12 +56,21 @@ function main() {
   let no_harm_n = 0;
   let used_cg_prove = 0;
   let used_cg_harm = 0;
+  let no_tools_prove_ok = 0;
+  let no_tools_prove_n = 0;
+  let no_tools_harm_ok = 0;
+  let no_tools_harm_n = 0;
   const paired = [];
 
   for (const qid of prove) {
     const arms = by.get(qid) || {};
     const g = arms["A-grep"];
     const t = arms["A-codegraph"];
+    const nt = arms["A-no-tools"];
+    if (nt) {
+      no_tools_prove_n++;
+      if (nt.answer_ok) no_tools_prove_ok++;
+    }
     if (!g || !t) continue;
     prove_n++;
     const gOk = Boolean(g.answer_ok);
@@ -71,16 +80,34 @@ function main() {
     if (t.used_codegraph) used_cg_prove++;
     if (tOk && !gOk) W++;
     if (gOk && !tOk) L++;
-    paired.push({ id: qid, cohort: "prove", grep_ok: gOk, treatment_ok: tOk, used_codegraph: Boolean(t.used_codegraph) });
+    paired.push({
+      id: qid,
+      cohort: "prove",
+      grep_ok: gOk,
+      treatment_ok: tOk,
+      no_tools_ok: nt ? Boolean(nt.answer_ok) : null,
+      used_codegraph: Boolean(t.used_codegraph),
+    });
   }
   for (const qid of noHarm) {
     const arms = by.get(qid) || {};
     const t = arms["A-codegraph"];
+    const nt = arms["A-no-tools"];
+    if (nt) {
+      no_tools_harm_n++;
+      if (nt.answer_ok) no_tools_harm_ok++;
+    }
     if (!t) continue;
     no_harm_n++;
     if (t.answer_ok) no_harm_cg_ok++;
     if (t.used_codegraph) used_cg_harm++;
-    paired.push({ id: qid, cohort: "no_harm", treatment_ok: Boolean(t.answer_ok), used_codegraph: Boolean(t.used_codegraph) });
+    paired.push({
+      id: qid,
+      cohort: "no_harm",
+      treatment_ok: Boolean(t.answer_ok),
+      no_tools_ok: nt ? Boolean(nt.answer_ok) : null,
+      used_codegraph: Boolean(t.used_codegraph),
+    });
   }
 
   const net = W - L;
@@ -98,12 +125,30 @@ function main() {
         ? "blocked_incomplete_spend"
         : "purge_codegraph_from_bundle";
 
+  // Memory baseline: report only — does not change Net / no-harm keep-purge rule.
+  const memory_baseline = {
+    does_not_change_beat: true,
+    prove: {
+      n: no_tools_prove_n,
+      ok: no_tools_prove_ok,
+      rate: no_tools_prove_n ? no_tools_prove_ok / no_tools_prove_n : null,
+    },
+    no_harm: {
+      n: no_tools_harm_n,
+      ok: no_tools_harm_ok,
+      rate: no_tools_harm_n ? no_tools_harm_ok / no_tools_harm_n : null,
+    },
+    note:
+      "Keys answered from training memory alone tend to go right in both beat arms and shrink room for Net≥5. Publish alongside the locked decision; do not keep on memory alone.",
+  };
+
   const report = {
     tag: "pageindex-ab-codegraph-beat-v1",
     lock_status: lock.status,
     answers_path: answersPath,
     prove: { n: prove_n, grep_ok: prove_grep_ok, treatment_ok: prove_cg_ok, W, L, net, used_codegraph: used_cg_prove },
     no_harm: { n: no_harm_n, treatment_ok: no_harm_cg_ok, pass: no_harm_pass, used_codegraph: used_cg_harm },
+    memory_baseline,
     outcome,
     freeze,
     decision_rule: lock.beat,
