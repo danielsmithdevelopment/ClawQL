@@ -506,11 +506,26 @@ jobs:
             --arms A-no-tools,A-grep,A-codegraph \
             --out benchmarks/pageindex-ab/results/agent-loop-freeze/
       - name: Decide CodeGraph beat / tie / purge
-        if: ${{ steps.gate.outputs.run == '1' }}
+        if: ${{ always() && steps.gate.outputs.run == '1' }}
+        id: beat
         run: |
+          set +e
           node benchmarks/pageindex-ab/scripts/decide_codegraph_beat.mjs \
             benchmarks/pageindex-ab/results/agent-loop-freeze/answers.jsonl \
             benchmarks/pageindex-ab/design/codegraph-beat-decision.json
+          code=$?
+          echo "exit=$code" >> "$GITHUB_OUTPUT"
+          if [ -f benchmarks/pageindex-ab/design/codegraph-beat-decision.json ]; then
+            outcome=$(node -e 'const d=require("./benchmarks/pageindex-ab/design/codegraph-beat-decision.json"); console.log(d.outcome||"")')
+            echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
+            echo "Track B outcome=$outcome (decide exit $code)"
+          fi
+          # Exit 2 = incomplete (resume later). Exit 0 = terminal beat. Other = hard fail.
+          if [ "$code" -eq 2 ]; then
+            echo "::warning::Track B decision incomplete — resume after fixing failed cells"
+            exit 0
+          fi
+          exit "$code"
       - name: Upload Track B artifacts
         if: ${{ always() && steps.gate.outputs.run == '1' }}
         uses: actions/upload-artifact@v4

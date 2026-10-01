@@ -204,6 +204,10 @@ export function runTool(name, args, ctx) {
     if (!path.isAbsolute(p)) p = path.join(repoRoot, p);
     if (!p.startsWith(repoRoot)) return "error: path outside repo";
     if (!fs.existsSync(p)) return `error: missing file ${args.path}`;
+    const st = fs.statSync(p);
+    if (st.isDirectory()) {
+      return `error: path is a directory (not a file): ${path.relative(repoRoot, p)}`;
+    }
     const text = fs.readFileSync(p, "utf8");
     const lines = text.split("\n");
     let start = args.start_line != null ? Math.max(1, Number(args.start_line)) : 1;

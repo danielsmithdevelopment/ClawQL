@@ -269,7 +269,12 @@ async function runCell({ apiKey, model, armId, key, toolCtx, maxToolCalls }) {
       } catch {
         args = {};
       }
-      const content = runTool(name, args, toolCtx);
+      let content;
+      try {
+        content = runTool(name, args, toolCtx);
+      } catch (toolErr) {
+        content = `error: ${String(toolErr.message || toolErr)}`;
+      }
       messages.push({
         role: "tool",
         tool_call_id: tc.id,
