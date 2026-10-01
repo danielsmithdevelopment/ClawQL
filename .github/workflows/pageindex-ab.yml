@@ -330,13 +330,17 @@ jobs:
         id: fair
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "model=${{ inputs.fair_model }}" >> "$GITHUB_OUTPUT"
-            echo "index_model=${{ inputs.index_model }}" >> "$GITHUB_OUTPUT"
-            echo "trials=${{ inputs.fair_trials }}" >> "$GITHUB_OUTPUT"
+            {
+              echo "model=${{ inputs.fair_model }}"
+              echo "index_model=${{ inputs.index_model }}"
+              echo "trials=${{ inputs.fair_trials }}"
+            } >> "$GITHUB_OUTPUT"
           else
-            echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
-            echo "index_model=openai/gpt-4o-mini" >> "$GITHUB_OUTPUT"
-            echo "trials=3" >> "$GITHUB_OUTPUT"
+            {
+              echo "model=anthropic/claude-sonnet-4.6"
+              echo "index_model=openai/gpt-4o-mini"
+              echo "trials=3"
+            } >> "$GITHUB_OUTPUT"
           fi
       - name: Vectify arm (IETF docs + shared finalize + majority)
         if: ${{ steps.gate.outputs.run == '1' }}
@@ -469,13 +473,15 @@ jobs:
         if: ${{ steps.gate.outputs.run == '1' }}
         id: trackb
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "model=${{ inputs.fair_model }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "model=anthropic/claude-sonnet-4.6" >> "$GITHUB_OUTPUT"
-          fi
-          # Fresh retest dir — do NOT resume the voided broken-grep run.
-          echo "out=benchmarks/pageindex-ab/results/agent-loop-freeze-retest" >> "$GITHUB_OUTPUT"
+          {
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "model=${{ inputs.fair_model }}"
+            else
+              echo "model=anthropic/claude-sonnet-4.6"
+            fi
+            # Fresh retest dir — do NOT resume the voided broken-grep run.
+            echo "out=benchmarks/pageindex-ab/results/agent-loop-freeze-retest"
+          } >> "$GITHUB_OUTPUT"
       - name: Offline smoke — grep sees no-harm gold files
         if: ${{ steps.gate.outputs.run == '1' }}
         run: node benchmarks/pageindex-ab/scripts/smoke_grep_no_harm.mjs
@@ -532,12 +538,14 @@ jobs:
             "$OUT/answers.jsonl" \
             benchmarks/pageindex-ab/design/codegraph-beat-decision.json
           code=$?
-          echo "exit=$code" >> "$GITHUB_OUTPUT"
-          if [ -f benchmarks/pageindex-ab/design/codegraph-beat-decision.json ]; then
-            outcome=$(node -e 'const d=require("./benchmarks/pageindex-ab/design/codegraph-beat-decision.json"); console.log(d.outcome||"")')
-            echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
-            echo "Track B outcome=$outcome (decide exit $code)"
-          fi
+          {
+            echo "exit=$code"
+            if [ -f benchmarks/pageindex-ab/design/codegraph-beat-decision.json ]; then
+              outcome=$(node -e 'const d=require("./benchmarks/pageindex-ab/design/codegraph-beat-decision.json"); console.log(d.outcome||"")')
+              echo "outcome=$outcome"
+              echo "Track B outcome=$outcome (decide exit $code)" >&2
+            fi
+          } >> "$GITHUB_OUTPUT"
           if [ "$code" -eq 2 ]; then
             echo "::warning::Track B decision incomplete — resume after fixing failed cells"
             exit 0
