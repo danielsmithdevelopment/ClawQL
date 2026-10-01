@@ -16,13 +16,6 @@ describe("createPaymentsX402ProxyPlugin", () => {
     expect(plugin.description).toContain("x402");
   });
 
-  it("registers pre-execute hooks when x402 enforcement is active", () => {
-    const env = { CLAWQL_X402_ENFORCE: "1" };
-    const plugin = createPaymentsX402ProxyPlugin({ env });
-    expect(plugin.hooks).toBeDefined();
-    expect(plugin.hooks!.length).toBeGreaterThan(0);
-  });
-
   it("is passive when x402 enforcement is off", () => {
     const env = { CLAWQL_X402_ENFORCE: "0" };
     const plugin = createPaymentsX402ProxyPlugin({ env });

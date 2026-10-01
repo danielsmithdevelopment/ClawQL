@@ -41,6 +41,7 @@ export type ClawQLHorizontalTierSpec = {
     readonly langfuseEval?: { readonly enabled?: boolean };
   };
   readonly observability?: { readonly enabled?: boolean };
+  readonly chatgptExtensions?: { readonly enabled?: boolean };
 };
 
 const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional();
@@ -91,6 +92,7 @@ const instanceBodyForFlagsSchema = z
       .strict()
       .optional(),
     observability: toggle,
+    chatgptExtensions: toggle,
   })
   .passthrough();
 
@@ -191,6 +193,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableAnydoc: false,
     enableLangfuseEval: false,
     enableObservability: false,
+    enableChatgptExtensions: true,
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
@@ -218,6 +221,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableOntologyWrites: tierEnabled(spec.ontology?.writes, d.enableOntologyWrites),
     enableLangfuseEval: tierEnabled(spec.ouroboros?.langfuseEval, d.enableLangfuseEval),
     enableObservability: tierEnabled(spec.observability, d.enableObservability),
+    enableChatgptExtensions: tierEnabled(spec.chatgptExtensions, d.enableChatgptExtensions),
   };
 }
 
@@ -272,6 +276,7 @@ function mergeHorizontal(
       langfuseEval: mergeToggle(base.ouroboros?.langfuseEval, override.ouroboros?.langfuseEval),
     },
     observability: mergeToggle(base.observability, override.observability),
+    chatgptExtensions: mergeToggle(base.chatgptExtensions, override.chatgptExtensions),
   };
 }
 

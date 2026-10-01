@@ -23,7 +23,6 @@ export {
   isShipableLowNativeWrite,
   isShipableNativeWrite,
   type GenerateOntologyOptions,
-  _relationshipToolNameForTests,
 } from "./generate.js";
 export {
   createOntologyEntity,

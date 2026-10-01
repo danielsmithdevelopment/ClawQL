@@ -31,6 +31,7 @@ import {
   resolveHttpMcpProtocolVersion,
   shouldUseStatelessHttpTransport,
 } from "../mcp/mcp-http-protocol.js";
+import { chatgptExtensionsDiscoverFragment } from "clawql-chatgpt-extensions";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   getVaultStartupStatus,
@@ -80,6 +81,11 @@ import {
   buildGatewayAuthConfig,
   createInferenceVirtualKeyClaimsResolver,
 } from "../composition/gateway-auth.js";
+
+function resolveChatgptDiscoverExtensions(): Record<string, unknown> | undefined {
+  if (!resolvePluginCompositionFlags().enableChatgptExtensions) return undefined;
+  return chatgptExtensionsDiscoverFragment();
+}
 
 /** @deprecated Import from `../composition/gateway-auth.js` instead. */
 export { createInferenceVirtualKeyClaimsResolver };
@@ -571,6 +577,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         protocolVersion,
         clientInfo: body.params?.clientInfo,
         clientCapabilities: body.params?.clientCapabilities,
+        extensions: resolveChatgptDiscoverExtensions(),
       });
       res.status(200).json({
         jsonrpc: "2.0",
@@ -687,6 +694,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
         protocolVersion,
         clientInfo: body.clientInfo,
         clientCapabilities: body.clientCapabilities,
+        extensions: resolveChatgptDiscoverExtensions(),
       })
     );
   });

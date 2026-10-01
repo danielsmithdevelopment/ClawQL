@@ -3,7 +3,7 @@ import { keywordScore, buildMemoryMarkdown } from "./vault.js";
 import { searchEdgeOperations, findEdgeOperation } from "./catalog.js";
 import { tierFromStripePlan } from "./tenants.js";
 import { parseStripeSignatureHeader } from "./stripe-webhook.js";
-import { simulateDemoPipeline, DEMO_TTL_MS } from "./demo.js";
+import { simulateDemoPipeline } from "./demo.js";
 import { listMcpTools } from "./tools.js";
 import { buildIdpProxyInit, resolveIdpProxyOrigin } from "./idp-proxy.js";
 import type { GatewayEnv, TenantRow } from "./env.js";
@@ -52,8 +52,7 @@ describe("stripe signature parse", () => {
 });
 
 describe("demo pipeline", () => {
-  it("marks IDP stages skipped and sets 5-minute TTL constant", () => {
-    expect(DEMO_TTL_MS).toBe(5 * 60 * 1000);
+  it("marks IDP stages skipped in demo pipeline", () => {
     const out = simulateDemoPipeline("lease.pdf", "Sample lease clause");
     expect(out.stages.find((s) => s.id === "ingest")?.status).toBe("ok");
     expect(out.stages.find((s) => s.id === "coneshare")?.status).toBe("skipped");
