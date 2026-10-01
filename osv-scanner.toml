@@ -23,4 +23,4 @@ name = "next"
 ecosystem = "npm"
 version = "16.1.7"
 vulnerability.ignore = true
-reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.3.3 — safe to delete once no branch locks reference 16.1.7."
+reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.3.6 — safe to delete once no branch locks reference 16.1.7."
