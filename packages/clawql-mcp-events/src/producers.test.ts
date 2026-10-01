@@ -29,7 +29,7 @@ function startEchoReceiver(): Promise<{
     req.on("data", (c) => chunks.push(c));
     req.on("end", () => {
       const raw = Buffer.concat(chunks).toString("utf8");
-      let parsed: Record<string, unknown> = {};
+      let parsed: Record<string, unknown>;
       try {
         parsed = JSON.parse(raw) as Record<string, unknown>;
       } catch {

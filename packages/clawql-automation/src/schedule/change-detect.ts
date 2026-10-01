@@ -195,7 +195,7 @@ export function canonicalizeForHash(
   if (value === null || typeof value !== "object") return value;
 
   if (Array.isArray(value)) {
-    const mapped = value.map((item, i) =>
+    const mapped = value.map((item) =>
       canonicalizeForHash(item, arraySortKeys, path ? `${path}[]` : "[]")
     );
     const sortKey = arraySortKeys[path] ?? arraySortKeys[path.replace(/\[\]$/, "")];
