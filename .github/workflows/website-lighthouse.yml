@@ -1,15 +1,32 @@
 # Lab Lighthouse against a production `next build` + standalone `node server.js` (not Cloudflare Workers).
 # Next 16+ rejects `next start` when `output: 'standalone'` is set (same layout as apps/docs/Dockerfile).
-# Manual / scheduled only — not part of normal PR CI (Chrome flakes; a11y regressions stay gated by
-# Playwright + axe in root ci.yml). See docs/website/website-performance-workers-guardrails.md.
+# Catches client-side / HTML regressions, WCAG-ish accessibility, SEO metadata, and best-practices headers.
+# See docs/website/website-performance-workers-guardrails.md for what this does *not* cover (Worker CPU, waitUntil).
 
 name: Website Lighthouse
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/docs/**"
+      - "packages/clawql-analytics/**"
+      - "packages/clawql-auth/**"
+      - "packages/clawql-audit/**"
+      - "packages/clawql-merkle/**"
+      - ".github/workflows/website-lighthouse.yml"
+      - "scripts/dev/assert-lighthouse-scores.mjs"
+  push:
+    branches: [main]
+    paths:
+      - "apps/docs/**"
+      - "packages/clawql-analytics/**"
+      - "packages/clawql-auth/**"
+      - "packages/clawql-audit/**"
+      - "packages/clawql-merkle/**"
+      - ".github/workflows/website-lighthouse.yml"
+      - "scripts/dev/assert-lighthouse-scores.mjs"
   workflow_dispatch:
-  schedule:
-    # Weekly lab run (Sunday 06:15 UTC) — advisory only; does not block merges.
-    - cron: "15 6 * * 0"
 
 concurrency:
   group: website-lighthouse-${{ github.workflow }}-${{ github.ref }}

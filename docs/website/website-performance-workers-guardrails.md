@@ -14,12 +14,12 @@ Root cause class: **too much work per invocation** on **Workers** (CPU / lifetim
 
 ---
 
-## Lab: Lighthouse (GitHub Actions, not PR CI)
+## CI: Lighthouse (GitHub Actions)
 
-Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)** — **`workflow_dispatch`** + weekly schedule only. It is **not** part of normal PR CI (flaky Chrome under Actions load). PR a11y stays on **Playwright + axe** in root **`ci.yml`**.
+Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)**
 
-- Builds **`apps/docs/`** with **`npm run build`**, serves standalone **`node server.js`**, runs **Lighthouse** **desktop** preset then a **mobile form-factor** run (`--form-factor=mobile --screenEmulation.mobile` in Lighthouse **13+**; there is no `--preset=mobile`) against **`http://127.0.0.1:3000/`**.
-- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged).
+- Builds **`apps/docs/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** **desktop** preset then a **mobile form-factor** run (`--form-factor=mobile --screenEmulation.mobile` in Lighthouse **13+**; there is no `--preset=mobile`) against **`http://127.0.0.1:3000/`**.
+- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars in CI or locally if needed). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged) so CPU throttling does not fail every PR.
 
 ### What Lighthouse CI **does** catch
 
