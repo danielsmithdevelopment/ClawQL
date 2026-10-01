@@ -92,4 +92,4 @@ Gold_recall still climbs (flash 0.65→0.77) but answer accuracy does not. Senti
 | `export_rerank_candidates.mjs` | kw∪vec pools; use `--max-chars 100000` for MaxP |
 | `run_rerank_bakeoff.py` | `--maxp` / `--blend` / `--heading-path` / `--max-length` |
 | `run_rerank_model_grid.py` | Model-scored k×±rerank (OpenRouter) |
-| `requirements-rerank.txt` | torch + sentence-transformers |
+| `rerank-python-deps.txt` | torch + sentence-transformers |
