@@ -1,5 +1,3 @@
-# Track B freeze — void, retest in progress
+# Track B freeze — complete
 
-See [`TRACK_B_VOID_RETEST.md`](TRACK_B_VOID_RETEST.md).
-
-Prior keep withdrawn. Retest path: ripgrep-hardened grep tool → offline smoke → A-grep no-harm gate ≥5/6 → paired 18×2 spend.
+Terminal retest: [`TRACK_B_RESULT.md`](TRACK_B_RESULT.md) — **`tie_purge`** / `purge_codegraph_from_bundle` (Net=0 vs working grep).
