@@ -113,7 +113,7 @@ async function resolvePdfBuffer(input: InspectPdfInputDecoded): Promise<Buffer> 
 }
 
 /** Core inspect — used by tests with an injected API. */
-export async function runInspectPdfWithApi(
+async function runInspectPdfWithApiImpl(
   input: InspectPdfInputDecoded,
   api: PdfInspectorApi
 ): Promise<InspectPdfResult> {
@@ -165,7 +165,7 @@ export async function runInspectPdfWithApi(
   };
 }
 
-export async function executeInspectPdf(input: InspectPdfInputDecoded): Promise<InspectPdfResult> {
+async function executeInspectPdfImpl(input: InspectPdfInputDecoded): Promise<InspectPdfResult> {
   if (!pdfInspectorToolEnabled()) {
     return {
       ok: false,
@@ -195,4 +195,36 @@ export async function handleInspectPdfToolInput(
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Core inspect with an injected API (Effect-primary). */
+export function runInspectPdfWithApiEffect(
+  input: InspectPdfInputDecoded,
+  api: PdfInspectorApi
+): Effect.Effect<InspectPdfResult, Error> {
+  return Effect.tryPromise({ try: () => runInspectPdfWithApiImpl(input, api), catch: fsError });
+}
+
+/** Promise façade for tests that still await inspect with injected API. */
+export async function runInspectPdfWithApi(
+  input: InspectPdfInputDecoded,
+  api: PdfInspectorApi
+): Promise<InspectPdfResult> {
+  return Effect.runPromise(runInspectPdfWithApiEffect(input, api));
+}
+
+/** Execute inspect_pdf against the loaded PDF inspector (Effect-primary). */
+export function executeInspectPdfEffect(
+  input: InspectPdfInputDecoded
+): Effect.Effect<InspectPdfResult, Error> {
+  return Effect.tryPromise({ try: () => executeInspectPdfImpl(input), catch: fsError });
+}
+
+/** Promise façade for callers that still await inspect_pdf. */
+export async function executeInspectPdf(input: InspectPdfInputDecoded): Promise<InspectPdfResult> {
+  return Effect.runPromise(executeInspectPdfEffect(input));
 }

@@ -80,7 +80,7 @@ export type ClassifierHttpResponse = {
 };
 
 /** POST to remote classifier; pure HTTP IO (no result shaping). */
-export async function postClassifierHttp(
+async function postClassifierHttpImpl(
   input: ClassifyDocumentInput,
   baseUrl: string
 ): Promise<ClassifierHttpResponse> {
@@ -183,4 +183,23 @@ export async function handleClassifyDocumentToolInput(
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
+}
+
+/** POST to remote classifier (Effect-primary). */
+export function postClassifierHttpEffect(
+  input: ClassifyDocumentInput,
+  baseUrl: string
+): Effect.Effect<ClassifierHttpResponse, Error> {
+  return Effect.tryPromise({
+    try: () => postClassifierHttpImpl(input, baseUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for callers that still await classifier HTTP. */
+export async function postClassifierHttp(
+  input: ClassifyDocumentInput,
+  baseUrl: string
+): Promise<ClassifierHttpResponse> {
+  return Effect.runPromise(postClassifierHttpEffect(input, baseUrl));
 }

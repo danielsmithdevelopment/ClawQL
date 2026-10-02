@@ -122,7 +122,7 @@ function resolveFormat(
 }
 
 /** Core convert — used by tests with an injected API. */
-export async function runConvertDocumentWithApi(
+async function runConvertDocumentWithApiImpl(
   input: ConvertDocumentInputDecoded,
   api: AnydocApi
 ): Promise<ConvertDocumentResult> {
@@ -155,7 +155,7 @@ export async function runConvertDocumentWithApi(
   }
 }
 
-export async function executeConvertDocument(
+async function executeConvertDocumentImpl(
   input: ConvertDocumentInputDecoded
 ): Promise<ConvertDocumentResult> {
   if (!anydocToolEnabled()) {
@@ -187,4 +187,38 @@ export async function handleConvertDocumentToolInput(
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Core convert with an injected API (Effect-primary). */
+export function runConvertDocumentWithApiEffect(
+  input: ConvertDocumentInputDecoded,
+  api: AnydocApi
+): Effect.Effect<ConvertDocumentResult, Error> {
+  return Effect.tryPromise({ try: () => runConvertDocumentWithApiImpl(input, api), catch: fsError });
+}
+
+/** Promise façade for tests that still await convert with injected API. */
+export async function runConvertDocumentWithApi(
+  input: ConvertDocumentInputDecoded,
+  api: AnydocApi
+): Promise<ConvertDocumentResult> {
+  return Effect.runPromise(runConvertDocumentWithApiEffect(input, api));
+}
+
+/** Execute convert_document against the loaded anydoc API (Effect-primary). */
+export function executeConvertDocumentEffect(
+  input: ConvertDocumentInputDecoded
+): Effect.Effect<ConvertDocumentResult, Error> {
+  return Effect.tryPromise({ try: () => executeConvertDocumentImpl(input), catch: fsError });
+}
+
+/** Promise façade for callers that still await convert_document. */
+export async function executeConvertDocument(
+  input: ConvertDocumentInputDecoded
+): Promise<ConvertDocumentResult> {
+  return Effect.runPromise(executeConvertDocumentEffect(input));
 }

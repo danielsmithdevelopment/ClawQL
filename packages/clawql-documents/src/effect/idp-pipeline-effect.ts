@@ -239,7 +239,7 @@ export function runIdpPipelineEffect(
         );
 
         if (Result.isSuccess(execEither)) {
-          const text = mcpResultText(execResult.succeed);
+          const text = mcpResultText(execEither.success);
           const parsed = parseExecuteText(text);
           if (parsed.ok) {
             ok = true;
@@ -252,8 +252,9 @@ export function runIdpPipelineEffect(
           error = parsed.error ?? "execute returned error payload";
           excerpt = parsed.excerpt;
         } else {
-          const cause = execResult.fail.cause;
-          error = cause instanceof Error ? cause.message : String(cause ?? execResult.fail.reason);
+          const fail = execEither.failure;
+          const cause = fail.cause;
+          error = cause instanceof Error ? cause.message : String(cause ?? fail.reason);
         }
 
         if (attempts <= maxRetries && retryDelayMs > 0) {

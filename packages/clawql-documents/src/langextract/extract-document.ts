@@ -396,7 +396,7 @@ export type LangextractHttpResponse = {
 };
 
 /** POST to LangExtract sidecar; pure HTTP IO (no result shaping). */
-export async function postLangextractHttp(
+async function postLangextractHttpImpl(
   input: ExtractDocumentInput,
   baseUrl: string
 ): Promise<LangextractHttpResponse> {
@@ -493,4 +493,23 @@ export async function handleExtractDocumentToolInput(
   return {
     content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
   };
+}
+
+/** POST to LangExtract sidecar (Effect-primary). */
+export function postLangextractHttpEffect(
+  input: ExtractDocumentInput,
+  baseUrl: string
+): Effect.Effect<LangextractHttpResponse, Error> {
+  return Effect.tryPromise({
+    try: () => postLangextractHttpImpl(input, baseUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for callers that still await LangExtract HTTP. */
+export async function postLangextractHttp(
+  input: ExtractDocumentInput,
+  baseUrl: string
+): Promise<LangextractHttpResponse> {
+  return Effect.runPromise(postLangextractHttpEffect(input, baseUrl));
 }

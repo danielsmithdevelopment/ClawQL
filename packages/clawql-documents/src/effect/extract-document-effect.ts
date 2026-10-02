@@ -8,17 +8,16 @@ import { Effect } from "effect";
 import {
   heuristicExtract,
   parseLangextractHttpResponse,
-  postLangextractHttp,
+  postLangextractHttpEffect,
   type ExtractDocumentInput,
   type ExtractDocumentResult,
 } from "../langextract/extract-document.js";
 import { langextractBaseUrl } from "../langextract/env.js";
 import { DocumentsError } from "./documents-errors.js";
-import { documentsFromPromise } from "./documents-effect-utils.js";
 
 /**
  * Extract pipeline as Effect.gen.
- * Remote fetch stays behind {@link documentsFromPromise}; heuristic + parse are sync.
+ * Remote fetch via {@link postLangextractHttpEffect}; heuristic + parse are sync.
  */
 export function executeExtractDocumentEffect(
   input: ExtractDocumentInput
@@ -28,7 +27,15 @@ export function executeExtractDocumentEffect(
     if (!baseUrl) {
       return heuristicExtract(input);
     }
-    const response = yield* documentsFromPromise(() => postLangextractHttp(input, baseUrl));
+    const response = yield* postLangextractHttpEffect(input, baseUrl).pipe(
+      Effect.mapError(
+        (cause) =>
+          new DocumentsError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            cause,
+          })
+      )
+    );
     return parseLangextractHttpResponse(response);
   });
 }

@@ -2,6 +2,7 @@ import { readFile, realpath, stat } from "node:fs/promises";
 import { cwd } from "node:process";
 import { isAbsolute, resolve } from "node:path";
 import { pdfInspectorFileRootsEnv } from "./env.js";
+import { Effect } from "effect";
 
 function isPathInsideRoot(root: string, file: string): boolean {
   const prefix = root.endsWith("/") ? root : `${root}/`;
@@ -31,7 +32,7 @@ async function resolveAllowRoots(): Promise<string[]> {
  * Read a PDF from an allowlisted filesystem path.
  * Throws a clear Error when the path is outside roots or not a regular file.
  */
-export async function readPdfPathAllowlisted(pathInput: string): Promise<Buffer> {
+async function readPdfPathAllowlistedImpl(pathInput: string): Promise<Buffer> {
   const abs = isAbsolute(pathInput) ? pathInput : resolve(cwd(), pathInput);
   let realFile: string;
   try {
@@ -59,4 +60,18 @@ export async function readPdfPathAllowlisted(pathInput: string): Promise<Buffer>
     throw new Error(`pdf exceeds 100 MiB limit (${st.size} bytes)`);
   }
   return readFile(realFile);
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Read a PDF from an allowlisted filesystem path (Effect-primary). */
+export function readPdfPathAllowlistedEffect(pathInput: string): Effect.Effect<Buffer, Error> {
+  return Effect.tryPromise({ try: () => readPdfPathAllowlistedImpl(pathInput), catch: fsError });
+}
+
+/** Promise façade for callers that still await allowlisted PDF reads. */
+export async function readPdfPathAllowlisted(pathInput: string): Promise<Buffer> {
+  return Effect.runPromise(readPdfPathAllowlistedEffect(pathInput));
 }
