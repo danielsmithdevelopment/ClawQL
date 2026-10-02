@@ -62,5 +62,5 @@ export function mcpX402BeforeCallToolEffect(
   }).pipe(
     Effect.asVoid,
     Effect.provide(paymentsServicesLiveLayer(env))
-  ) as Effect.Effect<void, Error>;
+  ) as unknown as Effect.Effect<void, Error>;
 }

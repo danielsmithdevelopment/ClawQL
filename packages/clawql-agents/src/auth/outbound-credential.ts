@@ -76,7 +76,7 @@ export const getOutboundCredential = (
         );
       }
 
-      const token: StoredOAuthToken = result.right;
+      const token: StoredOAuthToken = result.success;
       return { kind: "bearer" as const, token: token.accessToken };
     }
 
@@ -101,7 +101,7 @@ export const getOutboundCredential = (
 
       return {
         kind: "headers" as const,
-        headers: { Authorization: `Bearer ${apiKeyResult.right}` },
+        headers: { Authorization: `Bearer ${apiKeyResult.success}` },
       };
     }
 
