@@ -128,8 +128,8 @@ function makeTailService(
             for (const line of lines) {
               if (!line.trim()) continue;
               const result = await Effect.runPromise(denial.ingestLine(line).pipe(Effect.result));
-              if (result._tag === "Success" && result.right) {
-                await Effect.runPromise(options.onEvent(result.right));
+              if (result._tag === "Success" && result.success) {
+                await Effect.runPromise(options.onEvent(result.success));
               }
             }
           };

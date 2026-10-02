@@ -47,7 +47,7 @@ export function seedsPollTickEffect(
 
 export type SeedsPollerHandle = {
   readonly stop: () => void;
-  readonly fiber: Fiber.RuntimeFiber<never, never>;
+  readonly fiber: Fiber.Fiber<never, never>;
 };
 
 /**
@@ -85,10 +85,10 @@ export function startSeedsPollerFiberEffect(
     });
 
     const loop = Effect.forever(
-      Effect.sleep(Duration.millis(pollIntervalMs)).pipe(Effect.zipRight(maybeTick))
+      Effect.sleep(Duration.millis(pollIntervalMs)).pipe(Effect.andThen(maybeTick))
     );
 
-    const fiber = yield* Effect.forkDaemon(loop);
+    const fiber = yield* Effect.forkDetach(loop);
 
     return {
       fiber,

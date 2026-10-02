@@ -240,7 +240,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   ) {}
 
   private ensureOpen(): Effect.Effect<DuckDbHandle, DataError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (this.handle) return this.handle;
       this.handle = yield* openDuckDbEffect(this.path);
       return this.handle;
@@ -248,7 +248,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   private applySchema(replace: boolean): Effect.Effect<void, DataError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const handle = yield* this.ensureOpen();
       if (replace || !this.schemaReady) {
         for (const sql of DROP_LAB_SCHEMA_SQL) yield* runSqlEffect(handle, sql);
@@ -260,7 +260,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   ingest(payload: IngestPayload): Effect.Effect<IngestResult, DataError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const replace = payload.replace !== false;
       yield* this.applySchema(replace);
       const handle = yield* this.ensureOpen();
@@ -391,7 +391,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   query(sql: string): Effect.Effect<DataQueryResult, DataError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const validated = yield* dataFromSync(() => validateReadonlySelect(sql)).pipe(
         Effect.map((safeSql) => ({ ok: true as const, safeSql })),
         Effect.catch((err) =>
@@ -438,7 +438,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
   }
 
   close(): Effect.Effect<void, DataError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!this.handle) return;
       yield* closeDuckDbEffect(this.handle);
       this.handle = null;

@@ -170,11 +170,11 @@ export function makeIstioDenialWatchService(): Context.Service.Shape<typeof Isti
             parseErrors += 1;
             continue;
           }
-          if (result.right === null) {
+          if (result.success === null) {
             skippedNonDenials += 1;
             continue;
           }
-          events.push(result.right);
+          events.push(result.success);
         }
         return { events, parseErrors, skippedNonDenials };
       }),
