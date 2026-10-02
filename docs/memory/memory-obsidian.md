@@ -30,6 +30,21 @@ Vectors are **required** for memory. Without them, ClawQL loses to simple grep o
 
 For the **structured sidecar** (`memory.db`: chunks, optional chunk vectors, wikilink edges), see **[memory-db-schema.md](memory-db-schema.md)**, **[memory-db-hybrid-implementation.md](memory-db-hybrid-implementation.md)**, and **[hybrid-memory-backends.md](hybrid-memory-backends.md)**.
 
+## Erasure (crypto-shredding)
+
+Vault memory is often **git-backed** (`CLAWQL_MEMORY_BACKEND=git`) and synced to object storage. Deleting a Markdown file removes it from the working tree, but **history still holds the bytes** — `git log` / `git show` (and R2 mirrors of those objects) can bring a note back.
+
+ClawQL therefore **encrypts each Memory note with its own AES-256-GCM key** (stored under `.clawql/note-keys/`, gitignored) and **destroys the key on erase**. Commits and backups keep ciphertext; without the key the content is unreadable everywhere at once, including old clones. This suits a git-backed vault better than rewriting history with `git filter-repo`.
+
+| Step           | What happens                                                                                                                                                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ingest / write | When crypto-shred is on (default for git backend; force with `CLAWQL_MEMORY_CRYPTO_SHRED=1`), Memory notes are written as ciphertext envelopes. Plaintext never enters git.                                                                                   |
+| Erase          | `DELETE /memory/:slug` (inference) or `runMemoryErase` removes the file, purges `memory.db` / pgvector / `ontology.db`, destroys the per-note key, and deletes the readable path from `.clawql/path-map.json`.                                                |
+| WORM           | Emits `MEMORY_RETRACTED` with opaque **`pathId`** + content hash only — never the slug path (paths can be personal data) and never the body.                                                                                                                  |
+| Export gate    | Content hash is appended to `.clawql/erasure-deny.json`. Inference export skips matching hashes so erased content cannot re-enter a training set. Existing export files on disk stay operator-owned (**out of band**); use lineage to regenerate if required. |
+
+Disable crypto-shred with `CLAWQL_MEMORY_CRYPTO_SHRED=0` (plaintext history then remains recoverable until rewritten). Spec: **[gateway ladder — Erasure](../specs/inference/gateway-ladder-v0.1.md#erasure)**.
+
 ## Dashboard data (Agent Chat)
 
 The ClawQL **dashboard** (local **`npm run dev`** or Helm **`dashboard.enabled`**) uses the **same vault root** as MCP when **`CLAWQL_OBSIDIAN_VAULT_PATH`** is set (local default: **`~/.ClawQL`**). It does **not** mix with **`Memory/`** ingest pages; it keeps operator UI state in a sibling tree:

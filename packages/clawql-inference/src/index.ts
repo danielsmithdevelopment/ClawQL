@@ -114,7 +114,9 @@ export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-regis
 export {
   buildModelEscalationAuditEntry,
   buildAgentCoordinationAuditEntry,
+  buildMemoryEnrichmentAuditEntry,
   type InferenceAuditEntry,
+  type MemoryEnrichmentAuditPayload,
 } from "./audit/events.js";
 export {
   appendInferenceAuditToProcessWorm,
@@ -191,6 +193,29 @@ export {
 } from "./api/server.js";
 export { resolveRequestModel, toPublicModelId } from "./api/model-resolve.js";
 export { collectListedModels } from "./api/models.js";
+
+export {
+  DecisionGatewayService,
+  DecisionGatewayLive,
+  PRODUCTION_TRUSTED_USE_SITES,
+  runDecision,
+  createDecisionRouter,
+  type DecisionRequest,
+  type DecisionResponse,
+  type DecisionAnswer,
+  type DecisionQuestion,
+} from "./decision/index.js";
+
+export {
+  MemoryGatewayService,
+  MemoryGatewayLive,
+  createMemoryRouter,
+  memoryEnrichmentRequested,
+  maybeEnrichMessages,
+  runMemoryGatewayIngest,
+  runMemoryGatewaySearch,
+  type MemoryListEntry,
+} from "./memory/index.js";
 
 export { runInferenceServe } from "./cli/serve.js";
 export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";

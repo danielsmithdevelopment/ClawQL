@@ -12,6 +12,8 @@ const library = defineConfig({
     "ingest/hashes": "src/ingest/hashes.ts",
     "ingest/enterprise-citations": "src/ingest/enterprise-citations.ts",
     "ingest/ingest": "src/ingest/ingest.ts",
+    "erase/erase": "src/erase/erase.ts",
+    "crypto/shred": "src/crypto/shred.ts",
     "recall/onyx-recall": "src/recall/onyx-recall.ts",
     "recall/recall-sources": "src/recall/recall-sources.ts",
     "recall/vault-ranker": "src/recall/vault-ranker.ts",

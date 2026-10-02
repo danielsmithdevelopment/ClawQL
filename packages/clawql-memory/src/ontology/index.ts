@@ -38,3 +38,4 @@ export {
   syncDynamicOntologyDocument,
 } from "./ontology-register.js";
 export { matchDynamicFilters, matchDynamicPredicate } from "./dynamic-filter.js";
+export { deleteOntologyRowsByVaultNotePath } from "./ontology-erase.js";

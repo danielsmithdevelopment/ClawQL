@@ -2,9 +2,11 @@
 /**
  * Lightweight Managed Edge Gateway proxy (process profile).
  * Routes:
- *   /mcp*  → MCP_UPSTREAM (default http://127.0.0.1:18080)
- *   /v1*   → INFERENCE_UPSTREAM (default http://127.0.0.1:18081)
- *   /healthz → local JSON
+ *   /mcp*        → MCP_UPSTREAM (default http://127.0.0.1:18080)
+ *   /v1*         → INFERENCE_UPSTREAM (default http://127.0.0.1:18081)
+ *   /memory*     → INFERENCE_UPSTREAM
+ *   /decision*   → INFERENCE_UPSTREAM
+ *   /healthz     → local JSON
  *
  * Canonical copy for npm installs (`clawql-gateway-proxy`) and Packer/process profile.
  * docs/examples/managed-gateway/gateway-proxy.mjs stays in sync for local checkout demos.
@@ -51,6 +53,17 @@ function proxy(req, res, targetBase) {
   req.pipe(upstream);
 }
 
+function isInferencePath(path) {
+  return (
+    path === "/v1" ||
+    path.startsWith("/v1/") ||
+    path === "/memory" ||
+    path.startsWith("/memory/") ||
+    path === "/decision" ||
+    path.startsWith("/decision/")
+  );
+}
+
 const server = http.createServer((req, res) => {
   const path = req.url?.split("?")[0] || "/";
   if (path === "/healthz") {
@@ -61,6 +74,8 @@ const server = http.createServer((req, res) => {
         gateway: "managed-edge",
         mcp: "/mcp",
         inference: "/v1",
+        memory: "/memory",
+        decision: "/decision",
       })
     );
     return;
@@ -69,16 +84,21 @@ const server = http.createServer((req, res) => {
     proxy(req, res, mcpUpstream);
     return;
   }
-  if (path === "/v1" || path.startsWith("/v1/")) {
+  if (isInferencePath(path)) {
     proxy(req, res, inferenceUpstream);
     return;
   }
   res.writeHead(404, { "content-type": "application/json" });
-  res.end(JSON.stringify({ error: "not_found", hint: "Use /mcp, /v1, or /healthz" }));
+  res.end(
+    JSON.stringify({
+      error: "not_found",
+      hint: "Use /mcp, /v1, /memory, /decision, or /healthz",
+    })
+  );
 });
 
 server.listen(listenPort, listenHost, () => {
   console.log(
-    `clawql managed-gateway proxy on http://${listenHost}:${listenPort} (mcp→${mcpUpstream}, v1→${inferenceUpstream})`
+    `clawql managed-gateway proxy on http://${listenHost}:${listenPort} (mcp→${mcpUpstream}, inference→${inferenceUpstream} [/v1|/memory|/decision])`
   );
 });

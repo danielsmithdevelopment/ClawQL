@@ -14,26 +14,26 @@ Root cause class: **too much work per invocation** on **Workers** (CPU / lifetim
 
 ---
 
-## CI: Lighthouse (GitHub Actions)
+## Lab: Lighthouse (GitHub Actions, not PR CI)
 
-Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)**
+Workflow: **[`.github/workflows/website-lighthouse.yml`](../.github/workflows/website-lighthouse.yml)** — **`workflow_dispatch`** + weekly schedule only. It is **not** part of normal PR CI (flaky Chrome under Actions load). PR a11y stays on **Playwright + axe** in root **`ci.yml`**.
 
-- Builds **`apps/docs/`** with **`npm run build`**, serves **`next start`**, runs **Lighthouse** **desktop** preset then a **mobile form-factor** run (`--form-factor=mobile --screenEmulation.mobile` in Lighthouse **13+**; there is no `--preset=mobile`) against **`http://127.0.0.1:3000/`**.
-- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars in CI or locally if needed). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged) so CPU throttling does not fail every PR.
+- Builds **`apps/docs/`** with **`npm run build`**, serves standalone **`node server.js`**, runs **Lighthouse** **desktop** preset then a **mobile form-factor** run (`--form-factor=mobile --screenEmulation.mobile` in Lighthouse **13+**; there is no `--preset=mobile`) against **`http://127.0.0.1:3000/`**.
+- Asserts minimum scores via **[`scripts/dev/assert-lighthouse-scores.mjs`](../scripts/dev/assert-lighthouse-scores.mjs)** (defaults: performance **0.70**, accessibility **1.0** (WCAG-oriented lab gate), SEO **0.9**, best practices **0.85** — override with `LH_MIN_*` env vars). The **mobile** run uses **`LH_MIN_PERF=0.52`** inline (other floors unchanged).
 
-### What Lighthouse CI **does** catch
+### What lab Lighthouse **does** catch
 
 - **Accessibility** regressions (contrast, names, landmarks, keyboard traps — lab only; not a WCAG audit certificate).
 - **SEO** basics (meta, crawlability in the lab).
 - **Best practices** (e.g. headers we set in `apps/docs/next.config.mjs`).
 - **Client-side performance** signals (lab LCP/TBT/CLS on Node-served Next).
 
-### What Lighthouse CI **does not** catch
+### What lab Lighthouse **does not** catch
 
 - **Cloudflare Workers isolate CPU** limits, **`waitUntil`** budgets, or **production CDN** behavior.
 - **Cold vs warm** cache at the edge.
 
-**Follow-up (recommended):** add a **scheduled** job (weekly) running the same Lighthouse against **`https://docs.clawql.com/`** (production) with a **read-only** URL — optional secret not required for public site. That validates **headers + HTTP/2 + real TLS** without blocking PRs on prod flakiness.
+**Optional follow-up:** run the same Lighthouse against **`https://docs.clawql.com/`** via **`workflow_dispatch`** (or a second scheduled job) to validate **headers + HTTP/2 + real TLS** without blocking PRs.
 
 ---
 

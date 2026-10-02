@@ -14,6 +14,17 @@ export type VirtualKey = {
   budgetUsd?: number;
   spentUsd: number;
   rateLimit?: RateLimitSpec;
+  /**
+   * When true, this key may opt into chat memory enrichment (header/env).
+   * When false/undefined, enrichment is forbidden even if the client sends
+   * `x-clawql-memory-enrich` — key policy outranks the header.
+   */
+  memoryEnrichment?: boolean;
+  /**
+   * Vault folder under `Memory/` for this key's scope (defaults to `team`).
+   * Enrichment/list/search only see notes under `Memory/<scope>/`.
+   */
+  memoryScope?: string;
   createdAt: string;
   revokedAt?: string;
 };
@@ -31,6 +42,8 @@ export type VirtualKeyContext = {
   id: string;
   team: string;
   budgetUsd?: number;
+  memoryEnrichment?: boolean;
+  memoryScope?: string;
 };
 
 export type KeyValidationResult =

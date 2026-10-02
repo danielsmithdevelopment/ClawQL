@@ -21,9 +21,17 @@ COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
 COPY packages/clawql-ontology/package.json ./packages/clawql-ontology/
 COPY packages/clawql-web/package.json ./packages/clawql-web/
+COPY packages/clawql-chatgpt-extensions/package.json ./packages/clawql-chatgpt-extensions/
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/
+COPY packages/clawql-mcp-events/package.json ./packages/clawql-mcp-events/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
+COPY packages/clawql-data/package.json ./packages/clawql-data/
+COPY packages/clawql-analytics/package.json ./packages/clawql-analytics/
+COPY packages/clawql-observability/package.json ./packages/clawql-observability/
+COPY packages/clawql-tee/package.json ./packages/clawql-tee/
+COPY packages/clawql-network/package.json ./packages/clawql-network/
+COPY packages/clawql-harness/package.json ./packages/clawql-harness/
 COPY packages/clawql-inference/package.json ./packages/clawql-inference/
 COPY packages/clawql-payments/package.json ./packages/clawql-payments/
 COPY packages/clawql-release/package.json ./packages/clawql-release/

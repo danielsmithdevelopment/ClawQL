@@ -60,6 +60,8 @@ export type CreateVirtualKeyInput = {
   label?: string;
   budgetUsd?: number;
   rateLimit?: string;
+  memoryEnrichment?: boolean;
+  memoryScope?: string;
 };
 
 export type CreateVirtualKeyResult = {
@@ -83,6 +85,8 @@ export async function createVirtualKey(
     budgetUsd: input.budgetUsd,
     spentUsd: 0,
     rateLimit,
+    memoryEnrichment: input.memoryEnrichment === true ? true : undefined,
+    memoryScope: input.memoryScope?.trim() || undefined,
     createdAt: new Date().toISOString(),
   };
   store.keys.push(key);

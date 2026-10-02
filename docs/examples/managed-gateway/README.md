@@ -1,13 +1,15 @@
 # Managed Edge Gateway
 
-One hostname for **OpenAI-compatible `/v1`**, **MCP `/mcp`**, and **vault memory** —
-the go-live wedge for ClawQL’s Managed Edge Gateway (local / self-hosted).
+One hostname for **OpenAI-compatible `/v1`**, **MCP `/mcp`**, **vault `/memory`**,
+and **Fast Decision `/decision`** (alias `/v1/systemone`) — the go-live wedge for
+ClawQL’s Managed Edge Gateway (local / self-hosted).
 
-**Secure defaults:** virtual key required on `/v1`; MCP uses `CLAWQL_AUTH_MODE=apiKey`
-and accepts the same inference virtual key (`tenantId` from `key.team`). Never `noAuth`
-on networked surfaces.
+**Secure defaults:** virtual key required on `/v1` (and `/memory`, `/decision`);
+MCP uses `CLAWQL_AUTH_MODE=apiKey` and accepts the same inference virtual key
+(`tenantId` from `key.team`). Never `noAuth` on networked surfaces.
 
-**Docs:** [Get started — inference](../../getting-started/inference.md)
+**Docs:** [Get started — inference](../../getting-started/inference.md) ·
+[Gateway ladder spec](../../specs/inference/gateway-ladder-v0.1.md)
 
 ## Quick start (recommended)
 
@@ -21,6 +23,8 @@ clawql gateway create --profile process --team demo
 # Printed once:
 #   MCP URL:       http://127.0.0.1:8080/mcp
 #   Inference URL: http://127.0.0.1:8080/v1
+#   Memory URL:    http://127.0.0.1:8080/memory
+#   Decision URL:  http://127.0.0.1:8080/decision
 #   Virtual key:   clawql-vk-…
 ```
 
@@ -53,12 +57,12 @@ clawql gateway create --profile local-docker --team demo
 
 ## Layout
 
-| Path                 | Role                                        |
-| -------------------- | ------------------------------------------- |
-| `docker-compose.yml` | nginx gateway + MCP + inference             |
-| `nginx.conf`         | `/mcp` → MCP, `/v1` → inference, `/healthz` |
-| `gateway-proxy.mjs`  | same routing for process profile            |
-| `policy.yaml`        | inference policy with `keys.enabled: true`  |
+| Path                 | Role                                                                |
+| -------------------- | ------------------------------------------------------------------- |
+| `docker-compose.yml` | nginx gateway + MCP + inference                                     |
+| `nginx.conf`         | `/mcp` → MCP; `/v1`, `/memory`, `/decision` → inference; `/healthz` |
+| `gateway-proxy.mjs`  | same routing for process profile                                    |
+| `policy.yaml`        | inference policy with `keys.enabled: true`                          |
 
 ## Security checklist
 
