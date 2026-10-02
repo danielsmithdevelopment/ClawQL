@@ -17,9 +17,8 @@ import {
 import { deleteDocumentFromMemoryDb } from "../db/memory-db.js";
 import { deletePostgresChunkVectorsByPaths } from "../vector/pgvector.js";
 import { deleteOntologyRowsByVaultNotePath } from "../ontology/ontology-erase.js";
-import { emitMemoryWormEvent } from "../okf/worm-events.js";
 import {
-  appendErasureDeny,
+  appendErasureDenyEffect,
   deletePathMapEntry,
   destroyNoteKey,
   extractNoteIdFromEnvelope,
@@ -29,6 +28,7 @@ import {
   sha256Hex,
   upsertPathMapEntry,
 } from "../crypto/shred.js";
+import { emitMemoryWormEventEffect } from "../okf/worm-events.js";
 import { memoryGitBackendEnabled } from "../vault/git-backend.js";
 
 export type MemoryEraseInput = {
@@ -202,14 +202,10 @@ export function executeMemoryEraseCoreEffect(
 
     if (state.contentHash && state.pathId) {
       const denyExit = yield* Effect.exit(
-        Effect.tryPromise({
-          try: () =>
-            appendErasureDeny(vault, {
-              contentHash: state.contentHash!,
-              pathId: state.pathId!,
-              noteId: state.noteId,
-            }),
-          catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+        appendErasureDenyEffect(vault, {
+          contentHash: state.contentHash!,
+          pathId: state.pathId!,
+          noteId: state.noteId,
         })
       );
       if (Exit.isFailure(denyExit)) {
@@ -224,31 +220,27 @@ export function executeMemoryEraseCoreEffect(
     }
 
     const wormExit = yield* Effect.exit(
-      Effect.tryPromise({
-        try: () =>
-          emitMemoryWormEvent({
-            kind: "MEMORY_RETRACTED",
-            at: new Date().toISOString(),
-            pathId: state.pathId,
-            correlationId: input.correlationId,
-            wormRef: state.contentHash ? `sha256:${state.contentHash}` : null,
-            detail: {
-              erasedStores: [
-                "vault",
-                "memory.db",
-                "pgvector",
-                "ontology.db",
-                "note-key",
-                "path-map",
-              ],
-              contentHash: state.contentHash ?? null,
-              noteId: state.noteId ?? null,
-              cryptoShred: state.cryptoKeyDestroyed,
-              gitHistoryRetainsCiphertextOnly:
-                memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
-            },
-          }),
-        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      emitMemoryWormEventEffect({
+        kind: "MEMORY_RETRACTED",
+        at: new Date().toISOString(),
+        pathId: state.pathId,
+        correlationId: input.correlationId,
+        wormRef: state.contentHash ? `sha256:${state.contentHash}` : null,
+        detail: {
+          erasedStores: [
+            "vault",
+            "memory.db",
+            "pgvector",
+            "ontology.db",
+            "note-key",
+            "path-map",
+          ],
+          contentHash: state.contentHash ?? null,
+          noteId: state.noteId ?? null,
+          cryptoShred: state.cryptoKeyDestroyed,
+          gitHistoryRetainsCiphertextOnly:
+            memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
+        },
       })
     );
     if (Exit.isFailure(wormExit)) {

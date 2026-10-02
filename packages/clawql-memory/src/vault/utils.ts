@@ -1,11 +1,19 @@
 /**
  * Safe read/write under an Obsidian vault root with cooperative write locking.
  * When crypto-shredding is enabled, Memory notes are encrypted at rest (git-safe).
+ *
+ * Domain APIs are Effect-primary; thin Promise façades remain for ingest/erase edges.
  */
 
 import { open, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
-import { maybeDecryptVaultRead, maybeEncryptForVaultWrite } from "../crypto/shred.js";
+import { Duration, Effect, Exit } from "effect";
+import {
+  extractNoteIdFromEnvelope,
+  isEncryptedVaultEnvelope,
+  maybeDecryptVaultReadEffect,
+  maybeEncryptForVaultWriteEffect,
+} from "../crypto/shred.js";
 
 const LOCK_NAME = ".clawql-vault-write.lock";
 const LOCK_POLL_MS = 100;
@@ -37,76 +45,127 @@ export function resolveVaultPath(vaultRoot: string, relativePath: string): strin
   return full;
 }
 
+function asError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(String(e));
+}
+
+function fromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, Error> {
+  return Effect.tryPromise({ try: tryFn, catch: asError });
+}
+
 /**
- * Exclusive cooperative lock for vault writes (retry with backoff).
+ * Exclusive cooperative lock for vault writes (retry with backoff) — Effect primary.
+ */
+export function withVaultWriteLockEffect<A, E>(
+  vaultRoot: string,
+  fn: () => Effect.Effect<A, E>
+): Effect.Effect<A, E | Error> {
+  return Effect.gen(function* () {
+    const lockPath = resolveVaultPath(vaultRoot, LOCK_NAME);
+    let handle: Awaited<ReturnType<typeof open>> | null = null;
+    for (let i = 0; i < LOCK_MAX_ATTEMPTS; i++) {
+      const openExit = yield* Effect.exit(fromPromise(() => open(lockPath, "wx")));
+      if (Exit.isSuccess(openExit)) {
+        handle = openExit.value;
+        break;
+      }
+      yield* Effect.sleep(Duration.millis(LOCK_POLL_MS));
+    }
+    if (!handle) {
+      return yield* Effect.fail(
+        new Error(
+          `Vault write lock timeout after ${LOCK_MAX_ATTEMPTS * LOCK_POLL_MS}ms: ${lockPath}`
+        )
+      );
+    }
+    const h = handle;
+    return yield* Effect.ensuring(
+      fn(),
+      fromPromise(async () => {
+        await h.close();
+        try {
+          await unlink(lockPath);
+        } catch {
+          /* ignore */
+        }
+      }).pipe(Effect.ignore)
+    );
+  });
+}
+
+/**
+ * Promise façade — `fn` may remain Promise-based for erase host edge under lock.
  */
 export async function withVaultWriteLock<T>(vaultRoot: string, fn: () => Promise<T>): Promise<T> {
-  const lockPath = resolveVaultPath(vaultRoot, LOCK_NAME);
-  let handle: Awaited<ReturnType<typeof open>> | null = null;
-  for (let i = 0; i < LOCK_MAX_ATTEMPTS; i++) {
-    try {
-      handle = await open(lockPath, "wx");
-      break;
-    } catch {
-      await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
-    }
-  }
-  if (!handle) {
-    throw new Error(
-      `Vault write lock timeout after ${LOCK_MAX_ATTEMPTS * LOCK_POLL_MS}ms: ${lockPath}`
-    );
-  }
-  try {
-    return await fn();
-  } finally {
-    await handle.close();
-    try {
-      await unlink(lockPath);
-    } catch {
-      /* ignore */
-    }
-  }
+  return Effect.runPromise(
+    withVaultWriteLockEffect(vaultRoot, () => fromPromise(fn))
+  );
 }
 
 /** Read vault file as UTF-8; decrypts crypto-shred envelopes when the note key exists. */
+export function readVaultTextFileEffect(
+  vaultRoot: string,
+  relativePath: string
+): Effect.Effect<string, Error> {
+  return Effect.gen(function* () {
+    const p = resolveVaultPath(vaultRoot, relativePath);
+    const raw = yield* fromPromise(() => readFile(p, "utf8"));
+    return yield* maybeDecryptVaultReadEffect(vaultRoot, raw);
+  });
+}
+
+/** Promise façade. */
 export async function readVaultTextFile(vaultRoot: string, relativePath: string): Promise<string> {
-  const p = resolveVaultPath(vaultRoot, relativePath);
-  const raw = await readFile(p, "utf8");
-  return maybeDecryptVaultRead(vaultRoot, raw);
+  return Effect.runPromise(readVaultTextFileEffect(vaultRoot, relativePath));
 }
 
 /**
  * Raw bytes as stored on disk (ciphertext when crypto-shredding). Used by erase
  * probes that must inspect git history / R2 mirrors without decrypting.
  */
+export function readVaultFileRawEffect(
+  vaultRoot: string,
+  relativePath: string
+): Effect.Effect<string, Error> {
+  return fromPromise(() => {
+    const p = resolveVaultPath(vaultRoot, relativePath);
+    return readFile(p, "utf8");
+  });
+}
+
+/** Promise façade. */
 export async function readVaultFileRaw(vaultRoot: string, relativePath: string): Promise<string> {
-  const p = resolveVaultPath(vaultRoot, relativePath);
-  return readFile(p, "utf8");
+  return Effect.runPromise(readVaultFileRawEffect(vaultRoot, relativePath));
 }
 
 /** Write UTF-8 text; creates parent directories; atomic rename over the final path. */
+export function writeVaultTextFileAtomicEffect(
+  vaultRoot: string,
+  relativePath: string,
+  content: string
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    const p = resolveVaultPath(vaultRoot, relativePath);
+    yield* fromPromise(() => mkdir(dirname(p), { recursive: true }).then(() => undefined));
+    let priorNoteId: string | undefined;
+    const priorExit = yield* Effect.exit(fromPromise(() => readFile(p, "utf8")));
+    if (Exit.isSuccess(priorExit) && isEncryptedVaultEnvelope(priorExit.value)) {
+      priorNoteId = extractNoteIdFromEnvelope(priorExit.value);
+    }
+    const finalContent = yield* maybeEncryptForVaultWriteEffect(vaultRoot, relativePath, content, {
+      noteId: priorNoteId,
+    });
+    const tmp = `${p}.${process.pid}.tmp`;
+    yield* fromPromise(() => writeFile(tmp, finalContent, "utf8"));
+    yield* fromPromise(() => rename(tmp, p));
+  });
+}
+
+/** Promise façade. */
 export async function writeVaultTextFileAtomic(
   vaultRoot: string,
   relativePath: string,
   content: string
 ): Promise<void> {
-  const p = resolveVaultPath(vaultRoot, relativePath);
-  await mkdir(dirname(p), { recursive: true });
-  let priorNoteId: string | undefined;
-  try {
-    const prior = await readFile(p, "utf8");
-    const { extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
-      await import("../crypto/shred.js");
-    if (isEncryptedVaultEnvelope(prior)) {
-      priorNoteId = extractNoteIdFromEnvelope(prior);
-    }
-  } catch {
-    /* new file */
-  }
-  const finalContent = await maybeEncryptForVaultWrite(vaultRoot, relativePath, content, {
-    noteId: priorNoteId,
-  });
-  const tmp = `${p}.${process.pid}.tmp`;
-  await writeFile(tmp, finalContent, "utf8");
-  await rename(tmp, p);
+  return Effect.runPromise(writeVaultTextFileAtomicEffect(vaultRoot, relativePath, content));
 }

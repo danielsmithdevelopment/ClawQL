@@ -4,14 +4,14 @@
 
 import { Context, Effect, Layer } from "effect";
 import {
-  appendErasureDeny,
-  deletePathMapEntry,
-  destroyNoteKey,
-  loadErasureDenyHashes,
-  loadOrCreateNoteKey,
-  lookupPathMapByPath,
-  maybeDecryptVaultRead,
-  maybeEncryptForVaultWrite,
+  appendErasureDenyEffect,
+  deletePathMapEntryEffect,
+  destroyNoteKeyEffect,
+  loadErasureDenyHashesEffectInner,
+  loadOrCreateNoteKeyEffect,
+  lookupPathMapByPathEffect,
+  maybeDecryptVaultReadEffect,
+  maybeEncryptForVaultWriteEffect,
   memoryCryptoShredEnabled,
   type ErasureDenyEntry,
   type PathMapEntry,
@@ -51,15 +51,16 @@ export class MemoryCryptoShredService extends Context.Service<MemoryCryptoShredS
     readonly loadDenyHashes: (vaultRoot: string) => Effect.Effect<ReadonlySet<string>, MemoryError>;
   }>()("clawql/MemoryCryptoShredService") {}
 
-function fromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, MemoryError> {
-  return Effect.tryPromise({
-    try: tryFn,
-    catch: (cause) =>
-      new MemoryError({
-        reason: cause instanceof Error ? cause.message : "crypto-shred operation failed",
-        cause,
-      }),
-  });
+function mapError<A>(effect: Effect.Effect<A, Error>): Effect.Effect<A, MemoryError> {
+  return effect.pipe(
+    Effect.mapError(
+      (cause) =>
+        new MemoryError({
+          reason: cause instanceof Error ? cause.message : "crypto-shred operation failed",
+          cause,
+        })
+    )
+  );
 }
 
 /** Live service implementation (explicit param types avoid DTS `of` Shape collapse). */
@@ -71,25 +72,22 @@ export function memoryCryptoShredLiveService() {
       relativePath: string,
       plaintext: string,
       opts?: { noteId?: string; env?: NodeJS.ProcessEnv }
-    ) => fromPromise(() => maybeEncryptForVaultWrite(vaultRoot, relativePath, plaintext, opts)),
+    ) => mapError(maybeEncryptForVaultWriteEffect(vaultRoot, relativePath, plaintext, opts)),
     decryptForRead: (vaultRoot: string, text: string, env?: NodeJS.ProcessEnv) =>
-      fromPromise(() => maybeDecryptVaultRead(vaultRoot, text, env)),
+      mapError(maybeDecryptVaultReadEffect(vaultRoot, text, env)),
     destroyKey: (vaultRoot: string, noteId: string) =>
-      fromPromise(() => destroyNoteKey(vaultRoot, noteId)),
+      mapError(destroyNoteKeyEffect(vaultRoot, noteId)),
     loadOrCreateKey: (vaultRoot: string, noteId: string) =>
-      fromPromise(() => loadOrCreateNoteKey(vaultRoot, noteId)),
+      mapError(loadOrCreateNoteKeyEffect(vaultRoot, noteId)),
     lookupPath: (vaultRoot: string, path: string) =>
-      fromPromise(() => lookupPathMapByPath(vaultRoot, path)),
+      mapError(lookupPathMapByPathEffect(vaultRoot, path)),
     deletePath: (vaultRoot: string, path: string) =>
-      fromPromise(() => deletePathMapEntry(vaultRoot, path)),
+      mapError(deletePathMapEntryEffect(vaultRoot, path)),
     appendDeny: (
       vaultRoot: string,
       entry: Omit<ErasureDenyEntry, "erasedAt"> & { erasedAt?: string }
-    ) =>
-      fromPromise(async () => {
-        await appendErasureDeny(vaultRoot, entry);
-      }),
-    loadDenyHashes: (vaultRoot: string) => fromPromise(() => loadErasureDenyHashes(vaultRoot)),
+    ) => mapError(appendErasureDenyEffect(vaultRoot, entry).pipe(Effect.asVoid)),
+    loadDenyHashes: (vaultRoot: string) => mapError(loadErasureDenyHashesEffectInner(vaultRoot)),
   });
 }
 
