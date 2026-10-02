@@ -5,6 +5,7 @@
 
 import pg from "pg";
 import { runOuroborosPostgresMigrations } from "./postgres-migrations.js";
+import { Effect } from "effect";
 
 let pool: pg.Pool | null = null;
 let migrationsDone = false;
@@ -51,7 +52,7 @@ export function getOuroborosPgPool(): pg.Pool | null {
   return pool;
 }
 
-export async function ensureOuroborosSchema(): Promise<void> {
+async function ensureOuroborosSchemaImpl(): Promise<void>  {
   const p = getOuroborosPgPool();
   if (!p || migrationsDone) return;
   const client = await p.connect();
@@ -63,12 +64,36 @@ export async function ensureOuroborosSchema(): Promise<void> {
   }
 }
 
-export async function closeOuroborosPgPool(): Promise<void> {
+export function ensureOuroborosSchemaEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => ensureOuroborosSchemaImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link ensureOuroborosSchemaEffect} for Effect callers. */
+export async function ensureOuroborosSchema(): Promise<void>  {
+  return Effect.runPromise(ensureOuroborosSchemaEffect());
+}
+
+async function closeOuroborosPgPoolImpl(): Promise<void>  {
   migrationsDone = false;
   if (pool) {
     await pool.end();
     pool = null;
   }
+}
+
+export function closeOuroborosPgPoolEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => closeOuroborosPgPoolImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link closeOuroborosPgPoolEffect} for Effect callers. */
+export async function closeOuroborosPgPool(): Promise<void>  {
+  return Effect.runPromise(closeOuroborosPgPoolEffect());
 }
 
 export function registerOuroborosPoolShutdownHooks(): void {

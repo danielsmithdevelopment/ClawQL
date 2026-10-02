@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { resolveDurableBackendFromEnv } from "../backends/s3.js";
 import type { DatasetBackend } from "../backends/types.js";
+import { Effect } from "effect";
 
 export type SyncDatasetOptions = {
   datasetDir: string;
@@ -21,13 +22,13 @@ export type SyncDatasetOptions = {
  * Auth: CLOUDFLARE_API_TOKEN + account id is enough (auto-ensure bucket + REST put),
  * matching `clawql sync ensure`. Optional CLAWQL_SYNC_* / R2_* S3 keys still work.
  */
-export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
+async function syncDatasetPackImpl(opts: SyncDatasetOptions): Promise<{
   rawPrefix: string;
   manifestKey: string;
   traceFiles: number;
   bucket?: string;
   transport?: string;
-}> {
+}>  {
   const requireDurable = opts.requireDurable !== false;
   let backend = opts.backend;
   let bucketLabel = "local";
@@ -97,7 +98,31 @@ export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
   console.log(
     `Synced ${jsonl.length} traces → ${
       backend.name === "local" ? "" : `r2://${bucketLabel}/`
-    }${rawPrefix}/ (${transport})`
+    }
+
+export function syncDatasetPackEffect(opts: SyncDatasetOptions): Effect.Effect<{
+  rawPrefix: string;
+  manifestKey: string;
+  traceFiles: number;
+  bucket?: string;
+  transport?: string;
+}, Error> {
+  return Effect.tryPromise({
+    try: () => syncDatasetPackImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link syncDatasetPackEffect} for Effect callers. */
+export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
+  rawPrefix: string;
+  manifestKey: string;
+  traceFiles: number;
+  bucket?: string;
+  transport?: string;
+}>  {
+  return Effect.runPromise(syncDatasetPackEffect(opts));
+}${rawPrefix}/ (${transport})`
   );
   return {
     rawPrefix,

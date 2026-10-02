@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import type { EventStore } from "../interfaces.js";
 import { SeedSchema, type Seed } from "../seed.js";
+import { Effect } from "effect";
 
 export type ResolveBaselineSeedInput = {
   seed?: unknown;
@@ -9,10 +10,10 @@ export type ResolveBaselineSeedInput = {
 };
 
 /** Resolve baseline Seed for drift measurement from inline seed, lineage, or free-form content. */
-export async function resolveBaselineSeed(
+async function resolveBaselineSeedImpl(
   input: ResolveBaselineSeedInput,
   eventStore: EventStore
-): Promise<Seed | null> {
+): Promise<Seed | null>  {
   if (input.seed !== undefined) {
     return SeedSchema.parse(input.seed);
   }
@@ -53,4 +54,22 @@ export async function resolveBaselineSeed(
   }
 
   return null;
+}
+
+export function resolveBaselineSeedEffect(
+  input: ResolveBaselineSeedInput,
+  eventStore: EventStore
+): Effect.Effect<Seed | null, Error> {
+  return Effect.tryPromise({
+    try: () => resolveBaselineSeedImpl(input, eventStore),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveBaselineSeedEffect} for Effect callers. */
+export async function resolveBaselineSeed(
+  input: ResolveBaselineSeedInput,
+  eventStore: EventStore
+): Promise<Seed | null>  {
+  return Effect.runPromise(resolveBaselineSeedEffect(input, eventStore));
 }

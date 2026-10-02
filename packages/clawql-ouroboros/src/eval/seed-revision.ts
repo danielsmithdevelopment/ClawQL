@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { EventStore } from "../interfaces.js";
 import { SeedSchema, type Seed } from "../seed.js";
 import type { NormalizedLangfuseEval } from "./langfuse-normalize.js";
+import { Effect } from "effect";
 
 export type SeedRevisionAction = "ticket" | "proposed" | "applied";
 
@@ -62,14 +63,32 @@ export function langfuseEvalAutoApplyEnabled(env?: EnvMap): boolean {
 }
 
 /** Load the latest seed snapshot from an Ouroboros lineage, if any generations exist. */
-export async function loadLatestSeedFromLineage(
+async function loadLatestSeedFromLineageImpl(
   eventStore: EventStore,
   rootSeedId: string
-): Promise<Seed | null> {
+): Promise<Seed | null>  {
   const lineage = await eventStore.getLineage(rootSeedId);
   if (lineage.generations.length === 0) return null;
   const last = lineage.generations[lineage.generations.length - 1];
   return SeedSchema.parse(last.seed);
+}
+
+export function loadLatestSeedFromLineageEffect(
+  eventStore: EventStore,
+  rootSeedId: string
+): Effect.Effect<Seed | null, Error> {
+  return Effect.tryPromise({
+    try: () => loadLatestSeedFromLineageImpl(eventStore, rootSeedId),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadLatestSeedFromLineageEffect} for Effect callers. */
+export async function loadLatestSeedFromLineage(
+  eventStore: EventStore,
+  rootSeedId: string
+): Promise<Seed | null>  {
+  return Effect.runPromise(loadLatestSeedFromLineageEffect(eventStore, rootSeedId));
 }
 
 export function buildSeedRevisionProposal(
@@ -133,10 +152,10 @@ function bumpPatchVersion(version: string): string {
   return `${m[1]}.${m[2]}.${Number(m[3]) + 1}`;
 }
 
-export async function processLangfuseEval(
+async function processLangfuseEvalImpl(
   evalEvent: NormalizedLangfuseEval,
   options: ProcessLangfuseEvalOptions
-): Promise<ProcessLangfuseEvalResult> {
+): Promise<ProcessLangfuseEvalResult>  {
   const dryRun = !options.autoApply;
   const base: Omit<ProcessLangfuseEvalResult, "ok" | "action" | "reason" | "proposal"> = {
     dryRun,
@@ -250,4 +269,22 @@ export async function processLangfuseEval(
     revisedSeed,
     seedId: revisedSeed.metadata.seed_id,
   };
+}
+
+export function processLangfuseEvalEffect(
+  evalEvent: NormalizedLangfuseEval,
+  options: ProcessLangfuseEvalOptions
+): Effect.Effect<ProcessLangfuseEvalResult, Error> {
+  return Effect.tryPromise({
+    try: () => processLangfuseEvalImpl(evalEvent, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link processLangfuseEvalEffect} for Effect callers. */
+export async function processLangfuseEval(
+  evalEvent: NormalizedLangfuseEval,
+  options: ProcessLangfuseEvalOptions
+): Promise<ProcessLangfuseEvalResult>  {
+  return Effect.runPromise(processLangfuseEvalEffect(evalEvent, options));
 }
