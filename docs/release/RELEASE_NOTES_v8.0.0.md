@@ -19,6 +19,8 @@ On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed E
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
+**Supply-chain payoff (measured):** vs pre-purge `578e7e77`, the default `clawql-mcp` image at trim tip `d6b432e1` ships **10 fewer** Syft SBOM packages and **2 fewer** Trivy CRITICAL+HIGH+MEDIUM CVEs (~**7.4 MB** smaller compressed) after the PageIndex + CodeGraph purge — see [`8.0.0-payoff-measurement.md`](../releases/8.0.0-payoff-measurement.md).
+
 → Migration: [`docs/getting-started/migrate-to-8.0.md`](../getting-started/migrate-to-8.0.md) · Announcements: [`docs/announcements/announcement-drafts-v8.0.0.md`](../announcements/announcement-drafts-v8.0.0.md) · Prior: [`RELEASE_NOTES_v7.2.0.md`](RELEASE_NOTES_v7.2.0.md) · Checklist: [`docs/release/v8.0.0-checklist.md`](v8.0.0-checklist.md)
 
 ---
