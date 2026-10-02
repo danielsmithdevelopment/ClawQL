@@ -320,19 +320,33 @@ function migrate(db: Database): void {
   }
 }
 
-async function openOrCreateDb(absDbPath: string): Promise<Database> {
-  const SQL = await loadSqlJs();
-  try {
-    const buf = await readFile(absDbPath);
-    return new SQL.Database(buf);
-  } catch {
-    return new SQL.Database();
-  }
+function openOrCreateDbEffect(absDbPath: string): Effect.Effect<Database, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const SQL = await loadSqlJs();
+      try {
+        const buf = await readFile(absDbPath);
+        return new SQL.Database(buf);
+      } catch {
+        return new SQL.Database();
+      }
+    },
+    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+  });
 }
 
-/** Open schedule DB (Effect IO edge). */
+async function openOrCreateDb(absDbPath: string): Promise<Database> {
+  return Effect.runPromise(openOrCreateDbEffect(absDbPath));
+}
+
+/** Open schedule DB — Effect primary. */
+export function openScheduleDatabaseEffect(absDbPath: string): Effect.Effect<Database, Error> {
+  return openOrCreateDbEffect(absDbPath);
+}
+
+/** Promise façade. */
 export async function openScheduleDatabase(absDbPath: string): Promise<Database> {
-  return openOrCreateDb(absDbPath);
+  return Effect.runPromise(openScheduleDatabaseEffect(absDbPath));
 }
 
 export function prepareScheduleDatabase(db: Database): void {
@@ -675,25 +689,38 @@ function setJobChangeState(db: Database, jobId: string, patch: Partial<JobChange
   );
 }
 
-/** Delete stored projection when schedule job or stream.changed subscription ends. */
+/** Delete stored projection when schedule job or stream.changed subscription ends — Effect primary. */
+export function clearScheduleProjectionForTopicEffect(
+  topic: string
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    const jobId = topic.trim();
+    if (!jobId) return;
+    const absDbPath = getScheduleDatabasePath();
+    const db = yield* openOrCreateDbEffect(absDbPath);
+    yield* Effect.ensuring(
+      Effect.gen(function* () {
+        db.exec("PRAGMA foreign_keys = ON;");
+        migrate(db);
+        setJobChangeState(db, jobId, {
+          last_projection_json: null,
+          last_body_hash: null,
+          last_etag: null,
+          last_modified: null,
+        });
+        yield* Effect.tryPromise({
+          try: () => persistDb(db, absDbPath),
+          catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+        });
+      }),
+      Effect.sync(() => db.close())
+    );
+  });
+}
+
+/** Promise façade. */
 export async function clearScheduleProjectionForTopic(topic: string): Promise<void> {
-  const jobId = topic.trim();
-  if (!jobId) return;
-  const absDbPath = getScheduleDatabasePath();
-  const db = await openOrCreateDb(absDbPath);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    setJobChangeState(db, jobId, {
-      last_projection_json: null,
-      last_body_hash: null,
-      last_etag: null,
-      last_modified: null,
-    });
-    await persistDb(db, absDbPath);
-  } finally {
-    db.close();
-  }
+  return Effect.runPromise(clearScheduleProjectionForTopicEffect(topic));
 }
 
 function jobInBackoff(db: Database, jobId: string, now = new Date()): boolean {
@@ -1250,44 +1277,68 @@ function getAllEnabledJobs(db: Database): ScheduleJobRow[] {
   return out;
 }
 
+export function runScheduleWorkerTickEffect(
+  now = new Date()
+): Effect.Effect<number, Error> {
+  return Effect.gen(function* () {
+    const absDbPath = getScheduleDatabasePath();
+    const db = yield* openOrCreateDbEffect(absDbPath);
+    return yield* Effect.ensuring(
+      Effect.gen(function* () {
+        db.exec("PRAGMA foreign_keys = ON;");
+        migrate(db);
+        const jobs = getAllEnabledJobs(db);
+        let fired = 0;
+        const notifications: Array<Promise<void>> = [];
+        for (const job of jobs) {
+          if (!shouldRunJobNow(db, job, now)) continue;
+          const run = yield* Effect.tryPromise({
+            try: () =>
+              executeTriggerForJob(db, job, {
+                dryRun: false,
+                triggeredAt: now.toISOString(),
+              }),
+            catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+          });
+          fired++;
+          notifications.push(maybeSendScheduleNotification(job, run));
+        }
+        if (fired > 0) {
+          yield* Effect.tryPromise({
+            try: () => persistDb(db, absDbPath),
+            catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+          });
+        }
+        yield* Effect.tryPromise({
+          try: () => Promise.all(notifications).then(() => undefined),
+          catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+        });
+        yield* Effect.tryPromise({
+          try: async () => {
+            try {
+              const { McpEventsService, McpEventsServiceLive } = await import("clawql-mcp-events");
+              await Effect.runPromise(
+                Effect.gen(function* () {
+                  const svc = yield* McpEventsService;
+                  return yield* svc.flushCoalesced();
+                }).pipe(Effect.provide(McpEventsServiceLive))
+              );
+            } catch {
+              /* mcp-events optional */
+            }
+          },
+          catch: () => new Error("mcp-events flush failed"),
+        }).pipe(Effect.ignore);
+        return fired;
+      }),
+      Effect.sync(() => db.close())
+    );
+  });
+}
+
+/** Promise façade. */
 export async function runScheduleWorkerTick(now = new Date()): Promise<number> {
-  const absDbPath = getScheduleDatabasePath();
-  const db = await openOrCreateDb(absDbPath);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const jobs = getAllEnabledJobs(db);
-    let fired = 0;
-    const notifications: Array<Promise<void>> = [];
-    for (const job of jobs) {
-      if (!shouldRunJobNow(db, job, now)) continue;
-      const run = await executeTriggerForJob(db, job, {
-        dryRun: false,
-        triggeredAt: now.toISOString(),
-      });
-      fired++;
-      notifications.push(maybeSendScheduleNotification(job, run));
-    }
-    if (fired > 0) {
-      await persistDb(db, absDbPath);
-    }
-    await Promise.all(notifications);
-    try {
-      const { McpEventsService, McpEventsServiceLive } = await import("clawql-mcp-events");
-      const { Effect } = await import("effect");
-      await Effect.runPromise(
-        Effect.gen(function* () {
-          const svc = yield* McpEventsService;
-          return yield* svc.flushCoalesced();
-        }).pipe(Effect.provide(McpEventsServiceLive))
-      );
-    } catch {
-      /* mcp-events optional */
-    }
-    return fired;
-  } finally {
-    db.close();
-  }
+  return Effect.runPromise(runScheduleWorkerTickEffect(now));
 }
 
 export function startScheduleWorker(): void {
@@ -1512,15 +1563,15 @@ export async function dispatchScheduleOperation(
 /**
  * Promise façade over {@link executeScheduleToolCoreEffect}.
  */
+/** Promise façade. */
 export async function executeScheduleToolCore(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
   const { executeScheduleToolCoreEffect } = await import("../effect/schedule-effect.js");
-  const { Effect } = await import("effect");
   return Effect.runPromise(executeScheduleToolCoreEffect(params));
 }
 
-/** Public async facade for schedule MCP tool. */
+/** Promise façade for schedule MCP tool host edge. */
 export async function handleScheduleToolInput(
   params: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {

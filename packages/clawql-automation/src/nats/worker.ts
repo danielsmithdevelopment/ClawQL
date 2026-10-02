@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import {
   natsConfiguredForConsumer,
   natsConsumerConeshareFollowupEnabled,
@@ -10,8 +11,9 @@ import {
   startConeshareFollowupConsumer,
   startHitlCompletedConsumer,
   startIdpPipelineConsumer,
-  stopNatsClient,
+  stopNatsClientEffect,
 } from "./client.js";
+import type { AutomationError } from "../effect/automation-errors.js";
 
 let workerStarted = false;
 
@@ -29,9 +31,16 @@ export function startNatsWorkflowWorker(): void {
   }
 }
 
+export function stopNatsWorkflowWorkerEffect(): Effect.Effect<void, AutomationError> {
+  return Effect.gen(function* () {
+    workerStarted = false;
+    yield* stopNatsClientEffect();
+  });
+}
+
+/** Promise façade. */
 export async function stopNatsWorkflowWorker(): Promise<void> {
-  workerStarted = false;
-  await stopNatsClient();
+  return Effect.runPromise(stopNatsWorkflowWorkerEffect());
 }
 
 /** Test hook */

@@ -1,14 +1,15 @@
+import { Effect } from "effect";
 import type { HitlWorkflowRef } from "../workflow/suspend-resume.js";
-import { publishDocumentEvent, publishWorkflowEvent } from "./client.js";
+import { publishDocumentEventEffect, publishWorkflowEventEffect } from "./client.js";
 import { buildDocumentEvent, buildWorkflowEvent } from "./envelope.js";
 
-export async function publishHitlEnqueuedEvent(fields: {
+export function publishHitlEnqueuedEventEffect(fields: {
   correlation_id?: string;
   workflow_ref?: HitlWorkflowRef;
   project_id: number;
   task_count: number;
-}): Promise<boolean> {
-  return publishWorkflowEvent(
+}): Effect.Effect<boolean> {
+  return publishWorkflowEventEffect(
     buildWorkflowEvent("hitl.enqueued", "hitl_enqueue_label_studio", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
@@ -20,17 +21,27 @@ export async function publishHitlEnqueuedEvent(fields: {
   );
 }
 
-export async function publishHitlCompletedEvent(fields: {
+/** Promise façade. */
+export async function publishHitlEnqueuedEvent(fields: {
+  correlation_id?: string;
+  workflow_ref?: HitlWorkflowRef;
+  project_id: number;
+  task_count: number;
+}): Promise<boolean> {
+  return Effect.runPromise(publishHitlEnqueuedEventEffect(fields));
+}
+
+export function publishHitlCompletedEventEffect(fields: {
   correlation_id?: string;
   workflow_ref?: HitlWorkflowRef;
   clawql_hitl?: unknown;
   source?: string;
-}): Promise<boolean> {
+}): Effect.Effect<boolean> {
   const payload: Record<string, unknown> = {};
   if (fields.clawql_hitl !== undefined) {
     payload.clawql_hitl = fields.clawql_hitl;
   }
-  return publishWorkflowEvent(
+  return publishWorkflowEventEffect(
     buildWorkflowEvent("hitl.completed", fields.source ?? "hitl-label-studio-webhook", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
@@ -39,14 +50,24 @@ export async function publishHitlCompletedEvent(fields: {
   );
 }
 
-export async function publishWorkflowResumedEvent(fields: {
+/** Promise façade. */
+export async function publishHitlCompletedEvent(fields: {
+  correlation_id?: string;
+  workflow_ref?: HitlWorkflowRef;
+  clawql_hitl?: unknown;
+  source?: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishHitlCompletedEventEffect(fields));
+}
+
+export function publishWorkflowResumedEventEffect(fields: {
   correlation_id?: string;
   workflow_ref: HitlWorkflowRef;
   resumed_nodes: string[];
   workflow_level_resumed: boolean;
   source: string;
-}): Promise<boolean> {
-  return publishWorkflowEvent(
+}): Effect.Effect<boolean> {
+  return publishWorkflowEventEffect(
     buildWorkflowEvent("workflow.resumed", fields.source, {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
@@ -58,12 +79,23 @@ export async function publishWorkflowResumedEvent(fields: {
   );
 }
 
-export async function publishWorkflowSuspendedEvent(fields: {
+/** Promise façade. */
+export async function publishWorkflowResumedEvent(fields: {
+  correlation_id?: string;
+  workflow_ref: HitlWorkflowRef;
+  resumed_nodes: string[];
+  workflow_level_resumed: boolean;
+  source: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishWorkflowResumedEventEffect(fields));
+}
+
+export function publishWorkflowSuspendedEventEffect(fields: {
   correlation_id?: string;
   workflow_ref: HitlWorkflowRef;
   source: string;
-}): Promise<boolean> {
-  return publishWorkflowEvent(
+}): Effect.Effect<boolean> {
+  return publishWorkflowEventEffect(
     buildWorkflowEvent("workflow.suspended", fields.source, {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
@@ -71,15 +103,24 @@ export async function publishWorkflowSuspendedEvent(fields: {
   );
 }
 
-export async function publishConeshareViewerEvent(fields: {
+/** Promise façade. */
+export async function publishWorkflowSuspendedEvent(fields: {
+  correlation_id?: string;
+  workflow_ref: HitlWorkflowRef;
+  source: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishWorkflowSuspendedEventEffect(fields));
+}
+
+export function publishConeshareViewerEventEffect(fields: {
   correlation_id?: string;
   workflow_ref?: HitlWorkflowRef;
   event_type: string;
   share_link_id?: string;
   room_url?: string;
   viewer_email?: string;
-}): Promise<boolean> {
-  return publishDocumentEvent(
+}): Effect.Effect<boolean> {
+  return publishDocumentEventEffect(
     buildDocumentEvent("coneshare.viewer", "coneshare-webhook", {
       correlation_id: fields.correlation_id,
       workflow_ref: fields.workflow_ref,
@@ -93,7 +134,19 @@ export async function publishConeshareViewerEvent(fields: {
   );
 }
 
-export async function publishDocumentInboxArrivedEvent(fields: {
+/** Promise façade. */
+export async function publishConeshareViewerEvent(fields: {
+  correlation_id?: string;
+  workflow_ref?: HitlWorkflowRef;
+  event_type: string;
+  share_link_id?: string;
+  room_url?: string;
+  viewer_email?: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishConeshareViewerEventEffect(fields));
+}
+
+export function publishDocumentInboxArrivedEventEffect(fields: {
   correlation_id?: string;
   document_path: string;
   document_url?: string;
@@ -101,8 +154,8 @@ export async function publishDocumentInboxArrivedEvent(fields: {
   redact_list?: string;
   dry_run?: boolean;
   source?: string;
-}): Promise<boolean> {
-  return publishDocumentEvent(
+}): Effect.Effect<boolean> {
+  return publishDocumentEventEffect(
     buildDocumentEvent("inbox.arrived", fields.source ?? "nextcloud-webhook", {
       correlation_id: fields.correlation_id,
       payload: {
@@ -116,7 +169,8 @@ export async function publishDocumentInboxArrivedEvent(fields: {
   );
 }
 
-export async function publishDocumentPipelineRequestedEvent(fields: {
+/** Promise façade. */
+export async function publishDocumentInboxArrivedEvent(fields: {
   correlation_id?: string;
   document_path: string;
   document_url?: string;
@@ -125,7 +179,19 @@ export async function publishDocumentPipelineRequestedEvent(fields: {
   dry_run?: boolean;
   source?: string;
 }): Promise<boolean> {
-  return publishDocumentEvent(
+  return Effect.runPromise(publishDocumentInboxArrivedEventEffect(fields));
+}
+
+export function publishDocumentPipelineRequestedEventEffect(fields: {
+  correlation_id?: string;
+  document_path: string;
+  document_url?: string;
+  processed_path?: string;
+  redact_list?: string;
+  dry_run?: boolean;
+  source?: string;
+}): Effect.Effect<boolean> {
+  return publishDocumentEventEffect(
     buildDocumentEvent("pipeline.requested", fields.source ?? "mcp", {
       correlation_id: fields.correlation_id,
       payload: {
@@ -139,12 +205,25 @@ export async function publishDocumentPipelineRequestedEvent(fields: {
   );
 }
 
-export async function publishDocumentPipelineHopEvent(fields: {
+/** Promise façade. */
+export async function publishDocumentPipelineRequestedEvent(fields: {
+  correlation_id?: string;
+  document_path: string;
+  document_url?: string;
+  processed_path?: string;
+  redact_list?: string;
+  dry_run?: boolean;
+  source?: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishDocumentPipelineRequestedEventEffect(fields));
+}
+
+export function publishDocumentPipelineHopEventEffect(fields: {
   correlation_id?: string;
   hop: Record<string, unknown>;
   source?: string;
-}): Promise<boolean> {
-  return publishDocumentEvent(
+}): Effect.Effect<boolean> {
+  return publishDocumentEventEffect(
     buildDocumentEvent("pipeline.hop", fields.source ?? "run_idp_pipeline", {
       correlation_id: fields.correlation_id,
       payload: { hop: fields.hop },
@@ -152,15 +231,24 @@ export async function publishDocumentPipelineHopEvent(fields: {
   );
 }
 
-export async function publishDocumentPipelineTerminalEvent(fields: {
+/** Promise façade. */
+export async function publishDocumentPipelineHopEvent(fields: {
+  correlation_id?: string;
+  hop: Record<string, unknown>;
+  source?: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishDocumentPipelineHopEventEffect(fields));
+}
+
+export function publishDocumentPipelineTerminalEventEffect(fields: {
   ok: boolean;
   correlation_id?: string;
   document_path?: string;
   error?: string;
   completed_through?: number;
   source?: string;
-}): Promise<boolean> {
-  return publishDocumentEvent(
+}): Effect.Effect<boolean> {
+  return publishDocumentEventEffect(
     buildDocumentEvent(
       fields.ok ? "pipeline.completed" : "pipeline.failed",
       fields.source ?? "nats-idp-pipeline-consumer",
@@ -174,4 +262,16 @@ export async function publishDocumentPipelineTerminalEvent(fields: {
       }
     )
   );
+}
+
+/** Promise façade. */
+export async function publishDocumentPipelineTerminalEvent(fields: {
+  ok: boolean;
+  correlation_id?: string;
+  document_path?: string;
+  error?: string;
+  completed_through?: number;
+  source?: string;
+}): Promise<boolean> {
+  return Effect.runPromise(publishDocumentPipelineTerminalEventEffect(fields));
 }

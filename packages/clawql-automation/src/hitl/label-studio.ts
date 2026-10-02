@@ -5,6 +5,7 @@
 
 import { getClawqlOptionalToolFlags } from "clawql-api";
 import type { Request, Response } from "express";
+import { Cause, Effect } from "effect";
 import { publishHitlCompletedEvent } from "../nats/publish-hooks.js";
 import { maybeResumeWorkflowFromHitl, parseHitlWorkflowRef } from "../workflow/suspend-resume.js";
 import { getHitlWebhookDeps } from "./deps.js";
@@ -165,8 +166,63 @@ export function mergeHitlMetadata(
 }
 
 /**
- * POST `{base}/api/projects/{id}/import` with Label Studio token auth.
+ * POST `{base}/api/projects/{id}/import` with Label Studio token auth — Effect primary.
  */
+export function labelStudioImportTasksEffect(
+  baseUrl: string,
+  apiToken: string,
+  projectId: number,
+  tasks: HitlLabelStudioImportTask[]
+): Effect.Effect<
+  { ok: true; status: number; body: unknown } | { ok: false; error: string; detail?: string }
+> {
+  return Effect.gen(function* () {
+    const url = `${baseUrl}/api/projects/${projectId}/import`;
+    const httpExit = yield* Effect.exit(
+      Effect.tryPromise({
+        try: () =>
+          fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Token ${apiToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(tasks),
+          }),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      })
+    );
+    if (httpExit._tag === "Failure") {
+      const err = Cause.squash(httpExit.cause);
+      const msg = err instanceof Error ? err.message : String(err);
+      return { ok: false as const, error: `Label Studio request failed: ${msg}` };
+    }
+    const httpResponse = httpExit.value;
+    const text = yield* Effect.tryPromise({
+      try: () => httpResponse.text(),
+      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+    }).pipe(Effect.orElseSucceed(() => ""));
+    let parsed: unknown;
+    try {
+      parsed = text ? JSON.parse(text) : null;
+    } catch {
+      parsed = text;
+    }
+
+    if (!httpResponse.ok) {
+      const detail = typeof parsed === "string" ? parsed : JSON.stringify(parsed);
+      return {
+        ok: false as const,
+        error: `Label Studio returned HTTP ${httpResponse.status}`,
+        detail: detail.slice(0, 8000),
+      };
+    }
+
+    return { ok: true as const, status: httpResponse.status, body: parsed };
+  });
+}
+
+/** Promise façade. */
 export async function labelStudioImportTasks(
   baseUrl: string,
   apiToken: string,
@@ -175,40 +231,7 @@ export async function labelStudioImportTasks(
 ): Promise<
   { ok: true; status: number; body: unknown } | { ok: false; error: string; detail?: string }
 > {
-  const url = `${baseUrl}/api/projects/${projectId}/import`;
-  let httpResponse: globalThis.Response;
-  try {
-    httpResponse = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Token ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tasks),
-    });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: `Label Studio request failed: ${msg}` };
-  }
-
-  const text = await httpResponse.text();
-  let parsed: unknown;
-  try {
-    parsed = text ? JSON.parse(text) : null;
-  } catch {
-    parsed = text;
-  }
-
-  if (!httpResponse.ok) {
-    const detail = typeof parsed === "string" ? parsed : JSON.stringify(parsed);
-    return {
-      ok: false,
-      error: `Label Studio returned HTTP ${httpResponse.status}`,
-      detail: detail.slice(0, 8000),
-    };
-  }
-
-  return { ok: true, status: httpResponse.status, body: parsed };
+  return Effect.runPromise(labelStudioImportTasksEffect(baseUrl, apiToken, projectId, tasks));
 }
 
 /** Promise façade over {@link executeHitlEnqueueLabelStudioEffect}. */
