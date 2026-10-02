@@ -29,7 +29,11 @@ function classifyHttpMethod(method: string): OperationRisk | null {
     return risk("allow", "spec-default", `HTTP ${m} is read-only by default`);
   }
   if (m === "POST" || m === "PUT" || m === "PATCH") {
-    return risk("mandate", "spec-default", `HTTP ${m} is a write by default (override if read-only)`);
+    return risk(
+      "mandate",
+      "spec-default",
+      `HTTP ${m} is a write by default (override if read-only)`
+    );
   }
   if (m === "DELETE") {
     return risk("block", "spec-default", "HTTP DELETE is destructive unless allowlisted");
@@ -48,10 +52,7 @@ function classifyGraphql(method: string): OperationRisk | null {
   return null;
 }
 
-function classifyMcp(
-  op: Operation,
-  trustedMcpSourceIds: ReadonlySet<string>
-): OperationRisk {
+function classifyMcp(op: Operation, trustedMcpSourceIds: ReadonlySet<string>): OperationRisk {
   const sourceId = op.riskHints?.mcpSourceId ?? op.nativeMcp?.sourceId ?? op.specLabel ?? "";
   const trusted = sourceId.length > 0 && trustedMcpSourceIds.has(sourceId);
   if (!trusted) {
@@ -74,11 +75,7 @@ function classifyMcp(
     );
   }
   if (readOnly) {
-    return risk(
-      "allow",
-      "mcp-annotation",
-      `Trusted MCP source "${sourceId}" marked readOnlyHint`
-    );
+    return risk("allow", "mcp-annotation", `Trusted MCP source "${sourceId}" marked readOnlyHint`);
   }
   return risk(
     "mandate",
@@ -89,17 +86,9 @@ function classifyMcp(
 
 function classifyGrpc(op: Operation): OperationRisk {
   if (op.riskHints?.grpcNoSideEffects === true) {
-    return risk(
-      "allow",
-      "spec-default",
-      "gRPC method marked idempotency_level=NO_SIDE_EFFECTS"
-    );
+    return risk("allow", "spec-default", "gRPC method marked idempotency_level=NO_SIDE_EFFECTS");
   }
-  return risk(
-    "mandate",
-    "unknown-default",
-    "gRPC method has no no-side-effects marker → mandate"
-  );
+  return risk("mandate", "unknown-default", "gRPC method has no no-side-effects marker → mandate");
 }
 
 /** Pure classifier — Effect-wrapped for domain boundary consistency. */
@@ -114,7 +103,10 @@ export const classifyOperationRiskEffect = (
       return classifyMcp(op, trustedMcpSourceIds);
     }
     if (kind === "graphql" || op.nativeGraphQL) {
-      return classifyGraphql(op.method) ?? risk("mandate", "unknown-default", "Unclassifiable GraphQL operation → mandate");
+      return (
+        classifyGraphql(op.method) ??
+        risk("mandate", "unknown-default", "Unclassifiable GraphQL operation → mandate")
+      );
     }
     if (kind === "grpc" || op.nativeGrpc) {
       return classifyGrpc(op);
@@ -130,11 +122,7 @@ export const classifyOperationRiskEffect = (
     // OpenAPI / Discovery / REST
     return (
       classifyHttpMethod(op.method) ??
-      risk(
-        "mandate",
-        "unknown-default",
-        `Unclassifiable HTTP method "${op.method}" → mandate`
-      )
+      risk("mandate", "unknown-default", `Unclassifiable HTTP method "${op.method}" → mandate`)
     );
   });
 

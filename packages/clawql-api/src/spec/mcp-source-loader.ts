@@ -84,8 +84,9 @@ export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Pro
           toolName: tool.name,
           client,
         });
-        const ann = (tool as { annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean } })
-          .annotations;
+        const ann = (
+          tool as { annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean } }
+        ).annotations;
         ops.push(
           toolToOperation(entry, tool.name, tool.description ?? "", {
             readOnlyHint: ann?.readOnlyHint,

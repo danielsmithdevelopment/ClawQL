@@ -168,7 +168,7 @@ describe("operation-risk overrides + WORM", () => {
       JSON.stringify({
         version: 1,
         overrides: {
-          "searchIssues": {
+          searchIssues: {
             policy: "allow",
             level: "LOW",
             reason: "POST search endpoint is read-only",

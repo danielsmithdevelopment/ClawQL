@@ -59,8 +59,7 @@ export function executeClawqlOperationEffect(
         JSON.stringify({
           ok: false,
           status: "blocked",
-          reason:
-            "Destructive operation is blocked unless allowlisted via operation-risk override",
+          reason: "Destructive operation is blocked unless allowlisted via operation-risk override",
           operationId,
           risk,
         })

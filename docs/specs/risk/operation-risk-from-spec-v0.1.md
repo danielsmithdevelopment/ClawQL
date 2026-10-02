@@ -4,22 +4,22 @@ Every imported operation gets a **risk** classification at load time. Agents see
 
 ## Policies
 
-| Policy | Risk level | Meaning |
-|--------|------------|---------|
-| `allow` | `LOW` | Execute may proceed without a mandate |
-| `mandate` | `MEDIUM` | Execute refuses with `mandate_required` until a future pause/resume path supplies approval |
-| `block` | `HIGH` | Execute refuses with `blocked` unless an operator allowlists the operation |
+| Policy    | Risk level | Meaning                                                                                    |
+| --------- | ---------- | ------------------------------------------------------------------------------------------ |
+| `allow`   | `LOW`      | Execute may proceed without a mandate                                                      |
+| `mandate` | `MEDIUM`   | Execute refuses with `mandate_required` until a future pause/resume path supplies approval |
+| `block`   | `HIGH`     | Execute refuses with `blocked` unless an operator allowlists the operation                 |
 
 ## Spec defaults
 
-| Source | Allow | Mandate | Block |
-|--------|-------|---------|-------|
-| OpenAPI / Discovery | `GET`, `HEAD` | `POST`, `PUT`, `PATCH` | `DELETE` |
-| GraphQL | `QUERY` | `MUTATION` | — |
-| gRPC | methods with `idempotency_level = NO_SIDE_EFFECTS` | all other unary RPCs | — |
-| MCP (trusted only) | `readOnlyHint` | no hint / ambiguous | `destructiveHint` |
-| MCP (untrusted) | — | **always** (annotations ignored) | — |
-| CLI / WebMCP / unknown | — | **always** | — |
+| Source                 | Allow                                              | Mandate                          | Block             |
+| ---------------------- | -------------------------------------------------- | -------------------------------- | ----------------- |
+| OpenAPI / Discovery    | `GET`, `HEAD`                                      | `POST`, `PUT`, `PATCH`           | `DELETE`          |
+| GraphQL                | `QUERY`                                            | `MUTATION`                       | —                 |
+| gRPC                   | methods with `idempotency_level = NO_SIDE_EFFECTS` | all other unary RPCs             | —                 |
+| MCP (trusted only)     | `readOnlyHint`                                     | no hint / ambiguous              | `destructiveHint` |
+| MCP (untrusted)        | —                                                  | **always** (annotations ignored) | —                 |
+| CLI / WebMCP / unknown | —                                                  | **always**                       | —                 |
 
 **Unknown never allows.** Ambiguous or missing signal → `mandate`.
 
@@ -53,7 +53,7 @@ File: `$CLAWQL_HOME/operation-risk.json` (default `~/.ClawQL/operation-risk.json
 
 Changing an operation's risk is a **capability change**. Every applied override is appended to the process WORM log (`OPERATION_RISK_OVERRIDE`).
 
-`/decision` may later *suggest* a risk for ambiguous POSTs; suggestions never auto-downgrade — a person must write the override.
+`/decision` may later _suggest_ a risk for ambiguous POSTs; suggestions never auto-downgrade — a person must write the override.
 
 ## Surfaces
 

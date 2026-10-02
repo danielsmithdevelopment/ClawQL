@@ -11,10 +11,7 @@ export type OperationRiskPolicy = "allow" | "mandate" | "block";
 
 /** Provenance of the assigned risk. */
 export type OperationRiskSource =
-  | "spec-default"
-  | "mcp-annotation"
-  | "override"
-  | "unknown-default";
+  "spec-default" | "mcp-annotation" | "override" | "unknown-default";
 
 export type OperationRisk = {
   readonly level: OperationRiskLevel;
