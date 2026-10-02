@@ -21,6 +21,7 @@ import {
   runSourcesPropose,
   runSourcesRemove,
 } from "./sources-cli.js";
+import { runToolkitList, runToolkitShow } from "./toolkit-cli.js";
 import { runResume } from "./resume-cli.js";
 import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
@@ -184,6 +185,7 @@ type Command =
   | "onboard"
   | "operator"
   | "sources"
+  | "toolkit"
   | "resume"
   | "release"
   | "ontology"
@@ -433,6 +435,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "release" ||
     cmd === "ontology" ||
     cmd === "memory" ||
@@ -449,6 +452,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "network" ||
@@ -483,6 +487,7 @@ Usage:
   clawql sources propose <url> [--name NAME] [--kind KIND] [--commit] | approve <psp_…> | decline <psp_…>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
+  clawql toolkit list | show <id>
   clawql resume <executionId> | clawql resume --decline <executionId>
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
@@ -857,6 +862,20 @@ async function main(): Promise<void> {
     console.error(
       "Usage: clawql sources list | add <url> | propose <url> [--commit] | approve <psp_…> | decline <psp_…> | remove <id>"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "toolkit") {
+    if (subcmd === "list") {
+      process.exitCode = await runToolkitList();
+      return;
+    }
+    if (subcmd === "show") {
+      process.exitCode = await runToolkitShow(rest[0] ?? "");
+      return;
+    }
+    console.error("Usage: clawql toolkit list | show <id>");
     process.exitCode = 1;
     return;
   }
