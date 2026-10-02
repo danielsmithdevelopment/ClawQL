@@ -17,6 +17,7 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 | [`openbench-task-explanations.md`](openbench-task-explanations.md)                                         | **Thorough prove / why / how** for every verified OpenBench task.                                                                                                |
 | [`openbench-advanced-suites.md`](openbench-advanced-suites.md)                                             | **Next-gen suites (B-1…B-7)** broken into small tasks, phases, and gates.                                                                                        |
 | [`openbench-advanced-specs.md`](openbench-advanced-specs.md)                                               | Advanced suites B-1…B-7 (specs; Phase 1 offline packs).                                                                                                          |
+| [`pageindex-ab-eval-spec-v0.1.md`](pageindex-ab-eval-spec-v0.1.md)                                         | **Memory stack default-route A/B (v0.2)** — BM25 × PageIndex × CodeGraph factorial; task completion only gate.                                                   |
 | [`openbench-b7-calderwood.md`](openbench-b7-calderwood.md)                                                 | **B-7** C&H institutional knowledge + amortization. Essay: [Memory Finds. Ontology Decides.](https://pragmaticvectors.com/posts/memory-finds-ontology-decides/). |
 | [`harvey-lab-baseline.md`](harvey-lab-baseline.md)                                                         | Harvey LAB **firm-knowledge** baseline (Arm A, standard harness).                                                                                                |
 | [`harvey-lab-clawql-results.md`](harvey-lab-clawql-results.md)                                             | Harvey LAB × ClawQL three-arm ledger (Opus A/B + Nemotron C when complete).                                                                                      |
@@ -58,13 +59,14 @@ This directory holds **repro instructions**, **latest pointers**, **per-scenario
 
 Eval adapters live in repo-root [`benchmarks/`](../../benchmarks/), not in this docs tree:
 
-| Overlay                                                        | Role                                   |
-| -------------------------------------------------------------- | -------------------------------------- |
-| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/)   | Agents OpenBench dry harness           |
-| [`benchmarks/extractbench/`](../../benchmarks/extractbench/)   | ExtractBench IDP provider              |
-| [`benchmarks/harness-bench/`](../../benchmarks/harness-bench/) | Harness plugin compare + MCP UI traces |
-| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/)     | Harvey LAB firm-knowledge overlay      |
-| [`benchmarks/openbench/`](../../benchmarks/openbench/)         | MCP OpenBench tasks (Track A/B)        |
+| Overlay                                                        | Role                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------- |
+| [`benchmarks/agents-bench/`](../../benchmarks/agents-bench/)   | Agents OpenBench dry harness                            |
+| [`benchmarks/extractbench/`](../../benchmarks/extractbench/)   | ExtractBench IDP provider                               |
+| [`benchmarks/harness-bench/`](../../benchmarks/harness-bench/) | Harness plugin compare + MCP UI traces                  |
+| [`benchmarks/harvey-labs/`](../../benchmarks/harvey-labs/)     | Harvey LAB firm-knowledge overlay                       |
+| [`benchmarks/openbench/`](../../benchmarks/openbench/)         | MCP OpenBench tasks (Track A/B)                         |
+| [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/)   | Memory stack default-route A/B harness (v0.2 factorial) |
 
 ## Parent indexes
 

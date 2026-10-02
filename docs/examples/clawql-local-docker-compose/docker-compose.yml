@@ -19,8 +19,6 @@ services:
       CLAWQL_OBSIDIAN_VAULT_PATH: /vault
       CLAWQL_ENABLE_MEMORY: "1"
       CLAWQL_ENABLE_DOCUMENTS: "1"
-      CLAWQL_ENABLE_PAGEINDEX: "1"
-      CLAWQL_PAGEINDEX_PATH: /vault
       TIKA_BASE_URL: http://tika:9998
       GOTENBERG_BASE_URL: http://gotenberg:3000
       PAPERLESS_BASE_URL: http://paperless-ngx:8000

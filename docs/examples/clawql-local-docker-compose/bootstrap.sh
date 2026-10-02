@@ -87,11 +87,6 @@ documents:
     enabled: false
     failurePolicy: block
 
-pageindex:
-  enabled: true
-  storageBackend: file
-  path: ./data/pageindex.db.json
-
 telemetry:
   enabled: false
 

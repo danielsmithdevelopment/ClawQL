@@ -1,0 +1,84 @@
+{
+  "document_id": "converted-pdf-credit-agreement",
+  "path": "docs/converted-pdf-credit-agreement.md",
+  "sections": [
+    {
+      "id": "sec-credit-agreement-synthetic-edgar-exhibit",
+      "title": "Credit Agreement (synthetic EDGAR exhibit)",
+      "level": 1,
+      "chars": 123
+    },
+    {
+      "id": "sec-article-i-definitions",
+      "title": "ARTICLE I — DEFINITIONS",
+      "level": 2,
+      "chars": 110
+    },
+    {
+      "id": "sec-article-ii-the-credits",
+      "title": "ARTICLE II — THE CREDITS",
+      "level": 2,
+      "chars": 27
+    },
+    {
+      "id": "sec-section-2-01-commitments",
+      "title": "Section 2.01 Commitments",
+      "level": 3,
+      "chars": 145
+    },
+    {
+      "id": "sec-section-2-02-interest",
+      "title": "Section 2.02 Interest",
+      "level": 3,
+      "chars": 112
+    },
+    {
+      "id": "sec-miscellaneous-provisions-that-look-like-a-heading",
+      "title": "miscellaneous provisions that look like a heading",
+      "level": 2,
+      "chars": 212
+    },
+    {
+      "id": "sec-article-iii-representations",
+      "title": "ARTICLE III — REPRESENTATIONS",
+      "level": 2,
+      "chars": 32
+    },
+    {
+      "id": "sec-section-3-01-organization",
+      "title": "Section 3.01 Organization",
+      "level": 3,
+      "chars": 77
+    },
+    {
+      "id": "sec-section-3-02-financial-statements",
+      "title": "Section 3.02 Financial statements",
+      "level": 3,
+      "chars": 121
+    },
+    {
+      "id": "sec-article-iv-covenants",
+      "title": "ARTICLE IV — COVENANTS",
+      "level": 2,
+      "chars": 25
+    },
+    {
+      "id": "sec-section-4-01-affirmative-covenants",
+      "title": "Section 4.01 Affirmative covenants",
+      "level": 3,
+      "chars": 120
+    },
+    {
+      "id": "sec-section-4-02-negative-covenants",
+      "title": "Section 4.02 Negative covenants",
+      "level": 3,
+      "chars": 141
+    },
+    {
+      "id": "sec-schedules",
+      "title": "schedules",
+      "level": 2,
+      "chars": 170
+    }
+  ]
+}

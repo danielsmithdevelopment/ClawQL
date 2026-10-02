@@ -91,11 +91,9 @@ export type MemoryIngestInput = {
   append?: boolean;
   /**
    * Post-write derived-index rebuilds (canonical write remains the vault Markdown).
-   * - `pageindex`: rebuild PageIndex tree for the written note
    * - `embeddings`: ensure memory.db sync (chunk + embedding refresh) ran; default true when memory.db is on
    */
   rebuild?: {
-    pageindex?: boolean;
     embeddings?: boolean;
   };
 };
@@ -126,7 +124,6 @@ export type MemoryIngestResult = {
   cuckooMembershipReady?: boolean;
   /** Derived-index rebuild outcomes when requested. */
   rebuild?: {
-    pageindex?: { docId: string; nodeCount: number } | { error: string };
     embeddings?: { synced: boolean; skipped?: string };
   };
   /** Git-native vault: commit-on-ingest outcome when CLAWQL_MEMORY_BACKEND=git. */

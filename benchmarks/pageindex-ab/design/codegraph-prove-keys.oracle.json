@@ -1,0 +1,447 @@
+{
+  "generated_at": "2026-09-29T21:09:37.704Z",
+  "graph": {
+    "nodeCount": 10498,
+    "edgeCount": 22816
+  },
+  "keys": [
+    {
+      "id": "cg-prove-01",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "Using the code graph (not grep), list the TypeScript symbols within depth 2 that depend on `impactAnalysis` (callers / importers). Name at least the service wrapper and the test that exercises it.",
+      "why_grep_fails": "String grep finds the definition and imports, but does not rank inbound blast radius or distinguish call vs mention in comments/docs; depth-2 dependents need the reverse edge walk.",
+      "gold": {
+        "seed": "impactAnalysis",
+        "seedNodeId": "graph/explore.ts::function::impactAnalysis#L43",
+        "impacted_names": [
+          "makeCodeGraphServiceLive",
+          "graph/explore.ts",
+          "exploreGraph",
+          "indexer/extract-typescript.test.ts",
+          "effect/codegraph-service.ts",
+          "runCodeGraphEffect",
+          "index.ts"
+        ],
+        "files": [
+          "effect/codegraph-service.ts",
+          "graph/explore.ts",
+          "index.ts",
+          "indexer/extract-typescript.test.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=7",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-02",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "What is the upstream blast radius (depth ≤2) of renaming `fireHook`? List distinct package areas (files) that would need updates beyond the definition file.",
+      "why_grep_fails": "`fireHook` appears in many packages; grep dumps every string hit including tests/docs without a dependency-ordered impact set.",
+      "gold": {
+        "seed": "fireHook",
+        "seedNodeId": "plugin/hook-runtime.ts::function::fireHook#L49",
+        "impacted_names": [
+          "plugin/hook-runtime.ts",
+          "fireHooksForEvent",
+          "execute-batch/index.ts",
+          "plugin/hook-registry.ts",
+          "plugin/index.ts",
+          "providers/webmcp-draft/lifecycle/publish.ts",
+          "runNamedExecuteBatch",
+          "publishApprovedTool"
+        ],
+        "files": [
+          "execute-batch/index.ts",
+          "plugin/hook-registry.ts",
+          "plugin/hook-runtime.ts",
+          "plugin/index.ts",
+          "providers/webmcp-draft/lifecycle/publish.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=8",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-03",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "List depth-≤2 dependents of `createMemoryPlugin` (who wires or calls the memory plugin factory).",
+      "why_grep_fails": "The name appears in plugin docs and tests; inbound callers across packages need the reverse edge walk, not a string dump.",
+      "gold": {
+        "seed": "createMemoryPlugin",
+        "seedNodeId": "plugin/memory-plugin.ts::function::createMemoryPlugin#L353",
+        "impacted_names": [
+          "makeMemoryLayer",
+          "plugin/memory-plugin.test.ts",
+          "plugin/memory-plugin.ts",
+          "plugin/memory-layer.test.ts",
+          "plugin/memory-layer.ts",
+          "plugin/index.ts"
+        ],
+        "files": [
+          "plugin/index.ts",
+          "plugin/memory-layer.test.ts",
+          "plugin/memory-layer.ts",
+          "plugin/memory-plugin.test.ts",
+          "plugin/memory-plugin.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=6",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-04",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "What is the depth-≤2 blast radius of `queryGraph`? Name dependents in explore/service/recall layers.",
+      "why_grep_fails": "`queryGraph` is a common-looking name; grep cannot separate live call edges from prose or distinguish explore vs recall wrappers.",
+      "gold": {
+        "seed": "queryGraph",
+        "seedNodeId": "graph/operations.ts::function::queryGraph#L37",
+        "impacted_names": [
+          "dogfood/codegraph-dogfood.integration.test.ts",
+          "makeCodeGraphServiceLive",
+          "impactAnalysis",
+          "exploreGraph",
+          "graph/operations.test.ts",
+          "graph/operations.ts",
+          "shortestPath",
+          "explainNode",
+          "subgraph",
+          "effect/codegraph-service.ts",
+          "runCodeGraphEffect",
+          "graph/explore.ts",
+          "indexer/extract-typescript.test.ts",
+          "index.ts",
+          "codegraphSubgraph"
+        ],
+        "files": [
+          "dogfood/codegraph-dogfood.integration.test.ts",
+          "effect/codegraph-service.ts",
+          "graph/explore.ts",
+          "graph/operations.test.ts",
+          "graph/operations.ts",
+          "index.ts",
+          "indexer/extract-typescript.test.ts",
+          "mcp/handlers.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=15",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-05",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "Who depends on `splitMarkdownSections` (depth ≤2)? List impacted symbol names and files.",
+      "why_grep_fails": "Grep finds the export and direct imports, but misses re-exports / Effect wrappers and over-includes comment mentions.",
+      "gold": {
+        "seed": "splitMarkdownSections",
+        "seedNodeId": "recall/read-around.ts::function::splitMarkdownSections#L82",
+        "impacted_names": [
+          "recall/read-around.test.ts",
+          "recall/read-around.ts",
+          "readAroundFromMarkdown",
+          "effect/index.ts",
+          "plugin/memory-plugin.ts",
+          "executeReadAroundEffect"
+        ],
+        "files": [
+          "effect/index.ts",
+          "plugin/memory-plugin.ts",
+          "recall/read-around.test.ts",
+          "recall/read-around.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=6",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-06",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "explore",
+      "question": "Using one-shot explore, summarize `indexRepository`: primary file, notable neighbors (imports/calls), and top blast-radius hits.",
+      "why_grep_fails": "Explore aggregates explain + neighbors + impact; a single grep cannot assemble that neighborhood.",
+      "gold": {
+        "seed": "indexRepository",
+        "primary": "indexRepository",
+        "primary_file": "indexer/index-repo.ts",
+        "neighbor_names": [
+          "makeCodeGraphServiceLive",
+          "indexer/index-repo.ts",
+          "indexer/index-repo.ts",
+          "codeGraphBackend",
+          "loadGraphifyDocument",
+          "resolve",
+          "defaultGraphId",
+          "walkCodeFiles",
+          "Map",
+          "isCodeFile",
+          "readFile",
+          "relPath"
+        ],
+        "impact_names": [
+          "makeCodeGraphServiceLive",
+          "indexer/index-repo.ts",
+          "syncCodeGraph",
+          "indexAndMergeRoots",
+          "effect/codegraph-service.ts",
+          "runCodeGraphEffect",
+          "index.ts",
+          "sync/codegraph-sync.ts",
+          "sync/graphify-sync.ts",
+          "test-utils/dogfood-graph.ts",
+          "codegraphSync",
+          "sync/codegraph-sync.test.ts"
+        ]
+      },
+      "oracle_notes": "explore one-shot",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-07",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "List depth-≤2 dependents of `reciprocalRankFusion` (who would break if its signature changed).",
+      "why_grep_fails": "Need inbound edges across hybrid recall; string search confuses with RRF prose in design docs.",
+      "gold": {
+        "seed": "reciprocalRankFusion",
+        "seedNodeId": "recall/hybrid-rerank.ts::function::reciprocalRankFusion#L21",
+        "impacted_names": [
+          "recall/hybrid-rerank.test.ts",
+          "recall/hybrid-rerank.ts",
+          "rerankNormalizedHitsRrf",
+          "effect/memory-recall-effect.ts",
+          "executeMemoryRecallCoreEffect"
+        ],
+        "files": [
+          "effect/memory-recall-effect.ts",
+          "recall/hybrid-rerank.test.ts",
+          "recall/hybrid-rerank.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=5",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-08",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "List depth-≤2 dependents of `defineProviderPlugin` across provider packages.",
+      "why_grep_fails": "Dozens of providers call the helper; the prove job is the dependency set / files to touch on signature change, not finding the definition.",
+      "gold": {
+        "seed": "defineProviderPlugin",
+        "seedNodeId": "plugin/plugin-installer.ts::function::defineProviderPlugin#L125",
+        "impacted_names": [
+          "plugin/dynamic-loader.test.ts",
+          "plugin/plugin-installer.ts",
+          "plugin/providers/panguard.ts",
+          "plugin/host-services.ts",
+          "plugin/index.ts",
+          "providers/webmcp-draft/index.ts"
+        ],
+        "files": [
+          "plugin/dynamic-loader.test.ts",
+          "plugin/host-services.ts",
+          "plugin/index.ts",
+          "plugin/plugin-installer.ts",
+          "plugin/providers/panguard.ts",
+          "providers/webmcp-draft/index.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=6",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-09",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "What symbols/files sit in the depth-2 blast radius of `linkTypeScriptCrossFile`?",
+      "why_grep_fails": "Indexer pipeline wiring is multi-hop; grep of the name understates callers through sync/index entrypoints.",
+      "gold": {
+        "seed": "linkTypeScriptCrossFile",
+        "seedNodeId": "indexer/link-typescript.ts::function::linkTypeScriptCrossFile#L18",
+        "impacted_names": [
+          "indexer/extract-typescript.test.ts",
+          "indexRepository",
+          "indexer/link-typescript.ts",
+          "makeCodeGraphServiceLive",
+          "indexer/index-repo.ts",
+          "syncCodeGraph",
+          "indexAndMergeRoots",
+          "index.ts"
+        ],
+        "files": [
+          "effect/codegraph-service.ts",
+          "index.ts",
+          "indexer/extract-typescript.test.ts",
+          "indexer/index-repo.ts",
+          "indexer/link-typescript.ts",
+          "sync/codegraph-sync.ts",
+          "test-utils/dogfood-graph.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=8",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-10",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "List depth-≤2 dependents of `grantsWithinAtr` across packages.",
+      "why_grep_fails": "ATR helpers are re-exported and called from visibility/hook paths; grep cannot separate live edges from design text.",
+      "gold": {
+        "seed": "grantsWithinAtr",
+        "seedNodeId": "plugin/hook-runtime.ts::function::grantsWithinAtr#L27",
+        "impacted_names": [
+          "plugin/hook-runtime.ts",
+          "fireHook",
+          "execute-batch/index.ts",
+          "plugin/hook-registry.ts",
+          "plugin/index.ts",
+          "providers/webmcp-draft/lifecycle/publish.ts",
+          "fireHooksForEvent"
+        ],
+        "files": [
+          "execute-batch/index.ts",
+          "plugin/hook-registry.ts",
+          "plugin/hook-runtime.ts",
+          "plugin/index.ts",
+          "providers/webmcp-draft/lifecycle/publish.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=7",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-11",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "explore",
+      "question": "Explore `codegraphImpact` (MCP handler): which service method does it call, and which files appear in its neighborhood?",
+      "why_grep_fails": "Handler → Effect service → impactAnalysis is a cross-file chain; grep of the handler name stops at the handler file.",
+      "gold": {
+        "seed": "codegraphImpact",
+        "primary": "codegraphImpact",
+        "primary_file": "mcp/handlers.ts",
+        "neighbor_names": [
+          "mcp/handlers.ts",
+          "mcp/handlers.ts",
+          "parse",
+          "runCodeGraphEffect",
+          "gen",
+          "impact"
+        ],
+        "impact_names": [
+          "mcp/handlers.ts",
+          "dogfood/codegraph-dogfood.integration.test.ts",
+          "index.ts"
+        ]
+      },
+      "oracle_notes": "explore one-shot",
+      "machine_ok": true
+    },
+    {
+      "id": "cg-prove-12",
+      "repo": "danielsmithdevelopment/ClawQL",
+      "roots": [
+        "packages/clawql-codegraph/src",
+        "packages/clawql-memory/src",
+        "packages/clawql-core/src",
+        "packages/clawql-api/src"
+      ],
+      "job": "impact",
+      "question": "List depth-≤2 dependents of `bm25Score` (ranker wrappers / Effect layers that would break on a scoring change).",
+      "why_grep_fails": "Grep finds the function and nearby helpers; the prove job is the inbound blast radius used for a safe rename.",
+      "gold": {
+        "seed": "bm25Score",
+        "seedNodeId": "recall/vault-ranker.ts::function::bm25Score#L90",
+        "impacted_names": [
+          "recall/vault-ranker.test.ts",
+          "recall/vault-ranker.ts",
+          "scoreWithVaultRanker",
+          "effect/index.ts",
+          "effect/memory-recall-effect.ts",
+          "executeMemoryRecallCoreEffect",
+          "scoreWithVaultRankerEffect"
+        ],
+        "files": [
+          "effect/index.ts",
+          "effect/memory-recall-effect.ts",
+          "recall/vault-ranker.test.ts",
+          "recall/vault-ranker.ts"
+        ]
+      },
+      "oracle_notes": "impact depth=2 n=7",
+      "machine_ok": true
+    }
+  ],
+  "note": "Machine assist only — human must verify golds and why_grep_fails before spend."
+}

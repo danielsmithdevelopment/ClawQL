@@ -220,7 +220,11 @@ export function createAutomationPlugin(
             handler: (args) => handleScheduleToolInput(args),
           });
           registerScheduleWorkerShutdownHooks();
-          startScheduleWorker();
+          // Fail closed in production when CLAWQL_SCHEDULE_PROJECTION_KEY is missing
+          // (ciphertext + key on the same disk is not encryption). Sync throw → Effect defect.
+          yield* Effect.sync(() => {
+            startScheduleWorker();
+          });
         }
         if (enableNotify) {
           yield* api.registerMcpTool({

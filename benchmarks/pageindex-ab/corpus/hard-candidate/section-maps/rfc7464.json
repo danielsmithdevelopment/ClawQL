@@ -1,0 +1,50 @@
+{
+  "document_id": "rfc7464",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-n-williams",
+      "title": "Internet Engineering Task Force (IETF)                       N. Williams"
+    },
+    {
+      "id": "sec-1-introduction-and-motivation",
+      "title": "1 Introduction and Motivation"
+    },
+    {
+      "id": "sec-1-1-conventions-used-in-this-document",
+      "title": "1.1 Conventions Used in This Document"
+    },
+    {
+      "id": "sec-2-json-text-sequence-format",
+      "title": "2 JSON Text Sequence Format"
+    },
+    {
+      "id": "sec-2-1-json-text-sequence-parsing",
+      "title": "2.1 JSON Text Sequence Parsing"
+    },
+    {
+      "id": "sec-2-2-json-text-sequence-encoding",
+      "title": "2.2 JSON Text Sequence Encoding"
+    },
+    {
+      "id": "sec-2-3-incomplete-invalid-json-texts-need-not-be-fatal",
+      "title": "2.3 Incomplete/Invalid JSON Texts Need Not Be Fatal"
+    },
+    {
+      "id": "sec-2-4-top-level-values-numbers-true-false-and-null",
+      "title": "2.4 Top-Level Values: numbers, true, false, and null"
+    },
+    {
+      "id": "sec-3-security-considerations",
+      "title": "3 Security Considerations"
+    },
+    {
+      "id": "sec-4-iana-considerations",
+      "title": "4 IANA Considerations"
+    },
+    {
+      "id": "sec-5-normative-references",
+      "title": "5 Normative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7464.txt"
+}

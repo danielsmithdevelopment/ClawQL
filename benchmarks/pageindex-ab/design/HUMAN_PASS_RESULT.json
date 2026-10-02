@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "reviewed_by": "agent",
+  "reviewed_at": "2026-09-30T00:24:00Z",
+  "codegraph_prove": {
+    "n": 12,
+    "grep_soluble": 0,
+    "all_need_graph": true,
+    "verdict": "pass",
+    "artifact": "/opt/cursor/artifacts/codegraph-grep-check.json"
+  },
+  "doc_sample": {
+    "n": 60,
+    "seed": 20261015,
+    "real_defects": 0,
+    "auto_flags_adjudicated_fp": 3,
+    "verdict": "pass",
+    "sample": "design/doc-human-pass-sample.json"
+  },
+  "flagger": {
+    "keys_flagged_defective": 0,
+    "map_artifact_section_count": 0,
+    "keys_with_gold_clean": 238
+  },
+  "next": ["offline H-idf baseline on hard-candidate", "schedule k-sweep", "Track B spend when ready"]
+}

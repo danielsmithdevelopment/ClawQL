@@ -1,0 +1,7 @@
+{
+  "tool_calls": [
+    { "name": "clawql_pageindex_traverse" },
+    { "name": "pageindex_get_content" },
+    { "name": "pageindex_synthesize" }
+  ]
+}

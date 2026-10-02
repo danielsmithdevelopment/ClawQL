@@ -1,0 +1,286 @@
+{
+  "document_id": "rfc3986",
+  "sections": [
+    {
+      "id": "sec-network-working-group-t-berners-lee",
+      "title": "Network Working Group                                     T. Berners-Lee"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-overview-of-uris",
+      "title": "1.1 Overview of URIs"
+    },
+    {
+      "id": "sec-1-1-1-generic-syntax",
+      "title": "1.1.1 Generic Syntax"
+    },
+    {
+      "id": "sec-1-1-2-examples",
+      "title": "1.1.2 Examples"
+    },
+    {
+      "id": "sec-1-1-3-uri-url-and-urn",
+      "title": "1.1.3 URI, URL, and URN"
+    },
+    {
+      "id": "sec-1-2-design-considerations",
+      "title": "1.2 Design Considerations"
+    },
+    {
+      "id": "sec-1-2-1-transcription",
+      "title": "1.2.1 Transcription"
+    },
+    {
+      "id": "sec-1-2-2-separating-identification-from-interaction",
+      "title": "1.2.2 Separating Identification from Interaction"
+    },
+    {
+      "id": "sec-1-2-3-hierarchical-identifiers",
+      "title": "1.2.3 Hierarchical Identifiers"
+    },
+    {
+      "id": "sec-1-3-syntax-notation",
+      "title": "1.3 Syntax Notation"
+    },
+    {
+      "id": "sec-2-characters",
+      "title": "2 Characters"
+    },
+    {
+      "id": "sec-2-1-percent-encoding",
+      "title": "2.1 Percent-Encoding"
+    },
+    {
+      "id": "sec-2-2-reserved-characters",
+      "title": "2.2 Reserved Characters"
+    },
+    {
+      "id": "sec-2-3-unreserved-characters",
+      "title": "2.3 Unreserved Characters"
+    },
+    {
+      "id": "sec-2-5-identifying-data",
+      "title": "2.5 Identifying Data"
+    },
+    {
+      "id": "sec-3-syntax-components",
+      "title": "3 Syntax Components"
+    },
+    {
+      "id": "sec-3-1-scheme",
+      "title": "3.1 Scheme"
+    },
+    {
+      "id": "sec-3-2-authority",
+      "title": "3.2 Authority"
+    },
+    {
+      "id": "sec-3-2-1-user-information",
+      "title": "3.2.1 User Information"
+    },
+    {
+      "id": "sec-3-2-2-host",
+      "title": "3.2.2 Host"
+    },
+    {
+      "id": "sec-3-2-3-port",
+      "title": "3.2.3 Port"
+    },
+    {
+      "id": "sec-3-3-path",
+      "title": "3.3 Path"
+    },
+    {
+      "id": "sec-3-4-query",
+      "title": "3.4 Query"
+    },
+    {
+      "id": "sec-3-5-fragment",
+      "title": "3.5 Fragment"
+    },
+    {
+      "id": "sec-4-usage",
+      "title": "4 Usage"
+    },
+    {
+      "id": "sec-4-1-uri-reference",
+      "title": "4.1 URI Reference"
+    },
+    {
+      "id": "sec-4-2-relative-reference",
+      "title": "4.2 Relative Reference"
+    },
+    {
+      "id": "sec-4-3-absolute-uri",
+      "title": "4.3 Absolute URI"
+    },
+    {
+      "id": "sec-4-4-same-document-reference",
+      "title": "4.4 Same-Document Reference"
+    },
+    {
+      "id": "sec-4-5-suffix-reference",
+      "title": "4.5 Suffix Reference"
+    },
+    {
+      "id": "sec-5-reference-resolution",
+      "title": "5 Reference Resolution"
+    },
+    {
+      "id": "sec-5-1-establishing-a-base-uri",
+      "title": "5.1 Establishing a Base URI"
+    },
+    {
+      "id": "sec-5-1-1-base-uri-embedded-in-content",
+      "title": "5.1.1 Base URI Embedded in Content"
+    },
+    {
+      "id": "sec-5-1-2-base-uri-from-the-encapsulating-entity",
+      "title": "5.1.2 Base URI from the Encapsulating Entity"
+    },
+    {
+      "id": "sec-5-1-3-base-uri-from-the-retrieval-uri",
+      "title": "5.1.3 Base URI from the Retrieval URI"
+    },
+    {
+      "id": "sec-5-1-4-default-base-uri",
+      "title": "5.1.4 Default Base URI"
+    },
+    {
+      "id": "sec-5-2-relative-resolution",
+      "title": "5.2 Relative Resolution"
+    },
+    {
+      "id": "sec-5-2-1-pre-parse-the-base-uri",
+      "title": "5.2.1 Pre-parse the Base URI"
+    },
+    {
+      "id": "sec-5-2-2-transform-references",
+      "title": "5.2.2 Transform References"
+    },
+    {
+      "id": "sec-5-2-3-merge-paths",
+      "title": "5.2.3 Merge Paths"
+    },
+    {
+      "id": "sec-5-2-4-remove-dot-segments",
+      "title": "5.2.4 Remove Dot Segments"
+    },
+    {
+      "id": "sec-2-while-the-input-buffer-is-not-empty-loop-as-follows",
+      "title": "2 While the input buffer is not empty, loop as follows:"
+    },
+    {
+      "id": "sec-3-finally-the-output-buffer-is-returned-as-the-result-of",
+      "title": "3 Finally, the output buffer is returned as the result of"
+    },
+    {
+      "id": "sec-5-3-component-recomposition",
+      "title": "5.3 Component Recomposition"
+    },
+    {
+      "id": "sec-5-4-reference-resolution-examples",
+      "title": "5.4 Reference Resolution Examples"
+    },
+    {
+      "id": "sec-5-4-1-normal-examples",
+      "title": "5.4.1 Normal Examples"
+    },
+    {
+      "id": "sec-5-4-2-abnormal-examples",
+      "title": "5.4.2 Abnormal Examples"
+    },
+    {
+      "id": "sec-6-normalization-and-comparison",
+      "title": "6 Normalization and Comparison"
+    },
+    {
+      "id": "sec-6-1-equivalence",
+      "title": "6.1 Equivalence"
+    },
+    {
+      "id": "sec-6-2-comparison-ladder",
+      "title": "6.2 Comparison Ladder"
+    },
+    {
+      "id": "sec-6-2-1-simple-string-comparison",
+      "title": "6.2.1 Simple String Comparison"
+    },
+    {
+      "id": "sec-6-2-2-syntax-based-normalization",
+      "title": "6.2.2 Syntax-Based Normalization"
+    },
+    {
+      "id": "sec-6-2-2-1-case-normalization",
+      "title": "6.2.2.1 Case Normalization"
+    },
+    {
+      "id": "sec-6-2-2-2-percent-encoding-normalization",
+      "title": "6.2.2.2 Percent-Encoding Normalization"
+    },
+    {
+      "id": "sec-6-2-2-3-path-segment-normalization",
+      "title": "6.2.2.3 Path Segment Normalization"
+    },
+    {
+      "id": "sec-6-2-3-scheme-based-normalization",
+      "title": "6.2.3 Scheme-Based Normalization"
+    },
+    {
+      "id": "sec-6-2-4-protocol-based-normalization",
+      "title": "6.2.4 Protocol-Based Normalization"
+    },
+    {
+      "id": "sec-7-security-considerations",
+      "title": "7 Security Considerations"
+    },
+    {
+      "id": "sec-7-1-reliability-and-consistency",
+      "title": "7.1 Reliability and Consistency"
+    },
+    {
+      "id": "sec-7-2-malicious-construction",
+      "title": "7.2 Malicious Construction"
+    },
+    {
+      "id": "sec-7-3-back-end-transcoding",
+      "title": "7.3 Back-End Transcoding"
+    },
+    {
+      "id": "sec-7-4-rare-ip-address-formats",
+      "title": "7.4 Rare IP Address Formats"
+    },
+    {
+      "id": "sec-7-5-sensitive-information",
+      "title": "7.5 Sensitive Information"
+    },
+    {
+      "id": "sec-7-6-semantic-attacks",
+      "title": "7.6 Semantic Attacks"
+    },
+    {
+      "id": "sec-8-iana-considerations",
+      "title": "8 IANA Considerations"
+    },
+    {
+      "id": "sec-9-acknowledgements",
+      "title": "9 Acknowledgements"
+    },
+    {
+      "id": "sec-10-references",
+      "title": "10 References"
+    },
+    {
+      "id": "sec-10-1-normative-references",
+      "title": "10.1 Normative References"
+    },
+    {
+      "id": "sec-10-2-informative-references",
+      "title": "10.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc3986.txt"
+}

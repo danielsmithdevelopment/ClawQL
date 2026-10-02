@@ -27,6 +27,22 @@ describe("mcp-http-protocol", () => {
     });
     expect(r.stateless).toBe(true);
     expect((r.capabilities as { mrtr: boolean }).mrtr).toBe(true);
+    expect((r.capabilities as { events?: object }).events).toEqual({});
+    expect((r.serverInfo as { version: string }).version).toBe("8.0.0");
+  });
+
+  it("omits events capability when CLAWQL_ENABLE_MCP_EVENTS=0", () => {
+    const prev = process.env.CLAWQL_ENABLE_MCP_EVENTS;
+    process.env.CLAWQL_ENABLE_MCP_EVENTS = "0";
+    try {
+      const r = buildHttpDiscoverResponse({
+        protocolVersion: MCP_PROTOCOL_VERSION_2026_07_28,
+      });
+      expect((r.capabilities as { events?: object }).events).toBeUndefined();
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_ENABLE_MCP_EVENTS;
+      else process.env.CLAWQL_ENABLE_MCP_EVENTS = prev;
+    }
   });
 
   it("advertises openai/settings extensions when provided", () => {

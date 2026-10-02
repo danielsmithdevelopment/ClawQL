@@ -31,7 +31,7 @@ clawql/
 ├── packages/
 │   ├── clawql-core/       # types, audit, Merkle, Cuckoo, Plugin interface
 │   ├── clawql-auth/       # gateway auth + provider credential headers
-│   ├── clawql-pageindex/  # MIT vectorless hierarchical indexing
+│   ├── ~~clawql-pageindex/~~  # removed in 8.0
 │   ├── clawql-api/        # gateway composition root, search/execute
 │   ├── clawql-memory/     # vault, memory.db, ingest/recall
 │   ├── clawql-documents/  # ingest + DEFAULT_IDP_PIPELINE recipe
@@ -267,7 +267,7 @@ clawql-core  (merkle/, cuckoo/, utils/ — internal modules)
      │
      ├──────────────┐
      │              │
-clawql-api    clawql-pageindex (✅)
+clawql-api    ~~clawql-pageindex~~ (removed 8.0)
      │
 ┌────┼────────────────────┐
 │    │                    │
@@ -316,7 +316,7 @@ _Why:_ Type divergence is the leading cause of silent integration failures. If t
 
 _Enforcement:_ Code review + import linting. There is no automated check that can reliably detect structural duplication, so reviewers must be vigilant.
 
-**Rule 5: `clawql-pageindex` has zero ClawQL dependencies.**
+**Rule 5 (historical): `clawql-pageindex` had zero ClawQL dependencies — package removed in 8.0.**
 
 It may only import from its own sub-packages and approved third-party libraries. It must remain usable as a standalone MIT package outside of ClawQL.
 

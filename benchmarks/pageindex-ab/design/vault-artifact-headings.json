@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "mode": "vault",
+  "vault": "/home/ubuntu/.ClawQL",
+  "files_scanned": 10,
+  "files_with_artifacts": 0,
+  "total_atx_headings": 226,
+  "artifact_heading_count": 0,
+  "artifact_heading_rate": 0.0,
+  "files": [],
+  "note": "Artifact ATX headings in source Markdown mint bogus sec-* IDs for any tool that does not use the 8.0 splitMarkdownSections filter. Product read_around skips them; optional demote via scripts/dev/vault-resection-artifact-headings.mjs --write."
+}

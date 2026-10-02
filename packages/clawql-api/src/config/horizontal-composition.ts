@@ -182,7 +182,6 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableSandbox: false,
     enableData: false,
     enableWeb: false,
-    enableCodeGraph: false,
     enableOntology: false,
     enableOntologyWrites: false,
     enableHitlLabelStudio: false,

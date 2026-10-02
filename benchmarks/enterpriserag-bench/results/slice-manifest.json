@@ -1,0 +1,24 @@
+{
+  "tag": "enterpriserag-bench-slice-v1",
+  "n_docs": 20189,
+  "n_questions_total": 500,
+  "n_questions_covered": 144,
+  "covered_by_type": {
+    "basic": 33,
+    "semantic": 24,
+    "intra_document_reasoning": 2,
+    "project_related": 31,
+    "constrained": 16,
+    "conflicting_info": 17,
+    "completeness": 16,
+    "miscellaneous": 5
+  },
+  "slices": [
+    "confluence_slice_0001.zip",
+    "confluence_slice_0002.zip",
+    "google_drive_slice_0001.zip",
+    "google_drive_slice_0002.zip",
+    "google_drive_slice_0003.zip"
+  ],
+  "note": "Hard cohort for MaxP: semantic + intra_document_reasoning. No-harm: basic. Win only if hard\u2191 and no-harm holds."
+}

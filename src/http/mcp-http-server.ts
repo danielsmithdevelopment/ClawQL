@@ -32,6 +32,12 @@ import {
   shouldUseStatelessHttpTransport,
 } from "../mcp/mcp-http-protocol.js";
 import { chatgptExtensionsDiscoverFragment } from "clawql-chatgpt-extensions";
+import {
+  handleMcpEventsJsonRpc,
+  isMcpEventsEnabledSync,
+  isMcpEventsJsonRpc,
+  McpEventsServiceLive,
+} from "clawql-mcp-events";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import {
   getVaultStartupStatus,
@@ -201,6 +207,12 @@ export type CreateMcpHttpAppOptions = {
 export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): Promise<Express> {
   configureHitlTransportDeps();
   registerMcpX402TransportHooks();
+  try {
+    const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
+    configureMcpEventsProcessEmitter();
+  } catch {
+    /* mcp-events optional in slim test hosts */
+  }
   if (!options.skipSpecPreload) {
     await loadSpec();
     await preloadSchemaFieldCacheFromDisk();
@@ -587,6 +599,50 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       return;
     }
 
+    // MCP Events (ChatGPT / draft Events spec) — same authenticated endpoint as tools.
+    if (isMcpEventsJsonRpc(req.body)) {
+      if (!isMcpEventsEnabledSync()) {
+        const body = req.body as { id?: unknown };
+        res.status(200).json({
+          jsonrpc: "2.0",
+          id: body.id ?? null,
+          error: { code: -32601, message: "MCP Events disabled (CLAWQL_ENABLE_MCP_EVENTS=0)" },
+        });
+        return;
+      }
+      const body = req.body as {
+        id?: unknown;
+        method?: string;
+        params?: unknown;
+      };
+      const principal =
+        (typeof req.header("x-clawql-principal") === "string" &&
+          req.header("x-clawql-principal")?.trim()) ||
+        (typeof req.header("x-clawql-atr-sub") === "string" &&
+          req.header("x-clawql-atr-sub")?.trim()) ||
+        "anonymous";
+      try {
+        const rpc = await Effect.runPromise(
+          handleMcpEventsJsonRpc(
+            { jsonrpc: "2.0", id: body.id, method: body.method, params: body.params },
+            principal
+          ).pipe(Effect.provide(McpEventsServiceLive))
+        );
+        res.status(200).json(rpc);
+      } catch (err: unknown) {
+        console.error("[clawql-mcp-http] MCP Events error:", err);
+        res.status(200).json({
+          jsonrpc: "2.0",
+          id: body.id ?? null,
+          error: {
+            code: -32603,
+            message: err instanceof Error ? err.message : "Internal error",
+          },
+        });
+      }
+      return;
+    }
+
     const sessionId = req.header("mcp-session-id");
     const useStateless = shouldUseStatelessHttpTransport(protocolVersion);
     try {
@@ -743,6 +799,8 @@ export async function startMcpHttpServer(): Promise<void> {
     await import("../composition/clawql-api-adapters.js");
   registerClawqlApiShutdownHooks();
   await ensureClawqlApi();
+  const { configureMcpEventsProcessEmitter } = await import("../mcp/mcp-events-host.js");
+  configureMcpEventsProcessEmitter();
   const { ensureProcessWormHostBooted } = await import("../composition/process-worm-host.js");
   await ensureProcessWormHostBooted();
   const app = await createMcpHttpApp();

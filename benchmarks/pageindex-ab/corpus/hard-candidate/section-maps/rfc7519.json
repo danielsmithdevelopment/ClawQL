@@ -1,0 +1,186 @@
+{
+  "document_id": "rfc7519",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-m-jones",
+      "title": "Internet Engineering Task Force (IETF)                          M. Jones"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-notational-conventions",
+      "title": "1.1 Notational Conventions"
+    },
+    {
+      "id": "sec-2-terminology",
+      "title": "2 Terminology"
+    },
+    {
+      "id": "sec-3-json-web-token-jwt-overview",
+      "title": "3 JSON Web Token (JWT) Overview"
+    },
+    {
+      "id": "sec-3-1-example-jwt",
+      "title": "3.1 Example JWT"
+    },
+    {
+      "id": "sec-4-jwt-claims",
+      "title": "4 JWT Claims"
+    },
+    {
+      "id": "sec-4-1-registered-claim-names",
+      "title": "4.1 Registered Claim Names"
+    },
+    {
+      "id": "sec-4-2-public-claim-names",
+      "title": "4.2 Public Claim Names"
+    },
+    {
+      "id": "sec-4-3-private-claim-names",
+      "title": "4.3 Private Claim Names"
+    },
+    {
+      "id": "sec-5-jose-header",
+      "title": "5 JOSE Header"
+    },
+    {
+      "id": "sec-5-3-replicating-claims-as-header-parameters",
+      "title": "5.3 Replicating Claims as Header Parameters"
+    },
+    {
+      "id": "sec-6-unsecured-jwts",
+      "title": "6 Unsecured JWTs"
+    },
+    {
+      "id": "sec-6-1-example-unsecured-jwt",
+      "title": "6.1 Example Unsecured JWT"
+    },
+    {
+      "id": "sec-7-creating-and-validating-jwts",
+      "title": "7 Creating and Validating JWTs"
+    },
+    {
+      "id": "sec-7-1-creating-a-jwt",
+      "title": "7.1 Creating a JWT"
+    },
+    {
+      "id": "sec-2-let-the-message-be-the-octets-of-the-utf-8-representation-of-the",
+      "title": "2 Let the Message be the octets of the UTF-8 representation of the"
+    },
+    {
+      "id": "sec-4-depending-upon-whether-the-jwt-is-a-jws-or-jwe-there-are-two",
+      "title": "4 Depending upon whether the JWT is a JWS or JWE, there are two"
+    },
+    {
+      "id": "sec-6-otherwise-let-the-resulting-jwt-be-the-jws-or-jwe",
+      "title": "6 Otherwise, let the resulting JWT be the JWS or JWE."
+    },
+    {
+      "id": "sec-7-2-validating-a-jwt",
+      "title": "7.2 Validating a JWT"
+    },
+    {
+      "id": "sec-2-let-the-encoded-jose-header-be-the-portion-of-the-jwt-before-the",
+      "title": "2 Let the Encoded JOSE Header be the portion of the JWT before the"
+    },
+    {
+      "id": "sec-3-base64url-decode-the-encoded-jose-header-following-the",
+      "title": "3 Base64url decode the Encoded JOSE Header following the"
+    },
+    {
+      "id": "sec-6-determine-whether-the-jwt-is-a-jws-or-a-jwe-using-any-of-the",
+      "title": "6 Determine whether the JWT is a JWS or a JWE using any of the"
+    },
+    {
+      "id": "sec-7-depending-upon-whether-the-jwt-is-a-jws-or-jwe-there-are-two",
+      "title": "7 Depending upon whether the JWT is a JWS or JWE, there are two"
+    },
+    {
+      "id": "sec-9-otherwise-base64url-decode-the-message-following-the",
+      "title": "9 Otherwise, base64url decode the Message following the"
+    },
+    {
+      "id": "sec-7-3-string-comparison-rules",
+      "title": "7.3 String Comparison Rules"
+    },
+    {
+      "id": "sec-8-implementation-requirements",
+      "title": "8 Implementation Requirements"
+    },
+    {
+      "id": "sec-9-uri-for-declaring-that-content-is-a-jwt",
+      "title": "9 URI for Declaring that Content is a JWT"
+    },
+    {
+      "id": "sec-10-iana-considerations",
+      "title": "10 IANA Considerations"
+    },
+    {
+      "id": "sec-10-1-json-web-token-claims-registry",
+      "title": "10.1 JSON Web Token Claims Registry"
+    },
+    {
+      "id": "sec-10-1-1-registration-template",
+      "title": "10.1.1 Registration Template"
+    },
+    {
+      "id": "sec-10-1-2-initial-registry-contents",
+      "title": "10.1.2 Initial Registry Contents"
+    },
+    {
+      "id": "sec-10-2-sub-namespace-registration-of",
+      "title": "10.2 Sub-Namespace Registration of"
+    },
+    {
+      "id": "sec-10-2-1-registry-contents",
+      "title": "10.2.1 Registry Contents"
+    },
+    {
+      "id": "sec-10-3-media-type-registration",
+      "title": "10.3 Media Type Registration"
+    },
+    {
+      "id": "sec-10-3-1-registry-contents",
+      "title": "10.3.1 Registry Contents"
+    },
+    {
+      "id": "sec-10-4-header-parameter-names-registration",
+      "title": "10.4 Header Parameter Names Registration"
+    },
+    {
+      "id": "sec-10-4-1-registry-contents",
+      "title": "10.4.1 Registry Contents"
+    },
+    {
+      "id": "sec-11-security-considerations",
+      "title": "11 Security Considerations"
+    },
+    {
+      "id": "sec-11-1-trust-decisions",
+      "title": "11.1 Trust Decisions"
+    },
+    {
+      "id": "sec-11-2-signing-and-encryption-order",
+      "title": "11.2 Signing and Encryption Order"
+    },
+    {
+      "id": "sec-12-privacy-considerations",
+      "title": "12 Privacy Considerations"
+    },
+    {
+      "id": "sec-13-references",
+      "title": "13 References"
+    },
+    {
+      "id": "sec-13-1-normative-references",
+      "title": "13.1 Normative References"
+    },
+    {
+      "id": "sec-13-2-informative-references",
+      "title": "13.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc7519.txt"
+}

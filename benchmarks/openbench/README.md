@@ -46,8 +46,10 @@ benchmarks/openbench/
   README.md
 ```
 
-Advanced suites B-1…B-6 (specs + Phase 1 packs):
+Advanced suites B-1…B-7 (specs + Phase 1 packs):
 [`docs/benchmarks/openbench-advanced-specs.md`](../../docs/benchmarks/openbench-advanced-specs.md).
+**Memory stack default-route A/B (v0.2):** [`docs/benchmarks/pageindex-ab-eval-spec-v0.1.md`](../../docs/benchmarks/pageindex-ab-eval-spec-v0.1.md)
++ harness [`benchmarks/pageindex-ab/`](../pageindex-ab/) — BM25 × PageIndex × CodeGraph factorial (not binary on/off).
 CI matrix / retired list: [`ci-matrix.json`](ci-matrix.json).
 
 ## Prerequisites

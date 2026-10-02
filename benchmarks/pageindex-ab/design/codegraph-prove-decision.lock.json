@@ -1,0 +1,141 @@
+{
+  "locked_at": "2026-09-30T00:03:00Z",
+  "status": "locked_before_spend",
+  "clear_to_sign": true,
+  "product_question": "Does adding codegraph_* improve today's default (grep + read)? Additive treatment only.",
+  "freeze": "2026-10-15",
+  "caveat": "n=12 prove keys on one TypeScript monorepo (ClawQL) is a small test on CodeGraph home turf. Predeclared margin + no-harm + no-tools + usage recording are required so a home-turf win cannot sneak past a weak bar.",
+  "model": "anthropic/claude-sonnet-4.6",
+  "repo": "danielsmithdevelopment/ClawQL",
+  "cohorts": {
+    "prove": {
+      "file": "design/codegraph-prove-keys.md",
+      "oracle": "design/codegraph-prove-keys.oracle.json",
+      "n": 12,
+      "job": "grep-insoluble impact/explore",
+      "counts_toward_net": true
+    },
+    "no_harm": {
+      "file": "design/codegraph-no-harm-keys.json",
+      "n": 6,
+      "job": "grep-solvable export/definition lookups",
+      "counts_toward_net": false,
+      "purpose": "Adding CodeGraph tools must not distract the agent on easy questions (not: can CodeGraph replace grep)"
+    }
+  },
+  "arms": [
+    {
+      "id": "A-no-tools",
+      "role": "baseline",
+      "tools": [],
+      "purpose": "ClawQL is public; measure how much the frontier model answers from memory alone",
+      "counts_toward_net": false
+    },
+    {
+      "id": "A-grep",
+      "role": "control",
+      "tools": ["grep", "read_around"],
+      "purpose": "Today's default — unique-string grep + read",
+      "counts_toward_net": true
+    },
+    {
+      "id": "A-codegraph",
+      "role": "treatment",
+      "tools": [
+        "grep",
+        "read_around",
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "codegraph_query"
+      ],
+      "purpose": "Additive — today's default PLUS codegraph_*. This is the beat arm.",
+      "counts_toward_net": true,
+      "usage_evidence": {
+        "required": true,
+        "record": "Per question: whether any codegraph_* tool was called in the treatment arm",
+        "interpretation": "If the agent has grep+CodeGraph and never calls codegraph_*, that answers the purpose question on its own (no added value in practice)."
+      }
+    },
+    {
+      "id": "A-codegraph-only",
+      "role": "diagnostic",
+      "tools": [
+        "codegraph_explore",
+        "codegraph_impact",
+        "codegraph_neighbors",
+        "codegraph_path",
+        "codegraph_query",
+        "read_around"
+      ],
+      "purpose": "Diagnostic — can CodeGraph replace grep? Does NOT decide freeze. Optional in live spend; report if run.",
+      "counts_toward_net": false,
+      "optional": true
+    }
+  ],
+  "beat": {
+    "metric": "answer_only_strict",
+    "unit": "question",
+    "contrast": "A-codegraph (grep+codegraph) vs A-grep",
+    "definitions": {
+      "W": "#prove keys treatment (grep+CodeGraph) correct and grep-only wrong",
+      "L": "#prove keys grep-only correct and treatment wrong",
+      "Net": "W - L"
+    },
+    "codegraph_beats": {
+      "net_ge": 5,
+      "and": ["no_harm_pass"],
+      "note": "Net is the extra value of bundling CodeGraph on top of grep"
+    },
+    "tie": {
+      "net_in": [-4, 4],
+      "meaning": "purge — codegraph_* leaves the 8.0.0 bundle"
+    },
+    "grep_beats": {
+      "net_le": -5,
+      "meaning": "purge"
+    },
+    "no_harm_pass": {
+      "required_for_win": true,
+      "rule": "On the 6 grep-solvable no-harm keys, A-codegraph (grep+CodeGraph) answer-correct count >= 5 (allow one flake). Failure => treat as tie => purge.",
+      "interpretation": "Checks that CodeGraph's extra tools do not distract the agent on easy questions — not whether CodeGraph can do grep's job.",
+      "also_report": [
+        "A-grep no-harm rate (expected ~6/6)",
+        "A-no-tools prove + no-harm rates (memory baseline; does not rescue CodeGraph)",
+        "A-codegraph-only rates if diagnostic arm was run (does not change beat)"
+      ]
+    },
+    "usage_evidence": {
+      "required": true,
+      "arm": "A-codegraph",
+      "record_per_question": [
+        "codegraph_tool_calls (count)",
+        "codegraph_tools_used (names)",
+        "used_codegraph (bool)"
+      ],
+      "report": [
+        "fraction of prove keys where used_codegraph=true",
+        "fraction of no-harm keys where used_codegraph=true"
+      ],
+      "does_not_alone_decide_beat": true,
+      "note": "If treatment wins Net but almost never calls codegraph_*, treat as weak evidence for bundling — publish and prefer purge/tie judgment in freeze writeup."
+    },
+    "no_tools_reporting": {
+      "required": true,
+      "does_not_change_beat": true,
+      "note": "If A-no-tools already clears many prove keys, the Net vs grep overstates tool value — publish the rates; do not keep on memory alone."
+    },
+    "diagnostic_codegraph_only": {
+      "arm": "A-codegraph-only",
+      "does_not_change_beat": true,
+      "note": "Answers 'can CodeGraph replace grep?' — skews both ways vs real deployments; never use for keep/purge."
+    }
+  },
+  "human_pass_gate": {
+    "doc": "design/HUMAN_PASS_ONE_SITTING.md",
+    "prove_keys": "review all 12; confirm single grep cannot answer each",
+    "doc_keys": "stratified random sample ~60; stop if >=3 defects and fix builder",
+    "sign_before_spend": true
+  }
+}

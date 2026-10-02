@@ -113,9 +113,8 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   };
   if (process.env.CLAWQL_OPENBENCH?.trim()) {
     env.CLAWQL_OPENBENCH = process.env.CLAWQL_OPENBENCH.trim();
-    // Slim tool surface for cheap OpenBench models — avoid pageindex/docs noise
+    // Slim tool surface for cheap OpenBench models — avoid docs noise
     // unless the task explicitly enables them (forwarded below).
-    if (!process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) env.CLAWQL_ENABLE_PAGEINDEX = "0";
     if (!process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) env.CLAWQL_ENABLE_DOCUMENTS = "0";
     // Default recall snippets (520) truncate OpenBench vault recipes (full YAML
     // parser / scaffold notes). Raise so clawql-on can apply recalled content.
@@ -124,9 +123,6 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
     }
   }
   // Explicit overrides must reach the MCP child (OpenCode does not inherit parent env).
-  if (process.env.CLAWQL_ENABLE_PAGEINDEX?.trim()) {
-    env.CLAWQL_ENABLE_PAGEINDEX = process.env.CLAWQL_ENABLE_PAGEINDEX.trim();
-  }
   if (process.env.CLAWQL_ENABLE_DOCUMENTS?.trim()) {
     env.CLAWQL_ENABLE_DOCUMENTS = process.env.CLAWQL_ENABLE_DOCUMENTS.trim();
   }
@@ -144,15 +140,6 @@ export function clawqlMcpChildEnv(home = getClawqlHome()): Record<string, string
   }
   if (process.env.CLAWQL_PANGUARD_BLOCK_TOOLS?.trim()) {
     env.CLAWQL_PANGUARD_BLOCK_TOOLS = process.env.CLAWQL_PANGUARD_BLOCK_TOOLS.trim();
-  }
-  if (process.env.CLAWQL_ENABLE_CODEGRAPH?.trim()) {
-    env.CLAWQL_ENABLE_CODEGRAPH = process.env.CLAWQL_ENABLE_CODEGRAPH.trim();
-  }
-  if (process.env.CLAWQL_CODEGRAPH_ROOT?.trim()) {
-    env.CLAWQL_CODEGRAPH_ROOT = process.env.CLAWQL_CODEGRAPH_ROOT.trim();
-  }
-  if (process.env.CLAWQL_CODEGRAPH_PATH?.trim()) {
-    env.CLAWQL_CODEGRAPH_PATH = process.env.CLAWQL_CODEGRAPH_PATH.trim();
   }
   if (process.env.CLAWQL_ENABLE_SCHEDULE?.trim()) {
     env.CLAWQL_ENABLE_SCHEDULE = process.env.CLAWQL_ENABLE_SCHEDULE.trim();
@@ -253,7 +240,6 @@ export function buildOpencodeConfigContent(opts: {
   const gatewayModel = opts.gatewayModel.trim().replace(/^clawql\//, "");
   const mcpEnv = clawqlMcpChildEnv(home);
   mcpEnv.CLAWQL_OPENBENCH = mcpEnv.CLAWQL_OPENBENCH || "1";
-  if (!mcpEnv.CLAWQL_ENABLE_PAGEINDEX) mcpEnv.CLAWQL_ENABLE_PAGEINDEX = "0";
   if (!mcpEnv.CLAWQL_ENABLE_DOCUMENTS) mcpEnv.CLAWQL_ENABLE_DOCUMENTS = "0";
   if (!mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS) {
     mcpEnv.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS = "8192";

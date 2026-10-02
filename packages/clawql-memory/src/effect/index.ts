@@ -1,10 +1,3 @@
-export {
-  executePageindexBuildTreeEffect,
-  executePageindexGetContentEffect,
-  executePageindexSynthesizeEffect,
-  executePageindexTraverseEffect,
-  type PageindexMcpResult,
-} from "./pageindex-effect.js";
 export { MemoryError } from "./memory-errors.js";
 export { memoryFromPromise, memorySync } from "./memory-effect-utils.js";
 export {
@@ -44,6 +37,21 @@ export {
   memoryCryptoShredLiveLayer,
   memoryCryptoShredLiveService,
 } from "./memory-crypto-shred-service.js";
+export {
+  VaultRankerService,
+  vaultRankerLiveLayer,
+  resolveVaultRankerModeEffect,
+  buildVaultRankerStatsEffect,
+  scoreWithVaultRankerEffect,
+} from "../recall/vault-ranker.js";
+export {
+  ReadAroundService,
+  readAroundLiveLayer,
+  executeReadAroundEffect,
+  splitMarkdownSections,
+  readAroundFromMarkdown,
+  formatSectionEvidence,
+} from "../recall/read-around.js";
 export {
   memoryIngestProgram,
   memoryRecallProgram,

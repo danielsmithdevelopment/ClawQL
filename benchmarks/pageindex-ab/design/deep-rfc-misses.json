@@ -1,0 +1,104 @@
+{
+  "definition": "RFC retrieval misses with IDF gold_rank > 10 (outside k-sweep recovery)",
+  "n": 12,
+  "question_ids": [
+    "hc-rfc-08-q03",
+    "hc-rfc-05-q02",
+    "hc-rfc-06-q02",
+    "hc-rfc-01-q02",
+    "hc-rfc-01-q03",
+    "hc-rfc-04-q02",
+    "hc-rfc-03-q03",
+    "hc-rfc-08-q02",
+    "hc-rfc-03-q02",
+    "hc-rfc-02-q02",
+    "hc-rfc-07-q03",
+    "hc-rfc-07-q02"
+  ],
+  "rows": [
+    {
+      "id": "hc-rfc-08-q03",
+      "type": "buried_detail",
+      "doc": "rfc9205",
+      "gold_rank": 11,
+      "gold_id": "sec-4-7-specifying-http-header-fields"
+    },
+    {
+      "id": "hc-rfc-05-q02",
+      "type": "section_lookup",
+      "doc": "rfc7807",
+      "gold_rank": 16,
+      "gold_id": "sec-1-introduction-2"
+    },
+    {
+      "id": "hc-rfc-06-q02",
+      "type": "section_lookup",
+      "doc": "rfc8615",
+      "gold_rank": 18,
+      "gold_id": "sec-1-introduction-2"
+    },
+    {
+      "id": "hc-rfc-01-q02",
+      "type": "section_lookup",
+      "doc": "rfc8259",
+      "gold_rank": 20,
+      "gold_id": "sec-1-introduction-3"
+    },
+    {
+      "id": "hc-rfc-01-q03",
+      "type": "buried_detail",
+      "doc": "rfc8259",
+      "gold_rank": 22,
+      "gold_id": "sec-5-arrays"
+    },
+    {
+      "id": "hc-rfc-04-q02",
+      "type": "section_lookup",
+      "doc": "rfc7636",
+      "gold_rank": 36,
+      "gold_id": "sec-1-introduction-3"
+    },
+    {
+      "id": "hc-rfc-03-q03",
+      "type": "buried_detail",
+      "doc": "rfc7519",
+      "gold_rank": 41,
+      "gold_id": "sec-5-verify-that-the-resulting-\u2026"
+    },
+    {
+      "id": "hc-rfc-08-q02",
+      "type": "section_lookup",
+      "doc": "rfc9205",
+      "gold_rank": 45,
+      "gold_id": "sec-1-introduction"
+    },
+    {
+      "id": "hc-rfc-03-q02",
+      "type": "section_lookup",
+      "doc": "rfc7519",
+      "gold_rank": 57,
+      "gold_id": "sec-1-introduction-4"
+    },
+    {
+      "id": "hc-rfc-02-q02",
+      "type": "section_lookup",
+      "doc": "rfc6749",
+      "gold_rank": 104,
+      "gold_id": "sec-1-introduction-4"
+    },
+    {
+      "id": "hc-rfc-07-q03",
+      "type": "buried_detail",
+      "doc": "rfc9110",
+      "gold_rank": 278,
+      "gold_id": "sec-1-if-the-field-value-\u2026"
+    },
+    {
+      "id": "hc-rfc-07-q02",
+      "type": "section_lookup",
+      "doc": "rfc9110",
+      "gold_rank": 279,
+      "gold_id": "sec-1-introduction"
+    }
+  ]
+}

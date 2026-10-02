@@ -53,6 +53,20 @@ export function executeNotifySlackCoreEffect(
       })
     );
 
-    return reshapeSlackExecuteResult(exec);
+    const reshaped = reshapeSlackExecuteResult(exec);
+    yield* automationFromPromise(async () => {
+      try {
+        const text = reshaped.content?.[0]?.text ?? "";
+        if (text.includes('"error"') && !text.includes('"ok":true')) return;
+        const { emitNotificationSent } = await import("clawql-mcp-events");
+        emitNotificationSent({
+          channel: params.channel,
+          text: params.text,
+        });
+      } catch {
+        /* mcp-events optional */
+      }
+    });
+    return reshaped;
   });
 }

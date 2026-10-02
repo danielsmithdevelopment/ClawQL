@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clawql.dev/schemas/pageindex-ab/question.schema.json",
+  "title": "PageIndex A/B question + key",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "document_id",
+    "stratum",
+    "question_type",
+    "question",
+    "normalized_answer",
+    "accepted_variants",
+    "gold_sections",
+    "unanswerable"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "document_id": { "type": "string", "minLength": 1 },
+    "stratum": {
+      "type": "string",
+      "enum": ["well_structured", "converted_pdf", "weakly_structured", "code"]
+    },
+    "question_type": {
+      "type": "string",
+      "enum": [
+        "section_lookup",
+        "buried_detail",
+        "cross_section",
+        "misleading_heading",
+        "exact_term",
+        "not_in_document",
+        "cross_document_list"
+      ]
+    },
+    "question": { "type": "string", "minLength": 1 },
+    "normalized_answer": { "type": "string" },
+    "accepted_variants": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gold_sections": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Empty when unanswerable is true. File paths allowed for code stratum."
+    },
+    "unanswerable": { "type": "boolean" },
+    "notes": { "type": "string" },
+    "related_document_ids": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "For cross_document_list questions."
+    }
+  }
+}

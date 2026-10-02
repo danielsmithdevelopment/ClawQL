@@ -1,0 +1,990 @@
+{
+  "tag": "doc-human-pass-sample-v1",
+  "seed": 20261015,
+  "n_requested": 60,
+  "n": 60,
+  "gold_only": false,
+  "population": 358,
+  "keys_path": "/workspace/benchmarks/pageindex-ab/corpus/hard-candidate/keys.jsonl",
+  "allocation": {
+    "code/buried_detail": 1,
+    "code/exact_term": 1,
+    "code/not_in_document": 1,
+    "code/section_lookup": 1,
+    "converted_pdf/buried_detail": 2,
+    "converted_pdf/cross_section": 1,
+    "converted_pdf/exact_term": 2,
+    "converted_pdf/misleading_heading": 1,
+    "converted_pdf/not_in_document": 1,
+    "converted_pdf/section_lookup": 1,
+    "weakly_structured/buried_detail": 2,
+    "weakly_structured/cross_section": 1,
+    "weakly_structured/exact_term": 2,
+    "weakly_structured/misleading_heading": 1,
+    "weakly_structured/not_in_document": 1,
+    "weakly_structured/section_lookup": 1,
+    "well_structured/buried_detail": 3,
+    "well_structured/cross_document_list": 0,
+    "well_structured/cross_section": 6,
+    "well_structured/exact_term": 7,
+    "well_structured/not_in_document": 3,
+    "well_structured/section_lookup": 21
+  },
+  "stop_rule": {
+    "max_defects_to_sign": 2,
+    "reject_if_defects_ge": 3,
+    "action_on_reject": "fix builder / remap; re-sample with new seed; do not sign"
+  },
+  "power_note": "Population ~238 gold-clean keys: independent-trials rough MDE ~8pp; Flash-lite answers are deterministic, so single-comparison detectable difference is closer to ~9pp \u2014 still inside k-sweep needs.",
+  "sample_sha256": "a6227741099f41f69277316731889f9c1104c5d9e42a135ab56f6cef7a803c22",
+  "keys": [
+    {
+      "id": "hc-code-01-q04",
+      "document_id": "tiny-calc",
+      "stratum": "code",
+      "question_type": "not_in_document",
+      "question": "What is the production Kubernetes namespace?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-code-02-q01",
+      "document_id": "tiny-ledger",
+      "stratum": "code",
+      "question_type": "exact_term",
+      "question": "Which function contains LEDGER_LOCK?",
+      "normalized_answer": "postEntry",
+      "gold_sections": [
+        "src/core.ts"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-code-02-q02",
+      "document_id": "tiny-ledger",
+      "stratum": "code",
+      "question_type": "section_lookup",
+      "question": "What file exports postEntry?",
+      "normalized_answer": "src/index.ts",
+      "gold_sections": [
+        "src/index.ts"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": "false_positive: answer is file path src/index.ts (exists; exports postEntry) \u2014 checker looked in file bodies",
+        "initial_auto_flag": true
+      }
+    },
+    {
+      "id": "hc-code-03-q03",
+      "document_id": "tiny-router",
+      "stratum": "code",
+      "question_type": "buried_detail",
+      "question": "What constant string equals ROUTE_TOKEN?",
+      "normalized_answer": "ROUTE_TOKEN",
+      "gold_sections": [
+        "src/core.ts"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-01-q02",
+      "document_id": "pdf-long-meridian-credit",
+      "stratum": "converted_pdf",
+      "question_type": "buried_detail",
+      "question": "What interest margin over Term SOFR applies?",
+      "normalized_answer": "4.125%",
+      "gold_sections": [
+        "sec-schedules"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-03-q01",
+      "document_id": "pdf-long-harbor-revolver",
+      "stratum": "converted_pdf",
+      "question_type": "exact_term",
+      "question": "What is the maximum aggregate principal of the Loans?",
+      "normalized_answer": "USD 95,250,000",
+      "gold_sections": [
+        "sec-schedules"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-03-q03",
+      "document_id": "pdf-long-harbor-revolver",
+      "stratum": "converted_pdf",
+      "question_type": "misleading_heading",
+      "question": "When does amortization begin?",
+      "normalized_answer": "November 9, 2026",
+      "gold_sections": [
+        "sec-miscellaneous-provisions-that-look-like-a-heading"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-04-q05",
+      "document_id": "pdf-long-cascade-term",
+      "stratum": "converted_pdf",
+      "question_type": "buried_detail",
+      "question": "What is the facility fee on unused commitments?",
+      "normalized_answer": "0.80%",
+      "gold_sections": [
+        "sec-schedules"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-04-q08",
+      "document_id": "pdf-long-cascade-term",
+      "stratum": "converted_pdf",
+      "question_type": "not_in_document",
+      "question": "What is the Borrower's Moody's credit rating?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-05-q04",
+      "document_id": "pdf-long-summit-mezz",
+      "stratum": "converted_pdf",
+      "question_type": "exact_term",
+      "question": "What is the maximum leverage ratio?",
+      "normalized_answer": "5.10x",
+      "gold_sections": [
+        "sec-section-4-02-negative-covenants"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-06-q06",
+      "document_id": "pdf-long-prairie-abs",
+      "stratum": "converted_pdf",
+      "question_type": "cross_section",
+      "question": "Who is the Borrower and what is the commitment size?",
+      "normalized_answer": "Prairie Warehouse Issuer LLC; USD 330,000,000",
+      "gold_sections": [
+        "sec-article-i-definitions",
+        "sec-schedules"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-pdf-06-q07",
+      "document_id": "pdf-long-prairie-abs",
+      "stratum": "converted_pdf",
+      "question_type": "section_lookup",
+      "question": "Which article states negative covenants including leverage?",
+      "normalized_answer": "ARTICLE IV \u2014 COVENANTS",
+      "gold_sections": [
+        "sec-article-iv-covenants",
+        "sec-section-4-02-negative-covenants"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-01-q02",
+      "document_id": "rfc8259",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "What is the first numbered section heading in rfc8259?",
+      "normalized_answer": "1 Introduction",
+      "gold_sections": [
+        "sec-1-introduction"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-01-q14",
+      "document_id": "rfc8259",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 90% depth (among filtered headings) in rfc8259?",
+      "normalized_answer": "14 References",
+      "gold_sections": [
+        "sec-14-references"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-02-q01",
+      "document_id": "rfc6749",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What is the RFC number for document rfc6749?",
+      "normalized_answer": "6749",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-02-q03",
+      "document_id": "rfc6749",
+      "stratum": "well_structured",
+      "question_type": "buried_detail",
+      "question": "Which mid-document section heading appears near 60% depth in rfc6749?",
+      "normalized_answer": "7.1 Access Token Types",
+      "gold_sections": [
+        "sec-7-1-access-token-types"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-02-q04",
+      "document_id": "rfc6749",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What Category line does rfc6749 declare?",
+      "normalized_answer": "Standards Track",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-02-q13",
+      "document_id": "rfc6749",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 80% depth (among filtered headings) in rfc6749?",
+      "normalized_answer": "10.11 Phishing Attacks",
+      "gold_sections": [
+        "sec-10-11-phishing-attacks"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-04-q04",
+      "document_id": "rfc7636",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What Category line does rfc7636 declare?",
+      "normalized_answer": "Standards Track                         ",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-04-q08",
+      "document_id": "rfc7636",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Give the RFC number and Category for rfc7636.",
+      "normalized_answer": "7636; Standards Track                         ",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-04-q11",
+      "document_id": "rfc7636",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 50% depth (among filtered headings) in rfc7636?",
+      "normalized_answer": "5 Compatibility",
+      "gold_sections": [
+        "sec-5-compatibility"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-04-q12",
+      "document_id": "rfc7636",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 65% depth (among filtered headings) in rfc7636?",
+      "normalized_answer": "6.2.1 Registration Template",
+      "gold_sections": [
+        "sec-6-2-1-registration-template"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-04-q13",
+      "document_id": "rfc7636",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 80% depth (among filtered headings) in rfc7636?",
+      "normalized_answer": "7.3 Salting the code_challenge",
+      "gold_sections": [
+        "sec-7-3-salting-the-code-challenge"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-05-q01",
+      "document_id": "rfc7807",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What is the RFC number for document rfc7807?",
+      "normalized_answer": "7807",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-05-q03",
+      "document_id": "rfc7807",
+      "stratum": "well_structured",
+      "question_type": "buried_detail",
+      "question": "Which mid-document section heading appears near 60% depth in rfc7807?",
+      "normalized_answer": "5 Security Considerations",
+      "gold_sections": [
+        "sec-5-security-considerations"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-05-q09",
+      "document_id": "rfc7807",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 20% depth (among filtered headings) in rfc7807?",
+      "normalized_answer": "3.1 Members of a Problem Details Object",
+      "gold_sections": [
+        "sec-3-1-members-of-a-problem-details-object"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-06-q07",
+      "document_id": "rfc8615",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "Which RFC(s) does rfc8615 obsolete?",
+      "normalized_answer": "5785",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-06-q08",
+      "document_id": "rfc8615",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Give the RFC number and Category for rfc8615.",
+      "normalized_answer": "8615; Standards Track",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-06-q13",
+      "document_id": "rfc8615",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 80% depth (among filtered headings) in rfc8615?",
+      "normalized_answer": "6 References",
+      "gold_sections": [
+        "sec-6-references"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-08-q02",
+      "document_id": "rfc9205",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "What is the first numbered section heading in rfc9205?",
+      "normalized_answer": "1 Introduction",
+      "gold_sections": [
+        "sec-1-introduction"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-08-q14",
+      "document_id": "rfc9205",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 90% depth (among filtered headings) in rfc9205?",
+      "normalized_answer": "6 Security Considerations",
+      "gold_sections": [
+        "sec-6-security-considerations"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": "false_positive: duplicate heading title; heads.index hit early TOC-ish copy; builder p90 index 43 is correct (frac\u22480.91)",
+        "initial_auto_flag": true
+      }
+    },
+    {
+      "id": "hc-rfc-09-q02",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "What is the first numbered section heading in rfc3986?",
+      "normalized_answer": "1 Introduction",
+      "gold_sections": [
+        "sec-1-introduction"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-09-q03",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "buried_detail",
+      "question": "Which mid-document section heading appears near 60% depth in rfc3986?",
+      "normalized_answer": "2 While the input buffer is not empty, loop as follows:",
+      "gold_sections": [
+        "sec-2-while-the-input-buffer-is-not-empty-loop-as-follows"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-09-q04",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What Category line does rfc3986 declare?",
+      "normalized_answer": "Standards Track                         ",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-09-q08",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Give the RFC number and Category for rfc3986.",
+      "normalized_answer": "3986; Standards Track                         ",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-09-q12",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 65% depth (among filtered headings) in rfc3986?",
+      "normalized_answer": "5.4 Reference Resolution Examples",
+      "gold_sections": [
+        "sec-5-4-reference-resolution-examples"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-09-q14",
+      "document_id": "rfc3986",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 90% depth (among filtered headings) in rfc3986?",
+      "normalized_answer": "7.5 Sensitive Information",
+      "gold_sections": [
+        "sec-7-5-sensitive-information"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-10-q09",
+      "document_id": "rfc4648",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 20% depth (among filtered headings) in rfc4648?",
+      "normalized_answer": "3.2 Padding of Encoded Data",
+      "gold_sections": [
+        "sec-3-2-padding-of-encoded-data"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-11-q02",
+      "document_id": "rfc6901",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "What is the first numbered section heading in rfc6901?",
+      "normalized_answer": "1 Introduction",
+      "gold_sections": [
+        "sec-1-introduction"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-11-q06",
+      "document_id": "rfc6901",
+      "stratum": "well_structured",
+      "question_type": "not_in_document",
+      "question": "What is the CEO bonus multiplier stated in rfc6901?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-12-q06",
+      "document_id": "rfc7396",
+      "stratum": "well_structured",
+      "question_type": "not_in_document",
+      "question": "What is the CEO bonus multiplier stated in rfc7396?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-12-q09",
+      "document_id": "rfc7396",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 20% depth (among filtered headings) in rfc7396?",
+      "normalized_answer": "2 Processing Merge Patch Documents",
+      "gold_sections": [
+        "sec-2-processing-merge-patch-documents"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-12-q10",
+      "document_id": "rfc7396",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 35% depth (among filtered headings) in rfc7396?",
+      "normalized_answer": "3 Example",
+      "gold_sections": [
+        "sec-3-example"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-12-q11",
+      "document_id": "rfc7396",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 65% depth (among filtered headings) in rfc7396?",
+      "normalized_answer": "6 References",
+      "gold_sections": [
+        "sec-6-references"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-12-q14",
+      "document_id": "rfc7396",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Name the ~20% depth and ~80% depth body section headings in rfc7396.",
+      "normalized_answer": "2 Processing Merge Patch Documents; 6.1 Normative References",
+      "gold_sections": [
+        "sec-2-processing-merge-patch-documents",
+        "sec-6-1-normative-references"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-13-q09",
+      "document_id": "rfc7231",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 20% depth (among filtered headings) in rfc7231?",
+      "normalized_answer": "3.2 Representation Data",
+      "gold_sections": [
+        "sec-3-2-representation-data"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-15-q04",
+      "document_id": "rfc5321",
+      "stratum": "well_structured",
+      "question_type": "exact_term",
+      "question": "What Category line does rfc5321 declare?",
+      "normalized_answer": "Standards Track",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-15-q08",
+      "document_id": "rfc5321",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Give the RFC number and Category for rfc5321.",
+      "normalized_answer": "5321; Standards Track",
+      "gold_sections": [],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-15-q16",
+      "document_id": "rfc5321",
+      "stratum": "well_structured",
+      "question_type": "cross_section",
+      "question": "Name the ~20% depth and ~80% depth body section headings in rfc5321.",
+      "normalized_answer": "3.4 Forwarding for Address Correction or Updating; 4.5.4.2 Receiving Strategy",
+      "gold_sections": [
+        "sec-3-4-forwarding-for-address-correction-or-updating",
+        "sec-4-5-4-2-receiving-strategy"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-16-q06",
+      "document_id": "rfc7464",
+      "stratum": "well_structured",
+      "question_type": "not_in_document",
+      "question": "What is the CEO bonus multiplier stated in rfc7464?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-16-q09",
+      "document_id": "rfc7464",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 20% depth (among filtered headings) in rfc7464?",
+      "normalized_answer": "2 JSON Text Sequence Format",
+      "gold_sections": [
+        "sec-2-json-text-sequence-format"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-rfc-16-q11",
+      "document_id": "rfc7464",
+      "stratum": "well_structured",
+      "question_type": "section_lookup",
+      "question": "Which body section heading appears near 50% depth (among filtered headings) in rfc7464?",
+      "normalized_answer": "2.3 Incomplete/Invalid JSON Texts Need Not Be Fatal",
+      "gold_sections": [
+        "sec-2-3-incomplete-invalid-json-texts-need-not-be-fatal"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-01-q04",
+      "document_id": "wk-long-clearing-hearing",
+      "stratum": "weakly_structured",
+      "question_type": "exact_term",
+      "question": "Which vendor was primarily implicated?",
+      "normalized_answer": "LatticeClear",
+      "gold_sections": [
+        "sec-committee-hearing-transcript-clearing-outage-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-03-q01",
+      "document_id": "wk-long-cyber-briefing",
+      "stratum": "weakly_structured",
+      "question_type": "exact_term",
+      "question": "What incident severity code did Witness Adler assign?",
+      "normalized_answer": "SEV-1",
+      "gold_sections": [
+        "sec-cyber-briefing-transcript-vendor-incident-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-03-q03",
+      "document_id": "wk-long-cyber-briefing",
+      "stratum": "weakly_structured",
+      "question_type": "section_lookup",
+      "question": "When did the outage begin (Eastern)?",
+      "normalized_answer": "07:08",
+      "gold_sections": [
+        "sec-cyber-briefing-transcript-vendor-incident-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-04-q07",
+      "document_id": "wk-long-liquidity-panel",
+      "stratum": "weakly_structured",
+      "question_type": "buried_detail",
+      "question": "Were executive compensation packages discussed?",
+      "normalized_answer": "No",
+      "gold_sections": [
+        "sec-liquidity-panel-transcript-cancel-storm-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-05-q02",
+      "document_id": "wk-long-settlement-debrief",
+      "stratum": "weakly_structured",
+      "question_type": "buried_detail",
+      "question": "What was the maximum order cancel rate that morning?",
+      "normalized_answer": "28 percent",
+      "gold_sections": [
+        "sec-settlement-debrief-transcript-partial-fail-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-06-q05",
+      "document_id": "wk-long-ops-bridge",
+      "stratum": "weakly_structured",
+      "question_type": "cross_section",
+      "question": "What severity and cancel rate did Nguyen report?",
+      "normalized_answer": "SEV-3; 12 percent",
+      "gold_sections": [
+        "sec-ops-bridge-transcript-feed-lag-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    },
+    {
+      "id": "hc-wk-06-q06",
+      "document_id": "wk-long-ops-bridge",
+      "stratum": "weakly_structured",
+      "question_type": "misleading_heading",
+      "question": "Is there a dedicated severity schedule section with tables?",
+      "normalized_answer": "No dedicated schedule",
+      "gold_sections": [
+        "sec-ops-bridge-transcript-feed-lag-synthetic"
+      ],
+      "unanswerable": false,
+      "review": {
+        "defect": false,
+        "notes": "false_positive: misleading_heading key; answer is interpretive (No dedicated schedule) by design, not a literal quote",
+        "initial_auto_flag": true
+      }
+    },
+    {
+      "id": "hc-wk-06-q08",
+      "document_id": "wk-long-ops-bridge",
+      "stratum": "weakly_structured",
+      "question_type": "not_in_document",
+      "question": "What was the CEO compensation package discussed?",
+      "normalized_answer": "",
+      "gold_sections": [],
+      "unanswerable": true,
+      "review": {
+        "defect": false,
+        "notes": ""
+      }
+    }
+  ],
+  "acceptance": {
+    "reviewed_by": "agent",
+    "reviewed_at": "2026-09-30T00:25:57Z",
+    "method": "automated checks + manual adjudication of auto-flags",
+    "auto_flags": 3,
+    "real_defects": 0,
+    "false_positives_adjudicated": [
+      "hc-code-02-q02",
+      "hc-rfc-08-q14",
+      "hc-wk-06-q06"
+    ],
+    "verdict": "pass",
+    "stop_rule_reject_if_ge": 3,
+    "note": "0 real defects after adjudication; set accepted without full 250-key review"
+  }
+}

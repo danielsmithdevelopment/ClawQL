@@ -142,7 +142,7 @@ create_shipped() {
   PLATFORM_ISSUES+=("$n")
 }
 
-for pkg in clawql-core clawql-api clawql-auth clawql-documents clawql-memory clawql-pageindex clawql-telemetry clawql-sandbox clawql-automation; do
+for pkg in clawql-core clawql-api clawql-auth clawql-documents clawql-memory clawql-telemetry clawql-sandbox clawql-automation; do
   create_platform "$pkg"
 done
 

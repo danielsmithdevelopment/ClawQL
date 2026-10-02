@@ -1,0 +1,9 @@
+# Optional eval-only Python deps (not a committed lock for CI OSV).
+# Optional deps for cross-encoder rerank bakeoff (CPU or CUDA).
+# Install (CPU):
+#   pip install -r benchmarks/pageindex-ab/rerank-python-deps.txt \
+#     --extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.2
+transformers>=4.45
+sentence-transformers>=3.0
+accelerate>=0.34

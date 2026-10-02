@@ -125,20 +125,20 @@ const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.en
 
 ## Env knobs
 
-| Env                                          | Default | Effect                                                                |
-| -------------------------------------------- | ------- | --------------------------------------------------------------------- |
-| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                            |
-| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                       |
-| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                              |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)     |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates |
-| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
-| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`        |
-| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                  |
-| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off   |
-| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                        |
-| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off     | Also query codegraph / pageindex / onyx when those layers are enabled |
-| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`             |
+| Env                                          | Default | Effect                                                                                |
+| -------------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                                            |
+| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                                       |
+| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                                              |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)                     |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates                 |
+| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)                       |
+| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`                        |
+| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                                  |
+| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off                   |
+| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                                        |
+| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off     | Also query onyx when that layer is enabled (`pageindex` / `codegraph` removed in 8.0) |
+| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`                             |
 
 ## Flywheel export filters (planned / next)
 

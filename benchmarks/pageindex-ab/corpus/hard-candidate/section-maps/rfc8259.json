@@ -1,0 +1,98 @@
+{
+  "document_id": "rfc8259",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-t-bray-ed",
+      "title": "Internet Engineering Task Force (IETF)                      T. Bray, Ed."
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-conventions-used-in-this-document",
+      "title": "1.1 Conventions Used in This Document"
+    },
+    {
+      "id": "sec-1-2-specifications-of-json",
+      "title": "1.2 Specifications of JSON"
+    },
+    {
+      "id": "sec-1-3-introduction-to-this-revision",
+      "title": "1.3 Introduction to This Revision"
+    },
+    {
+      "id": "sec-2-json-grammar",
+      "title": "2 JSON Grammar"
+    },
+    {
+      "id": "sec-3-values",
+      "title": "3 Values"
+    },
+    {
+      "id": "sec-4-objects",
+      "title": "4 Objects"
+    },
+    {
+      "id": "sec-5-arrays",
+      "title": "5 Arrays"
+    },
+    {
+      "id": "sec-6-numbers",
+      "title": "6 Numbers"
+    },
+    {
+      "id": "sec-7-strings",
+      "title": "7 Strings"
+    },
+    {
+      "id": "sec-8-string-and-character-issues",
+      "title": "8 String and Character Issues"
+    },
+    {
+      "id": "sec-8-1-character-encoding",
+      "title": "8.1 Character Encoding"
+    },
+    {
+      "id": "sec-8-2-unicode-characters",
+      "title": "8.2 Unicode Characters"
+    },
+    {
+      "id": "sec-8-3-string-comparison",
+      "title": "8.3 String Comparison"
+    },
+    {
+      "id": "sec-9-parsers",
+      "title": "9 Parsers"
+    },
+    {
+      "id": "sec-10-generators",
+      "title": "10 Generators"
+    },
+    {
+      "id": "sec-11-iana-considerations",
+      "title": "11 IANA Considerations"
+    },
+    {
+      "id": "sec-12-security-considerations",
+      "title": "12 Security Considerations"
+    },
+    {
+      "id": "sec-13-examples",
+      "title": "13 Examples"
+    },
+    {
+      "id": "sec-14-references",
+      "title": "14 References"
+    },
+    {
+      "id": "sec-14-1-normative-references",
+      "title": "14.1 Normative References"
+    },
+    {
+      "id": "sec-14-2-informative-references",
+      "title": "14.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc8259.txt"
+}

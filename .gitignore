@@ -82,6 +82,10 @@ codegraph-out/
 # Local / CI smoke outputs (B-2.3 IDP, OpenBench scratch, etc.)
 artifacts/
 
+# pageindex-ab: large RFC seed downloads + local result JSONL
+benchmarks/pageindex-ab/corpus/seed/*.txt
+benchmarks/pageindex-ab/results/
+
 # Managed Edge Gateway local runtime
 docs/examples/managed-gateway/.env
 docs/examples/managed-gateway/data/

@@ -55,14 +55,14 @@ export const pluginPages: PluginPageMeta[] = [
     status: 'default-on',
     package: 'clawql-memory',
     prev: 'panguard-proxy',
-    next: 'codegraph',
+    next: 'documents',
   },
   {
     slug: 'codegraph',
     title: 'Code graph (structural)',
     description:
-      'Structural code indexing via codegraph_* MCP tools. Opt-in with CLAWQL_ENABLE_CODEGRAPH=1.',
-    status: 'opt-in',
+      'Removed in 8.0.0. Structural code indexing via codegraph_* MCP tools was purged after a tie_purge Track B retest.',
+    status: 'removed',
     package: 'clawql-codegraph',
     prev: 'memory',
     next: 'documents',
