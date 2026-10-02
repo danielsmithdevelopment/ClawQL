@@ -5,6 +5,9 @@
  *
  * Auth: `Authorization: Bearer <CLAWQL_CPC_PROVISION_TOKEN>`.
  * If the token env is unset, routes respond 503 (disabled).
+ *
+ * Self-serve Checkout Session creation is separate: `POST {base}/checkout/session`
+ * is public (no CPC bearer) when `CLAWQL_SELF_SERVE_CHECKOUT=1`; otherwise 503.
  */
 
 import type { Express, Request, Response, NextFunction } from "express";
@@ -16,6 +19,12 @@ import { ProvisionOrgService } from "./provision-org-service.js";
 import { ReportUsageService } from "./report-usage.js";
 import type { ProvisionOrgInput, ReportUsageToStripeInput } from "./types.js";
 import type { OrgBillingMode, OrgCreatedVia } from "../credits/org.js";
+import {
+  createStripeCheckoutSession,
+  type CheckoutBillingMode,
+  type CheckoutSessionPlan,
+} from "../stripe/checkout-session.js";
+import { StripeNotConfiguredError } from "../stripe/errors.js";
 
 export type AttachProvisioningRoutesOptions = {
   /** Mount prefix (default `/payments`). */
@@ -58,6 +67,43 @@ function isBillingMode(v: unknown): v is OrgBillingMode {
 
 function isCreatedVia(v: unknown): v is OrgCreatedVia {
   return v === "self_serve" || v === "enterprise_sales";
+}
+
+function isSelfServeCheckoutEnabled(env: NodeJS.ProcessEnv): boolean {
+  const v = env.CLAWQL_SELF_SERVE_CHECKOUT?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
+function parseCheckoutSessionBody(body: unknown):
+  | {
+      plan: CheckoutSessionPlan;
+      orgName: string;
+      ownerEmail: string;
+      successUrl: string;
+      cancelUrl: string;
+      billingMode?: CheckoutBillingMode;
+    }
+  | { error: string } {
+  if (!body || typeof body !== "object") return { error: "JSON body required" };
+  const b = body as Record<string, unknown>;
+  const plan = typeof b.plan === "string" ? b.plan.trim() : "";
+  if (plan !== "pro" && plan !== "team") return { error: "plan must be pro|team" };
+  const orgName = typeof b.orgName === "string" ? b.orgName.trim() : "";
+  const ownerEmail = typeof b.ownerEmail === "string" ? b.ownerEmail.trim() : "";
+  const successUrl = typeof b.successUrl === "string" ? b.successUrl.trim() : "";
+  const cancelUrl = typeof b.cancelUrl === "string" ? b.cancelUrl.trim() : "";
+  if (!orgName) return { error: "orgName is required" };
+  if (!ownerEmail) return { error: "ownerEmail is required" };
+  if (!successUrl) return { error: "successUrl is required" };
+  if (!cancelUrl) return { error: "cancelUrl is required" };
+  let billingMode: CheckoutBillingMode | undefined;
+  if (b.billingMode !== undefined) {
+    if (b.billingMode !== "stripe_checkout" && b.billingMode !== "hybrid") {
+      return { error: "billingMode must be stripe_checkout|hybrid" };
+    }
+    billingMode = b.billingMode;
+  }
+  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode };
 }
 
 function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string } {
@@ -119,6 +165,48 @@ export function attachProvisioningRoutes(
   const env = options.env ?? process.env;
   const base = (options.basePath ?? "/payments").replace(/\/$/, "") || "/payments";
   const auth = requireProvisionToken(env);
+
+  // Public self-serve Checkout (no CPC bearer). Gated by CLAWQL_SELF_SERVE_CHECKOUT=1.
+  const checkoutCors = (_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    next();
+  };
+  app.options(`${base}/checkout/session`, checkoutCors, (_req, res) => {
+    res.status(204).end();
+  });
+  app.post(`${base}/checkout/session`, checkoutCors, (req, res) => {
+    void (async () => {
+      if (!isSelfServeCheckoutEnabled(env)) {
+        res.status(503).json({
+          error: "Self-serve Checkout disabled — set CLAWQL_SELF_SERVE_CHECKOUT=1",
+        });
+        return;
+      }
+      const parsed = parseCheckoutSessionBody(req.body);
+      if ("error" in parsed) {
+        res.status(400).json({ error: parsed.error });
+        return;
+      }
+      try {
+        const session = await createStripeCheckoutSession({ ...parsed, env });
+        res.status(201).json(session);
+      } catch (err) {
+        if (err instanceof StripeNotConfiguredError) {
+          res.status(503).json({ error: err.message });
+          return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        // Effect FiberFailure often embeds StripeNotConfigured in the name/message.
+        if (/StripeNotConfigured/i.test(message) || /StripeNotConfigured/i.test(String(err))) {
+          res.status(503).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
 
   app.post(`${base}/provision-org`, auth, (req, res) => {
     void (async () => {

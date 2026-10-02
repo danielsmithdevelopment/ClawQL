@@ -32,6 +32,14 @@ export {
 } from "./meter-report.js";
 export { createCustomerPortalSession, type PortalSessionInput } from "./portal.js";
 export {
+  createStripeCheckoutSession,
+  buildCheckoutSessionMetadata,
+  type CheckoutBillingMode,
+  type CheckoutSessionInput,
+  type CheckoutSessionPlan,
+  type CheckoutSessionResult,
+} from "./checkout-session.js";
+export {
   assertStripeWebhookSignature,
   processStripeWebhookEvent,
   verifyAndProcessStripeWebhook,

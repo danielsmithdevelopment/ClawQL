@@ -449,3 +449,79 @@ export async function runPaymentsStripeCatalogValidate(
   }
   return result.ok ? 0 : 1;
 }
+
+export type PaymentsStripeCheckoutCreateOptions = {
+  plan?: string;
+  orgName?: string;
+  email?: string;
+  successUrl?: string;
+  cancelUrl?: string;
+  billingMode?: string;
+  json?: boolean;
+  env?: NodeJS.ProcessEnv;
+};
+
+export async function runPaymentsStripeCheckoutCreate(
+  options: PaymentsStripeCheckoutCreateOptions = {}
+): Promise<number> {
+  if (options.plan !== "pro" && options.plan !== "team") {
+    console.error(
+      "Usage: clawql payments stripe checkout create --plan pro|team --org-name NAME --email user@acme.com --success-url URL --cancel-url URL"
+    );
+    return 1;
+  }
+  if (!options.orgName?.trim() || !options.email?.trim()) {
+    console.error(
+      "Usage: clawql payments stripe checkout create --plan pro|team --org-name NAME --email user@acme.com --success-url URL --cancel-url URL"
+    );
+    return 1;
+  }
+  if (!options.successUrl?.trim() || !options.cancelUrl?.trim()) {
+    console.error("--success-url and --cancel-url are required");
+    return 1;
+  }
+  const billingMode =
+    options.billingMode === "hybrid" || options.billingMode === "stripe_checkout"
+      ? options.billingMode
+      : options.billingMode
+        ? null
+        : "stripe_checkout";
+  if (billingMode === null) {
+    console.error("--billing-mode must be stripe_checkout or hybrid");
+    return 1;
+  }
+
+  const env = options.env ?? process.env;
+  if (!isStripeConfigured(env)) {
+    console.error("STRIPE_SECRET_KEY is required for live Stripe API calls");
+    return 1;
+  }
+
+  try {
+    const { createStripeCheckoutSession } = await import("../stripe/checkout-session.js");
+    const session = await createStripeCheckoutSession({
+      plan: options.plan,
+      orgName: options.orgName,
+      ownerEmail: options.email,
+      successUrl: options.successUrl,
+      cancelUrl: options.cancelUrl,
+      billingMode,
+      env,
+    });
+
+    if (options.json) {
+      console.log(JSON.stringify(session, null, 2));
+      return 0;
+    }
+
+    console.log(`Created Checkout Session ${session.id} (${session.plan} · ${session.priceId})`);
+    console.log(session.url);
+    return 0;
+  } catch (error) {
+    if (error instanceof StripeNotConfiguredError) {
+      console.error(error.message);
+      return 1;
+    }
+    throw error;
+  }
+}
