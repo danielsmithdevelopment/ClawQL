@@ -95,12 +95,14 @@ export function composeHorizontalPluginLayersStatic(
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
   }
-  // Ouroboros is always a clawql-harness plugin (no env / tier enable gate).
-  layers.push(
-    makeHarnessLayer({
-      plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
-    })
-  );
+  // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools.
+  if (flags.enableOuroborosTools) {
+    layers.push(
+      makeHarnessLayer({
+        plugins: [createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval })],
+      })
+    );
+  }
   return layers;
 }
 

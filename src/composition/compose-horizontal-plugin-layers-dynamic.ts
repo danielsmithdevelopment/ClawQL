@@ -132,18 +132,20 @@ export function composeHorizontalPluginLayersDynamicEffect(
       layers.push(mod.makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
     }
 
-    // Ouroboros always via clawql-harness (same as static compose).
-    const harness = yield* loadPlugin<{
-      makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
-      createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
-    }>("clawql-harness/plugin");
-    layers.push(
-      harness.makeHarnessLayer({
-        plugins: [
-          harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
-        ],
-      })
-    );
+    // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools (same as static compose).
+    if (flags.enableOuroborosTools) {
+      const harness = yield* loadPlugin<{
+        makeHarnessLayer: (opts: { plugins: unknown[] }) => HorizLayer;
+        createOuroborosHarnessPlugin: (opts: { enableLangfuseEval: boolean }) => unknown;
+      }>("clawql-harness/plugin");
+      layers.push(
+        harness.makeHarnessLayer({
+          plugins: [
+            harness.createOuroborosHarnessPlugin({ enableLangfuseEval: flags.enableLangfuseEval }),
+          ],
+        })
+      );
+    }
 
     return layers;
   });

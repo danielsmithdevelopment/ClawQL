@@ -61,10 +61,13 @@ const cases: readonly ParityCase[] = [
     expectNames: ["hitl_enqueue_label_studio"],
   },
   {
-    name: "ouroboros (#141)",
+    // 8.0 demotion (opt-in): default off; instance ouroboros.enabled or
+    // CLAWQL_ENABLE_OUROBOROS_TOOLS=1 registers the agent-facing tools.
+    name: "ouroboros (#141, opt-in via CLAWQL_ENABLE_OUROBOROS_TOOLS)",
     setup: () => {
       delete process.env.CLAWQL_ENABLE_OUROBOROS;
       delete process.env.CLAWQL_INSTANCE_SPEC;
+      process.env.CLAWQL_ENABLE_OUROBOROS_TOOLS = "1";
     },
     expectNames: [
       "ouroboros_create_seed_from_document",
