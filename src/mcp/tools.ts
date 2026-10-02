@@ -27,6 +27,8 @@ import {
   resolveBundledProvider,
   SearchService,
   searchToolZodShape,
+  sourcesProposeToolZodShape,
+  sourcesApproveToolZodShape,
   cacheToolZodShape,
   auditToolZodShape,
   skillsListToolZodShape,
@@ -43,6 +45,10 @@ import {
   defaultFields,
   executeOutputFields,
   projectRestByFields,
+  proposeSourceEffect,
+  approveSourceEffect,
+  resetSpecCache,
+  type CustomSourceKind,
 } from "clawql-api";
 import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
 import { getClawqlApi } from "../composition/clawql-api-adapters.js";
@@ -112,6 +118,66 @@ export async function handleClawqlExecuteToolInput(
       const execute = yield* ExecuteService;
       const { content } = yield* execute.execute(params);
       return { content: [...content] };
+    })
+  );
+}
+
+/** MCP `sources_propose` — preview or park a custom source (v0.1). */
+export async function handleSourcesProposeToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const o = (raw ?? {}) as Record<string, unknown>;
+      const url = typeof o.url === "string" ? o.url : "";
+      if (!url.trim()) {
+        return {
+          content: [
+            { type: "text" as const, text: JSON.stringify({ ok: false, error: "url required" }) },
+          ],
+        };
+      }
+      const preview = yield* proposeSourceEffect({
+        url,
+        name: typeof o.name === "string" ? o.name : undefined,
+        kind: typeof o.kind === "string" ? (o.kind as CustomSourceKind) : undefined,
+        id: typeof o.id === "string" ? o.id : undefined,
+        dryRun: o.dryRun !== false,
+      });
+      return { content: [{ type: "text" as const, text: JSON.stringify(preview, null, 2) }] };
+    })
+  );
+}
+
+/** MCP `sources_approve` — human approve/decline a parked proposal (v0.1). */
+export async function handleSourcesApproveToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const o = (raw ?? {}) as Record<string, unknown>;
+      const proposalId = typeof o.proposalId === "string" ? o.proposalId : "";
+      const decision =
+        o.decision === "decline" ? "decline" : o.decision === "approve" ? "approve" : null;
+      if (!proposalId.trim() || !decision) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                ok: false,
+                error: 'proposalId and decision ("approve"|"decline") required',
+              }),
+            },
+          ],
+        };
+      }
+      const result = yield* approveSourceEffect({
+        proposalId,
+        decision,
+        resetSpecCache,
+      });
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     })
   );
 }
@@ -205,6 +271,20 @@ export function registerTools(server: McpServer) {
     skillsGetToolZodShape,
     wrapRegisteredMcpToolHandler("skills_get", handleSkillsGetToolInput)
   );
+
+  server.tool(
+    "sources_propose",
+    "Preview (default) or park a custom source proposal with operation-risk summary. Does not write sources.json until sources_approve.",
+    sourcesProposeToolZodShape,
+    wrapRegisteredMcpToolHandler("sources_propose", handleSourcesProposeToolInput)
+  );
+  server.tool(
+    "sources_approve",
+    "Approve or decline a parked sources_propose proposal (human gate).",
+    sourcesApproveToolZodShape,
+    wrapRegisteredMcpToolHandler("sources_approve", handleSourcesApproveToolInput)
+  );
+  registeredNames.push("sources_propose", "sources_approve");
 
   registerPluginMcpTools(server);
   for (const tool of getClawqlApi().listMcpTools()) {

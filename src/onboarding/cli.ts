@@ -13,7 +13,14 @@ import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
-import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
+import {
+  runSourcesAdd,
+  runSourcesApprove,
+  runSourcesDecline,
+  runSourcesList,
+  runSourcesPropose,
+  runSourcesRemove,
+} from "./sources-cli.js";
 import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
   parseImageDigestFlags,
@@ -470,6 +477,7 @@ Usage:
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
+  clawql sources propose <url> [--name NAME] [--kind KIND] [--commit] | approve <psp_…> | decline <psp_…>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
   clawql release init | collect | manifest | publish | verify <path>
@@ -799,8 +807,40 @@ async function main(): Promise<void> {
       });
       return;
     }
+    if (subcmd === "propose") {
+      const url = rest[0];
+      process.exitCode = await runSourcesPropose({
+        url: url ?? "",
+        name: typeof flags.name === "string" ? flags.name : undefined,
+        kind: typeof flags.kind === "string" ? (flags.kind as never) : undefined,
+        id: typeof flags.id === "string" ? flags.id : undefined,
+        commit: Boolean(flags.commit),
+        home,
+      });
+      return;
+    }
+    if (subcmd === "approve") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources approve <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesApprove(id, home);
+      return;
+    }
+    if (subcmd === "decline") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources decline <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesDecline(id, home);
+      return;
+    }
     console.error(
-      "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
+      "Usage: clawql sources list | add <url> | propose <url> [--commit] | approve <psp_…> | decline <psp_…> | remove <id>"
     );
     process.exitCode = 1;
     return;

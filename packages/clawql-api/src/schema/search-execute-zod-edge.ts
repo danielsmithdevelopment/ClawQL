@@ -28,3 +28,28 @@ export const executeToolZodShape = {
   args: z.record(z.string(), z.unknown()).describe(EXECUTE_ARGS_DESCRIPTION),
   fields: z.array(z.string()).optional().describe(EXECUTE_FIELDS_DESCRIPTION),
 } as const;
+
+/** Zod raw shape for MCP `sources_propose` (v0.1). */
+export const sourcesProposeToolZodShape = {
+  url: z
+    .string()
+    .describe("HTTPS URL of an OpenAPI, Discovery, GraphQL, gRPC, MCP, or WebMCP source"),
+  name: z.string().optional().describe("Optional display name for the source"),
+  kind: z
+    .enum(["openapi", "discovery", "graphql", "grpc", "mcp", "webmcp"])
+    .optional()
+    .describe("Optional kind hint when auto-detect is ambiguous"),
+  id: z.string().optional().describe("Optional stable source id (slug)"),
+  dryRun: z
+    .boolean()
+    .optional()
+    .describe("Default true: preview only. false parks a proposal for human approve"),
+} as const;
+
+/** Zod raw shape for MCP `sources_approve` (v0.1). */
+export const sourcesApproveToolZodShape = {
+  proposalId: z.string().describe("Proposal id from sources_propose (psp_…)"),
+  decision: z
+    .enum(["approve", "decline"])
+    .describe("Human decision — approve writes sources.json; decline rejects"),
+} as const;

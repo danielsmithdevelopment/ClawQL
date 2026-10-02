@@ -11,6 +11,11 @@ export {
   type SearchInputDecoded,
   type ExecuteInputDecoded,
 } from "./search-execute-schema.js";
-export { searchToolZodShape, executeToolZodShape } from "./search-execute-zod-edge.js";
+export {
+  searchToolZodShape,
+  executeToolZodShape,
+  sourcesProposeToolZodShape,
+  sourcesApproveToolZodShape,
+} from "./search-execute-zod-edge.js";
 export { cacheToolZodShape } from "./cache-zod-edge.js";
 export { auditToolZodShape } from "./audit-zod-edge.js";
