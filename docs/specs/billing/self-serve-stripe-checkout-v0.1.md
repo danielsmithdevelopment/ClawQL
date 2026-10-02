@@ -10,13 +10,13 @@ Operators, agents, and the marketing site can create a **live Stripe Checkout Se
 
 ## Surfaces
 
-| Surface | Entry | Gate |
-| ------- | ----- | ---- |
-| Effect | `StripeBillingService.createCheckoutSession` | `STRIPE_SECRET_KEY` + price price id |
-| Promise façade | `createStripeCheckoutSession` (`checkout-session.ts`) | same |
-| CLI | `clawql payments stripe checkout create --plan … --org-name … --email … --success-url … --cancel-url …` | same |
-| HTTP | `POST {base}/checkout/session` (no CPC bearer) | `CLAWQL_SELF_SERVE_CHECKOUT=1` else **503** |
-| www | `/signup` Pro checkout form | `NEXT_PUBLIC_CLAWQL_SELF_SERVE_CHECKOUT=1` + `NEXT_PUBLIC_CLAWQL_CHECKOUT_API` |
+| Surface        | Entry                                                                                                   | Gate                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Effect         | `StripeBillingService.createCheckoutSession`                                                            | `STRIPE_SECRET_KEY` + price price id                                           |
+| Promise façade | `createStripeCheckoutSession` (`checkout-session.ts`)                                                   | same                                                                           |
+| CLI            | `clawql payments stripe checkout create --plan … --org-name … --email … --success-url … --cancel-url …` | same                                                                           |
+| HTTP           | `POST {base}/checkout/session` (no CPC bearer)                                                          | `CLAWQL_SELF_SERVE_CHECKOUT=1` else **503**                                    |
+| www            | `/signup` Pro checkout form                                                                             | `NEXT_PUBLIC_CLAWQL_SELF_SERVE_CHECKOUT=1` + `NEXT_PUBLIC_CLAWQL_CHECKOUT_API` |
 
 ## Checkout Session contract
 

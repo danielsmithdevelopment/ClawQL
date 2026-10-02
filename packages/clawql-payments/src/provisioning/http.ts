@@ -74,9 +74,7 @@ function isSelfServeCheckoutEnabled(env: NodeJS.ProcessEnv): boolean {
   return v === "1" || v === "true" || v === "yes" || v === "on";
 }
 
-function parseCheckoutSessionBody(
-  body: unknown
-):
+function parseCheckoutSessionBody(body: unknown):
   | {
       plan: CheckoutSessionPlan;
       orgName: string;

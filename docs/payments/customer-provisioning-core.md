@@ -138,11 +138,11 @@ app.use(express.json());
 attachProvisioningRoutes(app); // or attachProvisioningRoutes(app, { basePath: "/payments" })
 ```
 
-| Method | Path                                    | Auth                                | Body                                              |
-| ------ | --------------------------------------- | ----------------------------------- | ------------------------------------------------- |
-| `POST` | `/payments/provision-org`               | Bearer `CLAWQL_CPC_PROVISION_TOKEN` | `ProvisionOrgInput` JSON                          |
-| `POST` | `/payments/provision-org-from-checkout` | same                                | Stripe Checkout Session object (or `{ session }`) |
-| `POST` | `/payments/report-usage`                | same                                | `{ orgId, month?, overageUnits? }`                |
+| Method | Path                                    | Auth                                | Body                                                                                                          |
+| ------ | --------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST` | `/payments/provision-org`               | Bearer `CLAWQL_CPC_PROVISION_TOKEN` | `ProvisionOrgInput` JSON                                                                                      |
+| `POST` | `/payments/provision-org-from-checkout` | same                                | Stripe Checkout Session object (or `{ session }`)                                                             |
+| `POST` | `/payments/report-usage`                | same                                | `{ orgId, month?, overageUnits? }`                                                                            |
 | `POST` | `/payments/checkout/session`            | **none** (public)                   | `{ plan, orgName, ownerEmail, successUrl, cancelUrl }` — requires `CLAWQL_SELF_SERVE_CHECKOUT=1` else **503** |
 
 If `CLAWQL_CPC_PROVISION_TOKEN` is unset, **provision / report-usage** routes return **503** (disabled). Do not expose those without a network boundary + token.

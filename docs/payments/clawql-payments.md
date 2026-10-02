@@ -224,14 +224,14 @@ Implementation: [`packages/clawql-inference/src/entitlements/`](../../packages/c
 
 ### Environment variables
 
-| Variable                              | Required        | Purpose                                                    |
-| ------------------------------------- | --------------- | ---------------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                   | Yes (live API)  | Stripe SDK authentication                                  |
-| `STRIPE_PRO_PRICE_ID`                 | For Pro subs    | Flat subscription price id                                 |
-| `STRIPE_TEAM_PRICE_ID`                | For Team subs   | Flat subscription price id                                 |
-| `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                       |
-| `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`) |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call  |
+| Variable                              | Required        | Purpose                                                       |
+| ------------------------------------- | --------------- | ------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                   | Yes (live API)  | Stripe SDK authentication                                     |
+| `STRIPE_PRO_PRICE_ID`                 | For Pro subs    | Flat subscription price id                                    |
+| `STRIPE_TEAM_PRICE_ID`                | For Team subs   | Flat subscription price id                                    |
+| `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                          |
+| `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`)    |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call     |
 | `CLAWQL_SELF_SERVE_CHECKOUT`          | Self-serve CTA  | Set to `1` to enable public `POST /payments/checkout/session` |
 
 ### Setup flow
