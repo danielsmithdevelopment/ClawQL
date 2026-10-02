@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
-import { loadSpec } from "clawql-api";
+import { loadSpecEffect } from "clawql-api";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
+import { Effect } from "effect";
 import { inferSpecMode } from "../onboarding/spec-mode.js";
 import { getClawqlHome, getLocalProvidersVaultPath } from "../onboarding/paths.js";
 
@@ -25,23 +26,32 @@ export function countLocalProviderSecrets(): number {
   }
 }
 
+export function buildStartupSummaryEffect(): Effect.Effect<StartupSummary, Error> {
+  return Effect.gen(function* () {
+    const spec = yield* loadSpecEffect();
+    const vendors = [
+      ...new Set(spec.operations.map((o) => o.specLabel).filter(Boolean)),
+    ] as string[];
+    vendors.sort();
+
+    const home = getClawqlHome();
+    const vaultPath = getLocalProvidersVaultPath();
+    const hasVaultFile = existsSync(vaultPath);
+
+    return {
+      specMode: inferSpecMode(),
+      vendorCount: vendors.length,
+      vendors: vendors.slice(0, 12),
+      memoryVault: getObsidianVaultPath() ?? (existsSync(home) ? home : null),
+      providerSecrets: countLocalProviderSecrets(),
+      providerVaultPath: hasVaultFile ? vaultPath : null,
+    };
+  });
+}
+
+/** Promise façade — prefer {@link buildStartupSummaryEffect}. */
 export async function buildStartupSummary(): Promise<StartupSummary> {
-  const spec = await loadSpec();
-  const vendors = [...new Set(spec.operations.map((o) => o.specLabel).filter(Boolean))] as string[];
-  vendors.sort();
-
-  const home = getClawqlHome();
-  const vaultPath = getLocalProvidersVaultPath();
-  const hasVaultFile = existsSync(vaultPath);
-
-  return {
-    specMode: inferSpecMode(),
-    vendorCount: vendors.length,
-    vendors: vendors.slice(0, 12),
-    memoryVault: getObsidianVaultPath() ?? (existsSync(home) ? home : null),
-    providerSecrets: countLocalProviderSecrets(),
-    providerVaultPath: hasVaultFile ? vaultPath : null,
-  };
+  return Effect.runPromise(buildStartupSummaryEffect());
 }
 
 export function formatStartupSummary(summary: StartupSummary): string {
@@ -59,11 +69,23 @@ export function formatStartupSummary(summary: StartupSummary): string {
   );
 }
 
+export function logStartupSummaryEffect(): Effect.Effect<void> {
+  return buildStartupSummaryEffect().pipe(
+    Effect.map((summary) => {
+      console.error(formatStartupSummary(summary));
+    }),
+    Effect.catch((e: unknown) =>
+      Effect.sync(() => {
+        console.error(
+          "[clawql-mcp] Startup summary unavailable:",
+          e instanceof Error ? e.message : e
+        );
+      })
+    )
+  );
+}
+
+/** Promise façade for MCP process start. */
 export async function logStartupSummary(): Promise<void> {
-  try {
-    const summary = await buildStartupSummary();
-    console.error(formatStartupSummary(summary));
-  } catch (e: unknown) {
-    console.error("[clawql-mcp] Startup summary unavailable:", e instanceof Error ? e.message : e);
-  }
+  return Effect.runPromise(logStartupSummaryEffect());
 }

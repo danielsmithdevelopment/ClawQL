@@ -67,7 +67,7 @@ const allPkgTs = workspacePackages.flatMap((name) => walkTs(join(packagesDir, na
 const rootTs = walkTs(join(root, "src"));
 const allTs = [...allPkgTs, ...rootTs];
 
-const contextTagFiles = countPattern(allTs, /Context\.Tag\s*\(/);
+const contextServiceFileCount = countPattern(allTs, /Context\.Service\s*</);
 const effectSchemaFiles = countPattern(
   allTs,
   /from ["']effect\/Schema["']|Schema\.(Struct|String|Number)/
@@ -81,7 +81,7 @@ const report = {
   workspacePackageCount: workspacePackages.length,
   packagesWithEffect: withEffect.length,
   packagesWithoutEffect: withoutEffect,
-  contextServiceFileCount: contextTagFiles,
+  contextServiceFileCount,
   effectSchemaFileCount: effectSchemaFiles,
   atEffectImportFileCount: atEffectImports,
   stage1Packages: ["clawql-core", "clawql-api"],

@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { Effect } from "effect";
 import { getClawqlHome } from "../onboarding/paths.js";
 import {
   DEFAULT_SYNC_INCLUDE,
@@ -13,6 +14,10 @@ import { syncProviderProfile } from "./providers.js";
 function envTrim(key: string): string | undefined {
   const v = process.env[key]?.trim();
   return v || undefined;
+}
+
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
 }
 
 /** Accept common aliases (`gcp` → `gcs`). */
@@ -43,8 +48,8 @@ function parseConfigFile(raw: unknown): HomeSyncConfigFile {
   return { version: 1, provider, bucket, prefix, endpoint, region, include };
 }
 
-export async function readSyncConfigFile(
-  configPath = getSyncConfigPath()
+async function readSyncConfigFileImpl(
+  configPath: string
 ): Promise<HomeSyncConfigFile | null> {
   try {
     const raw = await readFile(configPath, "utf8");
@@ -56,11 +61,38 @@ export async function readSyncConfigFile(
   }
 }
 
+export function readSyncConfigFileEffect(
+  configPath = getSyncConfigPath()
+): Effect.Effect<HomeSyncConfigFile | null, Error> {
+  return Effect.tryPromise({
+    try: () => readSyncConfigFileImpl(configPath),
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link readSyncConfigFileEffect}. */
+export async function readSyncConfigFile(
+  configPath = getSyncConfigPath()
+): Promise<HomeSyncConfigFile | null> {
+  return Effect.runPromise(readSyncConfigFileEffect(configPath));
+}
+
+export function writeSyncConfigFileEffect(
+  config: HomeSyncConfigFile,
+  configPath = getSyncConfigPath()
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8"),
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link writeSyncConfigFileEffect}. */
 export async function writeSyncConfigFile(
   config: HomeSyncConfigFile,
   configPath = getSyncConfigPath()
 ): Promise<void> {
-  await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  return Effect.runPromise(writeSyncConfigFileEffect(config, configPath));
 }
 
 /** Merge sync.json with CLAWQL_SYNC_* env overrides (env wins). */
@@ -98,11 +130,20 @@ export function resolveHomeSyncConfig(
   };
 }
 
+export function loadResolvedHomeSyncConfigEffect(
+  home = getClawqlHome()
+): Effect.Effect<ResolvedHomeSyncConfig, Error> {
+  return Effect.gen(function* () {
+    const file = yield* readSyncConfigFileEffect(getSyncConfigPath(home));
+    return resolveHomeSyncConfig(file, home);
+  });
+}
+
+/** Promise façade — prefer {@link loadResolvedHomeSyncConfigEffect}. */
 export async function loadResolvedHomeSyncConfig(
   home = getClawqlHome()
 ): Promise<ResolvedHomeSyncConfig> {
-  const file = await readSyncConfigFile(getSyncConfigPath(home));
-  return resolveHomeSyncConfig(file, home);
+  return Effect.runPromise(loadResolvedHomeSyncConfigEffect(home));
 }
 
 export type SyncCredentials = {
