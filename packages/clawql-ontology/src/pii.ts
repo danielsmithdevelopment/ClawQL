@@ -2,6 +2,7 @@
  * Apply ontology `pii_fields` (dotted paths) — redact string leaves for LLM exposure.
  */
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
+import { Effect } from "effect";
 
 const REDACTED = "[REDACTED]";
 
@@ -55,10 +56,10 @@ function setAtPath(root: Record<string, unknown>, path: string, value: unknown):
  * When gateway redaction is enabled, string values are run through Presidio + Privacy Filter
  * first (for side-effect / logging consistency) then replaced with `[REDACTED]`.
  */
-export async function redactOntologyPiiFields<T>(
+async function redactOntologyPiiFieldsImpl<T>(
   value: T,
   piiFields: string[] | undefined
-): Promise<T> {
+): Promise<T>  {
   if (!piiFields?.length || value == null || typeof value !== "object") {
     return value;
   }
@@ -92,4 +93,22 @@ export async function redactOntologyPiiFields<T>(
     }
   }
   return clone as T;
+}
+
+export function redactOntologyPiiFieldsEffect<T>(
+  value: T,
+  piiFields: string[] | undefined
+): Effect.Effect<T, Error> {
+  return Effect.tryPromise({
+    try: () => redactOntologyPiiFieldsImpl(value, piiFields),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link redactOntologyPiiFieldsEffect} for Effect callers. */
+export async function redactOntologyPiiFields<T>(
+  value: T,
+  piiFields: string[] | undefined
+): Promise<T>  {
+  return Effect.runPromise(redactOntologyPiiFieldsEffect(value, piiFields));
 }

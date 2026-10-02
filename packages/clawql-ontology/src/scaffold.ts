@@ -5,6 +5,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { cp, mkdir, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Effect } from "effect";
 
 export function ontologyRoot(rootDir: string): string {
   return join(resolve(rootDir), ".clawql", "ontology");
@@ -15,7 +16,7 @@ export function packRoot(packId: string): string {
   return join(here, "..", "packs", packId);
 }
 
-export async function initOntologyTree(rootDir: string): Promise<string[]> {
+async function initOntologyTreeImpl(rootDir: string): Promise<string[]>  {
   const root = ontologyRoot(rootDir);
   const dirs = [join(root, "entities"), join(root, "relationships"), join(root, "actions")];
   for (const d of dirs) await mkdir(d, { recursive: true });
@@ -37,6 +38,18 @@ export async function initOntologyTree(rootDir: string): Promise<string[]> {
     "utf8"
   );
   return [...dirs, readme];
+}
+
+export function initOntologyTreeEffect(rootDir: string): Effect.Effect<string[], Error> {
+  return Effect.tryPromise({
+    try: () => initOntologyTreeImpl(rootDir),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link initOntologyTreeEffect} for Effect callers. */
+export async function initOntologyTree(rootDir: string): Promise<string[]>  {
+  return Effect.runPromise(initOntologyTreeEffect(rootDir));
 }
 
 export function entityTemplate(name: string): string {
@@ -69,7 +82,7 @@ spec:
 `;
 }
 
-export async function createOntologyEntity(rootDir: string, name: string): Promise<string> {
+async function createOntologyEntityImpl(rootDir: string, name: string): Promise<string>  {
   if (!/^[A-Z][A-Za-z0-9]*$/.test(name)) {
     throw new Error(`Entity name must be PascalCase (got ${JSON.stringify(name)})`);
   }
@@ -82,7 +95,19 @@ export async function createOntologyEntity(rootDir: string, name: string): Promi
   return dest;
 }
 
-export async function importOntologyPack(rootDir: string, packId: string): Promise<string[]> {
+export function createOntologyEntityEffect(rootDir: string, name: string): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => createOntologyEntityImpl(rootDir, name),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link createOntologyEntityEffect} for Effect callers. */
+export async function createOntologyEntity(rootDir: string, name: string): Promise<string>  {
+  return Effect.runPromise(createOntologyEntityEffect(rootDir, name));
+}
+
+async function importOntologyPackImpl(rootDir: string, packId: string): Promise<string[]>  {
   const src = packRoot(packId);
   if (!existsSync(src)) {
     throw new Error(
@@ -98,6 +123,18 @@ export async function importOntologyPack(rootDir: string, packId: string): Promi
     if (/\.(cqe|ya?ml|json)$/i.test(name)) written.push(join(entitiesDest, name));
   }
   return written;
+}
+
+export function importOntologyPackEffect(rootDir: string, packId: string): Effect.Effect<string[], Error> {
+  return Effect.tryPromise({
+    try: () => importOntologyPackImpl(rootDir, packId),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link importOntologyPackEffect} for Effect callers. */
+export async function importOntologyPack(rootDir: string, packId: string): Promise<string[]>  {
+  return Effect.runPromise(importOntologyPackEffect(rootDir, packId));
 }
 
 export function listOntologyPacks(): string[] {
