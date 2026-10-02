@@ -53,14 +53,11 @@ export function scoreWithVaultRankerEffect(
   return Effect.sync(() => scoreWithVaultRanker(query, text, stats));
 }
 
-export class VaultRankerService extends Context.Tag("clawql/VaultRankerService")<
-  VaultRankerService,
-  {
+export class VaultRankerService extends Context.Service<VaultRankerService, {
     readonly resolveMode: () => Effect.Effect<VaultRankerMode>;
     readonly buildStats: (documents: readonly string[]) => Effect.Effect<VaultRankerStats>;
     readonly score: (query: string, text: string, stats: VaultRankerStats) => Effect.Effect<number>;
-  }
->() {}
+  }>()("clawql/VaultRankerService") {}
 
 export function vaultRankerLiveLayer(): Layer.Layer<VaultRankerService> {
   return Layer.succeed(

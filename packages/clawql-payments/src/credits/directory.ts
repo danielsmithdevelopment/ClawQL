@@ -569,9 +569,7 @@ type ResolveRecipientOptions = {
 };
 
 /** Effect surface over the payments directory (email / handle / phone → tenant). */
-export class CreditsDirectoryService extends Context.Tag("clawql/CreditsDirectoryService")<
-  CreditsDirectoryService,
-  {
+export class CreditsDirectoryService extends Context.Service<CreditsDirectoryService, {
     readonly getEmail: (email: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
     readonly getHandle: (
       handle: string
@@ -592,8 +590,7 @@ export class CreditsDirectoryService extends Context.Tag("clawql/CreditsDirector
       options?: ResolveRecipientOptions
     ) => Effect.Effect<ResolvedRecipient, DirectoryError>;
     readonly reset: () => Effect.Effect<void, DirectoryError>;
-  }
->() {}
+  }>()("clawql/CreditsDirectoryService") {}
 
 export function creditsDirectoryLiveLayer(
   env: NodeJS.ProcessEnv = process.env

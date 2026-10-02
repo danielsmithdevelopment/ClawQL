@@ -119,7 +119,7 @@ export class IssuedApiKeyStore {
   /** Fire an audit event on a detached daemon fiber — keeps callers (esp. sync-run `validate`) non-blocking. */
   private notify(event: AuthEvent): Effect.Effect<void> {
     return Effect.forkDaemon(
-      emitEffect(this.eventSink, event).pipe(Effect.catchAll(() => Effect.void))
+      emitEffect(this.eventSink, event).pipe(Effect.catch(() => Effect.void))
     ).pipe(Effect.asVoid);
   }
 
@@ -260,7 +260,7 @@ export class IssuedApiKeyStore {
       }
 
       yield* Effect.forkDaemon(
-        this.touchLastUsed(record.id).pipe(Effect.catchAll(() => Effect.void))
+        this.touchLastUsed(record.id).pipe(Effect.catch(() => Effect.void))
       );
       yield* this.notify({
         type: "API_KEY_USED",
@@ -346,9 +346,7 @@ export function createIssuedApiKeyStore(options: IssuedApiKeyStoreOptions): Issu
   return new IssuedApiKeyStore(options);
 }
 
-export class IssuedApiKeyStoreService extends Context.Tag("clawql/IssuedApiKeyStoreService")<
-  IssuedApiKeyStoreService,
-  {
+export class IssuedApiKeyStoreService extends Context.Service<IssuedApiKeyStoreService, {
     readonly path: string;
     readonly load: () => Effect.Effect<IssuedApiKeyStoreFile>;
     readonly findById: (id: string) => Effect.Effect<IssuedApiKeyRecord | undefined>;
@@ -361,8 +359,7 @@ export class IssuedApiKeyStoreService extends Context.Tag("clawql/IssuedApiKeySt
     readonly revoke: (keyId: string) => Effect.Effect<IssuedApiKeyRecord | null, ApiKeyStoreError>;
     readonly toAtrClaims: (record: IssuedApiKeyRecord) => AtrClaims;
     readonly asClaimsResolver: () => ApiKeyClaimsResolver;
-  }
->() {}
+  }>()("clawql/IssuedApiKeyStoreService") {}
 
 export function issuedApiKeyStoreServiceFromStore(
   store: IssuedApiKeyStore

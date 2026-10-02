@@ -66,32 +66,32 @@ function loadWebmcpSourceOperationsEffect(
       const cdpUrl = resolveWebmcpCdpUrl(entry.webmcpCdpUrl);
       const readyMs = entry.webmcpReadyMs ?? 2_000;
 
-      const sessionResult = yield* Effect.either(
+      const sessionResult = yield* Effect.result(
         openWebmcpPageSessionEffect({ cdpUrl, pageUrl, readyMs })
       );
-      if (sessionResult._tag === "Left") {
+      if (sessionResult._tag === "Failure") {
         console.error(
           `[spec-loader] WebMCP source "${entry.id}" connect failed:`,
-          sessionResult.left.message
+          sessionResult.failure.message
         );
         continue;
       }
 
-      const session = sessionResult.right;
-      const toolsResult = yield* Effect.either(discoverWebmcpToolsEffect(session));
-      if (toolsResult._tag === "Left") {
+      const session = sessionResult.success;
+      const toolsResult = yield* Effect.result(discoverWebmcpToolsEffect(session));
+      if (toolsResult._tag === "Failure") {
         console.error(
           `[spec-loader] WebMCP source "${entry.id}" discovery failed:`,
-          toolsResult.left.message
+          toolsResult.failure.message
         );
         yield* Effect.tryPromise({
           try: () => session.close(),
           catch: () => new Error("close failed"),
-        }).pipe(Effect.catchAll(() => Effect.void));
+        }).pipe(Effect.catch(() => Effect.void));
         continue;
       }
 
-      const tools = toolsResult.right;
+      const tools = toolsResult.success;
       registerWebmcpSourceBinding({
         sourceId: entry.id,
         pageUrl,

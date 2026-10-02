@@ -45,9 +45,7 @@ import {
 } from "../settings-store.js";
 import { readUiResource } from "../ui-resources.js";
 
-export class ChatgptExtensionsService extends Context.Tag("clawql/ChatgptExtensionsService")<
-  ChatgptExtensionsService,
-  {
+export class ChatgptExtensionsService extends Context.Service<ChatgptExtensionsService, {
     readonly isEnabled: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
     readonly detectSupport: (
       caps?: ClientCapabilitySnapshot | null
@@ -91,8 +89,7 @@ export class ChatgptExtensionsService extends Context.Tag("clawql/ChatgptExtensi
       contentText: string
     ) => Effect.Effect<ReturnType<typeof openClawqlFile>>;
     readonly readUi: (uri: string) => Effect.Effect<ReturnType<typeof readUiResource>>;
-  }
->() {}
+  }>()("clawql/ChatgptExtensionsService") {}
 
 export const ChatgptExtensionsServiceLive = Layer.succeed(
   ChatgptExtensionsService,

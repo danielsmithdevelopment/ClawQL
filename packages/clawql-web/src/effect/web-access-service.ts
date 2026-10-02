@@ -8,17 +8,14 @@ export class WebAccessError extends Data.TaggedError("WebAccessError")<{
   readonly cause?: unknown;
 }> {}
 
-export class WebAccessService extends Context.Tag("clawql/WebAccessService")<
-  WebAccessService,
-  {
+export class WebAccessService extends Context.Service<WebAccessService, {
     readonly loadConfig: (env?: NodeJS.ProcessEnv) => Effect.Effect<WebConfig>;
     readonly search: (
       query: string,
       options?: SearchOptions,
       env?: NodeJS.ProcessEnv
     ) => Effect.Effect<SearchResponse, WebAccessError>;
-  }
->() {}
+  }>()("clawql/WebAccessService") {}
 
 export const WebAccessServiceLive = Layer.succeed(
   WebAccessService,

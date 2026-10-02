@@ -4,7 +4,7 @@
  * No nested {@link runMemoryEffect} / {@link runDocumentsEffect}.
  */
 
-import { Effect, Either } from "effect";
+import { Effect, Result } from "effect";
 import {
   MemoryDbService,
   VaultConfigService,
@@ -74,13 +74,13 @@ export function executeExternalIngestCoreEffect(
         } satisfies ExternalIngestResult;
       }
 
-      const fetchEither = yield* Effect.either(
+      const fetchEither = yield* Effect.result(
         documentsFromPromise(() => fetchUrlResource(prelude.url))
       );
-      if (Either.isLeft(fetchEither)) {
-        const cause = fetchEither.left.cause;
+      if (Result.isFailure(fetchEither)) {
+        const cause = fetchResult.fail.cause;
         const msg =
-          cause instanceof Error ? cause.message : String(cause ?? fetchEither.left.reason);
+          cause instanceof Error ? cause.message : String(cause ?? fetchResult.fail.reason);
         return {
           ok: false,
           enabled: true,
@@ -90,7 +90,7 @@ export function executeExternalIngestCoreEffect(
         } satisfies ExternalIngestResult;
       }
 
-      const resource = fetchEither.right;
+      const resource = fetchResult.succeed;
       yield* documentsFromPromise(() =>
         writeUrlIngestNote(
           prelude.vault,

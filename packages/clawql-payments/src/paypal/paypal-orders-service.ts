@@ -37,9 +37,7 @@ export type PaypalOrderResult = {
 };
 
 /** Effect service for PayPal Orders v2 (create + capture). */
-export class PaypalOrdersService extends Context.Tag("clawql/PaypalOrdersService")<
-  PaypalOrdersService,
-  {
+export class PaypalOrdersService extends Context.Service<PaypalOrdersService, {
     readonly createOrder: (
       input: CreatePaypalOrderInput
     ) => Effect.Effect<PaypalOrderResult, PaypalError>;
@@ -48,8 +46,7 @@ export class PaypalOrdersService extends Context.Tag("clawql/PaypalOrdersService
       correlationId?: string;
       tenantId?: string;
     }) => Effect.Effect<PaypalOrderResult, PaypalError>;
-  }
->() {}
+  }>()("clawql/PaypalOrdersService") {}
 
 async function fetchAccessToken(env: NodeJS.ProcessEnv, fetchImpl: typeof fetch): Promise<string> {
   const clientId = env.PAYPAL_CLIENT_ID?.trim();
@@ -178,7 +175,7 @@ export function paypalOrdersLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return order;
         });
@@ -236,7 +233,7 @@ export function paypalOrdersLiveLayer(
                     correlationId: input.correlationId,
                   })
                 )
-                .pipe(Effect.catchAll(() => Effect.void))
+                .pipe(Effect.catch(() => Effect.void))
             )
           );
 
@@ -261,7 +258,7 @@ export function paypalOrdersLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return captured;
         });

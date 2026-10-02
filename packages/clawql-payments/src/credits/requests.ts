@@ -466,9 +466,7 @@ type MarkAcceptedInput = {
 type MarkPaidInput = { requestId: string; transferId: string };
 
 /** Effect surface over money requests / invoices. */
-export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsService")<
-  CreditsRequestsService,
-  {
+export class CreditsRequestsService extends Context.Service<CreditsRequestsService, {
     readonly get: (requestId: string) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
     readonly list: (
       options?: ListMoneyRequestsOptions
@@ -486,8 +484,7 @@ export class CreditsRequestsService extends Context.Tag("clawql/CreditsRequestsS
       input: MarkPaidInput
     ) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
     readonly reset: () => Effect.Effect<void, RequestsError>;
-  }
->() {}
+  }>()("clawql/CreditsRequestsService") {}
 
 export function creditsRequestsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -537,8 +534,8 @@ export function creditsRequestsLiveLayer(
             payerEmail = normalizeEmail(to);
             const resolved = yield* directory
               .resolveRecipient(to, { forceEmail: true })
-              .pipe(Effect.either);
-            if (resolved._tag === "Right") {
+              .pipe(Effect.result);
+            if (resolved._tag === "Success") {
               payerTenantId = resolved.right.tenantId;
               payerHandle = resolved.right.handle;
             } else {

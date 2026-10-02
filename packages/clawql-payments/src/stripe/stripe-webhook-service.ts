@@ -63,9 +63,7 @@ export function verifyStripeWebhookSignature(
 }
 
 /** Effect service for Stripe webhook verification and WORM-audited event handling. */
-export class StripeWebhookService extends Context.Tag("clawql/StripeWebhookService")<
-  StripeWebhookService,
-  {
+export class StripeWebhookService extends Context.Service<StripeWebhookService, {
     readonly verifySignature: (
       payload: string | Buffer,
       signature: string,
@@ -86,8 +84,7 @@ export class StripeWebhookService extends Context.Tag("clawql/StripeWebhookServi
       ProcessStripeWebhookResult,
       StripeSignatureError | ConfigError | PaymentError
     >;
-  }
->() {}
+  }>()("clawql/StripeWebhookService") {}
 
 export function stripeWebhookLiveLayer(): Layer.Layer<
   StripeWebhookService,
@@ -306,7 +303,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                 })
                 .pipe(
                   Effect.map((result) => ({ ok: true as const, ...result })),
-                  Effect.catchAll((cause) =>
+                  Effect.catch((cause) =>
                     Effect.succeed({ ok: false as const, reason: cause.reason })
                   )
                 );
@@ -352,7 +349,7 @@ export function stripeWebhookLiveLayer(): Layer.Layer<
                   note: failReason,
                   id: `fail_${pi.id}`,
                 })
-                .pipe(Effect.catchAll(() => Effect.void));
+                .pipe(Effect.catch(() => Effect.void));
               yield* audit.appendEntry(
                 buildCreditTopupFailedEntry({
                   tenantId: failTenant,

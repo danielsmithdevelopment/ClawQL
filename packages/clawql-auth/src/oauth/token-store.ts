@@ -108,7 +108,7 @@ export class OAuthTokenStore {
         if (this.options.markRequiresReauth) {
           yield* this.options
             .markRequiresReauth(providerId)
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
         }
         const reauthUrl = this.options.buildReauthUrl
           ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
@@ -120,7 +120,7 @@ export class OAuthTokenStore {
           reauthUrl,
         });
         if (this.options.onReauthRequired) {
-          yield* this.options.onReauthRequired(error).pipe(Effect.catchAll(() => Effect.void));
+          yield* this.options.onReauthRequired(error).pipe(Effect.catch(() => Effect.void));
         }
         return yield* Effect.fail(error);
       }
@@ -157,7 +157,7 @@ export class OAuthTokenStore {
           });
           return next;
         }).pipe(
-          Effect.catchAll((err) =>
+          Effect.catch((err) =>
             Effect.gen(this, function* () {
               const errorCode = oauthErrorCode(err);
               const requiresReauth = errorCode === "invalid_grant";
@@ -180,7 +180,7 @@ export class OAuthTokenStore {
                 if (this.options.markRequiresReauth) {
                   yield* this.options
                     .markRequiresReauth(providerId)
-                    .pipe(Effect.catchAll(() => Effect.void));
+                    .pipe(Effect.catch(() => Effect.void));
                 }
                 const reauthUrl = this.options.buildReauthUrl
                   ? yield* this.options.buildReauthUrl({
@@ -198,7 +198,7 @@ export class OAuthTokenStore {
                 if (this.options.onReauthRequired) {
                   yield* this.options
                     .onReauthRequired(error)
-                    .pipe(Effect.catchAll(() => Effect.void));
+                    .pipe(Effect.catch(() => Effect.void));
                 }
                 return yield* Effect.fail(error);
               }
@@ -219,9 +219,7 @@ export function createOAuthTokenStore(options: OAuthTokenStoreOptions): OAuthTok
   return new OAuthTokenStore(options);
 }
 
-export class OAuthTokenStoreService extends Context.Tag("clawql/OAuthTokenStoreService")<
-  OAuthTokenStoreService,
-  {
+export class OAuthTokenStoreService extends Context.Service<OAuthTokenStoreService, {
     readonly isExpiringSoon: (expiresAtMs: number, nowMs?: number) => boolean;
     readonly getValidToken: (
       key: OAuthTokenKey
@@ -230,8 +228,7 @@ export class OAuthTokenStoreService extends Context.Tag("clawql/OAuthTokenStoreS
       key: OAuthTokenKey,
       current: StoredOAuthToken
     ) => Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown>;
-  }
->() {}
+  }>()("clawql/OAuthTokenStoreService") {}
 
 export function oauthTokenStoreServiceFromStore(
   store: OAuthTokenStore

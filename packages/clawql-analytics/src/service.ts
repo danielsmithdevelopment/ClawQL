@@ -8,9 +8,7 @@ import {
 } from "./registry.js";
 import type { AnalyticsProvider, CustomEvent, PageviewEvent, ProviderHealth } from "./types.js";
 
-export class AnalyticsService extends Context.Tag("clawql/AnalyticsService")<
-  AnalyticsService,
-  {
+export class AnalyticsService extends Context.Service<AnalyticsService, {
     readonly pageview: (event: PageviewEvent) => Effect.Effect<void, AnalyticsError>;
     readonly capture: (event: CustomEvent) => Effect.Effect<void, AnalyticsError>;
     readonly identify: (
@@ -18,8 +16,7 @@ export class AnalyticsService extends Context.Tag("clawql/AnalyticsService")<
       traits?: Record<string, unknown>
     ) => Effect.Effect<void, AnalyticsError>;
     readonly health: () => Effect.Effect<ProviderHealth, AnalyticsError>;
-  }
->() {}
+  }>()("clawql/AnalyticsService") {}
 
 export const AnalyticsServiceLive = Layer.effect(
   AnalyticsService,

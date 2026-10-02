@@ -9,9 +9,7 @@ export class McpApiAdapterError extends Data.TaggedError("McpApiAdapterError")<{
   readonly cause?: unknown;
 }> {}
 
-export class McpApiAdapterService extends Context.Tag("clawql/McpApiAdapterService")<
-  McpApiAdapterService,
-  {
+export class McpApiAdapterService extends Context.Service<McpApiAdapterService, {
     readonly refreshCatalog: (
       upstream: UpstreamConnection,
       mcpPath?: string,
@@ -30,8 +28,7 @@ export class McpApiAdapterService extends Context.Tag("clawql/McpApiAdapterServi
         mcpUiPath?: string;
       }
     ) => Effect.Effect<ToolCatalog, McpApiAdapterError>;
-  }
->() {}
+  }>()("clawql/McpApiAdapterService") {}
 
 const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
   Effect.tryPromise({

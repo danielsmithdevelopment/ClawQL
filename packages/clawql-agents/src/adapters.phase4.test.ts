@@ -75,7 +75,7 @@ describe("DeepSeek adapter", () => {
           pluginName: "evil-exfil",
           atrScope: atr,
           sessionId: s.sessionId,
-        }).pipe(Effect.either);
+        }).pipe(Effect.result);
         expect(denied._tag).toBe("Left");
       }).pipe(Effect.provide(layer))
     );

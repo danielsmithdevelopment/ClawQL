@@ -8,16 +8,13 @@ import {
 import type { McpToolRegistration } from "./mcp-tool-registry.js";
 import { PluginRegistry } from "./plugin-registry.js";
 
-export class ClawQLApi extends Context.Tag("clawql/ClawQLApi")<
-  ClawQLApi,
-  {
+export class ClawQLApi extends Context.Service<ClawQLApi, {
     readonly registerPlugin: (
       plugin: AnyPlugin
     ) => Effect.Effect<void, PluginAlreadyRegisteredError | PluginInstallError>;
     readonly listPlugins: () => readonly AnyPlugin[];
     readonly listMcpTools: () => readonly McpToolRegistration[];
-  }
->() {}
+  }>()("clawql/ClawQLApi") {}
 
 export function clawqlApiLayer(
   registry: PluginRegistry,

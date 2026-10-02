@@ -62,9 +62,7 @@ export type PayoutResult = {
 };
 
 /** Effect service for Stripe Connect onboarding + creator payouts. */
-export class PayoutService extends Context.Tag("clawql/PayoutService")<
-  PayoutService,
-  {
+export class PayoutService extends Context.Service<PayoutService, {
     readonly createConnectAccount: (input: {
       email: string;
       country?: string;
@@ -101,8 +99,7 @@ export class PayoutService extends Context.Tag("clawql/PayoutService")<
     readonly getPreference: (
       creatorId: string
     ) => Effect.Effect<CreatorPayoutPreference | undefined, PayoutError>;
-  }
->() {}
+  }>()("clawql/PayoutService") {}
 
 export function payoutLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -156,7 +153,7 @@ export function payoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             if (input.creatorId?.trim()) {
               yield* prefs
                 .set({
@@ -195,7 +192,7 @@ export function payoutLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           if (input.creatorId?.trim()) {
             yield* prefs
               .set({
@@ -335,7 +332,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* audit
               .appendEntry(
                 buildPayoutPaidEntry({
@@ -347,7 +344,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id,
               status: "paid",
@@ -394,7 +391,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             // PAYOUT_PAID only after receipt confirmation (or dry-run). Skip-receipt → submitted.
             if (sent.confirmed) {
               yield* audit
@@ -408,7 +405,7 @@ export function payoutLiveLayer(
                     creatorId,
                   })
                 )
-                .pipe(Effect.catchAll(() => Effect.void));
+                .pipe(Effect.catch(() => Effect.void));
             }
             return {
               id,
@@ -451,7 +448,7 @@ export function payoutLiveLayer(
                   creatorId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id: transfer.id,
               status: transfer.reversed ? "reversed" : "pending",
@@ -470,7 +467,7 @@ export function payoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return yield* Effect.fail(
               cause instanceof PayoutError ||
                 cause instanceof StripeApiError ||

@@ -6,14 +6,11 @@ import { OuroborosError } from "./ouroboros-errors.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 
 /** Effect service for durable Ouroboros lineage event storage. */
-export class OuroborosEventStoreService extends Context.Tag("clawql/OuroborosEventStoreService")<
-  OuroborosEventStoreService,
-  {
+export class OuroborosEventStoreService extends Context.Service<OuroborosEventStoreService, {
     readonly getStore: () => EventStore;
     readonly append: (event: StoredEvent) => Effect.Effect<void, OuroborosError>;
     readonly getLineage: (seedId: string) => Effect.Effect<OntologyLineage, OuroborosError>;
-  }
->() {}
+  }>()("clawql/OuroborosEventStoreService") {}
 
 export function ouroborosEventStoreLiveLayer(): Layer.Layer<OuroborosEventStoreService> {
   const store = getOrCreateOuroborosEventStore();

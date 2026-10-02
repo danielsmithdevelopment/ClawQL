@@ -19,9 +19,7 @@ export type StableCacheAppendResult =
   | { readonly ok: true; readonly item: StableCacheItem }
   | { readonly ok: false; readonly error: string };
 
-export class StableCacheBlockService extends Context.Tag("clawql/StableCacheBlockService")<
-  StableCacheBlockService,
-  {
+export class StableCacheBlockService extends Context.Service<StableCacheBlockService, {
     /** Append only — never overwrite an existing id. */
     readonly append: (
       item: Omit<StableCacheItem, "writtenAt"> & { readonly writtenAt?: string }
@@ -30,8 +28,7 @@ export class StableCacheBlockService extends Context.Tag("clawql/StableCacheBloc
     readonly get: (id: string) => Effect.Effect<StableCacheItem | undefined>;
     /** Stable block is never pruned by compaction. */
     readonly isEligibleForCompactionPrune: () => false;
-  }
->() {}
+  }>()("clawql/StableCacheBlockService") {}
 
 export const InMemoryStableCacheBlockLive: Layer.Layer<StableCacheBlockService> = Layer.effect(
   StableCacheBlockService,

@@ -46,9 +46,7 @@ export type WORMAuditTrailConfig = {
   chainMetadata?: ChainMetadata;
 };
 
-export class WORMAuditTrailService extends Context.Tag("clawql-audit/WORMAuditTrail")<
-  WORMAuditTrailService,
-  {
+export class WORMAuditTrailService extends Context.Service<WORMAuditTrailService, {
     readonly append: (entry: WORMAppendInput) => Effect.Effect<WORMEntry, AuditError>;
     readonly query: (filter: WORMFilter) => Effect.Effect<WORMEntry[], AuditError>;
     readonly verify: (
@@ -66,8 +64,7 @@ export class WORMAuditTrailService extends Context.Tag("clawql-audit/WORMAuditTr
     readonly listMerkleRoots: () => Effect.Effect<MerkleRoot[], AuditError>;
     readonly drainOutbox: () => Effect.Effect<void, AuditError>;
     readonly stop: () => Effect.Effect<void, AuditError>;
-  }
->() {}
+  }>()("clawql-audit/WORMAuditTrail") {}
 
 function retryFromConfig(config: WORMAuditTrailConfig): RetryConfig {
   return {
@@ -110,7 +107,7 @@ const makeWORMAuditTrailLayerWithMeta = (
         config.remote,
         retryFromConfig(config)
       );
-      yield* replicator.drainOutbox().pipe(Effect.catchAll(() => Effect.void));
+      yield* replicator.drainOutbox().pipe(Effect.catch(() => Effect.void));
       const merkle = new MerkleBatchLayer();
       const tee = config.tee;
       const batchSize = config.merkleBatchSize ?? 100;
@@ -119,7 +116,7 @@ const makeWORMAuditTrailLayerWithMeta = (
 
       const existingRoots = yield* config.local
         .listMerkleRoots()
-        .pipe(Effect.catchAll(() => Effect.succeed([] as MerkleRoot[])));
+        .pipe(Effect.catch(() => Effect.succeed([] as MerkleRoot[])));
       if (existingRoots.length) {
         lastRootToIndex = existingRoots[existingRoots.length - 1]!.toChainIndex;
       }
@@ -142,7 +139,7 @@ const makeWORMAuditTrailLayerWithMeta = (
           return root;
         });
 
-      const service: Context.Tag.Service<typeof WORMAuditTrailService> = WORMAuditTrailService.of({
+      const service: Context.Service.Shape<typeof WORMAuditTrailService> = WORMAuditTrailService.of({
         merkle,
         drainOutbox: () => replicator.drainOutbox(),
         listMerkleRoots: () => config.local.listMerkleRoots(),
@@ -224,7 +221,7 @@ const makeWORMAuditTrailLayerWithMeta = (
 /** Effect program that constructs the trail service (loads tip + drains outbox). */
 export const createWORMAuditTrailEffect = (
   config: WORMAuditTrailConfig
-): Effect.Effect<Context.Tag.Service<typeof WORMAuditTrailService>, AuditError> =>
+): Effect.Effect<Context.Service.Shape<typeof WORMAuditTrailService>, AuditError> =>
   Effect.gen(function* () {
     return yield* WORMAuditTrailService;
   }).pipe(Effect.provide(makeWORMAuditTrailLayer(config)));
@@ -236,7 +233,7 @@ export const createWORMAuditTrailEffect = (
  */
 export class WORMAuditTrail {
   private constructor(
-    private readonly service: Context.Tag.Service<typeof WORMAuditTrailService>
+    private readonly service: Context.Service.Shape<typeof WORMAuditTrailService>
   ) {}
 
   /** Prefer Effect Layers in ClawQL; this factory is the npm-host boundary. */

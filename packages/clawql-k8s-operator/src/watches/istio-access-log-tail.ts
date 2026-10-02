@@ -36,9 +36,7 @@ export type IstioAccessLogTailHandle = {
   readonly path: string;
 };
 
-export class IstioAccessLogTailService extends Context.Tag("clawql/IstioAccessLogTailService")<
-  IstioAccessLogTailService,
-  {
+export class IstioAccessLogTailService extends Context.Service<IstioAccessLogTailService, {
     readonly start: (
       options: IstioAccessLogTailOptions
     ) => Effect.Effect<
@@ -54,8 +52,7 @@ export class IstioAccessLogTailService extends Context.Tag("clawql/IstioAccessLo
       },
       { readonly _tag: "IstioAccessLogTailUnavailable"; readonly reason: string }
     >;
-  }
->() {}
+  }>()("clawql/IstioAccessLogTailService") {}
 
 async function readNewBytes(
   fh: FileHandle,
@@ -79,8 +76,8 @@ async function readNewBytes(
 }
 
 function makeTailService(
-  denial: Context.Tag.Service<typeof IstioDenialWatchServiceTag>
-): Context.Tag.Service<typeof IstioAccessLogTailService> {
+  denial: Context.Service.Shape<typeof IstioDenialWatchServiceTag>
+): Context.Service.Shape<typeof IstioAccessLogTailService> {
   return {
     ingestFileOnce: (path) =>
       Effect.tryPromise({
@@ -130,8 +127,8 @@ function makeTailService(
             carry = lines.pop() ?? "";
             for (const line of lines) {
               if (!line.trim()) continue;
-              const result = await Effect.runPromise(denial.ingestLine(line).pipe(Effect.either));
-              if (result._tag === "Right" && result.right) {
+              const result = await Effect.runPromise(denial.ingestLine(line).pipe(Effect.result));
+              if (result._tag === "Success" && result.right) {
                 await Effect.runPromise(options.onEvent(result.right));
               }
             }
@@ -176,8 +173,8 @@ function makeTailService(
 }
 
 export function makeIstioAccessLogTailService(
-  denial?: Context.Tag.Service<typeof IstioDenialWatchServiceTag>
-): Context.Tag.Service<typeof IstioAccessLogTailService> {
+  denial?: Context.Service.Shape<typeof IstioDenialWatchServiceTag>
+): Context.Service.Shape<typeof IstioAccessLogTailService> {
   return makeTailService(denial ?? makeIstioDenialWatchService());
 }
 
@@ -212,8 +209,8 @@ export const UnavailableIstioAccessLogTailLive: Layer.Layer<IstioAccessLogTailSe
   });
 
 export function startIstioAccessLogTailOrNull(
-  tail: Context.Tag.Service<typeof IstioAccessLogTailService>,
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  tail: Context.Service.Shape<typeof IstioAccessLogTailService>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   options: Omit<IstioAccessLogTailOptions, "onEvent">
 ): Effect.Effect<IstioAccessLogTailHandle | null> {
   return tail
@@ -221,5 +218,5 @@ export function startIstioAccessLogTailOrNull(
       ...options,
       onEvent: (event) => stub.enqueue(event),
     })
-    .pipe(Effect.catchAll(() => Effect.succeed(null)));
+    .pipe(Effect.catch(() => Effect.succeed(null)));
 }

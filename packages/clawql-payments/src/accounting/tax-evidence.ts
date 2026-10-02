@@ -151,9 +151,7 @@ export class TaxEvidenceError extends Data.TaggedError("TaxEvidenceError")<{
  * Effect surface over 1099-style tax evidence packs (WORM audit → JSON/Markdown).
  * Evidence only — never an IRS/CRA e-file; `build` refuses when the audit chain fails.
  */
-export class TaxEvidenceService extends Context.Tag("clawql/TaxEvidenceService")<
-  TaxEvidenceService,
-  {
+export class TaxEvidenceService extends Context.Service<TaxEvidenceService, {
     readonly build: (
       options: BuildTaxEvidencePackOptions
     ) => Effect.Effect<TaxEvidencePack, TaxEvidenceError>;
@@ -162,8 +160,7 @@ export class TaxEvidenceService extends Context.Tag("clawql/TaxEvidenceService")
       outputDir?: string
     ) => Effect.Effect<{ jsonPath: string; mdPath: string }, TaxEvidenceError>;
     readonly formatMarkdown: (pack: TaxEvidencePack) => Effect.Effect<string, TaxEvidenceError>;
-  }
->() {}
+  }>()("clawql/TaxEvidenceService") {}
 
 export function taxEvidenceLiveLayer(
   env: NodeJS.ProcessEnv = process.env

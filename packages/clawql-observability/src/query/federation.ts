@@ -63,10 +63,7 @@ export type ObservabilityQueryServiceApi = {
   >;
 };
 
-export class ObservabilityQueryService extends Context.Tag("clawql/ObservabilityQueryService")<
-  ObservabilityQueryService,
-  ObservabilityQueryServiceApi
->() {}
+export class ObservabilityQueryService extends Context.Service<ObservabilityQueryService, ObservabilityQueryServiceApi>()("clawql/ObservabilityQueryService") {}
 
 type QueryServiceDeps =
   | LogRegistryService

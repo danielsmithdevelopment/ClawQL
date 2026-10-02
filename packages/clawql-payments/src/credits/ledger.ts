@@ -809,9 +809,7 @@ type SettleTopupInput = Parameters<typeof settleTopupByPaymentIntent>[0];
 type TransferCreditsInput = Parameters<typeof transferCredits>[0];
 
 /** Effect surface over the prepaid credit ledger (authoritative balances + holds). */
-export class CreditsLedgerService extends Context.Tag("clawql/CreditsLedgerService")<
-  CreditsLedgerService,
-  {
+export class CreditsLedgerService extends Context.Service<CreditsLedgerService, {
     readonly getAccount: (tenantId: string) => Effect.Effect<CreditAccount, LedgerError>;
     readonly appendEntry: (
       input: AppendCreditEntryInput
@@ -826,8 +824,7 @@ export class CreditsLedgerService extends Context.Tag("clawql/CreditsLedgerServi
       input: TransferCreditsInput
     ) => Effect.Effect<CreditTransferResult, LedgerError>;
     readonly reset: () => Effect.Effect<void, LedgerError>;
-  }
->() {}
+  }>()("clawql/CreditsLedgerService") {}
 
 export function creditsLedgerLiveLayer(
   env: NodeJS.ProcessEnv = process.env

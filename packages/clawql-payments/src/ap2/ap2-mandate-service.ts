@@ -21,9 +21,7 @@ export type VerifyAp2MandateInput = {
 };
 
 /** Effect service for AP2 Payment Mandate parse/verify/authorize. */
-export class Ap2MandateService extends Context.Tag("clawql/Ap2MandateService")<
-  Ap2MandateService,
-  {
+export class Ap2MandateService extends Context.Service<Ap2MandateService, {
     readonly verifyPaymentMandate: (
       input: VerifyAp2MandateInput
     ) => Effect.Effect<Ap2VerifyResult, Ap2Error>;
@@ -44,8 +42,7 @@ export class Ap2MandateService extends Context.Tag("clawql/Ap2MandateService")<
       | { present: true; ok: false; reason: string },
       never
     >;
-  }
->() {}
+  }>()("clawql/Ap2MandateService") {}
 
 export function ap2MandateLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -103,7 +100,7 @@ export function ap2MandateLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void))
+              .pipe(Effect.catch(() => Effect.void))
           ),
           Effect.tapError((err) =>
             audit
@@ -115,7 +112,7 @@ export function ap2MandateLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void))
+              .pipe(Effect.catch(() => Effect.void))
           )
         );
 
@@ -177,8 +174,8 @@ export function ap2MandateLiveLayer(
             correlationId: input.correlationId,
             tenantId: input.tenantId,
             resource: input.resource,
-          }).pipe(Effect.either);
-          if (verified._tag === "Left") {
+          }).pipe(Effect.result);
+          if (verified._tag === "Failure") {
             return {
               present: true as const,
               ok: false as const,
@@ -190,8 +187,8 @@ export function ap2MandateLiveLayer(
             resource: input.resource,
             amountMajor: input.amountMajor,
             currency: input.currency,
-          }).pipe(Effect.either);
-          if (auth._tag === "Left") {
+          }).pipe(Effect.result);
+          if (auth._tag === "Failure") {
             return { present: true as const, ok: false as const, reason: auth.left.reason };
           }
           return {

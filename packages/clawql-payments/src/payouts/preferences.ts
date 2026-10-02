@@ -79,17 +79,14 @@ export class PayoutPreferencesError extends Data.TaggedError("PayoutPreferencesE
 type SetCreatorPayoutPreferenceInput = Parameters<typeof setCreatorPayoutPreference>[0];
 
 /** Effect surface over creator payout preferences (bank / USDC destination + connect account). */
-export class PayoutPreferencesService extends Context.Tag("clawql/PayoutPreferencesService")<
-  PayoutPreferencesService,
-  {
+export class PayoutPreferencesService extends Context.Service<PayoutPreferencesService, {
     readonly get: (
       creatorId: string
     ) => Effect.Effect<CreatorPayoutPreference | undefined, PayoutPreferencesError>;
     readonly set: (
       input: SetCreatorPayoutPreferenceInput
     ) => Effect.Effect<CreatorPayoutPreference, PayoutPreferencesError>;
-  }
->() {}
+  }>()("clawql/PayoutPreferencesService") {}
 
 export function payoutPreferencesLiveLayer(
   env: NodeJS.ProcessEnv = process.env

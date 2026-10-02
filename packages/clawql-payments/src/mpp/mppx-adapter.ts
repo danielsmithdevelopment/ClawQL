@@ -24,16 +24,13 @@ export type MppxModule = {
 };
 
 /** Optional Effect wrapper around the `mppx` SDK (dynamic import). */
-export class MppxAdapterService extends Context.Tag("clawql/MppxAdapterService")<
-  MppxAdapterService,
-  {
+export class MppxAdapterService extends Context.Service<MppxAdapterService, {
     readonly isAvailable: () => boolean;
     readonly loadModule: () => Effect.Effect<MppxModule, ConfigError>;
     readonly createRuntime: (
       config: MppxAdapterConfig
     ) => Effect.Effect<unknown, ConfigError | MppVerificationError>;
-  }
->() {}
+  }>()("clawql/MppxAdapterService") {}
 
 export function isMppxEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   const raw = env.CLAWQL_MPPX_ENABLED?.trim().toLowerCase();

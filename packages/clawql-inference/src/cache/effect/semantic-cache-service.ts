@@ -1,4 +1,4 @@
-import { Context, Effect, Either, Layer } from "effect";
+import { Context, Effect, Result, Layer } from "effect";
 import type { InferenceRequest, InferenceResponse } from "../../gateway.js";
 import { InferenceGatewayService } from "../../fallback/effect/inference-gateway-service.js";
 import { createSemanticCacheEntry } from "../in-memory.js";
@@ -9,14 +9,11 @@ import { SemanticCacheStoreService } from "./semantic-cache-store-service.js";
 import { extractResourceTags, resolveCacheIntent } from "../../efficiency/layer-5-policy.js";
 
 /** Effect service for semantic cache lookup/store around gateway completion. */
-export class SemanticCacheService extends Context.Tag("clawql/SemanticCacheService")<
-  SemanticCacheService,
-  {
+export class SemanticCacheService extends Context.Service<SemanticCacheService, {
     readonly completeWithCache: (
       request: InferenceRequest
     ) => Effect.Effect<InferenceResponse, unknown>;
-  }
->() {}
+  }>()("clawql/SemanticCacheService") {}
 
 export function semanticCacheLiveLayer(
   config: SemanticCacheConfig
@@ -54,11 +51,11 @@ export function semanticCacheLiveLayer(
           }
 
           const signatureText = buildCacheSignatureText(request.messages);
-          const embeddingResult = yield* embedder.embed(signatureText).pipe(Effect.either);
-          if (Either.isLeft(embeddingResult) || embeddingResult.right.length === 0) {
+          const embeddingResult = yield* embedder.embed(signatureText).pipe(Effect.result);
+          if (Result.isFailure(embeddingResult) || embeddingResult.success.length === 0) {
             return yield* gateway.complete(request);
           }
-          const embedding = embeddingResult.right;
+          const embedding = embeddingResult.success;
 
           const hit = yield* store.lookup({
             modelId,

@@ -132,11 +132,11 @@ describe("credits P2P transfer", () => {
             toTenantId: "solo",
             amountCents: 50,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
     expect(same._tag).toBe("Left");
-    if (same._tag === "Left") {
+    if (same._tag === "Failure") {
       expect(same.left.reason).toMatch(/same tenant/i);
     }
 
@@ -149,11 +149,11 @@ describe("credits P2P transfer", () => {
             toTenantId: "other",
             amountCents: 9999,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
     expect(over._tag).toBe("Left");
-    if (over._tag === "Left") {
+    if (over._tag === "Failure") {
       expect(over.left.reason).toMatch(/Insufficient credits/i);
     }
   });
@@ -230,7 +230,7 @@ describe("credits P2P transfer", () => {
             actionId: staged.actionId,
             code: staged.confirmationCode,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       })
     );
     expect(denied._tag).toBe("Left");

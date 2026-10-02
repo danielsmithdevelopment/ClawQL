@@ -816,9 +816,7 @@ export function createMCPOAuthServer(
 
 export const CLAWQL_MCP_OAUTH_SERVICE_TAG = "clawql/McpOAuthService" as const;
 
-export class McpOAuthService extends Context.Tag(CLAWQL_MCP_OAUTH_SERVICE_TAG)<
-  McpOAuthService,
-  {
+export class McpOAuthService extends Context.Service<McpOAuthService, {
     readonly server: MCPOAuthServer;
     readonly issueToken: (
       request: McpTokenRequest
@@ -835,8 +833,7 @@ export class McpOAuthService extends Context.Tag(CLAWQL_MCP_OAUTH_SERVICE_TAG)<
     readonly exchangeIdJag: (
       request: McpTokenRequest
     ) => Effect.Effect<McpTokenResponse, McpOAuthError>;
-  }
->() {}
+  }>()(CLAWQL_MCP_OAUTH_SERVICE_TAG) {}
 
 export function mcpOAuthServiceFromServer(server: MCPOAuthServer) {
   return McpOAuthService.of({

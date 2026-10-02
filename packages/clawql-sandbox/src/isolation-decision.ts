@@ -49,12 +49,9 @@ export function classifyIsolationWorkload(input: IsolationDecisionInput): Isolat
   };
 }
 
-export class IsolationDecisionService extends Context.Tag("clawql/IsolationDecisionService")<
-  IsolationDecisionService,
-  {
+export class IsolationDecisionService extends Context.Service<IsolationDecisionService, {
     readonly classify: (input: IsolationDecisionInput) => Effect.Effect<IsolationDecision>;
-  }
->() {}
+  }>()("clawql/IsolationDecisionService") {}
 
 export const IsolationDecisionLive: Layer.Layer<IsolationDecisionService> = Layer.succeed(
   IsolationDecisionService,

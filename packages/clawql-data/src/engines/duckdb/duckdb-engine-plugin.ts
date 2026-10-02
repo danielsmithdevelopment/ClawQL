@@ -394,7 +394,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
     return Effect.gen(this, function* () {
       const validated = yield* dataFromSync(() => validateReadonlySelect(sql)).pipe(
         Effect.map((safeSql) => ({ ok: true as const, safeSql })),
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.succeed({
             ok: false as const,
             result: {
@@ -416,7 +416,7 @@ export class DuckDbEnginePlugin implements DataEnginePlugin {
             maxChars: maxCellChars(this.env),
           })
         ),
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.succeed({
             ok: false as const,
             engine: ENGINE_ID,

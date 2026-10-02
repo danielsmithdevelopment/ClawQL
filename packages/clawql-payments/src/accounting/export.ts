@@ -219,9 +219,7 @@ export class AccountingExportError extends Data.TaggedError("AccountingExportErr
  * Effect surface over accounting exports (WORM audit → CSV/QuickBooks/Xero/JSON).
  * `build` refuses to emit when the payment audit chain fails verification.
  */
-export class AccountingExportService extends Context.Tag("clawql/AccountingExportService")<
-  AccountingExportService,
-  {
+export class AccountingExportService extends Context.Service<AccountingExportService, {
     readonly build: (
       options: BuildAccountingExportOptions
     ) => Effect.Effect<AccountingExportResult, AccountingExportError>;
@@ -233,8 +231,7 @@ export class AccountingExportService extends Context.Tag("clawql/AccountingExpor
       result: AccountingExportResult,
       format: AccountingExportFormat
     ) => Effect.Effect<string, AccountingExportError>;
-  }
->() {}
+  }>()("clawql/AccountingExportService") {}
 
 export function accountingExportLiveLayer(
   env: NodeJS.ProcessEnv = process.env

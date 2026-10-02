@@ -55,9 +55,7 @@ async function saveStore(env: NodeJS.ProcessEnv, store: SessionStore): Promise<v
 }
 
 /** Effect service for ACP merchant-side checkout sessions + Stripe SPT complete. */
-export class AcpCheckoutService extends Context.Tag("clawql/AcpCheckoutService")<
-  AcpCheckoutService,
-  {
+export class AcpCheckoutService extends Context.Service<AcpCheckoutService, {
     readonly createSession: (
       input: CreateAcpCheckoutInput
     ) => Effect.Effect<AcpCheckoutSession, AcpError>;
@@ -65,8 +63,7 @@ export class AcpCheckoutService extends Context.Tag("clawql/AcpCheckoutService")
     readonly completeSession: (
       input: CompleteAcpCheckoutInput
     ) => Effect.Effect<AcpCheckoutSession, AcpError | StripeNotConfigured | StripeApiError>;
-  }
->() {}
+  }>()("clawql/AcpCheckoutService") {}
 
 export function acpCheckoutLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -139,7 +136,7 @@ export function acpCheckoutLiveLayer(
                   correlationId: session.id,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void))
+              .pipe(Effect.catch(() => Effect.void))
           )
         );
 
@@ -246,7 +243,7 @@ export function acpCheckoutLiveLayer(
                 correlationId: completed.id,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return completed;
         });

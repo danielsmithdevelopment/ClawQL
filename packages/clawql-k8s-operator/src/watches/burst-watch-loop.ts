@@ -21,9 +21,7 @@ export type WatchLoopTickResult = WatchDispatchResult & {
   readonly tick: number;
 };
 
-export class BurstWatchLoop extends Context.Tag("clawql/BurstWatchLoop")<
-  BurstWatchLoop,
-  {
+export class BurstWatchLoop extends Context.Service<BurstWatchLoop, {
     readonly enqueue: (event: WatchEvent) => Effect.Effect<void>;
     readonly tick: (args?: {
       readonly atrAllows?: PolicyAllowSet;
@@ -37,8 +35,7 @@ export class BurstWatchLoop extends Context.Tag("clawql/BurstWatchLoop")<
       readonly meshAllows?: PolicyAllowSet;
       readonly placement?: PlacementRequest;
     }) => Effect.Effect<readonly WatchLoopTickResult[]>;
-  }
->() {}
+  }>()("clawql/BurstWatchLoop") {}
 
 export const BurstWatchLoopLive: Layer.Layer<
   BurstWatchLoop,

@@ -14,9 +14,7 @@ import {
   type GatewayAuthError,
 } from "./gateway.js";
 
-export class GatewayAuthService extends Context.Tag("clawql/GatewayAuthService")<
-  GatewayAuthService,
-  {
+export class GatewayAuthService extends Context.Service<GatewayAuthService, {
     readonly config: GatewayAuthConfig;
     /** Resolve ATR claims from headers; fails with GatewayAuthError. */
     readonly resolveClaims: (
@@ -24,8 +22,7 @@ export class GatewayAuthService extends Context.Tag("clawql/GatewayAuthService")
     ) => Effect.Effect<AtrClaims, GatewayAuthError>;
     /** Assert gateway auth and return ATR claims; fails with GatewayAuthError. */
     readonly assertAuth: (headers?: AuthHeaderSource) => Effect.Effect<AtrClaims, GatewayAuthError>;
-  }
->() {}
+  }>()("clawql/GatewayAuthService") {}
 
 export function gatewayAuthServiceFromConfig(config: GatewayAuthConfig) {
   return GatewayAuthService.of({

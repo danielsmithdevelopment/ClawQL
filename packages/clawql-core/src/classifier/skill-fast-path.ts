@@ -13,15 +13,12 @@ import type {
   SkillValidityStatus,
 } from "./types.js";
 
-export class SkillValidityStore extends Context.Tag("clawql/SkillValidityStore")<
-  SkillValidityStore,
-  {
+export class SkillValidityStore extends Context.Service<SkillValidityStore, {
     /** Live status — must be called on every fast-path attempt; never cache externally. */
     readonly getStatus: (skillId: string) => Effect.Effect<SkillValidityStatus | undefined>;
     readonly setStatus: (skillId: string, status: SkillValidityStatus) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<ReadonlyMap<string, SkillValidityStatus>>;
-  }
->() {}
+  }>()("clawql/SkillValidityStore") {}
 
 export const InMemorySkillValidityStoreLive: Layer.Layer<SkillValidityStore> = Layer.effect(
   SkillValidityStore,

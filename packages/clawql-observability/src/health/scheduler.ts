@@ -27,20 +27,17 @@ export type ObservabilityHealthSnapshot = {
 type RegistryServices =
   LogRegistryService | MetricRegistryService | TraceRegistryService | ProfileRegistryService;
 
-export class ObservabilityHealthService extends Context.Tag("clawql/ObservabilityHealthService")<
-  ObservabilityHealthService,
-  {
+export class ObservabilityHealthService extends Context.Service<ObservabilityHealthService, {
     readonly runOnce: () => Effect.Effect<ObservabilityHealthSnapshot>;
     readonly getLastSnapshot: () => Effect.Effect<ObservabilityHealthSnapshot | undefined>;
-  }
->() {}
+  }>()("clawql/ObservabilityHealthService") {}
 
 const providerHealthEffect = (
   entry: RegisteredProvider<SignalProvider>
 ): Effect.Effect<ProviderHealth> =>
   entry.enabled
     ? entry.provider.health().pipe(
-        Effect.catchAll((cause: unknown) =>
+        Effect.catch((cause: unknown) =>
           Effect.succeed({
             status: "down" as const,
             details: cause instanceof Error ? cause.message : String(cause),
@@ -139,15 +136,10 @@ export type HealthSchedulerConfig = {
   readonly intervalMs: number;
 };
 
-export class ObservabilityHealthSchedulerService extends Context.Tag(
-  "clawql/ObservabilityHealthSchedulerService"
-)<
-  ObservabilityHealthSchedulerService,
-  {
+export class ObservabilityHealthSchedulerService extends Context.Service<ObservabilityHealthSchedulerService, {
     readonly start: () => Effect.Effect<void>;
     readonly stop: () => Effect.Effect<void>;
-  }
->() {}
+  }>()("clawql/ObservabilityHealthSchedulerService") {}
 
 export const makeObservabilityHealthSchedulerLayer = (
   config: HealthSchedulerConfig

@@ -36,12 +36,12 @@ describe("shared panguard", () => {
             atrScope: CLINE_ATR_TEMPLATES.execution_worker,
             sessionId: "sess-1",
             agentName: "cline",
-          }).pipe(Effect.either);
+          }).pipe(Effect.result);
         }).pipe(Effect.provide(layer))
       );
       expect(result._tag).toBe("Left");
-      if (result._tag === "Left") {
-        expect(result.left).toBeInstanceOf(PanguardDenyError);
+      if (result._tag === "Failure") {
+        expect(result.failure).toBeInstanceOf(PanguardDenyError);
       }
       const verified = await Effect.runPromise(
         Effect.gen(function* () {
@@ -90,7 +90,7 @@ describe("OpenClaw adapter", () => {
           skillName: "clawql_execute",
           atrScope: atr,
           sessionId: s.sessionId,
-        }).pipe(Effect.either);
+        }).pipe(Effect.result);
         expect(denied._tag).toBe("Left");
         yield* appendOpenClawHook({
           kind: "skill_invoke",

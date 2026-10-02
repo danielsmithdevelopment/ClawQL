@@ -39,7 +39,7 @@
     "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
     "clawql-core": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.0",
     "node-fetch": "^3.3.2",

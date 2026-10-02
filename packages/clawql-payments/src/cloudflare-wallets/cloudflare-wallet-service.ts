@@ -53,9 +53,7 @@ export type CloudflareVirtualWalletResult = CloudflareVirtualWalletRecord & {
 };
 
 /** Effect service for Cloudflare Wallets identity + Virtual Wallets. */
-export class CloudflareWalletService extends Context.Tag("clawql/CloudflareWalletService")<
-  CloudflareWalletService,
-  {
+export class CloudflareWalletService extends Context.Service<CloudflareWalletService, {
     readonly resolveHandle: (input: {
       handle?: string;
       tenantId?: string;
@@ -81,8 +79,7 @@ export class CloudflareWalletService extends Context.Tag("clawql/CloudflareWalle
     readonly listVirtualWallets: (input?: {
       agentId?: string;
     }) => Effect.Effect<CloudflareVirtualWalletResult[], CloudflareWalletError>;
-  }
->() {}
+  }>()("clawql/CloudflareWalletService") {}
 
 function toResult(record: CloudflareVirtualWalletRecord): CloudflareVirtualWalletResult {
   const remaining = Math.max(0, record.allowanceUsd - record.spentUsd);

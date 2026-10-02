@@ -268,7 +268,7 @@ export function executeMemoryRecallCoreEffect(
           continue;
         }
         const text = yield* memoryFromPromise(() => readVaultTextFile(vault, rel)).pipe(
-          Effect.catchAll(() => Effect.succeed(undefined))
+          Effect.catch(() => Effect.succeed(undefined))
         );
         if (text === undefined) continue;
         // OKF v0.2 — never surface retracted knowledge; down-weight stale/superseded.
@@ -380,7 +380,7 @@ export function executeMemoryRecallCoreEffect(
           if (sim < minVectorSimLoad) continue;
           if (textByRel.has(p)) continue;
           const text = yield* memoryFromPromise(() => readVaultTextFile(vault, p)).pipe(
-            Effect.catchAll(() => Effect.succeed(undefined))
+            Effect.catch(() => Effect.succeed(undefined))
           );
           if (text === undefined) continue;
           const fm = parseVaultFrontmatter(text);
@@ -609,7 +609,7 @@ export function executeMemoryRecallCoreEffect(
           sourcesUsed,
         },
       });
-    }).pipe(Effect.catchAll(() => Effect.void));
+    }).pipe(Effect.catch(() => Effect.void));
 
     return yield* memoryFromPromise(async () => {
       const { maybeEnrichHarveyLabRecall } = await import("../recall/harvey-lab-enrich.js");

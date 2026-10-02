@@ -31,9 +31,7 @@ export type ProcessOfframpWebhookResult = {
 };
 
 /** Effect service for MoonPay / Transak off-ramp webhook verify + WORM settle. */
-export class OfframpWebhookService extends Context.Tag("clawql/OfframpWebhookService")<
-  OfframpWebhookService,
-  {
+export class OfframpWebhookService extends Context.Service<OfframpWebhookService, {
     readonly processMoonpay: (input: {
       rawBody: string;
       signatureHeader: string;
@@ -55,8 +53,7 @@ export class OfframpWebhookService extends Context.Tag("clawql/OfframpWebhookSer
       correlationId?: string;
       requireSignature?: boolean;
     }) => Effect.Effect<ProcessOfframpWebhookResult, OffRampWebhookError>;
-  }
->() {}
+  }>()("clawql/OfframpWebhookService") {}
 
 function moonpayAmountUsd(data: Record<string, unknown>): number | undefined {
   const base =
@@ -178,7 +175,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           } else if (outcome === "failed") {
             yield* audit
               .appendEntry(
@@ -191,7 +188,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           } else if (outcome === "updated") {
             yield* audit
               .appendEntry(
@@ -204,7 +201,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
 
           return {
@@ -310,7 +307,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           } else if (outcome === "failed") {
             yield* audit
               .appendEntry(
@@ -323,7 +320,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           } else if (outcome === "updated") {
             yield* audit
               .appendEntry(
@@ -336,7 +333,7 @@ export function offrampWebhookLiveLayer(
                   correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
 
           return {

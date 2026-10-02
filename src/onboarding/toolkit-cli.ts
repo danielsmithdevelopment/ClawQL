@@ -2,7 +2,7 @@
  * `clawql toolkit` — list / show seeded toolkit presets (pack + ATR packaging).
  */
 
-import { Effect, Either } from "effect";
+import { Effect, Result } from "effect";
 import { getToolkitEffect, listToolkitsEffect } from "clawql-api";
 
 export async function runToolkitList(): Promise<number> {
@@ -25,11 +25,11 @@ export async function runToolkitShow(id: string): Promise<number> {
     console.error("Usage: clawql toolkit show <id>");
     return 1;
   }
-  const result = Effect.runSync(Effect.either(getToolkitEffect(id)));
-  if (Either.isLeft(result)) {
-    console.error(result.left.message);
+  const result = Effect.runSync(Effect.result(getToolkitEffect(id)));
+  if (Result.isFailure(result)) {
+    console.error(result.failure.message);
     return 1;
   }
-  console.log(JSON.stringify(result.right, null, 2));
+  console.log(JSON.stringify(result.success, null, 2));
   return 0;
 }

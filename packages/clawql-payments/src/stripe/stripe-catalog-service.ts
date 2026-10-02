@@ -110,17 +110,14 @@ export type EnsureStripeCatalogInput = {
   readonly defaults?: StripeCatalogDefaults;
 };
 
-export class StripeCatalogService extends Context.Tag("clawql-payments/StripeCatalogService")<
-  StripeCatalogService,
-  {
+export class StripeCatalogService extends Context.Service<StripeCatalogService, {
     readonly ensureCatalog: (
       input?: EnsureStripeCatalogInput
     ) => Effect.Effect<StripeCatalogEnsureResult, StripeNotConfigured | StripeApiError>;
     readonly validateCatalogEnv: (
       env?: NodeJS.ProcessEnv
     ) => Effect.Effect<StripeCatalogValidateResult>;
-  }
->() {}
+  }>()("clawql-payments/StripeCatalogService") {}
 
 function buildEnvExports(
   result: Omit<StripeCatalogEnsureResult, "envExports" | "dryRun">

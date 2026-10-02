@@ -249,19 +249,14 @@ export function createAuthorizationCodeFlow(
   return new AuthorizationCodeFlow(options);
 }
 
-export class AuthorizationCodeFlowService extends Context.Tag(
-  "clawql/AuthorizationCodeFlowService"
-)<
-  AuthorizationCodeFlowService,
-  {
+export class AuthorizationCodeFlowService extends Context.Service<AuthorizationCodeFlowService, {
     readonly startFlow: (config: AuthCodeConfig) => Effect.Effect<AuthFlowStart, unknown>;
     readonly handleCallback: (
       code: string,
       state: string,
       config?: Partial<AuthCodeConfig>
     ) => Effect.Effect<StoredOAuthToken, AuthCodeError | OAuthFlowError | unknown>;
-  }
->() {}
+  }>()("clawql/AuthorizationCodeFlowService") {}
 
 export function authorizationCodeFlowServiceFromFlow(
   flow: AuthorizationCodeFlow

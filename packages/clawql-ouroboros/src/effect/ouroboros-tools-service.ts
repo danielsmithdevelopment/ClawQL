@@ -19,9 +19,7 @@ import {
 } from "./ouroboros-tools-effect.js";
 
 /** Effect service for Ouroboros MCP tool bodies. */
-export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsService")<
-  OuroborosToolsService,
-  {
+export class OuroborosToolsService extends Context.Service<OuroborosToolsService, {
     readonly createSeedFromDocument: (
       input: z.infer<typeof CreateSeedFromDocumentSchema>
     ) => Effect.Effect<
@@ -67,8 +65,7 @@ export class OuroborosToolsService extends Context.Tag("clawql/OuroborosToolsSer
       never,
       OuroborosEventStoreService
     >;
-  }
->() {}
+  }>()("clawql/OuroborosToolsService") {}
 
 export function ouroborosToolsLiveLayer(): Layer.Layer<OuroborosToolsService> {
   return Layer.succeed(

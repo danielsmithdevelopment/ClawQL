@@ -116,7 +116,7 @@ export const emitPanguardTelemetryEffect = (
           reason: "panguard telemetry Loki push failed",
           cause,
         }),
-    }).pipe(Effect.catchAll(() => Effect.void));
+    }).pipe(Effect.catch(() => Effect.void));
 
     return { attributes };
   });

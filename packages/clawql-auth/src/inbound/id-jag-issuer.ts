@@ -234,15 +234,12 @@ export function idJagIssuerJwksEffect(
   });
 }
 
-export class IdJagIssuerService extends Context.Tag(CLAWQL_ID_JAG_ISSUER_TAG)<
-  IdJagIssuerService,
-  {
+export class IdJagIssuerService extends Context.Service<IdJagIssuerService, {
     readonly issueAssertion: (
       input: IssueIdJagAssertionInput
     ) => Effect.Effect<IssuedIdJagAssertion, IdJagIssuerError>;
     readonly jwks: (orgId: string) => Effect.Effect<{ keys: JWK[] }, IdJagIssuerError>;
-  }
->() {}
+  }>()(CLAWQL_ID_JAG_ISSUER_TAG) {}
 
 export function createIdJagIssuerService(deps: IdJagIssuerDeps): IdJagIssuerService["Type"] {
   return IdJagIssuerService.of({

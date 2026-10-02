@@ -22,9 +22,7 @@ export type ApplyOperationRiskResult = {
   readonly overrideCount: number;
 };
 
-export class OperationRiskService extends Context.Tag("clawql/OperationRiskService")<
-  OperationRiskService,
-  {
+export class OperationRiskService extends Context.Service<OperationRiskService, {
     readonly loadConfig: () => Effect.Effect<OperationRiskConfigFile, Error>;
     readonly applyToOperations: (
       operations: readonly Operation[],
@@ -35,8 +33,7 @@ export class OperationRiskService extends Context.Tag("clawql/OperationRiskServi
         readonly wormLogOverrides?: boolean;
       }
     ) => Effect.Effect<ApplyOperationRiskResult, Error>;
-  }
->() {}
+  }>()("clawql/OperationRiskService") {}
 
 function mergeTrustedIds(
   file: OperationRiskConfigFile,

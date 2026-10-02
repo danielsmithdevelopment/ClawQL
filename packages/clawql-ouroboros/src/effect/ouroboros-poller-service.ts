@@ -10,16 +10,13 @@ import { OuroborosLoopService } from "./ouroboros-loop-service.js";
 import { ouroborosFromPromise } from "./ouroboros-effect-utils.js";
 
 /** Effect service for the Ouroboros seeds background poller. */
-export class OuroborosPollerService extends Context.Tag("clawql/OuroborosPollerService")<
-  OuroborosPollerService,
-  {
+export class OuroborosPollerService extends Context.Service<OuroborosPollerService, {
     readonly start: (
       fetchPending: () => Promise<Seed[]>,
       markFailed: (seedId: string, error: unknown) => Promise<void>,
       options?: SeedPollerOptions
     ) => Effect.Effect<{ stop: () => void }, never, OuroborosLoopService>;
-  }
->() {}
+  }>()("clawql/OuroborosPollerService") {}
 
 export function ouroborosPollerLiveLayer(): Layer.Layer<OuroborosPollerService> {
   return Layer.succeed(

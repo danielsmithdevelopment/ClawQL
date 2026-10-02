@@ -6,7 +6,7 @@
  * inside Effect pipelines; do not treat Zod as the domain validator.
  */
 
-import { Effect, ParseResult, Schema } from "effect";
+import { Effect, Schema, SchemaIssue } from "effect";
 import type { MemoryIngestInput } from "../ingest/ingest.js";
 import type { MemoryRecallInput } from "../recall/recall.js";
 import { MEMORY_RECALL_SOURCES } from "../recall/recall-sources.js";
@@ -92,85 +92,81 @@ export const MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION =
   "INFERRED includes pattern matches. AMBIGUOUS includes conflicting extractions.";
 
 const EnterpriseCitationSchema = Schema.Struct({
-  title: Schema.optional(Schema.String.pipe(Schema.maxLength(500))),
-  url: Schema.optional(Schema.String.pipe(Schema.maxLength(2048))),
-  document_id: Schema.optional(Schema.String.pipe(Schema.maxLength(200))),
-  source: Schema.optional(Schema.String.pipe(Schema.maxLength(200))),
-  snippet: Schema.optional(Schema.String.pipe(Schema.maxLength(400))),
+  title: Schema.optional(Schema.String.pipe(Schema.check(Schema.isMaxLength(500)))),
+  url: Schema.optional(Schema.String.pipe(Schema.check(Schema.isMaxLength(2048)))),
+  document_id: Schema.optional(Schema.String.pipe(Schema.check(Schema.isMaxLength(200)))),
+  source: Schema.optional(Schema.String.pipe(Schema.check(Schema.isMaxLength(200)))),
+  snippet: Schema.optional(Schema.String.pipe(Schema.check(Schema.isMaxLength(400)))),
 });
 
 const MemoryRebuildSchema = Schema.Struct({
   embeddings: Schema.optional(
-    Schema.Boolean.annotations({ description: MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION })
+    Schema.Boolean.annotate({ description: MEMORY_INGEST_REBUILD_EMBEDDINGS_DESCRIPTION })
   ),
-}).annotations({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
+}).annotate({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
 const MemoryRecallSourceSchema = Schema.Literal(...MEMORY_RECALL_SOURCES);
-const OntologySchemaNameSchema = Schema.String.pipe(Schema.minLength(1), Schema.maxLength(200));
-const OntologyConfidenceSchema = Schema.Literal("EXTRACTED", "INFERRED", "AMBIGUOUS");
+const OntologySchemaNameSchema = Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(200)));
+const OntologyConfidenceSchema = Schema.Literals(["EXTRACTED", "INFERRED", "AMBIGUOUS"]);
 /** Predicate object — keys like gte/gt/eq; values validated at query time. */
-const OntologyFilterPredicateSchema = Schema.Record({
-  key: Schema.String,
-  value: Schema.Unknown,
-});
-const OntologyFiltersSchema = Schema.Record({
-  key: Schema.String,
-  value: OntologyFilterPredicateSchema,
-});
+const OntologyFilterPredicateSchema = Schema.Record(Schema.String, Schema.Unknown,
+);
+const OntologyFiltersSchema = Schema.Record(Schema.String, OntologyFilterPredicateSchema,
+);
 
 /** MCP `memory_ingest` tool arguments — Effect Schema (source of truth). */
 export const MemoryIngestInputSchema = Schema.Struct({
-  title: Schema.String.pipe(Schema.minLength(1)).annotations({
+  title: Schema.String.pipe(Schema.check(Schema.isMinLength(1))).annotate({
     description: MEMORY_INGEST_TITLE_DESCRIPTION,
   }),
   type: Schema.optional(
-    Schema.String.pipe(Schema.minLength(1)).annotations({
+    Schema.String.pipe(Schema.check(Schema.isMinLength(1))).annotate({
       description: MEMORY_INGEST_TYPE_DESCRIPTION,
     })
   ),
   description: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_DESCRIPTION_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_DESCRIPTION_DESCRIPTION })
   ),
   resource: Schema.optional(
-    Schema.NullOr(Schema.String).annotations({ description: MEMORY_INGEST_RESOURCE_DESCRIPTION })
+    Schema.NullOr(Schema.String).annotate({ description: MEMORY_INGEST_RESOURCE_DESCRIPTION })
   ),
   tags: Schema.optional(
-    Schema.mutable(Schema.Array(Schema.String)).annotations({
+    Schema.mutable(Schema.Array(Schema.String)).annotate({
       description: MEMORY_INGEST_TAGS_DESCRIPTION,
     })
   ),
   correlationId: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_CORRELATION_ID_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_CORRELATION_ID_DESCRIPTION })
   ),
   wormRef: Schema.optional(
-    Schema.NullOr(Schema.String).annotations({ description: MEMORY_INGEST_WORM_REF_DESCRIPTION })
+    Schema.NullOr(Schema.String).annotate({ description: MEMORY_INGEST_WORM_REF_DESCRIPTION })
   ),
   agentId: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_AGENT_ID_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_AGENT_ID_DESCRIPTION })
   ),
   verdict: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_VERDICT_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_VERDICT_DESCRIPTION })
   ),
   confidenceScore: Schema.optional(
-    Schema.Number.pipe(Schema.between(0, 1)).annotations({
+    Schema.Number.pipe(Schema.check(Schema.isBetween({ minimum: 0, maximum: 1 }))).annotate({
       description: MEMORY_INGEST_CONFIDENCE_SCORE_DESCRIPTION,
     })
   ),
   staleAfter: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_STALE_AFTER_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_STALE_AFTER_DESCRIPTION })
   ),
   status: Schema.optional(
-    Schema.Literal("current", "stale", "superseded", "retracted").annotations({
+    Schema.Literals(["current", "stale", "superseded", "retracted"]).annotate({
       description: MEMORY_INGEST_STATUS_DESCRIPTION,
     })
   ),
   supersededBy: Schema.optional(
-    Schema.NullOr(Schema.String).annotations({
+    Schema.NullOr(Schema.String).annotate({
       description: MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION,
     })
   ),
   model: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_MODEL_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_MODEL_DESCRIPTION })
   ),
   verified: Schema.optional(
     Schema.Struct({
@@ -178,44 +174,44 @@ export const MemoryIngestInputSchema = Schema.Struct({
       at: Schema.optional(Schema.String),
       method: Schema.optional(Schema.String),
       reviewer: Schema.optional(Schema.String),
-    }).annotations({ description: MEMORY_INGEST_VERIFIED_DESCRIPTION })
+    }).annotate({ description: MEMORY_INGEST_VERIFIED_DESCRIPTION })
   ),
   sources: Schema.optional(
     Schema.mutable(
       Schema.Array(
-        Schema.Record({ key: Schema.String, value: Schema.Union(Schema.String, Schema.Number) })
+        Schema.Record(Schema.String, Schema.Union([Schema.String, Schema.Number]) )
       )
-    ).annotations({ description: MEMORY_INGEST_SOURCES_DESCRIPTION })
+    ).annotate({ description: MEMORY_INGEST_SOURCES_DESCRIPTION })
   ),
   insights: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_INSIGHTS_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_INSIGHTS_DESCRIPTION })
   ),
   conversation: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_CONVERSATION_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_CONVERSATION_DESCRIPTION })
   ),
   toolOutputs: Schema.optional(
-    Schema.Union(Schema.String, Schema.mutable(Schema.Array(Schema.String))).annotations({
+    Schema.Union([Schema.String, Schema.mutable(Schema.Array(Schema.String))]).annotate({
       description: MEMORY_INGEST_TOOL_OUTPUTS_DESCRIPTION,
     })
   ),
   toolOutputsFile: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_TOOL_OUTPUTS_FILE_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_TOOL_OUTPUTS_FILE_DESCRIPTION })
   ),
   enterpriseCitations: Schema.optional(
     Schema.mutable(Schema.Array(EnterpriseCitationSchema))
       .pipe(Schema.maxItems(30))
-      .annotations({ description: MEMORY_INGEST_ENTERPRISE_CITATIONS_DESCRIPTION })
+      .annotate({ description: MEMORY_INGEST_ENTERPRISE_CITATIONS_DESCRIPTION })
   ),
   wikilinks: Schema.optional(
-    Schema.mutable(Schema.Array(Schema.String)).annotations({
+    Schema.mutable(Schema.Array(Schema.String)).annotate({
       description: MEMORY_INGEST_WIKILINKS_DESCRIPTION,
     })
   ),
   sessionId: Schema.optional(
-    Schema.String.annotations({ description: MEMORY_INGEST_SESSION_ID_DESCRIPTION })
+    Schema.String.annotate({ description: MEMORY_INGEST_SESSION_ID_DESCRIPTION })
   ),
   append: Schema.optional(
-    Schema.Boolean.annotations({ description: MEMORY_INGEST_APPEND_DESCRIPTION })
+    Schema.Boolean.annotate({ description: MEMORY_INGEST_APPEND_DESCRIPTION })
   ),
   rebuild: Schema.optional(MemoryRebuildSchema),
 });
@@ -228,37 +224,37 @@ void _ingestAssignability;
 
 /** MCP `memory_recall` tool arguments — Effect Schema (source of truth). */
 export const MemoryRecallInputSchema = Schema.Struct({
-  query: Schema.String.pipe(Schema.minLength(1)).annotations({
+  query: Schema.String.pipe(Schema.check(Schema.isMinLength(1))).annotate({
     description: MEMORY_RECALL_QUERY_DESCRIPTION,
   }),
   limit: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.between(1, 50)).annotations({
+    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 }))).annotate({
       description: MEMORY_RECALL_LIMIT_DESCRIPTION,
     })
   ),
   maxDepth: Schema.optional(
-    Schema.Number.pipe(Schema.int(), Schema.between(0, 10)).annotations({
+    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))).annotate({
       description: MEMORY_RECALL_MAX_DEPTH_DESCRIPTION,
     })
   ),
   minScore: Schema.optional(
-    Schema.Number.pipe(Schema.greaterThanOrEqualTo(0)).annotations({
+    Schema.Number.pipe(Schema.check(Schema.isGreaterThanOrEqualTo(0))).annotate({
       description: MEMORY_RECALL_MIN_SCORE_DESCRIPTION,
     })
   ),
   sources: Schema.optional(
     Schema.mutable(Schema.Array(MemoryRecallSourceSchema))
       .pipe(Schema.minItems(1))
-      .annotations({ description: MEMORY_RECALL_SOURCES_DESCRIPTION })
+      .annotate({ description: MEMORY_RECALL_SOURCES_DESCRIPTION })
   ),
   schema: Schema.optional(
-    OntologySchemaNameSchema.annotations({ description: MEMORY_RECALL_SCHEMA_DESCRIPTION })
+    OntologySchemaNameSchema.annotate({ description: MEMORY_RECALL_SCHEMA_DESCRIPTION })
   ),
   filters: Schema.optional(
-    OntologyFiltersSchema.annotations({ description: MEMORY_RECALL_FILTERS_DESCRIPTION })
+    OntologyFiltersSchema.annotate({ description: MEMORY_RECALL_FILTERS_DESCRIPTION })
   ),
   confidenceMinimum: Schema.optional(
-    OntologyConfidenceSchema.annotations({
+    OntologyConfidenceSchema.annotate({
       description: MEMORY_RECALL_CONFIDENCE_MINIMUM_DESCRIPTION,
     })
   ),
@@ -270,20 +266,21 @@ const _recallAssignability: MemoryRecallInputDecoded extends MemoryRecallInput ?
   true;
 void _recallAssignability;
 
-function formatParseError(err: ParseResult.ParseError): Error {
-  return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
+function formatParseError(err: Schema.SchemaError): Error {
+  const formatted = SchemaIssue.makeFormatterStandardSchemaV1()(err.issue);
+  return new Error(JSON.stringify(formatted.issues));
 }
 
 /** Decode unknown MCP memory_ingest args into {@link MemoryIngestInputDecoded}. */
 export function decodeMemoryIngestInput(
   raw: unknown
 ): Effect.Effect<MemoryIngestInputDecoded, Error> {
-  return Schema.decodeUnknown(MemoryIngestInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(MemoryIngestInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }
 
 /** Decode unknown MCP memory_recall args into {@link MemoryRecallInputDecoded}. */
 export function decodeMemoryRecallInput(
   raw: unknown
 ): Effect.Effect<MemoryRecallInputDecoded, Error> {
-  return Schema.decodeUnknown(MemoryRecallInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(MemoryRecallInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }

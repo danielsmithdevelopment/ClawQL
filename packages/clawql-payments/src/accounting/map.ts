@@ -71,15 +71,12 @@ export class AccountingMapError extends Data.TaggedError("AccountingMapError")<{
 }> {}
 
 /** Effect surface over the chart-of-accounts / GL mapping (accounting-map.json overrides). */
-export class AccountingMapService extends Context.Tag("clawql/AccountingMapService")<
-  AccountingMapService,
-  {
+export class AccountingMapService extends Context.Service<AccountingMapService, {
     readonly load: () => Effect.Effect<AccountingMapFile, AccountingMapError>;
     readonly resolveGlCode: (
       category: AccountingCategory
     ) => Effect.Effect<string, AccountingMapError>;
-  }
->() {}
+  }>()("clawql/AccountingMapService") {}
 
 export function accountingMapLiveLayer(
   env: NodeJS.ProcessEnv = process.env

@@ -160,9 +160,7 @@ export type LearnedEntityRow = {
   promoted_to_layer1: number;
 };
 
-export class MetaOntologyStoreService extends Context.Tag("clawql/MetaOntologyStoreService")<
-  MetaOntologyStoreService,
-  {
+export class MetaOntologyStoreService extends Context.Service<MetaOntologyStoreService, {
     readonly updateFieldReliability: (obs: FieldObservation) => Effect.Effect<void, OntologyError>;
     readonly getFieldReliability: (
       entityId: string,
@@ -193,8 +191,7 @@ export class MetaOntologyStoreService extends Context.Tag("clawql/MetaOntologySt
       },
       OntologyError
     >;
-  }
->() {}
+  }>()("clawql/MetaOntologyStoreService") {}
 
 type StoreDeps = {
   dbPath: string;

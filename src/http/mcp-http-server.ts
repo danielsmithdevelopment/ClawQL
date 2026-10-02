@@ -272,7 +272,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
   const resolveEmaAdminClaims = (req: import("express").Request) =>
     resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
       Effect.map((claims) => claims),
-      Effect.catchAll(() => Effect.succeed(null as AtrClaims | null))
+      Effect.catch(() => Effect.succeed(null as AtrClaims | null))
     );
 
   const emaAdminAuth = {
@@ -361,7 +361,7 @@ export async function createMcpHttpApp(options: CreateMcpHttpAppOptions = {}): P
       const result = await Effect.runPromise(
         resolveAtrClaimsFromHeadersEffect(req.headers, gatewayAuthConfig).pipe(
           Effect.map((claims) => ({ ok: true, claims }) as const),
-          Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason } as const))
+          Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason } as const))
         )
       );
       if (!result.ok) {

@@ -9,9 +9,7 @@ import {
   type MerkleSnapshot,
 } from "../merkle-tree.js";
 
-export class MerkleService extends Context.Tag("clawql/MerkleService")<
-  MerkleService,
-  {
+export class MerkleService extends Context.Service<MerkleService, {
     readonly buildSnapshot: (rows: readonly MerkleDocumentRow[]) => Effect.Effect<MerkleSnapshot>;
     readonly leafHash: (path: string, bodySha256Hex: string) => Effect.Effect<Buffer>;
     readonly nodeHash: (left: Buffer, right: Buffer) => Effect.Effect<Buffer>;
@@ -24,8 +22,7 @@ export class MerkleService extends Context.Tag("clawql/MerkleService")<
       leafIndex: number,
       proof: readonly Buffer[]
     ) => Effect.Effect<boolean>;
-  }
->() {}
+  }>()("clawql/MerkleService") {}
 
 export const MerkleServiceLive = Layer.succeed(
   MerkleService,

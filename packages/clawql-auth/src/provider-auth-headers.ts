@@ -313,13 +313,10 @@ export const isGoogleDiscoverySpecLabelEffect = (label: string): Effect.Effect<b
   Effect.sync(() => isGoogleDiscoverySpecLabel(label));
 
 /** Effect service exposing provider upstream auth-header resolution for DI in execute hosts. */
-export class ProviderAuthHeadersService extends Context.Tag("clawql/ProviderAuthHeadersService")<
-  ProviderAuthHeadersService,
-  {
+export class ProviderAuthHeadersService extends Context.Service<ProviderAuthHeadersService, {
     readonly mergedAuthHeaders: (specLabel?: string) => Effect.Effect<Record<string, string>>;
     readonly isGoogleDiscoverySpecLabel: (label: string) => Effect.Effect<boolean>;
-  }
->() {}
+  }>()("clawql/ProviderAuthHeadersService") {}
 
 /** Live provider auth-headers service backed by `process.env`. */
 export const ProviderAuthHeadersServiceLive = Layer.succeed(

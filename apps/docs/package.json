@@ -35,7 +35,7 @@
     "acorn": "^8.15.0",
     "clawql-analytics": "file:../../packages/clawql-analytics",
     "clsx": "^2.1.1",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "fast-glob": "^3.3.3",
     "flexsearch": "^0.8.205",
     "framer-motion": "^12.23.11",

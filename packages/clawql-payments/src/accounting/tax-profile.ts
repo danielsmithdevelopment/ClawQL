@@ -94,15 +94,12 @@ export class TaxProfileError extends Data.TaggedError("TaxProfileError")<{
  * Port: payout / cash-out may require a collected tax profile when enforce is on.
  * Implementations must never return SSN/ITIN — only opaque readiness.
  */
-export class TaxProfileService extends Context.Tag("clawql/TaxProfileService")<
-  TaxProfileService,
-  {
+export class TaxProfileService extends Context.Service<TaxProfileService, {
     readonly get: (partyId: string) => Effect.Effect<TaxProfile | undefined, TaxProfileError>;
     readonly requireForPayout: (
       partyId: string
     ) => Effect.Effect<TaxProfile | undefined, TaxProfileError>;
-  }
->() {}
+  }>()("clawql/TaxProfileService") {}
 
 export function taxProfileLiveLayer(
   env: NodeJS.ProcessEnv = process.env

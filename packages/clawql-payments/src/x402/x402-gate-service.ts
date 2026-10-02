@@ -8,16 +8,13 @@ import { X402GateSchema, type X402Gate, type X402GateInput, type X402GatesFile }
 import type { X402Asset } from "./wallet.js";
 
 /** Effect service for x402 gate configuration (`x402-gates.json`). */
-export class X402GateService extends Context.Tag("clawql/X402GateService")<
-  X402GateService,
-  {
+export class X402GateService extends Context.Service<X402GateService, {
     readonly create: (
       input: X402GateInput
     ) => Effect.Effect<{ gate: X402Gate; path: string }, X402Error>;
     readonly list: () => Effect.Effect<X402Gate[], X402Error>;
     readonly findForResource: (resource: string) => Effect.Effect<X402Gate | undefined, X402Error>;
-  }
->() {}
+  }>()("clawql/X402GateService") {}
 
 function gateResource(input: X402GateInput): string {
   if (input.tool?.trim()) return `tool:${input.tool.trim()}`;

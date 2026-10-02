@@ -4,14 +4,11 @@ import { executeMemoryIngestEffect, type MemoryIngestServices } from "./memory-i
 import { MemoryError } from "./memory-errors.js";
 
 /** Effect service for vault memory ingest (`memory_ingest`). */
-export class MemoryIngestService extends Context.Tag("clawql/MemoryIngestService")<
-  MemoryIngestService,
-  {
+export class MemoryIngestService extends Context.Service<MemoryIngestService, {
     readonly ingest: (
       input: MemoryIngestInput
     ) => Effect.Effect<MemoryIngestResult, MemoryError, MemoryIngestServices>;
-  }
->() {}
+  }>()("clawql/MemoryIngestService") {}
 
 export function memoryIngestLiveLayer(): Layer.Layer<MemoryIngestService> {
   return Layer.succeed(

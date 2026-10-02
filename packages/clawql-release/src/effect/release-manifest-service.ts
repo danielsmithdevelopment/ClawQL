@@ -8,9 +8,7 @@ export class ReleaseManifestError extends Data.TaggedError("ReleaseManifestError
   readonly cause?: unknown;
 }> {}
 
-export class ReleaseManifestService extends Context.Tag("clawql/ReleaseManifestService")<
-  ReleaseManifestService,
-  {
+export class ReleaseManifestService extends Context.Service<ReleaseManifestService, {
     readonly collect: (
       options: CollectOptions
     ) => Effect.Effect<ReleaseManifestV01, ReleaseManifestError>;
@@ -19,8 +17,7 @@ export class ReleaseManifestService extends Context.Tag("clawql/ReleaseManifestS
       bundleDir?: string,
       options?: { workspaceRoot?: string }
     ) => Effect.Effect<VerifyResult, ReleaseManifestError>;
-  }
->() {}
+  }>()("clawql/ReleaseManifestService") {}
 
 const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
   Effect.tryPromise({

@@ -249,9 +249,7 @@ export const payHateoasEnvelope = (
   });
 
 /** Effect surface over the env-reading credits deep-link builders. */
-export class CreditsDeeplinkService extends Context.Tag("clawql/CreditsDeeplinkService")<
-  CreditsDeeplinkService,
-  {
+export class CreditsDeeplinkService extends Context.Service<CreditsDeeplinkService, {
     readonly creditsHateoasBase: Effect.Effect<string>;
     readonly isHttpCreditsHateoasBase: Effect.Effect<boolean>;
     readonly buildCreditsTransferApproveUrl: (
@@ -270,8 +268,7 @@ export class CreditsDeeplinkService extends Context.Tag("clawql/CreditsDeeplinkS
     readonly buildRequestDeepLink: (input: RequestDeepLink) => Effect.Effect<string>;
     readonly buildInviteDeepLink: (input: InviteDeepLink) => Effect.Effect<string>;
     readonly payHateoasEnvelope: (input: PayDeepLink) => Effect.Effect<HateoasEnvelope>;
-  }
->() {}
+  }>()("clawql/CreditsDeeplinkService") {}
 
 /** Live deep-link builders bound to a specific environment snapshot. */
 export const creditsDeeplinkLiveLayer = (

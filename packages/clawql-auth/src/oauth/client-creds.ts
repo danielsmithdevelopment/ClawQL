@@ -59,7 +59,7 @@ export class ClientCredentialsFlow {
         const detail = yield* Effect.tryPromise({
           try: () => response.text(),
           catch: () => undefined,
-        }).pipe(Effect.catchAll(() => Effect.succeed("")));
+        }).pipe(Effect.catch(() => Effect.succeed("")));
         return yield* Effect.fail(
           new OAuthFlowError({
             reason: `Client credentials token request failed: ${response.status}${detail ? ` ${detail.slice(0, 200)}` : ""}`,
@@ -105,16 +105,11 @@ export function createClientCredentialsFlow(fetchImpl?: typeof fetch): ClientCre
   return new ClientCredentialsFlow(fetchImpl);
 }
 
-export class ClientCredentialsFlowService extends Context.Tag(
-  "clawql/ClientCredentialsFlowService"
-)<
-  ClientCredentialsFlowService,
-  {
+export class ClientCredentialsFlowService extends Context.Service<ClientCredentialsFlowService, {
     readonly getToken: (
       config: ClientCredentialsConfig
     ) => Effect.Effect<StoredOAuthToken, OAuthFlowError>;
-  }
->() {}
+  }>()("clawql/ClientCredentialsFlowService") {}
 
 export function clientCredentialsFlowServiceFromFlow(
   flow: ClientCredentialsFlow

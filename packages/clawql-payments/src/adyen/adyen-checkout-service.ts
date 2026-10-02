@@ -73,9 +73,7 @@ export type ProcessAdyenWebhookResult = {
 };
 
 /** Effect service for Adyen Checkout sessions, payments, and webhooks. */
-export class AdyenCheckoutService extends Context.Tag("clawql/AdyenCheckoutService")<
-  AdyenCheckoutService,
-  {
+export class AdyenCheckoutService extends Context.Service<AdyenCheckoutService, {
     readonly createSession: (
       input: CreateAdyenSessionInput
     ) => Effect.Effect<AdyenSessionResult, AdyenError>;
@@ -85,8 +83,7 @@ export class AdyenCheckoutService extends Context.Tag("clawql/AdyenCheckoutServi
     readonly processWebhook: (
       input: ProcessAdyenWebhookInput
     ) => Effect.Effect<ProcessAdyenWebhookResult, AdyenError>;
-  }
->() {}
+  }>()("clawql/AdyenCheckoutService") {}
 
 function toMinorUnits(amountUsd: number, currency: string): number {
   const decimals = currency.toUpperCase() === "JPY" || currency.toUpperCase() === "KRW" ? 0 : 2;
@@ -197,7 +194,7 @@ export function adyenCheckoutLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return result;
         });
@@ -253,7 +250,7 @@ export function adyenCheckoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           } else {
             yield* audit
               .appendEntry(
@@ -264,7 +261,7 @@ export function adyenCheckoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
 
           return {
@@ -330,7 +327,7 @@ export function adyenCheckoutLiveLayer(
                       correlationId: input.correlationId,
                     })
                   )
-                  .pipe(Effect.catchAll(() => Effect.void));
+                  .pipe(Effect.catch(() => Effect.void));
               } else {
                 yield* audit
                   .appendEntry(
@@ -344,7 +341,7 @@ export function adyenCheckoutLiveLayer(
                       correlationId: input.correlationId,
                     })
                   )
-                  .pipe(Effect.catchAll(() => Effect.void));
+                  .pipe(Effect.catch(() => Effect.void));
               }
             }
 
@@ -358,7 +355,7 @@ export function adyenCheckoutLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
           }
 
           return { processed, skipped, events };

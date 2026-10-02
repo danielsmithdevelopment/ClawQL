@@ -32,7 +32,7 @@ export function startScheduleWorkerFiberEffect(
       }
       yield* Ref.set(busy, true);
       yield* automationFromPromise(() => tick()).pipe(
-        Effect.catchAllCause((cause) =>
+        Effect.catchCause((cause) =>
           Effect.sync(() => {
             const squashed = Cause.squash(cause);
             let msg: string;

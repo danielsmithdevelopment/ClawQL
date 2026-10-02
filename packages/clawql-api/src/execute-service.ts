@@ -8,12 +8,9 @@ export type ExecuteOutput = {
   readonly content: { readonly type: "text"; readonly text: string }[];
 };
 
-export class ExecuteService extends Context.Tag("clawql/ExecuteService")<
-  ExecuteService,
-  {
+export class ExecuteService extends Context.Service<ExecuteService, {
     readonly execute: (input: ExecuteInput) => Effect.Effect<ExecuteOutput, Error>;
-  }
->() {}
+  }>()("clawql/ExecuteService") {}
 
 export const executeNotConfigured = ExecuteService.of({
   execute: () =>

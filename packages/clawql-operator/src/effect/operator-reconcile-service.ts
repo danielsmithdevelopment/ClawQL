@@ -17,9 +17,7 @@ export class OperatorReconcileError extends Data.TaggedError("OperatorReconcileE
   readonly cause?: unknown;
 }> {}
 
-export class OperatorReconcileService extends Context.Tag("clawql/OperatorReconcileService")<
-  OperatorReconcileService,
-  {
+export class OperatorReconcileService extends Context.Service<OperatorReconcileService, {
     readonly reconcileInstance: (
       instance: ClawQLInstanceObject,
       core: ReconcileCoreV1
@@ -33,8 +31,7 @@ export class OperatorReconcileService extends Context.Tag("clawql/OperatorReconc
     readonly serializeTierSpecConfigMap: (
       data: TierSpecConfigMapData
     ) => Effect.Effect<Record<string, string>, OperatorReconcileError>;
-  }
->() {}
+  }>()("clawql/OperatorReconcileService") {}
 
 const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
   Effect.tryPromise({

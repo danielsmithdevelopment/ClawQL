@@ -79,11 +79,11 @@ export const joinMesh = (
           "tailscale",
           ["up", "--login-server", options.loginServerUrl, "--authkey", authKey],
           { timeoutMs: 120_000 }
-        ).pipe(Effect.catchAll(() => Effect.succeed(undefined)));
+        ).pipe(Effect.catch(() => Effect.succeed(undefined)));
       }
       const status = yield* spawnCollect("tailscale", ["status", "--json"], {
         timeoutMs: 15_000,
-      }).pipe(Effect.catchAll(() => Effect.succeed({ stdout: "{}", stderr: "", exitCode: 0 })));
+      }).pipe(Effect.catch(() => Effect.succeed({ stdout: "{}", stderr: "", exitCode: 0 })));
       identity = parseTailscaleStatus(status.stdout, namespace);
     }
 
@@ -92,7 +92,7 @@ export const joinMesh = (
       if (headscaleCli) {
         const nodes = yield* spawnCollect("headscale", ["nodes", "list", "--output", "json"], {
           timeoutMs: 30_000,
-        }).pipe(Effect.catchAll(() => Effect.succeed({ stdout: "[]", stderr: "", exitCode: 0 })));
+        }).pipe(Effect.catch(() => Effect.succeed({ stdout: "[]", stderr: "", exitCode: 0 })));
         const list = JSON.parse(nodes.stdout || "[]") as Array<{
           id?: string;
           name?: string;
@@ -136,7 +136,7 @@ export const joinMesh = (
         });
       }).pipe(
         Effect.provide(gatewayRegistryLiveLayer(options.home)),
-        Effect.catchAll(() => Effect.void)
+        Effect.catch(() => Effect.void)
       );
     }
 

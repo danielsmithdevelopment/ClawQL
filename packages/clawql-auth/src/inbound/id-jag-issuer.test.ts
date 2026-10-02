@@ -103,10 +103,10 @@ describe("ID-JAG issuer + connector registry", () => {
           groups: ["engineering"],
         },
         deps
-      ).pipe(Effect.either)
+      ).pipe(Effect.result)
     );
     expect(disabled._tag).toBe("Left");
-    if (disabled._tag === "Left") {
+    if (disabled._tag === "Failure") {
       expect(disabled.left.reason).toBe("connector_disabled");
     }
 
@@ -119,10 +119,10 @@ describe("ID-JAG issuer + connector registry", () => {
           groups: ["engineering"],
         },
         deps
-      ).pipe(Effect.either)
+      ).pipe(Effect.result)
     );
     expect(missing._tag).toBe("Left");
-    if (missing._tag === "Left") {
+    if (missing._tag === "Failure") {
       expect(missing.left).toBeInstanceOf(IdJagIssuerError);
       expect(missing.left.reason).toBe("unknown_connector");
     }

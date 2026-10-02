@@ -38,17 +38,14 @@ export class ProvisionOrgError extends Data.TaggedError("ProvisionOrgError")<{
   readonly cause?: unknown;
 }> {}
 
-export class ProvisionOrgService extends Context.Tag("clawql/ProvisionOrgService")<
-  ProvisionOrgService,
-  {
+export class ProvisionOrgService extends Context.Service<ProvisionOrgService, {
     readonly provisionOrg: (
       input: ProvisionOrgInput
     ) => Effect.Effect<
       ProvisionOrgResult,
       ProvisionOrgError | PaymentError | ApiKeyStoreError | LedgerError
     >;
-  }
->() {}
+  }>()("clawql/ProvisionOrgService") {}
 
 function parseProvisionInput(input: ProvisionOrgInput): Effect.Effect<
   {

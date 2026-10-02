@@ -105,7 +105,7 @@
     "clawql-documents": "0.1.0",
     "clawql-mcp-events": "0.1.0",
     "clawql-memory": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "nats": "^2.29.3",
     "sql.js": "^1.14.1",
     "zod": "4.3.6"

@@ -203,9 +203,7 @@ type CreditAgentAccountInput = Parameters<typeof creditAgentAccount>[0];
 type DebitAgentAccountInput = Parameters<typeof debitAgentAccount>[0];
 
 /** Effect surface over the agent compensation accounts ledger (credits + funds held for cash-out). */
-export class CompensationAccountsService extends Context.Tag("clawql/CompensationAccountsService")<
-  CompensationAccountsService,
-  {
+export class CompensationAccountsService extends Context.Service<CompensationAccountsService, {
     readonly get: (
       agentId: string
     ) => Effect.Effect<AgentAccount | undefined, CompensationAccountsError>;
@@ -225,8 +223,7 @@ export class CompensationAccountsService extends Context.Tag("clawql/Compensatio
     readonly debit: (
       input: DebitAgentAccountInput
     ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
-  }
->() {}
+  }>()("clawql/CompensationAccountsService") {}
 
 export function compensationAccountsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

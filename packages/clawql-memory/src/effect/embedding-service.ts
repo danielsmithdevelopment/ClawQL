@@ -15,9 +15,7 @@ import { MemoryError } from "./memory-errors.js";
 import { memoryFromPromise } from "./memory-effect-utils.js";
 
 /** Effect service for embedding API and vector ranking helpers. */
-export class EmbeddingService extends Context.Tag("clawql/EmbeddingService")<
-  EmbeddingService,
-  {
+export class EmbeddingService extends Context.Service<EmbeddingService, {
     readonly resolveEmbeddingConfig: () => EmbeddingConfig | null;
     readonly vectorBackend: () => VectorBackend;
     readonly effectiveVectorBackend: () => VectorBackend;
@@ -35,8 +33,7 @@ export class EmbeddingService extends Context.Tag("clawql/EmbeddingService")<
       chunks: ChunkWithEmbedding[],
       opts?: { topChunks?: number; maxDocs?: number }
     ) => { path: string; score: number; chunkId: string }[];
-  }
->() {}
+  }>()("clawql/EmbeddingService") {}
 
 export const EmbeddingLive = Layer.succeed(
   EmbeddingService,

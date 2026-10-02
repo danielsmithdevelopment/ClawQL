@@ -35,7 +35,7 @@ function emitPanguardDenyTelemetryEffect(toolName: string, reason: string): Effe
   return Effect.gen(function* () {
     const lokiPushUrl = yield* resolvePanguardTelemetryLokiUrlEffect();
     yield* emitPanguardTelemetryEffect({ toolName, verdict: "deny", reason }, { lokiPushUrl });
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 function argKeysFromToolArgs(args: unknown): string[] {
@@ -74,7 +74,7 @@ function appendMcpToolAttemptEffect(toolName: string, args: unknown): Effect.Eff
       source: "mcp",
     });
     yield* appendProcessWormEffect(input);
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 function appendMcpToolResultEffect(
@@ -93,7 +93,7 @@ function appendMcpToolResultEffect(
       source: "mcp",
     });
     yield* appendProcessWormEffect(input);
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));
 }
 
 /**

@@ -36,12 +36,9 @@ export type AggregateTopologyInput = {
   readonly mcpUiTraceBase: string;
 };
 
-export class TopologyService extends Context.Tag("clawql-payments/TopologyService")<
-  TopologyService,
-  {
+export class TopologyService extends Context.Service<TopologyService, {
     readonly aggregate: (input: AggregateTopologyInput) => Effect.Effect<TopologyTree>;
-  }
->() {}
+  }>()("clawql-payments/TopologyService") {}
 
 /**
  * Per-agent / per-cell mcp-ui deep-link (#1082 option 1).
@@ -147,7 +144,7 @@ export const loadCelldCells = (env: NodeJS.ProcessEnv): Effect.Effect<CelldLoadR
       }
     },
     catch: (): CelldLoadResult => ({ cells: [], unavailable: true }),
-  }).pipe(Effect.catchAll(() => Effect.succeed({ cells: [], unavailable: true })));
+  }).pipe(Effect.catch(() => Effect.succeed({ cells: [], unavailable: true })));
 
 export const aggregateTopologyFromRegistries = (
   input: AggregateTopologyInput,

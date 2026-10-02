@@ -31,17 +31,14 @@ export type NodeClaimInformerHandle = {
   readonly source: "kubernetes-watch-nodeclaim";
 };
 
-export class NodeClaimInformerService extends Context.Tag("clawql/NodeClaimInformerService")<
-  NodeClaimInformerService,
-  {
+export class NodeClaimInformerService extends Context.Service<NodeClaimInformerService, {
     readonly start: (
       options: NodeClaimInformerOptions
     ) => Effect.Effect<
       NodeClaimInformerHandle,
       { readonly _tag: "NodeClaimInformerUnavailable"; readonly reason: string }
     >;
-  }
->() {}
+  }>()("clawql/NodeClaimInformerService") {}
 
 /** Map a raw NodeClaim-shaped object to our lifecycle record. */
 export function nodeClaimToLifecycleRecord(
@@ -89,7 +86,7 @@ export function nodeClaimToLifecycleRecord(
   };
 }
 
-export function makeKubernetesNodeClaimInformer(): Context.Tag.Service<
+export function makeKubernetesNodeClaimInformer(): Context.Service.Shape<
   typeof NodeClaimInformerService
 > {
   return {
@@ -171,8 +168,8 @@ export const UnavailableNodeClaimInformerLive: Layer.Layer<NodeClaimInformerServ
  * Start NodeClaim informer if possible; on failure return null (no invented events).
  */
 export function startNodeClaimInformerOrNull(
-  informer: Context.Tag.Service<typeof NodeClaimInformerService>,
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  informer: Context.Service.Shape<typeof NodeClaimInformerService>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   options?: Omit<NodeClaimInformerOptions, "onEvent">
 ): Effect.Effect<NodeClaimInformerHandle | null> {
   return informer
@@ -180,5 +177,5 @@ export function startNodeClaimInformerOrNull(
       ...options,
       onEvent: (event) => stub.enqueue(event),
     })
-    .pipe(Effect.catchAll(() => Effect.succeed(null)));
+    .pipe(Effect.catch(() => Effect.succeed(null)));
 }

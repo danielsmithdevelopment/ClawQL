@@ -12,9 +12,7 @@ export class GrpcMcpTransportError extends Data.TaggedError("GrpcMcpTransportErr
   readonly cause?: unknown;
 }> {}
 
-export class GrpcMcpTransportService extends Context.Tag("clawql/GrpcMcpTransportService")<
-  GrpcMcpTransportService,
-  {
+export class GrpcMcpTransportService extends Context.Service<GrpcMcpTransportService, {
     readonly maybeStartServer: (
       options: GrpcMcpServerOptions
     ) => Effect.Effect<Awaited<ReturnType<typeof maybeStartGrpcMcpServer>>, GrpcMcpTransportError>;
@@ -27,8 +25,7 @@ export class GrpcMcpTransportService extends Context.Tag("clawql/GrpcMcpTranspor
     readonly listTools: (
       options: ListToolsGrpcClientOptions
     ) => Effect.Effect<Awaited<ReturnType<typeof listToolsUnaryGrpc>>, GrpcMcpTransportError>;
-  }
->() {}
+  }>()("clawql/GrpcMcpTransportService") {}
 
 const fromPromise = <A>(reason: string, task: () => Promise<A>) =>
   Effect.tryPromise({

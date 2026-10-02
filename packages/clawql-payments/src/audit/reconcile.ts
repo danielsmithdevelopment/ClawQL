@@ -89,11 +89,7 @@ export class PaymentAuditReconcileError extends Data.TaggedError("PaymentAuditRe
 }> {}
 
 /** Effect surface over payment audit reconciliation (spend rollups + correlation lookups). */
-export class PaymentAuditReconcileService extends Context.Tag(
-  "clawql/PaymentAuditReconcileService"
-)<
-  PaymentAuditReconcileService,
-  {
+export class PaymentAuditReconcileService extends Context.Service<PaymentAuditReconcileService, {
     readonly spendReport: (
       groupBy?: SpendGroupBy,
       limit?: number
@@ -102,8 +98,7 @@ export class PaymentAuditReconcileService extends Context.Tag(
       correlationId: string,
       limit?: number
     ) => Effect.Effect<PaymentWormEntry[], PaymentAuditReconcileError>;
-  }
->() {}
+  }>()("clawql/PaymentAuditReconcileService") {}
 
 export function paymentAuditReconcileLiveLayer(): Layer.Layer<PaymentAuditReconcileService> {
   const run = <A>(reason: string, task: () => Promise<A>) =>

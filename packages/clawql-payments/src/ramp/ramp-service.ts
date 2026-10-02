@@ -62,9 +62,7 @@ export type RampCardResult = {
 };
 
 /** Effect service for Ramp funds + virtual/agent cards. */
-export class RampService extends Context.Tag("clawql/RampService")<
-  RampService,
-  {
+export class RampService extends Context.Service<RampService, {
     readonly createFund: (input: {
       displayName: string;
       limitUsd: number;
@@ -103,8 +101,7 @@ export class RampService extends Context.Tag("clawql/RampService")<
     readonly readAgenticCard: (input: {
       cardId: string;
     }) => Effect.Effect<Record<string, unknown>, RampError>;
-  }
->() {}
+  }>()("clawql/RampService") {}
 
 type TokenCache = { token: string; expiresAt: number };
 
@@ -248,7 +245,7 @@ export function rampLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id,
               displayName,
@@ -310,7 +307,7 @@ export function rampLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return {
             id,
             displayName,
@@ -354,7 +351,7 @@ export function rampLiveLayer(
                   correlationId: input.correlationId,
                   agentId: input.agentId,
                 });
-            yield* audit.appendEntry(entry).pipe(Effect.catchAll(() => Effect.void));
+            yield* audit.appendEntry(entry).pipe(Effect.catch(() => Effect.void));
             return {
               id,
               fundId: `fund_dry_${id}`,
@@ -428,7 +425,7 @@ export function rampLiveLayer(
                 correlationId: input.correlationId,
                 agentId: input.agentId,
               });
-          yield* audit.appendEntry(entry).pipe(Effect.catchAll(() => Effect.void));
+          yield* audit.appendEntry(entry).pipe(Effect.catch(() => Effect.void));
 
           return {
             id: parsed.id,
@@ -475,7 +472,7 @@ export function rampLiveLayer(
                   agentId: input.agentId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             return {
               id,
               fundId: input.fundId ?? `fund_dry_${id}`,
@@ -576,7 +573,7 @@ export function rampLiveLayer(
                 agentId: input.agentId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
 
           return {
             id: cardId,

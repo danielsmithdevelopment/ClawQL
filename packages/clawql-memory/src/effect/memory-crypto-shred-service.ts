@@ -18,9 +18,7 @@ import {
 } from "../crypto/shred.js";
 import { MemoryError } from "./memory-errors.js";
 
-export class MemoryCryptoShredService extends Context.Tag("clawql/MemoryCryptoShredService")<
-  MemoryCryptoShredService,
-  {
+export class MemoryCryptoShredService extends Context.Service<MemoryCryptoShredService, {
     readonly enabled: (env?: NodeJS.ProcessEnv) => Effect.Effect<boolean>;
     readonly encryptForWrite: (
       vaultRoot: string,
@@ -51,8 +49,7 @@ export class MemoryCryptoShredService extends Context.Tag("clawql/MemoryCryptoSh
       entry: Omit<ErasureDenyEntry, "erasedAt"> & { erasedAt?: string }
     ) => Effect.Effect<void, MemoryError>;
     readonly loadDenyHashes: (vaultRoot: string) => Effect.Effect<ReadonlySet<string>, MemoryError>;
-  }
->() {}
+  }>()("clawql/MemoryCryptoShredService") {}
 
 function fromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, MemoryError> {
   return Effect.tryPromise({
@@ -65,7 +62,7 @@ function fromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, MemoryError> 
   });
 }
 
-export function memoryCryptoShredLiveService(): Context.Tag.Service<MemoryCryptoShredService> {
+export function memoryCryptoShredLiveService(): Context.Service.Shape<MemoryCryptoShredService> {
   return {
     enabled: (env) => Effect.sync(() => memoryCryptoShredEnabled(env)),
     encryptForWrite: (vaultRoot, relativePath, plaintext, opts) =>

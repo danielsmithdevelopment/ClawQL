@@ -26,13 +26,10 @@ export type AgentSubstrateWormRecord = {
   readonly metadata?: Record<string, unknown>;
 };
 
-export class AgentSubstrateWormSink extends Context.Tag("clawql/AgentSubstrateWormSink")<
-  AgentSubstrateWormSink,
-  {
+export class AgentSubstrateWormSink extends Context.Service<AgentSubstrateWormSink, {
     readonly append: (record: AgentSubstrateWormRecord) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<readonly AgentSubstrateWormRecord[]>;
-  }
->() {}
+  }>()("clawql/AgentSubstrateWormSink") {}
 
 export const InMemoryAgentSubstrateWormSinkLive: Layer.Layer<AgentSubstrateWormSink> = Layer.effect(
   AgentSubstrateWormSink,

@@ -66,7 +66,7 @@ describe("execute-batch registry + runner", () => {
     const worm = wormTestLayer();
     const layer = Layer.mergeAll(createMemoryExecuteBatchRegistryLayer(), worm.layer);
     const either = await Effect.runPromise(
-      Effect.either(
+      Effect.result(
         runNamedExecuteBatch({
           batchName: "missing",
           args: { tenantId: "t", agentId: "a", sessionId: "s" },

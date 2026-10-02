@@ -361,7 +361,7 @@ describe("WebMcpDraftPlugin (ProviderPlugin)", () => {
           name: "ghost",
           description: "x",
           inputSchema: { type: "object", properties: {} },
-        }).pipe(Effect.either);
+        }).pipe(Effect.result);
         expect(blocked._tag).toBe("Left");
       })
     );

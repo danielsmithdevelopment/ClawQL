@@ -31,7 +31,7 @@ export function seedsPollTickEffect(
     const pending = yield* fetchPending.pipe(Effect.orDie);
     for (const seed of pending) {
       yield* run(seed).pipe(
-        Effect.catchAllCause((cause) =>
+        Effect.catchCause((cause) =>
           Effect.gen(function* () {
             const err = asUnknownError(cause);
             yield* markFailed(seed.metadata.seed_id, err).pipe(Effect.orDie);

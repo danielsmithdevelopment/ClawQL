@@ -1,7 +1,7 @@
 {
   "name": "clawql-ontology",
   "version": "0.1.0",
-  "description": "ClawQL enterprise Ontology \u2014 lint/generate entity schemas, fixture MCP tools, packs (ADR 0009)",
+  "description": "ClawQL enterprise Ontology — lint/generate entity schemas, fixture MCP tools, packs (ADR 0009)",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -35,7 +35,7 @@
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-memory": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "sql.js": "^1.14.2",
     "yaml": "^2.9.0",
     "zod": "4.3.6"

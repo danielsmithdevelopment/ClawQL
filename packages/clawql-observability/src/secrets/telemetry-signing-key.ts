@@ -17,12 +17,9 @@ export type TelemetrySigningKeyMaterial = {
   readonly locator: string;
 };
 
-export class TelemetrySigningKeyService extends Context.Tag("clawql/TelemetrySigningKeyService")<
-  TelemetrySigningKeyService,
-  {
+export class TelemetrySigningKeyService extends Context.Service<TelemetrySigningKeyService, {
     readonly resolve: () => Effect.Effect<TelemetrySigningKeyMaterial, ObservabilityError>;
-  }
->() {}
+  }>()("clawql/TelemetrySigningKeyService") {}
 
 export type VaultKvSigningKeyConfig = {
   readonly endpoint: string;

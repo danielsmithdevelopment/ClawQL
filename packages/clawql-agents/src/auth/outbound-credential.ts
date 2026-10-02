@@ -54,10 +54,10 @@ export const getOutboundCredential = (
 
     if (method === "oauth_code" || method === "oauth_client_credentials") {
       const key = `${input.tenantId}:${input.provider}:${input.subject}`;
-      const result = yield* input.tokenStore.getValidToken(key).pipe(Effect.either);
+      const result = yield* input.tokenStore.getValidToken(key).pipe(Effect.result);
 
-      if (result._tag === "Left") {
-        const err = result.left;
+      if (result._tag === "Failure") {
+        const err = result.failure;
         if (
           err instanceof ReauthRequiredError ||
           (err as { _tag?: string })?._tag === "ReauthRequiredError"
@@ -83,10 +83,10 @@ export const getOutboundCredential = (
     if (method === "api_key") {
       const apiKeyResult = yield* input.apiKeys
         .getKey(input.provider, input.sessionId ?? input.subject)
-        .pipe(Effect.either);
+        .pipe(Effect.result);
 
-      if (apiKeyResult._tag === "Left") {
-        const err = apiKeyResult.left;
+      if (apiKeyResult._tag === "Failure") {
+        const err = apiKeyResult.failure;
         if (err instanceof OutboundApiKeyError) {
           return yield* Effect.fail(err);
         }

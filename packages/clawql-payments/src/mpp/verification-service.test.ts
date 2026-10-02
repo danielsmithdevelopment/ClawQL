@@ -98,13 +98,13 @@ describe("MppVerificationService", () => {
             headers: { authorization: `Payment ${token}` },
             env,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       }).pipe(Effect.provide(verification))
     );
 
     expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left).toMatchObject({
+    if (result._tag === "Failure") {
+      expect(result.failure).toMatchObject({
         _tag: "MppVerificationError",
         reason: "unknown or expired MPP challenge id",
         code: MPP_MCP_VERIFICATION_FAILED_CODE,

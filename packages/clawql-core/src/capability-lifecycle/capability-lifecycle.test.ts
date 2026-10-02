@@ -174,7 +174,7 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
             },
             "sess-1"
           )
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       }).pipe(Effect.provide(layer))
     );
     expect(result._tag).toBe("Left");
@@ -286,7 +286,7 @@ describe("session catalog rebind (§3.5.2)", () => {
             newAtrScope: ["a", "extra"],
             authorizedBy: "operator",
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       }).pipe(Effect.provide(layer))
     );
     expect(result._tag).toBe("Left");

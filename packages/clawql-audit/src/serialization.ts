@@ -123,9 +123,7 @@ export const deserializeWormEntry = (
 export const sha256HexBytes = (input: Uint8Array): Effect.Effect<string> =>
   Effect.sync(() => createHash("sha256").update(input).digest("hex"));
 
-export class WormSerialization extends Context.Tag("clawql-audit/WormSerialization")<
-  WormSerialization,
-  {
+export class WormSerialization extends Context.Service<WormSerialization, {
     readonly metadata: ChainMetadata;
     readonly formatAt: (chainIndex: number) => WormSerializationVersion;
     readonly serialize: (
@@ -140,8 +138,7 @@ export class WormSerialization extends Context.Tag("clawql-audit/WormSerializati
       entry: WORMEntryPayload,
       version: WormSerializationVersion
     ) => Effect.Effect<string>;
-  }
->() {}
+  }>()("clawql-audit/WormSerialization") {}
 
 export const makeWormSerializationLayer = (
   metadata: ChainMetadata

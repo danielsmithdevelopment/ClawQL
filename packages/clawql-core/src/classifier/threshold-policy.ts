@@ -19,11 +19,7 @@ export type FastDecisionThresholdPolicy = {
   readonly rationale: string;
 };
 
-export class FastDecisionThresholdPolicyService extends Context.Tag(
-  "clawql/FastDecisionThresholdPolicyService"
-)<
-  FastDecisionThresholdPolicyService,
-  {
+export class FastDecisionThresholdPolicyService extends Context.Service<FastDecisionThresholdPolicyService, {
     readonly get: (useSiteId: string) => Effect.Effect<FastDecisionThresholdPolicy | undefined>;
     readonly set: (policy: FastDecisionThresholdPolicy) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<readonly FastDecisionThresholdPolicy[]>;
@@ -39,8 +35,7 @@ export class FastDecisionThresholdPolicyService extends Context.Tag(
       readonly costlyErrorDirection: CostlyErrorDirection;
       readonly hardFallbackRequired: boolean;
     }>;
-  }
->() {}
+  }>()("clawql/FastDecisionThresholdPolicyService") {}
 
 /** §9 illustrative defaults — callers may override per deployment. */
 export const DEFAULT_THRESHOLD_POLICIES: readonly FastDecisionThresholdPolicy[] = [

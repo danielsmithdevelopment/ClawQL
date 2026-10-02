@@ -53,9 +53,7 @@ export type DeductionReleaseResult = {
 };
 
 /** Sync counter decisions + durable ledger; events are post-commit only. */
-export class DeductionService extends Context.Tag("clawql/DeductionService")<
-  DeductionService,
-  {
+export class DeductionService extends Context.Service<DeductionService, {
     readonly getSpendableBalance: (
       tenantId: string
     ) => Effect.Effect<CreditAccount, DeductionError>;
@@ -89,8 +87,7 @@ export class DeductionService extends Context.Tag("clawql/DeductionService")<
       correlationId?: string;
       note?: string;
     }) => Effect.Effect<CreditLedgerEntry, DeductionError>;
-  }
->() {}
+  }>()("clawql/DeductionService") {}
 
 function mapLedgerError(error: LedgerError): DeductionError {
   return new DeductionError({ reason: error.reason, cause: error.cause });
@@ -149,7 +146,7 @@ export function deductionLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* bus.publish(
               yield* buildDeductionEvent(
                 "credits.held",
@@ -190,7 +187,7 @@ export function deductionLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* bus.publish(
               yield* buildDeductionEvent(
                 "credits.captured",
@@ -229,7 +226,7 @@ export function deductionLiveLayer(
                   correlationId: input.correlationId,
                 })
               )
-              .pipe(Effect.catchAll(() => Effect.void));
+              .pipe(Effect.catch(() => Effect.void));
             yield* bus.publish(
               yield* buildDeductionEvent(
                 "credits.released",
@@ -300,7 +297,7 @@ export function deductionLiveLayer(
                 correlationId: input.correlationId,
               })
             )
-            .pipe(Effect.catchAll(() => Effect.void));
+            .pipe(Effect.catch(() => Effect.void));
           return captured.entry;
         });
 

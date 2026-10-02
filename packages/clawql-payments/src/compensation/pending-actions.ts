@@ -271,9 +271,7 @@ type ListPendingActionsFilter = NonNullable<Parameters<typeof listPendingActions
 type FindRecruitDepositInput = Parameters<typeof findRecruitDepositByKey>[0];
 
 /** Effect surface over the file-backed PENDING_ACTIONS two-phase-commit staging store. */
-export class PendingActionsService extends Context.Tag("clawql/PendingActionsService")<
-  PendingActionsService,
-  {
+export class PendingActionsService extends Context.Service<PendingActionsService, {
     readonly stage: (
       input: StagePendingActionInput
     ) => Effect.Effect<PendingActionRecord, PendingActionsError>;
@@ -292,8 +290,7 @@ export class PendingActionsService extends Context.Tag("clawql/PendingActionsSer
       input: FindRecruitDepositInput
     ) => Effect.Effect<PendingActionRecord | undefined, PendingActionsError>;
     readonly delete: (actionId: string) => Effect.Effect<void, PendingActionsError>;
-  }
->() {}
+  }>()("clawql/PendingActionsService") {}
 
 export function pendingActionsLiveLayer(
   env: NodeJS.ProcessEnv = process.env
