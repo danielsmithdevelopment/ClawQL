@@ -38,7 +38,6 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_WORKFLOW: z.string().optional(),
   /** ([#244](https://github.com/danielsmithdevelopment/ClawQL/issues/244)): Argo CD `argocd` MCP tool. Default false. */
   CLAWQL_ENABLE_ARGO_CD: z.string().optional(),
-  CLAWQL_ENABLE_VISION: z.string().optional(),
   CLAWQL_ENABLE_ONYX: z.string().optional(),
   CLAWQL_ENABLE_SANDBOX: z.string().optional(),
   /**
@@ -155,10 +154,6 @@ export type ClawqlOptionalToolFlags = {
    */
   enableArgoCd: boolean;
   /**
-   * Planned (#78): `vision` / `multimodal` tool. Default false until implemented.
-   */
-  enableVision: boolean;
-  /**
    * ([#118](https://github.com/danielsmithdevelopment/ClawQL/issues/118)): `knowledge_search_onyx` — wrapper over bundled Onyx search. Default false.
    */
   enableOnyxKnowledge: boolean;
@@ -267,7 +262,6 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableNotify: envTruthy(raw.CLAWQL_ENABLE_NOTIFY),
     enableWorkflow: envTruthy(raw.CLAWQL_ENABLE_WORKFLOW),
     enableArgoCd: envTruthy(raw.CLAWQL_ENABLE_ARGO_CD),
-    enableVision: envTruthy(raw.CLAWQL_ENABLE_VISION),
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
@@ -326,7 +320,6 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableNotify: false,
     enableWorkflow: false,
     enableArgoCd: false,
-    enableVision: false,
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,

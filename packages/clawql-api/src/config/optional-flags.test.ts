@@ -13,7 +13,6 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_SCHEDULE: undefined,
       CLAWQL_ENABLE_NOTIFY: undefined,
       CLAWQL_ENABLE_WORKFLOW: undefined,
-      CLAWQL_ENABLE_VISION: undefined,
       CLAWQL_ENABLE_ONYX: undefined,
       CLAWQL_ENABLE_SANDBOX: undefined,
       CLAWQL_ENABLE_DATA: undefined,
@@ -35,7 +34,6 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableSchedule).toBe(false);
     expect(f.enableNotify).toBe(false);
     expect(f.enableWorkflow).toBe(false);
-    expect(f.enableVision).toBe(false);
     expect(f.enableOnyxKnowledge).toBe(false);
     expect(f.enableSandbox).toBe(false);
     expect(f.enableData).toBe(false);
@@ -89,7 +87,6 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_SCHEDULE: "yes",
       CLAWQL_ENABLE_NOTIFY: "TRUE",
       CLAWQL_ENABLE_WORKFLOW: "1",
-      CLAWQL_ENABLE_VISION: "0",
       CLAWQL_ENABLE_ONYX: "1",
       CLAWQL_ENABLE_SANDBOX: "1",
       CLAWQL_ENABLE_DATA: "1",
@@ -107,7 +104,6 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableSchedule).toBe(true);
     expect(f.enableNotify).toBe(true);
     expect(f.enableWorkflow).toBe(true);
-    expect(f.enableVision).toBe(false);
     expect(f.enableOnyxKnowledge).toBe(true);
     expect(f.enableSandbox).toBe(true);
     expect(f.enableData).toBe(true);

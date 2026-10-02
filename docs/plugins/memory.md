@@ -68,7 +68,7 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 
 | Source       | What it contributes                                                 |
 | ------------ | ------------------------------------------------------------------- |
-| **`vault`**  | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF or BM25) |
+| **`vault`**  | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF) |
 | **`vector`** | Embedding KNN seeds (when vector backend + API key configured)      |
 | **`onyx`**   | Enterprise citations via injected Onyx search                       |
 
@@ -80,14 +80,13 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 - **`hits`** — normalized multi-source hits (`source`, `id`, `score`, `snippet`, …)
 - **`followUps`** — specialist tool hints (`knowledge_search_onyx`, …)
 - **`sourcesUsed` / `sourceNotes`** — what ran and skip reasons
-- **`vaultRanker`** — `idf` (default) or `bm25` when vault was queried
+- **`vaultRanker`** — always `idf` when vault was queried (`bm25` removed in 8.0.0 — purge, wash vs IDF)
 
 ## Vault lexical ranker
 
-| Env                                   | Default | Effect                                                                                                                    |
-| ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **`CLAWQL_MEMORY_VAULT_RANKER=idf`**  | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801))                                   |
-| **`CLAWQL_MEMORY_VAULT_RANKER=bm25`** | —       | Okapi BM25 (length-normalized). Candidate default via [`pageindex-ab`](../benchmarks/pageindex-ab-eval-spec-v0.1.md) v0.2 |
+| Env                                   | Default | Effect                                                                                                                                              |
+| ------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`CLAWQL_MEMORY_VAULT_RANKER=idf`**  | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)); only mode — `bm25` removed in 8.0.0 (wash vs IDF, see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)) |
 
 ## `memory_ingest` rebuild
 
@@ -111,7 +110,7 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 | ---------------------------------------- | ------- | ------------------------------------------------------------ |
 | **`CLAWQL_ENABLE_MEMORY=0`**             | on      | Omit `MemoryPlugin` and hide memory tools                    |
 | **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`** | off     | Default `sources` includes onyx (needs Onyx wired + enabled) |
-| **`CLAWQL_MEMORY_VAULT_RANKER`**         | `idf`   | Vault lexical ranker: `idf` or `bm25`                        |
+| **`CLAWQL_MEMORY_VAULT_RANKER`**         | `idf`   | Vault lexical ranker — `idf` is the only mode (`bm25` removed in 8.0.0) |
 
 ## Prerequisites
 

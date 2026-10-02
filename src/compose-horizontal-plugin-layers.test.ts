@@ -35,7 +35,6 @@ const baseFlags = {
   enableGrpc: false,
   enableGrpcReflection: false,
   externalIngestPreview: false,
-  enableVision: false,
   enableConeshare: false,
   enableOntology: false,
   enableOntologyWrites: false,

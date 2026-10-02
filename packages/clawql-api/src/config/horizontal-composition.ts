@@ -177,7 +177,6 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableNotify: false,
     enableWorkflow: false,
     enableArgoCd: false,
-    enableVision: false,
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,
