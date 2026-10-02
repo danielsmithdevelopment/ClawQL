@@ -2,6 +2,9 @@
  * Optional Cuckoo + Merkle artifacts beside `vault_document` / `vault_chunk` (issues #25 / #37).
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import type { Database } from "sql.js";
 import {
   buildMerkleSnapshot,
@@ -96,10 +99,11 @@ export function rebuildSqliteMemoryArtifacts(db: Database): MemoryArtifactPayloa
   return { cuckooBlob, merkle };
 }
 
-export async function syncMemoryArtifactsToPostgres(
+export function syncMemoryArtifactsToPostgresEffect(
   cuckooBlob: Uint8Array | null,
   merkle: { rootHex: string; leafCount: number; treeHeight: number } | null
-): Promise<void> {
+): Effect.Effect<void, MemoryError> {
+  return memoryFromPromise(async () => {
   const pool = getPostgresVectorPool();
   if (!pool) return;
   if (!cuckooBlob && !merkle) return;
@@ -130,4 +134,13 @@ export async function syncMemoryArtifactsToPostgres(
   } finally {
     client.release();
   }
+  });
+}
+
+/** Promise façade. */
+export async function syncMemoryArtifactsToPostgres(
+  cuckooBlob: Uint8Array | null,
+  merkle: { rootHex: string; leafCount: number; treeHeight: number } | null
+): Promise<void> {
+  return Effect.runPromise(syncMemoryArtifactsToPostgresEffect(cuckooBlob, merkle));
 }

@@ -1,6 +1,9 @@
 /**
  * Public APIs to register Layer 2/3 dynamic entities into vault ontology.db.
  */
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import {
   openOntologyDb,
   ontologyDbEnabled,
@@ -20,10 +23,11 @@ export type UpsertDynamicOntologyRecordResult =
   { ok: true; entityId: string; recordId: string } | { ok: false; error: string };
 
 /** Persist a scaffolded entity definition into ontology.db (Layer 2/3). */
-export async function registerDynamicOntologyEntity(
+export function registerDynamicOntologyEntityEffect(
   vaultRoot: string,
   entity: DynamicEntityDef
-): Promise<RegisterDynamicOntologyResult> {
+): Effect.Effect<RegisterDynamicOntologyResult, MemoryError> {
+  return memoryFromPromise(async () => {
   if (ontologyDbExplicitlyDisabled()) {
     return { ok: false, error: "CLAWQL_ONTOLOGY_DB=0" };
   }
@@ -44,16 +48,26 @@ export async function registerDynamicOntologyEntity(
       handle.close();
     }
   });
+  });
+}
+
+/** Promise façade. */
+export async function registerDynamicOntologyEntity(
+  vaultRoot: string,
+  entity: DynamicEntityDef
+): Promise<RegisterDynamicOntologyResult> {
+  return Effect.runPromise(registerDynamicOntologyEntityEffect(vaultRoot, entity));
 }
 
 /** Upsert one instance record for a dynamic entity. */
-export async function upsertDynamicOntologyRecord(
+export function upsertDynamicOntologyRecordEffect(
   vaultRoot: string,
   entityId: string,
   recordId: string,
   fields: Record<string, unknown>,
   vaultNotePath?: string
-): Promise<UpsertDynamicOntologyRecordResult> {
+): Effect.Effect<UpsertDynamicOntologyRecordResult, MemoryError> {
+  return memoryFromPromise(async () => {
   if (ontologyDbExplicitlyDisabled()) {
     return { ok: false, error: "CLAWQL_ONTOLOGY_DB=0" };
   }
@@ -74,16 +88,29 @@ export async function upsertDynamicOntologyRecord(
       handle.close();
     }
   });
+  });
+}
+
+/** Promise façade. */
+export async function upsertDynamicOntologyRecord(
+  vaultRoot: string,
+  entityId: string,
+  recordId: string,
+  fields: Record<string, unknown>,
+  vaultNotePath?: string
+): Promise<UpsertDynamicOntologyRecordResult> {
+  return Effect.runPromise(upsertDynamicOntologyRecordEffect(vaultRoot, entityId, recordId, fields, vaultNotePath));
 }
 
 /** Register entity + upsert a primary document record (and optional nested row maps). */
-export async function syncDynamicOntologyDocument(
+export function syncDynamicOntologyDocumentEffect(
   vaultRoot: string,
   entity: DynamicEntityDef,
   documentId: string,
   record: Record<string, unknown>,
   nested?: Array<{ entityId: string; recordId: string; fields: Record<string, unknown> }>
-): Promise<RegisterDynamicOntologyResult> {
+): Effect.Effect<RegisterDynamicOntologyResult, MemoryError> {
+  return memoryFromPromise(async () => {
   if (ontologyDbExplicitlyDisabled()) {
     return { ok: false, error: "CLAWQL_ONTOLOGY_DB=0" };
   }
@@ -125,4 +152,16 @@ export async function syncDynamicOntologyDocument(
       handle.close();
     }
   });
+  });
+}
+
+/** Promise façade. */
+export async function syncDynamicOntologyDocument(
+  vaultRoot: string,
+  entity: DynamicEntityDef,
+  documentId: string,
+  record: Record<string, unknown>,
+  nested?: Array<{ entityId: string; recordId: string; fields: Record<string, unknown> }>
+): Promise<RegisterDynamicOntologyResult> {
+  return Effect.runPromise(syncDynamicOntologyDocumentEffect(vaultRoot, entity, documentId, record, nested));
 }

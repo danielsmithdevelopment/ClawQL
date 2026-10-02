@@ -6,6 +6,9 @@
  * Uses sql.js (WASM) so installs work with `npm ci --ignore-scripts` and Node 20+ CI.
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import { createRequire } from "node:module";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
@@ -223,30 +226,40 @@ async function persistDb(db: Database, absDbPath: string): Promise<void> {
  * Delete one vault document and its chunks / outbound wikilink edges from memory.db.
  * No-op when memory.db sync is disabled or the DB file is missing.
  */
+export function deleteDocumentFromMemoryDbEffect(
+  vaultRoot: string,
+  documentPath: string
+): Effect.Effect<{ deleted: boolean }, MemoryError> {
+  return memoryFromPromise(async () => {
+    if (!memoryDbSyncEnabled()) return { deleted: false };
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    let db: Database;
+    try {
+      db = await openOrCreateDb(absDb);
+    } catch {
+      return { deleted: false };
+    }
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const path = documentPath.replace(/\\/g, "/");
+      db.run("DELETE FROM wikilink_edge WHERE from_path = ?", [path]);
+      db.run("DELETE FROM vault_chunk WHERE document_path = ?", [path]);
+      db.run("DELETE FROM vault_document WHERE path = ?", [path]);
+      await persistDb(db, absDb);
+      return { deleted: true };
+    } finally {
+      db.close();
+    }
+  });
+}
+
+/** Promise façade. */
 export async function deleteDocumentFromMemoryDb(
   vaultRoot: string,
   documentPath: string
 ): Promise<{ deleted: boolean }> {
-  if (!memoryDbSyncEnabled()) return { deleted: false };
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  let db: Database;
-  try {
-    db = await openOrCreateDb(absDb);
-  } catch {
-    return { deleted: false };
-  }
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const path = documentPath.replace(/\\/g, "/");
-    db.run("DELETE FROM wikilink_edge WHERE from_path = ?", [path]);
-    db.run("DELETE FROM vault_chunk WHERE document_path = ?", [path]);
-    db.run("DELETE FROM vault_document WHERE path = ?", [path]);
-    await persistDb(db, absDb);
-    return { deleted: true };
-  } finally {
-    db.close();
-  }
+  return Effect.runPromise(deleteDocumentFromMemoryDbEffect(vaultRoot, documentPath));
 }
 
 /** `mtimeMs` + `size` — invalidates when `persistDb` rewrites the file. */
@@ -351,11 +364,12 @@ function loadMerkleSnapshotFromOpenDb(db: Database): MerkleSnapshotRow | null {
  * Single sql.js session for recall: chunk embeddings, optional Cuckoo predicate, optional Merkle row.
  * Prefer this over separate loaders when multiple are needed (fewer WASM DB opens).
  */
-export async function loadRecallDbArtifacts(
+export function loadRecallDbArtifactsEffect(
   vaultRoot: string,
   documentPaths: string[],
   opts: { loadChunks: boolean; loadCuckoo: boolean; loadMerkle: boolean }
-): Promise<RecallDbArtifacts> {
+): Effect.Effect<RecallDbArtifacts, MemoryError> {
+  return memoryFromPromise(async () => {
   const empty: RecallDbArtifacts = {
     chunks: [],
     cuckooPred: null,
@@ -378,6 +392,16 @@ export async function loadRecallDbArtifacts(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function loadRecallDbArtifacts(
+  vaultRoot: string,
+  documentPaths: string[],
+  opts: { loadChunks: boolean; loadCuckoo: boolean; loadMerkle: boolean }
+): Promise<RecallDbArtifacts> {
+  return Effect.runPromise(loadRecallDbArtifactsEffect(vaultRoot, documentPaths, opts));
 }
 
 function defaultScanRoot(): string {
@@ -431,10 +455,11 @@ async function loadExistingChunkEmbeddings(
   return out;
 }
 
-export async function syncMemoryDbFromDocuments(
+export function syncMemoryDbFromDocumentsEffect(
   vaultRoot: string,
   documents: { path: string; text: string; mtimeMs: number }[]
-): Promise<void> {
+): Effect.Effect<void, MemoryError> {
+  return memoryFromPromise(async () => {
   if (!memoryDbSyncEnabled() || documents.length === 0) return;
 
   const absDb = resolveMemoryDatabasePath(vaultRoot);
@@ -673,10 +698,20 @@ export async function syncMemoryDbFromDocuments(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function syncMemoryDbFromDocuments(
+  vaultRoot: string,
+  documents: { path: string; text: string; mtimeMs: number }[]
+): Promise<void> {
+  return Effect.runPromise(syncMemoryDbFromDocumentsEffect(vaultRoot, documents));
 }
 
 /** Full scan of the configured recall subtree — for `memory_ingest` refresh after writes. */
-export async function syncMemoryDbForVaultScanRoot(vaultRoot: string): Promise<void> {
+export function syncMemoryDbForVaultScanRootEffect(vaultRoot: string): Effect.Effect<void, MemoryError> {
+  return memoryFromPromise(async () => {
   if (!memoryDbSyncEnabled()) return;
   const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
   const scanRoot = defaultScanRoot();
@@ -697,13 +732,20 @@ export async function syncMemoryDbForVaultScanRoot(vaultRoot: string): Promise<v
     }
   }
   await syncMemoryDbFromDocuments(vaultRoot, documents);
+  });
+}
+
+/** Promise façade. */
+export async function syncMemoryDbForVaultScanRoot(vaultRoot: string): Promise<void> {
+  return Effect.runPromise(syncMemoryDbForVaultScanRootEffect(vaultRoot));
 }
 
 /** Load chunk rows with non-null embeddings for `memory_recall` vector KNN. */
-export async function loadChunkEmbeddingsForDocuments(
+export function loadChunkEmbeddingsForDocumentsEffect(
   vaultRoot: string,
   documentPaths: string[]
-): Promise<ChunkWithEmbedding[]> {
+): Effect.Effect<ChunkWithEmbedding[], MemoryError> {
+  return memoryFromPromise(async () => {
   if (!memoryDbSyncEnabled() || documentPaths.length === 0) return [];
   const absDb = resolveMemoryDatabasePath(vaultRoot);
   const db = await openOrCreateDb(absDb);
@@ -714,49 +756,69 @@ export async function loadChunkEmbeddingsForDocuments(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function loadChunkEmbeddingsForDocuments(
+  vaultRoot: string,
+  documentPaths: string[]
+): Promise<ChunkWithEmbedding[]> {
+  return Effect.runPromise(loadChunkEmbeddingsForDocumentsEffect(vaultRoot, documentPaths));
 }
 
 /** Load stored wikilink rows for graph merge (paths normalized with `/`). */
+export function loadWikilinkEdgesFromDatabaseEffect(
+  vaultRoot: string,
+  fromPaths: string[]
+): Effect.Effect<{ fromPath: string; toPath: string }[], MemoryError> {
+  return memoryFromPromise(async () => {
+    if (!memoryDbSyncEnabled() || fromPaths.length === 0) return [];
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const out: { fromPath: string; toPath: string }[] = [];
+      const chunk = 400;
+      for (let i = 0; i < fromPaths.length; i += chunk) {
+        const slice = fromPaths.slice(i, i + chunk);
+        if (slice.length === 0) continue;
+        const placeholders = slice.map(() => "?").join(",");
+        const stmt = db.prepare(
+          `SELECT from_path, to_resolved_path FROM wikilink_edge WHERE from_path IN (${placeholders}) AND to_resolved_path IS NOT NULL`
+        );
+        stmt.bind(slice);
+        while (stmt.step()) {
+          const row = stmt.getAsObject() as { from_path: string; to_resolved_path: string };
+          out.push({ fromPath: row.from_path, toPath: row.to_resolved_path });
+        }
+        stmt.free();
+      }
+      return out;
+    } finally {
+      db.close();
+    }
+  });
+}
+
+/** Promise façade. */
 export async function loadWikilinkEdgesFromDatabase(
   vaultRoot: string,
   fromPaths: string[]
 ): Promise<{ fromPath: string; toPath: string }[]> {
-  if (!memoryDbSyncEnabled() || fromPaths.length === 0) return [];
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const out: { fromPath: string; toPath: string }[] = [];
-    const chunk = 400;
-    for (let i = 0; i < fromPaths.length; i += chunk) {
-      const slice = fromPaths.slice(i, i + chunk);
-      if (slice.length === 0) continue;
-      const placeholders = slice.map(() => "?").join(",");
-      const stmt = db.prepare(
-        `SELECT from_path, to_resolved_path FROM wikilink_edge WHERE from_path IN (${placeholders}) AND to_resolved_path IS NOT NULL`
-      );
-      stmt.bind(slice);
-      while (stmt.step()) {
-        const row = stmt.getAsObject() as { from_path: string; to_resolved_path: string };
-        out.push({ fromPath: row.from_path, toPath: row.to_resolved_path });
-      }
-      stmt.free();
-    }
-    return out;
-  } finally {
-    db.close();
-  }
+  return Effect.runPromise(loadWikilinkEdgesFromDatabaseEffect(vaultRoot, fromPaths));
 }
 
 /**
  * When **`CLAWQL_CUCKOO_ENABLED=1`**, returns whether `chunk_id` might be in the indexed set
  * (no false negatives for indexed ids; false positives possible). Otherwise **`null`**.
  */
-export async function chunkIdMaybeInMemoryIndex(
+export function chunkIdMaybeInMemoryIndexEffect(
   vaultRoot: string,
   chunkId: string
-): Promise<boolean | null> {
+): Effect.Effect<boolean | null, MemoryError> {
+  return memoryFromPromise(async () => {
   if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
@@ -787,10 +849,20 @@ export async function chunkIdMaybeInMemoryIndex(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function chunkIdMaybeInMemoryIndex(
+  vaultRoot: string,
+  chunkId: string
+): Promise<boolean | null> {
+  return Effect.runPromise(chunkIdMaybeInMemoryIndexEffect(vaultRoot, chunkId));
 }
 
 /** Last persisted Cuckoo row timestamp (cross-process), for health checks. */
-export async function loadCuckooArtifactUpdatedAt(vaultRoot: string): Promise<string | null> {
+export function loadCuckooArtifactUpdatedAtEffect(vaultRoot: string): Effect.Effect<string | null, MemoryError> {
+  return memoryFromPromise(async () => {
   if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
@@ -811,15 +883,22 @@ export async function loadCuckooArtifactUpdatedAt(vaultRoot: string): Promise<st
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function loadCuckooArtifactUpdatedAt(vaultRoot: string): Promise<string | null> {
+  return Effect.runPromise(loadCuckooArtifactUpdatedAtEffect(vaultRoot));
 }
 
 /**
  * Loads the Cuckoo filter once for **`memory_recall`** vector consistency checks.
  * Returns **`null`** when disabled, no blob, or DB off — otherwise **`(chunkId) => maybeContains`**.
  */
-export async function loadCuckooMembershipPredicate(
+export function loadCuckooMembershipPredicateEffect(
   vaultRoot: string
-): Promise<((chunkId: string) => boolean) | null> {
+): Effect.Effect<((chunkId: string) => boolean) | null, MemoryError> {
+  return memoryFromPromise(async () => {
   if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
@@ -841,12 +920,21 @@ export async function loadCuckooMembershipPredicate(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function loadCuckooMembershipPredicate(
+  vaultRoot: string
+): Promise<((chunkId: string) => boolean) | null> {
+  return Effect.runPromise(loadCuckooMembershipPredicateEffect(vaultRoot));
 }
 
 /** Latest Merkle snapshot row from `memory.db`, if present. */
-export async function loadVaultMerkleSnapshotFromDb(
+export function loadVaultMerkleSnapshotFromDbEffect(
   vaultRoot: string
-): Promise<MerkleSnapshotRow | null> {
+): Effect.Effect<MerkleSnapshotRow | null, MemoryError> {
+  return memoryFromPromise(async () => {
   if (!memoryDbSyncEnabled()) return null;
   const absDb = resolveMemoryDatabasePath(vaultRoot);
   const sig = await memoryDbFileSignature(absDb);
@@ -864,4 +952,12 @@ export async function loadVaultMerkleSnapshotFromDb(
   } finally {
     db.close();
   }
+  });
+}
+
+/** Promise façade. */
+export async function loadVaultMerkleSnapshotFromDb(
+  vaultRoot: string
+): Promise<MerkleSnapshotRow | null> {
+  return Effect.runPromise(loadVaultMerkleSnapshotFromDbEffect(vaultRoot));
 }
