@@ -15,11 +15,11 @@ Toolkits are **named packaging** over ClawQL’s existing provider packs and ATR
 
 ## Seeded ids
 
-| Toolkit            | Expands to                                      |
-| ------------------ | ----------------------------------------------- |
-| `default-saas`     | Curated pack `default` + SaaS ATR tools         |
+| Toolkit            | Expands to                                                             |
+| ------------------ | ---------------------------------------------------------------------- |
+| `default-saas`     | Curated pack `default` + SaaS ATR tools                                |
 | `read-only`        | Pack `default` + read-only ATR (`search`, `memory_recall`, `skills_*`) |
-| `ops-github-slack` | `enabled: ["github","slack"]`                   |
+| `ops-github-slack` | `enabled: ["github","slack"]`                                          |
 
 ## Opt-in
 

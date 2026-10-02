@@ -12,9 +12,7 @@ import type { ClawqlToolkit, ToolkitProvidersComposition } from "./types.js";
 export class ToolkitNotFoundError extends Error {
   readonly _tag = "ToolkitNotFoundError";
   constructor(readonly toolkitId: string) {
-    super(
-      `Unknown toolkit "${toolkitId}". Known: ${listSeededToolkitIds().join(", ")}`
-    );
+    super(`Unknown toolkit "${toolkitId}". Known: ${listSeededToolkitIds().join(", ")}`);
     this.name = "ToolkitNotFoundError";
   }
 }
@@ -80,9 +78,7 @@ export class ToolkitService extends Context.Tag("clawql/ToolkitService")<
   {
     readonly list: () => Effect.Effect<readonly ClawqlToolkit[]>;
     readonly get: (toolkitId: string) => Effect.Effect<ClawqlToolkit, ToolkitNotFoundError>;
-    readonly resolve: (
-      toolkitId: string
-    ) => Effect.Effect<ClawqlToolkit, ToolkitNotFoundError>;
+    readonly resolve: (toolkitId: string) => Effect.Effect<ClawqlToolkit, ToolkitNotFoundError>;
     readonly resolveToolkitToProvidersComposition: (
       toolkitId: string
     ) => Effect.Effect<ToolkitProvidersComposition, ToolkitNotFoundError>;

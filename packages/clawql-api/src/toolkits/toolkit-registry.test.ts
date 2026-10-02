@@ -49,20 +49,13 @@ describe("toolkit registry", () => {
     const composition = Effect.runSync(resolveToolkitToProvidersComposition("read-only"));
     expect(composition).toEqual({ pack: "default" });
     const tk = Effect.runSync(getToolkitEffect("READ-ONLY"));
-    expect(tk.atrToolsInScope).toEqual([
-      "search",
-      "memory_recall",
-      "skills_list",
-      "skills_get",
-    ]);
+    expect(tk.atrToolsInScope).toEqual(["search", "memory_recall", "skills_list", "skills_get"]);
     expect(tk.atrToolsInScope).not.toContain("execute");
     expect(tk.apiKeyScopes).toEqual(["search", "memory"]);
   });
 
   it("resolves ops-github-slack to enabled github+slack", () => {
-    const composition = Effect.runSync(
-      resolveToolkitToProvidersComposition("ops-github-slack")
-    );
+    const composition = Effect.runSync(resolveToolkitToProvidersComposition("ops-github-slack"));
     expect(composition).toEqual({ enabled: ["github", "slack"] });
     expect(composition.pack).toBeUndefined();
   });
@@ -80,10 +73,7 @@ describe("toolkit registry", () => {
   });
 
   it("reads toolkit under nested spec object", () => {
-    vi.stubEnv(
-      "CLAWQL_INSTANCE_SPEC",
-      JSON.stringify({ spec: { toolkit: "read-only" } })
-    );
+    vi.stubEnv("CLAWQL_INSTANCE_SPEC", JSON.stringify({ spec: { toolkit: "read-only" } }));
     expect(Effect.runSync(readToolkitIdFromInstanceEnvEffect())).toBe("read-only");
   });
 });

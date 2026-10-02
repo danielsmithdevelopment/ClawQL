@@ -13,9 +13,7 @@ export async function runToolkitList(): Promise<number> {
   }
   for (const tk of list) {
     const pack = tk.providers.pack ? `pack=${tk.providers.pack}` : "";
-    const enabled = tk.providers.enabled?.length
-      ? `enabled=${tk.providers.enabled.join(",")}`
-      : "";
+    const enabled = tk.providers.enabled?.length ? `enabled=${tk.providers.enabled.join(",")}` : "";
     const providers = [pack, enabled].filter(Boolean).join(" ");
     console.log(`${tk.id}\t${tk.title}\t${providers}`);
   }

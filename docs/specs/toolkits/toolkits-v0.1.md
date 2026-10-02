@@ -8,11 +8,11 @@ Operators already compose providers via `providers.pack` / `providers.enabled` /
 
 ## Seeded toolkits
 
-| Id                 | Providers composition              | ATR tools (allowlist)                                      | Optional API key scopes              |
-| ------------------ | ---------------------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| `default-saas`     | `pack: "default"`                  | `search`, `execute`, `cache`, `audit`, `skills_*`, `memory_*` | `search`, `execute`, `memory`, `audit` |
-| `read-only`        | `pack: "default"`                  | `search`, `memory_recall`, `skills_*`                      | `search`, `memory`                   |
-| `ops-github-slack` | `enabled: ["github", "slack"]`     | same core tools as `default-saas`                          | `search`, `execute`, `memory`, `audit` |
+| Id                 | Providers composition          | ATR tools (allowlist)                                         | Optional API key scopes                |
+| ------------------ | ------------------------------ | ------------------------------------------------------------- | -------------------------------------- |
+| `default-saas`     | `pack: "default"`              | `search`, `execute`, `cache`, `audit`, `skills_*`, `memory_*` | `search`, `execute`, `memory`, `audit` |
+| `read-only`        | `pack: "default"`              | `search`, `memory_recall`, `skills_*`                         | `search`, `memory`                     |
+| `ops-github-slack` | `enabled: ["github", "slack"]` | same core tools as `default-saas`                             | `search`, `execute`, `memory`, `audit` |
 
 `skills_*` expands to `skills_list` + `skills_get`. `memory_*` expands to `memory_ingest` + `memory_recall`.
 
@@ -28,12 +28,12 @@ Provider load uses the same path as instance `providers` / `CLAWQL_PROVIDER` (`r
 
 ## Surfaces
 
-| Surface                         | Behavior                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------ |
+| Surface                         | Behavior                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `CLAWQL_TOOLKIT=<id>`           | When `CLAWQL_SPEC_PATHS` / `CLAWQL_BUNDLED_PROVIDERS` unset, expand toolkit into providers composition. Ignored (with console warn) if `CLAWQL_PROVIDER` is also set. |
-| Instance JSON `toolkit: "<id>"` | When `providers` key is missing, expand toolkit. If both present, `providers` wins. |
-| CLI `clawql toolkit list\|show` | Enumerate / inspect seeded toolkits                                      |
-| `ToolkitService` (Effect Tag)   | `list` / `get` / `resolve` / `resolveToolkitToProvidersComposition`      |
+| Instance JSON `toolkit: "<id>"` | When `providers` key is missing, expand toolkit. If both present, `providers` wins.                                                                                   |
+| CLI `clawql toolkit list\|show` | Enumerate / inspect seeded toolkits                                                                                                                                   |
+| `ToolkitService` (Effect Tag)   | `list` / `get` / `resolve` / `resolveToolkitToProvidersComposition`                                                                                                   |
 
 ## Precedence (multi-spec)
 
