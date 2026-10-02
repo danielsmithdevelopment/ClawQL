@@ -64,8 +64,6 @@ function parseSearchBody(body: unknown): MemoryRecallInput | { error: string } {
     limit: typeof b.limit === "number" ? b.limit : undefined,
     maxDepth: typeof b.maxDepth === "number" ? b.maxDepth : undefined,
     minScore: typeof b.minScore === "number" ? b.minScore : undefined,
-    includeCodeGraph: typeof b.includeCodeGraph === "boolean" ? b.includeCodeGraph : undefined,
-    codeGraphId: typeof b.codeGraphId === "string" ? b.codeGraphId : undefined,
     sources: Array.isArray(b.sources)
       ? (b.sources.filter(
           (x): x is string => typeof x === "string"
