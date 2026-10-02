@@ -232,6 +232,7 @@ Implementation: [`packages/clawql-inference/src/entitlements/`](../../packages/c
 | `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                       |
 | `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`) |
 | `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call  |
+| `CLAWQL_SELF_SERVE_CHECKOUT`          | Self-serve CTA  | Set to `1` to enable public `POST /payments/checkout/session` |
 
 ### Setup flow
 
@@ -779,6 +780,7 @@ clawql payments stripe setup --webhook-secret whsec_...
 clawql payments stripe customer create --email user@acme.com
 clawql payments stripe subscription create --customer cus_xxx --plan pro
 clawql payments stripe invoice create --customer cus_xxx --amount 500
+clawql payments stripe checkout create --plan pro --org-name Acme --email user@acme.com --success-url https://example/ok --cancel-url https://example/cancel
 clawql payments stripe meter report --value 1 --customer cus_xxx
 clawql payments stripe webhook verify --payload ./event.json --signature "..." --process
 

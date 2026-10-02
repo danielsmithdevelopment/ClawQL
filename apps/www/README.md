@@ -19,7 +19,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Route             | Purpose                                                              |
 | ----------------- | -------------------------------------------------------------------- |
 | `/`               | Homepage — MCP tool tiers, IDP pipeline, case studies, FAQs, pricing |
-| `/signup`         | Managed accounts waitlist                                            |
+| `/signup`         | Managed waitlist, or Stripe Checkout when self-serve env is set      |
 | `/pricing`        | Full pricing tiers and comparison table                              |
 | `/about`          | Mission and ecosystem overview                                       |
 | `/privacy-policy` | Privacy policy                                                       |

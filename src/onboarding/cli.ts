@@ -95,6 +95,7 @@ import {
   runPaymentsStripeMeterReportCmd,
   runPaymentsStripeCatalogEnsureCmd,
   runPaymentsStripeCatalogValidateCmd,
+  runPaymentsStripeCheckoutCreateCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -328,6 +329,9 @@ function parse(argv: string[]): {
     else if (a === "--email") flags.email = argv[++i] ?? "";
     else if (a === "--customer") flags.customer = argv[++i] ?? "";
     else if (a === "--plan") flags.plan = argv[++i] ?? "";
+    else if (a === "--org-name") flags.orgName = argv[++i] ?? "";
+    else if (a === "--success-url") flags.successUrl = argv[++i] ?? "";
+    else if (a === "--cancel-url") flags.cancelUrl = argv[++i] ?? "";
     else if (a === "--amount") flags.amount = argv[++i] ?? "";
     else if (a === "--payment-method") flags.paymentMethodId = argv[++i] ?? "";
     else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
@@ -505,7 +509,7 @@ Usage:
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
-  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | webhook verify
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -1329,6 +1333,9 @@ async function main(): Promise<void> {
       json: Boolean(flags.json),
       email: typeof flags.email === "string" ? flags.email : undefined,
       name: typeof flags.name === "string" ? flags.name : undefined,
+      orgName: typeof flags.orgName === "string" ? flags.orgName : undefined,
+      successUrl: typeof flags.successUrl === "string" ? flags.successUrl : undefined,
+      cancelUrl: typeof flags.cancelUrl === "string" ? flags.cancelUrl : undefined,
       customer: typeof flags.customer === "string" ? flags.customer : undefined,
       plan: typeof flags.plan === "string" ? flags.plan : undefined,
       amount: Number.isFinite(amount) ? amount : undefined,
@@ -1581,8 +1588,12 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeCatalogValidateCmd(paymentsOpts);
         return;
       }
+      if (stripeAction === "checkout" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeCheckoutCreateCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | webhook listen | webhook verify"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | checkout create | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;
