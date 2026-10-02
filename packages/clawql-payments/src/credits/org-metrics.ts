@@ -2,7 +2,11 @@
  * Prometheus text exposition for org credit balances (enterprise observability).
  */
 
-import { getOrgUnifiedSpendSummary, type OrgUnifiedSpendSummary } from "./org-spend.js";
+import { Context, Data, Effect, Layer } from "effect";
+import {
+  getOrgUnifiedSpendSummaryEffect,
+  type OrgUnifiedSpendSummary,
+} from "./org-spend.js";
 import { loadOrgCreditsFile } from "./org.js";
 import { renderOrgWaterfallPrometheus } from "./org-waterfall-metrics.js";
 
@@ -49,16 +53,64 @@ export function renderOrgSpendPrometheus(summary: OrgUnifiedSpendSummary): strin
   return `${lines.join("\n")}\n`;
 }
 
+export class OrgMetricsError extends Data.TaggedError("OrgMetricsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
 /** Load all orgs and emit combined Prometheus text (balances + waterfall counters). */
+export function renderAllOrgCreditsPrometheusEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string, OrgMetricsError> {
+  return Effect.gen(function* () {
+    const file = yield* Effect.tryPromise({
+      try: () => loadOrgCreditsFile(env),
+      catch: (cause) =>
+        new OrgMetricsError({
+          reason: cause instanceof Error ? cause.message : "Failed to load org credits",
+          cause,
+        }),
+    });
+    const chunks: string[] = [];
+    for (const orgId of Object.keys(file.orgs).sort()) {
+      const summary = yield* getOrgUnifiedSpendSummaryEffect({ orgId }, env).pipe(
+        Effect.mapError(
+          (cause) =>
+            new OrgMetricsError({
+              reason: cause.reason,
+              cause,
+            })
+        )
+      );
+      chunks.push(renderOrgSpendPrometheus(summary));
+    }
+    chunks.push(renderOrgWaterfallPrometheus());
+    return chunks.join("\n");
+  });
+}
+
+/** Promise façade for Prometheus scrape endpoints. */
 export async function renderAllOrgCreditsPrometheus(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<string> {
-  const file = await loadOrgCreditsFile(env);
-  const chunks: string[] = [];
-  for (const orgId of Object.keys(file.orgs).sort()) {
-    const summary = await getOrgUnifiedSpendSummary({ orgId }, env);
-    chunks.push(renderOrgSpendPrometheus(summary));
+  return Effect.runPromise(renderAllOrgCreditsPrometheusEffect(env));
+}
+
+/** Effect surface over org credits Prometheus exposition. */
+export class OrgMetricsService extends Context.Service<
+  OrgMetricsService,
+  {
+    readonly renderAllPrometheus: () => Effect.Effect<string, OrgMetricsError>;
   }
-  chunks.push(renderOrgWaterfallPrometheus());
-  return chunks.join("\n");
+>()("clawql/OrgMetricsService") {}
+
+export function orgMetricsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<OrgMetricsService> {
+  return Layer.succeed(
+    OrgMetricsService,
+    OrgMetricsService.of({
+      renderAllPrometheus: () => renderAllOrgCreditsPrometheusEffect(env),
+    })
+  );
 }

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuditLive, resetDefaultAuditRingBufferForTests } from "clawql-core";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { lokiPushLiveLayer } from "../audit/loki.js";
-import { getOrg, resetOrgCreditsForTests } from "../credits/org.js";
+import { getOrg, orgCreditsLiveLayer, resetOrgCreditsForTests } from "../credits/org.js";
 import { CreditsLedgerService, creditsLedgerLiveLayer } from "../credits/ledger.js";
 import { paymentAuditLiveLayer } from "../plugin/payment-audit-service.js";
 import {
@@ -222,9 +222,10 @@ describe("provisionOrgLiveLayer composition", () => {
       const loki = lokiPushLiveLayer(env);
       const audit = paymentAuditLiveLayer(env).pipe(Layer.provide(Layer.mergeAll(AuditLive, loki)));
       const ledger = creditsLedgerLiveLayer(env);
+      const orgCredits = orgCreditsLiveLayer(env);
       const keys = issuedApiKeyStoreForHomeLayer(home);
       const layer = provisionOrgLiveLayer(env).pipe(
-        Layer.provide(Layer.mergeAll(audit, keys, ledger))
+        Layer.provide(Layer.mergeAll(audit, keys, ledger, orgCredits))
       );
 
       const result = await Effect.runPromise(

@@ -14,10 +14,8 @@ import { buildOrgMemberAddedEntry, buildOrgProvisionedEntry } from "../audit/eve
 import { resolveIssuedApiKeysPath } from "../config/paths.js";
 import { isCreditsEnabled } from "../credits/config.js";
 import {
-  createOrg,
-  getOrg,
-  inviteOrgMember,
-  patchOrgBilling,
+  OrgCreditsError,
+  OrgCreditsService,
   poolTenantIdForOrg,
   type OrgRecord,
 } from "../credits/org.js";
@@ -84,12 +82,19 @@ function parseProvisionInput(input: ProvisionOrgInput): Effect.Effect<
   });
 }
 
+function mapOrgCreditsError(cause: OrgCreditsError, fallback: string): ProvisionOrgError {
+  return new ProvisionOrgError({
+    reason: cause.reason || fallback,
+    cause,
+  });
+}
+
 export function provisionOrgLiveLayer(
   env: NodeJS.ProcessEnv = process.env
 ): Layer.Layer<
   ProvisionOrgService,
   never,
-  PaymentAuditService | IssuedApiKeyStoreService | CreditsLedgerService
+  PaymentAuditService | IssuedApiKeyStoreService | CreditsLedgerService | OrgCreditsService
 > {
   return Layer.effect(
     ProvisionOrgService,
@@ -97,6 +102,7 @@ export function provisionOrgLiveLayer(
       const audit = yield* PaymentAuditService;
       const apiKeys = yield* IssuedApiKeyStoreService;
       const ledger = yield* CreditsLedgerService;
+      const orgs = yield* OrgCreditsService;
 
       const provisionOrg = (input: ProvisionOrgInput) =>
         Effect.gen(function* () {
@@ -110,62 +116,45 @@ export function provisionOrgLiveLayer(
           }
 
           const parsed = yield* parseProvisionInput(input);
-          const existing = yield* Effect.tryPromise({
-            try: () => getOrg(parsed.orgId, runEnv),
-            catch: (cause) => new ProvisionOrgError({ reason: "Failed to load org store", cause }),
-          });
+          const existing = yield* orgs.get(parsed.orgId).pipe(
+            Effect.mapError((cause) => mapOrgCreditsError(cause, "Failed to load org store"))
+          );
 
           let org: OrgRecord;
           if (existing) {
-            org = yield* Effect.tryPromise({
-              try: () =>
-                patchOrgBilling(
-                  {
-                    orgId: parsed.orgId,
-                    planId: input.planId,
-                    billingMode: input.billingMode,
-                    createdVia: input.createdVia,
-                    stripeCustomerId: input.stripeCustomerId,
-                    stripeSubscriptionId: input.stripeSubscriptionId,
-                    seatLimit: input.seatLimit,
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason: cause instanceof Error ? cause.message : "patchOrgBilling failed",
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .patchBilling({
+                orgId: parsed.orgId,
+                planId: input.planId,
+                billingMode: input.billingMode,
+                createdVia: input.createdVia,
+                stripeCustomerId: input.stripeCustomerId,
+                stripeSubscriptionId: input.stripeSubscriptionId,
+                seatLimit: input.seatLimit,
+              })
+              .pipe(
+                Effect.mapError((cause) => mapOrgCreditsError(cause, "patchOrgBilling failed"))
+              );
           } else {
             const domains = defaultAllowedEmailDomains(
               parsed.ownerEmail,
               input.allowedEmailDomains
             );
-            org = yield* Effect.tryPromise({
-              try: () =>
-                createOrg(
-                  {
-                    orgId: parsed.orgId,
-                    displayName: parsed.displayName,
-                    billingAdminTenantId: parsed.ownerMemberTenantId,
-                    billingAdminEmail: parsed.ownerEmail,
-                    planId: input.planId,
-                    seatLimit: input.seatLimit,
-                    allowedEmailDomains: domains,
-                    createdVia: input.createdVia,
-                    billingMode: input.billingMode,
-                    stripeCustomerId: input.stripeCustomerId,
-                    stripeSubscriptionId: input.stripeSubscriptionId,
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason: cause instanceof Error ? cause.message : "createOrg failed",
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .create({
+                orgId: parsed.orgId,
+                displayName: parsed.displayName,
+                billingAdminTenantId: parsed.ownerMemberTenantId,
+                billingAdminEmail: parsed.ownerEmail,
+                planId: input.planId,
+                seatLimit: input.seatLimit,
+                allowedEmailDomains: domains,
+                createdVia: input.createdVia,
+                billingMode: input.billingMode,
+                stripeCustomerId: input.stripeCustomerId,
+                stripeSubscriptionId: input.stripeSubscriptionId,
+              })
+              .pipe(Effect.mapError((cause) => mapOrgCreditsError(cause, "createOrg failed")));
           }
 
           yield* ledger.getAccount(org.poolTenantId);
@@ -174,25 +163,19 @@ export function provisionOrgLiveLayer(
           for (const rawEmail of input.additionalMemberEmails ?? []) {
             const email = rawEmail.trim().toLowerCase();
             if (!email || email === parsed.ownerEmail) continue;
-            org = yield* Effect.tryPromise({
-              try: () =>
-                inviteOrgMember(
-                  {
-                    orgId: org.orgId,
-                    actorTenantId: parsed.ownerMemberTenantId,
-                    email,
-                    allocationRoleId: "employee",
-                    orgRole: "member",
-                  },
-                  runEnv
-                ),
-              catch: (cause) =>
-                new ProvisionOrgError({
-                  reason:
-                    cause instanceof Error ? cause.message : `inviteOrgMember failed for ${email}`,
-                  cause,
-                }),
-            });
+            org = yield* orgs
+              .inviteMember({
+                orgId: org.orgId,
+                actorTenantId: parsed.ownerMemberTenantId,
+                email,
+                allocationRoleId: "employee",
+                orgRole: "member",
+              })
+              .pipe(
+                Effect.mapError((cause) =>
+                  mapOrgCreditsError(cause, `inviteOrgMember failed for ${email}`)
+                )
+              );
             const member = org.members.find((m) => m.email === email);
             if (member) {
               yield* ledger.getAccount(member.memberTenantId);

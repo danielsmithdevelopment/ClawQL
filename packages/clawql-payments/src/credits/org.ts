@@ -11,9 +11,9 @@
 
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolveOrgCreditsPath } from "../config/paths.js";
 import { getCreditAccount, transferCredits, type CreditTransferResult } from "./ledger.js";
-import { Effect } from "effect";
 import {
   assertCreditsOrgTransferEnabled,
   isCreditsEnabled,
@@ -126,6 +126,7 @@ export function poolTenantIdForOrg(orgId: string): string {
   return `org:${orgId.trim()}:pool`;
 }
 
+/** @deprecated Prefer OrgCreditsService.loadFile — Promise façade retained for legacy callers. */
 export async function loadOrgCreditsFile(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgCreditsFile> {
@@ -153,6 +154,7 @@ async function saveOrgCreditsFile(
   await rename(tmp, path);
 }
 
+/** @deprecated Prefer OrgCreditsService.reset — Promise façade retained for legacy/test callers. */
 export async function resetOrgCreditsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveOrgCreditsFile(emptyFile(), env);
 }
@@ -184,6 +186,7 @@ export type CreateOrgInput = {
   stripeSubscriptionId?: string;
 };
 
+/** @deprecated Prefer OrgCreditsService.create — Promise façade retained for legacy callers. */
 export async function createOrg(
   input: CreateOrgInput,
   env: NodeJS.ProcessEnv = process.env
@@ -256,7 +259,7 @@ export type PatchOrgBillingInput = {
   seatLimit?: number;
 };
 
-/** Patch CPC billing fields on an existing org (plan change / Stripe id link). */
+/** @deprecated Prefer OrgCreditsService.patchBilling — Promise façade retained for legacy callers. */
 export async function patchOrgBilling(
   input: PatchOrgBillingInput,
   env: NodeJS.ProcessEnv = process.env
@@ -283,6 +286,7 @@ export async function patchOrgBilling(
   return org;
 }
 
+/** @deprecated Prefer OrgCreditsService.get — Promise façade retained for legacy callers. */
 export async function getOrg(
   orgId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -291,7 +295,7 @@ export async function getOrg(
   return file.orgs[orgId.trim().toLowerCase()];
 }
 
-/** Orgs where the tenant is an active member or billing admin. */
+/** @deprecated Prefer OrgCreditsService.findForTenant — Promise façade retained for legacy callers. */
 export async function findOrgsForTenant(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
@@ -306,6 +310,7 @@ export async function findOrgsForTenant(
   );
 }
 
+/** @deprecated Prefer OrgCreditsService.setRolePolicies — Promise façade retained for legacy callers. */
 export async function setOrgRolePolicies(
   orgId: string,
   policies: OrgRolePolicy[],
@@ -341,6 +346,7 @@ export type AddOrgMemberInput = {
   bypassSeatCheck?: boolean;
 };
 
+/** @deprecated Prefer OrgCreditsService.addMember — Promise façade retained for legacy callers. */
 export async function addOrgMember(
   input: AddOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
@@ -474,7 +480,7 @@ export function assertEmailMatchesOrgDomains(org: OrgRecord, email: string): voi
   }
 }
 
-/** Resolve the company org that owns a work-email domain (first match). */
+/** @deprecated Prefer OrgCreditsService.findByEmailDomain — Promise façade retained for legacy callers. */
 export async function findOrgByEmailDomain(
   domain: string,
   env: NodeJS.ProcessEnv = process.env
@@ -486,7 +492,7 @@ export async function findOrgByEmailDomain(
 }
 
 /**
- * Billing admin: bind company email domains (+ optional IdP) for SSO under @company.com.
+ * @deprecated Prefer OrgCreditsService.setSsoPolicy — Promise façade retained for legacy callers.
  */
 export async function setOrgSsoPolicy(
   input: {
@@ -529,7 +535,7 @@ export type InviteOrgMemberInput = {
 };
 
 /**
- * Billing admin: invite a colleague by company email.
+ * @deprecated Prefer OrgCreditsService.inviteMember — Promise façade retained for legacy callers.
  * `memberTenantId` defaults to a slug derived from the email local-part + org.
  */
 export async function inviteOrgMember(
@@ -591,6 +597,7 @@ export async function inviteOrgMember(
   return org;
 }
 
+/** @deprecated Prefer OrgCreditsService.listMembers — Promise façade retained for legacy callers. */
 export async function listOrgMembers(
   orgId: string,
   options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
@@ -613,7 +620,7 @@ export async function listOrgMembers(
 }
 
 /**
- * Billing admin: set plan + optional seat cap for entitlement enforcement on invite/add.
+ * @deprecated Prefer OrgCreditsService.setSeatPolicy — Promise façade retained for legacy callers.
  */
 export async function setOrgSeatPolicy(
   input: {
@@ -639,7 +646,7 @@ export async function setOrgSeatPolicy(
   return org;
 }
 
-/** Assign a member's manager (reports-to). Billing admin only. */
+/** @deprecated Prefer OrgCreditsService.setMemberReportsTo — Promise façade retained for legacy callers. */
 export async function setMemberReportsTo(
   input: {
     orgId: string;
@@ -672,7 +679,7 @@ export async function setMemberReportsTo(
 }
 
 /**
- * Manager (or billing admin): transfer from own balance to a direct report.
+ * @deprecated Prefer OrgCreditsService.transferManagerToReport — Promise façade retained for legacy callers.
  */
 export async function transferManagerToReport(
   input: {
@@ -707,6 +714,7 @@ export async function transferManagerToReport(
   );
 }
 
+/** @deprecated Prefer OrgCreditsService.suspendMember — Promise façade retained for legacy callers. */
 export async function suspendOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -714,6 +722,7 @@ export async function suspendOrgMember(
   return setMemberStatus({ ...input, status: "suspended" }, env);
 }
 
+/** @deprecated Prefer OrgCreditsService.removeMember — Promise façade retained for legacy callers. */
 export async function removeOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -721,6 +730,7 @@ export async function removeOrgMember(
   return setMemberStatus({ ...input, status: "left" }, env);
 }
 
+/** @deprecated Prefer OrgCreditsService.reactivateMember — Promise façade retained for legacy callers. */
 export async function reactivateOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
@@ -783,7 +793,7 @@ export function assertSameOrgMembers(org: OrgRecord, a: string, b: string): void
 }
 
 /**
- * Billing admin: move credits from company pool → member (top-up individual).
+ * @deprecated Prefer OrgCreditsService.allocateFromPool — Promise façade retained for legacy callers.
  * Does not require CLAWQL_CREDITS_P2P_ENABLED — closed-loop org allocate.
  */
 export async function allocateFromPoolToMember(
@@ -828,8 +838,8 @@ export async function allocateFromPoolToMember(
 }
 
 /**
+ * @deprecated Prefer OrgCreditsService.transferWithinOrg — Promise façade retained for legacy callers.
  * Peer transfer within the same company org only.
- * Allowed on managed hosting. Distinct from cross-tenant Venmo P2P.
  */
 export async function transferWithinOrg(
   input: {
@@ -871,6 +881,7 @@ export type DistributePeriodResult = {
 };
 
 /**
+ * @deprecated Prefer OrgCreditsService.distributePeriod — Promise façade retained for legacy callers.
  * Start of billing period: optionally recall unused member credits to pool (expire_to_pool),
  * then grant each active member their role defaultGrantCents from the pool.
  */
@@ -960,4 +971,134 @@ export async function distributeOrgPeriod(
 export function orgCreditsAllowedOnManagedHosting(env: NodeJS.ProcessEnv = process.env): boolean {
   // Documented posture — org transfers are closed-loop even when isManagedHosting.
   return Effect.runSync(isCreditsOrgTransferEnabled(env)) || !Effect.runSync(isManagedHosting(env));
+}
+
+export class OrgCreditsError extends Data.TaggedError("OrgCreditsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type SetOrgSsoPolicyInput = Parameters<typeof setOrgSsoPolicy>[0];
+type SetOrgSeatPolicyInput = Parameters<typeof setOrgSeatPolicy>[0];
+type SetMemberReportsToInput = Parameters<typeof setMemberReportsTo>[0];
+type TransferManagerToReportInput = Parameters<typeof transferManagerToReport>[0];
+type MemberActorInput = { orgId: string; memberTenantId: string; actorTenantId: string };
+type AllocateFromPoolInput = Parameters<typeof allocateFromPoolToMember>[0];
+type TransferWithinOrgInput = Parameters<typeof transferWithinOrg>[0];
+type DistributePeriodInput = Parameters<typeof distributeOrgPeriod>[0];
+type ListOrgMembersOptions = Parameters<typeof listOrgMembers>[1];
+
+/** Effect surface over closed-loop enterprise org credits (pool, members, allocate, period). */
+export class OrgCreditsService extends Context.Service<
+  OrgCreditsService,
+  {
+    readonly loadFile: () => Effect.Effect<OrgCreditsFile, OrgCreditsError>;
+    readonly reset: () => Effect.Effect<void, OrgCreditsError>;
+    readonly create: (input: CreateOrgInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly patchBilling: (
+      input: PatchOrgBillingInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly get: (orgId: string) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
+    readonly findForTenant: (tenantId: string) => Effect.Effect<OrgRecord[], OrgCreditsError>;
+    readonly setRolePolicies: (
+      orgId: string,
+      policies: OrgRolePolicy[]
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly addMember: (input: AddOrgMemberInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly findByEmailDomain: (
+      domain: string
+    ) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
+    readonly setSsoPolicy: (
+      input: SetOrgSsoPolicyInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly inviteMember: (
+      input: InviteOrgMemberInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly listMembers: (
+      orgId: string,
+      options?: ListOrgMembersOptions
+    ) => Effect.Effect<OrgMembership[], OrgCreditsError>;
+    readonly setSeatPolicy: (
+      input: SetOrgSeatPolicyInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly setMemberReportsTo: (
+      input: SetMemberReportsToInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly transferManagerToReport: (
+      input: TransferManagerToReportInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly suspendMember: (input: MemberActorInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly removeMember: (input: MemberActorInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly reactivateMember: (
+      input: MemberActorInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly allocateFromPool: (
+      input: AllocateFromPoolInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly transferWithinOrg: (
+      input: TransferWithinOrgInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly distributePeriod: (
+      input: DistributePeriodInput
+    ) => Effect.Effect<DistributePeriodResult, OrgCreditsError>;
+  }
+>()("clawql/OrgCreditsService") {}
+
+export function orgCreditsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<OrgCreditsService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof OrgCreditsError
+          ? cause
+          : new OrgCreditsError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    OrgCreditsService,
+    OrgCreditsService.of({
+      loadFile: () => run("Failed to load org credits file", () => loadOrgCreditsFile(env)),
+      reset: () => run("Failed to reset org credits", () => resetOrgCreditsForTests(env)),
+      create: (input) => run("Failed to create org", () => createOrg(input, env)),
+      patchBilling: (input) =>
+        run("Failed to patch org billing", () => patchOrgBilling(input, env)),
+      get: (orgId) => run("Failed to load org", () => getOrg(orgId, env)),
+      findForTenant: (tenantId) =>
+        run("Failed to find orgs for tenant", () => findOrgsForTenant(tenantId, env)),
+      setRolePolicies: (orgId, policies) =>
+        run("Failed to set role policies", () => setOrgRolePolicies(orgId, policies, env)),
+      addMember: (input) => run("Failed to add org member", () => addOrgMember(input, env)),
+      findByEmailDomain: (domain) =>
+        run("Failed to find org by email domain", () => findOrgByEmailDomain(domain, env)),
+      setSsoPolicy: (input) =>
+        run("Failed to set org SSO policy", () => setOrgSsoPolicy(input, env)),
+      inviteMember: (input) =>
+        run("Failed to invite org member", () => inviteOrgMember(input, env)),
+      listMembers: (orgId, options) =>
+        run("Failed to list org members", () => listOrgMembers(orgId, options ?? {}, env)),
+      setSeatPolicy: (input) =>
+        run("Failed to set seat policy", () => setOrgSeatPolicy(input, env)),
+      setMemberReportsTo: (input) =>
+        run("Failed to set member reports-to", () => setMemberReportsTo(input, env)),
+      transferManagerToReport: (input) =>
+        run("Failed to transfer manager to report", () => transferManagerToReport(input, env)),
+      suspendMember: (input) =>
+        run("Failed to suspend org member", () => suspendOrgMember(input, env)),
+      removeMember: (input) =>
+        run("Failed to remove org member", () => removeOrgMember(input, env)),
+      reactivateMember: (input) =>
+        run("Failed to reactivate org member", () => reactivateOrgMember(input, env)),
+      allocateFromPool: (input) =>
+        run("Failed to allocate from pool", () => allocateFromPoolToMember(input, env)),
+      transferWithinOrg: (input) =>
+        run("Failed to transfer within org", () => transferWithinOrg(input, env)),
+      distributePeriod: (input) =>
+        run("Failed to distribute org period", () => distributeOrgPeriod(input, env)),
+    })
+  );
 }
