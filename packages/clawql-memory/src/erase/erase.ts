@@ -6,7 +6,7 @@
  */
 
 import { unlink } from "node:fs/promises";
-import { Effect } from "effect";
+import { Cause, Effect, Exit } from "effect";
 import { getObsidianVaultPath } from "../vault/config.js";
 import {
   readVaultFileRaw,
@@ -70,178 +70,236 @@ function normalizeRelPath(path: string): string {
   return cleaned;
 }
 
+type EraseLockState = {
+  contentHash?: string;
+  noteId?: string;
+  vaultErased: boolean;
+  cryptoKeyDestroyed: boolean;
+  pathMapDeleted: boolean;
+  pathId?: string;
+};
+
+function causeMessage(cause: Cause.Cause<unknown>): string {
+  const squashed = Cause.squash(cause);
+  if (squashed instanceof Error) return squashed.message;
+  return String(squashed);
+}
+
+/** Absolute IO inside the vault write lock (Promise only at this host edge). */
+async function eraseUnderVaultLock(
+  vault: string,
+  rel: string,
+  state: EraseLockState
+): Promise<void> {
+  try {
+    const body = await readVaultTextFile(vault, rel);
+    state.contentHash = sha256Hex(body);
+  } catch {
+    try {
+      const raw = await readVaultFileRaw(vault, rel);
+      if (isEncryptedVaultEnvelope(raw)) {
+        state.noteId = extractNoteIdFromEnvelope(raw);
+        const hashLine = raw.match(/content_hash:\s*sha256:([a-f0-9]{64})/i);
+        if (hashLine?.[1]) state.contentHash = hashLine[1];
+      }
+    } catch {
+      /* missing */
+    }
+  }
+
+  try {
+    const raw = await readVaultFileRaw(vault, rel);
+    if (isEncryptedVaultEnvelope(raw)) {
+      state.noteId = state.noteId ?? extractNoteIdFromEnvelope(raw);
+    }
+  } catch {
+    /* missing */
+  }
+
+  const mapped = await lookupPathMapByPath(vault, rel);
+  state.pathId = mapped?.pathId;
+  state.noteId = state.noteId ?? mapped?.noteId;
+  if (!state.contentHash && mapped?.contentHash) state.contentHash = mapped.contentHash;
+  if (!state.pathId) {
+    const created = await upsertPathMapEntry(vault, {
+      path: rel,
+      noteId: state.noteId,
+      contentHash: state.contentHash,
+    });
+    state.pathId = created.pathId;
+  }
+
+  const abs = resolveVaultPath(vault, rel);
+  try {
+    await unlink(abs);
+    state.vaultErased = true;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (!/ENOENT|no such file/i.test(msg)) throw e;
+  }
+
+  if (state.noteId) {
+    state.cryptoKeyDestroyed = await destroyNoteKey(vault, state.noteId);
+  } else if (memoryCryptoShredEnabled()) {
+    state.cryptoKeyDestroyed = false;
+  }
+
+  const removed = await deletePathMapEntry(vault, rel);
+  state.pathMapDeleted = Boolean(removed);
+  if (removed?.pathId) state.pathId = removed.pathId;
+
+  await deleteDocumentFromMemoryDb(vault, rel);
+  await deletePostgresChunkVectorsByPaths([rel]);
+  await deleteOntologyRowsByVaultNotePath(vault, rel);
+}
+
 /**
- * Erase one vault note and every in-tree derived index copy.
+ * Erase one vault note and every in-tree derived index copy (Effect primary).
  * Crypto-shred: destroy per-note key so git/R2 history ciphertext is unreadable.
  * WORM: pathId + contentHash only.
  */
-export async function executeMemoryEraseCore(input: MemoryEraseInput): Promise<MemoryEraseResult> {
-  const vault = getObsidianVaultPath();
-  if (!vault) {
-    return { ok: false, error: "CLAWQL_OBSIDIAN_VAULT_PATH is not set" };
-  }
+export function executeMemoryEraseCoreEffect(
+  input: MemoryEraseInput
+): Effect.Effect<MemoryEraseResult> {
+  return Effect.gen(function* () {
+    const vault = getObsidianVaultPath();
+    if (!vault) {
+      return { ok: false, error: "CLAWQL_OBSIDIAN_VAULT_PATH is not set" };
+    }
 
-  let rel: string;
-  try {
-    rel = normalizeRelPath(input.path);
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
+    const pathExit = yield* Effect.exit(
+      Effect.try({
+        try: () => normalizeRelPath(input.path),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      })
+    );
+    if (Exit.isFailure(pathExit)) {
+      return { ok: false, error: causeMessage(pathExit.cause) };
+    }
+    const rel = pathExit.value;
 
-  let contentHash: string | undefined;
-  let noteId: string | undefined;
-  let vaultErased = false;
-  let cryptoKeyDestroyed = false;
-  let pathMapDeleted = false;
-  let pathId: string | undefined;
-
-  try {
-    await withVaultWriteLock(vault, async () => {
-      // Prefer decrypt for contentHash; fall back to raw envelope hash if key already gone.
-      try {
-        const body = await readVaultTextFile(vault, rel);
-        contentHash = sha256Hex(body);
-      } catch {
-        try {
-          const raw = await readVaultFileRaw(vault, rel);
-          if (isEncryptedVaultEnvelope(raw)) {
-            noteId = extractNoteIdFromEnvelope(raw);
-            const hashLine = raw.match(/content_hash:\s*sha256:([a-f0-9]{64})/i);
-            if (hashLine?.[1]) contentHash = hashLine[1];
-          }
-        } catch {
-          /* missing */
-        }
-      }
-
-      try {
-        const raw = await readVaultFileRaw(vault, rel);
-        if (isEncryptedVaultEnvelope(raw)) {
-          noteId = noteId ?? extractNoteIdFromEnvelope(raw);
-        }
-      } catch {
-        /* missing */
-      }
-
-      const mapped = await lookupPathMapByPath(vault, rel);
-      pathId = mapped?.pathId;
-      noteId = noteId ?? mapped?.noteId;
-      if (!contentHash && mapped?.contentHash) contentHash = mapped.contentHash;
-      if (!pathId) {
-        const created = await upsertPathMapEntry(vault, {
-          path: rel,
-          noteId,
-          contentHash,
-        });
-        pathId = created.pathId;
-      }
-
-      const abs = resolveVaultPath(vault, rel);
-      try {
-        await unlink(abs);
-        vaultErased = true;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (!/ENOENT|no such file/i.test(msg)) throw e;
-      }
-
-      if (noteId) {
-        cryptoKeyDestroyed = await destroyNoteKey(vault, noteId);
-      } else if (memoryCryptoShredEnabled()) {
-        // Plaintext note with no key — shredding cannot scrub git history; still purge stores.
-        cryptoKeyDestroyed = false;
-      }
-
-      const removed = await deletePathMapEntry(vault, rel);
-      pathMapDeleted = Boolean(removed);
-      if (removed?.pathId) pathId = removed.pathId;
-
-      await deleteDocumentFromMemoryDb(vault, rel);
-      await deletePostgresChunkVectorsByPaths([rel]);
-      await deleteOntologyRowsByVaultNotePath(vault, rel);
-    });
-  } catch (e) {
-    return {
-      ok: false,
-      pathId,
-      contentHash,
-      noteId,
-      error: e instanceof Error ? e.message : String(e),
+    const state: EraseLockState = {
+      vaultErased: false,
+      cryptoKeyDestroyed: false,
+      pathMapDeleted: false,
     };
-  }
 
-  if (contentHash && pathId) {
-    await appendErasureDeny(vault, {
-      contentHash,
-      pathId,
-      noteId,
-    });
-  }
+    const lockExit = yield* Effect.exit(
+      Effect.tryPromise({
+        try: () => withVaultWriteLock(vault, () => eraseUnderVaultLock(vault, rel, state)),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      })
+    );
+    if (Exit.isFailure(lockExit)) {
+      return {
+        ok: false,
+        pathId: state.pathId,
+        contentHash: state.contentHash,
+        noteId: state.noteId,
+        error: causeMessage(lockExit.cause),
+      };
+    }
 
-  await emitMemoryWormEvent({
-    kind: "MEMORY_RETRACTED",
-    at: new Date().toISOString(),
-    // Never emit readable vault path — pathId only.
-    pathId,
-    correlationId: input.correlationId,
-    wormRef: contentHash ? `sha256:${contentHash}` : null,
-    detail: {
-      erasedStores: ["vault", "memory.db", "pgvector", "ontology.db", "note-key", "path-map"],
-      contentHash: contentHash ?? null,
-      noteId: noteId ?? null,
-      cryptoShred: cryptoKeyDestroyed,
-      gitHistoryRetainsCiphertextOnly: memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
-    },
+    if (state.contentHash && state.pathId) {
+      const denyExit = yield* Effect.exit(
+        Effect.tryPromise({
+          try: () =>
+            appendErasureDeny(vault, {
+              contentHash: state.contentHash!,
+              pathId: state.pathId!,
+              noteId: state.noteId,
+            }),
+          catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+        })
+      );
+      if (Exit.isFailure(denyExit)) {
+        return {
+          ok: false,
+          pathId: state.pathId,
+          contentHash: state.contentHash,
+          noteId: state.noteId,
+          error: causeMessage(denyExit.cause),
+        };
+      }
+    }
+
+    const wormExit = yield* Effect.exit(
+      Effect.tryPromise({
+        try: () =>
+          emitMemoryWormEvent({
+            kind: "MEMORY_RETRACTED",
+            at: new Date().toISOString(),
+            pathId: state.pathId,
+            correlationId: input.correlationId,
+            wormRef: state.contentHash ? `sha256:${state.contentHash}` : null,
+            detail: {
+              erasedStores: [
+                "vault",
+                "memory.db",
+                "pgvector",
+                "ontology.db",
+                "note-key",
+                "path-map",
+              ],
+              contentHash: state.contentHash ?? null,
+              noteId: state.noteId ?? null,
+              cryptoShred: state.cryptoKeyDestroyed,
+              gitHistoryRetainsCiphertextOnly:
+                memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
+            },
+          }),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      })
+    );
+    if (Exit.isFailure(wormExit)) {
+      return {
+        ok: false,
+        pathId: state.pathId,
+        contentHash: state.contentHash,
+        noteId: state.noteId,
+        error: causeMessage(wormExit.cause),
+      };
+    }
+
+    return {
+      ok: true,
+      pathId: state.pathId,
+      contentHash: state.contentHash,
+      noteId: state.noteId,
+      erased: {
+        vault: state.vaultErased,
+        memoryDb: true,
+        pgvector: true,
+        ontology: true,
+        cryptoKey: state.cryptoKeyDestroyed,
+        pathMap: state.pathMapDeleted,
+      },
+      denyListUpdated: Boolean(state.contentHash && state.pathId),
+      exportNote:
+        "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
+    };
   });
-
-  return {
-    ok: true,
-    pathId,
-    contentHash,
-    noteId,
-    erased: {
-      vault: vaultErased,
-      memoryDb: true,
-      pgvector: true,
-      ontology: true,
-      cryptoKey: cryptoKeyDestroyed,
-      pathMap: pathMapDeleted,
-    },
-    denyListUpdated: Boolean(contentHash && pathId),
-    exportNote:
-      "Historical training export files on operator disk are out of band; content hash was added to .clawql/erasure-deny.json so new export jobs skip matching hashes. Lineage records show which past exports and fine-tuned models included this content — regenerate those if an erasure request requires it.",
-  };
 }
 
-/** Effect wrapper for erase. */
+/** Promise façade for callers that still await erase. */
+export async function executeMemoryEraseCore(
+  input: MemoryEraseInput
+): Promise<MemoryEraseResult> {
+  return Effect.runPromise(executeMemoryEraseCoreEffect(input));
+}
+
+/** Effect entry used by MCP / plugin host boundaries. */
 export function memoryEraseProgram(
   input: MemoryEraseInput
 ): Effect.Effect<MemoryEraseResult, never, never> {
-  return Effect.tryPromise({
-    try: () => executeMemoryEraseCore(input),
-    catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-  }).pipe(
-    Effect.catch((e) =>
-      Effect.succeed({
-        ok: false as const,
-        error: e.message,
-      })
-    )
-  );
+  return executeMemoryEraseCoreEffect(input);
 }
 
 export async function runMemoryErase(input: MemoryEraseInput): Promise<MemoryEraseResult> {
   return Effect.runPromise(memoryEraseProgram(input));
 }
 
-/**
- * Probe helpers for tests — return whether residual plaintext needle remains.
- */
-export async function memoryContentRecoverableFromStores(opts: {
-  vaultRoot: string;
-  path: string;
-  needle: string;
-}): Promise<{
+export type MemoryRecoverableProbe = {
   vault: boolean;
   memoryDb: boolean;
   ontology: boolean;
@@ -249,7 +307,14 @@ export async function memoryContentRecoverableFromStores(opts: {
   /** Simulated R2 = object reachable without the note key (ciphertext only). */
   r2Mirror: boolean;
   keyDestroyed: boolean;
-}> {
+};
+
+/** Absolute probe IO for tests (Promise only at this host edge). */
+async function memoryContentRecoverableFromStoresImpl(opts: {
+  vaultRoot: string;
+  path: string;
+  needle: string;
+}): Promise<MemoryRecoverableProbe> {
   const { createRequire } = await import("node:module");
   const { readFile } = await import("node:fs/promises");
   const { join, dirname } = await import("node:path");
@@ -258,14 +323,12 @@ export async function memoryContentRecoverableFromStores(opts: {
   const execFileAsync = promisify(execFile);
   const { resolveMemoryDatabasePath } = await import("../db/memory-db.js");
   const { resolveOntologyDatabasePath } = await import("../ontology/ontology-db.js");
-  const { resolveVaultPath } = await import("../vault/utils.js");
   const { noteKeyExists, extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
     await import("../crypto/shred.js");
 
   let vaultHit = false;
   let rawOnDisk = "";
   try {
-    // Decrypted read — fails closed after shred.
     const body = await readVaultTextFile(opts.vaultRoot, opts.path);
     vaultHit = body.includes(opts.needle);
   } catch {
@@ -351,8 +414,6 @@ export async function memoryContentRecoverableFromStores(opts: {
       ["-C", opts.vaultRoot, "log", "-p", "--all", "-S", opts.needle, "--", opts.path],
       { maxBuffer: 8 * 1024 * 1024 }
     );
-    // -S finds commits that introduce/remove the string; after crypto-shred the
-    // commits only ever contained ciphertext, so needle must not appear.
     gitHistoryHit = stdout.includes(opts.needle);
   } catch {
     /* not a git vault */
@@ -360,7 +421,6 @@ export async function memoryContentRecoverableFromStores(opts: {
 
   let r2MirrorHit = false;
   try {
-    // Simulate R2 = what a remote clone can read from objects without the keystore.
     const { stdout: showOut } = await execFileAsync(
       "git",
       ["-C", opts.vaultRoot, "log", "--all", "--pretty=format:", "--name-only", "--", opts.path],
@@ -386,4 +446,22 @@ export async function memoryContentRecoverableFromStores(opts: {
     r2Mirror: r2MirrorHit,
     keyDestroyed,
   };
+}
+
+/** Effect primary for residual-plaintext probes (tests). */
+export function memoryContentRecoverableFromStoresEffect(opts: {
+  vaultRoot: string;
+  path: string;
+  needle: string;
+}): Effect.Effect<MemoryRecoverableProbe> {
+  return Effect.promise(() => memoryContentRecoverableFromStoresImpl(opts));
+}
+
+/** Promise façade for test probes. */
+export async function memoryContentRecoverableFromStores(opts: {
+  vaultRoot: string;
+  path: string;
+  needle: string;
+}): Promise<MemoryRecoverableProbe> {
+  return Effect.runPromise(memoryContentRecoverableFromStoresEffect(opts));
 }
