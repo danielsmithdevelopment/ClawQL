@@ -105,7 +105,13 @@ export {
   runInferenceFinetuneRefit,
   type InferenceFinetuneOptions,
 } from "./cli/finetune.js";
-export { runInferenceExport, type RunInferenceExportOptions } from "./export/run-export.js";
+export {
+  runInferenceExport,
+  runInferenceExportEffect,
+  exportRecordsEffect,
+  type RunInferenceExportOptions,
+} from "./export/run-export.js";
+export { scrubExportLineEffect } from "./export/pii.js";
 export type { ExportFormat, DatasetManifest } from "./export/types.js";
 export { submitFinetuneJob, getFinetuneJobStatus, registerFinetuneModel } from "./finetune/jobs.js";
 export type { FinetuneJob, FinetuneProvider } from "./finetune/types.js";
@@ -131,8 +137,13 @@ export {
   runInferencePipelineWorker,
 } from "./cli/pipeline.js";
 export { AGENT_COORDINATION_DRIFT_TRIPWIRE } from "./routing/tier-escalation-router.js";
-export { loadPipelineConfig, savePipelineConfig } from "./pipeline/config.js";
-export { runPipelineOnce } from "./pipeline/run.js";
+export {
+  loadPipelineConfig,
+  loadPipelineConfigEffect,
+  savePipelineConfig,
+  savePipelineConfigEffect,
+} from "./pipeline/config.js";
+export { runPipelineOnce, runPipelineOnceEffect } from "./pipeline/run.js";
 export type { InferencePipelineConfig } from "./pipeline/types.js";
 
 export { parseModelId } from "./providers/parse-model-id.js";
@@ -300,10 +311,16 @@ export {
 export { loadKeysConfig, resolveVirtualKeysPath } from "./keys/config.js";
 export {
   createVirtualKey,
+  createVirtualKeyEffect,
   revokeVirtualKey,
+  revokeVirtualKeyEffect,
   listVirtualKeys,
   keysEnforcementActive,
   redactVirtualKey,
+  saveVirtualKeyStoreEffect,
+  recordKeySpendEffect,
+  VirtualKeyStoreService,
+  virtualKeyStoreLiveLayer,
 } from "./keys/store.js";
 export { validateVirtualKey, extractPresentedApiKey } from "./keys/validate.js";
 export { createVirtualKeyAuthMiddleware, type VirtualKeyRequest } from "./api/auth.js";
@@ -319,10 +336,12 @@ export {
 export { runInferencePolicyShow, type InferencePolicyShowOptions } from "./cli/policy.js";
 export {
   evaluateAgentCoordination,
+  evaluateAgentCoordinationEffect,
   type AgentCoordinationEvaluation,
 } from "./coordination/trigger.js";
 export {
   invokeAgentCoordination,
+  invokeAgentCoordinationEffect,
   type AgentCoordinationResult,
   type AgentCoordinationMode,
 } from "./coordination/hermes-adapter.js";
