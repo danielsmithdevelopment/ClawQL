@@ -6,6 +6,7 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { basename, join, relative } from "node:path";
 import { unzipSync } from "fflate";
 import type { MemoryRecallResult } from "./recall.js";
+import { Effect } from "effect";
 
 const PREFERRED_SECOND_REQUEST_EVIDENCE = [
   "substantial-compliance-certification",
@@ -330,9 +331,9 @@ type EnrichedPayload = MemoryRecallResult & {
 /**
  * Attach sandbox document roots + deliverable reminder for LAB agents.
  */
-export async function enrichLabMemoryRecall(
+async function enrichLabMemoryRecallImpl(
   result: MemoryRecallResult | unknown
-): Promise<EnrichedPayload> {
+): Promise<EnrichedPayload>  {
   const payload: EnrichedPayload =
     result && typeof result === "object" && "ok" in result
       ? ({ ...(result as MemoryRecallResult) } as EnrichedPayload)
@@ -495,10 +496,42 @@ export async function enrichLabMemoryRecall(
   return ordered;
 }
 
+export function enrichLabMemoryRecallEffect(
+  result: MemoryRecallResult | unknown
+): Effect.Effect<EnrichedPayload, Error> {
+  return Effect.tryPromise({
+    try: () => enrichLabMemoryRecallImpl(result),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link enrichLabMemoryRecallEffect} for Effect callers. */
+export async function enrichLabMemoryRecall(
+  result: MemoryRecallResult | unknown
+): Promise<EnrichedPayload>  {
+  return Effect.runPromise(enrichLabMemoryRecallEffect(result));
+}
+
 /** Enrich recall output when `CLAWQL_HARVEY_LAB=1`. */
-export async function maybeEnrichHarveyLabRecall(
+async function maybeEnrichHarveyLabRecallImpl(
   result: MemoryRecallResult
-): Promise<MemoryRecallResult> {
+): Promise<MemoryRecallResult>  {
   if (!harveyLabRecallEnabled() || !result.ok) return result;
   return enrichLabMemoryRecall(result);
+}
+
+export function maybeEnrichHarveyLabRecallEffect(
+  result: MemoryRecallResult
+): Effect.Effect<MemoryRecallResult, Error> {
+  return Effect.tryPromise({
+    try: () => maybeEnrichHarveyLabRecallImpl(result),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybeEnrichHarveyLabRecallEffect} for Effect callers. */
+export async function maybeEnrichHarveyLabRecall(
+  result: MemoryRecallResult
+): Promise<MemoryRecallResult>  {
+  return Effect.runPromise(maybeEnrichHarveyLabRecallEffect(result));
 }

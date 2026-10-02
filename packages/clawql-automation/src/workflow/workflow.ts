@@ -37,6 +37,7 @@ import {
 import { maybeNotifyWorkflowTerminal } from "./workflow-notify.js";
 import { appendWorkflowAudit } from "./workflow-audit.js";
 import { listWorkflowArtifacts } from "./workflow-artifacts.js";
+import { Effect } from "effect";
 
 const templateRefSchema = z.object({
   kind: z.enum(["WorkflowTemplate", "ClusterWorkflowTemplate"]),
@@ -296,12 +297,28 @@ async function patchCronSuspend(
   return res as ArgoCronWorkflowObject;
 }
 
-export async function dispatchWorkflowToolCore(
+async function dispatchWorkflowToolCoreImpl(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }> {
+): Promise<{ content: { type: "text"; text: string }[] }>  {
   const parsedSoft = parseWorkflowToolParams(params);
   if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
   return runWorkflowParsedOperation(parsedSoft.value);
+}
+
+export function dispatchWorkflowToolCoreEffect(
+  params: unknown
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => dispatchWorkflowToolCoreImpl(params),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link dispatchWorkflowToolCoreEffect} for Effect callers. */
+export async function dispatchWorkflowToolCore(
+  params: unknown
+): Promise<{ content: { type: "text"; text: string }[] }>  {
+  return Effect.runPromise(dispatchWorkflowToolCoreEffect(params));
 }
 
 export type WorkflowParsedInput = z.infer<typeof workflowInputSchema>;
@@ -318,9 +335,9 @@ export function parseWorkflowToolParams(
 }
 
 /** K8s / wait dispatch for a Zod-validated workflow payload. */
-export async function runWorkflowParsedOperation(
+async function runWorkflowParsedOperationImpl(
   parsed: WorkflowParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }> {
+): Promise<{ content: { type: "text"; text: string }[] }>  {
   try {
     switch (parsed.operation) {
       case "submit": {
@@ -740,6 +757,22 @@ export async function runWorkflowParsedOperation(
     const message = error instanceof Error ? error.message : String(error);
     return jsonResponse({ ok: false, operation: parsed.operation, error: message });
   }
+}
+
+export function runWorkflowParsedOperationEffect(
+  parsed: WorkflowParsedInput
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => runWorkflowParsedOperationImpl(parsed),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runWorkflowParsedOperationEffect} for Effect callers. */
+export async function runWorkflowParsedOperation(
+  parsed: WorkflowParsedInput
+): Promise<{ content: { type: "text"; text: string }[] }>  {
+  return Effect.runPromise(runWorkflowParsedOperationEffect(parsed));
 }
 
 /**

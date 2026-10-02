@@ -7,6 +7,7 @@ import { basename } from "node:path/posix";
 import { readVaultTextFile } from "../vault/utils.js";
 import { stripVaultFrontmatter } from "../vault/markdown.js";
 import { keywordScore, tokenizeQuery } from "./recall.js";
+import { Effect } from "effect";
 
 export type IndexCatalogEntry = {
   /** Vault-relative path when present in catalog, else undefined. */
@@ -181,7 +182,7 @@ export type SurveyOkfIndexInput = {
 /**
  * Read index.md + log.md and produce a survey payload for memory_recall.
  */
-export async function surveyOkfIndex(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey> {
+async function surveyOkfIndexImpl(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey>  {
   const scanRoot = input.scanRoot ?? defaultScanRoot();
   const catalogLimit = input.catalogLimit ?? 12;
   const logLimit = input.logLimit ?? 8;
@@ -230,6 +231,18 @@ export async function surveyOkfIndex(input: SurveyOkfIndexInput): Promise<OkfInd
     recentLog,
     surveyTokenEstimate: estimateTokens(indexText) + estimateTokens(logText),
   };
+}
+
+export function surveyOkfIndexEffect(input: SurveyOkfIndexInput): Effect.Effect<OkfIndexSurvey, Error> {
+  return Effect.tryPromise({
+    try: () => surveyOkfIndexImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link surveyOkfIndexEffect} for Effect callers. */
+export async function surveyOkfIndex(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey>  {
+  return Effect.runPromise(surveyOkfIndexEffect(input));
 }
 
 /**

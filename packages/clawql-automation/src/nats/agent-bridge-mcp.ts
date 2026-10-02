@@ -5,10 +5,11 @@
 
 import type { AgentBridgeMcpCaller } from "./agent-bridge.js";
 import { natsMcpHttpUrl } from "./env.js";
+import { Effect } from "effect";
 
-export async function createStreamableHttpMcpCaller(
+async function createStreamableHttpMcpCallerImpl(
   url = natsMcpHttpUrl()
-): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }> {
+): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }>  {
   const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
   const { StreamableHTTPClientTransport } =
     await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
@@ -42,4 +43,20 @@ export async function createStreamableHttpMcpCaller(
       await client.close().catch(() => undefined);
     },
   };
+}
+
+export function createStreamableHttpMcpCallerEffect(
+  url = natsMcpHttpUrl()
+): Effect.Effect<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }, Error> {
+  return Effect.tryPromise({
+    try: () => createStreamableHttpMcpCallerImpl(url),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link createStreamableHttpMcpCallerEffect} for Effect callers. */
+export async function createStreamableHttpMcpCaller(
+  url = natsMcpHttpUrl()
+): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }>  {
+  return Effect.runPromise(createStreamableHttpMcpCallerEffect(url));
 }

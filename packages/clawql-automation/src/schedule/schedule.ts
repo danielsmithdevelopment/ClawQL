@@ -1367,11 +1367,11 @@ export function registerScheduleWorkerShutdownHooks(): void {
   process.once("exit", shutdown);
 }
 
-export async function dispatchScheduleOperation(
+async function dispatchScheduleOperationImpl(
   db: Database,
   absDbPath: string,
   parsed: ScheduleParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }> {
+): Promise<{ content: { type: "text"; text: string }[] }>  {
   switch (parsed.operation) {
     case "create": {
       const id = randomUUID();
@@ -1558,6 +1558,26 @@ export async function dispatchScheduleOperation(
       });
     }
   }
+}
+
+export function dispatchScheduleOperationEffect(
+  db: Database,
+  absDbPath: string,
+  parsed: ScheduleParsedInput
+): Effect.Effect<{ content: { type: "text"; text: string }[] }, Error> {
+  return Effect.tryPromise({
+    try: () => dispatchScheduleOperationImpl(db, absDbPath, parsed),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link dispatchScheduleOperationEffect} for Effect callers. */
+export async function dispatchScheduleOperation(
+  db: Database,
+  absDbPath: string,
+  parsed: ScheduleParsedInput
+): Promise<{ content: { type: "text"; text: string }[] }>  {
+  return Effect.runPromise(dispatchScheduleOperationEffect(db, absDbPath, parsed));
 }
 
 /**

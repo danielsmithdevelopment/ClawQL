@@ -1,6 +1,7 @@
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "clawql-api";
 
 import type { MemoryIngestInput } from "./ingest.js";
+import { Effect } from "effect";
 
 async function redactOptional(text: string | undefined): Promise<string | undefined> {
   if (!text?.trim() || !gatewayRedactionEnabled()) return text;
@@ -21,9 +22,9 @@ async function redactToolOutputs(
  * Redact ingest text fields when gateway redaction is enabled
  * (Presidio and/or local Privacy Filter).
  */
-export async function presidioRedactMemoryIngestInput(
+async function presidioRedactMemoryIngestInputImpl(
   input: MemoryIngestInput
-): Promise<MemoryIngestInput> {
+): Promise<MemoryIngestInput>  {
   if (!gatewayRedactionEnabled()) return input;
   return {
     ...input,
@@ -31,4 +32,20 @@ export async function presidioRedactMemoryIngestInput(
     conversation: await redactOptional(input.conversation),
     toolOutputs: await redactToolOutputs(input.toolOutputs),
   };
+}
+
+export function presidioRedactMemoryIngestInputEffect(
+  input: MemoryIngestInput
+): Effect.Effect<MemoryIngestInput, Error> {
+  return Effect.tryPromise({
+    try: () => presidioRedactMemoryIngestInputImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link presidioRedactMemoryIngestInputEffect} for Effect callers. */
+export async function presidioRedactMemoryIngestInput(
+  input: MemoryIngestInput
+): Promise<MemoryIngestInput>  {
+  return Effect.runPromise(presidioRedactMemoryIngestInputEffect(input));
 }

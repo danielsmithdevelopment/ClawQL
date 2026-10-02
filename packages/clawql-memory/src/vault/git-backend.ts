@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 /**
  * Git-native vault backend (Mode A) — commit-on-ingest + optional async push.
  *
@@ -133,12 +134,12 @@ async function pushVault(vault: string): Promise<{ ok: boolean; error?: string }
 /**
  * After a successful memory_ingest vault write: stage + commit (and optionally push).
  */
-export async function commitVaultAfterIngest(input: {
+async function commitVaultAfterIngestImpl(input: {
   vault: string;
   path?: string;
   title?: string;
   correlationId?: string;
-}): Promise<GitCommitOnIngestResult> {
+}): Promise<GitCommitOnIngestResult>  {
   if (!gitCommitOnIngest()) {
     return { committed: false, skipped: "git commit-on-ingest disabled" };
   }
@@ -189,4 +190,26 @@ export async function commitVaultAfterIngest(input: {
     console.error(`[clawql-mcp] memory git commit-on-ingest failed: ${msg}`);
     return { committed: false, error: msg };
   }
+}
+
+export function commitVaultAfterIngestEffect(input: {
+  vault: string;
+  path?: string;
+  title?: string;
+  correlationId?: string;
+}): Effect.Effect<GitCommitOnIngestResult, Error> {
+  return Effect.tryPromise({
+    try: () => commitVaultAfterIngestImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link commitVaultAfterIngestEffect} for Effect callers. */
+export async function commitVaultAfterIngest(input: {
+  vault: string;
+  path?: string;
+  title?: string;
+  correlationId?: string;
+}): Promise<GitCommitOnIngestResult>  {
+  return Effect.runPromise(commitVaultAfterIngestEffect(input));
 }

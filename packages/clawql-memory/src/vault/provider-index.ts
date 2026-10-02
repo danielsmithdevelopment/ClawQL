@@ -8,6 +8,7 @@ import { basename, dirname } from "node:path/posix";
 import { readVaultTextFile, writeVaultTextFileAtomic } from "./utils.js";
 import { listVaultMarkdownRelPaths } from "./slug-index.js";
 import { stripVaultFrontmatter } from "./markdown.js";
+import { Effect } from "effect";
 
 function envInt(key: string, def: number): number {
   const v = process.env[key]?.trim();
@@ -189,7 +190,7 @@ async function writeIndexIfChanged(vaultRoot: string, rel: string, body: string)
  * Also writes OKF **`index.md`** alongside **`_INDEX_{Provider}.md`**.
  * Skips when **`CLAWQL_MEMORY_INDEX_PAGE=0`**. Idempotent: no write when content unchanged.
  */
-export async function updateProviderIndexPage(vaultRoot: string): Promise<void> {
+async function updateProviderIndexPageImpl(vaultRoot: string): Promise<void>  {
   if (process.env.CLAWQL_MEMORY_INDEX_PAGE?.trim() === "0") return;
 
   const scanRoot = defaultScanRoot();
@@ -258,4 +259,16 @@ export async function updateProviderIndexPage(vaultRoot: string): Promise<void> 
   if (process.env.CLAWQL_MEMORY_OKF_INDEX?.trim() !== "0") {
     await writeIndexIfChanged(vaultRoot, okfIndexRel, okfBody);
   }
+}
+
+export function updateProviderIndexPageEffect(vaultRoot: string): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => updateProviderIndexPageImpl(vaultRoot),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link updateProviderIndexPageEffect} for Effect callers. */
+export async function updateProviderIndexPage(vaultRoot: string): Promise<void>  {
+  return Effect.runPromise(updateProviderIndexPageEffect(vaultRoot));
 }
