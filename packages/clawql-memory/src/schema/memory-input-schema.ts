@@ -76,8 +76,8 @@ export const MEMORY_RECALL_MAX_DEPTH_DESCRIPTION =
 export const MEMORY_RECALL_MIN_SCORE_DESCRIPTION =
   "Minimum keyword match score to seed a note (default: CLAWQL_MEMORY_RECALL_MIN_SCORE or 1).";
 export const MEMORY_RECALL_SOURCES_DESCRIPTION =
-  "Which recall backends to query. Omit for defaults: vault+vector, plus hybrids from env " +
-  "(CLAWQL_MEMORY_RECALL_HYBRID_ONYX). " +
+  "Which recall backends to query. Omit for defaults: vault+vector, plus optional Onyx from env " +
+  "(CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1). Master CLAWQL_MEMORY_RECALL_HYBRID was removed in 8.0. " +
   "Returns normalized hits[] + followUps for specialist tools. " +
   "Ignored when schema + filters select structured ontology recall.";
 export const MEMORY_RECALL_SCHEMA_DESCRIPTION =

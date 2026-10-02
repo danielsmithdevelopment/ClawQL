@@ -177,10 +177,10 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableNotify: false,
     enableWorkflow: false,
     enableArgoCd: false,
-    enableVision: false,
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,
+    enableClawqlSqlAlias: false,
     enableWeb: false,
     enableOntology: false,
     enableOntologyWrites: false,
@@ -314,7 +314,10 @@ export function readInstanceBodyForFlagsFromEnv(
 
 function transportFromEnv(
   env: NodeJS.ProcessEnv
-): Pick<ClawqlOptionalToolFlags, "enableGrpc" | "enableGrpcReflection" | "externalIngestPreview"> {
+): Pick<
+  ClawqlOptionalToolFlags,
+  "enableGrpc" | "enableGrpcReflection" | "externalIngestPreview" | "enableClawqlSqlAlias"
+> {
   const t = (v: string | undefined) => {
     const s = v?.trim().toLowerCase();
     return s === "1" || s === "true" || s === "yes";
@@ -323,6 +326,7 @@ function transportFromEnv(
     enableGrpc: t(env.ENABLE_GRPC),
     enableGrpcReflection: t(env.ENABLE_GRPC_REFLECTION),
     externalIngestPreview: env.CLAWQL_EXTERNAL_INGEST?.trim() === "1",
+    enableClawqlSqlAlias: t(env.CLAWQL_ENABLE_CLAWQL_SQL_ALIAS),
   };
 }
 

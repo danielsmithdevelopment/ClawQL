@@ -301,8 +301,10 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .Values.documentPipeline.enabled }}
+            {{- if .Values.documentPipeline.tika.enabled }}
             - name: TIKA_BASE_URL
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            {{- end }}
             {{- if .Values.documentPipeline.docling.enabled }}
             - name: DOCLING_BASE_URL
               value: "http://{{ include "clawql-mcp.doclingName" . }}:{{ .Values.documentPipeline.docling.service.port }}"
@@ -323,10 +325,14 @@ spec:
             - name: CLAWQL_PRIVACY_FILTER_FAILURE_POLICY
               value: "warn"
             {{- end }}
+            {{- if .Values.documentPipeline.gotenberg.enabled }}
             - name: GOTENBERG_BASE_URL
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
+            {{- end }}
+            {{- if .Values.documentPipeline.stirling.enabled }}
             - name: STIRLING_BASE_URL
               value: "http://{{ include "clawql-mcp.stirlingName" . }}:{{ .Values.documentPipeline.stirling.service.port }}"
+            {{- end }}
             {{- if .Values.documentPipeline.paperless.enabled }}
             - name: PAPERLESS_BASE_URL
               value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"

@@ -249,7 +249,9 @@ managedGateway:
 
 # memory_ingest / memory_recall (default on). Set false to inject CLAWQL_ENABLE_MEMORY=0.
 enableMemory: true
-# Document stack: tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0.
+# Document stack: docling, paperless, onyx, nextcloud, coneshare in all-providers merge + ingest_external_knowledge
+# + (with enableOnyx) knowledge_search_onyx. Set false to inject CLAWQL_ENABLE_DOCUMENTS=0. Docling is the sole
+# default converter as of 8.0 — tika/gotenberg/stirling stay opt-in (CLAWQL_BUNDLED_PROVIDERS=…, documentPipeline.{tika,gotenberg,stirling}.enabled=true).
 enableDocuments: true
 # IDP specialist MCP tools (documents tier). Default off — set true to inject CLAWQL_ENABLE_*=1.
 enableIdpClassifier: false
@@ -257,8 +259,11 @@ enableLangextract: false
 # Local Privacy Filter gateway backup ([#245]). Default off — set true to inject CLAWQL_ENABLE_PRIVACY_FILTER=1.
 enablePrivacyFilter: false
 # In-process Firecrawl pdf-inspector (`inspect_pdf`). No sidecar; ships in clawql-documents.
+# Opt-in only — not part of the recommended stack. Needs a unique job (e.g. signature/metadata inspection
+# distinct from Docling's layout parse) before it is auto-kept; see purge inventory "Document convert" row.
 enablePdfInspector: false
 # In-process Firecrawl anydoc (`convert_document`). No sidecar; ships in clawql-documents.
+# Opt-in only; flag-gated, not recommended — Docling already covers the default convert path.
 enableAnydoc: false
 enableIdpPipeline: false
 
@@ -623,11 +628,18 @@ ouroborosPostgres:
 # Optional full-stack document pipeline topology (#113).
 # When enabled, this chart can co-deploy intake/conversion/archive services
 # plus their minimal backing stores for integrated local/self-hosted workflows.
+#
+# 8.0 converter cut: Docling is the sole recommended converter (default enabled below).
+# Tika/Gotenberg/Stirling default OFF — they pull a JVM/LibreOffice stack with no unique job Docling
+# does not already cover for the default surface. Flip their `enabled: true` individually to opt back in
+# (see docs/releases/8.0.0-purge-inventory-spec-v0.1.md — "Document convert" row).
 documentPipeline:
   enabled: true
   docling:
-    # Layout-aware parse ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)). Large CPU image (~4 GiB); opt-in.
-    enabled: false
+    # Layout-aware parse ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248)). Sole default
+    # converter as of 8.0. CPU image (~4 GiB) — still relatively large, but recommended; disable only if you
+    # bring your own converter via a custom pipeline override.
+    enabled: true
     image:
       repository: quay.io/docling-project/docling-serve-cpu
       tag: v1.14.3
@@ -711,7 +723,9 @@ documentPipeline:
       limits:
         cpu: "1"
         memory: 4Gi
+  # Opt-in only (8.0 converter cut) — JVM text/metadata extractor. Set enabled: true to deploy.
   tika:
+    enabled: false
     image:
       repository: apache/tika
       tag: "2.9.2.1"
@@ -725,7 +739,9 @@ documentPipeline:
       limits:
         cpu: 500m
         memory: 1Gi
+  # Opt-in only (8.0 converter cut) — LibreOffice-based Office/HTML → PDF normalizer. Set enabled: true to deploy.
   gotenberg:
+    enabled: false
     image:
       repository: gotenberg/gotenberg
       tag: "8.8"
@@ -739,7 +755,9 @@ documentPipeline:
       limits:
         cpu: "1"
         memory: 1Gi
+  # Opt-in only (8.0 converter cut) — PDF redact/split/merge. Set enabled: true to deploy.
   stirling:
+    enabled: false
     image:
       repository: frooodle/s-pdf
       tag: "latest"
@@ -1361,13 +1379,15 @@ providerIngress:
     host: paperless.localhost
     path: /
     pathType: Prefix
+  # Opt-in-only converters (8.0 cut) — ingress stays off by default even when providerIngress.enabled=true;
+  # also requires documentPipeline.{stirling,tika,gotenberg}.enabled=true (the Deployment itself).
   stirling:
-    enabled: true
+    enabled: false
     host: stirling.localhost
     path: /
     pathType: Prefix
   tika:
-    enabled: true
+    enabled: false
     host: tika.localhost
     path: /
     pathType: Prefix
@@ -1377,7 +1397,7 @@ providerIngress:
     path: /
     pathType: Prefix
   gotenberg:
-    enabled: true
+    enabled: false
     host: gotenberg.localhost
     path: /
     pathType: Prefix

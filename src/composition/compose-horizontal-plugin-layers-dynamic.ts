@@ -59,6 +59,7 @@ export function composeHorizontalPluginLayersDynamicEffect(
       }>("clawql-documents/plugin");
       layers.push(
         mod.makeDocumentsLayer({
+          enableExternalIngest: flags.externalIngestPreview,
           enableOnyx: flags.enableOnyxKnowledge,
           enableIdpPipeline: flags.enableIdpPipeline,
           enableIdpClassifier: flags.enableIdpClassifier,
@@ -100,8 +101,10 @@ export function composeHorizontalPluginLayersDynamicEffect(
     }
 
     if (flags.enableData) {
-      const mod = yield* loadPlugin<{ makeDataLayer: () => HorizLayer }>("clawql-data/plugin");
-      layers.push(mod.makeDataLayer());
+      const mod = yield* loadPlugin<{
+        makeDataLayer: (opts?: Record<string, unknown>) => HorizLayer;
+      }>("clawql-data/plugin");
+      layers.push(mod.makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
     }
 
     if (flags.enableWeb) {

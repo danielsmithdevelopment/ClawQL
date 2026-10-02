@@ -15,7 +15,6 @@ There is no in-repo full draft of this essay (only outbound links). Use this fil
 **Ship today (8.0):** omit-`sources` resolves to **`vault` + `vector` only**. Onyx joins that default set only when:
 
 - `CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`, or
-- master `CLAWQL_MEMORY_RECALL_HYBRID=1`, or
 - the caller passes explicit `sources: [...]`.
 
 **PageIndex and CodeGraph are both removed in 8.0** (tools, hybrid flags, `pageindex.db.json` sync, and the `clawql-codegraph` package). Do not describe either as a live layer. Hybrid PageIndex was opt-in since introduction ([#653](https://github.com/danielsmithdevelopment/ClawQL/pull/653), [#806](https://github.com/danielsmithdevelopment/ClawQL/pull/806)) and measured harmful as a merge (−7.8 pts; 13/13 displaced). Track A fair test tied Net=4 → no Vectify port; see [post-8.0 Vectify backlog](../../backlog/post-8.0-vectify-pageindex.md). CodeGraph's Track B retest tied Net=0 vs working grep → `tie_purge`; see [post-8.0 CodeGraph backlog](../../backlog/post-8.0-codegraph-revisit.md).

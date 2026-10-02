@@ -48,6 +48,7 @@ export function composeHorizontalPluginLayersStatic(
   if (flags.enableDocuments) {
     layers.push(
       makeDocumentsLayer({
+        enableExternalIngest: flags.externalIngestPreview,
         enableOnyx: flags.enableOnyxKnowledge,
         enableIdpPipeline: flags.enableIdpPipeline,
         enableIdpClassifier: flags.enableIdpClassifier,
@@ -80,7 +81,7 @@ export function composeHorizontalPluginLayersStatic(
     layers.push(makeSandboxLayer());
   }
   if (flags.enableData) {
-    layers.push(makeDataLayer());
+    layers.push(makeDataLayer({ enableClawqlSqlAlias: flags.enableClawqlSqlAlias }));
   }
   if (flags.enableWeb) {
     layers.push(makeWebLayer());
