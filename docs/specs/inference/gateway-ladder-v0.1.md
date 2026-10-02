@@ -1,8 +1,8 @@
-# Inference gateway ladder — `/v1` → `/mcp` → `/memory` → `/decision` (8.0.0)
+# Inference gateway ladder — `/v1` → `/mcp` → `/memory` → `/decision` → `/events` (8.0.0)
 
 **Status:** locked for 8.0.0 ship  
 **Package:** `clawql-inference` (+ managed-gateway proxy)  
-**Related:** [[Inference gateway GTM ladder]] vault note · Fast Decision closeouts · Unified Capability Lifecycle
+**Related:** [[Inference gateway GTM ladder]] vault note · Fast Decision closeouts · Unified Capability Lifecycle · [[MCP Events in 8.0.0]]
 
 ## Ladder
 
@@ -12,6 +12,7 @@
 | 2    | `/mcp`                  | same host `/mcp` (proxy → MCP upstream) |
 | 3    | `/memory`               | REST + opt-in chat enrichment           |
 | 4    | `/decision`             | canonical; `/v1/systemone` alias        |
+| 5    | `/events`               | REST façade over MCP Events             |
 
 Shared virtual key, budgets, WORM/audit identity across rungs.
 
@@ -49,9 +50,26 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 - Supported question types: `choice`, `noul`
 - `score` → **400** with an explicit “not supported yet” message on both `/decision` and `/v1/systemone` (no silent failure)
 
+## `/events`
+
+REST façade over **`clawql-mcp-events`** — same live catalog, subscription store, Standard Webhooks delivery, and enterprise controls as MCP JSON-RPC `events/list|subscribe|unsubscribe` on `/mcp`. One store; no second event system.
+
+| Method | Path                        | Behavior                                                              |
+| ------ | --------------------------- | --------------------------------------------------------------------- |
+| `GET`  | `/events`                   | Discovery (`object: clawql.events`, enabled flag)                     |
+| `GET`  | `/events/list`              | Event catalog (`cursor` query); same payload as `events/list`         |
+| `POST` | `/events/subscribe`         | Webhook subscribe (`name`, `arguments`, `delivery`, optional `ttlMs`) |
+| `POST` | `/events/unsubscribe`       | Webhook unsubscribe (match `name` + `delivery.url`)                   |
+| `GET`  | `/events/subscriptions/:id` | Subscription metadata (no secret); principal-scoped                   |
+
+- **Principal:** virtual-key id when keys are enforced; else `x-clawql-principal` or `anonymous` (matches MCP host).
+- **Disable:** `CLAWQL_ENABLE_MCP_EVENTS=0` → REST returns **503** (same flag as MCP Discover `capabilities.events`).
+- **ChatGPT / MCP clients** keep using JSON-RPC on `/mcp`; HTTP clients and scripts use `/events`.
+- Spec detail: [`docs/specs/mcp/mcp-events-v0.1.md`](../mcp/mcp-events-v0.1.md).
+
 ## `/mcp`
 
-Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstream and `/v1`, `/memory`, `/decision` → inference. Same public host = one-line GTM story.
+Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstream and `/v1`, `/memory`, `/decision`, `/events` → inference. Same public host = one-line GTM story.
 
 ## Out of scope for first cut
 
@@ -60,3 +78,4 @@ Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstre
 - `score` System One questions (calibrate levels before averaging)
 - Promoting Nimble / Tev1 / Jev as trusted backends (candidates only via future eval)
 - In-process MCP inside the inference Express app
+- Full `clawql-streams` / `stream_subscribe` agent wake loop (change-detection → `stream.changed` already ships)

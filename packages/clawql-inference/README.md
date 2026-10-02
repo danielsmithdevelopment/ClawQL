@@ -63,19 +63,24 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 
 **Endpoints** (OpenAI-compatible + gateway ladder):
 
-| Method   | Path                   | Notes                                                 |
-| -------- | ---------------------- | ----------------------------------------------------- |
-| `GET`    | `/healthz`             | Liveness                                              |
-| `GET`    | `/v1/models`           | Credentialed catalog + tier map + Ollama tags         |
-| `GET`    | `/v1/models/:id`       | Single model                                          |
-| `POST`   | `/v1/chat/completions` | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
-| `POST`   | `/decision`            | Fast Decision (System One `choice`/`noul`); canonical |
-| `POST`   | `/v1/systemone`        | Alias of `/decision`                                  |
-| `POST`   | `/memory/ingest`       | Vault ingest façade                                   |
-| `POST`   | `/memory/search`       | Vault recall façade                                   |
-| `GET`    | `/memory`              | List Memory notes                                     |
-| `GET`    | `/memory/:slug`        | Read note                                             |
-| `DELETE` | `/memory/:slug`        | Erasure (crypto-shred + deny-list; see ladder spec)   |
+| Method   | Path                        | Notes                                                 |
+| -------- | --------------------------- | ----------------------------------------------------- |
+| `GET`    | `/healthz`                  | Liveness                                              |
+| `GET`    | `/v1/models`                | Credentialed catalog + tier map + Ollama tags         |
+| `GET`    | `/v1/models/:id`            | Single model                                          |
+| `POST`   | `/v1/chat/completions`      | Bare `gpt-4o` or `provider/model`; `stream: true` SSE |
+| `POST`   | `/decision`                 | Fast Decision (System One `choice`/`noul`); canonical |
+| `POST`   | `/v1/systemone`             | Alias of `/decision`                                  |
+| `POST`   | `/memory/ingest`            | Vault ingest façade                                   |
+| `POST`   | `/memory/search`            | Vault recall façade                                   |
+| `GET`    | `/memory`                   | List Memory notes                                     |
+| `GET`    | `/memory/:slug`             | Read note                                             |
+| `DELETE` | `/memory/:slug`             | Erasure (crypto-shred + deny-list; see ladder spec)   |
+| `GET`    | `/events`                   | Events discovery                                      |
+| `GET`    | `/events/list`              | MCP Events catalog                                    |
+| `POST`   | `/events/subscribe`         | Webhook subscribe                                     |
+| `POST`   | `/events/unsubscribe`       | Webhook unsubscribe                                   |
+| `GET`    | `/events/subscriptions/:id` | Subscription metadata                                 |
 
 Opt-in chat enrichment: virtual-key `memoryEnrichment` **outranks** `x-clawql-memory-enrich` /
 `CLAWQL_INFERENCE_MEMORY_ENRICH` (default **off**; store-down forwards without memory;
