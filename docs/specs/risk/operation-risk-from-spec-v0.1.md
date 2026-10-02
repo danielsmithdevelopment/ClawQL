@@ -64,7 +64,7 @@ Changing an operation's risk is a **capability change**. Every applied override 
 
 `CLAWQL_OPERATION_RISK_ENFORCE` defaults **on**. Set `0` / `false` / `no` to keep classification (search / `Operation.risk`) without refusing execute — intended for unit tests and staged rollouts. Production should leave it unset or `1`.
 
-## Out of scope (later)
+## Related
 
-- Pause-and-resume after mandate (`#2`) — see [execute-pause-resume-v0.1.md](./execute-pause-resume-v0.1.md)
-- `sources_propose` (`#3`) — will classify ops on arrival using this module
+- Pause-and-resume after mandate (`#2`) — [execute-pause-resume-v0.1](./execute-pause-resume-v0.1.md)
+- `sources_propose` (`#3`) — [sources-propose-v0.1](./sources-propose-v0.1.md)

@@ -20,6 +20,8 @@ export {
   searchToolZodShape,
   executeToolZodShape,
   resumeToolZodShape,
+  sourcesProposeToolZodShape,
+  sourcesApproveToolZodShape,
 } from "./search-execute-zod-edge.js";
 export { cacheToolZodShape } from "./cache-zod-edge.js";
 export { auditToolZodShape } from "./audit-zod-edge.js";
