@@ -70,7 +70,6 @@ describe("pending execute park + resume", () => {
       },
     });
 
-    let executed = false;
     const loadSpecFn = async () =>
       ({
         operations: [writeOp],
@@ -144,8 +143,6 @@ describe("pending execute park + resume", () => {
       (e) => e.type === "HUMAN_REJECTION"
     );
     expect(rejection).toBeDefined();
-
-    void executed;
   });
 
   it("execute parks when risk is mandate (integration with execute-core)", async () => {
