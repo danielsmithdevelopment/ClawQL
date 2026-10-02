@@ -9,7 +9,6 @@ import {
   listToolkitsEffect,
   readToolkitIdFromInstanceEnvEffect,
   resolveToolkitToProvidersComposition,
-  ToolkitNotFoundError,
 } from "./toolkit-service.js";
 import { SEEDED_TOOLKITS } from "./seeded-toolkits.js";
 
