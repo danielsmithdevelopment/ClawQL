@@ -30,6 +30,7 @@ describe("pending execute park + resume", () => {
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
     delete process.env.CLAWQL_WORM_SESSION_ID;
+    delete process.env.CLAWQL_OPERATION_RISK_ENFORCE;
   });
 
   it("hashes args canonically (key order independent)", () => {
@@ -48,6 +49,7 @@ describe("pending execute park + resume", () => {
   it("parks mandate execute and resumes the exact parked args", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-pending-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     process.env.CLAWQL_WORM_ENABLED = "1";
     process.env.CLAWQL_WORM_LOCAL = "memory";
     process.env.CLAWQL_WORM_REMOTE = "memory";
@@ -149,6 +151,7 @@ describe("pending execute park + resume", () => {
   it("execute parks when risk is mandate (integration with execute-core)", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-pending-exec-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     const writeOp = op({
       id: "patchItem",
       method: "PATCH",
