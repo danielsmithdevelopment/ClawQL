@@ -2,8 +2,8 @@
  * `clawql toolkit` — list / show seeded toolkit presets (pack + ATR packaging).
  */
 
-import { Effect, Exit } from "effect";
-import { getToolkitEffect, listToolkitsEffect, ToolkitNotFoundError } from "clawql-api";
+import { Effect, Either } from "effect";
+import { getToolkitEffect, listToolkitsEffect } from "clawql-api";
 
 export async function runToolkitList(): Promise<number> {
   const list = Effect.runSync(listToolkitsEffect());
@@ -27,16 +27,11 @@ export async function runToolkitShow(id: string): Promise<number> {
     console.error("Usage: clawql toolkit show <id>");
     return 1;
   }
-  const exit = Effect.runSyncExit(getToolkitEffect(id));
-  if (Exit.isFailure(exit)) {
-    const err = exit.cause;
-    const msg =
-      err._tag === "Fail" && err.error instanceof ToolkitNotFoundError
-        ? err.error.message
-        : `Unknown toolkit "${id}"`;
-    console.error(msg);
+  const result = Effect.runSync(Effect.either(getToolkitEffect(id)));
+  if (Either.isLeft(result)) {
+    console.error(result.left.message);
     return 1;
   }
-  console.log(JSON.stringify(exit.value, null, 2));
+  console.log(JSON.stringify(result.right, null, 2));
   return 0;
 }
