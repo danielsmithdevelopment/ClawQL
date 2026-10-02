@@ -12,7 +12,7 @@ import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } fro
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
 import {
   defaultClawqlHome,
-  loadContainmentConfig,
+  loadContainmentConfigEffect,
   seatbeltProfileParams,
 } from "./seatbelt-config.js";
 import {
@@ -120,8 +120,8 @@ export function callMacosSeatbeltSandboxEffect(
         try: () => mkdir(workspace, { recursive: true }),
         catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
       });
-      const containment = yield* Effect.promise(() =>
-        loadContainmentConfig(defaultClawqlHome()).catch(() => null)
+      const containment = yield* loadContainmentConfigEffect(defaultClawqlHome()).pipe(
+        Effect.catch(() => Effect.succeed(null))
       );
       const profileBody = containment?.enabled
         ? buildExecSeatbeltProfile(containment, workspace)

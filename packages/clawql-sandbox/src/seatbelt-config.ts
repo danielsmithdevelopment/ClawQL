@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { Effect } from "effect";
 import { z } from "zod";
 import { resolveSandboxPath } from "./seatbelt-paths.js";
 
@@ -131,28 +132,55 @@ export function seatbeltProfileParams(
   };
 }
 
+/** Load Seatbelt containment config from disk (Effect-primary). Missing file → null. */
+export function loadContainmentConfigEffect(
+  clawqlHome = defaultClawqlHome()
+): Effect.Effect<SandboxContainmentConfig | null, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const { configPath } = sandboxPaths(clawqlHome);
+      try {
+        const raw = await readFile(configPath, "utf8");
+        return SandboxContainmentConfigSchema.parse(JSON.parse(raw));
+      } catch (e: unknown) {
+        if (e && typeof e === "object" && "code" in e && e.code === "ENOENT") return null;
+        throw e;
+      }
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for CLI / hosts that still await config load. */
 export async function loadContainmentConfig(
   clawqlHome = defaultClawqlHome()
 ): Promise<SandboxContainmentConfig | null> {
-  const { configPath } = sandboxPaths(clawqlHome);
-  try {
-    const raw = await readFile(configPath, "utf8");
-    return SandboxContainmentConfigSchema.parse(JSON.parse(raw));
-  } catch (e: unknown) {
-    if (e && typeof e === "object" && "code" in e && e.code === "ENOENT") return null;
-    throw e;
-  }
+  return Effect.runPromise(loadContainmentConfigEffect(clawqlHome));
 }
 
+/** Persist Seatbelt containment config (Effect-primary). */
+export function saveContainmentConfigEffect(
+  config: SandboxContainmentConfig,
+  clawqlHome = defaultClawqlHome()
+): Effect.Effect<SandboxPaths, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      const paths = sandboxPaths(clawqlHome);
+      await mkdir(paths.sandboxDir, { recursive: true, mode: 0o700 });
+      await writeFile(paths.configPath, `${JSON.stringify(config, null, 2)}\n`, {
+        encoding: "utf8",
+        mode: 0o600,
+      });
+      return paths;
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for CLI / hosts that still await config save. */
 export async function saveContainmentConfig(
   config: SandboxContainmentConfig,
   clawqlHome = defaultClawqlHome()
 ): Promise<SandboxPaths> {
-  const paths = sandboxPaths(clawqlHome);
-  await mkdir(paths.sandboxDir, { recursive: true, mode: 0o700 });
-  await writeFile(paths.configPath, `${JSON.stringify(config, null, 2)}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-  });
-  return paths;
+  return Effect.runPromise(saveContainmentConfigEffect(config, clawqlHome));
 }
