@@ -1,9 +1,11 @@
 /**
  * Safe read/write under an Obsidian vault root with cooperative write locking.
+ * When crypto-shredding is enabled, Memory notes are encrypted at rest (git-safe).
  */
 
 import { open, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import { maybeDecryptVaultRead, maybeEncryptForVaultWrite } from "../crypto/shred.js";
 
 const LOCK_NAME = ".clawql-vault-write.lock";
 const LOCK_POLL_MS = 100;
@@ -66,7 +68,18 @@ export async function withVaultWriteLock<T>(vaultRoot: string, fn: () => Promise
   }
 }
 
+/** Read vault file as UTF-8; decrypts crypto-shred envelopes when the note key exists. */
 export async function readVaultTextFile(vaultRoot: string, relativePath: string): Promise<string> {
+  const p = resolveVaultPath(vaultRoot, relativePath);
+  const raw = await readFile(p, "utf8");
+  return maybeDecryptVaultRead(vaultRoot, raw);
+}
+
+/**
+ * Raw bytes as stored on disk (ciphertext when crypto-shredding). Used by erase
+ * probes that must inspect git history / R2 mirrors without decrypting.
+ */
+export async function readVaultFileRaw(vaultRoot: string, relativePath: string): Promise<string> {
   const p = resolveVaultPath(vaultRoot, relativePath);
   return readFile(p, "utf8");
 }
@@ -79,7 +92,21 @@ export async function writeVaultTextFileAtomic(
 ): Promise<void> {
   const p = resolveVaultPath(vaultRoot, relativePath);
   await mkdir(dirname(p), { recursive: true });
+  let priorNoteId: string | undefined;
+  try {
+    const prior = await readFile(p, "utf8");
+    const { extractNoteIdFromEnvelope, isEncryptedVaultEnvelope } =
+      await import("../crypto/shred.js");
+    if (isEncryptedVaultEnvelope(prior)) {
+      priorNoteId = extractNoteIdFromEnvelope(prior);
+    }
+  } catch {
+    /* new file */
+  }
+  const finalContent = await maybeEncryptForVaultWrite(vaultRoot, relativePath, content, {
+    noteId: priorNoteId,
+  });
   const tmp = `${p}.${process.pid}.tmp`;
-  await writeFile(tmp, content, "utf8");
+  await writeFile(tmp, finalContent, "utf8");
   await rename(tmp, p);
 }

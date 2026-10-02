@@ -27,7 +27,7 @@ echo "== vitest =="
 npm test -w mcp-api-adapter
 
 if [ "$LIVE" != "1" ]; then
-  echo "OK (unit). Re-run with --live for REST/GraphQL/gRPC parity against examples/mcp-api-adapter/server.mjs"
+  echo "OK (unit). Re-run with --live for REST/GraphQL/gRPC parity against docs/examples/mcp-api-adapter/server.mjs"
   exit 0
 fi
 
@@ -44,7 +44,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== start demo server (OpenAPI ${OPENAPI_PORT}, gRPC ${GRPC_PORT}) =="
-node examples/mcp-api-adapter/server.mjs &
+node docs/examples/mcp-api-adapter/server.mjs &
 SERVER_PID=$!
 
 for _ in $(seq 1 40); do
@@ -58,7 +58,7 @@ echo
 
 echo "== demo-all (REST / GraphQL / gRPC parity) =="
 OPENAPI_BASE_URL="$BASE" CLAWQL_MCP_GRPC_ADDR="127.0.0.1:${GRPC_PORT}" \
-  node examples/mcp-api-adapter/demo-all.mjs
+  node docs/examples/mcp-api-adapter/demo-all.mjs
 
 echo "== gen-cli =="
 OUT="$(mktemp -d)"

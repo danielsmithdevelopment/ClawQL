@@ -67,7 +67,7 @@ Canonical list in chart **`values.yaml`** → **`secretSourcing.providerEnvMappi
 ### Enable chart-managed ExternalSecret
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp -n clawql \
+helm upgrade --install clawql manifests/charts/clawql-mcp -n clawql \
   --set secretSourcing.externalSecrets.enabled=true
 ```
 
@@ -113,4 +113,4 @@ Non-technical operators can configure provider tokens in the bundled ClawQL dash
 2. Paste API keys or an entire `.env` snippet — matching provider keys auto-fill.
 3. Click **Save & apply** — the dashboard writes **`secret/clawql/providers`**, patches **`Secret/clawql-provider-env`**, and restarts **`clawql-mcp-http`**.
 
-Helm wires the dashboard pod with `CLAWQL_DASHBOARD_VAULT_PATH=clawql/providers` and `dashboard.allowSync: true`. See [`dashboard/README.md`](../../dashboard/README.md) and [`helm.md`](helm.md) § dashboard.
+Helm wires the dashboard pod with `CLAWQL_DASHBOARD_VAULT_PATH=clawql/providers` and `dashboard.allowSync: true`. See [`dashboard/README.md`](../../apps/dashboard/README.md) and [`helm.md`](helm.md) § dashboard.

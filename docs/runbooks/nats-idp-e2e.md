@@ -2,7 +2,7 @@
 
 Prove the **document JetStream** path: Nextcloud inbox → `run_idp_pipeline` → (optional) Coneshare viewer follow-up.
 
-**Related:** [nats-keda-worker.md](../deployment/nats-keda-worker.md) · [idp-pipeline-runner.md](../mcp/idp-pipeline-runner.md) · [lending W-2 pack](../../deployment/samples/lending-w2/README.md) · Helm example [`values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml) · Agent bridge (Hermes/Pi) [idp-nats-agent-bridge.md](idp-nats-agent-bridge.md)
+**Related:** [nats-keda-worker.md](../deployment/nats-keda-worker.md) · [idp-pipeline-runner.md](../mcp/idp-pipeline-runner.md) · [lending W-2 pack](../../docs/examples/idp/lending-w2/README.md) · Helm example [`values-nats-idp.example.yaml`](../../manifests/charts/clawql-mcp/values-nats-idp.example.yaml) · Agent bridge (Hermes/Pi) [idp-nats-agent-bridge.md](idp-nats-agent-bridge.md)
 
 ---
 
@@ -35,15 +35,15 @@ ConeShare automation ──► POST /idp/coneshare/webhook
 ### Overlay (lean)
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp \
-  -f charts/clawql-mcp/values-nats-idp.example.yaml \
+helm upgrade --install clawql manifests/charts/clawql-mcp \
+  -f manifests/charts/clawql-mcp/values-nats-idp.example.yaml \
   --set envFromSecret=clawql-provider-env \
   --namespace clawql --create-namespace
 ```
 
 ### Full IDP umbrella
 
-`charts/clawql-idp/values-idp-full.yaml` already sets `nats.worker.idpPipeline` + `coneshareFollowup` + publish. Install per [clawql-idp-helm.md](../deployment/clawql-idp-helm.md).
+`manifests/charts/clawql-idp/values-idp-full.yaml` already sets `nats.worker.idpPipeline` + `coneshareFollowup` + publish. Install per [clawql-idp-helm.md](../deployment/clawql-idp-helm.md).
 
 ### Secret keys (production)
 
@@ -97,7 +97,7 @@ Expect consume of `inbox.arrived` and a terminal `pipeline.completed` / hop publ
 3. Confirm Stirling hop ran and processed file appears at `processed_path`.
 4. Create a ConeShare link with `clawql_share.workflow` for HITL; open the share; webhook should resume / notify.
 
-Pair with [lending-w2](../../deployment/samples/lending-w2/README.md) for Argo suspend/HITL after classify.
+Pair with [lending-w2](../../docs/examples/idp/lending-w2/README.md) for Argo suspend/HITL after classify.
 
 ---
 

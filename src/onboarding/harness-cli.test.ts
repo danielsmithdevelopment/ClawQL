@@ -81,7 +81,7 @@ describe("buildOpencodeConfigContent", () => {
       expect(cfg.mcp.clawql.enabled).toBe(true);
       expect(cfg.mcp.clawql.environment.CLAWQL_OBSIDIAN_VAULT_PATH).toBe("/tmp/clawql-ab-vault");
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_MEMORY).toBe("1");
-      expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_PAGEINDEX).toBe("0");
+      expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_PAGEINDEX).toBeUndefined();
       expect(cfg.mcp.clawql.environment.CLAWQL_ENABLE_DOCUMENTS).toBe("0");
       expect(cfg.mcp.clawql.environment.CLAWQL_MEMORY_RECALL_SNIPPET_CHARS).toBe("8192");
       expect(cfg.mcp.clawql.command.length).toBeGreaterThan(0);
@@ -141,14 +141,14 @@ describe("buildOpencodeConfigContent", () => {
     }
   });
 
-  it("clawqlMcpChildEnv forwards CLAWQL_ENABLE_PAGEINDEX=1 override", () => {
+  it("clawqlMcpChildEnv ignores legacy CLAWQL_ENABLE_PAGEINDEX (purged in 8.0)", () => {
     const prevOb = process.env.CLAWQL_OPENBENCH;
     const prevPi = process.env.CLAWQL_ENABLE_PAGEINDEX;
     process.env.CLAWQL_OPENBENCH = "1";
     process.env.CLAWQL_ENABLE_PAGEINDEX = "1";
     try {
       const env = clawqlMcpChildEnv("/tmp/pi-home");
-      expect(env.CLAWQL_ENABLE_PAGEINDEX).toBe("1");
+      expect(env.CLAWQL_ENABLE_PAGEINDEX).toBeUndefined();
     } finally {
       if (prevOb === undefined) delete process.env.CLAWQL_OPENBENCH;
       else process.env.CLAWQL_OPENBENCH = prevOb;

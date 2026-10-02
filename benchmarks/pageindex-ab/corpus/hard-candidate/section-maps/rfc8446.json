@@ -1,0 +1,358 @@
+{
+  "document_id": "rfc8446",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-e-rescorla",
+      "title": "Internet Engineering Task Force (IETF)                       E. Rescorla"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-conventions-and-terminology",
+      "title": "1.1 Conventions and Terminology"
+    },
+    {
+      "id": "sec-1-2-major-differences-from-tls-1-2",
+      "title": "1.2 Major Differences from TLS 1.2"
+    },
+    {
+      "id": "sec-1-3-updates-affecting-tls-1-2",
+      "title": "1.3 Updates Affecting TLS 1.2"
+    },
+    {
+      "id": "sec-2-protocol-overview",
+      "title": "2 Protocol Overview"
+    },
+    {
+      "id": "sec-2-1-incorrect-dhe-share",
+      "title": "2.1 Incorrect DHE Share"
+    },
+    {
+      "id": "sec-2-2-resumption-and-pre-shared-key-psk",
+      "title": "2.2 Resumption and Pre-Shared Key (PSK)"
+    },
+    {
+      "id": "sec-1-this-data-is-not-forward-secret-as-it-is-encrypted-solely-under",
+      "title": "1 This data is not forward secret, as it is encrypted solely under"
+    },
+    {
+      "id": "sec-2-there-are-no-guarantees-of-non-replay-between-connections",
+      "title": "2 There are no guarantees of non-replay between connections."
+    },
+    {
+      "id": "sec-3-presentation-language",
+      "title": "3 Presentation Language"
+    },
+    {
+      "id": "sec-3-1-basic-block-size",
+      "title": "3.1 Basic Block Size"
+    },
+    {
+      "id": "sec-3-2-miscellaneous",
+      "title": "3.2 Miscellaneous"
+    },
+    {
+      "id": "sec-3-3-numbers",
+      "title": "3.3 Numbers"
+    },
+    {
+      "id": "sec-3-4-vectors",
+      "title": "3.4 Vectors"
+    },
+    {
+      "id": "sec-3-5-enumerateds",
+      "title": "3.5 Enumerateds"
+    },
+    {
+      "id": "sec-3-6-constructed-types",
+      "title": "3.6 Constructed Types"
+    },
+    {
+      "id": "sec-3-7-constants",
+      "title": "3.7 Constants"
+    },
+    {
+      "id": "sec-3-8-variants",
+      "title": "3.8 Variants"
+    },
+    {
+      "id": "sec-4-handshake-protocol",
+      "title": "4 Handshake Protocol"
+    },
+    {
+      "id": "sec-4-1-key-exchange-messages",
+      "title": "4.1 Key Exchange Messages"
+    },
+    {
+      "id": "sec-4-1-1-cryptographic-negotiation",
+      "title": "4.1.1 Cryptographic Negotiation"
+    },
+    {
+      "id": "sec-4-1-2-client-hello",
+      "title": "4.1.2 Client Hello"
+    },
+    {
+      "id": "sec-4-1-3-server-hello",
+      "title": "4.1.3 Server Hello"
+    },
+    {
+      "id": "sec-4-1-4-hello-retry-request",
+      "title": "4.1.4 Hello Retry Request"
+    },
+    {
+      "id": "sec-4-2-extensions",
+      "title": "4.2 Extensions"
+    },
+    {
+      "id": "sec-4-2-1-supported-versions",
+      "title": "4.2.1 Supported Versions"
+    },
+    {
+      "id": "sec-4-2-2-cookie",
+      "title": "4.2.2 Cookie"
+    },
+    {
+      "id": "sec-4-2-3-signature-algorithms",
+      "title": "4.2.3 Signature Algorithms"
+    },
+    {
+      "id": "sec-4-2-4-certificate-authorities",
+      "title": "4.2.4 Certificate Authorities"
+    },
+    {
+      "id": "sec-4-2-5-oid-filters",
+      "title": "4.2.5 OID Filters"
+    },
+    {
+      "id": "sec-4-2-6-post-handshake-client-authentication",
+      "title": "4.2.6 Post-Handshake Client Authentication"
+    },
+    {
+      "id": "sec-4-2-7-supported-groups",
+      "title": "4.2.7 Supported Groups"
+    },
+    {
+      "id": "sec-4-2-8-key-share",
+      "title": "4.2.8 Key Share"
+    },
+    {
+      "id": "sec-4-2-8-1-diffie-hellman-parameters",
+      "title": "4.2.8.1 Diffie-Hellman Parameters"
+    },
+    {
+      "id": "sec-4-2-8-2-ecdhe-parameters",
+      "title": "4.2.8.2 ECDHE Parameters"
+    },
+    {
+      "id": "sec-4-2-9-pre-shared-key-exchange-modes",
+      "title": "4.2.9 Pre-Shared Key Exchange Modes"
+    },
+    {
+      "id": "sec-4-2-10-early-data-indication",
+      "title": "4.2.10 Early Data Indication"
+    },
+    {
+      "id": "sec-4-2-11-pre-shared-key-extension",
+      "title": "4.2.11 Pre-Shared Key Extension"
+    },
+    {
+      "id": "sec-4-2-11-1-ticket-age",
+      "title": "4.2.11.1 Ticket Age"
+    },
+    {
+      "id": "sec-4-2-11-2-psk-binder",
+      "title": "4.2.11.2 PSK Binder"
+    },
+    {
+      "id": "sec-4-2-11-3-processing-order",
+      "title": "4.2.11.3 Processing Order"
+    },
+    {
+      "id": "sec-4-3-server-parameters",
+      "title": "4.3 Server Parameters"
+    },
+    {
+      "id": "sec-4-3-1-encrypted-extensions",
+      "title": "4.3.1 Encrypted Extensions"
+    },
+    {
+      "id": "sec-4-3-2-certificate-request",
+      "title": "4.3.2 Certificate Request"
+    },
+    {
+      "id": "sec-4-4-authentication-messages",
+      "title": "4.4 Authentication Messages"
+    },
+    {
+      "id": "sec-4-4-2-certificate",
+      "title": "4.4.2 Certificate"
+    },
+    {
+      "id": "sec-4-4-2-1-ocsp-status-and-sct-extensions",
+      "title": "4.4.2.1 OCSP Status and SCT Extensions"
+    },
+    {
+      "id": "sec-4-4-2-2-server-certificate-selection",
+      "title": "4.4.2.2 Server Certificate Selection"
+    },
+    {
+      "id": "sec-4-4-2-3-client-certificate-selection",
+      "title": "4.4.2.3 Client Certificate Selection"
+    },
+    {
+      "id": "sec-4-4-2-4-receiving-a-certificate-message",
+      "title": "4.4.2.4 Receiving a Certificate Message"
+    },
+    {
+      "id": "sec-4-4-3-certificate-verify",
+      "title": "4.4.3 Certificate Verify"
+    },
+    {
+      "id": "sec-4-4-4-finished",
+      "title": "4.4.4 Finished"
+    },
+    {
+      "id": "sec-1-clients-sending-0-rtt-data-as-described-in-section-4-2-10",
+      "title": "1 Clients sending 0-RTT data as described in Section 4.2.10."
+    },
+    {
+      "id": "sec-2-servers-may-send-data-after-sending-their-first-flight-but",
+      "title": "2 Servers MAY send data after sending their first flight, but"
+    },
+    {
+      "id": "sec-4-5-end-of-early-data",
+      "title": "4.5 End of Early Data"
+    },
+    {
+      "id": "sec-4-6-post-handshake-messages",
+      "title": "4.6 Post-Handshake Messages"
+    },
+    {
+      "id": "sec-4-6-1-new-session-ticket-message",
+      "title": "4.6.1 New Session Ticket Message"
+    },
+    {
+      "id": "sec-4-6-2-post-handshake-authentication",
+      "title": "4.6.2 Post-Handshake Authentication"
+    },
+    {
+      "id": "sec-4-6-3-key-and-initialization-vector-update",
+      "title": "4.6.3 Key and Initialization Vector Update"
+    },
+    {
+      "id": "sec-5-record-protocol",
+      "title": "5 Record Protocol"
+    },
+    {
+      "id": "sec-5-1-record-layer",
+      "title": "5.1 Record Layer"
+    },
+    {
+      "id": "sec-5-2-record-payload-protection",
+      "title": "5.2 Record Payload Protection"
+    },
+    {
+      "id": "sec-5-3-per-record-nonce",
+      "title": "5.3 Per-Record Nonce"
+    },
+    {
+      "id": "sec-5-4-record-padding",
+      "title": "5.4 Record Padding"
+    },
+    {
+      "id": "sec-5-5-limits-on-key-usage",
+      "title": "5.5 Limits on Key Usage"
+    },
+    {
+      "id": "sec-6-alert-protocol",
+      "title": "6 Alert Protocol"
+    },
+    {
+      "id": "sec-6-1-closure-alerts",
+      "title": "6.1 Closure Alerts"
+    },
+    {
+      "id": "sec-6-2-error-alerts",
+      "title": "6.2 Error Alerts"
+    },
+    {
+      "id": "sec-7-cryptographic-computations",
+      "title": "7 Cryptographic Computations"
+    },
+    {
+      "id": "sec-7-1-key-schedule",
+      "title": "7.1 Key Schedule"
+    },
+    {
+      "id": "sec-7-2-updating-traffic-secrets",
+      "title": "7.2 Updating Traffic Secrets"
+    },
+    {
+      "id": "sec-7-3-traffic-key-calculation",
+      "title": "7.3 Traffic Key Calculation"
+    },
+    {
+      "id": "sec-7-4-1-finite-field-diffie-hellman",
+      "title": "7.4.1 Finite Field Diffie-Hellman"
+    },
+    {
+      "id": "sec-7-4-2-elliptic-curve-diffie-hellman",
+      "title": "7.4.2 Elliptic Curve Diffie-Hellman"
+    },
+    {
+      "id": "sec-7-5-exporters",
+      "title": "7.5 Exporters"
+    },
+    {
+      "id": "sec-8-1-single-use-tickets",
+      "title": "8.1 Single-Use Tickets"
+    },
+    {
+      "id": "sec-8-2-client-hello-recording",
+      "title": "8.2 Client Hello Recording"
+    },
+    {
+      "id": "sec-8-3-freshness-checks",
+      "title": "8.3 Freshness Checks"
+    },
+    {
+      "id": "sec-9-compliance-requirements",
+      "title": "9 Compliance Requirements"
+    },
+    {
+      "id": "sec-9-1-mandatory-to-implement-cipher-suites",
+      "title": "9.1 Mandatory-to-Implement Cipher Suites"
+    },
+    {
+      "id": "sec-9-2-mandatory-to-implement-extensions",
+      "title": "9.2 Mandatory-to-Implement Extensions"
+    },
+    {
+      "id": "sec-9-3-protocol-invariants",
+      "title": "9.3 Protocol Invariants"
+    },
+    {
+      "id": "sec-10-security-considerations",
+      "title": "10 Security Considerations"
+    },
+    {
+      "id": "sec-11-iana-considerations",
+      "title": "11 IANA Considerations"
+    },
+    {
+      "id": "sec-12-references",
+      "title": "12 References"
+    },
+    {
+      "id": "sec-12-1-normative-references",
+      "title": "12.1 Normative References"
+    },
+    {
+      "id": "sec-12-2-informative-references",
+      "title": "12.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc8446.txt"
+}

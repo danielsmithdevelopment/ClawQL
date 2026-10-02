@@ -4,12 +4,12 @@ This deploy pattern runs ClawQL as **one** workload (**`clawql-mcp-http`**): MCP
 
 ## Helm chart (alternative)
 
-For **`helm install` / `helm upgrade`**, use the maintained chart at **`charts/clawql-mcp`**. See **[`helm.md`](helm.md)** for install examples, values, private registry pull secrets, Ingress, and persistence.
+For **`helm install` / `helm upgrade`**, use the maintained chart at **`manifests/charts/clawql-mcp`**. See **[`helm.md`](helm.md)** for install examples, values, private registry pull secrets, Ingress, and persistence.
 
 Quick start from repo root:
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp --namespace clawql --create-namespace --wait
+helm upgrade --install clawql ./manifests/charts/clawql-mcp --namespace clawql --create-namespace --wait
 ```
 
 For Docker Desktop Helm installs, open bundled UIs at **`http://clawql.localhost`** (dashboard) and **`http://docs.localhost`** (docs UI).
@@ -18,14 +18,14 @@ For Docker Desktop Helm installs, open bundled UIs at **`http://clawql.localhost
 
 - `kubectl` configured for your target cluster
 - image pushed to a registry your cluster can pull from
-- manifests in `docker/kustomize/`
+- manifests in `manifests/kustomize/`
 
 ## Kustomize layout
 
-- Base: `docker/kustomize/base`
+- Base: `manifests/kustomize/base`
 - Overlays:
-  - `docker/kustomize/overlays/dev`
-  - `docker/kustomize/overlays/prod`
+  - `manifests/kustomize/overlays/dev`
+  - `manifests/kustomize/overlays/prod`
 
 Overlay defaults:
 
@@ -75,7 +75,7 @@ ENV=dev IMAGE=us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp TAG=abc123 
 
 ### Service ports (HTTP and gRPC)
 
-The Helm chart (**`charts/clawql-mcp`**, including **`values-docker-desktop.yaml`** for Docker Desktop) and all Kustomize layers (**`base`**, **`dev`**, **`prod`**) define **`clawql-mcp-http`** with **two** ports:
+The Helm chart (**`manifests/charts/clawql-mcp`**, including **`values-docker-desktop.yaml`** for Docker Desktop) and all Kustomize layers (**`base`**, **`dev`**, **`prod`**) define **`clawql-mcp-http`** with **two** ports:
 
 | Name   | Service `port`                                          | `targetPort`                     | Purpose                                                                |
 | ------ | ------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------- |
@@ -98,7 +98,7 @@ Application-level TLS and optional client certificate verification on the gRPC l
 
 ## Docker Desktop: MCP auth (local cluster)
 
-For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../website/src/app/kubernetes/page.mdx)**.
+For **`make local-k8s-up`** on Docker Desktop, inject **GitHub**, **Cloudflare**, and **Google** tokens into the MCP deployment with **`scripts/kubernetes/k8s-docker-desktop-set-mcp-auth.sh`** (optional repo **`.env`**). Secret name on the cluster remains **`clawql-github-auth`** for compatibility. See **[`docker/README.md`](../docker/README.md)** (_MCP auth_) and the site page **[`/kubernetes`](../apps/docs/src/app/kubernetes/page.mdx)**.
 
 ## Notes
 
@@ -117,7 +117,7 @@ Use this section when moving from a simple stateless install to event-driven orc
 ### Enable
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
   --set nats.enabled=true \
   --set nats.persistence.enabled=true \
   --set nats.persistence.size=20Gi
@@ -140,4 +140,4 @@ kubectl -n clawql get deploy clawql-mcp-http -o yaml | rg "CLAWQL_NATS_URL|CLAWQ
 - Always enable persistence if workflow replay/recovery matters.
 - Budget PV size and JetStream max file store together.
 - Add internal scrape for monitor endpoint (`8222`) and alert on health degradation (broker JSON — use NATS Prometheus exporter or probe **`/healthz`**; see [helm.md § NATS JetStream deep dive](helm.md#nats-jetstream-deep-dive)).
-- Standardize subjects early — **`nats.subjectConvention`** in **`charts/clawql-mcp/values.yaml`** (`clawql.workflow`, `clawql.agent`, `clawql.document`, `clawql.edge`) — to avoid migration churn ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).
+- Standardize subjects early — **`nats.subjectConvention`** in **`manifests/charts/clawql-mcp/values.yaml`** (`clawql.workflow`, `clawql.agent`, `clawql.document`, `clawql.edge`) — to avoid migration churn ([#127](https://github.com/danielsmithdevelopment/ClawQL/issues/127)).

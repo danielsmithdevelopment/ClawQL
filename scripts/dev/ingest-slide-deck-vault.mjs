@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { runMemoryIngest } from "../../dist/memory-ingest.js";
+import { runMemoryIngest } from "clawql-memory/ingest/ingest";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..", "..");

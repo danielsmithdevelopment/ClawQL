@@ -65,8 +65,8 @@ After `repo-supply-chain` succeeds, four image jobs run in parallel:
 
 - **`build-push-mcp`**: `docker buildx build` with [`docker/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/Dockerfile), multi-arch `linux/amd64`, `linux/arm64`.
 - **`build-push-panguard-bridge`**: [`docker/panguard-mcp-bridge/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docker/panguard-mcp-bridge/Dockerfile).
-- **`build-push-website`**: [`website/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/website/Dockerfile).
-- **`build-push-dashboard`**: [`dashboard/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/dashboard/Dockerfile).
+- **`build-push-website`**: [`apps/docs/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/apps/docs/Dockerfile).
+- **`build-push-dashboard`**: [`apps/dashboard/Dockerfile`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/apps/dashboard/Dockerfile).
 
 The docs site runtime image uses Next `output: 'standalone'` and copies only `.next/standalone`, `.next/static`, and `public` into the runner stage — not the full `npm ci` tree — so the GHCR image stays much smaller than copying all `node_modules`.
 
@@ -126,7 +126,7 @@ Admission control closes the loop that CI signing alone cannot. Signing in CI pr
 
 ### Helm chart (default on)
 
-[`charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/values.yaml) defaults `kyverno.imageSignaturePolicy.enabled: true`, which renders a `ClusterPolicy` ([`templates/kyverno-clusterpolicy-cosign.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using `verifyImages` with Cosign keyless `subjectRegExp` / `issuerRegExp` matching this repo's GitHub Actions identity and `ghcr.io/danielsmithdevelopment/clawql-mcp*` / `clawql-panguard-mcp-bridge*` / `clawql-website*` / `clawql-dashboard*` image patterns.
+[`manifests/charts/clawql-mcp/values.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/manifests/charts/clawql-mcp/values.yaml) defaults `kyverno.imageSignaturePolicy.enabled: true`, which renders a `ClusterPolicy` ([`templates/kyverno-clusterpolicy-cosign.yaml`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/manifests/charts/clawql-mcp/templates/kyverno-clusterpolicy-cosign.yaml)) using `verifyImages` with Cosign keyless `subjectRegExp` / `issuerRegExp` matching this repo's GitHub Actions identity and `ghcr.io/danielsmithdevelopment/clawql-mcp*` / `clawql-panguard-mcp-bridge*` / `clawql-website*` / `clawql-dashboard*` image patterns.
 
 **Requirements:**
 
@@ -201,7 +201,7 @@ Container images (GHCR + Cosign + Kyverno) are separate from Packer AMI / GCP im
 | **Boot gate**               | Startup runs `clawql doctor --smoke` after `bootstrap-team-vault.sh` before serving traffic                    |
 | **Cloudflare Workers path** | `scripts/packer/cloudflare-bootstrap.sh` uses the same pull + hash verify + doctor gate                        |
 
-Related: [ADR 0006](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0006-golden-host-images-packer.md), [`packer/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/packer), [team vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync).
+Related: [ADR 0006](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0006-golden-host-images-packer.md), [`infra/packer/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/infra/packer), [team vault sync](https://docs.clawql.com/getting-started/for-teams#team-vault-sync).
 
 ---
 

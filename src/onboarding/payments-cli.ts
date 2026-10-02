@@ -15,6 +15,9 @@ import {
   runPaymentsStripeWebhookListen,
   runPaymentsStripeWebhookVerify,
   runPaymentsStripeMeterReport,
+  runPaymentsStripeCatalogEnsure,
+  runPaymentsStripeCatalogValidate,
+  runPaymentsStripeCheckoutCreate,
   runPaymentsUsageReport,
   runPaymentsX402Gate,
   runPaymentsX402GateList,
@@ -72,7 +75,9 @@ import {
   runPaymentsOrgDistribute,
   runPaymentsOrgInvite,
   runPaymentsOrgMembers,
+  runPaymentsOrgProvision,
   runPaymentsOrgRemove,
+  runPaymentsOrgReportUsage,
   runPaymentsOrgShow,
   runPaymentsOrgSpend,
   runPaymentsOrgSso,
@@ -187,6 +192,18 @@ export type PaymentsCliOptions = {
   sendEmail?: boolean;
   /** Force invite email dry-run preview. */
   emailDryRun?: boolean;
+  /** Stripe catalog ensure dry-run (no API). */
+  dryRun?: boolean;
+  /** Skip credit top-up Prices when ensuring Stripe catalog. */
+  noTopUps?: boolean;
+  /** Skip Billing Meter + metered Price when ensuring Stripe catalog. */
+  noMeter?: boolean;
+  /** Self-serve Checkout: organization display name. */
+  orgName?: string;
+  /** Self-serve Checkout: success redirect URL. */
+  successUrl?: string;
+  /** Self-serve Checkout: cancel redirect URL. */
+  cancelUrl?: string;
   /** Enterprise org id (`clawql payments org …`). */
   orgId?: string;
   /** Billing admin / actor tenant for org admin commands. */
@@ -199,6 +216,18 @@ export type PaymentsCliOptions = {
   allocationRoleId?: string;
   prometheus?: boolean;
   includeWorm?: boolean;
+  /** CPC: billing mode for org provision. */
+  billingMode?: string;
+  /** CPC: createdVia for org provision. */
+  createdVia?: string;
+  /** CPC: additional member emails. */
+  memberEmails?: string;
+  /** CPC: Stripe customer id. */
+  stripeCustomerId?: string;
+  /** CPC: Stripe subscription id. */
+  stripeSubscriptionId?: string;
+  /** CPC: explicit overage units for report-usage. */
+  overageUnits?: number;
 };
 
 export async function runPaymentsPlanShowCmd(options: PaymentsCliOptions = {}): Promise<number> {
@@ -300,6 +329,39 @@ export async function runPaymentsStripeMeterReportCmd(
     identifier: options.identifier,
     tenantId: options.tenantId,
     correlationId: options.correlationId,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCatalogEnsureCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCatalogEnsure({
+    dryRun: options.dryRun,
+    includeTopUps: options.noTopUps ? false : undefined,
+    includeMeter: options.noMeter ? false : undefined,
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCatalogValidateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCatalogValidate({
+    json: options.json,
+  });
+}
+
+export async function runPaymentsStripeCheckoutCreateCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsStripeCheckoutCreate({
+    plan: options.plan,
+    orgName: options.orgName ?? options.name,
+    email: options.email,
+    successUrl: options.successUrl,
+    cancelUrl: options.cancelUrl,
+    billingMode: options.billingMode,
     json: options.json,
   });
 }
@@ -982,11 +1044,31 @@ function orgCliOpts(options: PaymentsCliOptions) {
     json: options.json,
     prometheus: options.prometheus,
     includeWorm: options.includeWorm,
+    planId: options.plan ?? options.tier,
+    billingMode: options.billingMode,
+    createdVia: options.createdVia,
+    stripeCustomerId: options.stripeCustomerId ?? options.customer,
+    stripeSubscriptionId: options.stripeSubscriptionId,
+    memberEmails: options.memberEmails,
+    month: options.month,
+    overageUnits: options.overageUnits,
   };
 }
 
 export async function runPaymentsOrgCreateCmd(options: PaymentsCliOptions = {}): Promise<number> {
   return runPaymentsOrgCreate(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgProvisionCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOrgProvision(orgCliOpts(options));
+}
+
+export async function runPaymentsOrgReportUsageCmd(
+  options: PaymentsCliOptions = {}
+): Promise<number> {
+  return runPaymentsOrgReportUsage(orgCliOpts(options));
 }
 
 export async function runPaymentsOrgShowCmd(options: PaymentsCliOptions = {}): Promise<number> {

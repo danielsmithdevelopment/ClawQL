@@ -1,6 +1,6 @@
 /**
  * Reciprocal Rank Fusion across multi-source memory_recall hits.
- * Merges vault/vector/link/codegraph/pageindex/onyx lists into one ranked list
+ * Merges vault/vector/link/onyx lists into one ranked list
  * without requiring calibrated cross-source scores (agent-memory-stack composition).
  */
 
@@ -73,10 +73,4 @@ export function rerankNormalizedHitsRrf(
     list.sort((a, b) => b.score - a.score);
   }
   return reciprocalRankFusion([...bySource.values()], opts);
-}
-
-/** Master hybrid switch: CLAWQL_MEMORY_RECALL_HYBRID=1 enables optional layers by default. */
-export function hybridRecallMasterEnabled(): boolean {
-  const v = process.env.CLAWQL_MEMORY_RECALL_HYBRID?.trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes" || v === "on";
 }

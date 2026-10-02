@@ -54,7 +54,7 @@ Markdown with YAML frontmatter (OKF). File path = concept identity.
 
 ## Example
 
-Prefer the [decision rationale template](../../memory/okf-decision-rationale.md) body sections when `type: decision`. Worked example: [`examples/ontology/okf/decision-rationale-template.md`](../../../examples/ontology/okf/decision-rationale-template.md).
+Prefer the [decision rationale template](../../memory/okf-decision-rationale.md) body sections when `type: decision`. Worked example: [`docs/examples/ontology/okf/decision-rationale-template.md`](../../../docs/examples/ontology/okf/decision-rationale-template.md).
 
 ```markdown
 ---

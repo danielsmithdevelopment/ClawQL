@@ -2,7 +2,7 @@ import type { ListedMcpTool } from "mcp-grpc-transport";
 import type { VerifiedMcpAdapterAtr } from "./edge-auth.js";
 
 /** Tool-name prefixes that must be explicitly granted (not via generic memory/search scopes). */
-export const INTERNAL_TOOL_PREFIXES = ["ouroboros_", "pageindex_"] as const;
+export const INTERNAL_TOOL_PREFIXES = ["ouroboros_"] as const;
 
 /** Capability scope → tool names (non-internal). */
 const CAPABILITY_TOOLS: Record<string, readonly string[]> = {
@@ -71,7 +71,7 @@ function toolsOf(atr: VerifiedMcpAdapterAtr): string[] {
  * - `role: admin` or scope/tools `*` → all tools
  * - Exact tool name in `scope` or `tools` → that tool (including internal)
  * - Capability scopes (`search`, `memory`, …) → mapped public tools only
- * - Family scopes `pageindex` / `ouroboros` → matching internal prefixes
+ * - Family scope `ouroboros` → matching internal prefixes
  * - Internal tools are never granted by generic capability scopes alone
  */
 export function isToolAuthorizedForAtr(
@@ -88,7 +88,6 @@ export function isToolAuthorizedForAtr(
   if (scopes.includes(toolName) || tools.includes(toolName)) return true;
 
   if (isInternalToolName(toolName)) {
-    if (toolName.startsWith("pageindex_") && scopes.includes("pageindex")) return true;
     if (toolName.startsWith("ouroboros_") && scopes.includes("ouroboros")) return true;
     return false;
   }

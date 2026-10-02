@@ -4,15 +4,15 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenAPIDoc, Operation } from "clawql-api";
 import { resetSpecCache } from "clawql-api";
-import { handleMemoryIngestToolInput } from "./memory-ingest.js";
-import { handleMemoryRecallToolInput } from "./memory-recall.js";
+import { handleMemoryIngestToolInput } from "clawql-memory/plugin";
+import { handleMemoryRecallToolInput } from "clawql-memory/plugin";
 import { handleClawqlCodeToolInput } from "clawql-sandbox/plugin";
-import { resetClawqlApiForTests, setLoadSpecForTests } from "./clawql-api-adapters.js";
+import { resetClawqlApiForTests, setLoadSpecForTests } from "./composition/clawql-api-adapters.js";
 import {
   handleClawqlExecuteToolInput,
   handleClawqlSearchToolInput,
   resetSchemaFieldCache,
-} from "./tools.js";
+} from "./mcp/tools.js";
 import { withFetchServer } from "./test-utils/fetch-test-server.js";
 
 describe("MCP tool handlers", () => {

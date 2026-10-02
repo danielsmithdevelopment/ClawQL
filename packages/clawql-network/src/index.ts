@@ -5,7 +5,11 @@ export {
 } from "./enforcement/constants.js";
 export { tailcatConnectHook } from "./enforcement/tailcat-connect-hook.js";
 export { bootstrapHeadscale, type HeadscaleBootstrapConfig } from "./headscale/bootstrap.js";
-export { joinMesh, type MeshIdentity } from "./headscale/node-registration.js";
+export {
+  joinMesh,
+  type MeshIdentity,
+  type JoinMeshOptions,
+} from "./headscale/node-registration.js";
 export {
   initNetworking,
   type InitNetworkingOptions,
@@ -39,3 +43,4 @@ export {
   NetworkTransportServiceLive,
   runNetworkTransportEffect,
 } from "./effect/network-transport-service.js";
+export * from "./registry/index.js";

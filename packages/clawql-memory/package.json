@@ -51,10 +51,30 @@
       "import": "./dist/ingest/ingest.js",
       "require": "./dist/ingest/ingest.cjs"
     },
+    "./erase/erase": {
+      "types": "./dist/erase/erase.d.ts",
+      "import": "./dist/erase/erase.js",
+      "require": "./dist/erase/erase.cjs"
+    },
+    "./crypto/shred": {
+      "types": "./dist/crypto/shred.d.ts",
+      "import": "./dist/crypto/shred.js",
+      "require": "./dist/crypto/shred.cjs"
+    },
     "./recall/recall": {
       "types": "./dist/recall/recall.d.ts",
       "import": "./dist/recall/recall.js",
       "require": "./dist/recall/recall.cjs"
+    },
+    "./recall/vault-ranker": {
+      "types": "./dist/recall/vault-ranker.d.ts",
+      "import": "./dist/recall/vault-ranker.js",
+      "require": "./dist/recall/vault-ranker.cjs"
+    },
+    "./recall/read-around": {
+      "types": "./dist/recall/read-around.d.ts",
+      "import": "./dist/recall/read-around.js",
+      "require": "./dist/recall/read-around.cjs"
     },
     "./recall/onyx-recall": {
       "types": "./dist/recall/onyx-recall.d.ts",
@@ -123,9 +143,7 @@
   "dependencies": {
     "@xenova/transformers": "^2.17.2",
     "clawql-api": "0.1.0",
-    "clawql-codegraph": "0.1.0",
     "clawql-core": "0.1.0",
-    "clawql-pageindex": "0.1.0",
     "effect": "^3.21.4",
     "fflate": "^0.8.2",
     "pg": "^8.21.0",
@@ -138,7 +156,7 @@
     "@types/sql.js": "^1.4.11",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.0"
   },
   "files": [
     "dist",

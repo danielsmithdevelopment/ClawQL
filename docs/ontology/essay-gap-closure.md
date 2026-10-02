@@ -94,11 +94,11 @@
 
 ### WS6 — Vertical packs & import
 
-| ID      | Task                                                                                         | Band   | Done-when                                                                      |
-| ------- | -------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
-| **6.1** | Pack layout under `packages/clawql-ontology/packs/{legal,...}` or `examples/ontology/packs/` | A      | ≥1 pack (legal) with 3–5 entities                                              |
-| **6.2** | `clawql ontology import --pack legal` copies into `.clawql/ontology`                         | A      | Essay import works                                                             |
-| **6.3** | Healthcare / financial / real-estate packs                                                   | B/C ✅ | **Legal-only shipped**; other three roadmap placeholders (`packs/*/README.md`) |
+| ID      | Task                                                                                              | Band   | Done-when                                                                      |
+| ------- | ------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------ |
+| **6.1** | Pack layout under `packages/clawql-ontology/packs/{legal,...}` or `docs/examples/ontology/packs/` | A      | ≥1 pack (legal) with 3–5 entities                                              |
+| **6.2** | `clawql ontology import --pack legal` copies into `.clawql/ontology`                              | A      | Essay import works                                                             |
+| **6.3** | Healthcare / financial / real-estate packs                                                        | B/C ✅ | **Legal-only shipped**; other three roadmap placeholders (`packs/*/README.md`) |
 
 ### WS7 — Command Deck builder & VS Code
 

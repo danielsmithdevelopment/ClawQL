@@ -10,7 +10,7 @@
  *   - To skip every self-hosted fetch (public bundles only): **`CLAWQL_FETCH_PROVIDER_SPECS_SKIP_SELF_HOSTED=1`**.
  *
  *   PAPERLESS_BASE_URL  → providers/paperless/openapi.yaml (from `/api/schema/` on **Paperless-ngx ≥ 2.15**; older images redirect to login). Auth: **PAPERLESS_API_TOKEN** / **`CLAWQL_PAPERLESS_API_TOKEN`**, else **`paperless-api-token`** from the doc-pipeline Secret via kubectl, else **`clawql-local-paperless-dev`** on localhost (use a real DRF token from Profile or **`POST /api/token/`**). If the host still returns HTML, **in-cluster** `kubectl run … curl` to the Paperless Service. Disable k8s helpers with **`CLAWQL_FETCH_PAPERLESS_K8S_TOKEN=0`**.
- *   STIRLING_BASE_URL   → providers/stirling/openapi.yaml (Stirling-PDF uses **`/v1/api-docs`** per upstream `springdoc.api-docs.path`; script tries **`STIRLING_OPENAPI_PATHS`** or `/v1/api-docs` then `/v3/api-docs`). Optional **STIRLING_API_KEY**; localhost default key matches charts/clawql-mcp values-docker-desktop. Rejects HTML / non-OpenAPI bodies. On **401/403** or failed host attempts for stirling.localhost, tries **in-cluster** `kubectl run … curl` (**`CLAWQL_FETCH_STIRLING_K8S_FALLBACK=0`** disables).
+ *   STIRLING_BASE_URL   → providers/stirling/openapi.yaml (Stirling-PDF uses **`/v1/api-docs`** per upstream `springdoc.api-docs.path`; script tries **`STIRLING_OPENAPI_PATHS`** or `/v1/api-docs` then `/v3/api-docs`). Optional **STIRLING_API_KEY**; localhost default key matches manifests/charts/clawql-mcp values-docker-desktop. Rejects HTML / non-OpenAPI bodies. On **401/403** or failed host attempts for stirling.localhost, tries **in-cluster** `kubectl run … curl` (**`CLAWQL_FETCH_STIRLING_K8S_FALLBACK=0`** disables).
  *   TIKA_BASE_URL       → providers/tika/openapi.yaml (from `/openapi.json` when the server exposes it; otherwise the repo ships a **full JAX-RS surface** spec for Tika Server 2.9.x — there is no upstream OpenAPI URL)
  *   GOTENBERG_BASE_URL  → providers/gotenberg/openapi.yaml (from `/openapi.json` when available; else pins **Gotenberg v7.10.0** `docs/openapi.yaml` — override with **`GOTENBERG_OPENAPI_PIN_URL`**)
  *   ONYX_BASE_URL       → providers/onyx/openapi.yaml (from /openapi.json; optional Bearer via ONYX_API_TOKEN / CLAWQL_ONYX_API_TOKEN)
@@ -35,7 +35,7 @@ if (existsSync(envLocal)) {
   dotenv.config({ path: envLocal, override: true });
 }
 
-/** Same hostnames as charts/clawql-mcp values-docker-desktop.yaml `providerIngress.*.host` + Istio VS. */
+/** Same hostnames as manifests/charts/clawql-mcp values-docker-desktop.yaml `providerIngress.*.host` + Istio VS. */
 const LOCALHOST_SELF_HOSTED_DEFAULTS = {
   PAPERLESS_BASE_URL: "http://paperless.localhost",
   STIRLING_BASE_URL: "http://stirling.localhost",
@@ -45,7 +45,7 @@ const LOCALHOST_SELF_HOSTED_DEFAULTS = {
 };
 
 const CHART_LOCAL_STIRLING_API_KEY = "clawql-local-stirling-dev";
-/** Same default as `charts/clawql-mcp/values-docker-desktop.yaml` → `documentPipeline.paperless.auth.apiToken`. */
+/** Same default as `manifests/charts/clawql-mcp/values-docker-desktop.yaml` → `documentPipeline.paperless.auth.apiToken`. */
 const CHART_LOCAL_PAPERLESS_API_TOKEN = "clawql-local-paperless-dev";
 
 function selfHostedBlockSkipped() {

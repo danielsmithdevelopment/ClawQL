@@ -54,7 +54,11 @@ export type PaymentEventKind =
   | "COMPENSATION_CASHOUT_STAGED"
   | "COMPENSATION_CASHOUT_COMPLETED"
   | "COMPENSATION_CASHOUT_FAILED"
-  | "COMPENSATION_CANCELLED";
+  | "COMPENSATION_CANCELLED"
+  | "ORG_PROVISIONED"
+  | "ORG_MEMBER_ADDED"
+  | "ORG_PLAN_CHANGED"
+  | "USAGE_REPORTED_TO_BILLING";
 
 export type PaymentProvider =
   | "stripe"
@@ -68,7 +72,8 @@ export type PaymentProvider =
   | "payouts"
   | "offramp"
   | "credits"
-  | "compensation";
+  | "compensation"
+  | "billing";
 
 export type PaymentWormPayload = {
   provider: PaymentProvider;
@@ -85,6 +90,8 @@ export type PaymentWormPayload = {
   recruitment_id?: string;
   /** Counterparty tenant for P2P credit transfers. */
   counterparty_tenant_id?: string;
+  /** CPC org id (billing / provision events). */
+  org_id?: string;
 };
 
 /** Durable payment audit entry with hash-chained integrity fields on disk. */
@@ -1140,6 +1147,92 @@ export function buildCreditReleasedEntry(input: {
       balance_usd: input.balanceUsd,
       tenant_id: input.tenantId,
       resource: input.holdId,
+    },
+  });
+}
+
+export function buildOrgProvisionedEntry(input: {
+  orgId: string;
+  ownerTenantId: string;
+  planId: string;
+  billingMode: string;
+  createdVia: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ORG_PROVISIONED",
+    summary: `Org ${input.orgId} provisioned (${input.createdVia}, ${input.billingMode}, plan=${input.planId})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "billing",
+      tenant_id: input.ownerTenantId,
+      plan: input.planId,
+      org_id: input.orgId,
+      resource: input.billingMode,
+      reason: input.createdVia,
+    },
+  });
+}
+
+export function buildOrgMemberAddedEntry(input: {
+  orgId: string;
+  memberTenantId: string;
+  orgRole: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ORG_MEMBER_ADDED",
+    summary: `Org ${input.orgId} member added ${input.memberTenantId} (${input.orgRole})`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "billing",
+      tenant_id: input.memberTenantId,
+      org_id: input.orgId,
+      resource: input.orgRole,
+    },
+  });
+}
+
+export function buildOrgPlanChangedEntry(input: {
+  orgId: string;
+  tenantId: string;
+  fromPlan: string;
+  toPlan: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "ORG_PLAN_CHANGED",
+    summary: `Org ${input.orgId} plan ${input.fromPlan} → ${input.toPlan}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "billing",
+      tenant_id: input.tenantId,
+      plan: input.toPlan,
+      org_id: input.orgId,
+      resource: input.fromPlan,
+    },
+  });
+}
+
+export function buildUsageReportedToBillingEntry(input: {
+  orgId: string;
+  tenantId: string;
+  overageUnits: number;
+  eventName: string;
+  stripeCustomerId: string;
+  correlationId?: string;
+}): PaymentWormEntry {
+  return buildPaymentWormEntry({
+    eventKind: "USAGE_REPORTED_TO_BILLING",
+    summary: `Org ${input.orgId} reported ${input.overageUnits} overage units to Stripe meter ${input.eventName}`,
+    correlationId: input.correlationId,
+    payload: {
+      provider: "stripe",
+      tenant_id: input.tenantId,
+      org_id: input.orgId,
+      resource: input.eventName,
+      amount_usd: input.overageUnits,
+      reason: input.stripeCustomerId,
     },
   });
 }

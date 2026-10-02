@@ -31,7 +31,7 @@ clawql/
 ├── packages/
 │   ├── clawql-core/       # types, audit, Merkle, Cuckoo, Plugin interface
 │   ├── clawql-auth/       # gateway auth + provider credential headers
-│   ├── clawql-pageindex/  # MIT vectorless hierarchical indexing
+│   ├── ~~clawql-pageindex/~~  # removed in 8.0
 │   ├── clawql-api/        # gateway composition root, search/execute
 │   ├── clawql-memory/     # vault, memory.db, ingest/recall
 │   ├── clawql-documents/  # ingest + DEFAULT_IDP_PIPELINE recipe
@@ -267,7 +267,7 @@ clawql-core  (merkle/, cuckoo/, utils/ — internal modules)
      │
      ├──────────────┐
      │              │
-clawql-api    clawql-pageindex (✅)
+clawql-api    ~~clawql-pageindex~~ (removed 8.0)
      │
 ┌────┼────────────────────┐
 │    │                    │
@@ -316,7 +316,7 @@ _Why:_ Type divergence is the leading cause of silent integration failures. If t
 
 _Enforcement:_ Code review + import linting. There is no automated check that can reliably detect structural duplication, so reviewers must be vigilant.
 
-**Rule 5: `clawql-pageindex` has zero ClawQL dependencies.**
+**Rule 5 (historical): `clawql-pageindex` had zero ClawQL dependencies — package removed in 8.0.**
 
 It may only import from its own sub-packages and approved third-party libraries. It must remain usable as a standalone MIT package outside of ClawQL.
 
@@ -671,7 +671,7 @@ For integration tests, provide fixture documents in `test/fixtures/`. The CI int
 
 **Step 8: Add an end-to-end test in Tier 1 Docker Compose**
 
-Add your vertical’s toggle to `examples/clawql-local-docker-compose/docker-compose.yml` and add an end-to-end test in `examples/clawql-local-docker-compose/tests/`. The E2E test must:
+Add your vertical’s toggle to `docs/examples/clawql-local-docker-compose/docker-compose.yml` and add an end-to-end test in `docs/examples/clawql-local-docker-compose/tests/`. The E2E test must:
 
 1. Enable your vertical via CRD (or environment variable in Tier 1)
 2. Ingest at least one fixture document through the full pipeline
@@ -684,8 +684,8 @@ Add your vertical’s toggle to `examples/clawql-local-docker-compose/docker-com
 Add your vertical’s toggle to:
 
 - `operator/config/crd/clawqlinstance_types.go` — add the field to the spec struct
-- `charts/clawql-full-stack/values.yaml` — add the default (disabled) toggle
-- `charts/clawql-full-stack/templates/` — add the conditional include
+- `manifests/charts/clawql-full-stack/values.yaml` — add the default (disabled) toggle
+- `manifests/charts/clawql-full-stack/templates/` — add the conditional include
 
 **Step 10: Provide documentation**
 

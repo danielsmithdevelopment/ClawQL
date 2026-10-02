@@ -1,0 +1,321 @@
+/**
+ * Compose live / optional BurstWatch sources onto BurstWatchStub.
+ *
+ * Starts PodInformer + NodeClaimInformer when kubeconfig works; optionally
+ * tails an Istio access-log path when present; optionally evaluates a celld
+ * lease snapshot via CelldFleetHealthService. Each source that cannot start
+ * is recorded as unavailable — never invents watch events or lease rows.
+ *
+ * Spec: docs/streams/aws-celld-burst.md §8.
+ */
+
+import { readFileSync } from "node:fs";
+import { Context, Effect, Layer } from "effect";
+import type { BurstWatchStub } from "./burst-watch-stub.js";
+import {
+  PodInformerService,
+  startPodInformerOrNull,
+  type PodInformerHandle,
+} from "./pod-informer.js";
+import {
+  NodeClaimInformerService,
+  startNodeClaimInformerOrNull,
+  type NodeClaimInformerHandle,
+} from "./karpenter-nodeclaim-informer.js";
+import {
+  IstioAccessLogTailService,
+  startIstioAccessLogTailOrNull,
+  type IstioAccessLogTailHandle,
+} from "./istio-access-log-tail.js";
+import {
+  CelldFleetHealthService,
+  CelldFleetHealthLive,
+  parseCelldLeaseSnapshotJson,
+  type CelldLeaseRecord,
+} from "./celld-fleet-health.js";
+
+export type BurstWatchSourcesOptions = {
+  readonly podNamespace?: string;
+  readonly podLabelSelector?: string;
+  readonly nodeClaimLabelSelector?: string;
+  readonly enablePodInformer?: boolean;
+  readonly enableNodeClaimInformer?: boolean;
+  /**
+   * When set, start IstioAccessLogTailService against this NDJSON path.
+   * Missing/unreadable path → status started:false (fail-closed).
+   */
+  readonly istioAccessLogPath?: string;
+  /**
+   * JSON from `fetch-celld-leases-from-s3.sh` (or host-equivalent).
+   * Parsed fail-closed; never invents leases when missing/invalid.
+   */
+  readonly celldLeaseSnapshotJson?: string;
+  /**
+   * Path to a lease snapshot JSON file (same shape as `celldLeaseSnapshotJson`).
+   * Missing/unreadable → started:false (fail-closed).
+   */
+  readonly celldLeaseSnapshotPath?: string;
+  /** Pre-parsed leases (alternative to JSON / path). */
+  readonly celldLeases?: readonly CelldLeaseRecord[];
+  readonly celldExpectedNodeIds?: readonly string[];
+  readonly celldFleetSourceNote?: string;
+};
+
+export type BurstWatchSourceStatus = {
+  readonly id:
+    | "pod-informer"
+    | "nodeclaim-informer"
+    | "istio-access-log-tail"
+    | "celld-fleet-health";
+  readonly started: boolean;
+  readonly detail: string;
+};
+
+export type BurstWatchSourcesHandle = {
+  readonly stop: () => void;
+  readonly statuses: readonly BurstWatchSourceStatus[];
+  readonly startedCount: number;
+};
+
+export class BurstWatchSourcesService extends Context.Tag("clawql/BurstWatchSourcesService")<
+  BurstWatchSourcesService,
+  {
+    readonly start: (
+      stub: Context.Tag.Service<typeof BurstWatchStub>,
+      options?: BurstWatchSourcesOptions
+    ) => Effect.Effect<BurstWatchSourcesHandle>;
+  }
+>() {}
+
+export function makeBurstWatchSourcesService(
+  pod: Context.Tag.Service<typeof PodInformerService>,
+  nodeClaim: Context.Tag.Service<typeof NodeClaimInformerService>,
+  istioTail?: Context.Tag.Service<typeof IstioAccessLogTailService>,
+  fleet?: Context.Tag.Service<typeof CelldFleetHealthService>
+): Context.Tag.Service<typeof BurstWatchSourcesService> {
+  return {
+    start: (stub, options) =>
+      Effect.gen(function* () {
+        const statuses: BurstWatchSourceStatus[] = [];
+        const stops: Array<() => void> = [];
+        const enablePod = options?.enablePodInformer !== false;
+        const enableNc = options?.enableNodeClaimInformer !== false;
+
+        if (enablePod) {
+          const handle: PodInformerHandle | null = yield* startPodInformerOrNull(pod, stub, {
+            namespace: options?.podNamespace,
+            labelSelector: options?.podLabelSelector,
+          });
+          if (handle) {
+            stops.push(handle.stop);
+            statuses.push({
+              id: "pod-informer",
+              started: true,
+              detail: `kubernetes-watch ns=${options?.podNamespace ?? "default"}`,
+            });
+          } else {
+            statuses.push({
+              id: "pod-informer",
+              started: false,
+              detail: "unavailable (no kubeconfig / cluster)",
+            });
+          }
+        }
+
+        if (enableNc) {
+          const handle: NodeClaimInformerHandle | null = yield* startNodeClaimInformerOrNull(
+            nodeClaim,
+            stub,
+            { labelSelector: options?.nodeClaimLabelSelector }
+          );
+          if (handle) {
+            stops.push(handle.stop);
+            statuses.push({
+              id: "nodeclaim-informer",
+              started: true,
+              detail: "kubernetes-watch nodeclaims.karpenter.sh",
+            });
+          } else {
+            statuses.push({
+              id: "nodeclaim-informer",
+              started: false,
+              detail: "unavailable (no kubeconfig / cluster)",
+            });
+          }
+        }
+
+        if (options?.istioAccessLogPath) {
+          if (!istioTail) {
+            statuses.push({
+              id: "istio-access-log-tail",
+              started: false,
+              detail: "IstioAccessLogTailService not provided to bootstrap",
+            });
+          } else {
+            const handle: IstioAccessLogTailHandle | null = yield* startIstioAccessLogTailOrNull(
+              istioTail,
+              stub,
+              { path: options.istioAccessLogPath, fromStart: true }
+            );
+            if (handle) {
+              stops.push(handle.stop);
+              statuses.push({
+                id: "istio-access-log-tail",
+                started: true,
+                detail: `file-tail ${options.istioAccessLogPath}`,
+              });
+            } else {
+              statuses.push({
+                id: "istio-access-log-tail",
+                started: false,
+                detail: `unavailable (${options.istioAccessLogPath})`,
+              });
+            }
+          }
+        }
+
+        const wantFleet =
+          typeof options?.celldLeaseSnapshotJson === "string" ||
+          typeof options?.celldLeaseSnapshotPath === "string" ||
+          options?.celldLeases !== undefined;
+        if (wantFleet) {
+          if (!fleet) {
+            statuses.push({
+              id: "celld-fleet-health",
+              started: false,
+              detail: "CelldFleetHealthService not provided to bootstrap",
+            });
+          } else {
+            const leasesResult =
+              options?.celldLeases !== undefined
+                ? Effect.succeed(options.celldLeases)
+                : Effect.gen(function* () {
+                    let raw = options?.celldLeaseSnapshotJson;
+                    if (raw === undefined && options?.celldLeaseSnapshotPath) {
+                      const path = options.celldLeaseSnapshotPath;
+                      const read = yield* Effect.try({
+                        try: () => readFileSync(path, "utf8"),
+                        catch: (e) => ({
+                          _tag: "CelldLeaseSnapshotInvalid" as const,
+                          reason: `cannot read ${path}: ${e instanceof Error ? e.message : String(e)}`,
+                        }),
+                      });
+                      raw = read;
+                    }
+                    if (typeof raw !== "string") {
+                      return yield* Effect.fail({
+                        _tag: "CelldLeaseSnapshotInvalid" as const,
+                        reason: "no lease snapshot json or path provided",
+                      });
+                    }
+                    return yield* parseCelldLeaseSnapshotJson(raw);
+                  });
+            const leasesOrErr = yield* Effect.either(leasesResult);
+            if (leasesOrErr._tag === "Left") {
+              statuses.push({
+                id: "celld-fleet-health",
+                started: false,
+                detail: `invalid lease snapshot: ${leasesOrErr.left.reason}`,
+              });
+            } else if (leasesOrErr.right.length === 0 && !options?.celldExpectedNodeIds?.length) {
+              statuses.push({
+                id: "celld-fleet-health",
+                started: false,
+                detail: "empty lease snapshot — refuse inventing fleet health",
+              });
+            } else {
+              const report = yield* fleet.check({
+                leases: leasesOrErr.right,
+                expectedNodeIds: options?.celldExpectedNodeIds,
+                sourceNote:
+                  options?.celldFleetSourceNote ??
+                  "BurstWatchSources bootstrap — host-supplied lease snapshot",
+              });
+              for (const ev of report.watchEvents) {
+                yield* stub.enqueue(ev);
+              }
+              statuses.push({
+                id: "celld-fleet-health",
+                started: true,
+                detail: `evaluated leases=${leasesOrErr.right.length} findings=${report.findings.length}`,
+              });
+            }
+          }
+        }
+
+        const startedCount = statuses.filter((s) => s.started).length;
+        return {
+          startedCount,
+          statuses,
+          stop: () => {
+            for (const s of stops) {
+              try {
+                s();
+              } catch {
+                /* ignore */
+              }
+            }
+          },
+        } satisfies BurstWatchSourcesHandle;
+      }),
+  };
+}
+
+export const BurstWatchSourcesLive: Layer.Layer<
+  BurstWatchSourcesService,
+  never,
+  | PodInformerService
+  | NodeClaimInformerService
+  | IstioAccessLogTailService
+  | CelldFleetHealthService
+> = Layer.effect(
+  BurstWatchSourcesService,
+  Effect.gen(function* () {
+    const pod = yield* PodInformerService;
+    const nc = yield* NodeClaimInformerService;
+    const istio = yield* IstioAccessLogTailService;
+    const fleet = yield* CelldFleetHealthService;
+    return makeBurstWatchSourcesService(pod, nc, istio, fleet);
+  })
+);
+
+/** Test / no-cluster stack: unavailable informers + sources service. */
+export const BurstWatchSourcesUnavailableLive: Layer.Layer<
+  | BurstWatchSourcesService
+  | PodInformerService
+  | NodeClaimInformerService
+  | IstioAccessLogTailService
+  | CelldFleetHealthService
+> = BurstWatchSourcesLive.pipe(
+  Layer.provideMerge(
+    Layer.mergeAll(
+      Layer.succeed(PodInformerService, {
+        start: () =>
+          Effect.fail({
+            _tag: "PodInformerUnavailable" as const,
+            reason: "test double — no cluster",
+          }),
+      }),
+      Layer.succeed(NodeClaimInformerService, {
+        start: () =>
+          Effect.fail({
+            _tag: "NodeClaimInformerUnavailable" as const,
+            reason: "test double — no cluster",
+          }),
+      }),
+      Layer.succeed(IstioAccessLogTailService, {
+        start: () =>
+          Effect.fail({
+            _tag: "IstioAccessLogTailUnavailable" as const,
+            reason: "test double — no access-log path",
+          }),
+        ingestFileOnce: () =>
+          Effect.fail({
+            _tag: "IstioAccessLogTailUnavailable" as const,
+            reason: "test double — no access-log path",
+          }),
+      }),
+      CelldFleetHealthLive
+    )
+  )
+);

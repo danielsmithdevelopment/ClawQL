@@ -1,0 +1,2423 @@
+{
+  "modelTag": "decide",
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "backend": "gliner2",
+  "scoredAt": "2026-09-25T20:23:14.600Z",
+  "evalSuite": "v0.5-routing-fresh",
+  "fit": [
+    {
+      "caseId": "route-v03-001",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.968
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0288
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0249
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.968,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-002",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.8848
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.1465
+        }
+      ],
+      "topCandidateId": "mcp.execute",
+      "topConfidence": 0.8848,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-003",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.8635
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.2538
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0894
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.8635,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-004",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.7491
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.2234
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.1448
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.7491,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-005",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.7031
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.2552
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.1953
+        }
+      ],
+      "topCandidateId": "mcp.memory_ingest",
+      "topConfidence": 0.7031,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-006",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.9288
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2404
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.1254
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_a",
+      "topConfidence": 0.9288,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-007",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.9046
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2076
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.1504
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_b",
+      "topConfidence": 0.9046,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-008",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.866
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.4447
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.0694
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.866,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-009",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.9718
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0416
+        },
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.0122
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_overbroad",
+      "topConfidence": 0.9718,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-010",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.872
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.2183
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0789
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.872,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-011",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.8446
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.3075
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.033
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.8446,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-012",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.8337
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.1457
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0221
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.8337,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-013",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.9831
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.019
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0123
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.9831,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-014",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.9731
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0281
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0179
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.9731,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-015",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.7931
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.4049
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.268
+        }
+      ],
+      "topCandidateId": "mcp.skills_list",
+      "topConfidence": 0.7931,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-016",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.9312
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.2846
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.0403
+        }
+      ],
+      "topCandidateId": "mcp.skills_get",
+      "topConfidence": 0.9312,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-017",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.9601
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0679
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.027
+        }
+      ],
+      "topCandidateId": "mcp.sandbox_exec",
+      "topConfidence": 0.9601,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-018",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.9333
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0508
+        }
+      ],
+      "topCandidateId": "mcp.sandbox_exec",
+      "topConfidence": 0.9333,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-019",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.4513
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.3427
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.2642
+        }
+      ],
+      "topCandidateId": "mcp.notify",
+      "topConfidence": 0.4513,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-020",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.schedule",
+      "scores": [
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.9809
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0395
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0116
+        }
+      ],
+      "topCandidateId": "mcp.schedule",
+      "topConfidence": 0.9809,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-021",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.9342
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.0553
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0332
+        }
+      ],
+      "topCandidateId": "mcp.notify",
+      "topConfidence": 0.9342,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-022",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.958
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0801
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0106
+        }
+      ],
+      "topCandidateId": "mcp.pageindex_build_tree",
+      "topConfidence": 0.958,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-023",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.741
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.2653
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.036
+        }
+      ],
+      "topCandidateId": "tool.generic_web_search",
+      "topConfidence": 0.741,
+      "correct": false
+    },
+    {
+      "caseId": "route-v03-024",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "scores": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.8658
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.2649
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0887
+        }
+      ],
+      "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "topConfidence": 0.8658,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-025",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.9242
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.5037
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0164
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.9242,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-026",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.8558
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.2099
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.0475
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.8558,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-027",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "scores": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.9564
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0229
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.015
+        }
+      ],
+      "topCandidateId": "mcp.clawql_think",
+      "topConfidence": 0.9564,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-028",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.9889
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.0208
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0084
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.9889,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-029",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.9758
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0298
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.9758,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-030",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.7886
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.6756
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.1342
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.7886,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-031",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.9323
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.1135
+        }
+      ],
+      "topCandidateId": "mcp.execute",
+      "topConfidence": 0.9323,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-032",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.9298
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0374
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0099
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.9298,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-033",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.8597
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.1866
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.1214
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.8597,
+      "correct": true
+    },
+    {
+      "caseId": "route-v03-034",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.8647
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.5992
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0472
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.8647,
+      "correct": false
+    },
+    {
+      "caseId": "fit-harvey-harvey-018-sql-cohort-count",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.4934
+        },
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "confidence": 0.4481
+        },
+        {
+          "candidateId": "tool.generic_search",
+          "confidence": 0.3953
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.1613
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.4934,
+      "correct": true
+    },
+    {
+      "caseId": "fit-harvey-harvey-018-wrong-first-tool-bash",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.5199
+        },
+        {
+          "candidateId": "tool.grep_springing_blind",
+          "confidence": 0.4413
+        },
+        {
+          "candidateId": "tool.bash_ls_workspace",
+          "confidence": 0.2759
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.5199,
+      "correct": true
+    },
+    {
+      "caseId": "fit-harvey-harvey-018-memory-vs-sql-cohort",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.6676
+        },
+        {
+          "candidateId": "mcp.memory_recall_practice_area",
+          "confidence": 0.6312
+        },
+        {
+          "candidateId": "mcp.memory_recall_credit_title",
+          "confidence": 0.5175
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.6676,
+      "correct": true
+    },
+    {
+      "caseId": "fit-harvey-harvey-001-hsr-second-request-list",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "confidence": 0.7232
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.512
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2687
+        }
+      ],
+      "topCandidateId": "tool.bash_grep_hunt",
+      "topConfidence": 0.7232,
+      "correct": false
+    },
+    {
+      "caseId": "fit-harvey-harvey-002-hsr-merger-reviews",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "tool.grep_second_request",
+          "confidence": 0.8583
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.4154
+        },
+        {
+          "candidateId": "tool.bash_find",
+          "confidence": 0.0628
+        }
+      ],
+      "topCandidateId": "tool.grep_second_request",
+      "topConfidence": 0.8583,
+      "correct": false
+    },
+    {
+      "caseId": "fit-harvey-harvey-012-springing-lien-first-tool",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.5898
+        },
+        {
+          "candidateId": "tool.grep_springing_blind",
+          "confidence": 0.5079
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.3115
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.5898,
+      "correct": true
+    },
+    {
+      "caseId": "fit-harvey-harvey-008-hsr-vs-filing-confusion",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_hsr_filing",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_hsr_filing",
+          "confidence": 0.6697
+        },
+        {
+          "candidateId": "mcp.memory_recall_second_request_only",
+          "confidence": 0.4126
+        },
+        {
+          "candidateId": "tool.bash_grep_hunt",
+          "confidence": 0.3746
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_hsr_filing",
+      "topConfidence": 0.6697,
+      "correct": true
+    }
+  ],
+  "eval": [
+    {
+      "caseId": "route-v05-001",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.7387
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.1585
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_a",
+      "topConfidence": 0.7387,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-002",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.7456
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.242
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_b",
+      "topConfidence": 0.7456,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-003",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.8092
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.4559
+        }
+      ],
+      "topCandidateId": "mcp.skills_list",
+      "topConfidence": 0.8092,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-004",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.9453
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.0556
+        }
+      ],
+      "topCandidateId": "mcp.skills_get",
+      "topConfidence": 0.9453,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-005",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.7146
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.3451
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.7146,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-006",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.8888
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2626
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_overbroad",
+      "topConfidence": 0.8888,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-007",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.844
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.2414
+        }
+      ],
+      "topCandidateId": "mcp.memory_ingest",
+      "topConfidence": 0.844,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-008",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.9236
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0965
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-ingest",
+      "topConfidence": 0.9236,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-009",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.7966
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.3084
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.7966,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-010",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.7167
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.4059
+        }
+      ],
+      "topCandidateId": "skill.clawql-search-workflows",
+      "topConfidence": 0.7167,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-011",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.8887
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.2912
+        }
+      ],
+      "topCandidateId": "mcp.execute",
+      "topConfidence": 0.8887,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-012",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.9654
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0875
+        }
+      ],
+      "topCandidateId": "skill.clawql-execute-workflows",
+      "topConfidence": 0.9654,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-013",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.5546
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.4769
+        }
+      ],
+      "topCandidateId": "skill.clawql-notify-workflows",
+      "topConfidence": 0.5546,
+      "correct": false
+    },
+    {
+      "caseId": "route-v05-014",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.9059
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.1348
+        }
+      ],
+      "topCandidateId": "skill.clawql-notify-workflows",
+      "topConfidence": 0.9059,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-015",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.schedule",
+      "scores": [
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.9017
+        },
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.5988
+        }
+      ],
+      "topCandidateId": "mcp.schedule",
+      "topConfidence": 0.9017,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-016",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.8876
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.8478
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0968
+        }
+      ],
+      "topCandidateId": "skill.clawql-schedule-workflows",
+      "topConfidence": 0.8876,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-017",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "confidence": 0.6404
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.588
+        }
+      ],
+      "topCandidateId": "skill.clawql-sandbox-exec",
+      "topConfidence": 0.6404,
+      "correct": false
+    },
+    {
+      "caseId": "route-v05-018",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "confidence": 0.9925
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0077
+        }
+      ],
+      "topCandidateId": "skill.clawql-sandbox-exec",
+      "topConfidence": 0.9925,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-019",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.8613
+        },
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "confidence": 0.3992
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.8613,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-020",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "confidence": 0.9573
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.1424
+        }
+      ],
+      "topCandidateId": "skill.clawql-audit-workflows",
+      "topConfidence": 0.9573,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-021",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.8111
+        },
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.2769
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.8111,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-022",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.8281
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.5525
+        }
+      ],
+      "topCandidateId": "skill.clawql-cache-workflows",
+      "topConfidence": 0.8281,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-023",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "scores": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.6512
+        },
+        {
+          "candidateId": "skill.deep-thinking",
+          "confidence": 0.6146
+        }
+      ],
+      "topCandidateId": "mcp.clawql_think",
+      "topConfidence": 0.6512,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-024",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "scores": [
+        {
+          "candidateId": "skill.deep-thinking",
+          "confidence": 0.8753
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.2775
+        }
+      ],
+      "topCandidateId": "skill.deep-thinking",
+      "topConfidence": 0.8753,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-025",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "scores": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.9277
+        },
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.5761
+        }
+      ],
+      "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "topConfidence": 0.9277,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-026",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.9515
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.3255
+        }
+      ],
+      "topCandidateId": "skill.clawql-ouroboros-workflows",
+      "topConfidence": 0.9515,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-027",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.7035
+        },
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "confidence": 0.586
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.7035,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-028",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "confidence": 0.8646
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.2945
+        }
+      ],
+      "topCandidateId": "skill.clawql-external-ingest",
+      "topConfidence": 0.8646,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-029",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.736
+        },
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "confidence": 0.4978
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.736,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-030",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "confidence": 0.9196
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.3606
+        }
+      ],
+      "topCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "topConfidence": 0.9196,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-031",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.7924
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.3937
+        },
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.2483
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.7924,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-032",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.8718
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.1704
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.8718,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-033",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.9325
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0385
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.0371
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.9325,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-034",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.9274
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.1729
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0408
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.9274,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-035",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.9525
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0464
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.9525,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-036",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "scores": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.9843
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.0102
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0079
+        }
+      ],
+      "topCandidateId": "tool.generic_web_search",
+      "topConfidence": 0.9843,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-037",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.9553
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.0724
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0295
+        }
+      ],
+      "topCandidateId": "mcp.pageindex_build_tree",
+      "topConfidence": 0.9553,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-038",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.9919
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.012
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0113
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.9919,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-039",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.8555
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.1087
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.8555,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-040",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.7263
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.4706
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.1599
+        }
+      ],
+      "topCandidateId": "mcp.execute",
+      "topConfidence": 0.7263,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-041",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.8954
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.2213
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0832
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.8954,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-042",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.9327
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2146
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.0421
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-recall",
+      "topConfidence": 0.9327,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-043",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.8646
+        },
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.548
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.5109
+        }
+      ],
+      "topCandidateId": "skill.clawql-vault-memory",
+      "topConfidence": 0.8646,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-044",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.7135
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.3297
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.3163
+        }
+      ],
+      "topCandidateId": "skill.clawql-composed-mcp-workflows",
+      "topConfidence": 0.7135,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-045",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.96
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.039
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0172
+        }
+      ],
+      "topCandidateId": "mcp.notify",
+      "topConfidence": 0.96,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-046",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.schedule",
+      "scores": [
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.9416
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.1404
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0495
+        }
+      ],
+      "topCandidateId": "mcp.schedule",
+      "topConfidence": 0.9416,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-047",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.9862
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.0155
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0104
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.9862,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-048",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.8924
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.4301
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.0952
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.8924,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-049",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "scores": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.9
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1176
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.0764
+        }
+      ],
+      "topCandidateId": "mcp.clawql_think",
+      "topConfidence": 0.9,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-050",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.8982
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.1611
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.1475
+        }
+      ],
+      "topCandidateId": "mcp.pageindex_build_tree",
+      "topConfidence": 0.8982,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-051",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "scores": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.9282
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.1591
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0715
+        }
+      ],
+      "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "topConfidence": 0.9282,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-052",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.9536
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1465
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0166
+        }
+      ],
+      "topCandidateId": "mcp.sandbox_exec",
+      "topConfidence": 0.9536,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-053",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.8027
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.4173
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.1682
+        }
+      ],
+      "topCandidateId": "mcp.skills_list",
+      "topConfidence": 0.8027,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-054",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.9371
+        },
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.9128
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.0235
+        }
+      ],
+      "topCandidateId": "mcp.skills_get",
+      "topConfidence": 0.9371,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-055",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.9185
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0881
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0514
+        }
+      ],
+      "topCandidateId": "mcp.memory_ingest",
+      "topConfidence": 0.9185,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-056",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.9007
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.192
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0622
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.9007,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-057",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.9628
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0583
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.0304
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_a",
+      "topConfidence": 0.9628,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-058",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.8926
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.1558
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.0651
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_b",
+      "topConfidence": 0.8926,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-059",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.7166
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.3763
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.36
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_overbroad",
+      "topConfidence": 0.7166,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-060",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.9731
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.1666
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0182
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.9731,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-061",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "scores": [
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.9409
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0463
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0313
+        }
+      ],
+      "topCandidateId": "tool.bash_workspace_hunt",
+      "topConfidence": 0.9409,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-062",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "scores": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.9181
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.1073
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0233
+        }
+      ],
+      "topCandidateId": "tool.generic_web_search",
+      "topConfidence": 0.9181,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-063",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "confidence": 0.9392
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.2203
+        },
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.0726
+        }
+      ],
+      "topCandidateId": "skill.clawql-audit-workflows",
+      "topConfidence": 0.9392,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-064",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.8751
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.6981
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0208
+        }
+      ],
+      "topCandidateId": "skill.clawql-cache-workflows",
+      "topConfidence": 0.8751,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-065",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.8837
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.2231
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.1128
+        }
+      ],
+      "topCandidateId": "skill.clawql-composed-mcp-workflows",
+      "topConfidence": 0.8837,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-066",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.9455
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.1825
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1523
+        }
+      ],
+      "topCandidateId": "skill.clawql-execute-workflows",
+      "topConfidence": 0.9455,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-067",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "confidence": 0.8924
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.2645
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.0336
+        }
+      ],
+      "topCandidateId": "skill.clawql-external-ingest",
+      "topConfidence": 0.8924,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-068",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.8291
+        },
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.5246
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.4069
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-ingest",
+      "topConfidence": 0.8291,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-069",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.9033
+        },
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.6262
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.1906
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-recall",
+      "topConfidence": 0.9033,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-070",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.9325
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0955
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.0285
+        }
+      ],
+      "topCandidateId": "skill.clawql-notify-workflows",
+      "topConfidence": 0.9325,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-071",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.7094
+        },
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "confidence": 0.5598
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.189
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.7094,
+      "correct": false
+    },
+    {
+      "caseId": "route-v05-072",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.8983
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.4849
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0776
+        }
+      ],
+      "topCandidateId": "skill.clawql-ouroboros-workflows",
+      "topConfidence": 0.8983,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-073",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "confidence": 0.9368
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.1089
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0679
+        }
+      ],
+      "topCandidateId": "skill.clawql-sandbox-exec",
+      "topConfidence": 0.9368,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-074",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.9035
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.675
+        },
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.18
+        }
+      ],
+      "topCandidateId": "skill.clawql-schedule-workflows",
+      "topConfidence": 0.9035,
+      "correct": true
+    },
+    {
+      "caseId": "route-v05-075",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.8622
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.5037
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0407
+        }
+      ],
+      "topCandidateId": "skill.clawql-search-workflows",
+      "topConfidence": 0.8622,
+      "correct": true
+    }
+  ]
+}

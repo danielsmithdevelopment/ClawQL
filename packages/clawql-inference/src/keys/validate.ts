@@ -45,6 +45,14 @@ export function validateVirtualKey(
   }
 
   if (isBudgetExceeded(key.spentUsd, key.budgetUsd)) {
+    void import("clawql-mcp-events")
+      .then(({ emitBudgetExhausted }) => {
+        emitBudgetExhausted({
+          budget_id: key.id,
+          scope: key.team,
+        });
+      })
+      .catch(() => undefined);
     return {
       ok: false,
       status: 402,
@@ -68,6 +76,8 @@ export function validateVirtualKey(
       id: key.id,
       team: key.team,
       budgetUsd: key.budgetUsd,
+      memoryEnrichment: key.memoryEnrichment === true,
+      memoryScope: key.memoryScope?.trim() || key.team,
     },
   };
 }

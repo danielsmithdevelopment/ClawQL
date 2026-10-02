@@ -7,7 +7,7 @@
 #   cp docker/compose/legal.env.example docker/compose/legal.env
 #   docker compose -f docker/compose/legal.compose.yml --env-file docker/compose/legal.env up -d --build
 #
-# See docker/compose/README.md and deployment/samples/legal-contract/README.md
+# See docker/compose/README.md and docs/examples/idp/legal-contract/README.md
 
 name: clawql-legal
 
@@ -44,7 +44,7 @@ services:
       CLAWQL_HITL_WEBHOOK_RESUME_WORKFLOW: "0"
     volumes:
       - ${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL-legal}:/vault
-      - ../../deployment/samples/legal-contract/fixtures:/fixtures:ro
+      - ../../docs/examples/idp/legal-contract/fixtures:/fixtures:ro
     depends_on:
       docling:
         condition: service_healthy
@@ -74,7 +74,7 @@ services:
 
   classifier:
     build:
-      context: ../../deployment/samples/classifier-http
+      context: ../../docs/examples/idp/classifier-http
     environment:
       MODEL_VERSION: legal-contract-reference-v1
       CLASSIFIER_MIN_CONFIDENCE: ${CLASSIFIER_MIN_CONFIDENCE:-0.85}
@@ -86,7 +86,7 @@ services:
 
   langextract:
     build:
-      context: ../../deployment/samples/langextract-http
+      context: ../../docs/examples/idp/langextract-http
     ports:
       - "${LANGEXTRACT_HOST_PORT:-8290}:8090"
     environment:

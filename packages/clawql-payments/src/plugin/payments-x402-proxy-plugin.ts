@@ -7,6 +7,7 @@ import { Effect } from "effect";
 import { isX402EnforcementActive } from "../x402/config.js";
 import { mcpX402BeforeCallToolEffect } from "../x402/mcp-enforce-effect.js";
 import { createPaymentsToolsPlugin, paymentsMcpToolsEnabled } from "./payments-tools-plugin.js";
+import { maybeOutboundX402Plugin } from "../x402/outbound/outbound-plugin.js";
 
 export const PAYMENTS_X402_PROXY_PLUGIN_ID = "payments-x402-mcp-proxy";
 
@@ -57,7 +58,7 @@ export function createPaymentsX402ProxyPlugin(
   });
 }
 
-/** Default payments MCP plugins (x402 proxy + optional payout/ramp/offramp tools). */
+/** Default payments MCP plugins (x402 proxy + optional payout/ramp/offramp tools + outbound payer). */
 export function defaultPaymentsProxyPlugins(
   env: NodeJS.ProcessEnv = process.env
 ): readonly ProviderPlugin[] {
@@ -68,5 +69,7 @@ export function defaultPaymentsProxyPlugins(
   if (paymentsMcpToolsEnabled(env)) {
     plugins.push(createPaymentsToolsPlugin(env));
   }
+  const outbound = maybeOutboundX402Plugin(env);
+  if (outbound) plugins.push(outbound);
   return plugins;
 }

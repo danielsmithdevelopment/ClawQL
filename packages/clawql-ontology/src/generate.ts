@@ -421,18 +421,3 @@ ${writeList}
 ] as const;
 `;
 }
-
-/** @internal exported for tests */
-export function _relationshipToolNameForTests(from: string, rel: OntologyRelationship): string {
-  return relationshipToolName(from, rel);
-}
-
-/** @internal exported for tests */
-export function _isShipableLowNativeWriteForTests(action: OntologyAction): boolean {
-  return isShipableLowNativeWrite(action);
-}
-
-/** @internal exported for tests */
-export function _isShipableNativeWriteForTests(action: OntologyAction): boolean {
-  return isShipableNativeWrite(action);
-}

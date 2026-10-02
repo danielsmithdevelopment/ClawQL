@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://clawql.dev/schemas/pageindex-ab/answer-contract.schema.json",
+  "title": "PageIndex A/B answer contract",
+  "description": "Every arm must emit this JSON. Graders score answer + sections + not_found; never which tools were used.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["answer", "sections", "not_found"],
+  "properties": {
+    "answer": {
+      "type": "string",
+      "description": "Short normalized answer text. Empty string when not_found is true."
+    },
+    "sections": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Cited section IDs from the shared Docling conversion."
+    },
+    "not_found": {
+      "type": "boolean",
+      "description": "True only when the arm asserts the answer is not in the document."
+    }
+  }
+}

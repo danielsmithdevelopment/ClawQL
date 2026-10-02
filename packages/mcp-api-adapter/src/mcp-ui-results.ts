@@ -1,5 +1,5 @@
 import { escapeMcpUiHtml } from "./mcp-ui-form.js";
-import type { McpUiResultKind } from "./mcp-ui-templates.js";
+import type { McpUiResultKind } from "./mcp-ui-templates/index.js";
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -16,29 +16,242 @@ function jsonFallback(body: unknown): string {
   return `<pre><code>${escapeMcpUiHtml(JSON.stringify(body, null, 2))}</code></pre>`;
 }
 
-function renderSearchResults(body: unknown): string {
+const SAFE_TOOL = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+const SAFE_FIELD = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
+const HTTPS_IMG = /^https:\/\/[^\s"'<>]+$/i;
+const HTTPS_HREF = /^https:\/\/[^\s"'<>]+$/i;
+const MCP_UI_EXECUTE_PREFIX = "/mcp-ui/execute";
+
+type McpUiCardAction = {
+  label: string;
+  tool: string;
+  fields: Record<string, string>;
+};
+
+type McpUiCard = {
+  title: string;
+  subtitle?: string;
+  body?: string;
+  href?: string;
+  linkLabel?: string;
+  image?: string;
+  pills: string[];
+  actions: McpUiCardAction[];
+};
+
+type McpUiCardsDoc = {
+  summary?: string;
+  groups: Array<{ title: string; items: McpUiCard[] }>;
+};
+
+function parseCardsDoc(body: unknown): McpUiCardsDoc | undefined {
   const record = asRecord(body);
-  const results = asArray(record?.results);
-  if (results.length === 0) {
-    return `<p class="result-empty">No matching operations.</p>${jsonFallback(body)}`;
+  if (!record || record.mcpUi !== "cards") return undefined;
+
+  const parseCard = (raw: unknown): McpUiCard | undefined => {
+    const r = asRecord(raw);
+    if (!r) return undefined;
+    const title = String(r.title ?? "").trim();
+    if (!title) return undefined;
+    const pills = asArray(r.pills)
+      .map((p) => String(p).trim())
+      .filter(Boolean)
+      .slice(0, 12);
+    const actions: McpUiCardAction[] = [];
+    for (const actionRaw of asArray(r.actions).slice(0, 4)) {
+      const a = asRecord(actionRaw);
+      if (!a) continue;
+      const tool = String(a.tool ?? "").trim();
+      const label = String(a.label ?? "").trim();
+      if (!SAFE_TOOL.test(tool) || !label) continue;
+      const fields: Record<string, string> = {};
+      const fieldSrc = asRecord(a.fields) ?? {};
+      for (const [k, v] of Object.entries(fieldSrc)) {
+        if (!SAFE_FIELD.test(k)) continue;
+        fields[k] = String(v);
+      }
+      actions.push({ label, tool, fields });
+    }
+    const image = typeof r.image === "string" && HTTPS_IMG.test(r.image) ? r.image : undefined;
+    const href = typeof r.href === "string" && HTTPS_HREF.test(r.href) ? r.href : undefined;
+    const subtitle = r.subtitle != null ? String(r.subtitle).trim() : "";
+    const text = r.body != null ? String(r.body).trim() : "";
+    const linkLabel = r.linkLabel != null ? String(r.linkLabel).trim() : "";
+    return {
+      title,
+      subtitle: subtitle || undefined,
+      body: text || undefined,
+      href,
+      linkLabel: linkLabel || undefined,
+      image,
+      pills,
+      actions,
+    };
+  };
+
+  const groups: McpUiCardsDoc["groups"] = [];
+  const grouped = asArray(record.groups);
+  if (grouped.length > 0) {
+    for (const g of grouped) {
+      const row = asRecord(g);
+      if (!row) continue;
+      const title = String(row.title ?? "").trim() || "Meals";
+      const items = asArray(row.items)
+        .map(parseCard)
+        .filter((c): c is McpUiCard => c != null);
+      if (items.length) groups.push({ title, items });
+    }
+  } else {
+    const items = asArray(record.items)
+      .map(parseCard)
+      .filter((c): c is McpUiCard => c != null);
+    if (items.length) groups.push({ title: "Meals", items });
   }
-  const items = results
-    .map((row) => {
-      const r = asRecord(row) ?? {};
-      const id = String(r.id ?? r.operationId ?? "operation");
-      const method = r.method != null ? String(r.method) : "";
-      const path = r.path != null ? String(r.path) : "";
-      const description = r.description != null ? String(r.description) : "";
-      const score = r.score != null ? String(r.score) : "";
-      const label = r.specLabel != null ? String(r.specLabel) : "";
-      return `<li class="result-item">
-  <div class="result-item__title"><code>${escapeMcpUiHtml(id)}</code>${label ? ` <span class="pill">${escapeMcpUiHtml(label)}</span>` : ""}</div>
-  <div class="result-item__meta">${escapeMcpUiHtml([method, path].filter(Boolean).join(" "))} ${score ? `· score ${escapeMcpUiHtml(score)}` : ""}</div>
-  ${description ? `<p class="result-item__desc">${escapeMcpUiHtml(description)}</p>` : ""}
-</li>`;
+  if (groups.length === 0) return undefined;
+  const summary = record.summary != null ? String(record.summary).trim() : "";
+  return { summary: summary || undefined, groups };
+}
+
+function renderCardAction(action: McpUiCardAction, statusId: string): string {
+  const inputs = Object.entries(action.fields)
+    .map(
+      ([name, value]) =>
+        `<input type="hidden" name="${escapeMcpUiHtml(name)}" value="${escapeMcpUiHtml(value)}" />`
+    )
+    .join("");
+  return `<form
+    class="result-card__action"
+    hx-post="${escapeMcpUiHtml(`${MCP_UI_EXECUTE_PREFIX}/${action.tool}`)}"
+    hx-target="#${escapeMcpUiHtml(statusId)}"
+    hx-swap="innerHTML"
+  >
+    ${inputs}
+    <button type="submit">${escapeMcpUiHtml(action.label)}</button>
+  </form>`;
+}
+
+function renderMealCard(card: McpUiCard, statusId: string): string {
+  const pills = card.pills
+    .map((p) => `<span class="pill">${escapeMcpUiHtml(p)}</span>`)
+    .join("");
+  const img = card.image
+    ? `<img class="result-card__image" src="${escapeMcpUiHtml(card.image)}" alt="" />`
+    : "";
+  const sub = card.subtitle
+    ? `<p class="result-card__path">${escapeMcpUiHtml(card.subtitle)}</p>`
+    : "";
+  const snippet = card.body
+    ? `<p class="result-card__snippet">${escapeMcpUiHtml(card.body)}</p>`
+    : "";
+  const link =
+    card.href && card.linkLabel
+      ? `<p class="result-card__path"><a href="${escapeMcpUiHtml(card.href)}" target="_blank" rel="noopener noreferrer">${escapeMcpUiHtml(card.linkLabel)}</a></p>`
+      : "";
+  const actions = card.actions.map((a) => renderCardAction(a, statusId)).join("");
+  return `<article class="result-card">
+  ${img}
+  <header class="result-card__header">
+    <h3 class="result-card__title">${escapeMcpUiHtml(card.title)}</h3>
+    ${pills ? `<div class="result-card__pills">${pills}</div>` : ""}
+  </header>
+  ${sub}
+  ${snippet}
+  ${link}
+  ${actions ? `<div class="result-card__actions">${actions}<div id="${escapeMcpUiHtml(statusId)}" class="result-card__status"></div></div>` : ""}
+</article>`;
+}
+
+function renderMcpUiCards(doc: McpUiCardsDoc): string {
+  const shown = doc.groups.reduce((n, g) => n + g.items.length, 0);
+  const header = doc.summary
+    ? `<p class="result-summary">${escapeMcpUiHtml(doc.summary)}</p>`
+    : `<p class="result-summary"><strong>${shown}</strong> meal${shown === 1 ? "" : "s"}</p>`;
+  const sections = doc.groups
+    .map((group, gi) => {
+      const cards = group.items
+        .map((card, ci) => renderMealCard(card, `cart-status-${gi}-${ci}`))
+        .join("\n");
+      return `<section class="result-group">
+  <h3 class="result-group__title">${escapeMcpUiHtml(group.title)}</h3>
+  <div class="result-grid result-grid--meals" role="list">${cards}</div>
+</section>`;
     })
     .join("\n");
-  return `<ol class="result-list">${items}</ol>
+  return `${header}
+${sections}`;
+}
+
+function pickHitArray(record: Record<string, unknown> | undefined): unknown[] {
+  if (!record) return [];
+  for (const key of ["hits", "results", "operations", "items"] as const) {
+    const value = record[key];
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+  return [];
+}
+
+function normalizeSearchHit(row: unknown, index: number): {
+  title: string;
+  path: string;
+  method: string;
+  description: string;
+  score: string;
+  badge: string;
+} {
+  const r = asRecord(row) ?? {};
+  const title = String(
+    r.title ?? r.id ?? r.operationId ?? r.name ?? `Result ${index + 1}`
+  );
+  const path = String(r.path ?? r.url ?? r.href ?? "");
+  const method = String(r.method ?? "");
+  const description = String(r.snippet ?? r.description ?? r.summary ?? "");
+  const score =
+    r.score != null ? String(r.score) : r.rank != null ? String(r.rank) : "";
+  const badge = String(r.specLabel ?? r.label ?? r.kind ?? r.source ?? "");
+  return { title, path, method, description, score, badge };
+}
+
+/**
+ * Card-grid search surface — intentionally not a docs-site layout.
+ * Used for Core `search` and Agent Lab `docs_search` hits alike.
+ */
+function renderSearchResults(body: unknown): string {
+  const record = asRecord(body);
+  const rows = pickHitArray(record);
+  if (rows.length === 0) {
+    return `<p class="result-empty">No matching results.</p>
+<details class="result-raw"><summary>Raw JSON</summary>${jsonFallback(body)}</details>`;
+  }
+
+  const query =
+    record?.query != null ? String(record.query) : record?.q != null ? String(record.q) : "";
+  const header = query
+    ? `<p class="result-summary">Showing <strong>${rows.length}</strong> result${rows.length === 1 ? "" : "s"} for <code>${escapeMcpUiHtml(query)}</code></p>`
+    : `<p class="result-summary"><strong>${rows.length}</strong> result${rows.length === 1 ? "" : "s"}</p>`;
+
+  const cards = rows
+    .map((row, index) => {
+      const hit = normalizeSearchHit(row, index);
+      const pills = [
+        hit.method ? `<span class="pill pill--method">${escapeMcpUiHtml(hit.method)}</span>` : "",
+        hit.badge ? `<span class="pill">${escapeMcpUiHtml(hit.badge)}</span>` : "",
+        hit.score ? `<span class="pill pill--score">${escapeMcpUiHtml(hit.score)}</span>` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      return `<article class="result-card">
+  <header class="result-card__header">
+    <h3 class="result-card__title">${escapeMcpUiHtml(hit.title)}</h3>
+    ${pills ? `<div class="result-card__pills">${pills}</div>` : ""}
+  </header>
+  ${hit.path ? `<p class="result-card__path"><code>${escapeMcpUiHtml(hit.path)}</code></p>` : ""}
+  ${hit.description ? `<p class="result-card__snippet">${escapeMcpUiHtml(hit.description.slice(0, 220))}${hit.description.length > 220 ? "…" : ""}</p>` : ""}
+</article>`;
+    })
+    .join("\n");
+
+  return `${header}
+<div class="result-grid" role="list">${cards}</div>
 <details class="result-raw"><summary>Raw JSON</summary>${jsonFallback(body)}</details>`;
 }
 
@@ -117,6 +330,8 @@ function renderAuditResults(body: unknown): string {
 }
 
 export function renderResultContent(kind: McpUiResultKind, body: unknown): string {
+  const cards = parseCardsDoc(body);
+  if (cards) return renderMcpUiCards(cards);
   switch (kind) {
     case "search":
       return renderSearchResults(body);

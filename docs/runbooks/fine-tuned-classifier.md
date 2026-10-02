@@ -23,7 +23,7 @@ ClawQL does **not** ship trained weights — only **provider wiring**, **samples
 
 1. **Collect** representative documents per class (W-2, 1099, pay stub, bank statement, …). Use **synthetic or redacted** fixtures in git; keep production PII in vault/object storage only.
 2. **Parse** with **`docling::docling_convert_source`** or **`docling_convert_file`** — retain layout JSON + markdown for features.
-3. **Label** ground truth in Label Studio (see [lending W-2 pack](../../deployment/samples/lending-w2/README.md) `label-studio-config.xml`).
+3. **Label** ground truth in Label Studio (see [lending W-2 pack](../../docs/examples/idp/lending-w2/README.md) `label-studio-config.xml`).
 4. **Export** LS annotations to JSONL with stable `doc_id`, `label`, and optional bounding boxes.
 
 **Minimum viable set:** ≥ 50 docs per class for a baseline; ≥ 200 per class before production promote.
@@ -108,7 +108,7 @@ CLAWQL_ENABLE_IDP_CLASSIFIER=1
 
 Agents call MCP **`classify_document`** (posts to **`CLASSIFIER_BASE_URL/classify`**) or **`search`** your custom OpenAPI for `classify` via **`CLAWQL_SPEC_PATHS`**.
 
-Reference heuristic server: [`deployment/samples/classifier-http/`](../../deployment/samples/classifier-http/README.md). Compose with Docling: [`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml).
+Reference heuristic server: [`docs/examples/idp/classifier-http/`](../../docs/examples/idp/classifier-http/README.md). Compose with Docling: [`docker/compose/docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml).
 
 ---
 
@@ -129,8 +129,8 @@ High-confidence path: skip HITL, continue to Paperless/Onyx **`execute`** steps.
 Use the sample gate script after holdout eval:
 
 ```bash
-./deployment/samples/classifier-http/promote.sh \
-  --metrics deployment/samples/classifier-http/fixtures/metrics.example.json \
+./docs/examples/idp/classifier-http/promote.sh \
+  --metrics docs/examples/idp/classifier-http/fixtures/metrics.example.json \
   --tag v1.2.0 \
   --helm-print
 ```
@@ -146,7 +146,7 @@ Gates (override with env): macro F1 ≥ `CLASSIFIER_PROMOTE_MACRO_F1` (0.92), W-
 Helm pin example:
 
 ```bash
-helm upgrade --install clawql charts/clawql-mcp \
+helm upgrade --install clawql manifests/charts/clawql-mcp \
   --set enableIdpClassifier=true \
   --set documentPipeline.classifier.enabled=true \
   --set documentPipeline.classifier.image.tag=v1.2.0 \
@@ -161,5 +161,5 @@ Optional BYO weights: set `documentPipeline.classifier.model.existingClaim` + `e
 ## 8. Cross-links
 
 - **Extraction after classify:** LangExtract ([#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) — MCP **`extract_document`** + [`langextract-onboarding.md`](../providers/langextract-onboarding.md).
-- **End-to-end lending demo:** [deployment/samples/lending-w2](../../deployment/samples/lending-w2/README.md).
+- **End-to-end lending demo:** [docs/examples/idp/lending-w2](../../docs/examples/idp/lending-w2/README.md).
 - **Matrix row:** [IDP master requirements — Classification](../roadmap/idp-master-requirements-matrix.md).

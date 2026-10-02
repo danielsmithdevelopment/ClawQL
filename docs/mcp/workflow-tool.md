@@ -16,7 +16,7 @@ Template-ref **`submit`** only in v1 — agents start reviewed **`WorkflowTempla
 
 Optional: `CLAWQL_WORKFLOW_KUBECONFIG` (dev), `CLAWQL_WORKFLOW_TEMPLATE_ALLOWLIST`, `CLAWQL_WORKFLOW_ARGO_UI_BASE_URL`, `CLAWQL_WORKFLOW_ALLOW_DELETE=1`, `CLAWQL_WORKFLOW_WAIT_TIMEOUT_SECONDS` (default `600`), `CLAWQL_WORKFLOW_WAIT_POLL_SECONDS` (default `5`).
 
-## Helm (`charts/clawql-mcp`)
+## Helm (`manifests/charts/clawql-mcp`)
 
 ```yaml
 enableWorkflow: true
@@ -28,7 +28,7 @@ workflow:
   argoUiBaseUrl: https://argo.example.com
 ```
 
-The chart injects `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist, and wait/log defaults. Apply Argo templates into each allowlisted namespace (see [`deployment/argo-workflows/README.md`](../../deployment/argo-workflows/README.md)).
+The chart injects `CLAWQL_ENABLE_WORKFLOW=1`, namespace allowlist, and wait/log defaults. Apply Argo templates into each allowlisted namespace (see [`infra/gitops/argo-workflows/README.md`](../../infra/gitops/argo-workflows/README.md)).
 
 Terminal `submit` / `wait` / terminal `get` events append to the in-process **`audit`** ring buffer (`category: workflow`).
 
@@ -69,7 +69,7 @@ When a workflow is waiting on human review, **`get`** responses include **`suspe
 
 ## Example: vault daily digest
 
-Apply [`deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml`](../../deployment/argo-workflows/templates/clawql-vault-daily-digest.yaml), then:
+Apply [`infra/gitops/argo-workflows/templates/clawql-vault-daily-digest.yaml`](../../infra/gitops/argo-workflows/templates/clawql-vault-daily-digest.yaml), then:
 
 ```json
 {
@@ -149,6 +149,6 @@ The digest collects `memory_ingest` notes under `Memory/` from the last 24 hours
 
 ## Related
 
-- [Smoke test runbook](../../deployment/argo-workflows/SMOKE.md)
-- [Argo templates README](../../deployment/argo-workflows/README.md)
+- [Smoke test runbook](../../infra/gitops/argo-workflows/SMOKE.md)
+- [Argo templates README](../../infra/gitops/argo-workflows/README.md)
 - [ADR 0004](../adr/0004-argo-cd-workflows-clawql-pipelines.md)

@@ -88,7 +88,6 @@ async function main() {
     CLAWQL_INSTANCE_SPEC_FILE: "",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
-    CLAWQL_ENABLE_PAGEINDEX: "0",
     CLAWQL_BEARER_TOKEN: token,
     GITHUB_TOKEN: token,
   };

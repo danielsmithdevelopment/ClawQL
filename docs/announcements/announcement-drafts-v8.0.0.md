@@ -4,9 +4,11 @@
 
 **Positioning (use everywhere):** ClawQL provides the **Agentic Gateway** as the **Foundational Platform for Auditable Production AI**.
 
-**Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../../RELEASE_NOTES_v8.0.0.md)
+**Links:** [GitHub release v8.0.0](https://github.com/danielsmithdevelopment/ClawQL/releases/tag/v8.0.0) · [npm: clawql-mcp@8.0.0](https://www.npmjs.com/package/clawql-mcp) · [Docs](https://docs.clawql.com) · [Bundled providers](https://docs.clawql.com/plugins/bundled-providers) · [CHANGELOG](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md) · [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md)
 
 **Note:** 7.2.0 announcement drafts remain at [`announcement-drafts-v7.2.0.md`](announcement-drafts-v7.2.0.md); **8.0** is the opt-in catalog + **ProviderPlugin** **major**.
+
+**Breaking change — product surface purge:** 8.0 also removes two product surfaces evaluated and not kept: **ClawQL PageIndex** (`pageindex_*` tools, hybrid PageIndex recall) and **CodeGraph / Graphify** (`codegraph_*` tools (11), `CLAWQL_ENABLE_CODEGRAPH`, hybrid code-graph recall, the `clawql-codegraph` package, and the `code_change` vault-notes flywheel from [#808](https://github.com/danielsmithdevelopment/ClawQL/pull/808)). Both lost their A/B retest against a working baseline (Vectify-style ranking and `grep` + `read_around`, respectively) — see [migrate-to-8.0](../getting-started/migrate-to-8.0.md), the [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md), and the [post-8.0 CodeGraph backlog](../backlog/post-8.0-codegraph-revisit.md) for conditions under which CodeGraph could return as an opt-in tool.
 
 ---
 
@@ -30,14 +32,17 @@
 6. **Observability + audit** — `clawql-observability` LGTM+/Faro; merkle/audit WORM wedge; simulated TEE.
 7. **Network + analytics** — `clawql-network` mesh CLI; `clawql-analytics` docs adapter; workspace **`0.1.0`** first-publish policy.
 8. **Learn / 8.0 docs** — migrate-to-8 guide, Streams/IDP labs, Security/OSV sidebar, `/security/status`.
-9. **Streams celld** — celld **v0.4.0** Lab 5 + Helm; AgentSessionDO MCP/memory/adapter/audit-LTX path.
-10. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments.
+9. **Streams celld** — celld **v0.4.0** Lab 5 + Helm; AgentSessionDO MCP/memory/adapter/audit-LTX path; BurstWatch / AWS burst path.
+10. **Fast Decision + capability lifecycle** — GLiNER2/Decide classifier; default-on capability gate; gateway ladder `/decision` + `/events`.
+11. **Risk / HITL** — operation-risk-from-spec; execute pause/resume for mandates.
+12. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
+13. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; self-serve Stripe.
 
 ### Why it matters
 
 Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slack already in the merge — or with a silent ungated tool surface. Greenfield demos still get a one-liner. Pin **`@8`** when you move images and Helm `appVersion`.
 
-**CTA:** `npm install clawql-mcp@8.0.0` · migration in [RELEASE_NOTES_v8.0.0.md](../../RELEASE_NOTES_v8.0.0.md) · [CHANGELOG 8.0.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
+**CTA:** `npm install clawql-mcp@8.0.0` · migration in [RELEASE_NOTES_v8.0.0.md](../release/RELEASE_NOTES_v8.0.0.md) · [CHANGELOG 8.0.0](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)
 
 ---
 
@@ -70,7 +75,7 @@ We open-source an Agentic Gateway (MCP search/execute over OpenAPI + vault memor
 Also: skills-unified search, Agent Seer scenarios, Managed Edge Gateway, clawql-web/data, LGTM+/Faro observability, clawql-network/analytics, Streams celld v0.4.0, audit/TEE wedge, Learn docs for 8.0 migration, OpenBench B-7.
 
 npm: `clawql-mcp@8.0.0`  
-Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/RELEASE_NOTES_v8.0.0.md  
+Notes: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/release/RELEASE_NOTES_v8.0.0.md  
 Migrate: https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/getting-started/migrate-to-8.0.md
 
 Happy to answer questions about the opt-in defaults vs the old opinionated stack.

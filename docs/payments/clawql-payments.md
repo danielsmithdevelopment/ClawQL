@@ -48,12 +48,15 @@ It powers ClawQL's own managed tiers (Developer / Teams / Shared / Dedicated / E
 
 ### Roadmap
 
-| Tier  | Item                                | Role                                        | Notes                                                         |
-| ----- | ----------------------------------- | ------------------------------------------- | ------------------------------------------------------------- |
-| ~~1~~ | ~~**Accounting export**~~           | Period CSV/JSON subledger from payment WORM | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md) |
-| ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file             |
-| **1** | **Cloudflare Wallets live**         | Identity + capped Virtual Wallet HTTP API   | Scaffold shipped; wire client when CF API is public           |
-| **3** | **Mollie / Razorpay**               | Regional processors                         | Add when regional traction requires them                      |
+| Tier  | Item                                | Role                                        | Notes                                                                                                                                                                                                            |
+| ----- | ----------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~1~~ | ~~**Accounting export**~~           | Period CSV/JSON subledger from payment WORM | ✅ Shipped — [accounting-and-tax.md](./accounting-and-tax.md)                                                                                                                                                    |
+| ~~2~~ | ~~**Tax profile gate + year-end**~~ | Tags + export; Stripe Connect Tax for 1099s | ✅ Gate + evidence pack; no in-process IRS e-file                                                                                                                                                                |
+| **0** | **Outbound x402/MPP payer**         | Agent completes third-party `402`           | Spec’d — [execute batching](../specs/execute/execute-batching-v0.1.md#outbound-402-payer) + [spend governance](../specs/spend/spend-governance-v0.1.md#outbound-payment-hook); not a bare-`execute` special case |
+| **1** | **Cloudflare Wallets live**         | Identity + capped Virtual Wallet HTTP API   | Scaffold shipped; wire client when CF API is public                                                                                                                                                              |
+| **3** | **Mollie / Razorpay**               | Regional processors                         | Add when regional traction requires them                                                                                                                                                                         |
+
+**Positioning reminder:** `clawql-payments` is a billing and enforcement layer on the Agentic Gateway — not a general agent wallet that pays any vendor. Agents pay third parties only when that party already speaks a supported rail (x402/MPP) **and** outbound is enabled under spend governance. Inbound gates (Stripe, x402 middleware, virtual keys) ship today; the **payer client** (batch + `SecretStore` signer + allowlist/HITL) is the gap above.
 
 **Already covered (do not duplicate):** Shopify Payments (Stripe-powered), ACH Direct Debit via Stripe's APIs, card/subscription/invoice flows via Stripe, **bank ACH top-ups via Stripe Financial Connections** (Plaid-backed Link UI — no separate Plaid SDK), **Stripe Connect payouts**, **live Base USDC payouts with receipt confirmation**, **consumer off-ramp + webhooks (Moonpay/Transak)**, **Ramp vault + native agentic cards**. **Not planned:** Zelle (no merchant API), Square POS-first adapters, raw Plaid SDK unless non-payment bank data is required, **full GL / tax e-file product** (subledger export + Stripe Connect Tax / CPA handoff — [accounting-and-tax.md](./accounting-and-tax.md)), **full KYC product surface** (identity docs / watchlists belong in Documents + a banking vertical — see [`docs/design/clawql-banking-vertical.md`](../design/clawql-banking-vertical.md); payments may later expose only a thin `KycGatePort` before payouts).
 
@@ -221,14 +224,15 @@ Implementation: [`packages/clawql-inference/src/entitlements/`](../../packages/c
 
 ### Environment variables
 
-| Variable                              | Required        | Purpose                                                    |
-| ------------------------------------- | --------------- | ---------------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                   | Yes (live API)  | Stripe SDK authentication                                  |
-| `STRIPE_PRO_PRICE_ID`                 | For Pro subs    | Flat subscription price id                                 |
-| `STRIPE_TEAM_PRICE_ID`                | For Team subs   | Flat subscription price id                                 |
-| `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                       |
-| `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`) |
-| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call  |
+| Variable                              | Required        | Purpose                                                       |
+| ------------------------------------- | --------------- | ------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                   | Yes (live API)  | Stripe SDK authentication                                     |
+| `STRIPE_PRO_PRICE_ID`                 | For Pro subs    | Flat subscription price id                                    |
+| `STRIPE_TEAM_PRICE_ID`                | For Team subs   | Flat subscription price id                                    |
+| `STRIPE_CUSTOMER_ID`                  | Meter reporting | Override when not in `payments.json`                          |
+| `STRIPE_METER_EVENT_NAME`             | Meter reporting | Dashboard meter event name (e.g. `clawql_inference_calls`)    |
+| `CLAWQL_PAYMENTS_REPORT_STRIPE_METER` | Meter reporting | Set to `1` to emit meter events after each inference call     |
+| `CLAWQL_SELF_SERVE_CHECKOUT`          | Self-serve CTA  | Set to `1` to enable public `POST /payments/checkout/session` |
 
 ### Setup flow
 
@@ -776,6 +780,7 @@ clawql payments stripe setup --webhook-secret whsec_...
 clawql payments stripe customer create --email user@acme.com
 clawql payments stripe subscription create --customer cus_xxx --plan pro
 clawql payments stripe invoice create --customer cus_xxx --amount 500
+clawql payments stripe checkout create --plan pro --org-name Acme --email user@acme.com --success-url https://example/ok --cancel-url https://example/cancel
 clawql payments stripe meter report --value 1 --customer cus_xxx
 clawql payments stripe webhook verify --payload ./event.json --signature "..." --process
 
@@ -800,6 +805,11 @@ clawql payments credits directory claim --handle bob --tenant-id other-tenant
 clawql payments credits pay --to @bob --amount 10
 clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
 clawql payments credits step-up enroll|show
+
+# Customer Provisioning Core (org-of-1 / enterprise)
+clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]
+clawql payments org report-usage --org-id acme [--month YYYY-MM] [--overage N]
+clawql payments org create|show|sso|invite|members|spend|allocate|distribute|suspend|remove --org-id …
 ```
 
 ---
@@ -873,13 +883,20 @@ See also: [`packages/clawql-inference/README.md`](../../packages/clawql-inferenc
 
 ## Follow-up work
 
-| Item                         | Tracking     |
-| ---------------------------- | ------------ |
-| Hosted webhook HTTP endpoint | not CLI-only |
+| Item                                                  | Tracking                                                                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Hosted webhook HTTP endpoint                          | Node CPC routes + CF forward — [customer-provisioning-core.md](./customer-provisioning-core.md)                                |
+| Customer provisioning core (`provisionOrg`, org-of-1) | [customer-provisioning-core.md](./customer-provisioning-core.md) · [spec](../specs/billing/customer-provisioning-core-v0.1.md) |
+| Hybrid subscription + prepaid credits                 | [stripe-products-ops.md](./stripe-products-ops.md) · [hybrid-billing](../specs/billing/hybrid-billing-v0.1.md)                 |
+| Self-serve billing dashboard UI                       | ✅ `/credits/org` — [customer-provisioning-core.md](./customer-provisioning-core.md)                                           |
 
 ## Related
 
 - Accounting & tax: [`docs/payments/accounting-and-tax.md`](./accounting-and-tax.md)
+- Org credits: [`docs/payments/org-credits.md`](./org-credits.md)
+- CPC: [`docs/payments/customer-provisioning-core.md`](./customer-provisioning-core.md)
+- Stripe ops: [`docs/payments/stripe-products-ops.md`](./stripe-products-ops.md)
+- Billing specs: [`docs/specs/billing/README.md`](../specs/billing/README.md)
 - Package README: [`packages/clawql-payments/README.md`](../../packages/clawql-payments/README.md)
 - Inference doc: [`docs/inference/clawql-inference.md`](../inference/clawql-inference.md)
 - x402 protocol: [x402.org](https://www.x402.org/)

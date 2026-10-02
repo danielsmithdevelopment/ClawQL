@@ -1,11 +1,11 @@
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
-import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./clawql-audit.js";
+import { handleAuditToolInput, resetClawqlAuditBufferForTests } from "./mcp/clawql-audit.js";
 import {
   buildMcpToolAuditAppend,
   recordMcpToolCallAudit,
   summarizeMcpToolArgs,
-} from "./mcp-tool-audit.js";
+} from "./mcp/mcp-tool-audit.js";
 
 describe("mcp-tool-audit", () => {
   const saved = process.env.CLAWQL_AUDIT_TOOL_CALLS;

@@ -1,0 +1,494 @@
+{
+  "document_id": "rfc5321",
+  "sections": [
+    {
+      "id": "sec-network-working-group-j-klensin",
+      "title": "Network Working Group                                         J. Klensin"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-transport-of-electronic-mail",
+      "title": "1.1 Transport of Electronic Mail"
+    },
+    {
+      "id": "sec-1-2-history-and-context-for-this-document",
+      "title": "1.2 History and Context for This Document"
+    },
+    {
+      "id": "sec-1-3-document-conventions",
+      "title": "1.3 Document Conventions"
+    },
+    {
+      "id": "sec-2-1-basic-structure",
+      "title": "2.1 Basic Structure"
+    },
+    {
+      "id": "sec-2-2-1-background",
+      "title": "2.2.1 Background"
+    },
+    {
+      "id": "sec-2-2-2-definition-and-registration-of-extensions",
+      "title": "2.2.2 Definition and Registration of Extensions"
+    },
+    {
+      "id": "sec-2-2-3-special-issues-with-extensions",
+      "title": "2.2.3 Special Issues with Extensions"
+    },
+    {
+      "id": "sec-2-3-smtp-terminology",
+      "title": "2.3 SMTP Terminology"
+    },
+    {
+      "id": "sec-2-3-1-mail-objects",
+      "title": "2.3.1 Mail Objects"
+    },
+    {
+      "id": "sec-2-3-2-senders-and-receivers",
+      "title": "2.3.2 Senders and Receivers"
+    },
+    {
+      "id": "sec-2-3-3-mail-agents-and-message-stores",
+      "title": "2.3.3 Mail Agents and Message Stores"
+    },
+    {
+      "id": "sec-2-3-4-host",
+      "title": "2.3.4 Host"
+    },
+    {
+      "id": "sec-2-3-5-domain-names",
+      "title": "2.3.5 Domain Names"
+    },
+    {
+      "id": "sec-2-3-6-buffer-and-state-table",
+      "title": "2.3.6 Buffer and State Table"
+    },
+    {
+      "id": "sec-2-3-7-commands-and-replies",
+      "title": "2.3.7 Commands and Replies"
+    },
+    {
+      "id": "sec-2-3-8-lines",
+      "title": "2.3.8 Lines"
+    },
+    {
+      "id": "sec-2-3-9-message-content-and-mail-data",
+      "title": "2.3.9 Message Content and Mail Data"
+    },
+    {
+      "id": "sec-2-3-10-originator-delivery-relay-and-gateway-systems",
+      "title": "2.3.10 Originator, Delivery, Relay, and Gateway Systems"
+    },
+    {
+      "id": "sec-2-3-11-mailbox-and-address",
+      "title": "2.3.11 Mailbox and Address"
+    },
+    {
+      "id": "sec-2-4-general-syntax-principles-and-transaction-model",
+      "title": "2.4 General Syntax Principles and Transaction Model"
+    },
+    {
+      "id": "sec-3-1-session-initiation",
+      "title": "3.1 Session Initiation"
+    },
+    {
+      "id": "sec-3-2-client-initiation",
+      "title": "3.2 Client Initiation"
+    },
+    {
+      "id": "sec-3-3-mail-transactions",
+      "title": "3.3 Mail Transactions"
+    },
+    {
+      "id": "sec-3-4-forwarding-for-address-correction-or-updating",
+      "title": "3.4 Forwarding for Address Correction or Updating"
+    },
+    {
+      "id": "sec-3-5-commands-for-debugging-addresses",
+      "title": "3.5 Commands for Debugging Addresses"
+    },
+    {
+      "id": "sec-3-5-1-overview",
+      "title": "3.5.1 Overview"
+    },
+    {
+      "id": "sec-3-5-2-vrfy-normal-response",
+      "title": "3.5.2 VRFY Normal Response"
+    },
+    {
+      "id": "sec-3-5-3-meaning-of-vrfy-or-expn-success-response",
+      "title": "3.5.3 Meaning of VRFY or EXPN Success Response"
+    },
+    {
+      "id": "sec-3-5-4-semantics-and-applications-of-expn",
+      "title": "3.5.4 Semantics and Applications of EXPN"
+    },
+    {
+      "id": "sec-3-6-relaying-and-mail-routing",
+      "title": "3.6 Relaying and Mail Routing"
+    },
+    {
+      "id": "sec-3-6-1-source-routes-and-relaying",
+      "title": "3.6.1 Source Routes and Relaying"
+    },
+    {
+      "id": "sec-3-6-2-mail-exchange-records-and-relaying",
+      "title": "3.6.2 Mail eXchange Records and Relaying"
+    },
+    {
+      "id": "sec-3-6-3-message-submission-servers-as-relays",
+      "title": "3.6.3 Message Submission Servers as Relays"
+    },
+    {
+      "id": "sec-3-7-mail-gatewaying",
+      "title": "3.7 Mail Gatewaying"
+    },
+    {
+      "id": "sec-3-7-1-header-fields-in-gatewaying",
+      "title": "3.7.1 Header Fields in Gatewaying"
+    },
+    {
+      "id": "sec-3-7-2-received-lines-in-gatewaying",
+      "title": "3.7.2 Received Lines in Gatewaying"
+    },
+    {
+      "id": "sec-3-7-3-addresses-in-gatewaying",
+      "title": "3.7.3 Addresses in Gatewaying"
+    },
+    {
+      "id": "sec-3-7-4-other-header-fields-in-gatewaying",
+      "title": "3.7.4 Other Header Fields in Gatewaying"
+    },
+    {
+      "id": "sec-3-7-5-envelopes-in-gatewaying",
+      "title": "3.7.5 Envelopes in Gatewaying"
+    },
+    {
+      "id": "sec-3-8-terminating-sessions-and-connections",
+      "title": "3.8 Terminating Sessions and Connections"
+    },
+    {
+      "id": "sec-3-9-mailing-lists-and-aliases",
+      "title": "3.9 Mailing Lists and Aliases"
+    },
+    {
+      "id": "sec-3-9-1-alias",
+      "title": "3.9.1 Alias"
+    },
+    {
+      "id": "sec-3-9-2-list",
+      "title": "3.9.2 List"
+    },
+    {
+      "id": "sec-4-1-smtp-commands",
+      "title": "4.1 SMTP Commands"
+    },
+    {
+      "id": "sec-4-1-1-command-semantics-and-syntax",
+      "title": "4.1.1 Command Semantics and Syntax"
+    },
+    {
+      "id": "sec-4-1-1-1-extended-hello-ehlo-or-hello-helo",
+      "title": "4.1.1.1 Extended HELLO (EHLO) or HELLO (HELO)"
+    },
+    {
+      "id": "sec-4-1-1-2-mail-mail",
+      "title": "4.1.1.2 MAIL (MAIL)"
+    },
+    {
+      "id": "sec-4-1-1-3-recipient-rcpt",
+      "title": "4.1.1.3 RECIPIENT (RCPT)"
+    },
+    {
+      "id": "sec-4-1-1-4-data-data",
+      "title": "4.1.1.4 DATA (DATA)"
+    },
+    {
+      "id": "sec-4-1-1-5-reset-rset",
+      "title": "4.1.1.5 RESET (RSET)"
+    },
+    {
+      "id": "sec-4-1-1-6-verify-vrfy",
+      "title": "4.1.1.6 VERIFY (VRFY)"
+    },
+    {
+      "id": "sec-4-1-1-7-expand-expn",
+      "title": "4.1.1.7 EXPAND (EXPN)"
+    },
+    {
+      "id": "sec-4-1-1-8-help-help",
+      "title": "4.1.1.8 HELP (HELP)"
+    },
+    {
+      "id": "sec-4-1-1-9-noop-noop",
+      "title": "4.1.1.9 NOOP (NOOP)"
+    },
+    {
+      "id": "sec-4-1-1-10-quit-quit",
+      "title": "4.1.1.10 QUIT (QUIT)"
+    },
+    {
+      "id": "sec-4-1-1-11-mail-parameter-and-rcpt-parameter-error-responses",
+      "title": "4.1.1.11 Mail-Parameter and Rcpt-Parameter Error Responses"
+    },
+    {
+      "id": "sec-4-1-2-command-argument-syntax",
+      "title": "4.1.2 Command Argument Syntax"
+    },
+    {
+      "id": "sec-4-1-3-address-literals",
+      "title": "4.1.3 Address Literals"
+    },
+    {
+      "id": "sec-4-1-4-order-of-commands",
+      "title": "4.1.4 Order of Commands"
+    },
+    {
+      "id": "sec-4-1-5-private-use-commands",
+      "title": "4.1.5 Private-Use Commands"
+    },
+    {
+      "id": "sec-4-2-smtp-replies",
+      "title": "4.2 SMTP Replies"
+    },
+    {
+      "id": "sec-4-2-1-reply-code-severities-and-theory",
+      "title": "4.2.1 Reply Code Severities and Theory"
+    },
+    {
+      "id": "sec-4-2-2-reply-codes-by-function-groups",
+      "title": "4.2.2 Reply Codes by Function Groups"
+    },
+    {
+      "id": "sec-4-2-3-reply-codes-in-numeric-order",
+      "title": "4.2.3 Reply Codes in Numeric Order"
+    },
+    {
+      "id": "sec-4-2-4-reply-code-502",
+      "title": "4.2.4 Reply Code 502"
+    },
+    {
+      "id": "sec-4-2-5-reply-codes-after-data-and-the-subsequent-crlf-crlf",
+      "title": "4.2.5 Reply Codes after DATA and the Subsequent <CRLF>.<CRLF>"
+    },
+    {
+      "id": "sec-4-3-sequencing-of-commands-and-replies",
+      "title": "4.3 Sequencing of Commands and Replies"
+    },
+    {
+      "id": "sec-4-3-1-sequencing-overview",
+      "title": "4.3.1 Sequencing Overview"
+    },
+    {
+      "id": "sec-4-3-2-command-reply-sequences",
+      "title": "4.3.2 Command-Reply Sequences"
+    },
+    {
+      "id": "sec-4-4-trace-information",
+      "title": "4.4 Trace Information"
+    },
+    {
+      "id": "sec-4-5-additional-implementation-issues",
+      "title": "4.5 Additional Implementation Issues"
+    },
+    {
+      "id": "sec-4-5-1-minimum-implementation",
+      "title": "4.5.1 Minimum Implementation"
+    },
+    {
+      "id": "sec-4-5-2-transparency",
+      "title": "4.5.2 Transparency"
+    },
+    {
+      "id": "sec-4-5-3-sizes-and-timeouts",
+      "title": "4.5.3 Sizes and Timeouts"
+    },
+    {
+      "id": "sec-4-5-3-1-size-limits-and-minimums",
+      "title": "4.5.3.1 Size Limits and Minimums"
+    },
+    {
+      "id": "sec-4-5-3-1-1-local-part",
+      "title": "4.5.3.1.1 Local-part"
+    },
+    {
+      "id": "sec-4-5-3-1-2-domain",
+      "title": "4.5.3.1.2 Domain"
+    },
+    {
+      "id": "sec-4-5-3-1-3-path",
+      "title": "4.5.3.1.3 Path"
+    },
+    {
+      "id": "sec-4-5-3-1-4-command-line",
+      "title": "4.5.3.1.4 Command Line"
+    },
+    {
+      "id": "sec-4-5-3-1-5-reply-line",
+      "title": "4.5.3.1.5 Reply Line"
+    },
+    {
+      "id": "sec-4-5-3-1-6-text-line",
+      "title": "4.5.3.1.6 Text Line"
+    },
+    {
+      "id": "sec-4-5-3-1-7-message-content",
+      "title": "4.5.3.1.7 Message Content"
+    },
+    {
+      "id": "sec-4-5-3-1-8-recipients-buffer",
+      "title": "4.5.3.1.8 Recipients Buffer"
+    },
+    {
+      "id": "sec-4-5-3-1-9-treatment-when-limits-exceeded",
+      "title": "4.5.3.1.9 Treatment When Limits Exceeded"
+    },
+    {
+      "id": "sec-4-5-3-1-10-too-many-recipients-code",
+      "title": "4.5.3.1.10 Too Many Recipients Code"
+    },
+    {
+      "id": "sec-4-5-3-2-timeouts",
+      "title": "4.5.3.2 Timeouts"
+    },
+    {
+      "id": "sec-4-5-3-2-1-initial-220-message-5-minutes",
+      "title": "4.5.3.2.1 Initial 220 Message: 5 Minutes"
+    },
+    {
+      "id": "sec-4-5-3-2-2-mail-command-5-minutes",
+      "title": "4.5.3.2.2 MAIL Command: 5 Minutes"
+    },
+    {
+      "id": "sec-4-5-3-2-3-rcpt-command-5-minutes",
+      "title": "4.5.3.2.3 RCPT Command: 5 Minutes"
+    },
+    {
+      "id": "sec-4-5-3-2-4-data-initiation-2-minutes",
+      "title": "4.5.3.2.4 DATA Initiation: 2 Minutes"
+    },
+    {
+      "id": "sec-4-5-3-2-5-data-block-3-minutes",
+      "title": "4.5.3.2.5 Data Block: 3 Minutes"
+    },
+    {
+      "id": "sec-4-5-3-2-6-data-termination-10-minutes",
+      "title": "4.5.3.2.6 DATA Termination: 10 Minutes."
+    },
+    {
+      "id": "sec-4-5-3-2-7-server-timeout-5-minutes",
+      "title": "4.5.3.2.7 Server Timeout: 5 Minutes."
+    },
+    {
+      "id": "sec-4-5-4-retry-strategies",
+      "title": "4.5.4 Retry Strategies"
+    },
+    {
+      "id": "sec-4-5-4-1-sending-strategy",
+      "title": "4.5.4.1 Sending Strategy"
+    },
+    {
+      "id": "sec-4-5-4-2-receiving-strategy",
+      "title": "4.5.4.2 Receiving Strategy"
+    },
+    {
+      "id": "sec-4-5-5-messages-with-a-null-reverse-path",
+      "title": "4.5.5 Messages with a Null Reverse-Path"
+    },
+    {
+      "id": "sec-5-address-resolution-and-mail-handling",
+      "title": "5 Address Resolution and Mail Handling"
+    },
+    {
+      "id": "sec-5-1-locating-the-target-host",
+      "title": "5.1 Locating the Target Host"
+    },
+    {
+      "id": "sec-5-2-ipv6-and-mx-records",
+      "title": "5.2 IPv6 and MX Records"
+    },
+    {
+      "id": "sec-6-problem-detection-and-handling",
+      "title": "6 Problem Detection and Handling"
+    },
+    {
+      "id": "sec-6-1-reliable-delivery-and-replies-by-email",
+      "title": "6.1 Reliable Delivery and Replies by Email"
+    },
+    {
+      "id": "sec-6-2-unwanted-unsolicited-and-attack-messages",
+      "title": "6.2 Unwanted, Unsolicited, and \"Attack\" Messages"
+    },
+    {
+      "id": "sec-6-3-loop-detection",
+      "title": "6.3 Loop Detection"
+    },
+    {
+      "id": "sec-6-4-compensating-for-irregularities",
+      "title": "6.4 Compensating for Irregularities"
+    },
+    {
+      "id": "sec-7-security-considerations",
+      "title": "7 Security Considerations"
+    },
+    {
+      "id": "sec-7-1-mail-security-and-spoofing",
+      "title": "7.1 Mail Security and Spoofing"
+    },
+    {
+      "id": "sec-7-3-vrfy-expn-and-security",
+      "title": "7.3 VRFY, EXPN, and Security"
+    },
+    {
+      "id": "sec-7-4-mail-rerouting-based-on-the-251-and-551-response-codes",
+      "title": "7.4 Mail Rerouting Based on the 251 and 551 Response Codes"
+    },
+    {
+      "id": "sec-7-5-information-disclosure-in-announcements",
+      "title": "7.5 Information Disclosure in Announcements"
+    },
+    {
+      "id": "sec-7-6-information-disclosure-in-trace-fields",
+      "title": "7.6 Information Disclosure in Trace Fields"
+    },
+    {
+      "id": "sec-7-7-information-disclosure-in-message-forwarding",
+      "title": "7.7 Information Disclosure in Message Forwarding"
+    },
+    {
+      "id": "sec-7-8-resistance-to-attacks",
+      "title": "7.8 Resistance to Attacks"
+    },
+    {
+      "id": "sec-7-9-scope-of-operation-of-smtp-servers",
+      "title": "7.9 Scope of Operation of SMTP Servers"
+    },
+    {
+      "id": "sec-8-iana-considerations",
+      "title": "8 IANA Considerations"
+    },
+    {
+      "id": "sec-9-acknowledgments",
+      "title": "9 Acknowledgments"
+    },
+    {
+      "id": "sec-10-references",
+      "title": "10 References"
+    },
+    {
+      "id": "sec-10-1-normative-references",
+      "title": "10.1 Normative References"
+    },
+    {
+      "id": "sec-10-2-informative-references",
+      "title": "10.2 Informative References"
+    },
+    {
+      "id": "sec-1-each-recipient-address-from-a-to-cc-or-bcc-header-field-should",
+      "title": "1 Each recipient address from a TO, CC, or BCC header field SHOULD"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc5321.txt"
+}

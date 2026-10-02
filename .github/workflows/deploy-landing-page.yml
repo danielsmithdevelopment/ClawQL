@@ -1,4 +1,4 @@
-# Static export of landing-page/demo → GitHub Pages (https://clawql.com) by default.
+# Static export of apps/www → GitHub Pages (https://clawql.com) by default.
 # When CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID are set, also deploy to Cloudflare
 # Pages (Link headers + Markdown negotiation via functions/) and configure agent edge.
 # Set LANDING_PAGE_CLOUDFLARE_DEPLOY=false to skip Cloudflare Pages even if secrets exist.
@@ -8,12 +8,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "landing-page/**"
+      - "apps/www/**"
       - "packages/mcp-api-adapter/src/executor-cmp-trace-demo.ts"
       - "packages/mcp-api-adapter/src/mcp-ui-trace-html.ts"
       - "packages/mcp-api-adapter/scripts/generate-executor-cmp-compare-static.mjs"
       - "scripts/deploy/ensure-dns-aid-records.sh"
       - "scripts/deploy/ensure-clawql-com-agent-edge.sh"
+      - "scripts/deploy/ensure-cloudflare-pages-project.sh"
       - ".github/workflows/deploy-landing-page.yml"
   workflow_dispatch:
 
@@ -38,14 +39,14 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: landing-page/demo/package-lock.json
+          cache-dependency-path: apps/www/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: landing-page/demo
+        working-directory: apps/www
 
       - name: Build (static export)
-        working-directory: landing-page/demo
+        working-directory: apps/www
         env:
           # Custom domain at repo root. For project Pages only, set to /ClawQL in repo vars.
           NEXT_PUBLIC_BASE_PATH: ${{ vars.LANDING_PAGE_BASE_PATH || '' }}
@@ -54,7 +55,7 @@ jobs:
         run: npm run build
 
       - name: Verify SEO/agent static assets
-        working-directory: landing-page/demo
+        working-directory: apps/www
         run: |
           set -euo pipefail
           test -f out/.well-known/api-catalog
@@ -104,7 +105,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
-          path: landing-page/demo/out
+          path: apps/www/out
           # Required: default false drops .well-known and .nojekyll from the Pages deploy.
           include-hidden-files: true
 
@@ -112,7 +113,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: landing-page-out
-          path: landing-page/demo/out
+          path: apps/www/out
           retention-days: 1
           include-hidden-files: true
 
@@ -127,17 +128,17 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages (attempt 1)
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
         continue-on-error: true
       - name: Deploy to GitHub Pages (attempt 2)
         id: deployment_retry_2
         if: steps.deployment.outcome == 'failure'
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
         continue-on-error: true
       - name: Deploy to GitHub Pages (attempt 3)
         id: deployment_retry_3
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure'
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
       - name: Verify deploy succeeded
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry_2.outcome == 'failure' && steps.deployment_retry_3.outcome == 'failure'
         run: |
@@ -174,7 +175,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: landing-page-out
-          path: landing-page/demo/out
+          path: apps/www/out
 
       - name: Ensure Cloudflare Pages project exists
         if: steps.cf.outputs.enabled == 'true'
@@ -189,8 +190,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Run from landing-page/demo so sibling functions/ is bundled with out/.
-          workingDirectory: landing-page/demo
+          # Run from apps/www so sibling functions/ is bundled with out/.
+          workingDirectory: apps/www
           command: pages deploy out --project-name=clawql-website --branch=main
 
   configure-agent-edge:

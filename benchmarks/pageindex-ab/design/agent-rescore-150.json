@@ -1,0 +1,77 @@
+{
+  "tag": "pageindex-ab-v1-hard-candidate",
+  "rescore": "filtered_150",
+  "dropRule": {
+    "rule": "Drop RFC keys with empty gold_sections that are cite-impossible or builder-bogus: normative MUST/SHALL quotes; 'earliest publication year' fallbacks (often wrong body years).",
+    "pre_freeze": true,
+    "based_on_arm_results": false,
+    "n_keys_before": 161,
+    "n_keys_after": 150,
+    "source_run": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36524273079",
+    "method": "Filter saved agent-answers.jsonl to remaining key ids; majority vote across 3 trials; no new LLM calls."
+  },
+  "n_questions": 150,
+  "trials": 3,
+  "n_answer_rows_used": 4500,
+  "summaries": {
+    "H-bm25": {
+      "n": 150,
+      "strict_accuracy": 0.84,
+      "mean_citation_f1": 0.4577777777777778
+    },
+    "H-bm25-cg": {
+      "n": 150,
+      "strict_accuracy": 0.84,
+      "mean_citation_f1": 0.4577777777777778
+    },
+    "H-bm25-pi": {
+      "n": 150,
+      "strict_accuracy": 0.7533333333333333,
+      "mean_citation_f1": 0.3844444444444444
+    },
+    "H-bm25-pi-cg": {
+      "n": 150,
+      "strict_accuracy": 0.7533333333333333,
+      "mean_citation_f1": 0.3844444444444444
+    },
+    "H-idf": {
+      "n": 150,
+      "strict_accuracy": 0.84,
+      "mean_citation_f1": 0.4700000000000001
+    },
+    "H-idf-cg": {
+      "n": 150,
+      "strict_accuracy": 0.84,
+      "mean_citation_f1": 0.4700000000000001
+    },
+    "H-idf-pi": {
+      "n": 150,
+      "strict_accuracy": 0.7533333333333333,
+      "mean_citation_f1": 0.39333333333333326
+    },
+    "H-idf-pi-cg": {
+      "n": 150,
+      "strict_accuracy": 0.7533333333333333,
+      "mean_citation_f1": 0.39333333333333326
+    },
+    "H-idf-pi-gated": {
+      "n": 150,
+      "strict_accuracy": 0.84,
+      "mean_citation_f1": 0.4700000000000001
+    },
+    "H-idf-pi-union": {
+      "n": 150,
+      "strict_accuracy": 0.8533333333333334,
+      "mean_citation_f1": 0.48333333333333345
+    }
+  },
+  "contrasts": {
+    "pageindex_main_effect": -0.08666666666666667,
+    "bm25_main_effect": 0,
+    "codegraph_main_effect": 0,
+    "combination_vs_today": -0.08666666666666667,
+    "union_vs_today": 0.01333333333333342,
+    "gated_vs_today": 0,
+    "union_vs_rrf_pi": 0.10000000000000009
+  }
+}

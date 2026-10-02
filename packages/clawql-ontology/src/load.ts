@@ -93,6 +93,6 @@ export function defaultOntologySearchRoots(rootDir: string): string[] {
   }
   return [
     join(rootDir, ".clawql", "ontology", "entities"),
-    join(rootDir, "examples", "ontology", "entities"),
+    join(rootDir, "docs", "examples", "ontology", "entities"),
   ];
 }

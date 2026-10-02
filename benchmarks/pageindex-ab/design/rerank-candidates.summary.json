@@ -1,0 +1,13 @@
+{
+  "tag": "pageindex-ab-rerank-candidates-v1",
+  "generated_at": "2026-09-30T03:39:09.560Z",
+  "pool_per_retriever": 100,
+  "n": 262,
+  "tune_n": 156,
+  "holdout_n": 106,
+  "pool_has_gold_rate": 0.9923664122137404,
+  "mean_pool_size": 39.62595419847328,
+  "vector_enabled": true,
+  "embedding_model": "Xenova/all-MiniLM-L6-v2",
+  "path": "/workspace/benchmarks/pageindex-ab/design/rerank-candidates.jsonl"
+}

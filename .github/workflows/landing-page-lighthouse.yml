@@ -5,13 +5,13 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "landing-page/**"
+      - "apps/www/**"
       - ".github/workflows/landing-page-lighthouse.yml"
       - "scripts/dev/assert-lighthouse-scores.mjs"
   push:
     branches: [main]
     paths:
-      - "landing-page/**"
+      - "apps/www/**"
       - ".github/workflows/landing-page-lighthouse.yml"
       - "scripts/dev/assert-lighthouse-scores.mjs"
   workflow_dispatch:
@@ -35,17 +35,17 @@ jobs:
         with:
           node-version: "25"
           cache: npm
-          cache-dependency-path: landing-page/demo/package-lock.json
+          cache-dependency-path: apps/www/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: landing-page/demo
+        working-directory: apps/www
 
       - name: Build landing page
         env:
           NEXT_PUBLIC_SITE_URL: http://127.0.0.1:4321
         run: npm run build
-        working-directory: landing-page/demo
+        working-directory: apps/www
 
       - name: Serve out/, run Lighthouse, assert scores
         env:
@@ -55,7 +55,7 @@ jobs:
           LH_MIN_PERF: "0.70"
         run: |
           set -euo pipefail
-          cd landing-page/demo
+          cd apps/www
           npx --yes serve@14 out -l 4321 &
           PID=$!
           cleanup() { kill "$PID" 2>/dev/null || true; }

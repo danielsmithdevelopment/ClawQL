@@ -33,7 +33,7 @@ ClawQL closes all three gaps simultaneously through a layered, defense-in-depth 
 | **0** | Immutable Releases                 | `clawql-release`, Arweave, Rift, Radicle + GitHub mirror                                         | Permanent, verifiable, self-describing artifacts with machine-readable policy |
 | **1** | Collaboration                      | Radicle (primary) + GitHub mirror                                                                | Human & agent development surface                                             |
 | **2** | Execution & Intelligent Gateway    | `clawql-api`, `clawql-core`, `clawql-auth`                                                       | Single MCP surface, routing, enforcement, token optimization                  |
-| **3** | Memory & Documents                 | `clawql-memory` (Vault + Graph + PageIndex), `clawql-documents`, `clawql-pageindex`              | Persistent hybrid knowledge with Merkle stamping                              |
+| **3** | Memory & Documents                 | `clawql-memory` (Vault + Graph), `clawql-documents` (`clawql-pageindex` **removed in 8.0**)      | Persistent hybrid knowledge with Merkle stamping                              |
 | **4** | Strategic Coordination             | `clawql-ouroboros` evolutionary loop (shipped); DAOS swarm coordination — NSV + SGDOP (roadmap)  | Swarm diversity, reputation, recruitment, convergence control                 |
 | **5** | Security & Compliance              | ATRClaims, Presidio, Merkle/WORM, Vault, external-provider policies                              | Uniform zero-trust controls across all boundaries                             |
 | **6** | Observability & Runtime Protection | LGTM+ (Alloy + Langfuse + Beyla + Faro + Loki/Tempo/Mimir/Pyroscope + Falco/Tetragon/Wazuh + k6) | Full visibility, AI tracing, runtime enforcement, anomaly detection           |
@@ -154,7 +154,7 @@ _Full design: [Deployment & Operations Guide](../deployment/clawql-deployment-op
 
 **Effect-TS:** `search` / `execute` + `PluginRegistry` + Panguard proxy run on Effect; extracted domain packages remain mostly `async` at IO edges ([Effect plan](../design/effect-ts-modularization-rearchitecture-plan.md)).
 
-**Tier 1:** `examples/clawql-local-docker-compose` — runnable today.
+**Tier 1:** `docs/examples/clawql-local-docker-compose` — runnable today.
 
 **Next:** Operator dynamic composition → community verticals → Layer 0 permanence (Arweave/Rift).
 

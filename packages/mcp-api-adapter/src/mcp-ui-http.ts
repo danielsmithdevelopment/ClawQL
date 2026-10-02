@@ -11,9 +11,19 @@ import {
 import { canProcessDocuments, filterToolsForAtr } from "./mcp-ui-atr.js";
 import {
   createGeneratedUi,
+  deleteGeneratedUiBySlug,
   getGeneratedUiBySlug,
   type GeneratedUiDefinition,
 } from "./mcp-ui-generate.js";
+import {
+  AGENT_LAB_PRESET_SLUG,
+  CLOUDFLARE_CLAIM_PRESET_SLUG,
+  McpUiPresetError,
+  runResolveAgentLabPreset,
+  runResolveCloudflareClaimPreset,
+} from "./mcp-ui-presets.js";
+import { runRenderAgentLabLandingPage } from "./mcp-ui-agent-lab-html.js";
+import { runRenderCloudflareClaimLandingPage } from "./mcp-ui-cloudflare-claim-html.js";
 import {
   renderMcpUiCatalogPage,
   renderMcpUiCustomFormPage,
@@ -33,7 +43,7 @@ import {
   pushProgressEvent,
   subscribeProgress,
 } from "./mcp-ui-progress.js";
-import { formHintsForTool } from "./mcp-ui-templates.js";
+import { runFormHintsForTool } from "./mcp-ui-templates/index.js";
 import {
   buildContextFlamegraph,
   DEMO_TRACE_SESSION_COMPRESSED,
@@ -435,6 +445,70 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     );
   });
 
+  /**
+   * Per-agent / per-cell topology deep-link (#1082 option 1).
+   * Resolves live inference for the agent session key when present; otherwise
+   * explicit not-found — never silent demo compare swap.
+   */
+  router.get("/trace/agent/:agentId", async (req, res) => {
+    const agentId = String(req.params.agentId ?? "").trim();
+    if (!isValidTraceSessionId(agentId)) {
+      res
+        .status(400)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(agentId || "(empty)", {
+            basePath,
+            hint: "Agent id must be a short alphanumeric token (dashboard topology session key).",
+          })
+        );
+      return;
+    }
+
+    let records: TraceCallRecord[] | null;
+    try {
+      records = await resolveTraceRecords(agentId, options.listTraceCalls);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      res
+        .status(502)
+        .type("html")
+        .send(
+          renderTraceNotFoundPage(agentId, {
+            basePath,
+            hint: `Failed to load agent trace: ${message}`,
+          })
+        );
+      return;
+    }
+
+    if (!records) {
+      res.status(404).type("html").send(
+        renderTraceNotFoundPage(agentId, {
+          basePath,
+          hint: options.listTraceCalls
+            ? `No inference calls for agent/session “${agentId}”. When the agent (or cell) publishes a correlation id via Gap B heartbeat lastCorrelationId — or uses agentId as the correlation key — live calls appear here. Until then this empty state is intentional (not a demo).`
+            : "Wire listTraceCalls (MCP_API_ADAPTER_INFERENCE_TRACE=1) so agent-scoped sessions can resolve. Until then this page is an explicit empty state — not the compare demo.",
+        })
+      );
+      return;
+    }
+
+    const graph = buildContextFlamegraph(agentId, records, {
+      tokenization: traceTokenizationMeta(agentId, records),
+    });
+    const wantJson =
+      String(req.query.format ?? "").toLowerCase() === "json" ||
+      (req.accepts(["html", "json"]) === "json" &&
+        String(req.query.format ?? "").toLowerCase() !== "html");
+
+    if (wantJson) {
+      res.status(200).json(graph);
+      return;
+    }
+    res.status(200).type("html").send(renderContextFlamegraphPage(graph, { basePath }));
+  });
+
   router.get("/trace/:sessionId", async (req, res) => {
     const sessionId = String(req.params.sessionId ?? "").trim();
     if (!sessionId || sessionId.length > 200 || /[^\w.:@+-]/.test(sessionId)) {
@@ -536,13 +610,165 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
     });
   });
 
+  router.get("/presets/agent-lab", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveAgentLabPreset(authorized);
+      res.type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition,
+        })
+      );
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Docs Agent Lab",
+            description:
+              "HTMX-scaffolded multi-step view that does not exist as a static page on the docs site.",
+            slug: AGENT_LAB_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
+  router.post("/presets/agent-lab/start", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveAgentLabPreset(authorized);
+      deleteGeneratedUiBySlug(AGENT_LAB_PRESET_SLUG);
+      const form = createGeneratedUi(definition, authorized);
+      res.redirect(303, `${basePath}/custom/${encodeURIComponent(form.slug)}`);
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderAgentLabLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Docs Agent Lab",
+            description:
+              "HTMX-scaffolded multi-step view that does not exist as a static page on the docs site.",
+            slug: AGENT_LAB_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
+
+  router.get("/presets/cloudflare-claim", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveCloudflareClaimPreset(authorized);
+      res.type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition,
+        })
+      );
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Cloudflare-style click-to-claim",
+            description:
+              "Third-party WebMCP coupon tools re-humanized through /mcp-ui.",
+            slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
+  router.post("/presets/cloudflare-claim/start", (req, res) => {
+    const atr = atrFromRequest(req);
+    const catalog = options.getCatalog();
+    const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
+    try {
+      const definition = runResolveCloudflareClaimPreset(authorized);
+      deleteGeneratedUiBySlug(CLOUDFLARE_CLAIM_PRESET_SLUG);
+      const form = createGeneratedUi(definition, authorized);
+      res.redirect(303, `${basePath}/custom/${encodeURIComponent(form.slug)}`);
+    } catch (err) {
+      const reason =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
+      res.status(400).type("html").send(
+        runRenderCloudflareClaimLandingPage({
+          basePath,
+          title: options.title ?? "MCP API Adapter",
+          definition: {
+            title: "Cloudflare-style click-to-claim",
+            description:
+              "Third-party WebMCP coupon tools re-humanized through /mcp-ui.",
+            slug: CLOUDFLARE_CLAIM_PRESET_SLUG,
+            steps: [],
+          },
+          error: reason,
+        })
+      );
+    }
+  });
+
   router.post("/generate", (req, res) => {
     const atr = atrFromRequest(req);
     const catalog = options.getCatalog();
     const authorized = filterToolsForAtr(catalog.tools, atr, atrScoped);
-    const body = (req.body ?? {}) as GeneratedUiDefinition;
+    const body = (req.body ?? {}) as GeneratedUiDefinition & { preset?: string };
     try {
-      const form = createGeneratedUi(body, authorized);
+      let definition: GeneratedUiDefinition = body;
+      if (body.preset === "agent-lab" || body.preset === AGENT_LAB_PRESET_SLUG) {
+        definition = runResolveAgentLabPreset(authorized);
+        deleteGeneratedUiBySlug(AGENT_LAB_PRESET_SLUG);
+      } else if (
+        body.preset === "cloudflare-claim" ||
+        body.preset === CLOUDFLARE_CLAIM_PRESET_SLUG
+      ) {
+        definition = runResolveCloudflareClaimPreset(authorized);
+        deleteGeneratedUiBySlug(CLOUDFLARE_CLAIM_PRESET_SLUG);
+      }
+      const form = createGeneratedUi(definition, authorized);
       res.status(201).json({
         id: form.id,
         slug: form.slug,
@@ -552,7 +778,12 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         url: `${basePath}/custom/${form.slug}`,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message =
+        err instanceof McpUiPresetError
+          ? err.reason
+          : err instanceof Error
+            ? err.message
+            : String(err);
       res.status(400).json({ error: message });
     }
   });
@@ -595,7 +826,7 @@ export function attachMcpUiRoutes(app: Express, options: AttachMcpUiOptions): st
         );
       return;
     }
-    const hints = formHintsForTool(tool);
+    const hints = runFormHintsForTool(tool);
     const { html: fieldsHtml, hasFileFields } = renderToolFormFields(tool, hints);
     res.type("html").send(
       renderMcpUiCustomFormPage({

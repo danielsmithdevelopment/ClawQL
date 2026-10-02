@@ -1,16 +1,34 @@
 import { Effect } from "effect";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const startHitlCompletedConsumer = vi.fn(async () => undefined);
+const stopNatsClient = vi.fn(async () => undefined);
+
+vi.mock("./client.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./client.js")>();
+  return {
+    ...actual,
+    startHitlCompletedConsumer: (...args: unknown[]) => startHitlCompletedConsumer(...args),
+    stopNatsClient: (...args: unknown[]) => stopNatsClient(...args),
+  };
+});
+
 import { natsHitlConsumerScopedEffect } from "./nats-consumer-effect.js";
 import { resetNatsClientForTests } from "./client.js";
 
 describe("natsHitlConsumerScopedEffect", () => {
-  it("acquireRelease no-ops when NATS is not configured", async () => {
+  beforeEach(() => {
+    startHitlCompletedConsumer.mockClear();
+    stopNatsClient.mockClear();
     resetNatsClientForTests();
-    delete process.env.CLAWQL_NATS_URL;
-    delete process.env.CLAWQL_NATS_JETSTREAM;
-    await Effect.runPromise(
-      Effect.scoped(natsHitlConsumerScopedEffect(async () => ({ ok: true })))
-    );
-    expect(true).toBe(true);
+  });
+
+  it("acquireRelease calls start then stop on scope close", async () => {
+    const handler = async () => ({ ok: true as const });
+    await expect(
+      Effect.runPromise(Effect.scoped(natsHitlConsumerScopedEffect(handler)))
+    ).resolves.toBeUndefined();
+    expect(startHitlCompletedConsumer).toHaveBeenCalledExactlyOnceWith(handler);
+    expect(stopNatsClient).toHaveBeenCalledOnce();
   });
 });

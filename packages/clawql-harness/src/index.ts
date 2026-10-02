@@ -13,6 +13,17 @@ export {
   type HarnessRegistryState,
 } from "./registry.js";
 export {
+  CLAWQL_HARNESS_REGISTER_ID,
+  assertRegisterSideLiveOrThrow,
+  capabilityRegisterInterceptEnabled,
+  defaultCapabilityRegisterWiring,
+  ensureSessionCatalogFromHarnessScope,
+  isolatedCapabilityRegisterWiring,
+  reportHarnessToolRegistration,
+  type CapabilityRegisterWiring,
+  type RegisterToolWithInterceptResult,
+} from "./capability-register-wiring.js";
+export {
   harnessToolNamesForMcpBridge,
   invokeHarnessTool,
   listHarnessTools,

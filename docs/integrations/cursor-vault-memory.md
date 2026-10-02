@@ -17,8 +17,8 @@ This document explains how **ClawQL’s Obsidian vault tools** (`memory_ingest`,
 
 ### 1. MCP tools (ClawQL server)
 
-- **`memory_ingest`** — Writes structured Markdown under **`Memory/`** in the vault (YAML frontmatter, optional **`[[wikilinks]]`**, dedup by content hash). Implementation: **`packages/clawql-memory/ingest/`** (MCP shim: **`src/memory-ingest.ts`**). Optional **`toolOutputsFile`**: server reads a large file from disk (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**). See **[mcp-tools.md](../mcp/mcp-tools.md)** and **[memory-obsidian.md](../memory/memory-obsidian.md)**.
-- **`memory_recall`** — Keyword search, wikilink graph walks, optional vector leg when configured. Implementation: **`packages/clawql-memory/recall/`** (MCP shim: **`src/memory-recall.ts`**). See **[memory-db-hybrid-implementation.md](../memory/memory-db-hybrid-implementation.md)** for the **`memory.db`** sidecar.
+- **`memory_ingest`** — Writes structured Markdown under **`Memory/`** in the vault (YAML frontmatter, optional **`[[wikilinks]]`**, dedup by content hash). Implementation: **`packages/clawql-memory/ingest/`** (MCP handler: **`clawql-memory/plugin`**). Optional **`toolOutputsFile`**: server reads a large file from disk (allowlisted via **`CLAWQL_MEMORY_INGEST_FILE_ROOTS`**). See **[mcp-tools.md](../mcp/mcp-tools.md)** and **[memory-obsidian.md](../memory/memory-obsidian.md)**.
+- **`memory_recall`** — Keyword search, wikilink graph walks, optional vector leg when configured. Implementation: **`packages/clawql-memory/recall/`** (MCP handler: **`clawql-memory/plugin`**). See **[memory-db-hybrid-implementation.md](../memory/memory-db-hybrid-implementation.md)** for the **`memory.db`** sidecar.
 - **`cache`** (**ClawQL Core**, always registered) — **Ephemeral LRU** key/value in this process only — **not** the vault. Use for temporary session state; use **`memory_ingest`** / **`memory_recall`** (set **`CLAWQL_ENABLE_MEMORY=0`** to hide vault tools) for anything that must persist. See **[cache-tool.md](../mcp/cache-tool.md)**.
 - **`audit`** (always on) — **Ephemeral** in-process event ring buffer — **not** the vault and **not** a compliance system by itself; use **`memory_ingest`** for durable trails. See **[enterprise-mcp-tools.md](../mcp/enterprise-mcp-tools.md)** ([#89](https://github.com/danielsmithdevelopment/ClawQL/issues/89)).
 
@@ -76,5 +76,5 @@ Cursor uses the skill’s YAML **`description`** to decide when to attach it; yo
 | --------------------------------------------- | ----------------------------------- |
 | `.cursor/rules/clawql-vault-memory.mdc`       | Cursor rule (always apply)          |
 | `.cursor/skills/clawql-vault-memory/SKILL.md` | Cursor skill (deep ingest + recall) |
-| `src/memory-ingest.ts`                        | `memory_ingest` implementation      |
-| `src/memory-recall.ts`                        | `memory_recall` implementation      |
+| `packages/clawql-memory/src/ingest/`          | `memory_ingest` implementation      |
+| `packages/clawql-memory/src/recall/`          | `memory_recall` implementation      |

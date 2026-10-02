@@ -5,8 +5,9 @@
  * - Local file (JSON or YAML OpenAPI 3 / Swagger 2), or
  * - URL to fetch the same, or
  * - Google Discovery document URL, or
- * - **Opt-in** bundled packs via instance `providers` (`pack` / `enabled`) or legacy
- *   **`CLAWQL_PROVIDER`** / **`CLAWQL_BUNDLED_PROVIDERS`** / **`CLAWQL_SPEC_PATHS`**.
+ * - **Opt-in** bundled packs via instance `providers` (`pack` / `enabled`), named
+ *   **`toolkit`** / **`CLAWQL_TOOLKIT`**, or legacy **`CLAWQL_PROVIDER`** /
+ *   **`CLAWQL_BUNDLED_PROVIDERS`** / **`CLAWQL_SPEC_PATHS`**.
  * - **No-config default:** empty provider stack (native GraphQL/gRPC only when configured) —
  *   catalog stays available; nothing is auto-loaded.
  *
@@ -40,6 +41,10 @@ import {
   readProvidersCompositionFromEnv,
   type ClawqlProvidersComposition,
 } from "../config/providers-composition.js";
+import {
+  readToolkitIdFromInstanceEnvEffect,
+  resolveToolkitToProvidersComposition,
+} from "../toolkits/index.js";
 import {
   listBundledProviderGroupIds,
   listBundledProviderIds,
@@ -669,10 +674,31 @@ async function resolveMultiSpecItems(): Promise<ProviderGroupItem[] | "empty" | 
     return items.length === 0 ? "empty" : items;
   }
 
+  // Instance toolkit when providers key is absent.
+  const instanceToolkitId = Effect.runSync(readToolkitIdFromInstanceEnvEffect());
+  if (instanceToolkitId) {
+    const composition = Effect.runSync(resolveToolkitToProvidersComposition(instanceToolkitId));
+    const items = await resolveItemsFromProvidersComposition(composition);
+    return items.length === 0 ? "empty" : items;
+  }
+
+  const toolkitEnv = process.env.CLAWQL_TOOLKIT?.trim().toLowerCase();
+
   if (providerRaw) {
+    if (toolkitEnv) {
+      console.warn(
+        `[spec-loader] CLAWQL_PROVIDER="${providerRaw}" set; ignoring CLAWQL_TOOLKIT="${toolkitEnv}"`
+      );
+    }
     if (providerRaw === "none") return "empty";
     const grouped = await resolveBundledProviderGroup(providerRaw);
     if (grouped) return grouped;
+  }
+
+  if (toolkitEnv) {
+    const composition = Effect.runSync(resolveToolkitToProvidersComposition(toolkitEnv));
+    const items = await resolveItemsFromProvidersComposition(composition);
+    return items.length === 0 ? "empty" : items;
   }
 
   // Deprecated env add-ons alone no longer imply the curated pack.
@@ -864,7 +890,7 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
       `[spec-loader] BREAKING (8.0.0): No providers configured — native protocols only (${loaded.operations.length} operation(s)). ` +
         `ClawQL 7.x auto-loaded pack "default" (Cloudflare, GitHub, Slack, Linear, Notion, Onyx). ` +
         `Restore with CLAWQL_PROVIDER=default or CLAWQL_INSTANCE_SPEC={"providers":{"pack":"default"}}. ` +
-        `See RELEASE_NOTES_v8.0.0.md / docs/plugins/bundled-providers.md.`
+        `See docs/release/RELEASE_NOTES_v8.0.0.md / docs/plugins/bundled-providers.md.`
     );
     return loaded;
   }

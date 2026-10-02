@@ -13,7 +13,7 @@ Add **optional** integration so agents use a dedicated MCP **`workflow`** tool (
 
 ## Non-goals (initial)
 
-- Installing Argo inside **`charts/clawql-mcp`** as a **required** dependency (may document optional subchart or external install only).
+- Installing Argo inside **`manifests/charts/clawql-mcp`** as a **required** dependency (may document optional subchart or external install only).
 - Granting ClawQL **cluster-admin** by default.
 - Replacing **Ouroboros** — different abstraction (evolutionary loop vs. DAG templates).
 - **Inline `Workflow` specs** in v1 — submits are **template-ref only** (see design doc).

@@ -22,6 +22,7 @@ import {
 } from "../entitlements/enforced-gateway.js";
 import { isStripeMeterReportingActive } from "clawql-payments";
 import { buildInferenceRecord, type InferenceStore } from "../store/types.js";
+import { maybeEnrichMessages } from "../memory/enrichment.js";
 
 type OpenAiChatCompletionRequest = {
   model?: string;
@@ -381,6 +382,23 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
     };
 
     try {
+      const enrich = await maybeEnrichMessages({
+        messages,
+        req,
+        env,
+        virtualKey: keyContext,
+        correlationId,
+      });
+      if (enrich.kind === "fail_closed") {
+        sendOpenAiError(res, 502, enrich.error, "server_error");
+        return;
+      }
+      const effectiveMessages = enrich.kind === "inject" ? enrich.messages : messages;
+      const memoryIds = enrich.kind === "inject" ? enrich.memoryIds : undefined;
+      if (memoryIds?.length) {
+        res.setHeader("x-clawql-memory-ids", memoryIds.join(","));
+      }
+
       if (resolved && registry && requestUsesToolCalling(body)) {
         const adapter = getProviderAdapter(registry, resolved.provider);
         if (adapter) {
@@ -395,7 +413,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
             team: keyContext?.team,
             virtualKeyId: keyContext?.id,
             correlationId,
-            messages,
+            messages: effectiveMessages,
             store,
           });
           if (handled) return;
@@ -420,12 +438,12 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
               model: publicModelId,
               created,
               correlationId,
-              chunks: adapter.streamComplete(resolved.model, messages, completeOptions),
+              chunks: adapter.streamComplete(resolved.model, effectiveMessages, completeOptions),
             });
             await bill();
             await recordPassthroughCall({
               store,
-              messages,
+              messages: effectiveMessages,
               provider: resolved.provider,
               model: resolved.model,
               publicModelId,
@@ -441,7 +459,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
 
         const result = await options.gateway.complete({
           model: gatewayCompleteModel,
-          messages,
+          messages: effectiveMessages,
           correlationId,
           team: keyContext?.team,
           virtualKeyId: keyContext?.id,
@@ -458,7 +476,7 @@ export function createOpenAiCompatRouter(options: CreateOpenAiCompatRouterOption
 
       const result = await options.gateway.complete({
         model: gatewayCompleteModel,
-        messages,
+        messages: effectiveMessages,
         correlationId,
         team: keyContext?.team,
         virtualKeyId: keyContext?.id,

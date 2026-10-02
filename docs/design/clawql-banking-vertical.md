@@ -173,7 +173,7 @@ verticals/clawql-banking/   # or packages/clawql-banking when extracted
 | **`clawql-insurance`**  | Claims packets               | Different case types; share Documents/HITL patterns            |
 | **`clawql-blockchain`** | Optional on-chain settlement | Peer optional dep only if RWA/deposit tokenization is in scope |
 
-Prefer **shared document packs** under `deployment/samples/` over cross-vertical imports.
+Prefer **shared document packs** under `docs/examples/idp/` over cross-vertical imports.
 
 ---
 

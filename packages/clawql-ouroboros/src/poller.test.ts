@@ -1,5 +1,5 @@
 import { Deferred, Duration, Effect, Fiber, Ref, TestClock, TestContext } from "effect";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { startSeedsPoller } from "./poller.js";
 import { startSeedsPollerFiberEffect, type SeedRunEffect } from "./glue/seeds-poller-core.js";
 import type { Seed } from "./seed.js";
@@ -115,18 +115,22 @@ describe("startSeedsPollerFiberEffect (TestClock)", () => {
 });
 
 describe("startSeedsPoller Promise façade", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("exposes stop() without throwing", () => {
+  it("stop halts further fetchPending polls", async () => {
+    let fetches = 0;
     const poller = startSeedsPoller(
       { run: async () => undefined } as never,
-      async () => [],
+      async () => {
+        fetches += 1;
+        return [];
+      },
       async () => {},
-      { pollIntervalMs: 60_000 }
+      { pollIntervalMs: 40 }
     );
-    expect(typeof poller.stop).toBe("function");
+    await new Promise((r) => setTimeout(r, 110));
+    expect(fetches).toBeGreaterThanOrEqual(1);
+    const atStop = fetches;
     poller.stop();
+    await new Promise((r) => setTimeout(r, 130));
+    expect(fetches).toBe(atStop);
   });
 });

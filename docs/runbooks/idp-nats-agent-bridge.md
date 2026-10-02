@@ -36,7 +36,7 @@ npm run nats:agent-bridge
 
 ### Helm
 
-`nats.agentBridge.enabled=true` (included in [`values-nats-idp.example.yaml`](../../charts/clawql-mcp/values-nats-idp.example.yaml)) runs Deployment `*-nats-agent-bridge` against in-cluster `/mcp`.
+`nats.agentBridge.enabled=true` (included in [`values-nats-idp.example.yaml`](../../manifests/charts/clawql-mcp/values-nats-idp.example.yaml)) runs Deployment `*-nats-agent-bridge` against in-cluster `/mcp`.
 
 | Env                                       | Default                     | Purpose                    |
 | ----------------------------------------- | --------------------------- | -------------------------- |
@@ -47,10 +47,10 @@ npm run nats:agent-bridge
 
 ## Runtime setup
 
-Sample skills: [`deployment/samples/idp-nats-agent/`](../../deployment/samples/idp-nats-agent/README.md)
+Sample skills: [`docs/examples/idp/idp-nats-agent/`](../../docs/examples/idp/idp-nats-agent/README.md)
 
-- **Hermes** — [`hermes/SKILL.md`](../../deployment/samples/idp-nats-agent/hermes/SKILL.md)
-- **Pi** — [`pi/clawql-idp.ts`](../../deployment/samples/idp-nats-agent/pi/clawql-idp.ts)
+- **Hermes** — [`hermes/SKILL.md`](../../docs/examples/idp/idp-nats-agent/hermes/SKILL.md)
+- **Pi** — [`pi/clawql-idp.ts`](../../docs/examples/idp/idp-nats-agent/pi/clawql-idp.ts)
 
 ## Contract
 

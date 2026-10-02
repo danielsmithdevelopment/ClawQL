@@ -1,6 +1,6 @@
 /**
  * Smart-upload HTMX fragment for /mcp-ui.
- * Canonical copy — keep examples/mcp-api-adapter/pixeldrop/file-upload-smart.htmx.html in sync.
+ * Canonical copy — keep docs/examples/mcp-api-adapter/pixeldrop/file-upload-smart.htmx.html in sync.
  *
  * Deliberate client-side JS exception: convert/resize/drag before hx-post.
  */

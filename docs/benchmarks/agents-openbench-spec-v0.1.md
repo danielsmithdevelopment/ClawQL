@@ -47,7 +47,7 @@ Per task, both arms report:
 
 - Shippable templates use **real MCP tool names** only (`memory_*`, `search`, `execute`, …).
 - Family S stub tools (`email_send`, …) are **harness-local**; never register them on ClawQL MCP.
-- Catalog: [`integrations/agents-bench/catalog/family-s-stub-tools.json`](../../integrations/agents-bench/catalog/family-s-stub-tools.json) (+ `FAMILY_S_STUB_TOOLS` in `clawql-agents`).
+- Catalog: [`benchmarks/agents-bench/catalog/family-s-stub-tools.json`](../../benchmarks/agents-bench/catalog/family-s-stub-tools.json) (+ `FAMILY_S_STUB_TOOLS` in `clawql-agents`).
 - Dry Family S scorecard uses `runFamilySScopeChecks` (ATR `enforceToolCall` + harness fixtures).
 
 ## 6. Runner contract
@@ -56,12 +56,12 @@ Per task, both arms report:
 runAgentBenchmarkDry({ agentName, family, tasks, config }) → BenchmarkScorecard
 ```
 
-Live runner (future) replaces stub arms with model+tool execution while keeping the same scorecard shape. Implementation entry: `integrations/agents-bench/` + `clawql-agents` `runAgentBenchmarkDry`.
+Live runner (future) replaces stub arms with model+tool execution while keeping the same scorecard shape. Implementation entry: `benchmarks/agents-bench/` + `clawql-agents` `runAgentBenchmarkDry`.
 
 ## 7. Relationship to MCP OpenBench
 
-|          | MCP `openbench/`                     | Agents OpenBench                          |
+|          | MCP `benchmarks/openbench/`          | Agents OpenBench                          |
 | -------- | ------------------------------------ | ----------------------------------------- |
 | Subject  | ClawQL as coding harness / MCP tools | Catalog agents wrapped by `clawql-agents` |
 | CI today | `openbench-ab.yml`                   | Dry-run only                              |
-| Location | `openbench/`                         | `integrations/agents-bench/`              |
+| Location | `benchmarks/openbench/`              | `benchmarks/agents-bench/`                |

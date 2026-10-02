@@ -6,14 +6,15 @@ ClawQL stores vault memory as [Open Knowledge Format (OKF) v0.2](https://okf.io)
 
 ## What ships
 
-| Surface               | Behavior                                                                                                    |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **`memory_ingest`**   | Writes OKF v0.2 frontmatter (`type` required; defaults to `context`) plus trust signals + ClawQL extensions |
-| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                                       |
-| **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                                             |
-| **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                            |
-| **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                                     |
-| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                          |
+| Surface               | Behavior                                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`memory_ingest`**   | Writes OKF v0.2 frontmatter (`type` required; defaults to `context`) plus trust signals + ClawQL extensions                                                                                                         |
+| **`Memory/index.md`** | OKF catalog (alongside legacy `_INDEX_{Provider}.md`)                                                                                                                                                               |
+| **`Memory/log.md`**   | Append-only OKF changelog of successful ingests                                                                                                                                                                     |
+| **Append upgrade**    | Legacy notes missing `type` / v0.2 fields are upgraded on append                                                                                                                                                    |
+| **Recall**            | Excludes `status: retracted`; down-weights `stale` / past `stale_after`                                                                                                                                             |
+| **Lint**              | `lintOkfMarkdown` / `lintOkfFrontmatter` validate status, stale_after, verified.\*                                                                                                                                  |
+| **Erase / retract**   | Full erase crypto-shreds the note and emits WORM `MEMORY_RETRACTED` with opaque `pathId` + content hash (never readable path/body). See [memory-obsidian § Erasure](./memory-obsidian.md#erasure-crypto-shredding). |
 
 ## Frontmatter contract (OKF v0.2)
 
@@ -124,20 +125,20 @@ const issues = lintOkfMarkdown(next, { checkStale: true, requireWormRef: path.en
 
 ## Env knobs
 
-| Env                                          | Default | Effect                                                                |
-| -------------------------------------------- | ------- | --------------------------------------------------------------------- |
-| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                            |
-| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                       |
-| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                              |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)     |
-| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates |
-| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)       |
-| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`        |
-| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                  |
-| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off   |
-| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                        |
-| `CLAWQL_MEMORY_RECALL_HYBRID=1`              | off     | Also query codegraph / pageindex / onyx when those layers are enabled |
-| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`             |
+| Env                                          | Default | Effect                                                                              |
+| -------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_INDEX_PAGE=0`                 | on      | Disables `_INDEX_*` **and** OKF `index.md`                                          |
+| `CLAWQL_MEMORY_OKF_INDEX=0`                  | on      | Disables only OKF `index.md` (keeps `_INDEX_*`)                                     |
+| `CLAWQL_MEMORY_OKF_LOG=0`                    | on      | Disables `log.md` append                                                            |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST=0`         | on      | Disables index-first survey (`index.md` + `log.md` before bodies)                   |
+| `CLAWQL_MEMORY_RECALL_INDEX_FIRST_THRESHOLD` | `48`    | Above this file count, load bodies only for catalog/vector candidates               |
+| `CLAWQL_MEMORY_RECALL_MIN_SCORE`             | `0.05`  | Minimum keyword/IDF score to seed recall (fractional under IDF)                     |
+| `CLAWQL_MEMORY_BACKEND=git`                  | fs      | Git-native vault: commit after each successful `memory_ingest`                      |
+| `CLAWQL_MEMORY_GIT_COMMIT_ON`                | ingest* | `off` disables commits; `*` default when backend=git                                |
+| `CLAWQL_MEMORY_GIT_PUSH_MODE`                | async†  | `async` \| `sync` \| `off` — †async when `GIT_REMOTE` set, else off                 |
+| `CLAWQL_MEMORY_GIT_REMOTE`                   | —       | Remote URL (adds `origin` on first `git init`)                                      |
+| `CLAWQL_MEMORY_RECALL_HYBRID`                | —       | **Removed in 8.0** — use explicit `sources` or `CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1` |
+| `CLAWQL_MEMORY_RECALL_RRF=0`                 | on      | Disable reciprocal-rank fusion across multi-source `hits`                           |
 
 ## Flywheel export filters (planned / next)
 

@@ -202,15 +202,15 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 
 ### `notify-mock-slack`
 
-|                             |                                                                                                                                                                                                                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Claim**                   | Agents post a completion milestone via `notify` / `clawql_notify` (Slack `chat.postMessage`) and record a graded artifact — inventing `notify.json` without tool_use fails.                                                                                                               |
-| **Why it matters**          | First live proof of optional automation notify without a real Slack workspace — closes the “milestones are docs-only” gap.                                                                                                                                                                |
-| **How**                     | `CLAWQL_ENABLE_NOTIFY=1`, stub token, `CLAWQL_TEST_SLACK_FETCH_STUB=1` + fixed stub body, minimal Slack OpenAPI fixture (`openbench/fixtures/minimal-slack-chat-postmessage.json`). Marker `CLAWQL_NOTIFY_MARKER=nebula-55` must appear in real notify tool input. Channel `C-OPENBENCH`. |
-| **What success looks like** | on: clawql_notify → `notify.json` ok/channel/marker; off: no notify tool → 0.0.                                                                                                                                                                                                           |
-| **Evidence**                | on **1.0** (2 turns, ~21s) / off **0.0** — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305). Tools: clawql_notify, write.                                                                                                                         |
-| **Does _not_ prove**        | Live Slack GraphQL Mesh path; Block Kit; thread replies; real workspace auth.                                                                                                                                                                                                             |
-| **Failure modes learned**   | Offline `validate_tasks.py` requires `marker` in `solution/notify.json` (30890720126).                                                                                                                                                                                                    |
+|                             |                                                                                                                                                                                                                                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Claim**                   | Agents post a completion milestone via `notify` / `clawql_notify` (Slack `chat.postMessage`) and record a graded artifact — inventing `notify.json` without tool_use fails.                                                                                                                          |
+| **Why it matters**          | First live proof of optional automation notify without a real Slack workspace — closes the “milestones are docs-only” gap.                                                                                                                                                                           |
+| **How**                     | `CLAWQL_ENABLE_NOTIFY=1`, stub token, `CLAWQL_TEST_SLACK_FETCH_STUB=1` + fixed stub body, minimal Slack OpenAPI fixture (`benchmarks/openbench/fixtures/minimal-slack-chat-postmessage.json`). Marker `CLAWQL_NOTIFY_MARKER=nebula-55` must appear in real notify tool input. Channel `C-OPENBENCH`. |
+| **What success looks like** | on: clawql_notify → `notify.json` ok/channel/marker; off: no notify tool → 0.0.                                                                                                                                                                                                                      |
+| **Evidence**                | on **1.0** (2 turns, ~21s) / off **0.0** — [30891002305](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30891002305). Tools: clawql_notify, write.                                                                                                                                    |
+| **Does _not_ prove**        | Live Slack GraphQL Mesh path; Block Kit; thread replies; real workspace auth.                                                                                                                                                                                                                        |
+| **Failure modes learned**   | Offline `validate_tasks.py` requires `marker` in `solution/notify.json` (30890720126).                                                                                                                                                                                                               |
 
 ---
 
@@ -317,7 +317,7 @@ If clawql-on scores higher (ideally **1.0 / 0.0**), the claim is about **agent b
 | PageIndex/hybrid off=1.0 with no ClawQL | Often `"tool":"invalid"` embedding `clawql_pageindex_*` in input — use `require-real-clawql-tools.py`. |
 | Hybrid placeholder `<value after…>`     | Agent indexed instruction text; require read of handbook.md first.                                     |
 
-Shared grader helper: [`openbench/scripts/require-real-clawql-tools.py`](../../openbench/scripts/require-real-clawql-tools.py).
+Shared grader helper: [`benchmarks/openbench/scripts/require-real-clawql-tools.py`](../../benchmarks/openbench/scripts/require-real-clawql-tools.py).
 
 ---
 

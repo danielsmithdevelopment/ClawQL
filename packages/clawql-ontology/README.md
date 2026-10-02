@@ -10,14 +10,14 @@ Lint, scaffold, and generate tooling for ClawQL’s **enterprise Ontology** ([AD
 
 ```bash
 # Prefer .cqe (ADR 0010 §2a); .yaml / .yml / .json still accepted
-clawql ontology lint --dir examples/ontology/entities
-npx clawql-ontology lint --dir examples/ontology/entities
+clawql ontology lint --dir docs/examples/ontology/entities
+npx clawql-ontology lint --dir docs/examples/ontology/entities
 
 clawql ontology init
 clawql ontology create-entity Matter
 clawql ontology import --pack legal
 
-clawql ontology generate --dir examples/ontology/entities --out generated/ontology
+clawql ontology generate --dir docs/examples/ontology/entities --out generated/ontology
 
 # Layer 2 — runtime scaffold from JSON Schema
 clawql ontology scaffold --schema invoice-schema.json --document-type invoice --ttl permanent
@@ -57,10 +57,9 @@ See [meta-ontology-v0.1 § memory_recall](../../docs/specs/ontology/meta-ontolog
 
 ## Schema packaging
 
-`entity.schema.json` ships inside this package under `schemas/ontology/` so standalone
-`npm install clawql-ontology` can lint without a monorepo checkout. Keep it identical to
-the repo-canonical [`schemas/ontology/entity.schema.json`](../../schemas/ontology/entity.schema.json)
-(CI diffs the two).
+`entity.schema.json` lives in this package under [`schemas/ontology/`](./schemas/ontology/)
+so standalone `npm install clawql-ontology` can lint without a monorepo checkout. That
+copy is canonical — there is no duplicate at the repo root.
 
 ## Library
 

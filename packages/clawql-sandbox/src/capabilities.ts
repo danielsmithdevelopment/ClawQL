@@ -1,9 +1,11 @@
 /**
- * Probes for sandbox_exec backends: Kata RuntimeClass, Seatbelt binary, Docker/Podman CLI, Cloudflare bridge credentials.
+ * Probes for sandbox_exec backends: Agent Substrate, Kata RuntimeClass, Seatbelt binary,
+ * Docker/Podman CLI, Cloudflare bridge credentials.
  */
 
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import { agentSubstrateConfigured } from "./agent-substrate/types.js";
 import {
   createInClusterKataClient,
   kataRuntimeClassAvailable,
@@ -31,6 +33,11 @@ export function bridgeCredentialsConfigured(): boolean {
   const base = process.env.CLAWQL_SANDBOX_BRIDGE_URL?.trim();
   const token = process.env.CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN?.trim();
   return Boolean(base && token);
+}
+
+/** Agent Substrate configured (mock enabled or live URL+token) — ADR 0011. */
+export function agentSubstrateReachable(): boolean {
+  return agentSubstrateConfigured();
 }
 
 /** macOS Seatbelt: `sandbox-exec` present and executable. */

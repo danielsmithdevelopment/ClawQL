@@ -19,7 +19,13 @@ export type MemoryWormEventKind = (typeof MEMORY_WORM_EVENT_KINDS)[number];
 export type MemoryWormEvent = {
   kind: MemoryWormEventKind;
   at: string;
+  /**
+   * @deprecated Prefer {@link pathId} for retract / compliance events.
+   * Readable vault paths may contain personal data and must not enter WORM on erase.
+   */
   path?: string;
+  /** Opaque id from the erasable path-map (HMAC/UUID) — safe for append-only WORM. */
+  pathId?: string;
   correlationId?: string;
   wormRef?: string | null;
   detail?: Record<string, unknown>;

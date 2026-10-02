@@ -300,7 +300,7 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
    - **Next order:** automation (schedule/workflow/argocd/HITL) → sandbox → ouroboros → pageindex/codegraph → registry `McpToolRegistration.schema` type → non-MCP config Zod.
    - **Exit criterion:** no Zod `.parse` / `.safeParse` in domain packages; Zod imports confined to MCP transport adapter (or removed after Standard Schema SDK support). Prefer built-in `effect/Schema` (not `@effect/schema`).
 
-**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers; workflow audit via `AuditService`; **`Effect.withSpan`** on search/execute cores; **`@effect/opentelemetry` Tracer bridge** (`src/effect-otel-bridge.ts`); **pluginLayers owned by ManagedRuntime Scope**; **`effect/Schema`** for search/execute/cache/audit/memory/documents MCP inputs (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
+**Completed:** Turborepo scaffold; `clawql-core` + `AuditService`; execute/search Effect services; `PanguardProxyPlugin`; extraction **phases 1–9**; horizontal Plugin Layers; **Effect hot-path migration** for memory/documents/automation/sandbox/ouroboros + opt-in tools (pageindex, Onyx, HITL) + MCP audit bridge; **fiber workers** for schedule / ouroboros seeds poller / inference pipeline; **ManagedRuntime dispose** + pool/NATS `acquireRelease` helpers; workflow audit via `AuditService`; **`Effect.withSpan`** on search/execute cores; **`@effect/opentelemetry` Tracer bridge** (`src/composition/effect-otel-bridge.ts`); **pluginLayers owned by ManagedRuntime Scope**; **`effect/Schema`** for search/execute/cache/audit/memory/documents MCP inputs (IO remains `tryPromise`). Ouroboros Effect rewrite landed on the `effect-ouroboros` track.
 ---
 
 ## 14. References
@@ -308,4 +308,4 @@ Label cross-cutting PRs with both `effect-foundation` and `modularization-platfo
 - Enablement: §2.3, §5.3–5.6, §6, §13 (Operator Layer composition)
 - Modularization v2: §12 phases (calendar = illustrative; **Effect Phase 0–2 should lead or overlap Week 1–2**)
 - Shipped surface: [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md), [`docs/readme/configuration.md`](../readme/configuration.md)
-- Entry points: `src/server.ts`, `src/server-http.ts`, `src/mcp-server-factory.ts`, `src/tools.ts`
+- Entry points: `src/server.ts`, `src/server-http.ts`, `src/mcp/mcp-server-factory.ts`, `src/mcp/tools.ts`

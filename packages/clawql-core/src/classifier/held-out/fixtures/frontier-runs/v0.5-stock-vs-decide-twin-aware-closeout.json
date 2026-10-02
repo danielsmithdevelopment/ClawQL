@@ -1,0 +1,119 @@
+{
+  "protocol": "stock vs Decide locked-τ on frozen v0.5; twin-aware correctness; V06 spend ship rule",
+  "evalSuite": "v0.5-routing-fresh",
+  "fitPath": "packages/clawql-core/src/classifier/held-out/fixtures/fast-decision-fit-routing-v0.1.json",
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.5-routing-fresh-gha-36185003282-labels.json",
+  "labelCount": 75,
+  "groundTruthSource": "frontier_labels",
+  "lockedKnobs": {
+    "stock": {
+      "mode": "temperature_softmax",
+      "temperature": 4,
+      "tau": 0.7
+    },
+    "decide": {
+      "mode": "temperature_softmax",
+      "temperature": 0.75,
+      "tau": 0.8
+    }
+  },
+  "stockDump": {
+    "path": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.5-score-dumps/scores-stock.json",
+    "modelId": "fastino/gliner2.5-base-v1",
+    "backend": "gliner2"
+  },
+  "decideDump": {
+    "path": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.5-score-dumps/scores-decide.json",
+    "modelId": "fastino/GLiNER2.5-Decide",
+    "backend": "gliner2"
+  },
+  "arms": [
+    {
+      "arm": "stock_forced",
+      "model": "fastino/gliner2.5-base-v1",
+      "calibration": null,
+      "threshold": null,
+      "rejectRule": false,
+      "notes": "forced exact-match; no reject rule",
+      "n": 75,
+      "nFired": 75,
+      "fireRate": 1,
+      "nCorrectFired": 72,
+      "nErrorsFired": 3,
+      "precisionAmongFired": 0.96,
+      "cpLower95": 0.8875231782399916,
+      "forcedExactMatchAcc": 0.96
+    },
+    {
+      "arm": "decide_forced",
+      "model": "fastino/GLiNER2.5-Decide",
+      "calibration": null,
+      "threshold": null,
+      "rejectRule": false,
+      "notes": "forced exact-match; no reject rule",
+      "n": 75,
+      "nFired": 75,
+      "fireRate": 1,
+      "nCorrectFired": 75,
+      "nErrorsFired": 0,
+      "precisionAmongFired": 1,
+      "cpLower95": 0.9520049359448577,
+      "forcedExactMatchAcc": 1
+    },
+    {
+      "arm": "stock_locked_T_tau",
+      "model": "fastino/gliner2.5-base-v1",
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 4
+      },
+      "threshold": 0.7,
+      "rejectRule": true,
+      "notes": "locked from FIT_TAU_FREEZE_v0.1 (T=4, τ=0.70); not refit on v0.5",
+      "n": 75,
+      "nFired": 32,
+      "fireRate": 0.4266666666666667,
+      "nCorrectFired": 32,
+      "nErrorsFired": 0,
+      "precisionAmongFired": 1,
+      "cpLower95": 0.8911188393206471,
+      "forcedExactMatchAcc": 0.96
+    },
+    {
+      "arm": "decide_locked_T_tau",
+      "model": "fastino/GLiNER2.5-Decide",
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 0.75
+      },
+      "threshold": 0.8,
+      "rejectRule": true,
+      "notes": "locked from DECIDE_V05_FIT_TAU_LOCK (T=0.75, τ=0.80); not refit on v0.5",
+      "n": 75,
+      "nFired": 45,
+      "fireRate": 0.6,
+      "nCorrectFired": 45,
+      "nErrorsFired": 0,
+      "precisionAmongFired": 1,
+      "cpLower95": 0.9212948995931569,
+      "forcedExactMatchAcc": 1
+    }
+  ],
+  "shipRule": {
+    "rule": "V06 spend: fewer fire errors wins; equal errors → prefer higher coverage (twins count as correct)",
+    "decideNFired": 45,
+    "decideNErrorsFired": 0,
+    "stockNFired": 32,
+    "stockNErrorsFired": 0,
+    "frontierLabelsPresent": true,
+    "labelCountMatchesEval": true,
+    "shipEligible": true
+  },
+  "honesty": [
+    "v0.5 scored once with knobs locked before any v0.5 scores existed",
+    "Decide T/τ from fit-only lock (DECIDE_V05_FIT_TAU_LOCK); no refit on eval",
+    "After V06 cutover live path is Decide T=0.75/τ=0.80 (see DECIDE_V06_CUTOVER.md)",
+    "Closeout citation requires frontier_labels groundTruthSource",
+    "quote nFired and CP lower bound whenever citing precision among fired"
+  ]
+}

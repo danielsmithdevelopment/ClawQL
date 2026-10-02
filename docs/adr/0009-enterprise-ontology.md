@@ -96,7 +96,7 @@ One governance layer (`@kinetic` + PEP + WORM); agents do not choose the executo
 
 **Doctor (essay gap 4.4):** `clawql doctor` **warns** (does not hard-fail) when:
 
-- no Entity files under `.clawql/ontology/entities` / `examples/ontology/entities` / `CLAWQL_ONTOLOGY_DIR`, or
+- no Entity files under `.clawql/ontology/entities` / `docs/examples/ontology/entities` / `CLAWQL_ONTOLOGY_DIR`, or
 - env marks schema as object-storage-only (`CLAWQL_ONTOLOGY_SCHEMA_STORE=r2|s3|…`, `CLAWQL_ONTOLOGY_SCHEMA_IN_OBJECT_STORAGE=1`, or a remote `CLAWQL_ONTOLOGY_SCHEMA_URI`).
 
 Instances may live in R2; **schema must stay in Git** for PR review and release `ontologySchema` pins.
@@ -185,7 +185,7 @@ Ouroboros Seeds ([ADR 0001](./0001-ouroboros-workflow-engine.md)) carry a **task
 
 ### Follow-ups (implementation, not this ADR)
 
-1. Ship provisional JSON Schema + example entities under `schemas/ontology/` and `examples/ontology/`. ✅ (PR foundation)
+1. Ship provisional JSON Schema + example entities (schema canonical in `packages/clawql-ontology/schemas/ontology/`; examples under `docs/examples/ontology/`). ✅ (PR foundation)
 2. Implement `clawql ontology lint` / `generate` CLI + CI `Ontology lint (examples)` job. ✅ — `packages/clawql-ontology`, `npm run ontology:lint`, `.github/workflows/ci.yml`
 3. Wire `memory_ingest` frontmatter to OKF-compatible fields (`type`, optional `worm_ref`). ✅ — see [`docs/memory/okf.md`](../memory/okf.md)
 4. Document hot/cold sync tiers when implementing tiered pull.

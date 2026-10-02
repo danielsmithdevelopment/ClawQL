@@ -63,7 +63,7 @@ export async function runOntologyDoctorChecks(
   const override = env.CLAWQL_ONTOLOGY_DIR?.trim();
   const candidates = override
     ? [override]
-    : [".clawql/ontology/entities", "examples/ontology/entities"];
+    : [".clawql/ontology/entities", "docs/examples/ontology/entities"];
 
   let localCount = 0;
   let localRel: string | undefined;

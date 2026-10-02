@@ -44,7 +44,7 @@ Introduce **`CLAWQL_OBSERVABILITY_PROFILE`** (and Helm `observability.profile`):
 
 **Default by install path:**
 
-- `examples/clawql-local-docker-compose` → **`bundled`**
+- `docs/examples/clawql-local-docker-compose` → **`bundled`**
 - Docker Desktop Istio lab → **`bundled`** (wire MCP to collector + Langfuse when profile services exist)
 - `clawql-mcp` Helm (standalone) → **`external`**
 - `clawql-idp` full stack → **`bundled`** with subchart toggles

@@ -1,0 +1,484 @@
+{
+  "suiteId": "fast-decision-held-out-v0.5-routing-fresh",
+  "adjudicationMode": "live",
+  "judgeModel": "claude-sonnet-4-6",
+  "labelCount": 75,
+  "labelsIn": null,
+  "scorerBackend": "gliner2",
+  "glinerLiveConfigured": true,
+  "ontologyEnrichment": false,
+  "ontologyDigest": null,
+  "validationCriteria": {
+    "minAccuracy": 0.7,
+    "maxMeanCalibrationError": 0.15,
+    "minCases": 1
+  },
+  "candidateIdRemapPolicy": "cosmetic-only (quote/case); semantic label/suffix remaps fail the case — never counted",
+  "candidateIdRemaps": [],
+  "reports": [
+    {
+      "useSiteId": "search_provider_tool_routing",
+      "adjudicatedCount": 75,
+      "caseCount": 75,
+      "passedCriteria": false,
+      "productionTrusted": false,
+      "scorerBackend": "gliner2",
+      "meanCalibrationError": 0.16111111111111112,
+      "rawAccuracy": 0.8533333333333334,
+      "failureReasons": ["meanCalibrationError 0.161 > max 0.15"],
+      "cases": [
+        {
+          "caseId": "route-v05-001",
+          "topCandidateId": "mcp.memory_recall_title_flag_a",
+          "topConfidence": 0.5131871859619049,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-002",
+          "topCandidateId": "mcp.memory_recall_title_flag_b",
+          "topConfidence": 0.5043101582541999,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-003",
+          "topCandidateId": "mcp.skills_list",
+          "topConfidence": 0.8129218603893804,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-004",
+          "topCandidateId": "mcp.skills_get",
+          "topConfidence": 0.8522713505495638,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-005",
+          "topCandidateId": "mcp.memory_recall",
+          "topConfidence": 0.7282843880006162,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-006",
+          "topCandidateId": "mcp.memory_recall_overbroad",
+          "topConfidence": 0.7649974176770145,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-007",
+          "topCandidateId": "mcp.memory_ingest",
+          "topConfidence": 0.5195757576713265,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-008",
+          "topCandidateId": "skill.clawql-memory-ingest",
+          "topConfidence": 0.8021014123519989,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-009",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.969344341020671,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-010",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.6044121769808197,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-011",
+          "topCandidateId": "mcp.execute",
+          "topConfidence": 0.6631388514141479,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-012",
+          "topCandidateId": "skill.clawql-execute-workflows",
+          "topConfidence": 0.8646569525907513,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-013",
+          "topCandidateId": "mcp.notify",
+          "topConfidence": 0.5116644905292932,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-014",
+          "topCandidateId": "skill.clawql-notify-workflows",
+          "topConfidence": 0.6399899233391073,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-015",
+          "topCandidateId": "mcp.schedule",
+          "topConfidence": 0.5774888175257202,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-016",
+          "topCandidateId": "mcp.schedule",
+          "topConfidence": 0.4761831011970651,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-017",
+          "topCandidateId": "mcp.sandbox_exec",
+          "topConfidence": 0.5002167484696701,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-018",
+          "topCandidateId": "skill.clawql-sandbox-exec",
+          "topConfidence": 0.8172186435658053,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-019",
+          "topCandidateId": "mcp.audit",
+          "topConfidence": 0.9693458270774911,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-020",
+          "topCandidateId": "skill.clawql-audit-workflows",
+          "topConfidence": 0.8332812043779939,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-021",
+          "topCandidateId": "mcp.cache",
+          "topConfidence": 0.5708935282615633,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-022",
+          "topCandidateId": "skill.clawql-cache-workflows",
+          "topConfidence": 0.5002632638289701,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-023",
+          "topCandidateId": "mcp.clawql_think",
+          "topConfidence": 0.7326594304962182,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-024",
+          "topCandidateId": "skill.deep-thinking",
+          "topConfidence": 0.7565168199545647,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-025",
+          "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "topConfidence": 0.52401399920754,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-026",
+          "topCandidateId": "skill.clawql-ouroboros-workflows",
+          "topConfidence": 0.7681108959702839,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-027",
+          "topCandidateId": "mcp.ingest_external_knowledge",
+          "topConfidence": 0.5036670340565862,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-028",
+          "topCandidateId": "skill.clawql-external-ingest",
+          "topConfidence": 0.6023205953253935,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-029",
+          "topCandidateId": "mcp.knowledge_search_onyx",
+          "topConfidence": 0.9090847096236271,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-030",
+          "topCandidateId": "skill.clawql-onyx-knowledge-workflows",
+          "topConfidence": 0.5545256314245379,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-031",
+          "topCandidateId": "mcp.data_query",
+          "topConfidence": 0.6624909719230295,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-032",
+          "topCandidateId": "mcp.data_query_cohort_count",
+          "topConfidence": 0.876095228841013,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-033",
+          "topCandidateId": "mcp.data_query",
+          "topConfidence": 0.6889925383313077,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-034",
+          "topCandidateId": "mcp.memory_recall",
+          "topConfidence": 0.7726129037409939,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-035",
+          "topCandidateId": "mcp.data_query_cohort_count",
+          "topConfidence": 0.9090888428507611,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-036",
+          "topCandidateId": "tool.generic_web_search",
+          "topConfidence": 0.841654534521165,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-037",
+          "topCandidateId": "mcp.pageindex_build_tree",
+          "topConfidence": 0.6973424032386404,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-038",
+          "topCandidateId": "mcp.audit",
+          "topConfidence": 0.846623785954029,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-039",
+          "topCandidateId": "mcp.cache",
+          "topConfidence": 0.6540998626910154,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-040",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.47635015139740106,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-041",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.8334534598712029,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-042",
+          "topCandidateId": "skill.clawql-memory-recall",
+          "topConfidence": 0.6772520311753214,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-043",
+          "topCandidateId": "skill.clawql-vault-memory",
+          "topConfidence": 0.5785722267992524,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-044",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.44067751262598254,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-045",
+          "topCandidateId": "mcp.notify",
+          "topConfidence": 0.47645812286066463,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-046",
+          "topCandidateId": "mcp.schedule",
+          "topConfidence": 0.8333263880785873,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-047",
+          "topCandidateId": "mcp.ingest_external_knowledge",
+          "topConfidence": 0.8836764216605087,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-048",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.5558926617010147,
+          "correct": false
+        },
+        {
+          "caseId": "route-v05-049",
+          "topCandidateId": "mcp.clawql_think",
+          "topConfidence": 0.9405151141326359,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-050",
+          "topCandidateId": "mcp.pageindex_build_tree",
+          "topConfidence": 0.8119165011174097,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-051",
+          "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "topConfidence": 0.6283511395749266,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-052",
+          "topCandidateId": "mcp.sandbox_exec",
+          "topConfidence": 0.8203942227352619,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-053",
+          "topCandidateId": "mcp.skills_list",
+          "topConfidence": 0.42736425145446855,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-054",
+          "topCandidateId": "mcp.skills_get",
+          "topConfidence": 0.686727588156906,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-055",
+          "topCandidateId": "mcp.memory_ingest",
+          "topConfidence": 0.7379313680515941,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-056",
+          "topCandidateId": "mcp.memory_recall",
+          "topConfidence": 0.9405137152465408,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-057",
+          "topCandidateId": "mcp.memory_recall_title_flag_a",
+          "topConfidence": 0.8333263880785873,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-058",
+          "topCandidateId": "mcp.memory_recall_title_flag_b",
+          "topConfidence": 0.63836259053137,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-059",
+          "topCandidateId": "mcp.memory_recall_overbroad",
+          "topConfidence": 0.7377841416865383,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-060",
+          "topCandidateId": "mcp.data_query_cohort_count",
+          "topConfidence": 0.7706861742914236,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-061",
+          "topCandidateId": "tool.bash_workspace_hunt",
+          "topConfidence": 0.8836764216605087,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-062",
+          "topCandidateId": "tool.generic_web_search",
+          "topConfidence": 0.49407461979143996,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-063",
+          "topCandidateId": "skill.clawql-audit-workflows",
+          "topConfidence": 0.5090610207412292,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-064",
+          "topCandidateId": "skill.clawql-cache-workflows",
+          "topConfidence": 0.47646352893306865,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-065",
+          "topCandidateId": "skill.clawql-composed-mcp-workflows",
+          "topConfidence": 0.5084001400111271,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-066",
+          "topCandidateId": "skill.clawql-execute-workflows",
+          "topConfidence": 0.4568860569077672,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-067",
+          "topCandidateId": "skill.clawql-external-ingest",
+          "topConfidence": 0.5141575531549865,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-068",
+          "topCandidateId": "skill.clawql-memory-ingest",
+          "topConfidence": 0.6732986860149248,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-069",
+          "topCandidateId": "skill.clawql-memory-recall",
+          "topConfidence": 0.7374975567939686,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-070",
+          "topCandidateId": "skill.clawql-notify-workflows",
+          "topConfidence": 0.549575258945304,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-071",
+          "topCandidateId": "skill.clawql-onyx-knowledge-workflows",
+          "topConfidence": 0.6531615611197885,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-072",
+          "topCandidateId": "skill.clawql-ouroboros-workflows",
+          "topConfidence": 0.6037600305862724,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-073",
+          "topCandidateId": "skill.clawql-sandbox-exec",
+          "topConfidence": 0.5793544692071725,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-074",
+          "topCandidateId": "skill.clawql-schedule-workflows",
+          "topConfidence": 0.47788062764263317,
+          "correct": true
+        },
+        {
+          "caseId": "route-v05-075",
+          "topCandidateId": "mcp.search",
+          "topConfidence": 0.4695279768362191,
+          "correct": false
+        }
+      ]
+    }
+  ],
+  "honesty": "live judge labels applied; scorer=gliner2 (CLAWQL_FAST_DECISION_GLINER_URL set); productionTrusted requires DEFAULT_VALIDATION_CRITERIA (minAccuracy=0.7, maxMeanCalibrationError=0.15) — wiring criteria cannot light the flag; productionTrusted remains false until live adjudicationKind + live gliner2 backend + DEFAULT calibration criteria pass; no candidateId remaps on this run"
+}

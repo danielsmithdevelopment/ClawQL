@@ -1,0 +1,1102 @@
+{
+  "document_id": "rfc9110",
+  "sections": [
+    {
+      "id": "sec-internet-engineering-task-force-ietf-r-fielding-ed",
+      "title": "Internet Engineering Task Force (IETF)                  R. Fielding, Ed."
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-2-conformance",
+      "title": "2 Conformance"
+    },
+    {
+      "id": "sec-3-terminology-and-core-concepts",
+      "title": "3 Terminology and Core Concepts"
+    },
+    {
+      "id": "sec-4-identifiers-in-http",
+      "title": "4 Identifiers in HTTP"
+    },
+    {
+      "id": "sec-5-fields",
+      "title": "5 Fields"
+    },
+    {
+      "id": "sec-6-message-abstraction",
+      "title": "6 Message Abstraction"
+    },
+    {
+      "id": "sec-7-routing-http-messages",
+      "title": "7 Routing HTTP Messages"
+    },
+    {
+      "id": "sec-8-representation-data-and-metadata",
+      "title": "8 Representation Data and Metadata"
+    },
+    {
+      "id": "sec-9-methods",
+      "title": "9 Methods"
+    },
+    {
+      "id": "sec-10-message-context",
+      "title": "10 Message Context"
+    },
+    {
+      "id": "sec-11-http-authentication",
+      "title": "11 HTTP Authentication"
+    },
+    {
+      "id": "sec-12-content-negotiation",
+      "title": "12 Content Negotiation"
+    },
+    {
+      "id": "sec-13-conditional-requests",
+      "title": "13 Conditional Requests"
+    },
+    {
+      "id": "sec-14-range-requests",
+      "title": "14 Range Requests"
+    },
+    {
+      "id": "sec-15-status-codes",
+      "title": "15 Status Codes"
+    },
+    {
+      "id": "sec-16-extending-http",
+      "title": "16 Extending HTTP"
+    },
+    {
+      "id": "sec-17-security-considerations",
+      "title": "17 Security Considerations"
+    },
+    {
+      "id": "sec-18-iana-considerations",
+      "title": "18 IANA Considerations"
+    },
+    {
+      "id": "sec-19-references",
+      "title": "19 References"
+    },
+    {
+      "id": "sec-1-introduction",
+      "title": "1 Introduction"
+    },
+    {
+      "id": "sec-1-1-purpose",
+      "title": "1.1 Purpose"
+    },
+    {
+      "id": "sec-1-2-history-and-evolution",
+      "title": "1.2 History and Evolution"
+    },
+    {
+      "id": "sec-1-3-core-semantics",
+      "title": "1.3 Core Semantics"
+    },
+    {
+      "id": "sec-1-4-specifications-obsoleted-by-this-document",
+      "title": "1.4 Specifications Obsoleted by This Document"
+    },
+    {
+      "id": "sec-2-conformance",
+      "title": "2 Conformance"
+    },
+    {
+      "id": "sec-2-1-syntax-notation",
+      "title": "2.1 Syntax Notation"
+    },
+    {
+      "id": "sec-2-2-requirements-notation",
+      "title": "2.2 Requirements Notation"
+    },
+    {
+      "id": "sec-2-3-length-requirements",
+      "title": "2.3 Length Requirements"
+    },
+    {
+      "id": "sec-2-4-error-handling",
+      "title": "2.4 Error Handling"
+    },
+    {
+      "id": "sec-2-5-protocol-version",
+      "title": "2.5 Protocol Version"
+    },
+    {
+      "id": "sec-3-terminology-and-core-concepts",
+      "title": "3 Terminology and Core Concepts"
+    },
+    {
+      "id": "sec-3-1-resources",
+      "title": "3.1 Resources"
+    },
+    {
+      "id": "sec-3-2-representations",
+      "title": "3.2 Representations"
+    },
+    {
+      "id": "sec-3-3-connections-clients-and-servers",
+      "title": "3.3 Connections, Clients, and Servers"
+    },
+    {
+      "id": "sec-3-4-messages",
+      "title": "3.4 Messages"
+    },
+    {
+      "id": "sec-3-5-user-agents",
+      "title": "3.5 User Agents"
+    },
+    {
+      "id": "sec-3-6-origin-server",
+      "title": "3.6 Origin Server"
+    },
+    {
+      "id": "sec-3-7-intermediaries",
+      "title": "3.7 Intermediaries"
+    },
+    {
+      "id": "sec-3-8-caches",
+      "title": "3.8 Caches"
+    },
+    {
+      "id": "sec-3-9-example-message-exchange",
+      "title": "3.9 Example Message Exchange"
+    },
+    {
+      "id": "sec-4-identifiers-in-http",
+      "title": "4 Identifiers in HTTP"
+    },
+    {
+      "id": "sec-4-1-uri-references",
+      "title": "4.1 URI References"
+    },
+    {
+      "id": "sec-4-2-http-related-uri-schemes",
+      "title": "4.2 HTTP-Related URI Schemes"
+    },
+    {
+      "id": "sec-4-2-4-deprecation-of-userinfo-in-http-s-uris",
+      "title": "4.2.4 Deprecation of userinfo in http(s) URIs"
+    },
+    {
+      "id": "sec-4-3-authoritative-access",
+      "title": "4.3 Authoritative Access"
+    },
+    {
+      "id": "sec-4-3-1-uri-origin",
+      "title": "4.3.1 URI Origin"
+    },
+    {
+      "id": "sec-4-3-5-ip-id-reference-identity",
+      "title": "4.3.5 IP-ID Reference Identity"
+    },
+    {
+      "id": "sec-5-fields",
+      "title": "5 Fields"
+    },
+    {
+      "id": "sec-5-1-field-names",
+      "title": "5.1 Field Names"
+    },
+    {
+      "id": "sec-5-2-field-lines-and-combined-field-value",
+      "title": "5.2 Field Lines and Combined Field Value"
+    },
+    {
+      "id": "sec-5-3-field-order",
+      "title": "5.3 Field Order"
+    },
+    {
+      "id": "sec-5-4-field-limits",
+      "title": "5.4 Field Limits"
+    },
+    {
+      "id": "sec-5-5-field-values",
+      "title": "5.5 Field Values"
+    },
+    {
+      "id": "sec-5-6-common-rules-for-defining-field-values",
+      "title": "5.6 Common Rules for Defining Field Values"
+    },
+    {
+      "id": "sec-5-6-1-lists-rule-abnf-extension",
+      "title": "5.6.1 Lists (#rule ABNF Extension)"
+    },
+    {
+      "id": "sec-5-6-1-1-sender-requirements",
+      "title": "5.6.1.1 Sender Requirements"
+    },
+    {
+      "id": "sec-5-6-1-2-recipient-requirements",
+      "title": "5.6.1.2 Recipient Requirements"
+    },
+    {
+      "id": "sec-5-6-2-tokens",
+      "title": "5.6.2 Tokens"
+    },
+    {
+      "id": "sec-5-6-3-whitespace",
+      "title": "5.6.3 Whitespace"
+    },
+    {
+      "id": "sec-5-6-4-quoted-strings",
+      "title": "5.6.4 Quoted Strings"
+    },
+    {
+      "id": "sec-5-6-5-comments",
+      "title": "5.6.5 Comments"
+    },
+    {
+      "id": "sec-5-6-6-parameters",
+      "title": "5.6.6 Parameters"
+    },
+    {
+      "id": "sec-5-6-7-date-time-formats",
+      "title": "5.6.7 Date/Time Formats"
+    },
+    {
+      "id": "sec-6-message-abstraction",
+      "title": "6 Message Abstraction"
+    },
+    {
+      "id": "sec-6-1-framing-and-completeness",
+      "title": "6.1 Framing and Completeness"
+    },
+    {
+      "id": "sec-6-2-control-data",
+      "title": "6.2 Control Data"
+    },
+    {
+      "id": "sec-6-3-header-fields",
+      "title": "6.3 Header Fields"
+    },
+    {
+      "id": "sec-6-4-content",
+      "title": "6.4 Content"
+    },
+    {
+      "id": "sec-6-4-1-content-semantics",
+      "title": "6.4.1 Content Semantics"
+    },
+    {
+      "id": "sec-6-4-2-identifying-content",
+      "title": "6.4.2 Identifying Content"
+    },
+    {
+      "id": "sec-7-otherwise-the-content-is-unidentified-by-http-but-a-more",
+      "title": "7 Otherwise, the content is unidentified by HTTP, but a more"
+    },
+    {
+      "id": "sec-6-5-trailer-fields",
+      "title": "6.5 Trailer Fields"
+    },
+    {
+      "id": "sec-6-5-1-limitations-on-use-of-trailers",
+      "title": "6.5.1 Limitations on Use of Trailers"
+    },
+    {
+      "id": "sec-6-5-2-processing-trailer-fields",
+      "title": "6.5.2 Processing Trailer Fields"
+    },
+    {
+      "id": "sec-6-6-message-metadata",
+      "title": "6.6 Message Metadata"
+    },
+    {
+      "id": "sec-6-6-1-date",
+      "title": "6.6.1 Date"
+    },
+    {
+      "id": "sec-6-6-2-trailer",
+      "title": "6.6.2 Trailer"
+    },
+    {
+      "id": "sec-7-routing-http-messages",
+      "title": "7 Routing HTTP Messages"
+    },
+    {
+      "id": "sec-7-1-determining-the-target-resource",
+      "title": "7.1 Determining the Target Resource"
+    },
+    {
+      "id": "sec-7-2-host-and-authority",
+      "title": "7.2 Host and :authority"
+    },
+    {
+      "id": "sec-7-3-routing-inbound-requests",
+      "title": "7.3 Routing Inbound Requests"
+    },
+    {
+      "id": "sec-7-3-1-to-a-cache",
+      "title": "7.3.1 To a Cache"
+    },
+    {
+      "id": "sec-7-3-2-to-a-proxy",
+      "title": "7.3.2 To a Proxy"
+    },
+    {
+      "id": "sec-7-3-3-to-the-origin",
+      "title": "7.3.3 To the Origin"
+    },
+    {
+      "id": "sec-7-4-rejecting-misdirected-requests",
+      "title": "7.4 Rejecting Misdirected Requests"
+    },
+    {
+      "id": "sec-7-5-response-correlation",
+      "title": "7.5 Response Correlation"
+    },
+    {
+      "id": "sec-7-6-message-forwarding",
+      "title": "7.6 Message Forwarding"
+    },
+    {
+      "id": "sec-7-6-1-connection",
+      "title": "7.6.1 Connection"
+    },
+    {
+      "id": "sec-7-6-2-max-forwards",
+      "title": "7.6.2 Max-Forwards"
+    },
+    {
+      "id": "sec-7-6-3-via",
+      "title": "7.6.3 Via"
+    },
+    {
+      "id": "sec-7-7-message-transformations",
+      "title": "7.7 Message Transformations"
+    },
+    {
+      "id": "sec-7-8-upgrade",
+      "title": "7.8 Upgrade"
+    },
+    {
+      "id": "sec-8-representation-data-and-metadata",
+      "title": "8 Representation Data and Metadata"
+    },
+    {
+      "id": "sec-8-1-representation-data",
+      "title": "8.1 Representation Data"
+    },
+    {
+      "id": "sec-8-2-representation-metadata",
+      "title": "8.2 Representation Metadata"
+    },
+    {
+      "id": "sec-8-3-content-type",
+      "title": "8.3 Content-Type"
+    },
+    {
+      "id": "sec-8-3-1-media-type",
+      "title": "8.3.1 Media Type"
+    },
+    {
+      "id": "sec-8-3-2-charset",
+      "title": "8.3.2 Charset"
+    },
+    {
+      "id": "sec-8-3-3-multipart-types",
+      "title": "8.3.3 Multipart Types"
+    },
+    {
+      "id": "sec-8-4-content-encoding",
+      "title": "8.4 Content-Encoding"
+    },
+    {
+      "id": "sec-8-4-1-content-codings",
+      "title": "8.4.1 Content Codings"
+    },
+    {
+      "id": "sec-8-4-1-1-compress-coding",
+      "title": "8.4.1.1 Compress Coding"
+    },
+    {
+      "id": "sec-8-4-1-2-deflate-coding",
+      "title": "8.4.1.2 Deflate Coding"
+    },
+    {
+      "id": "sec-8-4-1-3-gzip-coding",
+      "title": "8.4.1.3 Gzip Coding"
+    },
+    {
+      "id": "sec-8-5-content-language",
+      "title": "8.5 Content-Language"
+    },
+    {
+      "id": "sec-8-5-1-language-tags",
+      "title": "8.5.1 Language Tags"
+    },
+    {
+      "id": "sec-8-6-content-length",
+      "title": "8.6 Content-Length"
+    },
+    {
+      "id": "sec-8-7-content-location",
+      "title": "8.7 Content-Location"
+    },
+    {
+      "id": "sec-8-8-validator-fields",
+      "title": "8.8 Validator Fields"
+    },
+    {
+      "id": "sec-8-8-1-weak-versus-strong",
+      "title": "8.8.1 Weak versus Strong"
+    },
+    {
+      "id": "sec-8-8-2-last-modified",
+      "title": "8.8.2 Last-Modified"
+    },
+    {
+      "id": "sec-8-8-2-1-generation",
+      "title": "8.8.2.1 Generation"
+    },
+    {
+      "id": "sec-8-8-2-2-comparison",
+      "title": "8.8.2.2 Comparison"
+    },
+    {
+      "id": "sec-8-8-3-etag",
+      "title": "8.8.3 ETag"
+    },
+    {
+      "id": "sec-8-8-3-1-generation",
+      "title": "8.8.3.1 Generation"
+    },
+    {
+      "id": "sec-8-8-3-2-comparison",
+      "title": "8.8.3.2 Comparison"
+    },
+    {
+      "id": "sec-8-8-3-3-example-entity-tags-varying-on-content-negotiated-resources",
+      "title": "8.8.3.3 Example: Entity Tags Varying on Content-Negotiated Resources"
+    },
+    {
+      "id": "sec-9-methods",
+      "title": "9 Methods"
+    },
+    {
+      "id": "sec-9-1-overview",
+      "title": "9.1 Overview"
+    },
+    {
+      "id": "sec-9-2-common-method-properties",
+      "title": "9.2 Common Method Properties"
+    },
+    {
+      "id": "sec-9-2-1-safe-methods",
+      "title": "9.2.1 Safe Methods"
+    },
+    {
+      "id": "sec-9-2-2-idempotent-methods",
+      "title": "9.2.2 Idempotent Methods"
+    },
+    {
+      "id": "sec-9-2-3-methods-and-caching",
+      "title": "9.2.3 Methods and Caching"
+    },
+    {
+      "id": "sec-9-3-method-definitions",
+      "title": "9.3 Method Definitions"
+    },
+    {
+      "id": "sec-9-3-1-get",
+      "title": "9.3.1 GET"
+    },
+    {
+      "id": "sec-9-3-2-head",
+      "title": "9.3.2 HEAD"
+    },
+    {
+      "id": "sec-9-3-3-post",
+      "title": "9.3.3 POST"
+    },
+    {
+      "id": "sec-9-3-4-put",
+      "title": "9.3.4 PUT"
+    },
+    {
+      "id": "sec-9-3-5-delete",
+      "title": "9.3.5 DELETE"
+    },
+    {
+      "id": "sec-9-3-6-connect",
+      "title": "9.3.6 CONNECT"
+    },
+    {
+      "id": "sec-9-3-7-options",
+      "title": "9.3.7 OPTIONS"
+    },
+    {
+      "id": "sec-9-3-8-trace",
+      "title": "9.3.8 TRACE"
+    },
+    {
+      "id": "sec-10-message-context",
+      "title": "10 Message Context"
+    },
+    {
+      "id": "sec-10-1-request-context-fields",
+      "title": "10.1 Request Context Fields"
+    },
+    {
+      "id": "sec-10-1-1-expect",
+      "title": "10.1.1 Expect"
+    },
+    {
+      "id": "sec-10-1-2-from",
+      "title": "10.1.2 From"
+    },
+    {
+      "id": "sec-10-1-3-referer",
+      "title": "10.1.3 Referer"
+    },
+    {
+      "id": "sec-10-1-5-user-agent",
+      "title": "10.1.5 User-Agent"
+    },
+    {
+      "id": "sec-10-2-response-context-fields",
+      "title": "10.2 Response Context Fields"
+    },
+    {
+      "id": "sec-10-2-1-allow",
+      "title": "10.2.1 Allow"
+    },
+    {
+      "id": "sec-10-2-2-location",
+      "title": "10.2.2 Location"
+    },
+    {
+      "id": "sec-10-2-3-retry-after",
+      "title": "10.2.3 Retry-After"
+    },
+    {
+      "id": "sec-10-2-4-server",
+      "title": "10.2.4 Server"
+    },
+    {
+      "id": "sec-11-http-authentication",
+      "title": "11 HTTP Authentication"
+    },
+    {
+      "id": "sec-11-1-authentication-scheme",
+      "title": "11.1 Authentication Scheme"
+    },
+    {
+      "id": "sec-11-2-authentication-parameters",
+      "title": "11.2 Authentication Parameters"
+    },
+    {
+      "id": "sec-11-3-challenge-and-response",
+      "title": "11.3 Challenge and Response"
+    },
+    {
+      "id": "sec-11-4-credentials",
+      "title": "11.4 Credentials"
+    },
+    {
+      "id": "sec-11-5-establishing-a-protection-space-realm",
+      "title": "11.5 Establishing a Protection Space (Realm)"
+    },
+    {
+      "id": "sec-11-6-authenticating-users-to-origin-servers",
+      "title": "11.6 Authenticating Users to Origin Servers"
+    },
+    {
+      "id": "sec-11-6-1-www-authenticate",
+      "title": "11.6.1 WWW-Authenticate"
+    },
+    {
+      "id": "sec-11-6-2-authorization",
+      "title": "11.6.2 Authorization"
+    },
+    {
+      "id": "sec-11-6-3-authentication-info",
+      "title": "11.6.3 Authentication-Info"
+    },
+    {
+      "id": "sec-11-7-authenticating-clients-to-proxies",
+      "title": "11.7 Authenticating Clients to Proxies"
+    },
+    {
+      "id": "sec-11-7-1-proxy-authenticate",
+      "title": "11.7.1 Proxy-Authenticate"
+    },
+    {
+      "id": "sec-11-7-2-proxy-authorization",
+      "title": "11.7.2 Proxy-Authorization"
+    },
+    {
+      "id": "sec-11-7-3-proxy-authentication-info",
+      "title": "11.7.3 Proxy-Authentication-Info"
+    },
+    {
+      "id": "sec-12-content-negotiation",
+      "title": "12 Content Negotiation"
+    },
+    {
+      "id": "sec-12-1-proactive-negotiation",
+      "title": "12.1 Proactive Negotiation"
+    },
+    {
+      "id": "sec-12-2-reactive-negotiation",
+      "title": "12.2 Reactive Negotiation"
+    },
+    {
+      "id": "sec-12-3-request-content-negotiation",
+      "title": "12.3 Request Content Negotiation"
+    },
+    {
+      "id": "sec-12-4-content-negotiation-field-features",
+      "title": "12.4 Content Negotiation Field Features"
+    },
+    {
+      "id": "sec-12-4-1-absence",
+      "title": "12.4.1 Absence"
+    },
+    {
+      "id": "sec-12-4-2-quality-values",
+      "title": "12.4.2 Quality Values"
+    },
+    {
+      "id": "sec-12-4-3-wildcard-values",
+      "title": "12.4.3 Wildcard Values"
+    },
+    {
+      "id": "sec-12-5-content-negotiation-fields",
+      "title": "12.5 Content Negotiation Fields"
+    },
+    {
+      "id": "sec-12-5-1-accept",
+      "title": "12.5.1 Accept"
+    },
+    {
+      "id": "sec-12-5-2-accept-charset",
+      "title": "12.5.2 Accept-Charset"
+    },
+    {
+      "id": "sec-12-5-3-accept-encoding",
+      "title": "12.5.3 Accept-Encoding"
+    },
+    {
+      "id": "sec-12-5-4-accept-language",
+      "title": "12.5.4 Accept-Language"
+    },
+    {
+      "id": "sec-12-5-5-vary",
+      "title": "12.5.5 Vary"
+    },
+    {
+      "id": "sec-1-to-inform-cache-recipients-that-they-must-not-use-this-response",
+      "title": "1 To inform cache recipients that they MUST NOT use this response"
+    },
+    {
+      "id": "sec-2-to-inform-user-agent-recipients-that-this-response-was-subject-to",
+      "title": "2 To inform user agent recipients that this response was subject to"
+    },
+    {
+      "id": "sec-13-conditional-requests",
+      "title": "13 Conditional Requests"
+    },
+    {
+      "id": "sec-13-1-preconditions",
+      "title": "13.1 Preconditions"
+    },
+    {
+      "id": "sec-3-otherwise-the-condition-is-false",
+      "title": "3 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-3-otherwise-the-condition-is-true",
+      "title": "3 Otherwise, the condition is true."
+    },
+    {
+      "id": "sec-2-otherwise-the-condition-is-true",
+      "title": "2 Otherwise, the condition is true."
+    },
+    {
+      "id": "sec-2-otherwise-the-condition-is-false",
+      "title": "2 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-3-otherwise-the-condition-is-false",
+      "title": "3 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-2-otherwise-the-condition-is-false",
+      "title": "2 Otherwise, the condition is false."
+    },
+    {
+      "id": "sec-13-2-evaluation-of-preconditions",
+      "title": "13.2 Evaluation of Preconditions"
+    },
+    {
+      "id": "sec-13-2-2-precedence-of-preconditions",
+      "title": "13.2.2 Precedence of Preconditions"
+    },
+    {
+      "id": "sec-6-otherwise",
+      "title": "6 Otherwise,"
+    },
+    {
+      "id": "sec-14-range-requests",
+      "title": "14 Range Requests"
+    },
+    {
+      "id": "sec-14-1-range-units",
+      "title": "14.1 Range Units"
+    },
+    {
+      "id": "sec-14-1-1-range-specifiers",
+      "title": "14.1.1 Range Specifiers"
+    },
+    {
+      "id": "sec-14-1-2-byte-ranges",
+      "title": "14.1.2 Byte Ranges"
+    },
+    {
+      "id": "sec-14-2-range",
+      "title": "14.2 Range"
+    },
+    {
+      "id": "sec-14-3-accept-ranges",
+      "title": "14.3 Accept-Ranges"
+    },
+    {
+      "id": "sec-14-4-content-range",
+      "title": "14.4 Content-Range"
+    },
+    {
+      "id": "sec-14-5-partial-put",
+      "title": "14.5 Partial PUT"
+    },
+    {
+      "id": "sec-14-6-media-type-multipart-byteranges",
+      "title": "14.6 Media Type multipart/byteranges"
+    },
+    {
+      "id": "sec-1-additional-crlfs-might-precede-the-first-boundary-string-in-the",
+      "title": "1 Additional CRLFs might precede the first boundary string in the"
+    },
+    {
+      "id": "sec-2-although-rfc2046-permits-the-boundary-string-to-be-quoted-some",
+      "title": "2 Although [RFC2046] permits the boundary string to be quoted, some"
+    },
+    {
+      "id": "sec-15-status-codes",
+      "title": "15 Status Codes"
+    },
+    {
+      "id": "sec-15-1-overview-of-status-codes",
+      "title": "15.1 Overview of Status Codes"
+    },
+    {
+      "id": "sec-15-2-informational-1xx",
+      "title": "15.2 Informational 1xx"
+    },
+    {
+      "id": "sec-15-3-successful-2xx",
+      "title": "15.3 Successful 2xx"
+    },
+    {
+      "id": "sec-15-3-7-1-single-part",
+      "title": "15.3.7.1 Single Part"
+    },
+    {
+      "id": "sec-15-3-7-2-multiple-parts",
+      "title": "15.3.7.2 Multiple Parts"
+    },
+    {
+      "id": "sec-15-3-7-3-combining-parts",
+      "title": "15.3.7.3 Combining Parts"
+    },
+    {
+      "id": "sec-15-4-redirection-3xx",
+      "title": "15.4 Redirection 3xx"
+    },
+    {
+      "id": "sec-1-redirects-that-indicate-this-resource-might-be-available-at-a",
+      "title": "1 Redirects that indicate this resource might be available at a"
+    },
+    {
+      "id": "sec-2-redirection-that-offers-a-choice-among-matching-resources-capable",
+      "title": "2 Redirection that offers a choice among matching resources capable"
+    },
+    {
+      "id": "sec-3-redirection-to-a-different-resource-identified-by-the-location",
+      "title": "3 Redirection to a different resource, identified by the Location"
+    },
+    {
+      "id": "sec-4-redirection-to-a-previously-stored-result-as-in-the-304-not",
+      "title": "4 Redirection to a previously stored result, as in the 304 (Not"
+    },
+    {
+      "id": "sec-1-replace-the-target-uri-with-the-uri-referenced-by-the-redirection",
+      "title": "1 Replace the target URI with the URI referenced by the redirection"
+    },
+    {
+      "id": "sec-2-remove-header-fields-that-were-automatically-generated-by-the",
+      "title": "2 Remove header fields that were automatically generated by the"
+    },
+    {
+      "id": "sec-3-consider-removing-header-fields-that-were-not-automatically",
+      "title": "3 Consider removing header fields that were not automatically"
+    },
+    {
+      "id": "sec-4-change-the-request-method-according-to-the-redirecting-status",
+      "title": "4 Change the request method according to the redirecting status"
+    },
+    {
+      "id": "sec-15-5-client-error-4xx",
+      "title": "15.5 Client Error 4xx"
+    },
+    {
+      "id": "sec-15-6-server-error-5xx",
+      "title": "15.6 Server Error 5xx"
+    },
+    {
+      "id": "sec-16-extending-http",
+      "title": "16 Extending HTTP"
+    },
+    {
+      "id": "sec-16-1-method-extensibility",
+      "title": "16.1 Method Extensibility"
+    },
+    {
+      "id": "sec-16-1-1-method-registry",
+      "title": "16.1.1 Method Registry"
+    },
+    {
+      "id": "sec-16-1-2-considerations-for-new-methods",
+      "title": "16.1.2 Considerations for New Methods"
+    },
+    {
+      "id": "sec-16-2-status-code-extensibility",
+      "title": "16.2 Status Code Extensibility"
+    },
+    {
+      "id": "sec-16-2-1-status-code-registry",
+      "title": "16.2.1 Status Code Registry"
+    },
+    {
+      "id": "sec-16-2-2-considerations-for-new-status-codes",
+      "title": "16.2.2 Considerations for New Status Codes"
+    },
+    {
+      "id": "sec-16-3-field-extensibility",
+      "title": "16.3 Field Extensibility"
+    },
+    {
+      "id": "sec-16-3-1-field-name-registry",
+      "title": "16.3.1 Field Name Registry"
+    },
+    {
+      "id": "sec-16-3-2-considerations-for-new-fields",
+      "title": "16.3.2 Considerations for New Fields"
+    },
+    {
+      "id": "sec-16-3-2-1-considerations-for-new-field-names",
+      "title": "16.3.2.1 Considerations for New Field Names"
+    },
+    {
+      "id": "sec-16-3-2-2-considerations-for-new-field-values",
+      "title": "16.3.2.2 Considerations for New Field Values"
+    },
+    {
+      "id": "sec-16-4-authentication-scheme-extensibility",
+      "title": "16.4 Authentication Scheme Extensibility"
+    },
+    {
+      "id": "sec-16-4-1-authentication-scheme-registry",
+      "title": "16.4.1 Authentication Scheme Registry"
+    },
+    {
+      "id": "sec-16-4-2-considerations-for-new-authentication-schemes",
+      "title": "16.4.2 Considerations for New Authentication Schemes"
+    },
+    {
+      "id": "sec-16-5-range-unit-extensibility",
+      "title": "16.5 Range Unit Extensibility"
+    },
+    {
+      "id": "sec-16-5-1-range-unit-registry",
+      "title": "16.5.1 Range Unit Registry"
+    },
+    {
+      "id": "sec-16-5-2-considerations-for-new-range-units",
+      "title": "16.5.2 Considerations for New Range Units"
+    },
+    {
+      "id": "sec-16-6-content-coding-extensibility",
+      "title": "16.6 Content Coding Extensibility"
+    },
+    {
+      "id": "sec-16-6-1-content-coding-registry",
+      "title": "16.6.1 Content Coding Registry"
+    },
+    {
+      "id": "sec-16-6-2-considerations-for-new-content-codings",
+      "title": "16.6.2 Considerations for New Content Codings"
+    },
+    {
+      "id": "sec-16-7-upgrade-token-registry",
+      "title": "16.7 Upgrade Token Registry"
+    },
+    {
+      "id": "sec-17-security-considerations",
+      "title": "17 Security Considerations"
+    },
+    {
+      "id": "sec-17-1-establishing-authority",
+      "title": "17.1 Establishing Authority"
+    },
+    {
+      "id": "sec-17-2-risks-of-intermediaries",
+      "title": "17.2 Risks of Intermediaries"
+    },
+    {
+      "id": "sec-17-3-attacks-based-on-file-and-path-names",
+      "title": "17.3 Attacks Based on File and Path Names"
+    },
+    {
+      "id": "sec-17-4-attacks-based-on-command-code-or-query-injection",
+      "title": "17.4 Attacks Based on Command, Code, or Query Injection"
+    },
+    {
+      "id": "sec-17-5-attacks-via-protocol-element-length",
+      "title": "17.5 Attacks via Protocol Element Length"
+    },
+    {
+      "id": "sec-17-6-attacks-using-shared-dictionary-compression",
+      "title": "17.6 Attacks Using Shared-Dictionary Compression"
+    },
+    {
+      "id": "sec-17-7-disclosure-of-personal-information",
+      "title": "17.7 Disclosure of Personal Information"
+    },
+    {
+      "id": "sec-17-8-privacy-of-server-log-information",
+      "title": "17.8 Privacy of Server Log Information"
+    },
+    {
+      "id": "sec-17-9-disclosure-of-sensitive-information-in-uris",
+      "title": "17.9 Disclosure of Sensitive Information in URIs"
+    },
+    {
+      "id": "sec-17-10-application-handling-of-field-names",
+      "title": "17.10 Application Handling of Field Names"
+    },
+    {
+      "id": "sec-17-11-disclosure-of-fragment-after-redirects",
+      "title": "17.11 Disclosure of Fragment after Redirects"
+    },
+    {
+      "id": "sec-17-12-disclosure-of-product-information",
+      "title": "17.12 Disclosure of Product Information"
+    },
+    {
+      "id": "sec-17-13-browser-fingerprinting",
+      "title": "17.13 Browser Fingerprinting"
+    },
+    {
+      "id": "sec-17-14-validator-retention",
+      "title": "17.14 Validator Retention"
+    },
+    {
+      "id": "sec-17-15-denial-of-service-attacks-using-range",
+      "title": "17.15 Denial-of-Service Attacks Using Range"
+    },
+    {
+      "id": "sec-17-16-authentication-considerations",
+      "title": "17.16 Authentication Considerations"
+    },
+    {
+      "id": "sec-17-16-1-confidentiality-of-credentials",
+      "title": "17.16.1 Confidentiality of Credentials"
+    },
+    {
+      "id": "sec-17-16-2-credentials-and-idle-clients",
+      "title": "17.16.2 Credentials and Idle Clients"
+    },
+    {
+      "id": "sec-17-16-3-protection-spaces",
+      "title": "17.16.3 Protection Spaces"
+    },
+    {
+      "id": "sec-17-16-4-additional-response-fields",
+      "title": "17.16.4 Additional Response Fields"
+    },
+    {
+      "id": "sec-18-iana-considerations",
+      "title": "18 IANA Considerations"
+    },
+    {
+      "id": "sec-18-1-uri-scheme-registration",
+      "title": "18.1 URI Scheme Registration"
+    },
+    {
+      "id": "sec-18-2-method-registration",
+      "title": "18.2 Method Registration"
+    },
+    {
+      "id": "sec-18-3-status-code-registration",
+      "title": "18.3 Status Code Registration"
+    },
+    {
+      "id": "sec-18-4-field-name-registration",
+      "title": "18.4 Field Name Registration"
+    },
+    {
+      "id": "sec-2-entries-that-had-a-status-of-standard-experimental",
+      "title": "2 Entries that had a status of 'standard', 'experimental',"
+    },
+    {
+      "id": "sec-3-provisional-entries-without-a-status-have-been-made-to-have-a",
+      "title": "3 Provisional entries without a status have been made to have a"
+    },
+    {
+      "id": "sec-4-permanent-entries-without-a-status-after-confirmation-that-the",
+      "title": "4 Permanent entries without a status (after confirmation that the"
+    },
+    {
+      "id": "sec-18-5-authentication-scheme-registration",
+      "title": "18.5 Authentication Scheme Registration"
+    },
+    {
+      "id": "sec-18-6-content-coding-registration",
+      "title": "18.6 Content Coding Registration"
+    },
+    {
+      "id": "sec-18-7-range-unit-registration",
+      "title": "18.7 Range Unit Registration"
+    },
+    {
+      "id": "sec-18-8-media-type-registration",
+      "title": "18.8 Media Type Registration"
+    },
+    {
+      "id": "sec-18-9-port-registration",
+      "title": "18.9 Port Registration"
+    },
+    {
+      "id": "sec-18-10-upgrade-token-registration",
+      "title": "18.10 Upgrade Token Registration"
+    },
+    {
+      "id": "sec-19-references",
+      "title": "19 References"
+    },
+    {
+      "id": "sec-19-1-normative-references",
+      "title": "19.1 Normative References"
+    },
+    {
+      "id": "sec-19-2-informative-references",
+      "title": "19.2 Informative References"
+    }
+  ],
+  "source_url": "https://www.rfc-editor.org/rfc/rfc9110.txt"
+}

@@ -1,6 +1,6 @@
 /**
  * Harvey LAB memory_recall enrichment — sandbox document roots + cohort guidance.
- * Ported from integrations/harvey-labs/harness/adapters/clawql_lab_session.py `_enrich_lab_memory_recall`.
+ * Ported from benchmarks/harvey-labs/harness/adapters/clawql_lab_session.py `_enrich_lab_memory_recall`.
  */
 import { readFile, readdir, stat } from "node:fs/promises";
 import { basename, join, relative } from "node:path";

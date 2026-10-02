@@ -1,0 +1,114 @@
+# MCP clients
+
+[Model Context Protocol](https://modelcontextprotocol.io) is how editors and assistants connect to ClawQL. **ClawQL Core** — **`search`**, **`execute`**, **`audit`**, **`cache`** — has **no opt-out**. Hosts register **`ingest_external_knowledge`** and **`memory_ingest`** / **`memory_recall`** by default (set **`CLAWQL_ENABLE_MEMORY=0`** to hide vault memory tools). Optional tools include **`sandbox_exec`** (**`CLAWQL_ENABLE_SANDBOX=1`**), **`notify`** (**`CLAWQL_ENABLE_NOTIFY`**, Slack **`chat.postMessage`**; [Slack notify](/notify)) and **`knowledge_search_onyx`** (**`CLAWQL_ENABLE_ONYX`**, Onyx when **`onyx`** is in the merge; [Onyx knowledge search](/onyx-knowledge)). [Cursor](https://cursor.com/docs/context/mcp) and Claude Desktop are common hosts. {{ className: 'lead' }}
+
+## What is MCP?
+
+The MCP server runs as a subprocess (**stdio**) or over the network (**HTTP**). Your client configuration supplies environment variables such as spec paths or **`CLAWQL_PROVIDER`**. Single-spec **`execute`** uses **in-process** OpenAPI→GraphQL; no separate GraphQL service is required.
+
+## stdio (npm)
+
+Use `npx` with `-p clawql-mcp` so the binary resolves from the package:
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "npx",
+      "args": ["-p", "clawql-mcp", "clawql-mcp"],
+      "env": {
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
+      }
+    }
+  }
+}
+```
+
+## stdio (git checkout)
+
+```json
+{
+  "mcpServers": {
+    "clawql": {
+      "command": "node",
+      "args": ["/absolute/path/to/ClawQL/dist/server.js"],
+      "env": {
+        "CLAWQL_SPEC_PATH": "/absolute/path/to/openapi.yaml"
+      }
+    }
+  }
+}
+```
+
+For development you can run `tsx` against `src/server.ts` instead; ensure the repo is built for production-style runs.
+
+## Streamable HTTP
+
+For `clawql-mcp-http`, Docker, Kubernetes, or Cloud Run, configure your client with a **`url`** (not `command`). Copy [`.cursor/mcp.json.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.cursor/mcp.json.example) to **`.cursor/mcp.json`** and set the base URL your deployment exposes. See [Deployment](/deployment). For **managed Tailscale** or **Headscale** MagicDNS, **`CLAWQL_MCP_URL`**, and **`${env:…}`** in **`mcp.json`**, see [Tailscale & Headscale](/tailscale). GraphQL debugging is available at **`/graphql`** on the same origin.
+
+<Note>
+  **`search`** and **`execute`** run in one process. **`clawql-mcp-http`**
+  serves **`/mcp`**, **`/healthz`**, and **`/graphql`** on the same server.
+</Note>
+
+## Gateway auth
+
+HTTP MCP enforces credentials on **`/mcp`** routes via **`clawql-auth`**. Upstream provider credentials (AWS SigV4, env JSON) live in the same package. **ClawQL is not an IdP** — `oidc` mode verifies customer-issued JWTs.
+
+```bash
+export CLAWQL_AUTH_MODE=apiKey
+export CLAWQL_API_KEY="your-long-random-secret"
+# Or: CLAWQL_AUTH_MODE=oidc + CLAWQL_AUTH_OIDC_JWKS_URL=…
+```
+
+Clients must send **`Authorization: Bearer <token>`** (API key or IdP JWT) or **`X-API-Key`** on Streamable HTTP MCP requests.
+
+| `CLAWQL_AUTH_MODE` | Behavior                                        |
+| ------------------ | ----------------------------------------------- |
+| `noAuth` (default) | No gateway key check on MCP HTTP                |
+| `apiKey`           | Reject MCP HTTP without valid key / virtual key |
+| `oidc`             | Verify Bearer JWT (JWKS / PEM) → ATR claims     |
+
+Shared TOTP step-up and MFA policy for financial tools: [`docs/security/clawql-auth-oidc-stepup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/clawql-auth-oidc-stepup.md). SAML/LDAP client modes and full RBAC/ABAC remain **roadmap**.
+
+## Presidio redaction
+
+When enabled, text is redacted **before** persistence on **`execute`** responses, **`memory_ingest`**, and **`ingest_external_knowledge`**:
+
+```bash
+export CLAWQL_ENABLE_PRESIDIO=1
+export CLAWQL_PRESIDIO_ANALYZER_URL=http://presidio-analyzer:3000
+export CLAWQL_PRESIDIO_ANONYMIZER_URL=http://presidio-anonymizer:3000
+# Optional: block when Presidio is unreachable
+export CLAWQL_PRESIDIO_FAILURE_POLICY=block
+```
+
+Tier 1 Compose with Presidio:
+
+```bash
+cd docs/examples/clawql-local-docker-compose
+docker compose -f docker-compose.yml -f docker-compose.presidio.override.yml up -d
+```
+
+## Privacy Filter (local backup)
+
+Optional **second local pass** after Presidio ([#245](https://github.com/danielsmithdevelopment/ClawQL/issues/245)). Uses the open-weight Privacy Filter model (or demo heuristics) on operator hardware — **not** an OpenAI API.
+
+```bash
+export CLAWQL_ENABLE_PRIVACY_FILTER=1
+export CLAWQL_PRIVACY_FILTER_URL=http://privacy-filter:8091
+export CLAWQL_PRIVACY_FILTER_FAILURE_POLICY=warn
+```
+
+```bash
+cd docs/examples/clawql-local-docker-compose
+docker compose -f docker-compose.yml \
+  -f docker-compose.presidio.override.yml \
+  -f docker-compose.privacy-filter.override.yml up -d
+```
+
+Docs: [privacy-filter-local.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/security/privacy-filter-local.md). Full mandatory IDP-hop redaction remains roadmap — [Security](/security) · [mcp-tools.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md).
+
+## OpenClaw
+
+To use the **OpenClaw** CLI (`npm install -g openclaw`) as an MCP host for ClawQL — **`openclaw mcp set`**, HTTP vs stdio, env — see **[OpenClaw + ClawQL](/openclaw)** and the canonical repo guide [`docs/openclaw/using-openclaw-with-clawql.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/openclaw/using-openclaw-with-clawql.md).

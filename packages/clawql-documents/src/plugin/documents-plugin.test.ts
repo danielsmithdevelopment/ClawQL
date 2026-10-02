@@ -17,7 +17,7 @@ function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistra
 }
 
 describe("createDocumentsPlugin", () => {
-  it("registers ingest_external_knowledge on install", () => {
+  it("registers no tools by default (ingest twin demoted)", () => {
     configureDocumentsPluginDeps({
       execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
     });
@@ -26,8 +26,17 @@ describe("createDocumentsPlugin", () => {
     const plugin = createDocumentsPlugin();
     expect(plugin.id).toBe(DOCUMENTS_PLUGIN_ID);
     installPluginMcpTools(plugin, api);
-    const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge"]);
+    expect(registry.list().map((t) => t.name)).toEqual([]);
+  });
+
+  it("registers ingest_external_knowledge when enableExternalIngest is true", () => {
+    configureDocumentsPluginDeps({
+      execute: async () => ({ content: [{ type: "text", text: "{}" }] }),
+    });
+    const registry = new McpToolRegistry();
+    const api = registry.registrationApi();
+    installPluginMcpTools(createDocumentsPlugin({ enableExternalIngest: true }), api);
+    expect(registry.list().map((t) => t.name)).toEqual(["ingest_external_knowledge"]);
   });
 
   it("registers knowledge_search_onyx when enableOnyx is true", () => {
@@ -38,7 +47,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enableOnyx: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "knowledge_search_onyx"]);
+    expect(names).toEqual(["knowledge_search_onyx"]);
   });
 
   it("registers run_idp_pipeline when enableIdpPipeline is true", () => {
@@ -49,7 +58,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enableIdpPipeline: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "run_idp_pipeline"]);
+    expect(names).toEqual(["run_idp_pipeline"]);
   });
 
   it("registers classify_document when enableIdpClassifier is true", () => {
@@ -60,7 +69,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enableIdpClassifier: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "classify_document"]);
+    expect(names).toEqual(["classify_document"]);
   });
 
   it("registers extract_document when enableLangextract is true", () => {
@@ -71,7 +80,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enableLangextract: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "extract_document"]);
+    expect(names).toEqual(["extract_document"]);
   });
 
   it("registers inspect_pdf when enablePdfInspector is true", () => {
@@ -82,7 +91,7 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enablePdfInspector: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "inspect_pdf"]);
+    expect(names).toEqual(["inspect_pdf"]);
   });
 
   it("registers convert_document when enableAnydoc is true", () => {
@@ -93,6 +102,6 @@ describe("createDocumentsPlugin", () => {
     const api = registry.registrationApi();
     installPluginMcpTools(createDocumentsPlugin({ enableAnydoc: true }), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["ingest_external_knowledge", "convert_document"]);
+    expect(names).toEqual(["convert_document"]);
   });
 });

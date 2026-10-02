@@ -1,0 +1,240 @@
+{
+  "tag": "enterpriserag-bench-retrieval-maxp-k-v1",
+  "generated_at": "2026-09-30T06:10:45Z",
+  "n_docs": 20189,
+  "n_questions_scored": 144,
+  "ks": [
+    3,
+    6,
+    10,
+    20
+  ],
+  "passage_chars": 900,
+  "passage_stride": 450,
+  "keyword": {
+    "all": {
+      "n": 144,
+      "n_found": 132,
+      "recall@3": 0.7651515151515151,
+      "recall@6": 0.803030303030303,
+      "recall@10": 0.8560606060606061,
+      "recall@20": 0.9090909090909091
+    },
+    "by_cohort": {
+      "hard": {
+        "n": 26,
+        "n_found": 19,
+        "recall@3": 0.42105263157894735,
+        "recall@6": 0.42105263157894735,
+        "recall@10": 0.5789473684210527,
+        "recall@20": 0.6842105263157895
+      },
+      "no_harm": {
+        "n": 33,
+        "n_found": 31,
+        "recall@3": 0.8709677419354839,
+        "recall@6": 0.9032258064516129,
+        "recall@10": 0.9032258064516129,
+        "recall@20": 0.9354838709677419
+      },
+      "other": {
+        "n": 85,
+        "n_found": 82,
+        "recall@3": 0.8048780487804879,
+        "recall@6": 0.8536585365853658,
+        "recall@10": 0.9024390243902439,
+        "recall@20": 0.9512195121951219
+      }
+    },
+    "by_type": {
+      "basic": {
+        "n": 33,
+        "n_found": 31,
+        "recall@3": 0.8709677419354839,
+        "recall@6": 0.9032258064516129,
+        "recall@10": 0.9032258064516129,
+        "recall@20": 0.9354838709677419
+      },
+      "completeness": {
+        "n": 16,
+        "n_found": 13,
+        "recall@3": 0.5384615384615384,
+        "recall@6": 0.5384615384615384,
+        "recall@10": 0.5384615384615384,
+        "recall@20": 0.7692307692307693
+      },
+      "conflicting_info": {
+        "n": 17,
+        "n_found": 17,
+        "recall@3": 0.8823529411764706,
+        "recall@6": 0.8823529411764706,
+        "recall@10": 0.9411764705882353,
+        "recall@20": 1.0
+      },
+      "constrained": {
+        "n": 16,
+        "n_found": 16,
+        "recall@3": 0.875,
+        "recall@6": 0.9375,
+        "recall@10": 0.9375,
+        "recall@20": 0.9375
+      },
+      "intra_document_reasoning": {
+        "n": 2,
+        "n_found": 2,
+        "recall@3": 1.0,
+        "recall@6": 1.0,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "miscellaneous": {
+        "n": 5,
+        "n_found": 5,
+        "recall@3": 1.0,
+        "recall@6": 1.0,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "project_related": {
+        "n": 31,
+        "n_found": 31,
+        "recall@3": 0.8064516129032258,
+        "recall@6": 0.9032258064516129,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "semantic": {
+        "n": 24,
+        "n_found": 17,
+        "recall@3": 0.35294117647058826,
+        "recall@6": 0.35294117647058826,
+        "recall@10": 0.5294117647058824,
+        "recall@20": 0.6470588235294118
+      }
+    }
+  },
+  "maxp": {
+    "all": {
+      "n": 144,
+      "n_found": 136,
+      "recall@3": 0.7647058823529411,
+      "recall@6": 0.875,
+      "recall@10": 0.8823529411764706,
+      "recall@20": 0.9191176470588235
+    },
+    "by_cohort": {
+      "hard": {
+        "n": 26,
+        "n_found": 19,
+        "recall@3": 0.42105263157894735,
+        "recall@6": 0.5263157894736842,
+        "recall@10": 0.5263157894736842,
+        "recall@20": 0.7368421052631579
+      },
+      "no_harm": {
+        "n": 33,
+        "n_found": 32,
+        "recall@3": 0.84375,
+        "recall@6": 0.84375,
+        "recall@10": 0.84375,
+        "recall@20": 0.875
+      },
+      "other": {
+        "n": 85,
+        "n_found": 85,
+        "recall@3": 0.8117647058823529,
+        "recall@6": 0.9647058823529412,
+        "recall@10": 0.9764705882352941,
+        "recall@20": 0.9764705882352941
+      }
+    },
+    "by_type": {
+      "basic": {
+        "n": 33,
+        "n_found": 32,
+        "recall@3": 0.84375,
+        "recall@6": 0.84375,
+        "recall@10": 0.84375,
+        "recall@20": 0.875
+      },
+      "completeness": {
+        "n": 16,
+        "n_found": 16,
+        "recall@3": 0.8125,
+        "recall@6": 0.9375,
+        "recall@10": 0.9375,
+        "recall@20": 0.9375
+      },
+      "conflicting_info": {
+        "n": 17,
+        "n_found": 17,
+        "recall@3": 0.8823529411764706,
+        "recall@6": 0.9411764705882353,
+        "recall@10": 0.9411764705882353,
+        "recall@20": 0.9411764705882353
+      },
+      "constrained": {
+        "n": 16,
+        "n_found": 16,
+        "recall@3": 0.9375,
+        "recall@6": 1.0,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "intra_document_reasoning": {
+        "n": 2,
+        "n_found": 2,
+        "recall@3": 1.0,
+        "recall@6": 1.0,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "miscellaneous": {
+        "n": 5,
+        "n_found": 5,
+        "recall@3": 1.0,
+        "recall@6": 1.0,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "project_related": {
+        "n": 31,
+        "n_found": 31,
+        "recall@3": 0.6774193548387096,
+        "recall@6": 0.967741935483871,
+        "recall@10": 1.0,
+        "recall@20": 1.0
+      },
+      "semantic": {
+        "n": 24,
+        "n_found": 17,
+        "recall@3": 0.35294117647058826,
+        "recall@6": 0.47058823529411764,
+        "recall@10": 0.47058823529411764,
+        "recall@20": 0.7058823529411765
+      }
+    }
+  },
+  "contrast_maxp_vs_keyword": {
+    "hard_recall@10_delta": -0.052631578947368474,
+    "no_harm_recall@10_delta": -0.05947580645161288,
+    "no_harm_flake_allowance": 0.030303030303030304,
+    "no_harm_ok": false,
+    "hard_ok": false,
+    "verdict": "no_hard_lift",
+    "decision_rule": "MaxP wins only if hard (semantic+intra_doc) recall@10 improves AND no-harm (basic) recall@10 does not drop more than one flake."
+  },
+  "k_sweep_keyword": {
+    "recall@3": 0.7651515151515151,
+    "recall@6": 0.803030303030303,
+    "recall@10": 0.8560606060606061,
+    "recall@20": 0.9090909090909091
+  },
+  "k_sweep_maxp": {
+    "recall@3": 0.7647058823529411,
+    "recall@6": 0.875,
+    "recall@10": 0.8823529411764706,
+    "recall@20": 0.9191176470588235
+  },
+  "note": "Offline doc-recall only \u2014 no answer model. Expand slices or add cross-encoder rerank next. LongMemEval-S is the vault track."
+}

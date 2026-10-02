@@ -13,77 +13,45 @@ function installPluginMcpTools(plugin: ProviderPlugin, api: ClawQLPluginRegistra
 }
 
 describe("createMemoryPlugin", () => {
-  const prevPageIndex = process.env.CLAWQL_ENABLE_PAGEINDEX;
   const prevCodeGraph = process.env.CLAWQL_ENABLE_CODEGRAPH;
+  const prevPageIndex = process.env.CLAWQL_ENABLE_PAGEINDEX;
 
   afterEach(() => {
-    if (prevPageIndex === undefined) delete process.env.CLAWQL_ENABLE_PAGEINDEX;
-    else process.env.CLAWQL_ENABLE_PAGEINDEX = prevPageIndex;
     if (prevCodeGraph === undefined) delete process.env.CLAWQL_ENABLE_CODEGRAPH;
     else process.env.CLAWQL_ENABLE_CODEGRAPH = prevCodeGraph;
+    if (prevPageIndex === undefined) delete process.env.CLAWQL_ENABLE_PAGEINDEX;
+    else process.env.CLAWQL_ENABLE_PAGEINDEX = prevPageIndex;
   });
 
-  it("registers memory_ingest and memory_recall on install", () => {
-    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
-    process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
+  it("registers memory_ingest, memory_recall, and read_around on install", () => {
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     const plugin = createMemoryPlugin();
     expect(plugin.id).toBe(MEMORY_PLUGIN_ID);
     installPluginMcpTools(plugin, api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["memory_ingest", "memory_recall"]);
+    expect(names).toEqual(["memory_ingest", "memory_recall", "read_around"]);
   });
 
-  it("registers pageindex tools when CLAWQL_ENABLE_PAGEINDEX is not 0", () => {
-    delete process.env.CLAWQL_ENABLE_PAGEINDEX;
+  it("never registers pageindex tools (purged in 8.0.0)", () => {
+    // Legacy env must be a no-op after purge.
+    process.env.CLAWQL_ENABLE_PAGEINDEX = "1";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toContain("pageindex_build_tree");
-    expect(names).toContain("pageindex_traverse");
-    expect(names).toContain("pageindex_synthesize");
-    expect(names).toContain("pageindex_get_content");
+    expect(names).toEqual(["memory_ingest", "memory_recall", "read_around"]);
+    expect(names.some((n) => n.startsWith("pageindex_"))).toBe(false);
   });
 
-  it("omits pageindex tools when CLAWQL_ENABLE_PAGEINDEX=0", () => {
-    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
-    process.env.CLAWQL_ENABLE_CODEGRAPH = "0";
-    const registry = new McpToolRegistry();
-    const api = registry.registrationApi();
-    installPluginMcpTools(createMemoryPlugin(), api);
-    const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["memory_ingest", "memory_recall"]);
-  });
-
-  it("registers codegraph tools when CLAWQL_ENABLE_CODEGRAPH=1", () => {
-    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
+  it("never registers codegraph tools (purged in 8.0.0)", () => {
+    // Legacy env must be a no-op after purge.
     process.env.CLAWQL_ENABLE_CODEGRAPH = "1";
     const registry = new McpToolRegistry();
     const api = registry.registrationApi();
     installPluginMcpTools(createMemoryPlugin(), api);
     const names = registry.list().map((t) => t.name);
-    expect(names).toContain("codegraph_index");
-    expect(names).toContain("codegraph_query");
-    expect(names).toContain("codegraph_neighbors");
-    expect(names).toContain("codegraph_path");
-    expect(names).toContain("codegraph_explain");
-    expect(names).toContain("codegraph_subgraph");
-    expect(names).toContain("codegraph_explore");
-    expect(names).toContain("codegraph_impact");
-    expect(names).toContain("codegraph_import_graphify");
-    expect(names).toContain("codegraph_sync");
-    expect(names).toContain("codegraph_sync_graphify");
-  });
-
-  it("omits codegraph tools when CLAWQL_ENABLE_CODEGRAPH is unset", () => {
-    process.env.CLAWQL_ENABLE_PAGEINDEX = "0";
-    delete process.env.CLAWQL_ENABLE_CODEGRAPH;
-    const registry = new McpToolRegistry();
-    const api = registry.registrationApi();
-    installPluginMcpTools(createMemoryPlugin(), api);
-    const names = registry.list().map((t) => t.name);
-    expect(names).toEqual(["memory_ingest", "memory_recall"]);
+    expect(names).toEqual(["memory_ingest", "memory_recall", "read_around"]);
+    expect(names.some((n) => n.startsWith("codegraph_"))).toBe(false);
   });
 });

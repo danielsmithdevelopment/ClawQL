@@ -79,7 +79,7 @@ Executor is a useful reference: one-line install, `doctor`, agent-bootstrap shor
 
 ### Phase 3 — Guided UI (shipped in 7.0 Desktop)
 
-- **ClawQL Desktop (macOS):** Electron app (`desktop/`) — Provider secrets panel + Agent Chat against local `~/.ClawQL` vault
+- **ClawQL Desktop (macOS):** Electron app (`apps/desktop/`) — Provider secrets panel + Agent Chat against local `~/.ClawQL` vault
 - Helm/K8s dashboard remains the cluster operator path ([#242](https://github.com/danielsmithdevelopment/ClawQL/issues/242))
 
 ---

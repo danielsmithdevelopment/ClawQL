@@ -2,7 +2,7 @@
 /**
  * ClawQL onboarding CLI: init, doctor, mcp-config, secrets.
  */
-import "../load-env.js";
+import "../host/load-env.js";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -13,7 +13,16 @@ import { writeMcpConfigFile, type McpWriteTarget } from "./mcp-config-write.js";
 import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
-import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
+import {
+  runSourcesAdd,
+  runSourcesApprove,
+  runSourcesDecline,
+  runSourcesList,
+  runSourcesPropose,
+  runSourcesRemove,
+} from "./sources-cli.js";
+import { runToolkitList, runToolkitShow } from "./toolkit-cli.js";
+import { runResume } from "./resume-cli.js";
 import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
   parseImageDigestFlags,
@@ -85,6 +94,9 @@ import {
   runPaymentsStripeWebhookListenCmd,
   runPaymentsStripeWebhookVerifyCmd,
   runPaymentsStripeMeterReportCmd,
+  runPaymentsStripeCatalogEnsureCmd,
+  runPaymentsStripeCatalogValidateCmd,
+  runPaymentsStripeCheckoutCreateCmd,
   runPaymentsUsageReportCmd,
   runPaymentsX402GateCmd,
   runPaymentsX402GateListCmd,
@@ -133,6 +145,8 @@ import {
   runPaymentsCreditsStepUpShowCmd,
   runPaymentsOrgAllocateCmd,
   runPaymentsOrgCreateCmd,
+  runPaymentsOrgProvisionCmd,
+  runPaymentsOrgReportUsageCmd,
   runPaymentsOrgDistributeCmd,
   runPaymentsOrgInviteCmd,
   runPaymentsOrgMembersCmd,
@@ -172,6 +186,8 @@ type Command =
   | "onboard"
   | "operator"
   | "sources"
+  | "toolkit"
+  | "resume"
   | "release"
   | "ontology"
   | "memory"
@@ -243,7 +259,10 @@ function parse(argv: string[]): {
     else if (a === "--strict") flags.strict = true;
     else if (a === "--skip-lint") flags.skipLint = true;
     else if (a === "--dry-run") flags.dryRun = true;
+    else if (a === "--no-topups") flags.noTopUps = true;
+    else if (a === "--no-meter") flags.noMeter = true;
     else if (a === "--force") flags.force = true;
+    else if (a === "--decline") flags.decline = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
     else if (a === "--project") flags.project = argv[++i] ?? "";
@@ -312,6 +331,9 @@ function parse(argv: string[]): {
     else if (a === "--email") flags.email = argv[++i] ?? "";
     else if (a === "--customer") flags.customer = argv[++i] ?? "";
     else if (a === "--plan") flags.plan = argv[++i] ?? "";
+    else if (a === "--org-name") flags.orgName = argv[++i] ?? "";
+    else if (a === "--success-url") flags.successUrl = argv[++i] ?? "";
+    else if (a === "--cancel-url") flags.cancelUrl = argv[++i] ?? "";
     else if (a === "--amount") flags.amount = argv[++i] ?? "";
     else if (a === "--payment-method") flags.paymentMethodId = argv[++i] ?? "";
     else if (a === "--return-url") flags.returnUrl = argv[++i] ?? "";
@@ -334,6 +356,12 @@ function parse(argv: string[]): {
     else if (a === "--tenant-id") flags.tenantId = argv[++i] ?? "";
     else if (a === "--org-id") flags.orgId = argv[++i] ?? "";
     else if (a === "--actor-tenant") flags.actorTenantId = argv[++i] ?? "";
+    else if (a === "--billing-mode") flags.billingMode = argv[++i] ?? "";
+    else if (a === "--created-via") flags.createdVia = argv[++i] ?? "";
+    else if (a === "--member-emails") flags.memberEmails = argv[++i] ?? "";
+    else if (a === "--stripe-customer") flags.stripeCustomerId = argv[++i] ?? "";
+    else if (a === "--stripe-subscription") flags.stripeSubscriptionId = argv[++i] ?? "";
+    else if (a === "--overage") flags.overageUnits = argv[++i] ?? "";
     else if (a === "--member-tenant") flags.memberTenantId = argv[++i] ?? "";
     else if (a === "--domains") flags.domains = argv[++i] ?? "";
     else if (a === "--allocation-role") flags.allocationRoleId = argv[++i] ?? "";
@@ -411,6 +439,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "release" ||
     cmd === "ontology" ||
     cmd === "memory" ||
@@ -427,6 +456,7 @@ function parse(argv: string[]): {
     cmd === "secrets" ||
     cmd === "operator" ||
     cmd === "sources" ||
+    cmd === "toolkit" ||
     cmd === "sync" ||
     cmd === "sandbox" ||
     cmd === "network" ||
@@ -458,8 +488,11 @@ Usage:
   clawql secrets set <github|slack|linear|…> [value]
   clawql mcp-config [--json] [--write cursor|claude-desktop] [--http] [--url http://host/mcp]
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
+  clawql sources propose <url> [--name NAME] [--kind KIND] [--commit] | approve <psp_…> | decline <psp_…>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
+  clawql toolkit list | show <id>
+  clawql resume <executionId> | clawql resume --decline <executionId>
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
@@ -481,7 +514,7 @@ Usage:
   clawql inference finetune status --job-id <id> | register --job-id <id> --tier frugal --alias <model>
   clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>
   clawql payments plan show | upgrade --tier team | usage report [--month YYYY-MM]
-  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | webhook verify
+  clawql payments stripe setup | customer create --email user@acme.com | subscription create | invoice create | catalog ensure [--dry-run] | catalog validate | checkout create --plan pro --org-name X --email Y --success-url U --cancel-url U | webhook verify
   clawql payments x402 wallet setup --address 0x... | gate --tool knowledge_search --price 0.001 | verify | reconcile
   clawql payments payout connect create --email creator@x.com | connect link --account acct_xxx | create --amount 25 | prefer --creator id --method bank
   clawql payments ramp fund create --limit 500 | card issue --user-id U --limit 100 | agent-card issue --user-id U --amount 25
@@ -511,6 +544,8 @@ Usage:
   clawql payments credits transfer --confirm --action-id UUID --code HEX [--totp NNNNNN]
   clawql payments credits step-up enroll|show [--tenant-id ID] [--show-secrets]
   clawql payments org create --org-id acme --actor-tenant cfo [--domains acme.com]
+  clawql payments org provision --email owner@acme.com --name Acme [--org-id acme] [--plan team] [--billing-mode stripe_invoice]
+  clawql payments org report-usage --org-id acme [--month YYYY-MM] [--overage N]
   clawql payments org sso --org-id acme --actor-tenant cfo --domains acme.com
   clawql payments org invite --org-id acme --actor-tenant cfo --email intern@acme.com [--role intern]
   clawql payments org members|spend|allocate|distribute|suspend|remove --org-id acme …
@@ -536,7 +571,7 @@ release (Layer 0 — immutable releases):
   verify <target> Verify bundle, manifest.json, or Arweave tx id
 
 ontology (ADR 0009 — enterprise Ontology + meta-ontology v0.1):
-  lint            Validate entity YAML against schemas/ontology/entity.schema.json
+  lint            Validate entity YAML against packages/clawql-ontology/schemas/ontology/entity.schema.json
   generate        Emit read MCP tools.json + TypeScript stub (--out DIR)
   scaffold        Layer 2: scaffold CQE entity from JSON Schema
   meta            Layer 3: status | patterns | promote
@@ -627,7 +662,7 @@ gateway (Managed Edge Gateway — /mcp + /v1 + memory):
 
 streams (ClawQL Streams — celld v0.4.0):
   celld install [--version v0.4.0]   Pin-install celld (CELLD_VERSION)
-  celld dev [--project DIR] [--port N]   Local dev (default: examples/streams-celld)
+  celld dev [--project DIR] [--port N]   Local dev (default: docs/examples/streams-celld)
   celld deploy [--project DIR] --bucket s3://… [--endpoint URL] [--region auto]
   celld start --bucket s3://… [--listen HOST:PORT] [--advertise HOST:PORT]
   celld diagnose --bucket s3://…     Fleet lease + peer probes
@@ -743,6 +778,17 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (cmd === "resume") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    const executionId = rest[0] ?? subcmd;
+    process.exitCode = await runResume({
+      executionId,
+      decline: Boolean(flags.decline),
+      home,
+    });
+    return;
+  }
+
   if (cmd === "sources") {
     const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
     if (subcmd === "list") {
@@ -785,9 +831,55 @@ async function main(): Promise<void> {
       });
       return;
     }
+    if (subcmd === "propose") {
+      const url = rest[0];
+      process.exitCode = await runSourcesPropose({
+        url: url ?? "",
+        name: typeof flags.name === "string" ? flags.name : undefined,
+        kind: typeof flags.kind === "string" ? (flags.kind as never) : undefined,
+        id: typeof flags.id === "string" ? flags.id : undefined,
+        commit: Boolean(flags.commit),
+        home,
+      });
+      return;
+    }
+    if (subcmd === "approve") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources approve <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesApprove(id, home);
+      return;
+    }
+    if (subcmd === "decline") {
+      const id = rest[0];
+      if (!id) {
+        console.error("Usage: clawql sources decline <proposalId>");
+        process.exitCode = 1;
+        return;
+      }
+      process.exitCode = await runSourcesDecline(id, home);
+      return;
+    }
     console.error(
-      "Usage: clawql sources list | clawql sources add <url> | clawql sources remove <id>"
+      "Usage: clawql sources list | add <url> | propose <url> [--commit] | approve <psp_…> | decline <psp_…> | remove <id>"
     );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "toolkit") {
+    if (subcmd === "list") {
+      process.exitCode = await runToolkitList();
+      return;
+    }
+    if (subcmd === "show") {
+      process.exitCode = await runToolkitShow(rest[0] ?? "");
+      return;
+    }
+    console.error("Usage: clawql toolkit list | show <id>");
     process.exitCode = 1;
     return;
   }
@@ -1260,6 +1352,9 @@ async function main(): Promise<void> {
       json: Boolean(flags.json),
       email: typeof flags.email === "string" ? flags.email : undefined,
       name: typeof flags.name === "string" ? flags.name : undefined,
+      orgName: typeof flags.orgName === "string" ? flags.orgName : undefined,
+      successUrl: typeof flags.successUrl === "string" ? flags.successUrl : undefined,
+      cancelUrl: typeof flags.cancelUrl === "string" ? flags.cancelUrl : undefined,
       customer: typeof flags.customer === "string" ? flags.customer : undefined,
       plan: typeof flags.plan === "string" ? flags.plan : undefined,
       amount: Number.isFinite(amount) ? amount : undefined,
@@ -1392,6 +1487,17 @@ async function main(): Promise<void> {
       domains: typeof flags.domains === "string" ? flags.domains : undefined,
       prometheus: Boolean(flags.prometheus),
       includeWorm: Boolean(flags.includeWorm),
+      billingMode: typeof flags.billingMode === "string" ? flags.billingMode : undefined,
+      createdVia: typeof flags.createdVia === "string" ? flags.createdVia : undefined,
+      memberEmails: typeof flags.memberEmails === "string" ? flags.memberEmails : undefined,
+      stripeCustomerId:
+        typeof flags.stripeCustomerId === "string" ? flags.stripeCustomerId : undefined,
+      stripeSubscriptionId:
+        typeof flags.stripeSubscriptionId === "string" ? flags.stripeSubscriptionId : undefined,
+      overageUnits:
+        typeof flags.overageUnits === "string" && flags.overageUnits
+          ? Number.parseFloat(flags.overageUnits)
+          : undefined,
       requestStatus: typeof flags.requestStatus === "string" ? flags.requestStatus : undefined,
       idempotencyKey: typeof flags.idempotencyKey === "string" ? flags.idempotencyKey : undefined,
       note: typeof flags.note === "string" ? flags.note : undefined,
@@ -1405,6 +1511,9 @@ async function main(): Promise<void> {
       label: typeof flags.label === "string" ? flags.label : undefined,
       sendEmail: Boolean(flags.sendEmail),
       emailDryRun: Boolean(flags.emailDryRun),
+      dryRun: Boolean(flags.dryRun),
+      noTopUps: Boolean(flags.noTopUps),
+      noMeter: Boolean(flags.noMeter),
     };
 
     if (subcmd === "plan") {
@@ -1490,8 +1599,20 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsStripeMeterReportCmd(paymentsOpts);
         return;
       }
+      if (stripeAction === "catalog" && (rest[1] === "ensure" || rest[1] === undefined)) {
+        process.exitCode = await runPaymentsStripeCatalogEnsureCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "catalog" && rest[1] === "validate") {
+        process.exitCode = await runPaymentsStripeCatalogValidateCmd(paymentsOpts);
+        return;
+      }
+      if (stripeAction === "checkout" && rest[1] === "create") {
+        process.exitCode = await runPaymentsStripeCheckoutCreateCmd(paymentsOpts);
+        return;
+      }
       console.error(
-        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | webhook listen | webhook verify"
+        "Usage: clawql payments stripe setup | customer create | subscription create | invoice create | meter report | catalog ensure|validate | checkout create | webhook listen | webhook verify"
       );
       process.exitCode = 1;
       return;
@@ -1739,6 +1860,14 @@ async function main(): Promise<void> {
         process.exitCode = await runPaymentsOrgCreateCmd(paymentsOpts);
         return;
       }
+      if (action === "provision") {
+        process.exitCode = await runPaymentsOrgProvisionCmd(paymentsOpts);
+        return;
+      }
+      if (action === "report-usage") {
+        process.exitCode = await runPaymentsOrgReportUsageCmd(paymentsOpts);
+        return;
+      }
       if (action === "show") {
         process.exitCode = await runPaymentsOrgShowCmd(paymentsOpts);
         return;
@@ -1776,7 +1905,7 @@ async function main(): Promise<void> {
         return;
       }
       console.error(
-        "Usage: clawql payments org create|show|sso|invite|members|spend|allocate|distribute|suspend|remove"
+        "Usage: clawql payments org create|provision|report-usage|show|sso|invite|members|spend|allocate|distribute|suspend|remove"
       );
       process.exitCode = 1;
       return;

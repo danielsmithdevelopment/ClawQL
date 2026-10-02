@@ -130,7 +130,7 @@ remediation before leaning on “self-healing” copy.
 
 ## Links
 
-- Task pack: [`openbench/tasks/ouroboros-oscillation-escape/`](../../openbench/tasks/ouroboros-oscillation-escape/)
+- Task pack: [`benchmarks/openbench/tasks/ouroboros-oscillation-escape/`](../../benchmarks/openbench/tasks/ouroboros-oscillation-escape/)
 - Workflow: [`.github/workflows/openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml)
 - Package guide: [`docs/ouroboros/clawql-ouroboros.md`](../ouroboros/clawql-ouroboros.md)
 - Skill (agent patterns): [`docs/skills/ouroboros.md`](../skills/ouroboros.md)

@@ -169,3 +169,5 @@ export type {
   FamilySCheckReport,
   InvokeHarnessStubResult,
 } from "./bench/family-s-checks.js";
+
+export * from "./registry/index.js";

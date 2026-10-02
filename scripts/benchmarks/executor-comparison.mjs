@@ -217,8 +217,6 @@ async function measureClawqlToolDefinitions() {
     CLAWQL_INSTANCE_SPEC_FILE: "",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
-    CLAWQL_ENABLE_PAGEINDEX: "0",
-    CLAWQL_ENABLE_CODEGRAPH: "0",
     CLAWQL_ENABLE_ONYX: "0",
     CLAWQL_ENABLE_SANDBOX: "0",
     CLAWQL_ENABLE_SCHEDULE: "0",
@@ -451,7 +449,6 @@ async function clawqlLiveExecuteProjected(task) {
     CLAWQL_INSTANCE_SPEC_FILE: "",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
-    CLAWQL_ENABLE_PAGEINDEX: "0",
   };
   if (token) {
     env.CLAWQL_BEARER_TOKEN = token;

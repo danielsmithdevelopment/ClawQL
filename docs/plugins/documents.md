@@ -28,7 +28,7 @@ Covers external knowledge import, enterprise search via Onyx, and optional intel
 | **`classify_document`**         | **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`**                                 |
 | **`extract_document`**          | **`CLAWQL_ENABLE_LANGEXTRACT=1`**                                    |
 
-Bundled IDP vendors (Tika, Gotenberg, Paperless, Stirling, Docling, Nextcloud, ConeShare) are loaded via **`execute`** when included in the spec merge — not separate plugins. **anydoc** and **pdf-inspector** are in-process (no sidecar); Docling / classifier / LangExtract use HTTP services when configured.
+Bundled IDP vendors (Docling, Paperless, Nextcloud, ConeShare — the default/recommended set as of 8.0) are loaded via **`execute`** when included in the spec merge — not separate plugins. **Tika**, **Gotenberg**, and **Stirling** keep bundled specs but are opt-in-only (`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling`) — Docling is now the sole default converter. **anydoc** and **pdf-inspector** are in-process (no sidecar) and opt-in-only, not recommended; Docling / classifier / LangExtract use HTTP services when configured.
 
 ## Recommended agent path
 
@@ -47,16 +47,16 @@ Office/PDF → convert_document (or inspect_pdf) → local_markdown | Docling OC
 
 ## Enable / disable
 
-| Env                                  | Default | Effect                                                                                         |
-| ------------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
-| **`CLAWQL_ENABLE_DOCUMENTS=0`**      | on      | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only |
-| **`CLAWQL_ENABLE_ONYX=1`**           | off     | Register **`knowledge_search_onyx`**                                                           |
-| **`CLAWQL_EXTERNAL_INGEST=1`**       | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                        |
-| **`CLAWQL_ENABLE_ANYDOC=1`**         | off     | Register **`convert_document`** (in-process `@firecrawl/anydoc`)                               |
-| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`**  | off     | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`)                             |
-| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off     | Register **`classify_document`**                                                               |
-| **`CLAWQL_ENABLE_LANGEXTRACT=1`**    | off     | Register **`extract_document`**                                                                |
-| **`CLAWQL_ENABLE_IDP_PIPELINE=1`**   | off     | Register **`run_idp_pipeline`**                                                                |
+| Env                                  | Default | Effect                                                                                                                                                                        |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_DOCUMENTS=0`**      | on      | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only (Tika/Gotenberg/Stirling stay out of `all-providers` regardless — opt-in-only) |
+| **`CLAWQL_ENABLE_ONYX=1`**           | off     | Register **`knowledge_search_onyx`**                                                                                                                                          |
+| **`CLAWQL_EXTERNAL_INGEST=1`**       | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                                                                                                       |
+| **`CLAWQL_ENABLE_ANYDOC=1`**         | off     | Register **`convert_document`** (in-process `@firecrawl/anydoc`)                                                                                                              |
+| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`**  | off     | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`)                                                                                                            |
+| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off     | Register **`classify_document`**                                                                                                                                              |
+| **`CLAWQL_ENABLE_LANGEXTRACT=1`**    | off     | Register **`extract_document`**                                                                                                                                               |
+| **`CLAWQL_ENABLE_IDP_PIPELINE=1`**   | off     | Register **`run_idp_pipeline`**                                                                                                                                               |
 
 ### Service URLs (when sidecars are up)
 
@@ -72,7 +72,7 @@ Explicit **`CLAWQL_BUNDLED_PROVIDERS=paperless,tika,...`** can still list IDP ve
 
 ## Helm / Compose
 
-- **Helm (`charts/clawql-mcp`):** `enableAnydoc`, `enablePdfInspector`, `enableIdpClassifier`, `enableLangextract`, `enableIdpPipeline`; opt-in **`documentPipeline.docling|classifier|langextract`**.
+- **Helm (`manifests/charts/clawql-mcp`):** `enableAnydoc`, `enablePdfInspector`, `enableIdpClassifier`, `enableLangextract`, `enableIdpPipeline` (all opt-in-only, not recommended); **`documentPipeline.docling`** defaults **on** (sole recommended converter); **`documentPipeline.{tika,gotenberg,stirling}`** default off (opt-in); opt-in **`documentPipeline.classifier|langextract`**.
 - **Compose:** [`docker/compose/lending.compose.yml`](../../docker/compose/lending.compose.yml) and [`docling-classifier.compose.yml`](../../docker/compose/docling-classifier.compose.yml).
 
 ## Onyx note

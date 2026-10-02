@@ -51,4 +51,4 @@ Response includes `sync_status`, `health_status`, `revision`, and condensed `sou
 ## Related
 
 - [Argo Workflows operator guide](workflow-tool.md)
-- [deployment/argo-workflows/README.md](../../deployment/argo-workflows/README.md)
+- [infra/gitops/argo-workflows/README.md](../../infra/gitops/argo-workflows/README.md)

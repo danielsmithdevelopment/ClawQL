@@ -4,7 +4,7 @@
 
 import { getPackageRoot } from "clawql-api";
 import { checkReleaseManifest, type ReleaseManifestCheckResult } from "clawql-release";
-import { NPM_PACKAGE_VERSION } from "../npm-version.js";
+import { NPM_PACKAGE_VERSION } from "../host/npm-version.js";
 import type { DoctorCheck } from "./doctor.js";
 
 function packageRootOrCwd(): string {

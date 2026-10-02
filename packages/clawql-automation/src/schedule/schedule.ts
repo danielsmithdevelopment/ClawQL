@@ -13,6 +13,43 @@ import initSqlJs, { type Database } from "sql.js";
 import { z } from "zod";
 import { startScheduleWorkerFiberEffect } from "../effect/schedule-worker-effect.js";
 import { executeNotifySlackCore } from "../notify/notify.js";
+import { appendWorkflowAudit } from "../workflow/workflow-audit.js";
+import {
+  DEFAULT_RATE_LIMIT_BACKOFF_MS,
+  detectProjectedChange,
+  parseRetryAfterMs,
+  summarizeDiff,
+  type ChangeDetectionConfig,
+} from "./change-detect.js";
+import {
+  assertScheduleProjectionKeyConfigured,
+  isEncryptedProjectionBlob,
+  loadStoredProjection,
+  loadStoredProjectionJson,
+  prepareProjectionForStore,
+  ProjectionKeyError,
+} from "./projection-store.js";
+
+export {
+  detectProjectedChange,
+  canonicalizeForHash,
+  projectByWatchFields,
+  diffProjections,
+  hashProjection,
+  parseRetryAfterMs,
+  serializeProjectionForStore,
+  DEFAULT_RATE_LIMIT_BACKOFF_MS,
+} from "./change-detect.js";
+export type { ChangeDetectionConfig, ProjectionDiff } from "./change-detect.js";
+export {
+  prepareProjectionForStore,
+  loadStoredProjection,
+  isEncryptedProjectionBlob,
+  assertScheduleProjectionKeyConfigured,
+  ProjectionKeyError,
+  isProductionProjectionEnv,
+  readConfiguredProjectionKeyRaw,
+} from "./projection-store.js";
 
 type Frequency =
   | { type: "cron"; expression: string }
@@ -37,6 +74,8 @@ type SyntheticTest = {
     latency_ms_max?: number;
     body_contains?: string;
   };
+  /** Precise stream.changed detection — project + hash watched fields. */
+  change_detection?: ChangeDetectionConfig;
 };
 
 type JobAction = {
@@ -71,9 +110,13 @@ type TriggerOutcome = {
   http_status: number | null;
   error_text: string | null;
   response_excerpt: string | null;
+  etag?: string | null;
+  last_modified?: string | null;
+  not_modified?: boolean;
+  retry_after_ms?: number | null;
 };
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 4;
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 let scheduleWorkerStop: (() => void) | null = null;
 const cronMinuteRunCache = new Map<string, string>();
@@ -244,6 +287,37 @@ function migrate(db: Database): void {
       [nowIso()]
     );
   }
+  if (currentSchemaVersion(db) < 2) {
+    db.exec(`
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_body_hash TEXT;
+    `);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (2, 'schedule_body_hash_v2', ?)",
+      [nowIso()]
+    );
+  }
+  if (currentSchemaVersion(db) < 3) {
+    db.exec(`
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_projection_json TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_etag TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN last_modified TEXT;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN backoff_until TEXT;
+    `);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (3, 'schedule_change_detect_v3', ?)",
+      [nowIso()]
+    );
+  }
+  if (currentSchemaVersion(db) < 4) {
+    db.exec(`
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN auth_failure_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE clawql_schedule_jobs ADD COLUMN poll_pause_reason TEXT;
+    `);
+    db.run(
+      "INSERT INTO schema_migrations (version, name, applied_at) VALUES (4, 'schedule_auth_pause_v4', ?)",
+      [nowIso()]
+    );
+  }
 }
 
 async function openOrCreateDb(absDbPath: string): Promise<Database> {
@@ -320,14 +394,24 @@ const actionSchema = z.object({
         body_contains: z.string().max(4000).optional(),
       })
       .optional(),
+    change_detection: z
+      .object({
+        watch_fields: z.array(z.string().min(1).max(200)).min(1).max(40),
+        exclude_paths: z.array(z.string().min(1).max(200)).max(40).optional(),
+        array_sort_keys: z.record(z.string(), z.string().min(1).max(64)).optional(),
+        conditional_requests: z.boolean().optional(),
+      })
+      .optional(),
   }),
 });
 
 export const scheduleToolSchema = {
   operation: z
-    .enum(["create", "list", "get", "delete", "trigger"])
-    .describe("create | list | get | delete | trigger scheduled jobs."),
-  job_id: z.string().max(128).optional().describe("Required for get/delete/trigger."),
+    .enum(["create", "list", "get", "delete", "trigger", "reconnect"])
+    .describe(
+      "create | list | get | delete | trigger | reconnect (ClawQL console Reconnect sources — clear auth pause and re-poll)."
+    ),
+  job_id: z.string().max(128).optional().describe("Required for get/delete/trigger/reconnect."),
   schedule: z.object({ frequency: frequencySchema }).optional(),
   action: actionSchema.optional(),
   enabled: z.boolean().optional().describe("For create: defaults true."),
@@ -339,6 +423,10 @@ export const scheduleToolSchema = {
     .boolean()
     .optional()
     .describe("For list/get: include recent run history (default true for get, false for list)."),
+  paused_only: z
+    .boolean()
+    .optional()
+    .describe("For list: only jobs with poll_pause_reason set (console paused sources)."),
   limit: z.number().int().min(1).max(200).optional().describe("For list: max jobs (default 50)."),
   runs_limit: z
     .number()
@@ -371,7 +459,12 @@ const scheduleInputSchema = z.object(scheduleToolSchema).superRefine((data, ctx)
       }
     }
   }
-  if (data.operation === "get" || data.operation === "delete" || data.operation === "trigger") {
+  if (
+    data.operation === "get" ||
+    data.operation === "delete" ||
+    data.operation === "trigger" ||
+    data.operation === "reconnect"
+  ) {
     if (!data.job_id || !data.job_id.trim()) {
       ctx.addIssue({ code: "custom", message: `${data.operation} requires job_id` });
     }
@@ -497,7 +590,173 @@ function getRunsForJob(db: Database, jobId: string, runsLimit: number): Schedule
   return out;
 }
 
-async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutcome> {
+type JobChangeState = {
+  last_body_hash: string | null;
+  last_projection_json: string | null;
+  last_etag: string | null;
+  last_modified: string | null;
+  backoff_until: string | null;
+  auth_failure_count: number;
+  poll_pause_reason: string | null;
+};
+
+function getAuthFailureThreshold(): number {
+  const raw = process.env.CLAWQL_SCHEDULE_AUTH_FAILURE_THRESHOLD?.trim();
+  const n = raw ? Number.parseInt(raw, 10) : 3;
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, 20) : 3;
+}
+
+function getJobChangeState(db: Database, jobId: string): JobChangeState {
+  const stmt = db.prepare(
+    `SELECT last_body_hash, last_projection_json, last_etag, last_modified, backoff_until,
+            auth_failure_count, poll_pause_reason
+     FROM clawql_schedule_jobs WHERE id = ?`
+  );
+  stmt.bind([jobId]);
+  const empty: JobChangeState = {
+    last_body_hash: null,
+    last_projection_json: null,
+    last_etag: null,
+    last_modified: null,
+    backoff_until: null,
+    auth_failure_count: 0,
+    poll_pause_reason: null,
+  };
+  if (!stmt.step()) {
+    stmt.free();
+    return empty;
+  }
+  const row = stmt.getAsObject() as Record<string, unknown>;
+  stmt.free();
+  const asStr = (v: unknown): string | null => (typeof v === "string" && v.length ? v : null);
+  return {
+    last_body_hash: asStr(row.last_body_hash),
+    last_projection_json: asStr(row.last_projection_json),
+    last_etag: asStr(row.last_etag),
+    last_modified: asStr(row.last_modified),
+    backoff_until: asStr(row.backoff_until),
+    auth_failure_count: Number(row.auth_failure_count) || 0,
+    poll_pause_reason: asStr(row.poll_pause_reason),
+  };
+}
+
+function setJobChangeState(db: Database, jobId: string, patch: Partial<JobChangeState>): void {
+  const cur = getJobChangeState(db, jobId);
+  const next: JobChangeState = {
+    last_body_hash: patch.last_body_hash !== undefined ? patch.last_body_hash : cur.last_body_hash,
+    last_projection_json:
+      patch.last_projection_json !== undefined
+        ? patch.last_projection_json
+        : cur.last_projection_json,
+    last_etag: patch.last_etag !== undefined ? patch.last_etag : cur.last_etag,
+    last_modified: patch.last_modified !== undefined ? patch.last_modified : cur.last_modified,
+    backoff_until: patch.backoff_until !== undefined ? patch.backoff_until : cur.backoff_until,
+    auth_failure_count:
+      patch.auth_failure_count !== undefined ? patch.auth_failure_count : cur.auth_failure_count,
+    poll_pause_reason:
+      patch.poll_pause_reason !== undefined ? patch.poll_pause_reason : cur.poll_pause_reason,
+  };
+  db.run(
+    `UPDATE clawql_schedule_jobs
+     SET last_body_hash = ?, last_projection_json = ?, last_etag = ?, last_modified = ?,
+         backoff_until = ?, auth_failure_count = ?, poll_pause_reason = ?, updated_at = ?
+     WHERE id = ?`,
+    [
+      next.last_body_hash,
+      next.last_projection_json,
+      next.last_etag,
+      next.last_modified,
+      next.backoff_until,
+      next.auth_failure_count,
+      next.poll_pause_reason,
+      nowIso(),
+      jobId,
+    ]
+  );
+}
+
+/** Delete stored projection when schedule job or stream.changed subscription ends. */
+export async function clearScheduleProjectionForTopic(topic: string): Promise<void> {
+  const jobId = topic.trim();
+  if (!jobId) return;
+  const absDbPath = getScheduleDatabasePath();
+  const db = await openOrCreateDb(absDbPath);
+  try {
+    db.exec("PRAGMA foreign_keys = ON;");
+    migrate(db);
+    setJobChangeState(db, jobId, {
+      last_projection_json: null,
+      last_body_hash: null,
+      last_etag: null,
+      last_modified: null,
+    });
+    await persistDb(db, absDbPath);
+  } finally {
+    db.close();
+  }
+}
+
+function jobInBackoff(db: Database, jobId: string, now = new Date()): boolean {
+  const state = getJobChangeState(db, jobId);
+  if (!state.backoff_until) return false;
+  const until = Date.parse(state.backoff_until);
+  if (!Number.isFinite(until)) return false;
+  return now.getTime() < until;
+}
+
+function jobPollPaused(db: Database, jobId: string): string | null {
+  return getJobChangeState(db, jobId).poll_pause_reason;
+}
+
+function surfaceScheduleAuthPause(jobId: string, name: string, failures: number): void {
+  const summary = `Paused schedule poll ${jobId} (${name}) after ${failures} consecutive upstream auth failures (401/403). Fix credentials then use schedule reconnect (ClawQL console Reconnect sources).`;
+  console.error(`[clawql-schedule] ${summary}`);
+  try {
+    appendWorkflowAudit({
+      action: "schedule_auth_paused",
+      summary,
+      correlationId: jobId,
+    });
+  } catch {
+    /* audit optional outside MCP process */
+  }
+  try {
+    void import("clawql-mcp-events").then(({ emitSchedulePaused }) => {
+      emitSchedulePaused({
+        schedule_id: jobId,
+        reason: "upstream_auth",
+        summary,
+        name,
+        auth_failure_count: failures,
+      });
+    });
+  } catch {
+    /* mcp-events optional */
+  }
+}
+
+/**
+ * Legacy whole-body hash helper — prefer {@link detectProjectedChange}.
+ * Still applies default volatile-path stripping when no watch_fields are set.
+ * Exported for unit tests / backward compatibility.
+ */
+export function detectSyntheticBodyChange(
+  previousHash: string | null,
+  excerpt: string | null
+): { changed: boolean; hash: string; baseline: boolean } {
+  const result = detectProjectedChange({
+    previousHash,
+    previousProjectionJson: null,
+    responseBody: excerpt,
+    config: undefined,
+  });
+  return { changed: result.changed, hash: result.hash, baseline: result.baseline };
+}
+
+async function runSyntheticCheck(
+  synthetic: SyntheticTest,
+  validators?: { etag?: string | null; last_modified?: string | null }
+): Promise<TriggerOutcome> {
   const method = synthetic.request.method.trim().toUpperCase();
   const targetValidation = validateSyntheticTarget(synthetic.request.url);
   if (!targetValidation.ok) {
@@ -528,6 +787,19 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
     10
   );
 
+  const useConditional =
+    (method === "GET" || method === "HEAD") &&
+    synthetic.change_detection?.conditional_requests !== false &&
+    Boolean(validators?.etag || validators?.last_modified);
+
+  const headers: Record<string, string> = {
+    ...(synthetic.request.headers ?? {}),
+  };
+  if (useConditional) {
+    if (validators?.etag) headers["If-None-Match"] = validators.etag;
+    if (validators?.last_modified) headers["If-Modified-Since"] = validators.last_modified;
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   const start = Date.now();
@@ -538,14 +810,16 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
     while (true) {
       response = await fetch(currentUrl, {
         method,
-        headers: synthetic.request.headers,
-        body: synthetic.request.body ?? undefined,
+        headers,
+        body:
+          method === "GET" || method === "HEAD" ? undefined : (synthetic.request.body ?? undefined),
         signal: controller.signal,
         redirect: "manual",
       });
       if (
         response.status >= 300 &&
         response.status < 400 &&
+        response.status !== 304 &&
         response.headers.get("location") &&
         redirects < maxRedirects
       ) {
@@ -556,12 +830,48 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
       break;
     }
     const latency = Date.now() - start;
+    const status = response!.status;
+    const etag = response!.headers.get("etag");
+    const lastModified = response!.headers.get("last-modified");
+    const retryAfterMs =
+      status === 429 ? parseRetryAfterMs(response!.headers.get("retry-after")) : null;
+
+    if (status === 304) {
+      return {
+        ok: true,
+        status: "pass",
+        latency_ms: latency,
+        http_status: 304,
+        error_text: null,
+        response_excerpt: null,
+        etag: etag ?? validators?.etag ?? null,
+        last_modified: lastModified ?? validators?.last_modified ?? null,
+        not_modified: true,
+        retry_after_ms: null,
+      };
+    }
+
+    if (status === 429) {
+      return {
+        ok: false,
+        status: "fail",
+        latency_ms: latency,
+        http_status: 429,
+        error_text: "upstream rate limited (429)",
+        response_excerpt: null,
+        etag: etag ?? validators?.etag ?? null,
+        last_modified: lastModified ?? validators?.last_modified ?? null,
+        not_modified: false,
+        retry_after_ms: retryAfterMs ?? DEFAULT_RATE_LIMIT_BACKOFF_MS,
+      };
+    }
+
     const raw = await response!.text();
     const excerpt = raw.slice(0, maxResponseBytes);
 
     let pass = true;
     const statusIn = synthetic.assert?.status_in;
-    if (statusIn?.length && !statusIn.includes(response!.status)) {
+    if (statusIn?.length && !statusIn.includes(status)) {
       pass = false;
     }
     const latencyMax = synthetic.assert?.latency_ms_max;
@@ -577,9 +887,13 @@ async function runSyntheticCheck(synthetic: SyntheticTest): Promise<TriggerOutco
       ok: pass,
       status: pass ? "pass" : "fail",
       latency_ms: latency,
-      http_status: response!.status,
+      http_status: status,
       error_text: pass ? null : "assertion failed",
       response_excerpt: excerpt,
+      etag: etag ?? null,
+      last_modified: lastModified ?? null,
+      not_modified: false,
+      retry_after_ms: null,
     };
   } catch (error: unknown) {
     return {
@@ -692,6 +1006,8 @@ function cronMatchesUtc(expression: string, at: Date): boolean {
 
 function shouldRunJobNow(db: Database, job: ScheduleJobRow, now: Date): boolean {
   if (!job.enabled) return false;
+  if (jobPollPaused(db, job.id)) return false;
+  if (jobInBackoff(db, job.id, now)) return false;
   if (job.frequency.type === "interval") {
     const latest = latestRunForJob(db, job.id);
     if (!latest) return true;
@@ -778,7 +1094,11 @@ async function executeTriggerForJob(
   opts: { dryRun: boolean; triggeredAt?: string }
 ): Promise<ScheduleRunRow & { ok: boolean }> {
   const synthetic = actionSchema.parse(job.action).synthetic_test;
-  const outcome = await runSyntheticCheck(synthetic);
+  const changeState = getJobChangeState(db, job.id);
+  const outcome = await runSyntheticCheck(synthetic, {
+    etag: changeState.last_etag,
+    last_modified: changeState.last_modified,
+  });
   const runId = randomUUID();
   const triggeredAt = opts.triggeredAt ?? nowIso();
   const run: ScheduleRunRow = {
@@ -809,6 +1129,94 @@ async function executeTriggerForJob(
       ]
     );
     trimRunsForJob(db, job.id, getScheduleHistoryLimit());
+
+    if (outcome.http_status === 429 && outcome.retry_after_ms) {
+      const until = new Date(Date.now() + outcome.retry_after_ms).toISOString();
+      setJobChangeState(db, job.id, { backoff_until: until });
+    } else if (outcome.http_status !== 429 && changeState.backoff_until) {
+      setJobChangeState(db, job.id, { backoff_until: null });
+    }
+
+    const authFail = outcome.http_status === 401 || outcome.http_status === 403;
+    if (authFail) {
+      const failures = changeState.auth_failure_count + 1;
+      const threshold = getAuthFailureThreshold();
+      const patch: Partial<JobChangeState> = { auth_failure_count: failures };
+      if (failures >= threshold) {
+        patch.poll_pause_reason = "upstream_auth";
+        surfaceScheduleAuthPause(job.id, synthetic.name, failures);
+      }
+      setJobChangeState(db, job.id, patch);
+    } else if (
+      outcome.http_status != null &&
+      outcome.http_status !== 429 &&
+      (changeState.auth_failure_count > 0 || changeState.poll_pause_reason)
+    ) {
+      setJobChangeState(db, job.id, {
+        auth_failure_count: 0,
+        poll_pause_reason: null,
+      });
+    }
+
+    if (outcome.http_status === 429 || authFail) {
+      /* do not advance projection baseline on throttle/auth failures */
+    } else if (outcome.not_modified) {
+      setJobChangeState(db, job.id, {
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+    } else if (outcome.response_excerpt != null) {
+      const previousProjectionJson = loadStoredProjectionJson(changeState.last_projection_json);
+      const detection = detectProjectedChange({
+        previousHash: changeState.last_body_hash,
+        previousProjectionJson,
+        responseBody: outcome.response_excerpt,
+        config: synthetic.change_detection,
+        notModified: false,
+      });
+      const storedProjection = await prepareProjectionForStore(detection.projection);
+      setJobChangeState(db, job.id, {
+        last_body_hash: detection.hash,
+        last_projection_json: storedProjection,
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+      if (detection.changed && detection.diff) {
+        try {
+          const { emitStreamChanged } = await import("clawql-mcp-events");
+          const watch = synthetic.change_detection?.watch_fields;
+          emitStreamChanged({
+            topic: job.id,
+            summary: `Synthetic topic ${synthetic.name}: ${summarizeDiff(detection.diff)}`,
+            cursor: detection.hash,
+            diff: detection.diff,
+            ...(watch?.length ? { watch_fields: watch } : {}),
+            projection_tool: "schedule",
+          });
+        } catch {
+          /* mcp-events optional */
+        }
+      }
+    } else if (outcome.etag || outcome.last_modified) {
+      setJobChangeState(db, job.id, {
+        last_etag: outcome.etag ?? changeState.last_etag,
+        last_modified: outcome.last_modified ?? changeState.last_modified,
+      });
+    }
+  }
+  try {
+    const { emitScheduleCompleted } = await import("clawql-mcp-events");
+    emitScheduleCompleted({
+      schedule_id: job.id,
+      status: outcome.status,
+      summary: outcome.ok
+        ? outcome.not_modified
+          ? `schedule job ${job.id} not modified (304)`
+          : `schedule job ${job.id} ok (${outcome.latency_ms ?? 0}ms)`
+        : (outcome.error_text ?? `schedule job ${job.id} ${outcome.status}`),
+    });
+  } catch {
+    /* mcp-events optional */
   }
   return { ...run, ok: outcome.ok };
 }
@@ -864,6 +1272,18 @@ export async function runScheduleWorkerTick(now = new Date()): Promise<number> {
       await persistDb(db, absDbPath);
     }
     await Promise.all(notifications);
+    try {
+      const { McpEventsService, McpEventsServiceLive } = await import("clawql-mcp-events");
+      const { Effect } = await import("effect");
+      await Effect.runPromise(
+        Effect.gen(function* () {
+          const svc = yield* McpEventsService;
+          return yield* svc.flushCoalesced();
+        }).pipe(Effect.provide(McpEventsServiceLive))
+      );
+    } catch {
+      /* mcp-events optional */
+    }
     return fired;
   } finally {
     db.close();
@@ -872,6 +1292,10 @@ export async function runScheduleWorkerTick(now = new Date()): Promise<number> {
 
 export function startScheduleWorker(): void {
   if (scheduleWorkerStop) return;
+  const keyCheck = assertScheduleProjectionKeyConfigured();
+  if (!keyCheck.ok) {
+    throw new ProjectionKeyError(keyCheck.reason);
+  }
   const pollMs = getSchedulePollMs();
   const handle = Effect.runSync(
     startScheduleWorkerFiberEffect(() => runScheduleWorkerTick(), pollMs)
@@ -933,11 +1357,20 @@ export async function dispatchScheduleOperation(
       const limit = parsed.limit ?? 50;
       const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
       const includeRuns = parsed.include_runs === true;
+      const pausedOnly = parsed.paused_only === true;
       const stmt = db.prepare(
-        `SELECT id, frequency_json, action_json, enabled, created_at, updated_at
-           FROM clawql_schedule_jobs
-           ORDER BY created_at DESC
-           LIMIT ?`
+        pausedOnly
+          ? `SELECT id, frequency_json, action_json, enabled, created_at, updated_at,
+                    auth_failure_count, poll_pause_reason
+               FROM clawql_schedule_jobs
+               WHERE poll_pause_reason IS NOT NULL AND trim(poll_pause_reason) != ''
+               ORDER BY created_at DESC
+               LIMIT ?`
+          : `SELECT id, frequency_json, action_json, enabled, created_at, updated_at,
+                    auth_failure_count, poll_pause_reason
+               FROM clawql_schedule_jobs
+               ORDER BY created_at DESC
+               LIMIT ?`
       );
       stmt.bind([limit]);
       const jobs: Array<Record<string, unknown>> = [];
@@ -949,7 +1382,13 @@ export async function dispatchScheduleOperation(
           enabled: number;
           created_at: string;
           updated_at: string;
+          auth_failure_count: number | null;
+          poll_pause_reason: string | null;
         };
+        const pauseReason =
+          typeof row.poll_pause_reason === "string" && row.poll_pause_reason.length > 0
+            ? row.poll_pause_reason
+            : null;
         const job: Record<string, unknown> = {
           id: row.id,
           schedule: { frequency: safeJsonParse<Frequency>(row.frequency_json) },
@@ -957,12 +1396,23 @@ export async function dispatchScheduleOperation(
           enabled: Number(row.enabled) === 1,
           created_at: row.created_at,
           updated_at: row.updated_at,
+          poll_pause_reason: pauseReason,
+          auth_failure_count: Number(row.auth_failure_count ?? 0),
+          /** Console "Reconnect sources" → schedule operation reconnect */
+          reconnect_available: pauseReason != null,
+          reconnect_operation: pauseReason != null ? "reconnect" : null,
         };
         if (includeRuns) job.runs = getRunsForJob(db, row.id, runsLimit);
         jobs.push(job);
       }
       stmt.free();
-      return jsonResponse({ ok: true, operation: "list", jobs });
+      return jsonResponse({
+        ok: true,
+        operation: "list",
+        paused_only: pausedOnly,
+        reconnect_sources_action: "reconnect",
+        jobs,
+      });
     }
     case "get": {
       const runsLimit = parsed.runs_limit ?? getScheduleHistoryLimit();
@@ -971,12 +1421,26 @@ export async function dispatchScheduleOperation(
       if (!job) {
         return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
       }
+      const change = getJobChangeState(db, job.id);
+      const last_projection = loadStoredProjection(change.last_projection_json);
       return jsonResponse({
         ok: true,
         operation: "get",
         job: {
           ...job,
           schedule: { frequency: job.frequency },
+          change_detection_state: {
+            last_hash: change.last_body_hash,
+            last_etag: change.last_etag,
+            last_modified: change.last_modified,
+            backoff_until: change.backoff_until,
+            last_projection,
+            projection_encrypted: isEncryptedProjectionBlob(change.last_projection_json),
+            auth_failure_count: change.auth_failure_count,
+            poll_pause_reason: change.poll_pause_reason,
+            reconnect_available: change.poll_pause_reason != null,
+            reconnect_operation: change.poll_pause_reason != null ? "reconnect" : null,
+          },
           ...(includeRuns ? { runs: getRunsForJob(db, job.id, runsLimit) } : {}),
         },
       });
@@ -1009,6 +1473,36 @@ export async function dispatchScheduleOperation(
         ok: run.ok,
         operation: "trigger",
         job_id: job.id,
+        run,
+      });
+    }
+    case "reconnect": {
+      // ClawQL console "Reconnect sources" — clear auth pause and re-poll immediately.
+      const job = getJobById(db, parsed.job_id!);
+      if (!job) {
+        return jsonResponse({ ok: false, error: `job not found: ${parsed.job_id}` });
+      }
+      const prior = getJobChangeState(db, job.id);
+      const wasPaused = prior.poll_pause_reason != null;
+      setJobChangeState(db, job.id, {
+        auth_failure_count: 0,
+        poll_pause_reason: null,
+        backoff_until: null,
+      });
+      const run = await executeTriggerForJob(db, job, { dryRun: parsed.dry_run === true });
+      if (!run.dry_run) {
+        await persistDb(db, absDbPath);
+        await maybeSendScheduleNotification(job, run);
+      }
+      const after = getJobChangeState(db, job.id);
+      return jsonResponse({
+        ok: run.ok,
+        operation: "reconnect",
+        reconnect_sources: true,
+        job_id: job.id,
+        was_paused: wasPaused,
+        prior_pause_reason: prior.poll_pause_reason,
+        poll_pause_reason: after.poll_pause_reason,
         run,
       });
     }

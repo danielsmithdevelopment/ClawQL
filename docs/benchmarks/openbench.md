@@ -1,7 +1,7 @@
 # OpenBench adoption for ClawQL
 
 ClawQL now ships an [OpenBench](https://github.com/minghinmatthewlam/openbench)-compatible
-pack under [`openbench/`](../../openbench/) so harness-level agent runs can be
+pack under [`benchmarks/openbench/`](../../benchmarks/openbench/) so harness-level agent runs can be
 compared on the same model and tasks.
 
 ## Why OpenBench
@@ -29,7 +29,7 @@ CLAWQL_TURNS: …
 CLAWQL_BENCH_JSON: {…}
 ```
 
-Python adapter: [`openbench/adapters/clawql.py`](../../openbench/adapters/clawql.py).
+Python adapter: [`benchmarks/openbench/adapters/clawql.py`](../../benchmarks/openbench/adapters/clawql.py).
 
 ### Track B — ClawQL-specific tasks
 
@@ -53,12 +53,12 @@ Full live scoreboard: [`openbench-results-ledger.md`](openbench-results-ledger.m
 Offline checker validation (no model):
 
 ```bash
-python3 openbench/validate_tasks.py
+python3 benchmarks/openbench/validate_tasks.py
 ```
 
 ## GitHub Actions A/B (CI + manual)
 
-- **Offline:** main CI always runs `python3 openbench/validate_tasks.py`.
+- **Offline:** main CI always runs `python3 benchmarks/openbench/validate_tasks.py`.
 - **Live A/B (ClawQL on vs off):** [`.github/workflows/openbench-ab.yml`](../../.github/workflows/openbench-ab.yml) runs on path-filtered PR/push to `main` and via `workflow_dispatch`.
 - **Live A/B (Ouroboros on vs off):** [`.github/workflows/openbench-ouroboros-ab.yml`](../../.github/workflows/openbench-ouroboros-ab.yml) — thrash-escape evidence; see [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md).
 - **Default model:** `openrouter/deepseek/deepseek-chat` (cheap OpenRouter default; flash-lite also supported) — preferred secret: **`OPENROUTER_API_KEY`**.
@@ -71,8 +71,8 @@ See [`openbench-github-actions.md`](openbench-github-actions.md).
 
 ## Reproduce live cells
 
-See [`openbench/README.md`](../../openbench/README.md) and
-[`openbench/scripts/run-with-openbench.sh`](../../openbench/scripts/run-with-openbench.sh).
+See [`benchmarks/openbench/README.md`](../../benchmarks/openbench/README.md) and
+[`benchmarks/openbench/scripts/run-with-openbench.sh`](../../benchmarks/openbench/scripts/run-with-openbench.sh).
 
 Live runs need agent CLI credentials plus an OpenRouter or BYOK inference secret in CI.
 

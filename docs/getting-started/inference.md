@@ -20,13 +20,17 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 
 ## What you get
 
-| Surface                    | Role                                                                                 |
-| -------------------------- | ------------------------------------------------------------------------------------ |
-| **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                    |
-| **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                            |
-| **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                       |
-| **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama |
-| **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend               |
+| Surface                    | Role                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **`/v1/chat/completions`** | Drop-in OpenAI SDK / curl / coding-agent base URL                                                |
+| **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                                        |
+| **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                             |
+| **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
+| **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                            |
+| **`/events`**              | REST MCP Events façade (list / subscribe / unsubscribe)                                          |
+| **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                                   |
+| **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama             |
+| **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend                           |
 
 On a laptop this is your **Edge Agentic Gateway**. Later you can grow into a Managed Gateway or Dedicated Virtual Gateway without changing the client contract (`OPENAI_BASE_URL` + key).
 
@@ -54,11 +58,14 @@ On a laptop this is your **Edge Agentic Gateway**. Later you can grow into a Man
 Pair with MCP when you want agents to **search / execute / remember** against your APIs and vault:
 
 ```text
-  Agent ──► /v1  (models)     clawql-inference
-       └──► /mcp (tools)      clawql-mcp-http  +  Memory/ vault
+  Agent ──► /v1        (models)      clawql-inference
+       ├──► /mcp       (tools)       clawql-mcp-http  +  Memory/ vault
+       ├──► /memory    (REST erase)  crypto-shred + export deny-list
+       ├──► /decision  (Fast Decision / System One)
+       └──► /events    (REST MCP Events façade)
 ```
 
-Today those are often two local processes; the **product** is one Agentic Gateway. Managed offerings co-host them behind one hostname.
+Today those are often two local processes; the **product** is one Agentic Gateway ladder. Managed offerings co-host them behind one hostname. Spec: [gateway-ladder-v0.1.md](../specs/inference/gateway-ladder-v0.1.md).
 
 ## Pick your path
 
@@ -89,7 +96,7 @@ npm ci && npm run build
 ```bash
 export CLAWQL_HOME="${CLAWQL_HOME:-$HOME/.clawql}"
 mkdir -p "$CLAWQL_HOME/Inference"
-cp examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
+cp docs/examples/inference/policy.yaml "$CLAWQL_HOME/Inference/policy.yaml"
 # From outside the repo, download the example or set:
 # export CLAWQL_INFERENCE_POLICY_MANIFEST=/path/to/policy.yaml
 ```
@@ -229,9 +236,9 @@ clawql gateway create --profile process --team demo
 ```
 
 Docker variant: `clawql gateway create --profile local-docker --team demo`  
-Example compose: [`examples/managed-gateway/`](../../examples/managed-gateway/).
+Example compose: [`docs/examples/managed-gateway/`](../../docs/examples/managed-gateway/).
 
-Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
+Kubernetes (chart defaults **off**): set `inference.enabled=true` and `managedGateway.enabled=true` on `manifests/charts/clawql-mcp` for an in-cluster `/mcp` + `/v1` edge. MCP accepts the same inference virtual key (`tenantId` = `key.team`); optional shared home via `inference.home`.
 
 3. **Dedicated Virtual Gateway** — customer VPC, WORM, Vault, team sync ([For teams](/getting-started/for-teams), Packer / Pulumi).
    **Alpha now:** Packer golden host + Pulumi dedicated tier boots team vault, then Managed Edge Gateway (`/mcp` + `/v1`) via `bootstrap-dedicated-gateway.sh`. Full WORM/NATS/Valkey + JWT ATR remain follow-ups.

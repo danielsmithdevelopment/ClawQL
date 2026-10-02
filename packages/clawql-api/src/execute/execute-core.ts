@@ -9,12 +9,15 @@ import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spe
 import type { Operation } from "../spec/operation-types.js";
 import type { LoadSpecFn } from "../search/search-core.js";
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "../redaction/gateway-redact.js";
+import { hashPendingArgsEffect } from "../pending/args-hash.js";
+import { loadPendingExecution, parkMandateExecute } from "../pending/pending-execution-service.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
+import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -51,6 +54,76 @@ export function executeClawqlOperationEffect(
           error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
         })
       );
+    }
+
+    const risk = op.risk;
+    const enforceRisk = yield* operationRiskEnforceEnabledEffect();
+    if (enforceRisk && risk?.policy === "block") {
+      return yield* textContentEffect(
+        JSON.stringify({
+          ok: false,
+          status: "blocked",
+          reason: "Destructive operation is blocked unless allowlisted via operation-risk override",
+          operationId,
+          risk,
+        })
+      );
+    }
+    if (enforceRisk && risk?.policy === "mandate") {
+      const approvedId = params.approvedExecutionId?.trim();
+      if (approvedId) {
+        const pending = yield* fromPromise(() => loadPendingExecution(approvedId));
+        if (!pending || pending.status !== "approved") {
+          return yield* textContentEffect(
+            JSON.stringify({
+              ok: false,
+              status: "mandate_required",
+              reason: `No approved pending execution for ${approvedId}`,
+              operationId,
+              risk,
+            })
+          );
+        }
+        if (pending.operationId !== operationId) {
+          return yield* textContentEffect(
+            JSON.stringify({
+              ok: false,
+              status: "blocked",
+              reason: "approved executionId is bound to a different operationId",
+              operationId,
+              risk,
+            })
+          );
+        }
+        const argsHash = yield* hashPendingArgsEffect({
+          operationId,
+          args,
+          fields,
+        });
+        if (argsHash !== pending.argsHash) {
+          return yield* textContentEffect(
+            JSON.stringify({
+              ok: false,
+              status: "blocked",
+              reason: "argsHash mismatch — resume may only run the exact parked arguments",
+              operationId,
+              risk,
+              executionId: approvedId,
+            })
+          );
+        }
+        // One-shot mandate bypass for this approvedExecutionId only.
+      } else {
+        const parked = yield* fromPromise(() =>
+          parkMandateExecute({
+            operationId,
+            args,
+            fields,
+            risk,
+          })
+        );
+        return yield* textContentEffect(JSON.stringify(parked));
+      }
     }
 
     const openapiForOp = (

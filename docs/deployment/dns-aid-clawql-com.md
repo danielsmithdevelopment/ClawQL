@@ -1,6 +1,6 @@
 # DNS-AID + agent edge for clawql.com
 
-[isitagentready.com/clawql.com](https://isitagentready.com/clawql.com) scores the marketing site. Static discovery files ship from `landing-page/demo` (GitHub Pages and/or Cloudflare Pages). **Link headers**, **Accept: text/markdown**, and **DNS-AID** need Cloudflare DNS/edge.
+[isitagentready.com/clawql.com](https://isitagentready.com/clawql.com) scores the marketing site. Static discovery files ship from `apps/www` (GitHub Pages and/or Cloudflare Pages). **Link headers**, **Accept: text/markdown**, and **DNS-AID** need Cloudflare DNS/edge.
 
 ## What the code deploys
 
@@ -29,7 +29,7 @@ Workflow [`.github/workflows/deploy-landing-page.yml`](../../.github/workflows/d
 1. Repo secrets: `CLOUDFLARE_API_TOKEN` (Zone DNS Edit, Zone Settings Edit, Transform Rules Edit, Pages Edit) and `CLOUDFLARE_ACCOUNT_ID`.
 2. Prefer attaching custom domain **clawql.com** to Cloudflare Pages project **clawql-website** so `functions/` serve Link + markdown without relying on Pro-only `content_converter`.
 3. Enable **DNSSEC** on the zone (scanners report `dnssecValidated`; docs already reach level 5 without it, but DNSSEC clears the remaining dnsAid warning).
-4. Re-run deploy (`workflow_dispatch` or push under `landing-page/**`), wait for propagation, then:
+4. Re-run deploy (`workflow_dispatch` or push under `apps/www/**`), wait for propagation, then:
 
 ```bash
 curl -sS -X POST 'https://isitagentready.com/api/scan' \
@@ -50,5 +50,5 @@ _a2a._agents.clawql.com.    HTTPS  1 clawql.com. alpn="h3,h2" port=443
 
 ## Related
 
-- Landing README: [landing-page/README.md](../../landing-page/README.md)
+- Marketing README: [`apps/www/README.md`](../../apps/www/README.md)
 - Docs DNS-AID: [dns-aid-docs-clawql.md](./dns-aid-docs-clawql.md)

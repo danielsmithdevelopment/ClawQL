@@ -1,7 +1,7 @@
 # OpenBench A/B via clawql-inference.
 #
 # OpenRouter-first with a cheap default model. PR/push runs only tasks listed in
-# openbench/ci-matrix.json → pr_active (retired tasks skip CI to save tokens).
+# benchmarks/openbench/ci-matrix.json → pr_active (retired tasks skip CI to save tokens).
 #
 # - workflow_dispatch: pick one task, "all" (= pr_active), or all-including-retired
 # - pull_request / push (path-filtered): pr_active matrix; skip live A/B when no secret
@@ -89,7 +89,7 @@ on:
         default: "8080"
   pull_request:
     paths:
-      - "openbench/**"
+      - "benchmarks/openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
       - "src/onboarding/harness-cli.ts"
@@ -99,7 +99,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "openbench/**"
+      - "benchmarks/openbench/**"
       - "packages/clawql-inference/**"
       - "src/onboarding/inference-cli.ts"
       - "src/onboarding/harness-cli.ts"
@@ -128,20 +128,20 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            python3 openbench/scripts/resolve-ci-matrix.py \
+            python3 benchmarks/openbench/scripts/resolve-ci-matrix.py \
               --mode dispatch \
               --task "${{ inputs.task || 'all' }}" \
               --github-output
           else
-            python3 openbench/scripts/resolve-ci-matrix.py \
+            python3 benchmarks/openbench/scripts/resolve-ci-matrix.py \
               --mode pr \
               --github-output
           fi
-          TASKS_JSON="$(python3 openbench/scripts/resolve-ci-matrix.py --mode pr)"
+          TASKS_JSON="$(python3 benchmarks/openbench/scripts/resolve-ci-matrix.py --mode pr)"
           echo "::notice::OpenBench PR-active matrix → ${TASKS_JSON}"
           python3 - <<'PY'
           import json
-          cfg = json.load(open("openbench/ci-matrix.json"))
+          cfg = json.load(open("benchmarks/openbench/ci-matrix.json"))
           if cfg.get("live_enabled", True) is False:
               print(f"::warning::Live OpenBench paused — {cfg.get('live_pause_reason', 'live_enabled=false')}")
           retired = ",".join(sorted(cfg.get("retired") or {}))
@@ -444,7 +444,7 @@ jobs:
               key_json=""
             }
             if [ -n "${key_json}" ]; then
-              eval "$(printf '%s' "$key_json" | python3 openbench/scripts/openrouter-key-preflight.py)"
+              eval "$(printf '%s' "$key_json" | python3 benchmarks/openbench/scripts/openrouter-key-preflight.py)"
               or_key_note="OpenRouter key label='${OR_LABEL}' limit=\$${OR_LIMIT} remaining=\$${OR_REMAINING} usage=\$${OR_USAGE} reset=${OR_RESET}"
               echo "::notice::${or_key_note}"
               if [ "${OR_EXHAUSTED}" = "1" ]; then
@@ -483,7 +483,7 @@ jobs:
           fi
 
       - name: Validate task checkers (offline)
-        run: python3 openbench/validate_tasks.py
+        run: python3 benchmarks/openbench/validate_tasks.py
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         if: steps.preflight.outputs.run_benchmark == 'true'
@@ -568,7 +568,7 @@ jobs:
         run: |
           OUT="artifacts/openbench-ab/${OPENBENCH_TASK}/results.json"
           SUM="artifacts/openbench-ab/${OPENBENCH_TASK}/summary.md"
-          python3 openbench/scripts/run-ab-compare.py \
+          python3 benchmarks/openbench/scripts/run-ab-compare.py \
             --task "${OPENBENCH_TASK}" \
             --model "${OPENBENCH_MODEL}" \
             --inference-url "http://127.0.0.1:${CLAWQL_INFERENCE_PORT}/v1" \
@@ -587,7 +587,7 @@ jobs:
             echo ""
             cat "$SUM"
           } >> "$GITHUB_STEP_SUMMARY"
-          python3 openbench/scripts/gate-ab-results.py
+          python3 benchmarks/openbench/scripts/gate-ab-results.py
 
       - name: Stop clawql-inference
         if: always() && steps.preflight.outputs.run_benchmark == 'true'

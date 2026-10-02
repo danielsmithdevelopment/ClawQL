@@ -2,8 +2,8 @@
 
 - Status: Accepted
 - Date: 2026-07-11
-- Related: team vault sync ([`docs/getting-started/getting-started-for-teams.md`](../getting-started/getting-started-for-teams.md#team-vault-sync)), golden image pipeline ([`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)), Pulumi provisioning ([ADR 0007](./0007-pulumi-provisioning-managed-tiers.md)), Helm `teamSync` ([`charts/clawql-mcp`](../../charts/clawql-mcp/README.md))
-- Implementation: [`packer/`](../../packer/), [`scripts/packer/`](../../scripts/packer/), [`.github/workflows/packer-publish.yml`](../../.github/workflows/packer-publish.yml)
+- Related: team vault sync ([`docs/getting-started/getting-started-for-teams.md`](../getting-started/getting-started-for-teams.md#team-vault-sync)), golden image pipeline ([`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)), Pulumi provisioning ([ADR 0007](./0007-pulumi-provisioning-managed-tiers.md)), Helm `teamSync` ([`manifests/charts/clawql-mcp`](../../manifests/charts/clawql-mcp/README.md))
+- Implementation: [`infra/packer/`](../../infra/packer/), [`scripts/packer/`](../../scripts/packer/), [`.github/workflows/packer-publish.yml`](../../.github/workflows/packer-publish.yml)
 
 ## Context
 

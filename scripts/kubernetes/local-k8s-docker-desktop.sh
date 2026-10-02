@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Install ClawQL on local desktop Kubernetes (Docker Desktop or Rancher Desktop / k3s).
 #
-# Default: Helm (charts/clawql-mcp + values-docker-desktop.yaml).
+# Default: Helm (manifests/charts/clawql-mcp + values-docker-desktop.yaml).
 # Optional: Kustomize — set CLAWQL_LOCAL_K8S_INSTALLER=kustomize (Helm is still required for Kyverno).
 #
 # Admission: installs Kyverno and a ClusterPolicy (Cosign keyless verifyImages for ClawQL GHCR
@@ -35,7 +35,7 @@ set -euo pipefail
 # Optional: CLAWQL_LOCAL_K8S_FULL_STACK=0 — quick MCP+UI only (skips Onyx/Flink/pipeline/NATS; short helm --wait).
 # Optional: CLAWQL_ENABLE_OPENCLAW=1 — deploy OpenClaw gateway container (Helm `openclaw.enabled=true`).
 # Requires OPENCLAW_GATEWAY_TOKEN (non-empty); passed as `--set-string openclaw.gatewayToken=...`.
-# See https://docs.openclaw.ai/install/kubernetes and charts/clawql-mcp/values.yaml (`openclaw.*`).
+# See https://docs.openclaw.ai/install/kubernetes and manifests/charts/clawql-mcp/values.yaml (`openclaw.*`).
 #
 # Optional: CLAWQL_KYVERNO_CHART_VERSION — Kyverno Helm chart version (default 3.7.2).
 #
@@ -72,9 +72,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 INSTALLER="${CLAWQL_LOCAL_K8S_INSTALLER:-helm}"
-CHART="${ROOT}/charts/clawql-mcp"
+CHART="${ROOT}/manifests/charts/clawql-mcp"
 VALUES_LOCAL="${CHART}/values-docker-desktop.yaml"
-KUSTOMIZE_OVERLAY="${ROOT}/docker/kustomize/overlays/local"
+KUSTOMIZE_OVERLAY="${ROOT}/manifests/kustomize/overlays/local"
 RELEASE_NAME="${HELM_RELEASE_NAME:-clawql}"
 NAMESPACE="${HELM_NAMESPACE:-clawql}"
 # Default Istio mode: ambient (set after kube context is selected).

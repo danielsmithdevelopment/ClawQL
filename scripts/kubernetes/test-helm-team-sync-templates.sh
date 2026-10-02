@@ -11,7 +11,7 @@ trap 'rm -f "${TMP_R2}" "${TMP_GCS}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set teamSync.enabled=true \
   --set teamSync.bucket=acme-team-clawql \
@@ -21,7 +21,7 @@ helm template test charts/clawql-mcp --namespace clawql \
   --set teamSync.r2.accountId=abc123 \
   >"${TMP_R2}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set teamSync.enabled=true \
   --set teamSync.provider=gcs \

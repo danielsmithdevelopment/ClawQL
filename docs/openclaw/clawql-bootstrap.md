@@ -148,7 +148,7 @@ Use this when validating through the OpenClaw UI (mirrors what the script proves
 
 After MCP is healthy, operators typically want **metrics** and a **dashboard**:
 
-1. **Scrape** **`clawql-mcp-http`** **`GET /metrics`** (OpenMetrics). With **Helm**, default **`metrics.prometheusScrapeAnnotations.enabled: true`** annotates the Service for common Prometheus setups; see **[`charts/clawql-mcp/README.md`](../../charts/clawql-mcp/README.md)** and **[`docs/deployment/helm.md`](../deployment/helm.md)**.
+1. **Scrape** **`clawql-mcp-http`** **`GET /metrics`** (OpenMetrics). With **Helm**, default **`metrics.prometheusScrapeAnnotations.enabled: true`** annotates the Service for common Prometheus setups; see **[`manifests/charts/clawql-mcp/README.md`](../../manifests/charts/clawql-mcp/README.md)** and **[`docs/deployment/helm.md`](../deployment/helm.md)**.
 2. **Import** **`docs/grafana/clawql-core-observability.json`** into Grafana — full steps and Istio dashboard IDs in **[`docs/grafana/README.md`](../grafana/README.md)**.
 3. **OpenClaw:** embedding Grafana or curated deep links in the OpenClaw UI is **not** implemented here; track **[#225](https://github.com/danielsmithdevelopment/ClawQL/issues/225)** (follow-ups) and **[#128](https://github.com/danielsmithdevelopment/ClawQL/issues/128)** (ecosystem). **IDP bundle:** **[`docs/observability/README.md`](../observability/README.md)** ([#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252)).
 

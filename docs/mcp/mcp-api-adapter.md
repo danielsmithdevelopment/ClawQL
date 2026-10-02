@@ -4,7 +4,7 @@
 **Status:** Shipped in-repo · **npm not published yet** (`npm view mcp-api-adapter` → 404)  
 **Essay:** [Eight surfaces, one catalog](https://pragmaticvectors.com/posts/mcp-api-adapter/) (draft: [`docs/gtm/pragmaticvectors/mcp-api-adapter.md`](../gtm/pragmaticvectors/mcp-api-adapter.md))  
 **Design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
-**Example:** [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)  
+**Example:** [`docs/examples/mcp-api-adapter/`](../../docs/examples/mcp-api-adapter/)  
 **Protocol Fabric:** [`protocol-fabric.md`](./protocol-fabric.md) (proven WS → CLI → REST → vault loop)
 
 `mcp-api-adapter` wraps **any** MCP server — stdio, Streamable HTTP, or gRPC — and exposes **seven API surfaces** from one tool catalog without changing the server (OpenAPI, GraphQL, Streamable HTTP `/mcp`, gRPC, WebSocket `/ws`, gen-cli, HTMX **`/mcp-ui`**). No ClawQL install required.

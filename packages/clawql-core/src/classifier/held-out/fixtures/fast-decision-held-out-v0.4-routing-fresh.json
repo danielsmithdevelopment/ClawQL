@@ -1,0 +1,1022 @@
+{
+  "suiteId": "fast-decision-held-out-v0.4-routing-fresh",
+  "description": "Fresh routing held-out drafted from catalog only for final eval. adjudicated=false until frontier labels.",
+  "cases": [
+    {
+      "caseId": "route-v04-001",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I don't know which operationId handles refunding a payment yet; find candidates before I call anything.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": false,
+      "notes": "Discovery of operationId from NL is search's job; execute requires a known operationId already."
+    },
+    {
+      "caseId": "route-v04-002",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Run operationId `billing.refundCharge` with amount=1200 and reason='duplicate' now that I've confirmed it.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": false,
+      "notes": "Operation is already known and validated; this is a direct execute call."
+    },
+    {
+      "caseId": "route-v04-003",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "What provider operations exist for rotating an API key? I haven't picked one yet.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": false,
+      "notes": "Discovering operationIds from NL belongs to search, not a generic web search or a direct execute."
+    },
+    {
+      "caseId": "route-v04-004",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "mcp.execute",
+          "features": {
+            "label": "execute",
+            "description": "Run a known operationId with validated arguments"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.execute",
+      "adjudicated": false,
+      "notes": "Known operationId with args to validate and run is execute's exact scope."
+    },
+    {
+      "caseId": "route-v04-005",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "List every skill available in this session so I can pick one to read in full.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": false,
+      "notes": "Enumerating the skill index (names/descriptions/digests) is skills_list's job."
+    },
+    {
+      "caseId": "route-v04-006",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Someone mentioned a skill called `clawql-schedule-workflows` \u2014 pull its complete write-up so I can walk through the steps myself.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": false,
+      "notes": "Retrieving the entire documentation body for one named skill id is skills_get's job, not the index browse."
+    },
+    {
+      "caseId": "route-v04-007",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I already know I want the sandbox exec skill by id; give me its full text, not a summary list.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "features": {
+            "label": "sandbox_exec",
+            "description": "Run isolated code snippets with safe persistence"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_get",
+      "adjudicated": false,
+      "notes": "Fetching full skill content for a chosen id is skills_get; sandbox_exec itself only runs code, not skill docs."
+    },
+    {
+      "caseId": "route-v04-008",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Show me digests and descriptions for all registered skills before I decide which one to open.",
+      "candidates": [
+        {
+          "candidateId": "mcp.skills_list",
+          "features": {
+            "label": "skills_list",
+            "description": "List skill index entries (name, description, digest)"
+          }
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "features": {
+            "label": "skills_get",
+            "description": "Load full skill content for a selected skill id"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.skills_list",
+      "adjudicated": false,
+      "notes": "Digest-level browsing across all skills is the index tool's purpose, not a single-skill fetch."
+    },
+    {
+      "caseId": "route-v04-009",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Stash this intermediate computation result in scratch memory so I can reuse it two turns from now this session.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": false,
+      "notes": "Ephemeral session-scoped scratch state is exactly the cache tool's purpose, not the durable audit trail."
+    },
+    {
+      "caseId": "route-v04-010",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Record a permanent, tamper-evident entry noting that the finance lead signed off on this wire transfer at 09:47 local time.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": false,
+      "notes": "A signed-off financial approval needs a durable, append-only trail, which is what the audit tool provides \u2014 not ephemeral cache."
+    },
+    {
+      "caseId": "route-v04-011",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "List the last audit events logged for this matter so I can confirm what was already recorded.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": false,
+      "notes": "Listing WORM-linked audit events is audit's list operation, not cache retrieval."
+    },
+    {
+      "caseId": "route-v04-012",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Keep this draft calculation available only for the rest of my current chat session; there's no need for it to outlive the conversation.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "features": {
+            "label": "memory_ingest",
+            "description": "Persist durable session outcomes to the vault"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.cache",
+      "adjudicated": false,
+      "notes": "A value that only needs to survive the current session and doesn't need durable persistence is cache's job, not audit or memory_ingest."
+    },
+    {
+      "caseId": "route-v04-013",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I need a permanent, append-only trail proving this rollback action happened, not just a scratch note.",
+      "candidates": [
+        {
+          "candidateId": "mcp.cache",
+          "features": {
+            "label": "cache",
+            "description": "Ephemeral session scratch state"
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": false,
+      "notes": "Append-only permanent proof of an action is the audit tool's defining trait."
+    },
+    {
+      "caseId": "route-v04-014",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Send a Slack message right now telling the team the nightly build just failed.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": false,
+      "notes": "An immediate one-off Slack alert about a failure is notify, not a recurring check."
+    },
+    {
+      "caseId": "route-v04-015",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I want an automated probe that pings the checkout flow every quarter hour, and it should validate itself with a dry run before going live.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": false,
+      "notes": "A recurring interval-based probe gated by a dry_run validation step is schedule's core capability, not a one-off notify."
+    },
+    {
+      "caseId": "route-v04-016",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Once the recurring check I set up starts failing, I also want a Slack milestone message sent automatically.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.notify",
+      "adjudicated": false,
+      "notes": "The delivery of the Slack milestone/failure message itself is notify's job, even though it's triggered by a schedule elsewhere."
+    },
+    {
+      "caseId": "route-v04-017",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Configure a synthetic probe that fires hourly against the payments API and validate it with dry_run before enabling.",
+      "candidates": [
+        {
+          "candidateId": "mcp.notify",
+          "features": {
+            "label": "notify",
+            "description": "Send Slack milestones or failure notifications"
+          }
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "features": {
+            "label": "schedule",
+            "description": "Recurring synthetic checks with dry_run"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.schedule",
+      "adjudicated": false,
+      "notes": "Hourly recurring probe configuration with a dry_run gate is schedule's core capability."
+    },
+    {
+      "caseId": "route-v04-018",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Pull vault context restricted only to items carrying title flag A; anything filed under flag B should be left out entirely.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": false,
+      "notes": "Restricting recall to flag-A-tagged items while excluding flag B maps directly to the flag-A sibling tool."
+    },
+    {
+      "caseId": "route-v04-019",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I need vault recall narrowed to title flag B only; flag A results are not relevant to this question.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": false,
+      "notes": "Explicit flag-B-only framing maps to the flag-B sibling tool, not flag A."
+    },
+    {
+      "caseId": "route-v04-020",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Pull ontology context using a coarse practice-area filter; I'd rather over-include than miss something, precision isn't critical here.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": false,
+      "notes": "Explicitly accepting coarse over-recall risk is the overbroad-filter tool's defining behavior, not the precise flag-A filter."
+    },
+    {
+      "caseId": "route-v04-021",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Get me a tightly scoped recall by title flag A for this specific sub-question, nothing broader.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "adjudicated": false,
+      "notes": "Tightly scoped, flag-A-specific recall rules out both the flag-B sibling and the intentionally coarse overbroad filter."
+    },
+    {
+      "caseId": "route-v04-022",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Run a broad practice-area recall sweep across the vault even if it risks pulling in extra unrelated notes.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": false,
+      "notes": "Accepting the risk of extra unrelated notes for broader coverage is the overbroad filter's described tradeoff."
+    },
+    {
+      "caseId": "route-v04-023",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Restrict the recall to notes bearing title flag B, and be careful not to let flag A material sneak into the output.",
+      "candidates": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "features": {
+            "label": "memory_recall title-flag B",
+            "description": "Ontology recall filtered by title flag B (not flag A)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "adjudicated": false,
+      "notes": "Restricting to flag B while guarding against flag A leakage selects the flag-B sibling tool over its counterpart."
+    },
+    {
+      "caseId": "route-v04-024",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "How many matters in the structured corpus have both flags X and Y set to true? I need an exact number.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "An exact numeric answer over structured flags is a SQL query job, not a fuzzy ontology recall."
+    },
+    {
+      "caseId": "route-v04-025",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I want a precise COUNT of exactly how many of the 500 records match this cohort definition, no estimate.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "features": {
+            "label": "data_query cohort COUNT",
+            "description": "SQL COUNT over structured flags for exact k of N"
+          }
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": false,
+      "notes": "An exact k-of-N COUNT over structured cohort flags is the cohort-COUNT tool's specific purpose."
+    },
+    {
+      "caseId": "route-v04-026",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Give me a rough sense of which vault notes touch on this general topic area, precision doesn't matter much.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "adjudicated": false,
+      "notes": "A loose, topic-level sweep accepting imprecision is the overbroad ontology recall, not a SQL corpus query."
+    },
+    {
+      "caseId": "route-v04-027",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Query the DuckDB matters table for the average settlement amount grouped by practice area.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query",
+          "features": {
+            "label": "data_query / clawql_sql",
+            "description": "SQL over pre-ingested structured corpus (DuckDB/matters)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "features": {
+            "label": "memory_recall title-flag A",
+            "description": "Ontology recall filtered by title flag A (not flag B)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query",
+      "adjudicated": false,
+      "notes": "Aggregation over the structured pre-ingested corpus is squarely data_query, not any ontology recall variant."
+    },
+    {
+      "caseId": "route-v04-028",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Count exactly how many cases in our tracked cohort satisfy both criteria A and criteria B simultaneously.",
+      "candidates": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "features": {
+            "label": "data_query cohort COUNT",
+            "description": "SQL COUNT over structured flags for exact k of N"
+          }
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "features": {
+            "label": "memory_recall overbroad filter",
+            "description": "Ontology recall with a coarse practice-area filter (risk of over-recall)"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "adjudicated": false,
+      "notes": "An exact simultaneous two-criteria COUNT is the cohort-COUNT tool's k-of-N specialty."
+    },
+    {
+      "caseId": "route-v04-029",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Just grep through the whole workspace directory tree to find where this function is defined.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "adjudicated": false,
+      "notes": "Unstructured shell grep/listing over workspace paths is exactly the anti-pattern this candidate represents; provider search is not for local file hunting."
+    },
+    {
+      "caseId": "route-v04-030",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Do a broad open-ended web search for 'best refund policy' with no schema or filters applied.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": false,
+      "notes": "An unfiltered, unstructured broad search is the generic-web-search anti-pattern rather than schema-driven provider discovery."
+    },
+    {
+      "caseId": "route-v04-031",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Find the operationId for cancelling a subscription using structured provider discovery, not ad hoc grepping.",
+      "candidates": [
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "features": {
+            "label": "bash/grep/find workspace hunt",
+            "description": "Unstructured shell listing and grepping over workspace paths"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": false,
+      "notes": "Explicit rejection of ad hoc grepping in favor of structured discovery selects search over the shell-hunt anti-pattern."
+    },
+    {
+      "caseId": "route-v04-032",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Search the open web broadly for background on a topic instead of using any schema-aware corpus tool.",
+      "candidates": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "adjudicated": false,
+      "notes": "Explicitly broad, non-schema-aware web search maps to the generic-search anti-pattern over the enterprise-grounded Onyx tool."
+    },
+    {
+      "caseId": "route-v04-033",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "This 200-page contract needs a section-by-section navigable index constructed before I can pull out specific evidentiary clauses.",
+      "candidates": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "features": {
+            "label": "pageindex_build_tree",
+            "description": "Build document tree indexes for long-form evidence"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "adjudicated": false,
+      "notes": "Constructing a navigable section index over a long-form document is pageindex_build_tree's specific purpose, distinct from generic provider discovery."
+    },
+    {
+      "caseId": "route-v04-034",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Before taking any action, search our internal enterprise knowledge base to see if this has already been documented.",
+      "candidates": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "features": {
+            "label": "knowledge_search_onyx",
+            "description": "Search enterprise Onyx knowledge before execution"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "features": {
+            "label": "generic unstructured search",
+            "description": "Broad search without schema filters or corpus SQL"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "adjudicated": false,
+      "notes": "Grounding in enterprise Onyx knowledge before execution is exactly knowledge_search_onyx's described role."
+    },
+    {
+      "caseId": "route-v04-035",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Bring this external blog post URL into our knowledge base so it's stored and available for future reference.",
+      "candidates": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "adjudicated": false,
+      "notes": "Bringing an external URL's content into the knowledge base for later reuse is ingest_external_knowledge's specific function, not operationId discovery."
+    },
+    {
+      "caseId": "route-v04-036",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I just need to find which API operation lists open invoices; I don't have a long document or external URL to import.",
+      "candidates": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "features": {
+            "label": "ingest_external_knowledge",
+            "description": "Import external markdown or URL content"
+          }
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "features": {
+            "label": "pageindex_build_tree",
+            "description": "Build document tree indexes for long-form evidence"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.search",
+      "adjudicated": false,
+      "notes": "A plain operationId discovery request with no document-tree or external-import need falls back to generic provider search."
+    },
+    {
+      "caseId": "route-v04-037",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Before we execute this multi-step migration, walk through a structured reasoning pass on risks and rollback options.",
+      "candidates": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "features": {
+            "label": "clawql_think",
+            "description": "Structured reasoning before consequential decisions"
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "adjudicated": false,
+      "notes": "Structured reasoning about risk and rollback before a consequential action is clawql_think's defined purpose, not discovery."
+    },
+    {
+      "caseId": "route-v04-038",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "I want the recipe/workflow doc for how to safely append and list WORM audit events across multiple steps, not to append one myself right now.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "features": {
+            "label": "clawql-audit-workflows",
+            "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered \u2014 no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs."
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "adjudicated": false,
+      "notes": "Asking for the workflow guidance/recipe itself is the skill doc, distinct from directly invoking the audit tool."
+    },
+    {
+      "caseId": "route-v04-039",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Append one audit event right now recording that the export completed successfully.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "features": {
+            "label": "clawql-audit-workflows",
+            "description": "Workflow recipes for the ClawQL MCP audit tool. The audit tool is ClawQL Core (always registered \u2014 no CLAWQL_ENABLE_AUDIT); this skill is optional guidance for append/list/clear patterns during multi-step runs."
+          }
+        },
+        {
+          "candidateId": "mcp.audit",
+          "features": {
+            "label": "audit",
+            "description": "Append or list WORM-linked audit events"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "mcp.audit",
+      "adjudicated": false,
+      "notes": "A direct single append action is the audit tool itself, not a request for the workflow skill documentation."
+    },
+    {
+      "caseId": "route-v04-040",
+      "useSiteId": "search_provider_tool_routing",
+      "query": "Show me the composed end-to-end recipe that chains search, memory, notify, and schedule together for this kind of task.",
+      "candidates": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "features": {
+            "label": "clawql-composed-mcp-workflows",
+            "description": "Apply proven end-to-end recipes combining search/execute, memory, notify, schedule, and optional tools."
+          }
+        },
+        {
+          "candidateId": "mcp.search",
+          "features": {
+            "label": "search",
+            "description": "Discover provider/API operationIds from natural language before execute"
+          }
+        }
+      ],
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "adjudicated": false,
+      "notes": "Requesting a multi-tool composed recipe is the composed-workflows skill's explicit purpose."
+    }
+  ]
+}

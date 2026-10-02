@@ -70,7 +70,7 @@ npm run fetch-provider-specs
 N8N_BASE_URL=http://127.0.0.1:5678 npm run fetch-n8n-openapi
 ```
 
-**Paperless, Stirling, Tika, Gotenberg, Onyx:** the script loads **repo-root `.env`** / **`.env.local`** first, then for any base URL still unset uses **`http://*.localhost`** defaults aligned with `charts/clawql-mcp/values-docker-desktop.yaml` (opt out: **`CLAWQL_FETCH_PROVIDER_SPECS_LOCALHOST_DEFAULTS=0`**). To skip all self-hosted fetches (public `TARGETS` only): **`CLAWQL_FETCH_PROVIDER_SPECS_SKIP_SELF_HOSTED=1`**.
+**Paperless, Stirling, Tika, Gotenberg, Onyx:** the script loads **repo-root `.env`** / **`.env.local`** first, then for any base URL still unset uses **`http://*.localhost`** defaults aligned with `manifests/charts/clawql-mcp/values-docker-desktop.yaml` (opt out: **`CLAWQL_FETCH_PROVIDER_SPECS_LOCALHOST_DEFAULTS=0`**). To skip all self-hosted fetches (public `TARGETS` only): **`CLAWQL_FETCH_PROVIDER_SPECS_SKIP_SELF_HOSTED=1`**.
 
 - **`PAPERLESS_BASE_URL`** — fetches `/api/schema/` into `providers/paperless/openapi.yaml` (**Paperless-ngx ≥ 2.15**; optional **`PAPERLESS_API_TOKEN`** / **`CLAWQL_PAPERLESS_API_TOKEN`** as **`Authorization: Token …`**)
 - **`STIRLING_BASE_URL`** — fetches OpenAPI from **`/v1/api-docs`** then **`/v3/api-docs`** into `providers/stirling/openapi.yaml` (override order with comma-separated **`STIRLING_OPENAPI_PATHS`**). Optional **`STIRLING_API_KEY`** / **`CLAWQL_STIRLING_API_KEY`** as **`X-API-KEY`** when the docs endpoint requires auth; for **`stirling.localhost`** / **`127.0.0.1`** the script falls back to the chart dev key **`clawql-local-stirling-dev`** when the env key is unset

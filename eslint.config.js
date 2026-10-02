@@ -12,7 +12,7 @@ export default tseslint.config(
       "dist/**",
       "node_modules/**",
       "providers/**",
-      "website/**",
+      "apps/docs/**",
       "coverage/**",
       "scripts/**",
       "*.mjs",
@@ -27,6 +27,33 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
+    files: ["packages/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "../../../src",
+                "../../../src/*",
+                "../../../src/**",
+                "../../../../src",
+                "../../../../src/*",
+                "../../../../src/**",
+                "../../../../../src",
+                "../../../../../src/*",
+                "../../../../../src/**",
+              ],
+              message:
+                "Workspace packages must not import the MCP host (src/). Use package subpaths.",
+            },
+          ],
+        },
+      ],
     },
   }
 );

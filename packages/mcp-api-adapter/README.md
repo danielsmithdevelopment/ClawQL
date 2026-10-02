@@ -54,7 +54,7 @@ npx mcp-api-adapter gen-cli --out ./my-cli --stdio -- npx -y @modelcontextprotoc
 | ---------- | ------------------------------------------------------------------------ |
 | User guide | [`docs/mcp/mcp-api-adapter.md`](../../docs/mcp/mcp-api-adapter.md)       |
 | Design     | [`docs/design/mcp-api-adapter.md`](../../docs/design/mcp-api-adapter.md) |
-| Example    | [`examples/mcp-api-adapter/`](../../examples/mcp-api-adapter/)           |
+| Example    | [`docs/examples/mcp-api-adapter/`](../../docs/examples/mcp-api-adapter/)           |
 
 ## HTTP routes
 

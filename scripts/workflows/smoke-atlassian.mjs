@@ -12,7 +12,7 @@ process.env.CLAWQL_API_BASE_URL = "https://example.atlassian.net";
 process.env.CLAWQL_BUNDLED_OFFLINE = "1";
 
 const { loadSpec, resetSpecCache } = await import("../../dist/spec-loader.js");
-const { preloadSchemaFieldCacheFromDisk } = await import("../../dist/tools.js");
+const { preloadSchemaFieldCacheFromDisk } = await import("../../dist/mcp/tools.js");
 const { searchOperations, formatSearchResults } = await import(
   "../../dist/spec-search.js"
 );

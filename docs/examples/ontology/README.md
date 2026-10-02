@@ -1,0 +1,14 @@
+# ClawQL Ontology examples (v1alpha1)
+
+Provisional entity definitions illustrating [ADR 0009](../../adr/0009-enterprise-ontology.md) and [`docs/architecture/enterprise-ontology.md`](../../architecture/enterprise-ontology.md).
+
+Validate with any Draft 2020-12 JSON Schema tool against [`packages/clawql-ontology/schemas/ontology/entity.schema.json`](../../../packages/clawql-ontology/schemas/ontology/entity.schema.json) after converting YAML → JSON (or via `clawql ontology lint`). Files may use `.yaml` or draft **`.cqe`** ([ADR 0010](../../adr/0010-cq-file-extensions.md)).
+
+These files are **schema definitions** (Git). Populated instances belong in object storage (R2/S3), not in this tree.
+
+## OKF examples
+
+| File                                                                         | Role                                                                                                                                         |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`okf/decision-rationale-template.md`](./okf/decision-rationale-template.md) | `type: decision` with AIF-inspired Claim / Grounds / Supports / Attacks / Decision sections — [docs](../../memory/okf-decision-rationale.md) |
+| [`okf/decision-ontology-adr-0009.md`](./okf/decision-ontology-adr-0009.md)   | Shorter decision note for ADR 0009                                                                                                           |

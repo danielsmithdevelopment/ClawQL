@@ -1,0 +1,416 @@
+/**
+ * tools.ts
+ *
+ * Core tools: search, execute, then immediately cache + audit (non-negotiable; must not follow optional branches that could throw). audit = in-process ring buffer (#89); cache = in-process LRU KV (#75).
+ * Optional: **`sandbox_exec`** via ClawQLInstance `sandbox.enabled` (Kata / Docker / Seatbelt / bridge).
+ * Optional: **`data_query` / `data_ingest` / `data_status`** via instance `data.enabled` — Node DuckDB (`clawql-data`).
+ * memory_ingest / memory_recall / memory_sync — Obsidian vault notes (`memory.enabled` in instance/tier config).
+ * Optional: ingest_external_knowledge — documents tier (`documents.enabled`).
+ * Optional: knowledge_search_onyx — `documents.onyx.enabled`.
+ * Optional: schedule / notify / workflow — `automation.*` in instance/tier config.
+ * Opt-in (8.0 demotion): ouroboros_* + clawql_think via clawql-harness (GitHub #141) — default OFF,
+ * gate with CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or instance/tier ouroboros.enabled; optional
+ * CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
+ * Plugin enablement: {@link resolvePluginCompositionFlags} / ClawQLInstance — not CLAWQL_ENABLE_*.
+ * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
+ */
+
+import { readFile } from "node:fs/promises";
+import { isAbsolute, resolve as resolvePath } from "node:path";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Effect } from "effect";
+import {
+  decodeExecuteInput,
+  decodeResumeInput,
+  decodeSearchInput,
+  executeToolZodShape,
+  resumeToolZodShape,
+  ExecuteService,
+  getPackageRoot,
+  loadSpec,
+  resolveBundledProvider,
+  resumeClawqlExecutionEffect,
+  SearchService,
+  searchToolZodShape,
+  sourcesProposeToolZodShape,
+  sourcesApproveToolZodShape,
+  cacheToolZodShape,
+  auditToolZodShape,
+  skillsListToolZodShape,
+  skillsGetToolZodShape,
+  handleSkillsListToolInput,
+  handleSkillsGetToolInput,
+  buildVarArgs,
+  buildVarDeclarations,
+  capturePathParams,
+  discoveryTypeToGraphQL,
+  normalizeArgsForField,
+  operationIdToGraphQLName,
+  operationIdToRunStyleName,
+  defaultFields,
+  executeOutputFields,
+  projectRestByFields,
+  proposeSourceEffect,
+  approveSourceEffect,
+  resetSpecCache,
+  type CustomSourceKind,
+} from "clawql-api";
+import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
+import { getClawqlApi } from "../composition/clawql-api-adapters.js";
+import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
+import { handleCacheToolInput } from "./clawql-cache.js";
+import { handleAuditToolInput } from "./clawql-audit.js";
+import {
+  configureAutomationPluginDeps,
+  handleNotifyToolInput,
+  SLACK_NOTIFY_OPERATION_ID,
+} from "clawql-automation/plugin";
+import {
+  configureDocumentsPluginDeps,
+  handleKnowledgeSearchOnyxToolInput,
+} from "clawql-documents/plugin";
+import { configureMemoryOnyxSearch } from "clawql-memory/recall/onyx-recall";
+import { wrapRegisteredMcpToolHandler } from "./mcp-tool-wrap.js";
+import { configureHomeSyncHooks } from "../composition/configure-home-sync.js";
+import { handleMemorySyncToolInput, memorySyncToolSchema } from "../home-sync/memory-sync.js";
+import { noteProcessRegisteredCapabilityTools } from "clawql-core";
+
+export { executeOutputFields, projectRestByFields } from "clawql-api";
+
+type GraphQLFieldInfo = { name: string; args: string[] };
+
+/**
+ * On startup: log whether pregenerated GraphQL introspection exists on disk (optional).
+ * Returns whether a file was found (for smoke scripts and diagnostics).
+ */
+export async function preloadSchemaFieldCacheFromDisk(): Promise<boolean> {
+  const spec = await loadSpec();
+  if (spec.multi) {
+    console.error(
+      "[tools] Multi-spec mode: skipping GraphQL introspection cache (OpenAPI execute uses REST when CLAWQL_GRAPHQL_SOURCES is unset)."
+    );
+    return false;
+  }
+  const parsed = await tryLoadIntrospectionFromDisk();
+  if (!parsed) return false;
+  return true;
+}
+
+/** @deprecated No-op; retained for test compatibility. */
+export function resetSchemaFieldCache(): void {}
+
+/** MCP `search` implementation (exported for tests). Effect Schema is authoritative. */
+export async function handleClawqlSearchToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const params = yield* decodeSearchInput(raw);
+      const search = yield* SearchService;
+      const { formattedText } = yield* search.search(params);
+      return { content: [{ type: "text" as const, text: formattedText }] };
+    })
+  );
+}
+
+/** MCP `execute` implementation (exported for tests). Effect Schema is authoritative. */
+export async function handleClawqlExecuteToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const params = yield* decodeExecuteInput(raw);
+      const execute = yield* ExecuteService;
+      const { content } = yield* execute.execute(params);
+      return { content: [...content] };
+    })
+  );
+}
+
+export async function handleClawqlResumeToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const params = yield* decodeResumeInput(raw);
+      const content = yield* resumeClawqlExecutionEffect({
+        executionId: params.executionId,
+        decision: params.decision,
+      });
+      return { content: [...content] };
+    })
+  );
+}
+
+/** MCP `sources_propose` — preview or park a custom source (v0.1). */
+export async function handleSourcesProposeToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const o = (raw ?? {}) as Record<string, unknown>;
+      const url = typeof o.url === "string" ? o.url : "";
+      if (!url.trim()) {
+        return {
+          content: [
+            { type: "text" as const, text: JSON.stringify({ ok: false, error: "url required" }) },
+          ],
+        };
+      }
+      const preview = yield* proposeSourceEffect({
+        url,
+        name: typeof o.name === "string" ? o.name : undefined,
+        kind: typeof o.kind === "string" ? (o.kind as CustomSourceKind) : undefined,
+        id: typeof o.id === "string" ? o.id : undefined,
+        dryRun: o.dryRun !== false,
+      });
+      return { content: [{ type: "text" as const, text: JSON.stringify(preview, null, 2) }] };
+    })
+  );
+}
+
+/** MCP `sources_approve` — human approve/decline a parked proposal (v0.1). */
+export async function handleSourcesApproveToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const o = (raw ?? {}) as Record<string, unknown>;
+      const proposalId = typeof o.proposalId === "string" ? o.proposalId : "";
+      const decision =
+        o.decision === "decline" ? "decline" : o.decision === "approve" ? "approve" : null;
+      if (!proposalId.trim() || !decision) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                ok: false,
+                error: 'proposalId and decision ("approve"|"decline") required',
+              }),
+            },
+          ],
+        };
+      }
+      const result = yield* approveSourceEffect({
+        proposalId,
+        decision,
+        resetSpecCache,
+      });
+      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+    })
+  );
+}
+
+export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
+
+configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
+configureDocumentsPluginDeps({
+  execute: (params) => handleClawqlExecuteToolInput(params),
+  onPipelineHop: async (event) => {
+    try {
+      const { publishDocumentPipelineHopEvent } =
+        await import("clawql-automation/nats/publish-hooks");
+      await publishDocumentPipelineHopEvent({
+        correlation_id: event.correlation_id,
+        hop: {
+          index: event.hop.index,
+          stage: event.hop.stage,
+          operationId: event.hop.operationId,
+          ok: event.hop.ok,
+          skipped: event.hop.skipped,
+          error: event.hop.error,
+        },
+      });
+    } catch {
+      /* NATS publish optional */
+    }
+  },
+});
+configureMemoryOnyxSearch((params) => handleKnowledgeSearchOnyxToolInput(params));
+configureHomeSyncHooks();
+
+/** Register MCP tools declared by composed plugins (Memory, Documents, Automation, Sandbox, Ouroboros, …). */
+function registerPluginMcpTools(server: McpServer): void {
+  for (const tool of getClawqlApi().listMcpTools()) {
+    const handler = wrapRegisteredMcpToolHandler(tool.name, (args) =>
+      tool.handler(args).then((result) => ({
+        content: result.content.map((c) => ({ type: "text" as const, text: c.text })),
+      }))
+    );
+    if (tool.description) {
+      server.tool(tool.name, tool.description, tool.schema, handler);
+    } else {
+      server.tool(tool.name, tool.schema, handler);
+    }
+  }
+}
+
+export function registerTools(server: McpServer) {
+  // Zod shapes are MCP SDK transport-only; Effect Schema decodes inside handlers.
+  const registeredNames: string[] = [
+    "search",
+    "execute",
+    "cache",
+    "audit",
+    "skills_list",
+    "skills_get",
+  ];
+
+  server.tool(
+    "search",
+    searchToolZodShape,
+    wrapRegisteredMcpToolHandler("search", handleClawqlSearchToolInput)
+  );
+
+  server.tool(
+    "execute",
+    executeToolZodShape,
+    wrapRegisteredMcpToolHandler("execute", handleClawqlExecuteToolInput)
+  );
+
+  server.tool(
+    "resume",
+    resumeToolZodShape,
+    wrapRegisteredMcpToolHandler("resume", handleClawqlResumeToolInput)
+  );
+  registeredNames.push("resume");
+
+  // Non-negotiable Core tools: register immediately after search/execute so optional branches
+  // below cannot throw and skip cache/audit (#89 #75).
+  server.tool(
+    "cache",
+    cacheToolZodShape,
+    wrapRegisteredMcpToolHandler("cache", handleCacheToolInput)
+  );
+  server.tool(
+    "audit",
+    auditToolZodShape,
+    wrapRegisteredMcpToolHandler("audit", handleAuditToolInput)
+  );
+  server.tool(
+    "skills_list",
+    skillsListToolZodShape,
+    wrapRegisteredMcpToolHandler("skills_list", handleSkillsListToolInput)
+  );
+  server.tool(
+    "skills_get",
+    skillsGetToolZodShape,
+    wrapRegisteredMcpToolHandler("skills_get", handleSkillsGetToolInput)
+  );
+
+  server.tool(
+    "sources_propose",
+    "Preview (default) or park a custom source proposal with operation-risk summary. Does not write sources.json until sources_approve.",
+    sourcesProposeToolZodShape,
+    wrapRegisteredMcpToolHandler("sources_propose", handleSourcesProposeToolInput)
+  );
+  server.tool(
+    "sources_approve",
+    "Approve or decline a parked sources_propose proposal (human gate).",
+    sourcesApproveToolZodShape,
+    wrapRegisteredMcpToolHandler("sources_approve", handleSourcesApproveToolInput)
+  );
+  registeredNames.push("sources_propose", "sources_approve");
+
+  registerPluginMcpTools(server);
+  for (const tool of getClawqlApi().listMcpTools()) {
+    registeredNames.push(tool.name);
+  }
+
+  if (resolvePluginCompositionFlags().enableChatgptExtensions) {
+    // ChatGPT-only surfaces: settings always; UI tools when host supports MCP Apps.
+    // Non-ChatGPT clients still connect — UI tools use app-only visibility / capability omit.
+    const attached = attachChatgptExtensions(server);
+    if (attached.attached) {
+      registeredNames.push(
+        "clawql_settings_read",
+        "clawql_settings_update",
+        "clawql_mentions_search",
+        "clawql_evidence",
+        "clawql_console",
+        "clawql_open_file"
+      );
+    }
+  }
+
+  if (resolvePluginCompositionFlags().enableMemory) {
+    server.tool(
+      "memory_sync",
+      memorySyncToolSchema,
+      wrapRegisteredMcpToolHandler("memory_sync", handleMemorySyncToolInput)
+    );
+    registeredNames.push("memory_sync");
+  }
+
+  // Capability lifecycle default-on: seed unbound sessions with tools actually
+  // live on this process (optional notify/onyx/schedule included when registered).
+  noteProcessRegisteredCapabilityTools(registeredNames);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────
+
+function resolveIntrospectionFilePath(): string | null {
+  const explicit = process.env.CLAWQL_INTROSPECTION_PATH?.trim();
+  if (explicit) {
+    return isAbsolute(explicit) ? explicit : resolvePath(process.cwd(), explicit);
+  }
+  const prov = process.env.CLAWQL_PROVIDER?.trim();
+  if (prov) {
+    const p = resolveBundledProvider(prov);
+    if (p && "bundledIntrospectionPath" in p && p.bundledIntrospectionPath) {
+      return resolvePath(getPackageRoot(), p.bundledIntrospectionPath);
+    }
+  }
+  return null;
+}
+
+async function tryLoadIntrospectionFromDisk(): Promise<{
+  query: GraphQLFieldInfo[];
+  mutation: GraphQLFieldInfo[];
+} | null> {
+  const introPath = resolveIntrospectionFilePath();
+  if (!introPath) return null;
+  try {
+    const text = await readFile(introPath, "utf-8");
+    const data = JSON.parse(text) as {
+      __schema: {
+        queryType: {
+          fields: Array<{ name: string; args: Array<{ name: string }> }>;
+        };
+        mutationType: {
+          fields: Array<{ name: string; args: Array<{ name: string }> }>;
+        } | null;
+      };
+    };
+    console.error(`[tools] Using pregenerated GraphQL introspection (disk): ${introPath}`);
+    return {
+      query: data.__schema.queryType.fields.map((f) => ({
+        name: f.name,
+        args: f.args.map((a) => a.name),
+      })),
+      mutation: (data.__schema.mutationType?.fields ?? []).map((f) => ({
+        name: f.name,
+        args: f.args.map((a) => a.name),
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Narrow test surface for critical path helper behavior.
+export const __testUtils = {
+  operationIdToGraphQLName,
+  operationIdToRunStyleName,
+  normalizeArgsForField,
+  capturePathParams,
+  buildVarDeclarations,
+  buildVarArgs,
+  discoveryTypeToGraphQL,
+  defaultFields,
+  projectRestByFields,
+  executeOutputFields,
+};

@@ -1,7 +1,7 @@
 {
   "name": "clawql-core",
   "version": "0.1.0",
-  "description": "ClawQL primitives: Effect-TS services, Merkle/Cuckoo modules, audit ring buffer — foundation for modular clawql-mcp",
+  "description": "ClawQL primitives: Effect-TS services, Merkle/Cuckoo modules, audit ring buffer \u2014 foundation for modular clawql-mcp",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -17,6 +17,11 @@
       "types": "./dist/streams-slim.d.ts",
       "import": "./dist/streams-slim.js",
       "require": "./dist/streams-slim.cjs"
+    },
+    "./classifier": {
+      "types": "./dist/classifier/index.d.ts",
+      "import": "./dist/classifier/index.js",
+      "require": "./dist/classifier/index.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -35,7 +40,7 @@
     "@types/node": "^26.1.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.1"
+    "vitest": "^5.0.0"
   },
   "files": [
     "dist",

@@ -5,7 +5,7 @@
 **Canonical design:** [`docs/design/mcp-api-adapter.md`](../design/mcp-api-adapter.md)  
 **User guide:** [`docs/mcp/mcp-api-adapter.md`](../mcp/mcp-api-adapter.md)  
 **Package:** [`packages/mcp-api-adapter`](../../packages/mcp-api-adapter/README.md)  
-**Example demos:** [`examples/mcp-api-adapter`](../../examples/mcp-api-adapter/README.md)  
+**Example demos:** [`docs/examples/mcp-api-adapter`](../../docs/examples/mcp-api-adapter/README.md)  
 **Transport:** [`packages/mcp-grpc-transport`](../../packages/mcp-grpc-transport/README.md)  
 **Protocol Fabric:** [`docs/mcp/protocol-fabric.md`](../mcp/protocol-fabric.md) (public) · GTM note [`protocol-fabric.md`](./protocol-fabric.md)  
 **Essay draft (publish to PV):** [`pragmaticvectors/mcp-api-adapter.md`](./pragmaticvectors/mcp-api-adapter.md) → `https://pragmaticvectors.com/posts/mcp-api-adapter/`

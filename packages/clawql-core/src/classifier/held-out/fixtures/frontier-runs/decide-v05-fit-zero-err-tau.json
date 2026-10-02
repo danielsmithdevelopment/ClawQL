@@ -1,0 +1,267 @@
+{
+  "protocol": "Decide v0.5 candidate: T locked from off-set fit; \u03c4 reselected on fit only under 0-error rule; eval on spent v0.4 is score-once readout not productionTrusted rewrite",
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "transform": {
+    "mode": "temperature_softmax",
+    "temperature": 0.75
+  },
+  "priorTauFromMaxCoveragePrec09": 0.6,
+  "newSelectionRule": "among fit \u03c4 with precision\u22650.9 AND nErrorsFired=0, maximize fireRate; ties \u2192 higher \u03c4",
+  "selectedTau": 0.8,
+  "fitAtSelected": {
+    "nFired": 23,
+    "nErrors": 0,
+    "precision": 1.0,
+    "cpLower95": 0.8518148710847756
+  },
+  "evalSpentV04AtSelected": {
+    "nFired": 23,
+    "nErrors": 0,
+    "precision": 1.0,
+    "cpLower95": 0.8518148710847756
+  },
+  "curve": [
+    {
+      "tau": 0.5,
+      "fit": {
+        "nFired": 36,
+        "nErrors": 4,
+        "precision": 0.8888888888888888,
+        "cpLower95": 0.7468487098496366
+      },
+      "evalSpentV04": {
+        "nFired": 39,
+        "nErrors": 2,
+        "precision": 0.9487179487179487,
+        "cpLower95": 0.8311406095436208
+      },
+      "fitEligiblePrec09": false,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.55,
+      "fit": {
+        "nFired": 33,
+        "nErrors": 3,
+        "precision": 0.9090909090909091,
+        "cpLower95": 0.7642705646564896
+      },
+      "evalSpentV04": {
+        "nFired": 35,
+        "nErrors": 1,
+        "precision": 0.9714285714285714,
+        "cpLower95": 0.8546659090672867
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.6,
+      "fit": {
+        "nFired": 33,
+        "nErrors": 3,
+        "precision": 0.9090909090909091,
+        "cpLower95": 0.7642705646564896
+      },
+      "evalSpentV04": {
+        "nFired": 34,
+        "nErrors": 1,
+        "precision": 0.9705882352941176,
+        "cpLower95": 0.8508409778365519
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.65,
+      "fit": {
+        "nFired": 31,
+        "nErrors": 2,
+        "precision": 0.9354838709677419,
+        "cpLower95": 0.7928101168125355
+      },
+      "evalSpentV04": {
+        "nFired": 30,
+        "nErrors": 1,
+        "precision": 0.9666666666666667,
+        "cpLower95": 0.8332924860304112
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.7,
+      "fit": {
+        "nFired": 28,
+        "nErrors": 2,
+        "precision": 0.9285714285714286,
+        "cpLower95": 0.7735426157408215
+      },
+      "evalSpentV04": {
+        "nFired": 29,
+        "nErrors": 1,
+        "precision": 0.9655172413793104,
+        "cpLower95": 0.8282410893529976
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.75,
+      "fit": {
+        "nFired": 27,
+        "nErrors": 1,
+        "precision": 0.9629629629629629,
+        "cpLower95": 0.8171614606584349
+      },
+      "evalSpentV04": {
+        "nFired": 25,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.8628148284692875
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": false
+    },
+    {
+      "tau": 0.8,
+      "fit": {
+        "nFired": 23,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.8518148710847756
+      },
+      "evalSpentV04": {
+        "nFired": 23,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.8518148710847756
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.85,
+      "fit": {
+        "nFired": 17,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.8049356770309067
+      },
+      "evalSpentV04": {
+        "nFired": 21,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.8389023847809204
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.9,
+      "fit": {
+        "nFired": 16,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.7940927857921772
+      },
+      "evalSpentV04": {
+        "nFired": 16,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.7940927857921772
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.92,
+      "fit": {
+        "nFired": 14,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.7683642383498834
+      },
+      "evalSpentV04": {
+        "nFired": 15,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.7819806390894659
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.95,
+      "fit": {
+        "nFired": 13,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.752947361999529
+      },
+      "evalSpentV04": {
+        "nFired": 12,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.7353515306029488
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.97,
+      "fit": {
+        "nFired": 10,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.6915028921812392
+      },
+      "evalSpentV04": {
+        "nFired": 10,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.6915028921812392
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    },
+    {
+      "tau": 0.99,
+      "fit": {
+        "nFired": 3,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.2924017738212866
+      },
+      "evalSpentV04": {
+        "nFired": 3,
+        "nErrors": 0,
+        "precision": 1.0,
+        "cpLower95": 0.2924017738212866
+      },
+      "fitEligiblePrec09": true,
+      "fitEligibleZeroErr": true
+    }
+  ],
+  "missAtPriorTau060": {
+    "caseId": "route-v04-004",
+    "query": "Call `users.deactivate` with userId=8821 immediately; skip discovery, I already know the op.",
+    "groundTruth": "mcp.execute",
+    "chosen": "mcp.search",
+    "topConfidenceCalibrated": 0.7393817580978831,
+    "second": {
+      "candidateId": "mcp.execute",
+      "confidence": 0.26061824190211685
+    },
+    "rawTop": "mcp.search",
+    "rawConf": 0.7052,
+    "remapTouched": false,
+    "note": "Decide prefers mcp.search over mcp.execute on an execute-shaped \"skip discovery\" query; conf 0.739 so \u03c4=0.60 fires the miss; \u03c4\u22650.75 abstains.",
+    "frontierGtAgreed": true
+  },
+  "honesty": [
+    "Decide (T,\u03c4) fit only on fast-decision-fit-routing-v0.1 (n=41); not on v0.4",
+    "v0.4 remains spent for stock closeout; this Decide candidate readout does not rewrite productionTrusted",
+    "Swapping live path requires freeze v0.5 + score-once + frontier adjudicate under this predeclared rule"
+  ]
+}

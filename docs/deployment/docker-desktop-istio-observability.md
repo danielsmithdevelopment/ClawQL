@@ -117,7 +117,7 @@ Expect **Running** pods for Prometheus, Grafana, Kiali (when not skipped), plus 
 3. Log in with the **default credentials from the Istio sample** (as of common Istio releases): user **`admin`**, password **`admin`**. **Change or disable this in anything beyond a disposable laptop lab.**
 4. Open **Connections → Data sources** (or **Configuration → Data sources** in older layouts) and confirm **Prometheus** points at the in-cluster Prometheus service.
 5. Open **Dashboards** and browse folders such as **Istio** (names vary by version). Pick any dashboard and watch panels while you send traffic to ClawQL.
-6. **ClawQL application metrics:** with the default **Helm** release (**`metrics.prometheusScrapeAnnotations.enabled: true`**) or **Kustomize** base Service, **Istio’s** Prometheus should already scrape **`/metrics`** on **`clawql-mcp-http`** (check **Status → Targets** in the Prometheus UI). Import the bundled dashboard **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** — see **[`docs/grafana/README.md`](../grafana/README.md)** and **`charts/clawql-mcp/README.md`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
+6. **ClawQL application metrics:** with the default **Helm** release (**`metrics.prometheusScrapeAnnotations.enabled: true`**) or **Kustomize** base Service, **Istio’s** Prometheus should already scrape **`/metrics`** on **`clawql-mcp-http`** (check **Status → Targets** in the Prometheus UI). Import the bundled dashboard **[`docs/grafana/clawql-core-observability.json`](../grafana/clawql-core-observability.json)** — see **[`docs/grafana/README.md`](../grafana/README.md)** and **`manifests/charts/clawql-mcp/README.md`** ([#210](https://github.com/danielsmithdevelopment/ClawQL/issues/210)).
 
 **Mental model:** Grafana answers **“show me a curated picture of metrics.”** Dig into raw series in **Prometheus** if a panel looks wrong.
 
@@ -210,12 +210,12 @@ You do **not** need a browser UI for the collector; **Grafana Explore (Tempo)** 
 
 ## ClawQL MCP metrics vs mesh observability
 
-| Signal                                                       | Where                                                                      | Beginner note                                                                                                                                   |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Application metrics** (merge counts, execute totals, etc.) | **`GET http://<mcp-host>:8080/metrics`** on the MCP Service / port-forward | OpenMetrics text for **Prometheus-style** scraping of the **MCP process**; see [`docs/readme/deployment.md`](../readme/deployment.md).          |
-| **Mesh / Istio metrics**                                     | Prometheus in **`istio-system`**                                           | Scraped from Envoy, Istio components, addons — **different** scrape config from the MCP `/metrics` path.                                        |
-| **Distributed traces (MCP tool spans)**                      | **Grafana Tempo** (Explore) after OTLP export                              | Opt-in: **`CLAWQL_ENABLE_OTEL_TRACING`**, OTLP env — see [`.env.example`](../../.env.example) and **`src/otel-tracing.ts`**. Collector → Tempo. |
-| **Audit / agent logs (JSON lines)**                          | **Loki** (optional **`CLAWQL_LOKI_PUSH_URL`**)                             | MCP **`audit.append`** can push to Loki; explore in Grafana **Explore**.                                                                        |
+| Signal                                                       | Where                                                                      | Beginner note                                                                                                                                                 |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Application metrics** (merge counts, execute totals, etc.) | **`GET http://<mcp-host>:8080/metrics`** on the MCP Service / port-forward | OpenMetrics text for **Prometheus-style** scraping of the **MCP process**; see [`docs/readme/deployment.md`](../readme/deployment.md).                        |
+| **Mesh / Istio metrics**                                     | Prometheus in **`istio-system`**                                           | Scraped from Envoy, Istio components, addons — **different** scrape config from the MCP `/metrics` path.                                                      |
+| **Distributed traces (MCP tool spans)**                      | **Grafana Tempo** (Explore) after OTLP export                              | Opt-in: **`CLAWQL_ENABLE_OTEL_TRACING`**, OTLP env — see [`.env.example`](../../.env.example) and **`src/observability/otel-tracing.ts`**. Collector → Tempo. |
+| **Audit / agent logs (JSON lines)**                          | **Loki** (optional **`CLAWQL_LOKI_PUSH_URL`**)                             | MCP **`audit.append`** can push to Loki; explore in Grafana **Explore**.                                                                                      |
 
 ---
 
@@ -223,7 +223,7 @@ You do **not** need a browser UI for the collector; **Grafana Explore (Tempo)** 
 
 - [`docker/README.md`](../../docker/README.md) — **Istio + observability** env vars, Agentic Gateway URLs, port-forward cheat sheet.
 - [`docs/readme/deployment.md`](../readme/deployment.md) — Kubernetes entry points and links.
-- [`docs/deployment/helm.md`](helm.md) — **`charts/clawql-mcp`** values, including **`extraEnv`** for OTLP.
+- [`docs/deployment/helm.md`](helm.md) — **`manifests/charts/clawql-mcp`** values, including **`extraEnv`** for OTLP.
 - Issue [**#155**](https://github.com/danielsmithdevelopment/ClawQL/issues/155) — Istio / mesh tracking.
 - [**ADR 0003** — Tempo + Dragonfly for local ops](../adr/0003-tempo-dragonfly-local-operations.md) — why this path is **Tempo-only** for traces (no Jaeger sample addon).
 - Broader **full-stack observability** roadmap may be tracked in additional GitHub issues (Helm subcharts, production sizing, etc.); this document focuses on the **Docker Desktop + Istio sample addons** path.

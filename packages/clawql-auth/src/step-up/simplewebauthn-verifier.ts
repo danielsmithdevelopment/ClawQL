@@ -5,7 +5,7 @@
 
 import type {
   AuthenticationResponseJSON,
-  AuthenticatorTransportFuture,
+  AuthenticatorTransport,
   RegistrationResponseJSON,
 } from "@simplewebauthn/server";
 import { Effect } from "effect";
@@ -44,7 +44,7 @@ export function createSimpleWebAuthnVerifier(
           id: input.credential.id,
           publicKey: new Uint8Array(input.credential.publicKey),
           counter: input.credential.counter,
-          transports: input.credential.transports as AuthenticatorTransportFuture[] | undefined,
+          transports: input.credential.transports as AuthenticatorTransport[] | undefined,
         },
       });
       if (!result.verified) {

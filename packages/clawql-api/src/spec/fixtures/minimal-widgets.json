@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "WidgetsB", "version": "1" },
+  "servers": [{ "url": "https://widgets-b.example.com" }],
+  "paths": {
+    "/widgets": {
+      "post": {
+        "operationId": "createWidget",
+        "responses": { "200": { "description": "ok" } }
+      }
+    }
+  },
+  "components": { "schemas": {} }
+}

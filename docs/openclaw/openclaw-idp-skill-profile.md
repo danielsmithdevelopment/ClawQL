@@ -135,7 +135,7 @@ when the HTTP bridge supplies it (see docs/dashboard/agent-chat.md).
 | Post-Paperless push to Onyx automation                | [#120](https://github.com/danielsmithdevelopment/ClawQL/issues/120)                                                                                                                     |
 | ClawQL-Agent Slack driver (runtime)                   | [ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent) — [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) runbook is shipped; agent loop is external |
 
-**Shipped IDP wave docs:** [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) [observability](../observability/README.md) · [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) [umbrella chart](../../charts/clawql-idp) · [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) [Slack runbook](slack-first-idp-runbook.md) · [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) [GitOps](../gitops/agent-pr-argocd-pipeline.md)
+**Shipped IDP wave docs:** [#252](https://github.com/danielsmithdevelopment/ClawQL/issues/252) [observability](../observability/README.md) · [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) [umbrella chart](../../manifests/charts/clawql-idp) · [#256](https://github.com/danielsmithdevelopment/ClawQL/issues/256) [Slack runbook](slack-first-idp-runbook.md) · [#258](https://github.com/danielsmithdevelopment/ClawQL/issues/258) [GitOps](../gitops/agent-pr-argocd-pipeline.md)
 
 ## Where operators start
 

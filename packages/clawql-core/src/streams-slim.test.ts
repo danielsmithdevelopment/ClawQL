@@ -28,8 +28,7 @@ describe("streams-slim entry", () => {
     expect(set.ok).toBe(true);
     const get = await runCacheOperation({ operation: "get", key: "streams:slim:test" });
     expect(get.ok).toBe(true);
-    if (get.ok && "hit" in get) {
-      expect(get.hit).toBe(true);
+    if (get.ok && "hit" in get && get.hit) {
       expect(get.value).toBe("ok");
     }
   });

@@ -44,6 +44,7 @@ import {
   type CreditsHateoasAuthOptions,
 } from "./hateoas-auth.js";
 import { CreditsRequestsService, publicMoneyRequest, type MoneyRequest } from "./requests.js";
+import { attachCpcDashboardRoutes } from "../provisioning/dashboard-http.js";
 
 /** Sync HTML escape used inside `Effect.sync` render bodies at the Express edge. */
 function esc(s: string): string {
@@ -302,6 +303,9 @@ export function attachCreditsHateoasRoutes(
   options: CreditsHateoasAuthOptions = {}
 ): void {
   app.use("/credits", createCreditsHateoasAuthMiddleware(options));
+
+  // CPC self-serve dashboard (plan, keys, usage, agents, traces)
+  attachCpcDashboardRoutes(app, { env: options.env });
 
   app.get("/credits", async (req: Request, res: Response) => {
     res.type("html").send(await homeHtml(tenantFromQuery(req)));

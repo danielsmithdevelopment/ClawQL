@@ -161,6 +161,8 @@ A new teammate can open one URL and call Salesforce, GitHub, internal gRPC, and 
 - **Streaming:** Long-running tools return an HTMX/EventSource progress shell; `GET /mcp-ui/progress/:jobId` streams `progress` / `complete` / `error` SSE events with the final result HTML embedded.
 - **File upload / IDP:** Tools with `pdf_base64` / `base64` (or format binary) render `<input type="file">` with `multipart/form-data`. Uploads are base64-encoded into CallTool args. Document **processing** requires ATR scopes `documents` / `idp` (or admin / explicit IDP tool grant) — separate from catalog visibility.
 - **Generated UIs:** `POST /mcp-ui/generate` with `{ title, steps: [{ tool, label? }], slug? }` returns a `/mcp-ui/custom/:slug` multi-step form (in-memory, TTL).
+- **Agent Lab preset:** `GET /mcp-ui/presets/agent-lab` landing + `POST …/start` (or `POST /mcp-ui/generate` with `{ "preset": "agent-lab" }`) scaffolds the docs WebMCP narrative as an HTMX workflow that is **not** a static docs page. Demo upstream: `docs/examples/mcp-api-adapter/docs-agent-lab-server.mjs`.
+- **Click-to-claim preset:** `GET /mcp-ui/presets/cloudflare-claim` + `POST …/start` (or `POST /mcp-ui/generate` with `{ "preset": "cloudflare-claim" }`) wraps third-party page WebMCP tools as a human **Click to claim** button. Default demo targets Cloudflare’s live challenge page (`https://webmcp-challenge.examples.workers.dev/`, tool `reveal_extra_credits_link` → real $10 credits redeem URL) via Chrome CDP → thin MCP proxy → `/mcp-ui`. Optional local `cf_*` mirror or Core index: `clawql sources add <url> --kind webmcp`.
 - **Proof:** clawql-payments `/credits/*` already demonstrates HTMX fragment UX inside ClawQL — generalize that pattern to arbitrary MCP catalogs.
 
 ### 5.1 Effect-TS
@@ -194,7 +196,7 @@ export CLAWQL_INFERENCE_STORE=jsonl
 export CLAWQL_INFERENCE_STORE_PATH=/tmp/clawql-inference/calls.jsonl   # shared with inference gateway
 
 npm run build -w clawql-inference -w mcp-api-adapter
-node examples/mcp-api-adapter/clawql-with-trace.mjs
+node docs/examples/mcp-api-adapter/clawql-with-trace.mjs
 # or: node packages/mcp-api-adapter/bin/mcp-api-adapter.mjs --mcp-url http://127.0.0.1:8080/mcp
 ```
 

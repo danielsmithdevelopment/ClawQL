@@ -24,7 +24,7 @@ Demo LangExtract uses deterministic grounded patterns with the **same
 
 ## Generalized Matter shape
 
-Registry: `integrations/harvey-labs/harness/adapters/clawql_lab_matter_schema.py`.
+Registry: `benchmarks/harvey-labs/harness/adapters/clawql_lab_matter_schema.py`.
 
 ```text
 Matter {
@@ -103,9 +103,9 @@ not bare Regulatory HSR memos.
 java -Xmx512m -jar tika-server-standard-2.9.2.jar --host 127.0.0.1 --port 9998
 
 LANGEXTRACT_MODE=demo PORT=8090 \
-  python3 deployment/samples/langextract-http/server.py
+  python3 docs/examples/idp/langextract-http/server.py
 
-node integrations/harvey-labs/scripts/lab-pre-ingest.mjs
+node benchmarks/harvey-labs/scripts/lab-pre-ingest.mjs
 # Requires CLAWQL_MCP_URL + CLAWQL_ENABLE_DATA=1 on MCP server (see start-clawql-for-lab.sh)
 # expects parity with legacy gold cohort counts (CREDIT_FACILITY=12, etc.)
 ```

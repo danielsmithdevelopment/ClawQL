@@ -3,17 +3,17 @@
 **Status:** Design reference for **full** operator (NL ops, verticals, auth) · **July 2026**  
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255) (Operator / umbrella chart), [#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251) (four Compose stacks)
 
-> **Shipped in 7.0.0:** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install, and **Tier 1 Docker Compose** (`examples/clawql-local-docker-compose`). **Teach operators:** [Getting started](https://docs.clawql.com/getting-started) · [Operations guide](https://docs.clawql.com/deployment/operations-guide). Deploy: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; items marked shipped are runnable today.
+> **Shipped in 7.0.0:** `ClawQLInstance` CRD, tier presets, tier-spec ConfigMaps, continuous reconcile, optional MCP rollout, `clawql operator status`, `make local-k8s-up` install, and **Tier 1 Docker Compose** (`docs/examples/clawql-local-docker-compose`). **Teach operators:** [Getting started](https://docs.clawql.com/getting-started) · [Operations guide](https://docs.clawql.com/deployment/operations-guide). Deploy: **[clawql-operator-helm.md](../deployment/clawql-operator-helm.md)**. Sections 1–13 below describe the **full** operator vision; items marked shipped are runnable today.
 
 This document captures the **planned** three-tier deployment model: **`ClawQLInstance` CRD**, Operator reconciliation, vertical toggles, natural-language operations, and enterprise hardening.
 
-**Deploy today:** [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Operator scaffold](../deployment/clawql-operator-helm.md) · [Helm (`charts/clawql-mcp`)](../deployment/helm.md) · [IDP pipeline](../providers/idp-pipeline.md) · `make local-k8s-up`
+**Deploy today:** [Deployment & Operations Guide](../deployment/clawql-deployment-operations-guide.md) · [Operator scaffold](../deployment/clawql-operator-helm.md) · [Helm (`manifests/charts/clawql-mcp`)](../deployment/helm.md) · [IDP pipeline](../providers/idp-pipeline.md) · `make local-k8s-up`
 
 ---
 
 ## Overview
 
-Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** shipped in **7.0.0** (CRD + reconcile + tier-spec ConfigMaps) — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **Tier 1** Compose/bootstrap shipped in **7.0.0** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — see `examples/clawql-local-docker-compose/`. **Default path for K8s:** Helm **`charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without enabling the operator.
+Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** shipped in **7.0.0** (CRD + reconcile + tier-spec ConfigMaps) — see [clawql-operator-helm.md](../deployment/clawql-operator-helm.md). **Tier 1** Compose/bootstrap shipped in **7.0.0** ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — see `docs/examples/clawql-local-docker-compose/`. **Default path for K8s:** Helm **`manifests/charts/clawql-mcp`** co-deploys MCP, document pipeline, optional Onyx/Nextcloud/Coneshare, dashboard, and vault memory without enabling the operator.
 
 ### Prerequisites by Tier
 
@@ -47,7 +47,7 @@ Three tiers were designed around a **ClawQL Operator**. An **opt-in scaffold** s
 
 ## 1. Tier 1: Local Developer Deployment (shipped)
 
-> **Shipped in 7.0.0.** Use `examples/clawql-local-docker-compose/bootstrap.sh` + `docker compose up`. For a local full stack on Kubernetes including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](helm.md).
+> **Shipped in 7.0.0.** Use `docs/examples/clawql-local-docker-compose/bootstrap.sh` + `docker compose up`. For a local full stack on Kubernetes including the **seven-vendor IDP pipeline**, use **`make local-k8s-up`** and [helm.md](helm.md).
 
 ### 1.1 Installation
 
@@ -58,10 +58,10 @@ cd clawql
 
 # Run the bootstrap script
 # This checks prerequisites, generates local secrets, and writes clawql.local.yaml
-./examples/clawql-local-docker-compose/bootstrap.sh
+./docs/examples/clawql-local-docker-compose/bootstrap.sh
 
 # Start the stack
-cd examples/clawql-local-docker-compose
+cd docs/examples/clawql-local-docker-compose
 docker compose up -d
 ```
 
@@ -306,7 +306,7 @@ If a migration fails, the API will not start. The failure message will indicate 
 
 ## 2. Tier 2: Standard Self-Hosted Deployment (Operator — planned)
 
-> **Shipped alternative:** use **[Helm `charts/clawql-mcp`](helm.md)** today (`helm upgrade --install`, `values-docker-desktop.yaml`, `make local-k8s-up`). The **ClawQL Operator** and **`ClawQLInstance` CRD** described below are **not shipped** — design reference only ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
+> **Shipped alternative:** use **[Helm `manifests/charts/clawql-mcp`](helm.md)** today (`helm upgrade --install`, `values-docker-desktop.yaml`, `make local-k8s-up`). The **ClawQL Operator** and **`ClawQLInstance` CRD** described below are **not shipped** — design reference only ([#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)).
 
 ### 2.1 Cluster Prerequisites Verification
 
@@ -526,7 +526,7 @@ kubectl -n clawql run test-psql --rm -it --image=postgres:15 -- \
 
 ## 3. Tier 3: Enterprise Production Deployment (Operator — planned)
 
-> **Shipped building blocks today:** Helm **`charts/clawql-mcp`**, optional **Istio** egress allowlist, **Kyverno** image verification, **Kata/gVisor** RuntimeClass toggles — see [helm.md](helm.md) and [image-signature-enforcement.md](../security/image-signature-enforcement.md). The **Operator-managed Tier 3** flow below is **not shipped**.
+> **Shipped building blocks today:** Helm **`manifests/charts/clawql-mcp`**, optional **Istio** egress allowlist, **Kyverno** image verification, **Kata/gVisor** RuntimeClass toggles — see [helm.md](helm.md) and [image-signature-enforcement.md](../security/image-signature-enforcement.md). The **Operator-managed Tier 3** flow below is **not shipped**.
 
 > **Note:** Planned — not yet shipped. This section documents the intended deployment procedure.
 
@@ -1419,7 +1419,7 @@ Pre-built dashboards are imported automatically on first run. If they are missin
 ```bash
 curl -X POST http://localhost:3301/api/v1/dashboards/import \
   -H "Content-Type: application/json" \
-  -d @charts/clawql-full-stack/dashboards/clawql-overview.json
+  -d @manifests/charts/clawql-full-stack/dashboards/clawql-overview.json
 ```
 
 ### 9.2 Key Metrics Reference

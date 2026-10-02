@@ -4,6 +4,7 @@ import {
   type ClawQLPluginRegistrationApi,
   type McpToolDefinition,
   type McpToolHandler,
+  type ToolRoutingHint,
 } from "clawql-core";
 import { Effect } from "effect";
 import type { z } from "zod";
@@ -15,7 +16,7 @@ export type McpToolRegistration = {
   readonly handler: McpToolHandler;
   /** Preserved for Agent Seer scenario synthesis / eval quality (§9.3). */
   readonly parameterNotes?: Record<string, string>;
-};
+} & ToolRoutingHint;
 
 export class McpToolRegistry {
   private readonly tools = new Map<string, McpToolRegistration>();
@@ -44,6 +45,9 @@ export class McpToolRegistry {
       schema: t.schema as unknown as Record<string, unknown>,
       handler: t.handler,
       parameterNotes: t.parameterNotes,
+      whenToUse: t.whenToUse,
+      whenNotToUse: t.whenNotToUse,
+      distinguishFrom: t.distinguishFrom,
     }));
   }
 
@@ -56,6 +60,9 @@ export class McpToolRegistry {
           schema: tool.schema as Record<string, z.ZodTypeAny>,
           handler: tool.handler,
           parameterNotes: tool.parameterNotes,
+          whenToUse: tool.whenToUse,
+          whenNotToUse: tool.whenNotToUse,
+          distinguishFrom: tool.distinguishFrom,
         }),
     };
   }

@@ -2,9 +2,9 @@
 #
 # OpenBench-style:
 #   - pull_request / push (path-filtered): default Nemotron ± ClawQL on task 001
-#   - Marker integrations/harvey-labs/.run-nemotron-sweep:
+#   - Marker benchmarks/harvey-labs/.run-nemotron-sweep:
 #       Nemotron ± ClawQL over task range (N or START-END, e.g. 16-25)
-#   - Marker integrations/harvey-labs/.run-opus-ledger:
+#   - Marker benchmarks/harvey-labs/.run-opus-ledger:
 #       Opus 4.8 ± ClawQL on task 001 via OpenRouter
 #   - workflow_dispatch: pick task / task_limit / arms / models
 #
@@ -72,13 +72,13 @@ on:
         default: "1"
   pull_request:
     paths:
-      - "integrations/harvey-labs/**"
+      - "benchmarks/harvey-labs/**"
       - "scripts/start-clawql-for-lab.sh"
       - ".github/workflows/harvey-lab-firm-knowledge.yml"
   push:
     branches: [main]
     paths:
-      - "integrations/harvey-labs/**"
+      - "benchmarks/harvey-labs/**"
       - "scripts/start-clawql-for-lab.sh"
       - ".github/workflows/harvey-lab-firm-knowledge.yml"
 
@@ -149,7 +149,7 @@ jobs:
             MATTERS="${{ inputs.max_matters }}"
             USE_OR="${{ inputs.use_openrouter }}"
             MODE="dispatch"
-          elif [ -f integrations/harvey-labs/.run-opus-ledger ]; then
+          elif [ -f benchmarks/harvey-labs/.run-opus-ledger ]; then
             ARMS_CSV="baseline,clawql"
             TASK="firm-knowledge/tasks/001"
             TASK_LIMIT=1
@@ -163,7 +163,7 @@ jobs:
             USE_OR="1"
             MODE="opus"
             echo "::notice::Detected .run-opus-ledger → Opus A/B via OpenRouter"
-          elif [ -f integrations/harvey-labs/.run-nemotron-sweep ]; then
+          elif [ -f benchmarks/harvey-labs/.run-nemotron-sweep ]; then
             ARMS_CSV="nemotron,nemotron-clawql"
             TASK="firm-knowledge/tasks/001"
             # First non-comment line: N  |  START-END  |  START END
@@ -171,7 +171,7 @@ jobs:
             #   START-END → tasks START..END (inclusive), e.g. 16-25
             # Empty / comment-only marker → smoke (do NOT default to 1–25).
             SWEEP_SPEC="$(
-              awk 'NF && $1 !~ /^#/ { print $0; exit }' integrations/harvey-labs/.run-nemotron-sweep || true
+              awk 'NF && $1 !~ /^#/ { print $0; exit }' benchmarks/harvey-labs/.run-nemotron-sweep || true
             )"
             if [ -z "${SWEEP_SPEC}" ]; then
               echo "::warning::.run-nemotron-sweep present but empty — falling back to smoke (task 001 only). Put N or START-END on a non-comment line to arm a sweep."
@@ -338,9 +338,9 @@ jobs:
           set -euo pipefail
           CAN=true
           REASON=""
-          if [ -f integrations/harvey-labs/.skip-lab-matrix ] && [ "${MODE}" != "dispatch" ]; then
+          if [ -f benchmarks/harvey-labs/.skip-lab-matrix ] && [ "${MODE}" != "dispatch" ]; then
             CAN=false
-            REASON="integrations/harvey-labs/.skip-lab-matrix present — matrix sweeps paused until ts-clawql-data-v2 baseline (remove file to resume; workflow_dispatch still allowed)"
+            REASON="benchmarks/harvey-labs/.skip-lab-matrix present — matrix sweeps paused until ts-clawql-data-v2 baseline (remove file to resume; workflow_dispatch still allowed)"
             echo "::warning::${REASON}"
           fi
           if [ "${NEED_AN}" = "true" ] && [ "${HAS_AN}" != "true" ]; then
@@ -448,7 +448,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Run Harvey LAB arm
-        run: bash integrations/harvey-labs/scripts/run-lab-gha.sh
+        run: bash benchmarks/harvey-labs/scripts/run-lab-gha.sh
         env:
           CLAWQL_EXTERNAL_INGEST: "1"
 
@@ -457,7 +457,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-${{ matrix.arm }}-${{ matrix.task_id }}-${{ github.run_id }}
-          path: integrations/harvey-labs/results/
+          path: benchmarks/harvey-labs/results/
           if-no-files-found: warn
           retention-days: 30
 
@@ -484,21 +484,21 @@ jobs:
           NEMO: ${{ needs.resolve-matrix.outputs.nemotron_model }}
         run: |
           set -euo pipefail
-          mkdir -p integrations/harvey-labs/results
-          python3 integrations/harvey-labs/scripts/aggregate-lab-scorecards.py \
+          mkdir -p benchmarks/harvey-labs/results
+          python3 benchmarks/harvey-labs/scripts/aggregate-lab-scorecards.py \
             --artifacts-root /tmp/lab-artifacts \
-            --out integrations/harvey-labs/results/sweep-summary.json \
+            --out benchmarks/harvey-labs/results/sweep-summary.json \
             --mode "${MODE}" \
             --task-count "${TASK_COUNT}" \
             --judge-model "${JUDGE}" \
             --nemotron-model "${NEMO}"
-          cat integrations/harvey-labs/results/sweep-summary.json
+          cat benchmarks/harvey-labs/results/sweep-summary.json
 
       - name: Upload sweep summary
         uses: actions/upload-artifact@v7
         with:
           name: harvey-lab-sweep-summary-${{ github.run_id }}
-          path: integrations/harvey-labs/results/sweep-summary.json
+          path: benchmarks/harvey-labs/results/sweep-summary.json
           if-no-files-found: warn
           retention-days: 30
 

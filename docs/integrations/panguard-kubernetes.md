@@ -1,6 +1,6 @@
 # Panguard + ClawQL on Kubernetes (Helm path)
 
-**Goal:** Run **Panguard** as the MCP chokepoint **inside the cluster**, in front of **`clawql-mcp-http`**, with **Streamable HTTP** on **`/mcp`** and eventually **native MCP gRPC** on **50051** — all **wired through Helm** (`charts/clawql-mcp` **`mcpProxy`**).
+**Goal:** Run **Panguard** as the MCP chokepoint **inside the cluster**, in front of **`clawql-mcp-http`**, with **Streamable HTTP** on **`/mcp`** and eventually **native MCP gRPC** on **50051** — all **wired through Helm** (`manifests/charts/clawql-mcp` **`mcpProxy`**).
 
 ## What exists upstream today
 
@@ -19,7 +19,7 @@ It does **not**, by itself, terminate **HTTP** or **gRPC** MCP the way **`clawql
 
 **Production-shaped example:** pin **`ghcr.io/danielsmithdevelopment/clawql-panguard-mcp-bridge`** (built from **`docker/panguard-mcp-bridge/Dockerfile`**, signed in **[`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml)**). The chart ships a ready-made overlay:
 
-**[`charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml`](../../charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml)** — copy or **`helm upgrade -f`** it; tune **`CLAWQL_BRIDGE_UPSTREAM_URL`**, **`ENABLE_GRPC`**, and tags **`sha-*`** / **`nightly`** per **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)**.
+**[`manifests/charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml`](../../manifests/charts/clawql-mcp/values-mcp-proxy-panguard-bridge.example.yaml)** — copy or **`helm upgrade -f`** it; tune **`CLAWQL_BRIDGE_UPSTREAM_URL`**, **`ENABLE_GRPC`**, and tags **`sha-*`** / **`nightly`** per **[`docs/security/golden-image-pipeline.md`](../security/golden-image-pipeline.md)**.
 
 Minimal inline snippet (same semantics):
 

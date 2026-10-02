@@ -1,4 +1,4 @@
-# Append CI security-scan-run-record artifacts into website/public/security-scan-history.json.
+# Append CI security-scan-run-record artifacts into apps/docs/public/security-scan-history.json.
 # Scheduled separately from the scan job so a compromised scan step cannot suppress its own record.
 # See docs/design/security-status-page-spec.md
 name: Security status publish
@@ -35,12 +35,12 @@ jobs:
 
       - name: Commit and push if history changed
         run: |
-          if git diff --quiet website/public/security-scan-history.json; then
+          if git diff --quiet apps/docs/public/security-scan-history.json; then
             echo "No scan history changes"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add website/public/security-scan-history.json
+          git add apps/docs/public/security-scan-history.json
           git commit -m "chore(security): update published scan history"
           git push

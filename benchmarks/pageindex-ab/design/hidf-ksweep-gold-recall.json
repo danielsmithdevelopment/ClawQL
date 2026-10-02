@@ -1,0 +1,23 @@
+{
+  "arm": "H-idf",
+  "population": "hard-candidate keys with gold_sections, non-code",
+  "n": 238,
+  "recall_at_k": {
+    "3": {
+      "n": 238,
+      "hit": 103,
+      "rate": 0.4327731092436975
+    },
+    "6": {
+      "n": 238,
+      "hit": 125,
+      "rate": 0.5252100840336135
+    },
+    "10": {
+      "n": 238,
+      "hit": 147,
+      "rate": 0.6176470588235294
+    }
+  },
+  "note": "Offline gold-in-top-k on vault IDF sections (Track C precursor)."
+}

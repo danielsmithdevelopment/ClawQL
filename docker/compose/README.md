@@ -1,6 +1,6 @@
 # Docker Compose vertical stacks ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251))
 
-Opinionated **local / POC** stacks for IDP verticals. These complement — but do not replace — **`make local-k8s-up`** (full Helm + Istio) or **`charts/clawql-idp`**.
+Opinionated **local / POC** stacks for IDP verticals. These complement — but do not replace — **`make local-k8s-up`** (full Helm + Istio) or **`manifests/charts/clawql-idp`**.
 
 **Disclaimer:** All vertical stacks use **synthetic or demo data** only. They are **not** legal, medical, tax, education, or underwriting advice. Train and promote tenant-specific models before production.
 
@@ -19,10 +19,10 @@ Default ports are **offset per vertical** so you can run more than one stack loc
 
 | File                                                               | Vertical                                                                                                                                                                          | Default MCP port | Sample pack                                                              |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------ |
-| [`lending.compose.yml`](lending.compose.yml)                       | **Lending / mortgage W-2**                                                                                                                                                        | 8080             | [`lending-w2`](../../deployment/samples/lending-w2/)                     |
-| [`healthcare.compose.yml`](healthcare.compose.yml)                 | **Healthcare / clinical referral**                                                                                                                                                | 8180             | [`healthcare-referral`](../../deployment/samples/healthcare-referral/)   |
-| [`legal.compose.yml`](legal.compose.yml)                           | **Legal / contract review**                                                                                                                                                       | 8280             | [`legal-contract`](../../deployment/samples/legal-contract/)             |
-| [`education.compose.yml`](education.compose.yml)                   | **Education / transcript verification**                                                                                                                                           | 8380             | [`education-transcript`](../../deployment/samples/education-transcript/) |
+| [`lending.compose.yml`](lending.compose.yml)                       | **Lending / mortgage W-2**                                                                                                                                                        | 8080             | [`lending-w2`](../../docs/examples/idp/lending-w2/)                     |
+| [`healthcare.compose.yml`](healthcare.compose.yml)                 | **Healthcare / clinical referral**                                                                                                                                                | 8180             | [`healthcare-referral`](../../docs/examples/idp/healthcare-referral/)   |
+| [`legal.compose.yml`](legal.compose.yml)                           | **Legal / contract review**                                                                                                                                                       | 8280             | [`legal-contract`](../../docs/examples/idp/legal-contract/)             |
+| [`education.compose.yml`](education.compose.yml)                   | **Education / transcript verification**                                                                                                                                           | 8380             | [`education-transcript`](../../docs/examples/idp/education-transcript/) |
 | [`docling-classifier.compose.yml`](docling-classifier.compose.yml) | **Docling + classifier + LangExtract** ([#248](https://github.com/danielsmithdevelopment/ClawQL/issues/248), [#246](https://github.com/danielsmithdevelopment/ClawQL/issues/246)) | —                | —                                                                        |
 
 Each vertical stack runs: ClawQL MCP (incl. **`inspect_pdf`** / **`convert_document`**), Docling, reference classifier, LangExtract (demo), Label Studio CE.
@@ -85,7 +85,7 @@ HITL webhook path on each MCP host: **`/hitl/label-studio/webhook`**.
 2. Create a project → paste the vertical’s `label-studio-config.xml` as the labeling setup.
 3. **Account & Settings → Access Token** → copy into **`CLAWQL_LABEL_STUDIO_API_TOKEN`** in the vertical `.env`, then recreate the MCP service.
 4. Add webhook URL `http://clawql-mcp:8080/hitl/label-studio/webhook` with Bearer `CLAWQL_HITL_WEBHOOK_TOKEN`.
-5. Optional pre-annotations: import / call MCP with [`sample-tasks.json`](../../deployment/samples/lending-w2/sample-tasks.json) (or the vertical’s pack) — see [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247).
+5. Optional pre-annotations: import / call MCP with [`sample-tasks.json`](../../docs/examples/idp/lending-w2/sample-tasks.json) (or the vertical’s pack) — see [#247](https://github.com/danielsmithdevelopment/ClawQL/issues/247).
 
 ### Demo flow (agent / MCP)
 
@@ -95,7 +95,7 @@ HITL webhook path on each MCP host: **`/hitl/label-studio/webhook`**.
 
 ### Real estate demo (reuse lending stack)
 
-Same Compose services support title commitment and PSA fixtures — see [`deployment/samples/real-estate/README.md`](../../deployment/samples/real-estate/README.md).
+Same Compose services support title commitment and PSA fixtures — see [`docs/examples/idp/real-estate/README.md`](../../docs/examples/idp/real-estate/README.md).
 
 ## Validate Compose (CI / local)
 

@@ -51,7 +51,7 @@
 
 If you deploy ClawQL on **Kubernetes**, **6.1.0** is the release where Helm, Istio, and secrets management line up with the same story you tell auditors: **Vault + ESO + verified images + scheduled history scans**. npm-only users get a calm **minor** bump—pin **`@6.1`** when your images and Helm chart move.
 
-**CTA:** **`npm install clawql-mcp@6.1.0`**, read **[CHANGELOG [6.1.0]](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)** and **`RELEASE_NOTES_v6.1.0.md`**, then **`helm upgrade`** with your environment’s **`values`** and the new **dashboard** / **Vault** sections as needed.
+**CTA:** **`npm install clawql-mcp@6.1.0`**, read **[CHANGELOG [6.1.0]](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md)** and **`docs/release/RELEASE_NOTES_v6.1.0.md`**, then **`helm upgrade`** with your environment’s **`values`** and the new **dashboard** / **Vault** sections as needed.
 
 ---
 
@@ -122,4 +122,4 @@ _ClawQL 6.1.0 — Helm Vault + dashboard + Istio MCP routing fixes_
 **Istio lab:** MCP under **`clawql.localhost`** routed to **`clawql-mcp-http`**; **`127.0.0.1`** in **`.cursor/mcp.json.example`** for macOS **`::1`** quirks.
 
 **6/6**  
-**CHANGELOG [6.1.0]**, **`RELEASE_NOTES_v6.1.0.md`**, announcement drafts under **`docs/announcements/`**. Pin **`@6.1`** when you roll Helm + images.
+**CHANGELOG [6.1.0]**, **`docs/release/RELEASE_NOTES_v6.1.0.md`**, announcement drafts under **`docs/announcements/`**. Pin **`@6.1`** when you roll Helm + images.

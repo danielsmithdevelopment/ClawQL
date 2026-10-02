@@ -66,7 +66,7 @@ Disable with `CLAWQL_LAB_GROUNDING_WONDER=0` if needed for ablation.
 Credibility for LAB claims rests on **independent verification**, not private
 notebooks:
 
-- Public adapter overlay: `integrations/harvey-labs/`
+- Public adapter overlay: `benchmarks/harvey-labs/`
 - Public workflow: `.github/workflows/harvey-lab-firm-knowledge.yml`
 - Public Actions run IDs (e.g. batch 1 matrix
   [31562539617](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/31562539617))

@@ -28,12 +28,12 @@ Token needs **Workers R2 Storage Write** (and Workers Scripts Edit if deploying 
 
 ## Separation of concerns
 
-| Layer                   | Tool                                                     | Owns                                                      |
-| ----------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
-| Cloud / account infra   | **Pulumi** (`infra/pulumi`)                              | Cloudflare edge bindings, EC2/K3s, EKS + Karpenter IAM    |
-| Cluster desired state   | **Argo CD** (`deployment/gitops`)                        | Helm charts, WorkflowTemplates, Karpenter NodePools       |
-| Deterministic pipelines | **Argo Workflows** + **`.cqw`** (`deployment/workflows`) | IDP DAGs, vault digest, fair queues                       |
-| Agent / MCP             | ClawQL `workflow` + `argocd` tools                       | Submit templates, observe sync (no inline Workflow specs) |
+| Layer                   | Tool                                                       | Owns                                                      |
+| ----------------------- | ---------------------------------------------------------- | --------------------------------------------------------- |
+| Cloud / account infra   | **Pulumi** (`infra/pulumi`)                                | Cloudflare edge bindings, EC2/K3s, EKS + Karpenter IAM    |
+| Cluster desired state   | **Argo CD** (`infra/gitops`)                               | Helm charts, WorkflowTemplates, Karpenter NodePools       |
+| Deterministic pipelines | **Argo Workflows** + **`.cqw`** (`infra/gitops/workflows`) | IDP DAGs, vault digest, fair queues                       |
+| Agent / MCP             | ClawQL `workflow` + `argocd` tools                         | Submit templates, observe sync (no inline Workflow specs) |
 
 Pulumi does **not** replace Argo CD. Pulumi creates the plane; Argo CD continuously reconciles apps and `.cqw` packs onto it.
 
@@ -43,20 +43,20 @@ Cloudflare edge (Pulumi profile=edge)
         ▼
 gateway Worker (MCP + vault + Stripe→D1) ──proxy──► AWS K3s/EKS ingress
                                               │
-                         Argo CD ◄── Git (charts + deployment/workflows/*.cqw)
+                         Argo CD ◄── Git (charts + infra/gitops/workflows/*.cqw)
                                               │
                          Argo Workflows executes WorkflowTemplates
 ```
 
 ## Profiles (`clawql:profile`)
 
-| Profile       | Cloud      | Provisions                                                                             |
-| ------------- | ---------- | -------------------------------------------------------------------------------------- |
-| `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, gateway Worker (`cloudflare/gateway`) |
-| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                                         |
-| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                                   |
-| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)                         |
-| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                                    |
+| Profile       | Cloud      | Provisions                                                                                   |
+| ------------- | ---------- | -------------------------------------------------------------------------------------------- |
+| `edge`        | cloudflare | R2 vault, KV semantic cache, D1 tenants, Queues, gateway Worker (`infra/cloudflare/gateway`) |
+| `team-vault`  | cloudflare | R2 only (legacy ADR 0007 path)                                                               |
+| `golden-host` | aws / gcp  | Packer AMI → EC2/GCE                                                                         |
+| `idp-k3s`     | aws        | `r7i.2xlarge` + 200GB gp3 + K3s user-data (first IDP customer)                               |
+| `eks`         | aws        | EKS + reserved node group + Karpenter IAM (Phase 3)                                          |
 
 ## Phase 1 — Cloudflare edge (Developer/Teams)
 
@@ -77,7 +77,9 @@ Stack outputs: vault bucket, KV id, D1 id, queue id, optional Worker name.
 
 ### Gateway Worker (Phase 1 product)
 
-Source: [`cloudflare/gateway`](../../cloudflare/gateway). Pulumi deploys `dist/index.js` when `clawql:deployWorkerStub=true` (name kept for config compatibility — content is the full gateway, not a stub).
+Source: [`infra/cloudflare/gateway`](../../infra/cloudflare/gateway). Pulumi deploys `dist/index.js` when `clawql:deployWorkerStub=true` (name kept for config compatibility — content is the full gateway, not a stub).
+
+**8.0.0 lag:** this Worker is **not** current with ClawQL 8.0 (empty catalog, `ProviderPlugin`, skills-unified search). It must be updated before it is treated as product MCP. See [`infra/cloudflare/README.md`](../../infra/cloudflare/README.md).
 
 | Surface | Notes                                                                                                          |
 | ------- | -------------------------------------------------------------------------------------------------------------- |
@@ -96,7 +98,7 @@ Secrets after deploy: `wrangler secret put CLAWQL_BOOTSTRAP_TOKEN`, `STRIPE_WEBH
 **Fabric ladder** (edge → IDP proxy → Dedicated VG → Helm managedGateway): [gateway-fabric.md](./gateway-fabric.md).
 
 ```bash
-cd cloudflare/gateway && npm install --legacy-peer-deps && npm test && npm run build
+cd infra/cloudflare/gateway && npm install --legacy-peer-deps && npm test && npm run build
 # then pulumi up with deployWorkerStub=true (CI deploy-edge.sh builds first)
 ```
 
@@ -122,8 +124,8 @@ After instance is Ready:
 
 1. `scp` / SSM → copy `/etc/rancher/k3s/k3s.yaml` (rewrite server IP to public IP).
 2. Install Argo CD (upstream Helm) into `argocd`.
-3. `kubectl apply -f deployment/gitops/projects/clawql.yaml -n argocd`
-4. `kubectl apply -f deployment/gitops/applications/root.yaml -n argocd`
+3. `kubectl apply -f infra/gitops/projects/clawql.yaml -n argocd`
+4. `kubectl apply -f infra/gitops/applications/root.yaml -n argocd`
 5. Sync **clawql-idp-dev** + **clawql-workflows**.
 6. Enable MCP: `CLAWQL_ENABLE_WORKFLOW=1`, `CLAWQL_ENABLE_ARGO_CD=1`.
 7. Point the edge Worker at the ingress (edge stack):
@@ -152,12 +154,12 @@ Then:
 
 1. `aws eks update-kubeconfig --name <clusterName>`
 2. Install Karpenter Helm (controller SA `karpenter` in ns `karpenter`) using `karpenterControllerRoleArn` output.
-3. Patch `deployment/gitops/karpenter/nodepools.yaml` placeholders → commit → Argo syncs **clawql-karpenter-config**.
+3. Patch `infra/gitops/karpenter/nodepools.yaml` placeholders → commit → Argo syncs **clawql-karpenter-config**.
 4. Label/tag subnets + cluster SGs with `karpenter.sh/discovery=<clusterName>`.
 
 ## `.cqw` → Argo Workflows
 
-- Author / review WorkflowTemplates as **`.cqw`** under [`deployment/workflows/`](../../deployment/workflows/).
+- Author / review WorkflowTemplates as **`.cqw`** under [`infra/gitops/workflows/`](../../infra/gitops/workflows/).
 - Argo CD Application **clawql-workflows** syncs them into namespace `argo`.
 - Agents call MCP `workflow` with `template_ref` only — never inline specs.
 - Per-tenant fair concurrency: semaphore ConfigMap keys (see `idp-document-pipeline.cqw`).

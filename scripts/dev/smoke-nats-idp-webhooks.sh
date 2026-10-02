@@ -22,10 +22,10 @@ CORR="nats-idp-smoke-$(date -u +%Y%m%d%H%M%S)"
 echo "== Helm template: NATS IDP document consumers =="
 TMP="$(mktemp)"
 trap 'rm -f "${TMP}"' EXIT
-helm template smoke-nats charts/clawql-mcp --namespace clawql \
+helm template smoke-nats manifests/charts/clawql-mcp --namespace clawql \
   --set envFromSecret=clawql-lint-provider-env \
   --set kyverno.imageSignaturePolicy.enabled=false \
-  -f charts/clawql-mcp/values-nats-idp.example.yaml \
+  -f manifests/charts/clawql-mcp/values-nats-idp.example.yaml \
   --set nats.keda.enabled=true \
   --set enableWorkflow=true >"${TMP}"
 

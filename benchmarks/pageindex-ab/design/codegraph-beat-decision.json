@@ -1,0 +1,246 @@
+{
+  "tag": "pageindex-ab-codegraph-beat-v1",
+  "lock_status": "locked_before_spend",
+  "answers_path": "benchmarks/pageindex-ab/results/agent-loop-freeze-retest/paired/answers.jsonl",
+  "prove": {
+    "n": 12,
+    "grep_ok": 12,
+    "treatment_ok": 12,
+    "W": 0,
+    "L": 0,
+    "net": 0,
+    "used_codegraph": 12
+  },
+  "no_harm": {
+    "n": 6,
+    "treatment_ok": 6,
+    "pass": true,
+    "used_codegraph": 5
+  },
+  "memory_baseline": {
+    "does_not_change_beat": true,
+    "prove": {
+      "n": 0,
+      "ok": 0,
+      "rate": null
+    },
+    "no_harm": {
+      "n": 0,
+      "ok": 0,
+      "rate": null
+    },
+    "note": "Keys answered from training memory alone tend to go right in both beat arms and shrink room for Net\u22655. Publish alongside the locked decision; do not keep on memory alone."
+  },
+  "outcome": "tie_purge",
+  "freeze": "purge_codegraph_from_bundle",
+  "decision_rule": {
+    "metric": "answer_only_strict",
+    "unit": "question",
+    "contrast": "A-codegraph (grep+codegraph) vs A-grep",
+    "definitions": {
+      "W": "#prove keys treatment (grep+CodeGraph) correct and grep-only wrong",
+      "L": "#prove keys grep-only correct and treatment wrong",
+      "Net": "W - L"
+    },
+    "codegraph_beats": {
+      "net_ge": 5,
+      "and": [
+        "no_harm_pass"
+      ],
+      "note": "Net is the extra value of bundling CodeGraph on top of grep"
+    },
+    "tie": {
+      "net_in": [
+        -4,
+        4
+      ],
+      "meaning": "purge \u2014 codegraph_* leaves the 8.0.0 bundle"
+    },
+    "grep_beats": {
+      "net_le": -5,
+      "meaning": "purge"
+    },
+    "no_harm_pass": {
+      "required_for_win": true,
+      "rule": "On the 6 grep-solvable no-harm keys, A-codegraph (grep+CodeGraph) answer-correct count >= 5 (allow one flake). Failure => treat as tie => purge.",
+      "interpretation": "Checks that CodeGraph's extra tools do not distract the agent on easy questions \u2014 not whether CodeGraph can do grep's job.",
+      "also_report": [
+        "A-grep no-harm rate (expected ~6/6)",
+        "A-no-tools prove + no-harm rates (memory baseline; does not rescue CodeGraph)",
+        "A-codegraph-only rates if diagnostic arm was run (does not change beat)"
+      ]
+    },
+    "usage_evidence": {
+      "required": true,
+      "arm": "A-codegraph",
+      "record_per_question": [
+        "codegraph_tool_calls (count)",
+        "codegraph_tools_used (names)",
+        "used_codegraph (bool)"
+      ],
+      "report": [
+        "fraction of prove keys where used_codegraph=true",
+        "fraction of no-harm keys where used_codegraph=true"
+      ],
+      "does_not_alone_decide_beat": true,
+      "note": "If treatment wins Net but almost never calls codegraph_*, treat as weak evidence for bundling \u2014 publish and prefer purge/tie judgment in freeze writeup."
+    },
+    "no_tools_reporting": {
+      "required": true,
+      "does_not_change_beat": true,
+      "note": "If A-no-tools already clears many prove keys, the Net vs grep overstates tool value \u2014 publish the rates; do not keep on memory alone."
+    },
+    "diagnostic_codegraph_only": {
+      "arm": "A-codegraph-only",
+      "does_not_change_beat": true,
+      "note": "Answers 'can CodeGraph replace grep?' \u2014 skews both ways vs real deployments; never use for keep/purge."
+    }
+  },
+  "paired": [
+    {
+      "id": "cg-prove-01",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-02",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-03",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-04",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-05",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-06",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-07",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-08",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-09",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-10",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-11",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-prove-12",
+      "cohort": "prove",
+      "grep_ok": true,
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-harm-01",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-harm-02",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-harm-03",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-harm-04",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    },
+    {
+      "id": "cg-harm-05",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": false
+    },
+    {
+      "id": "cg-harm-06",
+      "cohort": "no_harm",
+      "treatment_ok": true,
+      "no_tools_ok": null,
+      "used_codegraph": true
+    }
+  ],
+  "retest": {
+    "void_prior": "TRACK_B_VOID_RETEST.md",
+    "run": "https://github.com/danielsmithdevelopment/ClawQL/actions/runs/36823799781",
+    "grep_no_harm_gate": "6/6",
+    "paired": "18 keys \u00d7 A-grep + A-codegraph",
+    "instrument": "working A-grep (tool_trace shows real rg hits)"
+  }
+}

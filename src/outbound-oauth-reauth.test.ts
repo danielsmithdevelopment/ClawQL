@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   createHostOutboundOAuthTokenStore,
   createTelegramOnReauthRequired,
-} from "./outbound-oauth-reauth.js";
+} from "./http/outbound-oauth-reauth.js";
 import { createMemoryOAuthPersistence, ReauthRequiredError } from "clawql-auth";
 
 describe("createTelegramOnReauthRequired", () => {

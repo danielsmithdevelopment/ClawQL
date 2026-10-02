@@ -2,7 +2,7 @@
 
 The optional **`notify`** tool sends messages to Slack using **`chat.postMessage`**. It exists so agents and workflows can emit **high-signal completion signals** (batch done, deploy finished, policy check failed) without hand-authoring **`execute("chat_postMessage", …)`** every time.
 
-**Tracking:** [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77) · Implementation: [`packages/clawql-automation/src/notify/notify.ts`](../../packages/clawql-automation/src/notify/notify.ts) (`runNotifySlack`); MCP wrapper in [`src/tools.ts`](../../src/tools.ts) · Full MCP matrix: **[mcp-tools.md](mcp-tools.md)**.
+**Tracking:** [#77](https://github.com/danielsmithdevelopment/ClawQL/issues/77) · Implementation: [`packages/clawql-automation/src/notify/notify.ts`](../../packages/clawql-automation/src/notify/notify.ts) (`runNotifySlack`); MCP wrapper in [`src/mcp/tools.ts`](../../src/mcp/tools.ts) · Full MCP matrix: **[mcp-tools.md](mcp-tools.md)**.
 
 ---
 
@@ -189,7 +189,7 @@ If you use a **minimal spec** without Slack, either add **`CLAWQL_PROVIDER=slack
 
 ## Kubernetes (Helm)
 
-The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[`docs/deployment/helm.md`](../deployment/helm.md)** and **`charts/clawql-mcp/values.yaml`**.
+The chart exposes **`enableNotify`** → **`CLAWQL_ENABLE_NOTIFY=1`**. Set the token via **`extraEnv`** or **`envFromSecret`** (do not commit tokens to git). See **[`docs/deployment/helm.md`](../deployment/helm.md)** and **`manifests/charts/clawql-mcp/values.yaml`**.
 
 ---
 

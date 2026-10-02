@@ -1,0 +1,1531 @@
+{
+  "modelTag": "decide",
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "backend": "gliner2",
+  "scoredAt": "2026-09-25T23:02:42.765Z",
+  "evalSuite": "v0.6-routing-fresh",
+  "eval": [
+    {
+      "caseId": "route-v06-001",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.9221
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.1129
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1093
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.9221,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-002",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.8487
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.2923
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0453
+        }
+      ],
+      "topCandidateId": "mcp.execute",
+      "topConfidence": 0.8487,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-003",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.9189
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.3116
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0604
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.9189,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-004",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.9423
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0255
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0244
+        }
+      ],
+      "topCandidateId": "mcp.memory_ingest",
+      "topConfidence": 0.9423,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-005",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.7589
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.3953
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0983
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.7589,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-006",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.8868
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0854
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.0177
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.8868,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-007",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.9864
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0244
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.0138
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.9864,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-008",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.898
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.1463
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.1385
+        }
+      ],
+      "topCandidateId": "mcp.skills_list",
+      "topConfidence": 0.898,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-009",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.9038
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.8198
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.0416
+        }
+      ],
+      "topCandidateId": "skill.clawql-schedule-workflows",
+      "topConfidence": 0.9038,
+      "correct": false
+    },
+    {
+      "caseId": "route-v06-010",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.9407
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1614
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0263
+        }
+      ],
+      "topCandidateId": "mcp.sandbox_exec",
+      "topConfidence": 0.9407,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-011",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.7822
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.232
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.1028
+        }
+      ],
+      "topCandidateId": "mcp.notify",
+      "topConfidence": 0.7822,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-012",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.schedule",
+      "scores": [
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.5521
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.4345
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.1893
+        }
+      ],
+      "topCandidateId": "mcp.schedule",
+      "topConfidence": 0.5521,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-013",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.9893
+        },
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.017
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.0067
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.9893,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-014",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.9892
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.0283
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0047
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.9892,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-015",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "scores": [
+        {
+          "candidateId": "skill.deep-thinking",
+          "confidence": 0.7235
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.6385
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1019
+        }
+      ],
+      "topCandidateId": "skill.deep-thinking",
+      "topConfidence": 0.7235,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-016",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.9759
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0545
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.0486
+        }
+      ],
+      "topCandidateId": "mcp.pageindex_build_tree",
+      "topConfidence": 0.9759,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-017",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "scores": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.8316
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.3069
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.1497
+        }
+      ],
+      "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "topConfidence": 0.8316,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-018",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "scores": [
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.9592
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0442
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.02
+        }
+      ],
+      "topCandidateId": "tool.bash_workspace_hunt",
+      "topConfidence": 0.9592,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-019",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "scores": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.9754
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.0226
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0153
+        }
+      ],
+      "topCandidateId": "tool.generic_web_search",
+      "topConfidence": 0.9754,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-020",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.8336
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2275
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.0956
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_a",
+      "topConfidence": 0.8336,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-021",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.9495
+        },
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.0252
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.0121
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_b",
+      "topConfidence": 0.9495,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-022",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.9619
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.2086
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0289
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.9619,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-023",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.937
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.0864
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.0705
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_overbroad",
+      "topConfidence": 0.937,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-024",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "confidence": 0.9064
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.1591
+        },
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.1353
+        }
+      ],
+      "topCandidateId": "skill.clawql-audit-workflows",
+      "topConfidence": 0.9064,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-025",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.885
+        },
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.38
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.0509
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.885,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-026",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.8019
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.5839
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.0378
+        }
+      ],
+      "topCandidateId": "skill.clawql-composed-mcp-workflows",
+      "topConfidence": 0.8019,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-027",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.7659
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.3651
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.3647
+        }
+      ],
+      "topCandidateId": "skill.clawql-execute-workflows",
+      "topConfidence": 0.7659,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-028",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "confidence": 0.712
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.4405
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.0943
+        }
+      ],
+      "topCandidateId": "skill.clawql-external-ingest",
+      "topConfidence": 0.712,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-029",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.8576
+        },
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.4722
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.4211
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-ingest",
+      "topConfidence": 0.8576,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-030",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.8407
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.233
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.2035
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-recall",
+      "topConfidence": 0.8407,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-031",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.7463
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.5082
+        },
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.1463
+        }
+      ],
+      "topCandidateId": "skill.clawql-notify-workflows",
+      "topConfidence": 0.7463,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-032",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.6027
+        },
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "confidence": 0.5178
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.2438
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.6027,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-033",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.deep-thinking",
+          "confidence": 0.9216
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.4278
+        },
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.4085
+        }
+      ],
+      "topCandidateId": "skill.deep-thinking",
+      "topConfidence": 0.9216,
+      "correct": false
+    },
+    {
+      "caseId": "route-v06-034",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "confidence": 0.7991
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.5231
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.06
+        }
+      ],
+      "topCandidateId": "skill.clawql-sandbox-exec",
+      "topConfidence": 0.7991,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-035",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.8622
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.4972
+        },
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.1666
+        }
+      ],
+      "topCandidateId": "skill.clawql-schedule-workflows",
+      "topConfidence": 0.8622,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-036",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.7544
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.6328
+        },
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.0418
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.7544,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-037",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.7386
+        },
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.6908
+        },
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.5337
+        }
+      ],
+      "topCandidateId": "skill.clawql-vault-memory",
+      "topConfidence": 0.7386,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-038",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.deep-thinking",
+      "scores": [
+        {
+          "candidateId": "skill.deep-thinking",
+          "confidence": 0.9551
+        },
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.4384
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.0251
+        }
+      ],
+      "topCandidateId": "skill.deep-thinking",
+      "topConfidence": 0.9551,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-039",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.search",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.9791
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0192
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.9791,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-040",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.execute",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.9073
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.1237
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.9073,
+      "correct": false
+    },
+    {
+      "caseId": "route-v06-041",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.8833
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.1475
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall",
+      "topConfidence": 0.8833,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-042",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_ingest",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.9123
+        },
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.077
+        }
+      ],
+      "topCandidateId": "mcp.memory_ingest",
+      "topConfidence": 0.9123,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-043",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.8058
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.3456
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0382
+        }
+      ],
+      "topCandidateId": "mcp.data_query",
+      "topConfidence": 0.8058,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-044",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.cache",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.8908
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.1021
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.8908,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-045",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.audit",
+      "scores": [
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.9935
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0112
+        }
+      ],
+      "topCandidateId": "mcp.audit",
+      "topConfidence": 0.9935,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-046",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_list",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.6361
+        },
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.5879
+        }
+      ],
+      "topCandidateId": "mcp.skills_list",
+      "topConfidence": 0.6361,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-047",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.skills_get",
+      "scores": [
+        {
+          "candidateId": "mcp.skills_get",
+          "confidence": 0.9792
+        },
+        {
+          "candidateId": "mcp.skills_list",
+          "confidence": 0.0278
+        }
+      ],
+      "topCandidateId": "mcp.skills_get",
+      "topConfidence": 0.9792,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-048",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.sandbox_exec",
+      "scores": [
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.9808
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.0209
+        }
+      ],
+      "topCandidateId": "mcp.sandbox_exec",
+      "topConfidence": 0.9808,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-049",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.notify",
+      "scores": [
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.4718
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.3812
+        }
+      ],
+      "topCandidateId": "mcp.notify",
+      "topConfidence": 0.4718,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-050",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.schedule",
+      "scores": [
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.9727
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.0641
+        }
+      ],
+      "topCandidateId": "mcp.schedule",
+      "topConfidence": 0.9727,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-051",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ingest_external_knowledge",
+      "scores": [
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.8863
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.1577
+        }
+      ],
+      "topCandidateId": "mcp.ingest_external_knowledge",
+      "topConfidence": 0.8863,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-052",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.knowledge_search_onyx",
+      "scores": [
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.9528
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.2199
+        },
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.0375
+        }
+      ],
+      "topCandidateId": "mcp.knowledge_search_onyx",
+      "topConfidence": 0.9528,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-053",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.clawql_think",
+      "scores": [
+        {
+          "candidateId": "mcp.clawql_think",
+          "confidence": 0.9159
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.0835
+        }
+      ],
+      "topCandidateId": "mcp.clawql_think",
+      "topConfidence": 0.9159,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-054",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.pageindex_build_tree",
+      "scores": [
+        {
+          "candidateId": "mcp.pageindex_build_tree",
+          "confidence": 0.8425
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.3889
+        }
+      ],
+      "topCandidateId": "mcp.pageindex_build_tree",
+      "topConfidence": 0.8425,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-055",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "scores": [
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.9011
+        },
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.5974
+        }
+      ],
+      "topCandidateId": "mcp.ouroboros_run_evolutionary_loop",
+      "topConfidence": 0.9011,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-056",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.bash_workspace_hunt",
+      "scores": [
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.8886
+        },
+        {
+          "candidateId": "tool.bash_workspace_hunt",
+          "confidence": 0.2584
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0455
+        }
+      ],
+      "topCandidateId": "mcp.search",
+      "topConfidence": 0.8886,
+      "correct": false
+    },
+    {
+      "caseId": "route-v06-057",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "tool.generic_web_search",
+      "scores": [
+        {
+          "candidateId": "tool.generic_web_search",
+          "confidence": 0.9836
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.0113
+        }
+      ],
+      "topCandidateId": "tool.generic_web_search",
+      "topConfidence": 0.9836,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-058",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_a",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.5459
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.3533
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_a",
+      "topConfidence": 0.5459,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-059",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_title_flag_b",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_title_flag_b",
+          "confidence": 0.7514
+        },
+        {
+          "candidateId": "mcp.memory_recall_title_flag_a",
+          "confidence": 0.1357
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_title_flag_b",
+      "topConfidence": 0.7514,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-060",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.data_query_cohort_count",
+      "scores": [
+        {
+          "candidateId": "mcp.data_query_cohort_count",
+          "confidence": 0.5265
+        },
+        {
+          "candidateId": "mcp.data_query",
+          "confidence": 0.4862
+        }
+      ],
+      "topCandidateId": "mcp.data_query_cohort_count",
+      "topConfidence": 0.5265,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-061",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "mcp.memory_recall_overbroad",
+      "scores": [
+        {
+          "candidateId": "mcp.memory_recall_overbroad",
+          "confidence": 0.943
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.1886
+        }
+      ],
+      "topCandidateId": "mcp.memory_recall_overbroad",
+      "topConfidence": 0.943,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-062",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-audit-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-audit-workflows",
+          "confidence": 0.9662
+        },
+        {
+          "candidateId": "mcp.audit",
+          "confidence": 0.1904
+        }
+      ],
+      "topCandidateId": "skill.clawql-audit-workflows",
+      "topConfidence": 0.9662,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-063",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-cache-workflows",
+      "scores": [
+        {
+          "candidateId": "mcp.cache",
+          "confidence": 0.6798
+        },
+        {
+          "candidateId": "skill.clawql-cache-workflows",
+          "confidence": 0.4391
+        }
+      ],
+      "topCandidateId": "mcp.cache",
+      "topConfidence": 0.6798,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-064",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-composed-mcp-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-composed-mcp-workflows",
+          "confidence": 0.878
+        },
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.3821
+        }
+      ],
+      "topCandidateId": "skill.clawql-composed-mcp-workflows",
+      "topConfidence": 0.878,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-065",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-execute-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-execute-workflows",
+          "confidence": 0.9109
+        },
+        {
+          "candidateId": "mcp.execute",
+          "confidence": 0.12
+        }
+      ],
+      "topCandidateId": "skill.clawql-execute-workflows",
+      "topConfidence": 0.9109,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-066",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-external-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-external-ingest",
+          "confidence": 0.7988
+        },
+        {
+          "candidateId": "mcp.ingest_external_knowledge",
+          "confidence": 0.1777
+        }
+      ],
+      "topCandidateId": "skill.clawql-external-ingest",
+      "topConfidence": 0.7988,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-067",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-ingest",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-ingest",
+          "confidence": 0.8799
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.1817
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-ingest",
+      "topConfidence": 0.8799,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-068",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-memory-recall",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.9739
+        },
+        {
+          "candidateId": "mcp.memory_recall",
+          "confidence": 0.025
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-recall",
+      "topConfidence": 0.9739,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-069",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-notify-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.925
+        },
+        {
+          "candidateId": "mcp.notify",
+          "confidence": 0.1089
+        }
+      ],
+      "topCandidateId": "skill.clawql-notify-workflows",
+      "topConfidence": 0.925,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-070",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-onyx-knowledge-workflows",
+          "confidence": 0.6523
+        },
+        {
+          "candidateId": "mcp.knowledge_search_onyx",
+          "confidence": 0.4361
+        }
+      ],
+      "topCandidateId": "skill.clawql-onyx-knowledge-workflows",
+      "topConfidence": 0.6523,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-071",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-ouroboros-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-ouroboros-workflows",
+          "confidence": 0.8997
+        },
+        {
+          "candidateId": "mcp.ouroboros_run_evolutionary_loop",
+          "confidence": 0.2401
+        }
+      ],
+      "topCandidateId": "skill.clawql-ouroboros-workflows",
+      "topConfidence": 0.8997,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-072",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-sandbox-exec",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-sandbox-exec",
+          "confidence": 0.7132
+        },
+        {
+          "candidateId": "mcp.sandbox_exec",
+          "confidence": 0.2737
+        }
+      ],
+      "topCandidateId": "skill.clawql-sandbox-exec",
+      "topConfidence": 0.7132,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-073",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-schedule-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-schedule-workflows",
+          "confidence": 0.7616
+        },
+        {
+          "candidateId": "mcp.schedule",
+          "confidence": 0.6669
+        },
+        {
+          "candidateId": "skill.clawql-notify-workflows",
+          "confidence": 0.1966
+        }
+      ],
+      "topCandidateId": "skill.clawql-schedule-workflows",
+      "topConfidence": 0.7616,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-074",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-search-workflows",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-search-workflows",
+          "confidence": 0.8564
+        },
+        {
+          "candidateId": "mcp.search",
+          "confidence": 0.4269
+        }
+      ],
+      "topCandidateId": "skill.clawql-search-workflows",
+      "topConfidence": 0.8564,
+      "correct": true
+    },
+    {
+      "caseId": "route-v06-075",
+      "useSiteId": "search_provider_tool_routing",
+      "groundTruthCandidateId": "skill.clawql-vault-memory",
+      "scores": [
+        {
+          "candidateId": "skill.clawql-memory-recall",
+          "confidence": 0.766
+        },
+        {
+          "candidateId": "skill.clawql-vault-memory",
+          "confidence": 0.672
+        },
+        {
+          "candidateId": "mcp.memory_ingest",
+          "confidence": 0.313
+        }
+      ],
+      "topCandidateId": "skill.clawql-memory-recall",
+      "topConfidence": 0.766,
+      "correct": false
+    }
+  ]
+}

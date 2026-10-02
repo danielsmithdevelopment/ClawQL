@@ -1,5 +1,9 @@
 import { WORMAuditTrailService } from "clawql-audit";
 import { Effect, Layer, Ref } from "effect";
+import {
+  heartbeatAgentInstanceOnHealth,
+  registerAgentInstanceOnStart,
+} from "../../registry/adapter-hooks.js";
 import { enforceToolCall } from "../../shared/panguard.js";
 import { createAgentSession } from "../../shared/session.js";
 import type { AgentHealth, AgentSession, ATRScope, ClawQLAgentConfig } from "../../shared/types.js";
@@ -44,6 +48,10 @@ export const makeOpenClawAdapterLayer = () =>
             }
             const session = yield* createAgentSession("openclaw");
             yield* Ref.update(stateRef, (s) => ({ ...s, session, atrScope }));
+            yield* registerAgentInstanceOnStart(state.config, {
+              agentId: state.config.agentInstanceId ?? session.sessionId,
+              agentName: "openclaw",
+            });
             const worm = yield* WORMAuditTrailService;
             yield* worm.append({
               type: "SESSION_START",
@@ -83,6 +91,10 @@ export const makeOpenClawAdapterLayer = () =>
             }
             const worm = yield* WORMAuditTrailService;
             const verified = yield* worm.verify();
+            yield* heartbeatAgentInstanceOnHealth(state.config, {
+              agentId: state.config.agentInstanceId ?? state.session?.sessionId,
+              agentName: "openclaw",
+            });
             return {
               status: verified.valid ? "healthy" : "degraded",
               details: verified.valid

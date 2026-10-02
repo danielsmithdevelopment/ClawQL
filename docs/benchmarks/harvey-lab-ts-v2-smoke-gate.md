@@ -31,10 +31,10 @@ Only then run contiguous 001–025.
 
 ```bash
 # 0. Preflight (build + script paths; warns if inference down)
-bash integrations/harvey-labs/scripts/preflight-ts-v2-smoke.sh
+bash benchmarks/harvey-labs/scripts/preflight-ts-v2-smoke.sh
 
 # 1. Quarantine pre-v2 call-store — before collecting anything new
-bash integrations/harvey-labs/scripts/quarantine-legacy-call-store.sh
+bash benchmarks/harvey-labs/scripts/quarantine-legacy-call-store.sh
 
 # 2. Build clawql-data into dist (required — clawql-data is not on npm)
 npm run build
@@ -47,7 +47,7 @@ npm run build
 #    Ollama judge
 #    Podman or CLAWQL_LAB_PODMAN_VIA_DOCKER=1 shim
 #    harvey-labs clone with firm-knowledge DMS
-#    Optional: bash integrations/harvey-labs/scripts/start-clawql-inference-for-lab.sh 8091 <run_id>
+#    Optional: bash benchmarks/harvey-labs/scripts/start-clawql-inference-for-lab.sh 8091 <run_id>
 
 # 4. ClawQL MCP from built dist (npx blocked when CLAWQL_ENABLE_DATA=1)
 #    run-lab-local.sh calls start-clawql-for-lab.sh; or start manually:
@@ -59,15 +59,15 @@ export CLAWQL_LAB_SKIP_CLONE=1            # if clone already present
 export CLAWQL_LAB_PODMAN_VIA_DOCKER=1     # Mac docker shim if needed
 LAB_TASK=firm-knowledge/tasks/001 \
 LAB_ARMS=nemotron-clawql \
-bash integrations/harvey-labs/scripts/run-lab-local.sh
+bash benchmarks/harvey-labs/scripts/run-lab-local.sh
 
 # 6. Inspect gate
 #    - agent/run log: Node DuckDB fingerprint
 #    - $CLAWQL_HOME/HarveyLAB/call-store/*.jsonl: clawql_sql (and other clawql_*) rows
 
 # 7. Only if green: contiguous
-bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
-# → integrations/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json
+bash benchmarks/harvey-labs/scripts/run-contiguous-001-025.sh
+# → benchmarks/harvey-labs/results/ts-v2/aggregate-contiguous-001-025.json
 ```
 
 ## Likely smoke failures
@@ -82,7 +82,7 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 ## After contiguous is green
 
 1. Commit/push `results/ts-v2/aggregate-contiguous-001-025.json` with `"stack_version": "ts-clawql-data-v2"`.
-2. Remove `integrations/harvey-labs/.skip-lab-matrix` when ready to resume GHA matrix.
+2. Remove `benchmarks/harvey-labs/.skip-lab-matrix` when ready to resume GHA matrix.
 3. Re-open: Harvey outreach, training on **new** call-store only, PV posts citing LAB numbers, 026–050 held-out — all on v2 artifacts only.
 4. Publishable external claims still need judge `claude-sonnet-4-6` (or dual); Ollama judge is internal baseline only.
 
@@ -90,5 +90,5 @@ bash integrations/harvey-labs/scripts/run-contiguous-001-025.sh
 
 - [`harvey-lab-stack-lineage.md`](harvey-lab-stack-lineage.md)
 - [`harvey-lab-rules-compliance.md`](harvey-lab-rules-compliance.md)
-- [`integrations/harvey-labs/HARVEY.md`](../../integrations/harvey-labs/HARVEY.md)
+- [`benchmarks/harvey-labs/HARVEY.md`](../../benchmarks/harvey-labs/HARVEY.md)
 - [`../homelab/personal-agent-hermes-cline.md`](../homelab/personal-agent-hermes-cline.md) — personal Hermes/Ornith + Cline/Ornith stack (default `:8082` / `:8091`; optional Nemotron `:8081`; Cline ACP `:8095`)

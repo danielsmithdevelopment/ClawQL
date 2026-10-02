@@ -1,0 +1,48 @@
+# ClawQL documentation
+
+> ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI — OpenAPI/MCP search and execute, optional vault memory, Zero-Trust Agentic Fabric (Regional Hubs, Dedicated Virtual Gateways, Edge swarm), and defense-in-depth controls.
+
+This file helps AI agents and crawlers find canonical documentation. For full-text Markdown of any page, send `Accept: text/markdown` on that URL.
+
+## Getting started
+- [Agent setup](https://docs.clawql.com/agent-setup): Desktop onboarding, Cursor iOS Cloud Agents, local sandbox
+- [Inference setup](https://docs.clawql.com/getting-started/inference): clawql-inference five-minute start, BYOK, MCP + memory
+- [Custom sources](https://docs.clawql.com/getting-started/custom-sources): Register other MCP servers into one gateway surface
+- [Quickstart](https://docs.clawql.com/quickstart): Fastest path to a running gateway
+- [Getting started](https://docs.clawql.com/getting-started): Quickstart paths, teams, and install options
+- [Migrate to 8.0](https://docs.clawql.com/getting-started/migrate-to-8.0): Breaking changes: empty catalog, ProviderPlugin, enforcement opt-in
+- [Quickstart](https://docs.clawql.com/quickstart): npx, install options, and first MCP connect
+
+## Core reference
+- [MCP tools](https://docs.clawql.com/tools): search, execute, audit, cache, and optional tools
+- [mcp-api-adapter](https://docs.clawql.com/mcp/mcp-api-adapter): Any MCP server → OpenAPI, GraphQL, /mcp, gRPC, /ws, gen-cli, /mcp-ui
+- [mcp-ui](https://docs.clawql.com/mcp/mcp-ui): HTMX Swagger UI for MCP — seventh adapter surface
+- [clawql-network](https://docs.clawql.com/specs/network/clawql-network): Headscale mesh + Tailcat ephemeral transport, selector, ATR audit
+- [clawql-agents](https://docs.clawql.com/agents/clawql-agents): Seven open-source agent adapters with Panguard and WORM hooks
+- [Zero-Trust Agentic Fabric](https://docs.clawql.com/architecture/agentic-fabric): Regional Hubs, Dedicated Virtual Gateways, Edge swarm
+- [Enterprise Ontology](https://docs.clawql.com/architecture/enterprise-ontology): Open YAML/OKF typed entities, kinetic actions, Git vs R2
+- [.cq* file extensions](https://docs.clawql.com/specs/cq-extensions): Draft specs for .cqe, .cqm, .cqk, .cqw (ADR 0010)
+- [Token efficiency](https://docs.clawql.com/architecture/token-efficiency): Twelve compounding layers for cost and reasoning quality
+- [Agentic Gateway (inference)](https://docs.clawql.com/inference/clawql-inference): OpenAI drop-in, flywheel, WORM path to Auditable Production AI
+- [ClawQL Streams](https://docs.clawql.com/streams/clawql-streams): Event-driven autonomous agents — draft spec (WORM, NATS, DO/K8s)
+- [Durable Objects runtime](https://docs.clawql.com/streams/clawql-durable-objects): Streams DO sidecars — audit, inference virtual keys, RTP/OBT
+- [Plugins](https://docs.clawql.com/plugins): Searchable registry — horizontal plugins and domain verticals
+- [Protocol](https://docs.clawql.com/reference/protocol): Uniform envelope and approval flows
+- [Spec configuration](https://docs.clawql.com/spec-configuration): OpenAPI and provider sources
+
+## Deployment & security
+- [Deployment](https://docs.clawql.com/deployment): Docker, Kubernetes, and operations
+- [Security status](https://docs.clawql.com/security/status): Append-only Trivy/OSV scan history, SBOM, Cosign verify
+- [Defense in depth](https://docs.clawql.com/security/defense-in-depth): Layered MCP security model
+- [Security best practices](https://docs.clawql.com/security/best-practices): 32-module agentic AI security series
+
+## Agent discovery
+- [AGENTS.md](https://docs.clawql.com/AGENTS.md): MCP proxy and blocked-tool behavior
+- [Agent skills](https://docs.clawql.com/.well-known/agent-skills/index.json): RFC agent skills index
+- [API catalog](https://docs.clawql.com/.well-known/api-catalog): RFC 9727 linkset
+- [MCP server card](https://docs.clawql.com/.well-known/mcp/server-card.json): MCP server metadata
+
+## Optional
+
+- [GitHub repository](https://github.com/danielsmithdevelopment/ClawQL): source code and issues
+- [Sitemap](https://docs.clawql.com/sitemap.xml): all indexed documentation URLs

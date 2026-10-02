@@ -8,7 +8,7 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { CLAWQL_NONNEGOTIABLE_MCP_TOOL_NAMES } from "../../src/mcp-nonnegotiable-tools.js";
+import { CLAWQL_NONNEGOTIABLE_MCP_TOOL_NAMES } from "../../src/mcp/mcp-nonnegotiable-tools.js";
 
 const url = (process.argv[2] || process.env.CLAWQL_MCP_HTTP_URL || "http://127.0.0.1/mcp").trim();
 

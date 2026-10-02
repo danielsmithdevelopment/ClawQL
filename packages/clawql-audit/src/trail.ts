@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import { HashChain, HashChainLive } from "./chain.js";
+import { HashChain, makeHashChainLayer } from "./chain.js";
 import type { ChainVerifyResult, WORMAppendInput, WORMEntry, WORMFilter } from "./entry.js";
 import { AuditError } from "./errors.js";
 import { startAuditHttpServer, type AuditHttpServerHandle } from "./http/server.js";
@@ -14,6 +14,12 @@ import { DualAckReplicator } from "./replication/dual-ack.js";
 import { startOutboxReconciler, type ReconcilerHandle } from "./replication/reconciler.js";
 import { defaultRetryConfig, type RetryConfig } from "./replication/retry.js";
 import { generateUUIDv7, sealHashChainRecord } from "./seal.js";
+import {
+  formatAtIndex,
+  makeWormSerializationLayer,
+  resolveChainMetadata,
+  type ChainMetadata,
+} from "./serialization.js";
 import type { LocalStorageBackend, StorageBackend } from "./storage/types.js";
 import type { TEESigner } from "./tee/signer.js";
 
@@ -32,6 +38,12 @@ export type WORMAuditTrailConfig = {
   reconcileIntervalMs?: number;
   /** Seal + store a Merkle root every N appends (default 100). 0 disables. */
   merkleBatchSize?: number;
+  /**
+   * Hash-dialect marker (JSON vs CBOR). Default: CBOR for the whole chain.
+   * Legacy JSON chains must pass `LEGACY_JSON_CHAIN_METADATA`. See
+   * clawql-audit-cbor-serialization-v0.1.
+   */
+  chainMetadata?: ChainMetadata;
 };
 
 export class WORMAuditTrailService extends Context.Tag("clawql-audit/WORMAuditTrail")<
@@ -73,6 +85,21 @@ function retryFromConfig(config: WORMAuditTrailConfig): RetryConfig {
 export const makeWORMAuditTrailLayer = (
   config: WORMAuditTrailConfig
 ): Layer.Layer<WORMAuditTrailService, AuditError> =>
+  Layer.unwrapEffect(
+    Effect.gen(function* () {
+      const tip = yield* config.local.latestEntry();
+      const meta = resolveChainMetadata(config.chainMetadata, tip);
+      return makeWORMAuditTrailLayerWithMeta(config, meta).pipe(
+        Layer.provide(makeHashChainLayer(meta)),
+        Layer.provide(makeWormSerializationLayer(meta))
+      );
+    })
+  );
+
+const makeWORMAuditTrailLayerWithMeta = (
+  config: WORMAuditTrailConfig,
+  meta: ChainMetadata
+): Layer.Layer<WORMAuditTrailService, AuditError, HashChain> =>
   Layer.effect(
     WORMAuditTrailService,
     Effect.gen(function* () {
@@ -128,6 +155,8 @@ export const makeWORMAuditTrailLayer = (
         append: (input) =>
           Effect.gen(function* () {
             const prev = yield* chain.latest();
+            const nextIndex = prev ? prev.chainIndex + 1 : 0;
+            const serializationVersion = formatAtIndex(meta, nextIndex);
             const id = yield* generateUUIDv7();
             const writtenAt = new Date().toISOString();
             const sealed = yield* sealHashChainRecord({
@@ -137,6 +166,7 @@ export const makeWORMAuditTrailLayer = (
                 writtenAt,
                 ...input,
               },
+              serializationVersion,
             });
             let signed: Omit<WORMEntry, "backendAcks"> = sealed;
             if (tee) {
@@ -189,7 +219,7 @@ export const makeWORMAuditTrailLayer = (
 
       return service;
     })
-  ).pipe(Layer.provide(HashChainLive));
+  );
 
 /** Effect program that constructs the trail service (loads tip + drains outbox). */
 export const createWORMAuditTrailEffect = (

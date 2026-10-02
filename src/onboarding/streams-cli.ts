@@ -26,7 +26,7 @@ function findRepoRoot(): string | null {
   let dir = dirname(fileURLToPath(import.meta.url));
   for (let i = 0; i < 12; i++) {
     if (
-      existsSync(join(dir, "examples", "streams-celld", "wrangler.jsonc")) &&
+      existsSync(join(dir, "docs", "examples", "streams-celld", "wrangler.jsonc")) &&
       existsSync(join(dir, "package.json"))
     ) {
       return dir;
@@ -45,7 +45,7 @@ function defaultProjectDir(): string {
   }
   const root = findRepoRoot();
   if (root) {
-    return join(root, "examples", "streams-celld");
+    return join(root, "docs", "examples", "streams-celld");
   }
   return process.cwd();
 }

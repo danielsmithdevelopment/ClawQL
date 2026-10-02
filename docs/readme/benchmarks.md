@@ -32,7 +32,7 @@ These are context-size comparisons, not direct per-call provider invoices.
 
 ### OpenBench harness benchmark
 
-- Pack + adapter + tasks: `openbench/`
+- Pack + adapter + tasks: `benchmarks/openbench/`
 - Narrative: `docs/benchmarks/openbench.md`
 - Offline checker validation: `npm run openbench:validate`
 

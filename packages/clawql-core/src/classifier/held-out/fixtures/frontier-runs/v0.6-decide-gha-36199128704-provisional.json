@@ -1,0 +1,58 @@
+{
+  "protocol": "Decide live-path score-once on frozen v0.6; twin-aware; confirmation suite",
+  "evalSuite": "v0.6-routing-fresh",
+  "labelsPath": null,
+  "labelCount": 0,
+  "groundTruthSource": "provisional_suite_gt",
+  "lockedKnobs": {
+    "mode": "temperature_softmax",
+    "temperature": 0.75,
+    "tau": 0.8
+  },
+  "modelId": "fastino/GLiNER2.5-Decide",
+  "backend": "gliner2",
+  "arms": [
+    {
+      "arm": "decide_forced",
+      "n": 75,
+      "nFired": 75,
+      "fireRate": 1,
+      "nCorrectFired": 70,
+      "nErrorsFired": 5,
+      "precisionAmongFired": 0.9333333333333333,
+      "cpLower95": 0.8512395208422179,
+      "forcedExactMatchAcc": 0.9333333333333333,
+      "threshold": null,
+      "rejectRule": false
+    },
+    {
+      "arm": "decide_locked_T_tau",
+      "n": 75,
+      "nFired": 39,
+      "fireRate": 0.52,
+      "nCorrectFired": 37,
+      "nErrorsFired": 2,
+      "precisionAmongFired": 0.9487179487179487,
+      "cpLower95": 0.826755218626396,
+      "forcedExactMatchAcc": 0.9333333333333333,
+      "threshold": 0.8,
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 0.75
+      },
+      "rejectRule": true
+    }
+  ],
+  "confirmation": {
+    "nFired": 39,
+    "nErrorsFired": 2,
+    "cpLower95": 0.826755218626396,
+    "citeLb": "≈83%",
+    "liveCiteReference": "DECIDE_V06_CUTOVER.md (v0.5 twin-aware ≈92% @ 45/75)"
+  },
+  "honesty": [
+    "v0.6 is optional confirmation of the live Decide path — not a retune",
+    "twins count as correct (CATALOG_TWIN_EQUIVALENCE)",
+    "quote nFired and CP LB whenever citing precision among fired"
+  ]
+}

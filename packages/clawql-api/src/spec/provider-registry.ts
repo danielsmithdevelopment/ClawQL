@@ -366,19 +366,32 @@ export const BUNDLED_MERGED_VENDOR_LABELS: readonly string[] =
 /**
  * Local document / conversion / archive / enterprise search stack. Omitted from the default **`all-providers`**
  * merge when **`CLAWQL_ENABLE_DOCUMENTS=0`**. **`CLAWQL_BUNDLED_PROVIDERS=…`** can still list these ids explicitly.
+ *
+ * **8.0 converter cut:** Docling is the sole bundled converter — **`gotenberg`**, **`stirling`**, and **`tika`**
+ * are no longer bundled by default (see `docs/releases/8.0.0-purge-inventory-spec-v0.1.md` — "Document convert"
+ * row). Their OpenAPI specs still live under `providers/` and remain selectable via explicit
+ * **`CLAWQL_BUNDLED_PROVIDERS=gotenberg,stirling,tika,…`** for operators who need those JVM/LibreOffice hops.
  */
 export const BUNDLED_DOCUMENT_VENDOR_IDS: readonly string[] = [
   "coneshare",
   "docling",
-  "gotenberg",
   "nextcloud",
   "onyx",
   "paperless",
-  "stirling",
-  "tika",
 ];
 
 const BUNDLED_DOCUMENT_VENDOR_SET = new Set(BUNDLED_DOCUMENT_VENDOR_IDS);
+
+/**
+ * Converter stacks that keep OpenAPI specs bundled (and remain selectable via
+ * **`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling`**) but are **not** part of the default/recommended
+ * surface — Docling is the sole default converter as of 8.0. Omitted from `all-providers` unconditionally
+ * (not gated by **`CLAWQL_ENABLE_DOCUMENTS`**, since they are opt-in regardless of the document stack toggle).
+ * See `docs/releases/8.0.0-purge-inventory-spec-v0.1.md` — "Document convert" row.
+ */
+export const OPT_IN_DOCUMENT_CONVERTER_IDS: readonly string[] = ["gotenberg", "stirling", "tika"];
+
+const OPT_IN_DOCUMENT_CONVERTER_SET = new Set(OPT_IN_DOCUMENT_CONVERTER_IDS);
 
 /**
  * Opinionated curated pack — **`CLAWQL_PROVIDER=default`** / instance `providers.pack: "default"`.
@@ -411,6 +424,7 @@ async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   ];
   const allowDocuments = flags.enableDocuments;
   const labels = BUNDLED_MERGED_VENDOR_LABELS.filter((id) => {
+    if (OPT_IN_DOCUMENT_CONVERTER_SET.has(id)) return false;
     if (!allowDocuments && BUNDLED_DOCUMENT_VENDOR_SET.has(id)) return false;
     return true;
   });
@@ -449,8 +463,11 @@ export const BUNDLED_PROVIDER_GROUPS: Record<string, BundledProviderGroup> = {
   default: { resolve: resolveDefaultBundledProvidersItems },
   "default-providers": { resolve: resolveDefaultBundledProvidersItems },
   /**
-   * Literally every bundled vendor plus Google top-50 and AWS top-50. Only **`CLAWQL_ENABLE_DOCUMENTS=0`**
-   * trims the document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** / `providers.pack: "all-providers"`.
+   * Every bundled vendor plus Google top-50 and AWS top-50, **except** opt-in-only JVM/LibreOffice converters
+   * (**`gotenberg`** / **`stirling`** / **`tika`** — see {@link OPT_IN_DOCUMENT_CONVERTER_IDS}), which stay out
+   * even when documents are enabled. **`CLAWQL_ENABLE_DOCUMENTS=0`** additionally trims the rest of the
+   * document/IDP stack. Opt in with **`CLAWQL_PROVIDER=all-providers`** / `providers.pack: "all-providers"`.
+   * Pull a converter back explicitly with **`CLAWQL_BUNDLED_PROVIDERS=tika,gotenberg,stirling,…`**.
    */
   "all-providers": { resolve: resolveAllBundledProvidersItems },
 };

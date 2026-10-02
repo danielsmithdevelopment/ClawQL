@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-11
-- Related: [ADR 0006: Golden host images (Packer)](./0006-golden-host-images-packer.md), [`infra/pulumi/`](../../infra/pulumi/), [`packer/`](../../packer/), [ADR 0009](./0009-enterprise-ontology.md) (kinetic infra executor via Automation API)
+- Related: [ADR 0006: Golden host images (Packer)](./0006-golden-host-images-packer.md), [`infra/pulumi/`](../../infra/pulumi/), [`infra/packer/`](../../infra/packer/), [ADR 0009](./0009-enterprise-ontology.md) (kinetic infra executor via Automation API)
 - Supersedes: N/A (complements Packer — artifact vs infrastructure)
 
 ## Context
@@ -110,7 +110,7 @@ Extend `infra/pulumi` with explicit **`clawql:profile`** values for the GTM hybr
 | `idp-k3s` | AWS `r7i.2xlarge` K3s bootstrap for first IDP customer                        |
 | `eks`     | EKS control plane + reserved node group + Karpenter IAM for shared tenancy    |
 
-**Cluster desired state** (Helm charts, `.cqw` WorkflowTemplates, Karpenter NodePools) remains **Argo CD** under [`deployment/gitops/`](../../deployment/gitops/). Pulumi provisions the plane; Argo CD reconciles apps. Deterministic pipelines are authored as [`.cqw`](../specs/cq-extensions/cqw.md) and synced to Argo Workflows.
+**Cluster desired state** (Helm charts, `.cqw` WorkflowTemplates, Karpenter NodePools) remains **Argo CD** under [`infra/gitops/`](../../infra/gitops/). Pulumi provisions the plane; Argo CD reconciles apps. Deterministic pipelines are authored as [`.cqw`](../specs/cq-extensions/cqw.md) and synced to Argo Workflows.
 
 Canonical operator guide: [`docs/deployment/hosted-live-bootstrap.md`](../deployment/hosted-live-bootstrap.md).
 

@@ -108,7 +108,7 @@ Single-spec `execute` uses in-process OpenAPI→GraphQL. **`clawql-mcp-http`** s
 
 **Obsidian vault:** The image sets **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** and includes a writable **`/vault`** directory for **`memory_ingest`** / **`memory_recall`** and **[ClawQL-Agent](https://github.com/danielsmithdevelopment/ClawQL-Agent)**. **`docker-compose.yml`** bind-mounts **`${CLAWQL_VAULT_HOST_PATH:-${HOME}/.ClawQL}`** → **`/vault`** so notes persist on the host (override **`CLAWQL_VAULT_HOST_PATH`** for a different folder). See the main [README](../README.md#obsidian-vault-optional).
 
-**Sandbox (`sandbox_exec`):** Set **`CLAWQL_ENABLE_SANDBOX=1`** to register the tool. **Kubernetes (`values-docker-desktop.yaml`):** **`sandboxDocker.enabled: true`** mounts **`/var/run/docker.sock`**, installs a static **`docker`** CLI (initContainer), sets **`CLAWQL_SANDBOX_BACKEND=docker`**, and runs the MCP container as **root** for socket access (**local clusters only**). **Compose:** build target **`runtime-with-docker-cli`** mounts the host socket and sets **`CLAWQL_SANDBOX_BACKEND=docker`**. Alternatively use **`CLAWQL_SANDBOX_BRIDGE_URL`** + **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** with the [sandbox bridge](../cloudflare/sandbox-bridge/README.md) Worker.
+**Sandbox (`sandbox_exec`):** Set **`CLAWQL_ENABLE_SANDBOX=1`** to register the tool. **Kubernetes (`values-docker-desktop.yaml`):** **`sandboxDocker.enabled: true`** mounts **`/var/run/docker.sock`**, installs a static **`docker`** CLI (initContainer), sets **`CLAWQL_SANDBOX_BACKEND=docker`**, and runs the MCP container as **root** for socket access (**local clusters only**). **Compose:** build target **`runtime-with-docker-cli`** mounts the host socket and sets **`CLAWQL_SANDBOX_BACKEND=docker`**. Alternatively use **`CLAWQL_SANDBOX_BRIDGE_URL`** + **`CLAWQL_CLOUDFLARE_SANDBOX_API_TOKEN`** with the [sandbox bridge](../infra/cloudflare/sandbox-bridge/README.md) Worker.
 
 Full MCP tool list and JSON examples: **[`docs/mcp/mcp-tools.md`](../docs/mcp/mcp-tools.md)**.
 
@@ -130,7 +130,7 @@ docker run -i --rm --entrypoint node clawql-mcp dist/server.js
 | `docker/compose/`                | Vertical IDP stacks ([#251](https://github.com/danielsmithdevelopment/ClawQL/issues/251)) — start with [`compose/README.md`](compose/README.md) |
 | `docker/kubernetes-starter.yaml` | Starter K8s namespace + Deployments + Services                                                                                                  |
 
-**Helm:** a maintained chart lives at **`charts/clawql-mcp`** — see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**. Kustomize overlays remain under **`docker/kustomize/`**.
+**Helm:** a maintained chart lives at **`manifests/charts/clawql-mcp`** — see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**. Kustomize overlays remain under **`manifests/kustomize/`**.
 
 ## Docker Compose (local)
 
@@ -162,7 +162,7 @@ Endpoints:
 
 1. Enable **Kubernetes** in Docker Desktop (Settings → Kubernetes → Enable cluster).
 2. Install **[Helm 3](https://helm.sh/docs/intro/install/)** on your PATH (**required** for every `local-k8s-up` path — the script installs **Kyverno** via Helm).
-3. From the repo root, **`make local-k8s-up`** installs **Kyverno** (namespace **`kyverno`**) and applies a **ClusterPolicy** that **enforces Cosign (keyless)** signatures for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** in the **`clawql`** release namespace only. With **Istio** (default ambient), **`ingress-nginx` is omitted automatically** and **`istio-ingress`** **`deployment/clawql-mcp-ingress`** is exposed on **localhost :80 / :50051** via **`Service/clawql-mcp-ingress` `type: LoadBalancer`** on **docker-desktop** / **rancher-desktop** kube contexts (automatic — **`hostNetwork`** would bind inside the VM only). On other clusters the script defaults **`hostNetwork`** + **ClusterIP** unless you set **`CLAWQL_ISTIO_GATEWAY_HOST_NETWORK=0`**. **Gateway + VirtualServices** terminate **`localhost`**, **`clawql-mcp.localhost`**, **`clawql.localhost`**, **`onyx.localhost`**, … without per-user **`kubectl`** steps. Helm still deploys MCP + UI workloads; **`CLAWQL_LOCAL_K8S_ISTIO=0`** switches back to **ingress-nginx** + rendered **Ingress**. It runs **`helm upgrade --install`** with **`charts/clawql-mcp/values-docker-desktop.yaml`**: **`svc/clawql-mcp-http`** is **ClusterIP by default when Istio is on**, signed **`ghcr.io/.../clawql-mcp:latest`**, **`ghcr.io/.../clawql-website:latest`**, and **`ghcr.io/.../clawql-dashboard:latest`** (`pullPolicy: Always`), **`all-providers`**, and a vault backend:
+3. From the repo root, **`make local-k8s-up`** installs **Kyverno** (namespace **`kyverno`**) and applies a **ClusterPolicy** that **enforces Cosign (keyless)** signatures for **`ghcr.io/danielsmithdevelopment/clawql-mcp*`**, **`clawql-panguard-mcp-bridge*`**, **`clawql-website*`**, and **`clawql-dashboard*`** in the **`clawql`** release namespace only. With **Istio** (default ambient), **`ingress-nginx` is omitted automatically** and **`istio-ingress`** **`deployment/clawql-mcp-ingress`** is exposed on **localhost :80 / :50051** via **`Service/clawql-mcp-ingress` `type: LoadBalancer`** on **docker-desktop** / **rancher-desktop** kube contexts (automatic — **`hostNetwork`** would bind inside the VM only). On other clusters the script defaults **`hostNetwork`** + **ClusterIP** unless you set **`CLAWQL_ISTIO_GATEWAY_HOST_NETWORK=0`**. **Gateway + VirtualServices** terminate **`localhost`**, **`clawql-mcp.localhost`**, **`clawql.localhost`**, **`onyx.localhost`**, … without per-user **`kubectl`** steps. Helm still deploys MCP + UI workloads; **`CLAWQL_LOCAL_K8S_ISTIO=0`** switches back to **ingress-nginx** + rendered **Ingress**. It runs **`helm upgrade --install`** with **`manifests/charts/clawql-mcp/values-docker-desktop.yaml`**: **`svc/clawql-mcp-http`** is **ClusterIP by default when Istio is on**, signed **`ghcr.io/.../clawql-mcp:latest`**, **`ghcr.io/.../clawql-website:latest`**, and **`ghcr.io/.../clawql-dashboard:latest`** (`pullPolicy: Always`), **`all-providers`**, and a vault backend:
    - default **hostPath** at **`$HOME/.ClawQL`** (override **`CLAWQL_LOCAL_VAULT_HOST_PATH`**),
    - or in-cluster **PVC** with **`CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc make local-k8s-up`**.
      The cluster must reach **Rekor** / Sigstore for verification. **Full stack defaults** (dashboard, docs UI, document pipeline, Onyx, **`sandboxDocker`**, …) stay **enabled** in **`values-docker-desktop.yaml`**. Published images are intended to be **public** (GitHub has **no published REST `PATCH`** for container visibility — use Package settings; **§ GHCR visibility** at the top of this file). **`docker-publish.yml`** fails if anonymous reads on **`:latest`** still fail. Run **`make ghcr-packages-public`** after **`gh auth refresh -s read:packages -h github.com`** for a **GET** visibility audit. **GHCR `DENIED`** on forks: make packages **Public** or use Kyverno **`imageRegistrySecretNames`** (**`docs/security/image-signature-enforcement.md`**).
@@ -174,7 +174,7 @@ make local-k8s-up
 
 If Helm errors with **invalid ownership** (MCP was previously installed with **`kubectl apply`** / Kustomize), remove the old workload and reinstall: **`make local-k8s-mcp-delete && make local-k8s-up`**.
 
-**Kustomize instead of Helm for ClawQL manifests:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** still uses **Helm** for **Kyverno**, then **`kubectl apply -k docker/kustomize/overlays/local`** and applies the same **ClusterPolicy** via **`helm template … --show-only`**.
+**Kustomize instead of Helm for ClawQL manifests:** **`CLAWQL_LOCAL_K8S_INSTALLER=kustomize make local-k8s-up`** still uses **Helm** for **Kyverno**, then **`kubectl apply -k manifests/kustomize/overlays/local`** and applies the same **ClusterPolicy** via **`helm template … --show-only`**.
 
 **Unsigned local images are not supported** on this path: **`CLAWQL_LOCAL_K8S_BUILD_IMAGE=1`** and **`CLAWQL_LOCAL_K8S_BUILD_UI_IMAGE=1`** are rejected (Kyverno would block unsigned **`clawql-mcp`** / **`clawql-website`** / **`clawql-dashboard`**). For local iteration from source without cluster admission, use **`make local-docker-up`** (Compose) or push a branch build to GHCR and point **`image.tag`** at that digest or tag.
 
@@ -223,12 +223,12 @@ make local-k8s-up
 
 If the GHCR package is **private**, add **`imagePullSecrets`** via Helm values (same as any private registry).
 
-- **Customize provider or ports:** edit **`charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**.
+- **Customize provider or ports:** edit **`manifests/charts/clawql-mcp/values-docker-desktop.yaml`** or pass **`helm --set`**; see **[`docs/deployment/helm.md`](../docs/deployment/helm.md)**.
 - **`kubectl` / Helm context:** The script picks the first **reachable** context among **`rancher-desktop`**, **`docker-desktop`**, **`docker-for-desktop`** (so a stale `docker-desktop` entry after switching to Rancher Desktop does not win). Override: **`CLAWQL_LOCAL_K8S_CONTEXT=name make local-k8s-up`**. Your default context can stay on EKS when none of those names exist in kubeconfig.
 - **Restart behavior:** Deployments keep **`replicas: 1`** and Kubernetes **restarts failed containers** automatically (Pod `restartPolicy` is `Always`).
 - **MCP URL (Cursor / Streamable HTTP):** copy **`.cursor/mcp.json.example`** → **`.cursor/mcp.json`**. It defaults **`http://127.0.0.1/mcp`** so Docker Desktop on macOS does not resolve **`localhost` → `::1`** while the ingress LoadBalancer only publishes **IPv4** (symptom: **POST** fails, SSE fallback **404**). **`http://localhost/mcp`**, **`http://clawql-mcp.localhost/mcp`**, and **`http://clawql.localhost/mcp`** also work when routing reaches Envoy (**`clawql.localhost`** splits **`/mcp`** off the docs UI — see **`clawql-localhost-vs-core.yaml`**). Smoke from the host: **`bash scripts/kubernetes/smoke-mcp-http-istio-gateway.sh`** (override **`CLAWQL_MCP_HTTP_URL`** to match your Cursor **`url`**). **`CLAWQL_LOCAL_K8S_ISTIO=0`** falls back to **ingress-nginx** + Ingress manifests. **Compose:** **`http://localhost:8080/mcp`**.
 - **Cold start:** The MCP container loads every bundled spec before `listen()`; wait until **`curl -s http://localhost/healthz`** (defaults) or **`curl -s http://clawql-mcp.localhost/healthz`** (nginx path) succeeds. **`workflow:complex-release-stack:mcp`** polls **`/healthz`** when **`CLAWQL_MCP_URL`** is set.
-- **Bundled docs UI + provider UIs (`website/` source → `ghcr.io/…/clawql-website` image)** stay on **`deployment/clawql-mcp-http-ui`** with **`docs/website/`** as Markdown runbooks only. With **Istio**, **`docker/istio/docker-desktop/clawql-localhost-vs-*.yaml`** mirror the old nginx hostnames (**`http://clawql.localhost`**, **`http://onyx.localhost`**, …) via **`clawql-mcp-ingress`** Envoy (**LoadBalancer** on Docker/Rancher Desktop, **`hostNetwork`** on Linux-style nodes). **`make local-k8s-up`** uninstalls a **stale `ingress-nginx`** Helm release when nginx is auto-skipped — otherwise **`Server: nginx`** **404** means nginx still owns **:80** with **no** Ingress (routes moved to Istio). Manual fix: **`helm uninstall ingress-nginx -n ingress-nginx`**, then rerun **`make local-k8s-up`** or confirm **`kubectl -n istio-ingress get svc clawql-mcp-ingress`** shows **EXTERNAL-IP localhost** (or Envoy on node **:80** if using **hostNetwork**). If UIs flap **502** after mesh upgrades while stale **Envoy sidecars** linger, **`kubectl rollout restart deployment -n clawql`** aligns pods with ambient **ztunnel**.
+- **Bundled docs UI + provider UIs (`apps/docs/` source → `ghcr.io/…/clawql-website` image)** stay on **`deployment/clawql-mcp-http-ui`** with **`docs/website/`** as Markdown runbooks only. With **Istio**, **`docker/istio/docker-desktop/clawql-localhost-vs-*.yaml`** mirror the old nginx hostnames (**`http://clawql.localhost`**, **`http://onyx.localhost`**, …) via **`clawql-mcp-ingress`** Envoy (**LoadBalancer** on Docker/Rancher Desktop, **`hostNetwork`** on Linux-style nodes). **`make local-k8s-up`** uninstalls a **stale `ingress-nginx`** Helm release when nginx is auto-skipped — otherwise **`Server: nginx`** **404** means nginx still owns **:80** with **no** Ingress (routes moved to Istio). Manual fix: **`helm uninstall ingress-nginx -n ingress-nginx`**, then rerun **`make local-k8s-up`** or confirm **`kubectl -n istio-ingress get svc clawql-mcp-ingress`** shows **EXTERNAL-IP localhost** (or Envoy on node **:80** if using **hostNetwork**). If UIs flap **502** after mesh upgrades while stale **Envoy sidecars** linger, **`kubectl rollout restart deployment -n clawql`** aligns pods with ambient **ztunnel**.
 - **Obsidian vault (`memory_ingest` / `memory_recall`):** Helm defaults to **`vault.hostPath`** so **`$HOME/.ClawQL`** (or **`CLAWQL_LOCAL_VAULT_HOST_PATH`**) is mounted at **`/vault`** — same idea as Compose’s **`CLAWQL_VAULT_HOST_PATH`**. On Docker Desktop, paths such as **`/Users/...`** on macOS are visible to **`hostPath`** pods. If the path is not writable by the pod, MCP now starts in degraded mode (memory tools disabled) and logs a permission-fix command; you can also avoid host permissions entirely with **`CLAWQL_LOCAL_K8S_VAULT_BACKEND=pvc`**.
 - **Teardown:** `helm uninstall clawql -n clawql` or `kubectl delete namespace clawql` (also removes non-Helm resources in that namespace). If you used **`CLAWQL_LOCAL_K8S_ISTIO`**, also **`helm uninstall clawql-mcp-ingress -n istio-ingress`** (and consider **`kubectl delete ns istio-ingress`**) when tearing down the mesh gateway. If you installed egress allowlist (**#275**): **`helm uninstall istio-egressgateway -n istio-system`** (or your **`CLAWQL_ISTIO_EGRESS_GATEWAY_NAMESPACE`**). If you installed Loki/Tempo: **`helm uninstall clawql-loki clawql-tempo -n istio-system`** before removing **`istio-system`**.
 
@@ -259,7 +259,7 @@ grpcurl -plaintext -d '{"service":""}' localhost:50051 grpc.health.v1.Health/Che
 grpcurl -plaintext -d '{"service":"model_context_protocol.Mcp"}' localhost:50051 grpc.health.v1.Health/Check
 ```
 
-**Note:** Invoking protobuf MCP RPCs such as **`ListTools`** may fail from **`grpcurl`** with errors about **`google.protobuf.Value`** when using reflection alone; the server is still correct—use a client that loads **google well-known types**, or call **`mcp.transport.v1.Mcp.Session`** (JSON-RPC stream) from an MCP-aware client. For production gRPC probes without reflection, use the **`docker/kustomize/overlays/grpc-enabled`** overlay (native **`grpc`** readiness/liveness on **50051**).
+**Note:** Invoking protobuf MCP RPCs such as **`ListTools`** may fail from **`grpcurl`** with errors about **`google.protobuf.Value`** when using reflection alone; the server is still correct—use a client that loads **google well-known types**, or call **`mcp.transport.v1.Mcp.Session`** (JSON-RPC stream) from an MCP-aware client. For production gRPC probes without reflection, use the **`manifests/kustomize/overlays/grpc-enabled`** overlay (native **`grpc`** readiness/liveness on **50051**).
 
 ### MCP auth (GitHub + optional Cloudflare + Google) on Docker Desktop K8s
 
@@ -300,7 +300,7 @@ The helper script writes Secret **`clawql-github-auth`** (name unchanged for exi
 
 **Note:** **`helm upgrade --install`** reapplies chart values; env injected only via **`kubectl set env`** can be overwritten on the next upgrade. Prefer **`helm --set extraEnv`** or a **Secret** referenced from **`values.yaml`** for durable config.
 
-For remote clusters, use `docker/kustomize/overlays/dev` or `prod` and `scripts/deploy/deploy-k8s.sh` with a pushed image, or install the Helm chart with your registry image.
+For remote clusters, use `manifests/kustomize/overlays/dev` or `prod` and `scripts/deploy/deploy-k8s.sh` with a pushed image, or install the Helm chart with your registry image.
 
 Cloud Run deployment guide/script:
 
@@ -320,7 +320,7 @@ Included resources:
 - Namespace: `clawql`
 - Deployment: `clawql-mcp-http`
 - Service: `clawql-mcp-http` (`LoadBalancer`)
-- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`docker/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`:** use chart **`sandboxDocker`** (local Helm) / Compose socket mount, or **`CLAWQL_SANDBOX_BRIDGE_URL`** + token — see [`.env.example`](../.env.example) and [`docs/mcp/mcp-tools.md`](../docs/mcp/mcp-tools.md).
+- MCP pod: **`CLAWQL_OBSIDIAN_VAULT_PATH=/vault`** with an **`emptyDir`** volume at `/vault` in the starter and Kustomize **base** (`manifests/kustomize/base/deployment-mcp-http.yaml`) so **`memory_ingest`** / **`memory_recall`** can run. For a **persistent** host vault (e.g. **`~/.ClawQL`**), use the **`local`** overlay via **`make local-k8s-up`**, which generates a **`hostPath`** patch — or replace **`emptyDir`** with a PVC or **`hostPath`** yourself. **`sandbox_exec`:** use chart **`sandboxDocker`** (local Helm) / Compose socket mount, or **`CLAWQL_SANDBOX_BRIDGE_URL`** + token — see [`.env.example`](../.env.example) and [`docs/mcp/mcp-tools.md`](../docs/mcp/mcp-tools.md).
 
 After the external IP is ready, use:
 
@@ -328,10 +328,10 @@ After the external IP is ready, use:
 
 ## Kustomize overlay: gRPC + kubelet gRPC probes
 
-When you run **`ENABLE_GRPC=1`**, use **`docker/kustomize/overlays/grpc-enabled/`**: it sets that env and switches **readiness** / **liveness** to **native Kubernetes `grpc` probes** on port **50051**. The **kubelet** implements the [gRPC health protocol](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes); you do **not** need **`grpc_health_probe`** in the container. **Startup** stays **`httpGet` `/healthz`** so slow spec preload still passes.
+When you run **`ENABLE_GRPC=1`**, use **`manifests/kustomize/overlays/grpc-enabled/`**: it sets that env and switches **readiness** / **liveness** to **native Kubernetes `grpc` probes** on port **50051**. The **kubelet** implements the [gRPC health protocol](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#grpc-probes); you do **not** need **`grpc_health_probe`** in the container. **Startup** stays **`httpGet` `/healthz`** so slow spec preload still passes.
 
 ```bash
-kubectl apply -k docker/kustomize/overlays/grpc-enabled
+kubectl apply -k manifests/kustomize/overlays/grpc-enabled
 ```
 
 The **base** overlay keeps **HTTP** probes only because gRPC is off by default (nothing listens on **50051**).
@@ -340,10 +340,10 @@ The **base** overlay keeps **HTTP** probes only because gRPC is off by default (
 
 Kustomize base + overlays are under:
 
-- `docker/kustomize/base`
-- `docker/kustomize/overlays/dev`
-- `docker/kustomize/overlays/prod`
-- `docker/kustomize/overlays/grpc-enabled` (HTTP + gRPC + `grpc` probes; see above)
+- `manifests/kustomize/base`
+- `manifests/kustomize/overlays/dev`
+- `manifests/kustomize/overlays/prod`
+- `manifests/kustomize/overlays/grpc-enabled` (HTTP + gRPC + `grpc` probes; see above)
 
 Set image/tag at apply time:
 
@@ -352,7 +352,7 @@ Set image/tag at apply time:
 IMAGE="us-central1-docker.pkg.dev/<project>/<repo>/clawql-mcp"
 TAG="v1.0.0"
 
-kubectl apply -k docker/kustomize/overlays/dev \
+kubectl apply -k manifests/kustomize/overlays/dev \
   --dry-run=client -o yaml \
   | sed "s|image: clawql-mcp:dev|image: ${IMAGE}:${TAG}|g" \
   | kubectl apply -f -
@@ -360,8 +360,8 @@ kubectl apply -k docker/kustomize/overlays/dev \
 
 Or edit overlay `images` fields directly:
 
-- dev: `docker/kustomize/overlays/dev/kustomization.yaml`
-- prod: `docker/kustomize/overlays/prod/kustomization.yaml`
+- dev: `manifests/kustomize/overlays/dev/kustomization.yaml`
+- prod: `manifests/kustomize/overlays/prod/kustomization.yaml`
 
 Helper script (image/tag injection + apply):
 

@@ -1,0 +1,38 @@
+{
+  "gha": {
+    "stockVsDecide": 36185003105,
+    "frontier": 36185003282
+  },
+  "decideLocked": {
+    "T": 0.75,
+    "tau": 0.8,
+    "nFired": 45,
+    "errors": [
+      {
+        "caseId": "route-v05-007",
+        "top": "mcp.memory_ingest",
+        "conf": 0.841433,
+        "frontierGt": "skill.clawql-memory-ingest",
+        "provisionalGt": "mcp.memory_ingest",
+        "rawGt": "skill.clawql-memory-ingest",
+        "correct": false
+      }
+    ]
+  },
+  "stockLocked": {
+    "T": 4,
+    "tau": 0.7,
+    "nFired": 32,
+    "errors": [
+      {
+        "caseId": "route-v05-023",
+        "top": "mcp.clawql_think",
+        "conf": 0.732659,
+        "frontierGt": "skill.deep-thinking",
+        "provisionalGt": "mcp.clawql_think",
+        "rawGt": "skill.deep-thinking",
+        "correct": false
+      }
+    ]
+  }
+}

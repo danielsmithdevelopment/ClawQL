@@ -3,7 +3,7 @@ import {
   getClawqlAuditMaxEntries,
   handleAuditToolInput,
   resetClawqlAuditBufferForTests,
-} from "./clawql-audit.js";
+} from "./mcp/clawql-audit.js";
 import { renderPrometheusMetrics, resetNativeProtocolPrometheusForTests } from "clawql-api";
 
 describe("clawql-audit", () => {

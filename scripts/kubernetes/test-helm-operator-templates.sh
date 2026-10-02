@@ -7,7 +7,7 @@ cd "${ROOT}"
 TMP="$(mktemp)"
 trap 'rm -f "${TMP}"' EXIT
 
-helm template test charts/clawql-operator --namespace clawql-system >"${TMP}"
+helm template test manifests/charts/clawql-operator --namespace clawql-system >"${TMP}"
 
 python3 - "${TMP}" <<'PY'
 import sys
@@ -27,7 +27,7 @@ for needle, label in checks:
 print("helm-operator-template-tests OK")
 PY
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   --set envFromSecret=clawql-lint-provider-env \
   --set instanceSpec.enabled=true \
   --set instanceSpec.configMapName=clawql-tier-spec \

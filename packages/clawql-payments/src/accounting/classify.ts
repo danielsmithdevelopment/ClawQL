@@ -306,6 +306,30 @@ const KIND_MAP: Record<PaymentEventKind, Classified> = {
     taxTreatment: "non_taxable",
     counterpartyKind: "agent",
   },
+  ORG_PROVISIONED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
+  ORG_MEMBER_ADDED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
+  ORG_PLAN_CHANGED: {
+    direction: "internal",
+    category: "other",
+    taxTreatment: "non_taxable",
+    counterpartyKind: "customer",
+  },
+  USAGE_REPORTED_TO_BILLING: {
+    direction: "internal",
+    category: "usage_revenue",
+    taxTreatment: "taxable_revenue",
+    counterpartyKind: "customer",
+  },
 };
 
 /** Default eventKind → accounting classification (credits top-up = liability, not revenue). */

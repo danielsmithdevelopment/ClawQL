@@ -1,0 +1,132 @@
+{
+  "documents": [
+    {
+      "id": "rfc3986",
+      "stratum": "well_structured",
+      "path": "seed/rfc3986.txt",
+      "sha256": "3102dae4b68cebe40337730312fcb612297b8928547267e8b3d1ee6002b2d683",
+      "bytes": 141811,
+      "seed_only": true
+    },
+    {
+      "id": "rfc4648",
+      "stratum": "well_structured",
+      "path": "seed/rfc4648.txt",
+      "sha256": "84e14418f795d503be5f34bf23ce4ebaa119e9ec7c9f667d8caeb111385b178f",
+      "bytes": 35491,
+      "seed_only": true
+    },
+    {
+      "id": "rfc5321",
+      "stratum": "well_structured",
+      "path": "seed/rfc5321.txt",
+      "sha256": "7d560eddff1b213c17d4e1e5f95005728b2f05bc2b3947f0fcc91717c6707634",
+      "bytes": 225929,
+      "seed_only": true
+    },
+    {
+      "id": "rfc6749",
+      "stratum": "well_structured",
+      "path": "seed/rfc6749.txt",
+      "sha256": "f204fc8661d6c92d2ec6e0b54808f961a9ad26e792f57f312d9528335519bd71",
+      "bytes": 163498,
+      "seed_only": true
+    },
+    {
+      "id": "rfc6901",
+      "stratum": "well_structured",
+      "path": "seed/rfc6901.txt",
+      "sha256": "12f9f4fc13d686aa4fbe7d144d70166cd3fcd4ab89174c2b13bda8f4b55e49da",
+      "bytes": 13037,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7231",
+      "stratum": "well_structured",
+      "path": "seed/rfc7231.txt",
+      "sha256": "a83d026937f6f7929a0e53f8a9bfec4104285f0f89d6dbabd3927c4208a715b2",
+      "bytes": 235053,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7396",
+      "stratum": "well_structured",
+      "path": "seed/rfc7396.txt",
+      "sha256": "545e1d61667c243ea14d6b1a56212370a26d46e1acd441803805fcdecd9164c6",
+      "bytes": 12791,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7464",
+      "stratum": "well_structured",
+      "path": "seed/rfc7464.txt",
+      "sha256": "a8eadbcdce5fc508b9e014299621562da041232af13848632092164d50b3f482",
+      "bytes": 16132,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7519",
+      "stratum": "well_structured",
+      "path": "seed/rfc7519.txt",
+      "sha256": "fecd930e9ccf2276b95c0017c6c4ff5d09352e4bc3c7629946447894e0f97248",
+      "bytes": 63039,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7636",
+      "stratum": "well_structured",
+      "path": "seed/rfc7636.txt",
+      "sha256": "1972e5d81cbaba7066cfd46374207bc2b4546b085ed5dd9b034e79e023e0ca31",
+      "bytes": 39482,
+      "seed_only": true
+    },
+    {
+      "id": "rfc7807",
+      "stratum": "well_structured",
+      "path": "seed/rfc7807.txt",
+      "sha256": "c6ee12b7109d42ed3e68659da5f67397bd573226d86492fecf7d954f5f6ca03e",
+      "bytes": 31210,
+      "seed_only": true
+    },
+    {
+      "id": "rfc8259",
+      "stratum": "well_structured",
+      "path": "seed/rfc8259.txt",
+      "sha256": "61a5378f4255c720beb2a4b4a63b29540147c140f36988bf086291989b4cd2d7",
+      "bytes": 28360,
+      "seed_only": true
+    },
+    {
+      "id": "rfc8446",
+      "stratum": "well_structured",
+      "path": "seed/rfc8446.txt",
+      "sha256": "47871bc8820a2c3b6ea89f061055577058862cf543686b82d10131239702b3bd",
+      "bytes": 337736,
+      "seed_only": true
+    },
+    {
+      "id": "rfc8615",
+      "stratum": "well_structured",
+      "path": "seed/rfc8615.txt",
+      "sha256": "02d45caeb86c00197d30428472102bb558881fa61937804330c1242a0be5b5dc",
+      "bytes": 26866,
+      "seed_only": true
+    },
+    {
+      "id": "rfc9110",
+      "stratum": "well_structured",
+      "path": "seed/rfc9110.txt",
+      "sha256": "21c1cdce6ab0e5509b04d84a28000836c7a087cf786efe6f04877ebfff47232a",
+      "bytes": 502941,
+      "seed_only": true
+    },
+    {
+      "id": "rfc9205",
+      "stratum": "well_structured",
+      "path": "seed/rfc9205.txt",
+      "sha256": "43f73e1abf672f4183892a022efe9e71fd40d2def597e546cfb3c035990e2675",
+      "bytes": 68861,
+      "seed_only": true
+    }
+  ]
+}

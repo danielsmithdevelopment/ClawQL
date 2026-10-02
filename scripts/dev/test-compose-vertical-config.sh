@@ -86,7 +86,7 @@ for needle in (
     "CLAWQL_ENABLE_ANYDOC",
     "DOCLING_BASE_URL",
     "CLASSIFIER_BASE_URL",
-    "../../deployment/samples/",
+    "../../docs/examples/idp/",
 ):
     if needle not in compose:
         print(f"ERROR: {vertical}.compose.yml missing {needle!r}")

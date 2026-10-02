@@ -74,9 +74,9 @@ export function formatOperatorStatus(report: OperatorStatusReport): string {
     lines.push("");
     lines.push("Install:");
     lines.push(
-      "  helm upgrade --install clawql-operator ./charts/clawql-operator -n clawql-system --create-namespace"
+      "  helm upgrade --install clawql-operator ./manifests/charts/clawql-operator -n clawql-system --create-namespace"
     );
-    lines.push("  kubectl apply -f examples/operator/clawqlinstance-minimal.yaml -n clawql");
+    lines.push("  kubectl apply -f docs/examples/operator/clawqlinstance-minimal.yaml -n clawql");
     lines.push("");
     return lines.join("\n");
   }

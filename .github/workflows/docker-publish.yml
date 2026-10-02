@@ -59,7 +59,7 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           trivyignores: .trivyignore
-          skip-dirs: node_modules,website/node_modules,dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
+          skip-dirs: node_modules,apps/docs/node_modules,apps/dashboard/node_modules,dist,packages/mcp-grpc-transport/dist,packages/clawql-ouroboros/dist,packages/panguard-mcp-bridge/dist,.git
 
       - name: CycloneDX SBOM (Syft)
         run: |
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       # docker/setup-buildx-action@v4.2.0
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
 
       # docker/login-action@v4.4.0
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -203,7 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
 
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -225,7 +225,7 @@ jobs:
       - name: Install skopeo
         run: sudo apt-get update && sudo apt-get install -y skopeo
 
-      # `dashboard/Dockerfile` build context is repo root (clawql-api file: dep + catalog generators).
+      # `apps/dashboard/Dockerfile` build context is repo root (clawql-api file: dep + catalog generators).
       - name: Preflight — dashboard COPY sources not dockerignored
         run: |
           set -euo pipefail
@@ -247,7 +247,7 @@ jobs:
           rm -rf "${DEST}"
           mkdir -p "${DEST}"
           docker buildx build \
-            --file dashboard/Dockerfile \
+            --file apps/dashboard/Dockerfile \
             --platform linux/amd64,linux/arm64 \
             --output "type=oci,tar=false,dest=${DEST}" \
             --cache-from type=gha,scope=docker-publish-dashboard \
@@ -332,7 +332,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
 
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
@@ -449,7 +449,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       # docker/setup-buildx-action@v4.2.0
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
 
       # docker/login-action@v4.4.0
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
@@ -461,8 +461,8 @@ jobs:
       - name: Read package metadata
         id: pkg
         run: |
-          echo "version=$(node -e 'console.log(require(\"./website/package.json\").version)')" >> "$GITHUB_OUTPUT"
-          echo "description=$(node -e 'console.log(require(\"./website/package.json\").description)')" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -e 'console.log(require(\"./apps/docs/package.json\").version)')" >> "$GITHUB_OUTPUT"
+          echo "description=$(node -e 'console.log(require(\"./apps/docs/package.json\").description)')" >> "$GITHUB_OUTPUT"
 
       # docker/metadata-action@v6.1.0 — immutable **`sha-*`** only until promotion (same as MCP image).
       - name: Docker metadata
@@ -486,7 +486,7 @@ jobs:
           rm -rf "${DEST}"
           mkdir -p "${DEST}"
           docker buildx build \
-            --file website/Dockerfile \
+            --file apps/docs/Dockerfile \
             --platform linux/amd64,linux/arm64 \
             --output "type=oci,tar=false,dest=${DEST}" \
             --cache-from type=gha,scope=docker-publish-website \
@@ -495,7 +495,7 @@ jobs:
             --sbom=true \
             --build-arg "CLAWQL_PACKAGE_VERSION=${{ steps.pkg.outputs.version }}" \
             --build-arg "CLAWQL_PACKAGE_DESCRIPTION=${{ steps.pkg.outputs.description }}" \
-            ./website
+            .
 
       - name: Trivy scan OCI layout (HIGH / CRITICAL — before registry push)
         run: |

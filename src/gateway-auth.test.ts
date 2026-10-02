@@ -8,7 +8,7 @@ import {
   buildGatewayAuthConfig,
   getClawqlGatewayAuth,
   resetClawqlGatewayAuthForTests,
-} from "./gateway-auth.js";
+} from "./composition/gateway-auth.js";
 
 describe("gateway-auth WORM sink", () => {
   afterEach(async () => {

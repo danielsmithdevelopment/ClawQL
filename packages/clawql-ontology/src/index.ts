@@ -23,7 +23,6 @@ export {
   isShipableLowNativeWrite,
   isShipableNativeWrite,
   type GenerateOntologyOptions,
-  _relationshipToolNameForTests,
 } from "./generate.js";
 export {
   createOntologyEntity,
@@ -124,8 +123,11 @@ export {
   getBestQueryStrategy,
   checkPromotionCandidates,
   promoteDocumentType,
+  matchOntologyVocabularyTerm,
   type LearnedEntityRow,
   type PromoteResult,
   type OBTRecord,
   type OntologyEvidence,
+  type VocabularyTermCandidate,
+  type VocabularyMatchOutcome,
 } from "./layer3/index.js";

@@ -25,3 +25,7 @@ export * from "./search-service.js";
 export * from "./skills/index.js";
 export * from "./hooks/index.js";
 export * from "./spec/index.js";
+export * from "./risk/index.js";
+export * from "./pending/index.js";
+export * from "./sources/index.js";
+export * from "./toolkits/index.js";

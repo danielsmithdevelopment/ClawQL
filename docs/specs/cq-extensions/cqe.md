@@ -2,7 +2,7 @@
 
 **Extension:** `.cqe`  
 **Media type (proposed):** `application/vnd.clawql.entity+yaml`  
-**Status:** Draft v0.1 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Schema: [`schemas/ontology/entity.schema.json`](../../../schemas/ontology/entity.schema.json)
+**Status:** Draft v0.1 · [ADR 0010](../../adr/0010-cq-file-extensions.md) · Schema: [`entity.schema.json`](../../../packages/clawql-ontology/schemas/ontology/entity.schema.json)
 
 ## Purpose
 
@@ -15,7 +15,7 @@ Also allowed: OKF Markdown with frontmatter `type: ontology_entity` and a YAML e
 
 ## Required fields (YAML form)
 
-Same as [`entity.schema.json`](../../../schemas/ontology/entity.schema.json):
+Same as [`entity.schema.json`](../../../packages/clawql-ontology/schemas/ontology/entity.schema.json):
 
 - `apiVersion: clawql.dev/ontology/v1alpha1`
 - `kind: Entity`
@@ -47,4 +47,4 @@ Same as [`entity.schema.json`](../../../schemas/ontology/entity.schema.json):
 
 ## Example
 
-See [`examples/ontology/entities/Contract.cqe`](../../../examples/ontology/entities/Contract.cqe).
+See [`docs/examples/ontology/entities/Contract.cqe`](../../../docs/examples/ontology/entities/Contract.cqe).

@@ -37,12 +37,12 @@ CLAWQL_PRIVACY_FILTER_FAILURE_POLICY=warn
 # CLAWQL_PRIVACY_FILTER_MODEL=openai/privacy-filter
 ```
 
-Reference sidecar: [`deployment/samples/privacy-filter-http/`](../../deployment/samples/privacy-filter-http/).
+Reference sidecar: [`docs/examples/idp/privacy-filter-http/`](../../docs/examples/idp/privacy-filter-http/).
 
 Compose:
 
 ```bash
-cd examples/clawql-local-docker-compose
+cd docs/examples/clawql-local-docker-compose
 docker compose -f docker-compose.yml \
   -f docker-compose.presidio.override.yml \
   -f docker-compose.privacy-filter.override.yml up -d
@@ -82,7 +82,7 @@ Helm (opt-in):
 ## Smoke
 
 ```bash
-./deployment/samples/privacy-filter-http/smoke.sh
+./docs/examples/idp/privacy-filter-http/smoke.sh
 ```
 
 ## Related

@@ -17,10 +17,10 @@ This is the **platform** backlog. Ouroboros-only detail lives in
 
 ## Two measurement tracks (keep them separate)
 
-| Track                 | Measures                                                             | Artifacts today                                                     |
-| --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **Planning-context**  | Spec / response compression via `search` → GraphQL-shaped outputs    | [`latest.md`](./latest.md), multi-provider / GCP experiment folders |
-| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`openbench/`](../../openbench/), [`openbench.md`](./openbench.md)  |
+| Track                 | Measures                                                             | Artifacts today                                                                          |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Planning-context**  | Spec / response compression via `search` → GraphQL-shaped outputs    | [`latest.md`](./latest.md), multi-provider / GCP experiment folders                      |
+| **OpenBench (agent)** | Harness + model + tools on graded tasks (score, turns, tokens, wall) | [`benchmarks/openbench/`](../../benchmarks/openbench/), [`openbench.md`](./openbench.md) |
 
 Unit/integration tests prove APIs exist. **OpenBench proves agents use them and win.**
 
@@ -57,7 +57,7 @@ Unit/integration tests prove APIs exist. **OpenBench proves agents use them and 
 
 Still missing after this wave: n≥3 trials; ops-only (Argo / live Onyx / live Slack / R2). Full diary: [`openbench-results-ledger.md`](./openbench-results-ledger.md).
 
-**CI spend control:** only [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`** except recently retired **`idp-pipeline-resilience` (B-2.2)**. B-4.2 remains parked offline. Live vendor IDP = scheduled **B2.3** (not PR).
+**CI spend control:** only [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) → `pr_active` burns tokens on PR/push. Graded cells above are **`retired`** except recently retired **`idp-pipeline-resilience` (B-2.2)**. B-4.2 remains parked offline. Live vendor IDP = scheduled **B2.3** (not PR).
 
 Explanations for every verified cell: [`openbench-task-explanations.md`](./openbench-task-explanations.md).
 
@@ -153,8 +153,9 @@ See [`ouroboros-value-evidence.md`](./ouroboros-value-evidence.md). P0: `doom_lo
 
 ### P1 — memory & docs depth (where “tons of tooling” lives)
 
-8. ~~**PageIndex long-doc Q&A**~~ — verified on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)).
-9. ~~**Hybrid recall source pin**~~ — verified on 1.0 / off 0.0 ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)).
+8. ~~**PageIndex long-doc Q&A**~~ — tooling WIN on 1.0 / off 0.0 ([30881158522](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30881158522)). **Does not decide default-route** — see [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md).
+9. ~~**Hybrid recall source pin**~~ — tooling WIN on 1.0 / off 0.0 ([30888793063](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30888793063)). Product superiority gated on `pageindex-ab`.
+   9b. **`pageindex-ab` memory-stack default-route (v0.2)** — 2×2×2 factorial (ranker × PageIndex × CodeGraph); task completion only. Corpus not frozen.
 10. ~~**Codegraph-guided edit**~~ — verified on 1.0 / off 0.0 ([30885341377](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30885341377)).
 11. ~~**External ingest → continue**~~ — verified on 1.0 / off 0.0 ([30887394038](https://github.com/danielsmithdevelopment/ClawQL/actions/runs/30887394038)).
 

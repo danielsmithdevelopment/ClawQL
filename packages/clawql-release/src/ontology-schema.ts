@@ -51,10 +51,10 @@ export async function hashOntologyEntityTree(absDir: string): Promise<{
 }
 
 /**
- * Prefer `.clawql/ontology/entities`, then `examples/ontology/entities`.
+ * Prefer `.clawql/ontology/entities`, then `docs/examples/ontology/entities`.
  */
 export function resolveOntologyEntitiesDir(rootDir: string): string | null {
-  const candidates = [".clawql/ontology/entities", "examples/ontology/entities"];
+  const candidates = [".clawql/ontology/entities", "docs/examples/ontology/entities"];
   for (const rel of candidates) {
     const abs = join(rootDir, rel);
     if (existsSync(abs)) return rel.replace(/\\/g, "/");

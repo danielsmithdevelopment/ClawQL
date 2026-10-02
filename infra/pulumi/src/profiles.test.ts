@@ -37,7 +37,7 @@ describe("buildK3sBootstrapUserData", () => {
     expect(script).toContain("--disable traefik");
     expect(script).toContain("clawql-idp-acme");
     expect(script).toContain("CLAWQL_R2_BUCKET=clawql-vault-prod");
-    expect(script).toContain("deployment/gitops");
+    expect(script).toContain("infra/gitops");
     expect(script).toContain("NEXT_STEPS.txt");
   });
 });

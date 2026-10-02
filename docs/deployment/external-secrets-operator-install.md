@@ -246,7 +246,7 @@ Tune **`refreshInterval`** (for example **`5m`**) on the `ExternalSecret` if you
 ## Install / upgrade ClawQL referencing the synced Secret
 
 ```bash
-helm upgrade --install clawql ./charts/clawql-mcp -n clawql --create-namespace \
+helm upgrade --install clawql ./manifests/charts/clawql-mcp -n clawql --create-namespace \
   --set envFromSecret=clawql-provider-env \
   --wait
 ```

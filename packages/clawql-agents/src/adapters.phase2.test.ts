@@ -17,8 +17,6 @@ import {
 import { planOpenClawSkillInjection } from "./adapters/openclaw/mcp-bridge.js";
 import { HERMES_ATR_TEMPLATES } from "./adapters/hermes/atr-templates.js";
 import { appendHermesHook, makeHermesAdapterLayer } from "./adapters/hermes/index.js";
-import { getAdapterBundle } from "./get-adapter.js";
-
 describe("shared panguard", () => {
   it("isToolInScope respects out-of-scope denylist", () => {
     const scope = CLINE_ATR_TEMPLATES.execution_worker;
@@ -155,12 +153,5 @@ describe("Hermes adapter", () => {
     );
 
     expect(verified.valid).toBe(true);
-  });
-});
-
-describe("getAdapterBundle", () => {
-  it("resolves cline", async () => {
-    const cline = await Effect.runPromise(getAdapterBundle("cline", "/tmp/x.db"));
-    expect(cline.adapterLayer).toBeDefined();
   });
 });

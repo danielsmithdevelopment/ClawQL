@@ -2,7 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetSpecCache } from "clawql-api";
-import { handleNotifyToolInput, resetSchemaFieldCache } from "./tools.js";
+import { handleNotifyToolInput, resetSchemaFieldCache } from "./mcp/tools.js";
 
 const { mockFetch } = vi.hoisted(() => ({
   mockFetch: vi.fn(),

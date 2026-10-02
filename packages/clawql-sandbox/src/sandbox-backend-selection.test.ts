@@ -27,7 +27,7 @@ describe("parseExplicitSandboxBackendEnv", () => {
     expect(parseExplicitSandboxBackendEnv()).toBe("bridge");
   });
 
-  it("defaults unset in-cluster to auto (Kata-first)", () => {
+  it("defaults unset in-cluster to auto (Agent Substrate → Kata …)", () => {
     process.env.KUBERNETES_SERVICE_HOST = "10.0.0.1";
     expect(parseExplicitSandboxBackendEnv()).toBeNull();
   });
@@ -41,10 +41,18 @@ describe("parseExplicitSandboxBackendEnv", () => {
     process.env.CLAWQL_SANDBOX_BACKEND = "kata-containers";
     expect(parseExplicitSandboxBackendEnv()).toBe("kata");
   });
+
+  it("accepts agent-substrate aliases", () => {
+    process.env.CLAWQL_SANDBOX_BACKEND = "substrate";
+    expect(parseExplicitSandboxBackendEnv()).toBe("agent-substrate");
+    process.env.CLAWQL_SANDBOX_BACKEND = "gvisor";
+    expect(parseExplicitSandboxBackendEnv()).toBe("agent-substrate");
+  });
 });
 
 describe("resolveSandboxBackendChoice", () => {
   const depsAllTrue: SandboxBackendAutoDeps = {
+    agentSubstrate: () => true,
     kata: async () => true,
     seatbelt: () => true,
     docker: async () => true,
@@ -61,13 +69,31 @@ describe("resolveSandboxBackendChoice", () => {
     expect(r).toEqual({ ok: true, backend: "kata" });
   });
 
-  it("auto prefers kata when available", async () => {
+  it("explicit agent-substrate pins Agent Substrate", async () => {
+    const r = await resolveSandboxBackendChoice("agent-substrate", depsAllTrue);
+    expect(r).toEqual({ ok: true, backend: "agent-substrate" });
+  });
+
+  it("auto prefers Agent Substrate when available (ADR 0011)", async () => {
     const r = await resolveSandboxBackendChoice(null, depsAllTrue);
+    expect(r).toEqual({ ok: true, backend: "agent-substrate" });
+  });
+
+  it("auto prefers kata when Agent Substrate unavailable", async () => {
+    const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => false,
+      kata: async () => true,
+      seatbelt: () => true,
+      docker: async () => true,
+      bridge: () => true,
+    };
+    const r = await resolveSandboxBackendChoice(null, deps);
     expect(r).toEqual({ ok: true, backend: "kata" });
   });
 
-  it("auto uses docker when kata unavailable", async () => {
+  it("auto uses docker when kata and substrate unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => false,
       kata: async () => false,
       seatbelt: () => true,
       docker: async () => true,
@@ -79,6 +105,7 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto uses bridge when only bridge is configured", async () => {
     const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => false,
       kata: async () => false,
       seatbelt: () => false,
       docker: async () => false,
@@ -90,6 +117,7 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto fails when nothing is available", async () => {
     const deps: SandboxBackendAutoDeps = {
+      agentSubstrate: () => false,
       kata: async () => false,
       seatbelt: () => false,
       docker: async () => false,
@@ -97,6 +125,6 @@ describe("resolveSandboxBackendChoice", () => {
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error.length).toBeGreaterThan(40);
+    if (!r.ok) expect(r.error).toMatch(/Agent Substrate/);
   });
 });

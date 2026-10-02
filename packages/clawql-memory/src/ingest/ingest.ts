@@ -66,6 +66,11 @@ export type MemoryIngestInput = {
   };
   /** OKF v0.2 — provenance sources. */
   sources?: Array<Record<string, string | number>>;
+  /**
+   * Optional folder under `Memory/` for tenant scope (e.g. team id).
+   * Sanitized to a single path segment (`[a-z0-9_-]+`).
+   */
+  folder?: string;
   insights?: string;
   conversation?: string;
   /**
@@ -86,11 +91,9 @@ export type MemoryIngestInput = {
   append?: boolean;
   /**
    * Post-write derived-index rebuilds (canonical write remains the vault Markdown).
-   * - `pageindex`: rebuild PageIndex tree for the written note
    * - `embeddings`: ensure memory.db sync (chunk + embedding refresh) ran; default true when memory.db is on
    */
   rebuild?: {
-    pageindex?: boolean;
     embeddings?: boolean;
   };
 };
@@ -121,7 +124,6 @@ export type MemoryIngestResult = {
   cuckooMembershipReady?: boolean;
   /** Derived-index rebuild outcomes when requested. */
   rebuild?: {
-    pageindex?: { docId: string; nodeCount: number } | { error: string };
     embeddings?: { synced: boolean; skipped?: string };
   };
   /** Git-native vault: commit-on-ingest outcome when CLAWQL_MEMORY_BACKEND=git. */
@@ -321,7 +323,9 @@ export async function writeMemoryIngestPage(
     process.env.CLAWQL_MEMORY_CQK === "1" ||
     process.env.CLAWQL_MEMORY_CQK?.toLowerCase() === "true";
   const ext = useCqk ? ".cqk" : ".md";
-  const rel = `${MEMORY_DIR}/${slug}${ext}`;
+  const folderRaw = effective.folder?.trim().toLowerCase() ?? "";
+  const folder = folderRaw.replace(/[^a-z0-9_-]+/g, "").slice(0, 64);
+  const rel = folder ? `${MEMORY_DIR}/${folder}/${slug}${ext}` : `${MEMORY_DIR}/${slug}${ext}`;
   const append = effective.append !== false;
   const hash = hashIngestSection(effective);
   const when = new Date().toISOString();

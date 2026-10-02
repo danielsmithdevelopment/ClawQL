@@ -153,7 +153,7 @@ Helm injects non-secret `url` / `index` when `webSearch.opensearch.enabled` is t
 
 ## Helm — bundled SearXNG / Chromium
 
-`charts/clawql-mcp/templates/web-stack.yaml` deploys optional in-cluster workloads when:
+`manifests/charts/clawql-mcp/templates/web-stack.yaml` deploys optional in-cluster workloads when:
 
 ```yaml
 enableWeb: true

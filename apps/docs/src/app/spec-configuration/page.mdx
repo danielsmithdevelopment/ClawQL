@@ -1,0 +1,70 @@
+# Spec configuration
+
+ClawQL builds an in-memory operation index from **OpenAPI 3** (JSON/YAML), **Swagger 2** (auto-upgraded), **Google Discovery** documents, or **bundled presets** under `providers/`, optionally extended with **native GraphQL** and **gRPC** sources via env. Selection follows a **two-stage** precedence implemented in `src/spec-loader.ts`. {{ className: 'lead' }}
+
+## Overview
+
+- **Multi-spec mode:** one merged **search** index. **`execute`** uses **REST** per **OpenAPI/Discovery** operation on the owning spec, and **native GraphQL** / **gRPC** for bundled **`linear`** or env-configured sources (**`CLAWQL_GRAPHQL_*`**, **`CLAWQL_GRPC_SOURCES`**) in the same index; native ops use HTTP GraphQL or gRPC unary ([GraphQL layer](/graphql-proxy)).
+- **Single-spec mode:** one OpenAPI/Discovery document; **`execute`** can use the internal OpenAPI→GraphQL layer when translation succeeds, with **REST fallback** on failure. Native protocol ops behave the same when configured.
+
+## Stage 1 — Multi-spec merge
+
+**User-facing model (8.0+):** the bundled OpenAPI catalog is **empty by default**. Opt in with **`CLAWQL_PROVIDER=default`** (or `CLAWQL_INSTANCE_SPEC='{"providers":{"pack":"default"}}'` / Helm **`providers.pack=default`**; chart default is **`none`**), choose **`all-providers`** for literally everything, or **choose** a merge (`CLAWQL_BUNDLED_PROVIDERS`, `CLAWQL_SPEC_PATHS`, or another merged `CLAWQL_PROVIDER` preset).
+
+Precedence (order matters) when a merge is selected:
+
+1. **`CLAWQL_SPEC_PATHS`** — merge local files (comma, semicolon, or newline separated).
+2. **`CLAWQL_BUNDLED_PROVIDERS`** — comma/semicolon/newline-separated **bundled** provider ids and/or **`google`** / **`aws`**.
+3. **`CLAWQL_PROVIDER`** — merged shortcut (`default`, `google`, `aws`, `all-providers`, `atlassian`, …).
+4. **No automatic stack** — if none of the above select a pack, the catalog stays **empty** (native GraphQL/gRPC only when configured).
+
+See [Bundled providers plugin](/plugins/bundled-providers) for the full preset table. Curated pack **`default`** = Cloudflare, GitHub, Slack, Linear, Notion, Onyx.
+
+## Stage 2 — Single spec
+
+If Stage 1 does **not** apply, the first match wins:
+
+1. **`CLAWQL_SPEC_PATH`** (aliases: `OPENAPI_SPEC_PATH`, `OPENAPI_FILE`)
+2. **`CLAWQL_SPEC_URL`** (alias: `OPENAPI_SPEC_URL`)
+3. **`CLAWQL_DISCOVERY_URL`** (alias: `GOOGLE_DISCOVERY_URL`)
+4. **`CLAWQL_PROVIDER`** — **single** bundled vendor (`cloudflare`, `github`, **`linear`**, …), not a merged preset
+5. Rare fallback (`kind: "default"` in code)
+
+**Examples:** `CLAWQL_SPEC_PATH=./openapi.yaml` skips Stage 1. `CLAWQL_PROVIDER=cloudflare` alone loads Cloudflare as a **single** bundle. An empty environment (nothing above) leaves an **empty catalog**; set **`CLAWQL_PROVIDER=default`** for the curated pack, **`CLAWQL_PROVIDER=all-providers`** for every vendor plus GCP and AWS manifests, or **`CLAWQL_BUNDLED_PROVIDERS=…`** for a custom subset.
+
+## Environment variables
+
+| Variable                                                                | Meaning                                                                                                                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_SPEC_PATH`                                                      | Local OpenAPI JSON/YAML                                                                                                                                 |
+| `CLAWQL_SPEC_PATHS`                                                     | Multiple paths → **merge**                                                                                                                              |
+| `CLAWQL_BUNDLED_PROVIDERS`                                              | Ids to merge: `BUNDLED_PROVIDERS` keys and/or `google`                                                                                                  |
+| `CLAWQL_SPEC_URL`                                                       | Fetch OpenAPI from HTTPS                                                                                                                                |
+| `CLAWQL_DISCOVERY_URL`                                                  | Google Discovery JSON URL                                                                                                                               |
+| `CLAWQL_PROVIDER`                                                       | Merged preset (Stage 1) or single vendor (Stage 2)                                                                                                      |
+| `CLAWQL_PROVIDER_AUTH_JSON`                                             | One JSON object: **`specLabel`** → token string or headers (multi-vendor **`execute`**)                                                                 |
+| `CLAWQL_HTTP_HEADERS`                                                   | Global header JSON; with **`CLAWQL_PROVIDER_AUTH_JSON`**, omit **`Authorization`** here                                                                 |
+| `CLAWQL_INTROSPECTION_PATH`                                             | Pregenerated GraphQL introspection JSON for OpenAPI→GraphQL field hints (optional)                                                                      |
+| `CLAWQL_GRAPHQL_URL` / `CLAWQL_GRAPHQL_NAME` / `CLAWQL_GRAPHQL_HEADERS` | Single native GraphQL endpoint; optional **`CLAWQL_GRAPHQL_SCHEMA_PATH`** / **`CLAWQL_GRAPHQL_INTROSPECTION_PATH`** if introspection is blocked         |
+| `CLAWQL_GRAPHQL_SOURCES`                                                | JSON array — merge **native** GraphQL HTTP endpoints into **`search`** / **`execute`** (optional per-source **`schemaPath`** / **`introspectionPath`**) |
+| `CLAWQL_GRPC_SOURCES`                                                   | JSON array — merge unary **gRPC** RPCs from `.proto` paths                                                                                              |
+| `CLAWQL_API_BASE_URL`                                                   | Override REST base URL                                                                                                                                  |
+| `CLAWQL_BUNDLED_OFFLINE`                                                | `1` / `true` — do not fetch missing bundled files from the network                                                                                      |
+
+Full list: [`.env.example`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/.env.example) in the repo.
+
+## Google Discovery
+
+Use **`CLAWQL_DISCOVERY_URL`** for GCP and other Google APIs, for example:
+
+```bash
+export CLAWQL_DISCOVERY_URL="https://compute.googleapis.com/\$discovery/rest?version=v1"
+```
+
+The repo vendors a lookup snapshot and docs for refreshing it: [`docs/providers/google-apis-lookup.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/providers/google-apis-lookup.md). The **bundled Google Cloud** API set (on-disk manifest under [`providers/google/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/providers/google)) powers merged preset **`google`**.
+
+<div className="not-prose">
+  <Button href="/bundled-specs" variant="text" arrow="right">
+    <>Bundled providers and presets</>
+  </Button>
+</div>

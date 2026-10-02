@@ -360,3 +360,168 @@ export async function runPaymentsStripeMeterReport(
   );
   return 0;
 }
+
+export type PaymentsStripeCatalogEnsureOptions = {
+  dryRun?: boolean;
+  includeTopUps?: boolean;
+  includeMeter?: boolean;
+  json?: boolean;
+  env?: NodeJS.ProcessEnv;
+};
+
+export async function runPaymentsStripeCatalogEnsure(
+  options: PaymentsStripeCatalogEnsureOptions = {}
+): Promise<number> {
+  const env = options.env ?? process.env;
+  const dryRun = options.dryRun === true;
+  if (!dryRun && !isStripeConfigured(env)) {
+    console.error(
+      "STRIPE_SECRET_KEY is required for live catalog ensure (or pass --dry-run to preview)"
+    );
+    return 1;
+  }
+
+  const { ensureStripeCatalog } = await import("../stripe/stripe-catalog-service.js");
+  const result = await ensureStripeCatalog(
+    {
+      dryRun,
+      includeTopUps: options.includeTopUps,
+      includeMeter: options.includeMeter,
+    },
+    env
+  );
+
+  if (options.json) {
+    console.log(JSON.stringify(result, null, 2));
+    return 0;
+  }
+
+  console.log(
+    dryRun
+      ? "Stripe catalog dry-run (no API calls) — planned CPC Products / Prices / Meter:"
+      : "Stripe catalog ensure complete:"
+  );
+  for (const p of result.plans) {
+    console.log(
+      `  plan ${p.planId}: ${p.status}${p.priceId ? ` price=${p.priceId}` : ""}${p.productId ? ` product=${p.productId}` : ""} → ${p.envVar}`
+    );
+  }
+  for (const t of result.topUps) {
+    console.log(
+      `  top-up ${t.label}: ${t.status}${t.priceId ? ` price=${t.priceId}` : ""} → ${t.envVar}`
+    );
+  }
+  console.log(
+    `  meter ${result.meter.eventName}: ${result.meter.status}${result.meter.meterId ? ` meter=${result.meter.meterId}` : ""}${result.meter.meteredPriceId ? ` price=${result.meter.meteredPriceId}` : ""}`
+  );
+  if (result.envExports.length) {
+    console.log("\nEnv exports:");
+    for (const line of result.envExports) console.log(`  ${line}`);
+  }
+  return 0;
+}
+
+export type PaymentsStripeCatalogValidateOptions = {
+  json?: boolean;
+  env?: NodeJS.ProcessEnv;
+};
+
+export async function runPaymentsStripeCatalogValidate(
+  options: PaymentsStripeCatalogValidateOptions = {}
+): Promise<number> {
+  const env = options.env ?? process.env;
+  const { validateStripeCatalogEnv } = await import("../stripe/stripe-catalog-service.js");
+  const result = validateStripeCatalogEnv(env);
+  if (options.json) {
+    console.log(JSON.stringify(result, null, 2));
+    return result.ok ? 0 : 1;
+  }
+  console.log(
+    result.ok ? "Stripe catalog env: OK (subscription rail)" : "Stripe catalog env: INCOMPLETE"
+  );
+  for (const c of result.checks) {
+    console.log(`  ${c.ok ? "✓" : "✗"} ${c.name}: ${c.detail}`);
+  }
+  if (!result.ok) {
+    console.log(
+      "\nFix: set STRIPE_SECRET_KEY then run:\n  clawql payments stripe catalog ensure\nOr preview with --dry-run first."
+    );
+  }
+  return result.ok ? 0 : 1;
+}
+
+export type PaymentsStripeCheckoutCreateOptions = {
+  plan?: string;
+  orgName?: string;
+  email?: string;
+  successUrl?: string;
+  cancelUrl?: string;
+  billingMode?: string;
+  json?: boolean;
+  env?: NodeJS.ProcessEnv;
+};
+
+export async function runPaymentsStripeCheckoutCreate(
+  options: PaymentsStripeCheckoutCreateOptions = {}
+): Promise<number> {
+  if (options.plan !== "pro" && options.plan !== "team") {
+    console.error(
+      "Usage: clawql payments stripe checkout create --plan pro|team --org-name NAME --email user@acme.com --success-url URL --cancel-url URL"
+    );
+    return 1;
+  }
+  if (!options.orgName?.trim() || !options.email?.trim()) {
+    console.error(
+      "Usage: clawql payments stripe checkout create --plan pro|team --org-name NAME --email user@acme.com --success-url URL --cancel-url URL"
+    );
+    return 1;
+  }
+  if (!options.successUrl?.trim() || !options.cancelUrl?.trim()) {
+    console.error("--success-url and --cancel-url are required");
+    return 1;
+  }
+  const billingMode =
+    options.billingMode === "hybrid" || options.billingMode === "stripe_checkout"
+      ? options.billingMode
+      : options.billingMode
+        ? null
+        : "stripe_checkout";
+  if (billingMode === null) {
+    console.error("--billing-mode must be stripe_checkout or hybrid");
+    return 1;
+  }
+
+  const env = options.env ?? process.env;
+  if (!isStripeConfigured(env)) {
+    console.error("STRIPE_SECRET_KEY is required for live Stripe API calls");
+    return 1;
+  }
+
+  try {
+    const { createStripeCheckoutSession } = await import("../stripe/checkout-session.js");
+    const session = await createStripeCheckoutSession({
+      plan: options.plan,
+      orgName: options.orgName,
+      ownerEmail: options.email,
+      successUrl: options.successUrl,
+      cancelUrl: options.cancelUrl,
+      billingMode,
+      env,
+    });
+
+    if (options.json) {
+      console.log(JSON.stringify(session, null, 2));
+      return 0;
+    }
+
+    console.log(`Created Checkout Session ${session.id} (${session.plan} · ${session.priceId})`);
+    console.log(session.url);
+    return 0;
+  } catch (error) {
+    if (error instanceof StripeNotConfiguredError) {
+      console.error(error.message);
+      return 1;
+    }
+    throw error;
+  }
+}

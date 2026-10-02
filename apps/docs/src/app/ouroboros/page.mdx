@@ -1,0 +1,236 @@
+# Ouroboros library (`clawql-ouroboros`)
+
+ClawQL ships a TypeScript workspace package **`clawql-ouroboros`** for **specification-first** multi-generation workflows: validated **Seeds**, **Wonder / Reflect** hooks, pluggable **Executor** and **Evaluator**, **ontology convergence** (similarity, stagnation, oscillation, regression gates), an **`EvolutionaryLoop`**, and helpers for **MCP-style tool registration** and a **background seed poller**. {{ className: 'lead' }}
+
+It is a **library** you `import` from Node ≥ 22. In **`clawql-mcp`**, Ouroboros MCP tools **always register** via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`): **`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`**. For durable lineages, configure Postgres with **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split **`CLAWQL_OUROBOROS_DB_*`** env vars). **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate (ignored for tool load). Langfuse eval remains opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`**.
+
+**Learn walkthrough** (three tools together, benefits, full MCP example): [Ouroboros tools (seed, loop, lineage)](/learn/ouroboros-tools).
+
+## How it relates to upstream “Ouroboros”
+
+The widely known Python project **[Q00/ouroboros](https://github.com/Q00/ouroboros)** is a full agentic stack (interview, CLI, MCP plugin, execution routing, persistence, and more). **`clawql-ouroboros`** is a **ClawQL-scoped subset**: overlapping concepts (seed, wonder/reflect, convergence), **not** API or feature parity. The npm name **`clawql-ouroboros`** avoids implying an official TypeScript port of Q00.
+
+## Install and build
+
+From the **ClawQL** monorepo, depend on the workspace:
+
+```json
+{ "dependencies": { "clawql-ouroboros": "workspace:*" } }
+```
+
+From **npm** (after you publish `clawql-ouroboros`):
+
+```bash
+npm install clawql-ouroboros
+```
+
+From a repo checkout, build the package:
+
+```bash
+npm run build -w clawql-ouroboros
+```
+
+## Imports
+
+| Path                         | Contents                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clawql-ouroboros`           | `SeedSchema`, `EvolutionaryLoop`, `ConvergenceCriteria`, `InMemoryEventStore`, types                                                              |
+| `clawql-ouroboros/mcp-hooks` | `ouroborosMcpTools` — schemas + handlers for **embedding** in your own MCP host (not `clawql-mcp` registration; production uses `clawql-harness`) |
+| `clawql-ouroboros/poller`    | `startSeedsPoller` — interval loop with your DB `fetchPending` / `markFailed`                                                                     |
+
+## Minimal usage (conceptual)
+
+1. Implement or inject **WonderEngine**, **ReflectEngine**, **Executor**, **Evaluator** (or use stubs for tests).
+2. Choose an **EventStore** — **`InMemoryEventStore`** for dev/tests; **Postgres** (or similar) for production. `clawql-mcp` already includes a Postgres-backed store for `ouroboros_*`.
+3. Construct **`EvolutionaryLoop`**, then **`await loop.run(seed)`** or **`run(seed, { maxGenerations, convergenceThreshold })`** for per-run caps.
+
+## Using Ouroboros from `clawql-mcp` (production guide)
+
+**`clawql-mcp`** always composes **`makeHarnessLayer(createOuroborosHarnessPlugin)`**, so **`listTools`** includes:
+
+- **`clawql_think`**
+- **`ouroboros_create_seed_from_document`**
+- **`ouroboros_run_evolutionary_loop`**
+- **`ouroboros_get_lineage_status`**
+- **`ouroboros_measure_drift`**
+
+These are standard MCP tools exposed over stdio, Streamable HTTP, and optional gRPC. Do **not** use **`clawql-ouroboros/mcp-hooks`** as the registration path for **`clawql-mcp`** (that export is for embedding the library in your own server).
+
+### 1) Durable lineage (optional)
+
+Set **`CLAWQL_OUROBOROS_DATABASE_URL`** (or split `CLAWQL_OUROBOROS_DB_*`) for durable events in Postgres. Without database config, lineages are in-memory (process-local, cleared on restart).
+
+### 2) Understand the default loop behavior
+
+The loop runs with default Wonder/Reflect/Executor/Evaluator engines unless you replace them in your embedding:
+
+- Wonder/Reflect: conservative defaults
+- Evaluator: lightweight pass/fail based on output signal
+- Executor: can now route to internal ClawQL `search`/`execute` if Seed route hints are present
+
+This means you can run meaningful workflows immediately, then incrementally harden custom engines later.
+
+### 3) Route hints: the contract
+
+For schema-safe routing with MCP inputs, put hints in:
+
+- **`seed.brownfield_context.context_references[]`**
+
+Supported hint objects:
+
+1. **Execute hint** (run a specific operation):
+
+```json
+{
+  "clawql_execute": {
+    "operationId": "listPets",
+    "args": {},
+    "fields": ["name"]
+  }
+}
+```
+
+2. **Search hint** (discover operations first):
+
+```json
+{
+  "clawql_search": {
+    "query": "find pet listing operations",
+    "limit": 5
+  }
+}
+```
+
+Why this field: `context_references` accepts flexible object payloads and is validated by SeedSchema, so hints survive tool input parsing and transport boundaries.
+
+### 4) Full `ouroboros_run_evolutionary_loop` payload (copy/paste)
+
+```json
+{
+  "seed": {
+    "goal": "List pets through internal execute",
+    "task_type": "analysis",
+    "brownfield_context": {
+      "project_type": "brownfield",
+      "context_references": [
+        {
+          "clawql_execute": {
+            "operationId": "listPets",
+            "args": {},
+            "fields": ["name"]
+          }
+        }
+      ],
+      "existing_patterns": [],
+      "existing_dependencies": []
+    },
+    "constraints": [],
+    "acceptance_criteria": ["Return non-empty output"],
+    "ontology_schema": {
+      "name": "PetOntology",
+      "description": "Pet listing ontology",
+      "fields": []
+    },
+    "evaluation_principles": [],
+    "exit_conditions": [],
+    "metadata": {
+      "seed_id": "pet-run-0001",
+      "version": "1.0.0",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "ambiguity_score": 0.1,
+      "interview_id": null,
+      "parent_seed_id": null
+    }
+  },
+  "maxGenerations": 2,
+  "convergenceThreshold": 0.8
+}
+```
+
+Expected response includes:
+
+- `converged`
+- `generations`
+- `lineageId`
+- `status`
+- `summary`
+
+### 5) Inspect lineage output
+
+Call **`ouroboros_get_lineage_status`** with `seedId = lineageId` from the run response.
+
+Generation records include:
+
+- `generation_number`
+- `seed`
+- `execution_output`
+- `evaluation_summary`
+- `phase`
+
+For route-hinted runs, `execution_output` contains route metadata (for example `route: "execute"` or `route: "search"`), which is useful for observability and tests.
+
+### 6) Practical patterns
+
+1. **Deterministic execute workflow**
+   - Put `clawql_execute` hint in `context_references`
+   - Keep acceptance criteria narrow and objective
+   - Use low `maxGenerations` (2-4) for predictable behavior
+
+2. **Discovery-first workflow**
+   - Put `clawql_search` hint first
+   - Add explicit acceptance criteria about relevance and operation quality
+   - Later replace defaults with custom Reflect to convert search output into a new execute-focused seed
+
+3. **Document bootstrap workflow**
+   - Use `ouroboros_create_seed_from_document` to crystallize raw extracted text
+   - Run loop
+   - Optionally pair results with `memory_ingest` and `notify` for durable notes + completion signals
+
+### 7) Troubleshooting
+
+- **Tools missing from ListTools**
+  - Confirm you are on **clawql-mcp 8.0+** (harness always registers Ouroboros tools). Older docs that required `CLAWQL_ENABLE_OUROBOROS=1` are obsolete for registration.
+
+- **Lineage lost after restart**
+  - Configure `CLAWQL_OUROBOROS_DATABASE_URL` (or split DB vars)
+
+- **Custom route hint ignored**
+  - Verify hint object is inside `brownfield_context.context_references[]`
+  - Verify key names exactly: `clawql_execute` or `clawql_search`
+  - Confirm `operationId` and/or `query` are non-empty strings
+
+- **Validation errors on Seed**
+  - Ensure required Seed fields are present
+  - Keep metadata shape compatible with SeedSchema base fields
+
+- **Unexpected operation result shape**
+  - Remember `execute` may project fields or fallback to REST depending on mode
+  - Test operation directly with `search`/`execute` before embedding in loop
+
+### 8) Safety and rollout recommendations
+
+- Start with in-memory lineages in dev, then move to Postgres in staging/prod.
+- Keep initial `maxGenerations` low to bound runtime and output volume.
+- Log and monitor lineage status transitions (`active`, `converged`, `exhausted`, `aborted`).
+- Treat route hints as execution intent; gate who can author seeds in multi-tenant contexts.
+
+## npm registry
+
+On **npm**, the package listing shows **`README.md`** from [`packages/clawql-ouroboros/README.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-ouroboros/README.md) — install, quick start, export table, and honest scope for **any** Node ≥22 project (not only ClawQL). The tarball includes **`LICENSE`** (Apache-2.0).
+
+## Full guide and copy-paste examples
+
+Canonical documentation with **examples** (minimal loop, convergence-only, MCP hooks, poller) lives in the repo:
+
+**[clawql-ouroboros.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/ouroboros/clawql-ouroboros.md)**
+
+Package README (short pointer): **[packages/clawql-ouroboros/README.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/packages/clawql-ouroboros/README.md)**.
+
+## See also
+
+- [DAOS Unified Architecture v2.7](/ouroboros/daos) — 7-layer platform, Manifest, PEP, Memory 2.0, Circuit Breaker.
+- [Coordination layer specification](/ouroboros/specification) — NATS handoff, NSV/SGDOP, Diversity Dividends (math deep dive).
+- [DAOS build plan v2.7.1](/ouroboros/build-plan) — P0–P3 implementation contract.
+- [Tools](/tools) — MCP tools on **`clawql-mcp`** (**`search`**, **`execute`**, vault, optional **`notify`**, etc.).
+- [Concepts](/concepts) — how ClawQL’s **token-efficient** `search` → `execute` path fits the broader agent story.
+- [mcp-tools.md — Ouroboros section](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/mcp-tools.md#ouroboros_-optional) — tool names, flags, and persistence notes.

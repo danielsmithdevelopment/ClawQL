@@ -11,8 +11,6 @@ import { gateGooseFileWrite, makeGooseAdapterLayer } from "./adapters/goose/inde
 import { OPENHANDS_ATR_TEMPLATES } from "./adapters/openhands/atr-templates.js";
 import { makeOpenHandsBudgetEnforcer } from "./adapters/openhands/budget-enforcer.js";
 import { makeOpenHandsAdapterLayer } from "./adapters/openhands/index.js";
-import { getAdapterBundle } from "./get-adapter.js";
-
 describe("Goose adapter", () => {
   let dir = "";
 
@@ -109,14 +107,5 @@ describe("OpenHands budget enforcer", () => {
       }).pipe(Effect.provide(layer))
     );
     expect(verified.valid).toBe(true);
-  });
-});
-
-describe("getAdapterBundle phase 3", () => {
-  it("resolves goose and openhands", async () => {
-    const goose = await Effect.runPromise(getAdapterBundle("goose", "/tmp/g.db"));
-    const oh = await Effect.runPromise(getAdapterBundle("openhands", "/tmp/o.db"));
-    expect(goose.adapterLayer).toBeDefined();
-    expect(oh.adapterLayer).toBeDefined();
   });
 });

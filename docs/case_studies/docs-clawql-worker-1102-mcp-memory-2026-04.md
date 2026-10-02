@@ -16,7 +16,7 @@ Operators need a single narrative that ties together edge errors, Wrangler auth,
 
 - **Symptom:** "None of the case studies are loading" on the public docs site; mobile screenshot showed Cloudflare Error 1102 — Worker exceeded resource limits, with a Ray ID (example: `9ef9ed27bf83dbdd`, UTC window around 2026-04-21 05:18).
 - **Observability (dashboard):** spike of errors vs successes in a one-hour window; repeated `warn` lines — `waitUntil() tasks did not complete within the allowed time after invocation end and have been cancelled` (see Cloudflare Workers docs on `context.waitUntil` lifetime).
-- **Interpretation:** the isolate was under pressure from request-time work (large MDX / RSC paths) and post-response background tasks — often Next.js + OpenNext internals, not app-level `waitUntil` calls in `website/src`.
+- **Interpretation:** the isolate was under pressure from request-time work (large MDX / RSC paths) and post-response background tasks — often Next.js + OpenNext internals, not app-level `waitUntil` calls in `apps/docs/src`.
 
 ---
 
@@ -26,7 +26,7 @@ Chronology (compressed):
 
 1. **Wrangler / OAuth:** browser authorization for `wrangler login` failed ("unexpected error" / network) — common when VPN, extensions, or blocked auth endpoints interfere. Mitigation: use `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` for deploy automation.
 2. **Early API auth (9106 on `/memberships`):** resolved by supplying account context so Wrangler doesn't depend on endpoints the token can't use.
-3. **Deploy progressed, then failed on `/zones/.../workers/routes` (10000)** even with broad token permissions. Account-owned tokens and zone route attachment are a known friction surface. Mitigation: remove `routes` with `custom_domain` from `website/wrangler.jsonc` and attach `docs.<apex>` via `PUT /accounts/{account_id}/workers/domains` in `scripts/deploy/deploy-docs-to-cloudflare.sh` (already in repo). Result: Worker upload + custom hostname succeeded.
+3. **Deploy progressed, then failed on `/zones/.../workers/routes` (10000)** even with broad token permissions. Account-owned tokens and zone route attachment are a known friction surface. Mitigation: remove `routes` with `custom_domain` from `apps/docs/wrangler.jsonc` and attach `docs.<apex>` via `PUT /accounts/{account_id}/workers/domains` in `scripts/deploy/deploy-docs-to-cloudflare.sh` (already in repo). Result: Worker upload + custom hostname succeeded.
 
 ---
 
@@ -81,7 +81,7 @@ Shipped in-repo (see [`docs/website/website-performance-workers-guardrails.md`](
 - **GitHub Actions:** `.github/workflows/website-lighthouse.yml` — `npm run build` + `next start` + Lighthouse + `scripts/dev/assert-lighthouse-scores.mjs` thresholds.
 - **WCAG-oriented:** skip link to `#main-content`, `aria-label` on primary nav blocks, `focus-visible` outlines on `Button`, default `loading="lazy"` / `decoding="async"` on MDX `img`, `rel="noopener noreferrer"` on external `https://` links.
 - **SEO:** sitemap `force-static`, removed misleading `lastModified: new Date()` on every URL.
-- **Best practices headers:** `Referrer-Policy`, `X-Content-Type-Options` on `/:path*` via `website/next.config.mjs`.
+- **Best practices headers:** `Referrer-Policy`, `X-Content-Type-Options` on `/:path*` via `apps/docs/next.config.mjs`.
 
 ---
 
@@ -91,7 +91,7 @@ Shipped in-repo (see [`docs/website/website-performance-workers-guardrails.md`](
 
 - Scheduled Lighthouse against production `https://docs.clawql.com/` (looser thresholds; weekly cron).
 - Synthetic uptime for `/`, `/api/health`, and one case-study path (ties to [`docs/mcp/schedule-synthetic-checks.md`](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/mcp/schedule-synthetic-checks.md)).
-- `eslint-plugin-jsx-a11y` on `website/` with incremental cleanup.
+- `eslint-plugin-jsx-a11y` on `apps/docs/` with incremental cleanup.
 - Workers Logpush or extended retention for `clawql-docs` if incidents recur (Ray + path correlation).
 
 **Prevention checklist (condensed):**

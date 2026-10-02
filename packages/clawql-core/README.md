@@ -20,12 +20,25 @@ Canonical spec: [`docs/design/clawql-core-plugin-architecture.md`](../../docs/de
 | `loadPluginModuleEffect`                 | Dynamic `import()` loader (pairs with optionalDependencies)              |
 | `PanguardProviderPlugin`                 | Reference hooks-only provider plugin                                     |
 | `WebMcpDraftPlugin`                      | Draft WebMCP tools from OpenAPI/GraphQL/forms; bound execute via gateway |
+| Fast Decision (`clawql-core/classifier`) | Calibrated closed-category classifier + open use-site registry (leg 5)   |
 
 **Security:** Hooks may restrict, never loosen ATR — enforced in `fireHook`, not in any provider. Effect types structure errors and DI; they do **not** replace the runtime ATR check.
 
 **Zero-import-if-absent:** `optionalDependencies` + `loadPluginModuleEffect` — not Effect Layers alone.
 
-**Internal modules:** `merkle/`, `hash-chain/`, `cuckoo/`, `loki/`, `plugin/`, `audit/`, `providers/webmcp-draft/`.
+**Internal modules:** `merkle/`, `hash-chain/`, `cuckoo/`, `loki/`, `plugin/`, `audit/`, `classifier/`, `providers/webmcp-draft/`.
+
+### Fast Decision Primitive (`clawql-core/classifier`)
+
+Spec: [`docs/specs/classifier/fast-decision-primitive-v0.4.md`](../../docs/specs/classifier/fast-decision-primitive-v0.4.md)
+
+```ts
+import {
+  FastDecisionTestStackLive,
+  seedBuiltinUseSites,
+  runFastDecision,
+} from "clawql-core/classifier";
+```
 
 ### Streams / celld entry (`clawql-core/streams-slim`)
 
@@ -35,6 +48,6 @@ Workers-safe subset for Durable Object cells (no `webmcp-draft` / `node:fs`, no 
 import { runAuditOperation, runCacheOperation } from "clawql-core/streams-slim";
 ```
 
-Requires celld / Workers **`nodejs_compat`** for `node:crypto` + `Buffer` (hash-chain). Search / execute / memory stay on the MCP host via cell `fetch(CLAWQL_MCP_URL)` (Streamable HTTP) — they are not in this package. Example: [`examples/streams-celld`](../../examples/streams-celld/).
+Requires celld / Workers **`nodejs_compat`** for `node:crypto` + `Buffer` (hash-chain). Search / execute / memory stay on the MCP host via cell `fetch(CLAWQL_MCP_URL)` (Streamable HTTP) — they are not in this package. Example: [`docs/examples/streams-celld`](../../docs/examples/streams-celld/).
 
 **8.0 hard break:** Phase-2 `Plugin` / `beforeCallTool` and any compatibility bridge are removed — rewrite against `ProviderPlugin`.

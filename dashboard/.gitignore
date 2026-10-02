@@ -1,6 +1,0 @@
-.next/
-node_modules/
-*.log
-.env.local
-# Staged from repo root for `docker build -f dashboard/Dockerfile ./dashboard` (CI copies before build).
-.env.example

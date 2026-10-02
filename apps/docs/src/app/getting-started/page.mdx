@@ -1,0 +1,60 @@
+import { Button } from '@/components/Button'
+
+# Getting started
+
+You are connecting to ClawQL’s **Agentic Gateway** — the Foundational Platform for Auditable Production AI. Pick a path, connect an agent, then deepen with Learn and the [Zero-Trust Agentic Fabric](/architecture/agentic-fabric) when you graduate from a laptop Edge node to Dedicated Virtual Gateways. {{ className: 'lead' }}
+
+<div className="not-prose my-8 flex flex-wrap gap-3">
+  <Button href="/quickstart" arrow="right">
+    <>Quickstart</>
+  </Button>
+  <Button href="/agent-setup" variant="outline">
+    <>Agent setup</>
+  </Button>
+  <Button href="/getting-started/inference" variant="outline">
+    <>Inference setup</>
+  </Button>
+  <Button href="/getting-started/custom-sources" variant="outline">
+    <>Custom sources</>
+  </Button>
+  <Button href="/getting-started/for-teams" variant="outline">
+    <>For teams</>
+  </Button>
+  <Button href="/getting-started/immutable-releases" variant="outline">
+    <>Immutable releases</>
+  </Button>
+  <Button href="/mcp-clients" variant="outline">
+    <>MCP clients</>
+  </Button>
+</div>
+
+## Recommended path
+
+1. [Quickstart](/quickstart) — `npx clawql-mcp` (empty catalog until you set `CLAWQL_PROVIDER=default` or another pack) and optional install options
+2. [Agent setup](/agent-setup) — desktop onboarding, Cursor iOS Cloud Agents, local sandbox
+3. [Inference setup](/getting-started/inference) — OpenAI-compatible `/v1`, BYOK providers, MCP + memory
+4. [Custom sources](/getting-started/custom-sources) — register other MCP servers into one gateway surface
+5. [MCP clients](/mcp-clients) — stdio, HTTP, and gateway auth
+6. [Concepts](/concepts) — how **`search`** and **`execute`** save context
+7. [Using search & execute](/learn/search-and-execute-mcp) — first hands-on lesson
+8. [Deploy](/deployment) — Helm / Kubernetes when you outgrow local MCP
+
+## Deployment options
+
+| Path                   | Best for                                    | Start here                                                                                       |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Local MCP**          | Evaluation, solo dev                        | [Quickstart](/quickstart) · [Agent setup](/agent-setup)                                          |
+| **Custom sources**     | Consolidate other MCP servers / APIs        | [Custom sources](/getting-started/custom-sources)                                                |
+| **Inference**          | OpenAI drop-in gateway, BYOK models         | [Inference setup](/getting-started/inference)                                                    |
+| **Tier 1 Compose**     | Full local IDP slice                        | [Deployment](/deployment)                                                                        |
+| **Helm full stack**    | Team K8s, IDP pipeline                      | [Kubernetes](/deployment/kubernetes) · [Helm](/helm)                                             |
+| **Teams**              | Shared memory, golden hosts, observability  | [For teams](/getting-started/for-teams)                                                          |
+| **Immutable releases** | Verify forever — start with a local dry-run | [Immutable releases](/getting-started/immutable-releases) · [Vision](/vision/immutable-releases) |
+| **Operations**         | Secrets, health, day-2                      | [Operations guide](/deployment/operations-guide)                                                 |
+
+## Next steps
+
+- [Learn](/learn) — hands-on modules
+- [Vision & status](/vision/roadmap) — shipped vs planned
+- [Reference](/reference) — tools, configuration, plugins
+- [Examples](/examples) — session walkthroughs

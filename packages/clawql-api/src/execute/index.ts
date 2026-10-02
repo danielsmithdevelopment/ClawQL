@@ -1,5 +1,6 @@
 export * from "./execute-core.js";
 export * from "./execute-live.js";
+export * from "./resume-core.js";
 export * from "./field-projection.js";
 export * from "./native-grpc.js";
 export * from "./native-graphql.js";

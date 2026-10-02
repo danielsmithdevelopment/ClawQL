@@ -1,0 +1,5 @@
+# Marker: run Decide live-path score-once on frozen v0.6.
+# Leave EMPTY (comments only) when not intentionally triggering.
+# First non-comment line must be present to fire (e.g. v0.6).
+#
+# Last run: PR #1149 / GHA 36199128704. Cleared after confirmation closeout.

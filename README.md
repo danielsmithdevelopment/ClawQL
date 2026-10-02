@@ -16,7 +16,7 @@ Feature tiers (aligned with the [architecture diagram](docs/readme/images/clawql
 - Stdio and HTTP MCP server modes
 - Bundled provider specs for offline lookup and multi-provider workflows
 
-Primary package: `clawql-mcp` (**7.0.0** — Agentic Gateway entry; default stack, vault-first onboarding, opt-in operator scaffold — [`RELEASE_NOTES_v7.0.0.md`](RELEASE_NOTES_v7.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md))  
+Primary package: `clawql-mcp` (**7.0.0** — Agentic Gateway entry; default stack, vault-first onboarding, opt-in operator scaffold — [`RELEASE_NOTES_v7.0.0.md`](docs/release/RELEASE_NOTES_v7.0.0.md) · announcement drafts: [`docs/announcements/announcement-drafts-v7.0.0.md`](docs/announcements/announcement-drafts-v7.0.0.md))  
 Repo: https://github.com/danielsmithdevelopment/ClawQL
 
 ### Container images on GHCR (Docker / Helm)

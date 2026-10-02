@@ -1,3 +1,27 @@
+### 2026-09-29 — `pageindex-ab` preconditions: BM25 ranker + `read_around` (still no scored run)
+
+| Item                              | State                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------- |
+| `CLAWQL_MEMORY_VAULT_RANKER=bm25` | Landed (default remains `idf`)                                             |
+| MCP `read_around`                 | Landed                                                                     |
+| Offline smoke                     | BM25 tops short-protocols; IDF tops long-boilerplate (length-norm differs) |
+| Next                              | Corpus (+ list + code strata) → freeze → scored run → 8.0.0 default flips  |
+
+### 2026-09-29 — `pageindex-ab` eval spec **v0.2** (task-completion factorial; no scored run)
+
+**Not a WIN/FAIL cell.** Reframe: does each addition (BM25, PageIndex, CodeGraph) improve today's omit-`sources` default? Latency/cost reported, never gates. Live [memory-stack post](https://pragmaticvectors.com/posts/agent-memory-stack/) overclaims hybrid defaults — correction draft [`agent-memory-stack-corrections.md`](../gtm/pragmaticvectors/agent-memory-stack-corrections.md).
+
+| Item    | State                                                                                       |
+| ------- | ------------------------------------------------------------------------------------------- |
+| Spec    | [`pageindex-ab-eval-spec-v0.1.md`](./pageindex-ab-eval-spec-v0.1.md) (body v0.2)            |
+| Harness | [`benchmarks/pageindex-ab/`](../../benchmarks/pageindex-ab/) — 8 confirmatory + diagnostics |
+| Control | `H-idf` = vault IDF + vector                                                                |
+| Next    | Corpus (+ list + code strata) → freeze → scored run                                         |
+
+### 2026-09-28 — `pageindex-ab` eval spec v0.1 scaffold (superseded by v0.2)
+
+v0.1 used specialist/demote framing and token caps. Superseded by task-completion-only factorial.
+
 ### 2026-08-08 — B-7.2 + B-7.1-blind activated (pre-C&H)
 
 | Cell        | Task id                                   | Status                                                                                                                   |
@@ -129,7 +153,7 @@ document is the **scoreboard + run diary**.
 | Harness            | OpenCode → clawql-inference                                                                                                                      |
 | How to grade a WIN | clawql-on (or ouroboros-on) mean score **>** off arm; prefer on=1.0 / off=0.0                                                                    |
 | Last ledger update | 2026-08-04T16:40Z                                                                                                                                |
-| CI matrix control  | [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push                                          |
+| CI matrix control  | [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json) — only `pr_active` burns tokens on PR/push                    |
 | Task explanations  | [`openbench-task-explanations.md`](./openbench-task-explanations.md) — prove / why / how for every cell                                          |
 
 ---
@@ -329,7 +353,7 @@ Ouroboros [30872913519](https://github.com/danielsmithdevelopment/ClawQL/actions
 
 When a task is thoroughly verified (headline WIN, ideally replicated):
 
-1. Move it from `pr_active` → `retired` in [`openbench/ci-matrix.json`](../../openbench/ci-matrix.json).
+1. Move it from `pr_active` → `retired` in [`benchmarks/openbench/ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json).
 2. PR/push stops running it; `workflow_dispatch` can still pick the task or `all-including-retired`.
 3. Ouroboros is retired from PR auto-runs (`openbench-ouroboros-ab.yml` is **workflow_dispatch only**).
 
@@ -350,7 +374,7 @@ stream error until our wall timeout (classic #8203-style hang).
 
 **Actions taken:**
 
-- Pause PR live A/B: `openbench/ci-matrix.json` → `live_enabled: false`
+- Pause PR live A/B: `benchmarks/openbench/ci-matrix.json` → `live_enabled: false`
 - Cap OpenCode model `limit.output` default to 2048
 - Abort remaining arms/trials on credit exhaustion
 - Keep `pr_active` list ready; flip `live_enabled: true` after topping up `OPENROUTER_API_KEY` (or switch to BYOK)
@@ -571,7 +595,7 @@ Stakeholder framing: these headline WINs upgrade **architectural** statements to
 - [ ] Append a **Run diary** subsection with the table of on/off scores, turns, wall.
 - [ ] Update **Headline claims** if a new best WIN lands.
 - [ ] Note confounds / infra (timeouts, ties, flakes) explicitly.
-- [ ] If a task is thoroughly verified: move it `pr_active` → `retired` in [`ci-matrix.json`](../../openbench/ci-matrix.json).
+- [ ] If a task is thoroughly verified: move it `pr_active` → `retired` in [`ci-matrix.json`](../../benchmarks/openbench/ci-matrix.json).
 - [ ] Point [`openbench-stack-coverage.md`](./openbench-stack-coverage.md) “Live OpenBench today” at this ledger for detail.
 - [ ] Optional: `memory_ingest` a short pointer to the new run id under vault title `OpenBench ClawQL stack coverage`.
 

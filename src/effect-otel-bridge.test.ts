@@ -3,7 +3,10 @@ import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { trace } from "@opentelemetry/api";
 import { Effect } from "effect";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { attachActiveOtelParent, makeEffectOtelTracerLayer } from "./effect-otel-bridge.js";
+import {
+  attachActiveOtelParent,
+  makeEffectOtelTracerLayer,
+} from "./composition/effect-otel-bridge.js";
 
 describe("effect-otel-bridge", () => {
   const exporter = new InMemorySpanExporter();

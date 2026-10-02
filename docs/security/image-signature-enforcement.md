@@ -4,7 +4,7 @@ For the **full golden image story** (repo gates → single OCI build → Trivy �
 
 **Signing in CI** (Cosign in [`.github/workflows/docker-publish.yml`](../../.github/workflows/docker-publish.yml)) proves **who built and signed** an image. **Enforcement** is a separate layer: something on the **deploy path** must **reject** workloads whose images are **unsigned** or **signed by the wrong identity**.
 
-The chart **defaults** to rendering a **`ClusterPolicy`** (**`kyverno.imageSignaturePolicy.enabled: true`**) that matches the example below — operators must install **Kyverno** (CRDs + controller) **before** applying the chart, or pass **`--set kyverno.imageSignaturePolicy.enabled=false`** if their cluster does not use Kyverno yet. See [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) and matrix row **19** in [`clawql-security-defense-deliverables.md`](clawql-security-defense-deliverables.md) ([#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132)).
+The chart **defaults** to rendering a **`ClusterPolicy`** (**`kyverno.imageSignaturePolicy.enabled: true`**) that matches the example below — operators must install **Kyverno** (CRDs + controller) **before** applying the chart, or pass **`--set kyverno.imageSignaturePolicy.enabled=false`** if their cluster does not use Kyverno yet. See [`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml) and matrix row **19** in [`clawql-security-defense-deliverables.md`](clawql-security-defense-deliverables.md) ([#132](https://github.com/danielsmithdevelopment/ClawQL/issues/132)).
 
 ## What “impossible to deploy unsigned” requires
 
@@ -68,7 +68,7 @@ spec:
 
 ## Helm values (necessary but not sufficient)
 
-Pin **`image: …@sha256:…`** in [`charts/clawql-mcp/values.yaml`](../../charts/clawql-mcp/values.yaml) (or overlays) so deploys are **immutable** and policies can key off digests. **Without** admission, a mistaken edit can still apply an unsigned digest — Git review + CI helps, but **only admission makes “impossible” cluster-local**.
+Pin **`image: …@sha256:…`** in [`manifests/charts/clawql-mcp/values.yaml`](../../manifests/charts/clawql-mcp/values.yaml) (or overlays) so deploys are **immutable** and policies can key off digests. **Without** admission, a mistaken edit can still apply an unsigned digest — Git review + CI helps, but **only admission makes “impossible” cluster-local**.
 
 **`make local-k8s-up`** (Docker Desktop) installs **Kyverno** and enables the chart policy in **`values-docker-desktop.yaml`** (**`kyverno.imageSignaturePolicy`** and **`matchReleaseNamespaceOnly`**) so ClawQL MCP, docs website, and **dashboard** images in that namespace must be **Cosign-signed** on GHCR (see **`docker-publish`** jobs **`build-push-*`**); unsigned **`docker build`** deploy paths are rejected by admission.
 

@@ -255,6 +255,8 @@ await worm.append({
 
 **Where tailcat should not be used at all, stated plainly:** any connection where standing governance matters — a cloud-hosted `clawql-tee` instance reaching into a secure on-prem network is the clearest example. Tailcat has no attestation mechanism; it proves you're talking to whoever holds a given key, not that they're running trustworthy, unmodified code inside a verified enclave. That connection type stays on the Headscale-managed mesh, with `clawql-tee`'s own attestation layered on top, and a self-hosted DERP relay (§5.2) if NAT traversal alone isn't sufficient — never tailcat, regardless of how convenient the zero-setup model is.
 
+**Parallel case — outbound payment:** enabling money to leave a tenant (x402/MPP payer path) uses the same “documented justification, not less audited” phrasing and an even stricter floor — settled USDC cannot be rolled back the way a connection can be torn down. See [spend governance — Outbound payment hook](../spend/spend-governance-v0.1.md#outbound-payment-hook) and [execute batching — Outbound 402 payer](../execute/execute-batching-v0.1.md#outbound-402-payer). A reader hitting either escape hatch should treat the other as the sibling irreversibility bar.
+
 ---
 
 ## 8. The `clawql-network` Init Flow
@@ -317,6 +319,7 @@ Tailcat is a transport layer only — it has no relationship to cloud billing. T
 - Runtime coordination: [`docs/streams/clawql-cellrt.md`](../../streams/clawql-cellrt.md)
 - Trust: [`docs/streams/clawql-tee.md`](../../streams/clawql-tee.md)
 - Plugin hooks: [`docs/design/clawql-core-plugin-architecture.md`](../../design/clawql-core-plugin-architecture.md)
+- Outbound payment (same “documented justification” bar, stricter irreversibility): [`docs/specs/spend/spend-governance-v0.1.md`](../spend/spend-governance-v0.1.md#outbound-payment-hook) · [`docs/specs/execute/execute-batching-v0.1.md`](../execute/execute-batching-v0.1.md#outbound-402-payer)
 
 ---
 

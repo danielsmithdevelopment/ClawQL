@@ -1,0 +1,112 @@
+{
+  "protocol": "stock vs Decide four-arm score-once on frozen v0.4; does not rewrite productionTrusted closeout",
+  "labelsPath": "packages/clawql-core/src/classifier/held-out/fixtures/frontier-runs/v0.4-routing-fresh-gha-36144911649-labels.json",
+  "fitPath": "packages/clawql-core/src/classifier/held-out/fixtures/fast-decision-fit-routing-v0.1.json",
+  "evalSuite": "v0.4-routing-fresh",
+  "stockDump": {
+    "path": "artifacts/downloads/stock-vs-decide-scores-stock/scores-stock.json",
+    "modelId": "fastino/gliner2.5-base-v1",
+    "backend": "gliner2"
+  },
+  "decideDump": {
+    "path": "artifacts/downloads/stock-vs-decide-scores-decide/scores-decide.json",
+    "modelId": "fastino/GLiNER2.5-Decide",
+    "backend": "gliner2"
+  },
+  "decideFit": {
+    "transform": {
+      "mode": "temperature_softmax",
+      "temperature": 0.75
+    },
+    "tau": 0.6,
+    "tauStatus": "selected",
+    "fitAtTau": {
+      "n": 41,
+      "nFired": 33,
+      "fireRate": 0.8048780487804879,
+      "nCorrectFired": 30,
+      "nErrorsFired": 3,
+      "precisionAmongFired": 0.9090909090909091,
+      "cpLower95": 0.7566836492408466,
+      "forcedExactMatchAcc": 0.9024390243902439
+    }
+  },
+  "arms": [
+    {
+      "arm": "stock_forced",
+      "model": "fastino/gliner2.5-base-v1",
+      "calibration": null,
+      "threshold": null,
+      "rejectRule": false,
+      "notes": "forced exact-match; no reject rule",
+      "n": 40,
+      "nFired": 40,
+      "fireRate": 1,
+      "nCorrectFired": 32,
+      "nErrorsFired": 8,
+      "precisionAmongFired": 0.8,
+      "cpLower95": 0.6435219813207667,
+      "forcedExactMatchAcc": 0.8
+    },
+    {
+      "arm": "decide_forced",
+      "model": "fastino/GLiNER2.5-Decide",
+      "calibration": null,
+      "threshold": null,
+      "rejectRule": false,
+      "notes": "forced exact-match; no reject rule",
+      "n": 40,
+      "nFired": 40,
+      "fireRate": 1,
+      "nCorrectFired": 37,
+      "nErrorsFired": 3,
+      "precisionAmongFired": 0.925,
+      "cpLower95": 0.7961352512671018,
+      "forcedExactMatchAcc": 0.925
+    },
+    {
+      "arm": "stock_locked_T_tau",
+      "model": "fastino/gliner2.5-base-v1",
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 4
+      },
+      "threshold": 0.7,
+      "rejectRule": true,
+      "notes": "locked from FIT_TAU_FREEZE_v0.1 (T=4, τ=0.70); not refit on v0.4",
+      "n": 40,
+      "nFired": 18,
+      "fireRate": 0.45,
+      "nCorrectFired": 18,
+      "nErrorsFired": 0,
+      "precisionAmongFired": 1,
+      "cpLower95": 0.8146980318621477,
+      "forcedExactMatchAcc": 0.8
+    },
+    {
+      "arm": "decide_refit_T_tau",
+      "model": "fastino/GLiNER2.5-Decide",
+      "calibration": {
+        "mode": "temperature_softmax",
+        "temperature": 0.75
+      },
+      "threshold": 0.6,
+      "rejectRule": true,
+      "notes": "refit on same fit set (spent v0.3+Harvey routing); τ status=selected",
+      "n": 40,
+      "nFired": 34,
+      "fireRate": 0.85,
+      "nCorrectFired": 33,
+      "nErrorsFired": 1,
+      "precisionAmongFired": 0.9705882352941176,
+      "cpLower95": 0.8467323304396861,
+      "forcedExactMatchAcc": 0.925
+    }
+  ],
+  "honesty": [
+    "v0.4 remains spent for stock T/τ selection",
+    "Decide (T,τ) fit only on the shared off-set; applied once to frozen v0.4",
+    "forced arms report exact-match accuracy (fireRate=1); reject arms report fire rate + CP LB on nFired",
+    "quote nFired and CP lower bound whenever citing precision among fired"
+  ]
+}

@@ -2,10 +2,10 @@
 
 Canonical markdown for per-plugin pages under the top-level **Plugins** section on [docs.clawql.com/plugins](https://docs.clawql.com/plugins) (site header + sidebar). The hub page hosts a searchable registry (horizontal plugins **and** domain verticals).
 
-Each `*.md` file (except this README) syncs to `website/src/generated/clawql-plugins/` via:
+Each `*.md` file (except this README) syncs to `apps/docs/src/generated/clawql-plugins/` via:
 
 ```bash
-cd website && node scripts/sync-clawql-plugin-pages.mjs
+cd apps/docs && node scripts/sync-clawql-plugin-pages.mjs
 ```
 
 ## Pages
@@ -15,9 +15,10 @@ cd website && node scripts/sync-clawql-plugin-pages.mjs
 | `core.md`              | `/plugins/core`              | Always on                   |
 | `panguard-proxy.md`    | `/plugins/panguard-proxy`    | Default on                  |
 | `memory.md`            | `/plugins/memory`            | Default on                  |
-| `codegraph.md`         | `/plugins/codegraph`         | Opt in                      |
+| `codegraph.md`         | `/plugins/codegraph`         | Removed in 8.0              |
 | `documents.md`         | `/plugins/documents`         | Default on                  |
 | `bundled-providers.md` | `/plugins/bundled-providers` | Default install stack       |
+| `toolkits.md`          | `/plugins/toolkits`          | Named pack + ATR packaging  |
 | `automation.md`        | `/plugins/automation`        | Opt in                      |
 | `sandbox.md`           | `/plugins/sandbox`           | Opt in                      |
 | `data.md`              | `/plugins/data`              | Opt in                      |

@@ -11,23 +11,23 @@ trap 'rm -f "${TMP_CELLD}" "${TMP_OFF}" "${TMP_ADAPTER}"' EXIT
 
 _LINT_SECRET=(--set envFromSecret=clawql-lint-provider-env)
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
-  -f charts/clawql-mcp/values-streams-celld.example.yaml \
+  -f manifests/charts/clawql-mcp/values-streams-celld.example.yaml \
   --set streams.celld.bucket=s3://lint-clawql-streams-state \
   --set streams.celld.endpoint=https://lint.r2.cloudflarestorage.com \
   >"${TMP_CELLD}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
   >"${TMP_OFF}"
 
-helm template test charts/clawql-mcp --namespace clawql \
+helm template test manifests/charts/clawql-mcp --namespace clawql \
   "${_LINT_SECRET[@]}" \
   --set kyverno.imageSignaturePolicy.enabled=false \
-  -f charts/clawql-mcp/values-streams-celld.example.yaml \
+  -f manifests/charts/clawql-mcp/values-streams-celld.example.yaml \
   --set streams.celld.bucket=s3://lint-clawql-streams-state \
   --set streams.celld.endpoint=https://lint.r2.cloudflarestorage.com \
   --set streams.celld.adapterUrl=http://mcp-api-adapter.clawql.svc.cluster.local:8090 \

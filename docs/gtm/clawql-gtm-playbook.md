@@ -723,7 +723,7 @@ NAS (TrueNAS Scale) = **dev only** for AWS-side IDP. Cloudflare work uses Wrangl
 
 ### Phase 1 exit — Cloudflare (launch first)
 
-- [x] Routing Worker on `gateway.clawql.app` (auth, lookup, native, IDP stub) — [`cloudflare/gateway`](../../cloudflare/gateway)
+- [x] Routing Worker on `gateway.clawql.app` (auth, lookup, native, IDP stub) — [`infra/cloudflare/gateway`](../../infra/cloudflare/gateway) (**lags ClawQL 8.0.0** — [must update](../../infra/cloudflare/README.md))
 - [x] R2 per-tenant prefix; ingest/recall E2E — Worker `memory_ingest` / `memory_recall`
 - [x] D1 audit with `tenant_id` + `correlation_id`
 - [x] KV semantic cache write/hit path

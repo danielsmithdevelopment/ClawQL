@@ -4,7 +4,7 @@ import {
   maybeInitOtelTracing,
   otelTracingFeatureEnabled,
   wrapMcpToolHandler,
-} from "./otel-tracing.js";
+} from "./observability/otel-tracing.js";
 
 describe("otel-tracing", () => {
   it("otelTracingFeatureEnabled follows CLAWQL_ENABLE_OTEL_TRACING", () => {

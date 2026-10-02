@@ -7,12 +7,19 @@ import type { Effect } from "effect";
 import { Context } from "effect";
 import type { ClawQLError, McpToolAlreadyRegisteredError } from "../errors/clawql-error.js";
 import type { ClawQLPluginRegistrationApi, McpToolDefinition } from "./registration-api.js";
+import type { ToolRoutingHint } from "./routing-hint.js";
+
+export type { DistinguishFromEntry, ToolRoutingHint } from "./routing-hint.js";
 
 /** Tool registered into search/execute (MCP tool boundary). */
 export type ToolDefinition = McpToolDefinition;
 
 export type SkillApplicability = "always" | "query-matched";
 
+/**
+ * Skill registration. Routing hints compose via `ToolRoutingHint` intersection
+ * (same fields as tools — do not re-list or the shapes will drift).
+ */
 export type SkillDefinition = {
   readonly skillId: string;
   /** Full SKILL.md body. */
@@ -25,13 +32,17 @@ export type SkillDefinition = {
   readonly applicability?: SkillApplicability;
   readonly name?: string;
   readonly description?: string;
-};
+} & ToolRoutingHint;
 
 export type VaultSeedEntry = {
   readonly title: string;
   readonly content: string;
   readonly ontologyType: string;
 };
+
+/** Provider-declared preferred vocabulary for Layer 3 field minting (§2.3 / §11). */
+export type PreferredVocabularyId =
+  "schema.org" | "fibo" | "dublin-core" | "project-local" | (string & {});
 
 export type LifecycleScope = "tool" | "model" | "session";
 
@@ -42,6 +53,7 @@ export type LifecycleEvent =
   | "on-deny"
   | "pre-model"
   | "post-model"
+  | "pre-compaction"
   | "session-start"
   | "session-end";
 
@@ -181,6 +193,163 @@ export type WormAuditEvent =
       readonly pluginId: string;
       readonly version: string;
       readonly timestamp: string;
+    }
+  | {
+      readonly type: "EXECUTE_BATCH_STARTED";
+      readonly batchId: string;
+      readonly batchName: string;
+      readonly tenantId: string;
+      readonly agentId: string;
+      readonly sessionId: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "EXECUTE_BATCH_COMPLETED" | "EXECUTE_BATCH_ABORTED";
+      readonly batchId: string;
+      readonly batchName: string;
+      readonly tenantId: string;
+      readonly agentId: string;
+      readonly sessionId: string;
+      readonly innerCallCount: number;
+      readonly success: boolean;
+      readonly failureReason?: string;
+      readonly startedAt: string;
+      readonly completedAt: string;
+      readonly payment?: {
+        readonly kind: "outbound_payment";
+        readonly protocol: "x402" | "mpp";
+        readonly resourceUrl: string;
+        readonly method: string;
+        readonly quoteDigest: string;
+        readonly amount: string;
+        readonly asset: string;
+        readonly network: string;
+        readonly payer: string;
+        readonly payee: string;
+        readonly txHash?: string;
+        readonly facilitator: string;
+        readonly hookDecision: "allow" | "deny" | "hitl";
+        readonly hookPolicyVersion: string;
+        readonly tenantId: string;
+        readonly agentId: string;
+        readonly sessionId: string;
+      };
+      readonly timestamp: string;
+    }
+  | {
+      readonly type:
+        | "FAST_DECISION_ATTEMPTED"
+        | "FAST_DECISION_ABOVE_THRESHOLD"
+        | "FAST_DECISION_BELOW_THRESHOLD_FALLBACK";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly scores: readonly { readonly candidateId: string; readonly confidence: number }[];
+      readonly thresholdApplied: number;
+      readonly costlyErrorDirection: "false_positive" | "false_negative";
+      readonly outcome: "above_threshold" | "below_threshold_fallback";
+      readonly selectedCandidateId?: string;
+      readonly selectedConfidence?: number;
+      readonly backendId: string;
+      readonly wormEntryType?: string;
+      readonly hardFallbackRequired?: boolean;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SKILL_FAST_PATH_EXECUTED" | "SKILL_FAST_PATH_REJECTED_STALE_SKILL";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly skillId: string;
+      readonly validityStatus: "accepted" | "rejected" | "rolled_back";
+      readonly confidence: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SGDOP_PREFILTER_APPLIED";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly includedCount: number;
+      readonly excludedCount: number;
+      readonly thresholdApplied: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SGDOP_CANDIDATE_INCLUDED";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly peerId: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "PRE_COMPACTION_CACHE_CHECK_RUN";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly agentId?: string;
+      readonly candidatesScored: number;
+      readonly thresholdApplied: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "PRE_COMPACTION_CACHE_ITEM_WRITTEN";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly entryId: string;
+      readonly cacheItemId: string;
+      readonly confidence: number;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "ONTOLOGY_STANDARD_TERM_USED" | "ONTOLOGY_NOVEL_FIELD_FALLBACK";
+      readonly useSiteId: string;
+      readonly sessionId: string;
+      readonly term?: string;
+      readonly fieldName?: string;
+      readonly preferredVocabulary?: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "CAPABILITY_WRITE_INTERCEPTED";
+      readonly sessionId: string;
+      readonly toolName: string;
+      readonly interceptKind: "register" | "invoke";
+      readonly disposition: "routed_to_sandbox" | "denied";
+      readonly reason: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SLOW_PATH_COMPLETED_NO_NEW_CAPABILITY";
+      readonly sessionId: string;
+      readonly timestamp: string;
+      readonly metadata?: Record<string, unknown>;
+    }
+  | {
+      readonly type: "PROMOTION_ACCEPTED" | "PROMOTION_PROPOSED" | "PROMOTION_REJECTED";
+      readonly sessionId: string;
+      readonly skillId: string;
+      readonly validatedScope?: readonly string[];
+      readonly wormRef?: string;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SESSION_CATALOG_REBOUND";
+      readonly sessionId: string;
+      readonly authorizedBy: string;
+      readonly rebindGeneration: number;
+      readonly toolCount: number;
+      readonly atrScopeSize: number;
+      readonly widerScopeGranted: boolean;
+      readonly timestamp: string;
+    }
+  | {
+      readonly type: "SESSION_SCOPE_WIDENED";
+      readonly sessionId: string;
+      readonly authorizedBy: string;
+      readonly grantedTokens: readonly string[];
+      readonly timestamp: string;
     };
 
 export class WormAuditSink extends Context.Tag("clawql/WormAuditSink")<
@@ -244,6 +413,11 @@ export interface ProviderPlugin {
   readonly skills?: readonly SkillDefinition[];
   readonly vaultSeed?: readonly VaultSeedEntry[];
   readonly hooks?: readonly LifecycleHook[];
+  /**
+   * Optional preferred vocabulary for ontology Layer 3 promotion
+   * (Schema.org, FIBO, Dublin Core, …). Legal-domain vocab deliberately unresolved.
+   */
+  readonly preferredVocabulary?: PreferredVocabularyId;
   readonly install: (
     ctx: PluginContext
   ) => Effect.Effect<void, PluginInstallError, PluginInstallServices>;

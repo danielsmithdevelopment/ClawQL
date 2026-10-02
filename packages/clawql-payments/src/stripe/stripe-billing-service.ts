@@ -69,8 +69,52 @@ export type PortalSessionInput = {
   env?: NodeJS.ProcessEnv;
 };
 
-function resolvePriceId(plan: ClawqlPlanId): Effect.Effect<string, StripeNotConfigured> {
-  const priceId = getPlanDefinition(plan).stripe_price_id;
+export type CheckoutSessionPlan = "pro" | "team";
+
+export type CheckoutBillingMode = "stripe_checkout" | "hybrid";
+
+export type CheckoutSessionInput = {
+  plan: CheckoutSessionPlan;
+  orgName: string;
+  ownerEmail: string;
+  successUrl: string;
+  cancelUrl: string;
+  billingMode?: CheckoutBillingMode;
+  env?: NodeJS.ProcessEnv;
+};
+
+export type CheckoutSessionResult = {
+  id: string;
+  url: string;
+  plan: CheckoutSessionPlan;
+  priceId: string;
+};
+
+/** CPC metadata for self-serve Checkout → provisionOrg (stripe-products-ops §4). */
+export function buildCheckoutSessionMetadata(input: {
+  orgName: string;
+  plan: CheckoutSessionPlan;
+  ownerEmail: string;
+  billingMode?: CheckoutBillingMode;
+}): Record<string, string> {
+  return {
+    clawql_provision_org: "1",
+    clawql_org_name: input.orgName.trim(),
+    clawql_plan: input.plan,
+    clawql_billing_mode: input.billingMode ?? "stripe_checkout",
+    clawql_owner_email: input.ownerEmail.trim(),
+  };
+}
+
+function resolvePriceId(
+  plan: ClawqlPlanId,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string, StripeNotConfigured> {
+  const fromPlan = getPlanDefinition(plan).stripe_price_id?.trim();
+  const envKey =
+    plan === "pro" ? "STRIPE_PRO_PRICE_ID" : plan === "team" ? "STRIPE_TEAM_PRICE_ID" : null;
+  const fromEnv = envKey ? env[envKey]?.trim() : undefined;
+  const priceId = fromPlan || fromEnv || null;
   if (!priceId) {
     return Effect.fail(
       new StripeNotConfigured({
@@ -101,6 +145,9 @@ export class StripeBillingService extends Context.Tag("clawql/StripeBillingServi
     readonly createPortalSession: (
       input: PortalSessionInput
     ) => Effect.Effect<{ url: string; customerId: string }, StripeApiError | StripeNotConfigured>;
+    readonly createCheckoutSession: (
+      input: CheckoutSessionInput
+    ) => Effect.Effect<CheckoutSessionResult, StripeApiError | StripeNotConfigured>;
   }
 >() {}
 
@@ -156,7 +203,7 @@ export function stripeBillingLiveLayer(
       const createSubscription = (input: StripeSubscriptionInput) =>
         Effect.gen(function* () {
           const client = yield* stripeClient.getClient();
-          const priceId = yield* resolvePriceId(input.plan);
+          const priceId = yield* resolvePriceId(input.plan, input.env ?? env);
           const subscription = yield* stripeTryPromise("stripe subscription create failed", () =>
             client.subscriptions.create({
               customer: input.customerId,
@@ -229,12 +276,88 @@ export function stripeBillingLiveLayer(
           return { url: session.url, customerId: input.customerId };
         });
 
+      const createCheckoutSession = (input: CheckoutSessionInput) =>
+        Effect.gen(function* () {
+          const orgName = input.orgName?.trim() ?? "";
+          const ownerEmail = input.ownerEmail?.trim() ?? "";
+          const successUrl = input.successUrl?.trim() ?? "";
+          const cancelUrl = input.cancelUrl?.trim() ?? "";
+          if (!orgName) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "orgName is required for Checkout Session" })
+            );
+          }
+          if (!ownerEmail) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "ownerEmail is required for Checkout Session" })
+            );
+          }
+          if (!successUrl) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "successUrl is required for Checkout Session" })
+            );
+          }
+          if (!cancelUrl) {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: "cancelUrl is required for Checkout Session" })
+            );
+          }
+          if (input.plan !== "pro" && input.plan !== "team") {
+            return yield* Effect.fail(
+              new StripeApiError({ reason: 'plan must be "pro" or "team"' })
+            );
+          }
+          const billingMode = input.billingMode ?? "stripe_checkout";
+          if (billingMode !== "stripe_checkout" && billingMode !== "hybrid") {
+            return yield* Effect.fail(
+              new StripeApiError({
+                reason: 'billingMode must be "stripe_checkout" or "hybrid"',
+              })
+            );
+          }
+
+          const runEnv = input.env ?? env;
+          const client = yield* stripeClient.getClient();
+          const priceId = yield* resolvePriceId(input.plan, runEnv);
+          const metadata = buildCheckoutSessionMetadata({
+            orgName,
+            plan: input.plan,
+            ownerEmail,
+            billingMode,
+          });
+          const session = yield* stripeTryPromise("stripe checkout session create failed", () =>
+            client.checkout.sessions.create({
+              mode: "subscription",
+              customer_email: ownerEmail,
+              line_items: [{ price: priceId, quantity: 1 }],
+              success_url: successUrl,
+              cancel_url: cancelUrl,
+              metadata,
+              subscription_data: { metadata },
+            })
+          );
+          if (!session.id || !session.url) {
+            return yield* Effect.fail(
+              new StripeApiError({
+                reason: "Stripe Checkout Session create did not return id and url",
+              })
+            );
+          }
+          return {
+            id: session.id,
+            url: session.url,
+            plan: input.plan,
+            priceId,
+          };
+        });
+
       return StripeBillingService.of({
         setup,
         createCustomer,
         createSubscription,
         createInvoice,
         createPortalSession,
+        createCheckoutSession,
       });
     })
   );

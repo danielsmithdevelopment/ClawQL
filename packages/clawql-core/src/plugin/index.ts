@@ -1,4 +1,5 @@
 export * from "./registration-api.js";
+export * from "./routing-hint.js";
 export * from "./provider-types.js";
 export * from "./hook-runtime.js";
 export * from "./hook-registry.js";

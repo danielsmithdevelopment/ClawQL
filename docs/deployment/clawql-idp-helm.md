@@ -2,7 +2,7 @@
 
 **Tracking:** [#255](https://github.com/danielsmithdevelopment/ClawQL/issues/255)
 
-Install a **k3s-friendly** intelligent document processing stack without forking the lean [`charts/clawql-mcp`](../../charts/clawql-mcp) chart.
+Install a **k3s-friendly** intelligent document processing stack without forking the lean [`manifests/charts/clawql-mcp`](../../manifests/charts/clawql-mcp) chart.
 
 ## When to use which chart
 
@@ -16,10 +16,10 @@ The umbrella chart is a **values wrapper** — all Kubernetes objects still rend
 ## Quick install (full profile)
 
 ```bash
-helm dependency update charts/clawql-idp
+helm dependency update manifests/charts/clawql-idp
 
-helm upgrade --install clawql-idp charts/clawql-idp \
-  -f charts/clawql-idp/values-idp-full.yaml \
+helm upgrade --install clawql-idp manifests/charts/clawql-idp \
+  -f manifests/charts/clawql-idp/values-idp-full.yaml \
   --namespace clawql --create-namespace \
   --set clawql-mcp.envFromSecret=clawql-provider-env
 ```
@@ -37,7 +37,7 @@ Create `clawql-provider-env` with tokens your profile needs (`PAPERLESS_API_TOKE
 
 Under `clawql-mcp:` in `values-idp-full.yaml`:
 
-- **Document pipeline** — Docling (layout), Tika, Gotenberg, Stirling, Paperless
+- **Document pipeline** — Docling (layout, sole default converter as of 8.0), Paperless, plus opt-in-only Tika/Gotenberg/Stirling explicitly re-enabled in this full profile (upstream default is off — see [purge inventory spec](../releases/8.0.0-purge-inventory-spec-v0.1.md))
 - **OpenClaw + dashboard** — Agent Chat bridge
 - **Workflow + Argo CD MCP** — `enableWorkflow`, `enableArgoCd` (RBAC only; controllers are BYO)
 - **NATS JetStream** + **document workers** — publish + `nats.worker.idpPipeline` / `coneshareFollowup` (see [nats-idp-e2e.md](../runbooks/nats-idp-e2e.md))
@@ -48,7 +48,7 @@ Under `clawql-mcp:` in `values-idp-full.yaml`:
 
 | Component              | ClawQL integration         | Docs                                                                                                   |
 | ---------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Argo Workflows ≥ 3.4.0 | `workflow` MCP tool        | [`deployment/argo-workflows/README.md`](../../deployment/argo-workflows/README.md)                     |
+| Argo Workflows ≥ 3.4.0 | `workflow` MCP tool        | [`infra/gitops/argo-workflows/README.md`](../../infra/gitops/argo-workflows/README.md)                 |
 | Argo CD                | `argocd` MCP tool          | [`docs/mcp/argocd-tool.md`](../mcp/argocd-tool.md)                                                     |
 | Langfuse               | Agent/LLM traces (sidecar) | [`docs/observability/idp-trace-and-metrics-guide.md`](../observability/idp-trace-and-metrics-guide.md) |
 | Label Studio           | HITL MCP + webhook         | [`docs/mcp/hitl-label-studio.md`](../mcp/hitl-label-studio.md)                                         |

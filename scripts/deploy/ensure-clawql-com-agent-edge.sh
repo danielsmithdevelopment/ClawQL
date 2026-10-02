@@ -51,7 +51,7 @@ fi
 echo "    zone_id=${ZONE_ID}"
 
 link_header_value() {
-  # Keep in sync with landing-page/demo/functions/_middleware.ts
+  # Keep in sync with apps/www/functions/_middleware.ts
   printf '%s' \
     "<https://${APEX}/sitemap.xml>; rel=\"sitemap\", " \
     "</llms.txt>; rel=\"alternate\"; type=\"text/plain\", " \

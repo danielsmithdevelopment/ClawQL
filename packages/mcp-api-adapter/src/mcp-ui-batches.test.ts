@@ -9,7 +9,7 @@ import {
 } from "./mcp-ui-progress.js";
 import { createGeneratedUi, getGeneratedUiBySlug } from "./mcp-ui-generate.js";
 import type { ListedMcpTool } from "mcp-grpc-transport";
-import { formHintsForTool, resolveMcpUiTemplate } from "./mcp-ui-templates.js";
+import { runFormHintsForTool, runResolveMcpUiTemplate } from "./mcp-ui-templates/index.js";
 import { renderToolFormFields } from "./mcp-ui-form.js";
 
 describe("mcp-ui-multipart mergeFilesIntoArgs", () => {
@@ -103,8 +103,8 @@ describe("mcp-ui IDP template", () => {
         },
       },
     };
-    expect(resolveMcpUiTemplate(tool)?.fileFields).toContain("pdf_base64");
-    const hints = formHintsForTool(tool);
+    expect(runResolveMcpUiTemplate(tool)?.fileFields).toContain("pdf_base64");
+    const hints = runFormHintsForTool(tool);
     const rendered = renderToolFormFields(tool, hints);
     expect(rendered.hasFileFields).toBe(true);
     expect(rendered.html).toContain('type="file"');

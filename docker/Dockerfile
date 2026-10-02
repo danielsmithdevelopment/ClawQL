@@ -17,15 +17,21 @@ COPY packages/clawql-audit/package.json ./packages/clawql-audit/
 COPY packages/clawql-agents/package.json ./packages/clawql-agents/
 COPY packages/clawql-core/package.json ./packages/clawql-core/
 COPY packages/clawql-auth/package.json ./packages/clawql-auth/
-COPY packages/clawql-pageindex/package.json ./packages/clawql-pageindex/
-COPY packages/clawql-codegraph/package.json ./packages/clawql-codegraph/
 COPY packages/clawql-api/package.json ./packages/clawql-api/
 COPY packages/clawql-memory/package.json ./packages/clawql-memory/
 COPY packages/clawql-ontology/package.json ./packages/clawql-ontology/
 COPY packages/clawql-web/package.json ./packages/clawql-web/
+COPY packages/clawql-chatgpt-extensions/package.json ./packages/clawql-chatgpt-extensions/
 COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/
+COPY packages/clawql-mcp-events/package.json ./packages/clawql-mcp-events/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
+COPY packages/clawql-data/package.json ./packages/clawql-data/
+COPY packages/clawql-analytics/package.json ./packages/clawql-analytics/
+COPY packages/clawql-observability/package.json ./packages/clawql-observability/
+COPY packages/clawql-tee/package.json ./packages/clawql-tee/
+COPY packages/clawql-network/package.json ./packages/clawql-network/
+COPY packages/clawql-harness/package.json ./packages/clawql-harness/
 COPY packages/clawql-inference/package.json ./packages/clawql-inference/
 COPY packages/clawql-payments/package.json ./packages/clawql-payments/
 COPY packages/clawql-release/package.json ./packages/clawql-release/
@@ -42,8 +48,8 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY packages ./packages
 RUN npm run build \
-  && grep -qF 'server.tool("cache"' dist/tools.js \
-  && grep -qF 'server.tool("audit"' dist/tools.js \
+  && grep -qF 'server.tool("cache"' dist/mcp/tools.js \
+  && grep -qF 'server.tool("audit"' dist/mcp/tools.js \
   && npm prune --omit=dev
 
 COPY providers ./providers
@@ -55,7 +61,8 @@ RUN mkdir -p /vault && chown 65532:65532 /vault
 # Distroless Node: no shell; only Node + minimal libc / CA bundle for HTTPS fetches.
 # Runtime uses Node 24 (LTS); no nodejs26 image yet. Build stage above may use a newer major.
 # Pin digest — bump when rebuilding images (Trivy gate + Debian base refreshes).
-FROM gcr.io/distroless/nodejs24-debian13@sha256:ef5f3caf80da1630edd1a4df7b307a8f7d4553f8eec1dd29852b76e793593903 AS runtime
+# Digest bump: libssl3t64 3.5.7-1~deb13u2 (CVE-2026-14456). Prior pin had 3.5.6.
+FROM gcr.io/distroless/nodejs24-debian13@sha256:b1fc33242cc74151f50c62b4a03d48afd759dccf81279b5f8e401db4546479c1 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
