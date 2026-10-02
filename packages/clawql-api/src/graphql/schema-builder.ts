@@ -14,7 +14,7 @@ interface SchemaResult {
   contextValue: Record<string, unknown>;
 }
 
-export async function buildGraphQLSchema(openapi: object, baseUrl: string): Promise<SchemaResult> {
+async function buildGraphQLSchemaImpl(openapi: object, baseUrl: string): Promise<SchemaResult>  {
   const headers = Effect.runSync(mergedAuthHeadersEffect());
 
   const schema = await loadGraphQLSchemaFromOpenAPI("ClawQL", {
@@ -26,4 +26,16 @@ export async function buildGraphQLSchema(openapi: object, baseUrl: string): Prom
   });
 
   return { schema, contextValue: {} };
+}
+
+export function buildGraphQLSchemaEffect(openapi: object, baseUrl: string): Effect.Effect<SchemaResult, Error> {
+  return Effect.tryPromise({
+    try: () => buildGraphQLSchemaImpl(openapi, baseUrl),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link buildGraphQLSchemaEffect} for Effect callers. */
+export async function buildGraphQLSchema(openapi: object, baseUrl: string): Promise<SchemaResult>  {
+  return Effect.runPromise(buildGraphQLSchemaEffect(openapi, baseUrl));
 }

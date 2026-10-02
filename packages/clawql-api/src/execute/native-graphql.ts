@@ -9,11 +9,11 @@ import { recordNativeGraphqlExecute } from "../spec/native-protocol-metrics.js";
 import { getGraphQLSource } from "../spec/native-protocol-registry.js";
 import type { Operation } from "../spec/operation-types.js";
 
-export async function executeNativeGraphQL(
+async function executeNativeGraphQLImpl(
   op: Operation,
   args: Record<string, unknown>,
   selectionSet: string
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
   const meta = op.nativeGraphQL;
   if (!meta) {
     const r = { ok: false as const, error: "Internal error: missing nativeGraphQL metadata" };
@@ -92,4 +92,24 @@ export async function executeNativeGraphQL(
 
   recordNativeGraphqlExecute(true, meta.sourceLabel);
   return { ok: true, data: json.data };
+}
+
+export function executeNativeGraphQLEffect(
+  op: Operation,
+  args: Record<string, unknown>,
+  selectionSet: string
+): Effect.Effect<{ ok: true; data: unknown } | { ok: false; error: string }, Error> {
+  return Effect.tryPromise({
+    try: () => executeNativeGraphQLImpl(op, args, selectionSet),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeNativeGraphQLEffect} for Effect callers. */
+export async function executeNativeGraphQL(
+  op: Operation,
+  args: Record<string, unknown>,
+  selectionSet: string
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+  return Effect.runPromise(executeNativeGraphQLEffect(op, args, selectionSet));
 }

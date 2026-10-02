@@ -23,6 +23,7 @@ import type {
   UpstreamKind,
   UpstreamOptions,
 } from "./types.js";
+import { Effect } from "effect";
 
 const ADAPTER_VERSION = "0.6.0";
 
@@ -134,13 +135,13 @@ async function scaffoldLocalGrpc(
   }
 }
 
-export async function connectUpstream(
+async function connectUpstreamImpl(
   upstream: UpstreamOptions,
   options?: {
     /** Bind for scaffolded gRPC when upstream is stdio/HTTP. `false` skips. */
     grpcListen?: string | false;
   }
-): Promise<UpstreamConnection> {
+): Promise<UpstreamConnection>  {
   if (upstream.kind === "grpc") {
     const address = upstream.address.trim();
     if (!address) throw new Error("gRPC upstream requires a non-empty address");
@@ -285,4 +286,28 @@ export async function connectUpstream(
     },
   };
   return connection;
+}
+
+export function connectUpstreamEffect(
+  upstream: UpstreamOptions,
+  options?: {
+    /** Bind for scaffolded gRPC when upstream is stdio/HTTP. `false` skips. */
+    grpcListen?: string | false;
+  }
+): Effect.Effect<UpstreamConnection, Error> {
+  return Effect.tryPromise({
+    try: () => connectUpstreamImpl(upstream, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link connectUpstreamEffect} for Effect callers. */
+export async function connectUpstream(
+  upstream: UpstreamOptions,
+  options?: {
+    /** Bind for scaffolded gRPC when upstream is stdio/HTTP. `false` skips. */
+    grpcListen?: string | false;
+  }
+): Promise<UpstreamConnection>  {
+  return Effect.runPromise(connectUpstreamEffect(upstream, options));
 }

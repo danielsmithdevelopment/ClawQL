@@ -5,8 +5,9 @@
 import type { Operation } from "./operation-types.js";
 import { normalizeOperationId } from "./spec-kind.js";
 import type { CustomSourceEntry } from "./custom-sources-types.js";
+import { Effect } from "effect";
 
-export async function loadCliSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
+async function loadCliSourceOperationsImpl(entries: CustomSourceEntry[]): Promise<Operation[]>  {
   const ops: Operation[] = [];
 
   for (const entry of entries.filter((e) => e.kind === "cli")) {
@@ -52,4 +53,16 @@ export async function loadCliSourceOperations(entries: CustomSourceEntry[]): Pro
   }
 
   return ops;
+}
+
+export function loadCliSourceOperationsEffect(entries: CustomSourceEntry[]): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadCliSourceOperationsImpl(entries),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadCliSourceOperationsEffect} for Effect callers. */
+export async function loadCliSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]>  {
+  return Effect.runPromise(loadCliSourceOperationsEffect(entries));
 }

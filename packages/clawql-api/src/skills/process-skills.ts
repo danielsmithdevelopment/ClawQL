@@ -115,9 +115,21 @@ export function unregisterProcessSkills(pluginId: string): Promise<void> {
 }
 
 /** Test helper — clear bound + fallback registries. */
-export async function resetProcessSkillsRegistryForTests(): Promise<void> {
+async function resetProcessSkillsRegistryForTestsImpl(): Promise<void>  {
   boundRegistry = undefined;
   fallbackRegistry = undefined;
+}
+
+export function resetProcessSkillsRegistryForTestsEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetProcessSkillsRegistryForTestsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetProcessSkillsRegistryForTestsEffect} for Effect callers. */
+export async function resetProcessSkillsRegistryForTests(): Promise<void>  {
+  return Effect.runPromise(resetProcessSkillsRegistryForTestsEffect());
 }
 
 // silence unused Layer import if tree-shaken oddly

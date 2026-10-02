@@ -4,6 +4,7 @@
 
 import { isIP } from "node:net";
 import { resolve, sep } from "node:path";
+import { Effect } from "effect";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "metadata.google"]);
 
@@ -87,12 +88,30 @@ export function assertSafeSourceFetchUrl(raw: string): URL {
 }
 
 /** Fetch a user URL only after SSRF validation (single chokepoint for CodeQL + runtime policy). */
-export async function fetchSafeSourceUrl(
+async function fetchSafeSourceUrlImpl(
   raw: string,
   fetchFn: typeof fetch = fetch
-): Promise<{ url: URL; response: Response }> {
+): Promise<{ url: URL; response: Response }>  {
   const url = assertSafeSourceFetchUrl(raw);
   // codeql[js/request-forgery]: href is validated for public HTTPS hosts only (assertSafeSourceFetchUrl).
   const response = await fetchFn(url.href);
   return { url, response };
+}
+
+export function fetchSafeSourceUrlEffect(
+  raw: string,
+  fetchFn: typeof fetch = fetch
+): Effect.Effect<{ url: URL; response: Response }, Error> {
+  return Effect.tryPromise({
+    try: () => fetchSafeSourceUrlImpl(raw, fetchFn),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link fetchSafeSourceUrlEffect} for Effect callers. */
+export async function fetchSafeSourceUrl(
+  raw: string,
+  fetchFn: typeof fetch = fetch
+): Promise<{ url: URL; response: Response }>  {
+  return Effect.runPromise(fetchSafeSourceUrlEffect(raw, fetchFn));
 }

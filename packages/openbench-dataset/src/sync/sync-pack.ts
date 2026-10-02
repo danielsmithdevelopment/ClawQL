@@ -98,7 +98,16 @@ async function syncDatasetPackImpl(opts: SyncDatasetOptions): Promise<{
   console.log(
     `Synced ${jsonl.length} traces → ${
       backend.name === "local" ? "" : `r2://${bucketLabel}/`
-    }
+    }${rawPrefix}/ (${transport})`
+  );
+  return {
+    rawPrefix,
+    manifestKey,
+    traceFiles: jsonl.length,
+    bucket: bucketLabel === "local" ? undefined : bucketLabel,
+    transport,
+  };
+}
 
 export function syncDatasetPackEffect(opts: SyncDatasetOptions): Effect.Effect<{
   rawPrefix: string;
@@ -122,13 +131,4 @@ export async function syncDatasetPack(opts: SyncDatasetOptions): Promise<{
   transport?: string;
 }>  {
   return Effect.runPromise(syncDatasetPackEffect(opts));
-}${rawPrefix}/ (${transport})`
-  );
-  return {
-    rawPrefix,
-    manifestKey,
-    traceFiles: jsonl.length,
-    bucket: bucketLabel === "local" ? undefined : bucketLabel,
-    transport,
-  };
 }

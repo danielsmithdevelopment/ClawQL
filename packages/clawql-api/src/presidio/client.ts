@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 /**
  * Microsoft Presidio HTTP client (analyzer + anonymizer).
  * @see https://microsoft.github.io/presidio/
@@ -49,10 +50,10 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
-export async function presidioRedactText(
+async function presidioRedactTextImpl(
   text: string,
   config: PresidioConfig = loadPresidioConfig()!
-): Promise<{ text: string; redacted: boolean }> {
+): Promise<{ text: string; redacted: boolean }>  {
   if (!text.trim()) return { text, redacted: false };
 
   const analyzerResults = await postJson<PresidioAnalyzerResult[]>(
@@ -75,7 +76,25 @@ export async function presidioRedactText(
   return { text: anonymized.text, redacted: anonymized.text !== text };
 }
 
-export async function maybePresidioRedactText(text: string): Promise<string> {
+export function presidioRedactTextEffect(
+  text: string,
+  config: PresidioConfig = loadPresidioConfig()!
+): Effect.Effect<{ text: string; redacted: boolean }, Error> {
+  return Effect.tryPromise({
+    try: () => presidioRedactTextImpl(text, config),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link presidioRedactTextEffect} for Effect callers. */
+export async function presidioRedactText(
+  text: string,
+  config: PresidioConfig = loadPresidioConfig()!
+): Promise<{ text: string; redacted: boolean }>  {
+  return Effect.runPromise(presidioRedactTextEffect(text, config));
+}
+
+async function maybePresidioRedactTextImpl(text: string): Promise<string>  {
   const config = loadPresidioConfig();
   if (!config) return text;
   try {
@@ -91,10 +110,22 @@ export async function maybePresidioRedactText(text: string): Promise<string> {
   }
 }
 
+export function maybePresidioRedactTextEffect(text: string): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => maybePresidioRedactTextImpl(text),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybePresidioRedactTextEffect} for Effect callers. */
+export async function maybePresidioRedactText(text: string): Promise<string>  {
+  return Effect.runPromise(maybePresidioRedactTextEffect(text));
+}
+
 /**
  * Redact string fields in a JSON-like tool payload (shallow + one nested level).
  */
-export async function presidioRedactPayload(value: unknown): Promise<unknown> {
+async function presidioRedactPayloadImpl(value: unknown): Promise<unknown>  {
   if (typeof value === "string") {
     return maybePresidioRedactText(value);
   }
@@ -109,4 +140,16 @@ export async function presidioRedactPayload(value: unknown): Promise<unknown> {
     return out;
   }
   return value;
+}
+
+export function presidioRedactPayloadEffect(value: unknown): Effect.Effect<unknown, Error> {
+  return Effect.tryPromise({
+    try: () => presidioRedactPayloadImpl(value),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link presidioRedactPayloadEffect} for Effect callers. */
+export async function presidioRedactPayload(value: unknown): Promise<unknown>  {
+  return Effect.runPromise(presidioRedactPayloadEffect(value));
 }

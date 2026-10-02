@@ -180,11 +180,11 @@ export function renderPath(template: string, args: Record<string, unknown>): str
 /**
  * Perform the HTTP call for `op` with `args` (path + query + JSON body for non-GET with body).
  */
-export async function executeRestOperation(
+async function executeRestOperationImpl(
   op: Operation,
   args: Record<string, unknown>,
   openapi: OpenAPIDoc
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
   let baseUrl: string;
   try {
     baseUrl = resolveApiBaseUrlForOperation(openapi, op);
@@ -378,4 +378,24 @@ export async function executeRestOperation(
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export function executeRestOperationEffect(
+  op: Operation,
+  args: Record<string, unknown>,
+  openapi: OpenAPIDoc
+): Effect.Effect<{ ok: true; data: unknown } | { ok: false; error: string }, Error> {
+  return Effect.tryPromise({
+    try: () => executeRestOperationImpl(op, args, openapi),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeRestOperationEffect} for Effect callers. */
+export async function executeRestOperation(
+  op: Operation,
+  args: Record<string, unknown>,
+  openapi: OpenAPIDoc
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+  return Effect.runPromise(executeRestOperationEffect(op, args, openapi));
 }

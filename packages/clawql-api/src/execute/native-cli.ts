@@ -5,6 +5,7 @@
 import { spawn } from "node:child_process";
 import type { Operation } from "../spec/operation-types.js";
 import type { ExecuteOperationResult } from "./types.js";
+import { Effect } from "effect";
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 
@@ -37,10 +38,10 @@ function collectOutput(
   });
 }
 
-export async function executeNativeCli(
+async function executeNativeCliImpl(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult> {
+): Promise<ExecuteOperationResult>  {
   const meta = op.nativeCli;
   if (!meta) {
     return { ok: false, error: "Internal error: missing nativeCli metadata" };
@@ -85,4 +86,22 @@ export async function executeNativeCli(
       error: e instanceof Error ? e.message : String(e),
     };
   }
+}
+
+export function executeNativeCliEffect(
+  op: Operation,
+  args: Record<string, unknown>
+): Effect.Effect<ExecuteOperationResult, Error> {
+  return Effect.tryPromise({
+    try: () => executeNativeCliImpl(op, args),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeNativeCliEffect} for Effect callers. */
+export async function executeNativeCli(
+  op: Operation,
+  args: Record<string, unknown>
+): Promise<ExecuteOperationResult>  {
+  return Effect.runPromise(executeNativeCliEffect(op, args));
 }

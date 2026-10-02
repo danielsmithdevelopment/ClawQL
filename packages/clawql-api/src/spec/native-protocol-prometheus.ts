@@ -4,6 +4,7 @@
  */
 
 import { Counter, Gauge, Registry } from "prom-client";
+import { Effect } from "effect";
 
 const registry = new Registry();
 
@@ -130,9 +131,21 @@ export function httpMetricsEnabledForHttp(): boolean {
   return envTruthyWithDefault(process.env.CLAWQL_ENABLE_HTTP_METRICS, true);
 }
 
-export async function renderPrometheusMetrics(): Promise<{ body: string; contentType: string }> {
+async function renderPrometheusMetricsImpl(): Promise<{ body: string; contentType: string }>  {
   const body = await registry.metrics();
   return { body, contentType: registry.contentType };
+}
+
+export function renderPrometheusMetricsEffect(): Effect.Effect<{ body: string; contentType: string }, Error> {
+  return Effect.tryPromise({
+    try: () => renderPrometheusMetricsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link renderPrometheusMetricsEffect} for Effect callers. */
+export async function renderPrometheusMetrics(): Promise<{ body: string; contentType: string }>  {
+  return Effect.runPromise(renderPrometheusMetricsEffect());
 }
 
 /** Vitest — resets gauges/counters and merge label tracking (matches native-protocol-metrics reset). */

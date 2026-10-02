@@ -12,6 +12,7 @@ import {
   type CustomSourcesFile,
 } from "./custom-sources-types.js";
 import { assertSafeSourceId } from "./custom-sources-security.js";
+import { Effect } from "effect";
 
 const FILE_MODE = 0o600;
 
@@ -35,9 +36,9 @@ export function getCustomSourceCacheDir(id: string, home = resolveClawqlHome()):
   return dir;
 }
 
-export async function readCustomSourcesFile(
+async function readCustomSourcesFileImpl(
   home = resolveClawqlHome()
-): Promise<CustomSourcesFile> {
+): Promise<CustomSourcesFile>  {
   const path = getCustomSourcesFilePath(home);
   try {
     const raw = await readFile(path, "utf8");
@@ -58,6 +59,22 @@ export async function readCustomSourcesFile(
   }
 }
 
+export function readCustomSourcesFileEffect(
+  home = resolveClawqlHome()
+): Effect.Effect<CustomSourcesFile, Error> {
+  return Effect.tryPromise({
+    try: () => readCustomSourcesFileImpl(home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link readCustomSourcesFileEffect} for Effect callers. */
+export async function readCustomSourcesFile(
+  home = resolveClawqlHome()
+): Promise<CustomSourcesFile>  {
+  return Effect.runPromise(readCustomSourcesFileEffect(home));
+}
+
 function isCustomSourceEntry(v: unknown): v is CustomSourceEntry {
   if (!v || typeof v !== "object" || Array.isArray(v)) return false;
   const o = v as Record<string, unknown>;
@@ -69,10 +86,10 @@ function isCustomSourceEntry(v: unknown): v is CustomSourceEntry {
   );
 }
 
-export async function writeCustomSourcesFile(
+async function writeCustomSourcesFileImpl(
   file: CustomSourcesFile,
   home = resolveClawqlHome()
-): Promise<string> {
+): Promise<string>  {
   const path = getCustomSourcesFilePath(home);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(file, null, 2)}\n`, {
@@ -83,10 +100,28 @@ export async function writeCustomSourcesFile(
   return path;
 }
 
-export async function upsertCustomSource(
+export function writeCustomSourcesFileEffect(
+  file: CustomSourcesFile,
+  home = resolveClawqlHome()
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => writeCustomSourcesFileImpl(file, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writeCustomSourcesFileEffect} for Effect callers. */
+export async function writeCustomSourcesFile(
+  file: CustomSourcesFile,
+  home = resolveClawqlHome()
+): Promise<string>  {
+  return Effect.runPromise(writeCustomSourcesFileEffect(file, home));
+}
+
+async function upsertCustomSourceImpl(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
-): Promise<{ path: string; entry: CustomSourceEntry }> {
+): Promise<{ path: string; entry: CustomSourceEntry }>  {
   const file = await readCustomSourcesFile(home);
   const idx = file.sources.findIndex((s) => s.id === entry.id);
   if (idx >= 0) file.sources[idx] = entry;
@@ -95,7 +130,25 @@ export async function upsertCustomSource(
   return { path, entry };
 }
 
-export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean> {
+export function upsertCustomSourceEffect(
+  entry: CustomSourceEntry,
+  home = resolveClawqlHome()
+): Effect.Effect<{ path: string; entry: CustomSourceEntry }, Error> {
+  return Effect.tryPromise({
+    try: () => upsertCustomSourceImpl(entry, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link upsertCustomSourceEffect} for Effect callers. */
+export async function upsertCustomSource(
+  entry: CustomSourceEntry,
+  home = resolveClawqlHome()
+): Promise<{ path: string; entry: CustomSourceEntry }>  {
+  return Effect.runPromise(upsertCustomSourceEffect(entry, home));
+}
+
+async function removeCustomSourceImpl(id: string, home = resolveClawqlHome()): Promise<boolean>  {
   const safeId = assertSafeSourceId(id);
   const file = await readCustomSourcesFile(home);
   const next = file.sources.filter((s) => s.id !== safeId);
@@ -104,10 +157,22 @@ export async function removeCustomSource(id: string, home = resolveClawqlHome())
   return true;
 }
 
-export async function ensureSourceCacheDir(
+export function removeCustomSourceEffect(id: string, home = resolveClawqlHome()): Effect.Effect<boolean, Error> {
+  return Effect.tryPromise({
+    try: () => removeCustomSourceImpl(id, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link removeCustomSourceEffect} for Effect callers. */
+export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean>  {
+  return Effect.runPromise(removeCustomSourceEffect(id, home));
+}
+
+async function ensureSourceCacheDirImpl(
   id: string,
   home = resolveClawqlHome()
-): Promise<string> {
+): Promise<string>  {
   const dir = getCustomSourceCacheDir(id, home);
   await mkdir(dir, { recursive: true });
   const base = resolve(join(home, "sources"));
@@ -117,4 +182,22 @@ export async function ensureSourceCacheDir(
     throw new Error("Invalid source id path");
   }
   return resolvedDir;
+}
+
+export function ensureSourceCacheDirEffect(
+  id: string,
+  home = resolveClawqlHome()
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => ensureSourceCacheDirImpl(id, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link ensureSourceCacheDirEffect} for Effect callers. */
+export async function ensureSourceCacheDir(
+  id: string,
+  home = resolveClawqlHome()
+): Promise<string>  {
+  return Effect.runPromise(ensureSourceCacheDirEffect(id, home));
 }

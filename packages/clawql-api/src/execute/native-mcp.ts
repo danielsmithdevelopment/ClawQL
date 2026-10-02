@@ -5,11 +5,12 @@
 import type { Operation } from "../spec/operation-types.js";
 import { getMcpToolBinding } from "../spec/mcp-source-registry.js";
 import type { ExecuteOperationResult } from "./types.js";
+import { Effect } from "effect";
 
-export async function executeNativeMcp(
+async function executeNativeMcpImpl(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult> {
+): Promise<ExecuteOperationResult>  {
   const meta = op.nativeMcp;
   if (!meta) {
     return { ok: false, error: "Internal error: missing nativeMcp metadata" };
@@ -41,4 +42,22 @@ export async function executeNativeMcp(
       error: e instanceof Error ? e.message : String(e),
     };
   }
+}
+
+export function executeNativeMcpEffect(
+  op: Operation,
+  args: Record<string, unknown>
+): Effect.Effect<ExecuteOperationResult, Error> {
+  return Effect.tryPromise({
+    try: () => executeNativeMcpImpl(op, args),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeNativeMcpEffect} for Effect callers. */
+export async function executeNativeMcp(
+  op: Operation,
+  args: Record<string, unknown>
+): Promise<ExecuteOperationResult>  {
+  return Effect.runPromise(executeNativeMcpEffect(op, args));
 }
