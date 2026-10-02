@@ -96,7 +96,7 @@ describe("server (stdio)", () => {
       expect(names.has("memory_ingest")).toBe(true);
       expect(names.has("memory_recall")).toBe(true);
       expect(names.has("memory_sync")).toBe(true);
-      expect(names.has("ingest_external_knowledge")).toBe(true);
+      expect(names.has("ingest_external_knowledge")).toBe(false);
       expect(names.has("cache")).toBe(true);
       expect(names.has("audit")).toBe(true);
       expect(names.has("notify")).toBe(false);
@@ -202,8 +202,30 @@ describe("server (stdio)", () => {
       "clawql-stdio-data-on"
     );
     expect(names.has("data_query")).toBe(true);
-    expect(names.has("clawql_sql")).toBe(true);
+    expect(names.has("clawql_sql")).toBe(false);
     expect(names.has("data_ingest")).toBe(true);
+  }, 20_000);
+
+  it("registers clawql_sql alias when CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1 with data on", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_INSTANCE_SPEC: instanceSpecWith({ data: { enabled: true } }),
+        CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: "1",
+      }),
+      "clawql-stdio-data-sql-alias"
+    );
+    expect(names.has("data_query")).toBe(true);
+    expect(names.has("clawql_sql")).toBe(true);
+  }, 20_000);
+
+  it("registers ingest_external_knowledge when CLAWQL_EXTERNAL_INGEST=1", async () => {
+    const names = await listToolNames(
+      isolatedStdioChildEnv(minimalSpec, {
+        CLAWQL_EXTERNAL_INGEST: "1",
+      }),
+      "clawql-stdio-external-ingest-on"
+    );
+    expect(names.has("ingest_external_knowledge")).toBe(true);
   }, 20_000);
 
   it("hides memory_ingest and memory_recall when instance spec disables memory", async () => {
