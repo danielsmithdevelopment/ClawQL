@@ -28,7 +28,7 @@ import {
   type CreatorPayoutPreference,
   type PayoutMethod,
 } from "./preferences.js";
-import { UsdcSendError, sendUsdcPayoutEffect } from "./usdc-send.js";
+import { sendUsdcPayoutEffect } from "./usdc-send.js";
 
 export class PayoutError extends Data.TaggedError("PayoutError")<{
   readonly reason: string;
