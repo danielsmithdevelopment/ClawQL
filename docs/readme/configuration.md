@@ -139,7 +139,7 @@ ClawQL picks the best internal connection per provider (**gRPC → GraphQL → O
 See **[Feature tiers](#feature-tiers-architecture-diagram)** first. Quick list:
 
 - **Default on, opt out:** `CLAWQL_ENABLE_MEMORY`, `CLAWQL_ENABLE_DOCUMENTS` — set `0` / `false` / `no` to hide tools or trim default **`all-providers`** (documents).
-- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_LANGFUSE_EVAL`, `CLAWQL_ENABLE_OUROBOROS_TOOLS` (8.0 demotion — `ouroboros_*` / `clawql_think`, or instance/tier `ouroboros.enabled: true`).
+- **Default off, opt in:** `CLAWQL_ENABLE_SCHEDULE`, `CLAWQL_ENABLE_NOTIFY`, `CLAWQL_ENABLE_WORKFLOW`, `CLAWQL_ENABLE_ONYX`, `CLAWQL_ENABLE_LANGFUSE_EVAL`, `CLAWQL_ENABLE_OUROBOROS_TOOLS` (8.0 demotion — `ouroboros_*` / `clawql_think`, or instance/tier `ouroboros.enabled: true`), `CLAWQL_ENABLE_OBSERVABILITY` (operator LGTM+ query/apply — not agent-loop reasoning).
 - **Deleted, not resurrected:** `CLAWQL_ENABLE_OUROBOROS` (old name) — the new gate is `CLAWQL_ENABLE_OUROBOROS_TOOLS` above.
 
 ## `.env` loading and canonical `CLAWQL_*` names

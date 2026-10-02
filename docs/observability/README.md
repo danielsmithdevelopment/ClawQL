@@ -4,6 +4,19 @@
 
 Operator-facing **metrics + traces + work traces (Langfuse) + LLM eval** wiring for the full IDP stack. ClawQL does **not** embed Langfuse inside the MCP process — deploy as a sidecar stack or use an existing instance.
 
+## One instrumentation layer (8.0)
+
+**OpenTelemetry** is the sole instrumentation layer (`CLAWQL_ENABLE_OTEL_TRACING` → OTLP). Everything else is an **export destination** or an **operator tool surface**:
+
+| Surface | Flag | Role |
+| ------- | ---- | ---- |
+| **OpenTelemetry** | `CLAWQL_ENABLE_OTEL_TRACING` | Instrumentation — emit spans |
+| **Prometheus** (`GET /metrics`, prom-client) | `CLAWQL_ENABLE_HTTP_METRICS` (default on) | Metrics **export** / scrape (not the OTEL Metrics SDK; no merge in 8.0) |
+| **Langfuse** | `CLAWQL_ENABLE_LANGFUSE` | Work-trace **export** |
+| **`observability_*` MCP tools** | `CLAWQL_ENABLE_OBSERVABILITY` (default **off**) | Named job: **operator LGTM+ query/apply** — not agent-loop reasoning |
+
+Purge inventory: [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../releases/8.0.0-purge-inventory-spec-v0.1.md).
+
 ## Observability profiles (7.0)
 
 | Profile        | Guide                                               | Langfuse emission                                           |
