@@ -18,6 +18,10 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    /** Classify risk without refusing execute (Slack/Onyx POST fixtures). */
+    env: {
+      CLAWQL_OPERATION_RISK_ENFORCE: "0",
+    },
     include: [
       "src/**/*.test.ts",
       "packages/mcp-grpc-transport/src/**/*.test.ts",

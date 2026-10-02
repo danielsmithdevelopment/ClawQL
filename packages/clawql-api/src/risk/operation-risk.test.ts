@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { bootProcessWormFromEnvEffect, resetProcessWormForTests } from "clawql-audit";
 import type { Operation } from "../spec/operation-types.js";
 import { classifyOperationRisk } from "./classify-operation-risk.js";
+import { operationRiskEnforceEnabledEffect } from "./operation-risk-enforce.js";
 import { formatSearchResults } from "../spec/spec-search.js";
 import { executeClawqlOperationEffect } from "../execute/execute-core.js";
 import {
@@ -244,55 +245,83 @@ describe("search + execute surfaces", () => {
   });
 
   it("execute refuses mandate and block with risk in the body", async () => {
-    const mandateOp = baseOp({
-      id: "writeThing",
-      method: "POST",
-      protocolKind: "openapi",
-      risk: {
-        level: "MEDIUM",
-        policy: "mandate",
-        source: "spec-default",
-        reason: "HTTP POST",
-      },
-    });
-    const blockOp = baseOp({
-      id: "deleteThing",
-      method: "DELETE",
-      protocolKind: "openapi",
-      risk: {
-        level: "HIGH",
-        policy: "block",
-        source: "spec-default",
-        reason: "HTTP DELETE",
-      },
-    });
+    const prev = process.env.CLAWQL_OPERATION_RISK_ENFORCE;
+    process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
+    try {
+      const mandateOp = baseOp({
+        id: "writeThing",
+        method: "POST",
+        protocolKind: "openapi",
+        risk: {
+          level: "MEDIUM",
+          policy: "mandate",
+          source: "spec-default",
+          reason: "HTTP POST",
+        },
+      });
+      const blockOp = baseOp({
+        id: "deleteThing",
+        method: "DELETE",
+        protocolKind: "openapi",
+        risk: {
+          level: "HIGH",
+          policy: "block",
+          source: "spec-default",
+          reason: "HTTP DELETE",
+        },
+      });
 
-    const loadSpecFn = async () =>
-      ({
-        operations: [mandateOp, blockOp],
-        openapi: { openapi: "3.0.0", info: { title: "t", version: "1" }, paths: {} },
-        multi: false,
-      }) as Awaited<ReturnType<typeof import("../spec/spec-loader.js").loadSpec>>;
+      const loadSpecFn = async () =>
+        ({
+          operations: [mandateOp, blockOp],
+          openapi: { openapi: "3.0.0", info: { title: "t", version: "1" }, paths: {} },
+          multi: false,
+        }) as Awaited<ReturnType<typeof import("../spec/spec-loader.js").loadSpec>>;
 
-    const mandateBody = await Effect.runPromise(
-      executeClawqlOperationEffect({ operationId: "writeThing", args: {} }, loadSpecFn)
-    );
-    const mandateJson = JSON.parse(mandateBody[0]!.text) as {
-      status: string;
-      risk: { policy: string };
-    };
-    expect(mandateJson.status).toBe("mandate_required");
-    expect(mandateJson.risk.policy).toBe("mandate");
+      const mandateBody = await Effect.runPromise(
+        executeClawqlOperationEffect({ operationId: "writeThing", args: {} }, loadSpecFn)
+      );
+      const mandateJson = JSON.parse(mandateBody[0]!.text) as {
+        status: string;
+        risk: { policy: string };
+      };
+      expect(mandateJson.status).toBe("mandate_required");
+      expect(mandateJson.risk.policy).toBe("mandate");
 
-    const blockBody = await Effect.runPromise(
-      executeClawqlOperationEffect({ operationId: "deleteThing", args: {} }, loadSpecFn)
-    );
-    const blockJson = JSON.parse(blockBody[0]!.text) as {
-      status: string;
-      risk: { policy: string };
-    };
-    expect(blockJson.status).toBe("blocked");
-    expect(blockJson.risk.policy).toBe("block");
+      const blockBody = await Effect.runPromise(
+        executeClawqlOperationEffect({ operationId: "deleteThing", args: {} }, loadSpecFn)
+      );
+      const blockJson = JSON.parse(blockBody[0]!.text) as {
+        status: string;
+        risk: { policy: string };
+      };
+      expect(blockJson.status).toBe("blocked");
+      expect(blockJson.risk.policy).toBe("block");
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_OPERATION_RISK_ENFORCE;
+      else process.env.CLAWQL_OPERATION_RISK_ENFORCE = prev;
+    }
+  });
+});
+
+describe("CLAWQL_OPERATION_RISK_ENFORCE", () => {
+  it("defaults on; 0/false/no disable", async () => {
+    expect(await Effect.runPromise(operationRiskEnforceEnabledEffect({}))).toBe(true);
+    expect(
+      await Effect.runPromise(
+        operationRiskEnforceEnabledEffect({ CLAWQL_OPERATION_RISK_ENFORCE: "1" })
+      )
+    ).toBe(true);
+    expect(
+      await Effect.runPromise(
+        operationRiskEnforceEnabledEffect({ CLAWQL_OPERATION_RISK_ENFORCE: "0" })
+      )
+    ).toBe(false);
+    expect(
+      await Effect.runPromise(
+        operationRiskEnforceEnabledEffect({ CLAWQL_OPERATION_RISK_ENFORCE: "false" })
+      )
+    ).toBe(false);
   });
 });
 

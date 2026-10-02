@@ -15,6 +15,7 @@ import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
+import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -54,7 +55,8 @@ export function executeClawqlOperationEffect(
     }
 
     const risk = op.risk;
-    if (risk?.policy === "block") {
+    const enforceRisk = yield* operationRiskEnforceEnabledEffect();
+    if (enforceRisk && risk?.policy === "block") {
       return yield* textContentEffect(
         JSON.stringify({
           ok: false,
@@ -65,7 +67,7 @@ export function executeClawqlOperationEffect(
         })
       );
     }
-    if (risk?.policy === "mandate") {
+    if (enforceRisk && risk?.policy === "mandate") {
       return yield* textContentEffect(
         JSON.stringify({
           ok: false,

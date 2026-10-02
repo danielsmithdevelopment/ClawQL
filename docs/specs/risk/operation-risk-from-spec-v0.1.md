@@ -60,6 +60,10 @@ Changing an operation's risk is a **capability change**. Every applied override 
 1. **`search`** — each operation result includes `risk: { level, policy, source, reason }`.
 2. **`execute`** — on `mandate` / `block`, returns JSON with `ok: false`, `status`, `operationId`, and the same `risk` object (no upstream call).
 
+## Enforcement flag
+
+`CLAWQL_OPERATION_RISK_ENFORCE` defaults **on**. Set `0` / `false` / `no` to keep classification (search / `Operation.risk`) without refusing execute — intended for unit tests and staged rollouts. Production should leave it unset or `1`.
+
 ## Out of scope (later)
 
 - Pause-and-resume after mandate (`#2`)
