@@ -28,8 +28,9 @@ const rawOptionalFlagsSchema = z.object({
   /** Default on: `memory_ingest` / `memory_recall`. Set `0` / `false` / `no` to unregister. */
   CLAWQL_ENABLE_MEMORY: z.string().optional(),
   /**
-   * Default on: document pipeline — bundled tika / docling / gotenberg / paperless / stirling / onyx / **nextcloud** / **coneshare** in **`all-providers`**, plus
-   * **`ingest_external_knowledge`** and (with **`CLAWQL_ENABLE_ONYX`**) **`knowledge_search_onyx`**. Set `0` to opt out.
+   * Default on: document tier — Docling + archive/collab vendors in **`all-providers`**;
+   * optional IDP / Anydoc / pdf-inspector tools. **`ingest_external_knowledge`** needs
+   * **`CLAWQL_EXTERNAL_INGEST=1`**. Set `0` to opt out of the document tier.
    */
   CLAWQL_ENABLE_DOCUMENTS: z.string().optional(),
   CLAWQL_ENABLE_SCHEDULE: z.string().optional(),
@@ -45,6 +46,12 @@ const rawOptionalFlagsSchema = z.object({
    * register with `CLAWQL_ENABLE_DATA=1`. Not Python duckdb and not chDB.
    */
   CLAWQL_ENABLE_DATA: z.string().optional(),
+  /**
+   * Legacy MCP name `clawql_sql` as alias of `data_query`. Default false —
+   * set `CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1` when a client allowlists `clawql_sql` directly
+   * (Harvey LAB remaps via `lab-mcp-proxy.mjs` and does not need this).
+   */
+  CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: z.string().optional(),
   /** Web search/fetch MCP tools (`web_*`). Auto-on when a provider/key is set; `0` forces off. */
   CLAWQL_ENABLE_WEB: z.string().optional(),
   CLAWQL_WEB_SEARCH_PROVIDER: z.string().optional(),
@@ -125,7 +132,10 @@ export type ClawqlOptionalToolFlags = {
   enableGrpc: boolean;
   /** `ENABLE_GRPC_REFLECTION` — server reflection for grpcurl. */
   enableGrpcReflection: boolean;
-  /** `CLAWQL_EXTERNAL_INGEST=1` — `ingest_external_knowledge` (Markdown import + optional URL fetch). */
+  /**
+   * `CLAWQL_EXTERNAL_INGEST=1` — register `ingest_external_knowledge` (bulk Markdown + optional URL fetch).
+   * Default off; vault writes use `memory_ingest` (8.0 verb-twin demotion).
+   */
   externalIngestPreview: boolean;
   /**
    * Durable **vault** tools **`memory_ingest`** / **`memory_recall`**. Default **true** (set **`CLAWQL_ENABLE_MEMORY=0`**
@@ -133,8 +143,9 @@ export type ClawqlOptionalToolFlags = {
    */
   enableMemory: boolean;
   /**
-   * Document stack: default merge includes tika, gotenberg, paperless, stirling, onyx, nextcloud, coneshare; registers **`ingest_external_knowledge`**;
-   * pairs with **`knowledge_search_onyx`** when **`CLAWQL_ENABLE_ONYX=1`**. Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out.
+   * Document stack: Docling + archive/collab vendors in `all-providers`; optional IDP/Anydoc/pdf-inspector tools.
+   * `ingest_external_knowledge` registers only when **`CLAWQL_EXTERNAL_INGEST=1`**.
+   * Set **`CLAWQL_ENABLE_DOCUMENTS=0`** to opt out of the document tier.
    */
   enableDocuments: boolean;
   /**
@@ -166,6 +177,11 @@ export type ClawqlOptionalToolFlags = {
    * Default false — register with **`CLAWQL_ENABLE_DATA=1`**.
    */
   enableData: boolean;
+  /**
+   * Register legacy **`clawql_sql`** alias of **`data_query`**. Default false —
+   * **`CLAWQL_ENABLE_CLAWQL_SQL_ALIAS=1`**.
+   */
+  enableClawqlSqlAlias: boolean;
   /**
    * MCP **`web_search` / `web_fetch` / `web_screenshot` / `web_interact`** (`clawql-web`).
    * Default false unless `CLAWQL_ENABLE_WEB=1` or a web provider/API key is configured.
@@ -265,6 +281,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableOnyxKnowledge: envTruthy(raw.CLAWQL_ENABLE_ONYX),
     enableSandbox: envTruthy(raw.CLAWQL_ENABLE_SANDBOX),
     enableData: envTruthy(raw.CLAWQL_ENABLE_DATA),
+    enableClawqlSqlAlias: envTruthy(raw.CLAWQL_ENABLE_CLAWQL_SQL_ALIAS),
     enableWeb: resolveEnableWeb(raw),
     enableOntology:
       envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY) || envTruthy(raw.CLAWQL_ENABLE_ONTOLOGY_WRITES),
@@ -323,6 +340,7 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableOnyxKnowledge: false,
     enableSandbox: false,
     enableData: false,
+    enableClawqlSqlAlias: false,
     enableWeb: false,
     enableOntology: false,
     enableOntologyWrites: false,

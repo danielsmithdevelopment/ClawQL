@@ -16,6 +16,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_ONYX: undefined,
       CLAWQL_ENABLE_SANDBOX: undefined,
       CLAWQL_ENABLE_DATA: undefined,
+      CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: undefined,
       CLAWQL_ENABLE_WEB: undefined,
       CLAWQL_ENABLE_HITL_LABEL_STUDIO: undefined,
       CLAWQL_ENABLE_CONESHARE: undefined,
@@ -37,6 +38,7 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableOnyxKnowledge).toBe(false);
     expect(f.enableSandbox).toBe(false);
     expect(f.enableData).toBe(false);
+    expect(f.enableClawqlSqlAlias).toBe(false);
     expect(f.enableWeb).toBe(false);
     expect(f.enableHitlLabelStudio).toBe(false);
     expect(f.enableConeshare).toBe(false);
@@ -72,6 +74,17 @@ describe("getClawqlOptionalToolFlags", () => {
     ).toBe(false);
   });
 
+  it("parses CLAWQL_ENABLE_CLAWQL_SQL_ALIAS", () => {
+    expect(
+      getClawqlOptionalToolFlags({ CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: "1" } as NodeJS.ProcessEnv)
+        .enableClawqlSqlAlias
+    ).toBe(true);
+    expect(
+      getClawqlOptionalToolFlags({ CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: undefined } as NodeJS.ProcessEnv)
+        .enableClawqlSqlAlias
+    ).toBe(false);
+  });
+
   it("can disable memory and documents with explicit 0", () => {
     const off = getClawqlOptionalToolFlags({
       CLAWQL_ENABLE_MEMORY: "0",
@@ -90,6 +103,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_ONYX: "1",
       CLAWQL_ENABLE_SANDBOX: "1",
       CLAWQL_ENABLE_DATA: "1",
+      CLAWQL_ENABLE_CLAWQL_SQL_ALIAS: "1",
       CLAWQL_ENABLE_WEB: "1",
       CLAWQL_ENABLE_DOCUMENTS: "1",
       CLAWQL_ENABLE_IDP_PIPELINE: "1",
@@ -107,6 +121,7 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enableOnyxKnowledge).toBe(true);
     expect(f.enableSandbox).toBe(true);
     expect(f.enableData).toBe(true);
+    expect(f.enableClawqlSqlAlias).toBe(true);
     expect(f.enableWeb).toBe(true);
     expect(f.enableIdpPipeline).toBe(true);
     expect(f.enableIdpClassifier).toBe(true);

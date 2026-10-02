@@ -17,6 +17,7 @@ const baseFlags = {
   enableDocuments: false,
   enableSandbox: false,
   enableData: false,
+  enableClawqlSqlAlias: false,
   enableWeb: false,
   enableSchedule: false,
   enableNotify: false,
