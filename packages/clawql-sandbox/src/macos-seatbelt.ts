@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { Effect } from "effect";
 import type { SandboxBridgeResponse, SandboxCodeToolInput, SandboxLanguage } from "./types.js";
 import { defaultPersistence, parseTimeoutMs, resolveSandboxId, snippetFilename } from "./shared.js";
 import {
@@ -42,113 +43,150 @@ function execParts(language: SandboxLanguage, workspace: string): { argv: string
   }
 }
 
-function spawnSeatbeltArgs(
+function spawnSeatbeltArgsEffect(
   args: string[],
   cwd: string,
   timeoutMs: number
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const exe = "/usr/bin/sandbox-exec";
-  return new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn(exe, args, {
-      cwd,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    let stdout = "";
-    let stderr = "";
-    child.stdout?.on("data", (d: Buffer) => {
-      stdout += d.toString("utf8");
-    });
-    child.stderr?.on("data", (d: Buffer) => {
-      stderr += d.toString("utf8");
-    });
-    const t = setTimeout(() => {
-      child.kill("SIGKILL");
-    }, timeoutMs);
-    child.on("error", (err) => {
-      clearTimeout(t);
-      rejectPromise(err);
-    });
-    child.on("close", (code) => {
-      clearTimeout(t);
-      resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
-    });
+): Effect.Effect<{ stdout: string; stderr: string; exitCode: number }, Error> {
+  return Effect.tryPromise({
+    try: () =>
+      new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolvePromise, rejectPromise) => {
+        const exe = "/usr/bin/sandbox-exec";
+        const child = spawn(exe, args, {
+          cwd,
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        let stdout = "";
+        let stderr = "";
+        child.stdout?.on("data", (d: Buffer) => {
+          stdout += d.toString("utf8");
+        });
+        child.stderr?.on("data", (d: Buffer) => {
+          stderr += d.toString("utf8");
+        });
+        const t = setTimeout(() => {
+          child.kill("SIGKILL");
+        }, timeoutMs);
+        child.on("error", (err) => {
+          clearTimeout(t);
+          rejectPromise(err);
+        });
+        child.on("close", (code) => {
+          clearTimeout(t);
+          resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
+        });
+      }),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 }
 
+/**
+ * Run a sandbox_exec snippet under macOS Seatbelt.
+ * Soft-fails into {@link SandboxBridgeResponse} (Effect success channel).
+ */
+export function callMacosSeatbeltSandboxEffect(
+  input: SandboxCodeToolInput
+): Effect.Effect<SandboxBridgeResponse> {
+  return Effect.gen(function* () {
+    if (process.platform !== "darwin") {
+      return {
+        stdout: "",
+        stderr: "",
+        exitCode: -1,
+        success: false,
+        backend: "macos-seatbelt" as const,
+        error:
+          "CLAWQL_SANDBOX_BACKEND=macos-seatbelt requires macOS (darwin). Use bridge or docker backend instead.",
+      } satisfies SandboxBridgeResponse;
+    }
+
+    const persistenceMode = input.persistenceMode ?? defaultPersistence();
+    const sandboxId = resolveSandboxId(persistenceMode, input.sessionId);
+    const workspace = workspaceRootFor(sandboxId);
+    const timeoutMs = parseTimeoutMs(input.timeoutMs);
+    const profilePath = path.join(workspace, ".clawql-seatbelt.sb");
+    const snippetPath = path.join(workspace, snippetFilename(input.language));
+
+    const cleanup =
+      persistenceMode === "ephemeral"
+        ? Effect.tryPromise({
+            try: () => rm(workspace, { recursive: true, force: true }),
+            catch: () => undefined,
+          }).pipe(Effect.catch(() => Effect.void))
+        : Effect.void;
+
+    const run = Effect.gen(function* () {
+      yield* Effect.tryPromise({
+        try: () => mkdir(workspace, { recursive: true }),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+      const containment = yield* Effect.promise(() =>
+        loadContainmentConfig(defaultClawqlHome()).catch(() => null)
+      );
+      const profileBody = containment?.enabled
+        ? buildExecSeatbeltProfile(containment, workspace)
+        : SEATBELT_EXEC_PROFILE_V1;
+      yield* Effect.tryPromise({
+        try: () => writeFile(profilePath, profileBody, "utf8"),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+      yield* Effect.tryPromise({
+        try: () => writeFile(snippetPath, input.code, "utf8"),
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
+
+      const params = containment?.enabled
+        ? seatbeltProfileParams(containment, workspace)
+        : {
+            WORK_DIR: workspace,
+            CLAWQL_DIR: defaultClawqlHome(),
+            HOME_SSH: "/dev/null",
+            HOME_AWS: "/dev/null",
+            HOME_CONFIG: "/dev/null",
+          };
+
+      const { argv } = execParts(input.language, workspace);
+      const seatbeltArgs = sandboxExecArgv(profilePath, params, argv[0]!, argv.slice(1));
+      const { stdout, stderr, exitCode } = yield* spawnSeatbeltArgsEffect(
+        seatbeltArgs,
+        workspace,
+        timeoutMs
+      );
+
+      const ok = exitCode === 0;
+      return {
+        stdout,
+        stderr,
+        exitCode,
+        success: ok,
+        sandboxId,
+        backend: "macos-seatbelt" as const,
+        ...(ok ? {} : { error: stderr.trim() || `exit ${exitCode}` }),
+      } satisfies SandboxBridgeResponse;
+    });
+
+    return yield* run.pipe(
+      Effect.catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        return Effect.succeed({
+          stdout: "",
+          stderr: "",
+          exitCode: -1,
+          success: false,
+          backend: "macos-seatbelt" as const,
+          error: msg.includes("ENOENT")
+            ? `sandbox-exec not found at /usr/bin/sandbox-exec (${msg})`
+            : msg,
+        } satisfies SandboxBridgeResponse);
+      }),
+      Effect.ensuring(cleanup)
+    );
+  });
+}
+
+/** Promise façade for callers that still await the Seatbelt backend. */
 export async function callMacosSeatbeltSandbox(
   input: SandboxCodeToolInput
 ): Promise<SandboxBridgeResponse> {
-  if (process.platform !== "darwin") {
-    return {
-      stdout: "",
-      stderr: "",
-      exitCode: -1,
-      success: false,
-      backend: "macos-seatbelt",
-      error:
-        "CLAWQL_SANDBOX_BACKEND=macos-seatbelt requires macOS (darwin). Use bridge or docker backend instead.",
-    };
-  }
-
-  const persistenceMode = input.persistenceMode ?? defaultPersistence();
-  const sandboxId = resolveSandboxId(persistenceMode, input.sessionId);
-  const workspace = workspaceRootFor(sandboxId);
-  const timeoutMs = parseTimeoutMs(input.timeoutMs);
-  const profilePath = path.join(workspace, ".clawql-seatbelt.sb");
-  const snippetPath = path.join(workspace, snippetFilename(input.language));
-
-  try {
-    await mkdir(workspace, { recursive: true });
-    const containment = await loadContainmentConfig(defaultClawqlHome()).catch(() => null);
-    const profileBody = containment?.enabled
-      ? buildExecSeatbeltProfile(containment, workspace)
-      : SEATBELT_EXEC_PROFILE_V1;
-    await writeFile(profilePath, profileBody, "utf8");
-    await writeFile(snippetPath, input.code, "utf8");
-
-    const params = containment?.enabled
-      ? seatbeltProfileParams(containment, workspace)
-      : {
-          WORK_DIR: workspace,
-          CLAWQL_DIR: defaultClawqlHome(),
-          HOME_SSH: "/dev/null",
-          HOME_AWS: "/dev/null",
-          HOME_CONFIG: "/dev/null",
-        };
-
-    const { argv } = execParts(input.language, workspace);
-    const seatbeltArgs = sandboxExecArgv(profilePath, params, argv[0]!, argv.slice(1));
-    const { stdout, stderr, exitCode } = await spawnSeatbeltArgs(
-      seatbeltArgs,
-      workspace,
-      timeoutMs
-    );
-
-    const ok = exitCode === 0;
-    return {
-      stdout,
-      stderr,
-      exitCode,
-      success: ok,
-      sandboxId,
-      backend: "macos-seatbelt",
-      ...(ok ? {} : { error: stderr.trim() || `exit ${exitCode}` }),
-    };
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return {
-      stdout: "",
-      stderr: "",
-      exitCode: -1,
-      success: false,
-      backend: "macos-seatbelt",
-      error: msg.includes("ENOENT")
-        ? `sandbox-exec not found at /usr/bin/sandbox-exec (${msg})`
-        : msg,
-    };
-  } finally {
-    if (persistenceMode === "ephemeral") {
-      await rm(workspace, { recursive: true, force: true });
-    }
-  }
+  return Effect.runPromise(callMacosSeatbeltSandboxEffect(input));
 }

@@ -4,12 +4,13 @@
  * @see docs/adr/0011-isolation-agent-substrate-sandbox-celld.md
  */
 
+import { Effect } from "effect";
 import {
-  agentSubstrateReachable,
-  bridgeCredentialsConfigured,
-  dockerCliReachable,
-  kataRuntimeReachable,
-  seatbeltBinaryPresent,
+  agentSubstrateReachableEffect,
+  bridgeCredentialsConfiguredEffect,
+  dockerCliReachableEffect,
+  kataRuntimeReachableEffect,
+  seatbeltBinaryPresentEffect,
 } from "./capabilities.js";
 import { inKubernetesCluster } from "./kata-kubernetes.js";
 import type { SandboxExecBackendKind } from "./types.js";
@@ -19,41 +20,48 @@ export type ExplicitSandboxBackend = SandboxExecBackendKind | null;
 
 /** Injected probes (for tests); defaults use real capability checks. */
 export type SandboxBackendAutoDeps = {
-  agentSubstrate: () => Promise<boolean> | boolean;
-  kata: () => Promise<boolean>;
-  seatbelt: () => boolean;
-  docker: () => Promise<boolean>;
-  bridge: () => boolean;
+  agentSubstrate: () => Effect.Effect<boolean>;
+  kata: () => Effect.Effect<boolean>;
+  seatbelt: () => Effect.Effect<boolean>;
+  docker: () => Effect.Effect<boolean>;
+  bridge: () => Effect.Effect<boolean>;
 };
 
 export const defaultSandboxBackendAutoDeps: SandboxBackendAutoDeps = {
-  agentSubstrate: agentSubstrateReachable,
-  kata: kataRuntimeReachable,
-  seatbelt: seatbeltBinaryPresent,
-  docker: dockerCliReachable,
-  bridge: bridgeCredentialsConfigured,
+  agentSubstrate: agentSubstrateReachableEffect,
+  kata: kataRuntimeReachableEffect,
+  seatbelt: seatbeltBinaryPresentEffect,
+  docker: dockerCliReachableEffect,
+  bridge: bridgeCredentialsConfiguredEffect,
 };
 
-export function parseExplicitSandboxBackendEnv(): ExplicitSandboxBackend {
-  const v = process.env.CLAWQL_SANDBOX_BACKEND?.trim().toLowerCase();
-  if (!v) {
+export function parseExplicitSandboxBackendEnvEffect(): Effect.Effect<ExplicitSandboxBackend> {
+  return Effect.sync(() => {
+    const v = process.env.CLAWQL_SANDBOX_BACKEND?.trim().toLowerCase();
+    if (!v) {
+      return inKubernetesCluster() ? null : "bridge";
+    }
+    if (v === "auto") return null;
+    if (
+      v === "agent-substrate" ||
+      v === "substrate" ||
+      v === "agentsubstrate" ||
+      v === "cloud-hypervisor" ||
+      v === "gvisor"
+    ) {
+      return "agent-substrate";
+    }
+    if (v === "kata" || v === "kata-containers" || v === "kata-qemu") return "kata";
+    if (v === "bridge" || v === "cloudflare") return "bridge";
+    if (v === "macos-seatbelt" || v === "seatbelt") return "macos-seatbelt";
+    if (v === "docker" || v === "container" || v === "orbstack" || v === "podman") return "docker";
     return inKubernetesCluster() ? null : "bridge";
-  }
-  if (v === "auto") return null;
-  if (
-    v === "agent-substrate" ||
-    v === "substrate" ||
-    v === "agentsubstrate" ||
-    v === "cloud-hypervisor" ||
-    v === "gvisor"
-  ) {
-    return "agent-substrate";
-  }
-  if (v === "kata" || v === "kata-containers" || v === "kata-qemu") return "kata";
-  if (v === "bridge" || v === "cloudflare") return "bridge";
-  if (v === "macos-seatbelt" || v === "seatbelt") return "macos-seatbelt";
-  if (v === "docker" || v === "container" || v === "orbstack" || v === "podman") return "docker";
-  return inKubernetesCluster() ? null : "bridge";
+  });
+}
+
+/** Sync façade for env parsing at host edges. */
+export function parseExplicitSandboxBackendEnv(): ExplicitSandboxBackend {
+  return Effect.runSync(parseExplicitSandboxBackendEnvEffect());
 }
 
 export const SANDBOX_AUTO_NONE_ERROR =
@@ -64,21 +72,35 @@ export const SANDBOX_AUTO_NONE_ERROR =
   "or macOS `/usr/bin/sandbox-exec`. Set CLAWQL_SANDBOX_BACKEND=auto for automatic selection, or " +
   "agent-substrate|kata|bridge|macos-seatbelt|docker to pin.";
 
-export async function resolveSandboxBackendChoice(
+export type SandboxBackendChoice =
+  | { ok: true; backend: SandboxExecBackendKind }
+  | { ok: false; error: string };
+
+export function resolveSandboxBackendChoiceEffect(
   explicit: ExplicitSandboxBackend,
   deps: SandboxBackendAutoDeps = defaultSandboxBackendAutoDeps
-): Promise<{ ok: true; backend: SandboxExecBackendKind } | { ok: false; error: string }> {
-  if (explicit === "agent-substrate") return { ok: true, backend: "agent-substrate" };
-  if (explicit === "kata") return { ok: true, backend: "kata" };
-  if (explicit === "bridge") return { ok: true, backend: "bridge" };
-  if (explicit === "macos-seatbelt") return { ok: true, backend: "macos-seatbelt" };
-  if (explicit === "docker") return { ok: true, backend: "docker" };
+): Effect.Effect<SandboxBackendChoice> {
+  return Effect.gen(function* () {
+    if (explicit === "agent-substrate") return { ok: true as const, backend: "agent-substrate" };
+    if (explicit === "kata") return { ok: true as const, backend: "kata" };
+    if (explicit === "bridge") return { ok: true as const, backend: "bridge" };
+    if (explicit === "macos-seatbelt") return { ok: true as const, backend: "macos-seatbelt" };
+    if (explicit === "docker") return { ok: true as const, backend: "docker" };
 
-  if (await deps.agentSubstrate()) return { ok: true, backend: "agent-substrate" };
-  if (await deps.kata()) return { ok: true, backend: "kata" };
-  if (await deps.docker()) return { ok: true, backend: "docker" };
-  if (deps.bridge()) return { ok: true, backend: "bridge" };
-  if (deps.seatbelt()) return { ok: true, backend: "macos-seatbelt" };
+    if (yield* deps.agentSubstrate()) return { ok: true as const, backend: "agent-substrate" };
+    if (yield* deps.kata()) return { ok: true as const, backend: "kata" };
+    if (yield* deps.docker()) return { ok: true as const, backend: "docker" };
+    if (yield* deps.bridge()) return { ok: true as const, backend: "bridge" };
+    if (yield* deps.seatbelt()) return { ok: true as const, backend: "macos-seatbelt" };
 
-  return { ok: false, error: SANDBOX_AUTO_NONE_ERROR };
+    return { ok: false as const, error: SANDBOX_AUTO_NONE_ERROR };
+  });
+}
+
+/** Promise façade for callers that still await backend selection. */
+export async function resolveSandboxBackendChoice(
+  explicit: ExplicitSandboxBackend,
+  deps?: SandboxBackendAutoDeps
+): Promise<SandboxBackendChoice> {
+  return Effect.runPromise(resolveSandboxBackendChoiceEffect(explicit, deps));
 }
