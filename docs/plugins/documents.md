@@ -47,16 +47,16 @@ Office/PDF → convert_document (or inspect_pdf) → local_markdown | Docling OC
 
 ## Enable / disable
 
-| Env                                  | Default | Effect                                                                                         |
-| ------------------------------------ | ------- | ---------------------------------------------------------------------------------------------- |
+| Env                                  | Default | Effect                                                                                                                                                                        |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`CLAWQL_ENABLE_DOCUMENTS=0`**      | on      | Omit `DocumentsPlugin` and document MCP tools; trims IDP vendors from **`all-providers`** only (Tika/Gotenberg/Stirling stay out of `all-providers` regardless — opt-in-only) |
-| **`CLAWQL_ENABLE_ONYX=1`**           | off     | Register **`knowledge_search_onyx`**                                                           |
-| **`CLAWQL_EXTERNAL_INGEST=1`**       | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                        |
-| **`CLAWQL_ENABLE_ANYDOC=1`**         | off     | Register **`convert_document`** (in-process `@firecrawl/anydoc`)                               |
-| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`**  | off     | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`)                             |
-| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off     | Register **`classify_document`**                                                               |
-| **`CLAWQL_ENABLE_LANGEXTRACT=1`**    | off     | Register **`extract_document`**                                                                |
-| **`CLAWQL_ENABLE_IDP_PIPELINE=1`**   | off     | Register **`run_idp_pipeline`**                                                                |
+| **`CLAWQL_ENABLE_ONYX=1`**           | off     | Register **`knowledge_search_onyx`**                                                                                                                                          |
+| **`CLAWQL_EXTERNAL_INGEST=1`**       | off     | Allow URL fetch mode on **`ingest_external_knowledge`**                                                                                                                       |
+| **`CLAWQL_ENABLE_ANYDOC=1`**         | off     | Register **`convert_document`** (in-process `@firecrawl/anydoc`)                                                                                                              |
+| **`CLAWQL_ENABLE_PDF_INSPECTOR=1`**  | off     | Register **`inspect_pdf`** (in-process `@firecrawl/pdf-inspector`)                                                                                                            |
+| **`CLAWQL_ENABLE_IDP_CLASSIFIER=1`** | off     | Register **`classify_document`**                                                                                                                                              |
+| **`CLAWQL_ENABLE_LANGEXTRACT=1`**    | off     | Register **`extract_document`**                                                                                                                                               |
+| **`CLAWQL_ENABLE_IDP_PIPELINE=1`**   | off     | Register **`run_idp_pipeline`**                                                                                                                                               |
 
 ### Service URLs (when sidecars are up)
 
