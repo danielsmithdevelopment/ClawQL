@@ -1,3 +1,10 @@
+/**
+ * MCP plugin: operator LGTM+ query/apply tools (`observability_*`).
+ *
+ * Opt-in via `CLAWQL_ENABLE_OBSERVABILITY` (default off). Named job is operator
+ * LogQL / PromQL / TraceQL / Pyroscope + Alloy apply — not agent-loop reasoning.
+ * Instrumentation is OpenTelemetry elsewhere; Prometheus and Langfuse are exports.
+ */
 import { defineRegisteringProviderPlugin, type ProviderPlugin } from "clawql-core";
 import { Effect } from "effect";
 import { z } from "zod";
