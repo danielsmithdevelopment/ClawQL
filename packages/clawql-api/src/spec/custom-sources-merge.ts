@@ -41,7 +41,10 @@ function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
   return merged;
 }
 
-async function loadOpenApiLikeSource(entry: CustomSourceEntry, home: string): Promise<Operation[]> {
+export async function loadOpenApiLikeSource(
+  entry: CustomSourceEntry,
+  home: string
+): Promise<Operation[]> {
   if (!entry.cachePath) {
     console.error(`[spec-loader] Custom source "${entry.id}" missing cachePath`);
     return [];
@@ -89,6 +92,39 @@ function toGrpcConfig(entry: CustomSourceEntry, home: string): GrpcSourceConfig 
     protoPath: resolveSafePathUnder(home, protoPath),
     insecure: entry.grpcInsecure === true,
   };
+}
+
+/**
+ * Load operations for a single custom source entry (preview / propose path).
+ * Does not merge into the global index or write `sources.json`.
+ */
+export async function loadOperationsForCustomSourceEntry(
+  entry: CustomSourceEntry,
+  home = resolveClawqlHome()
+): Promise<Operation[]> {
+  if (entry.kind === "openapi" || entry.kind === "discovery") {
+    return loadOpenApiLikeSource(entry, home);
+  }
+  if (entry.kind === "graphql") {
+    const cfg = toGraphqlConfig(entry, home);
+    if (!cfg) return [];
+    return loadGraphqlNativeOperationsFromConfigs([cfg]);
+  }
+  if (entry.kind === "grpc") {
+    const cfg = toGrpcConfig(entry, home);
+    if (!cfg) return [];
+    return loadGrpcNativeOperationsFromConfigs([cfg]);
+  }
+  if (entry.kind === "mcp") {
+    return loadMcpSourceOperations([entry]);
+  }
+  if (entry.kind === "cli") {
+    return loadCliSourceOperations([entry]);
+  }
+  if (entry.kind === "webmcp") {
+    return loadWebmcpSourceOperations([entry]);
+  }
+  return [];
 }
 
 export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec> {

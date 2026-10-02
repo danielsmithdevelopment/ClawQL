@@ -66,5 +66,5 @@ Changing an operation's risk is a **capability change**. Every applied override 
 
 ## Out of scope (later)
 
-- Pause-and-resume after mandate (`#2`)
-- `sources_propose` (`#3`) — will classify ops on arrival using this module
+- Pause-and-resume after mandate (`#2`) — see [execute-pause-resume-v0.1](./execute-pause-resume-v0.1.md)
+- `sources_propose` (`#3`) — see [sources-propose-v0.1](./sources-propose-v0.1.md)
