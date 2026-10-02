@@ -5,7 +5,7 @@
  * Live sends wait for transaction receipt (confirmations) unless skipped.
  */
 
-import { Data } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 
 export class UsdcSendError extends Data.TaggedError("UsdcSendError")<{
   readonly reason: string;
@@ -24,6 +24,12 @@ export type UsdcSendResult = {
   confirmed: boolean;
   blockNumber?: bigint;
   confirmations?: number;
+};
+
+export type UsdcReceiptResult = {
+  status: "success" | "reverted";
+  blockNumber: bigint;
+  confirmations: number;
 };
 
 const ERC20_TRANSFER_ABI = [
@@ -95,172 +101,236 @@ function toAtomicUsdc(amountUsd: number): bigint {
   return BigInt(Math.round(amountUsd * 1_000_000));
 }
 
+export type WaitForUsdcReceiptInput = {
+  txHash: string;
+  chainId?: number;
+  confirmations?: number;
+  timeoutMs?: number;
+};
+
 /**
- * Wait for a previously broadcast USDC payout tx to be mined.
- * Used by sendUsdcPayout and for re-confirm / CLI verify.
+ * Wait for a previously broadcast USDC payout tx to be mined (Effect-primary).
  */
-export async function waitForUsdcReceipt(
-  input: {
-    txHash: string;
-    chainId?: number;
-    confirmations?: number;
-    timeoutMs?: number;
-  },
+export function waitForUsdcReceiptEffect(
+  input: WaitForUsdcReceiptInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ status: "success" | "reverted"; blockNumber: bigint; confirmations: number }> {
-  const chainId = input.chainId ?? usdcPayoutChainId(env);
-  const confirmations = input.confirmations ?? usdcReceiptConfirmations(env);
-  const timeout = input.timeoutMs ?? usdcReceiptTimeoutMs(env);
+): Effect.Effect<UsdcReceiptResult, UsdcSendError> {
+  return Effect.tryPromise({
+    try: async () => {
+      const chainId = input.chainId ?? usdcPayoutChainId(env);
+      const confirmations = input.confirmations ?? usdcReceiptConfirmations(env);
+      const timeout = input.timeoutMs ?? usdcReceiptTimeoutMs(env);
 
-  let viem: typeof import("viem");
-  let chains: typeof import("viem/chains");
-  try {
-    viem = await import("viem");
-    chains = await import("viem/chains");
-  } catch (cause) {
-    throw new UsdcSendError({
-      reason: "viem is required for USDC receipt confirmation — npm i viem",
-      cause,
-    });
-  }
+      let viem: typeof import("viem");
+      let chains: typeof import("viem/chains");
+      try {
+        viem = await import("viem");
+        chains = await import("viem/chains");
+      } catch (cause) {
+        throw new UsdcSendError({
+          reason: "viem is required for USDC receipt confirmation — npm i viem",
+          cause,
+        });
+      }
 
-  const chain = chainId === 8453 ? chains.base : chains.baseSepolia;
-  const publicClient = viem.createPublicClient({
-    chain,
-    transport: viem.http(usdcPayoutRpcUrl(env)),
-  });
-
-  try {
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: input.txHash as `0x${string}`,
-      confirmations: Math.max(1, confirmations),
-      timeout,
-    });
-    if (receipt.status !== "success") {
-      throw new UsdcSendError({
-        reason: `USDC transfer reverted (tx ${input.txHash})`,
+      const chain = chainId === 8453 ? chains.base : chains.baseSepolia;
+      const publicClient = viem.createPublicClient({
+        chain,
+        transport: viem.http(usdcPayoutRpcUrl(env)),
       });
-    }
-    return {
-      status: "success",
-      blockNumber: receipt.blockNumber,
-      confirmations: Math.max(1, confirmations),
-    };
-  } catch (cause) {
-    if (cause instanceof UsdcSendError) throw cause;
-    throw new UsdcSendError({
-      reason: cause instanceof Error ? cause.message : "USDC receipt wait failed",
-      cause,
-    });
-  }
+
+      try {
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: input.txHash as `0x${string}`,
+          confirmations: Math.max(1, confirmations),
+          timeout,
+        });
+        if (receipt.status !== "success") {
+          throw new UsdcSendError({
+            reason: `USDC transfer reverted (tx ${input.txHash})`,
+          });
+        }
+        return {
+          status: "success" as const,
+          blockNumber: receipt.blockNumber,
+          confirmations: Math.max(1, confirmations),
+        };
+      } catch (cause) {
+        if (cause instanceof UsdcSendError) throw cause;
+        throw new UsdcSendError({
+          reason: cause instanceof Error ? cause.message : "USDC receipt wait failed",
+          cause,
+        });
+      }
+    },
+    catch: (cause) =>
+      cause instanceof UsdcSendError
+        ? cause
+        : new UsdcSendError({
+            reason: cause instanceof Error ? cause.message : "USDC receipt wait failed",
+            cause,
+          }),
+  });
 }
 
+export type SendUsdcPayoutInput = {
+  to: string;
+  amountUsd: number;
+  correlationId?: string;
+};
+
 /**
- * Send USDC on Base. Dry-run when no private key or CLAWQL_PAYOUTS_USDC_DRY_RUN=1.
+ * Send USDC on Base (Effect-primary). Dry-run when no private key or CLAWQL_PAYOUTS_USDC_DRY_RUN=1.
  * Live path waits for receipt unless CLAWQL_PAYOUTS_USDC_SKIP_RECEIPT=1.
  */
-export async function sendUsdcPayout(
-  input: {
-    to: string;
-    amountUsd: number;
-    correlationId?: string;
-  },
+export function sendUsdcPayoutEffect(
+  input: SendUsdcPayoutInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<UsdcSendResult> {
-  const to = input.to.trim();
-  if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
-    throw new UsdcSendError({ reason: `Invalid USDC wallet address: ${to}` });
-  }
-  if (!Number.isFinite(input.amountUsd) || input.amountUsd <= 0) {
-    throw new UsdcSendError({ reason: "amountUsd must be > 0" });
-  }
+): Effect.Effect<UsdcSendResult, UsdcSendError> {
+  return Effect.gen(function* () {
+    const to = input.to.trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
+      return yield* Effect.fail(new UsdcSendError({ reason: `Invalid USDC wallet address: ${to}` }));
+    }
+    if (!Number.isFinite(input.amountUsd) || input.amountUsd <= 0) {
+      return yield* Effect.fail(new UsdcSendError({ reason: "amountUsd must be > 0" }));
+    }
 
-  const amountAtomic = toAtomicUsdc(input.amountUsd);
-  const chainId = usdcPayoutChainId(env);
-  const usdcAsset = usdcPayoutAsset(env);
-  const dryFlag = env.CLAWQL_PAYOUTS_USDC_DRY_RUN?.trim().toLowerCase();
-  const forceDry = dryFlag === "1" || dryFlag === "true" || dryFlag === "yes" || dryFlag === "on";
+    const amountAtomic = toAtomicUsdc(input.amountUsd);
+    const chainId = usdcPayoutChainId(env);
+    const usdcAsset = usdcPayoutAsset(env);
+    const dryFlag = env.CLAWQL_PAYOUTS_USDC_DRY_RUN?.trim().toLowerCase();
+    const forceDry = dryFlag === "1" || dryFlag === "true" || dryFlag === "yes" || dryFlag === "on";
 
-  if (forceDry || !isUsdcPayoutConfigured(env)) {
+    if (forceDry || !isUsdcPayoutConfigured(env)) {
+      return {
+        txHash: `0xdry${Date.now().toString(16)}`,
+        from: "0x0000000000000000000000000000000000000000",
+        to,
+        amountAtomic,
+        chainId,
+        usdcAsset,
+        dryRun: true,
+        confirmed: true,
+        confirmations: usdcReceiptConfirmations(env),
+      };
+    }
+
+    const pk = env.CLAWQL_PAYOUTS_USDC_PRIVATE_KEY!.trim();
+    const txHash = yield* Effect.tryPromise({
+      try: async () => {
+        let viem: typeof import("viem");
+        let accounts: typeof import("viem/accounts");
+        let chains: typeof import("viem/chains");
+        try {
+          viem = await import("viem");
+          accounts = await import("viem/accounts");
+          chains = await import("viem/chains");
+        } catch (cause) {
+          throw new UsdcSendError({
+            reason: "viem is required for live USDC payouts — npm i viem",
+            cause,
+          });
+        }
+
+        const chain = chainId === 8453 ? chains.base : chains.baseSepolia;
+        const account = accounts.privateKeyToAccount(
+          pk.startsWith("0x") ? (pk as `0x${string}`) : `0x${pk}`
+        );
+        const client = viem.createWalletClient({
+          account,
+          chain,
+          transport: viem.http(usdcPayoutRpcUrl(env)),
+        });
+
+        try {
+          const hash = await client.writeContract({
+            address: usdcAsset as `0x${string}`,
+            abi: ERC20_TRANSFER_ABI,
+            functionName: "transfer",
+            args: [to as `0x${string}`, amountAtomic],
+            chain,
+            account,
+          });
+          return { hash, from: account.address };
+        } catch (cause) {
+          throw new UsdcSendError({
+            reason: cause instanceof Error ? cause.message : "USDC transfer failed",
+            cause,
+          });
+        }
+      },
+      catch: (cause) =>
+        cause instanceof UsdcSendError
+          ? cause
+          : new UsdcSendError({
+              reason: cause instanceof Error ? cause.message : "USDC transfer failed",
+              cause,
+            }),
+    });
+
+    if (usdcSkipReceipt(env)) {
+      return {
+        txHash: txHash.hash,
+        from: txHash.from,
+        to,
+        amountAtomic,
+        chainId,
+        usdcAsset,
+        dryRun: false,
+        confirmed: false,
+      };
+    }
+
+    const receipt = yield* waitForUsdcReceiptEffect({ txHash: txHash.hash, chainId }, env);
     return {
-      txHash: `0xdry${Date.now().toString(16)}`,
-      from: "0x0000000000000000000000000000000000000000",
-      to,
-      amountAtomic,
-      chainId,
-      usdcAsset,
-      dryRun: true,
-      confirmed: true,
-      confirmations: usdcReceiptConfirmations(env),
-    };
-  }
-
-  const pk = env.CLAWQL_PAYOUTS_USDC_PRIVATE_KEY!.trim();
-  let viem: typeof import("viem");
-  let accounts: typeof import("viem/accounts");
-  let chains: typeof import("viem/chains");
-  try {
-    viem = await import("viem");
-    accounts = await import("viem/accounts");
-    chains = await import("viem/chains");
-  } catch (cause) {
-    throw new UsdcSendError({
-      reason: "viem is required for live USDC payouts — npm i viem",
-      cause,
-    });
-  }
-
-  const chain = chainId === 8453 ? chains.base : chains.baseSepolia;
-  const account = accounts.privateKeyToAccount(
-    pk.startsWith("0x") ? (pk as `0x${string}`) : `0x${pk}`
-  );
-  const client = viem.createWalletClient({
-    account,
-    chain,
-    transport: viem.http(usdcPayoutRpcUrl(env)),
-  });
-
-  let txHash: `0x${string}`;
-  try {
-    txHash = await client.writeContract({
-      address: usdcAsset as `0x${string}`,
-      abi: ERC20_TRANSFER_ABI,
-      functionName: "transfer",
-      args: [to as `0x${string}`, amountAtomic],
-      chain,
-      account,
-    });
-  } catch (cause) {
-    throw new UsdcSendError({
-      reason: cause instanceof Error ? cause.message : "USDC transfer failed",
-      cause,
-    });
-  }
-
-  if (usdcSkipReceipt(env)) {
-    return {
-      txHash,
-      from: account.address,
+      txHash: txHash.hash,
+      from: txHash.from,
       to,
       amountAtomic,
       chainId,
       usdcAsset,
       dryRun: false,
-      confirmed: false,
+      confirmed: true,
+      blockNumber: receipt.blockNumber,
+      confirmations: receipt.confirmations,
     };
-  }
+  });
+}
 
-  const receipt = await waitForUsdcReceipt({ txHash, chainId }, env);
-  return {
-    txHash,
-    from: account.address,
-    to,
-    amountAtomic,
-    chainId,
-    usdcAsset,
-    dryRun: false,
-    confirmed: true,
-    blockNumber: receipt.blockNumber,
-    confirmations: receipt.confirmations,
-  };
+/** Promise façade for callers that still await USDC receipt confirmation. */
+export async function waitForUsdcReceipt(
+  input: WaitForUsdcReceiptInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<UsdcReceiptResult> {
+  return Effect.runPromise(waitForUsdcReceiptEffect(input, env));
+}
+
+/** Promise façade for callers that still await USDC sends. */
+export async function sendUsdcPayout(
+  input: SendUsdcPayoutInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<UsdcSendResult> {
+  return Effect.runPromise(sendUsdcPayoutEffect(input, env));
+}
+
+/** Effect surface over Base USDC payout broadcast + receipt wait. */
+export class UsdcSendService extends Context.Service<
+  UsdcSendService,
+  {
+    readonly send: (input: SendUsdcPayoutInput) => Effect.Effect<UsdcSendResult, UsdcSendError>;
+    readonly waitForReceipt: (
+      input: WaitForUsdcReceiptInput
+    ) => Effect.Effect<UsdcReceiptResult, UsdcSendError>;
+  }
+>()("clawql/UsdcSendService") {}
+
+export function usdcSendLiveLayer(env: NodeJS.ProcessEnv = process.env): Layer.Layer<UsdcSendService> {
+  return Layer.succeed(
+    UsdcSendService,
+    UsdcSendService.of({
+      send: (input) => sendUsdcPayoutEffect(input, env),
+      waitForReceipt: (input) => waitForUsdcReceiptEffect(input, env),
+    })
+  );
 }

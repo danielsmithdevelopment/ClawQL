@@ -28,7 +28,7 @@ import {
   type CreatorPayoutPreference,
   type PayoutMethod,
 } from "./preferences.js";
-import { UsdcSendError, sendUsdcPayout } from "./usdc-send.js";
+import { UsdcSendError, sendUsdcPayoutEffect } from "./usdc-send.js";
 
 export class PayoutError extends Data.TaggedError("PayoutError")<{
   readonly reason: string;
@@ -360,24 +360,18 @@ export function payoutLiveLayer(
             const usdcEnv = isPayoutsDryRun(env)
               ? ({ ...env, CLAWQL_PAYOUTS_USDC_DRY_RUN: "1" } as NodeJS.ProcessEnv)
               : env;
-            const sent = yield* Effect.tryPromise({
-              try: () =>
-                sendUsdcPayout(
-                  {
-                    to: usdcWallet!,
-                    amountUsd: amountCents / 100,
-                    correlationId: input.correlationId,
-                  },
-                  usdcEnv
-                ),
-              catch: (cause) =>
-                cause instanceof UsdcSendError
-                  ? new PayoutError({ reason: cause.reason, cause })
-                  : new PayoutError({
-                      reason: cause instanceof Error ? cause.message : "USDC send failed",
-                      cause,
-                    }),
-            });
+            const sent = yield* sendUsdcPayoutEffect(
+              {
+                to: usdcWallet!,
+                amountUsd: amountCents / 100,
+                correlationId: input.correlationId,
+              },
+              usdcEnv
+            ).pipe(
+              Effect.mapError(
+                (cause) => new PayoutError({ reason: cause.reason, cause })
+              )
+            );
             const id = sent.txHash;
             yield* audit
               .appendEntry(
