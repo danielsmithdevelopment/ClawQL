@@ -116,7 +116,7 @@ describe("SecretStore", () => {
   it("env store rejects writes as a typed SecretStoreError when overlay disabled", async () => {
     const store = createEnvSecretStore({ allowOverlayWrites: false });
     const result = await Effect.runPromise(Effect.result(store.setSecret("local/only", "overlay")));
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     if (result._tag === "Failure") {
       expect(result.failure.reason).toBe("env_secret_store_readonly");
     }

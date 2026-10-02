@@ -233,7 +233,7 @@ describe("credits P2P transfer", () => {
           .pipe(Effect.result);
       })
     );
-    expect(denied._tag).toBe("Left");
+    expect(denied._tag).toBe("Failure");
 
     const totp = Effect.runSync(generateTotp(enrolled.enrollment.secretBase32));
     const ok = await runPaymentsEffect(

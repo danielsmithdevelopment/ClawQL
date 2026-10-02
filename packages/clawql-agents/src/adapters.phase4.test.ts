@@ -76,7 +76,7 @@ describe("DeepSeek adapter", () => {
           atrScope: atr,
           sessionId: s.sessionId,
         }).pipe(Effect.result);
-        expect(denied._tag).toBe("Left");
+        expect(denied._tag).toBe("Failure");
       }).pipe(Effect.provide(layer))
     );
   });

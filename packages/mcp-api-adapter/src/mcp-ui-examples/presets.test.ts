@@ -52,7 +52,7 @@ describe("agent-lab mcp-ui preset", () => {
     const result = await Effect.runPromise(
       Effect.result(resolveAgentLabPresetDefinition([tool("echo")]))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     if (result._tag === "Failure") {
       expect(result.failure).toBeInstanceOf(McpUiPresetError);
     }
@@ -88,7 +88,7 @@ describe("cloudflare-claim mcp-ui preset", () => {
     const result = await Effect.runPromise(
       Effect.result(resolveCloudflareClaimPresetDefinition([tool("cf_reveal_challenge")]))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     if (result._tag === "Failure") {
       expect(result.failure).toBeInstanceOf(McpUiPresetError);
     }

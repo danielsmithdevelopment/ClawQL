@@ -9,7 +9,7 @@ export type PipelineWorkerTick = () => Promise<void>;
 
 export type PipelineWorkerHandle = {
   readonly stop: () => void;
-  readonly fiber: Fiber.RuntimeFiber<never, never>;
+  readonly fiber: Fiber.Fiber<never, never>;
 };
 
 /**
@@ -34,7 +34,7 @@ export function startPipelineWorkerFiberEffect(
     });
 
     const loop = Effect.forever(
-      maybeTick.pipe(Effect.zipRight(Effect.sleep(Duration.millis(pollMs))))
+      maybeTick.pipe(Effect.andThen(Effect.sleep(Duration.millis(pollMs))))
     );
     const fiber = yield* Effect.forkDetach(loop);
     return {

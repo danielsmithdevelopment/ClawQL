@@ -177,7 +177,7 @@ describe("five-step test — steps 1–4 (invoke side)", () => {
           .pipe(Effect.result);
       }).pipe(Effect.provide(layer))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
   });
 
   it("step 4b: register disposition is clawql-core routed_to_sandbox (not harness claim)", async () => {
@@ -289,7 +289,7 @@ describe("session catalog rebind (§3.5.2)", () => {
           .pipe(Effect.result);
       }).pipe(Effect.provide(layer))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
   });
 });
 

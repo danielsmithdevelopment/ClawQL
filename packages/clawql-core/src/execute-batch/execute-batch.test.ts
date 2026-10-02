@@ -73,7 +73,7 @@ describe("execute-batch registry + runner", () => {
         }).pipe(Effect.provide(layer))
       )
     );
-    expect(either._tag).toBe("Left");
+    expect(either._tag).toBe("Failure");
   });
 
   it("lists registered batch names", async () => {

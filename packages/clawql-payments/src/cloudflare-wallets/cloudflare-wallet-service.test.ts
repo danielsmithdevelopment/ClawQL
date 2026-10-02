@@ -89,7 +89,7 @@ describe("CloudflareWalletService dry-run", () => {
     const either = await Effect.runPromise(
       program.pipe(Effect.provide(provideService(process.env)))
     );
-    expect(either._tag).toBe("Left");
+    expect(either._tag).toBe("Failure");
     if (either._tag === "Failure") {
       expect(either.failure.reason).toMatch(/disabled/i);
     }

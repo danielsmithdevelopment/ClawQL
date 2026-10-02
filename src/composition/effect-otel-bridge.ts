@@ -6,11 +6,11 @@
  * When OTEL is off, the global provider is a noop — Effect spans stay cheap no-ops.
  *
  * Captures `trace.getTracerProvider()` at Layer construction (call after
- * `maybeInitOtelTracing` when enabling OTLP). Avoids `Tracer.layerGlobal`, which
+ * `maybeInitOtelTracing` when enabling OTLP). Avoids `OtelTracer.layerGlobal`, which
  * memoizes the first provider forever via a module-level Layer.sync.
  */
 
-import { Resource, Tracer as OtelTracer } from "@effect/opentelemetry";
+import { OtelTracer, Resource } from "@effect/opentelemetry";
 import { trace } from "@opentelemetry/api";
 import { Effect, Layer } from "effect";
 

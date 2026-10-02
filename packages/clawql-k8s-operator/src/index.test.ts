@@ -534,7 +534,7 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
           .pipe(Effect.result);
       }).pipe(Effect.provide(IstioAccessLogTailStandaloneLive))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     if (result._tag === "Failure") {
       expect(result.failure._tag).toBe("IstioAccessLogTailUnavailable");
     }
@@ -622,7 +622,7 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     expect(ok[0]?.nodeId).toBe("n1");
 
     const bad = await Effect.runPromise(parseCelldLeaseSnapshotJson("[]").pipe(Effect.result));
-    expect(bad._tag).toBe("Left");
+    expect(bad._tag).toBe("Failure");
     if (bad._tag === "Failure") {
       expect(bad.left._tag).toBe("CelldLeaseSnapshotInvalid");
     }

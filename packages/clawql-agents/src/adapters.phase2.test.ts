@@ -39,7 +39,7 @@ describe("shared panguard", () => {
           }).pipe(Effect.result);
         }).pipe(Effect.provide(layer))
       );
-      expect(result._tag).toBe("Left");
+      expect(result._tag).toBe("Failure");
       if (result._tag === "Failure") {
         expect(result.failure).toBeInstanceOf(PanguardDenyError);
       }
@@ -91,7 +91,7 @@ describe("OpenClaw adapter", () => {
           atrScope: atr,
           sessionId: s.sessionId,
         }).pipe(Effect.result);
-        expect(denied._tag).toBe("Left");
+        expect(denied._tag).toBe("Failure");
         yield* appendOpenClawHook({
           kind: "skill_invoke",
           sessionId: s.sessionId,

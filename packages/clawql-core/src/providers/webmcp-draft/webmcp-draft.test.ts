@@ -362,7 +362,7 @@ describe("WebMcpDraftPlugin (ProviderPlugin)", () => {
           description: "x",
           inputSchema: { type: "object", properties: {} },
         }).pipe(Effect.result);
-        expect(blocked._tag).toBe("Left");
+        expect(blocked._tag).toBe("Failure");
       })
     );
   });

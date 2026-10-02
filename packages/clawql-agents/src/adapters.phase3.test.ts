@@ -45,7 +45,7 @@ describe("Goose adapter", () => {
           atrScope: atr,
           sessionId: s.sessionId,
         }).pipe(Effect.result);
-        expect(denied._tag).toBe("Left");
+        expect(denied._tag).toBe("Failure");
       }).pipe(Effect.provide(layer))
     );
   });
@@ -99,7 +99,7 @@ describe("OpenHands budget enforcer", () => {
       }).pipe(Effect.provide(layer))
     );
 
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
     const verified = await Effect.runPromise(
       Effect.gen(function* () {
         const worm = yield* WORMAuditTrailService;
