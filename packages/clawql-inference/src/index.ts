@@ -217,6 +217,17 @@ export {
   type MemoryListEntry,
 } from "./memory/index.js";
 
+export {
+  EventsGatewayService,
+  EventsGatewayLive,
+  createEventsRouter,
+  runEventsGatewayList,
+  runEventsGatewaySubscribe,
+  runEventsGatewayUnsubscribe,
+  runEventsGatewayGetSubscription,
+  type EventsGatewayListInput,
+} from "./events/index.js";
+
 export { runInferenceServe } from "./cli/serve.js";
 export { runInferenceComplete, type InferenceCompleteOptions } from "./cli/complete.js";
 export { runInferenceCacheStatus, type InferenceCacheStatusOptions } from "./cli/cache.js";
