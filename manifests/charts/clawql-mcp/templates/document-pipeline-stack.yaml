@@ -136,6 +136,7 @@ spec:
   storageClassName: {{ .Values.documentPipeline.paperless.persistence.storageClass | quote }}
   {{- end }}
 {{- end }}
+{{- if .Values.documentPipeline.tika.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -187,6 +188,7 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.documentPipeline.tika.resources | nindent 12 }}
+{{- end }}
 {{- if .Values.documentPipeline.docling.enabled }}
 ---
 apiVersion: v1
@@ -494,6 +496,7 @@ spec:
           resources:
             {{- toYaml .Values.documentPipeline.privacyFilter.resources | nindent 12 }}
 {{- end }}
+{{- if .Values.documentPipeline.gotenberg.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -545,6 +548,8 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.documentPipeline.gotenberg.resources | nindent 12 }}
+{{- end }}
+{{- if .Values.documentPipeline.stirling.enabled }}
 ---
 apiVersion: v1
 kind: Service
@@ -611,6 +616,7 @@ spec:
               protocol: TCP
           resources:
             {{- toYaml .Values.documentPipeline.stirling.resources | nindent 12 }}
+{{- end }}
 {{- if $postgresEnabled }}
 ---
 apiVersion: v1
@@ -801,12 +807,16 @@ spec:
           env:
             - name: PAPERLESS_URL
               value: "http://{{ include "clawql-mcp.paperlessName" . }}:{{ .Values.documentPipeline.paperless.service.port }}"
+            {{- /* Tika/Gotenberg are opt-in-only (8.0 converter cut) — Paperless's own Tika/Gotenberg
+                   integration only makes sense when those sidecars are actually deployed. */}}
+            {{- if and .Values.documentPipeline.tika.enabled .Values.documentPipeline.gotenberg.enabled }}
             - name: PAPERLESS_TIKA_ENABLED
               value: "1"
             - name: PAPERLESS_TIKA_GOTENBERG_ENDPOINT
               value: "http://{{ include "clawql-mcp.gotenbergName" . }}:{{ .Values.documentPipeline.gotenberg.service.port }}"
             - name: PAPERLESS_TIKA_ENDPOINT
               value: "http://{{ include "clawql-mcp.tikaName" . }}:{{ .Values.documentPipeline.tika.service.port }}"
+            {{- end }}
             # Celery broker URL scheme is still redis:// (RESP); server is Dragonfly.
             - name: PAPERLESS_REDIS
               value: "redis://{{ include "clawql-mcp.storesDragonflyName" . }}:{{ .Values.stores.dragonfly.service.port }}"

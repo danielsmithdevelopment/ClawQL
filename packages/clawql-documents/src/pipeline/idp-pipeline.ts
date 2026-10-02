@@ -14,7 +14,14 @@ export type IdpPipelineStep = {
   argsTemplate?: Record<string, unknown>;
 };
 
-/** Default multi-hop IDP flow: Nextcloud intake → convert/redact → archive → index → share. */
+/**
+ * Default multi-hop IDP flow: Nextcloud intake → Docling (sole default converter) → archive → index → share.
+ *
+ * Tika / Gotenberg / Stirling are **opt-in only** as of 8.0 (see
+ * `docs/releases/8.0.0-purge-inventory-spec-v0.1.md` — "Document convert" row). Their stages/operationIds
+ * still exist (see {@link IdpPipelineStage}) for custom `pipeline` overrides on `run_idp_pipeline`; they are
+ * simply no longer part of this default recipe.
+ */
 export const DEFAULT_IDP_PIPELINE: IdpPipelineStep[] = [
   {
     stage: "nextcloud",
@@ -33,32 +40,6 @@ export const DEFAULT_IDP_PIPELINE: IdpPipelineStep[] = [
         do_ocr: true,
         do_table_structure: true,
       },
-    },
-  },
-  {
-    stage: "tika",
-    operationId: "tika::tika_parse_put",
-    label: "Extract text (Tika)",
-  },
-  {
-    stage: "gotenberg",
-    operationId: "gotenberg::post_forms_libreoffice_convert",
-    label: "Normalize PDF (Gotenberg)",
-  },
-  {
-    stage: "stirling",
-    operationId: "stirling::redactPdfAuto",
-    label: "Redact PII (Stirling)",
-    argsTemplate: {
-      fileInput: "${pdf_base64}",
-      fileInputEncoding: "base64",
-      fileInputFileName: "document.pdf",
-      listOfText: "${redact_list}",
-      useRegex: true,
-      wholeWordSearch: false,
-      redactColor: "#000000",
-      customPadding: 0.1,
-      convertPDFToImage: false,
     },
   },
   {
