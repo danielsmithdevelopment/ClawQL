@@ -1,7 +1,8 @@
 # Corrections: The Complete Agent Memory Stack
 
 **Live post:** [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/)  
-**Status:** correction draft for republish — **Layer 3 PageIndex and CodeGraph both removed from product in 8.0**; in-repo Learn/docs pages already reflect the purge. **Live pragmaticvectors post still needs republish** before 8.0.0 tag so the public essay matches shipping product.  
+**Status:** **BLOCKING for 8.0.0 public content** — live page still presents the five-layer stack (Layer 3 PageIndex, Layer 4 CodeGraph) and “queries across active layers simultaneously”. In-repo Learn/docs pages already reflect the purge; **operator must republish** the live post before tag.  
+
 **Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · [`docs/backlog/post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
 
 There is no in-repo full draft of this essay (only outbound links). Use this file as the edit brief for the live page.

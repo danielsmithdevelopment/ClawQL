@@ -4,7 +4,7 @@ Plugin ID: clawql-harness (Ouroboros harness)
 
 Packages: packages/clawql-harness — createOuroborosHarnessPlugin / makeHarnessLayer; library packages/clawql-ouroboros
 
-Specification-first evolutionary loops with optional Postgres lineage storage. In clawql-mcp, tools always register through the harness — CLAWQL_ENABLE_OUROBOROS is deprecated as a registration gate.
+Specification-first evolutionary loops with optional Postgres lineage storage. In clawql-mcp, agent-facing tools are **opt-in as of 8.0** — set `CLAWQL_ENABLE_OUROBOROS_TOOLS=1` or instance/tier `ouroboros.enabled: true`. Default **off** (no additive agent-loop proof yet). `CLAWQL_ENABLE_OUROBOROS` (old name) is deleted, not resurrected.
 
 MCP tools
 
@@ -12,7 +12,7 @@ ToolPurposeclawql_thinkStructured planning / reflection helperouroboros_create_s
 
 Registration and lineage
 
-Env / HelmDefaultEffect(always on)—makeHarnessLayer(createOuroborosHarnessPlugin) registers the tools aboveCLAWQL*ENABLE_OUROBOROS(deprecated)No longer gates MCP registration; ignore for tool loadCLAWQL_OUROBOROS_DATABASE_URL or CLAWQL_OUROBOROS_DB*\*unset = in-memoryDurable Postgres events (clawql_ouroboros_events)CLAWQL_ENABLE_LANGFUSE_EVAL=1offLangfuse eval → ouroboros_propose_seed_revision_from_eval
+Env / HelmDefaultEffectCLAWQL_ENABLE_OUROBOROS_TOOLS=1 or ouroboros.enabled**off**makeHarnessLayer(createOuroborosHarnessPlugin) registers the tools aboveCLAWQL_ENABLE_OUROBOROS(deleted)Old name — not a gate; do not resurrectCLAWQL_OUROBOROS_DATABASE_URL or CLAWQL_OUROBOROS_DB_\*unset = in-memoryDurable Postgres events (clawql_ouroboros_events)CLAWQL_ENABLE_LANGFUSE_EVAL=1offLangfuse eval → ouroboros_propose_seed_revision_from_eval (nested under harness gate)
 
 Do not teach clawql-ouroboros/mcp-hooks as the clawql-mcp registration path (OK for embedding the library in your own MCP host).
 

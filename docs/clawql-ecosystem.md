@@ -144,7 +144,7 @@ Self-hosted stacks force teams to bolt on scanning, mesh, and observability by h
 - `memory_ingest` — structured vault writes with typed receipts and wikilinks
 - `knowledge_search_onyx` — live Onyx search (requires documents + `CLAWQL_ENABLE_ONYX`; not inside `memory_recall`)
 - GraphQL projection — trims verbose JSON responses where applicable
-- **Ouroboros** — evolutionary-loop library; optional MCP tools `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS=1` ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md))
+- **Ouroboros** — evolutionary-loop library; optional MCP tools `ouroboros_*` when `CLAWQL_ENABLE_OUROBOROS_TOOLS=1` ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md))
 - `notify` (optional), **`cache`** + **`audit`** (core, always on — LRU / ring buffer)
 
 **Layer 3 — API & Data-Plane Targets**
@@ -178,7 +178,7 @@ ClawQL registers **more than ten** tools; tiers and flags are summarized in [`mc
 | `ingest_external_knowledge` | Knowledge         | Bulk Markdown ingest + optional URL fetch when enabled ([`external-ingest.md`](mcp/external-ingest.md)).                                                                                                                      |
 | `schedule`                  | Automation        | Optional — **`CLAWQL_ENABLE_SCHEDULE=1`** — persisted synthetic checks ([`schedule-synthetic-checks.md`](mcp/schedule-synthetic-checks.md)).                                                                                  |
 | `notify`                    | Notification      | Optional — **`CLAWQL_ENABLE_NOTIFY=1`** — Slack `chat.postMessage` wrapper ([`notify-tool.md`](mcp/notify-tool.md)).                                                                                                          |
-| `ouroboros_*` (×3)          | Workflow          | Optional — **`CLAWQL_ENABLE_OUROBOROS=1`** — seed, evolutionary loop, lineage ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)).                                                                                       |
+| `ouroboros_*` / `clawql_think` | Workflow       | Optional — **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** (8.0 demotion; default off) — seed, evolutionary loop, lineage, drift ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)).                                              |
 | `cache`                     | Core / State      | Always on — in-process **LRU** session scratch ([`cache-tool.md`](mcp/cache-tool.md)); **no** `CLAWQL_ENABLE_CACHE`.                                                                                                          |
 | `audit`                     | Core / Compliance | Always on — in-process **ring buffer** ([`enterprise-mcp-tools.md`](mcp/enterprise-mcp-tools.md)); **no** `CLAWQL_ENABLE_AUDIT`.                                                                                              |
 
@@ -374,7 +374,7 @@ Slack (threads, channels, DMs), Google Drive (Docs, Sheets, Slides), Confluence 
 
 ### Ouroboros: Structured Workflow Engine
 
-**clawql-ouroboros** ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)) supplies evolutionary-loop primitives; the MCP server exposes **optional** tools when **`CLAWQL_ENABLE_OUROBOROS=1`**: `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** persists events to Postgres instead of in-memory.
+**clawql-ouroboros** ([`clawql-ouroboros.md`](ouroboros/clawql-ouroboros.md)) supplies evolutionary-loop primitives; the MCP server exposes **optional** tools when **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`**: `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`, `ouroboros_measure_drift`, `clawql_think`. Optional **`CLAWQL_OUROBOROS_DATABASE_URL`** persists events to Postgres instead of in-memory.
 
 Natural-language routing (“fast path” vs full loop) is a **product vision** — today assistants compose **`search`/`execute`**, **`memory_*`**, **`knowledge_search_onyx`**, document providers, etc., explicitly or via prompts. Complex pipelines (Nextcloud → Tika → Gotenberg → Stirling → Paperless → Onyx → Coneshare) are orchestrated through **`search`/`execute`**, **`DEFAULT_IDP_PIPELINE`**, and Helm-deployed services — not a hidden automatic router described here.
 
