@@ -14,12 +14,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BEFORE_SHA="${BEFORE_SHA:-578e7e77fab252e8cae245623f836d1f4488c7c2}"
 AFTER_SHA="${AFTER_SHA:-d6b432e1}"
-OUT_DIR="${OUT_DIR:-${ROOT}/docs/releases/payoff-artifacts}"
+# Large docker-save tarballs go under WORKDIR; summary JSON is copied to SUMMARY_DIR.
+OUT_DIR="${OUT_DIR:-/tmp/clawql-payoff-scan}"
+SUMMARY_DIR="${SUMMARY_DIR:-${ROOT}/docs/releases/payoff-artifacts}"
 SYFT_IMAGE="${SYFT_IMAGE:-anchore/syft:v1.19.0}"
 TRIVY_IMAGE="${TRIVY_IMAGE:-ghcr.io/aquasecurity/trivy:0.59.1}"
 WORKDIR="${WORKDIR:-/tmp/clawql-payoff-measure}"
 
-mkdir -p "$OUT_DIR" "$WORKDIR"
+mkdir -p "$OUT_DIR" "$WORKDIR" "$SUMMARY_DIR"
 
 need() { command -v "$1" >/dev/null || { echo "missing: $1" >&2; exit 1; }; }
 need docker
@@ -48,14 +50,16 @@ scan_image() {
   # compressed size of the save (approximate publishable artifact)
   stat -c '%s' "${OUT_DIR}/image-${label}.tar.gz" >"${OUT_DIR}/compressed-${label}.txt"
 
-  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$SYFT_IMAGE" \
-    scan "$tag" -o "cyclonedx-json=${sbom}" --file /dev/stdout >"$sbom" 2>/dev/null \
-    || docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$SYFT_IMAGE" \
-      "$tag" -o cyclonedx-json >"$sbom"
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "${OUT_DIR}:/out" \
+    "$SYFT_IMAGE" scan "$tag" -o "cyclonedx-json=/out/sbom-${label}.cdx.json"
 
-  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" \
-    image --scanners vuln --severity CRITICAL,HIGH,MEDIUM \
-    --format json --quiet "$tag" >"$trivy_json"
+  docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "${OUT_DIR}:/out" \
+    "$TRIVY_IMAGE" image --scanners vuln --severity CRITICAL,HIGH,MEDIUM \
+    --format json --output "/out/trivy-${label}.json" "$tag"
 }
 
 summarize() {
@@ -130,8 +134,9 @@ build_at "$AFTER_SHA" clawql-mcp:payoff-post "${WORKDIR}/post"
 echo "Scanning…"
 scan_image clawql-mcp:payoff-pre pre
 scan_image clawql-mcp:payoff-post post
-summarize | tee "${OUT_DIR}/payoff-summary.json.print"
+summarize
+cp -f "${OUT_DIR}/payoff-summary.json" "${SUMMARY_DIR}/payoff-summary.json"
 
-echo "Wrote ${OUT_DIR}/payoff-summary.json"
+echo "Wrote ${OUT_DIR}/payoff-summary.json and ${SUMMARY_DIR}/payoff-summary.json"
 git -C "$ROOT" worktree remove --force "${WORKDIR}/pre" 2>/dev/null || true
 git -C "$ROOT" worktree remove --force "${WORKDIR}/post" 2>/dev/null || true
