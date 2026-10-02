@@ -1,9 +1,33 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { mapVaultResultToNormalizedHit, resolveMemoryRecallSources } from "./recall-sources.js";
 
 describe("resolveMemoryRecallSources", () => {
+  const prevHybrid = process.env.CLAWQL_MEMORY_RECALL_HYBRID;
+  const prevOnyx = process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX;
+
+  afterEach(() => {
+    if (prevHybrid === undefined) delete process.env.CLAWQL_MEMORY_RECALL_HYBRID;
+    else process.env.CLAWQL_MEMORY_RECALL_HYBRID = prevHybrid;
+    if (prevOnyx === undefined) delete process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX;
+    else process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX = prevOnyx;
+  });
+
   it("defaults to vault+vector", () => {
+    delete process.env.CLAWQL_MEMORY_RECALL_HYBRID;
+    delete process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX;
     expect([...resolveMemoryRecallSources({})].sort()).toEqual(["vault", "vector"]);
+  });
+
+  it("ignores removed CLAWQL_MEMORY_RECALL_HYBRID master switch", () => {
+    process.env.CLAWQL_MEMORY_RECALL_HYBRID = "1";
+    delete process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX;
+    expect([...resolveMemoryRecallSources({})].sort()).toEqual(["vault", "vector"]);
+  });
+
+  it("adds onyx when CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1", () => {
+    delete process.env.CLAWQL_MEMORY_RECALL_HYBRID;
+    process.env.CLAWQL_MEMORY_RECALL_HYBRID_ONYX = "1";
+    expect([...resolveMemoryRecallSources({})].sort()).toEqual(["onyx", "vault", "vector"]);
   });
 
   it("honors explicit sources list", () => {
