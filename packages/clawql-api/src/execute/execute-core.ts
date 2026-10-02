@@ -53,6 +53,31 @@ export function executeClawqlOperationEffect(
       );
     }
 
+    const risk = op.risk;
+    if (risk?.policy === "block") {
+      return yield* textContentEffect(
+        JSON.stringify({
+          ok: false,
+          status: "blocked",
+          reason:
+            "Destructive operation is blocked unless allowlisted via operation-risk override",
+          operationId,
+          risk,
+        })
+      );
+    }
+    if (risk?.policy === "mandate") {
+      return yield* textContentEffect(
+        JSON.stringify({
+          ok: false,
+          status: "mandate_required",
+          reason: "Operation risk policy requires a mandate before execute",
+          operationId,
+          risk,
+        })
+      );
+    }
+
     const openapiForOp = (
       multi && openapis?.length ? openapis[op.specIndex ?? 0] : openapi
     ) as OpenAPIDoc;

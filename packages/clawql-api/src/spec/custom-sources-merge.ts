@@ -22,6 +22,7 @@ import type { CustomSourceEntry } from "./custom-sources-types.js";
 import { assertSafeSourceId, resolveSafePathUnder } from "./custom-sources-security.js";
 import type { GraphQLSourceConfig } from "./native-protocol-env.js";
 import type { GrpcSourceConfig } from "./native-protocol-env.js";
+import { applyOperationRiskToLoadedOps } from "../risk/operation-risk-service.js";
 
 function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
   if (extra.length === 0) return base;
@@ -93,62 +94,72 @@ function toGrpcConfig(entry: CustomSourceEntry, home: string): GrpcSourceConfig 
 export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
   const home = resolveClawqlHome();
   const file = await readCustomSourcesFile(home);
-  if (file.sources.length === 0) return loaded;
-
   let operations = loaded.operations;
   const openapis = loaded.openapis ? [...loaded.openapis] : loaded.openapi ? [loaded.openapi] : [];
 
-  const openapiLike = file.sources.filter((s) => s.kind === "openapi" || s.kind === "discovery");
-  for (const entry of openapiLike) {
-    const ops = await loadOpenApiLikeSource(entry, home);
-    operations = mergeOps(operations, ops);
-    if (ops.length > 0 && entry.cachePath) {
-      try {
-        const built = await loadOpenAPIFromAbsolutePath(
-          resolveSafePathUnder(home, entry.cachePath)
-        );
-        openapis.push(built.openapi);
-      } catch {
-        /* skip */
+  if (file.sources.length > 0) {
+    const openapiLike = file.sources.filter((s) => s.kind === "openapi" || s.kind === "discovery");
+    for (const entry of openapiLike) {
+      const ops = await loadOpenApiLikeSource(entry, home);
+      operations = mergeOps(operations, ops);
+      if (ops.length > 0 && entry.cachePath) {
+        try {
+          const built = await loadOpenAPIFromAbsolutePath(
+            resolveSafePathUnder(home, entry.cachePath)
+          );
+          openapis.push(built.openapi);
+        } catch {
+          /* skip */
+        }
       }
+    }
+
+    const gqlConfigs = file.sources
+      .filter((s) => s.kind === "graphql")
+      .map((e) => toGraphqlConfig(e, home))
+      .filter((c): c is GraphQLSourceConfig => c !== null);
+    if (gqlConfigs.length) {
+      const gqlOps = await loadGraphqlNativeOperationsFromConfigs(gqlConfigs);
+      operations = mergeOps(operations, gqlOps);
+    }
+
+    const grpcConfigs = file.sources
+      .filter((s) => s.kind === "grpc")
+      .map((e) => toGrpcConfig(e, home))
+      .filter((c): c is GrpcSourceConfig => c !== null);
+    if (grpcConfigs.length) {
+      const grpcOps = await loadGrpcNativeOperationsFromConfigs(grpcConfigs);
+      operations = mergeOps(operations, grpcOps);
+    }
+
+    const mcpOps = await loadMcpSourceOperations(file.sources);
+    operations = mergeOps(operations, mcpOps);
+
+    const cliOps = await loadCliSourceOperations(file.sources);
+    operations = mergeOps(operations, cliOps);
+
+    const webmcpOps = await loadWebmcpSourceOperations(file.sources);
+    operations = mergeOps(operations, webmcpOps);
+
+    const added = operations.length - loaded.operations.length;
+    if (added > 0) {
+      console.error(`[spec-loader] Merged ${added} custom source operation(s) from sources.json`);
     }
   }
 
-  const gqlConfigs = file.sources
-    .filter((s) => s.kind === "graphql")
-    .map((e) => toGraphqlConfig(e, home))
-    .filter((c): c is GraphQLSourceConfig => c !== null);
-  if (gqlConfigs.length) {
-    const gqlOps = await loadGraphqlNativeOperationsFromConfigs(gqlConfigs);
-    operations = mergeOps(operations, gqlOps);
-  }
+  const trustedFromSources = file.sources
+    .filter((s) => s.kind === "mcp" && s.trusted === true)
+    .map((s) => s.id);
 
-  const grpcConfigs = file.sources
-    .filter((s) => s.kind === "grpc")
-    .map((e) => toGrpcConfig(e, home))
-    .filter((c): c is GrpcSourceConfig => c !== null);
-  if (grpcConfigs.length) {
-    const grpcOps = await loadGrpcNativeOperationsFromConfigs(grpcConfigs);
-    operations = mergeOps(operations, grpcOps);
-  }
-
-  const mcpOps = await loadMcpSourceOperations(file.sources);
-  operations = mergeOps(operations, mcpOps);
-
-  const cliOps = await loadCliSourceOperations(file.sources);
-  operations = mergeOps(operations, cliOps);
-
-  const webmcpOps = await loadWebmcpSourceOperations(file.sources);
-  operations = mergeOps(operations, webmcpOps);
-
-  const added = operations.length - loaded.operations.length;
-  if (added > 0) {
-    console.error(`[spec-loader] Merged ${added} custom source operation(s) from sources.json`);
-  }
+  // Always classify risk — including when sources.json is empty (bundled OpenAPI / native ops).
+  const withRisk = await applyOperationRiskToLoadedOps(operations, {
+    extraTrustedMcpSources: trustedFromSources,
+    home,
+  });
 
   return {
     ...loaded,
-    operations,
+    operations: withRisk,
     ...(openapis.length > 1 ? { openapis, multi: true } : {}),
   };
 }

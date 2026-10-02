@@ -36,7 +36,8 @@ async function connectMcpClient(entry: CustomSourceEntry): Promise<Client> {
 function toolToOperation(
   entry: CustomSourceEntry,
   toolName: string,
-  description: string
+  description: string,
+  annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean }
 ): Operation {
   const id = normalizeOperationId("mcp", entry.id, toolName);
   return {
@@ -57,6 +58,11 @@ function toolToOperation(
     scopes: [],
     specLabel: entry.id,
     protocolKind: "mcp",
+    riskHints: {
+      mcpSourceId: entry.id,
+      mcpReadOnlyHint: annotations?.readOnlyHint === true ? true : undefined,
+      mcpDestructiveHint: annotations?.destructiveHint === true ? true : undefined,
+    },
     nativeMcp: {
       sourceId: entry.id,
       toolName,
@@ -78,7 +84,14 @@ export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Pro
           toolName: tool.name,
           client,
         });
-        ops.push(toolToOperation(entry, tool.name, tool.description ?? ""));
+        const ann = (tool as { annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean } })
+          .annotations;
+        ops.push(
+          toolToOperation(entry, tool.name, tool.description ?? "", {
+            readOnlyHint: ann?.readOnlyHint,
+            destructiveHint: ann?.destructiveHint,
+          })
+        );
       }
       console.error(
         `[spec-loader] MCP source "${entry.id}": ${tools.length} tool(s) from ${entry.mcpUrl ?? entry.mcpCommand}`

@@ -255,6 +255,7 @@ export function formatSearchResults(results: readonly RankedSearchHit[]): string
           score: r.score,
           specLabel: r.operation.specLabel ?? null,
           matchedOn: r.matchedOn,
+          risk: r.operation.risk ?? null,
         };
       }),
     },
