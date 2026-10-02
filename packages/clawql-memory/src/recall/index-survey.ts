@@ -182,7 +182,7 @@ export type SurveyOkfIndexInput = {
 /**
  * Read index.md + log.md and produce a survey payload for memory_recall.
  */
-async function surveyOkfIndexImpl(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey>  {
+async function surveyOkfIndexImpl(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey> {
   const scanRoot = input.scanRoot ?? defaultScanRoot();
   const catalogLimit = input.catalogLimit ?? 12;
   const logLimit = input.logLimit ?? 8;
@@ -233,7 +233,9 @@ async function surveyOkfIndexImpl(input: SurveyOkfIndexInput): Promise<OkfIndexS
   };
 }
 
-export function surveyOkfIndexEffect(input: SurveyOkfIndexInput): Effect.Effect<OkfIndexSurvey, Error> {
+export function surveyOkfIndexEffect(
+  input: SurveyOkfIndexInput
+): Effect.Effect<OkfIndexSurvey, Error> {
   return Effect.tryPromise({
     try: () => surveyOkfIndexImpl(input),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -241,7 +243,7 @@ export function surveyOkfIndexEffect(input: SurveyOkfIndexInput): Effect.Effect<
 }
 
 /** Promise façade — prefer {@link surveyOkfIndexEffect} for Effect callers. */
-export async function surveyOkfIndex(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey>  {
+export async function surveyOkfIndex(input: SurveyOkfIndexInput): Promise<OkfIndexSurvey> {
   return Effect.runPromise(surveyOkfIndexEffect(input));
 }
 

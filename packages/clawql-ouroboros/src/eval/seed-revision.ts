@@ -66,7 +66,7 @@ export function langfuseEvalAutoApplyEnabled(env?: EnvMap): boolean {
 async function loadLatestSeedFromLineageImpl(
   eventStore: EventStore,
   rootSeedId: string
-): Promise<Seed | null>  {
+): Promise<Seed | null> {
   const lineage = await eventStore.getLineage(rootSeedId);
   if (lineage.generations.length === 0) return null;
   const last = lineage.generations[lineage.generations.length - 1];
@@ -87,7 +87,7 @@ export function loadLatestSeedFromLineageEffect(
 export async function loadLatestSeedFromLineage(
   eventStore: EventStore,
   rootSeedId: string
-): Promise<Seed | null>  {
+): Promise<Seed | null> {
   return Effect.runPromise(loadLatestSeedFromLineageEffect(eventStore, rootSeedId));
 }
 
@@ -155,7 +155,7 @@ function bumpPatchVersion(version: string): string {
 async function processLangfuseEvalImpl(
   evalEvent: NormalizedLangfuseEval,
   options: ProcessLangfuseEvalOptions
-): Promise<ProcessLangfuseEvalResult>  {
+): Promise<ProcessLangfuseEvalResult> {
   const dryRun = !options.autoApply;
   const base: Omit<ProcessLangfuseEvalResult, "ok" | "action" | "reason" | "proposal"> = {
     dryRun,
@@ -285,6 +285,6 @@ export function processLangfuseEvalEffect(
 export async function processLangfuseEval(
   evalEvent: NormalizedLangfuseEval,
   options: ProcessLangfuseEvalOptions
-): Promise<ProcessLangfuseEvalResult>  {
+): Promise<ProcessLangfuseEvalResult> {
   return Effect.runPromise(processLangfuseEvalEffect(evalEvent, options));
 }

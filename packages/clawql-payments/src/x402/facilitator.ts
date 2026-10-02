@@ -45,7 +45,7 @@ async function verifyViaConfiguredFacilitatorImpl(input: {
   paymentRequirements: X402PaymentRequirements;
   env?: NodeJS.ProcessEnv;
   fetchImpl?: typeof fetch;
-}): Promise<X402FacilitatorVerifyResult>  {
+}): Promise<X402FacilitatorVerifyResult> {
   const { loadX402RuntimeConfig } = await import("./config.js");
   const config = await loadX402RuntimeConfig(input.env);
   if (!config.facilitatorUrl) {
@@ -78,6 +78,6 @@ export async function verifyViaConfiguredFacilitator(input: {
   paymentRequirements: X402PaymentRequirements;
   env?: NodeJS.ProcessEnv;
   fetchImpl?: typeof fetch;
-}): Promise<X402FacilitatorVerifyResult>  {
+}): Promise<X402FacilitatorVerifyResult> {
   return Effect.runPromise(verifyViaConfiguredFacilitatorEffect(input));
 }

@@ -24,7 +24,7 @@ async function redactToolOutputs(
  */
 async function presidioRedactMemoryIngestInputImpl(
   input: MemoryIngestInput
-): Promise<MemoryIngestInput>  {
+): Promise<MemoryIngestInput> {
   if (!gatewayRedactionEnabled()) return input;
   return {
     ...input,
@@ -46,6 +46,6 @@ export function presidioRedactMemoryIngestInputEffect(
 /** Promise façade — prefer {@link presidioRedactMemoryIngestInputEffect} for Effect callers. */
 export async function presidioRedactMemoryIngestInput(
   input: MemoryIngestInput
-): Promise<MemoryIngestInput>  {
+): Promise<MemoryIngestInput> {
   return Effect.runPromise(presidioRedactMemoryIngestInputEffect(input));
 }

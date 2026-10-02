@@ -20,7 +20,7 @@ export type InferenceFinetuneOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceFinetuneImpl(options: InferenceFinetuneOptions): Promise<number>  {
+async function runInferenceFinetuneImpl(options: InferenceFinetuneOptions): Promise<number> {
   if (!options.dataset?.trim()) {
     console.error(
       "Usage: clawql inference finetune --dataset <path.jsonl> --base-model <model> --provider openai|anthropic"
@@ -53,7 +53,9 @@ async function runInferenceFinetuneImpl(options: InferenceFinetuneOptions): Prom
   }
 }
 
-export function runInferenceFinetuneEffect(options: InferenceFinetuneOptions): Effect.Effect<number, Error> {
+export function runInferenceFinetuneEffect(
+  options: InferenceFinetuneOptions
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runInferenceFinetuneImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -61,13 +63,11 @@ export function runInferenceFinetuneEffect(options: InferenceFinetuneOptions): E
 }
 
 /** Promise façade — prefer {@link runInferenceFinetuneEffect} for Effect callers. */
-export async function runInferenceFinetune(options: InferenceFinetuneOptions): Promise<number>  {
+export async function runInferenceFinetune(options: InferenceFinetuneOptions): Promise<number> {
   return Effect.runPromise(runInferenceFinetuneEffect(options));
 }
 
-async function runInferenceFinetuneStatusImpl(
-  options: InferenceFinetuneOptions
-): Promise<number>  {
+async function runInferenceFinetuneStatusImpl(options: InferenceFinetuneOptions): Promise<number> {
   if (!options.jobId?.trim()) {
     console.error(
       "Usage: clawql inference finetune status --job-id <id> --provider openai|anthropic"
@@ -109,13 +109,13 @@ export function runInferenceFinetuneStatusEffect(
 /** Promise façade — prefer {@link runInferenceFinetuneStatusEffect} for Effect callers. */
 export async function runInferenceFinetuneStatus(
   options: InferenceFinetuneOptions
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceFinetuneStatusEffect(options));
 }
 
 async function runInferenceFinetuneRegisterImpl(
   options: InferenceFinetuneOptions
-): Promise<number>  {
+): Promise<number> {
   if (!options.jobId?.trim() || !options.tier || !options.alias?.trim()) {
     console.error(
       "Usage: clawql inference finetune register --job-id <id> --tier frugal|standard|frontier --alias <provider/model>"
@@ -154,7 +154,7 @@ export function runInferenceFinetuneRegisterEffect(
 /** Promise façade — prefer {@link runInferenceFinetuneRegisterEffect} for Effect callers. */
 export async function runInferenceFinetuneRegister(
   options: InferenceFinetuneOptions
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceFinetuneRegisterEffect(options));
 }
 
@@ -168,7 +168,7 @@ export type InferenceFinetuneRefitOptions = {
 /** PorTAL alignment-only refit (placeholder artifacts until Python train). */
 async function runInferenceFinetuneRefitImpl(
   options: InferenceFinetuneRefitOptions
-): Promise<number>  {
+): Promise<number> {
   if (!options.bundle?.trim() || !options.targetModel?.trim() || !options.output?.trim()) {
     console.error(
       "Usage: clawql inference finetune refit --bundle <task_latent.pt|dir> --target-model <model> --output <dir>"
@@ -208,6 +208,6 @@ export function runInferenceFinetuneRefitEffect(
 /** Promise façade — prefer {@link runInferenceFinetuneRefitEffect} for Effect callers. */
 export async function runInferenceFinetuneRefit(
   options: InferenceFinetuneRefitOptions
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceFinetuneRefitEffect(options));
 }

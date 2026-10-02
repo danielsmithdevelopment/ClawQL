@@ -20,11 +20,14 @@ export type McpProxyCallContext = {
 };
 
 /** Runs HookRegistry `pre-execute` hooks through `fireHook` (ATR never-loosen). */
-export class McpProxyPipeline extends Context.Service<McpProxyPipeline, {
+export class McpProxyPipeline extends Context.Service<
+  McpProxyPipeline,
+  {
     readonly runBeforeCallTool: (
       ctx: McpProxyCallContext
     ) => Effect.Effect<void, ClawQLError | Error>;
-  }>()("clawql/McpProxyPipeline") {}
+  }
+>()("clawql/McpProxyPipeline") {}
 
 export function mcpProxyPipelineLayer(registry: PluginRegistry): Layer.Layer<McpProxyPipeline> {
   return Layer.succeed(

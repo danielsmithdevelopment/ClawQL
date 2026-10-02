@@ -22,14 +22,17 @@ export type AuditAppendInput = {
 
 export type AuditAppendWithEntry = AuditAppendResult & { readonly entry: ClawqlAuditEntry };
 
-export class AuditService extends Context.Service<AuditService, {
+export class AuditService extends Context.Service<
+  AuditService,
+  {
     readonly getMaxEntries: () => number;
     readonly append: (input: AuditAppendInput) => Effect.Effect<AuditAppendWithEntry>;
     readonly list: (limit: number) => Effect.Effect<AuditListResult>;
     readonly clear: () => Effect.Effect<AuditClearResult>;
     readonly verify: () => Effect.Effect<AuditVerifyResult>;
     readonly resetForTests: () => Effect.Effect<void>;
-  }>()("clawql/AuditService") {}
+  }
+>()("clawql/AuditService") {}
 
 function serviceFromBuffer(
   buffer: AuditRingBuffer,

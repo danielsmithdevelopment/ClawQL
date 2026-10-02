@@ -37,7 +37,9 @@ export class CloudflareWalletStoreError extends Data.TaggedError("CloudflareWall
   readonly cause?: unknown;
 }> {}
 
-function loadFileEffect(env: NodeJS.ProcessEnv): Effect.Effect<StoreFile, CloudflareWalletStoreError> {
+function loadFileEffect(
+  env: NodeJS.ProcessEnv
+): Effect.Effect<StoreFile, CloudflareWalletStoreError> {
   return Effect.tryPromise({
     try: async () => {
       const path = resolveCloudflareVirtualWalletsPath(env);

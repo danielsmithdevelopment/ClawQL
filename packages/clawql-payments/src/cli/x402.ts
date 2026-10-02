@@ -24,7 +24,7 @@ export type PaymentsX402WalletSetupOptions = {
 
 async function runPaymentsX402WalletSetupImpl(
   options: PaymentsX402WalletSetupOptions = {}
-): Promise<number>  {
+): Promise<number> {
   if (!options.address?.trim()) {
     console.error("Usage: clawql payments x402 wallet setup --address 0x...");
     return 1;
@@ -62,7 +62,7 @@ export function runPaymentsX402WalletSetupEffect(
 /** Promise façade — prefer {@link runPaymentsX402WalletSetupEffect} for Effect callers. */
 export async function runPaymentsX402WalletSetup(
   options: PaymentsX402WalletSetupOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsX402WalletSetupEffect(options));
 }
 
@@ -75,7 +75,7 @@ export type PaymentsX402GateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runPaymentsX402GateImpl(options: PaymentsX402GateOptions = {}): Promise<number>  {
+async function runPaymentsX402GateImpl(options: PaymentsX402GateOptions = {}): Promise<number> {
   if (options.price === undefined || options.price <= 0) {
     console.error(
       "Usage: clawql payments x402 gate --resource /v1/chat/completions --price 0.001 [--asset USDC]"
@@ -108,7 +108,9 @@ async function runPaymentsX402GateImpl(options: PaymentsX402GateOptions = {}): P
   return 0;
 }
 
-export function runPaymentsX402GateEffect(options: PaymentsX402GateOptions = {}): Effect.Effect<number, Error> {
+export function runPaymentsX402GateEffect(
+  options: PaymentsX402GateOptions = {}
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runPaymentsX402GateImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -116,7 +118,7 @@ export function runPaymentsX402GateEffect(options: PaymentsX402GateOptions = {})
 }
 
 /** Promise façade — prefer {@link runPaymentsX402GateEffect} for Effect callers. */
-export async function runPaymentsX402Gate(options: PaymentsX402GateOptions = {}): Promise<number>  {
+export async function runPaymentsX402Gate(options: PaymentsX402GateOptions = {}): Promise<number> {
   return Effect.runPromise(runPaymentsX402GateEffect(options));
 }
 
@@ -131,9 +133,7 @@ export type PaymentsX402VerifyOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runPaymentsX402VerifyImpl(
-  options: PaymentsX402VerifyOptions = {}
-): Promise<number>  {
+async function runPaymentsX402VerifyImpl(options: PaymentsX402VerifyOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
 
   if (options.payloadPath?.trim() && options.resource?.trim()) {
@@ -215,7 +215,7 @@ export function runPaymentsX402VerifyEffect(
 /** Promise façade — prefer {@link runPaymentsX402VerifyEffect} for Effect callers. */
 export async function runPaymentsX402Verify(
   options: PaymentsX402VerifyOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsX402VerifyEffect(options));
 }
 
@@ -232,7 +232,7 @@ export type PaymentsX402ReconcileOptions = {
 
 async function runPaymentsX402ReconcileImpl(
   options: PaymentsX402ReconcileOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   const config = await loadPaymentsConfig(env);
   const tenantId = options.tenantId ?? config.tenantId ?? "default";
@@ -281,13 +281,13 @@ export function runPaymentsX402ReconcileEffect(
 /** Promise façade — prefer {@link runPaymentsX402ReconcileEffect} for Effect callers. */
 export async function runPaymentsX402Reconcile(
   options: PaymentsX402ReconcileOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsX402ReconcileEffect(options));
 }
 
 async function runPaymentsX402GateListImpl(
   options: { json?: boolean; env?: NodeJS.ProcessEnv } = {}
-): Promise<number>  {
+): Promise<number> {
   const gates = await listX402Gates(options.env);
   if (options.json) {
     console.log(JSON.stringify({ gates }, null, 2));
@@ -315,6 +315,6 @@ export function runPaymentsX402GateListEffect(
 /** Promise façade — prefer {@link runPaymentsX402GateListEffect} for Effect callers. */
 export async function runPaymentsX402GateList(
   options: { json?: boolean; env?: NodeJS.ProcessEnv } = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsX402GateListEffect(options));
 }

@@ -19,7 +19,7 @@ export function resetVaultSyncHooksForTests(): void {
   beforeRecallHook = null;
 }
 
-async function runAfterIngestVaultSyncImpl(): Promise<void>  {
+async function runAfterIngestVaultSyncImpl(): Promise<void> {
   if (!afterIngestHook) return;
   try {
     await afterIngestHook();
@@ -37,11 +37,11 @@ export function runAfterIngestVaultSyncEffect(): Effect.Effect<void, Error> {
 }
 
 /** Promise façade — prefer {@link runAfterIngestVaultSyncEffect} for Effect callers. */
-export async function runAfterIngestVaultSync(): Promise<void>  {
+export async function runAfterIngestVaultSync(): Promise<void> {
   return Effect.runPromise(runAfterIngestVaultSyncEffect());
 }
 
-async function runBeforeRecallVaultSyncImpl(): Promise<void>  {
+async function runBeforeRecallVaultSyncImpl(): Promise<void> {
   if (!beforeRecallHook) return;
   try {
     await beforeRecallHook();
@@ -59,6 +59,6 @@ export function runBeforeRecallVaultSyncEffect(): Effect.Effect<void, Error> {
 }
 
 /** Promise façade — prefer {@link runBeforeRecallVaultSyncEffect} for Effect callers. */
-export async function runBeforeRecallVaultSync(): Promise<void>  {
+export async function runBeforeRecallVaultSync(): Promise<void> {
   return Effect.runPromise(runBeforeRecallVaultSyncEffect());
 }

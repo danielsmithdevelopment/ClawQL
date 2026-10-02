@@ -196,9 +196,7 @@ export function runAutoPullOnStartupEffect(): Effect.Effect<void> {
     yield* Effect.gen(function* () {
       yield* loadResolvedHomeSyncConfigEffect();
       const result = yield* runSyncPullEffect({});
-      console.error(
-        `[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`
-      );
+      console.error(`[clawql-mcp] team sync startup pull: downloaded ${result.downloaded} file(s)`);
     }).pipe(
       Effect.catch((e: unknown) =>
         Effect.sync(() => {

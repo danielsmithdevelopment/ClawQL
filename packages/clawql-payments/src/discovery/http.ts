@@ -13,7 +13,7 @@ async function handlePaymentsWellKnownRequestImpl(
   req: Request,
   res: Response,
   options: AttachPaymentsWellKnownOptions = {}
-): Promise<void>  {
+): Promise<void> {
   const origin =
     options.origin ??
     (req.get("x-forwarded-proto") && req.get("host")
@@ -47,7 +47,7 @@ export async function handlePaymentsWellKnownRequest(
   req: Request,
   res: Response,
   options: AttachPaymentsWellKnownOptions = {}
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(handlePaymentsWellKnownRequestEffect(req, res, options));
 }
 

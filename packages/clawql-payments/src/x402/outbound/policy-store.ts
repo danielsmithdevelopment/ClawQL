@@ -12,7 +12,9 @@ import {
 } from "clawql-core";
 import type { OutboundTenantState } from "./types.js";
 
-export class OutboundPolicyStoreService extends Context.Service<OutboundPolicyStoreService, {
+export class OutboundPolicyStoreService extends Context.Service<
+  OutboundPolicyStoreService,
+  {
     readonly getPolicy: (
       tenantId: string
     ) => Effect.Effect<OutboundPaymentPolicyAccepted | null, never>;
@@ -25,7 +27,8 @@ export class OutboundPolicyStoreService extends Context.Service<OutboundPolicySt
       tenantId: string,
       policyVersionId: string
     ) => Effect.Effect<void, never>;
-  }>()("clawql/OutboundPolicyStoreService") {}
+  }
+>()("clawql/OutboundPolicyStoreService") {}
 
 export function createMemoryOutboundPolicyStoreLayer(
   seed?: ReadonlyMap<string, OutboundPaymentPolicyAccepted>

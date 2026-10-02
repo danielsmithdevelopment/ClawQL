@@ -50,32 +50,34 @@ function spawnSeatbeltArgsEffect(
 ): Effect.Effect<{ stdout: string; stderr: string; exitCode: number }, Error> {
   return Effect.tryPromise({
     try: () =>
-      new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolvePromise, rejectPromise) => {
-        const exe = "/usr/bin/sandbox-exec";
-        const child = spawn(exe, args, {
-          cwd,
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-        let stdout = "";
-        let stderr = "";
-        child.stdout?.on("data", (d: Buffer) => {
-          stdout += d.toString("utf8");
-        });
-        child.stderr?.on("data", (d: Buffer) => {
-          stderr += d.toString("utf8");
-        });
-        const t = setTimeout(() => {
-          child.kill("SIGKILL");
-        }, timeoutMs);
-        child.on("error", (err) => {
-          clearTimeout(t);
-          rejectPromise(err);
-        });
-        child.on("close", (code) => {
-          clearTimeout(t);
-          resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
-        });
-      }),
+      new Promise<{ stdout: string; stderr: string; exitCode: number }>(
+        (resolvePromise, rejectPromise) => {
+          const exe = "/usr/bin/sandbox-exec";
+          const child = spawn(exe, args, {
+            cwd,
+            stdio: ["ignore", "pipe", "pipe"],
+          });
+          let stdout = "";
+          let stderr = "";
+          child.stdout?.on("data", (d: Buffer) => {
+            stdout += d.toString("utf8");
+          });
+          child.stderr?.on("data", (d: Buffer) => {
+            stderr += d.toString("utf8");
+          });
+          const t = setTimeout(() => {
+            child.kill("SIGKILL");
+          }, timeoutMs);
+          child.on("error", (err) => {
+            clearTimeout(t);
+            rejectPromise(err);
+          });
+          child.on("close", (code) => {
+            clearTimeout(t);
+            resolvePromise({ stdout, stderr, exitCode: code ?? -1 });
+          });
+        }
+      ),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 }

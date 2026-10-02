@@ -70,7 +70,7 @@ function nowIso(): string {
 async function reconcileClawqlInstanceImpl(
   instance: ClawQLInstanceObject,
   core: ReconcileCoreV1
-): Promise<ReconcileResult>  {
+): Promise<ReconcileResult> {
   const name = instance.metadata.name;
   const namespace = instance.metadata.namespace;
   const generation = instance.metadata.generation ?? 0;
@@ -212,7 +212,7 @@ export function reconcileClawqlInstanceEffect(
 export async function reconcileClawqlInstance(
   instance: ClawQLInstanceObject,
   core: ReconcileCoreV1
-): Promise<ReconcileResult>  {
+): Promise<ReconcileResult> {
   return Effect.runPromise(reconcileClawqlInstanceEffect(instance, core));
 }
 

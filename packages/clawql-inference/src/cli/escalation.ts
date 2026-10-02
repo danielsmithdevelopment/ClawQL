@@ -10,7 +10,7 @@ export type InferenceEscalationShowOptions = {
 
 async function runInferenceEscalationShowImpl(
   options: InferenceEscalationShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const config = await loadModelEscalationConfigAsync(options.env);
   if (options.json) {
     console.log(JSON.stringify(config, null, 2));
@@ -37,7 +37,7 @@ export function runInferenceEscalationShowEffect(
 /** Promise façade — prefer {@link runInferenceEscalationShowEffect} for Effect callers. */
 export async function runInferenceEscalationShow(
   options: InferenceEscalationShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceEscalationShowEffect(options));
 }
 
@@ -50,7 +50,7 @@ export type InferenceEscalationSetTierOptions = {
 
 async function runInferenceEscalationSetTierImpl(
   options: InferenceEscalationSetTierOptions
-): Promise<number>  {
+): Promise<number> {
   if (!options.tier || !options.model?.trim()) {
     console.error(
       "Usage: clawql inference escalation set-tier --tier frugal|standard|frontier --model <provider/model>"
@@ -82,6 +82,6 @@ export function runInferenceEscalationSetTierEffect(
 /** Promise façade — prefer {@link runInferenceEscalationSetTierEffect} for Effect callers. */
 export async function runInferenceEscalationSetTier(
   options: InferenceEscalationSetTierOptions
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceEscalationSetTierEffect(options));
 }

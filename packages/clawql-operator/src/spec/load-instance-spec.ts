@@ -23,7 +23,7 @@ function parseInstanceSpecText(text: string): ClawQLInstanceSpecV1Alpha1 {
 /** Load optional ClawQLInstance spec from env (`CLAWQL_INSTANCE_SPEC` JSON or `CLAWQL_INSTANCE_SPEC_FILE`). */
 async function loadClawqlInstanceSpecFromEnvImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<ClawQLInstanceSpecV1Alpha1 | undefined>  {
+): Promise<ClawQLInstanceSpecV1Alpha1 | undefined> {
   const inline = env.CLAWQL_INSTANCE_SPEC?.trim();
   if (inline) {
     return parseInstanceSpecDocument(JSON.parse(inline) as unknown);
@@ -46,7 +46,7 @@ export function loadClawqlInstanceSpecFromEnvEffect(
 /** Promise façade — prefer {@link loadClawqlInstanceSpecFromEnvEffect} for Effect callers. */
 export async function loadClawqlInstanceSpecFromEnv(
   env: NodeJS.ProcessEnv = process.env
-): Promise<ClawQLInstanceSpecV1Alpha1 | undefined>  {
+): Promise<ClawQLInstanceSpecV1Alpha1 | undefined> {
   return Effect.runPromise(loadClawqlInstanceSpecFromEnvEffect(env));
 }
 

@@ -12,7 +12,9 @@ export class SessionCatalogError extends Data.TaggedError("SessionCatalogError")
   readonly reason: string;
 }> {}
 
-export class SessionCatalogService extends Context.Service<SessionCatalogService, {
+export class SessionCatalogService extends Context.Service<
+  SessionCatalogService,
+  {
     readonly bind: (catalog: SessionCatalog) => Effect.Effect<SessionCatalog, SessionCatalogError>;
     readonly get: (sessionId: string) => Effect.Effect<SessionCatalog | undefined>;
     /**
@@ -23,7 +25,8 @@ export class SessionCatalogService extends Context.Service<SessionCatalogService
       input: SessionCatalogRebindInput
     ) => Effect.Effect<SessionCatalog, SessionCatalogError, WormAuditSink>;
     readonly hasTool: (sessionId: string, toolName: string) => Effect.Effect<boolean>;
-  }>()("clawql/SessionCatalogService") {}
+  }
+>()("clawql/SessionCatalogService") {}
 
 function toSet(xs: readonly string[]): ReadonlySet<string> {
   return new Set(xs);

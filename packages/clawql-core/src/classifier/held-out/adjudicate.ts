@@ -36,10 +36,13 @@ export type AdjudicationRunReport = {
   readonly cases: readonly HeldOutCaseSpec[];
 };
 
-export class FrontierAdjudicator extends Context.Service<FrontierAdjudicator, {
+export class FrontierAdjudicator extends Context.Service<
+  FrontierAdjudicator,
+  {
     readonly adjudicateCase: (c: HeldOutCaseSpec) => Effect.Effect<AdjudicationLabel, Error>;
     readonly judgeModelId: () => string;
-  }>()("clawql/FrontierAdjudicator") {}
+  }
+>()("clawql/FrontierAdjudicator") {}
 
 /**
  * Dry-run adjudicator: copies the suite's provisional groundTruthCandidateId

@@ -46,7 +46,9 @@ export type AgentHealth = {
   readonly details: string;
 };
 
-export class AgentAdapter extends Context.Service<AgentAdapter, {
+export class AgentAdapter extends Context.Service<
+  AgentAdapter,
+  {
     readonly name: AgentName;
     readonly version: string;
     readonly initialize: (config: ClawQLAgentConfig) => Effect.Effect<void>;
@@ -57,7 +59,8 @@ export class AgentAdapter extends Context.Service<AgentAdapter, {
       session: AgentSession
     ) => Effect.Effect<void, AgentWormError, WORMAuditTrailService>;
     readonly health: () => Effect.Effect<AgentHealth, AuditError, WORMAuditTrailService>;
-  }>()("clawql/AgentAdapter") {}
+  }
+>()("clawql/AgentAdapter") {}
 
 export const AgentAdapterLive = (impl: Context.Service.Shape<typeof AgentAdapter>) =>
   Layer.succeed(AgentAdapter, impl);

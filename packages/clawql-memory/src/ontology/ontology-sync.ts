@@ -174,26 +174,26 @@ export function ensureOntologyLegalEntitiesIndexedEffect(
   schema: LegalEntitySchema
 ): Effect.Effect<void, MemoryError> {
   return memoryFromPromise(async () => {
-  {
-    const probe = await openOntologyDb(vault);
-    if (!probe) return;
-    try {
-      if (countLegalEntities(probe.db, schema) > 0) return;
-    } finally {
-      probe.close();
+    {
+      const probe = await openOntologyDb(vault);
+      if (!probe) return;
+      try {
+        if (countLegalEntities(probe.db, schema) > 0) return;
+      } finally {
+        probe.close();
+      }
     }
-  }
 
-  await withOntologyWriteLock(vault, async () => {
-    const handle = await openOntologyDb(vault);
-    if (!handle) return;
-    try {
-      if (countLegalEntities(handle.db, schema) > 0) return;
-      await syncOntologyLegalEntitiesFromVault(vault, handle);
-    } finally {
-      handle.close();
-    }
-  });
+    await withOntologyWriteLock(vault, async () => {
+      const handle = await openOntologyDb(vault);
+      if (!handle) return;
+      try {
+        if (countLegalEntities(handle.db, schema) > 0) return;
+        await syncOntologyLegalEntitiesFromVault(vault, handle);
+      } finally {
+        handle.close();
+      }
+    });
   });
 }
 
@@ -206,9 +206,11 @@ export async function ensureOntologyLegalEntitiesIndexed(
 }
 
 /** @deprecated Use {@link ensureOntologyLegalEntitiesIndexed} with `legal.Matter`. */
-export function ensureOntologyMattersIndexedEffect(vault: string): Effect.Effect<void, MemoryError> {
+export function ensureOntologyMattersIndexedEffect(
+  vault: string
+): Effect.Effect<void, MemoryError> {
   return memoryFromPromise(async () => {
-  return ensureOntologyLegalEntitiesIndexed(vault, "legal.Matter");
+    return ensureOntologyLegalEntitiesIndexed(vault, "legal.Matter");
   });
 }
 

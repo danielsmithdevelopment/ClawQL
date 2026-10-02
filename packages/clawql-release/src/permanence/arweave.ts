@@ -203,7 +203,10 @@ export function uploadBundleToArweaveEffect(
     gateway?: string;
   }
 ): Effect.Effect<ArweaveUploadResult, Error> {
-  return Effect.tryPromise({ try: () => uploadBundleToArweaveImpl(bundleDir, opts), catch: fsError });
+  return Effect.tryPromise({
+    try: () => uploadBundleToArweaveImpl(bundleDir, opts),
+    catch: fsError,
+  });
 }
 
 /** Promise façade for callers that still await Arweave upload. */

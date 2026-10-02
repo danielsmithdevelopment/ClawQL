@@ -105,11 +105,14 @@ export function createClientCredentialsFlow(fetchImpl?: typeof fetch): ClientCre
   return new ClientCredentialsFlow(fetchImpl);
 }
 
-export class ClientCredentialsFlowService extends Context.Service<ClientCredentialsFlowService, {
+export class ClientCredentialsFlowService extends Context.Service<
+  ClientCredentialsFlowService,
+  {
     readonly getToken: (
       config: ClientCredentialsConfig
     ) => Effect.Effect<StoredOAuthToken, OAuthFlowError>;
-  }>()("clawql/ClientCredentialsFlowService") {}
+  }
+>()("clawql/ClientCredentialsFlowService") {}
 
 export function clientCredentialsFlowServiceFromFlow(
   flow: ClientCredentialsFlow

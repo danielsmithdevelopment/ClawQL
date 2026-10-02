@@ -129,7 +129,7 @@ export function poolTenantIdForOrg(orgId: string): string {
 /** @deprecated Prefer OrgCreditsService.loadFile — Promise façade retained for legacy callers. */
 async function loadOrgCreditsFileImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgCreditsFile>  {
+): Promise<OrgCreditsFile> {
   const path = resolveOrgCreditsPath(env);
   try {
     const raw = await readFile(path, "utf8");
@@ -155,7 +155,7 @@ export function loadOrgCreditsFileEffect(
 /** Promise façade — prefer {@link loadOrgCreditsFileEffect} for Effect callers. */
 export async function loadOrgCreditsFile(
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgCreditsFile>  {
+): Promise<OrgCreditsFile> {
   return Effect.runPromise(loadOrgCreditsFileEffect(env));
 }
 
@@ -171,11 +171,13 @@ async function saveOrgCreditsFile(
 }
 
 /** @deprecated Prefer OrgCreditsService.reset — Promise façade retained for legacy/test callers. */
-async function resetOrgCreditsForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
+async function resetOrgCreditsForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveOrgCreditsFile(emptyFile(), env);
 }
 
-export function resetOrgCreditsForTestsEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<void, Error> {
+export function resetOrgCreditsForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () => resetOrgCreditsForTestsImpl(env),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -183,7 +185,7 @@ export function resetOrgCreditsForTestsEffect(env: NodeJS.ProcessEnv = process.e
 }
 
 /** Promise façade — prefer {@link resetOrgCreditsForTestsEffect} for Effect callers. */
-export async function resetOrgCreditsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
+export async function resetOrgCreditsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   return Effect.runPromise(resetOrgCreditsForTestsEffect(env));
 }
 
@@ -218,7 +220,7 @@ export type CreateOrgInput = {
 async function createOrgImpl(
   input: CreateOrgInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   if (!Effect.runSync(isCreditsEnabled(env))) {
     throw new Error("Credits disabled — set CLAWQL_CREDITS_ENABLED=1");
   }
@@ -291,7 +293,7 @@ export function createOrgEffect(
 export async function createOrg(
   input: CreateOrgInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(createOrgEffect(input, env));
 }
 
@@ -309,7 +311,7 @@ export type PatchOrgBillingInput = {
 async function patchOrgBillingImpl(
   input: PatchOrgBillingInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = input.orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -346,7 +348,7 @@ export function patchOrgBillingEffect(
 export async function patchOrgBilling(
   input: PatchOrgBillingInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(patchOrgBillingEffect(input, env));
 }
 
@@ -354,7 +356,7 @@ export async function patchOrgBilling(
 async function getOrgImpl(
   orgId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord | undefined>  {
+): Promise<OrgRecord | undefined> {
   const file = await loadOrgCreditsFile(env);
   return file.orgs[orgId.trim().toLowerCase()];
 }
@@ -373,7 +375,7 @@ export function getOrgEffect(
 export async function getOrg(
   orgId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord | undefined>  {
+): Promise<OrgRecord | undefined> {
   return Effect.runPromise(getOrgEffect(orgId, env));
 }
 
@@ -381,7 +383,7 @@ export async function getOrg(
 async function findOrgsForTenantImpl(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord[]>  {
+): Promise<OrgRecord[]> {
   const id = tenantId.trim();
   if (!id) return [];
   const file = await loadOrgCreditsFile(env);
@@ -406,7 +408,7 @@ export function findOrgsForTenantEffect(
 export async function findOrgsForTenant(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord[]>  {
+): Promise<OrgRecord[]> {
   return Effect.runPromise(findOrgsForTenantEffect(tenantId, env));
 }
 
@@ -415,7 +417,7 @@ async function setOrgRolePoliciesImpl(
   orgId: string,
   policies: OrgRolePolicy[],
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -449,7 +451,7 @@ export async function setOrgRolePolicies(
   orgId: string,
   policies: OrgRolePolicy[],
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(setOrgRolePoliciesEffect(orgId, policies, env));
 }
 
@@ -470,7 +472,7 @@ export type AddOrgMemberInput = {
 async function addOrgMemberImpl(
   input: AddOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = input.orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -532,7 +534,7 @@ export function addOrgMemberEffect(
 export async function addOrgMember(
   input: AddOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(addOrgMemberEffect(input, env));
 }
 
@@ -622,7 +624,7 @@ export function assertEmailMatchesOrgDomains(org: OrgRecord, email: string): voi
 async function findOrgByEmailDomainImpl(
   domain: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord | undefined>  {
+): Promise<OrgRecord | undefined> {
   const needle = domain.trim().toLowerCase().replace(/^@/, "");
   if (!needle) return undefined;
   const file = await loadOrgCreditsFile(env);
@@ -643,7 +645,7 @@ export function findOrgByEmailDomainEffect(
 export async function findOrgByEmailDomain(
   domain: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord | undefined>  {
+): Promise<OrgRecord | undefined> {
   return Effect.runPromise(findOrgByEmailDomainEffect(domain, env));
 }
 
@@ -659,7 +661,7 @@ async function setOrgSsoPolicyImpl(
     jwksUrl?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = input.orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -704,7 +706,7 @@ export async function setOrgSsoPolicy(
     jwksUrl?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(setOrgSsoPolicyEffect(input, env));
 }
 
@@ -727,7 +729,7 @@ export type InviteOrgMemberInput = {
 async function inviteOrgMemberImpl(
   input: InviteOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const email = input.email.trim().toLowerCase();
   if (!email.includes("@")) throw new Error("Valid work email is required");
   const memberTenantId =
@@ -797,7 +799,7 @@ export function inviteOrgMemberEffect(
 export async function inviteOrgMember(
   input: InviteOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(inviteOrgMemberEffect(input, env));
 }
 
@@ -806,7 +808,7 @@ async function listOrgMembersImpl(
   orgId: string,
   options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgMembership[]>  {
+): Promise<OrgMembership[]> {
   const org = await getOrg(orgId, env);
   if (!org) throw new Error(`Unknown org: ${orgId}`);
   if (options.actorTenantId) assertManagerOrBillingAdmin(org, options.actorTenantId);
@@ -839,7 +841,7 @@ export async function listOrgMembers(
   orgId: string,
   options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgMembership[]>  {
+): Promise<OrgMembership[]> {
   return Effect.runPromise(listOrgMembersEffect(orgId, options, env));
 }
 
@@ -854,7 +856,7 @@ async function setOrgSeatPolicyImpl(
     seatLimit?: number;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = input.orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -894,7 +896,7 @@ export async function setOrgSeatPolicy(
     seatLimit?: number;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(setOrgSeatPolicyEffect(input, env));
 }
 
@@ -907,7 +909,7 @@ async function setMemberReportsToImpl(
     actorTenantId: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const file = await loadOrgCreditsFile(env);
   const key = input.orgId.trim().toLowerCase();
   const org = file.orgs[key];
@@ -954,7 +956,7 @@ export async function setMemberReportsTo(
     actorTenantId: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(setMemberReportsToEffect(input, env));
 }
 
@@ -971,7 +973,7 @@ async function transferManagerToReportImpl(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   const org = await getOrg(input.orgId, env);
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
   assertManagerOrBillingAdmin(org, input.managerTenantId);
@@ -1022,7 +1024,7 @@ export async function transferManagerToReport(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   return Effect.runPromise(transferManagerToReportEffect(input, env));
 }
 
@@ -1030,7 +1032,7 @@ export async function transferManagerToReport(
 async function suspendOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return setMemberStatus({ ...input, status: "suspended" }, env);
 }
 
@@ -1048,7 +1050,7 @@ export function suspendOrgMemberEffect(
 export async function suspendOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(suspendOrgMemberEffect(input, env));
 }
 
@@ -1056,7 +1058,7 @@ export async function suspendOrgMember(
 async function removeOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return setMemberStatus({ ...input, status: "left" }, env);
 }
 
@@ -1074,7 +1076,7 @@ export function removeOrgMemberEffect(
 export async function removeOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(removeOrgMemberEffect(input, env));
 }
 
@@ -1082,7 +1084,7 @@ export async function removeOrgMember(
 async function reactivateOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   const org = await getOrg(input.orgId, env);
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
   const member = org.members.find((m) => m.memberTenantId === input.memberTenantId.trim());
@@ -1106,7 +1108,7 @@ export function reactivateOrgMemberEffect(
 export async function reactivateOrgMember(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<OrgRecord>  {
+): Promise<OrgRecord> {
   return Effect.runPromise(reactivateOrgMemberEffect(input, env));
 }
 
@@ -1172,7 +1174,7 @@ async function allocateFromPoolToMemberImpl(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   assertCreditsOrgTransferEnabled(env);
   const org = await getOrg(input.orgId, env);
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
@@ -1231,7 +1233,7 @@ export async function allocateFromPoolToMember(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   return Effect.runPromise(allocateFromPoolToMemberEffect(input, env));
 }
 
@@ -1249,7 +1251,7 @@ async function transferWithinOrgImpl(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   assertCreditsOrgTransferEnabled(env);
   const org = await getOrg(input.orgId, env);
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
@@ -1299,7 +1301,7 @@ export async function transferWithinOrg(
     idempotencyKey?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   return Effect.runPromise(transferWithinOrgEffect(input, env));
 }
 
@@ -1318,7 +1320,7 @@ export type DistributePeriodResult = {
 async function distributeOrgPeriodImpl(
   input: { orgId: string; actorTenantId: string; idempotencyPrefix?: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<DistributePeriodResult>  {
+): Promise<DistributePeriodResult> {
   assertCreditsOrgTransferEnabled(env);
   const org = await getOrg(input.orgId, env);
   if (!org) throw new Error(`Unknown org: ${input.orgId}`);
@@ -1411,7 +1413,7 @@ export function distributeOrgPeriodEffect(
 export async function distributeOrgPeriod(
   input: { orgId: string; actorTenantId: string; idempotencyPrefix?: string },
   env: NodeJS.ProcessEnv = process.env
-): Promise<DistributePeriodResult>  {
+): Promise<DistributePeriodResult> {
   return Effect.runPromise(distributeOrgPeriodEffect(input, env));
 }
 

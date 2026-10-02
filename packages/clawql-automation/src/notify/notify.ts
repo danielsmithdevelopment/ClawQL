@@ -120,7 +120,7 @@ export function evaluateNotifySlackPrelude(params: NotifySlackInput): NotifySlac
 }
 
 /** Ensure Slack chat.postMessage is present in the loaded OpenAPI set. */
-async function ensureNotifySlackOperationPresentImpl(): Promise<McpTextResult | null>  {
+async function ensureNotifySlackOperationPresentImpl(): Promise<McpTextResult | null> {
   const loaded = await loadSpec();
   const op = loaded.operations.find((o) => o.id === SLACK_NOTIFY_OPERATION_ID);
   if (!op) {
@@ -131,7 +131,10 @@ async function ensureNotifySlackOperationPresentImpl(): Promise<McpTextResult | 
   return null;
 }
 
-export function ensureNotifySlackOperationPresentEffect(): Effect.Effect<McpTextResult | null, Error> {
+export function ensureNotifySlackOperationPresentEffect(): Effect.Effect<
+  McpTextResult | null,
+  Error
+> {
   return Effect.tryPromise({
     try: () => ensureNotifySlackOperationPresentImpl(),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -139,7 +142,7 @@ export function ensureNotifySlackOperationPresentEffect(): Effect.Effect<McpText
 }
 
 /** Promise façade — prefer {@link ensureNotifySlackOperationPresentEffect} for Effect callers. */
-export async function ensureNotifySlackOperationPresent(): Promise<McpTextResult | null>  {
+export async function ensureNotifySlackOperationPresent(): Promise<McpTextResult | null> {
   return Effect.runPromise(ensureNotifySlackOperationPresentEffect());
 }
 

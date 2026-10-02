@@ -12,7 +12,7 @@ async function handleMppOpenApiRequestImpl(
   req: Request,
   res: Response,
   options: AttachMppOpenApiOptions = {}
-): Promise<void>  {
+): Promise<void> {
   const origin =
     options.origin ??
     (req.get("x-forwarded-proto") && req.get("host")
@@ -46,7 +46,7 @@ export async function handleMppOpenApiRequest(
   req: Request,
   res: Response,
   options: AttachMppOpenApiOptions = {}
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(handleMppOpenApiRequestEffect(req, res, options));
 }
 

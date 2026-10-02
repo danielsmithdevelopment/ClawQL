@@ -30,7 +30,7 @@ async function walkMarkdownOrYaml(dir: string, out: string[]): Promise<void> {
 }
 
 /** Discover entity files under a directory (recursive). */
-async function discoverOntologyEntityFilesImpl(dir: string): Promise<string[]>  {
+async function discoverOntologyEntityFilesImpl(dir: string): Promise<string[]> {
   const abs = resolve(dir);
   const st = await stat(abs).catch(() => null);
   if (!st) return [];
@@ -48,11 +48,11 @@ export function discoverOntologyEntityFilesEffect(dir: string): Effect.Effect<st
 }
 
 /** Promise façade — prefer {@link discoverOntologyEntityFilesEffect} for Effect callers. */
-export async function discoverOntologyEntityFiles(dir: string): Promise<string[]>  {
+export async function discoverOntologyEntityFiles(dir: string): Promise<string[]> {
   return Effect.runPromise(discoverOntologyEntityFilesEffect(dir));
 }
 
-async function loadOntologyEntityFileImpl(path: string): Promise<LoadedOntologyEntity>  {
+async function loadOntologyEntityFileImpl(path: string): Promise<LoadedOntologyEntity> {
   const abs = resolve(path);
   const raw = await readFile(abs, "utf8");
   let doc: unknown;
@@ -66,7 +66,9 @@ async function loadOntologyEntityFileImpl(path: string): Promise<LoadedOntologyE
   return { path: abs, entity: doc as OntologyEntityDocument };
 }
 
-export function loadOntologyEntityFileEffect(path: string): Effect.Effect<LoadedOntologyEntity, Error> {
+export function loadOntologyEntityFileEffect(
+  path: string
+): Effect.Effect<LoadedOntologyEntity, Error> {
   return Effect.tryPromise({
     try: () => loadOntologyEntityFileImpl(path),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -74,13 +76,13 @@ export function loadOntologyEntityFileEffect(path: string): Effect.Effect<Loaded
 }
 
 /** Promise façade — prefer {@link loadOntologyEntityFileEffect} for Effect callers. */
-export async function loadOntologyEntityFile(path: string): Promise<LoadedOntologyEntity>  {
+export async function loadOntologyEntityFile(path: string): Promise<LoadedOntologyEntity> {
   return Effect.runPromise(loadOntologyEntityFileEffect(path));
 }
 
 async function loadOntologyEntitiesImpl(
   pathsOrDirs: string[]
-): Promise<{ loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] }>  {
+): Promise<{ loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] }> {
   const files = new Set<string>();
   for (const p of pathsOrDirs) {
     const abs = resolve(p);
@@ -112,7 +114,10 @@ async function loadOntologyEntitiesImpl(
 
 export function loadOntologyEntitiesEffect(
   pathsOrDirs: string[]
-): Effect.Effect<{ loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] }, Error> {
+): Effect.Effect<
+  { loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] },
+  Error
+> {
   return Effect.tryPromise({
     try: () => loadOntologyEntitiesImpl(pathsOrDirs),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -122,7 +127,7 @@ export function loadOntologyEntitiesEffect(
 /** Promise façade — prefer {@link loadOntologyEntitiesEffect} for Effect callers. */
 export async function loadOntologyEntities(
   pathsOrDirs: string[]
-): Promise<{ loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] }>  {
+): Promise<{ loaded: LoadedOntologyEntity[]; loadErrors: { path: string; message: string }[] }> {
   return Effect.runPromise(loadOntologyEntitiesEffect(pathsOrDirs));
 }
 

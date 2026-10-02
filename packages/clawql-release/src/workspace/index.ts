@@ -103,9 +103,7 @@ async function registerSnapshot(
   });
 }
 
-async function createGitWorktreeSnapshotImpl(
-  options: SnapshotOptions
-): Promise<WorkspaceSnapshot> {
+async function createGitWorktreeSnapshotImpl(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
   const rootDir = resolve(options.rootDir);
   const worktreesRoot = join(rootDir, ".clawql", "workspaces", "git-worktree");
   await mkdir(worktreesRoot, { recursive: true });
@@ -222,9 +220,7 @@ async function createRiftSnapshotImpl(options: SnapshotOptions): Promise<Workspa
   return registerSnapshot(rootDir, snap);
 }
 
-async function createWorkspaceSnapshotImpl(
-  options: SnapshotOptions
-): Promise<WorkspaceSnapshot> {
+async function createWorkspaceSnapshotImpl(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
   switch (options.backend) {
     case "git-worktree":
       return createGitWorktreeSnapshotImpl(options);
@@ -351,7 +347,10 @@ export function removeWorkspaceSnapshotEffect(
   rootDir: string,
   name: string
 ): Effect.Effect<WorkspaceSnapshot | undefined, Error> {
-  return Effect.tryPromise({ try: () => removeWorkspaceSnapshotImpl(rootDir, name), catch: fsError });
+  return Effect.tryPromise({
+    try: () => removeWorkspaceSnapshotImpl(rootDir, name),
+    catch: fsError,
+  });
 }
 
 /** Promise façade for callers that still await snapshot removal. */
@@ -367,7 +366,10 @@ export function resolveLatestSnapshotEffect(
   rootDir: string,
   backend?: WorkspaceBackend
 ): Effect.Effect<WorkspaceSnapshot | undefined, Error> {
-  return Effect.tryPromise({ try: () => resolveLatestSnapshotImpl(rootDir, backend), catch: fsError });
+  return Effect.tryPromise({
+    try: () => resolveLatestSnapshotImpl(rootDir, backend),
+    catch: fsError,
+  });
 }
 
 /** Promise façade for callers that still await latest-snapshot resolve. */

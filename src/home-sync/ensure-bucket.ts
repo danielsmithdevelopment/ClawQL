@@ -411,9 +411,7 @@ export function ensureSyncBucketEffect(
         }
         if (!accountId) {
           return yield* Effect.fail(
-            new Error(
-              "Cannot ensure R2 bucket — set CLAWQL_R2_ACCOUNT_ID (Cloudflare account id)."
-            )
+            new Error("Cannot ensure R2 bucket — set CLAWQL_R2_ACCOUNT_ID (Cloudflare account id).")
           );
         }
         const cf = yield* ensureR2BucketViaCloudflareApiEffect({

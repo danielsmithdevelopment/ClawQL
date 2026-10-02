@@ -7,7 +7,7 @@ async function appendInferenceAuditEventImpl(
   eventStore: EventStore,
   seedId: string,
   entry: InferenceAuditEntry
-): Promise<void>  {
+): Promise<void> {
   await eventStore.append({
     type: entry.action,
     seed_id: seedId,
@@ -39,6 +39,6 @@ export async function appendInferenceAuditEvent(
   eventStore: EventStore,
   seedId: string,
   entry: InferenceAuditEntry
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(appendInferenceAuditEventEffect(eventStore, seedId, entry));
 }

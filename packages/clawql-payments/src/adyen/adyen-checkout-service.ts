@@ -73,7 +73,9 @@ export type ProcessAdyenWebhookResult = {
 };
 
 /** Effect service for Adyen Checkout sessions, payments, and webhooks. */
-export class AdyenCheckoutService extends Context.Service<AdyenCheckoutService, {
+export class AdyenCheckoutService extends Context.Service<
+  AdyenCheckoutService,
+  {
     readonly createSession: (
       input: CreateAdyenSessionInput
     ) => Effect.Effect<AdyenSessionResult, AdyenError>;
@@ -83,7 +85,8 @@ export class AdyenCheckoutService extends Context.Service<AdyenCheckoutService, 
     readonly processWebhook: (
       input: ProcessAdyenWebhookInput
     ) => Effect.Effect<ProcessAdyenWebhookResult, AdyenError>;
-  }>()("clawql/AdyenCheckoutService") {}
+  }
+>()("clawql/AdyenCheckoutService") {}
 
 function toMinorUnits(amountUsd: number, currency: string): number {
   const decimals = currency.toUpperCase() === "JPY" || currency.toUpperCase() === "KRW" ? 0 : 2;

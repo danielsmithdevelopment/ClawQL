@@ -259,9 +259,7 @@ export function getWebWormStore(env: NodeJS.ProcessEnv = process.env): WebWormSt
   return defaultStore;
 }
 
-async function resetWebWormStoreForTestsImpl(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+async function resetWebWormStoreForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   if (defaultStore) await defaultStore.reset();
   defaultStore = null;
   defaultMode = null;
@@ -283,14 +281,14 @@ export function resetWebWormStoreForTestsEffect(
 /** Promise façade — prefer {@link resetWebWormStoreForTestsEffect} for Effect callers. */
 export async function resetWebWormStoreForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(resetWebWormStoreForTestsEffect(env));
 }
 
 async function appendWebWormEventImpl(
   event: WebAuditEvent,
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebWormRecord | null>  {
+): Promise<WebWormRecord | null> {
   const store = getWebWormStore(env);
   if (!store) return null;
   return store.append(event);
@@ -310,14 +308,14 @@ export function appendWebWormEventEffect(
 export async function appendWebWormEvent(
   event: WebAuditEvent,
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebWormRecord | null>  {
+): Promise<WebWormRecord | null> {
   return Effect.runPromise(appendWebWormEventEffect(event, env));
 }
 
 async function listWebWormRecordsImpl(
   limit = 100,
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebWormRecord[]>  {
+): Promise<WebWormRecord[]> {
   const store = getWebWormStore(env);
   if (!store) return [];
   return store.list(limit);
@@ -337,13 +335,13 @@ export function listWebWormRecordsEffect(
 export async function listWebWormRecords(
   limit = 100,
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebWormRecord[]>  {
+): Promise<WebWormRecord[]> {
   return Effect.runPromise(listWebWormRecordsEffect(limit, env));
 }
 
 async function verifyWebWormLogImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebAuditVerifyResult>  {
+): Promise<WebAuditVerifyResult> {
   const store = getWebWormStore(env);
   if (!store) {
     return { ok: true, records: 0, head_hash: WEB_AUDIT_GENESIS_HASH, issues: [] };
@@ -363,6 +361,6 @@ export function verifyWebWormLogEffect(
 /** Promise façade — prefer {@link verifyWebWormLogEffect} for Effect callers. */
 export async function verifyWebWormLog(
   env: NodeJS.ProcessEnv = process.env
-): Promise<WebAuditVerifyResult>  {
+): Promise<WebAuditVerifyResult> {
   return Effect.runPromise(verifyWebWormLogEffect(env));
 }

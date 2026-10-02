@@ -53,7 +53,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 async function presidioRedactTextImpl(
   text: string,
   config: PresidioConfig = loadPresidioConfig()!
-): Promise<{ text: string; redacted: boolean }>  {
+): Promise<{ text: string; redacted: boolean }> {
   if (!text.trim()) return { text, redacted: false };
 
   const analyzerResults = await postJson<PresidioAnalyzerResult[]>(
@@ -90,11 +90,11 @@ export function presidioRedactTextEffect(
 export async function presidioRedactText(
   text: string,
   config: PresidioConfig = loadPresidioConfig()!
-): Promise<{ text: string; redacted: boolean }>  {
+): Promise<{ text: string; redacted: boolean }> {
   return Effect.runPromise(presidioRedactTextEffect(text, config));
 }
 
-async function maybePresidioRedactTextImpl(text: string): Promise<string>  {
+async function maybePresidioRedactTextImpl(text: string): Promise<string> {
   const config = loadPresidioConfig();
   if (!config) return text;
   try {
@@ -118,14 +118,14 @@ export function maybePresidioRedactTextEffect(text: string): Effect.Effect<strin
 }
 
 /** Promise façade — prefer {@link maybePresidioRedactTextEffect} for Effect callers. */
-export async function maybePresidioRedactText(text: string): Promise<string>  {
+export async function maybePresidioRedactText(text: string): Promise<string> {
   return Effect.runPromise(maybePresidioRedactTextEffect(text));
 }
 
 /**
  * Redact string fields in a JSON-like tool payload (shallow + one nested level).
  */
-async function presidioRedactPayloadImpl(value: unknown): Promise<unknown>  {
+async function presidioRedactPayloadImpl(value: unknown): Promise<unknown> {
   if (typeof value === "string") {
     return maybePresidioRedactText(value);
   }
@@ -150,6 +150,6 @@ export function presidioRedactPayloadEffect(value: unknown): Effect.Effect<unkno
 }
 
 /** Promise façade — prefer {@link presidioRedactPayloadEffect} for Effect callers. */
-export async function presidioRedactPayload(value: unknown): Promise<unknown>  {
+export async function presidioRedactPayload(value: unknown): Promise<unknown> {
   return Effect.runPromise(presidioRedactPayloadEffect(value));
 }

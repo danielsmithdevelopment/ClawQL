@@ -1,9 +1,6 @@
 import { Context, Effect, Layer } from "effect";
 import type { ModelTier } from "../routing/types.js";
-import {
-  getAnthropicFinetuneJobEffect,
-  submitAnthropicFinetuneJobEffect,
-} from "./anthropic.js";
+import { getAnthropicFinetuneJobEffect, submitAnthropicFinetuneJobEffect } from "./anthropic.js";
 import { getOpenAiFinetuneJobEffect, submitOpenAiFinetuneJobEffect } from "./openai.js";
 import { registerModelToTierEffect } from "./tier-registry.js";
 import type {

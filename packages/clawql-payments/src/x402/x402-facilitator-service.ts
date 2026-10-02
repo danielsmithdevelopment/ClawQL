@@ -65,14 +65,17 @@ function postFacilitatorJsonEffect<T>(
 }
 
 /** Effect service for x402 facilitator verify/settle HTTP calls. */
-export class X402FacilitatorService extends Context.Service<X402FacilitatorService, {
+export class X402FacilitatorService extends Context.Service<
+  X402FacilitatorService,
+  {
     readonly verify: (
       input: X402FacilitatorVerifyInput
     ) => Effect.Effect<X402FacilitatorVerifyResult, X402Error>;
     readonly settle: (
       input: X402FacilitatorSettleInput
     ) => Effect.Effect<X402FacilitatorSettleResult, X402Error>;
-  }>()("clawql/X402FacilitatorService") {}
+  }
+>()("clawql/X402FacilitatorService") {}
 
 export function x402FacilitatorLiveLayer(
   env: NodeJS.ProcessEnv = process.env

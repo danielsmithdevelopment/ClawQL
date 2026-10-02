@@ -67,10 +67,7 @@ function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> 
 }
 
 export class OAuthTokenStore {
-  private readonly refreshLock = new Map<
-    OAuthTokenKey,
-    Fiber.Fiber<StoredOAuthToken, unknown>
-  >();
+  private readonly refreshLock = new Map<OAuthTokenKey, Fiber.Fiber<StoredOAuthToken, unknown>>();
   private readonly proactiveRefreshMs: number;
   private readonly now: () => number;
   private readonly eventSink: AuthEventSink;
@@ -106,9 +103,7 @@ export class OAuthTokenStore {
           timestamp: new Date(this.now()).toISOString(),
         });
         if (this.options.markRequiresReauth) {
-          yield* this.options
-            .markRequiresReauth(providerId)
-            .pipe(Effect.catch(() => Effect.void));
+          yield* this.options.markRequiresReauth(providerId).pipe(Effect.catch(() => Effect.void));
         }
         const reauthUrl = this.options.buildReauthUrl
           ? yield* this.options.buildReauthUrl({ providerId, tokenKey: key, reason: "no_token" })
@@ -196,9 +191,7 @@ export class OAuthTokenStore {
                   reauthUrl,
                 });
                 if (this.options.onReauthRequired) {
-                  yield* this.options
-                    .onReauthRequired(error)
-                    .pipe(Effect.catch(() => Effect.void));
+                  yield* this.options.onReauthRequired(error).pipe(Effect.catch(() => Effect.void));
                 }
                 return yield* Effect.fail(error);
               }
@@ -219,7 +212,9 @@ export function createOAuthTokenStore(options: OAuthTokenStoreOptions): OAuthTok
   return new OAuthTokenStore(options);
 }
 
-export class OAuthTokenStoreService extends Context.Service<OAuthTokenStoreService, {
+export class OAuthTokenStoreService extends Context.Service<
+  OAuthTokenStoreService,
+  {
     readonly isExpiringSoon: (expiresAtMs: number, nowMs?: number) => boolean;
     readonly getValidToken: (
       key: OAuthTokenKey
@@ -228,7 +223,8 @@ export class OAuthTokenStoreService extends Context.Service<OAuthTokenStoreServi
       key: OAuthTokenKey,
       current: StoredOAuthToken
     ) => Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown>;
-  }>()("clawql/OAuthTokenStoreService") {}
+  }
+>()("clawql/OAuthTokenStoreService") {}
 
 export function oauthTokenStoreServiceFromStore(
   store: OAuthTokenStore

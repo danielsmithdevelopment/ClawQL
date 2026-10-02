@@ -348,7 +348,7 @@ export type ClaimDirectoryInput = {
 async function claimDirectoryImpl(
   input: ClaimDirectoryInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }>  {
+): Promise<{ entry: DirectoryEntry; created: boolean }> {
   const tenantId = input.tenantId.trim();
   if (!tenantId) throw new Error("tenantId required");
   if (!input.email?.trim() && !input.handle?.trim() && !input.phone?.trim()) {
@@ -431,7 +431,7 @@ export function claimDirectoryEffect(
 export async function claimDirectory(
   input: ClaimDirectoryInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }>  {
+): Promise<{ entry: DirectoryEntry; created: boolean }> {
   return Effect.runPromise(claimDirectoryEffect(input, env));
 }
 
@@ -571,11 +571,13 @@ async function resolveRecipient(
 }
 
 /** Reset directory file. Internal helper used by the service `reset` op. */
-async function resetDirectoryForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
+async function resetDirectoryForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 
-export function resetDirectoryForTestsEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<void, Error> {
+export function resetDirectoryForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () => resetDirectoryForTestsImpl(env),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -583,7 +585,7 @@ export function resetDirectoryForTestsEffect(env: NodeJS.ProcessEnv = process.en
 }
 
 /** Promise façade — prefer {@link resetDirectoryForTestsEffect} for Effect callers. */
-export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
+export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   return Effect.runPromise(resetDirectoryForTestsEffect(env));
 }
 
@@ -599,7 +601,9 @@ type ResolveRecipientOptions = {
 };
 
 /** Effect surface over the payments directory (email / handle / phone → tenant). */
-export class CreditsDirectoryService extends Context.Service<CreditsDirectoryService, {
+export class CreditsDirectoryService extends Context.Service<
+  CreditsDirectoryService,
+  {
     readonly getEmail: (email: string) => Effect.Effect<DirectoryEntry | undefined, DirectoryError>;
     readonly getHandle: (
       handle: string
@@ -620,7 +624,8 @@ export class CreditsDirectoryService extends Context.Service<CreditsDirectorySer
       options?: ResolveRecipientOptions
     ) => Effect.Effect<ResolvedRecipient, DirectoryError>;
     readonly reset: () => Effect.Effect<void, DirectoryError>;
-  }>()("clawql/CreditsDirectoryService") {}
+  }
+>()("clawql/CreditsDirectoryService") {}
 
 export function creditsDirectoryLiveLayer(
   env: NodeJS.ProcessEnv = process.env

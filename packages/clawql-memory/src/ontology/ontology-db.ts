@@ -127,9 +127,7 @@ export async function withOntologyWriteLock<T>(
   vaultRoot: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  return Effect.runPromise(
-    withOntologyWriteLockEffect(vaultRoot, () => memoryFromPromise(fn))
-  );
+  return Effect.runPromise(withOntologyWriteLockEffect(vaultRoot, () => memoryFromPromise(fn)));
 }
 
 function isoNow(): string {
@@ -243,34 +241,36 @@ export type OntologyDbHandle = {
   close: () => void;
 };
 
-export function openOntologyDbEffect(vaultRoot: string): Effect.Effect<OntologyDbHandle | null, MemoryError> {
+export function openOntologyDbEffect(
+  vaultRoot: string
+): Effect.Effect<OntologyDbHandle | null, MemoryError> {
   return memoryFromPromise(async () => {
-  if (process.env.CLAWQL_ONTOLOGY_DB === "0") return null;
-  const path = resolveOntologyDatabasePath(vaultRoot);
-  await mkdir(dirname(path), { recursive: true });
-  const SQL = await loadSqlJs();
-  let db: Database;
-  try {
-    const buf = await readFile(path);
-    db = new SQL.Database(buf);
-  } catch {
-    db = new SQL.Database();
-  }
-  migrate(db);
+    if (process.env.CLAWQL_ONTOLOGY_DB === "0") return null;
+    const path = resolveOntologyDatabasePath(vaultRoot);
+    await mkdir(dirname(path), { recursive: true });
+    const SQL = await loadSqlJs();
+    let db: Database;
+    try {
+      const buf = await readFile(path);
+      db = new SQL.Database(buf);
+    } catch {
+      db = new SQL.Database();
+    }
+    migrate(db);
 
-  const persist = async () => {
-    const data = db.export();
-    const tmp = `${path}.${process.pid}.tmp`;
-    await writeFile(tmp, Buffer.from(data));
-    await rename(tmp, path);
-  };
+    const persist = async () => {
+      const data = db.export();
+      const tmp = `${path}.${process.pid}.tmp`;
+      await writeFile(tmp, Buffer.from(data));
+      await rename(tmp, path);
+    };
 
-  return {
-    db,
-    path,
-    persist,
-    close: () => db.close(),
-  };
+    return {
+      db,
+      path,
+      persist,
+      close: () => db.close(),
+    };
   });
 }
 

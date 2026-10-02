@@ -13,7 +13,7 @@ async function executeNativeGraphQLImpl(
   op: Operation,
   args: Record<string, unknown>,
   selectionSet: string
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   const meta = op.nativeGraphQL;
   if (!meta) {
     const r = { ok: false as const, error: "Internal error: missing nativeGraphQL metadata" };
@@ -110,6 +110,6 @@ export async function executeNativeGraphQL(
   op: Operation,
   args: Record<string, unknown>,
   selectionSet: string
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   return Effect.runPromise(executeNativeGraphQLEffect(op, args, selectionSet));
 }

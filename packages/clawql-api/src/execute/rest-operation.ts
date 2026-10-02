@@ -184,7 +184,7 @@ async function executeRestOperationImpl(
   op: Operation,
   args: Record<string, unknown>,
   openapi: OpenAPIDoc
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   let baseUrl: string;
   try {
     baseUrl = resolveApiBaseUrlForOperation(openapi, op);
@@ -396,6 +396,6 @@ export async function executeRestOperation(
   op: Operation,
   args: Record<string, unknown>,
   openapi: OpenAPIDoc
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   return Effect.runPromise(executeRestOperationEffect(op, args, openapi));
 }

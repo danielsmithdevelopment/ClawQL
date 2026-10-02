@@ -21,7 +21,9 @@ export type VerifyAp2MandateInput = {
 };
 
 /** Effect service for AP2 Payment Mandate parse/verify/authorize. */
-export class Ap2MandateService extends Context.Service<Ap2MandateService, {
+export class Ap2MandateService extends Context.Service<
+  Ap2MandateService,
+  {
     readonly verifyPaymentMandate: (
       input: VerifyAp2MandateInput
     ) => Effect.Effect<Ap2VerifyResult, Ap2Error>;
@@ -42,7 +44,8 @@ export class Ap2MandateService extends Context.Service<Ap2MandateService, {
       | { present: true; ok: false; reason: string },
       never
     >;
-  }>()("clawql/Ap2MandateService") {}
+  }
+>()("clawql/Ap2MandateService") {}
 
 export function ap2MandateLiveLayer(
   env: NodeJS.ProcessEnv = process.env

@@ -107,9 +107,12 @@ async function tryPublishNats(event: DeductionEvent, env: NodeJS.ProcessEnv): Pr
 }
 
 /** Effect service: emit deduction events after sync counter mutation. */
-export class DeductionEventBus extends Context.Service<DeductionEventBus, {
+export class DeductionEventBus extends Context.Service<
+  DeductionEventBus,
+  {
     readonly publish: (event: DeductionEvent) => Effect.Effect<void, never>;
-  }>()("clawql/DeductionEventBus") {}
+  }
+>()("clawql/DeductionEventBus") {}
 
 export function deductionEventBusLiveLayer(
   env: NodeJS.ProcessEnv = process.env

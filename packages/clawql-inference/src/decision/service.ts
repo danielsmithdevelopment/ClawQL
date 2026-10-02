@@ -82,9 +82,12 @@ export type DecisionResponse = {
   readonly escalationModel?: string;
 };
 
-export class DecisionGatewayService extends Context.Service<DecisionGatewayService, {
+export class DecisionGatewayService extends Context.Service<
+  DecisionGatewayService,
+  {
     readonly decide: (req: DecisionRequest) => Effect.Effect<DecisionResponse>;
-  }>()("clawql/inference/DecisionGatewayService") {}
+  }
+>()("clawql/inference/DecisionGatewayService") {}
 
 // Runtime R varies between GLiNER (prod) and heuristic (tests); keep loose.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

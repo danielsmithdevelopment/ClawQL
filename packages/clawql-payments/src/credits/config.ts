@@ -163,7 +163,9 @@ export const isCreditsTransferTotpRequired = (
 ): Effect.Effect<boolean> => Effect.sync(() => truthy(env.CLAWQL_CREDITS_TRANSFER_REQUIRE_TOTP));
 
 /** Effect surface over prepaid credits feature flags (yield methods inside `Effect.gen`). */
-export class CreditsConfigService extends Context.Service<CreditsConfigService, {
+export class CreditsConfigService extends Context.Service<
+  CreditsConfigService,
+  {
     readonly isCreditsEnabled: Effect.Effect<boolean>;
     readonly isAchTopupEnabled: Effect.Effect<boolean>;
     readonly isAchTopupDryRun: Effect.Effect<boolean>;
@@ -177,7 +179,8 @@ export class CreditsConfigService extends Context.Service<CreditsConfigService, 
     readonly isManagedHosting: Effect.Effect<boolean>;
     readonly isCreditsP2pEnabled: Effect.Effect<boolean>;
     readonly isCreditsOrgTransferEnabled: Effect.Effect<boolean>;
-  }>()("clawql/CreditsConfigService") {}
+  }
+>()("clawql/CreditsConfigService") {}
 
 /** Live flag service bound to a specific environment snapshot. */
 export const creditsConfigLiveLayer = (

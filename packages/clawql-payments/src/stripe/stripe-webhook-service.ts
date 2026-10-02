@@ -63,7 +63,9 @@ export function verifyStripeWebhookSignature(
 }
 
 /** Effect service for Stripe webhook verification and WORM-audited event handling. */
-export class StripeWebhookService extends Context.Service<StripeWebhookService, {
+export class StripeWebhookService extends Context.Service<
+  StripeWebhookService,
+  {
     readonly verifySignature: (
       payload: string | Buffer,
       signature: string,
@@ -84,7 +86,8 @@ export class StripeWebhookService extends Context.Service<StripeWebhookService, 
       ProcessStripeWebhookResult,
       StripeSignatureError | ConfigError | PaymentError
     >;
-  }>()("clawql/StripeWebhookService") {}
+  }
+>()("clawql/StripeWebhookService") {}
 
 export function stripeWebhookLiveLayer(): Layer.Layer<
   StripeWebhookService,

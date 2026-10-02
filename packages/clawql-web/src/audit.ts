@@ -33,7 +33,7 @@ export function listWebAuditEvents(): readonly WebAuditEvent[] {
 
 async function appendWebAuditImpl(
   event: Omit<WebAuditEvent, "ts"> & { ts?: string }
-): Promise<WebAuditEvent>  {
+): Promise<WebAuditEvent> {
   const full: WebAuditEvent = {
     ...event,
     ts: event.ts ?? new Date().toISOString(),
@@ -56,7 +56,7 @@ export function appendWebAuditEffect(
 /** Promise façade — prefer {@link appendWebAuditEffect} for Effect callers. */
 export async function appendWebAudit(
   event: Omit<WebAuditEvent, "ts"> & { ts?: string }
-): Promise<WebAuditEvent>  {
+): Promise<WebAuditEvent> {
   return Effect.runPromise(appendWebAuditEffect(event));
 }
 

@@ -312,7 +312,9 @@ export class InviteEmailError extends Data.TaggedError("InviteEmailError")<{
 }> {}
 
 /** Effect surface over money-request invite email delivery (dry-run by default). */
-export class CreditsInviteEmailService extends Context.Service<CreditsInviteEmailService, {
+export class CreditsInviteEmailService extends Context.Service<
+  CreditsInviteEmailService,
+  {
     readonly build: (
       input: MoneyRequestInviteEmailInput
     ) => Effect.Effect<InviteEmailPayload, InviteEmailError>;
@@ -320,7 +322,8 @@ export class CreditsInviteEmailService extends Context.Service<CreditsInviteEmai
       input: MoneyRequestInviteEmailInput,
       options?: SendInviteEmailOptions
     ) => Effect.Effect<InviteEmailResult, InviteEmailError>;
-  }>()("clawql/CreditsInviteEmailService") {}
+  }
+>()("clawql/CreditsInviteEmailService") {}
 
 export function creditsInviteEmailLiveLayer(
   env: NodeJS.ProcessEnv = process.env

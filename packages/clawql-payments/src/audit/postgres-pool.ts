@@ -67,9 +67,7 @@ export function getPaymentsAuditPgPool(env: NodeJS.ProcessEnv = process.env): pg
   return pool;
 }
 
-async function ensurePaymentsAuditSchemaImpl(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+async function ensurePaymentsAuditSchemaImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   const p = getPaymentsAuditPgPool(env);
   if (!p || migrationsDone) return;
   const client = await p.connect();
@@ -93,11 +91,11 @@ export function ensurePaymentsAuditSchemaEffect(
 /** Promise façade — prefer {@link ensurePaymentsAuditSchemaEffect} for Effect callers. */
 export async function ensurePaymentsAuditSchema(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(ensurePaymentsAuditSchemaEffect(env));
 }
 
-async function closePaymentsAuditPgPoolImpl(): Promise<void>  {
+async function closePaymentsAuditPgPoolImpl(): Promise<void> {
   migrationsDone = false;
   poolKey = null;
   if (pool) {
@@ -114,7 +112,7 @@ export function closePaymentsAuditPgPoolEffect(): Effect.Effect<void, Error> {
 }
 
 /** Promise façade — prefer {@link closePaymentsAuditPgPoolEffect} for Effect callers. */
-export async function closePaymentsAuditPgPool(): Promise<void>  {
+export async function closePaymentsAuditPgPool(): Promise<void> {
   return Effect.runPromise(closePaymentsAuditPgPoolEffect());
 }
 

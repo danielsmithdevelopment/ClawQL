@@ -184,7 +184,7 @@ function elicitRequestProtoToMcpParams(req: Record<string, unknown>): Record<str
 async function fulfillDependentRequestsImpl(
   dependentRequests: Record<string, Record<string, unknown>>,
   handlers: DependentHandlers
-): Promise<Record<string, Record<string, unknown>>>  {
+): Promise<Record<string, Record<string, unknown>>> {
   const out: Record<string, Record<string, unknown>> = {};
   for (const [id, sir] of Object.entries(dependentRequests)) {
     if (sir.sampling_create_message != null) {
@@ -237,7 +237,7 @@ export function fulfillDependentRequestsEffect(
 export async function fulfillDependentRequests(
   dependentRequests: Record<string, Record<string, unknown>>,
   handlers: DependentHandlers
-): Promise<Record<string, Record<string, unknown>>>  {
+): Promise<Record<string, Record<string, unknown>>> {
   return Effect.runPromise(fulfillDependentRequestsEffect(dependentRequests, handlers));
 }
 
@@ -261,7 +261,7 @@ async function runUnaryWithDependentsImpl<T extends UnaryWithCommon>(
   invoke: (common: Record<string, unknown>) => Promise<T>,
   handlers: DependentHandlers,
   options?: { maxRounds?: number }
-): Promise<T>  {
+): Promise<T> {
   const maxRounds = options?.maxRounds ?? 64;
   let common: Record<string, unknown> = { ...initialCommon };
   for (let round = 0; round < maxRounds; round++) {
@@ -301,7 +301,7 @@ export async function runUnaryWithDependents<T extends UnaryWithCommon>(
   invoke: (common: Record<string, unknown>) => Promise<T>,
   handlers: DependentHandlers,
   options?: { maxRounds?: number }
-): Promise<T>  {
+): Promise<T> {
   return Effect.runPromise(runUnaryWithDependentsEffect(initialCommon, invoke, handlers, options));
 }
 

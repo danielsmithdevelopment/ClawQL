@@ -5,11 +5,14 @@ import { MemoryError } from "./memory-errors.js";
 import { VaultConfigService } from "./vault-config-service.js";
 
 /** Effect service for vault memory recall (`memory_recall`). */
-export class MemoryRecallService extends Context.Service<MemoryRecallService, {
+export class MemoryRecallService extends Context.Service<
+  MemoryRecallService,
+  {
     readonly recall: (
       input: MemoryRecallInput
     ) => Effect.Effect<MemoryRecallResult, MemoryError, VaultConfigService | MemoryRecallServices>;
-  }>()("clawql/MemoryRecallService") {}
+  }
+>()("clawql/MemoryRecallService") {}
 
 export function memoryRecallLiveLayer(): Layer.Layer<MemoryRecallService> {
   return Layer.succeed(

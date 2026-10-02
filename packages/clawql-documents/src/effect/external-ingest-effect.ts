@@ -88,8 +88,7 @@ export function executeExternalIngestCoreEffect(
       if (Result.isFailure(fetchEither)) {
         const fail = fetchEither.failure;
         const cause = fail.cause;
-        const msg =
-          cause instanceof Error ? cause.message : String(cause ?? fail.reason);
+        const msg = cause instanceof Error ? cause.message : String(cause ?? fail.reason);
         return {
           ok: false,
           enabled: true,

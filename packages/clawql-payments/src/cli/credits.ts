@@ -565,7 +565,7 @@ export async function runPaymentsCreditsDirectoryRelease(
 /** Alias: Venmo-style pay → same staging path as transfer. */
 async function runPaymentsCreditsPayImpl(
   options: PaymentsCreditsTransferOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return runPaymentsCreditsTransfer(options);
 }
 
@@ -581,7 +581,7 @@ export function runPaymentsCreditsPayEffect(
 /** Promise façade — prefer {@link runPaymentsCreditsPayEffect} for Effect callers. */
 export async function runPaymentsCreditsPay(
   options: PaymentsCreditsTransferOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsCreditsPayEffect(options));
 }
 
@@ -874,7 +874,7 @@ export async function runPaymentsCreditsRequestCreate(
 /** Alias for request create (invoice language). */
 async function runPaymentsCreditsInvoiceImpl(
   options: PaymentsCreditsRequestOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return runPaymentsCreditsRequestCreate(options);
 }
 
@@ -890,7 +890,7 @@ export function runPaymentsCreditsInvoiceEffect(
 /** Promise façade — prefer {@link runPaymentsCreditsInvoiceEffect} for Effect callers. */
 export async function runPaymentsCreditsInvoice(
   options: PaymentsCreditsRequestOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsCreditsInvoiceEffect(options));
 }
 
@@ -1384,7 +1384,7 @@ function resolvePayeeForLink(options: PaymentsCreditsLinkOptions): string | unde
 /** Print HATEOAS / clawql:// pay (or request) deep links. */
 async function runPaymentsCreditsLinkImpl(
   options: PaymentsCreditsLinkOptions = {}
-): Promise<number>  {
+): Promise<number> {
   if (options.parse?.trim()) {
     const parsed = Effect.runSync(parseCreditsDeepLink(options.parse));
     if (!parsed.ok) {
@@ -1464,7 +1464,7 @@ export function runPaymentsCreditsLinkEffect(
 /** Promise façade — prefer {@link runPaymentsCreditsLinkEffect} for Effect callers. */
 export async function runPaymentsCreditsLink(
   options: PaymentsCreditsLinkOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsCreditsLinkEffect(options));
 }
 

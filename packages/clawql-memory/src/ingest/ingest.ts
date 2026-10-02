@@ -281,7 +281,7 @@ export type PreparedMemoryIngest =
  */
 async function prepareMemoryIngestEffectiveInputImpl(
   input: MemoryIngestInput
-): Promise<PreparedMemoryIngest>  {
+): Promise<PreparedMemoryIngest> {
   const title = input.title?.trim();
   if (!title) {
     return { ok: false, error: "title is required" };
@@ -323,7 +323,7 @@ export function prepareMemoryIngestEffectiveInputEffect(
 /** Promise façade — prefer {@link prepareMemoryIngestEffectiveInputEffect} for Effect callers. */
 export async function prepareMemoryIngestEffectiveInput(
   input: MemoryIngestInput
-): Promise<PreparedMemoryIngest>  {
+): Promise<PreparedMemoryIngest> {
   return Effect.runPromise(prepareMemoryIngestEffectiveInputEffect(input));
 }
 
@@ -333,7 +333,7 @@ async function writeMemoryIngestPageImpl(
   title: string,
   effective: MemoryIngestInput,
   fileProvenance?: string
-): Promise<MemoryIngestResult>  {
+): Promise<MemoryIngestResult> {
   const slug = slugifyTitle(title);
   const useCqk =
     Boolean(effective.wormRef?.trim()) ||
@@ -470,7 +470,7 @@ export async function writeMemoryIngestPage(
   title: string,
   effective: MemoryIngestInput,
   fileProvenance?: string
-): Promise<MemoryIngestResult>  {
+): Promise<MemoryIngestResult> {
   return Effect.runPromise(writeMemoryIngestPageEffect(vault, title, effective, fileProvenance));
 }
 
@@ -482,11 +482,13 @@ export async function runMemoryIngest(input: MemoryIngestInput): Promise<MemoryI
 }
 
 /** @deprecated Prefer {@link runMemoryIngest} — routes through Effect services. */
-async function executeMemoryIngestImpl(input: MemoryIngestInput): Promise<MemoryIngestResult>  {
+async function executeMemoryIngestImpl(input: MemoryIngestInput): Promise<MemoryIngestResult> {
   return runMemoryIngest(input);
 }
 
-export function executeMemoryIngestEffect(input: MemoryIngestInput): Effect.Effect<MemoryIngestResult, Error> {
+export function executeMemoryIngestEffect(
+  input: MemoryIngestInput
+): Effect.Effect<MemoryIngestResult, Error> {
   return Effect.tryPromise({
     try: () => executeMemoryIngestImpl(input),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -494,7 +496,7 @@ export function executeMemoryIngestEffect(input: MemoryIngestInput): Effect.Effe
 }
 
 /** Promise façade — prefer {@link executeMemoryIngestEffect} for Effect callers. */
-export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult>  {
+export async function executeMemoryIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
   return Effect.runPromise(executeMemoryIngestEffect(input));
 }
 

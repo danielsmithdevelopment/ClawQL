@@ -185,14 +185,17 @@ export function createVaultDynamicSecretProvider(
   return new VaultDynamicSecretProvider(options);
 }
 
-export class VaultDynamicSecretService extends Context.Service<VaultDynamicSecretService, {
+export class VaultDynamicSecretService extends Context.Service<
+  VaultDynamicSecretService,
+  {
     readonly getDynamicSecret: (
       rolePath: string
     ) => Effect.Effect<VaultDynamicLease, VaultDynamicSecretError>;
     readonly renewIfNeeded: (
       lease: VaultDynamicLease
     ) => Effect.Effect<VaultDynamicLease, VaultDynamicSecretError>;
-  }>()("clawql/VaultDynamicSecretService") {}
+  }
+>()("clawql/VaultDynamicSecretService") {}
 
 export function createVaultDynamicSecretServiceLayer(
   options: VaultDynamicSecretProviderOptions

@@ -41,7 +41,7 @@ function collectOutput(
 async function executeNativeCliImpl(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult>  {
+): Promise<ExecuteOperationResult> {
   const meta = op.nativeCli;
   if (!meta) {
     return { ok: false, error: "Internal error: missing nativeCli metadata" };
@@ -102,6 +102,6 @@ export function executeNativeCliEffect(
 export async function executeNativeCli(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult>  {
+): Promise<ExecuteOperationResult> {
   return Effect.runPromise(executeNativeCliEffect(op, args));
 }

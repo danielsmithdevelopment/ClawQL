@@ -11,7 +11,7 @@ import { Effect } from "effect";
  */
 async function loadInferenceModelCatalogImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<InferenceModelCatalog>  {
+): Promise<InferenceModelCatalog> {
   const path = env.CLAWQL_INFERENCE_CATALOG_PATH?.trim();
   if (!path) return DEFAULT_INFERENCE_MODEL_CATALOG;
   try {
@@ -42,7 +42,7 @@ export function loadInferenceModelCatalogEffect(
 /** Promise façade — prefer {@link loadInferenceModelCatalogEffect} for Effect callers. */
 export async function loadInferenceModelCatalog(
   env: NodeJS.ProcessEnv = process.env
-): Promise<InferenceModelCatalog>  {
+): Promise<InferenceModelCatalog> {
   return Effect.runPromise(loadInferenceModelCatalogEffect(env));
 }
 

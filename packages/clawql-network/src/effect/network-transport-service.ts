@@ -2,10 +2,13 @@ import { Context, Effect, Layer } from "effect";
 import { loadNetworkState, type NetworkState } from "../network-state.js";
 import { selectTransport, type ConnectionRequest, type NetworkTransport } from "../selector.js";
 
-export class NetworkTransportService extends Context.Service<NetworkTransportService, {
+export class NetworkTransportService extends Context.Service<
+  NetworkTransportService,
+  {
     readonly selectTransport: (req: ConnectionRequest) => Effect.Effect<NetworkTransport>;
     readonly loadState: (home?: string) => Effect.Effect<NetworkState | null, never>;
-  }>()("clawql/NetworkTransportService") {}
+  }
+>()("clawql/NetworkTransportService") {}
 
 export const NetworkTransportServiceLive = Layer.succeed(
   NetworkTransportService,

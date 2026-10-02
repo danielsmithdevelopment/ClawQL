@@ -62,7 +62,9 @@ export type RampCardResult = {
 };
 
 /** Effect service for Ramp funds + virtual/agent cards. */
-export class RampService extends Context.Service<RampService, {
+export class RampService extends Context.Service<
+  RampService,
+  {
     readonly createFund: (input: {
       displayName: string;
       limitUsd: number;
@@ -101,7 +103,8 @@ export class RampService extends Context.Service<RampService, {
     readonly readAgenticCard: (input: {
       cardId: string;
     }) => Effect.Effect<Record<string, unknown>, RampError>;
-  }>()("clawql/RampService") {}
+  }
+>()("clawql/RampService") {}
 
 type TokenCache = { token: string; expiresAt: number };
 

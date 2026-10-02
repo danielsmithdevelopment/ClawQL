@@ -169,7 +169,7 @@ export type LintOntologyOptions = {
  * Validate ontology entity YAML/JSON files.
  * If `paths` is empty, searches `.clawql/ontology/entities` then `docs/examples/ontology/entities`.
  */
-async function lintOntologyImpl(opts: LintOntologyOptions = {}): Promise<OntologyLintResult>  {
+async function lintOntologyImpl(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
   const rootDir = resolve(opts.rootDir ?? process.cwd());
   const schemaPath = resolve(opts.schemaPath ?? defaultEntitySchemaPath(rootDir));
   const search =
@@ -241,7 +241,9 @@ async function lintOntologyImpl(opts: LintOntologyOptions = {}): Promise<Ontolog
   };
 }
 
-export function lintOntologyEffect(opts: LintOntologyOptions = {}): Effect.Effect<OntologyLintResult, Error> {
+export function lintOntologyEffect(
+  opts: LintOntologyOptions = {}
+): Effect.Effect<OntologyLintResult, Error> {
   return Effect.tryPromise({
     try: () => lintOntologyImpl(opts),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -249,6 +251,6 @@ export function lintOntologyEffect(opts: LintOntologyOptions = {}): Effect.Effec
 }
 
 /** Promise façade — prefer {@link lintOntologyEffect} for Effect callers. */
-export async function lintOntology(opts: LintOntologyOptions = {}): Promise<OntologyLintResult>  {
+export async function lintOntology(opts: LintOntologyOptions = {}): Promise<OntologyLintResult> {
   return Effect.runPromise(lintOntologyEffect(opts));
 }

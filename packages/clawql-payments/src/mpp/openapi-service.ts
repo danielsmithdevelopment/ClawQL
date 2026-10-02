@@ -145,14 +145,17 @@ export function composeMppOpenApiDocument(input: {
 }
 
 /** Effect service for `GET /openapi.json` (MPP discovery). */
-export class MppOpenApiService extends Context.Service<MppOpenApiService, {
+export class MppOpenApiService extends Context.Service<
+  MppOpenApiService,
+  {
     readonly buildDocument: (
       options?: BuildMppOpenApiOptions
     ) => Effect.Effect<Record<string, unknown>, ConfigError | X402Error>;
     readonly renderJson: (
       options?: BuildMppOpenApiOptions
     ) => Effect.Effect<string, ConfigError | X402Error>;
-  }>()("clawql/MppOpenApiService") {}
+  }
+>()("clawql/MppOpenApiService") {}
 
 export function mppOpenApiLiveLayer(
   env: NodeJS.ProcessEnv = process.env

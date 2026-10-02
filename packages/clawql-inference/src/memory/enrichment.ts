@@ -102,7 +102,7 @@ async function maybeEnrichMessagesImpl(opts: {
   search?: typeof runMemoryGatewaySearch;
   /** Injected for tests. */
   audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
-}): Promise<MemoryEnrichDecision>  {
+}): Promise<MemoryEnrichDecision> {
   const env = opts.env ?? process.env;
   if (!memoryEnrichmentAllowed({ req: opts.req, env, virtualKey: opts.virtualKey })) {
     return { kind: "skip", reason: "not_allowed" };
@@ -237,6 +237,6 @@ export async function maybeEnrichMessages(opts: {
   search?: typeof runMemoryGatewaySearch;
   /** Injected for tests. */
   audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
-}): Promise<MemoryEnrichDecision>  {
+}): Promise<MemoryEnrichDecision> {
   return Effect.runPromise(maybeEnrichMessagesEffect(opts));
 }

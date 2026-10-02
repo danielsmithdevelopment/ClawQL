@@ -3,7 +3,10 @@ import { Context, Effect, Layer } from "effect";
 import { ObservabilityError } from "../errors.js";
 import type { TelemetryQueryTransportApi } from "./types.js";
 
-export class TelemetryQueryTransport extends Context.Service<TelemetryQueryTransport, TelemetryQueryTransportApi>()("clawql/TelemetryQueryTransport") {}
+export class TelemetryQueryTransport extends Context.Service<
+  TelemetryQueryTransport,
+  TelemetryQueryTransportApi
+>()("clawql/TelemetryQueryTransport") {}
 
 export const TelemetryQueryTransportLive = Layer.succeed(TelemetryQueryTransport, {
   getJson: ({ url, headers }) =>

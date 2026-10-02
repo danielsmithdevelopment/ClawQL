@@ -690,9 +690,7 @@ function setJobChangeState(db: Database, jobId: string, patch: Partial<JobChange
 }
 
 /** Delete stored projection when schedule job or stream.changed subscription ends — Effect primary. */
-export function clearScheduleProjectionForTopicEffect(
-  topic: string
-): Effect.Effect<void, Error> {
+export function clearScheduleProjectionForTopicEffect(topic: string): Effect.Effect<void, Error> {
   return Effect.gen(function* () {
     const jobId = topic.trim();
     if (!jobId) return;
@@ -1277,9 +1275,7 @@ function getAllEnabledJobs(db: Database): ScheduleJobRow[] {
   return out;
 }
 
-export function runScheduleWorkerTickEffect(
-  now = new Date()
-): Effect.Effect<number, Error> {
+export function runScheduleWorkerTickEffect(now = new Date()): Effect.Effect<number, Error> {
   return Effect.gen(function* () {
     const absDbPath = getScheduleDatabasePath();
     const db = yield* openOrCreateDbEffect(absDbPath);
@@ -1371,7 +1367,7 @@ async function dispatchScheduleOperationImpl(
   db: Database,
   absDbPath: string,
   parsed: ScheduleParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   switch (parsed.operation) {
     case "create": {
       const id = randomUUID();
@@ -1576,7 +1572,7 @@ export async function dispatchScheduleOperation(
   db: Database,
   absDbPath: string,
   parsed: ScheduleParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(dispatchScheduleOperationEffect(db, absDbPath, parsed));
 }
 

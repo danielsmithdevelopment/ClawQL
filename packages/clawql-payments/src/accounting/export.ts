@@ -164,7 +164,7 @@ export type BuildAccountingExportOptions = {
 /** @deprecated Prefer AccountingExportService.build — Promise façade retained for legacy callers. */
 async function buildAccountingExportImpl(
   options: BuildAccountingExportOptions
-): Promise<AccountingExportResult>  {
+): Promise<AccountingExportResult> {
   const env = options.env ?? process.env;
   const format = options.format ?? "csv";
   let verifyOk = true;
@@ -213,7 +213,7 @@ export function buildAccountingExportEffect(
 /** Promise façade — prefer {@link buildAccountingExportEffect} for Effect callers. */
 export async function buildAccountingExport(
   options: BuildAccountingExportOptions
-): Promise<AccountingExportResult>  {
+): Promise<AccountingExportResult> {
   return Effect.runPromise(buildAccountingExportEffect(options));
 }
 
@@ -221,7 +221,7 @@ export async function buildAccountingExport(
 async function writeAccountingExportImpl(
   result: AccountingExportResult,
   outputPath: string
-): Promise<void>  {
+): Promise<void> {
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, serializeAccountingExport(result, result.format), "utf8");
 }
@@ -240,7 +240,7 @@ export function writeAccountingExportEffect(
 export async function writeAccountingExport(
   result: AccountingExportResult,
   outputPath: string
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(writeAccountingExportEffect(result, outputPath));
 }
 
@@ -253,7 +253,9 @@ export class AccountingExportError extends Data.TaggedError("AccountingExportErr
  * Effect surface over accounting exports (WORM audit → CSV/QuickBooks/Xero/JSON).
  * `build` refuses to emit when the payment audit chain fails verification.
  */
-export class AccountingExportService extends Context.Service<AccountingExportService, {
+export class AccountingExportService extends Context.Service<
+  AccountingExportService,
+  {
     readonly build: (
       options: BuildAccountingExportOptions
     ) => Effect.Effect<AccountingExportResult, AccountingExportError>;
@@ -265,7 +267,8 @@ export class AccountingExportService extends Context.Service<AccountingExportSer
       result: AccountingExportResult,
       format: AccountingExportFormat
     ) => Effect.Effect<string, AccountingExportError>;
-  }>()("clawql/AccountingExportService") {}
+  }
+>()("clawql/AccountingExportService") {}
 
 export function accountingExportLiveLayer(
   env: NodeJS.ProcessEnv = process.env

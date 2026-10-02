@@ -22,7 +22,9 @@ export type AgentInstanceRegistryFile = {
   readonly instances: Record<string, AgentInstanceRecord>;
 };
 
-export class AgentInstanceRegistryService extends Context.Service<AgentInstanceRegistryService, {
+export class AgentInstanceRegistryService extends Context.Service<
+  AgentInstanceRegistryService,
+  {
     readonly registerAgentInstance: (
       input: RegisterAgentInstanceInput
     ) => Effect.Effect<AgentInstanceRecord>;
@@ -32,7 +34,8 @@ export class AgentInstanceRegistryService extends Context.Service<AgentInstanceR
       opts?: AgentHeartbeatOptions
     ) => Effect.Effect<AgentInstanceRecord | null>;
     readonly listAgentInstances: (orgId: string) => Effect.Effect<readonly AgentInstanceRecord[]>;
-  }>()("clawql-agents/AgentInstanceRegistryService") {}
+  }
+>()("clawql-agents/AgentInstanceRegistryService") {}
 
 function defaultHome(): string {
   const raw = process.env.CLAWQL_HOME?.trim();

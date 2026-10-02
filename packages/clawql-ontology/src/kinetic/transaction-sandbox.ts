@@ -106,7 +106,7 @@ function moneyDelta(before: unknown, next: unknown): number | undefined {
 /**
  * Run one native kinetic write with ATR + optional MEDIUM mandate gate.
  */
-async function runKineticTransactionImpl(req: KineticWriteRequest): Promise<KineticWriteResult>  {
+async function runKineticTransactionImpl(req: KineticWriteRequest): Promise<KineticWriteResult> {
   const claims = req.claims === undefined ? resolveKineticAtrClaimsForRuntime() : req.claims;
   const atr = checkKineticWriteAllowed(claims);
   const before =
@@ -205,7 +205,9 @@ async function runKineticTransactionImpl(req: KineticWriteRequest): Promise<Kine
   }
 }
 
-export function runKineticTransactionEffect(req: KineticWriteRequest): Effect.Effect<KineticWriteResult, Error> {
+export function runKineticTransactionEffect(
+  req: KineticWriteRequest
+): Effect.Effect<KineticWriteResult, Error> {
   return Effect.tryPromise({
     try: () => runKineticTransactionImpl(req),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -213,14 +215,12 @@ export function runKineticTransactionEffect(req: KineticWriteRequest): Effect.Ef
 }
 
 /** Promise façade — prefer {@link runKineticTransactionEffect} for Effect callers. */
-export async function runKineticTransaction(req: KineticWriteRequest): Promise<KineticWriteResult>  {
+export async function runKineticTransaction(req: KineticWriteRequest): Promise<KineticWriteResult> {
   return Effect.runPromise(runKineticTransactionEffect(req));
 }
 
 /** @deprecated prefer {@link runKineticTransaction} */
-async function runLowKineticTransactionImpl(
-  req: KineticWriteRequest
-): Promise<KineticWriteResult>  {
+async function runLowKineticTransactionImpl(req: KineticWriteRequest): Promise<KineticWriteResult> {
   return runKineticTransaction(req);
 }
 
@@ -236,7 +236,7 @@ export function runLowKineticTransactionEffect(
 /** Promise façade — prefer {@link runLowKineticTransactionEffect} for Effect callers. */
 export async function runLowKineticTransaction(
   req: KineticWriteRequest
-): Promise<KineticWriteResult>  {
+): Promise<KineticWriteResult> {
   return Effect.runPromise(runLowKineticTransactionEffect(req));
 }
 

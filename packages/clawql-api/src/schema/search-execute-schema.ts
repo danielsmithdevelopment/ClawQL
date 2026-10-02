@@ -36,7 +36,12 @@ export const EXECUTE_FIELDS_DESCRIPTION =
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({
   query: Schema.String.annotate({ description: SEARCH_QUERY_DESCRIPTION }),
-  limit: (Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 })))).pipe(Schema.withDecodingDefaultType(Effect.succeed(5))).annotate({ description: SEARCH_LIMIT_DESCRIPTION }),
+  limit: Schema.Number.pipe(
+    Schema.check(Schema.isInt()),
+    Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 }))
+  )
+    .pipe(Schema.withDecodingDefaultType(Effect.succeed(5)))
+    .annotate({ description: SEARCH_LIMIT_DESCRIPTION }),
 });
 
 export type SearchInputDecoded = Schema.Schema.Type<typeof SearchInputSchema>;
@@ -44,7 +49,7 @@ export type SearchInputDecoded = Schema.Schema.Type<typeof SearchInputSchema>;
 /** MCP `execute` tool arguments — Effect Schema (source of truth). */
 export const ExecuteInputSchema = Schema.Struct({
   operationId: Schema.String.annotate({ description: EXECUTE_OPERATION_ID_DESCRIPTION }),
-  args: Schema.Record(Schema.String, Schema.Unknown ).annotate({
+  args: Schema.Record(Schema.String, Schema.Unknown).annotate({
     description: EXECUTE_ARGS_DESCRIPTION,
   }),
   fields: Schema.optional(
@@ -83,7 +88,9 @@ export function decodeSearchInput(raw: unknown): Effect.Effect<SearchInputDecode
 
 /** Decode unknown MCP execute args into {@link ExecuteInputDecoded}. */
 export function decodeExecuteInput(raw: unknown): Effect.Effect<ExecuteInputDecoded, Error> {
-  return Schema.decodeUnknownEffect(ExecuteInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(ExecuteInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }
 
 /** Decode unknown MCP resume args into {@link ResumeInputDecoded}. */

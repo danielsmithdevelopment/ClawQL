@@ -420,7 +420,7 @@ function mergeGrpcServerOptions(user?: grpc.ServerOptions): grpc.ServerOptions {
  */
 async function maybeStartGrpcMcpServerImpl(
   options: GrpcMcpServerOptions
-): Promise<StartedGrpcServer | undefined>  {
+): Promise<StartedGrpcServer | undefined> {
   const enabled = process.env.ENABLE_GRPC?.trim();
   if (enabled !== "1" && enabled?.toLowerCase() !== "true") {
     return undefined;
@@ -527,6 +527,6 @@ export function maybeStartGrpcMcpServerEffect(
 /** Promise façade — prefer {@link maybeStartGrpcMcpServerEffect} for Effect callers. */
 export async function maybeStartGrpcMcpServer(
   options: GrpcMcpServerOptions
-): Promise<StartedGrpcServer | undefined>  {
+): Promise<StartedGrpcServer | undefined> {
   return Effect.runPromise(maybeStartGrpcMcpServerEffect(options));
 }

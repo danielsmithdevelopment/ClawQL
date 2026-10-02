@@ -96,9 +96,7 @@ export function mergeTierMap(base: ModelTierMap, overrides: TierMapOverrides): M
 export class FinetuneTierRegistryService extends Context.Service<
   FinetuneTierRegistryService,
   {
-    readonly loadOverrides: (
-      env?: NodeJS.ProcessEnv
-    ) => Effect.Effect<TierMapOverrides, Error>;
+    readonly loadOverrides: (env?: NodeJS.ProcessEnv) => Effect.Effect<TierMapOverrides, Error>;
     readonly saveOverrides: (
       overrides: TierMapOverrides,
       env?: NodeJS.ProcessEnv

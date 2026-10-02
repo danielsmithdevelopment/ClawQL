@@ -50,7 +50,7 @@ async function writePortalBundleImpl(input: {
   presidioActive: boolean;
   baseModel?: string;
   vaultRef?: string;
-}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }>  {
+}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }> {
   const outputDir = input.outputDir.trim();
   await mkdir(outputDir, { recursive: true });
 
@@ -177,7 +177,7 @@ export async function writePortalBundle(input: {
   presidioActive: boolean;
   baseModel?: string;
   vaultRef?: string;
-}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }>  {
+}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }> {
   return Effect.runPromise(writePortalBundleEffect(input));
 }
 
@@ -190,7 +190,7 @@ async function writePortalRefitImpl(input: {
   outputDir: string;
   alignmentLora: string;
   manifestPath: string;
-}>  {
+}> {
   const bundlePath = input.bundlePath.trim();
   const outputDir = input.outputDir.trim();
   await mkdir(outputDir, { recursive: true });
@@ -277,11 +277,14 @@ export function writePortalRefitEffect(input: {
   bundlePath: string;
   targetModel: string;
   outputDir: string;
-}): Effect.Effect<{
-  outputDir: string;
-  alignmentLora: string;
-  manifestPath: string;
-}, Error> {
+}): Effect.Effect<
+  {
+    outputDir: string;
+    alignmentLora: string;
+    manifestPath: string;
+  },
+  Error
+> {
   return Effect.tryPromise({
     try: () => writePortalRefitImpl(input),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -297,7 +300,7 @@ export async function writePortalRefit(input: {
   outputDir: string;
   alignmentLora: string;
   manifestPath: string;
-}>  {
+}> {
   return Effect.runPromise(writePortalRefitEffect(input));
 }
 

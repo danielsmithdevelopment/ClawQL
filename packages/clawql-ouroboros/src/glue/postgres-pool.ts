@@ -52,7 +52,7 @@ export function getOuroborosPgPool(): pg.Pool | null {
   return pool;
 }
 
-async function ensureOuroborosSchemaImpl(): Promise<void>  {
+async function ensureOuroborosSchemaImpl(): Promise<void> {
   const p = getOuroborosPgPool();
   if (!p || migrationsDone) return;
   const client = await p.connect();
@@ -72,11 +72,11 @@ export function ensureOuroborosSchemaEffect(): Effect.Effect<void, Error> {
 }
 
 /** Promise façade — prefer {@link ensureOuroborosSchemaEffect} for Effect callers. */
-export async function ensureOuroborosSchema(): Promise<void>  {
+export async function ensureOuroborosSchema(): Promise<void> {
   return Effect.runPromise(ensureOuroborosSchemaEffect());
 }
 
-async function closeOuroborosPgPoolImpl(): Promise<void>  {
+async function closeOuroborosPgPoolImpl(): Promise<void> {
   migrationsDone = false;
   if (pool) {
     await pool.end();
@@ -92,7 +92,7 @@ export function closeOuroborosPgPoolEffect(): Effect.Effect<void, Error> {
 }
 
 /** Promise façade — prefer {@link closeOuroborosPgPoolEffect} for Effect callers. */
-export async function closeOuroborosPgPool(): Promise<void>  {
+export async function closeOuroborosPgPool(): Promise<void> {
   return Effect.runPromise(closeOuroborosPgPoolEffect());
 }
 

@@ -30,7 +30,7 @@ function loadKubeConfig(): KubeConfig | null {
   }
 }
 
-async function collectOperatorStatusImpl(): Promise<OperatorStatusReport>  {
+async function collectOperatorStatusImpl(): Promise<OperatorStatusReport> {
   const kc = loadKubeConfig();
   if (!kc) {
     return { crdInstalled: false, instances: [], error: "kubeconfig not available" };
@@ -76,7 +76,7 @@ export function collectOperatorStatusEffect(): Effect.Effect<OperatorStatusRepor
 }
 
 /** Promise façade — prefer {@link collectOperatorStatusEffect} for Effect callers. */
-export async function collectOperatorStatus(): Promise<OperatorStatusReport>  {
+export async function collectOperatorStatus(): Promise<OperatorStatusReport> {
   return Effect.runPromise(collectOperatorStatusEffect());
 }
 
@@ -108,7 +108,7 @@ export function formatOperatorStatus(report: OperatorStatusReport): string {
 }
 
 /** Best-effort: verify tier-spec ConfigMap exists for each Ready instance. */
-async function verifyTierSpecConfigMapsImpl(report: OperatorStatusReport): Promise<string[]>  {
+async function verifyTierSpecConfigMapsImpl(report: OperatorStatusReport): Promise<string[]> {
   const kc = loadKubeConfig();
   if (!kc) return [];
   const core = kc.makeApiClient(CoreV1Api);
@@ -125,7 +125,9 @@ async function verifyTierSpecConfigMapsImpl(report: OperatorStatusReport): Promi
   return notes;
 }
 
-export function verifyTierSpecConfigMapsEffect(report: OperatorStatusReport): Effect.Effect<string[], Error> {
+export function verifyTierSpecConfigMapsEffect(
+  report: OperatorStatusReport
+): Effect.Effect<string[], Error> {
   return Effect.tryPromise({
     try: () => verifyTierSpecConfigMapsImpl(report),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -133,6 +135,6 @@ export function verifyTierSpecConfigMapsEffect(report: OperatorStatusReport): Ef
 }
 
 /** Promise façade — prefer {@link verifyTierSpecConfigMapsEffect} for Effect callers. */
-export async function verifyTierSpecConfigMaps(report: OperatorStatusReport): Promise<string[]>  {
+export async function verifyTierSpecConfigMaps(report: OperatorStatusReport): Promise<string[]> {
   return Effect.runPromise(verifyTierSpecConfigMapsEffect(report));
 }

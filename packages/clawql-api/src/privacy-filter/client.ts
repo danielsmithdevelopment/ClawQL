@@ -60,7 +60,7 @@ export type PrivacyFilterRedactResult = {
 async function privacyFilterRedactTextImpl(
   text: string,
   config: PrivacyFilterConfig = loadPrivacyFilterConfig()!
-): Promise<PrivacyFilterRedactResult>  {
+): Promise<PrivacyFilterRedactResult> {
   if (!text.trim()) return { text, redacted: false };
 
   const body = await postJson<{
@@ -101,11 +101,11 @@ export function privacyFilterRedactTextEffect(
 export async function privacyFilterRedactText(
   text: string,
   config: PrivacyFilterConfig = loadPrivacyFilterConfig()!
-): Promise<PrivacyFilterRedactResult>  {
+): Promise<PrivacyFilterRedactResult> {
   return Effect.runPromise(privacyFilterRedactTextEffect(text, config));
 }
 
-async function maybePrivacyFilterRedactTextImpl(text: string): Promise<string>  {
+async function maybePrivacyFilterRedactTextImpl(text: string): Promise<string> {
   const config = loadPrivacyFilterConfig();
   if (!config) return text;
   try {
@@ -129,6 +129,6 @@ export function maybePrivacyFilterRedactTextEffect(text: string): Effect.Effect<
 }
 
 /** Promise façade — prefer {@link maybePrivacyFilterRedactTextEffect} for Effect callers. */
-export async function maybePrivacyFilterRedactText(text: string): Promise<string>  {
+export async function maybePrivacyFilterRedactText(text: string): Promise<string> {
   return Effect.runPromise(maybePrivacyFilterRedactTextEffect(text));
 }

@@ -73,7 +73,10 @@ export type CandidateEquivalenceApi = {
   readonly equivalenceClassOf: (id: string) => Effect.Effect<ReadonlySet<string>>;
 };
 
-export class CandidateEquivalence extends Context.Service<CandidateEquivalence, CandidateEquivalenceApi>()("clawql/CandidateEquivalence") {}
+export class CandidateEquivalence extends Context.Service<
+  CandidateEquivalence,
+  CandidateEquivalenceApi
+>()("clawql/CandidateEquivalence") {}
 
 export function createCandidateEquivalenceLayer(
   pairs: ReadonlyArray<readonly [string, string]> = ROUTING_TOOL_SKILL_TWIN_PAIRS

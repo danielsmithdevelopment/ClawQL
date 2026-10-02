@@ -1,7 +1,7 @@
 import type { PoolClient } from "pg";
 import { Effect } from "effect";
 
-async function runPaymentsAuditPostgresMigrationsImpl(client: PoolClient): Promise<void>  {
+async function runPaymentsAuditPostgresMigrationsImpl(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS clawql_payments_audit (
       seq bigint PRIMARY KEY,
@@ -22,7 +22,9 @@ async function runPaymentsAuditPostgresMigrationsImpl(client: PoolClient): Promi
   `);
 }
 
-export function runPaymentsAuditPostgresMigrationsEffect(client: PoolClient): Effect.Effect<void, Error> {
+export function runPaymentsAuditPostgresMigrationsEffect(
+  client: PoolClient
+): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () => runPaymentsAuditPostgresMigrationsImpl(client),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -30,6 +32,6 @@ export function runPaymentsAuditPostgresMigrationsEffect(client: PoolClient): Ef
 }
 
 /** Promise façade — prefer {@link runPaymentsAuditPostgresMigrationsEffect} for Effect callers. */
-export async function runPaymentsAuditPostgresMigrations(client: PoolClient): Promise<void>  {
+export async function runPaymentsAuditPostgresMigrations(client: PoolClient): Promise<void> {
   return Effect.runPromise(runPaymentsAuditPostgresMigrationsEffect(client));
 }

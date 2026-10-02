@@ -85,7 +85,9 @@ function amountMinorUnits(amount: unknown, currency: string): number | undefined
 }
 
 /** Effect service for MPP credential verification (x402 + Stripe SPT). */
-export class MppVerificationService extends Context.Service<MppVerificationService, {
+export class MppVerificationService extends Context.Service<
+  MppVerificationService,
+  {
     readonly registerChallenges: (challenges: MppPaymentChallenge[]) => Effect.Effect<void, never>;
     readonly verifyCredential: (
       input: VerifyMppCredentialInput
@@ -94,7 +96,8 @@ export class MppVerificationService extends Context.Service<MppVerificationServi
       MppVerificationError | ConfigError | X402Error | StripeNotConfigured | StripeApiError
     >;
     readonly buildReceiptHeader: (receipt: Record<string, unknown>) => string;
-  }>()("clawql/MppVerificationService") {}
+  }
+>()("clawql/MppVerificationService") {}
 
 export function mppVerificationLiveLayer(
   env: NodeJS.ProcessEnv = process.env

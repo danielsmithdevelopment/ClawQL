@@ -24,7 +24,7 @@ export type InferencePipelineCliOptions = {
 
 async function runInferencePipelineEnableImpl(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const config = buildPipelineConfig({
     enabled: true,
     schedule: options.schedule,
@@ -58,13 +58,13 @@ export function runInferencePipelineEnableEffect(
 /** Promise façade — prefer {@link runInferencePipelineEnableEffect} for Effect callers. */
 export async function runInferencePipelineEnable(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePipelineEnableEffect(options));
 }
 
 async function runInferencePipelineStatusImpl(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const config = await loadPipelineConfig(options.env);
   if (!config) {
     console.log("Pipeline is not configured.");
@@ -100,13 +100,13 @@ export function runInferencePipelineStatusEffect(
 /** Promise façade — prefer {@link runInferencePipelineStatusEffect} for Effect callers. */
 export async function runInferencePipelineStatus(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePipelineStatusEffect(options));
 }
 
 async function runInferencePipelineDisableImpl(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const existing = await loadPipelineConfig(options.env);
   const config: InferencePipelineConfig = buildPipelineConfig({
     ...(existing ?? {}),
@@ -133,13 +133,13 @@ export function runInferencePipelineDisableEffect(
 /** Promise façade — prefer {@link runInferencePipelineDisableEffect} for Effect callers. */
 export async function runInferencePipelineDisable(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePipelineDisableEffect(options));
 }
 
 async function runInferencePipelineRunImpl(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const config = await loadPipelineConfig(options.env);
   if (!config?.enabled) {
     console.error("Pipeline is not enabled. Run: clawql inference pipeline enable ...");
@@ -181,13 +181,13 @@ export function runInferencePipelineRunEffect(
 /** Promise façade — prefer {@link runInferencePipelineRunEffect} for Effect callers. */
 export async function runInferencePipelineRun(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePipelineRunEffect(options));
 }
 
 async function runInferencePipelineWorkerImpl(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   startPipelineWorker({ env });
   if (options.json) {
@@ -211,6 +211,6 @@ export function runInferencePipelineWorkerEffect(
 /** Promise façade — prefer {@link runInferencePipelineWorkerEffect} for Effect callers. */
 export async function runInferencePipelineWorker(
   options: InferencePipelineCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePipelineWorkerEffect(options));
 }

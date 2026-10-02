@@ -4,9 +4,12 @@ import { SandboxError } from "./sandbox-errors.js";
 import { executeSandboxExecEffect, type SandboxExecResult } from "./sandbox-exec-effect.js";
 
 /** Effect service for `sandbox_exec` tool body. */
-export class SandboxExecService extends Context.Service<SandboxExecService, {
+export class SandboxExecService extends Context.Service<
+  SandboxExecService,
+  {
     readonly exec: (input: SandboxCodeToolInput) => Effect.Effect<SandboxExecResult, SandboxError>;
-  }>()("clawql/SandboxExecService") {}
+  }
+>()("clawql/SandboxExecService") {}
 
 export function sandboxExecLiveLayer(): Layer.Layer<SandboxExecService> {
   return Layer.succeed(

@@ -86,7 +86,7 @@ async function loadCallToolTypes(): Promise<{
  */
 async function callToolServerStreamingGrpcImpl(
   options: CallToolGrpcClientOptions
-): Promise<Record<string, unknown>[]>  {
+): Promise<Record<string, unknown>[]> {
   const { CallToolRequest, CallToolResponse } = await loadCallToolTypes();
   const fields = mcpArgumentsToCallToolStructFields(options.arguments);
   const payload = {
@@ -148,7 +148,7 @@ export function callToolServerStreamingGrpcEffect(
 /** Promise façade — prefer {@link callToolServerStreamingGrpcEffect} for Effect callers. */
 export async function callToolServerStreamingGrpc(
   options: CallToolGrpcClientOptions
-): Promise<Record<string, unknown>[]>  {
+): Promise<Record<string, unknown>[]> {
   return Effect.runPromise(callToolServerStreamingGrpcEffect(options));
 }
 
@@ -231,7 +231,7 @@ async function loadListToolsTypes(): Promise<{
  */
 async function listToolsUnaryGrpcImpl(
   options: ListToolsGrpcClientOptions
-): Promise<ListedMcpTool[]>  {
+): Promise<ListedMcpTool[]> {
   const { ListToolsRequest, ListToolsResponse } = await loadListToolsTypes();
   const payload = { common: {} };
   const encodedRequest = Buffer.from(
@@ -331,6 +331,6 @@ export function listToolsUnaryGrpcEffect(
 /** Promise façade — prefer {@link listToolsUnaryGrpcEffect} for Effect callers. */
 export async function listToolsUnaryGrpc(
   options: ListToolsGrpcClientOptions
-): Promise<ListedMcpTool[]>  {
+): Promise<ListedMcpTool[]> {
   return Effect.runPromise(listToolsUnaryGrpcEffect(options));
 }

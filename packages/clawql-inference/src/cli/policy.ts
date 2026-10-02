@@ -8,7 +8,7 @@ export type InferencePolicyShowOptions = {
 
 async function runInferencePolicyShowImpl(
   options: InferencePolicyShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   const policy = resolveInferencePolicy(env);
 
@@ -47,6 +47,6 @@ export function runInferencePolicyShowEffect(
 /** Promise façade — prefer {@link runInferencePolicyShowEffect} for Effect callers. */
 export async function runInferencePolicyShow(
   options: InferencePolicyShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferencePolicyShowEffect(options));
 }

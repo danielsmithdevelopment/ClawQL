@@ -91,9 +91,12 @@ export class LokiPushError extends Data.TaggedError("LokiPushError")<{
  * {@link isPaymentAuditLokiPushEnabled} / CLAWQL_LOKI_PUSH_URL are unset, and fails
  * with {@link LokiPushError} on HTTP/transport errors so callers can decide policy.
  */
-export class LokiPushService extends Context.Service<LokiPushService, {
+export class LokiPushService extends Context.Service<
+  LokiPushService,
+  {
     readonly push: (entry: PaymentWormEntry) => Effect.Effect<void, LokiPushError>;
-  }>()("clawql/LokiPushService") {}
+  }
+>()("clawql/LokiPushService") {}
 
 export function lokiPushLiveLayer(
   env: NodeJS.ProcessEnv = process.env

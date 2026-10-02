@@ -190,7 +190,7 @@ async function writeIndexIfChanged(vaultRoot: string, rel: string, body: string)
  * Also writes OKF **`index.md`** alongside **`_INDEX_{Provider}.md`**.
  * Skips when **`CLAWQL_MEMORY_INDEX_PAGE=0`**. Idempotent: no write when content unchanged.
  */
-async function updateProviderIndexPageImpl(vaultRoot: string): Promise<void>  {
+async function updateProviderIndexPageImpl(vaultRoot: string): Promise<void> {
   if (process.env.CLAWQL_MEMORY_INDEX_PAGE?.trim() === "0") return;
 
   const scanRoot = defaultScanRoot();
@@ -269,6 +269,6 @@ export function updateProviderIndexPageEffect(vaultRoot: string): Effect.Effect<
 }
 
 /** Promise façade — prefer {@link updateProviderIndexPageEffect} for Effect callers. */
-export async function updateProviderIndexPage(vaultRoot: string): Promise<void>  {
+export async function updateProviderIndexPage(vaultRoot: string): Promise<void> {
   return Effect.runPromise(updateProviderIndexPageEffect(vaultRoot));
 }

@@ -57,9 +57,7 @@ export function ensureWorkflowStreamEffect(): Effect.Effect<void, AutomationErro
     const jsm = yield* automationFromPromise(() => nc.jetstreamManager());
     const streamName = natsStreamName();
     const subjects = [`${natsWorkflowSubjectRoot()}.>`, `${natsDocumentSubjectRoot()}.>`];
-    const infoExit = yield* Effect.exit(
-      automationFromPromise(() => jsm.streams.info(streamName))
-    );
+    const infoExit = yield* Effect.exit(automationFromPromise(() => jsm.streams.info(streamName)));
     if (infoExit._tag === "Failure") {
       yield* automationFromPromise(() =>
         jsm.streams.add({

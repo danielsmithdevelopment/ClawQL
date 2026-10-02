@@ -83,13 +83,11 @@ export function invokeAgentCoordinationEffect(input: {
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.orElseSucceed(
-        (): AgentCoordinationResult => ({
-          triggered: true,
-          mode: "hermes",
-          message: "Hermes coordination error: unknown",
-        })
-      )
+      Effect.orElseSucceed((): AgentCoordinationResult => ({
+        triggered: true,
+        mode: "hermes",
+        message: "Hermes coordination error: unknown",
+      }))
     );
   });
 }

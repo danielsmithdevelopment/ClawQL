@@ -21,7 +21,10 @@ export const INGEST_URL_DESCRIPTION =
   "HTTPS URL to fetch when source is url and CLAWQL_EXTERNAL_INGEST_FETCH=1 (opt-in network).";
 
 const ExternalIngestDocumentSchema = Schema.Struct({
-  path: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(512))).annotate({
+  path: Schema.String.pipe(
+    Schema.check(Schema.isMinLength(1)),
+    Schema.check(Schema.isMaxLength(512))
+  ).annotate({
     description: INGEST_DOCUMENT_PATH_DESCRIPTION,
   }),
   markdown: Schema.String.pipe(Schema.check(Schema.isMaxLength(2_097_152))).annotate({
@@ -39,7 +42,9 @@ export const IngestExternalKnowledgeInputSchema = Schema.Struct({
       .annotate({ description: INGEST_DOCUMENTS_DESCRIPTION })
   ),
   url: Schema.optional(
-    Schema.String.pipe(Schema.check(Schema.isMaxLength(2048))).annotate({ description: INGEST_URL_DESCRIPTION })
+    Schema.String.pipe(Schema.check(Schema.isMaxLength(2048))).annotate({
+      description: INGEST_URL_DESCRIPTION,
+    })
   ),
 });
 
@@ -69,7 +74,10 @@ export const KnowledgeSearchOnyxInputSchema = Schema.Struct({
     description: ONYX_QUERY_DESCRIPTION,
   }),
   num_hits: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 100 }))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 1, maximum: 100 }))
+    ).annotate({
       description: ONYX_NUM_HITS_DESCRIPTION,
     })
   ),
@@ -84,13 +92,11 @@ export const KnowledgeSearchOnyxInputSchema = Schema.Struct({
     Schema.Number.annotate({ description: ONYX_HYBRID_ALPHA_DESCRIPTION })
   ),
   filters: Schema.optional(
-    Schema.Record(Schema.String, Schema.Unknown ).annotate({
+    Schema.Record(Schema.String, Schema.Unknown).annotate({
       description: ONYX_FILTERS_DESCRIPTION,
     })
   ),
-  tenant_id: Schema.optional(
-    Schema.String.annotate({ description: ONYX_TENANT_ID_DESCRIPTION })
-  ),
+  tenant_id: Schema.optional(Schema.String.annotate({ description: ONYX_TENANT_ID_DESCRIPTION })),
   fields: Schema.optional(
     Schema.mutable(Schema.Array(Schema.String)).annotate({
       description: ONYX_FIELDS_DESCRIPTION,
@@ -138,7 +144,7 @@ const IdpStageSchema = Schema.Literals([
   "stirling",
   "paperless",
   "onyx",
-  "coneshare"
+  "coneshare",
 ]);
 
 export const RunIdpPipelineInputSchema = Schema.Struct({
@@ -158,9 +164,7 @@ export const RunIdpPipelineInputSchema = Schema.Struct({
   redact_list: Schema.optional(
     Schema.String.annotate({ description: IDP_REDACT_LIST_DESCRIPTION })
   ),
-  pdf_base64: Schema.optional(
-    Schema.String.annotate({ description: IDP_PDF_BASE64_DESCRIPTION })
-  ),
+  pdf_base64: Schema.optional(Schema.String.annotate({ description: IDP_PDF_BASE64_DESCRIPTION })),
   step_args: Schema.optional(
     Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Unknown)).annotate({
       description: IDP_STEP_ARGS_DESCRIPTION,
@@ -175,17 +179,26 @@ export const RunIdpPipelineInputSchema = Schema.Struct({
     Schema.Boolean.annotate({ description: IDP_STOP_ON_ERROR_DESCRIPTION })
   ),
   max_retries: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))
+    ).annotate({
       description: IDP_MAX_RETRIES_DESCRIPTION,
     })
   ),
   from_step: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThanOrEqualTo(0))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isGreaterThanOrEqualTo(0))
+    ).annotate({
       description: IDP_FROM_STEP_DESCRIPTION,
     })
   ),
   to_step: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isGreaterThanOrEqualTo(0))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isGreaterThanOrEqualTo(0))
+    ).annotate({
       description: IDP_TO_STEP_DESCRIPTION,
     })
   ),
@@ -209,7 +222,7 @@ export const ClassifyDocumentInputSchema = Schema.Struct({
     Schema.String.annotate({ description: CLASSIFY_DOCLING_MD_DESCRIPTION })
   ),
   docling_json: Schema.optional(
-    Schema.Record(Schema.String, Schema.Unknown ).annotate({
+    Schema.Record(Schema.String, Schema.Unknown).annotate({
       description: CLASSIFY_DOCLING_JSON_DESCRIPTION,
     })
   ),
@@ -244,7 +257,7 @@ export const EXTRACT_DOC_ID_DESCRIPTION = "Stable id for artifact file names and
 const ExtractionExampleSchema = Schema.Struct({
   extraction_class: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
   extraction_text: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
-  attributes: Schema.optional(Schema.Record(Schema.String, Schema.Unknown )),
+  attributes: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)),
 });
 
 const ExtractExampleSchema = Schema.Struct({
@@ -255,11 +268,17 @@ const ExtractExampleSchema = Schema.Struct({
 });
 
 export const ExtractDocumentInputSchema = Schema.Struct({
-  text: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(2_097_152))).annotate({
+  text: Schema.String.pipe(
+    Schema.check(Schema.isMinLength(1)),
+    Schema.check(Schema.isMaxLength(2_097_152))
+  ).annotate({
     description: EXTRACT_TEXT_DESCRIPTION,
   }),
   prompt_description: Schema.optional(
-    Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(8192))).annotate({
+    Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(8192))
+    ).annotate({
       description: EXTRACT_PROMPT_DESCRIPTION,
     })
   ),
@@ -273,9 +292,7 @@ export const ExtractDocumentInputSchema = Schema.Struct({
       .pipe(Schema.check(Schema.isMaxLength(20)))
       .annotate({ description: EXTRACT_EXAMPLES_DESCRIPTION })
   ),
-  model_id: Schema.optional(
-    Schema.String.annotate({ description: EXTRACT_MODEL_ID_DESCRIPTION })
-  ),
+  model_id: Schema.optional(Schema.String.annotate({ description: EXTRACT_MODEL_ID_DESCRIPTION })),
   backend: Schema.optional(
     Schema.Literals(["openrouter", "ollama", "openai_compatible"]).annotate({
       description: EXTRACT_BACKEND_DESCRIPTION,
@@ -302,7 +319,10 @@ export const INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION =
 
 export const InspectPdfInputSchema = Schema.Union([
   Schema.Struct({
-    path: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(4096))).annotate({
+    path: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(4096))
+    ).annotate({
       description: INSPECT_PDF_PATH_DESCRIPTION,
     }),
     mode: Schema.optional(
@@ -313,7 +333,10 @@ export const InspectPdfInputSchema = Schema.Union([
     ),
   }),
   Schema.Struct({
-    base64: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(140_000_000))).annotate({
+    base64: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(140_000_000))
+    ).annotate({
       description: INSPECT_PDF_BASE64_DESCRIPTION,
     }),
     mode: Schema.optional(
@@ -322,7 +345,7 @@ export const InspectPdfInputSchema = Schema.Union([
     include_markdown: Schema.optional(
       Schema.Boolean.annotate({ description: INSPECT_PDF_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
-  })
+  }),
 ]);
 
 export type InspectPdfInputDecoded = Schema.Schema.Type<typeof InspectPdfInputSchema>;
@@ -340,11 +363,17 @@ export const CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION =
 
 export const ConvertDocumentInputSchema = Schema.Union([
   Schema.Struct({
-    path: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(4096))).annotate({
+    path: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(4096))
+    ).annotate({
       description: CONVERT_DOCUMENT_PATH_DESCRIPTION,
     }),
     format: Schema.optional(
-      Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(32))).annotate({
+      Schema.String.pipe(
+        Schema.check(Schema.isMinLength(1)),
+        Schema.check(Schema.isMaxLength(32))
+      ).annotate({
         description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
       })
     ),
@@ -353,18 +382,24 @@ export const ConvertDocumentInputSchema = Schema.Union([
     ),
   }),
   Schema.Struct({
-    base64: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(140_000_000))).annotate({
+    base64: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(140_000_000))
+    ).annotate({
       description: CONVERT_DOCUMENT_BASE64_DESCRIPTION,
     }),
     format: Schema.optional(
-      Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(32))).annotate({
+      Schema.String.pipe(
+        Schema.check(Schema.isMinLength(1)),
+        Schema.check(Schema.isMaxLength(32))
+      ).annotate({
         description: CONVERT_DOCUMENT_FORMAT_DESCRIPTION,
       })
     ),
     include_markdown: Schema.optional(
       Schema.Boolean.annotate({ description: CONVERT_DOCUMENT_INCLUDE_MARKDOWN_DESCRIPTION })
     ),
-  })
+  }),
 ]);
 
 export type ConvertDocumentInputDecoded = Schema.Schema.Type<typeof ConvertDocumentInputSchema>;
@@ -415,7 +450,9 @@ export function decodeExtractDocumentInput(
 }
 
 export function decodeInspectPdfInput(raw: unknown): Effect.Effect<InspectPdfInputDecoded, Error> {
-  return Schema.decodeUnknownEffect(InspectPdfInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(InspectPdfInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }
 
 export function decodeConvertDocumentInput(

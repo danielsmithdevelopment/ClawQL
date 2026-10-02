@@ -227,7 +227,7 @@ async function generateOntologyReadToolsImpl(opts: GenerateOntologyOptions): Pro
   result: OntologyGenerateResult;
   lint?: OntologyLintResult;
   written: string[];
-}>  {
+}> {
   const rootDir = resolve(opts.rootDir ?? process.cwd());
   const search =
     opts.paths && opts.paths.length > 0
@@ -391,11 +391,14 @@ async function generateOntologyReadToolsImpl(opts: GenerateOntologyOptions): Pro
   };
 }
 
-export function generateOntologyReadToolsEffect(opts: GenerateOntologyOptions): Effect.Effect<{
-  result: OntologyGenerateResult;
-  lint?: OntologyLintResult;
-  written: string[];
-}, Error> {
+export function generateOntologyReadToolsEffect(opts: GenerateOntologyOptions): Effect.Effect<
+  {
+    result: OntologyGenerateResult;
+    lint?: OntologyLintResult;
+    written: string[];
+  },
+  Error
+> {
   return Effect.tryPromise({
     try: () => generateOntologyReadToolsImpl(opts),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -407,7 +410,7 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
   result: OntologyGenerateResult;
   lint?: OntologyLintResult;
   written: string[];
-}>  {
+}> {
   return Effect.runPromise(generateOntologyReadToolsEffect(opts));
 }
 

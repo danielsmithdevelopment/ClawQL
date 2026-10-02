@@ -91,7 +91,7 @@ async function runInferenceHttpServerImpl(
     port?: number;
     host?: string;
   } = {}
-): Promise<{ app: Express; port: number; host: string }>  {
+): Promise<{ app: Express; port: number; host: string }> {
   const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
@@ -132,6 +132,6 @@ export async function runInferenceHttpServer(
     port?: number;
     host?: string;
   } = {}
-): Promise<{ app: Express; port: number; host: string }>  {
+): Promise<{ app: Express; port: number; host: string }> {
   return Effect.runPromise(runInferenceHttpServerEffect(options));
 }

@@ -251,12 +251,17 @@ export function callKataSandboxEffect(
       });
 
     const run = Effect.gen(function* () {
-      const cmRes = yield* clientRequestEffect(client, "POST", `/api/v1/namespaces/${ns}/configmaps`, {
-        apiVersion: "v1",
-        kind: "ConfigMap",
-        metadata: { name: cmName, labels: { "clawql.dev/sandbox": "true" } },
-        data: { [rel]: input.code },
-      });
+      const cmRes = yield* clientRequestEffect(
+        client,
+        "POST",
+        `/api/v1/namespaces/${ns}/configmaps`,
+        {
+          apiVersion: "v1",
+          kind: "ConfigMap",
+          metadata: { name: cmName, labels: { "clawql.dev/sandbox": "true" } },
+          data: { [rel]: input.code },
+        }
+      );
       if (cmRes.status < 200 || cmRes.status >= 300) {
         return {
           stdout: "",

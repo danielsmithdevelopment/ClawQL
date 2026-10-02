@@ -24,7 +24,7 @@ async function executeOperationGraphQLImpl(
   op: Operation,
   rawArgs: Record<string, unknown>,
   fieldsSelectionString: string
-): Promise<InProcessGraphQLResult>  {
+): Promise<InProcessGraphQLResult> {
   let schema: import("graphql").GraphQLSchema;
   try {
     const built = await buildGraphQLSchema(openapi, baseUrl);
@@ -99,6 +99,8 @@ export async function executeOperationGraphQL(
   op: Operation,
   rawArgs: Record<string, unknown>,
   fieldsSelectionString: string
-): Promise<InProcessGraphQLResult>  {
-  return Effect.runPromise(executeOperationGraphQLEffect(openapi, baseUrl, op, rawArgs, fieldsSelectionString));
+): Promise<InProcessGraphQLResult> {
+  return Effect.runPromise(
+    executeOperationGraphQLEffect(openapi, baseUrl, op, rawArgs, fieldsSelectionString)
+  );
 }

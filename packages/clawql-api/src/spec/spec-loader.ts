@@ -519,13 +519,15 @@ async function buildLoadedSpec(raw: unknown): Promise<LoadedSpec> {
 /**
  * Load a local OpenAPI / Discovery / Swagger file by absolute path (build scripts).
  */
-async function loadOpenAPIFromAbsolutePathImpl(absolutePath: string): Promise<LoadedSpec>  {
+async function loadOpenAPIFromAbsolutePathImpl(absolutePath: string): Promise<LoadedSpec> {
   const text = await readFile(absolutePath, "utf-8");
   const raw = parseSpecText(text);
   return buildLoadedSpec(raw);
 }
 
-export function loadOpenAPIFromAbsolutePathEffect(absolutePath: string): Effect.Effect<LoadedSpec, Error> {
+export function loadOpenAPIFromAbsolutePathEffect(
+  absolutePath: string
+): Effect.Effect<LoadedSpec, Error> {
   return Effect.tryPromise({
     try: () => loadOpenAPIFromAbsolutePathImpl(absolutePath),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -533,7 +535,7 @@ export function loadOpenAPIFromAbsolutePathEffect(absolutePath: string): Effect.
 }
 
 /** Promise façade — prefer {@link loadOpenAPIFromAbsolutePathEffect} for Effect callers. */
-export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise<LoadedSpec>  {
+export async function loadOpenAPIFromAbsolutePath(absolutePath: string): Promise<LoadedSpec> {
   return Effect.runPromise(loadOpenAPIFromAbsolutePathEffect(absolutePath));
 }
 
@@ -938,7 +940,7 @@ async function loadSpecUncached(): Promise<LoadedSpec> {
   return loaded;
 }
 
-async function loadSpecImpl(): Promise<LoadedSpec>  {
+async function loadSpecImpl(): Promise<LoadedSpec> {
   if (cachedSpec) return cachedSpec;
   const generation = loadGeneration;
   if (!loadInFlight) {
@@ -966,7 +968,7 @@ export function loadSpecEffect(): Effect.Effect<LoadedSpec, Error> {
 }
 
 /** Promise façade — prefer {@link loadSpecEffect} for Effect callers. */
-export async function loadSpec(): Promise<LoadedSpec>  {
+export async function loadSpec(): Promise<LoadedSpec> {
   return Effect.runPromise(loadSpecEffect());
 }
 

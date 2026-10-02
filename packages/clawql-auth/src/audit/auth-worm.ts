@@ -140,12 +140,15 @@ function loadDatabaseSync(): DatabaseSyncCtor {
   }
 }
 
-export class AuthWormService extends Context.Service<AuthWormService, {
+export class AuthWormService extends Context.Service<
+  AuthWormService,
+  {
     readonly append: (event: AuthEvent) => Effect.Effect<AuthWormRecord, AuthWormError>;
     readonly list: (limit?: number) => Effect.Effect<AuthWormRecord[], AuthWormError>;
     readonly verify: () => Effect.Effect<AuthWormVerifyResult, AuthWormError>;
     readonly reset: () => Effect.Effect<void, AuthWormError>;
-  }>()("clawql/AuthWormService") {}
+  }
+>()("clawql/AuthWormService") {}
 
 function memoryAuthWormBackend(): Context.Service.Shape<typeof AuthWormService> {
   let records: AuthWormRecord[] = [];

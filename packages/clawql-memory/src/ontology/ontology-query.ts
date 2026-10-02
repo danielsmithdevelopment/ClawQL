@@ -467,33 +467,34 @@ export function runOntologyRecallEffect(
   input: OntologyRecallInput
 ): Effect.Effect<OntologyRecallResult | OntologyRecallFailure, MemoryError> {
   return memoryFromPromise(async () => {
-  if (ontologyDbExplicitlyDisabled()) {
+    if (ontologyDbExplicitlyDisabled()) {
+      return {
+        ok: false,
+        error: "CLAWQL_ONTOLOGY_DB=0; ontology.db sync disabled",
+        errorType: "ontology_disabled",
+      };
+    }
+    if (!ontologyDbEnabled()) {
+      return {
+        ok: false,
+        error:
+          "CLAWQL_ONTOLOGY_DB disabled or vault not configured (set CLAWQL_OBSIDIAN_VAULT_PATH)",
+        errorType: "ontology_disabled",
+      };
+    }
+    if (isDynamicOntologySchema(input.schema)) {
+      return runDynamicOntologyRecall(vault, input);
+    }
+
+    if (isLegalOntologySchema(input.schema)) {
+      return runLegalLayerOneRecall(vault, { ...input, schema: input.schema });
+    }
+
     return {
       ok: false,
-      error: "CLAWQL_ONTOLOGY_DB=0; ontology.db sync disabled",
-      errorType: "ontology_disabled",
+      error: `Unknown ontology schema '${input.schema}'`,
+      errorType: "ontology_unsupported_schema",
     };
-  }
-  if (!ontologyDbEnabled()) {
-    return {
-      ok: false,
-      error: "CLAWQL_ONTOLOGY_DB disabled or vault not configured (set CLAWQL_OBSIDIAN_VAULT_PATH)",
-      errorType: "ontology_disabled",
-    };
-  }
-  if (isDynamicOntologySchema(input.schema)) {
-    return runDynamicOntologyRecall(vault, input);
-  }
-
-  if (isLegalOntologySchema(input.schema)) {
-    return runLegalLayerOneRecall(vault, { ...input, schema: input.schema });
-  }
-
-  return {
-    ok: false,
-    error: `Unknown ontology schema '${input.schema}'`,
-    errorType: "ontology_unsupported_schema",
-  };
   });
 }
 

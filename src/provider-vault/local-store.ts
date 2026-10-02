@@ -19,9 +19,7 @@ function asError(cause: unknown): Error {
   return cause instanceof Error ? cause : new Error(String(cause));
 }
 
-async function readLocalProvidersVaultImpl(
-  vaultPath: string
-): Promise<LocalProvidersVault | null> {
+async function readLocalProvidersVaultImpl(vaultPath: string): Promise<LocalProvidersVault | null> {
   try {
     const raw = await readFile(vaultPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;

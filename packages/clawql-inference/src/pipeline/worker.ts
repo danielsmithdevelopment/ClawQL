@@ -80,9 +80,7 @@ export function stopPipelineWorker(): void {
 }
 
 /** Test helper */
-async function runPipelineWorkerTickOnceImpl(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+async function runPipelineWorkerTickOnceImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await pipelineWorkerTick(env);
 }
 
@@ -98,6 +96,6 @@ export function runPipelineWorkerTickOnceEffect(
 /** Promise façade — prefer {@link runPipelineWorkerTickOnceEffect} for Effect callers. */
 export async function runPipelineWorkerTickOnce(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(runPipelineWorkerTickOnceEffect(env));
 }

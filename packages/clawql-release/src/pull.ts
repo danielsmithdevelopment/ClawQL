@@ -178,11 +178,7 @@ async function readEscrowKey(rootDir: string, tag: string): Promise<string | und
   }
 }
 
-async function writeEscrowKeyImpl(
-  rootDir: string,
-  tag: string,
-  keyHex: string
-): Promise<string> {
+async function writeEscrowKeyImpl(rootDir: string, tag: string, keyHex: string): Promise<string> {
   const dir = join(rootDir, ".clawql", "escrow");
   await mkdir(dir, { recursive: true });
   const path = join(dir, `${tag.replace(/[^a-zA-Z0-9._-]/g, "_")}.key`);

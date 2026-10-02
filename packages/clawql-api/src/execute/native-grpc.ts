@@ -12,7 +12,7 @@ import type { Operation } from "../spec/operation-types.js";
 async function executeNativeGrpcImpl(
   op: Operation,
   args: Record<string, unknown>
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   const meta = op.nativeGrpc;
   if (!meta) {
     const r = { ok: false as const, error: "Internal error: missing nativeGrpc metadata" };
@@ -71,6 +71,6 @@ export function executeNativeGrpcEffect(
 export async function executeNativeGrpc(
   op: Operation,
   args: Record<string, unknown>
-): Promise<{ ok: true; data: unknown } | { ok: false; error: string }>  {
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
   return Effect.runPromise(executeNativeGrpcEffect(op, args));
 }

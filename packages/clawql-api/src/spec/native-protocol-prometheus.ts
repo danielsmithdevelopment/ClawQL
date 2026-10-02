@@ -131,12 +131,15 @@ export function httpMetricsEnabledForHttp(): boolean {
   return envTruthyWithDefault(process.env.CLAWQL_ENABLE_HTTP_METRICS, true);
 }
 
-async function renderPrometheusMetricsImpl(): Promise<{ body: string; contentType: string }>  {
+async function renderPrometheusMetricsImpl(): Promise<{ body: string; contentType: string }> {
   const body = await registry.metrics();
   return { body, contentType: registry.contentType };
 }
 
-export function renderPrometheusMetricsEffect(): Effect.Effect<{ body: string; contentType: string }, Error> {
+export function renderPrometheusMetricsEffect(): Effect.Effect<
+  { body: string; contentType: string },
+  Error
+> {
   return Effect.tryPromise({
     try: () => renderPrometheusMetricsImpl(),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -144,7 +147,7 @@ export function renderPrometheusMetricsEffect(): Effect.Effect<{ body: string; c
 }
 
 /** Promise façade — prefer {@link renderPrometheusMetricsEffect} for Effect callers. */
-export async function renderPrometheusMetrics(): Promise<{ body: string; contentType: string }>  {
+export async function renderPrometheusMetrics(): Promise<{ body: string; contentType: string }> {
   return Effect.runPromise(renderPrometheusMetricsEffect());
 }
 

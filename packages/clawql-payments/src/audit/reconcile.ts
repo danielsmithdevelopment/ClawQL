@@ -62,7 +62,7 @@ export function buildSpendReport(
 async function loadSpendReportImpl(
   groupBy: SpendGroupBy = "provider",
   limit = 10_000
-): Promise<SpendReport>  {
+): Promise<SpendReport> {
   const entries = await listPaymentAuditEntries(limit);
   return buildSpendReport(entries, groupBy);
 }
@@ -81,7 +81,7 @@ export function loadSpendReportEffect(
 export async function loadSpendReport(
   groupBy: SpendGroupBy = "provider",
   limit = 10_000
-): Promise<SpendReport>  {
+): Promise<SpendReport> {
   return Effect.runPromise(loadSpendReportEffect(groupBy, limit));
 }
 
@@ -96,7 +96,7 @@ export function filterAuditByCorrelationId(
 async function loadAuditByCorrelationIdImpl(
   correlationId: string,
   limit = 10_000
-): Promise<PaymentWormEntry[]>  {
+): Promise<PaymentWormEntry[]> {
   const entries = await listPaymentAuditEntries(limit);
   return filterAuditByCorrelationId(correlationId, entries);
 }
@@ -115,7 +115,7 @@ export function loadAuditByCorrelationIdEffect(
 export async function loadAuditByCorrelationId(
   correlationId: string,
   limit = 10_000
-): Promise<PaymentWormEntry[]>  {
+): Promise<PaymentWormEntry[]> {
   return Effect.runPromise(loadAuditByCorrelationIdEffect(correlationId, limit));
 }
 
@@ -125,7 +125,9 @@ export class PaymentAuditReconcileError extends Data.TaggedError("PaymentAuditRe
 }> {}
 
 /** Effect surface over payment audit reconciliation (spend rollups + correlation lookups). */
-export class PaymentAuditReconcileService extends Context.Service<PaymentAuditReconcileService, {
+export class PaymentAuditReconcileService extends Context.Service<
+  PaymentAuditReconcileService,
+  {
     readonly spendReport: (
       groupBy?: SpendGroupBy,
       limit?: number
@@ -134,7 +136,8 @@ export class PaymentAuditReconcileService extends Context.Service<PaymentAuditRe
       correlationId: string,
       limit?: number
     ) => Effect.Effect<PaymentWormEntry[], PaymentAuditReconcileError>;
-  }>()("clawql/PaymentAuditReconcileService") {}
+  }
+>()("clawql/PaymentAuditReconcileService") {}
 
 export function paymentAuditReconcileLiveLayer(): Layer.Layer<PaymentAuditReconcileService> {
   const run = <A>(reason: string, task: () => Promise<A>) =>

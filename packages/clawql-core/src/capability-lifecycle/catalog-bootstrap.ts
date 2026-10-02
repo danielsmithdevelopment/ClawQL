@@ -43,11 +43,14 @@ export const DEFAULT_CAPABILITY_SESSION_SEED: readonly string[] = [
 /** Process-local MCP tool names published by the host after registerTools. */
 const processRegisteredTools = new Set<string>();
 
-export class CapabilityProcessToolSurface extends Context.Service<CapabilityProcessToolSurface, {
+export class CapabilityProcessToolSurface extends Context.Service<
+  CapabilityProcessToolSurface,
+  {
     readonly note: (names: readonly string[]) => Effect.Effect<void>;
     readonly list: () => Effect.Effect<readonly string[]>;
     readonly clear: () => Effect.Effect<void>;
-  }>()("clawql/CapabilityProcessToolSurface") {}
+  }
+>()("clawql/CapabilityProcessToolSurface") {}
 
 export function makeCapabilityProcessToolSurface(): Context.Service.Shape<
   typeof CapabilityProcessToolSurface
@@ -106,7 +109,9 @@ export function resolveCapabilitySessionSeed(
   });
 }
 
-export class CapabilityCatalogBootstrap extends Context.Service<CapabilityCatalogBootstrap, {
+export class CapabilityCatalogBootstrap extends Context.Service<
+  CapabilityCatalogBootstrap,
+  {
     /**
      * Bind catalog if missing. Idempotent. Returns the bound (or existing) catalog.
      */
@@ -114,7 +119,8 @@ export class CapabilityCatalogBootstrap extends Context.Service<CapabilityCatalo
       readonly sessionId: string;
       readonly atrTokens?: readonly string[] | null;
     }) => Effect.Effect<SessionCatalog, SessionCatalogError>;
-  }>()("clawql/CapabilityCatalogBootstrap") {}
+  }
+>()("clawql/CapabilityCatalogBootstrap") {}
 
 export function makeCapabilityCatalogBootstrap(
   catalogs: Context.Service.Shape<typeof SessionCatalogService>

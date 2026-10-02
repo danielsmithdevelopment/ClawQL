@@ -198,7 +198,10 @@ export function runConvertDocumentWithApiEffect(
   input: ConvertDocumentInputDecoded,
   api: AnydocApi
 ): Effect.Effect<ConvertDocumentResult, Error> {
-  return Effect.tryPromise({ try: () => runConvertDocumentWithApiImpl(input, api), catch: fsError });
+  return Effect.tryPromise({
+    try: () => runConvertDocumentWithApiImpl(input, api),
+    catch: fsError,
+  });
 }
 
 /** Promise façade for tests that still await convert with injected API. */

@@ -172,11 +172,14 @@ export class ActivityError extends Data.TaggedError("ActivityError")<{
 }> {}
 
 /** Effect surface over the activity read model (ledger + money requests, directory-enriched). */
-export class CreditsActivityService extends Context.Service<CreditsActivityService, {
+export class CreditsActivityService extends Context.Service<
+  CreditsActivityService,
+  {
     readonly getFeed: (
       options: GetActivityFeedOptions
     ) => Effect.Effect<ActivityFeed, ActivityError>;
-  }>()("clawql/CreditsActivityService") {}
+  }
+>()("clawql/CreditsActivityService") {}
 
 export function creditsActivityLiveLayer(): Layer.Layer<
   CreditsActivityService,

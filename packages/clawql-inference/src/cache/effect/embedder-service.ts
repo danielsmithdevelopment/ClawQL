@@ -2,9 +2,12 @@ import { Context, Effect, Layer } from "effect";
 import { embedQueryEffect, type EmbeddingConfig, type Embedder } from "../embedding.js";
 
 /** Effect wrapper for semantic cache embedding lookups. */
-export class EmbedderService extends Context.Service<EmbedderService, {
+export class EmbedderService extends Context.Service<
+  EmbedderService,
+  {
     readonly embed: (text: string) => Effect.Effect<Float32Array, unknown>;
-  }>()("clawql/EmbedderService") {}
+  }
+>()("clawql/EmbedderService") {}
 
 export function embedderLiveLayer(embedder: Embedder): Layer.Layer<EmbedderService> {
   return Layer.succeed(
@@ -20,9 +23,7 @@ export function embedderLiveLayer(embedder: Embedder): Layer.Layer<EmbedderServi
 }
 
 /** Prefer this when embedding config is known — avoids Promise embedder façade. */
-export function embedderFromConfigLiveLayer(
-  config: EmbeddingConfig
-): Layer.Layer<EmbedderService> {
+export function embedderFromConfigLiveLayer(config: EmbeddingConfig): Layer.Layer<EmbedderService> {
   return Layer.succeed(
     EmbedderService,
     EmbedderService.of({

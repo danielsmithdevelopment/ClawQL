@@ -63,7 +63,9 @@ export type X402Settlement = {
 };
 
 /** Effect service for x402 gate enforcement and settlement reconciliation. */
-export class X402EnforcementService extends Context.Service<X402EnforcementService, {
+export class X402EnforcementService extends Context.Service<
+  X402EnforcementService,
+  {
     readonly enforceGate: (
       input: EnforceX402GateInput
     ) => Effect.Effect<X402EnforceResult, ConfigError | X402Error>;
@@ -74,7 +76,8 @@ export class X402EnforcementService extends Context.Service<X402EnforcementServi
       proof: X402PaymentProof;
       correlationId?: string;
     }) => Effect.Effect<X402Settlement, never>;
-  }>()("clawql/X402EnforcementService") {}
+  }
+>()("clawql/X402EnforcementService") {}
 
 export function x402EnforcementLiveLayer(): Layer.Layer<
   X402EnforcementService,

@@ -3,10 +3,7 @@
  */
 
 import { Context, Data, Effect, Layer } from "effect";
-import {
-  getOrgUnifiedSpendSummaryEffect,
-  type OrgUnifiedSpendSummary,
-} from "./org-spend.js";
+import { getOrgUnifiedSpendSummaryEffect, type OrgUnifiedSpendSummary } from "./org-spend.js";
 import { loadOrgCreditsFile } from "./org.js";
 import { renderOrgWaterfallPrometheus } from "./org-waterfall-metrics.js";
 

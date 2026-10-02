@@ -26,21 +26,29 @@ export const AuditInputSchema = Schema.Union([
     action: NonEmptyTrimmed(128).annotate({ description: AUDIT_ACTION_DESCRIPTION }),
     summary: NonEmptyTrimmed(512).annotate({ description: AUDIT_SUMMARY_DESCRIPTION }),
     correlationId: Schema.optional(
-      Schema.Trim.pipe(Schema.check(Schema.isNonEmpty()), Schema.check(Schema.isMaxLength(128))).annotate({
+      Schema.Trim.pipe(
+        Schema.check(Schema.isNonEmpty()),
+        Schema.check(Schema.isMaxLength(128))
+      ).annotate({
         description: AUDIT_CORRELATION_ID_DESCRIPTION,
       })
     ),
   }),
   Schema.Struct({
     operation: Schema.Literal("list"),
-    limit: (Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 100 })))).pipe(Schema.withDecodingDefaultType(Effect.succeed(20))).annotate({ description: AUDIT_LIMIT_DESCRIPTION }),
+    limit: Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 1, maximum: 100 }))
+    )
+      .pipe(Schema.withDecodingDefaultType(Effect.succeed(20)))
+      .annotate({ description: AUDIT_LIMIT_DESCRIPTION }),
   }),
   Schema.Struct({
     operation: Schema.Literal("verify"),
   }),
   Schema.Struct({
     operation: Schema.Literal("clear"),
-  })
+  }),
 ]).annotate({ description: AUDIT_OPERATION_DESCRIPTION });
 
 export type AuditInputDecoded = Schema.Schema.Type<typeof AuditInputSchema>;

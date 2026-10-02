@@ -352,11 +352,16 @@ export type WormAuditEvent =
       readonly timestamp: string;
     };
 
-export class WormAuditSink extends Context.Service<WormAuditSink, {
+export class WormAuditSink extends Context.Service<
+  WormAuditSink,
+  {
     readonly append: (event: WormAuditEvent) => Effect.Effect<void, never>;
-  }>()("clawql/WormAuditSink") {}
+  }
+>()("clawql/WormAuditSink") {}
 
-export class SkillRegistry extends Context.Service<SkillRegistry, {
+export class SkillRegistry extends Context.Service<
+  SkillRegistry,
+  {
     readonly register: (
       pluginId: string,
       skills: readonly SkillDefinition[],
@@ -365,9 +370,12 @@ export class SkillRegistry extends Context.Service<SkillRegistry, {
     readonly unregisterPlugin: (pluginId: string) => Effect.Effect<void, never>;
     readonly listIndex: () => Effect.Effect<readonly SkillIndexEntry[], never>;
     readonly getContent: (skillId: string) => Effect.Effect<SkillContent | undefined, never>;
-  }>()("clawql/SkillRegistry") {}
+  }
+>()("clawql/SkillRegistry") {}
 
-export class HookRegistry extends Context.Service<HookRegistry, {
+export class HookRegistry extends Context.Service<
+  HookRegistry,
+  {
     readonly register: (
       pluginId: string,
       hooks: readonly LifecycleHook[]
@@ -377,17 +385,21 @@ export class HookRegistry extends Context.Service<HookRegistry, {
       event: LifecycleEvent,
       toolName?: string
     ) => Effect.Effect<readonly RegisteredHook[], never>;
-  }>()("clawql/HookRegistry") {}
+  }
+>()("clawql/HookRegistry") {}
 
 export type RegisteredHook = LifecycleHook & { readonly pluginId: string };
 
-export class VaultSeedPort extends Context.Service<VaultSeedPort, {
+export class VaultSeedPort extends Context.Service<
+  VaultSeedPort,
+  {
     readonly ingestTagged: (
       pluginId: string,
       entries: readonly VaultSeedEntry[]
     ) => Effect.Effect<void, ClawQLError>;
     readonly deleteByPluginTag: (pluginId: string) => Effect.Effect<void, ClawQLError>;
-  }>()("clawql/VaultSeedPort") {}
+  }
+>()("clawql/VaultSeedPort") {}
 
 /**
  * Installable provider domain artifact (tools + skills + vault-seed + hooks).

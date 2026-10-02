@@ -82,7 +82,7 @@ function looksLikeMcpEndpoint(url: string): boolean {
 async function detectSourceFromUrlImpl(
   url: string,
   options: { kindHint?: CustomSourceKind; fetchFn?: typeof fetch } = {}
-): Promise<DetectedSource>  {
+): Promise<DetectedSource> {
   const fetchFn = options.fetchFn ?? fetch;
   const kindHint = options.kindHint;
 
@@ -205,6 +205,6 @@ export function detectSourceFromUrlEffect(
 export async function detectSourceFromUrl(
   url: string,
   options: { kindHint?: CustomSourceKind; fetchFn?: typeof fetch } = {}
-): Promise<DetectedSource>  {
+): Promise<DetectedSource> {
   return Effect.runPromise(detectSourceFromUrlEffect(url, options));
 }

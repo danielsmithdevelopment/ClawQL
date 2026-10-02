@@ -133,7 +133,10 @@ export function resolveLocalIpfsStagingEffect(
   rootDir: string,
   cid: string
 ): Effect.Effect<string | undefined, Error> {
-  return Effect.tryPromise({ try: () => resolveLocalIpfsStagingImpl(rootDir, cid), catch: fsError });
+  return Effect.tryPromise({
+    try: () => resolveLocalIpfsStagingImpl(rootDir, cid),
+    catch: fsError,
+  });
 }
 
 /** Promise façade for callers that still await local IPFS resolve. */

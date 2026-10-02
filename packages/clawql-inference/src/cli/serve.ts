@@ -18,7 +18,7 @@ export type InferenceServeOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceServeImpl(options: InferenceServeOptions = {}): Promise<number>  {
+async function runInferenceServeImpl(options: InferenceServeOptions = {}): Promise<number> {
   const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
@@ -40,7 +40,9 @@ async function runInferenceServeImpl(options: InferenceServeOptions = {}): Promi
   return 0;
 }
 
-export function runInferenceServeEffect(options: InferenceServeOptions = {}): Effect.Effect<number, Error> {
+export function runInferenceServeEffect(
+  options: InferenceServeOptions = {}
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runInferenceServeImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -48,6 +50,6 @@ export function runInferenceServeEffect(options: InferenceServeOptions = {}): Ef
 }
 
 /** Promise façade — prefer {@link runInferenceServeEffect} for Effect callers. */
-export async function runInferenceServe(options: InferenceServeOptions = {}): Promise<number>  {
+export async function runInferenceServe(options: InferenceServeOptions = {}): Promise<number> {
   return Effect.runPromise(runInferenceServeEffect(options));
 }

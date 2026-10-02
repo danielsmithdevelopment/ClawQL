@@ -248,9 +248,7 @@ function fsError(cause: unknown): Error {
 }
 
 /** Publish a release bundle (IPFS / Arweave / GitHub) (Effect-primary). */
-export function publishReleaseEffect(
-  options: PublishOptions
-): Effect.Effect<PublishResult, Error> {
+export function publishReleaseEffect(options: PublishOptions): Effect.Effect<PublishResult, Error> {
   return Effect.tryPromise({ try: () => publishReleaseImpl(options), catch: fsError });
 }
 

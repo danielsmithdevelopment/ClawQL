@@ -21,11 +21,14 @@ import { EntitlementLimitError } from "../errors.js";
 import { isStripeMeterReportingActive } from "clawql-payments";
 
 /** Effect service for plan entitlement + sync credit hold around gateway completion. */
-export class EntitlementEnforcementService extends Context.Service<EntitlementEnforcementService, {
+export class EntitlementEnforcementService extends Context.Service<
+  EntitlementEnforcementService,
+  {
     readonly completeWithEnforcement: (
       request: InferenceRequest
     ) => Effect.Effect<InferenceResponse, unknown>;
-  }>()("clawql/EntitlementEnforcementService") {}
+  }
+>()("clawql/EntitlementEnforcementService") {}
 
 function inferenceIdempotencyKey(tenantId: string, request: InferenceRequest): string {
   const corr = request.correlationId?.trim();

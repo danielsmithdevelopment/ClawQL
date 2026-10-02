@@ -12,7 +12,7 @@ async function listVaultMarkdownRelPathsImpl(
   vaultAbs: string,
   subRel: string,
   maxFiles: number
-): Promise<string[]>  {
+): Promise<string[]> {
   const out: string[] = [];
   async function walk(rel: string): Promise<void> {
     if (out.length >= maxFiles) return;
@@ -52,7 +52,7 @@ export async function listVaultMarkdownRelPaths(
   vaultAbs: string,
   subRel: string,
   maxFiles: number
-): Promise<string[]>  {
+): Promise<string[]> {
   return Effect.runPromise(listVaultMarkdownRelPathsEffect(vaultAbs, subRel, maxFiles));
 }
 

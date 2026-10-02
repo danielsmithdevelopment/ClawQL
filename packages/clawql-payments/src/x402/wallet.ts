@@ -33,21 +33,26 @@ export function setupX402WalletEffect(
 ): Effect.Effect<X402WalletSetupResult, X402WalletError, PaymentsConfigService> {
   return Effect.gen(function* () {
     const configSvc = yield* PaymentsConfigService;
-    const { config, path } = yield* configSvc.merge({
-      x402: {
-        walletAddress: input.address,
-        facilitatorUrl: input.facilitatorUrl,
-        defaultAsset: input.defaultAsset ?? "USDC",
-      },
-    }).pipe(
-      Effect.mapError(
-        (cause) =>
-          new X402WalletError({
-            reason: "reason" in cause && typeof cause.reason === "string" ? cause.reason : "Failed to merge payments config",
-            cause,
-          })
-      )
-    );
+    const { config, path } = yield* configSvc
+      .merge({
+        x402: {
+          walletAddress: input.address,
+          facilitatorUrl: input.facilitatorUrl,
+          defaultAsset: input.defaultAsset ?? "USDC",
+        },
+      })
+      .pipe(
+        Effect.mapError(
+          (cause) =>
+            new X402WalletError({
+              reason:
+                "reason" in cause && typeof cause.reason === "string"
+                  ? cause.reason
+                  : "Failed to merge payments config",
+              cause,
+            })
+        )
+      );
 
     return {
       address: config.x402.walletAddress ?? input.address,
@@ -78,7 +83,11 @@ export class X402WalletService extends Context.Service<
   }
 >()("clawql/X402WalletService") {}
 
-export function x402WalletLiveLayer(): Layer.Layer<X402WalletService, never, PaymentsConfigService> {
+export function x402WalletLiveLayer(): Layer.Layer<
+  X402WalletService,
+  never,
+  PaymentsConfigService
+> {
   return Layer.effect(
     X402WalletService,
     Effect.gen(function* () {
@@ -86,24 +95,26 @@ export function x402WalletLiveLayer(): Layer.Layer<X402WalletService, never, Pay
       return X402WalletService.of({
         setup: (input) =>
           Effect.gen(function* () {
-            const { config, path } = yield* configSvc.merge({
-              x402: {
-                walletAddress: input.address,
-                facilitatorUrl: input.facilitatorUrl,
-                defaultAsset: input.defaultAsset ?? "USDC",
-              },
-            }).pipe(
-              Effect.mapError(
-                (cause) =>
-                  new X402WalletError({
-                    reason:
-                      "reason" in cause && typeof cause.reason === "string"
-                        ? cause.reason
-                        : "Failed to merge payments config",
-                    cause,
-                  })
-              )
-            );
+            const { config, path } = yield* configSvc
+              .merge({
+                x402: {
+                  walletAddress: input.address,
+                  facilitatorUrl: input.facilitatorUrl,
+                  defaultAsset: input.defaultAsset ?? "USDC",
+                },
+              })
+              .pipe(
+                Effect.mapError(
+                  (cause) =>
+                    new X402WalletError({
+                      reason:
+                        "reason" in cause && typeof cause.reason === "string"
+                          ? cause.reason
+                          : "Failed to merge payments config",
+                      cause,
+                    })
+                )
+              );
             return {
               address: config.x402.walletAddress ?? input.address,
               facilitatorUrl: config.x402.facilitatorUrl,

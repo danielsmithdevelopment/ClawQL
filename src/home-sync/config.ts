@@ -48,9 +48,7 @@ function parseConfigFile(raw: unknown): HomeSyncConfigFile {
   return { version: 1, provider, bucket, prefix, endpoint, region, include };
 }
 
-async function readSyncConfigFileImpl(
-  configPath: string
-): Promise<HomeSyncConfigFile | null> {
+async function readSyncConfigFileImpl(configPath: string): Promise<HomeSyncConfigFile | null> {
   try {
     const raw = await readFile(configPath, "utf8");
     return parseConfigFile(JSON.parse(raw) as unknown);

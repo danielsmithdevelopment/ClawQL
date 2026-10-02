@@ -13,7 +13,7 @@ export type ResolveBaselineSeedInput = {
 async function resolveBaselineSeedImpl(
   input: ResolveBaselineSeedInput,
   eventStore: EventStore
-): Promise<Seed | null>  {
+): Promise<Seed | null> {
   if (input.seed !== undefined) {
     return SeedSchema.parse(input.seed);
   }
@@ -70,6 +70,6 @@ export function resolveBaselineSeedEffect(
 export async function resolveBaselineSeed(
   input: ResolveBaselineSeedInput,
   eventStore: EventStore
-): Promise<Seed | null>  {
+): Promise<Seed | null> {
   return Effect.runPromise(resolveBaselineSeedEffect(input, eventStore));
 }

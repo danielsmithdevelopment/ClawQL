@@ -41,7 +41,7 @@ function modelObject(gatewayModelId: string): OpenAiModelObject {
 async function collectListedModelsImpl(
   registry: ProviderRegistry,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OpenAiModelObject[]>  {
+): Promise<OpenAiModelObject[]> {
   const seen = new Set<string>();
   const models: OpenAiModelObject[] = [];
 
@@ -131,7 +131,7 @@ export function collectListedModelsEffect(
 export async function collectListedModels(
   registry: ProviderRegistry,
   env: NodeJS.ProcessEnv = process.env
-): Promise<OpenAiModelObject[]>  {
+): Promise<OpenAiModelObject[]> {
   return Effect.runPromise(collectListedModelsEffect(registry, env));
 }
 

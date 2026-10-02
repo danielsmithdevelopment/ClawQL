@@ -2,9 +2,12 @@ import { Context, Effect, Layer } from "effect";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../../gateway.js";
 
 /** Effect wrapper for an inner {@link InferenceGateway} (fallback chain attempts). */
-export class InferenceGatewayService extends Context.Service<InferenceGatewayService, {
+export class InferenceGatewayService extends Context.Service<
+  InferenceGatewayService,
+  {
     readonly complete: (request: InferenceRequest) => Effect.Effect<InferenceResponse, unknown>;
-  }>()("clawql/InferenceGatewayService") {}
+  }
+>()("clawql/InferenceGatewayService") {}
 
 export function inferenceGatewayLiveLayer(
   inner: InferenceGateway

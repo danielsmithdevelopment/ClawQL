@@ -6,12 +6,15 @@ import {
   isClawqlCuckooMetricsEnabled,
 } from "./env.js";
 
-export class ConfigService extends Context.Service<ConfigService, {
+export class ConfigService extends Context.Service<
+  ConfigService,
+  {
     readonly getAuditMaxEntries: () => number;
     readonly getCacheMaxValueBytes: () => number;
     readonly getCacheMaxEntries: () => number;
     readonly isCuckooMetricsEnabled: () => boolean;
-  }>()("clawql/ConfigService") {}
+  }
+>()("clawql/ConfigService") {}
 
 export function configServiceFromEnv(env: NodeJS.ProcessEnv = process.env) {
   return ConfigService.of({

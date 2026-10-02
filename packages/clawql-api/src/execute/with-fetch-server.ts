@@ -6,7 +6,7 @@ import { Effect } from "effect";
 async function withFetchServerImpl(
   handler: (req: Request) => Response | Promise<Response>,
   fn: (origin: string) => Promise<void>
-): Promise<void>  {
+): Promise<void> {
   let port = 0;
   const server = http.createServer(async (incoming, res) => {
     try {
@@ -63,6 +63,6 @@ export function withFetchServerEffect(
 export async function withFetchServer(
   handler: (req: Request) => Response | Promise<Response>,
   fn: (origin: string) => Promise<void>
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(withFetchServerEffect(handler, fn));
 }

@@ -453,12 +453,15 @@ function fsError(cause: unknown): Error {
 }
 
 /** Fetch a URL for external ingest (Effect-primary). */
-export function fetchUrlResourceEffect(urlStr: string): Effect.Effect<{
-  body: string;
-  bytes: Uint8Array;
-  contentType: string | null;
-  finalUrl: string;
-}, Error> {
+export function fetchUrlResourceEffect(urlStr: string): Effect.Effect<
+  {
+    body: string;
+    bytes: Uint8Array;
+    contentType: string | null;
+    finalUrl: string;
+  },
+  Error
+> {
   return Effect.tryPromise({ try: () => fetchUrlResourceImpl(urlStr), catch: fsError });
 }
 
@@ -476,7 +479,10 @@ export async function fetchUrlResource(urlStr: string): Promise<{
 export function prepareMarkdownDocumentsEffect(
   documents: ExternalIngestDocumentInput[],
   vault: string
-): Effect.Effect<{ planned: PlannedMarkdownDoc[]; docErrors: { path: string; error: string }[] }, Error> {
+): Effect.Effect<
+  { planned: PlannedMarkdownDoc[]; docErrors: { path: string; error: string }[] },
+  Error
+> {
   return Effect.tryPromise({
     try: () => prepareMarkdownDocumentsImpl(documents, vault),
     catch: fsError,

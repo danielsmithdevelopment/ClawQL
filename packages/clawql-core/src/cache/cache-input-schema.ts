@@ -18,11 +18,17 @@ export const CACHE_QUERY_DESCRIPTION = "For search: case-insensitive substring m
 export const CACHE_LIMIT_DESCRIPTION =
   "For list/search: max results (defaults: list 100, search 50).";
 
-const CacheKey = Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(2048))).annotate({
+const CacheKey = Schema.String.pipe(
+  Schema.check(Schema.isMinLength(1)),
+  Schema.check(Schema.isMaxLength(2048))
+).annotate({
   description: CACHE_KEY_DESCRIPTION,
 });
 
-const CacheLimit = Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 1000 }))).annotate({
+const CacheLimit = Schema.Number.pipe(
+  Schema.check(Schema.isInt()),
+  Schema.check(Schema.isBetween({ minimum: 1, maximum: 1000 }))
+).annotate({
   description: CACHE_LIMIT_DESCRIPTION,
 });
 
@@ -51,11 +57,14 @@ export const CacheInputSchema = Schema.Union([
   }),
   Schema.Struct({
     operation: Schema.Literal("search"),
-    query: Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(512))).annotate({
+    query: Schema.String.pipe(
+      Schema.check(Schema.isMinLength(1)),
+      Schema.check(Schema.isMaxLength(512))
+    ).annotate({
       description: CACHE_QUERY_DESCRIPTION,
     }),
     limit: Schema.optional(CacheLimit),
-  })
+  }),
 ]).annotate({ description: CACHE_OPERATION_DESCRIPTION });
 
 export type CacheInputDecoded = Schema.Schema.Type<typeof CacheInputSchema>;

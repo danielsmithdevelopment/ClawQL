@@ -370,28 +370,28 @@ export function loadRecallDbArtifactsEffect(
   opts: { loadChunks: boolean; loadCuckoo: boolean; loadMerkle: boolean }
 ): Effect.Effect<RecallDbArtifacts, MemoryError> {
   return memoryFromPromise(async () => {
-  const empty: RecallDbArtifacts = {
-    chunks: [],
-    cuckooPred: null,
-    merkleSnapshot: null,
-  };
-  if (!memoryDbSyncEnabled()) return empty;
+    const empty: RecallDbArtifacts = {
+      chunks: [],
+      cuckooPred: null,
+      merkleSnapshot: null,
+    };
+    if (!memoryDbSyncEnabled()) return empty;
 
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const chunks =
-      opts.loadChunks && documentPaths.length > 0
-        ? loadChunkEmbeddingsFromOpenDb(db, documentPaths)
-        : [];
-    const cuckooPred = opts.loadCuckoo ? loadCuckooPredicateFromOpenDb(db) : null;
-    const merkleSnapshot = opts.loadMerkle ? loadMerkleSnapshotFromOpenDb(db) : null;
-    return { chunks, cuckooPred, merkleSnapshot };
-  } finally {
-    db.close();
-  }
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const chunks =
+        opts.loadChunks && documentPaths.length > 0
+          ? loadChunkEmbeddingsFromOpenDb(db, documentPaths)
+          : [];
+      const cuckooPred = opts.loadCuckoo ? loadCuckooPredicateFromOpenDb(db) : null;
+      const merkleSnapshot = opts.loadMerkle ? loadMerkleSnapshotFromOpenDb(db) : null;
+      return { chunks, cuckooPred, merkleSnapshot };
+    } finally {
+      db.close();
+    }
   });
 }
 
@@ -460,89 +460,102 @@ export function syncMemoryDbFromDocumentsEffect(
   documents: { path: string; text: string; mtimeMs: number }[]
 ): Effect.Effect<void, MemoryError> {
   return memoryFromPromise(async () => {
-  if (!memoryDbSyncEnabled() || documents.length === 0) return;
+    if (!memoryDbSyncEnabled() || documents.length === 0) return;
 
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
 
-    const normPaths = documents.map((d) => d.path.replace(/\\/g, "/"));
-    const vb = effectiveVectorBackend();
-    const oldEmbByPath =
-      vb === "sqlite"
-        ? await loadExistingChunkEmbeddings(db, normPaths)
-        : new Map<string, Map<string, OldChunkEmb>>();
-    const pgChunkMap =
-      vb === "postgres" ? await loadPostgresChunkVectorsByPaths(normPaths) : new Map();
-    const embedConfig = resolveEmbeddingConfig();
+      const normPaths = documents.map((d) => d.path.replace(/\\/g, "/"));
+      const vb = effectiveVectorBackend();
+      const oldEmbByPath =
+        vb === "sqlite"
+          ? await loadExistingChunkEmbeddings(db, normPaths)
+          : new Map<string, Map<string, OldChunkEmb>>();
+      const pgChunkMap =
+        vb === "postgres" ? await loadPostgresChunkVectorsByPaths(normPaths) : new Map();
+      const embedConfig = resolveEmbeddingConfig();
 
-    type PlannedChunk = {
-      id: string;
-      ordinal: number;
-      charStart: number;
-      charEnd: number;
-      text: string;
-      contentSha256: string;
-      floatVec: Float32Array | null;
-      embeddingModel: string | null;
-    };
+      type PlannedChunk = {
+        id: string;
+        ordinal: number;
+        charStart: number;
+        charEnd: number;
+        text: string;
+        contentSha256: string;
+        floatVec: Float32Array | null;
+        embeddingModel: string | null;
+      };
 
-    const planned: {
-      doc: (typeof documents)[0];
-      path: string;
-      plan: ReturnType<typeof planVaultMarkdownChunks>;
-      chunks: PlannedChunk[];
-    }[] = [];
+      const planned: {
+        doc: (typeof documents)[0];
+        path: string;
+        plan: ReturnType<typeof planVaultMarkdownChunks>;
+        chunks: PlannedChunk[];
+      }[] = [];
 
-    const toEmbedTexts: string[] = [];
-    const toEmbedRef: { pi: number; ci: number }[] = [];
+      const toEmbedTexts: string[] = [];
+      const toEmbedRef: { pi: number; ci: number }[] = [];
 
-    for (let pi = 0; pi < documents.length; pi++) {
-      const doc = documents[pi]!;
-      const path = doc.path.replace(/\\/g, "/");
-      const plan = planVaultMarkdownChunks(doc.text);
-      const oldMap = oldEmbByPath.get(path) ?? new Map<string, OldChunkEmb>();
-      const chunks: PlannedChunk[] = [];
+      for (let pi = 0; pi < documents.length; pi++) {
+        const doc = documents[pi]!;
+        const path = doc.path.replace(/\\/g, "/");
+        const plan = planVaultMarkdownChunks(doc.text);
+        const oldMap = oldEmbByPath.get(path) ?? new Map<string, OldChunkEmb>();
+        const chunks: PlannedChunk[] = [];
 
-      for (const c of plan.chunks) {
-        const id = vaultChunkId(path, CHUNK_STRATEGY_PARAGRAPH_V1, c.ordinal, c.contentSha256);
+        for (const c of plan.chunks) {
+          const id = vaultChunkId(path, CHUNK_STRATEGY_PARAGRAPH_V1, c.ordinal, c.contentSha256);
 
-        if (embedConfig) {
-          if (vb === "sqlite") {
-            const prev = oldMap.get(id);
-            if (prev && prev.model === embedConfig.model) {
-              chunks.push({
-                id,
-                ordinal: c.ordinal,
-                charStart: c.charStart,
-                charEnd: c.charEnd,
-                text: c.text,
-                contentSha256: c.contentSha256,
-                floatVec: blobToFloat32Array(prev.blob),
-                embeddingModel: embedConfig.model,
-              });
-              continue;
+          if (embedConfig) {
+            if (vb === "sqlite") {
+              const prev = oldMap.get(id);
+              if (prev && prev.model === embedConfig.model) {
+                chunks.push({
+                  id,
+                  ordinal: c.ordinal,
+                  charStart: c.charStart,
+                  charEnd: c.charEnd,
+                  text: c.text,
+                  contentSha256: c.contentSha256,
+                  floatVec: blobToFloat32Array(prev.blob),
+                  embeddingModel: embedConfig.model,
+                });
+                continue;
+              }
+            } else if (vb === "postgres") {
+              const prev = pgChunkMap.get(id);
+              if (prev && prev.model === embedConfig.model) {
+                chunks.push({
+                  id,
+                  ordinal: c.ordinal,
+                  charStart: c.charStart,
+                  charEnd: c.charEnd,
+                  text: c.text,
+                  contentSha256: c.contentSha256,
+                  floatVec: prev.vector,
+                  embeddingModel: embedConfig.model,
+                });
+                continue;
+              }
             }
-          } else if (vb === "postgres") {
-            const prev = pgChunkMap.get(id);
-            if (prev && prev.model === embedConfig.model) {
-              chunks.push({
-                id,
-                ordinal: c.ordinal,
-                charStart: c.charStart,
-                charEnd: c.charEnd,
-                text: c.text,
-                contentSha256: c.contentSha256,
-                floatVec: prev.vector,
-                embeddingModel: embedConfig.model,
-              });
-              continue;
-            }
+            toEmbedTexts.push(c.text);
+            toEmbedRef.push({ pi: planned.length, ci: chunks.length });
+            chunks.push({
+              id,
+              ordinal: c.ordinal,
+              charStart: c.charStart,
+              charEnd: c.charEnd,
+              text: c.text,
+              contentSha256: c.contentSha256,
+              floatVec: null,
+              embeddingModel: null,
+            });
+            continue;
           }
-          toEmbedTexts.push(c.text);
-          toEmbedRef.push({ pi: planned.length, ci: chunks.length });
+
           chunks.push({
             id,
             ordinal: c.ordinal,
@@ -553,151 +566,138 @@ export function syncMemoryDbFromDocumentsEffect(
             floatVec: null,
             embeddingModel: null,
           });
-          continue;
         }
 
-        chunks.push({
-          id,
-          ordinal: c.ordinal,
-          charStart: c.charStart,
-          charEnd: c.charEnd,
-          text: c.text,
-          contentSha256: c.contentSha256,
-          floatVec: null,
-          embeddingModel: null,
-        });
+        planned.push({ doc, path, plan, chunks });
       }
 
-      planned.push({ doc, path, plan, chunks });
-    }
-
-    if (embedConfig && toEmbedTexts.length > 0) {
-      try {
-        const { vectors, model } = await embedTexts(toEmbedTexts, embedConfig);
-        for (let i = 0; i < toEmbedRef.length; i++) {
-          const ref = toEmbedRef[i]!;
-          const vec = vectors[i];
-          if (!vec) continue;
-          const row = planned[ref.pi]!.chunks[ref.ci]!;
-          row.floatVec = vec;
-          row.embeddingModel = model;
-        }
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[clawql-mcp] memory.db embedding sync failed: ${msg}`);
-        // Vectors are mandatory for memory — do not silently write NULL embeddings.
-        if (!allowKeywordOnlyMemory()) {
-          throw new Error(
-            `memory.db embedding sync failed (vectors required for memory_recall): ${msg}`,
-            { cause: e }
-          );
+      if (embedConfig && toEmbedTexts.length > 0) {
+        try {
+          const { vectors, model } = await embedTexts(toEmbedTexts, embedConfig);
+          for (let i = 0; i < toEmbedRef.length; i++) {
+            const ref = toEmbedRef[i]!;
+            const vec = vectors[i];
+            if (!vec) continue;
+            const row = planned[ref.pi]!.chunks[ref.ci]!;
+            row.floatVec = vec;
+            row.embeddingModel = model;
+          }
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[clawql-mcp] memory.db embedding sync failed: ${msg}`);
+          // Vectors are mandatory for memory — do not silently write NULL embeddings.
+          if (!allowKeywordOnlyMemory()) {
+            throw new Error(
+              `memory.db embedding sync failed (vectors required for memory_recall): ${msg}`,
+              { cause: e }
+            );
+          }
         }
       }
-    }
 
-    const slugMap = buildSlugToVaultPath(documents);
-    const indexedAt = isoNow();
+      const slugMap = buildSlugToVaultPath(documents);
+      const indexedAt = isoNow();
 
-    const delDoc = db.prepare("DELETE FROM vault_document WHERE path = ?");
-    const insDoc = db.prepare(
-      `INSERT INTO vault_document (
+      const delDoc = db.prepare("DELETE FROM vault_document WHERE path = ?");
+      const insDoc = db.prepare(
+        `INSERT INTO vault_document (
         path, title, body_sha256, byte_length, mtime_ms, index_body_sha256, chunk_strategy, indexed_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    );
-    const insChunk = db.prepare(
-      `INSERT INTO vault_chunk (
+      );
+      const insChunk = db.prepare(
+        `INSERT INTO vault_chunk (
         chunk_id, document_path, ordinal, char_start, char_end, text, content_sha256, chunk_strategy, embedding_model, embedding
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    );
-    const delEdges = db.prepare("DELETE FROM wikilink_edge WHERE from_path = ?");
-    const insEdge = db.prepare(
-      `INSERT OR REPLACE INTO wikilink_edge (from_path, to_target, to_resolved_path) VALUES (?, ?, ?)`
-    );
+      );
+      const delEdges = db.prepare("DELETE FROM wikilink_edge WHERE from_path = ?");
+      const insEdge = db.prepare(
+        `INSERT OR REPLACE INTO wikilink_edge (from_path, to_target, to_resolved_path) VALUES (?, ?, ?)`
+      );
 
-    let artifactPayload: MemoryArtifactPayload = { cuckooBlob: null, merkle: null };
-    db.run("BEGIN");
-    try {
-      for (const { doc, path, plan, chunks } of planned) {
-        const bodySha = sha256HexUtf8(doc.text);
-        const byteLen = Buffer.byteLength(doc.text, "utf8");
-        const title = extractTitle(doc.text);
-
-        delEdges.run([path]);
-        delDoc.run([path]);
-
-        insDoc.run([
-          path,
-          title,
-          bodySha,
-          byteLen,
-          doc.mtimeMs,
-          plan.indexBodySha256,
-          plan.strategy,
-          indexedAt,
-        ]);
-
-        const dualVecToSqlite = vectorDualWriteToMemoryDb();
-        for (const c of chunks) {
-          const embBlob = dualVecToSqlite && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
-          const embModel = dualVecToSqlite && c.floatVec ? c.embeddingModel : null;
-          insChunk.run([
-            c.id,
-            path,
-            c.ordinal,
-            c.charStart,
-            c.charEnd,
-            c.text,
-            c.contentSha256,
-            plan.strategy,
-            embModel,
-            embBlob,
-          ]);
-        }
-
-        for (const target of extractWikilinkTargets(doc.text)) {
-          const slug = slugifyTitle(target);
-          const resolved = slugMap.get(slug) ?? null;
-          insEdge.run([path, target, resolved]);
-        }
-      }
-      artifactPayload = rebuildSqliteMemoryArtifacts(db);
-      db.run("COMMIT");
-    } catch (e) {
-      db.run("ROLLBACK");
-      throw e;
-    } finally {
-      delDoc.free();
-      insDoc.free();
-      insChunk.free();
-      delEdges.free();
-      insEdge.free();
-    }
-
-    await persistDb(db, absDb);
-
-    await syncMemoryArtifactsToPostgres(artifactPayload.cuckooBlob, artifactPayload.merkle);
-
-    if (vb === "postgres" && embedConfig) {
+      let artifactPayload: MemoryArtifactPayload = { cuckooBlob: null, merkle: null };
+      db.run("BEGIN");
       try {
-        await upsertPostgresChunkVectors(
-          planned.map((p) => ({
-            path: p.path,
-            chunks: p.chunks.map((c) => ({
-              id: c.id,
-              text: c.text,
-              floatVec: c.floatVec,
-              embeddingModel: c.embeddingModel,
-            })),
-          }))
-        );
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[clawql-mcp] postgres vector sync failed: ${msg}`);
+        for (const { doc, path, plan, chunks } of planned) {
+          const bodySha = sha256HexUtf8(doc.text);
+          const byteLen = Buffer.byteLength(doc.text, "utf8");
+          const title = extractTitle(doc.text);
+
+          delEdges.run([path]);
+          delDoc.run([path]);
+
+          insDoc.run([
+            path,
+            title,
+            bodySha,
+            byteLen,
+            doc.mtimeMs,
+            plan.indexBodySha256,
+            plan.strategy,
+            indexedAt,
+          ]);
+
+          const dualVecToSqlite = vectorDualWriteToMemoryDb();
+          for (const c of chunks) {
+            const embBlob = dualVecToSqlite && c.floatVec ? float32ArrayToBlob(c.floatVec) : null;
+            const embModel = dualVecToSqlite && c.floatVec ? c.embeddingModel : null;
+            insChunk.run([
+              c.id,
+              path,
+              c.ordinal,
+              c.charStart,
+              c.charEnd,
+              c.text,
+              c.contentSha256,
+              plan.strategy,
+              embModel,
+              embBlob,
+            ]);
+          }
+
+          for (const target of extractWikilinkTargets(doc.text)) {
+            const slug = slugifyTitle(target);
+            const resolved = slugMap.get(slug) ?? null;
+            insEdge.run([path, target, resolved]);
+          }
+        }
+        artifactPayload = rebuildSqliteMemoryArtifacts(db);
+        db.run("COMMIT");
+      } catch (e) {
+        db.run("ROLLBACK");
+        throw e;
+      } finally {
+        delDoc.free();
+        insDoc.free();
+        insChunk.free();
+        delEdges.free();
+        insEdge.free();
       }
+
+      await persistDb(db, absDb);
+
+      await syncMemoryArtifactsToPostgres(artifactPayload.cuckooBlob, artifactPayload.merkle);
+
+      if (vb === "postgres" && embedConfig) {
+        try {
+          await upsertPostgresChunkVectors(
+            planned.map((p) => ({
+              path: p.path,
+              chunks: p.chunks.map((c) => ({
+                id: c.id,
+                text: c.text,
+                floatVec: c.floatVec,
+                embeddingModel: c.embeddingModel,
+              })),
+            }))
+          );
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.error(`[clawql-mcp] postgres vector sync failed: ${msg}`);
+        }
+      }
+    } finally {
+      db.close();
     }
-  } finally {
-    db.close();
-  }
   });
 }
 
@@ -710,28 +710,30 @@ export async function syncMemoryDbFromDocuments(
 }
 
 /** Full scan of the configured recall subtree — for `memory_ingest` refresh after writes. */
-export function syncMemoryDbForVaultScanRootEffect(vaultRoot: string): Effect.Effect<void, MemoryError> {
+export function syncMemoryDbForVaultScanRootEffect(
+  vaultRoot: string
+): Effect.Effect<void, MemoryError> {
   return memoryFromPromise(async () => {
-  if (!memoryDbSyncEnabled()) return;
-  const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
-  const scanRoot = defaultScanRoot();
-  let rels: string[];
-  try {
-    rels = await listVaultMarkdownRelPaths(vaultRoot, scanRoot, maxFiles);
-  } catch {
-    return;
-  }
-  const documents: { path: string; text: string; mtimeMs: number }[] = [];
-  const now = Date.now();
-  for (const rel of rels) {
+    if (!memoryDbSyncEnabled()) return;
+    const maxFiles = envInt("CLAWQL_MEMORY_RECALL_MAX_FILES", 2000);
+    const scanRoot = defaultScanRoot();
+    let rels: string[];
     try {
-      const text = await readVaultTextFile(vaultRoot, rel);
-      documents.push({ path: rel, text, mtimeMs: now });
+      rels = await listVaultMarkdownRelPaths(vaultRoot, scanRoot, maxFiles);
     } catch {
-      /* skip */
+      return;
     }
-  }
-  await syncMemoryDbFromDocuments(vaultRoot, documents);
+    const documents: { path: string; text: string; mtimeMs: number }[] = [];
+    const now = Date.now();
+    for (const rel of rels) {
+      try {
+        const text = await readVaultTextFile(vaultRoot, rel);
+        documents.push({ path: rel, text, mtimeMs: now });
+      } catch {
+        /* skip */
+      }
+    }
+    await syncMemoryDbFromDocuments(vaultRoot, documents);
   });
 }
 
@@ -746,16 +748,16 @@ export function loadChunkEmbeddingsForDocumentsEffect(
   documentPaths: string[]
 ): Effect.Effect<ChunkWithEmbedding[], MemoryError> {
   return memoryFromPromise(async () => {
-  if (!memoryDbSyncEnabled() || documentPaths.length === 0) return [];
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    return loadChunkEmbeddingsFromOpenDb(db, documentPaths);
-  } finally {
-    db.close();
-  }
+    if (!memoryDbSyncEnabled() || documentPaths.length === 0) return [];
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      return loadChunkEmbeddingsFromOpenDb(db, documentPaths);
+    } finally {
+      db.close();
+    }
   });
 }
 
@@ -819,36 +821,36 @@ export function chunkIdMaybeInMemoryIndexEffect(
   chunkId: string
 ): Effect.Effect<boolean | null, MemoryError> {
   return memoryFromPromise(async () => {
-  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
-  if (!memoryDbSyncEnabled()) return null;
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const sig = await memoryDbFileSignature(absDb);
-  const metrics = cuckooMetricsEnabled();
-  if (!metrics && sig) {
-    const hit = getCachedCuckooFilter(absDb, sig);
-    if (hit !== undefined) {
-      return hit.maybeContains(chunkId);
+    if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+    if (!memoryDbSyncEnabled()) return null;
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const sig = await memoryDbFileSignature(absDb);
+    const metrics = cuckooMetricsEnabled();
+    if (!metrics && sig) {
+      const hit = getCachedCuckooFilter(absDb, sig);
+      if (hit !== undefined) {
+        return hit.maybeContains(chunkId);
+      }
     }
-  }
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const filter = readCuckooFilterFromOpenDb(db);
-    if (!filter) return null;
-    if (sig) setCachedCuckooFilter(absDb, sig, filter);
-    const maybe = filter.maybeContains(chunkId);
-    if (metrics) {
-      const stmt = db.prepare("SELECT 1 FROM vault_chunk WHERE chunk_id = ? LIMIT 1");
-      stmt.bind([chunkId]);
-      const presentInDb = stmt.step();
-      stmt.free();
-      recordCuckooLookup({ filterSaysMaybe: maybe, presentInDb });
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const filter = readCuckooFilterFromOpenDb(db);
+      if (!filter) return null;
+      if (sig) setCachedCuckooFilter(absDb, sig, filter);
+      const maybe = filter.maybeContains(chunkId);
+      if (metrics) {
+        const stmt = db.prepare("SELECT 1 FROM vault_chunk WHERE chunk_id = ? LIMIT 1");
+        stmt.bind([chunkId]);
+        const presentInDb = stmt.step();
+        stmt.free();
+        recordCuckooLookup({ filterSaysMaybe: maybe, presentInDb });
+      }
+      return maybe;
+    } finally {
+      db.close();
     }
-    return maybe;
-  } finally {
-    db.close();
-  }
   });
 }
 
@@ -861,28 +863,30 @@ export async function chunkIdMaybeInMemoryIndex(
 }
 
 /** Last persisted Cuckoo row timestamp (cross-process), for health checks. */
-export function loadCuckooArtifactUpdatedAtEffect(vaultRoot: string): Effect.Effect<string | null, MemoryError> {
+export function loadCuckooArtifactUpdatedAtEffect(
+  vaultRoot: string
+): Effect.Effect<string | null, MemoryError> {
   return memoryFromPromise(async () => {
-  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
-  if (!memoryDbSyncEnabled()) return null;
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const stmt = db.prepare(
-      "SELECT updated_at FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
-    );
-    if (!stmt.step()) {
+    if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+    if (!memoryDbSyncEnabled()) return null;
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const stmt = db.prepare(
+        "SELECT updated_at FROM clawql_cuckoo_chunk_membership WHERE id = 1 LIMIT 1"
+      );
+      if (!stmt.step()) {
+        stmt.free();
+        return null;
+      }
+      const row = stmt.getAsObject() as { updated_at: string };
       stmt.free();
-      return null;
+      return row.updated_at ?? null;
+    } finally {
+      db.close();
     }
-    const row = stmt.getAsObject() as { updated_at: string };
-    stmt.free();
-    return row.updated_at ?? null;
-  } finally {
-    db.close();
-  }
   });
 }
 
@@ -899,27 +903,27 @@ export function loadCuckooMembershipPredicateEffect(
   vaultRoot: string
 ): Effect.Effect<((chunkId: string) => boolean) | null, MemoryError> {
   return memoryFromPromise(async () => {
-  if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
-  if (!memoryDbSyncEnabled()) return null;
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const sig = await memoryDbFileSignature(absDb);
-  if (sig) {
-    const hit = getCachedCuckooFilter(absDb, sig);
-    if (hit !== undefined) {
-      return (chunkId: string) => hit.maybeContains(chunkId);
+    if (process.env.CLAWQL_CUCKOO_ENABLED !== "1") return null;
+    if (!memoryDbSyncEnabled()) return null;
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const sig = await memoryDbFileSignature(absDb);
+    if (sig) {
+      const hit = getCachedCuckooFilter(absDb, sig);
+      if (hit !== undefined) {
+        return (chunkId: string) => hit.maybeContains(chunkId);
+      }
     }
-  }
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const filter = readCuckooFilterFromOpenDb(db);
-    if (!filter) return null;
-    if (sig) setCachedCuckooFilter(absDb, sig, filter);
-    return (chunkId: string) => filter.maybeContains(chunkId);
-  } finally {
-    db.close();
-  }
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const filter = readCuckooFilterFromOpenDb(db);
+      if (!filter) return null;
+      if (sig) setCachedCuckooFilter(absDb, sig, filter);
+      return (chunkId: string) => filter.maybeContains(chunkId);
+    } finally {
+      db.close();
+    }
   });
 }
 
@@ -935,23 +939,23 @@ export function loadVaultMerkleSnapshotFromDbEffect(
   vaultRoot: string
 ): Effect.Effect<MerkleSnapshotRow | null, MemoryError> {
   return memoryFromPromise(async () => {
-  if (!memoryDbSyncEnabled()) return null;
-  const absDb = resolveMemoryDatabasePath(vaultRoot);
-  const sig = await memoryDbFileSignature(absDb);
-  if (sig) {
-    const hit = getCachedMerkleSnapshot(absDb, sig);
-    if (hit !== undefined) return hit;
-  }
-  const db = await openOrCreateDb(absDb);
-  try {
-    db.exec("PRAGMA foreign_keys = ON;");
-    migrate(db);
-    const row = loadMerkleSnapshotFromOpenDb(db);
-    if (sig) setCachedMerkleSnapshot(absDb, sig, row);
-    return row;
-  } finally {
-    db.close();
-  }
+    if (!memoryDbSyncEnabled()) return null;
+    const absDb = resolveMemoryDatabasePath(vaultRoot);
+    const sig = await memoryDbFileSignature(absDb);
+    if (sig) {
+      const hit = getCachedMerkleSnapshot(absDb, sig);
+      if (hit !== undefined) return hit;
+    }
+    const db = await openOrCreateDb(absDb);
+    try {
+      db.exec("PRAGMA foreign_keys = ON;");
+      migrate(db);
+      const row = loadMerkleSnapshotFromOpenDb(db);
+      if (sig) setCachedMerkleSnapshot(absDb, sig, row);
+      return row;
+    } finally {
+      db.close();
+    }
   });
 }
 

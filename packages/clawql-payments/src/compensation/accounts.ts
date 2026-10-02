@@ -63,7 +63,7 @@ function emptyAccount(agentId: string, tenantId?: string): AgentAccount {
 async function listAgentAccountsImpl(
   env: NodeJS.ProcessEnv = process.env,
   filter?: { tenantId?: string }
-): Promise<AgentAccount[]>  {
+): Promise<AgentAccount[]> {
   const file = await loadFile(env);
   const all = Object.values(file.agents);
   const tenant = filter?.tenantId?.trim();
@@ -87,7 +87,7 @@ export function listAgentAccountsEffect(
 export async function listAgentAccounts(
   env: NodeJS.ProcessEnv = process.env,
   filter?: { tenantId?: string }
-): Promise<AgentAccount[]>  {
+): Promise<AgentAccount[]> {
   return Effect.runPromise(listAgentAccountsEffect(env, filter));
 }
 
@@ -95,7 +95,7 @@ export async function listAgentAccounts(
 async function getAgentAccountImpl(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount | undefined>  {
+): Promise<AgentAccount | undefined> {
   const file = await loadFile(env);
   return file.agents[agentId.trim()];
 }
@@ -114,7 +114,7 @@ export function getAgentAccountEffect(
 export async function getAgentAccount(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount | undefined>  {
+): Promise<AgentAccount | undefined> {
   return Effect.runPromise(getAgentAccountEffect(agentId, env));
 }
 
@@ -123,7 +123,7 @@ async function ensureAgentAccountImpl(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env,
   tenantId?: string
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   const id = agentId.trim();
   if (!id) throw new Error("agentId required");
   const file = await loadFile(env);
@@ -151,7 +151,7 @@ export async function ensureAgentAccount(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env,
   tenantId?: string
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   return Effect.runPromise(ensureAgentAccountEffect(agentId, env, tenantId));
 }
 
@@ -166,7 +166,7 @@ async function setAgentAccountPreferenceImpl(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id] ?? emptyAccount(id, input.tenantId);
@@ -212,7 +212,7 @@ export async function setAgentAccountPreference(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   return Effect.runPromise(setAgentAccountPreferenceEffect(input, env));
 }
 
@@ -225,7 +225,7 @@ async function creditAgentAccountImpl(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id] ?? emptyAccount(id, input.tenantId);
@@ -268,7 +268,7 @@ export async function creditAgentAccount(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   return Effect.runPromise(creditAgentAccountEffect(input, env));
 }
 
@@ -280,7 +280,7 @@ async function debitAgentAccountImpl(
     fundsUsd?: number;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id];
@@ -327,7 +327,7 @@ export async function debitAgentAccount(
     fundsUsd?: number;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount>  {
+): Promise<AgentAccount> {
   return Effect.runPromise(debitAgentAccountEffect(input, env));
 }
 
@@ -345,7 +345,9 @@ type CreditAgentAccountInput = Parameters<typeof creditAgentAccount>[0];
 type DebitAgentAccountInput = Parameters<typeof debitAgentAccount>[0];
 
 /** Effect surface over the agent compensation accounts ledger (credits + funds held for cash-out). */
-export class CompensationAccountsService extends Context.Service<CompensationAccountsService, {
+export class CompensationAccountsService extends Context.Service<
+  CompensationAccountsService,
+  {
     readonly get: (
       agentId: string
     ) => Effect.Effect<AgentAccount | undefined, CompensationAccountsError>;
@@ -365,7 +367,8 @@ export class CompensationAccountsService extends Context.Service<CompensationAcc
     readonly debit: (
       input: DebitAgentAccountInput
     ) => Effect.Effect<AgentAccount, CompensationAccountsError>;
-  }>()("clawql/CompensationAccountsService") {}
+  }
+>()("clawql/CompensationAccountsService") {}
 
 export function compensationAccountsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

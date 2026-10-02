@@ -91,7 +91,9 @@ export type CashoutResult = {
 };
 
 /** Effect service for agent credits, staged deposits, and cash-out. */
-export class AgentCompensationService extends Context.Service<AgentCompensationService, {
+export class AgentCompensationService extends Context.Service<
+  AgentCompensationService,
+  {
     readonly getAccount: (agentId: string) => Effect.Effect<AgentAccount, CompensationError>;
     readonly setPreference: (input: {
       agentId: string;
@@ -155,7 +157,8 @@ export class AgentCompensationService extends Context.Service<AgentCompensationS
       correlationId?: string;
       recruitmentId?: string;
     }) => Effect.Effect<DepositResult, CompensationError>;
-  }>()("clawql/AgentCompensationService") {}
+  }
+>()("clawql/AgentCompensationService") {}
 
 export function agentCompensationLiveLayer(
   env: NodeJS.ProcessEnv = process.env

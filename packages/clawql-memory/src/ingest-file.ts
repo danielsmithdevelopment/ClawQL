@@ -31,7 +31,7 @@ export function getMemoryIngestFileMaxBytes(): number {
  * Comma- or newline-separated absolute directory prefixes. If unset, the only
  * allowed root is the process current working directory (resolved).
  */
-async function getMemoryIngestFileRootsRealImpl(): Promise<string[]>  {
+async function getMemoryIngestFileRootsRealImpl(): Promise<string[]> {
   const raw = process.env.CLAWQL_MEMORY_INGEST_FILE_ROOTS?.trim();
   const parts = raw
     ? raw
@@ -65,7 +65,7 @@ export function getMemoryIngestFileRootsRealEffect(): Effect.Effect<string[], Er
 }
 
 /** Promise façade — prefer {@link getMemoryIngestFileRootsRealEffect} for Effect callers. */
-export async function getMemoryIngestFileRootsReal(): Promise<string[]>  {
+export async function getMemoryIngestFileRootsReal(): Promise<string[]> {
   return Effect.runPromise(getMemoryIngestFileRootsRealEffect());
 }
 
@@ -78,7 +78,7 @@ async function readToolOutputsFileForIngestImpl(
 ): Promise<
   | { ok: true; text: string; displayPath: string; absolutePath: string }
   | { ok: false; error: string }
->  {
+> {
   if (!isMemoryIngestFileReadEnabled()) {
     return {
       ok: false,
@@ -161,8 +161,11 @@ async function readToolOutputsFileForIngestImpl(
 
 export function readToolOutputsFileForIngestEffect(
   userPath: string
-): Effect.Effect<| { ok: true; text: string; displayPath: string; absolutePath: string }
-  | { ok: false; error: string }, Error> {
+): Effect.Effect<
+  | { ok: true; text: string; displayPath: string; absolutePath: string }
+  | { ok: false; error: string },
+  Error
+> {
   return Effect.tryPromise({
     try: () => readToolOutputsFileForIngestImpl(userPath),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -175,6 +178,6 @@ export async function readToolOutputsFileForIngest(
 ): Promise<
   | { ok: true; text: string; displayPath: string; absolutePath: string }
   | { ok: false; error: string }
->  {
+> {
   return Effect.runPromise(readToolOutputsFileForIngestEffect(userPath));
 }

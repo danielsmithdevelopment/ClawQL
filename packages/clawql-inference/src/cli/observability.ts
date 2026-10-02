@@ -13,7 +13,7 @@ export type InferenceLogsOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceLogsImpl(options: InferenceLogsOptions = {}): Promise<number>  {
+async function runInferenceLogsImpl(options: InferenceLogsOptions = {}): Promise<number> {
   const store = createInferenceStore({ env: options.env });
   if (!store) {
     console.error("Inference store is disabled (CLAWQL_INFERENCE_STORE=off)");
@@ -42,7 +42,9 @@ async function runInferenceLogsImpl(options: InferenceLogsOptions = {}): Promise
   return 0;
 }
 
-export function runInferenceLogsEffect(options: InferenceLogsOptions = {}): Effect.Effect<number, Error> {
+export function runInferenceLogsEffect(
+  options: InferenceLogsOptions = {}
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runInferenceLogsImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -50,7 +52,7 @@ export function runInferenceLogsEffect(options: InferenceLogsOptions = {}): Effe
 }
 
 /** Promise façade — prefer {@link runInferenceLogsEffect} for Effect callers. */
-export async function runInferenceLogs(options: InferenceLogsOptions = {}): Promise<number>  {
+export async function runInferenceLogs(options: InferenceLogsOptions = {}): Promise<number> {
   return Effect.runPromise(runInferenceLogsEffect(options));
 }
 
@@ -60,7 +62,7 @@ export type InferenceTraceOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceTraceImpl(options: InferenceTraceOptions): Promise<number>  {
+async function runInferenceTraceImpl(options: InferenceTraceOptions): Promise<number> {
   if (!options.correlationId?.trim()) {
     console.error("Usage: clawql inference trace --correlation-id <id>");
     return 1;
@@ -89,7 +91,9 @@ async function runInferenceTraceImpl(options: InferenceTraceOptions): Promise<nu
   return 0;
 }
 
-export function runInferenceTraceEffect(options: InferenceTraceOptions): Effect.Effect<number, Error> {
+export function runInferenceTraceEffect(
+  options: InferenceTraceOptions
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runInferenceTraceImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -97,7 +101,7 @@ export function runInferenceTraceEffect(options: InferenceTraceOptions): Effect.
 }
 
 /** Promise façade — prefer {@link runInferenceTraceEffect} for Effect callers. */
-export async function runInferenceTrace(options: InferenceTraceOptions): Promise<number>  {
+export async function runInferenceTrace(options: InferenceTraceOptions): Promise<number> {
   return Effect.runPromise(runInferenceTraceEffect(options));
 }
 
@@ -108,7 +112,7 @@ export type InferenceSpendOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceSpendImpl(options: InferenceSpendOptions = {}): Promise<number>  {
+async function runInferenceSpendImpl(options: InferenceSpendOptions = {}): Promise<number> {
   const store = createInferenceStore({ env: options.env });
   if (!store) {
     console.error("Inference store is disabled (CLAWQL_INFERENCE_STORE=off)");
@@ -134,7 +138,9 @@ async function runInferenceSpendImpl(options: InferenceSpendOptions = {}): Promi
   return 0;
 }
 
-export function runInferenceSpendEffect(options: InferenceSpendOptions = {}): Effect.Effect<number, Error> {
+export function runInferenceSpendEffect(
+  options: InferenceSpendOptions = {}
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runInferenceSpendImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -142,6 +148,6 @@ export function runInferenceSpendEffect(options: InferenceSpendOptions = {}): Ef
 }
 
 /** Promise façade — prefer {@link runInferenceSpendEffect} for Effect callers. */
-export async function runInferenceSpend(options: InferenceSpendOptions = {}): Promise<number>  {
+export async function runInferenceSpend(options: InferenceSpendOptions = {}): Promise<number> {
   return Effect.runPromise(runInferenceSpendEffect(options));
 }

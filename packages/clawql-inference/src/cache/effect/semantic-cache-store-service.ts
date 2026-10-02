@@ -6,7 +6,9 @@ import type {
 } from "../types.js";
 
 /** Effect wrapper for semantic cache store lookup/put. */
-export class SemanticCacheStoreService extends Context.Service<SemanticCacheStoreService, {
+export class SemanticCacheStoreService extends Context.Service<
+  SemanticCacheStoreService,
+  {
     readonly lookup: (input: {
       modelId: string;
       embedding: Float32Array;
@@ -15,7 +17,8 @@ export class SemanticCacheStoreService extends Context.Service<SemanticCacheStor
     }) => Effect.Effect<SemanticCacheLookupResult | null>;
     readonly put: (entry: SemanticCacheEntry) => Effect.Effect<void>;
     readonly invalidateByTags: (tags: string[], now?: number) => Effect.Effect<number>;
-  }>()("clawql/SemanticCacheStoreService") {}
+  }
+>()("clawql/SemanticCacheStoreService") {}
 
 export function semanticCacheStoreLiveLayer(
   store: SemanticCacheStore

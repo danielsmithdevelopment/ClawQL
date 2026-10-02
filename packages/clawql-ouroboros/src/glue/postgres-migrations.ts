@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import { Effect } from "effect";
 
-async function runOuroborosPostgresMigrationsImpl(client: PoolClient): Promise<void>  {
+async function runOuroborosPostgresMigrationsImpl(client: PoolClient): Promise<void> {
   await client.query(`
     CREATE TABLE IF NOT EXISTS clawql_ouroboros_events (
       id bigserial PRIMARY KEY,
@@ -21,7 +21,9 @@ async function runOuroborosPostgresMigrationsImpl(client: PoolClient): Promise<v
   `);
 }
 
-export function runOuroborosPostgresMigrationsEffect(client: PoolClient): Effect.Effect<void, Error> {
+export function runOuroborosPostgresMigrationsEffect(
+  client: PoolClient
+): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () => runOuroborosPostgresMigrationsImpl(client),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -29,6 +31,6 @@ export function runOuroborosPostgresMigrationsEffect(client: PoolClient): Effect
 }
 
 /** Promise façade — prefer {@link runOuroborosPostgresMigrationsEffect} for Effect callers. */
-export async function runOuroborosPostgresMigrations(client: PoolClient): Promise<void>  {
+export async function runOuroborosPostgresMigrations(client: PoolClient): Promise<void> {
   return Effect.runPromise(runOuroborosPostgresMigrationsEffect(client));
 }

@@ -18,18 +18,18 @@ Effect **v4.0.0** is stable GA (2026-10-01). This document tracks the production
 
 ## Cutover inventory (v4)
 
-| Area | Status |
-|------|--------|
-| Root / workspace `effect` pin | `4.0.0` |
-| `@effect/opentelemetry` | `4.0.0` (`OtelTracer` / `Resource` bridge in `src/composition/effect-otel-bridge.ts`) |
-| `@effect/platform` | **Removed** (folded into `effect`) |
-| `Context.Tag` → `Context.Service` | Done (codemod + `Context.Service.Shape`) |
-| `Effect.catchAll` → `Effect.catch` | Done |
-| `Effect.either` / `Either` → `Effect.result` / `Result` | Done |
-| Schema MCP input modules | Migrated (`annotate`, `check(is*)`, `decodeUnknownEffect`, `Union([...])`, `Literals`, `withDecodingDefaultType`) |
-| All `packages/*` build + DTS | Green (30/30) |
-| Root `tsc --noEmit` | Green |
-| CI guard | Detects `Context.Service` (legacy Tag still accepted during partial trees) |
+| Area                                                    | Status                                                                                                            |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Root / workspace `effect` pin                           | `4.0.0`                                                                                                           |
+| `@effect/opentelemetry`                                 | `4.0.0` (`OtelTracer` / `Resource` bridge in `src/composition/effect-otel-bridge.ts`)                             |
+| `@effect/platform`                                      | **Removed** (folded into `effect`)                                                                                |
+| `Context.Tag` → `Context.Service`                       | Done (codemod + `Context.Service.Shape`)                                                                          |
+| `Effect.catchAll` → `Effect.catch`                      | Done                                                                                                              |
+| `Effect.either` / `Either` → `Effect.result` / `Result` | Done                                                                                                              |
+| Schema MCP input modules                                | Migrated (`annotate`, `check(is*)`, `decodeUnknownEffect`, `Union([...])`, `Literals`, `withDecodingDefaultType`) |
+| All `packages/*` build + DTS                            | Green (30/30)                                                                                                     |
+| Root `tsc --noEmit`                                     | Green                                                                                                             |
+| CI guard                                                | Detects `Context.Service` (legacy Tag still accepted during partial trees)                                        |
 
 ### Codemods (scripts/)
 

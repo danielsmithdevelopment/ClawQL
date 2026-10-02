@@ -41,7 +41,7 @@ export function resolveAccountingMapPath(env: NodeJS.ProcessEnv = process.env): 
 /** @deprecated Prefer AccountingMapService.load — Promise façade retained for legacy callers. */
 async function loadAccountingMapImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<AccountingMapFile>  {
+): Promise<AccountingMapFile> {
   const path = resolveAccountingMapPath(env);
   try {
     const raw = await readFile(path, "utf8");
@@ -66,7 +66,7 @@ export function loadAccountingMapEffect(
 /** Promise façade — prefer {@link loadAccountingMapEffect} for Effect callers. */
 export async function loadAccountingMap(
   env: NodeJS.ProcessEnv = process.env
-): Promise<AccountingMapFile>  {
+): Promise<AccountingMapFile> {
   return Effect.runPromise(loadAccountingMapEffect(env));
 }
 
@@ -87,12 +87,15 @@ export class AccountingMapError extends Data.TaggedError("AccountingMapError")<{
 }> {}
 
 /** Effect surface over the chart-of-accounts / GL mapping (accounting-map.json overrides). */
-export class AccountingMapService extends Context.Service<AccountingMapService, {
+export class AccountingMapService extends Context.Service<
+  AccountingMapService,
+  {
     readonly load: () => Effect.Effect<AccountingMapFile, AccountingMapError>;
     readonly resolveGlCode: (
       category: AccountingCategory
     ) => Effect.Effect<string, AccountingMapError>;
-  }>()("clawql/AccountingMapService") {}
+  }
+>()("clawql/AccountingMapService") {}
 
 export function accountingMapLiveLayer(
   env: NodeJS.ProcessEnv = process.env

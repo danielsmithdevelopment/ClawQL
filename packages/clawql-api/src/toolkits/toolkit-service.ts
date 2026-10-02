@@ -73,7 +73,9 @@ export const resolveToolkitToProvidersComposition = (
     return out;
   });
 
-export class ToolkitService extends Context.Service<ToolkitService, {
+export class ToolkitService extends Context.Service<
+  ToolkitService,
+  {
     readonly list: () => Effect.Effect<readonly ClawqlToolkit[]>;
     readonly get: (toolkitId: string) => Effect.Effect<ClawqlToolkit, ToolkitNotFoundError>;
     readonly resolve: (toolkitId: string) => Effect.Effect<ClawqlToolkit, ToolkitNotFoundError>;
@@ -83,7 +85,8 @@ export class ToolkitService extends Context.Service<ToolkitService, {
     readonly readToolkitIdFromInstanceEnv: (
       env?: NodeJS.ProcessEnv
     ) => Effect.Effect<string | undefined>;
-  }>()("clawql/ToolkitService") {}
+  }
+>()("clawql/ToolkitService") {}
 
 export const ToolkitLive = Layer.succeed(
   ToolkitService,

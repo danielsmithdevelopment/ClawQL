@@ -91,7 +91,7 @@ async function stagePendingActionImpl(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord>  {
+): Promise<PendingActionRecord> {
   const dir = resolvePendingActionsDir(env);
   await mkdir(dir, { recursive: true });
   const actionId = randomUUID();
@@ -148,7 +148,7 @@ export async function stagePendingAction(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord>  {
+): Promise<PendingActionRecord> {
   return Effect.runPromise(stagePendingActionEffect(input, env));
 }
 
@@ -156,7 +156,7 @@ export async function stagePendingAction(
 async function loadPendingActionImpl(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined>  {
+): Promise<PendingActionRecord | undefined> {
   try {
     const raw = await readFile(actionPath(actionId.trim(), env), "utf8");
     return JSON.parse(raw) as PendingActionRecord;
@@ -180,7 +180,7 @@ export function loadPendingActionEffect(
 export async function loadPendingAction(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined>  {
+): Promise<PendingActionRecord | undefined> {
   return Effect.runPromise(loadPendingActionEffect(actionId, env));
 }
 
@@ -188,7 +188,7 @@ export async function loadPendingAction(
 async function savePendingActionImpl(
   record: PendingActionRecord,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   await mkdir(resolvePendingActionsDir(env), { recursive: true });
   await writeFile(actionPath(record.actionId, env), `${JSON.stringify(record, null, 2)}\n`, {
     mode: 0o600,
@@ -209,7 +209,7 @@ export function savePendingActionEffect(
 export async function savePendingAction(
   record: PendingActionRecord,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(savePendingActionEffect(record, env));
 }
 
@@ -229,7 +229,7 @@ async function assertPendingCodeImpl(
   actionId: string,
   code: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord>  {
+): Promise<PendingActionRecord> {
   const loaded = await loadPendingAction(actionId, env);
   if (!loaded) throw new Error(`Unknown pending action: ${actionId}`);
   const record = materializeExpiry(loaded);
@@ -258,7 +258,7 @@ export async function assertPendingCode(
   actionId: string,
   code: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord>  {
+): Promise<PendingActionRecord> {
   return Effect.runPromise(assertPendingCodeEffect(actionId, code, env));
 }
 
@@ -272,7 +272,7 @@ async function listPendingActionsImpl(
     reason?: string;
     kindPrefix?: "deposit" | "cashout";
   }
-): Promise<PendingActionRecord[]>  {
+): Promise<PendingActionRecord[]> {
   const dir = resolvePendingActionsDir(env);
   let names: string[];
   try {
@@ -334,7 +334,7 @@ export async function listPendingActions(
     reason?: string;
     kindPrefix?: "deposit" | "cashout";
   }
-): Promise<PendingActionRecord[]>  {
+): Promise<PendingActionRecord[]> {
   return Effect.runPromise(listPendingActionsEffect(env, filter));
 }
 
@@ -351,7 +351,7 @@ async function findRecruitDepositByKeyImpl(
     reason: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined>  {
+): Promise<PendingActionRecord | undefined> {
   const rid = input.recruitmentId.trim();
   const agentId = input.agentId.trim();
   const reason = input.reason.trim();
@@ -391,7 +391,7 @@ export async function findRecruitDepositByKey(
     reason: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined>  {
+): Promise<PendingActionRecord | undefined> {
   return Effect.runPromise(findRecruitDepositByKeyEffect(input, env));
 }
 
@@ -399,7 +399,7 @@ export async function findRecruitDepositByKey(
 async function deletePendingActionImpl(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   try {
     await unlink(actionPath(actionId, env));
   } catch (err) {
@@ -421,7 +421,7 @@ export function deletePendingActionEffect(
 export async function deletePendingAction(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(deletePendingActionEffect(actionId, env));
 }
 
@@ -435,7 +435,9 @@ type ListPendingActionsFilter = NonNullable<Parameters<typeof listPendingActions
 type FindRecruitDepositInput = Parameters<typeof findRecruitDepositByKey>[0];
 
 /** Effect surface over the file-backed PENDING_ACTIONS two-phase-commit staging store. */
-export class PendingActionsService extends Context.Service<PendingActionsService, {
+export class PendingActionsService extends Context.Service<
+  PendingActionsService,
+  {
     readonly stage: (
       input: StagePendingActionInput
     ) => Effect.Effect<PendingActionRecord, PendingActionsError>;
@@ -454,7 +456,8 @@ export class PendingActionsService extends Context.Service<PendingActionsService
       input: FindRecruitDepositInput
     ) => Effect.Effect<PendingActionRecord | undefined, PendingActionsError>;
     readonly delete: (actionId: string) => Effect.Effect<void, PendingActionsError>;
-  }>()("clawql/PendingActionsService") {}
+  }
+>()("clawql/PendingActionsService") {}
 
 export function pendingActionsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

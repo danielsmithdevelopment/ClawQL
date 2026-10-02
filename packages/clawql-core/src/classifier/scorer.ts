@@ -41,13 +41,16 @@ export type FastDecisionScoreRequest = {
   readonly capabilityOntology?: CapabilityOntology;
 };
 
-export class FastDecisionScorer extends Context.Service<FastDecisionScorer, {
+export class FastDecisionScorer extends Context.Service<
+  FastDecisionScorer,
+  {
     readonly score: (
       request: FastDecisionScoreRequest
     ) => Effect.Effect<readonly FastDecisionScore[]>;
     /** Backend id recorded in WORM metadata (gliner2, needle3-stub, heuristic, …). */
     readonly backendId: () => string;
-  }>()("clawql/FastDecisionScorer") {}
+  }
+>()("clawql/FastDecisionScorer") {}
 
 function clamp01(n: number): number {
   if (Number.isNaN(n)) return 0;

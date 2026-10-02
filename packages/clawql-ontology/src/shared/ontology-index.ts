@@ -39,7 +39,9 @@ function isExpired(entry: IndexedEntity, now: number): boolean {
   return entry.expiresAt !== null && entry.expiresAt <= now;
 }
 
-export class OntologyIndexService extends Context.Service<OntologyIndexService, {
+export class OntologyIndexService extends Context.Service<
+  OntologyIndexService,
+  {
     readonly registerDynamic: (
       entity: CQEEntity,
       options?: RegisterDynamicOptions
@@ -55,7 +57,8 @@ export class OntologyIndexService extends Context.Service<OntologyIndexService, 
     readonly listRecords: (entityId: string) => Effect.Effect<DynamicRecord[]>;
     readonly clearSession: () => Effect.Effect<void>;
     readonly resetForTests: () => Effect.Effect<void>;
-  }>()("clawql/OntologyIndexService") {}
+  }
+>()("clawql/OntologyIndexService") {}
 
 export function makeOntologyIndexLive(): Layer.Layer<OntologyIndexService> {
   const state = createState();

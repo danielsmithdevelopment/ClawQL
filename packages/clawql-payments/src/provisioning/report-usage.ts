@@ -19,14 +19,17 @@ import type { StripeApiError, StripeNotConfigured } from "../stripe/stripe-error
 import { ProvisionOrgError } from "./provision-org-service.js";
 import type { ReportUsageToStripeInput, ReportUsageToStripeResult } from "./types.js";
 
-export class ReportUsageService extends Context.Service<ReportUsageService, {
+export class ReportUsageService extends Context.Service<
+  ReportUsageService,
+  {
     readonly reportUsageToStripe: (
       input: ReportUsageToStripeInput
     ) => Effect.Effect<
       ReportUsageToStripeResult,
       ProvisionOrgError | PaymentError | ConfigError | StripeApiError | StripeNotConfigured
     >;
-  }>()("clawql/ReportUsageService") {}
+  }
+>()("clawql/ReportUsageService") {}
 
 function currentMonthUtc(): string {
   const now = new Date();

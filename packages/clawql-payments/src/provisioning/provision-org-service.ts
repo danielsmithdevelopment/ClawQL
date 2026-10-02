@@ -36,14 +36,17 @@ export class ProvisionOrgError extends Data.TaggedError("ProvisionOrgError")<{
   readonly cause?: unknown;
 }> {}
 
-export class ProvisionOrgService extends Context.Service<ProvisionOrgService, {
+export class ProvisionOrgService extends Context.Service<
+  ProvisionOrgService,
+  {
     readonly provisionOrg: (
       input: ProvisionOrgInput
     ) => Effect.Effect<
       ProvisionOrgResult,
       ProvisionOrgError | PaymentError | ApiKeyStoreError | LedgerError
     >;
-  }>()("clawql/ProvisionOrgService") {}
+  }
+>()("clawql/ProvisionOrgService") {}
 
 function parseProvisionInput(input: ProvisionOrgInput): Effect.Effect<
   {
@@ -116,9 +119,11 @@ export function provisionOrgLiveLayer(
           }
 
           const parsed = yield* parseProvisionInput(input);
-          const existing = yield* orgs.get(parsed.orgId).pipe(
-            Effect.mapError((cause) => mapOrgCreditsError(cause, "Failed to load org store"))
-          );
+          const existing = yield* orgs
+            .get(parsed.orgId)
+            .pipe(
+              Effect.mapError((cause) => mapOrgCreditsError(cause, "Failed to load org store"))
+            );
 
           let org: OrgRecord;
           if (existing) {

@@ -5,9 +5,12 @@ import { DEFAULT_OBSIDIAN_VAULT_PATH, getObsidianVaultPath } from "../vault/conf
 export { DEFAULT_OBSIDIAN_VAULT_PATH };
 
 /** Effect service for Obsidian vault path configuration. */
-export class VaultConfigService extends Context.Service<VaultConfigService, {
+export class VaultConfigService extends Context.Service<
+  VaultConfigService,
+  {
     readonly getObsidianVaultPath: () => string | null;
-  }>()("clawql/VaultConfigService") {}
+  }
+>()("clawql/VaultConfigService") {}
 
 export function vaultConfigServiceFromEnv(env: NodeJS.ProcessEnv = process.env) {
   return VaultConfigService.of({

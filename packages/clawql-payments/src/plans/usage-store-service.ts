@@ -60,7 +60,9 @@ function saveUsageFileEffect(
 }
 
 /** Effect service for monthly plan usage counters. */
-export class UsageStoreService extends Context.Service<UsageStoreService, {
+export class UsageStoreService extends Context.Service<
+  UsageStoreService,
+  {
     readonly getUsage: (
       tenantId: string,
       month?: string
@@ -71,7 +73,8 @@ export class UsageStoreService extends Context.Service<UsageStoreService, {
       amount?: number,
       planId?: ClawqlPlanId
     ) => Effect.Effect<MonthlyUsage, PaymentError>;
-  }>()("clawql/UsageStoreService") {}
+  }
+>()("clawql/UsageStoreService") {}
 
 export function usageStoreLiveLayer(
   env: NodeJS.ProcessEnv = process.env

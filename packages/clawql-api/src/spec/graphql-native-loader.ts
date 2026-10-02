@@ -172,7 +172,7 @@ async function loadOne(cfg: GraphQLSourceConfig): Promise<Operation[]> {
 /** Exported for tests with injected configs. */
 async function loadGraphqlNativeOperationsFromConfigsImpl(
   configs: GraphQLSourceConfig[]
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   const out: Operation[] = [];
   for (const cfg of configs) {
     try {
@@ -196,11 +196,11 @@ export function loadGraphqlNativeOperationsFromConfigsEffect(
 /** Promise façade — prefer {@link loadGraphqlNativeOperationsFromConfigsEffect} for Effect callers. */
 export async function loadGraphqlNativeOperationsFromConfigs(
   configs: GraphQLSourceConfig[]
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   return Effect.runPromise(loadGraphqlNativeOperationsFromConfigsEffect(configs));
 }
 
-async function loadGraphqlNativeOperationsImpl(): Promise<Operation[]>  {
+async function loadGraphqlNativeOperationsImpl(): Promise<Operation[]> {
   return loadGraphqlNativeOperationsFromConfigs(parseGraphQLSourcesEnv());
 }
 
@@ -212,6 +212,6 @@ export function loadGraphqlNativeOperationsEffect(): Effect.Effect<Operation[], 
 }
 
 /** Promise façade — prefer {@link loadGraphqlNativeOperationsEffect} for Effect callers. */
-export async function loadGraphqlNativeOperations(): Promise<Operation[]>  {
+export async function loadGraphqlNativeOperations(): Promise<Operation[]> {
   return Effect.runPromise(loadGraphqlNativeOperationsEffect());
 }

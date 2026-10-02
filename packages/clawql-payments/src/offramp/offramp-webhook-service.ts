@@ -31,7 +31,9 @@ export type ProcessOfframpWebhookResult = {
 };
 
 /** Effect service for MoonPay / Transak off-ramp webhook verify + WORM settle. */
-export class OfframpWebhookService extends Context.Service<OfframpWebhookService, {
+export class OfframpWebhookService extends Context.Service<
+  OfframpWebhookService,
+  {
     readonly processMoonpay: (input: {
       rawBody: string;
       signatureHeader: string;
@@ -53,7 +55,8 @@ export class OfframpWebhookService extends Context.Service<OfframpWebhookService
       correlationId?: string;
       requireSignature?: boolean;
     }) => Effect.Effect<ProcessOfframpWebhookResult, OffRampWebhookError>;
-  }>()("clawql/OfframpWebhookService") {}
+  }
+>()("clawql/OfframpWebhookService") {}
 
 function moonpayAmountUsd(data: Record<string, unknown>): number | undefined {
   const base =

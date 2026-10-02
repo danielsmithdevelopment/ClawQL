@@ -32,7 +32,7 @@ export type AppsV1PatchDeployment = {
 async function rolloutMcpDeploymentImpl(
   target: McpRolloutTarget,
   apps: AppsV1PatchDeployment
-): Promise<void>  {
+): Promise<void> {
   const restartedAt = new Date().toISOString();
   const patch = {
     spec: {
@@ -68,6 +68,6 @@ export function rolloutMcpDeploymentEffect(
 export async function rolloutMcpDeployment(
   target: McpRolloutTarget,
   apps: AppsV1PatchDeployment
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(rolloutMcpDeploymentEffect(target, apps));
 }

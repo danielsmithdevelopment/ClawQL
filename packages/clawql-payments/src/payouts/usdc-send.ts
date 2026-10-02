@@ -190,7 +190,9 @@ export function sendUsdcPayoutEffect(
   return Effect.gen(function* () {
     const to = input.to.trim();
     if (!/^0x[a-fA-F0-9]{40}$/.test(to)) {
-      return yield* Effect.fail(new UsdcSendError({ reason: `Invalid USDC wallet address: ${to}` }));
+      return yield* Effect.fail(
+        new UsdcSendError({ reason: `Invalid USDC wallet address: ${to}` })
+      );
     }
     if (!Number.isFinite(input.amountUsd) || input.amountUsd <= 0) {
       return yield* Effect.fail(new UsdcSendError({ reason: "amountUsd must be > 0" }));
@@ -325,7 +327,9 @@ export class UsdcSendService extends Context.Service<
   }
 >()("clawql/UsdcSendService") {}
 
-export function usdcSendLiveLayer(env: NodeJS.ProcessEnv = process.env): Layer.Layer<UsdcSendService> {
+export function usdcSendLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<UsdcSendService> {
   return Layer.succeed(
     UsdcSendService,
     UsdcSendService.of({

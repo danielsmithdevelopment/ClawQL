@@ -101,10 +101,7 @@ export async function readManifestFile(manifestPath: string): Promise<ReleaseMan
 /** Collect + write a release manifest bundle (Effect-primary). */
 export function buildReleaseManifestEffect(
   options: CollectOptions & { copyArtifacts?: boolean }
-): Effect.Effect<
-  { manifest: ReleaseManifestV01; bundleDir: string; manifestPath: string },
-  Error
-> {
+): Effect.Effect<{ manifest: ReleaseManifestV01; bundleDir: string; manifestPath: string }, Error> {
   return Effect.tryPromise({ try: () => buildReleaseManifestImpl(options), catch: fsError });
 }
 

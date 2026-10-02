@@ -444,9 +444,7 @@ async function markMoneyRequestPaidImpl(
 }
 
 /** Private IO helper backing {@link CreditsRequestsService.reset}. */
-async function resetMoneyRequestsForTestsImpl(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+async function resetMoneyRequestsForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile(emptyFile(), env);
 }
 
@@ -462,7 +460,7 @@ export function resetMoneyRequestsForTestsEffect(
 /** Promise façade — prefer {@link resetMoneyRequestsForTestsEffect} for Effect callers. */
 export async function resetMoneyRequestsForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(resetMoneyRequestsForTestsEffect(env));
 }
 
@@ -482,7 +480,9 @@ type MarkAcceptedInput = {
 type MarkPaidInput = { requestId: string; transferId: string };
 
 /** Effect surface over money requests / invoices. */
-export class CreditsRequestsService extends Context.Service<CreditsRequestsService, {
+export class CreditsRequestsService extends Context.Service<
+  CreditsRequestsService,
+  {
     readonly get: (requestId: string) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
     readonly list: (
       options?: ListMoneyRequestsOptions
@@ -500,7 +500,8 @@ export class CreditsRequestsService extends Context.Service<CreditsRequestsServi
       input: MarkPaidInput
     ) => Effect.Effect<MoneyRequest | undefined, RequestsError>;
     readonly reset: () => Effect.Effect<void, RequestsError>;
-  }>()("clawql/CreditsRequestsService") {}
+  }
+>()("clawql/CreditsRequestsService") {}
 
 export function creditsRequestsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

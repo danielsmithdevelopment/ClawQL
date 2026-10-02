@@ -8,7 +8,7 @@ export type InferenceFallbackShowOptions = {
 
 async function runInferenceFallbackShowImpl(
   options: InferenceFallbackShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   const config = loadFallbackConfig(env);
   const payload = {
@@ -53,6 +53,6 @@ export function runInferenceFallbackShowEffect(
 /** Promise façade — prefer {@link runInferenceFallbackShowEffect} for Effect callers. */
 export async function runInferenceFallbackShow(
   options: InferenceFallbackShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceFallbackShowEffect(options));
 }

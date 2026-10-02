@@ -31,7 +31,7 @@ async function tryAcquirePipelineAdvisoryLockImpl(
   lockKey: string,
   env: NodeJS.ProcessEnv = process.env,
   deps: { getPool?: typeof getInferencePgPool } = {}
-): Promise<PipelineAdvisoryLockResult>  {
+): Promise<PipelineAdvisoryLockResult> {
   const pool = (deps.getPool ?? getInferencePgPool)(env);
   if (!pool) {
     return { acquired: true, backend: "none", release: async () => {} };
@@ -87,6 +87,6 @@ export async function tryAcquirePipelineAdvisoryLock(
   lockKey: string,
   env: NodeJS.ProcessEnv = process.env,
   deps: { getPool?: typeof getInferencePgPool } = {}
-): Promise<PipelineAdvisoryLockResult>  {
+): Promise<PipelineAdvisoryLockResult> {
   return Effect.runPromise(tryAcquirePipelineAdvisoryLockEffect(lockKey, env, deps));
 }

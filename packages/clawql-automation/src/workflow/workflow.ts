@@ -299,7 +299,7 @@ async function patchCronSuspend(
 
 async function dispatchWorkflowToolCoreImpl(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   const parsedSoft = parseWorkflowToolParams(params);
   if (!parsedSoft.ok) return jsonResponse({ ok: false, error: parsedSoft.error });
   return runWorkflowParsedOperation(parsedSoft.value);
@@ -317,7 +317,7 @@ export function dispatchWorkflowToolCoreEffect(
 /** Promise façade — prefer {@link dispatchWorkflowToolCoreEffect} for Effect callers. */
 export async function dispatchWorkflowToolCore(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(dispatchWorkflowToolCoreEffect(params));
 }
 
@@ -337,7 +337,7 @@ export function parseWorkflowToolParams(
 /** K8s / wait dispatch for a Zod-validated workflow payload. */
 async function runWorkflowParsedOperationImpl(
   parsed: WorkflowParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   try {
     switch (parsed.operation) {
       case "submit": {
@@ -771,7 +771,7 @@ export function runWorkflowParsedOperationEffect(
 /** Promise façade — prefer {@link runWorkflowParsedOperationEffect} for Effect callers. */
 export async function runWorkflowParsedOperation(
   parsed: WorkflowParsedInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(runWorkflowParsedOperationEffect(parsed));
 }
 

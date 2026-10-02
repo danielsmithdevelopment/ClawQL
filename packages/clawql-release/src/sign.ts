@@ -152,7 +152,11 @@ export function enableSignedCommitsByDefaultEffect(rootDir: string): Effect.Effe
       }).stdout;
       if (signingKey) {
         runCommand("git", ["config", "commit.gpgsign", "true"], { cwd: rootDir });
-        return { enabled: true, format: "openpgp" as const, detail: `enabled with existing signingkey` };
+        return {
+          enabled: true,
+          format: "openpgp" as const,
+          detail: `enabled with existing signingkey`,
+        };
       }
 
       // Configure SSH signing with a managed key (git >= 2.34)
@@ -190,7 +194,11 @@ export function enableSignedCommitsByDefaultEffect(rootDir: string): Effect.Effe
         runCommand("git", ["config", "gpg.ssh.allowedSignersFile", allowed], { cwd: rootDir });
       }
 
-      return { enabled: true, format: "ssh" as const, detail: `configured SSH signing key at ${sshKey}` };
+      return {
+        enabled: true,
+        format: "ssh" as const,
+        detail: `configured SSH signing key at ${sshKey}`,
+      };
     },
     catch: fsError,
   });

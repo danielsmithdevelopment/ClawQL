@@ -139,7 +139,7 @@ async function commitVaultAfterIngestImpl(input: {
   path?: string;
   title?: string;
   correlationId?: string;
-}): Promise<GitCommitOnIngestResult>  {
+}): Promise<GitCommitOnIngestResult> {
   if (!gitCommitOnIngest()) {
     return { committed: false, skipped: "git commit-on-ingest disabled" };
   }
@@ -210,6 +210,6 @@ export async function commitVaultAfterIngest(input: {
   path?: string;
   title?: string;
   correlationId?: string;
-}): Promise<GitCommitOnIngestResult>  {
+}): Promise<GitCommitOnIngestResult> {
   return Effect.runPromise(commitVaultAfterIngestEffect(input));
 }

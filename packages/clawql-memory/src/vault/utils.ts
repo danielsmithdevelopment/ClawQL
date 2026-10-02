@@ -97,9 +97,7 @@ export function withVaultWriteLockEffect<A, E>(
  * Promise façade — `fn` may remain Promise-based for erase host edge under lock.
  */
 export async function withVaultWriteLock<T>(vaultRoot: string, fn: () => Promise<T>): Promise<T> {
-  return Effect.runPromise(
-    withVaultWriteLockEffect(vaultRoot, () => fromPromise(fn))
-  );
+  return Effect.runPromise(withVaultWriteLockEffect(vaultRoot, () => fromPromise(fn)));
 }
 
 /** Read vault file as UTF-8; decrypts crypto-shred envelopes when the note key exists. */

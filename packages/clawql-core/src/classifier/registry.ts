@@ -5,12 +5,15 @@
 import { Context, Effect, Layer, Ref } from "effect";
 import type { FastDecisionUseSite } from "./types.js";
 
-export class FastDecisionRegistry extends Context.Service<FastDecisionRegistry, {
+export class FastDecisionRegistry extends Context.Service<
+  FastDecisionRegistry,
+  {
     readonly register: (useSite: FastDecisionUseSite) => Effect.Effect<void>;
     readonly unregister: (useSiteId: string) => Effect.Effect<boolean>;
     readonly get: (useSiteId: string) => Effect.Effect<FastDecisionUseSite | undefined>;
     readonly list: () => Effect.Effect<readonly FastDecisionUseSite[]>;
-  }>()("clawql/FastDecisionRegistry") {}
+  }
+>()("clawql/FastDecisionRegistry") {}
 
 export const InMemoryFastDecisionRegistryLive: Layer.Layer<FastDecisionRegistry> = Layer.effect(
   FastDecisionRegistry,

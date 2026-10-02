@@ -28,7 +28,7 @@ export function resolveFallbackChainsPath(env: NodeJS.ProcessEnv = process.env):
 
 async function loadFallbackChainsFileImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<Partial<FallbackChainMap>>  {
+): Promise<Partial<FallbackChainMap>> {
   return loadFallbackChainsFileSync(env);
 }
 
@@ -44,7 +44,7 @@ export function loadFallbackChainsFileEffect(
 /** Promise façade — prefer {@link loadFallbackChainsFileEffect} for Effect callers. */
 export async function loadFallbackChainsFile(
   env: NodeJS.ProcessEnv = process.env
-): Promise<Partial<FallbackChainMap>>  {
+): Promise<Partial<FallbackChainMap>> {
   return Effect.runPromise(loadFallbackChainsFileEffect(env));
 }
 
@@ -67,7 +67,7 @@ function loadFallbackChainsFileSync(
 async function saveFallbackChainsFileImpl(
   chains: FallbackChainMap,
   env: NodeJS.ProcessEnv = process.env
-): Promise<string>  {
+): Promise<string> {
   const path = resolveFallbackChainsPath(env);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(chains, null, 2)}\n`, "utf8");
@@ -88,7 +88,7 @@ export function saveFallbackChainsFileEffect(
 export async function saveFallbackChainsFile(
   chains: FallbackChainMap,
   env: NodeJS.ProcessEnv = process.env
-): Promise<string>  {
+): Promise<string> {
   return Effect.runPromise(saveFallbackChainsFileEffect(chains, env));
 }
 
@@ -126,7 +126,7 @@ export function loadFallbackConfig(env: NodeJS.ProcessEnv = process.env): Fallba
 /** @deprecated Use {@link loadFallbackConfig} (sync). */
 async function loadFallbackConfigAsyncImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<FallbackConfig>  {
+): Promise<FallbackConfig> {
   return loadFallbackConfig(env);
 }
 
@@ -142,7 +142,7 @@ export function loadFallbackConfigAsyncEffect(
 /** Promise façade — prefer {@link loadFallbackConfigAsyncEffect} for Effect callers. */
 export async function loadFallbackConfigAsync(
   env: NodeJS.ProcessEnv = process.env
-): Promise<FallbackConfig>  {
+): Promise<FallbackConfig> {
   return Effect.runPromise(loadFallbackConfigAsyncEffect(env));
 }
 

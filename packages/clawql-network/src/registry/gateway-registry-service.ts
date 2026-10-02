@@ -21,11 +21,14 @@ export type GatewayRegistryFile = {
   readonly gateways: Record<string, GatewayRecord>;
 };
 
-export class GatewayRegistryService extends Context.Service<GatewayRegistryService, {
+export class GatewayRegistryService extends Context.Service<
+  GatewayRegistryService,
+  {
     readonly registerGateway: (input: RegisterGatewayInput) => Effect.Effect<GatewayRecord>;
     readonly heartbeat: (gatewayId: string, orgId: string) => Effect.Effect<GatewayRecord | null>;
     readonly listMeshPeers: (orgId: string) => Effect.Effect<readonly GatewayRecord[]>;
-  }>()("clawql-network/GatewayRegistryService") {}
+  }
+>()("clawql-network/GatewayRegistryService") {}
 
 export const gatewayRegistryPath = (orgId: string, home?: string): string =>
   join(networkRoot(home ?? defaultClawqlHome()), "registry", "orgs", orgId, "gateways.json");

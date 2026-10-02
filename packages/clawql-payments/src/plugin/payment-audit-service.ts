@@ -11,7 +11,9 @@ import type { PaymentWormRecord } from "../audit/chain.js";
 import { PaymentError } from "../errors/payment-errors.js";
 
 /** Effect service for WORM payment audit persistence. */
-export class PaymentAuditService extends Context.Service<PaymentAuditService, {
+export class PaymentAuditService extends Context.Service<
+  PaymentAuditService,
+  {
     readonly store: PaymentAuditStore;
     readonly append: (entry: PaymentWormEntry) => Effect.Effect<PaymentWormRecord, PaymentError>;
     /** Persist + mirror to in-process audit ring buffer and optional Loki push. */
@@ -21,7 +23,8 @@ export class PaymentAuditService extends Context.Service<PaymentAuditService, {
     readonly list: (limit?: number) => Effect.Effect<PaymentWormEntry[], PaymentError>;
     readonly verify: () => Effect.Effect<PaymentAuditVerifyResult, PaymentError>;
     readonly reset: () => Effect.Effect<void, PaymentError>;
-  }>()("clawql/PaymentAuditService") {}
+  }
+>()("clawql/PaymentAuditService") {}
 
 /**
  * Live payment audit Layer. Requires {@link AuditService} for MCP ring-buffer mirror

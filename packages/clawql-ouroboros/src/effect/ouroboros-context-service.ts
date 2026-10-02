@@ -3,9 +3,12 @@ import type { OuroborosContext } from "../mcp-hooks.js";
 import { getOuroborosContext } from "../plugin/context.js";
 
 /** Effect service for the Ouroboros loop + event store context. */
-export class OuroborosContextService extends Context.Service<OuroborosContextService, {
+export class OuroborosContextService extends Context.Service<
+  OuroborosContextService,
+  {
     readonly getContext: () => OuroborosContext;
-  }>()("clawql/OuroborosContextService") {}
+  }
+>()("clawql/OuroborosContextService") {}
 
 export function ouroborosContextLiveLayer(): Layer.Layer<OuroborosContextService> {
   return Layer.succeed(

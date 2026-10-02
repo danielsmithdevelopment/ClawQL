@@ -12,7 +12,7 @@ export function resolveDomainAdapterMapPath(env: NodeJS.ProcessEnv = process.env
 
 async function loadDomainAdapterMapImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<DomainAdapterTierMap>  {
+): Promise<DomainAdapterTierMap> {
   try {
     const raw = await readFile(resolveDomainAdapterMapPath(env), "utf8");
     return (JSON.parse(raw) as DomainAdapterTierMap) ?? {};
@@ -33,14 +33,14 @@ export function loadDomainAdapterMapEffect(
 /** Promise façade — prefer {@link loadDomainAdapterMapEffect} for Effect callers. */
 export async function loadDomainAdapterMap(
   env: NodeJS.ProcessEnv = process.env
-): Promise<DomainAdapterTierMap>  {
+): Promise<DomainAdapterTierMap> {
   return Effect.runPromise(loadDomainAdapterMapEffect(env));
 }
 
 async function saveDomainAdapterMapImpl(
   map: DomainAdapterTierMap,
   env: NodeJS.ProcessEnv = process.env
-): Promise<string>  {
+): Promise<string> {
   const path = resolveDomainAdapterMapPath(env);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(map, null, 2)}\n`, "utf8");
@@ -61,7 +61,7 @@ export function saveDomainAdapterMapEffect(
 export async function saveDomainAdapterMap(
   map: DomainAdapterTierMap,
   env: NodeJS.ProcessEnv = process.env
-): Promise<string>  {
+): Promise<string> {
   return Effect.runPromise(saveDomainAdapterMapEffect(map, env));
 }
 
@@ -76,7 +76,7 @@ export type PromoteDomainAdapterInput = {
 /** Promote (or replace) a domain adapter; previous path retained for rollback. */
 async function promoteDomainAdapterImpl(
   input: PromoteDomainAdapterInput
-): Promise<{ path: string; map: DomainAdapterTierMap }>  {
+): Promise<{ path: string; map: DomainAdapterTierMap }> {
   const env = input.env ?? process.env;
   const tier = input.tier ?? "frugal";
   const map = await loadDomainAdapterMap(env);
@@ -107,14 +107,14 @@ export function promoteDomainAdapterEffect(
 /** Promise façade — prefer {@link promoteDomainAdapterEffect} for Effect callers. */
 export async function promoteDomainAdapter(
   input: PromoteDomainAdapterInput
-): Promise<{ path: string; map: DomainAdapterTierMap }>  {
+): Promise<{ path: string; map: DomainAdapterTierMap }> {
   return Effect.runPromise(promoteDomainAdapterEffect(input));
 }
 
 async function rollbackDomainAdapterImpl(
   domain: string,
   options?: { tier?: "frugal" | "standard" | "frontier"; env?: NodeJS.ProcessEnv }
-): Promise<{ path: string; map: DomainAdapterTierMap; rolledBack: boolean }>  {
+): Promise<{ path: string; map: DomainAdapterTierMap; rolledBack: boolean }> {
   const env = options?.env ?? process.env;
   const tier = options?.tier ?? "frugal";
   const map = await loadDomainAdapterMap(env);
@@ -148,7 +148,7 @@ export function rollbackDomainAdapterEffect(
 export async function rollbackDomainAdapter(
   domain: string,
   options?: { tier?: "frugal" | "standard" | "frontier"; env?: NodeJS.ProcessEnv }
-): Promise<{ path: string; map: DomainAdapterTierMap; rolledBack: boolean }>  {
+): Promise<{ path: string; map: DomainAdapterTierMap; rolledBack: boolean }> {
   return Effect.runPromise(rollbackDomainAdapterEffect(domain, options));
 }
 

@@ -59,7 +59,7 @@ function setAtPath(root: Record<string, unknown>, path: string, value: unknown):
 async function redactOntologyPiiFieldsImpl<T>(
   value: T,
   piiFields: string[] | undefined
-): Promise<T>  {
+): Promise<T> {
   if (!piiFields?.length || value == null || typeof value !== "object") {
     return value;
   }
@@ -109,6 +109,6 @@ export function redactOntologyPiiFieldsEffect<T>(
 export async function redactOntologyPiiFields<T>(
   value: T,
   piiFields: string[] | undefined
-): Promise<T>  {
+): Promise<T> {
   return Effect.runPromise(redactOntologyPiiFieldsEffect(value, piiFields));
 }

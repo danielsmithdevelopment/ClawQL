@@ -333,7 +333,7 @@ type EnrichedPayload = MemoryRecallResult & {
  */
 async function enrichLabMemoryRecallImpl(
   result: MemoryRecallResult | unknown
-): Promise<EnrichedPayload>  {
+): Promise<EnrichedPayload> {
   const payload: EnrichedPayload =
     result && typeof result === "object" && "ok" in result
       ? ({ ...(result as MemoryRecallResult) } as EnrichedPayload)
@@ -508,14 +508,14 @@ export function enrichLabMemoryRecallEffect(
 /** Promise façade — prefer {@link enrichLabMemoryRecallEffect} for Effect callers. */
 export async function enrichLabMemoryRecall(
   result: MemoryRecallResult | unknown
-): Promise<EnrichedPayload>  {
+): Promise<EnrichedPayload> {
   return Effect.runPromise(enrichLabMemoryRecallEffect(result));
 }
 
 /** Enrich recall output when `CLAWQL_HARVEY_LAB=1`. */
 async function maybeEnrichHarveyLabRecallImpl(
   result: MemoryRecallResult
-): Promise<MemoryRecallResult>  {
+): Promise<MemoryRecallResult> {
   if (!harveyLabRecallEnabled() || !result.ok) return result;
   return enrichLabMemoryRecall(result);
 }
@@ -532,6 +532,6 @@ export function maybeEnrichHarveyLabRecallEffect(
 /** Promise façade — prefer {@link maybeEnrichHarveyLabRecallEffect} for Effect callers. */
 export async function maybeEnrichHarveyLabRecall(
   result: MemoryRecallResult
-): Promise<MemoryRecallResult>  {
+): Promise<MemoryRecallResult> {
   return Effect.runPromise(maybeEnrichHarveyLabRecallEffect(result));
 }

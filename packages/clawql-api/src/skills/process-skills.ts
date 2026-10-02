@@ -115,7 +115,7 @@ export function unregisterProcessSkills(pluginId: string): Promise<void> {
 }
 
 /** Test helper — clear bound + fallback registries. */
-async function resetProcessSkillsRegistryForTestsImpl(): Promise<void>  {
+async function resetProcessSkillsRegistryForTestsImpl(): Promise<void> {
   boundRegistry = undefined;
   fallbackRegistry = undefined;
 }
@@ -128,7 +128,7 @@ export function resetProcessSkillsRegistryForTestsEffect(): Effect.Effect<void, 
 }
 
 /** Promise façade — prefer {@link resetProcessSkillsRegistryForTestsEffect} for Effect callers. */
-export async function resetProcessSkillsRegistryForTests(): Promise<void>  {
+export async function resetProcessSkillsRegistryForTests(): Promise<void> {
   return Effect.runPromise(resetProcessSkillsRegistryForTestsEffect());
 }
 

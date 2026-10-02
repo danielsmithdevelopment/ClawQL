@@ -26,7 +26,7 @@ function tokenizeEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
 async function tokenizeChatMessagesAsyncImpl(
   messages: ChatMessage[],
   env: NodeJS.ProcessEnv = process.env
-): Promise<ChatMessage[]>  {
+): Promise<ChatMessage[]> {
   if (!tokenizeEnabled(env) || messages.length === 0) return messages;
   const enc = await getEncoding();
   if (!enc) return messages;
@@ -50,7 +50,7 @@ export function tokenizeChatMessagesAsyncEffect(
 export async function tokenizeChatMessagesAsync(
   messages: ChatMessage[],
   env: NodeJS.ProcessEnv = process.env
-): Promise<ChatMessage[]>  {
+): Promise<ChatMessage[]> {
   return Effect.runPromise(tokenizeChatMessagesAsyncEffect(messages, env));
 }
 

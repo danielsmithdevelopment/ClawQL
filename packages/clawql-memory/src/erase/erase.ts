@@ -227,19 +227,11 @@ export function executeMemoryEraseCoreEffect(
         correlationId: input.correlationId,
         wormRef: state.contentHash ? `sha256:${state.contentHash}` : null,
         detail: {
-          erasedStores: [
-            "vault",
-            "memory.db",
-            "pgvector",
-            "ontology.db",
-            "note-key",
-            "path-map",
-          ],
+          erasedStores: ["vault", "memory.db", "pgvector", "ontology.db", "note-key", "path-map"],
           contentHash: state.contentHash ?? null,
           noteId: state.noteId ?? null,
           cryptoShred: state.cryptoKeyDestroyed,
-          gitHistoryRetainsCiphertextOnly:
-            memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
+          gitHistoryRetainsCiphertextOnly: memoryGitBackendEnabled() || memoryCryptoShredEnabled(),
         },
       })
     );
@@ -274,9 +266,7 @@ export function executeMemoryEraseCoreEffect(
 }
 
 /** Promise façade for callers that still await erase. */
-export async function executeMemoryEraseCore(
-  input: MemoryEraseInput
-): Promise<MemoryEraseResult> {
+export async function executeMemoryEraseCore(input: MemoryEraseInput): Promise<MemoryEraseResult> {
   return Effect.runPromise(executeMemoryEraseCoreEffect(input));
 }
 

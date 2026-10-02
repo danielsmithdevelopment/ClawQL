@@ -8,7 +8,9 @@ export class ReleaseManifestError extends Data.TaggedError("ReleaseManifestError
   readonly cause?: unknown;
 }> {}
 
-export class ReleaseManifestService extends Context.Service<ReleaseManifestService, {
+export class ReleaseManifestService extends Context.Service<
+  ReleaseManifestService,
+  {
     readonly collect: (
       options: CollectOptions
     ) => Effect.Effect<ReleaseManifestV01, ReleaseManifestError>;
@@ -17,18 +19,23 @@ export class ReleaseManifestService extends Context.Service<ReleaseManifestServi
       bundleDir?: string,
       options?: { workspaceRoot?: string }
     ) => Effect.Effect<VerifyResult, ReleaseManifestError>;
-  }>()("clawql/ReleaseManifestService") {}
+  }
+>()("clawql/ReleaseManifestService") {}
 
 export const ReleaseManifestServiceLive = Layer.succeed(
   ReleaseManifestService,
   ReleaseManifestService.of({
     collect: (options) =>
       collectReleaseManifestEffect(options).pipe(
-        Effect.mapError((cause) => new ReleaseManifestError({ reason: "collect release manifest failed", cause }))
+        Effect.mapError(
+          (cause) => new ReleaseManifestError({ reason: "collect release manifest failed", cause })
+        )
       ),
     verify: (manifestPath, bundleDir, options) =>
       verifyReleaseManifestEffect(manifestPath, bundleDir, options).pipe(
-        Effect.mapError((cause) => new ReleaseManifestError({ reason: "verify release manifest failed", cause }))
+        Effect.mapError(
+          (cause) => new ReleaseManifestError({ reason: "verify release manifest failed", cause })
+        )
       ),
   })
 );

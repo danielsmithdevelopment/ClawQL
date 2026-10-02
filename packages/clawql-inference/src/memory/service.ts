@@ -58,7 +58,9 @@ export type MemoryScopeOpts = {
   readonly scope?: string;
 };
 
-export class MemoryGatewayService extends Context.Service<MemoryGatewayService, {
+export class MemoryGatewayService extends Context.Service<
+  MemoryGatewayService,
+  {
     readonly ingest: (input: MemoryIngestInput) => Effect.Effect<MemoryIngestResult>;
     readonly search: (
       input: MemoryRecallInput,
@@ -72,7 +74,8 @@ export class MemoryGatewayService extends Context.Service<MemoryGatewayService, 
       scope?: string
     ) => Effect.Effect<MemoryGetResult | MemoryEraseResult>;
     readonly erase: (slug: string, scope?: string) => Effect.Effect<MemoryEraseResult>;
-  }>()("clawql/inference/MemoryGatewayService") {}
+  }
+>()("clawql/inference/MemoryGatewayService") {}
 
 function requireVault(): string {
   const vault = getObsidianVaultPath();

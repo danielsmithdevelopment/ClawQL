@@ -50,7 +50,7 @@ export type OrgCliOptions = {
   overageUnits?: number;
 };
 
-async function runPaymentsOrgCreateImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgCreateImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const admin = options.actorTenantId?.trim();
@@ -84,11 +84,11 @@ export function runPaymentsOrgCreateEffect(options: OrgCliOptions): Effect.Effec
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgCreateEffect} for Effect callers. */
-export async function runPaymentsOrgCreate(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgCreate(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgCreateEffect(options));
 }
 
-async function runPaymentsOrgShowImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgShowImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   if (!orgId) {
@@ -112,11 +112,11 @@ export function runPaymentsOrgShowEffect(options: OrgCliOptions): Effect.Effect<
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgShowEffect} for Effect callers. */
-export async function runPaymentsOrgShow(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgShow(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgShowEffect(options));
 }
 
-async function runPaymentsOrgSsoImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgSsoImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -149,11 +149,11 @@ export function runPaymentsOrgSsoEffect(options: OrgCliOptions): Effect.Effect<n
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgSsoEffect} for Effect callers. */
-export async function runPaymentsOrgSso(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgSso(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgSsoEffect(options));
 }
 
-async function runPaymentsOrgInviteImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgInviteImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -187,11 +187,11 @@ export function runPaymentsOrgInviteEffect(options: OrgCliOptions): Effect.Effec
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgInviteEffect} for Effect callers. */
-export async function runPaymentsOrgInvite(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgInvite(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgInviteEffect(options));
 }
 
-async function runPaymentsOrgMembersImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgMembersImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   if (!orgId) {
@@ -221,11 +221,11 @@ export function runPaymentsOrgMembersEffect(options: OrgCliOptions): Effect.Effe
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgMembersEffect} for Effect callers. */
-export async function runPaymentsOrgMembers(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgMembers(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgMembersEffect(options));
 }
 
-async function runPaymentsOrgSuspendImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgSuspendImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -249,11 +249,11 @@ export function runPaymentsOrgSuspendEffect(options: OrgCliOptions): Effect.Effe
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgSuspendEffect} for Effect callers. */
-export async function runPaymentsOrgSuspend(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgSuspend(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgSuspendEffect(options));
 }
 
-async function runPaymentsOrgRemoveImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgRemoveImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -277,11 +277,11 @@ export function runPaymentsOrgRemoveEffect(options: OrgCliOptions): Effect.Effec
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgRemoveEffect} for Effect callers. */
-export async function runPaymentsOrgRemove(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgRemove(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgRemoveEffect(options));
 }
 
-async function runPaymentsOrgAllocateImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgAllocateImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -312,11 +312,11 @@ export function runPaymentsOrgAllocateEffect(options: OrgCliOptions): Effect.Eff
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgAllocateEffect} for Effect callers. */
-export async function runPaymentsOrgAllocate(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgAllocate(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgAllocateEffect(options));
 }
 
-async function runPaymentsOrgDistributeImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgDistributeImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   const actor = options.actorTenantId?.trim();
@@ -329,7 +329,9 @@ async function runPaymentsOrgDistributeImpl(options: OrgCliOptions): Promise<num
   return 0;
 }
 
-export function runPaymentsOrgDistributeEffect(options: OrgCliOptions): Effect.Effect<number, Error> {
+export function runPaymentsOrgDistributeEffect(
+  options: OrgCliOptions
+): Effect.Effect<number, Error> {
   return Effect.tryPromise({
     try: () => runPaymentsOrgDistributeImpl(options),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -337,11 +339,11 @@ export function runPaymentsOrgDistributeEffect(options: OrgCliOptions): Effect.E
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgDistributeEffect} for Effect callers. */
-export async function runPaymentsOrgDistribute(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgDistribute(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgDistributeEffect(options));
 }
 
-async function runPaymentsOrgSpendImpl(options: OrgCliOptions): Promise<number>  {
+async function runPaymentsOrgSpendImpl(options: OrgCliOptions): Promise<number> {
   requireCredits();
   const orgId = options.orgId?.trim();
   if (!orgId) {
@@ -371,7 +373,7 @@ export function runPaymentsOrgSpendEffect(options: OrgCliOptions): Effect.Effect
 }
 
 /** Promise façade — prefer {@link runPaymentsOrgSpendEffect} for Effect callers. */
-export async function runPaymentsOrgSpend(options: OrgCliOptions): Promise<number>  {
+export async function runPaymentsOrgSpend(options: OrgCliOptions): Promise<number> {
   return Effect.runPromise(runPaymentsOrgSpendEffect(options));
 }
 

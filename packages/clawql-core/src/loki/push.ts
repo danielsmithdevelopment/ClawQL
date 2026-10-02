@@ -73,9 +73,12 @@ const performLokiPush = (req: LokiPushRequest): Effect.Effect<void, LokiPushErro
       }),
   });
 
-export class LokiLogPush extends Context.Service<LokiLogPush, {
+export class LokiLogPush extends Context.Service<
+  LokiLogPush,
+  {
     readonly push: (input: LokiLogLine) => Effect.Effect<void, LokiPushError>;
-  }>()("clawql/core/LokiLogPush") {}
+  }
+>()("clawql/core/LokiLogPush") {}
 
 export function lokiLogPushLiveLayer(
   env: NodeJS.ProcessEnv = process.env

@@ -451,7 +451,7 @@ export function parseLangextractHttpResponse(
 }
 
 /** Promise façade — prefer {@link executeExtractDocumentEffect} for Effect callers. */
-async function extractDocumentImpl(input: ExtractDocumentInput): Promise<ExtractDocumentResult>  {
+async function extractDocumentImpl(input: ExtractDocumentInput): Promise<ExtractDocumentResult> {
   const baseUrl = langextractBaseUrl();
   if (!baseUrl) {
     return heuristicExtract(input);
@@ -460,7 +460,9 @@ async function extractDocumentImpl(input: ExtractDocumentInput): Promise<Extract
   return parseLangextractHttpResponse(response);
 }
 
-export function extractDocumentEffect(input: ExtractDocumentInput): Effect.Effect<ExtractDocumentResult, Error> {
+export function extractDocumentEffect(
+  input: ExtractDocumentInput
+): Effect.Effect<ExtractDocumentResult, Error> {
   return Effect.tryPromise({
     try: () => extractDocumentImpl(input),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -468,7 +470,7 @@ export function extractDocumentEffect(input: ExtractDocumentInput): Effect.Effec
 }
 
 /** Promise façade — prefer {@link extractDocumentEffect} for Effect callers. */
-export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult>  {
+export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult> {
   return Effect.runPromise(extractDocumentEffect(input));
 }
 

@@ -62,7 +62,9 @@ export type PayoutResult = {
 };
 
 /** Effect service for Stripe Connect onboarding + creator payouts. */
-export class PayoutService extends Context.Service<PayoutService, {
+export class PayoutService extends Context.Service<
+  PayoutService,
+  {
     readonly createConnectAccount: (input: {
       email: string;
       country?: string;
@@ -99,7 +101,8 @@ export class PayoutService extends Context.Service<PayoutService, {
     readonly getPreference: (
       creatorId: string
     ) => Effect.Effect<CreatorPayoutPreference | undefined, PayoutError>;
-  }>()("clawql/PayoutService") {}
+  }
+>()("clawql/PayoutService") {}
 
 export function payoutLiveLayer(
   env: NodeJS.ProcessEnv = process.env
@@ -367,11 +370,7 @@ export function payoutLiveLayer(
                 correlationId: input.correlationId,
               },
               usdcEnv
-            ).pipe(
-              Effect.mapError(
-                (cause) => new PayoutError({ reason: cause.reason, cause })
-              )
-            );
+            ).pipe(Effect.mapError((cause) => new PayoutError({ reason: cause.reason, cause })));
             const id = sent.txHash;
             yield* audit
               .appendEntry(

@@ -27,9 +27,7 @@ export type InferenceExportCliOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceExportCliImpl(
-  options: InferenceExportCliOptions = {}
-): Promise<number>  {
+async function runInferenceExportCliImpl(options: InferenceExportCliOptions = {}): Promise<number> {
   try {
     const result = await runInferenceExport({
       output: options.output ?? "",
@@ -78,6 +76,6 @@ export function runInferenceExportCliEffect(
 /** Promise façade — prefer {@link runInferenceExportCliEffect} for Effect callers. */
 export async function runInferenceExportCli(
   options: InferenceExportCliOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceExportCliEffect(options));
 }

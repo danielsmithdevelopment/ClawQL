@@ -109,9 +109,7 @@ export function callSandboxBridgeEffect(
       Effect.catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : String(e);
         const aborted = e instanceof Error && e.name === "AbortError";
-        return Effect.succeed(
-          bridgeFail(aborted ? `Timed out after ${timeoutMs}ms` : msg)
-        );
+        return Effect.succeed(bridgeFail(aborted ? `Timed out after ${timeoutMs}ms` : msg));
       }),
       Effect.ensuring(Effect.sync(() => clearTimeout(id)))
     );

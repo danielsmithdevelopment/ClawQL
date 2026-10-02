@@ -9,11 +9,14 @@ import { SemanticCacheStoreService } from "./semantic-cache-store-service.js";
 import { extractResourceTags, resolveCacheIntent } from "../../efficiency/layer-5-policy.js";
 
 /** Effect service for semantic cache lookup/store around gateway completion. */
-export class SemanticCacheService extends Context.Service<SemanticCacheService, {
+export class SemanticCacheService extends Context.Service<
+  SemanticCacheService,
+  {
     readonly completeWithCache: (
       request: InferenceRequest
     ) => Effect.Effect<InferenceResponse, unknown>;
-  }>()("clawql/SemanticCacheService") {}
+  }
+>()("clawql/SemanticCacheService") {}
 
 export function semanticCacheLiveLayer(
   config: SemanticCacheConfig

@@ -212,11 +212,13 @@ export {
 } from "./harvey-lab-enrich.js";
 
 /** @deprecated Prefer {@link runMemoryRecall} — routes through Effect services. */
-async function executeMemoryRecallImpl(input: MemoryRecallInput): Promise<MemoryRecallResult>  {
+async function executeMemoryRecallImpl(input: MemoryRecallInput): Promise<MemoryRecallResult> {
   return runMemoryRecall(input);
 }
 
-export function executeMemoryRecallEffect(input: MemoryRecallInput): Effect.Effect<MemoryRecallResult, Error> {
+export function executeMemoryRecallEffect(
+  input: MemoryRecallInput
+): Effect.Effect<MemoryRecallResult, Error> {
   return Effect.tryPromise({
     try: () => executeMemoryRecallImpl(input),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -224,7 +226,7 @@ export function executeMemoryRecallEffect(input: MemoryRecallInput): Effect.Effe
 }
 
 /** Promise façade — prefer {@link executeMemoryRecallEffect} for Effect callers. */
-export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult>  {
+export async function executeMemoryRecall(input: MemoryRecallInput): Promise<MemoryRecallResult> {
   return Effect.runPromise(executeMemoryRecallEffect(input));
 }
 

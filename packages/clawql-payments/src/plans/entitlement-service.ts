@@ -7,12 +7,15 @@ import {
 } from "./limits.js";
 
 /** Effect service for managed plan entitlement checks. */
-export class EntitlementService extends Context.Service<EntitlementService, {
+export class EntitlementService extends Context.Service<
+  EntitlementService,
+  {
     readonly checkLimit: (input: LimitEnforcementInput) => Effect.Effect<LimitCheckResult, never>;
     readonly enforceLimit: (
       input: LimitEnforcementInput
     ) => Effect.Effect<void, EntitlementLimitError>;
-  }>()("clawql/EntitlementService") {}
+  }
+>()("clawql/EntitlementService") {}
 
 export function entitlementLiveLayer(): Layer.Layer<EntitlementService> {
   return Layer.succeed(

@@ -108,7 +108,9 @@ function saveFileEffect(path: string, file: StepUpFile): Effect.Effect<void, Ste
   });
 }
 
-export class StepUpStoreService extends Context.Service<StepUpStoreService, {
+export class StepUpStoreService extends Context.Service<
+  StepUpStoreService,
+  {
     readonly path: string;
     readonly getEnrollment: (
       subjectId: string
@@ -122,7 +124,8 @@ export class StepUpStoreService extends Context.Service<StepUpStoreService, {
       token: string | undefined,
       enrollHint?: string
     ) => Effect.Effect<void, StepUpStoreError>;
-  }>()("clawql/StepUpStoreService") {}
+  }
+>()("clawql/StepUpStoreService") {}
 
 export function stepUpStoreServiceFromPath(path: string) {
   const getEnrollment = (

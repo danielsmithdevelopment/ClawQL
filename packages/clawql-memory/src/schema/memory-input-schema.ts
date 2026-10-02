@@ -106,7 +106,10 @@ const MemoryRebuildSchema = Schema.Struct({
 }).annotate({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
 const MemoryRecallSourceSchema = Schema.Literals(MEMORY_RECALL_SOURCES);
-const OntologySchemaNameSchema = Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(200)));
+const OntologySchemaNameSchema = Schema.String.pipe(
+  Schema.check(Schema.isMinLength(1)),
+  Schema.check(Schema.isMaxLength(200))
+);
 const OntologyConfidenceSchema = Schema.Literals(["EXTRACTED", "INFERRED", "AMBIGUOUS"]);
 /** Predicate object — keys like gte/gt/eq; values validated at query time. */
 const OntologyFilterPredicateSchema = Schema.Record(Schema.String, Schema.Unknown);
@@ -163,9 +166,7 @@ export const MemoryIngestInputSchema = Schema.Struct({
       description: MEMORY_INGEST_SUPERSEDED_BY_DESCRIPTION,
     })
   ),
-  model: Schema.optional(
-    Schema.String.annotate({ description: MEMORY_INGEST_MODEL_DESCRIPTION })
-  ),
+  model: Schema.optional(Schema.String.annotate({ description: MEMORY_INGEST_MODEL_DESCRIPTION })),
   verified: Schema.optional(
     Schema.Struct({
       by: Schema.optional(Schema.String),
@@ -176,9 +177,7 @@ export const MemoryIngestInputSchema = Schema.Struct({
   ),
   sources: Schema.optional(
     Schema.mutable(
-      Schema.Array(
-        Schema.Record(Schema.String, Schema.Union([Schema.String, Schema.Number]) )
-      )
+      Schema.Array(Schema.Record(Schema.String, Schema.Union([Schema.String, Schema.Number])))
     ).annotate({ description: MEMORY_INGEST_SOURCES_DESCRIPTION })
   ),
   insights: Schema.optional(
@@ -226,12 +225,18 @@ export const MemoryRecallInputSchema = Schema.Struct({
     description: MEMORY_RECALL_QUERY_DESCRIPTION,
   }),
   limit: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 }))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 }))
+    ).annotate({
       description: MEMORY_RECALL_LIMIT_DESCRIPTION,
     })
   ),
   maxDepth: Schema.optional(
-    Schema.Number.pipe(Schema.check(Schema.isInt()), Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))).annotate({
+    Schema.Number.pipe(
+      Schema.check(Schema.isInt()),
+      Schema.check(Schema.isBetween({ minimum: 0, maximum: 10 }))
+    ).annotate({
       description: MEMORY_RECALL_MAX_DEPTH_DESCRIPTION,
     })
   ),
@@ -273,12 +278,16 @@ function formatParseError(err: Schema.SchemaError): Error {
 export function decodeMemoryIngestInput(
   raw: unknown
 ): Effect.Effect<MemoryIngestInputDecoded, Error> {
-  return Schema.decodeUnknownEffect(MemoryIngestInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(MemoryIngestInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }
 
 /** Decode unknown MCP memory_recall args into {@link MemoryRecallInputDecoded}. */
 export function decodeMemoryRecallInput(
   raw: unknown
 ): Effect.Effect<MemoryRecallInputDecoded, Error> {
-  return Schema.decodeUnknownEffect(MemoryRecallInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(MemoryRecallInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }

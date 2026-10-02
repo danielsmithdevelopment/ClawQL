@@ -64,14 +64,17 @@ export type AchTopupResult = {
 const TOPUP_META_KEY = "clawql_credit_topup";
 
 /** Effect service: Financial Connections link + ACH debit → credit ledger. */
-export class AchTopupService extends Context.Service<AchTopupService, {
+export class AchTopupService extends Context.Service<
+  AchTopupService,
+  {
     readonly createBankLinkSession: (
       input: CreateBankLinkSessionInput
     ) => Effect.Effect<BankLinkSessionResult, AchTopupError | StripeNotConfigured | StripeApiError>;
     readonly createTopup: (
       input: CreateAchTopupInput
     ) => Effect.Effect<AchTopupResult, AchTopupError | StripeNotConfigured | StripeApiError>;
-  }>()("clawql/AchTopupService") {}
+  }
+>()("clawql/AchTopupService") {}
 
 export function achTopupLiveLayer(
   env: NodeJS.ProcessEnv = process.env

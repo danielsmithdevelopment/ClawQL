@@ -41,7 +41,9 @@ export type ObservabilityAlertRulesFile = {
   }[];
 };
 
-export class ObservabilityAlertingService extends Context.Service<ObservabilityAlertingService, {
+export class ObservabilityAlertingService extends Context.Service<
+  ObservabilityAlertingService,
+  {
     readonly loadRules: () => Effect.Effect<ObservabilityAlertRulesFile, ObservabilityError>;
     readonly evaluateHealth: () => Effect.Effect<
       readonly ObservabilityAlertEvent[],
@@ -49,7 +51,8 @@ export class ObservabilityAlertingService extends Context.Service<ObservabilityA
       ObservabilityHealthService
     >;
     readonly getLastEvents: () => Effect.Effect<readonly ObservabilityAlertEvent[]>;
-  }>()("clawql/ObservabilityAlertingService") {}
+  }
+>()("clawql/ObservabilityAlertingService") {}
 
 const severityFromLabels = (
   labels: Readonly<Record<string, string>> | undefined

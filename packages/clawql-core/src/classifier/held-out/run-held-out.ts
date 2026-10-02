@@ -286,12 +286,15 @@ export function runHeldOutValidationSuite(
   });
 }
 
-export class FastDecisionHeldOutRunner extends Context.Service<FastDecisionHeldOutRunner, {
+export class FastDecisionHeldOutRunner extends Context.Service<
+  FastDecisionHeldOutRunner,
+  {
     readonly runSuite: (
       suite?: HeldOutSuiteManifest,
       criteria?: ValidationCriteria
     ) => Effect.Effect<readonly HeldOutValidationRunReport[]>;
-  }>()("clawql/FastDecisionHeldOutRunner") {}
+  }
+>()("clawql/FastDecisionHeldOutRunner") {}
 
 export function makeFastDecisionHeldOutRunnerLive(): Layer.Layer<
   FastDecisionHeldOutRunner,

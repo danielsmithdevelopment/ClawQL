@@ -41,7 +41,7 @@ async function saveFile(file: PrefFile, env: NodeJS.ProcessEnv): Promise<void> {
 async function getCreatorPayoutPreferenceImpl(
   creatorId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreatorPayoutPreference | undefined>  {
+): Promise<CreatorPayoutPreference | undefined> {
   const file = await loadFile(env);
   return file.creators[creatorId.trim()];
 }
@@ -60,7 +60,7 @@ export function getCreatorPayoutPreferenceEffect(
 export async function getCreatorPayoutPreference(
   creatorId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreatorPayoutPreference | undefined>  {
+): Promise<CreatorPayoutPreference | undefined> {
   return Effect.runPromise(getCreatorPayoutPreferenceEffect(creatorId, env));
 }
 
@@ -74,7 +74,7 @@ async function setCreatorPayoutPreferenceImpl(
     email?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreatorPayoutPreference>  {
+): Promise<CreatorPayoutPreference> {
   const file = await loadFile(env);
   const pref: CreatorPayoutPreference = {
     creatorId: input.creatorId.trim(),
@@ -115,7 +115,7 @@ export async function setCreatorPayoutPreference(
     email?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreatorPayoutPreference>  {
+): Promise<CreatorPayoutPreference> {
   return Effect.runPromise(setCreatorPayoutPreferenceEffect(input, env));
 }
 
@@ -127,14 +127,17 @@ export class PayoutPreferencesError extends Data.TaggedError("PayoutPreferencesE
 type SetCreatorPayoutPreferenceInput = Parameters<typeof setCreatorPayoutPreference>[0];
 
 /** Effect surface over creator payout preferences (bank / USDC destination + connect account). */
-export class PayoutPreferencesService extends Context.Service<PayoutPreferencesService, {
+export class PayoutPreferencesService extends Context.Service<
+  PayoutPreferencesService,
+  {
     readonly get: (
       creatorId: string
     ) => Effect.Effect<CreatorPayoutPreference | undefined, PayoutPreferencesError>;
     readonly set: (
       input: SetCreatorPayoutPreferenceInput
     ) => Effect.Effect<CreatorPayoutPreference, PayoutPreferencesError>;
-  }>()("clawql/PayoutPreferencesService") {}
+  }
+>()("clawql/PayoutPreferencesService") {}
 
 export function payoutPreferencesLiveLayer(
   env: NodeJS.ProcessEnv = process.env

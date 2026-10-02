@@ -105,7 +105,9 @@ export function ensureClawqlMetaGitignoredEffect(vaultRoot: string): Effect.Effe
       return;
     }
     const next =
-      existing.endsWith("\n") || existing === "" ? `${existing}${line}\n` : `${existing}\n${line}\n`;
+      existing.endsWith("\n") || existing === ""
+        ? `${existing}${line}\n`
+        : `${existing}\n${line}\n`;
     await writeFile(gi, next, "utf8");
   });
 }
@@ -301,7 +303,9 @@ export function upsertPathMapEntryEffect(
   input: { path: string; noteId?: string; contentHash?: string; pathId?: string }
 ): Effect.Effect<PathMapEntry, Error> {
   return Effect.gen(function* () {
-    yield* fromPromise(() => mkdir(clawqlMetaDir(vaultRoot), { recursive: true }).then(() => undefined));
+    yield* fromPromise(() =>
+      mkdir(clawqlMetaDir(vaultRoot), { recursive: true }).then(() => undefined)
+    );
     yield* ensureClawqlMetaGitignoredEffect(vaultRoot);
     const file = yield* readJsonFileEffect<PathMapFile>(pathMapPath(vaultRoot), {
       version: 1,
@@ -364,7 +368,9 @@ export function deletePathMapEntryEffect(
     const found = file.entries.find((e) => e.path === path);
     if (!found) return undefined;
     file.entries = file.entries.filter((e) => e.path !== path);
-    yield* fromPromise(() => mkdir(dirname(pathMapPath(vaultRoot)), { recursive: true }).then(() => undefined));
+    yield* fromPromise(() =>
+      mkdir(dirname(pathMapPath(vaultRoot)), { recursive: true }).then(() => undefined)
+    );
     yield* fromPromise(() =>
       writeFile(pathMapPath(vaultRoot), `${JSON.stringify(file, null, 2)}\n`, "utf8")
     );
@@ -385,7 +391,9 @@ export function appendErasureDenyEffect(
   entry: Omit<ErasureDenyEntry, "erasedAt"> & { erasedAt?: string }
 ): Effect.Effect<ErasureDenyFile, Error> {
   return Effect.gen(function* () {
-    yield* fromPromise(() => mkdir(clawqlMetaDir(vaultRoot), { recursive: true }).then(() => undefined));
+    yield* fromPromise(() =>
+      mkdir(clawqlMetaDir(vaultRoot), { recursive: true }).then(() => undefined)
+    );
     yield* ensureClawqlMetaGitignoredEffect(vaultRoot);
     const file = yield* readJsonFileEffect<ErasureDenyFile>(denyListPath(vaultRoot), {
       version: 1,
@@ -430,7 +438,9 @@ export async function loadErasureDenyHashes(vaultRoot: string): Promise<Readonly
   return Effect.runPromise(loadErasureDenyHashesEffectInner(vaultRoot));
 }
 
-export function loadErasureDenyFileEffect(vaultRoot: string): Effect.Effect<ErasureDenyFile, Error> {
+export function loadErasureDenyFileEffect(
+  vaultRoot: string
+): Effect.Effect<ErasureDenyFile, Error> {
   return readJsonFileEffect<ErasureDenyFile>(denyListPath(vaultRoot), {
     version: 1,
     entries: [],

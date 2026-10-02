@@ -36,9 +36,12 @@ export type AggregateTopologyInput = {
   readonly mcpUiTraceBase: string;
 };
 
-export class TopologyService extends Context.Service<TopologyService, {
+export class TopologyService extends Context.Service<
+  TopologyService,
+  {
     readonly aggregate: (input: AggregateTopologyInput) => Effect.Effect<TopologyTree>;
-  }>()("clawql-payments/TopologyService") {}
+  }
+>()("clawql-payments/TopologyService") {}
 
 /**
  * Per-agent / per-cell mcp-ui deep-link (#1082 option 1).

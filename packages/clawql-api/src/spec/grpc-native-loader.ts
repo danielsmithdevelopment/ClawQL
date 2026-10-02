@@ -100,7 +100,7 @@ async function loadOne(cfg: GrpcSourceConfig): Promise<Operation[]> {
 /** Exported for tests with injected configs. */
 async function loadGrpcNativeOperationsFromConfigsImpl(
   configs: GrpcSourceConfig[]
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   const out: Operation[] = [];
   for (const cfg of configs) {
     try {
@@ -124,11 +124,11 @@ export function loadGrpcNativeOperationsFromConfigsEffect(
 /** Promise façade — prefer {@link loadGrpcNativeOperationsFromConfigsEffect} for Effect callers. */
 export async function loadGrpcNativeOperationsFromConfigs(
   configs: GrpcSourceConfig[]
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   return Effect.runPromise(loadGrpcNativeOperationsFromConfigsEffect(configs));
 }
 
-async function loadGrpcNativeOperationsImpl(): Promise<Operation[]>  {
+async function loadGrpcNativeOperationsImpl(): Promise<Operation[]> {
   return loadGrpcNativeOperationsFromConfigs(parseGrpcSourcesEnv());
 }
 
@@ -140,6 +140,6 @@ export function loadGrpcNativeOperationsEffect(): Effect.Effect<Operation[], Err
 }
 
 /** Promise façade — prefer {@link loadGrpcNativeOperationsEffect} for Effect callers. */
-export async function loadGrpcNativeOperations(): Promise<Operation[]>  {
+export async function loadGrpcNativeOperations(): Promise<Operation[]> {
   return Effect.runPromise(loadGrpcNativeOperationsEffect());
 }

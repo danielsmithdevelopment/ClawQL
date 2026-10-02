@@ -35,7 +35,7 @@ function loadKubeConfig(): KubeConfig {
   return kc;
 }
 
-async function runOperatorImpl(options: RunOperatorOptions = {}): Promise<void>  {
+async function runOperatorImpl(options: RunOperatorOptions = {}): Promise<void> {
   const log = options.log ?? defaultLog;
   const kc = loadKubeConfig();
   const customObjects = kc.makeApiClient(CustomObjectsApi);
@@ -126,6 +126,6 @@ export function runOperatorEffect(options: RunOperatorOptions = {}): Effect.Effe
 }
 
 /** Promise façade — prefer {@link runOperatorEffect} for Effect callers. */
-export async function runOperator(options: RunOperatorOptions = {}): Promise<void>  {
+export async function runOperator(options: RunOperatorOptions = {}): Promise<void> {
   return Effect.runPromise(runOperatorEffect(options));
 }

@@ -140,9 +140,7 @@ export function parseClassifierHttpResponse(
 }
 
 /** Promise façade — prefer {@link executeClassifyDocumentEffect} for Effect callers. */
-async function classifyDocumentImpl(
-  input: ClassifyDocumentInput
-): Promise<ClassifyDocumentResult>  {
+async function classifyDocumentImpl(input: ClassifyDocumentInput): Promise<ClassifyDocumentResult> {
   const baseUrl = classifierBaseUrl();
   if (!baseUrl) {
     return heuristicClassify(input);
@@ -163,7 +161,7 @@ export function classifyDocumentEffect(
 /** Promise façade — prefer {@link classifyDocumentEffect} for Effect callers. */
 export async function classifyDocument(
   input: ClassifyDocumentInput
-): Promise<ClassifyDocumentResult>  {
+): Promise<ClassifyDocumentResult> {
   return Effect.runPromise(classifyDocumentEffect(input));
 }
 

@@ -317,7 +317,11 @@ export function resumeWorkflowFromHitlRefEffect(
 ): Effect.Effect<HitlWebhookResumeResult> {
   return Effect.gen(function* () {
     if (!workflowToolEnabled()) {
-      return { attempted: true as const, ok: false as const, error: "workflow tool is not enabled" };
+      return {
+        attempted: true as const,
+        ok: false as const,
+        error: "workflow tool is not enabled",
+      };
     }
     const ref = parseHitlWorkflowRef(hitl);
     if (!ref) return { attempted: false as const };

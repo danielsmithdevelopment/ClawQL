@@ -9,7 +9,7 @@ import { Effect } from "effect";
 
 async function createStreamableHttpMcpCallerImpl(
   url = natsMcpHttpUrl()
-): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }>  {
+): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }> {
   const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
   const { StreamableHTTPClientTransport } =
     await import("@modelcontextprotocol/sdk/client/streamableHttp.js");
@@ -57,6 +57,6 @@ export function createStreamableHttpMcpCallerEffect(
 /** Promise façade — prefer {@link createStreamableHttpMcpCallerEffect} for Effect callers. */
 export async function createStreamableHttpMcpCaller(
   url = natsMcpHttpUrl()
-): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }>  {
+): Promise<{ caller: AgentBridgeMcpCaller; close: () => Promise<void> }> {
   return Effect.runPromise(createStreamableHttpMcpCallerEffect(url));
 }

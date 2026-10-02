@@ -16,7 +16,9 @@ import {
 } from "./documents-tools-effect.js";
 
 /** Effect service for IDP pipeline, classify, and extract document tools. */
-export class DocumentsToolsService extends Context.Service<DocumentsToolsService, {
+export class DocumentsToolsService extends Context.Service<
+  DocumentsToolsService,
+  {
     readonly runIdpPipeline: (
       input: RunIdpPipelineInput
     ) => Effect.Effect<RunIdpPipelineResult, DocumentsError>;
@@ -26,7 +28,8 @@ export class DocumentsToolsService extends Context.Service<DocumentsToolsService
     readonly extract: (
       input: ExtractDocumentInput
     ) => Effect.Effect<ExtractDocumentResult, DocumentsError>;
-  }>()("clawql/DocumentsToolsService") {}
+  }
+>()("clawql/DocumentsToolsService") {}
 
 export function documentsToolsLiveLayer(): Layer.Layer<DocumentsToolsService> {
   return Layer.succeed(

@@ -298,7 +298,7 @@ async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
  */
 async function resolveItemsFromBundledProviderEnvListImpl(
   raw: string
-): Promise<ProviderGroupItem[]>  {
+): Promise<ProviderGroupItem[]> {
   const parts = raw
     .split(/[,\n;]/)
     .map((s) => s.trim().toLowerCase())
@@ -369,7 +369,7 @@ export function resolveItemsFromBundledProviderEnvListEffect(
 /** Promise façade — prefer {@link resolveItemsFromBundledProviderEnvListEffect} for Effect callers. */
 export async function resolveItemsFromBundledProviderEnvList(
   raw: string
-): Promise<ProviderGroupItem[]>  {
+): Promise<ProviderGroupItem[]> {
   return Effect.runPromise(resolveItemsFromBundledProviderEnvListEffect(raw));
 }
 
@@ -428,11 +428,14 @@ export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
  * Cloud add-ons (google/aws) are **not** appended via env flags — list them in `providers.enabled`
  * or use pack **`all-providers`** / **`CLAWQL_PROVIDER=google|aws`**.
  */
-async function resolveDefaultBundledProvidersItemsImpl(): Promise<ProviderGroupItem[]>  {
+async function resolveDefaultBundledProvidersItemsImpl(): Promise<ProviderGroupItem[]> {
   return resolveItemsFromBundledProviderEnvList(DEFAULT_BUNDLED_PROVIDER_IDS.join(","));
 }
 
-export function resolveDefaultBundledProvidersItemsEffect(): Effect.Effect<ProviderGroupItem[], Error> {
+export function resolveDefaultBundledProvidersItemsEffect(): Effect.Effect<
+  ProviderGroupItem[],
+  Error
+> {
   return Effect.tryPromise({
     try: () => resolveDefaultBundledProvidersItemsImpl(),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -440,7 +443,7 @@ export function resolveDefaultBundledProvidersItemsEffect(): Effect.Effect<Provi
 }
 
 /** Promise façade — prefer {@link resolveDefaultBundledProvidersItemsEffect} for Effect callers. */
-export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]>  {
+export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
   return Effect.runPromise(resolveDefaultBundledProvidersItemsEffect());
 }
 
@@ -523,7 +526,7 @@ const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
 
 async function resolveBundledProviderGroupImpl(
   raw: string | undefined
-): Promise<ProviderGroupItem[] | undefined>  {
+): Promise<ProviderGroupItem[] | undefined> {
   if (!raw?.trim()) return undefined;
   const key = raw.trim().toLowerCase();
   if (REMOVED_BUNDLED_PROVIDER_GROUP_IDS[key]) {
@@ -570,6 +573,6 @@ export function resolveBundledProviderGroupEffect(
 /** Promise façade — prefer {@link resolveBundledProviderGroupEffect} for Effect callers. */
 export async function resolveBundledProviderGroup(
   raw: string | undefined
-): Promise<ProviderGroupItem[] | undefined>  {
+): Promise<ProviderGroupItem[] | undefined> {
   return Effect.runPromise(resolveBundledProviderGroupEffect(raw));
 }

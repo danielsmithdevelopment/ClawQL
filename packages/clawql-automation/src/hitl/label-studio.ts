@@ -295,7 +295,7 @@ function extractWebhookFields(body: unknown): {
  * POST **`/hitl/label-studio/webhook`** — Label Studio project webhook target.
  * When vault memory is enabled and path is writable, records reviewer output via **`memory_ingest`**; otherwise **`audit`** append.
  */
-async function handleLabelStudioWebhookRequestImpl(req: Request, res: Response): Promise<void>  {
+async function handleLabelStudioWebhookRequestImpl(req: Request, res: Response): Promise<void> {
   const deps = getHitlWebhookDeps();
   if (!deps.enforceWebhookRateLimit(req, res)) return;
   if (!getWebhookTokenExpected() && process.env.NODE_ENV === "production") {
@@ -384,7 +384,10 @@ async function handleLabelStudioWebhookRequestImpl(req: Request, res: Response):
   });
 }
 
-export function handleLabelStudioWebhookRequestEffect(req: Request, res: Response): Effect.Effect<void, Error> {
+export function handleLabelStudioWebhookRequestEffect(
+  req: Request,
+  res: Response
+): Effect.Effect<void, Error> {
   return Effect.tryPromise({
     try: () => handleLabelStudioWebhookRequestImpl(req, res),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -392,7 +395,7 @@ export function handleLabelStudioWebhookRequestEffect(req: Request, res: Respons
 }
 
 /** Promise façade — prefer {@link handleLabelStudioWebhookRequestEffect} for Effect callers. */
-export async function handleLabelStudioWebhookRequest(req: Request, res: Response): Promise<void>  {
+export async function handleLabelStudioWebhookRequest(req: Request, res: Response): Promise<void> {
   return Effect.runPromise(handleLabelStudioWebhookRequestEffect(req, res));
 }
 

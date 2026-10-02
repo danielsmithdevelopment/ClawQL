@@ -47,7 +47,9 @@ function subtractUsdc(from: string, amount: string): Effect.Effect<string, Outbo
   });
 }
 
-export class OutboundSpendCounterService extends Context.Service<OutboundSpendCounterService, {
+export class OutboundSpendCounterService extends Context.Service<
+  OutboundSpendCounterService,
+  {
     readonly get: (
       key: SpendCounterKey
     ) => Effect.Effect<OutboundSpendCounters, OutboundPolicyError>;
@@ -67,7 +69,8 @@ export class OutboundSpendCounterService extends Context.Service<OutboundSpendCo
     readonly totals: (
       key: SpendCounterKey
     ) => Effect.Effect<{ dayTotalUsdc: string; sessionTotalUsdc: string }, OutboundPolicyError>;
-  }>()("clawql/OutboundSpendCounterService") {}
+  }
+>()("clawql/OutboundSpendCounterService") {}
 
 export function createMemoryOutboundSpendCounterLayer(): Layer.Layer<OutboundSpendCounterService> {
   return Layer.effect(

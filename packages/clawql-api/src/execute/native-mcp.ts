@@ -10,7 +10,7 @@ import { Effect } from "effect";
 async function executeNativeMcpImpl(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult>  {
+): Promise<ExecuteOperationResult> {
   const meta = op.nativeMcp;
   if (!meta) {
     return { ok: false, error: "Internal error: missing nativeMcp metadata" };
@@ -58,6 +58,6 @@ export function executeNativeMcpEffect(
 export async function executeNativeMcp(
   op: Operation,
   args: Record<string, unknown>
-): Promise<ExecuteOperationResult>  {
+): Promise<ExecuteOperationResult> {
   return Effect.runPromise(executeNativeMcpEffect(op, args));
 }

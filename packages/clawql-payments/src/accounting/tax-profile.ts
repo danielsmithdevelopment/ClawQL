@@ -43,7 +43,7 @@ export function isTaxFormKind(value: string): value is TaxFormKind {
 async function getTaxProfileImpl(
   partyId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<TaxProfile | undefined>  {
+): Promise<TaxProfile | undefined> {
   const file = await loadFile(env);
   return file.parties[partyId.trim()];
 }
@@ -62,7 +62,7 @@ export function getTaxProfileEffect(
 export async function getTaxProfile(
   partyId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<TaxProfile | undefined>  {
+): Promise<TaxProfile | undefined> {
   return Effect.runPromise(getTaxProfileEffect(partyId, env));
 }
 
@@ -75,7 +75,7 @@ async function setTaxProfileImpl(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<TaxProfile>  {
+): Promise<TaxProfile> {
   const file = await loadFile(env);
   const partyId = input.partyId.trim();
   if (!partyId) throw new Error("partyId required");
@@ -124,16 +124,18 @@ export async function setTaxProfile(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<TaxProfile>  {
+): Promise<TaxProfile> {
   return Effect.runPromise(setTaxProfileEffect(input, env));
 }
 
-async function listTaxProfilesImpl(env: NodeJS.ProcessEnv = process.env): Promise<TaxProfile[]>  {
+async function listTaxProfilesImpl(env: NodeJS.ProcessEnv = process.env): Promise<TaxProfile[]> {
   const file = await loadFile(env);
   return Object.values(file.parties).sort((a, b) => a.partyId.localeCompare(b.partyId));
 }
 
-export function listTaxProfilesEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<TaxProfile[], Error> {
+export function listTaxProfilesEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<TaxProfile[], Error> {
   return Effect.tryPromise({
     try: () => listTaxProfilesImpl(env),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -141,7 +143,7 @@ export function listTaxProfilesEffect(env: NodeJS.ProcessEnv = process.env): Eff
 }
 
 /** Promise façade — prefer {@link listTaxProfilesEffect} for Effect callers. */
-export async function listTaxProfiles(env: NodeJS.ProcessEnv = process.env): Promise<TaxProfile[]>  {
+export async function listTaxProfiles(env: NodeJS.ProcessEnv = process.env): Promise<TaxProfile[]> {
   return Effect.runPromise(listTaxProfilesEffect(env));
 }
 
@@ -154,12 +156,15 @@ export class TaxProfileError extends Data.TaggedError("TaxProfileError")<{
  * Port: payout / cash-out may require a collected tax profile when enforce is on.
  * Implementations must never return SSN/ITIN — only opaque readiness.
  */
-export class TaxProfileService extends Context.Service<TaxProfileService, {
+export class TaxProfileService extends Context.Service<
+  TaxProfileService,
+  {
     readonly get: (partyId: string) => Effect.Effect<TaxProfile | undefined, TaxProfileError>;
     readonly requireForPayout: (
       partyId: string
     ) => Effect.Effect<TaxProfile | undefined, TaxProfileError>;
-  }>()("clawql/TaxProfileService") {}
+  }
+>()("clawql/TaxProfileService") {}
 
 export function taxProfileLiveLayer(
   env: NodeJS.ProcessEnv = process.env

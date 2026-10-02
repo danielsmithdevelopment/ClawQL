@@ -48,18 +48,15 @@ export function validateObsidianVaultAtStartupEffect(): Effect.Effect<void, Erro
       },
     });
     if (!st.isDirectory()) {
-      return yield* Effect.fail(
-        new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not a directory: ${vault}`)
-      );
+      return yield* Effect.fail(new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not a directory: ${vault}`));
     }
     yield* Effect.tryPromise({
       try: () => access(vault, constants.R_OK | constants.W_OK),
       catch: (e: unknown) => {
         const msg = e instanceof Error ? e.message : String(e);
-        return new Error(
-          `CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`,
-          { cause: e }
-        );
+        return new Error(`CLAWQL_OBSIDIAN_VAULT_PATH: not readable/writable: ${vault} (${msg})`, {
+          cause: e,
+        });
       },
     });
     console.error(`[clawql-mcp] Obsidian vault: ${vault}`);

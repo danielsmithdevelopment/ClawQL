@@ -24,7 +24,9 @@ export type EventsGatewayListInput = ListEventsParams & {
   readonly principal: string;
 };
 
-export class EventsGatewayService extends Context.Service<EventsGatewayService, {
+export class EventsGatewayService extends Context.Service<
+  EventsGatewayService,
+  {
     readonly list: (input: EventsGatewayListInput) => Effect.Effect<ListEventsResult>;
     readonly subscribe: (
       input: SubscribeParams
@@ -34,7 +36,8 @@ export class EventsGatewayService extends Context.Service<EventsGatewayService, 
     >;
     readonly unsubscribe: (input: UnsubscribeParams) => Effect.Effect<Record<string, never>>;
     readonly getSubscription: (id: string) => Effect.Effect<StoredSubscription | undefined>;
-  }>()("clawql/inference/EventsGatewayService") {}
+  }
+>()("clawql/inference/EventsGatewayService") {}
 
 export const EventsGatewayLive = Layer.effect(
   EventsGatewayService,

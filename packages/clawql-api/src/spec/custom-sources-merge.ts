@@ -45,7 +45,7 @@ function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
 async function loadOpenApiLikeSourceImpl(
   entry: CustomSourceEntry,
   home: string
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   if (!entry.cachePath) {
     console.error(`[spec-loader] Custom source "${entry.id}" missing cachePath`);
     return [];
@@ -81,7 +81,7 @@ export function loadOpenApiLikeSourceEffect(
 export async function loadOpenApiLikeSource(
   entry: CustomSourceEntry,
   home: string
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   return Effect.runPromise(loadOpenApiLikeSourceEffect(entry, home));
 }
 
@@ -120,7 +120,7 @@ function toGrpcConfig(entry: CustomSourceEntry, home: string): GrpcSourceConfig 
 async function loadOperationsForCustomSourceEntryImpl(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   if (entry.kind === "openapi" || entry.kind === "discovery") {
     return loadOpenApiLikeSource(entry, home);
   }
@@ -160,11 +160,11 @@ export function loadOperationsForCustomSourceEntryEffect(
 export async function loadOperationsForCustomSourceEntry(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
-): Promise<Operation[]>  {
+): Promise<Operation[]> {
   return Effect.runPromise(loadOperationsForCustomSourceEntryEffect(entry, home));
 }
 
-async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<LoadedSpec>  {
+async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<LoadedSpec> {
   const home = resolveClawqlHome();
   const file = await readCustomSourcesFile(home);
   let operations = loaded.operations;
@@ -237,7 +237,9 @@ async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<Load
   };
 }
 
-export function mergeCustomSourceOperationsEffect(loaded: LoadedSpec): Effect.Effect<LoadedSpec, Error> {
+export function mergeCustomSourceOperationsEffect(
+  loaded: LoadedSpec
+): Effect.Effect<LoadedSpec, Error> {
   return Effect.tryPromise({
     try: () => mergeCustomSourceOperationsImpl(loaded),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -245,7 +247,7 @@ export function mergeCustomSourceOperationsEffect(loaded: LoadedSpec): Effect.Ef
 }
 
 /** Promise façade — prefer {@link mergeCustomSourceOperationsEffect} for Effect callers. */
-export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec>  {
+export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
   return Effect.runPromise(mergeCustomSourceOperationsEffect(loaded));
 }
 
@@ -256,7 +258,7 @@ async function cacheCustomSourceBodyImpl(
   entry: CustomSourceEntry,
   bodyText: string,
   home = resolveClawqlHome()
-): Promise<CustomSourceEntry>  {
+): Promise<CustomSourceEntry> {
   const safeEntry = { ...entry, id: assertSafeSourceId(entry.id) };
   const dir = getCustomSourceCacheDir(safeEntry.id, home);
   let filename:
@@ -308,6 +310,6 @@ export async function cacheCustomSourceBody(
   entry: CustomSourceEntry,
   bodyText: string,
   home = resolveClawqlHome()
-): Promise<CustomSourceEntry>  {
+): Promise<CustomSourceEntry> {
   return Effect.runPromise(cacheCustomSourceBodyEffect(entry, bodyText, home));
 }

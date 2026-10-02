@@ -27,7 +27,7 @@ export type PaymentsAccountingExportOptions = {
 
 async function runPaymentsAccountingExportImpl(
   options: PaymentsAccountingExportOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const from = options.from?.trim();
   const to = options.to?.trim();
   if (!from || !to) {
@@ -93,7 +93,7 @@ export function runPaymentsAccountingExportEffect(
 /** Promise façade — prefer {@link runPaymentsAccountingExportEffect} for Effect callers. */
 export async function runPaymentsAccountingExport(
   options: PaymentsAccountingExportOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsAccountingExportEffect(options));
 }
 
@@ -108,7 +108,7 @@ export type PaymentsTaxEvidenceOptions = {
 
 async function runPaymentsTaxEvidenceImpl(
   options: PaymentsTaxEvidenceOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const taxYear = options.taxYear;
   if (!taxYear || !Number.isInteger(taxYear)) {
     console.error(
@@ -163,7 +163,7 @@ export function runPaymentsTaxEvidenceEffect(
 /** Promise façade — prefer {@link runPaymentsTaxEvidenceEffect} for Effect callers. */
 export async function runPaymentsTaxEvidence(
   options: PaymentsTaxEvidenceOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsTaxEvidenceEffect(options));
 }
 
@@ -179,7 +179,7 @@ export type PaymentsTaxProfileSetOptions = {
 
 async function runPaymentsTaxProfileSetImpl(
   options: PaymentsTaxProfileSetOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const partyId = options.partyId?.trim();
   const taxForm = options.taxForm?.trim();
   if (!partyId || !taxForm || !isTaxFormKind(taxForm)) {
@@ -225,7 +225,7 @@ export function runPaymentsTaxProfileSetEffect(
 /** Promise façade — prefer {@link runPaymentsTaxProfileSetEffect} for Effect callers. */
 export async function runPaymentsTaxProfileSet(
   options: PaymentsTaxProfileSetOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsTaxProfileSetEffect(options));
 }
 
@@ -237,7 +237,7 @@ export type PaymentsTaxProfileShowOptions = {
 
 async function runPaymentsTaxProfileShowImpl(
   options: PaymentsTaxProfileShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   try {
     if (options.partyId?.trim()) {
@@ -288,6 +288,6 @@ export function runPaymentsTaxProfileShowEffect(
 /** Promise façade — prefer {@link runPaymentsTaxProfileShowEffect} for Effect callers. */
 export async function runPaymentsTaxProfileShow(
   options: PaymentsTaxProfileShowOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runPaymentsTaxProfileShowEffect(options));
 }

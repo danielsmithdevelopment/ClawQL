@@ -7,7 +7,7 @@ async function generateCritiqueImpl(_input: {
   originalResponse: string;
   principles: string[];
   critiquePrompt: string;
-}): Promise<string>  {
+}): Promise<string> {
   throw new Error("generateCritique not implemented — Constitutional AI augmentor is staged");
 }
 
@@ -27,7 +27,7 @@ export async function generateCritique(_input: {
   originalResponse: string;
   principles: string[];
   critiquePrompt: string;
-}): Promise<string>  {
+}): Promise<string> {
   return Effect.runPromise(generateCritiqueEffect(_input));
 }
 
@@ -35,7 +35,7 @@ async function generateRevisionImpl(_input: {
   originalResponse: string;
   critique: string;
   revisionPrompt: string;
-}): Promise<string>  {
+}): Promise<string> {
   throw new Error("generateRevision not implemented — Constitutional AI augmentor is staged");
 }
 
@@ -55,6 +55,6 @@ export async function generateRevision(_input: {
   originalResponse: string;
   critique: string;
   revisionPrompt: string;
-}): Promise<string>  {
+}): Promise<string> {
   return Effect.runPromise(generateRevisionEffect(_input));
 }

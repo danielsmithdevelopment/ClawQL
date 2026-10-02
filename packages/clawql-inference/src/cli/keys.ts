@@ -18,7 +18,7 @@ export type InferenceKeysCreateOptions = {
 
 async function runInferenceKeysCreateImpl(
   options: InferenceKeysCreateOptions = {}
-): Promise<number>  {
+): Promise<number> {
   if (!options.team?.trim()) {
     console.error(
       "Usage: clawql inference keys create --team <name> [--budget-usd N] [--rate-limit 100rpm] [--label NAME]"
@@ -78,7 +78,7 @@ export function runInferenceKeysCreateEffect(
 /** Promise façade — prefer {@link runInferenceKeysCreateEffect} for Effect callers. */
 export async function runInferenceKeysCreate(
   options: InferenceKeysCreateOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceKeysCreateEffect(options));
 }
 
@@ -87,9 +87,7 @@ export type InferenceKeysListOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-async function runInferenceKeysListImpl(
-  options: InferenceKeysListOptions = {}
-): Promise<number>  {
+async function runInferenceKeysListImpl(options: InferenceKeysListOptions = {}): Promise<number> {
   const env = options.env ?? process.env;
   const config = loadKeysConfig(env);
   const keys = listVirtualKeys(env).map(redactVirtualKey);
@@ -134,7 +132,7 @@ export function runInferenceKeysListEffect(
 /** Promise façade — prefer {@link runInferenceKeysListEffect} for Effect callers. */
 export async function runInferenceKeysList(
   options: InferenceKeysListOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceKeysListEffect(options));
 }
 
@@ -146,7 +144,7 @@ export type InferenceKeysRevokeOptions = {
 
 async function runInferenceKeysRevokeImpl(
   options: InferenceKeysRevokeOptions = {}
-): Promise<number>  {
+): Promise<number> {
   if (!options.id?.trim()) {
     console.error("Usage: clawql inference keys revoke --id <vk_...>");
     return 1;
@@ -180,6 +178,6 @@ export function runInferenceKeysRevokeEffect(
 /** Promise façade — prefer {@link runInferenceKeysRevokeEffect} for Effect callers. */
 export async function runInferenceKeysRevoke(
   options: InferenceKeysRevokeOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceKeysRevokeEffect(options));
 }

@@ -40,7 +40,7 @@ export type OnyxRecallSupplement = {
 async function recallOnyxSupplementImpl(input: {
   query: string;
   limit?: number;
-}): Promise<OnyxRecallSupplement>  {
+}): Promise<OnyxRecallSupplement> {
   const limit = input.limit ?? envInt("CLAWQL_MEMORY_RECALL_ONYX_LIMIT", 8);
   const followUps: RecallFollowUpHint[] = [
     {
@@ -120,7 +120,7 @@ export function recallOnyxSupplementEffect(input: {
 export async function recallOnyxSupplement(input: {
   query: string;
   limit?: number;
-}): Promise<OnyxRecallSupplement>  {
+}): Promise<OnyxRecallSupplement> {
   return Effect.runPromise(recallOnyxSupplementEffect(input));
 }
 

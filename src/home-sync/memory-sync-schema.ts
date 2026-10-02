@@ -17,9 +17,7 @@ export const MemorySyncInputSchema = Schema.Struct({
       description: MEMORY_SYNC_DIRECTION_DESCRIPTION,
     })
   ),
-  force: Schema.optional(
-    Schema.Boolean.annotate({ description: MEMORY_SYNC_FORCE_DESCRIPTION })
-  ),
+  force: Schema.optional(Schema.Boolean.annotate({ description: MEMORY_SYNC_FORCE_DESCRIPTION })),
   dryRun: Schema.optional(
     Schema.Boolean.annotate({ description: MEMORY_SYNC_DRY_RUN_DESCRIPTION })
   ),
@@ -33,5 +31,7 @@ function formatParseError(err: Schema.SchemaError): Error {
 }
 
 export function decodeMemorySyncInput(raw: unknown): Effect.Effect<MemorySyncInputDecoded, Error> {
-  return Schema.decodeUnknownEffect(MemorySyncInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(MemorySyncInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }

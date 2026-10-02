@@ -23,7 +23,7 @@ async function defaultHarveyEvalRunnerImpl(input: {
   taskId: string;
   criteria: unknown[] | undefined;
   judgeModel: string;
-}): Promise<HarveyEvalResult>  {
+}): Promise<HarveyEvalResult> {
   void input.taskId;
   void input.judgeModel;
   const criteria = (input.criteria ?? []).map(String);
@@ -57,7 +57,7 @@ export async function defaultHarveyEvalRunner(input: {
   taskId: string;
   criteria: unknown[] | undefined;
   judgeModel: string;
-}): Promise<HarveyEvalResult>  {
+}): Promise<HarveyEvalResult> {
   return Effect.runPromise(defaultHarveyEvalRunnerEffect(input));
 }
 

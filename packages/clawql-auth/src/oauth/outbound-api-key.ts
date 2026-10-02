@@ -87,12 +87,15 @@ export function createOutboundAPIKeyManager(
   return new OutboundAPIKeyManager(options);
 }
 
-export class OutboundAPIKeyManagerService extends Context.Service<OutboundAPIKeyManagerService, {
+export class OutboundAPIKeyManagerService extends Context.Service<
+  OutboundAPIKeyManagerService,
+  {
     readonly getKey: (
       providerId: string,
       sessionId: string
     ) => Effect.Effect<string, OutboundApiKeyError | unknown>;
-  }>()("clawql/OutboundAPIKeyManagerService") {}
+  }
+>()("clawql/OutboundAPIKeyManagerService") {}
 
 export function outboundAPIKeyManagerServiceFromManager(
   manager: OutboundAPIKeyManager

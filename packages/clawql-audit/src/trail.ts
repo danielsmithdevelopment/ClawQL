@@ -46,7 +46,9 @@ export type WORMAuditTrailConfig = {
   chainMetadata?: ChainMetadata;
 };
 
-export class WORMAuditTrailService extends Context.Service<WORMAuditTrailService, {
+export class WORMAuditTrailService extends Context.Service<
+  WORMAuditTrailService,
+  {
     readonly append: (entry: WORMAppendInput) => Effect.Effect<WORMEntry, AuditError>;
     readonly query: (filter: WORMFilter) => Effect.Effect<WORMEntry[], AuditError>;
     readonly verify: (
@@ -64,7 +66,8 @@ export class WORMAuditTrailService extends Context.Service<WORMAuditTrailService
     readonly listMerkleRoots: () => Effect.Effect<MerkleRoot[], AuditError>;
     readonly drainOutbox: () => Effect.Effect<void, AuditError>;
     readonly stop: () => Effect.Effect<void, AuditError>;
-  }>()("clawql-audit/WORMAuditTrail") {}
+  }
+>()("clawql-audit/WORMAuditTrail") {}
 
 function retryFromConfig(config: WORMAuditTrailConfig): RetryConfig {
   return {
@@ -139,63 +142,65 @@ const makeWORMAuditTrailLayerWithMeta = (
           return root;
         });
 
-      const service: Context.Service.Shape<typeof WORMAuditTrailService> = WORMAuditTrailService.of({
-        merkle,
-        drainOutbox: () => replicator.drainOutbox(),
-        listMerkleRoots: () => config.local.listMerkleRoots(),
-        sealMerkleBatch,
-        stop: () =>
-          Effect.gen(function* () {
-            if (reconciler) yield* reconciler.stop();
-            if (http) yield* http.close();
-          }),
-        append: (input) =>
-          Effect.gen(function* () {
-            const prev = yield* chain.latest();
-            const nextIndex = prev ? prev.chainIndex + 1 : 0;
-            const serializationVersion = formatAtIndex(meta, nextIndex);
-            const id = yield* generateUUIDv7();
-            const writtenAt = new Date().toISOString();
-            const sealed = yield* sealHashChainRecord({
-              prev: prev ? { hash: prev.hash, seq: prev.chainIndex } : null,
-              body: {
-                id,
-                writtenAt,
-                ...input,
-              },
-              serializationVersion,
-            });
-            let signed: Omit<WORMEntry, "backendAcks"> = sealed;
-            if (tee) {
-              signed = {
-                ...sealed,
-                teeSignature: yield* tee.sign(sealed.hash),
-              };
-            }
-            const acks = yield* replicator.write(signed);
-            const final: WORMEntry = { ...signed, backendAcks: acks };
-            yield* chain.update(final);
-            sinceLastRoot += 1;
-            if (batchSize > 0 && sinceLastRoot >= batchSize) {
-              const from = lastRootToIndex + 1;
-              const all = yield* replicator.all();
-              const slice = all.filter((e) => e.chainIndex >= from);
-              if (slice.length) yield* sealMerkleBatch(slice);
-            }
-            return final;
-          }),
-        query: (filter) => replicator.query(filter),
-        verify: (entries) =>
-          Effect.gen(function* () {
-            const toVerify = entries ?? (yield* replicator.all());
-            return yield* chain.verify(toVerify);
-          }),
-        exportEntries: (filter, format, options) =>
-          Effect.gen(function* () {
-            const rows = yield* replicator.query(filter);
-            return yield* exportEntries(rows, format, options);
-          }),
-      });
+      const service: Context.Service.Shape<typeof WORMAuditTrailService> = WORMAuditTrailService.of(
+        {
+          merkle,
+          drainOutbox: () => replicator.drainOutbox(),
+          listMerkleRoots: () => config.local.listMerkleRoots(),
+          sealMerkleBatch,
+          stop: () =>
+            Effect.gen(function* () {
+              if (reconciler) yield* reconciler.stop();
+              if (http) yield* http.close();
+            }),
+          append: (input) =>
+            Effect.gen(function* () {
+              const prev = yield* chain.latest();
+              const nextIndex = prev ? prev.chainIndex + 1 : 0;
+              const serializationVersion = formatAtIndex(meta, nextIndex);
+              const id = yield* generateUUIDv7();
+              const writtenAt = new Date().toISOString();
+              const sealed = yield* sealHashChainRecord({
+                prev: prev ? { hash: prev.hash, seq: prev.chainIndex } : null,
+                body: {
+                  id,
+                  writtenAt,
+                  ...input,
+                },
+                serializationVersion,
+              });
+              let signed: Omit<WORMEntry, "backendAcks"> = sealed;
+              if (tee) {
+                signed = {
+                  ...sealed,
+                  teeSignature: yield* tee.sign(sealed.hash),
+                };
+              }
+              const acks = yield* replicator.write(signed);
+              const final: WORMEntry = { ...signed, backendAcks: acks };
+              yield* chain.update(final);
+              sinceLastRoot += 1;
+              if (batchSize > 0 && sinceLastRoot >= batchSize) {
+                const from = lastRootToIndex + 1;
+                const all = yield* replicator.all();
+                const slice = all.filter((e) => e.chainIndex >= from);
+                if (slice.length) yield* sealMerkleBatch(slice);
+              }
+              return final;
+            }),
+          query: (filter) => replicator.query(filter),
+          verify: (entries) =>
+            Effect.gen(function* () {
+              const toVerify = entries ?? (yield* replicator.all());
+              return yield* chain.verify(toVerify);
+            }),
+          exportEntries: (filter, format, options) =>
+            Effect.gen(function* () {
+              const rows = yield* replicator.query(filter);
+              return yield* exportEntries(rows, format, options);
+            }),
+        }
+      );
 
       let http: AuditHttpServerHandle | undefined;
       if (config.httpPort !== undefined) {

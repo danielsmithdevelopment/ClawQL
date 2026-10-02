@@ -188,7 +188,9 @@ export function redactVirtualKey(key: VirtualKey): Omit<VirtualKey, "secretHash"
 }
 
 /** Effect service for virtual-key persistence. */
-export class VirtualKeyStoreService extends Context.Service<VirtualKeyStoreService, {
+export class VirtualKeyStoreService extends Context.Service<
+  VirtualKeyStoreService,
+  {
     readonly save: (
       store: VirtualKeyStoreFile,
       env?: NodeJS.ProcessEnv
@@ -206,7 +208,8 @@ export class VirtualKeyStoreService extends Context.Service<VirtualKeyStoreServi
       amountUsd: number,
       env?: NodeJS.ProcessEnv
     ) => Effect.Effect<void, Error>;
-  }>()("clawql/VirtualKeyStoreService") {}
+  }
+>()("clawql/VirtualKeyStoreService") {}
 
 export function virtualKeyStoreLiveLayer(): Layer.Layer<VirtualKeyStoreService> {
   return Layer.succeed(

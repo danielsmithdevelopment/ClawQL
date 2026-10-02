@@ -259,9 +259,7 @@ export class IssuedApiKeyStore {
         return { ok: false, reason: "hash_mismatch", keyId: record.id } as const;
       }
 
-      yield* Effect.forkDetach(
-        this.touchLastUsed(record.id).pipe(Effect.catch(() => Effect.void))
-      );
+      yield* Effect.forkDetach(this.touchLastUsed(record.id).pipe(Effect.catch(() => Effect.void)));
       yield* this.notify({
         type: "API_KEY_USED",
         keyId: record.id,
@@ -346,7 +344,9 @@ export function createIssuedApiKeyStore(options: IssuedApiKeyStoreOptions): Issu
   return new IssuedApiKeyStore(options);
 }
 
-export class IssuedApiKeyStoreService extends Context.Service<IssuedApiKeyStoreService, {
+export class IssuedApiKeyStoreService extends Context.Service<
+  IssuedApiKeyStoreService,
+  {
     readonly path: string;
     readonly load: () => Effect.Effect<IssuedApiKeyStoreFile>;
     readonly findById: (id: string) => Effect.Effect<IssuedApiKeyRecord | undefined>;
@@ -359,7 +359,8 @@ export class IssuedApiKeyStoreService extends Context.Service<IssuedApiKeyStoreS
     readonly revoke: (keyId: string) => Effect.Effect<IssuedApiKeyRecord | null, ApiKeyStoreError>;
     readonly toAtrClaims: (record: IssuedApiKeyRecord) => AtrClaims;
     readonly asClaimsResolver: () => ApiKeyClaimsResolver;
-  }>()("clawql/IssuedApiKeyStoreService") {}
+  }
+>()("clawql/IssuedApiKeyStoreService") {}
 
 export function issuedApiKeyStoreServiceFromStore(
   store: IssuedApiKeyStore

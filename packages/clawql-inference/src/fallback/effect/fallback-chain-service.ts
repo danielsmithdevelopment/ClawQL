@@ -6,11 +6,14 @@ import { FallbackExhaustedError } from "./fallback-errors.js";
 import { InferenceGatewayService } from "./inference-gateway-service.js";
 
 /** Effect service for ordered model fallback within a single `complete()` call. */
-export class FallbackChainService extends Context.Service<FallbackChainService, {
+export class FallbackChainService extends Context.Service<
+  FallbackChainService,
+  {
     readonly completeWithFallback: (
       request: InferenceRequest
     ) => Effect.Effect<InferenceResponse, FallbackExhaustedError | unknown>;
-  }>()("clawql/FallbackChainService") {}
+  }
+>()("clawql/FallbackChainService") {}
 
 export function fallbackChainLiveLayer(
   config: FallbackConfig

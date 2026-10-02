@@ -216,7 +216,7 @@ export function spendableBalanceCents(account: CreditAccount, now: Date = new Da
 async function getCreditAccountImpl(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditAccount>  {
+): Promise<CreditAccount> {
   const file = await loadFile(env);
   return normalizeAccount(tenantId, file.accounts[tenantId]);
 }
@@ -235,7 +235,7 @@ export function getCreditAccountEffect(
 export async function getCreditAccount(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditAccount>  {
+): Promise<CreditAccount> {
   return Effect.runPromise(getCreditAccountEffect(tenantId, env));
 }
 
@@ -307,7 +307,7 @@ async function appendCreditEntryImpl(
     expiresAt?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditLedgerEntry>  {
+): Promise<CreditLedgerEntry> {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -405,7 +405,7 @@ export async function appendCreditEntry(
     expiresAt?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditLedgerEntry>  {
+): Promise<CreditLedgerEntry> {
   return Effect.runPromise(appendCreditEntryEffect(input, env));
 }
 
@@ -426,7 +426,7 @@ async function holdCreditsImpl(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<HoldResult>  {
+): Promise<HoldResult> {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -526,7 +526,7 @@ export async function holdCredits(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<HoldResult>  {
+): Promise<HoldResult> {
   return Effect.runPromise(holdCreditsEffect(input, env));
 }
 
@@ -546,7 +546,7 @@ async function captureHoldImpl(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CaptureResult>  {
+): Promise<CaptureResult> {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -649,7 +649,7 @@ export async function captureHold(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CaptureResult>  {
+): Promise<CaptureResult> {
   return Effect.runPromise(captureHoldEffect(input, env));
 }
 
@@ -667,7 +667,7 @@ async function releaseHoldImpl(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<ReleaseResult>  {
+): Promise<ReleaseResult> {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -744,7 +744,7 @@ export async function releaseHold(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<ReleaseResult>  {
+): Promise<ReleaseResult> {
   return Effect.runPromise(releaseHoldEffect(input, env));
 }
 
@@ -757,7 +757,7 @@ async function settleTopupByPaymentIntentImpl(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }>  {
+): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }> {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -824,13 +824,11 @@ export async function settleTopupByPaymentIntent(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }>  {
+): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }> {
   return Effect.runPromise(settleTopupByPaymentIntentEffect(input, env));
 }
 
-async function resetCreditsLedgerForTestsImpl(
-  env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+async function resetCreditsLedgerForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveFile({ accounts: {} }, env);
 }
 
@@ -846,7 +844,7 @@ export function resetCreditsLedgerForTestsEffect(
 /** Promise façade — prefer {@link resetCreditsLedgerForTestsEffect} for Effect callers. */
 export async function resetCreditsLedgerForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(resetCreditsLedgerForTestsEffect(env));
 }
 
@@ -874,7 +872,7 @@ async function transferCreditsImpl(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   const fromTenantId = input.fromTenantId.trim();
   const toTenantId = input.toTenantId.trim();
   if (!fromTenantId || !toTenantId) {
@@ -1020,7 +1018,7 @@ export async function transferCredits(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult>  {
+): Promise<CreditTransferResult> {
   return Effect.runPromise(transferCreditsEffect(input, env));
 }
 
@@ -1037,7 +1035,9 @@ type SettleTopupInput = Parameters<typeof settleTopupByPaymentIntent>[0];
 type TransferCreditsInput = Parameters<typeof transferCredits>[0];
 
 /** Effect surface over the prepaid credit ledger (authoritative balances + holds). */
-export class CreditsLedgerService extends Context.Service<CreditsLedgerService, {
+export class CreditsLedgerService extends Context.Service<
+  CreditsLedgerService,
+  {
     readonly getAccount: (tenantId: string) => Effect.Effect<CreditAccount, LedgerError>;
     readonly appendEntry: (
       input: AppendCreditEntryInput
@@ -1052,7 +1052,8 @@ export class CreditsLedgerService extends Context.Service<CreditsLedgerService, 
       input: TransferCreditsInput
     ) => Effect.Effect<CreditTransferResult, LedgerError>;
     readonly reset: () => Effect.Effect<void, LedgerError>;
-  }>()("clawql/CreditsLedgerService") {}
+  }
+>()("clawql/CreditsLedgerService") {}
 
 export function creditsLedgerLiveLayer(
   env: NodeJS.ProcessEnv = process.env

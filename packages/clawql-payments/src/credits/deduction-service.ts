@@ -53,7 +53,9 @@ export type DeductionReleaseResult = {
 };
 
 /** Sync counter decisions + durable ledger; events are post-commit only. */
-export class DeductionService extends Context.Service<DeductionService, {
+export class DeductionService extends Context.Service<
+  DeductionService,
+  {
     readonly getSpendableBalance: (
       tenantId: string
     ) => Effect.Effect<CreditAccount, DeductionError>;
@@ -87,7 +89,8 @@ export class DeductionService extends Context.Service<DeductionService, {
       correlationId?: string;
       note?: string;
     }) => Effect.Effect<CreditLedgerEntry, DeductionError>;
-  }>()("clawql/DeductionService") {}
+  }
+>()("clawql/DeductionService") {}
 
 function mapLedgerError(error: LedgerError): DeductionError {
   return new DeductionError({ reason: error.reason, cause: error.cause });

@@ -17,7 +17,7 @@ let initPromise: Promise<InferenceOtelShutdownFn | undefined> | null = null;
  */
 async function maybeInitInferenceOtelTracingImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<InferenceOtelShutdownFn | undefined>  {
+): Promise<InferenceOtelShutdownFn | undefined> {
   if (!inferenceTracingEnabled(env)) return undefined;
   if (!initPromise) {
     initPromise = initInferenceOtelTracing(env);
@@ -37,7 +37,7 @@ export function maybeInitInferenceOtelTracingEffect(
 /** Promise façade — prefer {@link maybeInitInferenceOtelTracingEffect} for Effect callers. */
 export async function maybeInitInferenceOtelTracing(
   env: NodeJS.ProcessEnv = process.env
-): Promise<InferenceOtelShutdownFn | undefined>  {
+): Promise<InferenceOtelShutdownFn | undefined> {
   return Effect.runPromise(maybeInitInferenceOtelTracingEffect(env));
 }
 

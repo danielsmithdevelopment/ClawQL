@@ -73,8 +73,7 @@ export const SANDBOX_AUTO_NONE_ERROR =
   "agent-substrate|kata|bridge|macos-seatbelt|docker to pin.";
 
 export type SandboxBackendChoice =
-  | { ok: true; backend: SandboxExecBackendKind }
-  | { ok: false; error: string };
+  { ok: true; backend: SandboxExecBackendKind } | { ok: false; error: string };
 
 export function resolveSandboxBackendChoiceEffect(
   explicit: ExplicitSandboxBackend,

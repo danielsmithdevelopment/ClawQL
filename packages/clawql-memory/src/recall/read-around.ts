@@ -272,12 +272,15 @@ export function executeReadAroundEffect(
   });
 }
 
-export class ReadAroundService extends Context.Service<ReadAroundService, {
+export class ReadAroundService extends Context.Service<
+  ReadAroundService,
+  {
     readonly readAround: (
       vault: string | undefined,
       input: ReadAroundInput
     ) => Effect.Effect<ReadAroundResult, MemoryError>;
-  }>()("clawql/ReadAroundService") {}
+  }
+>()("clawql/ReadAroundService") {}
 
 export function readAroundLiveLayer(): Layer.Layer<ReadAroundService> {
   return Layer.succeed(

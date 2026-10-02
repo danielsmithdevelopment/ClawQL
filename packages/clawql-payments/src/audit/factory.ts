@@ -59,7 +59,7 @@ export function getPaymentAuditStore(env: NodeJS.ProcessEnv = process.env): Paym
 
 async function resetPaymentAuditStoreForTestsImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   if (defaultStore) {
     await defaultStore.reset();
   }
@@ -83,6 +83,6 @@ export function resetPaymentAuditStoreForTestsEffect(
 /** Promise façade — prefer {@link resetPaymentAuditStoreForTestsEffect} for Effect callers. */
 export async function resetPaymentAuditStoreForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void>  {
+): Promise<void> {
   return Effect.runPromise(resetPaymentAuditStoreForTestsEffect(env));
 }

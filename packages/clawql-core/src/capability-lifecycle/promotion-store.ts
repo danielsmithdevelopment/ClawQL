@@ -14,7 +14,9 @@ export class PromotionStoreError extends Data.TaggedError("PromotionStoreError")
   readonly reason: string;
 }> {}
 
-export class PromotionStore extends Context.Service<PromotionStore, {
+export class PromotionStore extends Context.Service<
+  PromotionStore,
+  {
     readonly get: (skillId: string) => Effect.Effect<PromotedSkillRecord | undefined>;
     readonly list: () => Effect.Effect<readonly PromotedSkillRecord[]>;
     /**
@@ -33,7 +35,8 @@ export class PromotionStore extends Context.Service<PromotionStore, {
       skillId: string,
       sessionId: string
     ) => Effect.Effect<boolean, never, WormAuditSink>;
-  }>()("clawql/PromotionStore") {}
+  }
+>()("clawql/PromotionStore") {}
 
 /** True iff every token in validatedScope is in session ATR S. */
 export function validatedScopeSubsetOfS(

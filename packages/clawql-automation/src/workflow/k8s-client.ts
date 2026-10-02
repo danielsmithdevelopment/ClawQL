@@ -155,9 +155,12 @@ export function findWorkflowPods(workflow: ArgoWorkflowObject): V1Pod[] {
 }
 
 /** Effect service for K8s client acquisition used by workflow suspend/resume. */
-export class WorkflowK8sService extends Context.Service<WorkflowK8sService, {
+export class WorkflowK8sService extends Context.Service<
+  WorkflowK8sService,
+  {
     readonly clients: () => Effect.Effect<WorkflowK8sClients, AutomationError>;
-  }>()("clawql/WorkflowK8sService") {}
+  }
+>()("clawql/WorkflowK8sService") {}
 
 export function workflowK8sLiveLayer(): Layer.Layer<WorkflowK8sService> {
   return Layer.succeed(

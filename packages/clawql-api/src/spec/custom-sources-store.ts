@@ -36,9 +36,7 @@ export function getCustomSourceCacheDir(id: string, home = resolveClawqlHome()):
   return dir;
 }
 
-async function readCustomSourcesFileImpl(
-  home = resolveClawqlHome()
-): Promise<CustomSourcesFile>  {
+async function readCustomSourcesFileImpl(home = resolveClawqlHome()): Promise<CustomSourcesFile> {
   const path = getCustomSourcesFilePath(home);
   try {
     const raw = await readFile(path, "utf8");
@@ -71,7 +69,7 @@ export function readCustomSourcesFileEffect(
 /** Promise façade — prefer {@link readCustomSourcesFileEffect} for Effect callers. */
 export async function readCustomSourcesFile(
   home = resolveClawqlHome()
-): Promise<CustomSourcesFile>  {
+): Promise<CustomSourcesFile> {
   return Effect.runPromise(readCustomSourcesFileEffect(home));
 }
 
@@ -89,7 +87,7 @@ function isCustomSourceEntry(v: unknown): v is CustomSourceEntry {
 async function writeCustomSourcesFileImpl(
   file: CustomSourcesFile,
   home = resolveClawqlHome()
-): Promise<string>  {
+): Promise<string> {
   const path = getCustomSourcesFilePath(home);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(file, null, 2)}\n`, {
@@ -114,14 +112,14 @@ export function writeCustomSourcesFileEffect(
 export async function writeCustomSourcesFile(
   file: CustomSourcesFile,
   home = resolveClawqlHome()
-): Promise<string>  {
+): Promise<string> {
   return Effect.runPromise(writeCustomSourcesFileEffect(file, home));
 }
 
 async function upsertCustomSourceImpl(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
-): Promise<{ path: string; entry: CustomSourceEntry }>  {
+): Promise<{ path: string; entry: CustomSourceEntry }> {
   const file = await readCustomSourcesFile(home);
   const idx = file.sources.findIndex((s) => s.id === entry.id);
   if (idx >= 0) file.sources[idx] = entry;
@@ -144,11 +142,11 @@ export function upsertCustomSourceEffect(
 export async function upsertCustomSource(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
-): Promise<{ path: string; entry: CustomSourceEntry }>  {
+): Promise<{ path: string; entry: CustomSourceEntry }> {
   return Effect.runPromise(upsertCustomSourceEffect(entry, home));
 }
 
-async function removeCustomSourceImpl(id: string, home = resolveClawqlHome()): Promise<boolean>  {
+async function removeCustomSourceImpl(id: string, home = resolveClawqlHome()): Promise<boolean> {
   const safeId = assertSafeSourceId(id);
   const file = await readCustomSourcesFile(home);
   const next = file.sources.filter((s) => s.id !== safeId);
@@ -157,7 +155,10 @@ async function removeCustomSourceImpl(id: string, home = resolveClawqlHome()): P
   return true;
 }
 
-export function removeCustomSourceEffect(id: string, home = resolveClawqlHome()): Effect.Effect<boolean, Error> {
+export function removeCustomSourceEffect(
+  id: string,
+  home = resolveClawqlHome()
+): Effect.Effect<boolean, Error> {
   return Effect.tryPromise({
     try: () => removeCustomSourceImpl(id, home),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -165,14 +166,11 @@ export function removeCustomSourceEffect(id: string, home = resolveClawqlHome())
 }
 
 /** Promise façade — prefer {@link removeCustomSourceEffect} for Effect callers. */
-export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean>  {
+export async function removeCustomSource(id: string, home = resolveClawqlHome()): Promise<boolean> {
   return Effect.runPromise(removeCustomSourceEffect(id, home));
 }
 
-async function ensureSourceCacheDirImpl(
-  id: string,
-  home = resolveClawqlHome()
-): Promise<string>  {
+async function ensureSourceCacheDirImpl(id: string, home = resolveClawqlHome()): Promise<string> {
   const dir = getCustomSourceCacheDir(id, home);
   await mkdir(dir, { recursive: true });
   const base = resolve(join(home, "sources"));
@@ -198,6 +196,6 @@ export function ensureSourceCacheDirEffect(
 export async function ensureSourceCacheDir(
   id: string,
   home = resolveClawqlHome()
-): Promise<string>  {
+): Promise<string> {
   return Effect.runPromise(ensureSourceCacheDirEffect(id, home));
 }

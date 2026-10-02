@@ -143,7 +143,7 @@ export const hitlLabelStudioToolSchema = {
 
 async function handleScheduleToolInputImpl(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as {
     operation?: string;
     job_id?: string;
@@ -171,13 +171,13 @@ export function handleScheduleToolInputEffect(
 /** Promise façade — prefer {@link handleScheduleToolInputEffect} for Effect callers. */
 export async function handleScheduleToolInput(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(handleScheduleToolInputEffect(params));
 }
 
 async function handleNotifyToolInputImpl(
   params: NotifySlackInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return runNotifySlack(params);
 }
 
@@ -193,13 +193,13 @@ export function handleNotifyToolInputEffect(
 /** Promise façade — prefer {@link handleNotifyToolInputEffect} for Effect callers. */
 export async function handleNotifyToolInput(
   params: NotifySlackInput
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(handleNotifyToolInputEffect(params));
 }
 
 async function handleWorkflowToolInputImpl(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as { operation?: string; namespace?: string; name?: string };
   logMcpToolShape("workflow", {
     operation: p.operation,
@@ -221,13 +221,13 @@ export function handleWorkflowToolInputEffect(
 /** Promise façade — prefer {@link handleWorkflowToolInputEffect} for Effect callers. */
 export async function handleWorkflowToolInput(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(handleWorkflowToolInputEffect(params));
 }
 
 async function handleArgocdToolInputImpl(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   const p = params as { operation?: string; namespace?: string; name?: string };
   logMcpToolShape("argocd", {
     operation: p.operation,
@@ -249,7 +249,7 @@ export function handleArgocdToolInputEffect(
 /** Promise façade — prefer {@link handleArgocdToolInputEffect} for Effect callers. */
 export async function handleArgocdToolInput(
   params: unknown
-): Promise<{ content: { type: "text"; text: string }[] }>  {
+): Promise<{ content: { type: "text"; text: string }[] }> {
   return Effect.runPromise(handleArgocdToolInputEffect(params));
 }
 

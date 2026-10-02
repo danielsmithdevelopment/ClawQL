@@ -57,7 +57,9 @@ export type StagedCreditTransfer = {
 };
 
 /** Prepaid USD credit balances for tenants (local ledger + WORM). */
-export class CreditsService extends Context.Service<CreditsService, {
+export class CreditsService extends Context.Service<
+  CreditsService,
+  {
     readonly getBalance: (tenantId: string) => Effect.Effect<CreditAccount, CreditsError>;
     readonly debit: (input: {
       tenantId: string;
@@ -108,7 +110,8 @@ export class CreditsService extends Context.Service<CreditsService, {
       code: string;
       totp?: string;
     }) => Effect.Effect<CreditTransferResult, CreditsError>;
-  }>()("clawql/CreditsService") {}
+  }
+>()("clawql/CreditsService") {}
 
 export function creditsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

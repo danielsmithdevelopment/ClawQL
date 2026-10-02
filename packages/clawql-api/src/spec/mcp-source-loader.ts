@@ -71,7 +71,7 @@ function toolToOperation(
   };
 }
 
-async function loadMcpSourceOperationsImpl(entries: CustomSourceEntry[]): Promise<Operation[]>  {
+async function loadMcpSourceOperationsImpl(entries: CustomSourceEntry[]): Promise<Operation[]> {
   const mcpEntries = entries.filter((e) => e.kind === "mcp");
   const ops: Operation[] = [];
 
@@ -109,7 +109,9 @@ async function loadMcpSourceOperationsImpl(entries: CustomSourceEntry[]): Promis
   return ops;
 }
 
-export function loadMcpSourceOperationsEffect(entries: CustomSourceEntry[]): Effect.Effect<Operation[], Error> {
+export function loadMcpSourceOperationsEffect(
+  entries: CustomSourceEntry[]
+): Effect.Effect<Operation[], Error> {
   return Effect.tryPromise({
     try: () => loadMcpSourceOperationsImpl(entries),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -117,6 +119,6 @@ export function loadMcpSourceOperationsEffect(entries: CustomSourceEntry[]): Eff
 }
 
 /** Promise façade — prefer {@link loadMcpSourceOperationsEffect} for Effect callers. */
-export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]>  {
+export async function loadMcpSourceOperations(entries: CustomSourceEntry[]): Promise<Operation[]> {
   return Effect.runPromise(loadMcpSourceOperationsEffect(entries));
 }

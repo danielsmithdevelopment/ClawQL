@@ -9,7 +9,7 @@ export type TrainingRunHandle = {
 };
 
 /** Orchestrate a training run (Argo when configured; otherwise dry-run workflow name). */
-async function runTrainingPipelineImpl(config: TrainingConfig): Promise<TrainingRunHandle>  {
+async function runTrainingPipelineImpl(config: TrainingConfig): Promise<TrainingRunHandle> {
   const workflow = buildTrainingWorkflow(config);
   const name = await scheduleTrainingRun(config);
   const argoConfigured = Boolean(process.env.CLAWQL_ARGO_ENDPOINT?.trim());
@@ -20,7 +20,9 @@ async function runTrainingPipelineImpl(config: TrainingConfig): Promise<Training
   };
 }
 
-export function runTrainingPipelineEffect(config: TrainingConfig): Effect.Effect<TrainingRunHandle, Error> {
+export function runTrainingPipelineEffect(
+  config: TrainingConfig
+): Effect.Effect<TrainingRunHandle, Error> {
   return Effect.tryPromise({
     try: () => runTrainingPipelineImpl(config),
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
@@ -28,7 +30,7 @@ export function runTrainingPipelineEffect(config: TrainingConfig): Effect.Effect
 }
 
 /** Promise façade — prefer {@link runTrainingPipelineEffect} for Effect callers. */
-export async function runTrainingPipeline(config: TrainingConfig): Promise<TrainingRunHandle>  {
+export async function runTrainingPipeline(config: TrainingConfig): Promise<TrainingRunHandle> {
   return Effect.runPromise(runTrainingPipelineEffect(config));
 }
 

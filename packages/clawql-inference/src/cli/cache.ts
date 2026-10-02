@@ -9,7 +9,7 @@ export type InferenceCacheStatusOptions = {
 
 async function runInferenceCacheStatusImpl(
   options: InferenceCacheStatusOptions = {}
-): Promise<number>  {
+): Promise<number> {
   const env = options.env ?? process.env;
   const config = loadSemanticCacheConfig(env);
   const embedding = resolveInferenceEmbeddingConfig(env);
@@ -46,6 +46,6 @@ export function runInferenceCacheStatusEffect(
 /** Promise façade — prefer {@link runInferenceCacheStatusEffect} for Effect callers. */
 export async function runInferenceCacheStatus(
   options: InferenceCacheStatusOptions = {}
-): Promise<number>  {
+): Promise<number> {
   return Effect.runPromise(runInferenceCacheStatusEffect(options));
 }
