@@ -28,12 +28,12 @@ Specification-first evolutionary loops with optional Postgres lineage storage. I
 
 ## Registration and lineage
 
-| Env / Helm                                                         | Default           | Effect                                                                                                |
-| ------------------------------------------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------ |
-| **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true` | off | `makeHarnessLayer(createOuroborosHarnessPlugin)` registers the tools above — Helm: **`enableOuroboros`** |
-| **`CLAWQL_ENABLE_OUROBOROS`** (old name)                           | _(deleted)_       | Never a registration gate; not resurrected                                                             |
-| **`CLAWQL_OUROBOROS_DATABASE_URL`** or **`CLAWQL_OUROBOROS_DB_*`** | unset = in-memory | Durable Postgres events (`clawql_ouroboros_events`)                                                     |
-| **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`**                                | off               | Langfuse eval → `ouroboros_propose_seed_revision_from_eval` (nested under the harness gate above)       |
+| Env / Helm                                                                       | Default           | Effect                                                                                                   |
+| -------------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true` | off               | `makeHarnessLayer(createOuroborosHarnessPlugin)` registers the tools above — Helm: **`enableOuroboros`** |
+| **`CLAWQL_ENABLE_OUROBOROS`** (old name)                                         | _(deleted)_       | Never a registration gate; not resurrected                                                               |
+| **`CLAWQL_OUROBOROS_DATABASE_URL`** or **`CLAWQL_OUROBOROS_DB_*`**               | unset = in-memory | Durable Postgres events (`clawql_ouroboros_events`)                                                      |
+| **`CLAWQL_ENABLE_LANGFUSE_EVAL=1`**                                              | off               | Langfuse eval → `ouroboros_propose_seed_revision_from_eval` (nested under the harness gate above)        |
 
 Do **not** teach **`clawql-ouroboros/mcp-hooks`** as the **`clawql-mcp`** registration path (OK for embedding the library in your own MCP host).
 
