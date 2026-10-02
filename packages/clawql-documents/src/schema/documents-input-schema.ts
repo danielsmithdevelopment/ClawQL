@@ -35,7 +35,7 @@ export const IngestExternalKnowledgeInputSchema = Schema.Struct({
   scope: Schema.optional(Schema.String.annotate({ description: INGEST_SCOPE_DESCRIPTION })),
   documents: Schema.optional(
     Schema.mutable(Schema.Array(ExternalIngestDocumentSchema))
-      .pipe(Schema.maxItems(50))
+      .pipe(Schema.check(Schema.isMaxLength(50)))
       .annotate({ description: INGEST_DOCUMENTS_DESCRIPTION })
   ),
   url: Schema.optional(
@@ -162,8 +162,9 @@ export const RunIdpPipelineInputSchema = Schema.Struct({
     Schema.String.annotate({ description: IDP_PDF_BASE64_DESCRIPTION })
   ),
   step_args: Schema.optional(
-    Schema.Record(Schema.String, Schema.Record({ key: Schema.String, value: Schema.Unknown ),
-    }).annotate({ description: IDP_STEP_ARGS_DESCRIPTION })
+    Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Unknown)).annotate({
+      description: IDP_STEP_ARGS_DESCRIPTION,
+    })
   ),
   skip_stages: Schema.optional(
     Schema.mutable(Schema.Array(IdpStageSchema)).annotate({
@@ -248,7 +249,9 @@ const ExtractionExampleSchema = Schema.Struct({
 
 const ExtractExampleSchema = Schema.Struct({
   text: Schema.String.pipe(Schema.check(Schema.isMinLength(1))),
-  extractions: Schema.mutable(Schema.Array(ExtractionExampleSchema)).pipe(Schema.minItems(1)),
+  extractions: Schema.mutable(Schema.Array(ExtractionExampleSchema)).pipe(
+    Schema.check(Schema.isMinLength(1))
+  ),
 });
 
 export const ExtractDocumentInputSchema = Schema.Struct({
@@ -267,7 +270,7 @@ export const ExtractDocumentInputSchema = Schema.Struct({
   ),
   examples: Schema.optional(
     Schema.mutable(Schema.Array(ExtractExampleSchema))
-      .pipe(Schema.maxItems(20))
+      .pipe(Schema.check(Schema.isMaxLength(20)))
       .annotate({ description: EXTRACT_EXAMPLES_DESCRIPTION })
   ),
   model_id: Schema.optional(

@@ -62,24 +62,35 @@ function fromPromise<A>(tryFn: () => Promise<A>): Effect.Effect<A, MemoryError> 
   });
 }
 
-export function memoryCryptoShredLiveService(): Context.Service.Shape<MemoryCryptoShredService> {
-  return {
-    enabled: (env) => Effect.sync(() => memoryCryptoShredEnabled(env)),
-    encryptForWrite: (vaultRoot, relativePath, plaintext, opts) =>
-      fromPromise(() => maybeEncryptForVaultWrite(vaultRoot, relativePath, plaintext, opts)),
-    decryptForRead: (vaultRoot, text, env) =>
+/** Live service implementation (explicit param types avoid DTS `of` Shape collapse). */
+export function memoryCryptoShredLiveService() {
+  return MemoryCryptoShredService.of({
+    enabled: (env?: NodeJS.ProcessEnv) => Effect.sync(() => memoryCryptoShredEnabled(env)),
+    encryptForWrite: (
+      vaultRoot: string,
+      relativePath: string,
+      plaintext: string,
+      opts?: { noteId?: string; env?: NodeJS.ProcessEnv }
+    ) => fromPromise(() => maybeEncryptForVaultWrite(vaultRoot, relativePath, plaintext, opts)),
+    decryptForRead: (vaultRoot: string, text: string, env?: NodeJS.ProcessEnv) =>
       fromPromise(() => maybeDecryptVaultRead(vaultRoot, text, env)),
-    destroyKey: (vaultRoot, noteId) => fromPromise(() => destroyNoteKey(vaultRoot, noteId)),
-    loadOrCreateKey: (vaultRoot, noteId) =>
+    destroyKey: (vaultRoot: string, noteId: string) =>
+      fromPromise(() => destroyNoteKey(vaultRoot, noteId)),
+    loadOrCreateKey: (vaultRoot: string, noteId: string) =>
       fromPromise(() => loadOrCreateNoteKey(vaultRoot, noteId)),
-    lookupPath: (vaultRoot, path) => fromPromise(() => lookupPathMapByPath(vaultRoot, path)),
-    deletePath: (vaultRoot, path) => fromPromise(() => deletePathMapEntry(vaultRoot, path)),
-    appendDeny: (vaultRoot, entry) =>
+    lookupPath: (vaultRoot: string, path: string) =>
+      fromPromise(() => lookupPathMapByPath(vaultRoot, path)),
+    deletePath: (vaultRoot: string, path: string) =>
+      fromPromise(() => deletePathMapEntry(vaultRoot, path)),
+    appendDeny: (
+      vaultRoot: string,
+      entry: Omit<ErasureDenyEntry, "erasedAt"> & { erasedAt?: string }
+    ) =>
       fromPromise(async () => {
         await appendErasureDeny(vaultRoot, entry);
       }),
-    loadDenyHashes: (vaultRoot) => fromPromise(() => loadErasureDenyHashes(vaultRoot)),
-  };
+    loadDenyHashes: (vaultRoot: string) => fromPromise(() => loadErasureDenyHashes(vaultRoot)),
+  });
 }
 
 export const MemoryCryptoShredLive = Layer.succeed(

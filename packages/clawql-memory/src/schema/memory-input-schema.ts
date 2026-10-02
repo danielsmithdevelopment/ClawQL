@@ -105,14 +105,12 @@ const MemoryRebuildSchema = Schema.Struct({
   ),
 }).annotate({ description: MEMORY_INGEST_REBUILD_DESCRIPTION });
 
-const MemoryRecallSourceSchema = Schema.Literal(...MEMORY_RECALL_SOURCES);
+const MemoryRecallSourceSchema = Schema.Literals(MEMORY_RECALL_SOURCES);
 const OntologySchemaNameSchema = Schema.String.pipe(Schema.check(Schema.isMinLength(1)), Schema.check(Schema.isMaxLength(200)));
 const OntologyConfidenceSchema = Schema.Literals(["EXTRACTED", "INFERRED", "AMBIGUOUS"]);
 /** Predicate object — keys like gte/gt/eq; values validated at query time. */
-const OntologyFilterPredicateSchema = Schema.Record(Schema.String, Schema.Unknown,
-);
-const OntologyFiltersSchema = Schema.Record(Schema.String, OntologyFilterPredicateSchema,
-);
+const OntologyFilterPredicateSchema = Schema.Record(Schema.String, Schema.Unknown);
+const OntologyFiltersSchema = Schema.Record(Schema.String, OntologyFilterPredicateSchema);
 
 /** MCP `memory_ingest` tool arguments — Effect Schema (source of truth). */
 export const MemoryIngestInputSchema = Schema.Struct({
@@ -199,7 +197,7 @@ export const MemoryIngestInputSchema = Schema.Struct({
   ),
   enterpriseCitations: Schema.optional(
     Schema.mutable(Schema.Array(EnterpriseCitationSchema))
-      .pipe(Schema.maxItems(30))
+      .pipe(Schema.check(Schema.isMaxLength(30)))
       .annotate({ description: MEMORY_INGEST_ENTERPRISE_CITATIONS_DESCRIPTION })
   ),
   wikilinks: Schema.optional(
@@ -244,7 +242,7 @@ export const MemoryRecallInputSchema = Schema.Struct({
   ),
   sources: Schema.optional(
     Schema.mutable(Schema.Array(MemoryRecallSourceSchema))
-      .pipe(Schema.minItems(1))
+      .pipe(Schema.check(Schema.isMinLength(1)))
       .annotate({ description: MEMORY_RECALL_SOURCES_DESCRIPTION })
   ),
   schema: Schema.optional(
