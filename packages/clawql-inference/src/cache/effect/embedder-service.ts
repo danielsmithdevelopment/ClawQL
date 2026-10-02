@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import type { Embedder } from "../embedding.js";
+import { embedQueryEffect, type EmbeddingConfig, type Embedder } from "../embedding.js";
 
 /** Effect wrapper for semantic cache embedding lookups. */
 export class EmbedderService extends Context.Service<EmbedderService, {
@@ -15,6 +15,18 @@ export function embedderLiveLayer(embedder: Embedder): Layer.Layer<EmbedderServi
           try: () => embedder.embed(text),
           catch: (cause) => cause,
         }),
+    })
+  );
+}
+
+/** Prefer this when embedding config is known — avoids Promise embedder façade. */
+export function embedderFromConfigLiveLayer(
+  config: EmbeddingConfig
+): Layer.Layer<EmbedderService> {
+  return Layer.succeed(
+    EmbedderService,
+    EmbedderService.of({
+      embed: (text) => embedQueryEffect(text, config),
     })
   );
 }

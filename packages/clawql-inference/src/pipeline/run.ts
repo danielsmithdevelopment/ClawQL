@@ -4,8 +4,8 @@ import { Effect } from "effect";
 import { createInferenceStore } from "../store/create.js";
 import { filterRecordsForExport } from "../export/filter.js";
 import { runInferenceExportEffect } from "../export/run-export.js";
-import { submitFinetuneJob } from "../finetune/jobs.js";
-import { registerModelToTier } from "../finetune/tier-registry.js";
+import { submitFinetuneJobEffect } from "../finetune/jobs.js";
+import { registerModelToTierEffect } from "../finetune/tier-registry.js";
 import type { InferencePipelineConfig } from "./types.js";
 
 export type PipelineRunResult = {
@@ -65,18 +65,16 @@ export function runPipelineOnceEffect(
 
     let finetuneJobId: string | undefined;
     if (!config.evaluateBeforePromote) {
-      const job = yield* fromPromise(() =>
-        submitFinetuneJob({
-          datasetPath: exportResult.outputPath,
-          manifestPath: exportResult.manifestPath,
-          baseModel: config.baseModel,
-          provider: config.provider,
-          env,
-        })
-      );
+      const job = yield* submitFinetuneJobEffect({
+        datasetPath: exportResult.outputPath,
+        manifestPath: exportResult.manifestPath,
+        baseModel: config.baseModel,
+        provider: config.provider,
+        env,
+      });
       finetuneJobId = job.id;
       if (job.fineTunedModel) {
-        yield* fromPromise(() => registerModelToTier(config.targetTier, job.fineTunedModel!, env));
+        yield* registerModelToTierEffect(config.targetTier, job.fineTunedModel, env);
       }
     }
 

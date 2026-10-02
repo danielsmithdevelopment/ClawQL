@@ -113,9 +113,25 @@ export {
 } from "./export/run-export.js";
 export { scrubExportLineEffect } from "./export/pii.js";
 export type { ExportFormat, DatasetManifest } from "./export/types.js";
-export { submitFinetuneJob, getFinetuneJobStatus, registerFinetuneModel } from "./finetune/jobs.js";
+export {
+  submitFinetuneJob,
+  submitFinetuneJobEffect,
+  getFinetuneJobStatus,
+  getFinetuneJobStatusEffect,
+  registerFinetuneModel,
+  registerFinetuneModelEffect,
+  FinetuneJobsService,
+  finetuneJobsLiveLayer,
+} from "./finetune/jobs.js";
 export type { FinetuneJob, FinetuneProvider } from "./finetune/types.js";
-export { registerModelToTier, loadTierMapOverrides } from "./finetune/tier-registry.js";
+export {
+  registerModelToTier,
+  registerModelToTierEffect,
+  loadTierMapOverrides,
+  loadTierMapOverridesEffect,
+  FinetuneTierRegistryService,
+  finetuneTierRegistryLiveLayer,
+} from "./finetune/tier-registry.js";
 
 export {
   buildModelEscalationAuditEntry,
@@ -250,6 +266,7 @@ export {
 } from "./cache/cached-gateway.js";
 export {
   createSemanticCacheStore,
+  createSemanticCacheStoreEffect,
   resolveSemanticCacheBackend,
   PostgresSemanticCacheStore,
   type SemanticCacheBackend,
@@ -260,7 +277,12 @@ export {
   type SemanticCacheConfig,
   type SemanticCacheStats,
 } from "./cache/types.js";
-export { cosineSimilarity, resolveInferenceEmbeddingConfig } from "./cache/embedding.js";
+export {
+  cosineSimilarity,
+  resolveInferenceEmbeddingConfig,
+  embedTextsEffect,
+  embedQueryEffect,
+} from "./cache/embedding.js";
 export { buildCacheSignatureText, hashSystemPrompt } from "./cache/signature.js";
 export {
   EmbedderService,
@@ -349,7 +371,11 @@ export { PostgresInferenceStore } from "./store/postgres.js";
 export {
   getInferencePgPool,
   ensureInferenceSchema,
+  ensureInferenceSchemaEffect,
   closeInferencePgPool,
+  closeInferencePgPoolEffect,
+  InferencePgPoolService,
+  inferencePgPoolLiveLayer,
 } from "./store/postgres-pool.js";
 export { cronMatchesUtc } from "./pipeline/cron.js";
 export {
