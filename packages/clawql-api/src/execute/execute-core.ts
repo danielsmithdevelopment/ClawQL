@@ -15,6 +15,7 @@ import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
+import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -49,6 +50,31 @@ export function executeClawqlOperationEffect(
       return yield* textContentEffect(
         JSON.stringify({
           error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
+        })
+      );
+    }
+
+    const risk = op.risk;
+    const enforceRisk = yield* operationRiskEnforceEnabledEffect();
+    if (enforceRisk && risk?.policy === "block") {
+      return yield* textContentEffect(
+        JSON.stringify({
+          ok: false,
+          status: "blocked",
+          reason: "Destructive operation is blocked unless allowlisted via operation-risk override",
+          operationId,
+          risk,
+        })
+      );
+    }
+    if (enforceRisk && risk?.policy === "mandate") {
+      return yield* textContentEffect(
+        JSON.stringify({
+          ok: false,
+          status: "mandate_required",
+          reason: "Operation risk policy requires a mandate before execute",
+          operationId,
+          risk,
         })
       );
     }

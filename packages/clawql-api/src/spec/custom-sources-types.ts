@@ -32,6 +32,11 @@ export type CustomSourceEntry = {
   mcpCommand?: string;
   mcpArgs?: string[];
   mcpEnv?: Record<string, string>;
+  /**
+   * When true, honor MCP `readOnlyHint` / `destructiveHint` for risk classification.
+   * Untrusted sources ignore annotations (default → mandate).
+   */
+  trusted?: boolean;
   /** CLI wrapper — one execute op runs command + args with JSON args appended. */
   cliCommand?: string;
   cliArgs?: string[];
