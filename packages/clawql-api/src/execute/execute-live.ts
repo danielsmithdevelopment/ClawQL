@@ -13,7 +13,18 @@ function executeResultLooksOk(content: { type: "text"; text: string }[]): boolea
   const text = content[0]?.text ?? "";
   try {
     const parsed = JSON.parse(text) as unknown;
-    if (parsed && typeof parsed === "object" && "error" in parsed) return false;
+    if (parsed && typeof parsed === "object") {
+      const o = parsed as Record<string, unknown>;
+      if ("error" in o) return false;
+      if (o.ok === false) return false;
+      if (
+        o.status === "mandate_required" ||
+        o.status === "blocked" ||
+        o.status === "pending_approval"
+      ) {
+        return false;
+      }
+    }
   } catch {
     /* non-JSON success payloads are treated as ok */
   }

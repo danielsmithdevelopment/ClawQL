@@ -4,6 +4,11 @@ export type ExecuteClawqlOperationParams = {
   operationId: string;
   args: Record<string, unknown>;
   fields?: readonly string[];
+  /**
+   * After `clawql resume` / MCP `resume` approves a parked mandate call, pass the
+   * pending `executionId` so execute may run that exact payload once.
+   */
+  approvedExecutionId?: string;
 };
 
 export type ExecuteOperationResult = { ok: true; data: unknown } | { ok: false; error: string };

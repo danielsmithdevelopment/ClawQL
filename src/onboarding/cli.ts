@@ -14,6 +14,7 @@ import { runSecretsList, runSecretsSet } from "./secrets-cli.js";
 import { onboardExitCode, runOnboard } from "./onboard.js";
 import { runOperatorStatus } from "./operator-cli.js";
 import { runSourcesAdd, runSourcesList, runSourcesRemove } from "./sources-cli.js";
+import { runResume } from "./resume-cli.js";
 import { runHarness, runHarnessNonInteractive, type HarnessId } from "./harness-cli.js";
 import {
   parseImageDigestFlags,
@@ -176,6 +177,7 @@ type Command =
   | "onboard"
   | "operator"
   | "sources"
+  | "resume"
   | "release"
   | "ontology"
   | "memory"
@@ -250,6 +252,7 @@ function parse(argv: string[]): {
     else if (a === "--no-topups") flags.noTopUps = true;
     else if (a === "--no-meter") flags.noMeter = true;
     else if (a === "--force") flags.force = true;
+    else if (a === "--decline") flags.decline = true;
     else if (a === "--provider") flags.provider = argv[++i] ?? "";
     else if (a === "--bucket") flags.bucket = argv[++i] ?? "";
     else if (a === "--project") flags.project = argv[++i] ?? "";
@@ -472,6 +475,7 @@ Usage:
   clawql sources list | add <url> [--name NAME] [--kind openapi|discovery|graphql|grpc|mcp|cli|webmcp] | remove <id>
   clawql sources add --kind cli --command <bin> [--args a,b] [--name NAME]
   clawql sources add --kind webmcp <https-url> [--name NAME] [--webmcp-cdp-url http://127.0.0.1:9222]
+  clawql resume <executionId> | clawql resume --decline <executionId>
   clawql release init | collect | manifest | publish | verify <path>
   clawql ontology lint [--dir PATH] [files...] | generate --out DIR [--dir PATH]
   clawql ontology init | create-entity <Name> | import --pack legal
@@ -754,6 +758,17 @@ async function main(): Promise<void> {
     }
     console.error("Usage: clawql operator status");
     process.exitCode = 1;
+    return;
+  }
+
+  if (cmd === "resume") {
+    const home = typeof flags.home === "string" && flags.home ? flags.home : undefined;
+    const executionId = rest[0] ?? subcmd;
+    process.exitCode = await runResume({
+      executionId,
+      decline: Boolean(flags.decline),
+      home,
+    });
     return;
   }
 
