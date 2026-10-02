@@ -254,7 +254,7 @@ export class MCPOAuthServer {
   }
 
   issueToken(request: McpTokenRequest): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const grantType = normalizeGrantType(request.grantType);
       if (!this.allowedGrantTypes.has(grantType)) {
         return yield* fail("unsupported_grant_type", String(request.grantType));
@@ -283,7 +283,7 @@ export class MCPOAuthServer {
   createAuthorizationCode(
     request: McpAuthorizeRequest
   ): Effect.Effect<McpAuthorizeResult, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!this.authCodeStore) {
         return yield* fail("invalid_request", "authorization_code_not_configured");
       }
@@ -350,7 +350,7 @@ export class MCPOAuthServer {
   private exchangeAuthorizationCode(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!this.authCodeStore) {
         return yield* fail("invalid_request", "authorization_code_not_configured");
       }
@@ -407,7 +407,7 @@ export class MCPOAuthServer {
    * Zero per-user consent — scope derives from admin-configured IdP group mappings.
    */
   exchangeIdJag(request: McpTokenRequest): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.assertion?.trim()) {
         return yield* fail("invalid_request", "missing assertion");
       }
@@ -503,7 +503,7 @@ export class MCPOAuthServer {
   private issueClientCredentials(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.clientId) return yield* fail("invalid_client");
       const client = yield* this.clients.getClient(request.clientId);
       if (!client) return yield* fail("invalid_client");
@@ -521,7 +521,7 @@ export class MCPOAuthServer {
   private refreshAccessToken(
     request: McpTokenRequest
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       if (!request.clientId) return yield* fail("invalid_client");
       if (!request.refreshToken) return yield* fail("invalid_request");
       const hash = hashRefreshToken(request.refreshToken);
@@ -611,7 +611,7 @@ export class MCPOAuthServer {
       };
     }
   ): Effect.Effect<McpTokenResponse, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
       const jti = randomBytes(12).toString("hex");
       const accessToken = yield* Effect.tryPromise({
@@ -686,7 +686,7 @@ export class MCPOAuthServer {
    * Rejects tokens present in the access-token store as revoked.
    */
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const atr = yield* Effect.tryPromise({
         try: async () => {
           const { payload } = await jwtVerify(bearerToken, this.signing.verifyKey, {
@@ -738,7 +738,7 @@ export class MCPOAuthServer {
     clientId?: string;
     clientSecret?: string;
   }): Effect.Effect<void, McpOAuthError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const token = input.token?.trim();
       if (!token) return yield* fail("invalid_request", "missing token");
 

@@ -179,23 +179,23 @@ export function ap2MandateLiveLayer(
             return {
               present: true as const,
               ok: false as const,
-              reason: verified.left.reason,
+              reason: verified.failure.reason,
             };
           }
           const auth = yield* authorizeForResource({
-            mandate: verified.right.mandate,
+            mandate: verified.success.mandate,
             resource: input.resource,
             amountMajor: input.amountMajor,
             currency: input.currency,
           }).pipe(Effect.result);
           if (auth._tag === "Failure") {
-            return { present: true as const, ok: false as const, reason: auth.left.reason };
+            return { present: true as const, ok: false as const, reason: auth.failure.reason };
           }
           return {
             present: true as const,
             ok: true as const,
-            mandate: verified.right.mandate,
-            signed: verified.right.signed,
+            mandate: verified.success.mandate,
+            signed: verified.success.signed,
           };
         });
 

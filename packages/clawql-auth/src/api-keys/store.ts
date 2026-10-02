@@ -12,7 +12,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { Context, Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer, Semaphore } from "effect";
 
 import {
   emitAuthEventEffect,
@@ -99,7 +99,7 @@ export type IssuedApiKeyStoreOptions = {
  * don't clobber the JSON file.
  */
 export class IssuedApiKeyStore {
-  private readonly lock = Effect.unsafeMakeSemaphore(1);
+  private readonly lock = Semaphore.makeUnsafe(1);
   private readonly now: () => Date;
   private readonly eventSink: AuthEventSink;
 
@@ -118,7 +118,7 @@ export class IssuedApiKeyStore {
 
   /** Fire an audit event on a detached daemon fiber — keeps callers (esp. sync-run `validate`) non-blocking. */
   private notify(event: AuthEvent): Effect.Effect<void> {
-    return Effect.forkDaemon(
+    return Effect.forkDetach(
       emitEffect(this.eventSink, event).pipe(Effect.catch(() => Effect.void))
     ).pipe(Effect.asVoid);
   }
@@ -148,7 +148,7 @@ export class IssuedApiKeyStore {
 
   issue(input: IssueApiKeyInput): Effect.Effect<IssueApiKeyResult, ApiKeyStoreError> {
     return this.withLock(
-      Effect.gen(this, function* () {
+      Effect.gen({ self: this }, function* () {
         const store = yield* loadIssuedApiKeyStoreEffect(this.options.path);
         const id = yield* generateApiKeyIdEffect();
         const salt = yield* generateApiKeySaltEffect();
@@ -204,7 +204,7 @@ export class IssuedApiKeyStore {
    * synchronous host boundary.
    */
   validate(presented: string): Effect.Effect<ValidateApiKeyResult> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const parsed = yield* parseApiKeySecretEffect(presented);
       if (!parsed) {
         yield* this.notify({
@@ -259,7 +259,7 @@ export class IssuedApiKeyStore {
         return { ok: false, reason: "hash_mismatch", keyId: record.id } as const;
       }
 
-      yield* Effect.forkDaemon(
+      yield* Effect.forkDetach(
         this.touchLastUsed(record.id).pipe(Effect.catch(() => Effect.void))
       );
       yield* this.notify({
@@ -278,7 +278,7 @@ export class IssuedApiKeyStore {
   /** Best-effort `lastUsedAt` update — fire-and-forget from {@link validate}, mutex-serialized. */
   private touchLastUsed(keyId: string): Effect.Effect<void, ApiKeyStoreError> {
     return this.withLock(
-      Effect.gen(this, function* () {
+      Effect.gen({ self: this }, function* () {
         const store = yield* loadIssuedApiKeyStoreEffect(this.options.path);
         const key = store.keys.find((k) => k.id === keyId);
         if (!key) return;
@@ -290,7 +290,7 @@ export class IssuedApiKeyStore {
 
   revoke(keyId: string): Effect.Effect<IssuedApiKeyRecord | null, ApiKeyStoreError> {
     return this.withLock(
-      Effect.gen(this, function* () {
+      Effect.gen({ self: this }, function* () {
         const store = yield* loadIssuedApiKeyStoreEffect(this.options.path);
         const key = store.keys.find((k) => k.id === keyId);
         if (!key) return null;
@@ -363,7 +363,7 @@ export class IssuedApiKeyStoreService extends Context.Service<IssuedApiKeyStoreS
 
 export function issuedApiKeyStoreServiceFromStore(
   store: IssuedApiKeyStore
-): IssuedApiKeyStoreService["Type"] {
+): Context.Service.Shape<typeof IssuedApiKeyStoreService> {
   return IssuedApiKeyStoreService.of({
     path: store.path,
     load: () => store.load(),

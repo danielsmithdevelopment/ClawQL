@@ -88,9 +88,9 @@ describe("credits + ACH top-up (dry-run)", () => {
         return yield* credits.debit({ tenantId: "t1", amountCents: 9999 }).pipe(Effect.result);
       })
     );
-    expect(overdraft._tag).toBe("Left");
+    expect(overdraft._tag).toBe("Failure");
     if (overdraft._tag === "Failure") {
-      expect(overdraft.left.reason).toMatch(/Insufficient credits/);
+      expect(overdraft.failure.reason).toMatch(/Insufficient credits/);
     }
   });
 });

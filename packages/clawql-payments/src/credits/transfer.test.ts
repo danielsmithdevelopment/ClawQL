@@ -135,9 +135,9 @@ describe("credits P2P transfer", () => {
           .pipe(Effect.result);
       })
     );
-    expect(same._tag).toBe("Left");
+    expect(same._tag).toBe("Failure");
     if (same._tag === "Failure") {
-      expect(same.left.reason).toMatch(/same tenant/i);
+      expect(same.failure.reason).toMatch(/same tenant/i);
     }
 
     const over = await runPaymentsEffect(
@@ -152,9 +152,9 @@ describe("credits P2P transfer", () => {
           .pipe(Effect.result);
       })
     );
-    expect(over._tag).toBe("Left");
+    expect(over._tag).toBe("Failure");
     if (over._tag === "Failure") {
-      expect(over.left.reason).toMatch(/Insufficient credits/i);
+      expect(over.failure.reason).toMatch(/Insufficient credits/i);
     }
   });
 

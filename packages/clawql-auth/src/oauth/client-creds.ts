@@ -31,7 +31,7 @@ export class ClientCredentialsFlow {
   constructor(private readonly fetchImpl: typeof fetch = fetch) {}
 
   getToken(config: ClientCredentialsConfig): Effect.Effect<StoredOAuthToken, OAuthFlowError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const fetchFn = config.fetchImpl ?? this.fetchImpl;
       const body = new URLSearchParams({
         grant_type: "client_credentials",
@@ -113,7 +113,7 @@ export class ClientCredentialsFlowService extends Context.Service<ClientCredenti
 
 export function clientCredentialsFlowServiceFromFlow(
   flow: ClientCredentialsFlow
-): ClientCredentialsFlowService["Type"] {
+): Context.Service.Shape<typeof ClientCredentialsFlowService> {
   return ClientCredentialsFlowService.of({
     getToken: (config) => flow.getToken(config),
   });

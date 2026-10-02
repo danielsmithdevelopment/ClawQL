@@ -536,8 +536,8 @@ export function creditsRequestsLiveLayer(
               .resolveRecipient(to, { forceEmail: true })
               .pipe(Effect.result);
             if (resolved._tag === "Success") {
-              payerTenantId = resolved.right.tenantId;
-              payerHandle = resolved.right.handle;
+              payerTenantId = resolved.success.tenantId;
+              payerHandle = resolved.success.handle;
             } else {
               invite = true;
             }

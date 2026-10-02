@@ -82,7 +82,7 @@ function retryFromConfig(config: WORMAuditTrailConfig): RetryConfig {
 export const makeWORMAuditTrailLayer = (
   config: WORMAuditTrailConfig
 ): Layer.Layer<WORMAuditTrailService, AuditError> =>
-  Layer.unwrapEffect(
+  Layer.unwrap(
     Effect.gen(function* () {
       const tip = yield* config.local.latestEntry();
       const meta = resolveChainMetadata(config.chainMetadata, tip);

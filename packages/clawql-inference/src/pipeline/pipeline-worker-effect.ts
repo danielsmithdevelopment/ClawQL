@@ -36,7 +36,7 @@ export function startPipelineWorkerFiberEffect(
     const loop = Effect.forever(
       maybeTick.pipe(Effect.zipRight(Effect.sleep(Duration.millis(pollMs))))
     );
-    const fiber = yield* Effect.forkDaemon(loop);
+    const fiber = yield* Effect.forkDetach(loop);
     return {
       fiber,
       stop: () => {

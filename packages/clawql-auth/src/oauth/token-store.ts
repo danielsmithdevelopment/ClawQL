@@ -5,8 +5,8 @@
  *
  * Effect-primary: {@link OAuthTokenStoreService} + {@link createOAuthTokenStoreLayer} mirror
  * {@link GatewayAuthService} / {@link IdJagIssuerService}. The in-flight refresh dedup uses a
- * `Map<OAuthTokenKey, Fiber.RuntimeFiber<...>>` — an Effect-native replacement for the
- * `Map<OAuthTokenKey, Promise<...>>` mutex — with `Effect.forkDaemon` + `Fiber.join` so all
+ * `Map<OAuthTokenKey, Fiber.Fiber<...>>` — an Effect-native replacement for the
+ * `Map<OAuthTokenKey, Promise<...>>` mutex — with `Effect.forkDetach` + `Fiber.join` so all
  * concurrent waiters share the same underlying refresh fiber.
  */
 
@@ -69,7 +69,7 @@ function emitEffect(sink: AuthEventSink, event: AuthEvent): Effect.Effect<void> 
 export class OAuthTokenStore {
   private readonly refreshLock = new Map<
     OAuthTokenKey,
-    Fiber.RuntimeFiber<StoredOAuthToken, unknown>
+    Fiber.Fiber<StoredOAuthToken, unknown>
   >();
   private readonly proactiveRefreshMs: number;
   private readonly now: () => number;
@@ -94,7 +94,7 @@ export class OAuthTokenStore {
   getValidToken(
     key: OAuthTokenKey
   ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const current = yield* this.options.persistence.load(key);
       if (!current) {
         const providerId = this.resolveProviderId(key);
@@ -138,14 +138,14 @@ export class OAuthTokenStore {
     key: OAuthTokenKey,
     current: StoredOAuthToken
   ): Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const inflight = this.refreshLock.get(key);
       if (inflight) return yield* Fiber.join(inflight);
 
       const providerId = this.resolveProviderId(key);
 
       const refreshEffect: Effect.Effect<StoredOAuthToken, ReauthRequiredError | unknown> =
-        Effect.gen(this, function* () {
+        Effect.gen({ self: this }, function* () {
           const next = yield* this.options.refresh(key, current);
           yield* this.options.persistence.save(key, next);
           yield* emitEffect(this.eventSink, {
@@ -158,7 +158,7 @@ export class OAuthTokenStore {
           return next;
         }).pipe(
           Effect.catch((err) =>
-            Effect.gen(this, function* () {
+            Effect.gen({ self: this }, function* () {
               const errorCode = oauthErrorCode(err);
               const requiresReauth = errorCode === "invalid_grant";
               yield* emitEffect(this.eventSink, {
@@ -208,7 +208,7 @@ export class OAuthTokenStore {
           Effect.ensuring(Effect.sync(() => this.refreshLock.delete(key)))
         );
 
-      const fiber = yield* Effect.forkDaemon(refreshEffect);
+      const fiber = yield* Effect.forkDetach(refreshEffect);
       this.refreshLock.set(key, fiber);
       return yield* Fiber.join(fiber);
     });
@@ -232,7 +232,7 @@ export class OAuthTokenStoreService extends Context.Service<OAuthTokenStoreServi
 
 export function oauthTokenStoreServiceFromStore(
   store: OAuthTokenStore
-): OAuthTokenStoreService["Type"] {
+): Context.Service.Shape<typeof OAuthTokenStoreService> {
   return OAuthTokenStoreService.of({
     isExpiringSoon: (expiresAtMs, nowMs) => store.isExpiringSoon(expiresAtMs, nowMs),
     getValidToken: (key) => store.getValidToken(key),

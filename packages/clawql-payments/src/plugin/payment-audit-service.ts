@@ -71,7 +71,7 @@ export function paymentAuditLiveLayer(
             }).pipe(Effect.catch(() => Effect.succeed(null)));
             if (isPaymentAuditLokiPushEnabled(env)) {
               // Fire-and-forget: Loki must not block WORM append.
-              yield* Effect.forkDaemon(
+              yield* Effect.forkDetach(
                 loki.push(entry).pipe(
                   Effect.catch((err) =>
                     Effect.sync(() => {
