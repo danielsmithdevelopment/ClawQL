@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Effect } from "effect";
-import { buildVaultRankerStats, resolveVaultRankerModeEffect, scoreWithVaultRanker } from "./vault-ranker.js";
+import {
+  buildVaultRankerStats,
+  resolveVaultRankerModeEffect,
+  scoreWithVaultRanker,
+} from "./vault-ranker.js";
 
 describe("vault IDF ranker", () => {
   it("defaults mode to idf", async () => {

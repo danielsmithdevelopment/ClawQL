@@ -66,11 +66,11 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 }
 ```
 
-| Source       | What it contributes                                                 |
-| ------------ | ------------------------------------------------------------------- |
-| **`vault`**  | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF) |
-| **`vector`** | Embedding KNN seeds (when vector backend + API key configured)      |
-| **`onyx`**   | Enterprise citations via injected Onyx search                       |
+| Source       | What it contributes                                            |
+| ------------ | -------------------------------------------------------------- |
+| **`vault`**  | Lexical + wikilink BFS over Obsidian Markdown (ranker: IDF)    |
+| **`vector`** | Embedding KNN seeds (when vector backend + API key configured) |
+| **`onyx`**   | Enterprise citations via injected Onyx search                  |
 
 **Defaults when `sources` is omitted:** `vault` + `vector`, plus the Onyx hybrid from env (`CLAWQL_MEMORY_RECALL_HYBRID_ONYX`).
 
@@ -84,9 +84,9 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 
 ## Vault lexical ranker
 
-| Env                                   | Default | Effect                                                                                                                                              |
-| ------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------|
-| **`CLAWQL_MEMORY_VAULT_RANKER=idf`**  | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)); only mode — `bm25` removed in 8.0.0 (wash vs IDF, see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)) |
+| Env                                  | Default | Effect                                                                                                                                                                                                            |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`CLAWQL_MEMORY_VAULT_RANKER=idf`** | **idf** | Corpus IDF × log-TF ([#801](https://github.com/danielsmithdevelopment/ClawQL/pull/801)); only mode — `bm25` removed in 8.0.0 (wash vs IDF, see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md)) |
 
 ## `memory_ingest` rebuild
 
@@ -106,10 +106,10 @@ Full write-up: [memory-obsidian § Erasure](https://github.com/danielsmithdevelo
 
 ## Enable / disable
 
-| Env                                      | Default | Effect                                                       |
-| ---------------------------------------- | ------- | ------------------------------------------------------------ |
-| **`CLAWQL_ENABLE_MEMORY=0`**             | on      | Omit `MemoryPlugin` and hide memory tools                    |
-| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`** | off     | Default `sources` includes onyx (needs Onyx wired + enabled) |
+| Env                                      | Default | Effect                                                                  |
+| ---------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| **`CLAWQL_ENABLE_MEMORY=0`**             | on      | Omit `MemoryPlugin` and hide memory tools                               |
+| **`CLAWQL_MEMORY_RECALL_HYBRID_ONYX=1`** | off     | Default `sources` includes onyx (needs Onyx wired + enabled)            |
 | **`CLAWQL_MEMORY_VAULT_RANKER`**         | `idf`   | Vault lexical ranker — `idf` is the only mode (`bm25` removed in 8.0.0) |
 
 ## Prerequisites
