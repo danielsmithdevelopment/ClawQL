@@ -66,5 +66,5 @@ Changing an operation's risk is a **capability change**. Every applied override 
 
 ## Related
 
-- Pause-and-resume after mandate (`#2`) — `docs/specs/risk/execute-pause-resume-v0.1.md` (stacked PR)
+- Pause-and-resume after mandate (`#2`) — [execute-pause-resume-v0.1](./execute-pause-resume-v0.1.md)
 - `sources_propose` (`#3`) — [sources-propose-v0.1](./sources-propose-v0.1.md)

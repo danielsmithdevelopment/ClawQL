@@ -4,16 +4,22 @@ export {
   EXECUTE_OPERATION_ID_DESCRIPTION,
   EXECUTE_ARGS_DESCRIPTION,
   EXECUTE_FIELDS_DESCRIPTION,
+  RESUME_EXECUTION_ID_DESCRIPTION,
+  RESUME_DECISION_DESCRIPTION,
   SearchInputSchema,
   ExecuteInputSchema,
+  ResumeInputSchema,
   decodeSearchInput,
   decodeExecuteInput,
+  decodeResumeInput,
   type SearchInputDecoded,
   type ExecuteInputDecoded,
+  type ResumeInputDecoded,
 } from "./search-execute-schema.js";
 export {
   searchToolZodShape,
   executeToolZodShape,
+  resumeToolZodShape,
   sourcesProposeToolZodShape,
   sourcesApproveToolZodShape,
 } from "./search-execute-zod-edge.js";

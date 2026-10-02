@@ -12,6 +12,8 @@ import {
   EXECUTE_ARGS_DESCRIPTION,
   EXECUTE_FIELDS_DESCRIPTION,
   EXECUTE_OPERATION_ID_DESCRIPTION,
+  RESUME_DECISION_DESCRIPTION,
+  RESUME_EXECUTION_ID_DESCRIPTION,
   SEARCH_LIMIT_DESCRIPTION,
   SEARCH_QUERY_DESCRIPTION,
 } from "./search-execute-schema.js";
@@ -27,6 +29,12 @@ export const executeToolZodShape = {
   operationId: z.string().describe(EXECUTE_OPERATION_ID_DESCRIPTION),
   args: z.record(z.string(), z.unknown()).describe(EXECUTE_ARGS_DESCRIPTION),
   fields: z.array(z.string()).optional().describe(EXECUTE_FIELDS_DESCRIPTION),
+} as const;
+
+/** Zod raw shape for MCP `resume` — mirrors {@link ResumeInputSchema}. */
+export const resumeToolZodShape = {
+  executionId: z.string().describe(RESUME_EXECUTION_ID_DESCRIPTION),
+  decision: z.enum(["approve", "decline"]).optional().describe(RESUME_DECISION_DESCRIPTION),
 } as const;
 
 /** Zod raw shape for MCP `sources_propose` (v0.1). */

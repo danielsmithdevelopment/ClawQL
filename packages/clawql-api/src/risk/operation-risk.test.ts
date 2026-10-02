@@ -247,6 +247,8 @@ describe("search + execute surfaces", () => {
   it("execute refuses mandate and block with risk in the body", async () => {
     const prev = process.env.CLAWQL_OPERATION_RISK_ENFORCE;
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
+    const home = await mkdtemp(join(tmpdir(), "clawql-risk-exec-"));
+    process.env.CLAWQL_HOME = home;
     try {
       const mandateOp = baseOp({
         id: "writeThing",
@@ -284,9 +286,11 @@ describe("search + execute surfaces", () => {
       const mandateJson = JSON.parse(mandateBody[0]!.text) as {
         status: string;
         risk: { policy: string };
+        executionId?: string;
       };
       expect(mandateJson.status).toBe("mandate_required");
       expect(mandateJson.risk.policy).toBe("mandate");
+      expect(mandateJson.executionId).toMatch(/^pex_/);
 
       const blockBody = await Effect.runPromise(
         executeClawqlOperationEffect({ operationId: "deleteThing", args: {} }, loadSpecFn)
@@ -300,6 +304,7 @@ describe("search + execute surfaces", () => {
     } finally {
       if (prev === undefined) delete process.env.CLAWQL_OPERATION_RISK_ENFORCE;
       else process.env.CLAWQL_OPERATION_RISK_ENFORCE = prev;
+      delete process.env.CLAWQL_HOME;
     }
   });
 });

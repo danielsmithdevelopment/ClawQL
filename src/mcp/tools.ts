@@ -19,12 +19,15 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Effect } from "effect";
 import {
   decodeExecuteInput,
+  decodeResumeInput,
   decodeSearchInput,
   executeToolZodShape,
+  resumeToolZodShape,
   ExecuteService,
   getPackageRoot,
   loadSpec,
   resolveBundledProvider,
+  resumeClawqlExecutionEffect,
   SearchService,
   searchToolZodShape,
   sourcesProposeToolZodShape,
@@ -117,6 +120,21 @@ export async function handleClawqlExecuteToolInput(
       const params = yield* decodeExecuteInput(raw);
       const execute = yield* ExecuteService;
       const { content } = yield* execute.execute(params);
+      return { content: [...content] };
+    })
+  );
+}
+
+export async function handleClawqlResumeToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  return getClawqlApi().run(
+    Effect.gen(function* () {
+      const params = yield* decodeResumeInput(raw);
+      const content = yield* resumeClawqlExecutionEffect({
+        executionId: params.executionId,
+        decision: params.decision,
+      });
       return { content: [...content] };
     })
   );
@@ -248,6 +266,13 @@ export function registerTools(server: McpServer) {
     executeToolZodShape,
     wrapRegisteredMcpToolHandler("execute", handleClawqlExecuteToolInput)
   );
+
+  server.tool(
+    "resume",
+    resumeToolZodShape,
+    wrapRegisteredMcpToolHandler("resume", handleClawqlResumeToolInput)
+  );
+  registeredNames.push("resume");
 
   // Non-negotiable Core tools: register immediately after search/execute so optional branches
   // below cannot throw and skip cache/audit (#89 #75).

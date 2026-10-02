@@ -56,6 +56,23 @@ export const ExecuteInputSchema = Schema.Struct({
 
 export type ExecuteInputDecoded = Schema.Schema.Type<typeof ExecuteInputSchema>;
 
+export const RESUME_EXECUTION_ID_DESCRIPTION =
+  "Pending execution id from a mandate_required execute response (pex_…). " +
+  "Resumes the exact parked operationId + args — no alternate arguments.";
+
+export const RESUME_DECISION_DESCRIPTION =
+  "approve (default) runs the parked call; decline records HUMAN_REJECTION and does not execute.";
+
+/** MCP `resume` tool arguments — Effect Schema (source of truth). */
+export const ResumeInputSchema = Schema.Struct({
+  executionId: Schema.String.annotations({ description: RESUME_EXECUTION_ID_DESCRIPTION }),
+  decision: Schema.optional(
+    Schema.Literal("approve", "decline").annotations({ description: RESUME_DECISION_DESCRIPTION })
+  ),
+});
+
+export type ResumeInputDecoded = Schema.Schema.Type<typeof ResumeInputSchema>;
+
 function formatParseError(err: ParseResult.ParseError): Error {
   return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
 }
@@ -68,4 +85,9 @@ export function decodeSearchInput(raw: unknown): Effect.Effect<SearchInputDecode
 /** Decode unknown MCP execute args into {@link ExecuteInputDecoded}. */
 export function decodeExecuteInput(raw: unknown): Effect.Effect<ExecuteInputDecoded, Error> {
   return Schema.decodeUnknown(ExecuteInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+}
+
+/** Decode unknown MCP resume args into {@link ResumeInputDecoded}. */
+export function decodeResumeInput(raw: unknown): Effect.Effect<ResumeInputDecoded, Error> {
+  return Schema.decodeUnknown(ResumeInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }
