@@ -345,10 +345,10 @@ export type ClaimDirectoryInput = {
  * Claim or update directory identity for a tenant.
  * Email is the default payee; username (`handle`) and phone are optional aliases.
  */
-export async function claimDirectory(
+async function claimDirectoryImpl(
   input: ClaimDirectoryInput,
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: DirectoryEntry; created: boolean }> {
+): Promise<{ entry: DirectoryEntry; created: boolean }>  {
   const tenantId = input.tenantId.trim();
   if (!tenantId) throw new Error("tenantId required");
   if (!input.email?.trim() && !input.handle?.trim() && !input.phone?.trim()) {
@@ -415,6 +415,24 @@ export async function claimDirectory(
   indexEntry(file, entry);
   await saveFile(file, env);
   return { entry, created: !existing };
+}
+
+export function claimDirectoryEffect(
+  input: ClaimDirectoryInput,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<{ entry: DirectoryEntry; created: boolean }, Error> {
+  return Effect.tryPromise({
+    try: () => claimDirectoryImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link claimDirectoryEffect} for Effect callers. */
+export async function claimDirectory(
+  input: ClaimDirectoryInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<{ entry: DirectoryEntry; created: boolean }>  {
+  return Effect.runPromise(claimDirectoryEffect(input, env));
 }
 
 function keepEntryIfAddressable(entry: DirectoryEntry): DirectoryEntry | null {
@@ -553,8 +571,20 @@ async function resolveRecipient(
 }
 
 /** Reset directory file. Internal helper used by the service `reset` op. */
-export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+async function resetDirectoryForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
   await saveFile(emptyFile(), env);
+}
+
+export function resetDirectoryForTestsEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetDirectoryForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetDirectoryForTestsEffect} for Effect callers. */
+export async function resetDirectoryForTests(env: NodeJS.ProcessEnv = process.env): Promise<void>  {
+  return Effect.runPromise(resetDirectoryForTestsEffect(env));
 }
 
 export class DirectoryError extends Data.TaggedError("DirectoryError")<{

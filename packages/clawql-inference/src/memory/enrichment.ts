@@ -22,6 +22,7 @@ import { pathInMemoryScope, resolveMemoryScope } from "./scope.js";
 import { runMemoryGatewaySearch } from "./service.js";
 
 export { pathInMemoryScope, resolveMemoryScope } from "./scope.js";
+import { Effect } from "effect";
 
 export const MEMORY_CONTEXT_BEGIN = "<!-- clawql-memory-context -->";
 export const MEMORY_CONTEXT_END = "<!-- /clawql-memory-context -->";
@@ -91,7 +92,7 @@ function buildMemoryBlock(snippets: Array<{ path: string; snippet: string }>): s
  * When enrichment is requested + allowed, recall scoped notes and inject a marked system block.
  * Vault unset / recall soft-fail → skip (store down). Hard redact/screen errors → fail closed.
  */
-export async function maybeEnrichMessages(opts: {
+async function maybeEnrichMessagesImpl(opts: {
   messages: ChatMessage[];
   req: Request;
   env?: NodeJS.ProcessEnv;
@@ -101,7 +102,7 @@ export async function maybeEnrichMessages(opts: {
   search?: typeof runMemoryGatewaySearch;
   /** Injected for tests. */
   audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
-}): Promise<MemoryEnrichDecision> {
+}): Promise<MemoryEnrichDecision>  {
   const env = opts.env ?? process.env;
   if (!memoryEnrichmentAllowed({ req: opts.req, env, virtualKey: opts.virtualKey })) {
     return { kind: "skip", reason: "not_allowed" };
@@ -206,4 +207,36 @@ export async function maybeEnrichMessages(opts: {
   }
 
   return { kind: "inject", messages, memoryIds };
+}
+
+export function maybeEnrichMessagesEffect(opts: {
+  messages: ChatMessage[];
+  req: Request;
+  env?: NodeJS.ProcessEnv;
+  virtualKey?: VirtualKeyContext;
+  correlationId?: string;
+  /** Injected for tests. */
+  search?: typeof runMemoryGatewaySearch;
+  /** Injected for tests. */
+  audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
+}): Effect.Effect<MemoryEnrichDecision, Error> {
+  return Effect.tryPromise({
+    try: () => maybeEnrichMessagesImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybeEnrichMessagesEffect} for Effect callers. */
+export async function maybeEnrichMessages(opts: {
+  messages: ChatMessage[];
+  req: Request;
+  env?: NodeJS.ProcessEnv;
+  virtualKey?: VirtualKeyContext;
+  correlationId?: string;
+  /** Injected for tests. */
+  search?: typeof runMemoryGatewaySearch;
+  /** Injected for tests. */
+  audit?: (payload: MemoryEnrichmentAuditPayload & { correlationId?: string }) => Promise<void>;
+}): Promise<MemoryEnrichDecision>  {
+  return Effect.runPromise(maybeEnrichMessagesEffect(opts));
 }

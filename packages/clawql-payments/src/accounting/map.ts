@@ -39,9 +39,9 @@ export function resolveAccountingMapPath(env: NodeJS.ProcessEnv = process.env): 
 }
 
 /** @deprecated Prefer AccountingMapService.load — Promise façade retained for legacy callers. */
-export async function loadAccountingMap(
+async function loadAccountingMapImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<AccountingMapFile> {
+): Promise<AccountingMapFile>  {
   const path = resolveAccountingMapPath(env);
   try {
     const raw = await readFile(path, "utf8");
@@ -52,6 +52,22 @@ export async function loadAccountingMap(
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return {};
     throw err;
   }
+}
+
+export function loadAccountingMapEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<AccountingMapFile, Error> {
+  return Effect.tryPromise({
+    try: () => loadAccountingMapImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadAccountingMapEffect} for Effect callers. */
+export async function loadAccountingMap(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AccountingMapFile>  {
+  return Effect.runPromise(loadAccountingMapEffect(env));
 }
 
 export function resolveGlCode(category: AccountingCategory, map: AccountingMapFile = {}): string {

@@ -1,6 +1,7 @@
 import { createInferenceStore } from "../store/create.js";
 import { parseSinceDuration } from "../observability/parse-since.js";
 import type { SpendGroupBy } from "../store/types.js";
+import { Effect } from "effect";
 
 export type InferenceLogsOptions = {
   model?: string;
@@ -12,7 +13,7 @@ export type InferenceLogsOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceLogs(options: InferenceLogsOptions = {}): Promise<number> {
+async function runInferenceLogsImpl(options: InferenceLogsOptions = {}): Promise<number>  {
   const store = createInferenceStore({ env: options.env });
   if (!store) {
     console.error("Inference store is disabled (CLAWQL_INFERENCE_STORE=off)");
@@ -41,13 +42,25 @@ export async function runInferenceLogs(options: InferenceLogsOptions = {}): Prom
   return 0;
 }
 
+export function runInferenceLogsEffect(options: InferenceLogsOptions = {}): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceLogsImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceLogsEffect} for Effect callers. */
+export async function runInferenceLogs(options: InferenceLogsOptions = {}): Promise<number>  {
+  return Effect.runPromise(runInferenceLogsEffect(options));
+}
+
 export type InferenceTraceOptions = {
   correlationId: string;
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceTrace(options: InferenceTraceOptions): Promise<number> {
+async function runInferenceTraceImpl(options: InferenceTraceOptions): Promise<number>  {
   if (!options.correlationId?.trim()) {
     console.error("Usage: clawql inference trace --correlation-id <id>");
     return 1;
@@ -76,6 +89,18 @@ export async function runInferenceTrace(options: InferenceTraceOptions): Promise
   return 0;
 }
 
+export function runInferenceTraceEffect(options: InferenceTraceOptions): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceTraceImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceTraceEffect} for Effect callers. */
+export async function runInferenceTrace(options: InferenceTraceOptions): Promise<number>  {
+  return Effect.runPromise(runInferenceTraceEffect(options));
+}
+
 export type InferenceSpendOptions = {
   groupBy?: SpendGroupBy;
   since?: string;
@@ -83,7 +108,7 @@ export type InferenceSpendOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceSpend(options: InferenceSpendOptions = {}): Promise<number> {
+async function runInferenceSpendImpl(options: InferenceSpendOptions = {}): Promise<number>  {
   const store = createInferenceStore({ env: options.env });
   if (!store) {
     console.error("Inference store is disabled (CLAWQL_INFERENCE_STORE=off)");
@@ -107,4 +132,16 @@ export async function runInferenceSpend(options: InferenceSpendOptions = {}): Pr
     );
   }
   return 0;
+}
+
+export function runInferenceSpendEffect(options: InferenceSpendOptions = {}): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceSpendImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceSpendEffect} for Effect callers. */
+export async function runInferenceSpend(options: InferenceSpendOptions = {}): Promise<number>  {
+  return Effect.runPromise(runInferenceSpendEffect(options));
 }

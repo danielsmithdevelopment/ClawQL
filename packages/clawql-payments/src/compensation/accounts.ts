@@ -60,10 +60,10 @@ function emptyAccount(agentId: string, tenantId?: string): AgentAccount {
 }
 
 /** @deprecated Prefer CompensationAccountsService.list — Promise façade retained for legacy callers. */
-export async function listAgentAccounts(
+async function listAgentAccountsImpl(
   env: NodeJS.ProcessEnv = process.env,
   filter?: { tenantId?: string }
-): Promise<AgentAccount[]> {
+): Promise<AgentAccount[]>  {
   const file = await loadFile(env);
   const all = Object.values(file.agents);
   const tenant = filter?.tenantId?.trim();
@@ -73,21 +73,57 @@ export async function listAgentAccounts(
     .sort((a, b) => a.agentId.localeCompare(b.agentId));
 }
 
+export function listAgentAccountsEffect(
+  env: NodeJS.ProcessEnv = process.env,
+  filter?: { tenantId?: string }
+): Effect.Effect<AgentAccount[], Error> {
+  return Effect.tryPromise({
+    try: () => listAgentAccountsImpl(env, filter),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listAgentAccountsEffect} for Effect callers. */
+export async function listAgentAccounts(
+  env: NodeJS.ProcessEnv = process.env,
+  filter?: { tenantId?: string }
+): Promise<AgentAccount[]>  {
+  return Effect.runPromise(listAgentAccountsEffect(env, filter));
+}
+
 /** @deprecated Prefer CompensationAccountsService.get — Promise façade retained for legacy callers. */
-export async function getAgentAccount(
+async function getAgentAccountImpl(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount | undefined> {
+): Promise<AgentAccount | undefined>  {
   const file = await loadFile(env);
   return file.agents[agentId.trim()];
 }
 
+export function getAgentAccountEffect(
+  agentId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<AgentAccount | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => getAgentAccountImpl(agentId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link getAgentAccountEffect} for Effect callers. */
+export async function getAgentAccount(
+  agentId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AgentAccount | undefined>  {
+  return Effect.runPromise(getAgentAccountEffect(agentId, env));
+}
+
 /** @deprecated Prefer CompensationAccountsService.ensure — Promise façade retained for legacy callers. */
-export async function ensureAgentAccount(
+async function ensureAgentAccountImpl(
   agentId: string,
   env: NodeJS.ProcessEnv = process.env,
   tenantId?: string
-): Promise<AgentAccount> {
+): Promise<AgentAccount>  {
   const id = agentId.trim();
   if (!id) throw new Error("agentId required");
   const file = await loadFile(env);
@@ -99,8 +135,28 @@ export async function ensureAgentAccount(
   return created;
 }
 
+export function ensureAgentAccountEffect(
+  agentId: string,
+  env: NodeJS.ProcessEnv = process.env,
+  tenantId?: string
+): Effect.Effect<AgentAccount, Error> {
+  return Effect.tryPromise({
+    try: () => ensureAgentAccountImpl(agentId, env, tenantId),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link ensureAgentAccountEffect} for Effect callers. */
+export async function ensureAgentAccount(
+  agentId: string,
+  env: NodeJS.ProcessEnv = process.env,
+  tenantId?: string
+): Promise<AgentAccount>  {
+  return Effect.runPromise(ensureAgentAccountEffect(agentId, env, tenantId));
+}
+
 /** @deprecated Prefer CompensationAccountsService.setPreference — Promise façade retained for legacy callers. */
-export async function setAgentAccountPreference(
+async function setAgentAccountPreferenceImpl(
   input: {
     agentId: string;
     cashoutMethod?: PayoutMethod;
@@ -110,7 +166,7 @@ export async function setAgentAccountPreference(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount> {
+): Promise<AgentAccount>  {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id] ?? emptyAccount(id, input.tenantId);
@@ -128,8 +184,40 @@ export async function setAgentAccountPreference(
   return next;
 }
 
+export function setAgentAccountPreferenceEffect(
+  input: {
+    agentId: string;
+    cashoutMethod?: PayoutMethod;
+    connectAccountId?: string;
+    usdcWallet?: string;
+    email?: string;
+    tenantId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<AgentAccount, Error> {
+  return Effect.tryPromise({
+    try: () => setAgentAccountPreferenceImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setAgentAccountPreferenceEffect} for Effect callers. */
+export async function setAgentAccountPreference(
+  input: {
+    agentId: string;
+    cashoutMethod?: PayoutMethod;
+    connectAccountId?: string;
+    usdcWallet?: string;
+    email?: string;
+    tenantId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AgentAccount>  {
+  return Effect.runPromise(setAgentAccountPreferenceEffect(input, env));
+}
+
 /** @deprecated Prefer CompensationAccountsService.credit — Promise façade retained for legacy callers. */
-export async function creditAgentAccount(
+async function creditAgentAccountImpl(
   input: {
     agentId: string;
     creditsUsd?: number;
@@ -137,7 +225,7 @@ export async function creditAgentAccount(
     tenantId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount> {
+): Promise<AgentAccount>  {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id] ?? emptyAccount(id, input.tenantId);
@@ -156,15 +244,43 @@ export async function creditAgentAccount(
   return next;
 }
 
+export function creditAgentAccountEffect(
+  input: {
+    agentId: string;
+    creditsUsd?: number;
+    fundsUsd?: number;
+    tenantId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<AgentAccount, Error> {
+  return Effect.tryPromise({
+    try: () => creditAgentAccountImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link creditAgentAccountEffect} for Effect callers. */
+export async function creditAgentAccount(
+  input: {
+    agentId: string;
+    creditsUsd?: number;
+    fundsUsd?: number;
+    tenantId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AgentAccount>  {
+  return Effect.runPromise(creditAgentAccountEffect(input, env));
+}
+
 /** @deprecated Prefer CompensationAccountsService.debit — Promise façade retained for legacy callers. */
-export async function debitAgentAccount(
+async function debitAgentAccountImpl(
   input: {
     agentId: string;
     creditsUsd?: number;
     fundsUsd?: number;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<AgentAccount> {
+): Promise<AgentAccount>  {
   const file = await loadFile(env);
   const id = input.agentId.trim();
   const prev = file.agents[id];
@@ -187,6 +303,32 @@ export async function debitAgentAccount(
   file.agents[id] = next;
   await saveFile(file, env);
   return next;
+}
+
+export function debitAgentAccountEffect(
+  input: {
+    agentId: string;
+    creditsUsd?: number;
+    fundsUsd?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<AgentAccount, Error> {
+  return Effect.tryPromise({
+    try: () => debitAgentAccountImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link debitAgentAccountEffect} for Effect callers. */
+export async function debitAgentAccount(
+  input: {
+    agentId: string;
+    creditsUsd?: number;
+    fundsUsd?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AgentAccount>  {
+  return Effect.runPromise(debitAgentAccountEffect(input, env));
 }
 
 function roundMoney(n: number): number {

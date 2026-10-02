@@ -59,12 +59,30 @@ export function buildSpendReport(
 }
 
 /** @deprecated Prefer PaymentAuditReconcileService.spendReport — Promise façade retained for legacy callers. */
+async function loadSpendReportImpl(
+  groupBy: SpendGroupBy = "provider",
+  limit = 10_000
+): Promise<SpendReport>  {
+  const entries = await listPaymentAuditEntries(limit);
+  return buildSpendReport(entries, groupBy);
+}
+
+export function loadSpendReportEffect(
+  groupBy: SpendGroupBy = "provider",
+  limit = 10_000
+): Effect.Effect<SpendReport, Error> {
+  return Effect.tryPromise({
+    try: () => loadSpendReportImpl(groupBy, limit),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadSpendReportEffect} for Effect callers. */
 export async function loadSpendReport(
   groupBy: SpendGroupBy = "provider",
   limit = 10_000
-): Promise<SpendReport> {
-  const entries = await listPaymentAuditEntries(limit);
-  return buildSpendReport(entries, groupBy);
+): Promise<SpendReport>  {
+  return Effect.runPromise(loadSpendReportEffect(groupBy, limit));
 }
 
 export function filterAuditByCorrelationId(
@@ -75,12 +93,30 @@ export function filterAuditByCorrelationId(
 }
 
 /** @deprecated Prefer PaymentAuditReconcileService.byCorrelationId — Promise façade retained for legacy callers. */
+async function loadAuditByCorrelationIdImpl(
+  correlationId: string,
+  limit = 10_000
+): Promise<PaymentWormEntry[]>  {
+  const entries = await listPaymentAuditEntries(limit);
+  return filterAuditByCorrelationId(correlationId, entries);
+}
+
+export function loadAuditByCorrelationIdEffect(
+  correlationId: string,
+  limit = 10_000
+): Effect.Effect<PaymentWormEntry[], Error> {
+  return Effect.tryPromise({
+    try: () => loadAuditByCorrelationIdImpl(correlationId, limit),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadAuditByCorrelationIdEffect} for Effect callers. */
 export async function loadAuditByCorrelationId(
   correlationId: string,
   limit = 10_000
-): Promise<PaymentWormEntry[]> {
-  const entries = await listPaymentAuditEntries(limit);
-  return filterAuditByCorrelationId(correlationId, entries);
+): Promise<PaymentWormEntry[]>  {
+  return Effect.runPromise(loadAuditByCorrelationIdEffect(correlationId, limit));
 }
 
 export class PaymentAuditReconcileError extends Data.TaggedError("PaymentAuditReconcileError")<{

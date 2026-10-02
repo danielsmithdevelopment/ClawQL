@@ -444,10 +444,26 @@ async function markMoneyRequestPaidImpl(
 }
 
 /** Private IO helper backing {@link CreditsRequestsService.reset}. */
+async function resetMoneyRequestsForTestsImpl(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  await saveFile(emptyFile(), env);
+}
+
+export function resetMoneyRequestsForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetMoneyRequestsForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetMoneyRequestsForTestsEffect} for Effect callers. */
 export async function resetMoneyRequestsForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
-  await saveFile(emptyFile(), env);
+): Promise<void>  {
+  return Effect.runPromise(resetMoneyRequestsForTestsEffect(env));
 }
 
 export class RequestsError extends Data.TaggedError("RequestsError")<{

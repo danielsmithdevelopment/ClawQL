@@ -15,6 +15,7 @@ import {
   type PaymentAuditStore,
   type PaymentAuditStoreMode,
 } from "./store.js";
+import { Effect } from "effect";
 
 let defaultStore: PaymentAuditStore | null = null;
 let defaultStoreKey: string | null = null;
@@ -56,9 +57,9 @@ export function getPaymentAuditStore(env: NodeJS.ProcessEnv = process.env): Paym
   return defaultStore;
 }
 
-export async function resetPaymentAuditStoreForTests(
+async function resetPaymentAuditStoreForTestsImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+): Promise<void>  {
   if (defaultStore) {
     await defaultStore.reset();
   }
@@ -68,4 +69,20 @@ export async function resetPaymentAuditStoreForTests(
     defaultStore = new MemoryPaymentAuditStore();
     defaultStoreKey = storeKey("memory", env);
   }
+}
+
+export function resetPaymentAuditStoreForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetPaymentAuditStoreForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetPaymentAuditStoreForTestsEffect} for Effect callers. */
+export async function resetPaymentAuditStoreForTests(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  return Effect.runPromise(resetPaymentAuditStoreForTestsEffect(env));
 }

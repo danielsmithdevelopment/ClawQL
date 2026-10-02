@@ -8,6 +8,7 @@
  */
 import pg from "pg";
 import { runPaymentsAuditPostgresMigrations } from "./postgres-migrations.js";
+import { Effect } from "effect";
 
 let pool: pg.Pool | null = null;
 let poolKey: string | null = null;
@@ -66,9 +67,9 @@ export function getPaymentsAuditPgPool(env: NodeJS.ProcessEnv = process.env): pg
   return pool;
 }
 
-export async function ensurePaymentsAuditSchema(
+async function ensurePaymentsAuditSchemaImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+): Promise<void>  {
   const p = getPaymentsAuditPgPool(env);
   if (!p || migrationsDone) return;
   const client = await p.connect();
@@ -80,13 +81,41 @@ export async function ensurePaymentsAuditSchema(
   }
 }
 
-export async function closePaymentsAuditPgPool(): Promise<void> {
+export function ensurePaymentsAuditSchemaEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => ensurePaymentsAuditSchemaImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link ensurePaymentsAuditSchemaEffect} for Effect callers. */
+export async function ensurePaymentsAuditSchema(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  return Effect.runPromise(ensurePaymentsAuditSchemaEffect(env));
+}
+
+async function closePaymentsAuditPgPoolImpl(): Promise<void>  {
   migrationsDone = false;
   poolKey = null;
   if (pool) {
     await pool.end();
     pool = null;
   }
+}
+
+export function closePaymentsAuditPgPoolEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => closePaymentsAuditPgPoolImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link closePaymentsAuditPgPoolEffect} for Effect callers. */
+export async function closePaymentsAuditPgPool(): Promise<void>  {
+  return Effect.runPromise(closePaymentsAuditPgPoolEffect());
 }
 
 export function registerPaymentsAuditPoolShutdownHooks(): void {

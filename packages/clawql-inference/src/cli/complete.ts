@@ -1,4 +1,5 @@
 import { createInferenceGateway } from "../gateway.js";
+import { Effect } from "effect";
 
 export type InferenceCompleteOptions = {
   model: string;
@@ -8,7 +9,7 @@ export type InferenceCompleteOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceComplete(options: InferenceCompleteOptions): Promise<number> {
+async function runInferenceCompleteImpl(options: InferenceCompleteOptions): Promise<number>  {
   const gateway = createInferenceGateway({ env: options.env });
   const result = await gateway.complete({
     model: options.model,
@@ -27,4 +28,16 @@ export async function runInferenceComplete(options: InferenceCompleteOptions): P
     }
   }
   return 0;
+}
+
+export function runInferenceCompleteEffect(options: InferenceCompleteOptions): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceCompleteImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceCompleteEffect} for Effect callers. */
+export async function runInferenceComplete(options: InferenceCompleteOptions): Promise<number>  {
+  return Effect.runPromise(runInferenceCompleteEffect(options));
 }

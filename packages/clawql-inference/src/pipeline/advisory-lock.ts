@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { getInferencePgPool } from "../store/postgres-pool.js";
+import { Effect } from "effect";
 
 export type PipelineAdvisoryLockResult = {
   acquired: boolean;
@@ -26,11 +27,11 @@ export function buildPipelineRunLockKey(schedule: string, minuteKey: string): st
  * Try to acquire a session-level Postgres advisory lock for one pipeline tick.
  * When inference Postgres is not configured, returns acquired=true (caller may use in-process dedup).
  */
-export async function tryAcquirePipelineAdvisoryLock(
+async function tryAcquirePipelineAdvisoryLockImpl(
   lockKey: string,
   env: NodeJS.ProcessEnv = process.env,
   deps: { getPool?: typeof getInferencePgPool } = {}
-): Promise<PipelineAdvisoryLockResult> {
+): Promise<PipelineAdvisoryLockResult>  {
   const pool = (deps.getPool ?? getInferencePgPool)(env);
   if (!pool) {
     return { acquired: true, backend: "none", release: async () => {} };
@@ -68,4 +69,24 @@ export async function tryAcquirePipelineAdvisoryLock(
     }
     return { acquired: false, backend: "postgres", release: async () => {} };
   }
+}
+
+export function tryAcquirePipelineAdvisoryLockEffect(
+  lockKey: string,
+  env: NodeJS.ProcessEnv = process.env,
+  deps: { getPool?: typeof getInferencePgPool } = {}
+): Effect.Effect<PipelineAdvisoryLockResult, Error> {
+  return Effect.tryPromise({
+    try: () => tryAcquirePipelineAdvisoryLockImpl(lockKey, env, deps),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link tryAcquirePipelineAdvisoryLockEffect} for Effect callers. */
+export async function tryAcquirePipelineAdvisoryLock(
+  lockKey: string,
+  env: NodeJS.ProcessEnv = process.env,
+  deps: { getPool?: typeof getInferencePgPool } = {}
+): Promise<PipelineAdvisoryLockResult>  {
+  return Effect.runPromise(tryAcquirePipelineAdvisoryLockEffect(lockKey, env, deps));
 }

@@ -5,6 +5,7 @@ import {
   otelInfraTracingEnabled,
 } from "./profile.js";
 import { resolveLangfuseOtlpConfig } from "./langfuse-config.js";
+import { Effect } from "effect";
 
 export type InferenceOtelShutdownFn = () => Promise<void>;
 
@@ -14,14 +15,30 @@ let initPromise: Promise<InferenceOtelShutdownFn | undefined> | null = null;
  * Registers NodeTracerProvider with infra OTLP and/or Langfuse OTLP exporters.
  * Dynamic imports keep OTEL packages off the critical path when tracing is disabled.
  */
-export async function maybeInitInferenceOtelTracing(
+async function maybeInitInferenceOtelTracingImpl(
   env: NodeJS.ProcessEnv = process.env
-): Promise<InferenceOtelShutdownFn | undefined> {
+): Promise<InferenceOtelShutdownFn | undefined>  {
   if (!inferenceTracingEnabled(env)) return undefined;
   if (!initPromise) {
     initPromise = initInferenceOtelTracing(env);
   }
   return initPromise;
+}
+
+export function maybeInitInferenceOtelTracingEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<InferenceOtelShutdownFn | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => maybeInitInferenceOtelTracingImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybeInitInferenceOtelTracingEffect} for Effect callers. */
+export async function maybeInitInferenceOtelTracing(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<InferenceOtelShutdownFn | undefined>  {
+  return Effect.runPromise(maybeInitInferenceOtelTracingEffect(env));
 }
 
 async function initInferenceOtelTracing(

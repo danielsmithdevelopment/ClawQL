@@ -563,10 +563,26 @@ export async function runPaymentsCreditsDirectoryRelease(
 }
 
 /** Alias: Venmo-style pay → same staging path as transfer. */
+async function runPaymentsCreditsPayImpl(
+  options: PaymentsCreditsTransferOptions = {}
+): Promise<number>  {
+  return runPaymentsCreditsTransfer(options);
+}
+
+export function runPaymentsCreditsPayEffect(
+  options: PaymentsCreditsTransferOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsCreditsPayImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsCreditsPayEffect} for Effect callers. */
 export async function runPaymentsCreditsPay(
   options: PaymentsCreditsTransferOptions = {}
-): Promise<number> {
-  return runPaymentsCreditsTransfer(options);
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsCreditsPayEffect(options));
 }
 
 export async function runPaymentsCreditsStepUpEnroll(
@@ -856,10 +872,26 @@ export async function runPaymentsCreditsRequestCreate(
 }
 
 /** Alias for request create (invoice language). */
+async function runPaymentsCreditsInvoiceImpl(
+  options: PaymentsCreditsRequestOptions = {}
+): Promise<number>  {
+  return runPaymentsCreditsRequestCreate(options);
+}
+
+export function runPaymentsCreditsInvoiceEffect(
+  options: PaymentsCreditsRequestOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsCreditsInvoiceImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsCreditsInvoiceEffect} for Effect callers. */
 export async function runPaymentsCreditsInvoice(
   options: PaymentsCreditsRequestOptions = {}
-): Promise<number> {
-  return runPaymentsCreditsRequestCreate(options);
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsCreditsInvoiceEffect(options));
 }
 
 /**
@@ -1350,9 +1382,9 @@ function resolvePayeeForLink(options: PaymentsCreditsLinkOptions): string | unde
 }
 
 /** Print HATEOAS / clawql:// pay (or request) deep links. */
-export async function runPaymentsCreditsLink(
+async function runPaymentsCreditsLinkImpl(
   options: PaymentsCreditsLinkOptions = {}
-): Promise<number> {
+): Promise<number>  {
   if (options.parse?.trim()) {
     const parsed = Effect.runSync(parseCreditsDeepLink(options.parse));
     if (!parsed.ok) {
@@ -1418,6 +1450,22 @@ export async function runPaymentsCreditsLink(
   console.log(`CLI: ${envelope.links.cli}`);
   console.log(`HATEOAS base: ${Effect.runSync(creditsHateoasBase())}`);
   return 0;
+}
+
+export function runPaymentsCreditsLinkEffect(
+  options: PaymentsCreditsLinkOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsCreditsLinkImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsCreditsLinkEffect} for Effect callers. */
+export async function runPaymentsCreditsLink(
+  options: PaymentsCreditsLinkOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsCreditsLinkEffect(options));
 }
 
 /** Generate a pay QR (SVG) to stdout or --out file. */

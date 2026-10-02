@@ -1,15 +1,16 @@
 import { loadModelEscalationConfigAsync } from "../routing/config.js";
 import { registerModelToTier } from "../finetune/tier-registry.js";
 import type { ModelTier } from "../routing/types.js";
+import { Effect } from "effect";
 
 export type InferenceEscalationShowOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceEscalationShow(
+async function runInferenceEscalationShowImpl(
   options: InferenceEscalationShowOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const config = await loadModelEscalationConfigAsync(options.env);
   if (options.json) {
     console.log(JSON.stringify(config, null, 2));
@@ -24,6 +25,22 @@ export async function runInferenceEscalationShow(
   return 0;
 }
 
+export function runInferenceEscalationShowEffect(
+  options: InferenceEscalationShowOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceEscalationShowImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceEscalationShowEffect} for Effect callers. */
+export async function runInferenceEscalationShow(
+  options: InferenceEscalationShowOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runInferenceEscalationShowEffect(options));
+}
+
 export type InferenceEscalationSetTierOptions = {
   tier?: ModelTier;
   model?: string;
@@ -31,9 +48,9 @@ export type InferenceEscalationSetTierOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceEscalationSetTier(
+async function runInferenceEscalationSetTierImpl(
   options: InferenceEscalationSetTierOptions
-): Promise<number> {
+): Promise<number>  {
   if (!options.tier || !options.model?.trim()) {
     console.error(
       "Usage: clawql inference escalation set-tier --tier frugal|standard|frontier --model <provider/model>"
@@ -51,4 +68,20 @@ export async function runInferenceEscalationSetTier(
     console.log(`Set ${options.tier} → ${options.model.trim()} (saved to ${path})`);
   }
   return 0;
+}
+
+export function runInferenceEscalationSetTierEffect(
+  options: InferenceEscalationSetTierOptions
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceEscalationSetTierImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceEscalationSetTierEffect} for Effect callers. */
+export async function runInferenceEscalationSetTier(
+  options: InferenceEscalationSetTierOptions
+): Promise<number>  {
+  return Effect.runPromise(runInferenceEscalationSetTierEffect(options));
 }

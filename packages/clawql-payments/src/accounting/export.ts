@@ -162,9 +162,9 @@ export type BuildAccountingExportOptions = {
 };
 
 /** @deprecated Prefer AccountingExportService.build — Promise façade retained for legacy callers. */
-export async function buildAccountingExport(
+async function buildAccountingExportImpl(
   options: BuildAccountingExportOptions
-): Promise<AccountingExportResult> {
+): Promise<AccountingExportResult>  {
   const env = options.env ?? process.env;
   const format = options.format ?? "csv";
   let verifyOk = true;
@@ -201,13 +201,47 @@ export async function buildAccountingExport(
   };
 }
 
+export function buildAccountingExportEffect(
+  options: BuildAccountingExportOptions
+): Effect.Effect<AccountingExportResult, Error> {
+  return Effect.tryPromise({
+    try: () => buildAccountingExportImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link buildAccountingExportEffect} for Effect callers. */
+export async function buildAccountingExport(
+  options: BuildAccountingExportOptions
+): Promise<AccountingExportResult>  {
+  return Effect.runPromise(buildAccountingExportEffect(options));
+}
+
 /** @deprecated Prefer AccountingExportService.write — Promise façade retained for legacy callers. */
+async function writeAccountingExportImpl(
+  result: AccountingExportResult,
+  outputPath: string
+): Promise<void>  {
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, serializeAccountingExport(result, result.format), "utf8");
+}
+
+export function writeAccountingExportEffect(
+  result: AccountingExportResult,
+  outputPath: string
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => writeAccountingExportImpl(result, outputPath),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writeAccountingExportEffect} for Effect callers. */
 export async function writeAccountingExport(
   result: AccountingExportResult,
   outputPath: string
-): Promise<void> {
-  await mkdir(dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, serializeAccountingExport(result, result.format), "utf8");
+): Promise<void>  {
+  return Effect.runPromise(writeAccountingExportEffect(result, outputPath));
 }
 
 export class AccountingExportError extends Data.TaggedError("AccountingExportError")<{

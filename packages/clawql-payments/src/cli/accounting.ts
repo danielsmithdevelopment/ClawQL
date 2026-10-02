@@ -13,6 +13,7 @@ import {
   setTaxProfile,
 } from "../accounting/tax-profile.js";
 import type { AccountingExportFormat } from "../accounting/types.js";
+import { Effect } from "effect";
 
 export type PaymentsAccountingExportOptions = {
   from?: string;
@@ -24,9 +25,9 @@ export type PaymentsAccountingExportOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsAccountingExport(
+async function runPaymentsAccountingExportImpl(
   options: PaymentsAccountingExportOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const from = options.from?.trim();
   const to = options.to?.trim();
   if (!from || !to) {
@@ -80,6 +81,22 @@ export async function runPaymentsAccountingExport(
   }
 }
 
+export function runPaymentsAccountingExportEffect(
+  options: PaymentsAccountingExportOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsAccountingExportImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsAccountingExportEffect} for Effect callers. */
+export async function runPaymentsAccountingExport(
+  options: PaymentsAccountingExportOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsAccountingExportEffect(options));
+}
+
 export type PaymentsTaxEvidenceOptions = {
   taxYear?: number;
   output?: string;
@@ -89,9 +106,9 @@ export type PaymentsTaxEvidenceOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsTaxEvidence(
+async function runPaymentsTaxEvidenceImpl(
   options: PaymentsTaxEvidenceOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const taxYear = options.taxYear;
   if (!taxYear || !Number.isInteger(taxYear)) {
     console.error(
@@ -134,6 +151,22 @@ export async function runPaymentsTaxEvidence(
   }
 }
 
+export function runPaymentsTaxEvidenceEffect(
+  options: PaymentsTaxEvidenceOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsTaxEvidenceImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsTaxEvidenceEffect} for Effect callers. */
+export async function runPaymentsTaxEvidence(
+  options: PaymentsTaxEvidenceOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsTaxEvidenceEffect(options));
+}
+
 export type PaymentsTaxProfileSetOptions = {
   partyId?: string;
   taxForm?: string;
@@ -144,9 +177,9 @@ export type PaymentsTaxProfileSetOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsTaxProfileSet(
+async function runPaymentsTaxProfileSetImpl(
   options: PaymentsTaxProfileSetOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const partyId = options.partyId?.trim();
   const taxForm = options.taxForm?.trim();
   if (!partyId || !taxForm || !isTaxFormKind(taxForm)) {
@@ -180,15 +213,31 @@ export async function runPaymentsTaxProfileSet(
   }
 }
 
+export function runPaymentsTaxProfileSetEffect(
+  options: PaymentsTaxProfileSetOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsTaxProfileSetImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsTaxProfileSetEffect} for Effect callers. */
+export async function runPaymentsTaxProfileSet(
+  options: PaymentsTaxProfileSetOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsTaxProfileSetEffect(options));
+}
+
 export type PaymentsTaxProfileShowOptions = {
   partyId?: string;
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsTaxProfileShow(
+async function runPaymentsTaxProfileShowImpl(
   options: PaymentsTaxProfileShowOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   try {
     if (options.partyId?.trim()) {
@@ -225,4 +274,20 @@ export async function runPaymentsTaxProfileShow(
     console.error(err instanceof Error ? err.message : String(err));
     return 1;
   }
+}
+
+export function runPaymentsTaxProfileShowEffect(
+  options: PaymentsTaxProfileShowOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsTaxProfileShowImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsTaxProfileShowEffect} for Effect callers. */
+export async function runPaymentsTaxProfileShow(
+  options: PaymentsTaxProfileShowOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsTaxProfileShowEffect(options));
 }

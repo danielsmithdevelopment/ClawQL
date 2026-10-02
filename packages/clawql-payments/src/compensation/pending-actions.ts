@@ -80,7 +80,7 @@ export function buildCancelUrl(
 }
 
 /** @deprecated Prefer PendingActionsService.stage — Promise façade retained for legacy callers. */
-export async function stagePendingAction(
+async function stagePendingActionImpl(
   input: {
     tool: string;
     kind: CompensationPendingKind;
@@ -91,7 +91,7 @@ export async function stagePendingAction(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord> {
+): Promise<PendingActionRecord>  {
   const dir = resolvePendingActionsDir(env);
   await mkdir(dir, { recursive: true });
   const actionId = randomUUID();
@@ -118,11 +118,45 @@ export async function stagePendingAction(
   return record;
 }
 
+export function stagePendingActionEffect(
+  input: {
+    tool: string;
+    kind: CompensationPendingKind;
+    classification: HighImpactClassification;
+    args: Record<string, unknown>;
+    agentId: string;
+    tenantId?: string;
+    correlationId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<PendingActionRecord, Error> {
+  return Effect.tryPromise({
+    try: () => stagePendingActionImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link stagePendingActionEffect} for Effect callers. */
+export async function stagePendingAction(
+  input: {
+    tool: string;
+    kind: CompensationPendingKind;
+    classification: HighImpactClassification;
+    args: Record<string, unknown>;
+    agentId: string;
+    tenantId?: string;
+    correlationId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<PendingActionRecord>  {
+  return Effect.runPromise(stagePendingActionEffect(input, env));
+}
+
 /** @deprecated Prefer PendingActionsService.load — Promise façade retained for legacy callers. */
-export async function loadPendingAction(
+async function loadPendingActionImpl(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined> {
+): Promise<PendingActionRecord | undefined>  {
   try {
     const raw = await readFile(actionPath(actionId.trim(), env), "utf8");
     return JSON.parse(raw) as PendingActionRecord;
@@ -132,15 +166,51 @@ export async function loadPendingAction(
   }
 }
 
+export function loadPendingActionEffect(
+  actionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<PendingActionRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => loadPendingActionImpl(actionId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadPendingActionEffect} for Effect callers. */
+export async function loadPendingAction(
+  actionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<PendingActionRecord | undefined>  {
+  return Effect.runPromise(loadPendingActionEffect(actionId, env));
+}
+
 /** @deprecated Prefer PendingActionsService.save — Promise façade retained for legacy callers. */
-export async function savePendingAction(
+async function savePendingActionImpl(
   record: PendingActionRecord,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+): Promise<void>  {
   await mkdir(resolvePendingActionsDir(env), { recursive: true });
   await writeFile(actionPath(record.actionId, env), `${JSON.stringify(record, null, 2)}\n`, {
     mode: 0o600,
   });
+}
+
+export function savePendingActionEffect(
+  record: PendingActionRecord,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => savePendingActionImpl(record, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link savePendingActionEffect} for Effect callers. */
+export async function savePendingAction(
+  record: PendingActionRecord,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  return Effect.runPromise(savePendingActionEffect(record, env));
 }
 
 /** Mark expired in-place when past TTL and still pending. */
@@ -155,11 +225,11 @@ export function materializeExpiry(
 }
 
 /** @deprecated Prefer PendingActionsService.assertCode — Promise façade retained for legacy callers. */
-export async function assertPendingCode(
+async function assertPendingCodeImpl(
   actionId: string,
   code: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord> {
+): Promise<PendingActionRecord>  {
   const loaded = await loadPendingAction(actionId, env);
   if (!loaded) throw new Error(`Unknown pending action: ${actionId}`);
   const record = materializeExpiry(loaded);
@@ -172,8 +242,28 @@ export async function assertPendingCode(
   return record;
 }
 
+export function assertPendingCodeEffect(
+  actionId: string,
+  code: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<PendingActionRecord, Error> {
+  return Effect.tryPromise({
+    try: () => assertPendingCodeImpl(actionId, code, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link assertPendingCodeEffect} for Effect callers. */
+export async function assertPendingCode(
+  actionId: string,
+  code: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<PendingActionRecord>  {
+  return Effect.runPromise(assertPendingCodeEffect(actionId, code, env));
+}
+
 /** @deprecated Prefer PendingActionsService.list — Promise façade retained for legacy callers. */
-export async function listPendingActions(
+async function listPendingActionsImpl(
   env: NodeJS.ProcessEnv = process.env,
   filter?: {
     agentId?: string;
@@ -182,7 +272,7 @@ export async function listPendingActions(
     reason?: string;
     kindPrefix?: "deposit" | "cashout";
   }
-): Promise<PendingActionRecord[]> {
+): Promise<PendingActionRecord[]>  {
   const dir = resolvePendingActionsDir(env);
   let names: string[];
   try {
@@ -218,20 +308,50 @@ export async function listPendingActions(
   return out.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+export function listPendingActionsEffect(
+  env: NodeJS.ProcessEnv = process.env,
+  filter?: {
+    agentId?: string;
+    status?: PendingActionStatus;
+    recruitmentId?: string;
+    reason?: string;
+    kindPrefix?: "deposit" | "cashout";
+  }
+): Effect.Effect<PendingActionRecord[], Error> {
+  return Effect.tryPromise({
+    try: () => listPendingActionsImpl(env, filter),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listPendingActionsEffect} for Effect callers. */
+export async function listPendingActions(
+  env: NodeJS.ProcessEnv = process.env,
+  filter?: {
+    agentId?: string;
+    status?: PendingActionStatus;
+    recruitmentId?: string;
+    reason?: string;
+    kindPrefix?: "deposit" | "cashout";
+  }
+): Promise<PendingActionRecord[]>  {
+  return Effect.runPromise(listPendingActionsEffect(env, filter));
+}
+
 /**
  * Idempotency key for SGDOP / dividend deposits: recruitmentId + agentId + reason.
  * Returns the newest matching deposit that is still pending or already executed.
  *
  * @deprecated Prefer PendingActionsService.findRecruitDeposit — Promise façade retained for legacy callers.
  */
-export async function findRecruitDepositByKey(
+async function findRecruitDepositByKeyImpl(
   input: {
     recruitmentId: string;
     agentId: string;
     reason: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<PendingActionRecord | undefined> {
+): Promise<PendingActionRecord | undefined>  {
   const rid = input.recruitmentId.trim();
   const agentId = input.agentId.trim();
   const reason = input.reason.trim();
@@ -249,16 +369,60 @@ export async function findRecruitDepositByKey(
   return [...matches].reverse().find((r) => r.status === "executed");
 }
 
+export function findRecruitDepositByKeyEffect(
+  input: {
+    recruitmentId: string;
+    agentId: string;
+    reason: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<PendingActionRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => findRecruitDepositByKeyImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link findRecruitDepositByKeyEffect} for Effect callers. */
+export async function findRecruitDepositByKey(
+  input: {
+    recruitmentId: string;
+    agentId: string;
+    reason: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<PendingActionRecord | undefined>  {
+  return Effect.runPromise(findRecruitDepositByKeyEffect(input, env));
+}
+
 /** @deprecated Prefer PendingActionsService.delete — Promise façade retained for legacy callers. */
-export async function deletePendingAction(
+async function deletePendingActionImpl(
   actionId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
+): Promise<void>  {
   try {
     await unlink(actionPath(actionId, env));
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
   }
+}
+
+export function deletePendingActionEffect(
+  actionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => deletePendingActionImpl(actionId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link deletePendingActionEffect} for Effect callers. */
+export async function deletePendingAction(
+  actionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  return Effect.runPromise(deletePendingActionEffect(actionId, env));
 }
 
 export class PendingActionsError extends Data.TaggedError("PendingActionsError")<{

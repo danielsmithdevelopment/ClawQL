@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { renderPaymentsWellKnownJson, type BuildPaymentsWellKnownOptions } from "./well-known.js";
+import { Effect } from "effect";
 
 export const PAYMENTS_WELL_KNOWN_PATH = "/.well-known/payments.json";
 
@@ -8,11 +9,11 @@ export type AttachPaymentsWellKnownOptions = BuildPaymentsWellKnownOptions & {
   maxAgeSeconds?: number;
 };
 
-export async function handlePaymentsWellKnownRequest(
+async function handlePaymentsWellKnownRequestImpl(
   req: Request,
   res: Response,
   options: AttachPaymentsWellKnownOptions = {}
-): Promise<void> {
+): Promise<void>  {
   const origin =
     options.origin ??
     (req.get("x-forwarded-proto") && req.get("host")
@@ -28,6 +29,26 @@ export async function handlePaymentsWellKnownRequest(
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", `public, max-age=${maxAge}`);
   res.status(200).send(body);
+}
+
+export function handlePaymentsWellKnownRequestEffect(
+  req: Request,
+  res: Response,
+  options: AttachPaymentsWellKnownOptions = {}
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => handlePaymentsWellKnownRequestImpl(req, res, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link handlePaymentsWellKnownRequestEffect} for Effect callers. */
+export async function handlePaymentsWellKnownRequest(
+  req: Request,
+  res: Response,
+  options: AttachPaymentsWellKnownOptions = {}
+): Promise<void>  {
+  return Effect.runPromise(handlePaymentsWellKnownRequestEffect(req, res, options));
 }
 
 export function attachPaymentsWellKnownRoutes(

@@ -1,4 +1,5 @@
 import type { GrpoTask, RewardFunction, RewardScore } from "../types.js";
+import { Effect } from "effect";
 
 export type HarveyEvalResult = {
   criteriaPassed: number;
@@ -17,12 +18,12 @@ export type HarveyEvalRunner = (input: {
  * Heuristic offline scorer when Harvey harness is unavailable.
  * Counts checklist-style criterion strings that appear in the rollout.
  */
-export async function defaultHarveyEvalRunner(input: {
+async function defaultHarveyEvalRunnerImpl(input: {
   rollout: string;
   taskId: string;
   criteria: unknown[] | undefined;
   judgeModel: string;
-}): Promise<HarveyEvalResult> {
+}): Promise<HarveyEvalResult>  {
   void input.taskId;
   void input.judgeModel;
   const criteria = (input.criteria ?? []).map(String);
@@ -36,6 +37,28 @@ export async function defaultHarveyEvalRunner(input: {
     criteriaTotal: total,
     criteriaAttempted: total,
   };
+}
+
+export function defaultHarveyEvalRunnerEffect(input: {
+  rollout: string;
+  taskId: string;
+  criteria: unknown[] | undefined;
+  judgeModel: string;
+}): Effect.Effect<HarveyEvalResult, Error> {
+  return Effect.tryPromise({
+    try: () => defaultHarveyEvalRunnerImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link defaultHarveyEvalRunnerEffect} for Effect callers. */
+export async function defaultHarveyEvalRunner(input: {
+  rollout: string;
+  taskId: string;
+  criteria: unknown[] | undefined;
+  judgeModel: string;
+}): Promise<HarveyEvalResult>  {
+  return Effect.runPromise(defaultHarveyEvalRunnerEffect(input));
 }
 
 export function createHarveyLabReward(options?: {

@@ -213,12 +213,30 @@ export function spendableBalanceCents(account: CreditAccount, now: Date = new Da
   return sumGrants(account.grants, now);
 }
 
+async function getCreditAccountImpl(
+  tenantId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditAccount>  {
+  const file = await loadFile(env);
+  return normalizeAccount(tenantId, file.accounts[tenantId]);
+}
+
+export function getCreditAccountEffect(
+  tenantId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditAccount, Error> {
+  return Effect.tryPromise({
+    try: () => getCreditAccountImpl(tenantId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link getCreditAccountEffect} for Effect callers. */
 export async function getCreditAccount(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditAccount> {
-  const file = await loadFile(env);
-  return normalizeAccount(tenantId, file.accounts[tenantId]);
+): Promise<CreditAccount>  {
+  return Effect.runPromise(getCreditAccountEffect(tenantId, env));
 }
 
 function newId(prefix: string): string {
@@ -273,7 +291,7 @@ function applyAllocationsCredit(
   return [...byId.values()];
 }
 
-export async function appendCreditEntry(
+async function appendCreditEntryImpl(
   input: {
     tenantId: string;
     kind: CreditLedgerKind;
@@ -289,7 +307,7 @@ export async function appendCreditEntry(
     expiresAt?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditLedgerEntry> {
+): Promise<CreditLedgerEntry>  {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -347,6 +365,50 @@ export async function appendCreditEntry(
   });
 }
 
+export function appendCreditEntryEffect(
+  input: {
+    tenantId: string;
+    kind: CreditLedgerKind;
+    deltaCents: number;
+    paymentIntentId?: string;
+    financialConnectionsSessionId?: string;
+    correlationId?: string;
+    note?: string;
+    id?: string;
+    idempotencyKey?: string;
+    holdId?: string;
+    grantSource?: CreditGrantSource;
+    expiresAt?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditLedgerEntry, Error> {
+  return Effect.tryPromise({
+    try: () => appendCreditEntryImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link appendCreditEntryEffect} for Effect callers. */
+export async function appendCreditEntry(
+  input: {
+    tenantId: string;
+    kind: CreditLedgerKind;
+    deltaCents: number;
+    paymentIntentId?: string;
+    financialConnectionsSessionId?: string;
+    correlationId?: string;
+    note?: string;
+    id?: string;
+    idempotencyKey?: string;
+    holdId?: string;
+    grantSource?: CreditGrantSource;
+    expiresAt?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditLedgerEntry>  {
+  return Effect.runPromise(appendCreditEntryEffect(input, env));
+}
+
 export type HoldResult = {
   hold: CreditHold;
   entry: CreditLedgerEntry;
@@ -354,7 +416,7 @@ export type HoldResult = {
   spendableAfterCents: number;
 };
 
-export async function holdCredits(
+async function holdCreditsImpl(
   input: {
     tenantId: string;
     amountCents: number;
@@ -364,7 +426,7 @@ export async function holdCredits(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<HoldResult> {
+): Promise<HoldResult>  {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -436,6 +498,38 @@ export async function holdCredits(
   });
 }
 
+export function holdCreditsEffect(
+  input: {
+    tenantId: string;
+    amountCents: number;
+    idempotencyKey: string;
+    correlationId?: string;
+    resource?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<HoldResult, Error> {
+  return Effect.tryPromise({
+    try: () => holdCreditsImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link holdCreditsEffect} for Effect callers. */
+export async function holdCredits(
+  input: {
+    tenantId: string;
+    amountCents: number;
+    idempotencyKey: string;
+    correlationId?: string;
+    resource?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<HoldResult>  {
+  return Effect.runPromise(holdCreditsEffect(input, env));
+}
+
 export type CaptureResult = {
   hold: CreditHold;
   entry: CreditLedgerEntry;
@@ -443,7 +537,7 @@ export type CaptureResult = {
   alreadyCaptured: boolean;
 };
 
-export async function captureHold(
+async function captureHoldImpl(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -452,7 +546,7 @@ export async function captureHold(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CaptureResult> {
+): Promise<CaptureResult>  {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -529,13 +623,43 @@ export async function captureHold(
   });
 }
 
+export function captureHoldEffect(
+  input: {
+    tenantId: string;
+    idempotencyKey: string;
+    actualAmountCents?: number;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CaptureResult, Error> {
+  return Effect.tryPromise({
+    try: () => captureHoldImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link captureHoldEffect} for Effect callers. */
+export async function captureHold(
+  input: {
+    tenantId: string;
+    idempotencyKey: string;
+    actualAmountCents?: number;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CaptureResult>  {
+  return Effect.runPromise(captureHoldEffect(input, env));
+}
+
 export type ReleaseResult = {
   hold: CreditHold;
   entry: CreditLedgerEntry;
   alreadyReleased: boolean;
 };
 
-export async function releaseHold(
+async function releaseHoldImpl(
   input: {
     tenantId: string;
     idempotencyKey: string;
@@ -543,7 +667,7 @@ export async function releaseHold(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<ReleaseResult> {
+): Promise<ReleaseResult>  {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -596,8 +720,36 @@ export async function releaseHold(
   });
 }
 
+export function releaseHoldEffect(
+  input: {
+    tenantId: string;
+    idempotencyKey: string;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<ReleaseResult, Error> {
+  return Effect.tryPromise({
+    try: () => releaseHoldImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link releaseHoldEffect} for Effect callers. */
+export async function releaseHold(
+  input: {
+    tenantId: string;
+    idempotencyKey: string;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<ReleaseResult>  {
+  return Effect.runPromise(releaseHoldEffect(input, env));
+}
+
 /** Idempotent settle: if PI already settled, return existing entry. */
-export async function settleTopupByPaymentIntent(
+async function settleTopupByPaymentIntentImpl(
   input: {
     tenantId: string;
     paymentIntentId: string;
@@ -605,7 +757,7 @@ export async function settleTopupByPaymentIntent(
     correlationId?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }> {
+): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }>  {
   return withTenantLedgerLock(input.tenantId, async () => {
     const file = await loadFile(env);
     let account = normalizeAccount(input.tenantId, file.accounts[input.tenantId]);
@@ -648,10 +800,54 @@ export async function settleTopupByPaymentIntent(
   });
 }
 
+export function settleTopupByPaymentIntentEffect(
+  input: {
+    tenantId: string;
+    paymentIntentId: string;
+    amountCents: number;
+    correlationId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<{ entry: CreditLedgerEntry; alreadySettled: boolean }, Error> {
+  return Effect.tryPromise({
+    try: () => settleTopupByPaymentIntentImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link settleTopupByPaymentIntentEffect} for Effect callers. */
+export async function settleTopupByPaymentIntent(
+  input: {
+    tenantId: string;
+    paymentIntentId: string;
+    amountCents: number;
+    correlationId?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<{ entry: CreditLedgerEntry; alreadySettled: boolean }>  {
+  return Effect.runPromise(settleTopupByPaymentIntentEffect(input, env));
+}
+
+async function resetCreditsLedgerForTestsImpl(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<void>  {
+  await saveFile({ accounts: {} }, env);
+}
+
+export function resetCreditsLedgerForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetCreditsLedgerForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetCreditsLedgerForTestsEffect} for Effect callers. */
 export async function resetCreditsLedgerForTests(
   env: NodeJS.ProcessEnv = process.env
-): Promise<void> {
-  await saveFile({ accounts: {} }, env);
+): Promise<void>  {
+  return Effect.runPromise(resetCreditsLedgerForTestsEffect(env));
 }
 
 export type CreditTransferResult = {
@@ -668,7 +864,7 @@ export type CreditTransferResult = {
  * Atomic prepaid credit transfer between two tenants (P2P).
  * Locks tenants in sorted order to avoid deadlock; idempotent on `idempotencyKey`.
  */
-export async function transferCredits(
+async function transferCreditsImpl(
   input: {
     fromTenantId: string;
     toTenantId: string;
@@ -678,7 +874,7 @@ export async function transferCredits(
     note?: string;
   },
   env: NodeJS.ProcessEnv = process.env
-): Promise<CreditTransferResult> {
+): Promise<CreditTransferResult>  {
   const fromTenantId = input.fromTenantId.trim();
   const toTenantId = input.toTenantId.trim();
   if (!fromTenantId || !toTenantId) {
@@ -794,6 +990,38 @@ export async function transferCredits(
       };
     })
   );
+}
+
+export function transferCreditsEffect(
+  input: {
+    fromTenantId: string;
+    toTenantId: string;
+    amountCents: number;
+    idempotencyKey?: string;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditTransferResult, Error> {
+  return Effect.tryPromise({
+    try: () => transferCreditsImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link transferCreditsEffect} for Effect callers. */
+export async function transferCredits(
+  input: {
+    fromTenantId: string;
+    toTenantId: string;
+    amountCents: number;
+    idempotencyKey?: string;
+    correlationId?: string;
+    note?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult>  {
+  return Effect.runPromise(transferCreditsEffect(input, env));
 }
 
 export class LedgerError extends Data.TaggedError("LedgerError")<{

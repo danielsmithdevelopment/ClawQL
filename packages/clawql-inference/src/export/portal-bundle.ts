@@ -11,6 +11,7 @@ import type { InferenceRecord } from "../store/types.js";
 import { formatExportLine } from "./format.js";
 import { buildSampleLines, sha256Hex } from "./manifest.js";
 import type { ExportFilter, PiiScrubMode, RunExportResult } from "./types.js";
+import { Effect } from "effect";
 
 export type PortalBundleManifest = {
   version: 1;
@@ -40,7 +41,7 @@ function slugBaseModel(baseModel: string | undefined): string {
 }
 
 /** Write a PorTAL-shaped adapter directory (placeholders until Python train runs). */
-export async function writePortalBundle(input: {
+async function writePortalBundleImpl(input: {
   outputDir: string;
   records: InferenceRecord[];
   lines: string[];
@@ -49,7 +50,7 @@ export async function writePortalBundle(input: {
   presidioActive: boolean;
   baseModel?: string;
   vaultRef?: string;
-}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }> {
+}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }>  {
   const outputDir = input.outputDir.trim();
   await mkdir(outputDir, { recursive: true });
 
@@ -150,8 +151,38 @@ export async function writePortalBundle(input: {
   };
 }
 
+export function writePortalBundleEffect(input: {
+  outputDir: string;
+  records: InferenceRecord[];
+  lines: string[];
+  filters: ExportFilter;
+  piiScrub: PiiScrubMode;
+  presidioActive: boolean;
+  baseModel?: string;
+  vaultRef?: string;
+}): Effect.Effect<RunExportResult & { portalManifest?: PortalBundleManifest }, Error> {
+  return Effect.tryPromise({
+    try: () => writePortalBundleImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writePortalBundleEffect} for Effect callers. */
+export async function writePortalBundle(input: {
+  outputDir: string;
+  records: InferenceRecord[];
+  lines: string[];
+  filters: ExportFilter;
+  piiScrub: PiiScrubMode;
+  presidioActive: boolean;
+  baseModel?: string;
+  vaultRef?: string;
+}): Promise<RunExportResult & { portalManifest?: PortalBundleManifest }>  {
+  return Effect.runPromise(writePortalBundleEffect(input));
+}
+
 /** Alignment-only refit: copy task_latent, write new alignment stub + updated manifest. */
-export async function writePortalRefit(input: {
+async function writePortalRefitImpl(input: {
   bundlePath: string;
   targetModel: string;
   outputDir: string;
@@ -159,7 +190,7 @@ export async function writePortalRefit(input: {
   outputDir: string;
   alignmentLora: string;
   manifestPath: string;
-}> {
+}>  {
   const bundlePath = input.bundlePath.trim();
   const outputDir = input.outputDir.trim();
   await mkdir(outputDir, { recursive: true });
@@ -240,6 +271,34 @@ export async function writePortalRefit(input: {
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
   return { outputDir, alignmentLora: alignmentName, manifestPath };
+}
+
+export function writePortalRefitEffect(input: {
+  bundlePath: string;
+  targetModel: string;
+  outputDir: string;
+}): Effect.Effect<{
+  outputDir: string;
+  alignmentLora: string;
+  manifestPath: string;
+}, Error> {
+  return Effect.tryPromise({
+    try: () => writePortalRefitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link writePortalRefitEffect} for Effect callers. */
+export async function writePortalRefit(input: {
+  bundlePath: string;
+  targetModel: string;
+  outputDir: string;
+}): Promise<{
+  outputDir: string;
+  alignmentLora: string;
+  manifestPath: string;
+}>  {
+  return Effect.runPromise(writePortalRefitEffect(input));
 }
 
 /** Format helper kept for type exhaustiveness when portal-bundle is used line-wise (should not). */

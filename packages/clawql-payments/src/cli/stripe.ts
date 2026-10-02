@@ -12,6 +12,7 @@ import {
 import { appendPaymentWormEntry, buildStripeMeterReportedEntry } from "../audit/index.js";
 import { loadPaymentsConfig, mergePaymentsConfig } from "../config/store.js";
 import { StripeNotConfiguredError, StripeWebhookVerificationError } from "../stripe/errors.js";
+import { Effect } from "effect";
 
 export type PaymentsStripeSetupOptions = {
   accountId?: string;
@@ -21,9 +22,9 @@ export type PaymentsStripeSetupOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeSetup(
+async function runPaymentsStripeSetupImpl(
   options: PaymentsStripeSetupOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   const result = await setupStripe(
     {
@@ -49,6 +50,22 @@ export async function runPaymentsStripeSetup(
   return 0;
 }
 
+export function runPaymentsStripeSetupEffect(
+  options: PaymentsStripeSetupOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeSetupImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeSetupEffect} for Effect callers. */
+export async function runPaymentsStripeSetup(
+  options: PaymentsStripeSetupOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeSetupEffect(options));
+}
+
 export type PaymentsStripeCustomerCreateOptions = {
   email?: string;
   name?: string;
@@ -56,9 +73,9 @@ export type PaymentsStripeCustomerCreateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeCustomerCreate(
+async function runPaymentsStripeCustomerCreateImpl(
   options: PaymentsStripeCustomerCreateOptions = {}
-): Promise<number> {
+): Promise<number>  {
   if (!options.email?.trim()) {
     console.error(
       "Usage: clawql payments stripe customer create --email user@acme.com [--name NAME]"
@@ -99,6 +116,22 @@ export async function runPaymentsStripeCustomerCreate(
   }
 }
 
+export function runPaymentsStripeCustomerCreateEffect(
+  options: PaymentsStripeCustomerCreateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeCustomerCreateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeCustomerCreateEffect} for Effect callers. */
+export async function runPaymentsStripeCustomerCreate(
+  options: PaymentsStripeCustomerCreateOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeCustomerCreateEffect(options));
+}
+
 export type PaymentsStripeSubscriptionCreateOptions = {
   customer?: string;
   plan?: string;
@@ -106,9 +139,9 @@ export type PaymentsStripeSubscriptionCreateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeSubscriptionCreate(
+async function runPaymentsStripeSubscriptionCreateImpl(
   options: PaymentsStripeSubscriptionCreateOptions = {}
-): Promise<number> {
+): Promise<number>  {
   if (!options.customer?.trim()) {
     console.error(
       "Usage: clawql payments stripe subscription create --customer cus_xxx --plan pro|team"
@@ -151,6 +184,22 @@ export async function runPaymentsStripeSubscriptionCreate(
   }
 }
 
+export function runPaymentsStripeSubscriptionCreateEffect(
+  options: PaymentsStripeSubscriptionCreateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeSubscriptionCreateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeSubscriptionCreateEffect} for Effect callers. */
+export async function runPaymentsStripeSubscriptionCreate(
+  options: PaymentsStripeSubscriptionCreateOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeSubscriptionCreateEffect(options));
+}
+
 export type PaymentsStripeInvoiceCreateOptions = {
   customer?: string;
   amount?: number;
@@ -159,9 +208,9 @@ export type PaymentsStripeInvoiceCreateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeInvoiceCreate(
+async function runPaymentsStripeInvoiceCreateImpl(
   options: PaymentsStripeInvoiceCreateOptions = {}
-): Promise<number> {
+): Promise<number>  {
   if (!options.customer?.trim() || options.amount === undefined) {
     console.error("Usage: clawql payments stripe invoice create --customer cus_xxx --amount 500");
     return 1;
@@ -203,6 +252,22 @@ export async function runPaymentsStripeInvoiceCreate(
   }
 }
 
+export function runPaymentsStripeInvoiceCreateEffect(
+  options: PaymentsStripeInvoiceCreateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeInvoiceCreateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeInvoiceCreateEffect} for Effect callers. */
+export async function runPaymentsStripeInvoiceCreate(
+  options: PaymentsStripeInvoiceCreateOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeInvoiceCreateEffect(options));
+}
+
 export type PaymentsStripeWebhookVerifyOptions = {
   payloadPath?: string;
   signature?: string;
@@ -214,9 +279,9 @@ export type PaymentsStripeWebhookVerifyOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeWebhookVerify(
+async function runPaymentsStripeWebhookVerifyImpl(
   options: PaymentsStripeWebhookVerifyOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   const config = await loadPaymentsConfig(env);
   const secret = options.webhookSecret ?? config.stripe.webhookSecret;
@@ -283,7 +348,23 @@ export async function runPaymentsStripeWebhookVerify(
   }
 }
 
-export async function runPaymentsStripeWebhookListen(): Promise<number> {
+export function runPaymentsStripeWebhookVerifyEffect(
+  options: PaymentsStripeWebhookVerifyOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeWebhookVerifyImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeWebhookVerifyEffect} for Effect callers. */
+export async function runPaymentsStripeWebhookVerify(
+  options: PaymentsStripeWebhookVerifyOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeWebhookVerifyEffect(options));
+}
+
+async function runPaymentsStripeWebhookListenImpl(): Promise<number>  {
   console.log(`Forward Stripe webhooks with the Stripe CLI, then verify/process locally:
 
   stripe listen --forward-to http://127.0.0.1:8080/webhooks/stripe
@@ -292,6 +373,18 @@ export async function runPaymentsStripeWebhookListen(): Promise<number> {
 Store the webhook signing secret via:
   clawql payments stripe setup --webhook-secret whsec_...`);
   return 0;
+}
+
+export function runPaymentsStripeWebhookListenEffect(): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeWebhookListenImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeWebhookListenEffect} for Effect callers. */
+export async function runPaymentsStripeWebhookListen(): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeWebhookListenEffect());
 }
 
 export type PaymentsStripeMeterReportOptions = {
@@ -305,9 +398,9 @@ export type PaymentsStripeMeterReportOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeMeterReport(
+async function runPaymentsStripeMeterReportImpl(
   options: PaymentsStripeMeterReportOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   if (!isStripeConfigured(env)) {
     console.error("STRIPE_SECRET_KEY is required for live Stripe API calls");
@@ -361,6 +454,22 @@ export async function runPaymentsStripeMeterReport(
   return 0;
 }
 
+export function runPaymentsStripeMeterReportEffect(
+  options: PaymentsStripeMeterReportOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeMeterReportImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeMeterReportEffect} for Effect callers. */
+export async function runPaymentsStripeMeterReport(
+  options: PaymentsStripeMeterReportOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeMeterReportEffect(options));
+}
+
 export type PaymentsStripeCatalogEnsureOptions = {
   dryRun?: boolean;
   includeTopUps?: boolean;
@@ -369,9 +478,9 @@ export type PaymentsStripeCatalogEnsureOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeCatalogEnsure(
+async function runPaymentsStripeCatalogEnsureImpl(
   options: PaymentsStripeCatalogEnsureOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   const dryRun = options.dryRun === true;
   if (!dryRun && !isStripeConfigured(env)) {
@@ -421,14 +530,30 @@ export async function runPaymentsStripeCatalogEnsure(
   return 0;
 }
 
+export function runPaymentsStripeCatalogEnsureEffect(
+  options: PaymentsStripeCatalogEnsureOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeCatalogEnsureImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeCatalogEnsureEffect} for Effect callers. */
+export async function runPaymentsStripeCatalogEnsure(
+  options: PaymentsStripeCatalogEnsureOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeCatalogEnsureEffect(options));
+}
+
 export type PaymentsStripeCatalogValidateOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeCatalogValidate(
+async function runPaymentsStripeCatalogValidateImpl(
   options: PaymentsStripeCatalogValidateOptions = {}
-): Promise<number> {
+): Promise<number>  {
   const env = options.env ?? process.env;
   const { validateStripeCatalogEnv } = await import("../stripe/stripe-catalog-service.js");
   const result = validateStripeCatalogEnv(env);
@@ -450,6 +575,22 @@ export async function runPaymentsStripeCatalogValidate(
   return result.ok ? 0 : 1;
 }
 
+export function runPaymentsStripeCatalogValidateEffect(
+  options: PaymentsStripeCatalogValidateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeCatalogValidateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeCatalogValidateEffect} for Effect callers. */
+export async function runPaymentsStripeCatalogValidate(
+  options: PaymentsStripeCatalogValidateOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeCatalogValidateEffect(options));
+}
+
 export type PaymentsStripeCheckoutCreateOptions = {
   plan?: string;
   orgName?: string;
@@ -461,9 +602,9 @@ export type PaymentsStripeCheckoutCreateOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runPaymentsStripeCheckoutCreate(
+async function runPaymentsStripeCheckoutCreateImpl(
   options: PaymentsStripeCheckoutCreateOptions = {}
-): Promise<number> {
+): Promise<number>  {
   if (options.plan !== "pro" && options.plan !== "team") {
     console.error(
       "Usage: clawql payments stripe checkout create --plan pro|team --org-name NAME --email user@acme.com --success-url URL --cancel-url URL"
@@ -524,4 +665,20 @@ export async function runPaymentsStripeCheckoutCreate(
     }
     throw error;
   }
+}
+
+export function runPaymentsStripeCheckoutCreateEffect(
+  options: PaymentsStripeCheckoutCreateOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runPaymentsStripeCheckoutCreateImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runPaymentsStripeCheckoutCreateEffect} for Effect callers. */
+export async function runPaymentsStripeCheckoutCreate(
+  options: PaymentsStripeCheckoutCreateOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runPaymentsStripeCheckoutCreateEffect(options));
 }

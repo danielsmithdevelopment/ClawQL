@@ -1,6 +1,7 @@
 import { runInferenceExport } from "../export/run-export.js";
 import type { ExportFormat } from "../export/types.js";
 import type { EvaluatorVerdict } from "../store/types.js";
+import { Effect } from "effect";
 
 export type InferenceExportCliOptions = {
   output?: string;
@@ -26,9 +27,9 @@ export type InferenceExportCliOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceExportCli(
+async function runInferenceExportCliImpl(
   options: InferenceExportCliOptions = {}
-): Promise<number> {
+): Promise<number>  {
   try {
     const result = await runInferenceExport({
       output: options.output ?? "",
@@ -63,4 +64,20 @@ export async function runInferenceExportCli(
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+export function runInferenceExportCliEffect(
+  options: InferenceExportCliOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceExportCliImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceExportCliEffect} for Effect callers. */
+export async function runInferenceExportCli(
+  options: InferenceExportCliOptions = {}
+): Promise<number>  {
+  return Effect.runPromise(runInferenceExportCliEffect(options));
 }
