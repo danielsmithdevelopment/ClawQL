@@ -7,6 +7,7 @@ import {
   type JetStreamClient,
   type NatsConnection,
 } from "nats";
+import { Effect } from "effect";
 import {
   natsConeshareFollowupConsumerDurable,
   natsDocumentSubjectRoot,
@@ -24,6 +25,8 @@ import {
 } from "./env.js";
 import type { DocumentEventEnvelope, WorkflowEventEnvelope } from "./envelope.js";
 import { documentEventSubject, workflowEventSubject } from "./envelope.js";
+import { automationFromPromise } from "../effect/automation-effect-utils.js";
+import type { AutomationError } from "../effect/automation-errors.js";
 
 const sc = StringCodec();
 
@@ -47,47 +50,71 @@ async function getJetStream(): Promise<JetStreamClient> {
   return jetStreamClient;
 }
 
+export function ensureWorkflowStreamEffect(): Effect.Effect<void, AutomationError> {
+  return Effect.gen(function* () {
+    if (streamsEnsured) return;
+    const nc = yield* automationFromPromise(() => getConnection());
+    const jsm = yield* automationFromPromise(() => nc.jetstreamManager());
+    const streamName = natsStreamName();
+    const subjects = [`${natsWorkflowSubjectRoot()}.>`, `${natsDocumentSubjectRoot()}.>`];
+    const infoExit = yield* Effect.exit(
+      automationFromPromise(() => jsm.streams.info(streamName))
+    );
+    if (infoExit._tag === "Failure") {
+      yield* automationFromPromise(() =>
+        jsm.streams.add({
+          name: streamName,
+          subjects,
+          retention: RetentionPolicy.Limits,
+          max_age: 7 * 24 * 60 * 60 * 1_000_000_000,
+        })
+      );
+    }
+    streamsEnsured = true;
+  });
+}
+
+/** Promise façade. */
 export async function ensureWorkflowStream(): Promise<void> {
-  if (streamsEnsured) return;
-  const nc = await getConnection();
-  const jsm = await nc.jetstreamManager();
-  const streamName = natsStreamName();
-  const subjects = [`${natsWorkflowSubjectRoot()}.>`, `${natsDocumentSubjectRoot()}.>`];
-  try {
-    await jsm.streams.info(streamName);
-  } catch {
-    await jsm.streams.add({
-      name: streamName,
-      subjects,
-      retention: RetentionPolicy.Limits,
-      max_age: 7 * 24 * 60 * 60 * 1_000_000_000,
-    });
-  }
-  streamsEnsured = true;
+  return Effect.runPromise(ensureWorkflowStreamEffect());
 }
 
+export function publishWorkflowEventEffect(
+  envelope: WorkflowEventEnvelope
+): Effect.Effect<boolean> {
+  return Effect.gen(function* () {
+    if (!natsConfiguredForPublish()) return false;
+    yield* ensureWorkflowStreamEffect();
+    const js = yield* automationFromPromise(() => getJetStream());
+    yield* automationFromPromise(() =>
+      js.publish(envelope.subject, sc.encode(JSON.stringify(envelope)))
+    );
+    return true;
+  }).pipe(Effect.orElseSucceed(() => false));
+}
+
+/** Promise façade. */
 export async function publishWorkflowEvent(envelope: WorkflowEventEnvelope): Promise<boolean> {
-  if (!natsConfiguredForPublish()) return false;
-  try {
-    await ensureWorkflowStream();
-    const js = await getJetStream();
-    await js.publish(envelope.subject, sc.encode(JSON.stringify(envelope)));
-    return true;
-  } catch {
-    return false;
-  }
+  return Effect.runPromise(publishWorkflowEventEffect(envelope));
 }
 
-export async function publishDocumentEvent(envelope: DocumentEventEnvelope): Promise<boolean> {
-  if (!natsConfiguredForPublish()) return false;
-  try {
-    await ensureWorkflowStream();
-    const js = await getJetStream();
-    await js.publish(envelope.subject, sc.encode(JSON.stringify(envelope)));
+export function publishDocumentEventEffect(
+  envelope: DocumentEventEnvelope
+): Effect.Effect<boolean> {
+  return Effect.gen(function* () {
+    if (!natsConfiguredForPublish()) return false;
+    yield* ensureWorkflowStreamEffect();
+    const js = yield* automationFromPromise(() => getJetStream());
+    yield* automationFromPromise(() =>
+      js.publish(envelope.subject, sc.encode(JSON.stringify(envelope)))
+    );
     return true;
-  } catch {
-    return false;
-  }
+  }).pipe(Effect.orElseSucceed(() => false));
+}
+
+/** Promise façade. */
+export async function publishDocumentEvent(envelope: DocumentEventEnvelope): Promise<boolean> {
+  return Effect.runPromise(publishDocumentEventEffect(envelope));
 }
 
 export type HitlCompletedConsumerHandler = (
