@@ -97,6 +97,12 @@ const rawOptionalFlagsSchema = z.object({
   /** ([#250](https://github.com/danielsmithdevelopment/ClawQL/issues/250)): Langfuse eval webhook + `ouroboros_propose_seed_revision_from_eval`. Default false. */
   CLAWQL_ENABLE_LANGFUSE_EVAL: z.string().optional(),
   /**
+   * (8.0 demotion): agent-facing `ouroboros_*` / `clawql_think` MCP tools via `clawql-harness`.
+   * Default **false** — no additive agent-loop proof yet. Server-side Ouroboros lifecycle and
+   * the `clawql-ouroboros` / `clawql-harness` packages stay regardless of this flag.
+   */
+  CLAWQL_ENABLE_OUROBOROS_TOOLS: z.string().optional(),
+  /**
    * Governed observability MCP tools + HTTP read API (query federation, health, Alloy apply).
    * Default false — register with `CLAWQL_ENABLE_OBSERVABILITY=1`.
    */
@@ -228,6 +234,12 @@ export type ClawqlOptionalToolFlags = {
    */
   enableLangfuseEval: boolean;
   /**
+   * (8.0 demotion): agent-facing `ouroboros_*` / `clawql_think` MCP tools. Default **false** —
+   * register with **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true`.
+   * Server-side Ouroboros capability lifecycle and `clawql-harness` plugin loading stay unaffected.
+   */
+  enableOuroborosTools: boolean;
+  /**
    * Governed observability MCP tools (`observability_query_*`, health, Alloy apply) + optional HTTP read API.
    * Default false — register with **`CLAWQL_ENABLE_OBSERVABILITY=1`**.
    */
@@ -294,6 +306,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enablePdfInspector: envTruthy(raw.CLAWQL_ENABLE_PDF_INSPECTOR),
     enableAnydoc: envTruthy(raw.CLAWQL_ENABLE_ANYDOC),
     enableLangfuseEval: envTruthy(raw.CLAWQL_ENABLE_LANGFUSE_EVAL),
+    enableOuroborosTools: envTruthy(raw.CLAWQL_ENABLE_OUROBOROS_TOOLS),
     enableObservability: envTruthy(raw.CLAWQL_ENABLE_OBSERVABILITY),
     enableChatgptExtensions: envTruthyWithDefault(raw.CLAWQL_ENABLE_CHATGPT_EXTENSIONS, true),
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
@@ -352,6 +365,7 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enablePdfInspector: false,
     enableAnydoc: false,
     enableLangfuseEval: false,
+    enableOuroborosTools: false,
     enableObservability: false,
     enableChatgptExtensions: true,
     enableGoogle: false,

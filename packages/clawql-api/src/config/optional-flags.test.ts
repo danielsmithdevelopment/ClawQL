@@ -26,6 +26,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_PDF_INSPECTOR: undefined,
       CLAWQL_ENABLE_ANYDOC: undefined,
       CLAWQL_ENABLE_LANGFUSE_EVAL: undefined,
+      CLAWQL_ENABLE_OUROBOROS_TOOLS: undefined,
     });
     expect(f.enableGrpc).toBe(false);
     expect(f.enableGrpcReflection).toBe(false);
@@ -48,6 +49,22 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enablePdfInspector).toBe(false);
     expect(f.enableAnydoc).toBe(false);
     expect(f.enableLangfuseEval).toBe(false);
+    expect(f.enableOuroborosTools).toBe(false);
+  });
+
+  it("defaults enableOuroborosTools off; CLAWQL_ENABLE_OUROBOROS_TOOLS=1 enables agent-facing ouroboros_* / clawql_think", () => {
+    expect(
+      getClawqlOptionalToolFlags({ CLAWQL_ENABLE_OUROBOROS_TOOLS: undefined } as NodeJS.ProcessEnv)
+        .enableOuroborosTools
+    ).toBe(false);
+    expect(
+      getClawqlOptionalToolFlags({ CLAWQL_ENABLE_OUROBOROS_TOOLS: "1" } as NodeJS.ProcessEnv)
+        .enableOuroborosTools
+    ).toBe(true);
+    expect(
+      getClawqlOptionalToolFlags({ CLAWQL_ENABLE_OUROBOROS_TOOLS: "0" } as NodeJS.ProcessEnv)
+        .enableOuroborosTools
+    ).toBe(false);
   });
 
   it("parses ENABLE_GRPC and ENABLE_GRPC_REFLECTION", () => {
@@ -112,6 +129,7 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_PDF_INSPECTOR: "1",
       CLAWQL_ENABLE_ANYDOC: "1",
       CLAWQL_ENABLE_LANGFUSE_EVAL: "1",
+      CLAWQL_ENABLE_OUROBOROS_TOOLS: "1",
     } as NodeJS.ProcessEnv);
     expect(f.enableMemory).toBe(true);
     expect(f.enableDocuments).toBe(true);
@@ -129,5 +147,6 @@ describe("getClawqlOptionalToolFlags", () => {
     expect(f.enablePdfInspector).toBe(true);
     expect(f.enableAnydoc).toBe(true);
     expect(f.enableLangfuseEval).toBe(true);
+    expect(f.enableOuroborosTools).toBe(true);
   });
 });

@@ -8,7 +8,9 @@
  * Optional: ingest_external_knowledge — documents tier (`documents.enabled`).
  * Optional: knowledge_search_onyx — `documents.onyx.enabled`.
  * Optional: schedule / notify / workflow — `automation.*` in instance/tier config.
- * Always: ouroboros_* + clawql_think via clawql-harness (GitHub #141); optional CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
+ * Opt-in (8.0 demotion): ouroboros_* + clawql_think via clawql-harness (GitHub #141) — default OFF,
+ * gate with CLAWQL_ENABLE_OUROBOROS_TOOLS=1 or instance/tier ouroboros.enabled; optional
+ * CLAWQL_OUROBOROS_DATABASE_URL for Postgres lineage (#142).
  * Plugin enablement: {@link resolvePluginCompositionFlags} / ClawQLInstance — not CLAWQL_ENABLE_*.
  * Single-spec `execute` runs OpenAPI→GraphQL in-process; field resolution uses `graphql-execute-helpers`.
  */

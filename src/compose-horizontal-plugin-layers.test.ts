@@ -31,6 +31,7 @@ const baseFlags = {
   enablePdfInspector: false,
   enableAnydoc: false,
   enableLangfuseEval: false,
+  enableOuroborosTools: false,
   enableObservability: false,
   enableChatgptExtensions: false,
   enableGrpc: false,
@@ -59,7 +60,7 @@ describe("composeHorizontalPluginLayers", () => {
     expect(ids).toContain(DATA_PLUGIN_ID);
   });
 
-  it("maps tier spec to flags and composes layers", () => {
+  it("maps tier spec to flags and composes layers (ouroboros tools off by default)", () => {
     const flags = optionalFlagsFromHorizontalTierSpec({
       memory: { enabled: true },
       documents: { enabled: false },
@@ -69,6 +70,7 @@ describe("composeHorizontalPluginLayers", () => {
     expect(flags.enableMemory).toBe(true);
     expect(flags.enableDocuments).toBe(false);
     expect(flags.enableLangfuseEval).toBe(true);
+    expect(flags.enableOuroborosTools).toBe(false);
 
     const layers = composeHorizontalPluginLayersFromTierSpec({
       memory: { enabled: true },
@@ -76,6 +78,19 @@ describe("composeHorizontalPluginLayers", () => {
     });
     const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
     expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(false);
+  });
+
+  it("maps tier spec ouroboros.enabled: true to enableOuroborosTools and registers harness", () => {
+    const flags = optionalFlagsFromHorizontalTierSpec({
+      ouroboros: { enabled: true },
+    });
+    expect(flags.enableOuroborosTools).toBe(true);
+
+    const layers = composeHorizontalPluginLayersFromTierSpec({
+      ouroboros: { enabled: true },
+    });
+    const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
     expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
   });
 
@@ -101,23 +116,32 @@ describe("composeHorizontalPluginLayers", () => {
 });
 
 describe("composeHorizontalPluginLayersDynamic", () => {
-  it("still loads harness when all optional flags are off", async () => {
+  it("pushes no layers (no harness) when all optional flags are off", async () => {
     const layers = await composeHorizontalPluginLayersDynamic(
       { ...baseFlags },
       { includeNatsWorker: false }
     );
     const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
-    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
-    expect(layers.length).toBe(1);
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(false);
+    expect(layers.length).toBe(0);
   });
 
-  it("dynamically loads memory when enableMemory is true", async () => {
+  it("dynamically loads memory when enableMemory is true (harness still off)", async () => {
     const layers = await composeHorizontalPluginLayersDynamic(
       { ...baseFlags, enableMemory: true },
       { includeNatsWorker: false }
     );
     const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
     expect(api.registry.list().some((p) => p.id === MEMORY_PLUGIN_ID)).toBe(true);
+    expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(false);
+  });
+
+  it("dynamically loads harness when enableOuroborosTools is true", async () => {
+    const layers = await composeHorizontalPluginLayersDynamic(
+      { ...baseFlags, enableOuroborosTools: true },
+      { includeNatsWorker: false }
+    );
+    const api = createClawQLApi({ plugins: [], pluginLayers: [...layers] });
     expect(api.registry.list().some((p) => p.id === "clawql-harness")).toBe(true);
   });
 });
