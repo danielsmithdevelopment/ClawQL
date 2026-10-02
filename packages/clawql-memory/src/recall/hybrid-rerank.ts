@@ -74,4 +74,3 @@ export function rerankNormalizedHitsRrf(
   }
   return reciprocalRankFusion([...bySource.values()], opts);
 }
-
