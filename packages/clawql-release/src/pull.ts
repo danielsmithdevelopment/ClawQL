@@ -8,6 +8,7 @@ import { decryptBuffer } from "./crypto/encrypt.js";
 import { createWorkspaceSnapshot } from "./workspace/index.js";
 import type { ReleaseManifestV01, WorkspaceBackend } from "./types.js";
 import { isDryRun } from "./exec.js";
+import { Effect } from "effect";
 
 export type PullOptions = {
   rootDir: string;
@@ -42,7 +43,7 @@ function looksLikeTxId(target: string): boolean {
  * Pull + verify a release (local bundle or Arweave tx), pay/decrypt when required,
  * optionally materialize into a Rift / git-worktree workspace.
  */
-export async function pullRelease(options: PullOptions): Promise<PullResult> {
+async function pullReleaseImpl(options: PullOptions): Promise<PullResult> {
   const errors: string[] = [];
   const dry = isDryRun(options.dryRun);
   const outDir =
@@ -177,7 +178,7 @@ async function readEscrowKey(rootDir: string, tag: string): Promise<string | und
   }
 }
 
-export async function writeEscrowKey(
+async function writeEscrowKeyImpl(
   rootDir: string,
   tag: string,
   keyHex: string
@@ -187,4 +188,36 @@ export async function writeEscrowKey(
   const path = join(dir, `${tag.replace(/[^a-zA-Z0-9._-]/g, "_")}.key`);
   await writeFile(path, `${keyHex}\n`, { encoding: "utf8", mode: 0o600 });
   return path;
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Pull + verify a release (local or Arweave), pay/decrypt when required (Effect-primary). */
+export function pullReleaseEffect(options: PullOptions): Effect.Effect<PullResult, Error> {
+  return Effect.tryPromise({ try: () => pullReleaseImpl(options), catch: fsError });
+}
+
+/** Promise façade for CLI / hosts that still await pull. */
+export async function pullRelease(options: PullOptions): Promise<PullResult> {
+  return Effect.runPromise(pullReleaseEffect(options));
+}
+
+/** Persist an escrowed content-encryption key (Effect-primary). */
+export function writeEscrowKeyEffect(
+  rootDir: string,
+  tag: string,
+  keyHex: string
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({ try: () => writeEscrowKeyImpl(rootDir, tag, keyHex), catch: fsError });
+}
+
+/** Promise façade for callers that still await escrow key writes. */
+export async function writeEscrowKey(
+  rootDir: string,
+  tag: string,
+  keyHex: string
+): Promise<string> {
+  return Effect.runPromise(writeEscrowKeyEffect(rootDir, tag, keyHex));
 }

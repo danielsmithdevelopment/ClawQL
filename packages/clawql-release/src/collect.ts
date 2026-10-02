@@ -14,6 +14,7 @@ import {
   type ArtifactRecord,
   type ImageRecord,
 } from "./types.js";
+import { Effect } from "effect";
 
 async function readPackageVersion(rootDir: string): Promise<string> {
   const raw = await readFile(join(rootDir, "package.json"), "utf8");
@@ -22,7 +23,7 @@ async function readPackageVersion(rootDir: string): Promise<string> {
   return pkg.version.trim();
 }
 
-export async function collectReleaseManifest(options: CollectOptions): Promise<ReleaseManifestV01> {
+async function collectReleaseManifestImpl(options: CollectOptions): Promise<ReleaseManifestV01> {
   const rootDir = options.rootDir;
   const config = await readReleaseConfig(rootDir);
   const version = options.version ?? (await readPackageVersion(rootDir));
@@ -180,4 +181,20 @@ export async function collectReleaseManifest(options: CollectOptions): Promise<R
   }
 
   return manifest;
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Collect a release manifest from workspace artifacts (Effect-primary). */
+export function collectReleaseManifestEffect(
+  options: CollectOptions
+): Effect.Effect<ReleaseManifestV01, Error> {
+  return Effect.tryPromise({ try: () => collectReleaseManifestImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await manifest collection. */
+export async function collectReleaseManifest(options: CollectOptions): Promise<ReleaseManifestV01> {
+  return Effect.runPromise(collectReleaseManifestEffect(options));
 }

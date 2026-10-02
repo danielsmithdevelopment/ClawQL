@@ -1,5 +1,6 @@
 import type { AccessRecord, ReleaseManifestV01 } from "../types.js";
 import { buildPaymentLitCondition } from "../crypto/lit.js";
+import { Effect } from "effect";
 
 export type X402PaymentRequest = {
   amount: string;
@@ -50,7 +51,7 @@ export function buildAccessRecord(opts: {
  * Present an x402 payment for a gated release. Uses clawql-payments facilitator when
  * available via env; otherwise issues a local dry-run receipt for agent/CI flows.
  */
-export async function payForReleaseAccess(
+async function payForReleaseAccessImpl(
   req: X402PaymentRequest,
   opts: { dryRun?: boolean; paymentHeader?: string } = {}
 ): Promise<X402PaymentResult> {
@@ -115,4 +116,23 @@ export async function payForReleaseAccess(
 
 export function accessFromManifest(manifest: ReleaseManifestV01): AccessRecord {
   return manifest.access ?? { public: true, paymentRequired: false };
+}
+
+/** Present an x402 payment for a gated release (Effect-primary). */
+export function payForReleaseAccessEffect(
+  req: X402PaymentRequest,
+  opts: { dryRun?: boolean; paymentHeader?: string } = {}
+): Effect.Effect<X402PaymentResult, Error> {
+  return Effect.tryPromise({
+    try: () => payForReleaseAccessImpl(req, opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade for callers that still await x402 payment. */
+export async function payForReleaseAccess(
+  req: X402PaymentRequest,
+  opts: { dryRun?: boolean; paymentHeader?: string } = {}
+): Promise<X402PaymentResult> {
+  return Effect.runPromise(payForReleaseAccessEffect(req, opts));
 }

@@ -1,6 +1,7 @@
 import { mkdir, readFile, rm, writeFile, symlink, lstat, access } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import { join, resolve } from "node:path";
+import { Effect } from "effect";
 import { runCommand, commandExists } from "../exec.js";
 import { readGitHead } from "../git.js";
 import type { SnapshotOptions, WorkspaceSnapshot, WorkspaceBackend } from "../types.js";
@@ -102,7 +103,7 @@ async function registerSnapshot(
   });
 }
 
-export async function createGitWorktreeSnapshot(
+async function createGitWorktreeSnapshotImpl(
   options: SnapshotOptions
 ): Promise<WorkspaceSnapshot> {
   const rootDir = resolve(options.rootDir);
@@ -151,7 +152,7 @@ export async function createGitWorktreeSnapshot(
  * Rift CoW backend. Uses `rift` CLI (rift-snapshot) when available; otherwise creates a local
  * provenance workspace under `.rifts/` (CI / machines without btrfs·APFS·XFS CoW).
  */
-export async function createRiftSnapshot(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
+async function createRiftSnapshotImpl(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
   const rootDir = resolve(options.rootDir);
 
   const early = await findExistingSnapshot(rootDir, options.name, "rift");
@@ -221,14 +222,14 @@ export async function createRiftSnapshot(options: SnapshotOptions): Promise<Work
   return registerSnapshot(rootDir, snap);
 }
 
-export async function createWorkspaceSnapshot(
+async function createWorkspaceSnapshotImpl(
   options: SnapshotOptions
 ): Promise<WorkspaceSnapshot> {
   switch (options.backend) {
     case "git-worktree":
-      return createGitWorktreeSnapshot(options);
+      return createGitWorktreeSnapshotImpl(options);
     case "rift":
-      return createRiftSnapshot(options);
+      return createRiftSnapshotImpl(options);
     case "cloudflare":
     case "ebs":
       throw new Error(
@@ -239,12 +240,12 @@ export async function createWorkspaceSnapshot(
   }
 }
 
-export async function listWorkspaceSnapshots(rootDir: string): Promise<WorkspaceSnapshot[]> {
+async function listWorkspaceSnapshotsImpl(rootDir: string): Promise<WorkspaceSnapshot[]> {
   const store = await loadStore(resolve(rootDir));
   return store.snapshots;
 }
 
-export async function removeWorkspaceSnapshot(
+async function removeWorkspaceSnapshotImpl(
   rootDir: string,
   name: string
 ): Promise<WorkspaceSnapshot | undefined> {
@@ -274,7 +275,7 @@ export async function removeWorkspaceSnapshot(
   });
 }
 
-export async function resolveLatestSnapshot(
+async function resolveLatestSnapshotImpl(
   rootDir: string,
   backend?: WorkspaceBackend
 ): Promise<WorkspaceSnapshot | undefined> {
@@ -283,8 +284,106 @@ export async function resolveLatestSnapshot(
   return filtered[filtered.length - 1];
 }
 
-export async function ensureWorkspacesGitignore(rootDir: string): Promise<void> {
+async function ensureWorkspacesGitignoreImpl(rootDir: string): Promise<void> {
   const gi = join(rootDir, ".clawql", "workspaces", ".gitignore");
   await mkdir(join(rootDir, ".clawql", "workspaces"), { recursive: true });
   await writeFile(gi, "git-worktree/\n*\n!.gitignore\n!snapshots.json\n", "utf8");
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Create a git-worktree workspace snapshot (Effect-primary). */
+export function createGitWorktreeSnapshotEffect(
+  options: SnapshotOptions
+): Effect.Effect<WorkspaceSnapshot, Error> {
+  return Effect.tryPromise({ try: () => createGitWorktreeSnapshotImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await git-worktree snapshots. */
+export async function createGitWorktreeSnapshot(
+  options: SnapshotOptions
+): Promise<WorkspaceSnapshot> {
+  return Effect.runPromise(createGitWorktreeSnapshotEffect(options));
+}
+
+/** Create a Rift CoW workspace snapshot (Effect-primary). */
+export function createRiftSnapshotEffect(
+  options: SnapshotOptions
+): Effect.Effect<WorkspaceSnapshot, Error> {
+  return Effect.tryPromise({ try: () => createRiftSnapshotImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await Rift snapshots. */
+export async function createRiftSnapshot(options: SnapshotOptions): Promise<WorkspaceSnapshot> {
+  return Effect.runPromise(createRiftSnapshotEffect(options));
+}
+
+/** Create a workspace snapshot for the configured backend (Effect-primary). */
+export function createWorkspaceSnapshotEffect(
+  options: SnapshotOptions
+): Effect.Effect<WorkspaceSnapshot, Error> {
+  return Effect.tryPromise({ try: () => createWorkspaceSnapshotImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await workspace snapshots. */
+export async function createWorkspaceSnapshot(
+  options: SnapshotOptions
+): Promise<WorkspaceSnapshot> {
+  return Effect.runPromise(createWorkspaceSnapshotEffect(options));
+}
+
+/** List registered workspace snapshots (Effect-primary). */
+export function listWorkspaceSnapshotsEffect(
+  rootDir: string
+): Effect.Effect<WorkspaceSnapshot[], Error> {
+  return Effect.tryPromise({ try: () => listWorkspaceSnapshotsImpl(rootDir), catch: fsError });
+}
+
+/** Promise façade for callers that still await snapshot listing. */
+export async function listWorkspaceSnapshots(rootDir: string): Promise<WorkspaceSnapshot[]> {
+  return Effect.runPromise(listWorkspaceSnapshotsEffect(rootDir));
+}
+
+/** Remove a named workspace snapshot (Effect-primary). */
+export function removeWorkspaceSnapshotEffect(
+  rootDir: string,
+  name: string
+): Effect.Effect<WorkspaceSnapshot | undefined, Error> {
+  return Effect.tryPromise({ try: () => removeWorkspaceSnapshotImpl(rootDir, name), catch: fsError });
+}
+
+/** Promise façade for callers that still await snapshot removal. */
+export async function removeWorkspaceSnapshot(
+  rootDir: string,
+  name: string
+): Promise<WorkspaceSnapshot | undefined> {
+  return Effect.runPromise(removeWorkspaceSnapshotEffect(rootDir, name));
+}
+
+/** Resolve the latest workspace snapshot (Effect-primary). */
+export function resolveLatestSnapshotEffect(
+  rootDir: string,
+  backend?: WorkspaceBackend
+): Effect.Effect<WorkspaceSnapshot | undefined, Error> {
+  return Effect.tryPromise({ try: () => resolveLatestSnapshotImpl(rootDir, backend), catch: fsError });
+}
+
+/** Promise façade for callers that still await latest-snapshot resolve. */
+export async function resolveLatestSnapshot(
+  rootDir: string,
+  backend?: WorkspaceBackend
+): Promise<WorkspaceSnapshot | undefined> {
+  return Effect.runPromise(resolveLatestSnapshotEffect(rootDir, backend));
+}
+
+/** Ensure `.clawql/workspaces/.gitignore` exists (Effect-primary). */
+export function ensureWorkspacesGitignoreEffect(rootDir: string): Effect.Effect<void, Error> {
+  return Effect.tryPromise({ try: () => ensureWorkspacesGitignoreImpl(rootDir), catch: fsError });
+}
+
+/** Promise façade for callers that still await workspaces gitignore setup. */
+export async function ensureWorkspacesGitignore(rootDir: string): Promise<void> {
+  return Effect.runPromise(ensureWorkspacesGitignoreEffect(rootDir));
 }
