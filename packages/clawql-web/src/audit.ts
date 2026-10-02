@@ -31,9 +31,9 @@ export function listWebAuditEvents(): readonly WebAuditEvent[] {
   return [...buffer];
 }
 
-export async function appendWebAudit(
+async function appendWebAuditImpl(
   event: Omit<WebAuditEvent, "ts"> & { ts?: string }
-): Promise<WebAuditEvent> {
+): Promise<WebAuditEvent>  {
   const full: WebAuditEvent = {
     ...event,
     ts: event.ts ?? new Date().toISOString(),
@@ -42,6 +42,22 @@ export async function appendWebAudit(
   if (buffer.length > 500) buffer.shift();
   if (sink) await sink(full);
   return full;
+}
+
+export function appendWebAuditEffect(
+  event: Omit<WebAuditEvent, "ts"> & { ts?: string }
+): Effect.Effect<WebAuditEvent, Error> {
+  return Effect.tryPromise({
+    try: () => appendWebAuditImpl(event),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link appendWebAuditEffect} for Effect callers. */
+export async function appendWebAudit(
+  event: Omit<WebAuditEvent, "ts"> & { ts?: string }
+): Promise<WebAuditEvent>  {
+  return Effect.runPromise(appendWebAuditEffect(event));
 }
 
 /**

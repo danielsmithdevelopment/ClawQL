@@ -5,6 +5,7 @@
 
 import { emitMcpEvent, emitMcpEventBestEffort } from "./process-bridge.js";
 import type { DeliveryOutcome } from "./types.js";
+import { Effect } from "effect";
 
 export function emitStreamChanged(input: {
   topic: string;
@@ -136,7 +137,7 @@ export function emitNotificationSent(input: {
 }
 
 /** Test helpers: await delivery for one producer. */
-export async function emitStreamChangedAwait(input: {
+async function emitStreamChangedAwaitImpl(input: {
   topic: string;
   summary: string;
   changed_at?: string;
@@ -149,7 +150,7 @@ export async function emitStreamChangedAwait(input: {
   };
   watch_fields?: string[];
   projection_tool?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "stream.changed",
     data: {
@@ -164,12 +165,50 @@ export async function emitStreamChangedAwait(input: {
   });
 }
 
-export async function emitDocumentProcessedAwait(input: {
+export function emitStreamChangedAwaitEffect(input: {
+  topic: string;
+  summary: string;
+  changed_at?: string;
+  cursor?: string;
+  diff?: {
+    added: unknown[];
+    removed: unknown[];
+    changed: Array<{ path: string; before: unknown; after: unknown }>;
+    truncated: boolean;
+  };
+  watch_fields?: string[];
+  projection_tool?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitStreamChangedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitStreamChangedAwaitEffect} for Effect callers. */
+export async function emitStreamChangedAwait(input: {
+  topic: string;
+  summary: string;
+  changed_at?: string;
+  cursor?: string;
+  diff?: {
+    added: unknown[];
+    removed: unknown[];
+    changed: Array<{ path: string; before: unknown; after: unknown }>;
+    truncated: boolean;
+  };
+  watch_fields?: string[];
+  projection_tool?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitStreamChangedAwaitEffect(input));
+}
+
+async function emitDocumentProcessedAwaitImpl(input: {
   document_id: string;
   status: string;
   summary?: string;
   url?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "document.processed",
     data: {
@@ -181,11 +220,33 @@ export async function emitDocumentProcessedAwait(input: {
   });
 }
 
-export async function emitHookBlockedAwait(input: {
+export function emitDocumentProcessedAwaitEffect(input: {
+  document_id: string;
+  status: string;
+  summary?: string;
+  url?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitDocumentProcessedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitDocumentProcessedAwaitEffect} for Effect callers. */
+export async function emitDocumentProcessedAwait(input: {
+  document_id: string;
+  status: string;
+  summary?: string;
+  url?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitDocumentProcessedAwaitEffect(input));
+}
+
+async function emitHookBlockedAwaitImpl(input: {
   tool: string;
   reason: string;
   session_id?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "hook.blocked",
     data: {
@@ -196,11 +257,31 @@ export async function emitHookBlockedAwait(input: {
   });
 }
 
-export async function emitBudgetExhaustedAwait(input: {
+export function emitHookBlockedAwaitEffect(input: {
+  tool: string;
+  reason: string;
+  session_id?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitHookBlockedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitHookBlockedAwaitEffect} for Effect callers. */
+export async function emitHookBlockedAwait(input: {
+  tool: string;
+  reason: string;
+  session_id?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitHookBlockedAwaitEffect(input));
+}
+
+async function emitBudgetExhaustedAwaitImpl(input: {
   budget_id: string;
   exhausted_at?: string;
   scope?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "budget.exhausted",
     data: {
@@ -211,11 +292,31 @@ export async function emitBudgetExhaustedAwait(input: {
   });
 }
 
-export async function emitScheduleCompletedAwait(input: {
+export function emitBudgetExhaustedAwaitEffect(input: {
+  budget_id: string;
+  exhausted_at?: string;
+  scope?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitBudgetExhaustedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitBudgetExhaustedAwaitEffect} for Effect callers. */
+export async function emitBudgetExhaustedAwait(input: {
+  budget_id: string;
+  exhausted_at?: string;
+  scope?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitBudgetExhaustedAwaitEffect(input));
+}
+
+async function emitScheduleCompletedAwaitImpl(input: {
   schedule_id: string;
   status: string;
   summary?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "schedule.completed",
     data: {
@@ -226,14 +327,34 @@ export async function emitScheduleCompletedAwait(input: {
   });
 }
 
-export async function emitSchedulePausedAwait(input: {
+export function emitScheduleCompletedAwaitEffect(input: {
+  schedule_id: string;
+  status: string;
+  summary?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitScheduleCompletedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitScheduleCompletedAwaitEffect} for Effect callers. */
+export async function emitScheduleCompletedAwait(input: {
+  schedule_id: string;
+  status: string;
+  summary?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitScheduleCompletedAwaitEffect(input));
+}
+
+async function emitSchedulePausedAwaitImpl(input: {
   schedule_id: string;
   reason: string;
   summary: string;
   name?: string;
   auth_failure_count?: number;
   paused_at?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "schedule.paused",
     data: {
@@ -248,11 +369,37 @@ export async function emitSchedulePausedAwait(input: {
   });
 }
 
-export async function emitNotificationSentAwait(input: {
+export function emitSchedulePausedAwaitEffect(input: {
+  schedule_id: string;
+  reason: string;
+  summary: string;
+  name?: string;
+  auth_failure_count?: number;
+  paused_at?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitSchedulePausedAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitSchedulePausedAwaitEffect} for Effect callers. */
+export async function emitSchedulePausedAwait(input: {
+  schedule_id: string;
+  reason: string;
+  summary: string;
+  name?: string;
+  auth_failure_count?: number;
+  paused_at?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitSchedulePausedAwaitEffect(input));
+}
+
+async function emitNotificationSentAwaitImpl(input: {
   text: string;
   channel?: string;
   url?: string;
-}): Promise<readonly DeliveryOutcome[]> {
+}): Promise<readonly DeliveryOutcome[]>  {
   return emitMcpEvent({
     name: "notification.sent",
     data: {
@@ -261,4 +408,24 @@ export async function emitNotificationSentAwait(input: {
       ...(input.url ? { url: input.url } : {}),
     },
   });
+}
+
+export function emitNotificationSentAwaitEffect(input: {
+  text: string;
+  channel?: string;
+  url?: string;
+}): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitNotificationSentAwaitImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitNotificationSentAwaitEffect} for Effect callers. */
+export async function emitNotificationSentAwait(input: {
+  text: string;
+  channel?: string;
+  url?: string;
+}): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitNotificationSentAwaitEffect(input));
 }

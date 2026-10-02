@@ -451,13 +451,25 @@ export function parseLangextractHttpResponse(
 }
 
 /** Promise façade — prefer {@link executeExtractDocumentEffect} for Effect callers. */
-export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult> {
+async function extractDocumentImpl(input: ExtractDocumentInput): Promise<ExtractDocumentResult>  {
   const baseUrl = langextractBaseUrl();
   if (!baseUrl) {
     return heuristicExtract(input);
   }
   const response = await postLangextractHttp(input, baseUrl);
   return parseLangextractHttpResponse(response);
+}
+
+export function extractDocumentEffect(input: ExtractDocumentInput): Effect.Effect<ExtractDocumentResult, Error> {
+  return Effect.tryPromise({
+    try: () => extractDocumentImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link extractDocumentEffect} for Effect callers. */
+export async function extractDocument(input: ExtractDocumentInput): Promise<ExtractDocumentResult>  {
+  return Effect.runPromise(extractDocumentEffect(input));
 }
 
 export async function handleExtractDocumentToolInput(

@@ -14,6 +14,7 @@ import protobuf from "protobufjs";
 import { LATEST_PROTOCOL_VERSION } from "./protocol-versions.js";
 import { jsonToStruct, structToJson } from "./mcp-protobuf-struct.js";
 import { MCP_PROTOCOL_VERSION_METADATA_KEY } from "./grpc-mcp-metadata.js";
+import { Effect } from "effect";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const protoRoot = join(__dirname, "../proto");
@@ -83,9 +84,9 @@ async function loadCallToolTypes(): Promise<{
 /**
  * Invoke `CallTool` over gRPC (server-streaming). Returns decoded `CallToolResponse` objects as plain maps.
  */
-export async function callToolServerStreamingGrpc(
+async function callToolServerStreamingGrpcImpl(
   options: CallToolGrpcClientOptions
-): Promise<Record<string, unknown>[]> {
+): Promise<Record<string, unknown>[]>  {
   const { CallToolRequest, CallToolResponse } = await loadCallToolTypes();
   const fields = mcpArgumentsToCallToolStructFields(options.arguments);
   const payload = {
@@ -133,6 +134,22 @@ export async function callToolServerStreamingGrpc(
   return decoded.map((msg) =>
     CallToolResponse.toObject(msg, { defaults: true, enums: String, longs: String })
   ) as Record<string, unknown>[];
+}
+
+export function callToolServerStreamingGrpcEffect(
+  options: CallToolGrpcClientOptions
+): Effect.Effect<Record<string, unknown>[], Error> {
+  return Effect.tryPromise({
+    try: () => callToolServerStreamingGrpcImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link callToolServerStreamingGrpcEffect} for Effect callers. */
+export async function callToolServerStreamingGrpc(
+  options: CallToolGrpcClientOptions
+): Promise<Record<string, unknown>[]>  {
+  return Effect.runPromise(callToolServerStreamingGrpcEffect(options));
 }
 
 /** Last non-empty text block from streamed CallTool responses (typical ClawQL `execute` shape). */
@@ -212,9 +229,9 @@ async function loadListToolsTypes(): Promise<{
  * Uses protobufjs decode (not `@grpc/proto-loader` message objects) so nested
  * `google.protobuf.Value` fields inside Struct survive the wire.
  */
-export async function listToolsUnaryGrpc(
+async function listToolsUnaryGrpcImpl(
   options: ListToolsGrpcClientOptions
-): Promise<ListedMcpTool[]> {
+): Promise<ListedMcpTool[]>  {
   const { ListToolsRequest, ListToolsResponse } = await loadListToolsTypes();
   const payload = { common: {} };
   const encodedRequest = Buffer.from(
@@ -300,4 +317,20 @@ export async function listToolsUnaryGrpc(
   } finally {
     client.close();
   }
+}
+
+export function listToolsUnaryGrpcEffect(
+  options: ListToolsGrpcClientOptions
+): Effect.Effect<ListedMcpTool[], Error> {
+  return Effect.tryPromise({
+    try: () => listToolsUnaryGrpcImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listToolsUnaryGrpcEffect} for Effect callers. */
+export async function listToolsUnaryGrpc(
+  options: ListToolsGrpcClientOptions
+): Promise<ListedMcpTool[]>  {
+  return Effect.runPromise(listToolsUnaryGrpcEffect(options));
 }

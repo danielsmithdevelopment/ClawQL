@@ -26,6 +26,7 @@ import { createMcpProtobufServiceImplementation } from "./mcp-protobuf-service.j
 import { McpProtobufBridge } from "./mcp-protobuf-bridge.js";
 import { TaskCancellationRegistry } from "./mcp-protobuf-tasks.js";
 import { patchProtoLoaderPackageDefinitionForReflection } from "./proto-loader-reflection-patch.js";
+import { Effect } from "effect";
 
 export type McpMessageContextHook = (
   extra: MessageExtraInfo
@@ -417,9 +418,9 @@ function mergeGrpcServerOptions(user?: grpc.ServerOptions): grpc.ServerOptions {
  * Starts a gRPC server with `grpc.health.v1.Health` + MCP session when `ENABLE_GRPC` is `1` or `true`.
  * Returns `undefined` when disabled.
  */
-export async function maybeStartGrpcMcpServer(
+async function maybeStartGrpcMcpServerImpl(
   options: GrpcMcpServerOptions
-): Promise<StartedGrpcServer | undefined> {
+): Promise<StartedGrpcServer | undefined>  {
   const enabled = process.env.ENABLE_GRPC?.trim();
   if (enabled !== "1" && enabled?.toLowerCase() !== "true") {
     return undefined;
@@ -512,4 +513,20 @@ export async function maybeStartGrpcMcpServer(
       });
     },
   };
+}
+
+export function maybeStartGrpcMcpServerEffect(
+  options: GrpcMcpServerOptions
+): Effect.Effect<StartedGrpcServer | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => maybeStartGrpcMcpServerImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybeStartGrpcMcpServerEffect} for Effect callers. */
+export async function maybeStartGrpcMcpServer(
+  options: GrpcMcpServerOptions
+): Promise<StartedGrpcServer | undefined>  {
+  return Effect.runPromise(maybeStartGrpcMcpServerEffect(options));
 }

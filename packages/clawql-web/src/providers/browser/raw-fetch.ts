@@ -7,6 +7,7 @@
  */
 
 import { isPrivateOrLoopbackIp } from "clawql-api";
+import { Effect } from "effect";
 
 const MAX_URL_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_URL_REDIRECTS = 5;
@@ -49,7 +50,7 @@ export function assertSafeWebUrl(urlStr: string): URL {
   return u;
 }
 
-export async function fetchRawUrl(
+async function fetchRawUrlImpl(
   urlStr: string,
   options: {
     timeoutMs?: number;
@@ -59,7 +60,7 @@ export async function fetchRawUrl(
     /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
     userAgent?: string;
   } = {}
-): Promise<RawFetchResult> {
+): Promise<RawFetchResult>  {
   if (options.dryRun) {
     const text = `dry-run raw bytes for ${urlStr}`;
     return {
@@ -116,4 +117,36 @@ export async function fetchRawUrl(
     };
   }
   throw new Error("too many redirects");
+}
+
+export function fetchRawUrlEffect(
+  urlStr: string,
+  options: {
+    timeoutMs?: number;
+    maxBytes?: number;
+    dryRun?: boolean;
+    fetchImpl?: typeof fetch;
+    /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
+    userAgent?: string;
+  } = {}
+): Effect.Effect<RawFetchResult, Error> {
+  return Effect.tryPromise({
+    try: () => fetchRawUrlImpl(urlStr, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link fetchRawUrlEffect} for Effect callers. */
+export async function fetchRawUrl(
+  urlStr: string,
+  options: {
+    timeoutMs?: number;
+    maxBytes?: number;
+    dryRun?: boolean;
+    fetchImpl?: typeof fetch;
+    /** Override User-Agent (IDP may pass legacy `clawql-mcp-external-ingest/1.0`). */
+    userAgent?: string;
+  } = {}
+): Promise<RawFetchResult>  {
+  return Effect.runPromise(fetchRawUrlEffect(urlStr, options));
 }

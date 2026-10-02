@@ -140,15 +140,31 @@ export function parseClassifierHttpResponse(
 }
 
 /** Promise façade — prefer {@link executeClassifyDocumentEffect} for Effect callers. */
-export async function classifyDocument(
+async function classifyDocumentImpl(
   input: ClassifyDocumentInput
-): Promise<ClassifyDocumentResult> {
+): Promise<ClassifyDocumentResult>  {
   const baseUrl = classifierBaseUrl();
   if (!baseUrl) {
     return heuristicClassify(input);
   }
   const response = await postClassifierHttp(input, baseUrl);
   return parseClassifierHttpResponse(input, response);
+}
+
+export function classifyDocumentEffect(
+  input: ClassifyDocumentInput
+): Effect.Effect<ClassifyDocumentResult, Error> {
+  return Effect.tryPromise({
+    try: () => classifyDocumentImpl(input),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link classifyDocumentEffect} for Effect callers. */
+export async function classifyDocument(
+  input: ClassifyDocumentInput
+): Promise<ClassifyDocumentResult>  {
+  return Effect.runPromise(classifyDocumentEffect(input));
 }
 
 export async function handleClassifyDocumentToolInput(
