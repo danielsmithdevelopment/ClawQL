@@ -43,6 +43,7 @@ const baseFlags = {
   enableGoogle: false,
   enableCloudflare: true,
   enableAws: false,
+  enableSupabase: false,
 } as const;
 
 describe("composeHorizontalPluginLayers", () => {

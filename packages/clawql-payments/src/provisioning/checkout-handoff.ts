@@ -115,6 +115,8 @@ export function provisionOrgInputFromCheckoutSession(
         .filter(Boolean)
     : undefined;
 
+  const supabaseUserId = metaString(metadata, "clawql_supabase_user_id");
+
   return {
     ok: true,
     input: {
@@ -127,6 +129,7 @@ export function provisionOrgInputFromCheckoutSession(
       stripeCustomerId: customer,
       stripeSubscriptionId: subscription,
       additionalMemberEmails,
+      ownerMemberTenantId: supabaseUserId ? `supabase:${supabaseUserId}` : undefined,
       correlationId: options.correlationId ?? session.id,
       env: options.env,
     },

@@ -40,6 +40,7 @@ export default defineConfig({
       "packages/clawql-documents/src/**/*.test.ts",
       "packages/clawql-automation/src/**/*.test.ts",
       "packages/clawql-sandbox/src/**/*.test.ts",
+      "packages/clawql-supabase/src/**/*.test.ts",
       "packages/clawql-network/src/**/*.test.ts",
       "packages/clawql-mcp-events/src/**/*.test.ts",
       "packages/clawql-data/src/**/*.test.ts",
