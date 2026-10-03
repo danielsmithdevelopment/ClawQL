@@ -26,6 +26,7 @@ COPY packages/clawql-documents/package.json ./packages/clawql-documents/
 COPY packages/clawql-automation/package.json ./packages/clawql-automation/
 COPY packages/clawql-mcp-events/package.json ./packages/clawql-mcp-events/
 COPY packages/clawql-sandbox/package.json ./packages/clawql-sandbox/
+COPY packages/clawql-supabase/package.json ./packages/clawql-supabase/
 COPY packages/clawql-data/package.json ./packages/clawql-data/
 COPY packages/clawql-analytics/package.json ./packages/clawql-analytics/
 COPY packages/clawql-observability/package.json ./packages/clawql-observability/
