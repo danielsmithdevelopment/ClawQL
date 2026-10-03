@@ -17,14 +17,14 @@ Supabase Auth (signup/login)
 
 ## Env
 
-| Variable | Role |
-|----------|------|
-| `CLAWQL_ENABLE_SUPABASE=1` | Register `clawql-supabase` ProviderPlugin |
-| `CLAWQL_SUPABASE_URL` | Project URL |
-| `CLAWQL_SUPABASE_JWT_SECRET` | HS256 verify (legacy) |
-| `CLAWQL_SUPABASE_JWKS_URL` | Optional JWKS override |
-| `CLAWQL_SUPABASE_ANON_KEY` | Auth REST (server helpers) |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clawql.com browser signup |
+| Variable                                                     | Role                                      |
+| ------------------------------------------------------------ | ----------------------------------------- |
+| `CLAWQL_ENABLE_SUPABASE=1`                                   | Register `clawql-supabase` ProviderPlugin |
+| `CLAWQL_SUPABASE_URL`                                        | Project URL                               |
+| `CLAWQL_SUPABASE_JWT_SECRET`                                 | HS256 verify (legacy)                     |
+| `CLAWQL_SUPABASE_JWKS_URL`                                   | Optional JWKS override                    |
+| `CLAWQL_SUPABASE_ANON_KEY`                                   | Auth REST (server helpers)                |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clawql.com browser signup                 |
 
 Instance CRD: `spec.supabase.enabled: true` (horizontal tier).
 
