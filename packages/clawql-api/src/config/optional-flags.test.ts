@@ -27,8 +27,10 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_ANYDOC: undefined,
       CLAWQL_ENABLE_LANGFUSE_EVAL: undefined,
       CLAWQL_ENABLE_OUROBOROS_TOOLS: undefined,
+      CLAWQL_ENABLE_SUPABASE: undefined,
     });
     expect(f.enableGrpc).toBe(false);
+    expect(f.enableSupabase).toBe(false);
     expect(f.enableGrpcReflection).toBe(false);
     expect(f.externalIngestPreview).toBe(false);
     expect(f.enableMemory).toBe(true);
@@ -130,8 +132,10 @@ describe("getClawqlOptionalToolFlags", () => {
       CLAWQL_ENABLE_ANYDOC: "1",
       CLAWQL_ENABLE_LANGFUSE_EVAL: "1",
       CLAWQL_ENABLE_OUROBOROS_TOOLS: "1",
+      CLAWQL_ENABLE_SUPABASE: "1",
     } as NodeJS.ProcessEnv);
     expect(f.enableMemory).toBe(true);
+    expect(f.enableSupabase).toBe(true);
     expect(f.enableDocuments).toBe(true);
     expect(f.enableSchedule).toBe(true);
     expect(f.enableNotify).toBe(true);

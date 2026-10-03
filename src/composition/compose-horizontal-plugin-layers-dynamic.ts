@@ -132,6 +132,13 @@ export function composeHorizontalPluginLayersDynamicEffect(
       layers.push(mod.makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
     }
 
+    if (flags.enableSupabase) {
+      const mod = yield* loadPlugin<{ makeSupabaseLayer: () => HorizLayer }>(
+        "clawql-supabase/plugin"
+      );
+      layers.push(mod.makeSupabaseLayer());
+    }
+
     // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools (same as static compose).
     if (flags.enableOuroborosTools) {
       const harness = yield* loadPlugin<{

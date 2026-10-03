@@ -19,6 +19,7 @@ import { makeDataLayer } from "clawql-data/plugin";
 import { makeWebLayer } from "clawql-web/plugin";
 import { makeObservabilityLayer } from "clawql-observability/plugin";
 import { makeChatgptExtensionsLayer } from "clawql-chatgpt-extensions/plugin";
+import { makeSupabaseLayer } from "clawql-supabase/plugin";
 import {
   optionalFlagsFromHorizontalTierSpec,
   type ClawQLHorizontalTierSpec,
@@ -94,6 +95,9 @@ export function composeHorizontalPluginLayersStatic(
   }
   if (flags.enableOntology) {
     layers.push(makeOntologyLayer({ enableWrites: flags.enableOntologyWrites }));
+  }
+  if (flags.enableSupabase) {
+    layers.push(makeSupabaseLayer());
   }
   // Ouroboros / clawql_think (8.0 demotion): opt-in via enableOuroborosTools.
   if (flags.enableOuroborosTools) {
