@@ -32,9 +32,9 @@ export CLAWQL_SUPABASE_ANON_KEY=…
 
 ## MCP tools (when enabled)
 
-| Tool | Purpose |
-|------|---------|
-| `supabase_verify_session` | Verify a Supabase access token; return subject + email |
+| Tool                        | Purpose                                                    |
+| --------------------------- | ---------------------------------------------------------- |
+| `supabase_verify_session`   | Verify a Supabase access token; return subject + email     |
 | `supabase_checkout_handoff` | Build Stripe Checkout CPC metadata from a verified session |
 
 ## clawql.com

@@ -30,10 +30,7 @@ const handoffSchema = {
   accessToken: z.string().describe("Supabase Auth access_token to verify before building metadata"),
   orgName: z.string().describe("Organization name for CPC provisionOrg"),
   plan: z.enum(["pro", "team"]).optional().describe("Checkout plan (default pro)"),
-  ownerEmail: z
-    .string()
-    .optional()
-    .describe("Override email when JWT email claim is missing"),
+  ownerEmail: z.string().optional().describe("Override email when JWT email claim is missing"),
   billingMode: z
     .enum(["stripe_checkout", "hybrid"])
     .optional()

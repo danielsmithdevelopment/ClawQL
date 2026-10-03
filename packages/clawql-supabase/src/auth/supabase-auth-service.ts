@@ -143,8 +143,7 @@ const authRestCall = (
     });
     const json = yield* Effect.tryPromise({
       try: () => res.json() as Promise<AuthRestBody>,
-      catch: (cause) =>
-        new SupabaseAuthError({ reason: "Invalid JSON from Supabase Auth", cause }),
+      catch: (cause) => new SupabaseAuthError({ reason: "Invalid JSON from Supabase Auth", cause }),
     });
     if (!res.ok) {
       const reason =

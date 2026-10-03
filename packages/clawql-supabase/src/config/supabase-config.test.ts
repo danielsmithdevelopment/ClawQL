@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import {
-  loadSupabaseConfigEffect,
-  supabasePluginEnabled,
-} from "./supabase-config.js";
+import { loadSupabaseConfigEffect, supabasePluginEnabled } from "./supabase-config.js";
 
 describe("supabase config", () => {
   it("disabled by default", () => {

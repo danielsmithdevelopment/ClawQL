@@ -28,9 +28,7 @@ export type SupabaseCheckoutMetadata = {
 };
 
 /** Stable member tenant id for CPC when the human identity is a Supabase user. */
-export const supabaseOwnerMemberTenantIdEffect = (
-  supabaseUserId: string
-): Effect.Effect<string> =>
+export const supabaseOwnerMemberTenantIdEffect = (supabaseUserId: string): Effect.Effect<string> =>
   Effect.sync(() => `supabase:${supabaseUserId.trim()}`);
 
 export const buildSupabaseCheckoutMetadataEffect = (
