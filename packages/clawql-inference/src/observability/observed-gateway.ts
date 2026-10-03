@@ -31,7 +31,7 @@ function appendInferenceCallWorm(
     messageCount: request.messages.length,
     cacheIntent: request.cacheIntent,
   }).pipe(
-    Effect.catchAll(() => Effect.void),
+    Effect.catch(() => Effect.void),
     Effect.asVoid
   );
 }
@@ -58,7 +58,7 @@ function appendInferenceResultWorm(input: {
     outputTokens: input.response?.usage?.outputTokens,
     detail: input.detail,
   }).pipe(
-    Effect.catchAll(() => Effect.void),
+    Effect.catch(() => Effect.void),
     Effect.asVoid
   );
 }

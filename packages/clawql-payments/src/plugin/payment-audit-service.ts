@@ -11,7 +11,7 @@ import type { PaymentWormRecord } from "../audit/chain.js";
 import { PaymentError } from "../errors/payment-errors.js";
 
 /** Effect service for WORM payment audit persistence. */
-export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService")<
+export class PaymentAuditService extends Context.Service<
   PaymentAuditService,
   {
     readonly store: PaymentAuditStore;
@@ -24,7 +24,7 @@ export class PaymentAuditService extends Context.Tag("clawql/PaymentAuditService
     readonly verify: () => Effect.Effect<PaymentAuditVerifyResult, PaymentError>;
     readonly reset: () => Effect.Effect<void, PaymentError>;
   }
->() {}
+>()("clawql/PaymentAuditService") {}
 
 /**
  * Live payment audit Layer. Requires {@link AuditService} for MCP ring-buffer mirror
@@ -71,12 +71,12 @@ export function paymentAuditLiveLayer(
               summary: entry.summary,
               correlationId: entry.correlationId,
               payload: entry.payload as unknown as Record<string, unknown>,
-            }).pipe(Effect.catchAll(() => Effect.succeed(null)));
+            }).pipe(Effect.catch(() => Effect.succeed(null)));
             if (isPaymentAuditLokiPushEnabled(env)) {
               // Fire-and-forget: Loki must not block WORM append.
-              yield* Effect.forkDaemon(
+              yield* Effect.forkDetach(
                 loki.push(entry).pipe(
-                  Effect.catchAll((err) =>
+                  Effect.catch((err) =>
                     Effect.sync(() => {
                       console.error("[clawql-payments-audit-loki] push failed:", err.reason);
                     })

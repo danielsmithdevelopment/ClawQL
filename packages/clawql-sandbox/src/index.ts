@@ -1,6 +1,7 @@
 export {
   handleClawqlCodeToolInput,
   callSandboxBridge,
+  callSandboxBridgeEffect,
   type SandboxBridgeResponse,
   type SandboxCodeToolInput,
   type SandboxLanguage,
@@ -10,14 +11,18 @@ export {
 
 export {
   parseExplicitSandboxBackendEnv,
+  parseExplicitSandboxBackendEnvEffect,
   resolveSandboxBackendChoice,
+  resolveSandboxBackendChoiceEffect,
   SANDBOX_AUTO_NONE_ERROR,
   type ExplicitSandboxBackend,
   type SandboxBackendAutoDeps,
+  type SandboxBackendChoice,
 } from "./backend-selection.js";
 
 export {
   callKataSandbox,
+  callKataSandboxEffect,
   createInClusterKataClient,
   inKubernetesCluster,
   kataRuntimeClassName,
@@ -27,6 +32,7 @@ export {
 
 export {
   callAgentSubstrateSandbox,
+  callAgentSubstrateSandboxEffect,
   agentSubstrateConfigured,
   readAgentSubstrateConfig,
   AgentSubstrateService,

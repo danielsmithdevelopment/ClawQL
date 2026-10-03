@@ -103,11 +103,11 @@ describe("ID-JAG issuer + connector registry", () => {
           groups: ["engineering"],
         },
         deps
-      ).pipe(Effect.either)
+      ).pipe(Effect.result)
     );
-    expect(disabled._tag).toBe("Left");
-    if (disabled._tag === "Left") {
-      expect(disabled.left.reason).toBe("connector_disabled");
+    expect(disabled._tag).toBe("Failure");
+    if (disabled._tag === "Failure") {
+      expect(disabled.failure.reason).toBe("connector_disabled");
     }
 
     const missing = await Effect.runPromise(
@@ -119,12 +119,12 @@ describe("ID-JAG issuer + connector registry", () => {
           groups: ["engineering"],
         },
         deps
-      ).pipe(Effect.either)
+      ).pipe(Effect.result)
     );
-    expect(missing._tag).toBe("Left");
-    if (missing._tag === "Left") {
-      expect(missing.left).toBeInstanceOf(IdJagIssuerError);
-      expect(missing.left.reason).toBe("unknown_connector");
+    expect(missing._tag).toBe("Failure");
+    if (missing._tag === "Failure") {
+      expect(missing.failure).toBeInstanceOf(IdJagIssuerError);
+      expect(missing.failure.reason).toBe("unknown_connector");
     }
   });
 

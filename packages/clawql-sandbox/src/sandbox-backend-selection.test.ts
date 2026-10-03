@@ -1,7 +1,9 @@
+import { Effect } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   parseExplicitSandboxBackendEnv,
   resolveSandboxBackendChoice,
+  resolveSandboxBackendChoiceEffect,
   type SandboxBackendAutoDeps,
 } from "./backend-selection.js";
 
@@ -52,11 +54,11 @@ describe("parseExplicitSandboxBackendEnv", () => {
 
 describe("resolveSandboxBackendChoice", () => {
   const depsAllTrue: SandboxBackendAutoDeps = {
-    agentSubstrate: () => true,
-    kata: async () => true,
-    seatbelt: () => true,
-    docker: async () => true,
-    bridge: () => true,
+    agentSubstrate: () => Effect.succeed(true),
+    kata: () => Effect.succeed(true),
+    seatbelt: () => Effect.succeed(true),
+    docker: () => Effect.succeed(true),
+    bridge: () => Effect.succeed(true),
   };
 
   it("explicit bridge bypasses auto", async () => {
@@ -75,17 +77,17 @@ describe("resolveSandboxBackendChoice", () => {
   });
 
   it("auto prefers Agent Substrate when available (ADR 0011)", async () => {
-    const r = await resolveSandboxBackendChoice(null, depsAllTrue);
+    const r = await Effect.runPromise(resolveSandboxBackendChoiceEffect(null, depsAllTrue));
     expect(r).toEqual({ ok: true, backend: "agent-substrate" });
   });
 
   it("auto prefers kata when Agent Substrate unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
-      agentSubstrate: () => false,
-      kata: async () => true,
-      seatbelt: () => true,
-      docker: async () => true,
-      bridge: () => true,
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(true),
+      seatbelt: () => Effect.succeed(true),
+      docker: () => Effect.succeed(true),
+      bridge: () => Effect.succeed(true),
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r).toEqual({ ok: true, backend: "kata" });
@@ -93,11 +95,11 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto uses docker when kata and substrate unavailable", async () => {
     const deps: SandboxBackendAutoDeps = {
-      agentSubstrate: () => false,
-      kata: async () => false,
-      seatbelt: () => true,
-      docker: async () => true,
-      bridge: () => true,
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(false),
+      seatbelt: () => Effect.succeed(true),
+      docker: () => Effect.succeed(true),
+      bridge: () => Effect.succeed(true),
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r).toEqual({ ok: true, backend: "docker" });
@@ -105,11 +107,11 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto uses bridge when only bridge is configured", async () => {
     const deps: SandboxBackendAutoDeps = {
-      agentSubstrate: () => false,
-      kata: async () => false,
-      seatbelt: () => false,
-      docker: async () => false,
-      bridge: () => true,
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(false),
+      seatbelt: () => Effect.succeed(false),
+      docker: () => Effect.succeed(false),
+      bridge: () => Effect.succeed(true),
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r).toEqual({ ok: true, backend: "bridge" });
@@ -117,11 +119,11 @@ describe("resolveSandboxBackendChoice", () => {
 
   it("auto fails when nothing is available", async () => {
     const deps: SandboxBackendAutoDeps = {
-      agentSubstrate: () => false,
-      kata: async () => false,
-      seatbelt: () => false,
-      docker: async () => false,
-      bridge: () => false,
+      agentSubstrate: () => Effect.succeed(false),
+      kata: () => Effect.succeed(false),
+      seatbelt: () => Effect.succeed(false),
+      docker: () => Effect.succeed(false),
+      bridge: () => Effect.succeed(false),
     };
     const r = await resolveSandboxBackendChoice(null, deps);
     expect(r.ok).toBe(false);

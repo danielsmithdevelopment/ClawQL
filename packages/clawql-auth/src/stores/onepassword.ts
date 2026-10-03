@@ -63,7 +63,7 @@ export class OnePasswordStore extends PathSecretStore {
   }
 
   private refreshIndex(): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const res = yield* Effect.tryPromise({
         try: () =>
           this.fetchImpl(`${this.endpoint}/v1/vaults/${this.vaultId}/items`, {
@@ -109,7 +109,7 @@ export class OnePasswordStore extends PathSecretStore {
   }
 
   getSecret(path: string): Effect.Effect<string | null, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.refreshIndex();
       const id = this.titleToId.get(this.titleFor(path));
       if (!id) return null;
@@ -140,7 +140,7 @@ export class OnePasswordStore extends PathSecretStore {
   }
 
   setSecret(path: string, value: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.refreshIndex();
       const title = this.titleFor(path);
       const existingId = this.titleToId.get(title);
@@ -187,7 +187,7 @@ export class OnePasswordStore extends PathSecretStore {
   }
 
   deleteSecret(path: string): Effect.Effect<void, SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.refreshIndex();
       const id = this.titleToId.get(this.titleFor(path));
       if (!id) return;
@@ -210,7 +210,7 @@ export class OnePasswordStore extends PathSecretStore {
   }
 
   listSecrets(prefix: string): Effect.Effect<string[], SecretStoreError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       yield* this.refreshIndex();
       const fullPrefix = this.titleFor(prefix);
       return [...this.titleToId.keys()]

@@ -9,7 +9,7 @@ import { AuditError } from "../errors.js";
 import type { WORMAuditTrailService } from "../trail.js";
 
 export type AuditHttpDeps = {
-  trail: Context.Tag.Service<typeof WORMAuditTrailService>;
+  trail: Context.Service.Shape<typeof WORMAuditTrailService>;
   apiKey: string;
 };
 
@@ -162,7 +162,7 @@ export const handleAuditHttpRequest = (
 
     return json(404, { error: "Not found" });
   }).pipe(
-    Effect.catchAll((err) =>
+    Effect.catch((err) =>
       Effect.succeed(
         json(500, {
           error: err instanceof Error ? err.message : "Internal error",

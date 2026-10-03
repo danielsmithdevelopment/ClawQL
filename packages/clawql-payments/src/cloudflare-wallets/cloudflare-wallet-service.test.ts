@@ -84,14 +84,14 @@ describe("CloudflareWalletService dry-run", () => {
     delete process.env.CLAWQL_CLOUDFLARE_WALLETS;
     const program = Effect.gen(function* () {
       const cfw = yield* CloudflareWalletService;
-      return yield* Effect.either(cfw.resolveHandle({}));
+      return yield* Effect.result(cfw.resolveHandle({}));
     });
     const either = await Effect.runPromise(
       program.pipe(Effect.provide(provideService(process.env)))
     );
-    expect(either._tag).toBe("Left");
-    if (either._tag === "Left") {
-      expect(either.left.reason).toMatch(/disabled/i);
+    expect(either._tag).toBe("Failure");
+    if (either._tag === "Failure") {
+      expect(either.failure.reason).toMatch(/disabled/i);
     }
   });
 });

@@ -14,6 +14,7 @@ import type {
   OntologyRelationship,
 } from "./types.js";
 import { lintOntology } from "./lint.js";
+import { Effect } from "effect";
 
 function snakeEntity(name: string): string {
   return name
@@ -222,7 +223,7 @@ function renderOnyxStubs(entities: LoadedMeta[]): string {
   )}\n`;
 }
 
-export async function generateOntologyReadTools(opts: GenerateOntologyOptions): Promise<{
+async function generateOntologyReadToolsImpl(opts: GenerateOntologyOptions): Promise<{
   result: OntologyGenerateResult;
   lint?: OntologyLintResult;
   written: string[];
@@ -388,6 +389,29 @@ export async function generateOntologyReadTools(opts: GenerateOntologyOptions): 
     lint,
     written: [toolsJsonPath, pluginPath, indexPath, onyxPath, readmePath],
   };
+}
+
+export function generateOntologyReadToolsEffect(opts: GenerateOntologyOptions): Effect.Effect<
+  {
+    result: OntologyGenerateResult;
+    lint?: OntologyLintResult;
+    written: string[];
+  },
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => generateOntologyReadToolsImpl(opts),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link generateOntologyReadToolsEffect} for Effect callers. */
+export async function generateOntologyReadTools(opts: GenerateOntologyOptions): Promise<{
+  result: OntologyGenerateResult;
+  lint?: OntologyLintResult;
+  written: string[];
+}> {
+  return Effect.runPromise(generateOntologyReadToolsEffect(opts));
 }
 
 function renderPluginStub(tools: GeneratedReadTool[], writeTools: GeneratedWriteTool[]): string {

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile, readdir, stat } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { isDryRun } from "../exec.js";
+import { Effect } from "effect";
 
 export type ArweaveUploadResult = {
   txId: string;
@@ -31,7 +32,7 @@ export function dryRunTxId(merkleRoot: string): string {
  * Without a wallet (`CLAWQL_ARWEAVE_WALLET_JWK`) or when dry-run, writes a local
  * permanence store under `.clawql/arweave/` that `verify` / `pull` can resolve.
  */
-export async function uploadBundleToArweave(
+async function uploadBundleToArweaveImpl(
   bundleDir: string,
   opts: {
     rootDir: string;
@@ -132,7 +133,7 @@ export async function uploadBundleToArweave(
   };
 }
 
-export async function fetchArweaveBundle(
+async function fetchArweaveBundleImpl(
   txId: string,
   opts: { rootDir: string; gateway?: string; outDir: string }
 ): Promise<{ path: string; mode: "ar.io" | "local-dry-run" }> {
@@ -185,4 +186,55 @@ export async function fetchArweaveBundle(
   throw new Error(
     `Unable to fetch Arweave tx ${txId}: ${lastErr instanceof Error ? lastErr.message : lastErr}`
   );
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Upload a release bundle to Arweave / local permanence store (Effect-primary). */
+export function uploadBundleToArweaveEffect(
+  bundleDir: string,
+  opts: {
+    rootDir: string;
+    merkleRoot: string;
+    encrypted?: boolean;
+    dryRun?: boolean;
+    gateway?: string;
+  }
+): Effect.Effect<ArweaveUploadResult, Error> {
+  return Effect.tryPromise({
+    try: () => uploadBundleToArweaveImpl(bundleDir, opts),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await Arweave upload. */
+export async function uploadBundleToArweave(
+  bundleDir: string,
+  opts: {
+    rootDir: string;
+    merkleRoot: string;
+    encrypted?: boolean;
+    dryRun?: boolean;
+    gateway?: string;
+  }
+): Promise<ArweaveUploadResult> {
+  return Effect.runPromise(uploadBundleToArweaveEffect(bundleDir, opts));
+}
+
+/** Fetch a release bundle by Arweave tx id (Effect-primary). */
+export function fetchArweaveBundleEffect(
+  txId: string,
+  opts: { rootDir: string; gateway?: string; outDir: string }
+): Effect.Effect<{ path: string; mode: "ar.io" | "local-dry-run" }, Error> {
+  return Effect.tryPromise({ try: () => fetchArweaveBundleImpl(txId, opts), catch: fsError });
+}
+
+/** Promise façade for callers that still await Arweave fetch. */
+export async function fetchArweaveBundle(
+  txId: string,
+  opts: { rootDir: string; gateway?: string; outDir: string }
+): Promise<{ path: string; mode: "ar.io" | "local-dry-run" }> {
+  return Effect.runPromise(fetchArweaveBundleEffect(txId, opts));
 }

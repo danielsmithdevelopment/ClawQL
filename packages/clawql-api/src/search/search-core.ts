@@ -26,7 +26,7 @@ export type LoadSpecFn = typeof loadSpec;
 
 export type SearchCoreOptions = {
   /** Prefer host SkillRegistry; falls back to process-bound registry. */
-  readonly skillRegistry?: Context.Tag.Service<typeof SkillRegistry>;
+  readonly skillRegistry?: Context.Service.Shape<typeof SkillRegistry>;
   /**
    * Session ATR tokens for filtering provider-bundled skills (§6.4).
    * - omit / undefined → resolve process bind / `CLAWQL_SESSION_ATR`

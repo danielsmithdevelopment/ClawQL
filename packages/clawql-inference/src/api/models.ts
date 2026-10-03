@@ -10,6 +10,7 @@ import {
 } from "../catalog/index.js";
 import { toPublicModelId } from "./model-resolve.js";
 import { sendOpenAiError } from "./openai-errors.js";
+import { Effect } from "effect";
 
 export type OpenAiModelObject = {
   id: string;
@@ -37,7 +38,7 @@ function modelObject(gatewayModelId: string): OpenAiModelObject {
   };
 }
 
-export async function collectListedModels(
+async function collectListedModelsImpl(
   registry: ProviderRegistry,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OpenAiModelObject[]> {
@@ -114,6 +115,24 @@ export async function collectListedModels(
   }
 
   return models.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export function collectListedModelsEffect(
+  registry: ProviderRegistry,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OpenAiModelObject[], Error> {
+  return Effect.tryPromise({
+    try: () => collectListedModelsImpl(registry, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link collectListedModelsEffect} for Effect callers. */
+export async function collectListedModels(
+  registry: ProviderRegistry,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OpenAiModelObject[]> {
+  return Effect.runPromise(collectListedModelsEffect(registry, env));
 }
 
 export function createModelsHandlers(registry: ProviderRegistry, env?: NodeJS.ProcessEnv) {

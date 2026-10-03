@@ -20,15 +20,15 @@ export type PluginRegistryOptions = {
   /** Install-time services Layer (HookRegistry + SkillRegistry + VaultSeed + Worm). */
   readonly installLayer: Layer.Layer<PluginInstallServices, never, never>;
   /** Same HookRegistry instance used by McpProxyPipeline.fireHook. */
-  readonly hookRegistry: Context.Tag.Service<typeof HookRegistry>;
-  readonly worm: Context.Tag.Service<typeof WormAuditSink>;
+  readonly hookRegistry: Context.Service.Shape<typeof HookRegistry>;
+  readonly worm: Context.Service.Shape<typeof WormAuditSink>;
 };
 
 export class PluginRegistry {
   private readonly plugins = new Map<string, AnyPlugin>();
   readonly installLayer: Layer.Layer<PluginInstallServices, never, never>;
-  readonly hookRegistry: Context.Tag.Service<typeof HookRegistry>;
-  readonly worm: Context.Tag.Service<typeof WormAuditSink>;
+  readonly hookRegistry: Context.Service.Shape<typeof HookRegistry>;
+  readonly worm: Context.Service.Shape<typeof WormAuditSink>;
 
   constructor(options?: PluginRegistryOptions) {
     if (options) {
@@ -78,7 +78,7 @@ export class PluginRegistry {
         const ctx: PluginContext = { registrationApi, pluginId: plugin.id };
         yield* plugin.uninstall(ctx).pipe(
           Effect.provide(installLayer),
-          Effect.catchAll(() => Effect.void)
+          Effect.catch(() => Effect.void)
         );
       }
       plugins.clear();

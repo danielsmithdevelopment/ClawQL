@@ -1,11 +1,16 @@
 import pg from "pg";
-import { runInferencePostgresMigrations } from "./postgres-migrations.js";
+import { Context, Effect, Layer } from "effect";
+import { runInferencePostgresMigrationsEffect } from "./postgres-migrations.js";
 
 let pool: pg.Pool | null = null;
 let migrationsDone = false;
 let shutdownHooksRegistered = false;
 
 type InferencePgPoolConfig = string | pg.PoolConfig | null;
+
+function asError(e: unknown): Error {
+  return e instanceof Error ? e : new Error(String(e));
+}
 
 function parsePort(raw: string | undefined): number | undefined {
   if (!raw) return undefined;
@@ -46,24 +51,47 @@ export function getInferencePgPool(env: NodeJS.ProcessEnv = process.env): pg.Poo
   return pool;
 }
 
-export async function ensureInferenceSchema(env: NodeJS.ProcessEnv = process.env): Promise<void> {
-  const p = getInferencePgPool(env);
-  if (!p || migrationsDone) return;
-  const client = await p.connect();
-  try {
-    await runInferencePostgresMigrations(client);
+export function ensureInferenceSchemaEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    const p = getInferencePgPool(env);
+    if (!p || migrationsDone) return;
+    const client = yield* Effect.tryPromise({
+      try: () => p.connect(),
+      catch: asError,
+    });
+    yield* Effect.ensuring(
+      runInferencePostgresMigrationsEffect(client),
+      Effect.sync(() => {
+        client.release();
+      })
+    );
     migrationsDone = true;
-  } finally {
-    client.release();
-  }
+  });
 }
 
+/** Promise façade. */
+export async function ensureInferenceSchema(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+  return Effect.runPromise(ensureInferenceSchemaEffect(env));
+}
+
+export function closeInferencePgPoolEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: async () => {
+      migrationsDone = false;
+      if (pool) {
+        await pool.end();
+        pool = null;
+      }
+    },
+    catch: asError,
+  });
+}
+
+/** Promise façade. */
 export async function closeInferencePgPool(): Promise<void> {
-  migrationsDone = false;
-  if (pool) {
-    await pool.end();
-    pool = null;
-  }
+  return Effect.runPromise(closeInferencePgPoolEffect());
 }
 
 export function registerInferencePoolShutdownHooks(): void {
@@ -74,6 +102,24 @@ export function registerInferencePoolShutdownHooks(): void {
   };
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);
+}
+
+export class InferencePgPoolService extends Context.Service<
+  InferencePgPoolService,
+  {
+    readonly ensureSchema: (env?: NodeJS.ProcessEnv) => Effect.Effect<void, Error>;
+    readonly close: () => Effect.Effect<void, Error>;
+  }
+>()("clawql/InferencePgPoolService") {}
+
+export function inferencePgPoolLiveLayer(): Layer.Layer<InferencePgPoolService> {
+  return Layer.succeed(
+    InferencePgPoolService,
+    InferencePgPoolService.of({
+      ensureSchema: ensureInferenceSchemaEffect,
+      close: closeInferencePgPoolEffect,
+    })
+  );
 }
 
 export const __testUtils = {

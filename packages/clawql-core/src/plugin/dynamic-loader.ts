@@ -51,7 +51,7 @@ export function assertProviderPlugin(
     }
     return plugin as ProviderPlugin;
   }).pipe(
-    Effect.catchAllDefect((cause) =>
+    Effect.catchDefect((cause) =>
       Effect.fail(
         cause instanceof ClawQLError
           ? cause

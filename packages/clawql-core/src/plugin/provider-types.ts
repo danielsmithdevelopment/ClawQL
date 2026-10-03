@@ -352,14 +352,14 @@ export type WormAuditEvent =
       readonly timestamp: string;
     };
 
-export class WormAuditSink extends Context.Tag("clawql/WormAuditSink")<
+export class WormAuditSink extends Context.Service<
   WormAuditSink,
   {
     readonly append: (event: WormAuditEvent) => Effect.Effect<void, never>;
   }
->() {}
+>()("clawql/WormAuditSink") {}
 
-export class SkillRegistry extends Context.Tag("clawql/SkillRegistry")<
+export class SkillRegistry extends Context.Service<
   SkillRegistry,
   {
     readonly register: (
@@ -371,9 +371,9 @@ export class SkillRegistry extends Context.Tag("clawql/SkillRegistry")<
     readonly listIndex: () => Effect.Effect<readonly SkillIndexEntry[], never>;
     readonly getContent: (skillId: string) => Effect.Effect<SkillContent | undefined, never>;
   }
->() {}
+>()("clawql/SkillRegistry") {}
 
-export class HookRegistry extends Context.Tag("clawql/HookRegistry")<
+export class HookRegistry extends Context.Service<
   HookRegistry,
   {
     readonly register: (
@@ -386,11 +386,11 @@ export class HookRegistry extends Context.Tag("clawql/HookRegistry")<
       toolName?: string
     ) => Effect.Effect<readonly RegisteredHook[], never>;
   }
->() {}
+>()("clawql/HookRegistry") {}
 
 export type RegisteredHook = LifecycleHook & { readonly pluginId: string };
 
-export class VaultSeedPort extends Context.Tag("clawql/VaultSeedPort")<
+export class VaultSeedPort extends Context.Service<
   VaultSeedPort,
   {
     readonly ingestTagged: (
@@ -399,7 +399,7 @@ export class VaultSeedPort extends Context.Tag("clawql/VaultSeedPort")<
     ) => Effect.Effect<void, ClawQLError>;
     readonly deleteByPluginTag: (pluginId: string) => Effect.Effect<void, ClawQLError>;
   }
->() {}
+>()("clawql/VaultSeedPort") {}
 
 /**
  * Installable provider domain artifact (tools + skills + vault-seed + hooks).

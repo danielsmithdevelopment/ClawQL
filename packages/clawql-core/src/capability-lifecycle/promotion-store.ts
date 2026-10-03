@@ -14,7 +14,7 @@ export class PromotionStoreError extends Data.TaggedError("PromotionStoreError")
   readonly reason: string;
 }> {}
 
-export class PromotionStore extends Context.Tag("clawql/PromotionStore")<
+export class PromotionStore extends Context.Service<
   PromotionStore,
   {
     readonly get: (skillId: string) => Effect.Effect<PromotedSkillRecord | undefined>;
@@ -36,7 +36,7 @@ export class PromotionStore extends Context.Tag("clawql/PromotionStore")<
       sessionId: string
     ) => Effect.Effect<boolean, never, WormAuditSink>;
   }
->() {}
+>()("clawql/PromotionStore") {}
 
 /** True iff every token in validatedScope is in session ATR S. */
 export function validatedScopeSubsetOfS(
@@ -49,7 +49,7 @@ export function validatedScopeSubsetOfS(
   return true;
 }
 
-export function makeInMemoryPromotionStore(): Context.Tag.Service<typeof PromotionStore> {
+export function makeInMemoryPromotionStore(): Context.Service.Shape<typeof PromotionStore> {
   const map = new Map<string, PromotedSkillRecord>();
   return {
     get: (skillId) => Effect.sync(() => map.get(skillId)),

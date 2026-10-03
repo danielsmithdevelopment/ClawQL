@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DeliverableEvent, DeliveryOutcome } from "./types.js";
+import { Effect } from "effect";
 
 export type McpEventsProcessEmitter = (
   event: DeliverableEvent
@@ -46,11 +47,29 @@ export function emitMcpEventBestEffort(
 }
 
 /** Awaitable emit for tests / producers that need delivery outcomes. */
-export async function emitMcpEvent(
+async function emitMcpEventImpl(
   partial: Omit<DeliverableEvent, "eventId" | "timestamp"> &
     Partial<Pick<DeliverableEvent, "eventId" | "timestamp">>
-): Promise<readonly DeliveryOutcome[]> {
+): Promise<readonly DeliveryOutcome[]>  {
   const emitter = processEmitter;
   if (!emitter) return [];
   return emitter(stamp(partial));
+}
+
+export function emitMcpEventEffect(
+  partial: Omit<DeliverableEvent, "eventId" | "timestamp"> &
+    Partial<Pick<DeliverableEvent, "eventId" | "timestamp">>
+): Effect.Effect<readonly DeliveryOutcome[], Error> {
+  return Effect.tryPromise({
+    try: () => emitMcpEventImpl(partial),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link emitMcpEventEffect} for Effect callers. */
+export async function emitMcpEvent(
+  partial: Omit<DeliverableEvent, "eventId" | "timestamp"> &
+    Partial<Pick<DeliverableEvent, "eventId" | "timestamp">>
+): Promise<readonly DeliveryOutcome[]>  {
+  return Effect.runPromise(emitMcpEventEffect(partial));
 }

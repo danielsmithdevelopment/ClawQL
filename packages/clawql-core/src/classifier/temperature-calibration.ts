@@ -217,9 +217,7 @@ export function readCalibrationConfigFromEnv(): CalibrationConfig {
   };
 }
 
-export class FastDecisionCalibrationService extends Context.Tag(
-  "clawql/FastDecisionCalibrationService"
-)<
+export class FastDecisionCalibrationService extends Context.Service<
   FastDecisionCalibrationService,
   {
     readonly getConfig: () => Effect.Effect<CalibrationConfig>;
@@ -233,7 +231,7 @@ export class FastDecisionCalibrationService extends Context.Tag(
       readonly criteria?: ValidationCriteria;
     }) => Effect.Effect<FitTemperatureResult>;
   }
->() {}
+>()("clawql/FastDecisionCalibrationService") {}
 
 export function makeFastDecisionCalibrationLive(
   config: CalibrationConfig = readCalibrationConfigFromEnv()

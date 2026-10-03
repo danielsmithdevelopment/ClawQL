@@ -67,7 +67,7 @@ const allPkgTs = workspacePackages.flatMap((name) => walkTs(join(packagesDir, na
 const rootTs = walkTs(join(root, "src"));
 const allTs = [...allPkgTs, ...rootTs];
 
-const contextTagFiles = countPattern(allTs, /Context\.Tag\s*\(/);
+const contextServiceFileCount = countPattern(allTs, /Context\.Service\s*</);
 const effectSchemaFiles = countPattern(
   allTs,
   /from ["']effect\/Schema["']|Schema\.(Struct|String|Number)/
@@ -81,7 +81,7 @@ const report = {
   workspacePackageCount: workspacePackages.length,
   packagesWithEffect: withEffect.length,
   packagesWithoutEffect: withoutEffect,
-  contextTagFileCount: contextTagFiles,
+  contextServiceFileCount,
   effectSchemaFileCount: effectSchemaFiles,
   atEffectImportFileCount: atEffectImports,
   stage1Packages: ["clawql-core", "clawql-api"],
@@ -94,7 +94,7 @@ console.log(`  packages/* w/ effect: ${report.packagesWithEffect}/${report.works
 if (withoutEffect.length) {
   console.log(`  Missing effect:       ${withoutEffect.join(", ")}`);
 }
-console.log(`  Context.Tag files:    ${report.contextTagFileCount}`);
+console.log(`  Context.Service files:    ${report.contextServiceFileCount}`);
 console.log(`  effect/Schema files:  ${report.effectSchemaFileCount}`);
 console.log(`  @effect/* imports:    ${report.atEffectImportFileCount} files`);
 console.log(`  Stage 1 targets:      ${report.stage1Packages.join(", ")}`);

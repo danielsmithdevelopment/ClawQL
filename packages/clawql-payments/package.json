@@ -112,7 +112,7 @@
     "clawql-auth": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-network": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "nats": "^2.29.3",
     "pg": "^8.21.0",
     "qrcode": "^1.5.4",

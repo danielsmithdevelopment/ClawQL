@@ -13,10 +13,10 @@ import {
 } from "clawql-core";
 import { Context, Effect, Layer } from "effect";
 
-let boundRegistry: Context.Tag.Service<typeof SkillRegistry> | undefined;
-let fallbackRegistry: Context.Tag.Service<typeof SkillRegistry> | undefined;
+let boundRegistry: Context.Service.Shape<typeof SkillRegistry> | undefined;
+let fallbackRegistry: Context.Service.Shape<typeof SkillRegistry> | undefined;
 
-function extractInMemory(): Context.Tag.Service<typeof SkillRegistry> {
+function extractInMemory(): Context.Service.Shape<typeof SkillRegistry> {
   return Effect.runSync(
     Effect.gen(function* () {
       return yield* SkillRegistry;
@@ -24,7 +24,7 @@ function extractInMemory(): Context.Tag.Service<typeof SkillRegistry> {
   );
 }
 
-function activeRegistry(): Context.Tag.Service<typeof SkillRegistry> {
+function activeRegistry(): Context.Service.Shape<typeof SkillRegistry> {
   if (boundRegistry) return boundRegistry;
   if (!fallbackRegistry) fallbackRegistry = extractInMemory();
   return fallbackRegistry;
@@ -32,12 +32,12 @@ function activeRegistry(): Context.Tag.Service<typeof SkillRegistry> {
 
 /** Wire MCP skills_* + search to the same SkillRegistry used by plugin install. */
 export function bindProcessSkillRegistry(
-  registry: Context.Tag.Service<typeof SkillRegistry>
+  registry: Context.Service.Shape<typeof SkillRegistry>
 ): void {
   boundRegistry = registry;
 }
 
-export function getBoundSkillRegistry(): Context.Tag.Service<typeof SkillRegistry> {
+export function getBoundSkillRegistry(): Context.Service.Shape<typeof SkillRegistry> {
   return activeRegistry();
 }
 
@@ -115,9 +115,21 @@ export function unregisterProcessSkills(pluginId: string): Promise<void> {
 }
 
 /** Test helper — clear bound + fallback registries. */
-export async function resetProcessSkillsRegistryForTests(): Promise<void> {
+async function resetProcessSkillsRegistryForTestsImpl(): Promise<void> {
   boundRegistry = undefined;
   fallbackRegistry = undefined;
+}
+
+export function resetProcessSkillsRegistryForTestsEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetProcessSkillsRegistryForTestsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetProcessSkillsRegistryForTestsEffect} for Effect callers. */
+export async function resetProcessSkillsRegistryForTests(): Promise<void> {
+  return Effect.runPromise(resetProcessSkillsRegistryForTestsEffect());
 }
 
 // silence unused Layer import if tree-shaken oddly

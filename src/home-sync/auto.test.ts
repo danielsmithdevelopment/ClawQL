@@ -7,8 +7,9 @@ import {
   scheduleAutoPushAfterIngest,
 } from "./auto.js";
 
-vi.mock("./engine.js", () => ({
-  runSyncPush: vi.fn(async () => ({
+vi.mock("./engine.js", () => {
+  const { Effect } = require("effect") as typeof import("effect");
+  const runSyncPush = vi.fn(async () => ({
     provider: "r2",
     bucket: "test",
     prefix: "",
@@ -18,8 +19,8 @@ vi.mock("./engine.js", () => ({
     conflicts: 0,
     dryRun: false,
     actions: [],
-  })),
-  runSyncPull: vi.fn(async () => ({
+  }));
+  const runSyncPull = vi.fn(async () => ({
     provider: "r2",
     bucket: "test",
     prefix: "",
@@ -29,19 +30,30 @@ vi.mock("./engine.js", () => ({
     conflicts: 0,
     dryRun: false,
     actions: [],
-  })),
-}));
+  }));
+  return {
+    runSyncPush,
+    runSyncPull,
+    runSyncPushEffect: () => Effect.promise(() => runSyncPush()),
+    runSyncPullEffect: () => Effect.promise(() => runSyncPull()),
+  };
+});
 
-vi.mock("./config.js", () => ({
-  loadResolvedHomeSyncConfig: vi.fn(async () => ({
+vi.mock("./config.js", () => {
+  const { Effect } = require("effect") as typeof import("effect");
+  const loadResolvedHomeSyncConfig = vi.fn(async () => ({
     version: 1,
     provider: "r2",
     bucket: "test",
     home: "/tmp",
     include: ["Memory"],
     manifestKey: ".clawql/sync/manifest.v1.json",
-  })),
-}));
+  }));
+  return {
+    loadResolvedHomeSyncConfig,
+    loadResolvedHomeSyncConfigEffect: () => Effect.promise(() => loadResolvedHomeSyncConfig()),
+  };
+});
 
 describe("home-sync auto", () => {
   beforeEach(() => {

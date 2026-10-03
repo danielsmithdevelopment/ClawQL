@@ -11,9 +11,9 @@
 
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Context, Data, Effect, Layer } from "effect";
 import { resolveOrgCreditsPath } from "../config/paths.js";
 import { getCreditAccount, transferCredits, type CreditTransferResult } from "./ledger.js";
-import { Effect } from "effect";
 import {
   assertCreditsOrgTransferEnabled,
   isCreditsEnabled,
@@ -126,7 +126,8 @@ export function poolTenantIdForOrg(orgId: string): string {
   return `org:${orgId.trim()}:pool`;
 }
 
-export async function loadOrgCreditsFile(
+/** @deprecated Prefer OrgCreditsService.loadFile — Promise façade retained for legacy callers. */
+async function loadOrgCreditsFileImpl(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgCreditsFile> {
   const path = resolveOrgCreditsPath(env);
@@ -142,6 +143,22 @@ export async function loadOrgCreditsFile(
   }
 }
 
+export function loadOrgCreditsFileEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgCreditsFile, Error> {
+  return Effect.tryPromise({
+    try: () => loadOrgCreditsFileImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadOrgCreditsFileEffect} for Effect callers. */
+export async function loadOrgCreditsFile(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgCreditsFile> {
+  return Effect.runPromise(loadOrgCreditsFileEffect(env));
+}
+
 async function saveOrgCreditsFile(
   file: OrgCreditsFile,
   env: NodeJS.ProcessEnv = process.env
@@ -153,8 +170,23 @@ async function saveOrgCreditsFile(
   await rename(tmp, path);
 }
 
-export async function resetOrgCreditsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+/** @deprecated Prefer OrgCreditsService.reset — Promise façade retained for legacy/test callers. */
+async function resetOrgCreditsForTestsImpl(env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await saveOrgCreditsFile(emptyFile(), env);
+}
+
+export function resetOrgCreditsForTestsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetOrgCreditsForTestsImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetOrgCreditsForTestsEffect} for Effect callers. */
+export async function resetOrgCreditsForTests(env: NodeJS.ProcessEnv = process.env): Promise<void> {
+  return Effect.runPromise(resetOrgCreditsForTestsEffect(env));
 }
 
 const DEFAULT_ROLE_POLICIES: OrgRolePolicy[] = [
@@ -184,7 +216,8 @@ export type CreateOrgInput = {
   stripeSubscriptionId?: string;
 };
 
-export async function createOrg(
+/** @deprecated Prefer OrgCreditsService.create — Promise façade retained for legacy callers. */
+async function createOrgImpl(
   input: CreateOrgInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
@@ -246,6 +279,24 @@ export async function createOrg(
   return org;
 }
 
+export function createOrgEffect(
+  input: CreateOrgInput,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => createOrgImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link createOrgEffect} for Effect callers. */
+export async function createOrg(
+  input: CreateOrgInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(createOrgEffect(input, env));
+}
+
 export type PatchOrgBillingInput = {
   orgId: string;
   planId?: OrgRecord["planId"];
@@ -256,8 +307,8 @@ export type PatchOrgBillingInput = {
   seatLimit?: number;
 };
 
-/** Patch CPC billing fields on an existing org (plan change / Stripe id link). */
-export async function patchOrgBilling(
+/** @deprecated Prefer OrgCreditsService.patchBilling — Promise façade retained for legacy callers. */
+async function patchOrgBillingImpl(
   input: PatchOrgBillingInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
@@ -283,7 +334,26 @@ export async function patchOrgBilling(
   return org;
 }
 
-export async function getOrg(
+export function patchOrgBillingEffect(
+  input: PatchOrgBillingInput,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => patchOrgBillingImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link patchOrgBillingEffect} for Effect callers. */
+export async function patchOrgBilling(
+  input: PatchOrgBillingInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(patchOrgBillingEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.get — Promise façade retained for legacy callers. */
+async function getOrgImpl(
   orgId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord | undefined> {
@@ -291,8 +361,26 @@ export async function getOrg(
   return file.orgs[orgId.trim().toLowerCase()];
 }
 
-/** Orgs where the tenant is an active member or billing admin. */
-export async function findOrgsForTenant(
+export function getOrgEffect(
+  orgId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => getOrgImpl(orgId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link getOrgEffect} for Effect callers. */
+export async function getOrg(
+  orgId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  return Effect.runPromise(getOrgEffect(orgId, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.findForTenant — Promise façade retained for legacy callers. */
+async function findOrgsForTenantImpl(
   tenantId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord[]> {
@@ -306,7 +394,26 @@ export async function findOrgsForTenant(
   );
 }
 
-export async function setOrgRolePolicies(
+export function findOrgsForTenantEffect(
+  tenantId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord[], Error> {
+  return Effect.tryPromise({
+    try: () => findOrgsForTenantImpl(tenantId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link findOrgsForTenantEffect} for Effect callers. */
+export async function findOrgsForTenant(
+  tenantId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord[]> {
+  return Effect.runPromise(findOrgsForTenantEffect(tenantId, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.setRolePolicies — Promise façade retained for legacy callers. */
+async function setOrgRolePoliciesImpl(
   orgId: string,
   policies: OrgRolePolicy[],
   env: NodeJS.ProcessEnv = process.env
@@ -328,6 +435,26 @@ export async function setOrgRolePolicies(
   return org;
 }
 
+export function setOrgRolePoliciesEffect(
+  orgId: string,
+  policies: OrgRolePolicy[],
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => setOrgRolePoliciesImpl(orgId, policies, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setOrgRolePoliciesEffect} for Effect callers. */
+export async function setOrgRolePolicies(
+  orgId: string,
+  policies: OrgRolePolicy[],
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(setOrgRolePoliciesEffect(orgId, policies, env));
+}
+
 export type AddOrgMemberInput = {
   orgId: string;
   memberTenantId: string;
@@ -341,7 +468,8 @@ export type AddOrgMemberInput = {
   bypassSeatCheck?: boolean;
 };
 
-export async function addOrgMember(
+/** @deprecated Prefer OrgCreditsService.addMember — Promise façade retained for legacy callers. */
+async function addOrgMemberImpl(
   input: AddOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
@@ -390,6 +518,24 @@ export async function addOrgMember(
   file.orgs[key] = org;
   await saveOrgCreditsFile(file, env);
   return org;
+}
+
+export function addOrgMemberEffect(
+  input: AddOrgMemberInput,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => addOrgMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link addOrgMemberEffect} for Effect callers. */
+export async function addOrgMember(
+  input: AddOrgMemberInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(addOrgMemberEffect(input, env));
 }
 
 function assertBillingAdmin(org: OrgRecord, actorTenantId: string): void {
@@ -474,8 +620,8 @@ export function assertEmailMatchesOrgDomains(org: OrgRecord, email: string): voi
   }
 }
 
-/** Resolve the company org that owns a work-email domain (first match). */
-export async function findOrgByEmailDomain(
+/** @deprecated Prefer OrgCreditsService.findByEmailDomain — Promise façade retained for legacy callers. */
+async function findOrgByEmailDomainImpl(
   domain: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord | undefined> {
@@ -485,10 +631,28 @@ export async function findOrgByEmailDomain(
   return Object.values(file.orgs).find((o) => (o.sso?.allowedEmailDomains ?? []).includes(needle));
 }
 
+export function findOrgByEmailDomainEffect(
+  domain: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => findOrgByEmailDomainImpl(domain, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link findOrgByEmailDomainEffect} for Effect callers. */
+export async function findOrgByEmailDomain(
+  domain: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  return Effect.runPromise(findOrgByEmailDomainEffect(domain, env));
+}
+
 /**
- * Billing admin: bind company email domains (+ optional IdP) for SSO under @company.com.
+ * @deprecated Prefer OrgCreditsService.setSsoPolicy — Promise façade retained for legacy callers.
  */
-export async function setOrgSsoPolicy(
+async function setOrgSsoPolicyImpl(
   input: {
     orgId: string;
     actorTenantId: string;
@@ -516,6 +680,36 @@ export async function setOrgSsoPolicy(
   return org;
 }
 
+export function setOrgSsoPolicyEffect(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    allowedEmailDomains: string[];
+    issuer?: string;
+    jwksUrl?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => setOrgSsoPolicyImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setOrgSsoPolicyEffect} for Effect callers. */
+export async function setOrgSsoPolicy(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    allowedEmailDomains: string[];
+    issuer?: string;
+    jwksUrl?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(setOrgSsoPolicyEffect(input, env));
+}
+
 export type InviteOrgMemberInput = {
   orgId: string;
   email: string;
@@ -529,10 +723,10 @@ export type InviteOrgMemberInput = {
 };
 
 /**
- * Billing admin: invite a colleague by company email.
+ * @deprecated Prefer OrgCreditsService.inviteMember — Promise façade retained for legacy callers.
  * `memberTenantId` defaults to a slug derived from the email local-part + org.
  */
-export async function inviteOrgMember(
+async function inviteOrgMemberImpl(
   input: InviteOrgMemberInput,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
@@ -591,7 +785,26 @@ export async function inviteOrgMember(
   return org;
 }
 
-export async function listOrgMembers(
+export function inviteOrgMemberEffect(
+  input: InviteOrgMemberInput,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => inviteOrgMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link inviteOrgMemberEffect} for Effect callers. */
+export async function inviteOrgMember(
+  input: InviteOrgMemberInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(inviteOrgMemberEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.listMembers — Promise façade retained for legacy callers. */
+async function listOrgMembersImpl(
   orgId: string,
   options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
   env: NodeJS.ProcessEnv = process.env
@@ -612,10 +825,30 @@ export async function listOrgMembers(
   return members;
 }
 
+export function listOrgMembersEffect(
+  orgId: string,
+  options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgMembership[], Error> {
+  return Effect.tryPromise({
+    try: () => listOrgMembersImpl(orgId, options, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link listOrgMembersEffect} for Effect callers. */
+export async function listOrgMembers(
+  orgId: string,
+  options: { status?: OrgMembership["status"] | "any"; actorTenantId?: string } = {},
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgMembership[]> {
+  return Effect.runPromise(listOrgMembersEffect(orgId, options, env));
+}
+
 /**
- * Billing admin: set plan + optional seat cap for entitlement enforcement on invite/add.
+ * @deprecated Prefer OrgCreditsService.setSeatPolicy — Promise façade retained for legacy callers.
  */
-export async function setOrgSeatPolicy(
+async function setOrgSeatPolicyImpl(
   input: {
     orgId: string;
     actorTenantId: string;
@@ -639,8 +872,36 @@ export async function setOrgSeatPolicy(
   return org;
 }
 
-/** Assign a member's manager (reports-to). Billing admin only. */
-export async function setMemberReportsTo(
+export function setOrgSeatPolicyEffect(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    planId?: OrgRecord["planId"];
+    seatLimit?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => setOrgSeatPolicyImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setOrgSeatPolicyEffect} for Effect callers. */
+export async function setOrgSeatPolicy(
+  input: {
+    orgId: string;
+    actorTenantId: string;
+    planId?: OrgRecord["planId"];
+    seatLimit?: number;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(setOrgSeatPolicyEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.setMemberReportsTo — Promise façade retained for legacy callers. */
+async function setMemberReportsToImpl(
   input: {
     orgId: string;
     memberTenantId: string;
@@ -671,10 +932,38 @@ export async function setMemberReportsTo(
   return org;
 }
 
+export function setMemberReportsToEffect(
+  input: {
+    orgId: string;
+    memberTenantId: string;
+    reportsToTenantId: string | null;
+    actorTenantId: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => setMemberReportsToImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setMemberReportsToEffect} for Effect callers. */
+export async function setMemberReportsTo(
+  input: {
+    orgId: string;
+    memberTenantId: string;
+    reportsToTenantId: string | null;
+    actorTenantId: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(setMemberReportsToEffect(input, env));
+}
+
 /**
- * Manager (or billing admin): transfer from own balance to a direct report.
+ * @deprecated Prefer OrgCreditsService.transferManagerToReport — Promise façade retained for legacy callers.
  */
-export async function transferManagerToReport(
+async function transferManagerToReportImpl(
   input: {
     orgId: string;
     managerTenantId: string;
@@ -707,21 +996,92 @@ export async function transferManagerToReport(
   );
 }
 
-export async function suspendOrgMember(
+export function transferManagerToReportEffect(
+  input: {
+    orgId: string;
+    managerTenantId: string;
+    reportTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditTransferResult, Error> {
+  return Effect.tryPromise({
+    try: () => transferManagerToReportImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link transferManagerToReportEffect} for Effect callers. */
+export async function transferManagerToReport(
+  input: {
+    orgId: string;
+    managerTenantId: string;
+    reportTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  return Effect.runPromise(transferManagerToReportEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.suspendMember — Promise façade retained for legacy callers. */
+async function suspendOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
   return setMemberStatus({ ...input, status: "suspended" }, env);
 }
 
-export async function removeOrgMember(
+export function suspendOrgMemberEffect(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => suspendOrgMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link suspendOrgMemberEffect} for Effect callers. */
+export async function suspendOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(suspendOrgMemberEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.removeMember — Promise façade retained for legacy callers. */
+async function removeOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
   return setMemberStatus({ ...input, status: "left" }, env);
 }
 
-export async function reactivateOrgMember(
+export function removeOrgMemberEffect(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => removeOrgMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link removeOrgMemberEffect} for Effect callers. */
+export async function removeOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(removeOrgMemberEffect(input, env));
+}
+
+/** @deprecated Prefer OrgCreditsService.reactivateMember — Promise façade retained for legacy callers. */
+async function reactivateOrgMemberImpl(
   input: { orgId: string; memberTenantId: string; actorTenantId: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord> {
@@ -732,6 +1092,24 @@ export async function reactivateOrgMember(
     assertOrgSeatAvailable(org);
   }
   return setMemberStatus({ ...input, status: "active" }, env);
+}
+
+export function reactivateOrgMemberEffect(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord, Error> {
+  return Effect.tryPromise({
+    try: () => reactivateOrgMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link reactivateOrgMemberEffect} for Effect callers. */
+export async function reactivateOrgMember(
+  input: { orgId: string; memberTenantId: string; actorTenantId: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord> {
+  return Effect.runPromise(reactivateOrgMemberEffect(input, env));
 }
 
 async function setMemberStatus(
@@ -783,10 +1161,10 @@ export function assertSameOrgMembers(org: OrgRecord, a: string, b: string): void
 }
 
 /**
- * Billing admin: move credits from company pool → member (top-up individual).
+ * @deprecated Prefer OrgCreditsService.allocateFromPool — Promise façade retained for legacy callers.
  * Does not require CLAWQL_CREDITS_P2P_ENABLED — closed-loop org allocate.
  */
-export async function allocateFromPoolToMember(
+async function allocateFromPoolToMemberImpl(
   input: {
     orgId: string;
     toMemberTenantId: string;
@@ -827,11 +1205,43 @@ export async function allocateFromPoolToMember(
   );
 }
 
+export function allocateFromPoolToMemberEffect(
+  input: {
+    orgId: string;
+    toMemberTenantId: string;
+    amountCents: number;
+    actorTenantId: string;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditTransferResult, Error> {
+  return Effect.tryPromise({
+    try: () => allocateFromPoolToMemberImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link allocateFromPoolToMemberEffect} for Effect callers. */
+export async function allocateFromPoolToMember(
+  input: {
+    orgId: string;
+    toMemberTenantId: string;
+    amountCents: number;
+    actorTenantId: string;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  return Effect.runPromise(allocateFromPoolToMemberEffect(input, env));
+}
+
 /**
+ * @deprecated Prefer OrgCreditsService.transferWithinOrg — Promise façade retained for legacy callers.
  * Peer transfer within the same company org only.
- * Allowed on managed hosting. Distinct from cross-tenant Venmo P2P.
  */
-export async function transferWithinOrg(
+async function transferWithinOrgImpl(
   input: {
     orgId: string;
     fromMemberTenantId: string;
@@ -863,6 +1273,38 @@ export async function transferWithinOrg(
   );
 }
 
+export function transferWithinOrgEffect(
+  input: {
+    orgId: string;
+    fromMemberTenantId: string;
+    toMemberTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreditTransferResult, Error> {
+  return Effect.tryPromise({
+    try: () => transferWithinOrgImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link transferWithinOrgEffect} for Effect callers. */
+export async function transferWithinOrg(
+  input: {
+    orgId: string;
+    fromMemberTenantId: string;
+    toMemberTenantId: string;
+    amountCents: number;
+    note?: string;
+    idempotencyKey?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreditTransferResult> {
+  return Effect.runPromise(transferWithinOrgEffect(input, env));
+}
+
 export type DistributePeriodResult = {
   orgId: string;
   distributed: Array<{ memberTenantId: string; amountCents: number; transferId: string }>;
@@ -871,10 +1313,11 @@ export type DistributePeriodResult = {
 };
 
 /**
+ * @deprecated Prefer OrgCreditsService.distributePeriod — Promise façade retained for legacy callers.
  * Start of billing period: optionally recall unused member credits to pool (expire_to_pool),
  * then grant each active member their role defaultGrantCents from the pool.
  */
-export async function distributeOrgPeriod(
+async function distributeOrgPeriodImpl(
   input: { orgId: string; actorTenantId: string; idempotencyPrefix?: string },
   env: NodeJS.ProcessEnv = process.env
 ): Promise<DistributePeriodResult> {
@@ -956,8 +1399,156 @@ export async function distributeOrgPeriod(
   return { orgId: org.orgId, distributed, recalled, skipped };
 }
 
+export function distributeOrgPeriodEffect(
+  input: { orgId: string; actorTenantId: string; idempotencyPrefix?: string },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<DistributePeriodResult, Error> {
+  return Effect.tryPromise({
+    try: () => distributeOrgPeriodImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link distributeOrgPeriodEffect} for Effect callers. */
+export async function distributeOrgPeriod(
+  input: { orgId: string; actorTenantId: string; idempotencyPrefix?: string },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<DistributePeriodResult> {
+  return Effect.runPromise(distributeOrgPeriodEffect(input, env));
+}
+
 /** Compliance helper: managed hosting may use org credits; general P2P still blocked. */
 export function orgCreditsAllowedOnManagedHosting(env: NodeJS.ProcessEnv = process.env): boolean {
   // Documented posture — org transfers are closed-loop even when isManagedHosting.
   return Effect.runSync(isCreditsOrgTransferEnabled(env)) || !Effect.runSync(isManagedHosting(env));
+}
+
+export class OrgCreditsError extends Data.TaggedError("OrgCreditsError")<{
+  readonly reason: string;
+  readonly cause?: unknown;
+}> {}
+
+type SetOrgSsoPolicyInput = Parameters<typeof setOrgSsoPolicy>[0];
+type SetOrgSeatPolicyInput = Parameters<typeof setOrgSeatPolicy>[0];
+type SetMemberReportsToInput = Parameters<typeof setMemberReportsTo>[0];
+type TransferManagerToReportInput = Parameters<typeof transferManagerToReport>[0];
+type MemberActorInput = { orgId: string; memberTenantId: string; actorTenantId: string };
+type AllocateFromPoolInput = Parameters<typeof allocateFromPoolToMember>[0];
+type TransferWithinOrgInput = Parameters<typeof transferWithinOrg>[0];
+type DistributePeriodInput = Parameters<typeof distributeOrgPeriod>[0];
+type ListOrgMembersOptions = Parameters<typeof listOrgMembers>[1];
+
+/** Effect surface over closed-loop enterprise org credits (pool, members, allocate, period). */
+export class OrgCreditsService extends Context.Service<
+  OrgCreditsService,
+  {
+    readonly loadFile: () => Effect.Effect<OrgCreditsFile, OrgCreditsError>;
+    readonly reset: () => Effect.Effect<void, OrgCreditsError>;
+    readonly create: (input: CreateOrgInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly patchBilling: (
+      input: PatchOrgBillingInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly get: (orgId: string) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
+    readonly findForTenant: (tenantId: string) => Effect.Effect<OrgRecord[], OrgCreditsError>;
+    readonly setRolePolicies: (
+      orgId: string,
+      policies: OrgRolePolicy[]
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly addMember: (input: AddOrgMemberInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly findByEmailDomain: (
+      domain: string
+    ) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
+    readonly setSsoPolicy: (
+      input: SetOrgSsoPolicyInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly inviteMember: (
+      input: InviteOrgMemberInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly listMembers: (
+      orgId: string,
+      options?: ListOrgMembersOptions
+    ) => Effect.Effect<OrgMembership[], OrgCreditsError>;
+    readonly setSeatPolicy: (
+      input: SetOrgSeatPolicyInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly setMemberReportsTo: (
+      input: SetMemberReportsToInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly transferManagerToReport: (
+      input: TransferManagerToReportInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly suspendMember: (input: MemberActorInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly removeMember: (input: MemberActorInput) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly reactivateMember: (
+      input: MemberActorInput
+    ) => Effect.Effect<OrgRecord, OrgCreditsError>;
+    readonly allocateFromPool: (
+      input: AllocateFromPoolInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly transferWithinOrg: (
+      input: TransferWithinOrgInput
+    ) => Effect.Effect<CreditTransferResult, OrgCreditsError>;
+    readonly distributePeriod: (
+      input: DistributePeriodInput
+    ) => Effect.Effect<DistributePeriodResult, OrgCreditsError>;
+  }
+>()("clawql/OrgCreditsService") {}
+
+export function orgCreditsLiveLayer(
+  env: NodeJS.ProcessEnv = process.env
+): Layer.Layer<OrgCreditsService> {
+  const run = <A>(reason: string, task: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: task,
+      catch: (cause) =>
+        cause instanceof OrgCreditsError
+          ? cause
+          : new OrgCreditsError({
+              reason: cause instanceof Error ? cause.message : reason,
+              cause,
+            }),
+    });
+
+  return Layer.succeed(
+    OrgCreditsService,
+    OrgCreditsService.of({
+      loadFile: () => run("Failed to load org credits file", () => loadOrgCreditsFile(env)),
+      reset: () => run("Failed to reset org credits", () => resetOrgCreditsForTests(env)),
+      create: (input) => run("Failed to create org", () => createOrg(input, env)),
+      patchBilling: (input) =>
+        run("Failed to patch org billing", () => patchOrgBilling(input, env)),
+      get: (orgId) => run("Failed to load org", () => getOrg(orgId, env)),
+      findForTenant: (tenantId) =>
+        run("Failed to find orgs for tenant", () => findOrgsForTenant(tenantId, env)),
+      setRolePolicies: (orgId, policies) =>
+        run("Failed to set role policies", () => setOrgRolePolicies(orgId, policies, env)),
+      addMember: (input) => run("Failed to add org member", () => addOrgMember(input, env)),
+      findByEmailDomain: (domain) =>
+        run("Failed to find org by email domain", () => findOrgByEmailDomain(domain, env)),
+      setSsoPolicy: (input) =>
+        run("Failed to set org SSO policy", () => setOrgSsoPolicy(input, env)),
+      inviteMember: (input) =>
+        run("Failed to invite org member", () => inviteOrgMember(input, env)),
+      listMembers: (orgId, options) =>
+        run("Failed to list org members", () => listOrgMembers(orgId, options ?? {}, env)),
+      setSeatPolicy: (input) =>
+        run("Failed to set seat policy", () => setOrgSeatPolicy(input, env)),
+      setMemberReportsTo: (input) =>
+        run("Failed to set member reports-to", () => setMemberReportsTo(input, env)),
+      transferManagerToReport: (input) =>
+        run("Failed to transfer manager to report", () => transferManagerToReport(input, env)),
+      suspendMember: (input) =>
+        run("Failed to suspend org member", () => suspendOrgMember(input, env)),
+      removeMember: (input) =>
+        run("Failed to remove org member", () => removeOrgMember(input, env)),
+      reactivateMember: (input) =>
+        run("Failed to reactivate org member", () => reactivateOrgMember(input, env)),
+      allocateFromPool: (input) =>
+        run("Failed to allocate from pool", () => allocateFromPoolToMember(input, env)),
+      transferWithinOrg: (input) =>
+        run("Failed to transfer within org", () => transferWithinOrg(input, env)),
+      distributePeriod: (input) =>
+        run("Failed to distribute org period", () => distributeOrgPeriod(input, env)),
+    })
+  );
 }

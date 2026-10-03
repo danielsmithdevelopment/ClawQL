@@ -200,7 +200,7 @@ function resourceFromGate(gate: {
 }
 
 /** Effect service for `/.well-known/payments.json` document generation. */
-export class PaymentsDiscoveryService extends Context.Tag("clawql/PaymentsDiscoveryService")<
+export class PaymentsDiscoveryService extends Context.Service<
   PaymentsDiscoveryService,
   {
     readonly buildDocument: (
@@ -210,7 +210,7 @@ export class PaymentsDiscoveryService extends Context.Tag("clawql/PaymentsDiscov
       options?: BuildPaymentsWellKnownOptions
     ) => Effect.Effect<string, ConfigError | X402Error>;
   }
->() {}
+>()("clawql/PaymentsDiscoveryService") {}
 
 export function paymentsDiscoveryLiveLayer(
   env: NodeJS.ProcessEnv = process.env

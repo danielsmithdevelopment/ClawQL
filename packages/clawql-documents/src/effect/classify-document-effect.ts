@@ -8,17 +8,16 @@ import { Effect } from "effect";
 import {
   heuristicClassify,
   parseClassifierHttpResponse,
-  postClassifierHttp,
+  postClassifierHttpEffect,
   type ClassifyDocumentInput,
   type ClassifyDocumentResult,
 } from "../classify/classify-document.js";
 import { classifierBaseUrl } from "../classify/env.js";
 import { DocumentsError } from "./documents-errors.js";
-import { documentsFromPromise } from "./documents-effect-utils.js";
 
 /**
  * Classify pipeline as Effect.gen.
- * Remote fetch stays behind {@link documentsFromPromise}; heuristic + parse are sync.
+ * Remote fetch via {@link postClassifierHttpEffect}; heuristic + parse are sync.
  */
 export function executeClassifyDocumentEffect(
   input: ClassifyDocumentInput
@@ -28,7 +27,15 @@ export function executeClassifyDocumentEffect(
     if (!baseUrl) {
       return heuristicClassify(input);
     }
-    const response = yield* documentsFromPromise(() => postClassifierHttp(input, baseUrl));
+    const response = yield* postClassifierHttpEffect(input, baseUrl).pipe(
+      Effect.mapError(
+        (cause) =>
+          new DocumentsError({
+            reason: cause instanceof Error ? cause.message : String(cause),
+            cause,
+          })
+      )
+    );
     return parseClassifierHttpResponse(input, response);
   });
 }

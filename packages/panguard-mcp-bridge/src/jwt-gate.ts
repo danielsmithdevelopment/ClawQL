@@ -13,6 +13,7 @@ import {
 } from "jose";
 import * as grpc from "@grpc/grpc-js";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { Effect } from "effect";
 
 const HEALTH_PREFIX = "/grpc.health.";
 
@@ -104,7 +105,7 @@ function verifyOptions(): {
 }
 
 /** Validates `Authorization` value (full header or bare token); throws on failure. */
-export async function verifyBridgeJwtAuthorizationHeader(authHeader: string): Promise<void> {
+async function verifyBridgeJwtAuthorizationHeaderImpl(authHeader: string): Promise<void>  {
   const raw = authHeader.trim();
   const token = /^Bearer\s+(\S+)/i.exec(raw)?.[1] ?? (raw && !raw.includes(" ") ? raw : undefined);
   if (!token) {
@@ -113,6 +114,18 @@ export async function verifyBridgeJwtAuthorizationHeader(authHeader: string): Pr
   const key = resolveVerifyKey();
   const { payload } = await jwtVerify(token, key, verifyOptions());
   assertAtrClaim(payload, atrClaimName());
+}
+
+export function verifyBridgeJwtAuthorizationHeaderEffect(authHeader: string): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => verifyBridgeJwtAuthorizationHeaderImpl(authHeader),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link verifyBridgeJwtAuthorizationHeaderEffect} for Effect callers. */
+export async function verifyBridgeJwtAuthorizationHeader(authHeader: string): Promise<void>  {
+  return Effect.runPromise(verifyBridgeJwtAuthorizationHeaderEffect(authHeader));
 }
 
 /**

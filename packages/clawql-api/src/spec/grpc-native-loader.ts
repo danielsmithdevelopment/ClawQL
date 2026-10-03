@@ -10,6 +10,7 @@ import { normalizeOperationId } from "./spec-kind.js";
 import type { GrpcSourceConfig } from "./native-protocol-env.js";
 import { parseGrpcSourcesEnv } from "./native-protocol-env.js";
 import { registerGrpcClient } from "./native-protocol-registry.js";
+import { Effect } from "effect";
 
 type ServiceCtor = grpc.ServiceClientConstructor;
 
@@ -97,7 +98,7 @@ async function loadOne(cfg: GrpcSourceConfig): Promise<Operation[]> {
 }
 
 /** Exported for tests with injected configs. */
-export async function loadGrpcNativeOperationsFromConfigs(
+async function loadGrpcNativeOperationsFromConfigsImpl(
   configs: GrpcSourceConfig[]
 ): Promise<Operation[]> {
   const out: Operation[] = [];
@@ -111,6 +112,34 @@ export async function loadGrpcNativeOperationsFromConfigs(
   return out;
 }
 
-export async function loadGrpcNativeOperations(): Promise<Operation[]> {
+export function loadGrpcNativeOperationsFromConfigsEffect(
+  configs: GrpcSourceConfig[]
+): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadGrpcNativeOperationsFromConfigsImpl(configs),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadGrpcNativeOperationsFromConfigsEffect} for Effect callers. */
+export async function loadGrpcNativeOperationsFromConfigs(
+  configs: GrpcSourceConfig[]
+): Promise<Operation[]> {
+  return Effect.runPromise(loadGrpcNativeOperationsFromConfigsEffect(configs));
+}
+
+async function loadGrpcNativeOperationsImpl(): Promise<Operation[]> {
   return loadGrpcNativeOperationsFromConfigs(parseGrpcSourcesEnv());
+}
+
+export function loadGrpcNativeOperationsEffect(): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadGrpcNativeOperationsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadGrpcNativeOperationsEffect} for Effect callers. */
+export async function loadGrpcNativeOperations(): Promise<Operation[]> {
+  return Effect.runPromise(loadGrpcNativeOperationsEffect());
 }

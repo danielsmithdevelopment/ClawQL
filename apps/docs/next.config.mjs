@@ -66,13 +66,14 @@ const nextConfig = {
   webpack: (config) => {
     // Prebuilt analytics dist lives at /packages/... in Docker; Node/webpack would resolve
     // `effect` / `posthog-node` from there (missing) instead of apps/docs/node_modules.
+    // Effect 4 is exports-only (no package.json "main") — alias the entry file, not the dir.
     config.resolve.modules = [
       path.join(__dirname, 'node_modules'),
       ...(config.resolve.modules || ['node_modules']),
     ]
     config.resolve.alias = {
       ...config.resolve.alias,
-      effect: path.join(__dirname, 'node_modules/effect'),
+      effect: path.join(__dirname, 'node_modules/effect/dist/index.js'),
       'posthog-node': path.join(__dirname, 'node_modules/posthog-node'),
     }
     return config

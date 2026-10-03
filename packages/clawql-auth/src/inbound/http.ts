@@ -21,7 +21,7 @@ import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { IdJagIssuerService } from "./id-jag-issuer.js";
 import type { SecretStoreMcpClientRegistry } from "./mcp-oauth-stores.js";
 import { createMcpOAuthRateLimiter, enforceMcpOAuthRateLimit } from "./oauth-rate-limit.js";
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
 export const MCP_OAUTH_AUTHORIZE_PATH = "/oauth/authorize";
@@ -72,7 +72,7 @@ export type AttachMcpOAuthRoutesOptions = {
    * Publishes JWKS, connector admin routes, and POST /oauth/id-jag/issue.
    */
   idJagIssuer?: McpOAuthAdminAuth & {
-    service: IdJagIssuerService["Type"];
+    service: Context.Service.Shape<typeof IdJagIssuerService>;
     connectors: EmaConnectorRegistry;
     /** Default org when `?orgId=` omitted on JWKS (single-tenant). */
     defaultOrgId?: string;

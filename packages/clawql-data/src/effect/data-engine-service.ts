@@ -6,16 +6,13 @@ import type { DataQueryResult, DataStatus, IngestPayload, IngestResult } from ".
 import type { DataError } from "./data-errors.js";
 
 /** Effect service: active {@link DataEnginePlugin} from registry (Effect-native). */
-export class DataEngineService extends Context.Tag("clawql/DataEngineService")<
-  DataEngineService,
-  {
+export class DataEngineService extends Context.Service<DataEngineService, {
     readonly engine: () => DataEnginePlugin;
     readonly query: (sql: string) => Effect.Effect<DataQueryResult, DataError>;
     readonly ingest: (payload: IngestPayload) => Effect.Effect<IngestResult, DataError>;
     readonly status: () => DataStatus;
     readonly close: () => Effect.Effect<void, DataError>;
-  }
->() {}
+  }>()("clawql/DataEngineService") {}
 
 export function dataEngineLiveLayer(
   env: NodeJS.ProcessEnv = process.env

@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { ModelTier } from "../routing/types.js";
 import type { FallbackChainMap, FallbackConfig } from "./types.js";
+import { Effect } from "effect";
 
 const FILE_NAME = "fallback-chains.json";
 
@@ -25,10 +26,26 @@ export function resolveFallbackChainsPath(env: NodeJS.ProcessEnv = process.env):
   return join(home, "Inference", FILE_NAME);
 }
 
-export async function loadFallbackChainsFile(
+async function loadFallbackChainsFileImpl(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<Partial<FallbackChainMap>> {
   return loadFallbackChainsFileSync(env);
+}
+
+export function loadFallbackChainsFileEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<Partial<FallbackChainMap>, Error> {
+  return Effect.tryPromise({
+    try: () => loadFallbackChainsFileImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadFallbackChainsFileEffect} for Effect callers. */
+export async function loadFallbackChainsFile(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<Partial<FallbackChainMap>> {
+  return Effect.runPromise(loadFallbackChainsFileEffect(env));
 }
 
 function loadFallbackChainsFileSync(
@@ -47,7 +64,7 @@ function loadFallbackChainsFileSync(
   }
 }
 
-export async function saveFallbackChainsFile(
+async function saveFallbackChainsFileImpl(
   chains: FallbackChainMap,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<string> {
@@ -55,6 +72,24 @@ export async function saveFallbackChainsFile(
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(chains, null, 2)}\n`, "utf8");
   return path;
+}
+
+export function saveFallbackChainsFileEffect(
+  chains: FallbackChainMap,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => saveFallbackChainsFileImpl(chains, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link saveFallbackChainsFileEffect} for Effect callers. */
+export async function saveFallbackChainsFile(
+  chains: FallbackChainMap,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<string> {
+  return Effect.runPromise(saveFallbackChainsFileEffect(chains, env));
 }
 
 function readTierChainsFromEnv(env: NodeJS.ProcessEnv): Partial<Record<ModelTier, string[]>> {
@@ -89,10 +124,26 @@ export function loadFallbackConfig(env: NodeJS.ProcessEnv = process.env): Fallba
 }
 
 /** @deprecated Use {@link loadFallbackConfig} (sync). */
-export async function loadFallbackConfigAsync(
+async function loadFallbackConfigAsyncImpl(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<FallbackConfig> {
   return loadFallbackConfig(env);
+}
+
+export function loadFallbackConfigAsyncEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<FallbackConfig, Error> {
+  return Effect.tryPromise({
+    try: () => loadFallbackConfigAsyncImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadFallbackConfigAsyncEffect} for Effect callers. */
+export async function loadFallbackConfigAsync(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<FallbackConfig> {
+  return Effect.runPromise(loadFallbackConfigAsyncEffect(env));
 }
 
 export function loadFallbackConfigSync(env: NodeJS.ProcessEnv = process.env): FallbackConfig {

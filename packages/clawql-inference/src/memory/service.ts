@@ -58,7 +58,7 @@ export type MemoryScopeOpts = {
   readonly scope?: string;
 };
 
-export class MemoryGatewayService extends Context.Tag("clawql/inference/MemoryGatewayService")<
+export class MemoryGatewayService extends Context.Service<
   MemoryGatewayService,
   {
     readonly ingest: (input: MemoryIngestInput) => Effect.Effect<MemoryIngestResult>;
@@ -75,7 +75,7 @@ export class MemoryGatewayService extends Context.Tag("clawql/inference/MemoryGa
     ) => Effect.Effect<MemoryGetResult | MemoryEraseResult>;
     readonly erase: (slug: string, scope?: string) => Effect.Effect<MemoryEraseResult>;
   }
->() {}
+>()("clawql/inference/MemoryGatewayService") {}
 
 function requireVault(): string {
   const vault = getObsidianVaultPath();
@@ -138,7 +138,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
     Effect.tryPromise({
       try: () => runMemoryIngest(input),
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(Effect.catchAll((e) => Effect.succeed({ ok: false as const, error: e.message }))),
+    }).pipe(Effect.catch((e) => Effect.succeed({ ok: false as const, error: e.message }))),
 
   search: (input, scope) =>
     Effect.tryPromise({
@@ -151,7 +151,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.succeed({
           ok: false as const,
           query: input.query,
@@ -173,7 +173,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
         };
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(Effect.catchAll((e) => Effect.succeed({ ok: false as const, error: e.message }))),
+    }).pipe(Effect.catch((e) => Effect.succeed({ ok: false as const, error: e.message }))),
 
   get: (slug, scope) =>
     Effect.tryPromise({
@@ -190,7 +190,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catchAll((e) => {
+      Effect.catch((e) => {
         const msg = e.message;
         const status = /ENOENT|no such file|outside key scope/i.test(msg) ? 404 : 502;
         return Effect.succeed({
@@ -226,7 +226,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
       },
       catch: (e) => (e instanceof Error ? e : new Error(String(e))),
     }).pipe(
-      Effect.catchAll((e) => {
+      Effect.catch((e) => {
         const msg = e.message;
         const status = /ENOENT|no such file|outside key scope/i.test(msg) ? 404 : 502;
         return Effect.succeed({

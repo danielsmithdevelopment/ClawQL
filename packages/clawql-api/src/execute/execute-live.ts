@@ -45,7 +45,7 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
               argKeys: Object.keys(args),
             });
             yield* appendProcessWormEffect(attempt);
-          }).pipe(Effect.catchAll(() => Effect.void));
+          }).pipe(Effect.catch(() => Effect.void));
 
           const content = yield* executeClawqlOperationEffect(
             {
@@ -64,7 +64,7 @@ export function makeExecuteLive(loadSpecFn: LoadSpecFn = loadSpec): Layer.Layer<
               detail: ok ? undefined : content[0]?.text?.slice(0, 500),
             });
             yield* appendProcessWormEffect(result);
-          }).pipe(Effect.catchAll(() => Effect.void));
+          }).pipe(Effect.catch(() => Effect.void));
 
           return { content };
         }),

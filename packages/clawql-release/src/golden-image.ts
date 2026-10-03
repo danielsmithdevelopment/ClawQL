@@ -5,6 +5,7 @@ import { readReleaseConfig } from "./config.js";
 import { ensureReleaseSigningKey, signBytes } from "./sign.js";
 import { sha256Utf8Hex } from "./hash.js";
 import type { ImageRecord } from "./types.js";
+import { Effect } from "effect";
 
 export type GoldenImageBuildOptions = {
   rootDir: string;
@@ -26,7 +27,7 @@ export type GoldenImageBuildResult = {
  * for the release manifest. Uses cosign when available; always writes an
  * Ed25519-signed attestation document for verify.
  */
-export async function buildGoldenImages(
+async function buildGoldenImagesImpl(
   options: GoldenImageBuildOptions
 ): Promise<GoldenImageBuildResult> {
   const config = await readReleaseConfig(options.rootDir);
@@ -111,4 +112,22 @@ export async function buildGoldenImages(
     signed: true,
     detail,
   };
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Build golden-image attestations for release manifests (Effect-primary). */
+export function buildGoldenImagesEffect(
+  options: GoldenImageBuildOptions
+): Effect.Effect<GoldenImageBuildResult, Error> {
+  return Effect.tryPromise({ try: () => buildGoldenImagesImpl(options), catch: fsError });
+}
+
+/** Promise façade for callers that still await golden-image builds. */
+export async function buildGoldenImages(
+  options: GoldenImageBuildOptions
+): Promise<GoldenImageBuildResult> {
+  return Effect.runPromise(buildGoldenImagesEffect(options));
 }

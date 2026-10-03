@@ -2,6 +2,9 @@
  * Optional Cuckoo + Merkle artifacts beside `vault_document` / `vault_chunk` (issues #25 / #37).
  */
 
+import { Effect } from "effect";
+import { MemoryError } from "../effect/memory-errors.js";
+import { memoryFromPromise } from "../effect/memory-effect-utils.js";
 import type { Database } from "sql.js";
 import {
   buildMerkleSnapshot,
@@ -96,38 +99,48 @@ export function rebuildSqliteMemoryArtifacts(db: Database): MemoryArtifactPayloa
   return { cuckooBlob, merkle };
 }
 
-export async function syncMemoryArtifactsToPostgres(
+export function syncMemoryArtifactsToPostgresEffect(
   cuckooBlob: Uint8Array | null,
   merkle: { rootHex: string; leafCount: number; treeHeight: number } | null
-): Promise<void> {
-  const pool = getPostgresVectorPool();
-  if (!pool) return;
-  if (!cuckooBlob && !merkle) return;
+): Effect.Effect<void, MemoryError> {
+  return memoryFromPromise(async () => {
+    const pool = getPostgresVectorPool();
+    if (!pool) return;
+    if (!cuckooBlob && !merkle) return;
 
-  const client = await pool.connect();
-  try {
-    await ensurePgVectorSchema(client);
-    if (cuckooBlob) {
-      await client.query(
-        `INSERT INTO clawql_cuckoo_chunk_membership (id, filter_blob, updated_at)
+    const client = await pool.connect();
+    try {
+      await ensurePgVectorSchema(client);
+      if (cuckooBlob) {
+        await client.query(
+          `INSERT INTO clawql_cuckoo_chunk_membership (id, filter_blob, updated_at)
          VALUES (1, $1, NOW())
          ON CONFLICT (id) DO UPDATE SET filter_blob = EXCLUDED.filter_blob, updated_at = NOW()`,
-        [Buffer.from(cuckooBlob)]
-      );
-    }
-    if (merkle) {
-      await client.query(
-        `INSERT INTO clawql_vault_merkle (id, root_hex, leaf_count, tree_height, built_at)
+          [Buffer.from(cuckooBlob)]
+        );
+      }
+      if (merkle) {
+        await client.query(
+          `INSERT INTO clawql_vault_merkle (id, root_hex, leaf_count, tree_height, built_at)
          VALUES (1, $1, $2, $3, NOW())
          ON CONFLICT (id) DO UPDATE SET
            root_hex = EXCLUDED.root_hex,
            leaf_count = EXCLUDED.leaf_count,
            tree_height = EXCLUDED.tree_height,
            built_at = NOW()`,
-        [merkle.rootHex, merkle.leafCount, merkle.treeHeight]
-      );
+          [merkle.rootHex, merkle.leafCount, merkle.treeHeight]
+        );
+      }
+    } finally {
+      client.release();
     }
-  } finally {
-    client.release();
-  }
+  });
+}
+
+/** Promise façade. */
+export async function syncMemoryArtifactsToPostgres(
+  cuckooBlob: Uint8Array | null,
+  merkle: { rootHex: string; leafCount: number; treeHeight: number } | null
+): Promise<void> {
+  return Effect.runPromise(syncMemoryArtifactsToPostgresEffect(cuckooBlob, merkle));
 }

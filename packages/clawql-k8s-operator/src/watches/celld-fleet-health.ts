@@ -157,14 +157,11 @@ export function evaluateCelldFleetHealth(
   });
 }
 
-export class CelldFleetHealthService extends Context.Tag("clawql/CelldFleetHealthService")<
-  CelldFleetHealthService,
-  {
+export class CelldFleetHealthService extends Context.Service<CelldFleetHealthService, {
     readonly check: (args: FleetHealthCheckArgs) => Effect.Effect<FleetHealthReport>;
-  }
->() {}
+  }>()("clawql/CelldFleetHealthService") {}
 
-export function makeCelldFleetHealthService(): Context.Tag.Service<typeof CelldFleetHealthService> {
+export function makeCelldFleetHealthService(): Context.Service.Shape<typeof CelldFleetHealthService> {
   return {
     check: (args) => evaluateCelldFleetHealth(args),
   };
@@ -177,7 +174,7 @@ export const CelldFleetHealthLive: Layer.Layer<CelldFleetHealthService> = Layer.
 
 /** Run fleet health and enqueue drop signals onto BurstWatchStub. */
 export function enqueueFleetHealthToStub(
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   args: FleetHealthCheckArgs
 ): Effect.Effect<FleetHealthReport, never, CelldFleetHealthService> {
   return Effect.gen(function* () {

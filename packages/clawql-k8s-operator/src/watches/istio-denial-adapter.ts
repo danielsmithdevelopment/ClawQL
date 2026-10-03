@@ -141,9 +141,7 @@ export function watchEventFromIstioAccessLogLine(
   });
 }
 
-export class IstioDenialWatchService extends Context.Tag("clawql/IstioDenialWatchService")<
-  IstioDenialWatchService,
-  {
+export class IstioDenialWatchService extends Context.Service<IstioDenialWatchService, {
     readonly ingestLine: (
       line: string
     ) => Effect.Effect<
@@ -155,10 +153,9 @@ export class IstioDenialWatchService extends Context.Tag("clawql/IstioDenialWatc
       readonly parseErrors: number;
       readonly skippedNonDenials: number;
     }>;
-  }
->() {}
+  }>()("clawql/IstioDenialWatchService") {}
 
-export function makeIstioDenialWatchService(): Context.Tag.Service<typeof IstioDenialWatchService> {
+export function makeIstioDenialWatchService(): Context.Service.Shape<typeof IstioDenialWatchService> {
   return {
     ingestLine: (line) => watchEventFromIstioAccessLogLine(line),
     ingestNdjson: (body) =>
@@ -168,16 +165,16 @@ export function makeIstioDenialWatchService(): Context.Tag.Service<typeof IstioD
         let skippedNonDenials = 0;
         for (const line of body.split(/\r?\n/)) {
           if (!line.trim()) continue;
-          const result = yield* watchEventFromIstioAccessLogLine(line).pipe(Effect.either);
-          if (result._tag === "Left") {
+          const result = yield* watchEventFromIstioAccessLogLine(line).pipe(Effect.result);
+          if (result._tag === "Failure") {
             parseErrors += 1;
             continue;
           }
-          if (result.right === null) {
+          if (result.success === null) {
             skippedNonDenials += 1;
             continue;
           }
-          events.push(result.right);
+          events.push(result.success);
         }
         return { events, parseErrors, skippedNonDenials };
       }),
@@ -191,7 +188,7 @@ export const IstioDenialWatchLive: Layer.Layer<IstioDenialWatchService> = Layer.
 
 /** Push parsed denials onto BurstWatchStub. */
 export function enqueueIstioNdjsonToStub(
-  stub: Context.Tag.Service<typeof BurstWatchStub>,
+  stub: Context.Service.Shape<typeof BurstWatchStub>,
   body: string
 ): Effect.Effect<
   { readonly enqueued: number; readonly parseErrors: number; readonly skippedNonDenials: number },

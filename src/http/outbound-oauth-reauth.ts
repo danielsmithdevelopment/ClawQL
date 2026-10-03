@@ -25,7 +25,7 @@ export function createTelegramOnReauthRequired(
     notifyReauthRequiredEffect(notifier, error, {
       channel: "telegram",
       notifyTarget: env.YOUR_TELEGRAM_USER_ID?.trim() || env.TELEGRAM_CHAT_ID?.trim(),
-    }).pipe(Effect.catchAll(() => Effect.void));
+    }).pipe(Effect.catch(() => Effect.void));
 }
 
 /**

@@ -3,12 +3,13 @@ import { DEFAULT_INFERENCE_MODEL_CATALOG, type InferenceModelCatalog } from "./d
 
 export type { CatalogModel, InferenceModelCatalog } from "./default-catalog.js";
 export { DEFAULT_INFERENCE_MODEL_CATALOG } from "./default-catalog.js";
+import { Effect } from "effect";
 
 /**
  * Load catalog from `CLAWQL_INFERENCE_CATALOG_PATH` when set; otherwise the
  * built-in curated BYOK catalog.
  */
-export async function loadInferenceModelCatalog(
+async function loadInferenceModelCatalogImpl(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<InferenceModelCatalog> {
   const path = env.CLAWQL_INFERENCE_CATALOG_PATH?.trim();
@@ -27,6 +28,22 @@ export async function loadInferenceModelCatalog(
   } catch {
     return DEFAULT_INFERENCE_MODEL_CATALOG;
   }
+}
+
+export function loadInferenceModelCatalogEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<InferenceModelCatalog, Error> {
+  return Effect.tryPromise({
+    try: () => loadInferenceModelCatalogImpl(env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadInferenceModelCatalogEffect} for Effect callers. */
+export async function loadInferenceModelCatalog(
+  env: NodeJS.ProcessEnv = process.env
+): Promise<InferenceModelCatalog> {
+  return Effect.runPromise(loadInferenceModelCatalogEffect(env));
 }
 
 export function resolveCatalogAlias(modelId: string, catalog: InferenceModelCatalog): string {

@@ -49,10 +49,10 @@ function action(
 describe("loadOutboundPaymentPolicy", () => {
   it("rejects requireDocumentedJustification !== true", async () => {
     const bad = { ...basePolicy, requireDocumentedJustification: false };
-    const result = await Effect.runPromise(Effect.either(loadOutboundPaymentPolicy(bad)));
-    expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left).toMatchObject({
+    const result = await Effect.runPromise(Effect.result(loadOutboundPaymentPolicy(bad)));
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure).toMatchObject({
         reason: expect.stringContaining("requireDocumentedJustification"),
       });
     }
@@ -60,14 +60,14 @@ describe("loadOutboundPaymentPolicy", () => {
 
   it("rejects omit of requireDocumentedJustification", async () => {
     const { requireDocumentedJustification: _, ...rest } = basePolicy;
-    const result = await Effect.runPromise(Effect.either(loadOutboundPaymentPolicy(rest)));
-    expect(result._tag).toBe("Left");
+    const result = await Effect.runPromise(Effect.result(loadOutboundPaymentPolicy(rest)));
+    expect(result._tag).toBe("Failure");
   });
 
   it("rejects blank documentedJustificationId", async () => {
     const bad = { ...basePolicy, documentedJustificationId: "  " };
-    const result = await Effect.runPromise(Effect.either(loadOutboundPaymentPolicy(bad)));
-    expect(result._tag).toBe("Left");
+    const result = await Effect.runPromise(Effect.result(loadOutboundPaymentPolicy(bad)));
+    expect(result._tag).toBe("Failure");
   });
 
   it("accepts a valid policy and returns versionId", async () => {
@@ -83,11 +83,11 @@ describe("loadOutboundPaymentPolicy", () => {
       hostsAllowlist: [...basePolicy.hostsAllowlist, "evil.example"],
     };
     const result = await Effect.runPromise(
-      Effect.either(loadOutboundPaymentPolicy(widened, previous))
+      Effect.result(loadOutboundPaymentPolicy(widened, previous))
     );
-    expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left).toMatchObject({
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure).toMatchObject({
         reason: expect.stringContaining("hostsAllowlist_widen"),
       });
     }
@@ -97,9 +97,9 @@ describe("loadOutboundPaymentPolicy", () => {
     const previous = (await Effect.runPromise(loadOutboundPaymentPolicy(basePolicy))).policy;
     const raised = { ...basePolicy, maxUsdcPerCall: "1" };
     const result = await Effect.runPromise(
-      Effect.either(loadOutboundPaymentPolicy(raised, previous))
+      Effect.result(loadOutboundPaymentPolicy(raised, previous))
     );
-    expect(result._tag).toBe("Left");
+    expect(result._tag).toBe("Failure");
   });
 
   it("allows narrowing hosts and lowering caps", async () => {

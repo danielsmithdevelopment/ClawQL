@@ -109,7 +109,7 @@ export function maybeSignAwsRequestEffect(
   );
 }
 
-export class AwsSigV4Service extends Context.Tag("clawql/AwsSigV4Service")<
+export class AwsSigV4Service extends Context.Service<
   AwsSigV4Service,
   {
     readonly maybeSign: (
@@ -120,7 +120,7 @@ export class AwsSigV4Service extends Context.Tag("clawql/AwsSigV4Service")<
       specLabel?: string
     ) => Effect.Effect<AwsSignableRequestInit | undefined, AwsSigV4Error>;
   }
->() {}
+>()("clawql/AwsSigV4Service") {}
 
 /** Live SigV4 service backed by `process.env` AWS credentials/region. */
 export const AwsSigV4ServiceLive = Layer.succeed(

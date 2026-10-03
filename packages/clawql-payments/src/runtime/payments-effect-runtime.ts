@@ -29,6 +29,13 @@ import { creditsActivityLiveLayer } from "../credits/activity.js";
 import { creditsInviteEmailLiveLayer } from "../credits/invite-email.js";
 import { creditsStepUpLiveLayer } from "../credits/step-up.js";
 import { achTopupLiveLayer } from "../credits/ach-topup-service.js";
+import { orgCreditsLiveLayer } from "../credits/org.js";
+import { orgSpendLiveLayer } from "../credits/org-spend.js";
+import { orgWaterfallLiveLayer } from "../credits/org-waterfall.js";
+import { orgMetricsLiveLayer } from "../credits/org-metrics.js";
+import { usdcSendLiveLayer } from "../payouts/usdc-send.js";
+import { cloudflareWalletStoreLiveLayer } from "../cloudflare-wallets/store.js";
+import { x402WalletLiveLayer } from "../x402/wallet.js";
 import { pendingActionsLiveLayer } from "../compensation/pending-actions.js";
 import { compensationAccountsLiveLayer } from "../compensation/accounts.js";
 import { agentCompensationLiveLayer } from "../compensation/agent-compensation-service.js";
@@ -99,6 +106,13 @@ export type PaymentsServices =
   | import("../credits/invite-email.js").CreditsInviteEmailService
   | import("../credits/step-up.js").CreditsStepUpService
   | import("../credits/ach-topup-service.js").AchTopupService
+  | import("../credits/org.js").OrgCreditsService
+  | import("../credits/org-spend.js").OrgSpendService
+  | import("../credits/org-waterfall.js").OrgWaterfallService
+  | import("../credits/org-metrics.js").OrgMetricsService
+  | import("../payouts/usdc-send.js").UsdcSendService
+  | import("../cloudflare-wallets/store.js").CloudflareWalletStoreService
+  | import("../x402/wallet.js").X402WalletService
   | import("../compensation/pending-actions.js").PendingActionsService
   | import("../compensation/accounts.js").CompensationAccountsService
   | import("../compensation/agent-compensation-service.js").AgentCompensationService
@@ -193,9 +207,16 @@ export function paymentsServicesLiveLayer(
   const stripeBilling = stripeBillingLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeClient, config))
   );
+  const orgCredits = orgCreditsLiveLayer(env);
+  const orgSpend = orgSpendLiveLayer(env);
+  const orgWaterfall = orgWaterfallLiveLayer(env);
+  const orgMetrics = orgMetricsLiveLayer(env);
+  const usdcSend = usdcSendLiveLayer(env);
+  const cloudflareWalletStore = cloudflareWalletStoreLiveLayer(env);
+  const x402Wallet = x402WalletLiveLayer().pipe(Layer.provide(config));
   const issuedApiKeys = issuedApiKeyStoreLiveLayer(env);
   const provisioning = provisionOrgLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger))
+    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger, orgCredits))
   );
   const reportUsage = reportUsageLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeMeter, usage, audit))
@@ -253,6 +274,13 @@ export function paymentsServicesLiveLayer(
     stepUp,
     credits,
     achTopup,
+    orgCredits,
+    orgSpend,
+    orgWaterfall,
+    orgMetrics,
+    usdcSend,
+    cloudflareWalletStore,
+    x402Wallet,
     pendingActions,
     compensationAccounts,
     compensation,

@@ -4,6 +4,7 @@
 
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { Effect } from "effect";
 import { getLocalProvidersVaultPath } from "../onboarding/paths.js";
 import { buildProvidersVaultPayload, vaultProviderDataToEnv } from "./catalog.js";
 
@@ -14,9 +15,11 @@ export type LocalProvidersVault = {
   readonly data: Record<string, string>;
 };
 
-export async function readLocalProvidersVault(
-  vaultPath = getLocalProvidersVaultPath()
-): Promise<LocalProvidersVault | null> {
+function asError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+async function readLocalProvidersVaultImpl(vaultPath: string): Promise<LocalProvidersVault | null> {
   try {
     const raw = await readFile(vaultPath, "utf8");
     const parsed = JSON.parse(raw) as unknown;
@@ -35,9 +38,25 @@ export async function readLocalProvidersVault(
   }
 }
 
-export async function writeLocalProvidersVault(
-  data: Record<string, string>,
+export function readLocalProvidersVaultEffect(
   vaultPath = getLocalProvidersVaultPath()
+): Effect.Effect<LocalProvidersVault | null, Error> {
+  return Effect.tryPromise({
+    try: () => readLocalProvidersVaultImpl(vaultPath),
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link readLocalProvidersVaultEffect}. */
+export async function readLocalProvidersVault(
+  vaultPath = getLocalProvidersVaultPath()
+): Promise<LocalProvidersVault | null> {
+  return Effect.runPromise(readLocalProvidersVaultEffect(vaultPath));
+}
+
+async function writeLocalProvidersVaultImpl(
+  data: Record<string, string>,
+  vaultPath: string
 ): Promise<void> {
   await mkdir(dirname(vaultPath), { recursive: true });
   const cleaned: Record<string, string> = {};
@@ -52,15 +71,43 @@ export async function writeLocalProvidersVault(
   await chmod(vaultPath, PROVIDERS_FILE_MODE);
 }
 
+export function writeLocalProvidersVaultEffect(
+  data: Record<string, string>,
+  vaultPath = getLocalProvidersVaultPath()
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => writeLocalProvidersVaultImpl(data, vaultPath),
+    catch: asError,
+  });
+}
+
+/** Promise façade — prefer {@link writeLocalProvidersVaultEffect}. */
+export async function writeLocalProvidersVault(
+  data: Record<string, string>,
+  vaultPath = getLocalProvidersVaultPath()
+): Promise<void> {
+  return Effect.runPromise(writeLocalProvidersVaultEffect(data, vaultPath));
+}
+
+export function mergeEnvIntoLocalProvidersVaultEffect(
+  env: Record<string, string>,
+  vaultPath = getLocalProvidersVaultPath()
+): Effect.Effect<LocalProvidersVault, Error> {
+  return Effect.gen(function* () {
+    const incoming = buildProvidersVaultPayload(env);
+    const existing = (yield* readLocalProvidersVaultEffect(vaultPath))?.data ?? {};
+    const merged = { ...existing, ...incoming };
+    yield* writeLocalProvidersVaultEffect(merged, vaultPath);
+    return { path: vaultPath, data: merged };
+  });
+}
+
+/** Promise façade — prefer {@link mergeEnvIntoLocalProvidersVaultEffect}. */
 export async function mergeEnvIntoLocalProvidersVault(
   env: Record<string, string>,
   vaultPath = getLocalProvidersVaultPath()
 ): Promise<LocalProvidersVault> {
-  const incoming = buildProvidersVaultPayload(env);
-  const existing = (await readLocalProvidersVault(vaultPath))?.data ?? {};
-  const merged = { ...existing, ...incoming };
-  await writeLocalProvidersVault(merged, vaultPath);
-  return { path: vaultPath, data: merged };
+  return Effect.runPromise(mergeEnvIntoLocalProvidersVaultEffect(env, vaultPath));
 }
 
 /** Apply local vault secrets to `process.env` (does not override already-set keys). */

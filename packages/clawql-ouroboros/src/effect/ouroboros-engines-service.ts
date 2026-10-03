@@ -56,7 +56,7 @@ export function resetOuroborosEnginesForTests(): void {
 }
 
 /** Effect service for Wonder / Reflect / Executor / Evaluator engines. */
-export class OuroborosEnginesService extends Context.Tag("clawql/OuroborosEnginesService")<
+export class OuroborosEnginesService extends Context.Service<
   OuroborosEnginesService,
   {
     readonly getEngines: () => OuroborosEngines;
@@ -82,7 +82,7 @@ export class OuroborosEnginesService extends Context.Tag("clawql/OuroborosEngine
       ctx?: EngineCallContext
     ) => Effect.Effect<EvaluationSummary, OuroborosError>;
   }
->() {}
+>()("clawql/OuroborosEnginesService") {}
 
 export function ouroborosEnginesLiveLayer(): Layer.Layer<OuroborosEnginesService> {
   return Layer.succeed(

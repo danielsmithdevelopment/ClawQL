@@ -37,7 +37,7 @@ export function recallSyncDocumentsOnScanEffect(
     const db = yield* MemoryDbService;
     if (!db.recallSyncDbEnabled()) return;
     yield* db.syncMemoryDbFromDocuments(vault, docs).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] memory.db sync on recall failed: ${err.reason}`);
         })
@@ -57,7 +57,7 @@ export function recallWikilinkEdgesEffect(
       return [];
     }
     return yield* db.loadWikilinkEdgesFromDatabase(vault, [...documentPaths]).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] memory.db wikilink merge failed: ${err.reason}`);
           return [];
@@ -88,7 +88,7 @@ export function recallMerkleSnapshotEffect(
     }
     const db = yield* MemoryDbService;
     return yield* db.loadVaultMerkleSnapshotFromDb(vault).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] memory_recall merkle snapshot load failed: ${err.reason}`);
           return null;
@@ -125,7 +125,7 @@ export function loadRecallArtifactsEffect(
         loadMerkle: wantMerkle,
       })
       .pipe(
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.sync(() => {
             console.error(`[clawql-mcp] memory_recall artifact load failed: ${err.reason}`);
             return null;
@@ -179,7 +179,7 @@ export function computeRecallVectorScoresEffect(
             maxDocs: input.maxDocs,
           })
         ).pipe(
-          Effect.catchAll((err) =>
+          Effect.catch((err) =>
             Effect.sync(() => {
               console.error(
                 `[clawql-mcp] memory_recall pgvector query failed, trying memory.db: ${err.reason}`
@@ -216,7 +216,7 @@ export function computeRecallVectorScoresEffect(
         recallArtifacts,
       } satisfies RecallVectorPassResult;
     }).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] memory_recall vector pass failed: ${err.reason}`);
           return empty;

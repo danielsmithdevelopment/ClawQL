@@ -192,7 +192,7 @@ type ResolveContactPayeeResult = {
 };
 
 /** Effect surface over the per-tenant contacts book (frequent payees). */
-export class CreditsContactsService extends Context.Tag("clawql/CreditsContactsService")<
+export class CreditsContactsService extends Context.Service<
   CreditsContactsService,
   {
     readonly list: (ownerTenantId: string) => Effect.Effect<ContactEntry[], ContactsError>;
@@ -213,7 +213,7 @@ export class CreditsContactsService extends Context.Tag("clawql/CreditsContactsS
     ) => Effect.Effect<ResolveContactPayeeResult, ContactsError>;
     readonly reset: () => Effect.Effect<void, ContactsError>;
   }
->() {}
+>()("clawql/CreditsContactsService") {}
 
 export function creditsContactsLiveLayer(
   env: NodeJS.ProcessEnv = process.env

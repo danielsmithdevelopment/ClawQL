@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { ReleaseConfigV1 } from "./types.js";
 import { enableSignedCommitsByDefault } from "./sign.js";
 import { ensureWorkspacesGitignore } from "./workspace/index.js";
+import { Effect } from "effect";
 
 export const DEFAULT_RELEASE_CONFIG: ReleaseConfigV1 = {
   version: 1,
@@ -35,7 +36,7 @@ export function releaseConfigPath(rootDir: string): string {
   return join(rootDir, ".clawql", "release.json");
 }
 
-export async function readReleaseConfig(rootDir: string): Promise<ReleaseConfigV1> {
+async function readReleaseConfigImpl(rootDir: string): Promise<ReleaseConfigV1> {
   const path = releaseConfigPath(rootDir);
   try {
     const raw = await readFile(path, "utf8");
@@ -69,7 +70,7 @@ export type InitReleaseOptions = {
   skipSigningSetup?: boolean;
 };
 
-export async function writeReleaseConfig(
+async function writeReleaseConfigImpl(
   rootDir: string,
   config?: ReleaseConfigV1,
   options: InitReleaseOptions = {}
@@ -106,4 +107,39 @@ export async function writeReleaseConfig(
   }
 
   return path;
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Read merged release config (Effect-primary). Missing file → defaults. */
+export function readReleaseConfigEffect(rootDir: string): Effect.Effect<ReleaseConfigV1, Error> {
+  return Effect.tryPromise({ try: () => readReleaseConfigImpl(rootDir), catch: fsError });
+}
+
+/** Promise façade for callers that still await release config reads. */
+export async function readReleaseConfig(rootDir: string): Promise<ReleaseConfigV1> {
+  return Effect.runPromise(readReleaseConfigEffect(rootDir));
+}
+
+/** Write release config + clawql gitignore scaffolding (Effect-primary). */
+export function writeReleaseConfigEffect(
+  rootDir: string,
+  config?: ReleaseConfigV1,
+  options: InitReleaseOptions = {}
+): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => writeReleaseConfigImpl(rootDir, config, options),
+    catch: fsError,
+  });
+}
+
+/** Promise façade for callers that still await release config writes. */
+export async function writeReleaseConfig(
+  rootDir: string,
+  config?: ReleaseConfigV1,
+  options: InitReleaseOptions = {}
+): Promise<string> {
+  return Effect.runPromise(writeReleaseConfigEffect(rootDir, config, options));
 }

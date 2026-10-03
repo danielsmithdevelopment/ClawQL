@@ -21,6 +21,7 @@ import {
   createBridgeJwtExpressMiddleware,
   createBridgeJwtGrpcInterceptor,
 } from "./jwt-gate.js";
+import { Effect } from "effect";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -152,10 +153,10 @@ function jsonRpcError(res: import("express").Response, message: string, code = -
   });
 }
 
-export async function createPanguardBridgeApp(options?: {
+async function createPanguardBridgeAppImpl(options?: {
   upstreamUrl?: string;
   shimPath?: string;
-}): Promise<Express> {
+}): Promise<Express>  {
   const upstreamUrl = options?.upstreamUrl ?? resolveUpstreamUrl();
   const shimPath = options?.shimPath ?? resolveShimEntry();
   const mcpPath = process.env.MCP_PATH?.trim() || DEFAULT_MCP_PATH;
@@ -277,6 +278,24 @@ export async function createPanguardBridgeApp(options?: {
   });
 
   return app;
+}
+
+export function createPanguardBridgeAppEffect(options?: {
+  upstreamUrl?: string;
+  shimPath?: string;
+}): Effect.Effect<Express, Error> {
+  return Effect.tryPromise({
+    try: () => createPanguardBridgeAppImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link createPanguardBridgeAppEffect} for Effect callers. */
+export async function createPanguardBridgeApp(options?: {
+  upstreamUrl?: string;
+  shimPath?: string;
+}): Promise<Express>  {
+  return Effect.runPromise(createPanguardBridgeAppEffect(options));
 }
 
 function grpcEnabledFromEnv(): boolean {

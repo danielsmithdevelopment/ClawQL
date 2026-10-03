@@ -8,8 +8,9 @@ import { mergeCustomSourceOperations } from "./custom-sources-merge.js";
 import { recordNativeMergeFromOperations } from "./native-protocol-metrics.js";
 import type { LoadedSpec } from "./spec-loader.js";
 import type { Operation } from "./operation-types.js";
+import { Effect } from "effect";
 
-export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
+async function mergeNativeProtocolOperationsImpl(loaded: LoadedSpec): Promise<LoadedSpec> {
   let gql: Operation[] = [];
   let grpc: Operation[] = [];
   try {
@@ -58,4 +59,18 @@ export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise
     ...loaded,
     operations: merged,
   });
+}
+
+export function mergeNativeProtocolOperationsEffect(
+  loaded: LoadedSpec
+): Effect.Effect<LoadedSpec, Error> {
+  return Effect.tryPromise({
+    try: () => mergeNativeProtocolOperationsImpl(loaded),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link mergeNativeProtocolOperationsEffect} for Effect callers. */
+export async function mergeNativeProtocolOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
+  return Effect.runPromise(mergeNativeProtocolOperationsEffect(loaded));
 }

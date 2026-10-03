@@ -38,7 +38,7 @@ async function saveFile(file: PrefFile, env: NodeJS.ProcessEnv): Promise<void> {
 }
 
 /** @deprecated Prefer PayoutPreferencesService.get — Promise façade retained for legacy callers. */
-export async function getCreatorPayoutPreference(
+async function getCreatorPayoutPreferenceImpl(
   creatorId: string,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<CreatorPayoutPreference | undefined> {
@@ -46,8 +46,26 @@ export async function getCreatorPayoutPreference(
   return file.creators[creatorId.trim()];
 }
 
+export function getCreatorPayoutPreferenceEffect(
+  creatorId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreatorPayoutPreference | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => getCreatorPayoutPreferenceImpl(creatorId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link getCreatorPayoutPreferenceEffect} for Effect callers. */
+export async function getCreatorPayoutPreference(
+  creatorId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreatorPayoutPreference | undefined> {
+  return Effect.runPromise(getCreatorPayoutPreferenceEffect(creatorId, env));
+}
+
 /** @deprecated Prefer PayoutPreferencesService.set — Promise façade retained for legacy callers. */
-export async function setCreatorPayoutPreference(
+async function setCreatorPayoutPreferenceImpl(
   input: {
     creatorId: string;
     method: PayoutMethod;
@@ -71,6 +89,36 @@ export async function setCreatorPayoutPreference(
   return pref;
 }
 
+export function setCreatorPayoutPreferenceEffect(
+  input: {
+    creatorId: string;
+    method: PayoutMethod;
+    connectAccountId?: string;
+    usdcWallet?: string;
+    email?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<CreatorPayoutPreference, Error> {
+  return Effect.tryPromise({
+    try: () => setCreatorPayoutPreferenceImpl(input, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link setCreatorPayoutPreferenceEffect} for Effect callers. */
+export async function setCreatorPayoutPreference(
+  input: {
+    creatorId: string;
+    method: PayoutMethod;
+    connectAccountId?: string;
+    usdcWallet?: string;
+    email?: string;
+  },
+  env: NodeJS.ProcessEnv = process.env
+): Promise<CreatorPayoutPreference> {
+  return Effect.runPromise(setCreatorPayoutPreferenceEffect(input, env));
+}
+
 export class PayoutPreferencesError extends Data.TaggedError("PayoutPreferencesError")<{
   readonly reason: string;
   readonly cause?: unknown;
@@ -79,7 +127,7 @@ export class PayoutPreferencesError extends Data.TaggedError("PayoutPreferencesE
 type SetCreatorPayoutPreferenceInput = Parameters<typeof setCreatorPayoutPreference>[0];
 
 /** Effect surface over creator payout preferences (bank / USDC destination + connect account). */
-export class PayoutPreferencesService extends Context.Tag("clawql/PayoutPreferencesService")<
+export class PayoutPreferencesService extends Context.Service<
   PayoutPreferencesService,
   {
     readonly get: (
@@ -89,7 +137,7 @@ export class PayoutPreferencesService extends Context.Tag("clawql/PayoutPreferen
       input: SetCreatorPayoutPreferenceInput
     ) => Effect.Effect<CreatorPayoutPreference, PayoutPreferencesError>;
   }
->() {}
+>()("clawql/PayoutPreferencesService") {}
 
 export function payoutPreferencesLiveLayer(
   env: NodeJS.ProcessEnv = process.env

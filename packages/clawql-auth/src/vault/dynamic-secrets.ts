@@ -87,7 +87,7 @@ export class VaultDynamicSecretProvider {
   }
 
   getDynamicSecret(rolePath: string): Effect.Effect<VaultDynamicLease, VaultDynamicSecretError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const path = rolePath.replace(/^\/+/, "");
       const res = yield* Effect.tryPromise({
         try: () =>
@@ -136,7 +136,7 @@ export class VaultDynamicSecretProvider {
   renewIfNeeded(
     lease: VaultDynamicLease
   ): Effect.Effect<VaultDynamicLease, VaultDynamicSecretError> {
-    return Effect.gen(this, function* () {
+    return Effect.gen({ self: this }, function* () {
       const remainingSec = Math.floor((lease.expiresAtMs - this.now()) / 1000);
       if (!lease.renewable || remainingSec > this.proactiveRenewSeconds) {
         return lease;
@@ -185,7 +185,7 @@ export function createVaultDynamicSecretProvider(
   return new VaultDynamicSecretProvider(options);
 }
 
-export class VaultDynamicSecretService extends Context.Tag("clawql/VaultDynamicSecretService")<
+export class VaultDynamicSecretService extends Context.Service<
   VaultDynamicSecretService,
   {
     readonly getDynamicSecret: (
@@ -195,7 +195,7 @@ export class VaultDynamicSecretService extends Context.Tag("clawql/VaultDynamicS
       lease: VaultDynamicLease
     ) => Effect.Effect<VaultDynamicLease, VaultDynamicSecretError>;
   }
->() {}
+>()("clawql/VaultDynamicSecretService") {}
 
 export function createVaultDynamicSecretServiceLayer(
   options: VaultDynamicSecretProviderOptions

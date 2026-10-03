@@ -26,7 +26,7 @@ export type ParkInput = {
 
 export type ResumeDecision = "approve" | "decline";
 
-export class PendingExecutionService extends Context.Tag("clawql/PendingExecutionService")<
+export class PendingExecutionService extends Context.Service<
   PendingExecutionService,
   {
     readonly park: (input: ParkInput) => Effect.Effect<ParkExecuteResult, Error>;
@@ -45,7 +45,7 @@ export class PendingExecutionService extends Context.Tag("clawql/PendingExecutio
       home?: string
     ) => Effect.Effect<PendingExecutionRecord, Error>;
   }
->() {}
+>()("clawql/PendingExecutionService") {}
 
 function isExpired(record: PendingExecutionRecord, now = Date.now()): boolean {
   return Date.parse(record.expiresAt) <= now;

@@ -7,15 +7,12 @@ export class PanguardBridgeError extends Data.TaggedError("PanguardBridgeError")
 }> {}
 
 /** Registers MCP delegation handlers — Effect surface for bridge wiring. */
-export class PanguardBridgeService extends Context.Tag("clawql/PanguardBridgeService")<
-  PanguardBridgeService,
-  {
+export class PanguardBridgeService extends Context.Service<PanguardBridgeService, {
     readonly wireDelegation: (input: {
       server: Parameters<typeof wireDelegationHandlers>[0];
       client: Parameters<typeof wireDelegationHandlers>[1];
     }) => Effect.Effect<void, PanguardBridgeError>;
-  }
->() {}
+  }>()("clawql/PanguardBridgeService") {}
 
 export const PanguardBridgeServiceLive = Layer.succeed(
   PanguardBridgeService,

@@ -9,12 +9,12 @@ export type SearchOutput = {
   readonly formattedText: string;
 };
 
-export class SearchService extends Context.Tag("clawql/SearchService")<
+export class SearchService extends Context.Service<
   SearchService,
   {
     readonly search: (input: SearchInput) => Effect.Effect<SearchOutput, Error>;
   }
->() {}
+>()("clawql/SearchService") {}
 
 export const searchNotConfigured = SearchService.of({
   search: () =>

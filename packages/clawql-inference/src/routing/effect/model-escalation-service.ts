@@ -69,7 +69,7 @@ function computeShouldTriggerAgentCoordination(
 }
 
 /** Effect service for frugal → standard → frontier model tier escalation. */
-export class ModelEscalationService extends Context.Tag("clawql/ModelEscalationService")<
+export class ModelEscalationService extends Context.Service<
   ModelEscalationService,
   {
     readonly initialTier: (ctx: {
@@ -86,7 +86,7 @@ export class ModelEscalationService extends Context.Tag("clawql/ModelEscalationS
       drift?: { combined: number }
     ) => Effect.Effect<boolean>;
   }
->() {}
+>()("clawql/ModelEscalationService") {}
 
 export function modelEscalationLiveLayer(
   config: ModelEscalationConfig
