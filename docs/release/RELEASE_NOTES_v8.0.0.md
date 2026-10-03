@@ -1,9 +1,9 @@
 ## clawql-mcp 8.0.0
 
 **npm:** [`clawql-mcp@8.0.0`](https://www.npmjs.com/package/clawql-mcp/v/8.0.0) (publish on tag `v8.0.0`)  
-**Full changelog:** [CHANGELOG.md#800---2026-10-02](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-10-02)  
-**Release date:** 2026-10-02 (prep; tag when checklist clears)  
-**Since:** `v7.2.0` (2026-08-04) — **~1836 commits**, **~261 merge PRs**
+**Full changelog:** [CHANGELOG.md#800---2026-10-03](https://github.com/danielsmithdevelopment/ClawQL/blob/main/CHANGELOG.md#800---2026-10-03)  
+**Release date:** 2026-10-03 (prep; tag when checklist clears)  
+**Since:** `v7.2.0` (2026-08-04) — **~1878 commits**, **~262 merge PRs**
 
 ---
 
@@ -15,7 +15,7 @@
 2. **`ProviderPlugin` only** — legacy `Plugin` bridge removed ([#999](https://github.com/danielsmithdevelopment/ClawQL/pull/999))
 3. **Tool-scope enforcement default off** — Panguard proxy is opt-in; boot warns if none active
 
-On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld**, **Fast Decision** + unified capability lifecycle, inference gateway ladder (`/v1`→`/mcp`→`/memory`→`/decision`→`/events`), operation-risk + execute pause/resume, toolkits + self-serve Stripe, product-surface purge (PageIndex/CodeGraph out), repo layout (`apps/` / `manifests/`), security status page, Learn/docs wave, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
+On top of that, 8.0 ships skills-unified search, Agent Seer scenarios, Managed Edge Gateway / enterprise control plane, payments/Effect hardening, **Effect v4.0.0** cutover (singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4), `clawql-web` / `clawql-data` / MCP UI, **`clawql-observability`** LGTM+/Faro, **`clawql-network`** / **`clawql-analytics`**, audit/TEE wedge, meta-ontology + ExtractBench, **Streams celld**, **Fast Decision** + unified capability lifecycle, inference gateway ladder (`/v1`→`/mcp`→`/memory`→`/decision`→`/events`), operation-risk + execute pause/resume, toolkits + self-serve Stripe, product-surface purge (PageIndex/CodeGraph out), repo layout (`apps/` / `manifests/`), security status page, Learn/docs wave, workspace **`0.1.0`** first-publish policy, OpenBench B-7, and Protocol Fabric / personal-agent surfaces.
 
 **ClawQL provides the Agentic Gateway as the Foundational Platform for Auditable Production AI.**
 
@@ -83,10 +83,11 @@ Without `CLAWQL_INSTANCE_SPEC`, composition uses **`CLAWQL_TIER`** (default **`s
 
 ---
 
-## What’s new since the Sep 7 refresh (through #1196)
+## What’s new since the Sep 7 refresh (through #1197)
 
 | Area                              | What landed                                                                                                                   | PRs                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Effect v4**                     | Production cutover to `effect@4.0.0` + `@effect/opentelemetry@4.0.0`; `Context.Service` / `Result` / Schema v4; platform folded into `effect`; closes [#1034](https://github.com/danielsmithdevelopment/ClawQL/issues/1034) | [#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)                                                                                                                                                                                                                                                                                                                                                        |
 | **Fast Decision**                 | GLiNER2/Decide calibrated classifier; held-out suites through v0.6; frontier adjudication GHA; productionTrusted gates        | [#1119](https://github.com/danielsmithdevelopment/ClawQL/pull/1119)–[#1149](https://github.com/danielsmithdevelopment/ClawQL/pull/1149) wave                                                                                                                                                                                                                                                                                |
 | **Capability lifecycle**          | Three-bucket `execute()` reachability; default-on MCP gate (`CLAWQL_CAPABILITY_LIFECYCLE=0` opt-out)                          | [#1119](https://github.com/danielsmithdevelopment/ClawQL/pull/1119), [#1121](https://github.com/danielsmithdevelopment/ClawQL/pull/1121)                                                                                                                                                                                                                                                                                    |
 | **Inference gateway ladder**      | `/v1` → `/mcp` → `/memory` → `/decision` → `/events`; crypto-shred erase; System One decision façade                          | [#1183](https://github.com/danielsmithdevelopment/ClawQL/pull/1183), [#1196](https://github.com/danielsmithdevelopment/ClawQL/pull/1196)                                                                                                                                                                                                                                                                                    |

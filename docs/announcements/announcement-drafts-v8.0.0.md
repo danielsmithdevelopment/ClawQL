@@ -37,6 +37,7 @@
 11. **Risk / HITL** — operation-risk-from-spec; execute pause/resume for mandates.
 12. **Purge honesty** — PageIndex + CodeGraph removed; ouroboros agent tools opt-in; Docling-default converters.
 13. **Credits / Effect** — hosted compliance (P2P off by default), HATEOAS auth gate, Effect-primary auth/payments; self-serve Stripe.
+14. **Effect v4.0.0** — singular `effect` + `@effect/opentelemetry`; `Context.Service` / `Result` / Schema v4 ([#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)).
 
 ### Why it matters
 
@@ -52,7 +53,7 @@ Regulated and air-gapped installs should not wake up with Cloudflare/GitHub/Slac
 
 Shipped **clawql-mcp 8.0.0** (semver-**major**).
 
-Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · skills-unified search · LGTM+/Faro observability · Streams **celld** · `clawql-network` + analytics · Learn/migrate-to-8 docs · Managed Edge Gateway.
+Headlines: **available ≠ loaded** providers · **`ProviderPlugin` hard break** · enforcement **opt-in** · **Effect v4** · skills-unified search · LGTM+/Faro observability · Streams **celld** · `clawql-network` + analytics · Learn/migrate-to-8 docs · Managed Edge Gateway.
 
 Pin `@8` · migrate: docs/getting-started/migrate-to-8.0.md · npm: clawql-mcp@8.0.0
 
