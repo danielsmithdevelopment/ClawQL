@@ -17,7 +17,7 @@ Do not auto-generate Istio `AuthorizationPolicy` from ATR scopes — that collap
 
 - `BurstArchitectureWORMEntryType` — append to existing `clawql-audit` trail only (includes `SessionRoutingWORMEntryType`: `THICC_SESSION_SPLIT`, `CELL_PLACEMENT_LOAD_AWARE`, `NEW_CAPACITY_PREFERRED_ROUTING`)
 - `detectMeshAtrDrift` — pure Effect comparison of mesh allow-set vs ATR allow-set
-- `BurstOperatorService` Context.Tag + Live layer
+- `BurstOperatorService` Context.Service + Live layer
 - `BurstWatchStub` / `BurstWatchLoop` — in-memory watch queue + drain loop
 - `BurstWatchSourcesService` — compose Pod + NodeClaim informers (+ optional Istio access-log tail + celld lease snapshot fleet health) onto the stub; unavailable without cluster/path/valid leases (fail-closed)
 - `PodInformerService` — `@kubernetes/client-node` Watch on pods → node_load / eviction events when kubeconfig works; otherwise unavailable

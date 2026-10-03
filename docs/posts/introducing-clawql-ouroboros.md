@@ -41,7 +41,7 @@ This focused scope keeps the library lightweight, fast, and easy to integrate.
 
 ### MCP in `clawql-mcp` (8.0+)
 
-In **`clawql-mcp`**, Ouroboros tools **always register** via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`): `clawql_think`, `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`, `ouroboros_measure_drift`. Older docs that required **`CLAWQL_ENABLE_OUROBOROS=1`** as a registration gate are obsolete; that flag is **deprecated** for tool load. **`clawql-ouroboros/mcp-hooks`** remains valid for **embedding** the library in a custom MCP host — it is not the production registration path for `clawql-mcp`. Langfuse eval stays opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`**.
+In **`clawql-mcp`**, Ouroboros tools register via **`clawql-harness`** only when **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** (or instance/tier `ouroboros.enabled: true`) — default **off** as of 8.0: `clawql_think`, `ouroboros_create_seed_from_document`, `ouroboros_run_evolutionary_loop`, `ouroboros_get_lineage_status`, `ouroboros_measure_drift`. The old **`CLAWQL_ENABLE_OUROBOROS`** name is **deleted**. **`clawql-ouroboros/mcp-hooks`** remains valid for **embedding** the library in a custom MCP host — it is not the production registration path for `clawql-mcp`. Langfuse eval stays opt-in via **`CLAWQL_ENABLE_LANGFUSE_EVAL`** (nested under the harness gate).
 
 ### 3) Architecture Shift: In-Process vs. Standalone
 
