@@ -34,7 +34,8 @@ docker build -f docker/Dockerfile --target runtime \
 | Field | Value |
 | --- | --- |
 | Git commit SHA (intended RC base at prep) | `159399c5e984ae9780a7fc06b4054f4c0d730e8d` (`origin/main` as of 2026-10-03) |
-| Local image tag | `clawql-mcp:rc-8.0.0` (fill after build) |
+| Local image tag | `clawql-mcp:rc-8.0.0` |
+| Local manifest list Id (not GHCR) | `sha256:310677dd24a0d39b4da1f5f8e0e4bcd6df9718d47df49e5fa7365e677c102b3e` |
 | **GHCR digest to paste into checklist §0** | _operator: after signed Docker publish of this SHA_ `ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:…` |
 | Cosign verified | [ ] |
 
