@@ -41,8 +41,6 @@ build_at() {
 
 scan_image() {
   local tag="$1" label="$2"
-  local sbom="${OUT_DIR}/sbom-${label}.cdx.json"
-  local trivy_json="${OUT_DIR}/trivy-${label}.json"
   local size_file="${OUT_DIR}/size-${label}.txt"
 
   docker image inspect "$tag" --format '{{.Size}}' >"$size_file"
