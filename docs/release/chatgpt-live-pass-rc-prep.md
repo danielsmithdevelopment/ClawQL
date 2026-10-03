@@ -31,13 +31,13 @@ docker build -f docker/Dockerfile --target runtime \
 # Prefer the digest from Docker publish / cosign after push — local Id is not the GHCR digest.
 ```
 
-| Field | Value |
-| --- | --- |
-| Git commit SHA (intended RC base at prep) | `159399c5e984ae9780a7fc06b4054f4c0d730e8d` (`origin/main` as of 2026-10-03) |
-| Local image tag | `clawql-mcp:rc-8.0.0` |
-| Local manifest list Id (not GHCR) | `sha256:310677dd24a0d39b4da1f5f8e0e4bcd6df9718d47df49e5fa7365e677c102b3e` |
+| Field                                      | Value                                                                                                    |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Git commit SHA (intended RC base at prep)  | `159399c5e984ae9780a7fc06b4054f4c0d730e8d` (`origin/main` as of 2026-10-03)                              |
+| Local image tag                            | `clawql-mcp:rc-8.0.0`                                                                                    |
+| Local manifest list Id (not GHCR)          | `sha256:310677dd24a0d39b4da1f5f8e0e4bcd6df9718d47df49e5fa7365e677c102b3e`                                |
 | **GHCR digest to paste into checklist §0** | _operator: after signed Docker publish of this SHA_ `ghcr.io/danielsmithdevelopment/clawql-mcp@sha256:…` |
-| Cosign verified | [ ] |
+| Cosign verified                            | [ ]                                                                                                      |
 
 **Important:** A local `docker build` digest is **not** the release digest. Checklist §0 requires the **signed OCI image** that will be tagged `v8.0.0` (typically from [Docker publish](../../.github/workflows/docker-publish.yml) + Cosign). Use this prep to:
 

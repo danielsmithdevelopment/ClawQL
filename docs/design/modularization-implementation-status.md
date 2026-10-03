@@ -299,19 +299,19 @@ These vision items are **not** done by package extraction alone:
 
 ## 9. References
 
-| Doc                                                                       | Use when                                  |
-| ------------------------------------------------------------------------- | ----------------------------------------- |
-| [ClawQL plugin model](./clawql-plugin-model.md)                           | Horizontal plugins, MCP tool registration |
-| [Plugin registry](../reference/clawql-plugin-registry.md)                 | Shipped vs planned plugins, enable flags  |
-| [Master enablement guide](../vision/clawql-master-enablement-guide.md)    | Platform intent, 6-layer model            |
-| [Modularization v2](../vision/clawql-modularization-v2.md)                | Target package boundaries, gateway design |
-| [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) | Effect phases, plugin checklist, CI       |
-| [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table           |
-| [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix               |
-| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                     |
-| [Immutable releases](https://docs.clawql.com/vision/immutable-releases)   | Layer 0 manifest commands, CI             |
+| Doc                                                                       | Use when                                                  |
+| ------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [ClawQL plugin model](./clawql-plugin-model.md)                           | Horizontal plugins, MCP tool registration                 |
+| [Plugin registry](../reference/clawql-plugin-registry.md)                 | Shipped vs planned plugins, enable flags                  |
+| [Master enablement guide](../vision/clawql-master-enablement-guide.md)    | Platform intent, 6-layer model                            |
+| [Modularization v2](../vision/clawql-modularization-v2.md)                | Target package boundaries, gateway design                 |
+| [Effect + plugin plan](./effect-ts-modularization-rearchitecture-plan.md) | Effect phases, plugin checklist, CI                       |
+| [Vision & roadmap](../vision/clawql-vision-roadmap.md)                    | Public shipped vs planned table                           |
+| [MCP tools](../mcp/mcp-tools.md)                                          | Operator-facing tool matrix                               |
+| [#306](https://github.com/danielsmithdevelopment/ClawQL/issues/306)       | Package delivery epic                                     |
+| [Immutable releases](https://docs.clawql.com/vision/immutable-releases)   | Layer 0 manifest commands, CI                             |
 | [Getting started](https://docs.clawql.com/getting-started)                | Auth, Presidio, Tier 1 Compose (PageIndex removed in 8.0) |
-| [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                 |
+| [clawql-operator-helm](../deployment/clawql-operator-helm.md)             | Operator scaffold install                                 |
 
 ---
 

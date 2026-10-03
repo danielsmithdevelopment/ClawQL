@@ -2,7 +2,7 @@
 
 **Live post:** [pragmaticvectors.com/posts/agent-memory-stack](https://pragmaticvectors.com/posts/agent-memory-stack/)  
 **Status:** **BLOCKING for 8.0.0 public content** — live page still presents the five-layer stack (Layer 3 PageIndex, Layer 4 CodeGraph) and “queries across active layers simultaneously” as of **2026-10-03**. In-repo Learn/docs pages already reflect the purge.  
-**Paste-ready draft:** [`agent-memory-stack.md`](./agent-memory-stack.md) — operator: replace the live CMS body with that file (or apply the must-fix list below). PragmaticVectors is not deployed from this repo.  
+**Paste-ready draft:** [`agent-memory-stack.md`](./agent-memory-stack.md) — operator: replace the live CMS body with that file (or apply the must-fix list below). PragmaticVectors is not deployed from this repo.
 
 **Evidence:** eval / purge [`docs/releases/8.0.0-purge-inventory-spec-v0.1.md`](../../releases/8.0.0-purge-inventory-spec-v0.1.md) · backlog [`docs/backlog/post-8.0-vectify-pageindex.md`](../../backlog/post-8.0-vectify-pageindex.md) · [`docs/backlog/post-8.0-codegraph-revisit.md`](../../backlog/post-8.0-codegraph-revisit.md) · code `packages/clawql-memory/src/recall/recall-sources.ts`
 
