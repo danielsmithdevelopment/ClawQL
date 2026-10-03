@@ -28,7 +28,7 @@ Org-of-1 and org-of-1000 share one data shape.
 | **API keys**                        | Reuse `IssuedApiKeyStore.issue` with `subjectId` + optional `orgId` metadata. No `ownerType: 'org'` field today — org ownership is `orgId` on a subject-issued default key (or a dedicated service subject). Spec forbids inventing a second issuer                                          |
 | **Credits ledger**                  | Reuse `CreditsLedgerService` / `CreditLedgerEntry` / `DeductionService` — **not** a new bare `CreditLedger` type                                                                                                                                                                             |
 | **Stripe Checkout provision today** | Cloudflare gateway already handles `checkout.session.completed` → D1 tenant. Node CPC must **converge** on the same `provisionOrg` Effect (gateway calls shared logic or posts into payments), not fork a second provisioner                                                                 |
-| **Effect**                          | `provisionOrg` / stores / Stripe wrappers are Effect `Context.Tag` + `Layer`; Express/MCP/webhook hosts stay thin Promise façades                                                                                                                                                            |
+| **Effect**                          | `provisionOrg` / stores / Stripe wrappers are Effect `Context.Service` + `Layer`; Express/MCP/webhook hosts stay thin Promise façades                                                                                                                                                        |
 
 Spend-governance v0.1 remains **outbound USDC only**. CPC does not fold into that spec.
 

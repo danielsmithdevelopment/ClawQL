@@ -1,10 +1,10 @@
 # Effect v4 stable cutover (ClawQL)
 
-**Status:** In progress on `cursor/effect-v4-stable-f4ec` — `effect@4.0.0` GA  
-**Created:** 2026-09-02 (as RC spike); **cutover started:** 2026-10-02  
-**Tracking issue:** [#1034](https://github.com/danielsmithdevelopment/ClawQL/issues/1034)  
+**Status:** **Done** — merged to `main` via [#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197) (`45186b77`, 2026-10-03)  
+**Created:** 2026-09-02 (as RC spike); **cutover started:** 2026-10-02; **merged:** 2026-10-03  
+**Tracking issue:** [#1034](https://github.com/danielsmithdevelopment/ClawQL/issues/1034) (close with this release-prep PR)  
 **Baseline (pre-cutover):** `effect@3.22.1`  
-**Target (this branch):** `effect@4.0.0` + `@effect/opentelemetry@4.0.0` (singular Effect line; `@effect/platform` removed — folded into `effect`)
+**Shipped:** `effect@4.0.0` + `@effect/opentelemetry@4.0.0` (singular Effect line; `@effect/platform` removed — folded into `effect`)
 
 ---
 
@@ -12,7 +12,7 @@
 
 ClawQL’s **Effect everywhere** claim is enforced by `npm run check:effect-every-package` (every `packages/*` declares `effect` and ships a `Context.Service` + `Layer`).
 
-Effect **v4.0.0** is stable GA (2026-10-01). This document tracks the production cutover from the former RC spike checklist.
+Effect **v4.0.0** is stable GA (2026-10-01). This document recorded the production cutover from the former RC spike checklist and now stands as the closeout record.
 
 ---
 
@@ -27,8 +27,9 @@ Effect **v4.0.0** is stable GA (2026-10-01). This document tracks the production
 | `Effect.catchAll` → `Effect.catch`                      | Done                                                                                                              |
 | `Effect.either` / `Either` → `Effect.result` / `Result` | Done                                                                                                              |
 | Schema MCP input modules                                | Migrated (`annotate`, `check(is*)`, `decodeUnknownEffect`, `Union([...])`, `Literals`, `withDecodingDefaultType`) |
-| All `packages/*` build + DTS                            | Green (30/30)                                                                                                     |
+| All `packages/*` build + DTS                            | Green                                                                                                             |
 | Root `tsc --noEmit`                                     | Green                                                                                                             |
+| Full CI (incl. Node 22/24/25 vitest)                    | Green on merge tip                                                                                                |
 | CI guard                                                | Detects `Context.Service` (legacy Tag still accepted during partial trees)                                        |
 
 ### Codemods (scripts/)
@@ -40,17 +41,17 @@ Effect **v4.0.0** is stable GA (2026-10-01). This document tracks the production
 
 ---
 
-## Remaining work
+## Post-merge hygiene (optional)
 
-1. **Domain Promise façades** — convert remaining bare `async` domain exports in packages (sandbox backends, etc.) to Effect primary APIs; keep CLI / Express / MCP as thin `runPromise` façades only.
-2. **Full vitest matrix** — keep fixing package suites as CI surfaces v4 leftovers (e.g. `Layer.scopedDiscard` → `Layer.effectDiscard`).
-3. **Close #1034** after merge + soak.
+1. Keep docs/examples on `Context.Service` (not `Context.Tag`) as Learn/contributor pages churn.
+2. Rebase Dependabot OTEL bumps carefully so `@opentelemetry/api-logs` stays a direct root dep (MCP Docker prune).
+3. Further bare `async` domain façades → Effect-primary as they surface (Effect-everywhere rule unchanged).
 
 ---
 
 ## Rollback
 
-Pin root overrides back to `effect@3.22.1` and restore `@effect/platform` / Tag APIs from `main` prior to this branch’s merge commit.
+Pin root overrides back to `effect@3.22.1` and restore `@effect/platform` / Tag APIs from `main` prior to merge commit `45186b77` (#1197). Prefer a follow-up revert PR over force-push.
 
 ---
 
@@ -60,3 +61,4 @@ Pin root overrides back to `effect@3.22.1` and restore `@effect/platform` / Tag 
 - [MIGRATION.md](https://github.com/Effect-TS/effect/blob/main/MIGRATION.md)
 - [Services: Tag → Service](https://github.com/Effect-TS/effect/blob/main/migration/services.md)
 - [Schema v4](https://github.com/Effect-TS/effect/blob/main/migration/schema.md)
+- Merge PR: [#1197](https://github.com/danielsmithdevelopment/ClawQL/pull/1197)
