@@ -6,19 +6,31 @@ vi.mock("../workflow/env.js", () => ({
   workflowToolEnabled: () => true,
 }));
 
-vi.mock("../workflow/suspend-resume.js", () => ({
-  parseHitlWorkflowRef: (hitl: unknown) => {
-    const h = hitl as { workflow?: { namespace: string; name: string } };
-    if (h?.workflow?.namespace && h?.workflow?.name) return h.workflow;
-    return undefined;
-  },
-  resumeWorkflowFromHitlRef: vi.fn(async () => ({
+const { resumeMock } = vi.hoisted(() => ({
+  resumeMock: vi.fn(async () => ({
     attempted: true,
     ok: true,
     resumed_nodes: ["hitl-review"],
     workflow_level_resumed: false,
   })),
 }));
+
+vi.mock("../workflow/suspend-resume.js", async () => {
+  const { Effect } = await import("effect");
+  return {
+    parseHitlWorkflowRef: (hitl: unknown) => {
+      const h = hitl as { workflow?: { namespace: string; name: string } };
+      if (h?.workflow?.namespace && h?.workflow?.name) return h.workflow;
+      return undefined;
+    },
+    resumeWorkflowFromHitlRef: resumeMock,
+    resumeWorkflowFromHitlRefEffect: (hitl: unknown) =>
+      Effect.tryPromise({
+        try: () => resumeMock(hitl),
+        catch: (cause) => cause,
+      }),
+  };
+});
 
 describe("dispatchHitlCompletedEvent", () => {
   it("resumes workflow from envelope workflow_ref", async () => {

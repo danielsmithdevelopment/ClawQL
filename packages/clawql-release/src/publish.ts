@@ -14,6 +14,7 @@ import { writeEscrowKey } from "./pull.js";
 import { readReleaseConfig } from "./config.js";
 import { commandExists, isDryRun } from "./exec.js";
 import type { PublishOptions, ReleaseManifestV01 } from "./types.js";
+import { Effect } from "effect";
 
 export type PublishResult = {
   manifestPath: string;
@@ -25,7 +26,7 @@ export type PublishResult = {
   manifest: ReleaseManifestV01;
 };
 
-export async function publishRelease(options: PublishOptions): Promise<PublishResult> {
+async function publishReleaseImpl(options: PublishOptions): Promise<PublishResult> {
   const dry = isDryRun(options.dryRun);
   const config = await readReleaseConfig(options.rootDir);
 
@@ -240,4 +241,18 @@ function attachGitHubRelease(
     encoding: "utf8",
   });
   return view.stdout?.trim() || undefined;
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Publish a release bundle (IPFS / Arweave / GitHub) (Effect-primary). */
+export function publishReleaseEffect(options: PublishOptions): Effect.Effect<PublishResult, Error> {
+  return Effect.tryPromise({ try: () => publishReleaseImpl(options), catch: fsError });
+}
+
+/** Promise façade for CLI / hosts that still await publish. */
+export async function publishRelease(options: PublishOptions): Promise<PublishResult> {
+  return Effect.runPromise(publishReleaseEffect(options));
 }

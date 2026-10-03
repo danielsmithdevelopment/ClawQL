@@ -7,7 +7,7 @@
  * Zod as the domain validator.
  */
 
-import { Effect, ParseResult, Schema } from "effect";
+import { Effect, Schema, SchemaIssue } from "effect";
 
 // --- Shared descriptions (single source for Schema annotations + Zod edge) ---
 
@@ -35,22 +35,25 @@ export const EXECUTE_FIELDS_DESCRIPTION =
 
 /** MCP `search` tool arguments — Effect Schema (source of truth). */
 export const SearchInputSchema = Schema.Struct({
-  query: Schema.String.annotations({ description: SEARCH_QUERY_DESCRIPTION }),
-  limit: Schema.optionalWith(Schema.Number.pipe(Schema.int(), Schema.between(1, 50)), {
-    default: () => 5,
-  }).annotations({ description: SEARCH_LIMIT_DESCRIPTION }),
+  query: Schema.String.annotate({ description: SEARCH_QUERY_DESCRIPTION }),
+  limit: Schema.Number.pipe(
+    Schema.check(Schema.isInt()),
+    Schema.check(Schema.isBetween({ minimum: 1, maximum: 50 }))
+  )
+    .pipe(Schema.withDecodingDefaultType(Effect.succeed(5)))
+    .annotate({ description: SEARCH_LIMIT_DESCRIPTION }),
 });
 
 export type SearchInputDecoded = Schema.Schema.Type<typeof SearchInputSchema>;
 
 /** MCP `execute` tool arguments — Effect Schema (source of truth). */
 export const ExecuteInputSchema = Schema.Struct({
-  operationId: Schema.String.annotations({ description: EXECUTE_OPERATION_ID_DESCRIPTION }),
-  args: Schema.Record({ key: Schema.String, value: Schema.Unknown }).annotations({
+  operationId: Schema.String.annotate({ description: EXECUTE_OPERATION_ID_DESCRIPTION }),
+  args: Schema.Record(Schema.String, Schema.Unknown).annotate({
     description: EXECUTE_ARGS_DESCRIPTION,
   }),
   fields: Schema.optional(
-    Schema.Array(Schema.String).annotations({ description: EXECUTE_FIELDS_DESCRIPTION })
+    Schema.Array(Schema.String).annotate({ description: EXECUTE_FIELDS_DESCRIPTION })
   ),
 });
 
@@ -65,29 +68,32 @@ export const RESUME_DECISION_DESCRIPTION =
 
 /** MCP `resume` tool arguments — Effect Schema (source of truth). */
 export const ResumeInputSchema = Schema.Struct({
-  executionId: Schema.String.annotations({ description: RESUME_EXECUTION_ID_DESCRIPTION }),
+  executionId: Schema.String.annotate({ description: RESUME_EXECUTION_ID_DESCRIPTION }),
   decision: Schema.optional(
-    Schema.Literal("approve", "decline").annotations({ description: RESUME_DECISION_DESCRIPTION })
+    Schema.Literals(["approve", "decline"]).annotate({ description: RESUME_DECISION_DESCRIPTION })
   ),
 });
 
 export type ResumeInputDecoded = Schema.Schema.Type<typeof ResumeInputSchema>;
 
-function formatParseError(err: ParseResult.ParseError): Error {
-  return new Error(ParseResult.TreeFormatter.formatErrorSync(err));
+function formatParseError(err: Schema.SchemaError): Error {
+  const formatted = SchemaIssue.makeFormatterStandardSchemaV1()(err.issue);
+  return new Error(JSON.stringify(formatted.issues));
 }
 
 /** Decode unknown MCP search args into {@link SearchInputDecoded}. */
 export function decodeSearchInput(raw: unknown): Effect.Effect<SearchInputDecoded, Error> {
-  return Schema.decodeUnknown(SearchInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(SearchInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }
 
 /** Decode unknown MCP execute args into {@link ExecuteInputDecoded}. */
 export function decodeExecuteInput(raw: unknown): Effect.Effect<ExecuteInputDecoded, Error> {
-  return Schema.decodeUnknown(ExecuteInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(ExecuteInputSchema)(raw).pipe(
+    Effect.mapError(formatParseError)
+  );
 }
 
 /** Decode unknown MCP resume args into {@link ResumeInputDecoded}. */
 export function decodeResumeInput(raw: unknown): Effect.Effect<ResumeInputDecoded, Error> {
-  return Schema.decodeUnknown(ResumeInputSchema)(raw).pipe(Effect.mapError(formatParseError));
+  return Schema.decodeUnknownEffect(ResumeInputSchema)(raw).pipe(Effect.mapError(formatParseError));
 }

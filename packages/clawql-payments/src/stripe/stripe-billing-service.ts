@@ -126,7 +126,7 @@ function resolvePriceId(
 }
 
 /** Effect service for Stripe billing setup and CRUD helpers. */
-export class StripeBillingService extends Context.Tag("clawql/StripeBillingService")<
+export class StripeBillingService extends Context.Service<
   StripeBillingService,
   {
     readonly setup: (
@@ -149,7 +149,7 @@ export class StripeBillingService extends Context.Tag("clawql/StripeBillingServi
       input: CheckoutSessionInput
     ) => Effect.Effect<CheckoutSessionResult, StripeApiError | StripeNotConfigured>;
   }
->() {}
+>()("clawql/StripeBillingService") {}
 
 export function stripeBillingLiveLayer(
   env: NodeJS.ProcessEnv = process.env

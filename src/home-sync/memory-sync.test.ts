@@ -6,11 +6,17 @@ const statusMock = vi.fn();
 const pullMock = vi.fn();
 const pushMock = vi.fn();
 
-vi.mock("./engine.js", () => ({
-  runSyncStatus: (...args: unknown[]) => statusMock(...args),
-  runSyncPull: (...args: unknown[]) => pullMock(...args),
-  runSyncPush: (...args: unknown[]) => pushMock(...args),
-}));
+vi.mock("./engine.js", () => {
+  const { Effect } = require("effect") as typeof import("effect");
+  return {
+    runSyncStatus: (...args: unknown[]) => statusMock(...args),
+    runSyncPull: (...args: unknown[]) => pullMock(...args),
+    runSyncPush: (...args: unknown[]) => pushMock(...args),
+    runSyncStatusEffect: (...args: unknown[]) => Effect.promise(() => statusMock(...args)),
+    runSyncPullEffect: (...args: unknown[]) => Effect.promise(() => pullMock(...args)),
+    runSyncPushEffect: (...args: unknown[]) => Effect.promise(() => pushMock(...args)),
+  };
+});
 
 function run(overrides: Partial<SyncRunResult> = {}): SyncRunResult {
   return {

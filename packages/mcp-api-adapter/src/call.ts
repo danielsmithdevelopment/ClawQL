@@ -4,6 +4,7 @@ import {
   structToJson,
   type ListedMcpTool,
 } from "mcp-grpc-transport";
+import { Effect } from "effect";
 
 export type CollapsedToolResult = {
   structuredContent?: Record<string, unknown>;
@@ -143,12 +144,12 @@ export function collapseCallToolMessages(
   return out;
 }
 
-export async function callToolViaGrpc(options: {
+async function callToolViaGrpcImpl(options: {
   grpcAddress: string;
   tool: ListedMcpTool;
   arguments: Record<string, unknown>;
   protocolVersion?: string;
-}): Promise<CollapsedToolResult> {
+}): Promise<CollapsedToolResult>  {
   const messages = await callToolServerStreamingGrpc({
     address: options.grpcAddress,
     toolName: options.tool.name,
@@ -162,4 +163,26 @@ export async function callToolViaGrpc(options: {
     throw err;
   }
   return collapsed;
+}
+
+export function callToolViaGrpcEffect(options: {
+  grpcAddress: string;
+  tool: ListedMcpTool;
+  arguments: Record<string, unknown>;
+  protocolVersion?: string;
+}): Effect.Effect<CollapsedToolResult, Error> {
+  return Effect.tryPromise({
+    try: () => callToolViaGrpcImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link callToolViaGrpcEffect} for Effect callers. */
+export async function callToolViaGrpc(options: {
+  grpcAddress: string;
+  tool: ListedMcpTool;
+  arguments: Record<string, unknown>;
+  protocolVersion?: string;
+}): Promise<CollapsedToolResult>  {
+  return Effect.runPromise(callToolViaGrpcEffect(options));
 }

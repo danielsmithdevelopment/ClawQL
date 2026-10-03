@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 /** Optional post-ingest / pre-recall hooks (wired from MCP transport for team bucket sync). */
 
 export type VaultSyncHook = () => void | Promise<void>;
@@ -18,7 +19,7 @@ export function resetVaultSyncHooksForTests(): void {
   beforeRecallHook = null;
 }
 
-export async function runAfterIngestVaultSync(): Promise<void> {
+async function runAfterIngestVaultSyncImpl(): Promise<void> {
   if (!afterIngestHook) return;
   try {
     await afterIngestHook();
@@ -28,7 +29,19 @@ export async function runAfterIngestVaultSync(): Promise<void> {
   }
 }
 
-export async function runBeforeRecallVaultSync(): Promise<void> {
+export function runAfterIngestVaultSyncEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => runAfterIngestVaultSyncImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runAfterIngestVaultSyncEffect} for Effect callers. */
+export async function runAfterIngestVaultSync(): Promise<void> {
+  return Effect.runPromise(runAfterIngestVaultSyncEffect());
+}
+
+async function runBeforeRecallVaultSyncImpl(): Promise<void> {
   if (!beforeRecallHook) return;
   try {
     await beforeRecallHook();
@@ -36,4 +49,16 @@ export async function runBeforeRecallVaultSync(): Promise<void> {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`[clawql-mcp] vault sync before recall failed: ${msg}`);
   }
+}
+
+export function runBeforeRecallVaultSyncEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => runBeforeRecallVaultSyncImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runBeforeRecallVaultSyncEffect} for Effect callers. */
+export async function runBeforeRecallVaultSync(): Promise<void> {
+  return Effect.runPromise(runBeforeRecallVaultSyncEffect());
 }

@@ -15,6 +15,7 @@ import {
   DEMO_TRACE_SESSION_EXECUTOR_CMP_EXECUTOR,
   demoExecutorCmpRecords,
 } from "./executor-cmp-trace-demo.js";
+import { Effect } from "effect";
 
 export type TraceSource =
   | "harness_prompt"
@@ -412,12 +413,12 @@ export function demoCompressedVsFatRecords(sessionId: string): {
  * Resolve records for a session id: built-in demos, else optional host callback.
  * Returns `null` when nothing is available (caller renders 404).
  */
-export async function resolveTraceRecords(
+async function resolveTraceRecordsImpl(
   sessionId: string,
   listTraceCalls?: (
     sessionId: string
   ) => TraceCallRecord[] | Promise<TraceCallRecord[]>
-): Promise<TraceCallRecord[] | null> {
+): Promise<TraceCallRecord[] | null>  {
   const id = sessionId.trim();
   if (!id) return null;
 
@@ -437,6 +438,28 @@ export async function resolveTraceRecords(
   const records = await listTraceCalls(id);
   if (!records || records.length === 0) return null;
   return records;
+}
+
+export function resolveTraceRecordsEffect(
+  sessionId: string,
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>
+): Effect.Effect<TraceCallRecord[] | null, Error> {
+  return Effect.tryPromise({
+    try: () => resolveTraceRecordsImpl(sessionId, listTraceCalls),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveTraceRecordsEffect} for Effect callers. */
+export async function resolveTraceRecords(
+  sessionId: string,
+  listTraceCalls?: (
+    sessionId: string
+  ) => TraceCallRecord[] | Promise<TraceCallRecord[]>
+): Promise<TraceCallRecord[] | null>  {
+  return Effect.runPromise(resolveTraceRecordsEffect(sessionId, listTraceCalls));
 }
 
 /** Coalesce adjacent same-source frames for stacked-bar rendering. */

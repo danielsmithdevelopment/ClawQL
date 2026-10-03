@@ -5,6 +5,7 @@
 import { parse as parseYaml } from "yaml";
 import type { CustomSourceKind } from "./custom-sources-types.js";
 import { fetchSafeSourceUrl } from "./custom-sources-security.js";
+import { Effect } from "effect";
 
 export type DetectedSource = {
   kind: CustomSourceKind;
@@ -78,7 +79,7 @@ function looksLikeMcpEndpoint(url: string): boolean {
  * Fetch URL and infer source kind. Throws on HTTP errors.
  * Pass `kindHint` to skip auto-detection (mcp, cli, grpc).
  */
-export async function detectSourceFromUrl(
+async function detectSourceFromUrlImpl(
   url: string,
   options: { kindHint?: CustomSourceKind; fetchFn?: typeof fetch } = {}
 ): Promise<DetectedSource> {
@@ -188,4 +189,22 @@ export async function detectSourceFromUrl(
   throw new Error(
     "Could not detect source kind. Use --kind openapi|discovery|graphql|grpc|mcp|cli|webmcp."
   );
+}
+
+export function detectSourceFromUrlEffect(
+  url: string,
+  options: { kindHint?: CustomSourceKind; fetchFn?: typeof fetch } = {}
+): Effect.Effect<DetectedSource, Error> {
+  return Effect.tryPromise({
+    try: () => detectSourceFromUrlImpl(url, options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link detectSourceFromUrlEffect} for Effect callers. */
+export async function detectSourceFromUrl(
+  url: string,
+  options: { kindHint?: CustomSourceKind; fetchFn?: typeof fetch } = {}
+): Promise<DetectedSource> {
+  return Effect.runPromise(detectSourceFromUrlEffect(url, options));
 }

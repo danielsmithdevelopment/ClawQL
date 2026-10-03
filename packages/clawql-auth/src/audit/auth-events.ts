@@ -164,7 +164,7 @@ export function composeAuthEventSinks(...sinks: AuthEventSink[]): AuthEventSink 
   return (event) =>
     Effect.gen(function* () {
       for (const sink of sinks) {
-        yield* sink(event).pipe(Effect.catchAll(() => Effect.void));
+        yield* sink(event).pipe(Effect.catch(() => Effect.void));
       }
     });
 }
@@ -179,7 +179,7 @@ export function emitAuthEventEffect(
     const result = sink(event);
     // Effect-primary sinks return Effect; sync push-style test sinks return void.
     if (result != null && Effect.isEffect(result)) {
-      yield* result.pipe(Effect.catchAll(() => Effect.void));
+      yield* result.pipe(Effect.catch(() => Effect.void));
     }
   });
 }

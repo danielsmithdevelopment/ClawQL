@@ -6,7 +6,7 @@ import type { MetricProvider, ProviderConfig } from "./types.js";
 export const LGTM_MIMIR_PROVIDER_ID = "lgtm-mimir";
 
 export const createMimirMetricProvider = (): MetricProvider => {
-  const configRef = Ref.unsafeMake<ProviderConfig>(defaultMimirProviderConfig());
+  const configRef = Ref.makeUnsafe<ProviderConfig>(defaultMimirProviderConfig());
 
   return {
     id: LGTM_MIMIR_PROVIDER_ID,

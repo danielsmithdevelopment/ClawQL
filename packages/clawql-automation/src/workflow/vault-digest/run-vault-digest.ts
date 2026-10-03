@@ -1,14 +1,17 @@
 /**
  * Collect vault notes ingested in the last N hours and ingest one digest note.
+ * Domain orchestration is Effect-primary; Promise façade for CLI / cron edges.
  */
 
 import { stat } from "node:fs/promises";
 import { basename, join } from "node:path";
+import { Effect, Exit } from "effect";
 import { stripVaultFrontmatter } from "clawql-memory";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { listVaultMarkdownRelPaths } from "clawql-memory/vault/slug-index";
 import { readVaultTextFile } from "clawql-memory/vault/utils";
 import { runMemoryIngest } from "clawql-memory/ingest/ingest";
+import { automationFromPromise } from "../../effect/automation-effect-utils.js";
 
 export const DIGEST_TAG = "clawql-digest";
 export const MEMORY_DIR = "Memory";
@@ -180,91 +183,110 @@ function buildDigestInsights(
   return lines.join("\n");
 }
 
+export function runVaultDailyDigestEffect(
+  input: RunVaultDailyDigestInput = {}
+): Effect.Effect<RunVaultDailyDigestResult> {
+  return Effect.gen(function* () {
+    const vaultAbs = input.vaultPath?.trim() || getObsidianVaultPath();
+    if (!vaultAbs) {
+      return {
+        ok: false,
+        sourceCount: 0,
+        error:
+          "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.",
+      };
+    }
+
+    const hoursBack = input.hoursBack ?? 24;
+    const titlePrefix = input.titlePrefix?.trim() || "Vault digest";
+    const maxSources = input.maxSources ?? 200;
+    const windowEnd = new Date();
+    const windowStart = new Date(windowEnd.getTime() - hoursBack * 60 * 60 * 1000);
+    const cutoffMs = windowStart.getTime();
+
+    const paths = yield* automationFromPromise(() =>
+      listVaultMarkdownRelPaths(vaultAbs, MEMORY_DIR, 10_000)
+    ).pipe(Effect.orElseSucceed(() => [] as string[]));
+    const sources: VaultDigestSource[] = [];
+
+    for (const rel of paths) {
+      if (sources.length >= maxSources) break;
+      const textExit = yield* Effect.exit(
+        automationFromPromise(() => readVaultTextFile(vaultAbs, rel))
+      );
+      if (Exit.isFailure(textExit)) continue;
+      const text = textExit.value;
+      const fm = parseFrontmatter(text);
+      const title = extractTitle(text, rel);
+      if (isDigestNote(fm, title, titlePrefix)) continue;
+
+      const ts = yield* automationFromPromise(() => noteTimestampMs(vaultAbs, rel, text)).pipe(
+        Effect.orElseSucceed(() => null as number | null)
+      );
+      if (ts === null || ts < cutoffMs) continue;
+
+      sources.push({
+        path: rel,
+        title,
+        ingested_at: new Date(ts).toISOString(),
+        excerpt: extractInsightsExcerpt(text),
+      });
+    }
+
+    sources.sort((a, b) => a.ingested_at.localeCompare(b.ingested_at));
+
+    if (sources.length === 0) {
+      return {
+        ok: true,
+        sourceCount: 0,
+        skipped: true,
+        reason: `No ingested notes in Memory/ within the last ${hoursBack} hours`,
+        sources: [],
+      };
+    }
+
+    const digestTitle = `${titlePrefix} — ${utcDateLabel(windowEnd)}`;
+    const insights = buildDigestInsights(windowStart, windowEnd, sources);
+    const ingest = yield* automationFromPromise(() =>
+      runMemoryIngest({
+        title: digestTitle,
+        type: "digest",
+        tags: [DIGEST_TAG],
+        description: `Rolling digest of ${sources.length} note(s) from the last ${hoursBack} hours`,
+        insights,
+        wikilinks: sources.map((s) => s.title),
+        sessionId: `vault-digest-${utcDateLabel(windowEnd)}`,
+        append: true,
+      })
+    ).pipe(
+      Effect.orElseSucceed(() => ({
+        ok: false as const,
+        error: "memory_ingest failed",
+      }))
+    );
+
+    if (!ingest.ok) {
+      return {
+        ok: false,
+        sourceCount: sources.length,
+        sources,
+        error: ("error" in ingest ? ingest.error : undefined) ?? "memory_ingest failed",
+      };
+    }
+
+    return {
+      ok: true,
+      sourceCount: sources.length,
+      digestPath: ingest.path,
+      digestTitle,
+      sources,
+    };
+  });
+}
+
+/** Promise façade for CLI / cron. */
 export async function runVaultDailyDigest(
   input: RunVaultDailyDigestInput = {}
 ): Promise<RunVaultDailyDigestResult> {
-  const vaultAbs = input.vaultPath?.trim() || getObsidianVaultPath();
-  if (!vaultAbs) {
-    return {
-      ok: false,
-      sourceCount: 0,
-      error:
-        "Obsidian vault is not configured. Set CLAWQL_OBSIDIAN_VAULT_PATH to a writable directory.",
-    };
-  }
-
-  const hoursBack = input.hoursBack ?? 24;
-  const titlePrefix = input.titlePrefix?.trim() || "Vault digest";
-  const maxSources = input.maxSources ?? 200;
-  const windowEnd = new Date();
-  const windowStart = new Date(windowEnd.getTime() - hoursBack * 60 * 60 * 1000);
-  const cutoffMs = windowStart.getTime();
-
-  const paths = await listVaultMarkdownRelPaths(vaultAbs, MEMORY_DIR, 10_000);
-  const sources: VaultDigestSource[] = [];
-
-  for (const rel of paths) {
-    if (sources.length >= maxSources) break;
-    let text: string;
-    try {
-      text = await readVaultTextFile(vaultAbs, rel);
-    } catch {
-      continue;
-    }
-    const fm = parseFrontmatter(text);
-    const title = extractTitle(text, rel);
-    if (isDigestNote(fm, title, titlePrefix)) continue;
-
-    const ts = await noteTimestampMs(vaultAbs, rel, text);
-    if (ts === null || ts < cutoffMs) continue;
-
-    sources.push({
-      path: rel,
-      title,
-      ingested_at: new Date(ts).toISOString(),
-      excerpt: extractInsightsExcerpt(text),
-    });
-  }
-
-  sources.sort((a, b) => a.ingested_at.localeCompare(b.ingested_at));
-
-  if (sources.length === 0) {
-    return {
-      ok: true,
-      sourceCount: 0,
-      skipped: true,
-      reason: `No ingested notes in Memory/ within the last ${hoursBack} hours`,
-      sources: [],
-    };
-  }
-
-  const digestTitle = `${titlePrefix} — ${utcDateLabel(windowEnd)}`;
-  const insights = buildDigestInsights(windowStart, windowEnd, sources);
-  const ingest = await runMemoryIngest({
-    title: digestTitle,
-    type: "digest",
-    tags: [DIGEST_TAG],
-    description: `Rolling digest of ${sources.length} note(s) from the last ${hoursBack} hours`,
-    insights,
-    wikilinks: sources.map((s) => s.title),
-    sessionId: `vault-digest-${utcDateLabel(windowEnd)}`,
-    append: true,
-  });
-
-  if (!ingest.ok) {
-    return {
-      ok: false,
-      sourceCount: sources.length,
-      sources,
-      error: ingest.error ?? "memory_ingest failed",
-    };
-  }
-
-  return {
-    ok: true,
-    sourceCount: sources.length,
-    digestPath: ingest.path,
-    digestTitle,
-    sources,
-  };
+  return Effect.runPromise(runVaultDailyDigestEffect(input));
 }

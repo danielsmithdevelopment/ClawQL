@@ -6,6 +6,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ListedMcpTool } from "mcp-grpc-transport";
+import { Effect } from "effect";
 
 export type GenCliOptions = {
   /** Output directory (created if missing). */
@@ -176,11 +177,11 @@ main(process.argv.slice(2)).catch((err) => {
 `;
 }
 
-export async function generateToolCli(options: GenCliOptions): Promise<{
+async function generateToolCliImpl(options: GenCliOptions): Promise<{
   outDir: string;
   binName: string;
   files: string[];
-}> {
+}>  {
   const binName = safeBinName(options.name ?? "mcp-tools");
   const baseUrl = (options.baseUrl?.trim() || "http://127.0.0.1:8090").replace(/\/$/, "");
   const outDir = options.outDir;
@@ -235,4 +236,24 @@ This is a lightweight scaffold. When **clawql-printingpress** ships, prefer it f
   files.push("README.md");
 
   return { outDir, binName, files };
+}
+
+export function generateToolCliEffect(options: GenCliOptions): Effect.Effect<{
+  outDir: string;
+  binName: string;
+  files: string[];
+}, Error> {
+  return Effect.tryPromise({
+    try: () => generateToolCliImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link generateToolCliEffect} for Effect callers. */
+export async function generateToolCli(options: GenCliOptions): Promise<{
+  outDir: string;
+  binName: string;
+  files: string[];
+}>  {
+  return Effect.runPromise(generateToolCliEffect(options));
 }

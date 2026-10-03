@@ -1,8 +1,9 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
+import { Effect } from "effect";
 
 /** Minimal HTTP server that invokes a Fetch-style handler (for tests without Bun). */
-export async function withFetchServer(
+async function withFetchServerImpl(
   handler: (req: Request) => Response | Promise<Response>,
   fn: (origin: string) => Promise<void>
 ): Promise<void> {
@@ -46,4 +47,22 @@ export async function withFetchServer(
       server.close((err) => (err ? reject(err) : resolve()));
     });
   }
+}
+
+export function withFetchServerEffect(
+  handler: (req: Request) => Response | Promise<Response>,
+  fn: (origin: string) => Promise<void>
+): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => withFetchServerImpl(handler, fn),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link withFetchServerEffect} for Effect callers. */
+export async function withFetchServer(
+  handler: (req: Request) => Response | Promise<Response>,
+  fn: (origin: string) => Promise<void>
+): Promise<void> {
+  return Effect.runPromise(withFetchServerEffect(handler, fn));
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * CI guard: every packages/* workspace must declare `effect` and export at least
- * one Context.Tag service (marketing claim: Effect everywhere, one package).
+ * one Context.Service (Effect v4; formerly Context.Tag) — Effect everywhere, one package.
  */
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -39,14 +39,15 @@ for (const name of readdirSync(packagesDir).sort()) {
       if (ent.isDirectory()) walk(p);
       else if (ent.name.endsWith(".ts") && !ent.name.endsWith(".test.ts")) {
         const text = readFileSync(p, "utf8");
-        if (/Context\.Tag\s*\(/.test(text)) hasTag = true;
+        // Effect v4: Context.Service; accept legacy Context.Tag during partial migrations.
+        if (/Context\.Service\s*</.test(text) || /Context\.Tag\s*\(/.test(text)) hasTag = true;
       }
     }
   };
   walk(srcDir);
 
   if (!hasTag) {
-    failures.push(`${name}: no Context.Tag service found under src/`);
+    failures.push(`${name}: no Context.Service found under src/`);
   }
 }
 
@@ -54,9 +55,11 @@ if (failures.length) {
   console.error("Effect-every-package check failed:\n");
   for (const f of failures) console.error(`  - ${f}`);
   console.error(
-    `\nEvery packages/* workspace must declare effect (${effectVersion ?? "^3.21.4"}) and ship a Tag + Layer service.`
+    `\nEvery packages/* workspace must declare effect (${effectVersion ?? "4.0.0"}) and ship a Context.Service + Layer.`
   );
   process.exit(1);
 }
 
-console.log("Effect-every-package: all workspace packages declare effect and export Context.Tag services.");
+console.log(
+  "Effect-every-package: all workspace packages declare effect and export Context.Service services."
+);

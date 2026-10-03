@@ -8,15 +8,14 @@ import { agentSubstrateLiveFromEnv, AgentSubstrateService } from "./service.js";
 import { InMemoryAgentSubstrateWormSinkLive } from "./worm-bridge.js";
 
 /**
- * Run a sandbox_exec snippet inside Agent Substrate.
- * Promise façade for runSandboxBackend; Effect underneath.
+ * Run a sandbox_exec snippet inside Agent Substrate (Effect primary API).
  * Layer is built per call so env (`CLAWQL_SANDBOX_AGENT_SUBSTRATE_*`) is current.
  */
-export async function callAgentSubstrateSandbox(
+export function callAgentSubstrateSandboxEffect(
   input: SandboxCodeToolInput
-): Promise<SandboxBridgeResponse> {
+): Effect.Effect<SandboxBridgeResponse> {
   const stack = Layer.merge(agentSubstrateLiveFromEnv(), InMemoryAgentSubstrateWormSinkLive);
-  const program = Effect.gen(function* () {
+  return Effect.gen(function* () {
     const svc = yield* AgentSubstrateService;
     const cfg = svc.config();
     if (!cfg.enabled) {
@@ -51,8 +50,13 @@ export async function callAgentSubstrateSandbox(
     ),
     Effect.provide(stack)
   );
+}
 
-  return Effect.runPromise(program);
+/** Promise façade for callers that still await Agent Substrate. */
+export async function callAgentSubstrateSandbox(
+  input: SandboxCodeToolInput
+): Promise<SandboxBridgeResponse> {
+  return Effect.runPromise(callAgentSubstrateSandboxEffect(input));
 }
 
 /** @deprecated Prefer building Layer via agentSubstrateLiveFromEnv() at call sites — env is dynamic. */

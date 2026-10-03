@@ -1,11 +1,12 @@
 import { resolveInferencePolicy } from "../policy/resolve.js";
+import { Effect } from "effect";
 
 export type InferencePolicyShowOptions = {
   json?: boolean;
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferencePolicyShow(
+async function runInferencePolicyShowImpl(
   options: InferencePolicyShowOptions = {}
 ): Promise<number> {
   const env = options.env ?? process.env;
@@ -32,4 +33,20 @@ export async function runInferencePolicyShow(
   console.log(`pipeline_worker: ${policy.pipelineWorker.enabled}`);
   console.log(`agent_coordination: ${policy.agentCoordination.enabled}`);
   return 0;
+}
+
+export function runInferencePolicyShowEffect(
+  options: InferencePolicyShowOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferencePolicyShowImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferencePolicyShowEffect} for Effect callers. */
+export async function runInferencePolicyShow(
+  options: InferencePolicyShowOptions = {}
+): Promise<number> {
+  return Effect.runPromise(runInferencePolicyShowEffect(options));
 }

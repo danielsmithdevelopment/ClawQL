@@ -531,12 +531,12 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
             path: "/tmp/clawql-istio-access-log-does-not-exist-088d.ndjson",
             onEvent: () => Effect.void,
           })
-          .pipe(Effect.either);
+          .pipe(Effect.result);
       }).pipe(Effect.provide(IstioAccessLogTailStandaloneLive))
     );
-    expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left._tag).toBe("IstioAccessLogTailUnavailable");
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure._tag).toBe("IstioAccessLogTailUnavailable");
     }
   });
 
@@ -621,10 +621,10 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     expect(ok).toHaveLength(1);
     expect(ok[0]?.nodeId).toBe("n1");
 
-    const bad = await Effect.runPromise(parseCelldLeaseSnapshotJson("[]").pipe(Effect.either));
-    expect(bad._tag).toBe("Left");
-    if (bad._tag === "Left") {
-      expect(bad.left._tag).toBe("CelldLeaseSnapshotInvalid");
+    const bad = await Effect.runPromise(parseCelldLeaseSnapshotJson("[]").pipe(Effect.result));
+    expect(bad._tag).toBe("Failure");
+    if (bad._tag === "Failure") {
+      expect(bad.failure._tag).toBe("CelldLeaseSnapshotInvalid");
     }
   });
 });

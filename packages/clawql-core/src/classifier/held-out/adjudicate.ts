@@ -36,13 +36,13 @@ export type AdjudicationRunReport = {
   readonly cases: readonly HeldOutCaseSpec[];
 };
 
-export class FrontierAdjudicator extends Context.Tag("clawql/FrontierAdjudicator")<
+export class FrontierAdjudicator extends Context.Service<
   FrontierAdjudicator,
   {
     readonly adjudicateCase: (c: HeldOutCaseSpec) => Effect.Effect<AdjudicationLabel, Error>;
     readonly judgeModelId: () => string;
   }
->() {}
+>()("clawql/FrontierAdjudicator") {}
 
 /**
  * Dry-run adjudicator: copies the suite's provisional groundTruthCandidateId
@@ -51,7 +51,7 @@ export class FrontierAdjudicator extends Context.Tag("clawql/FrontierAdjudicator
  */
 export function makeDryRunFrontierAdjudicator(
   judgeModel = "dry-run-recorded"
-): Context.Tag.Service<typeof FrontierAdjudicator> {
+): Context.Service.Shape<typeof FrontierAdjudicator> {
   return {
     judgeModelId: () => judgeModel,
     adjudicateCase: (c) =>
@@ -81,7 +81,7 @@ export function makeHttpFrontierAdjudicator(args: {
   readonly model: string;
   readonly token?: string;
   readonly fetchImpl?: typeof fetch;
-}): Context.Tag.Service<typeof FrontierAdjudicator> {
+}): Context.Service.Shape<typeof FrontierAdjudicator> {
   const fetchImpl = args.fetchImpl ?? fetch;
   return {
     judgeModelId: () => args.model,

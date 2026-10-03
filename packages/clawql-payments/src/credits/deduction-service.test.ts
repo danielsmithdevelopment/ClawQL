@@ -106,14 +106,14 @@ describe("DeductionService (sync hold → capture/release → outbox)", () => {
                 amountCents: 500,
                 idempotencyKey: `swarm-${k}`,
               })
-              .pipe(Effect.either);
+              .pipe(Effect.result);
           })
         )
       )
     );
 
-    const allowed = outcomes.filter((o) => o._tag === "Right");
-    const denied = outcomes.filter((o) => o._tag === "Left");
+    const allowed = outcomes.filter((o) => o._tag === "Success");
+    const denied = outcomes.filter((o) => o._tag === "Failure");
     expect(allowed).toHaveLength(1);
     expect(denied).toHaveLength(4);
 

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { commandExists, isDryRun, runCommand } from "../exec.js";
 import type { CollaborationRecord } from "../types.js";
 import { readReleaseConfig } from "../config.js";
+import { Effect } from "effect";
 
 export type CollaborationSyncResult = {
   collaboration: CollaborationRecord;
@@ -13,7 +14,7 @@ export type CollaborationSyncResult = {
  * Radicle is the primary git surface; GitHub is a read-only mirror with a
  * banner pointing at the permanent Arweave release when available.
  */
-export async function syncCollaborationRemotes(opts: {
+async function syncCollaborationRemotesImpl(opts: {
   rootDir: string;
   arweaveTxId?: string;
   dryRun?: boolean;
@@ -107,7 +108,7 @@ export async function syncCollaborationRemotes(opts: {
   return { collaboration, detail };
 }
 
-export async function readCollaborationState(
+async function readCollaborationStateImpl(
   rootDir: string
 ): Promise<CollaborationRecord | undefined> {
   try {
@@ -117,4 +118,40 @@ export async function readCollaborationState(
   } catch {
     return undefined;
   }
+}
+
+function fsError(cause: unknown): Error {
+  return cause instanceof Error ? cause : new Error(String(cause));
+}
+
+/** Sync Radicle/GitHub collaboration remotes for a release (Effect-primary). */
+export function syncCollaborationRemotesEffect(opts: {
+  rootDir: string;
+  arweaveTxId?: string;
+  dryRun?: boolean;
+}): Effect.Effect<CollaborationSyncResult, Error> {
+  return Effect.tryPromise({ try: () => syncCollaborationRemotesImpl(opts), catch: fsError });
+}
+
+/** Promise façade for callers that still await collaboration sync. */
+export async function syncCollaborationRemotes(opts: {
+  rootDir: string;
+  arweaveTxId?: string;
+  dryRun?: boolean;
+}): Promise<CollaborationSyncResult> {
+  return Effect.runPromise(syncCollaborationRemotesEffect(opts));
+}
+
+/** Read persisted collaboration state (Effect-primary). */
+export function readCollaborationStateEffect(
+  rootDir: string
+): Effect.Effect<CollaborationRecord | undefined, Error> {
+  return Effect.tryPromise({ try: () => readCollaborationStateImpl(rootDir), catch: fsError });
+}
+
+/** Promise façade for callers that still await collaboration state reads. */
+export async function readCollaborationState(
+  rootDir: string
+): Promise<CollaborationRecord | undefined> {
+  return Effect.runPromise(readCollaborationStateEffect(rootDir));
 }

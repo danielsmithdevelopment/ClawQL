@@ -56,9 +56,21 @@ export function getClawqlDataStore(env: NodeJS.ProcessEnv = process.env): Clawql
   return processStore;
 }
 
-export async function resetClawqlDataStoreForTests(): Promise<void> {
+async function resetClawqlDataStoreForTestsImpl(): Promise<void>  {
   if (processStore) await processStore.close();
   processStore = null;
+}
+
+export function resetClawqlDataStoreForTestsEffect(): Effect.Effect<void, Error> {
+  return Effect.tryPromise({
+    try: () => resetClawqlDataStoreForTestsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resetClawqlDataStoreForTestsEffect} for Effect callers. */
+export async function resetClawqlDataStoreForTests(): Promise<void>  {
+  return Effect.runPromise(resetClawqlDataStoreForTestsEffect());
 }
 
 export type { OpenFactRow, IngestPayload, IngestResult, DataQueryResult, DataStatus };

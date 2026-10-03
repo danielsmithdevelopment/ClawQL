@@ -3,7 +3,8 @@
  */
 
 import { getPackageRoot } from "clawql-api";
-import { enforceReleaseManifestAtStartup } from "clawql-release";
+import { enforceReleaseManifestAtStartupEffect } from "clawql-release";
+import { Effect } from "effect";
 import { NPM_PACKAGE_VERSION } from "./npm-version.js";
 
 function packageRootOrCwd(): string {
@@ -14,10 +15,15 @@ function packageRootOrCwd(): string {
   }
 }
 
-/** No-op unless `CLAWQL_RELEASE_MANIFEST` is set. */
-export async function maybeVerifyReleaseManifestAtStartup(): Promise<void> {
-  await enforceReleaseManifestAtStartup({
+/** No-op unless `CLAWQL_RELEASE_MANIFEST` is set. Prefer {@link maybeVerifyReleaseManifestAtStartupEffect}. */
+export function maybeVerifyReleaseManifestAtStartupEffect(): Effect.Effect<void, Error> {
+  return enforceReleaseManifestAtStartupEffect({
     version: NPM_PACKAGE_VERSION,
     rootDir: packageRootOrCwd(),
   });
+}
+
+/** Promise façade for MCP/HTTP process start. */
+export async function maybeVerifyReleaseManifestAtStartup(): Promise<void> {
+  return Effect.runPromise(maybeVerifyReleaseManifestAtStartupEffect());
 }

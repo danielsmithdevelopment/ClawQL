@@ -4,6 +4,7 @@ import { maybeInitInferenceOtelTracing } from "../observability/otel-tracing.js"
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 import { startPipelineWorker } from "../pipeline/worker.js";
 import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
+import { Effect } from "effect";
 
 function parseTruthy(value: string | undefined): boolean {
   if (value === undefined) return false;
@@ -17,7 +18,7 @@ export type InferenceServeOptions = {
   env?: NodeJS.ProcessEnv;
 };
 
-export async function runInferenceServe(options: InferenceServeOptions = {}): Promise<number> {
+async function runInferenceServeImpl(options: InferenceServeOptions = {}): Promise<number> {
   const env = resolveInferenceEffectiveEnv(options.env ?? process.env);
   registerInferencePoolShutdownHooks();
   await maybeInitInferenceOtelTracing(env);
@@ -37,4 +38,18 @@ export async function runInferenceServe(options: InferenceServeOptions = {}): Pr
     console.log("  pipeline worker: enabled");
   }
   return 0;
+}
+
+export function runInferenceServeEffect(
+  options: InferenceServeOptions = {}
+): Effect.Effect<number, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceServeImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceServeEffect} for Effect callers. */
+export async function runInferenceServe(options: InferenceServeOptions = {}): Promise<number> {
+  return Effect.runPromise(runInferenceServeEffect(options));
 }

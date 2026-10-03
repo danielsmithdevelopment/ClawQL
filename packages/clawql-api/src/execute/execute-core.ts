@@ -271,7 +271,7 @@ export function executeClawqlOperationEffect(
         JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2)
       );
     }).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.gen(function* () {
           const fallback = yield* fromPromise(() =>
             executeRestOperation(op as Operation, args, openapiForOp)

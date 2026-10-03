@@ -50,11 +50,11 @@ describe("agent-lab mcp-ui preset", () => {
 
   it("fails when fewer than two tools match", async () => {
     const result = await Effect.runPromise(
-      Effect.either(resolveAgentLabPresetDefinition([tool("echo")]))
+      Effect.result(resolveAgentLabPresetDefinition([tool("echo")]))
     );
-    expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left).toBeInstanceOf(McpUiPresetError);
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure).toBeInstanceOf(McpUiPresetError);
     }
   });
 });
@@ -86,11 +86,11 @@ describe("cloudflare-claim mcp-ui preset", () => {
 
   it("fails when claim tools are missing", async () => {
     const result = await Effect.runPromise(
-      Effect.either(resolveCloudflareClaimPresetDefinition([tool("cf_reveal_challenge")]))
+      Effect.result(resolveCloudflareClaimPresetDefinition([tool("cf_reveal_challenge")]))
     );
-    expect(result._tag).toBe("Left");
-    if (result._tag === "Left") {
-      expect(result.left).toBeInstanceOf(McpUiPresetError);
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(result.failure).toBeInstanceOf(McpUiPresetError);
     }
   });
 });

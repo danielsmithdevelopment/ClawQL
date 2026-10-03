@@ -15,12 +15,10 @@ reason = "extract-zip@2.0.1 (symlink path traversal) is transitive via website l
 id = "GHSA-7pqw-9j4j-h8q3"
 reason = "Same extract-zip@2.0.1 symlink path traversal as GHSA-jmr9-qjv8-65gv (new OSV id / CVE-2026-19693); transitive via website lighthouse → puppeteer-core → @puppeteer/browsers; no fixed version. Dev-only browser download path."
 
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+reason = "braces@3.0.3 stack-exhaustion DoS via deeply nested patterns; OSV lists no fixed version beyond 3.0.3 (latest). Transitive via micromatch/chokidar in website/dashboard/www tooling; not a production request-path dependency. Remove when upstream ships a patched braces."
 
-# Historical note: website was briefly pinned on 16.1.x for MDX/webpack metadata; current pin is 16.3.6.
-# Keep this stanza only if an older lock still appears in a long-lived branch scan.
-[[PackageOverrides]]
-name = "next"
-ecosystem = "npm"
-version = "16.1.7"
-vulnerability.ignore = true
-reason = "Legacy website pin (vercel/next.js#91735); current main uses Next 16.3.6 — safe to delete once no branch locks reference 16.1.7."
+[[IgnoredVulns]]
+id = "GHSA-ch52-4w7c-c8xp"
+reason = "http-cache-semantics@4.2.0 max-stale cross-user cache disclosure; OSV lists no fixed version beyond 4.2.0 (latest). Transitive via make-fetch-happen (npm/cacache tooling path), not ClawQL MCP request handling. Remove when upstream ships a patched release."

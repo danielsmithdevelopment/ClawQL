@@ -1,14 +1,19 @@
 /**
  * Argo Workflows suspend / resume — workflow-level and suspend-template (HITL) nodes.
  * Mirrors argo-workflows `SuspendWorkflow` / `ResumeWorkflow` via the Workflow CRD API.
+ *
+ * Domain APIs are Effect-primary; thin Promise façades for MCP / webhook edges.
  */
 
+import { Cause, Effect, Exit } from "effect";
 import { ARGO_CRD, isNamespaceAllowed, workflowToolEnabled } from "./env.js";
 import {
-  getWorkflowK8sClients,
+  getWorkflowK8sClientsEffect,
   type ArgoWorkflowNodeStatus,
   type ArgoWorkflowObject,
 } from "./k8s-client.js";
+import { automationFromPromise } from "../effect/automation-effect-utils.js";
+import { AutomationError } from "../effect/automation-errors.js";
 import { isTerminalWorkflowPhase } from "./wait.js";
 
 export function isActiveSuspendNode(node: ArgoWorkflowNodeStatus): boolean {
@@ -61,51 +66,76 @@ export function nodeMatchesFieldSelector(
   return true;
 }
 
-async function getWorkflowObject(namespace: string, name: string): Promise<ArgoWorkflowObject> {
-  const { customObjects } = await getWorkflowK8sClients();
-  const res = await customObjects.getNamespacedCustomObject({
-    group: ARGO_CRD.group,
-    version: ARGO_CRD.version,
-    namespace,
-    plural: ARGO_CRD.workflowPlural,
-    name,
+function getWorkflowObjectEffect(
+  namespace: string,
+  name: string
+): Effect.Effect<ArgoWorkflowObject, AutomationError> {
+  return Effect.gen(function* () {
+    const { customObjects } = yield* getWorkflowK8sClientsEffect();
+    return yield* automationFromPromise(async () => {
+      const res = await customObjects.getNamespacedCustomObject({
+        group: ARGO_CRD.group,
+        version: ARGO_CRD.version,
+        namespace,
+        plural: ARGO_CRD.workflowPlural,
+        name,
+      });
+      return res as ArgoWorkflowObject;
+    });
   });
-  return res as ArgoWorkflowObject;
 }
 
-async function replaceWorkflowObject(
+function replaceWorkflowObjectEffect(
   namespace: string,
   name: string,
   body: ArgoWorkflowObject
-): Promise<ArgoWorkflowObject> {
-  const { customObjects } = await getWorkflowK8sClients();
-  const res = await customObjects.replaceNamespacedCustomObject({
-    group: ARGO_CRD.group,
-    version: ARGO_CRD.version,
-    namespace,
-    plural: ARGO_CRD.workflowPlural,
-    name,
-    body,
+): Effect.Effect<ArgoWorkflowObject, AutomationError> {
+  return Effect.gen(function* () {
+    const { customObjects } = yield* getWorkflowK8sClientsEffect();
+    return yield* automationFromPromise(async () => {
+      const res = await customObjects.replaceNamespacedCustomObject({
+        group: ARGO_CRD.group,
+        version: ARGO_CRD.version,
+        namespace,
+        plural: ARGO_CRD.workflowPlural,
+        name,
+        body,
+      });
+      return res as ArgoWorkflowObject;
+    });
   });
-  return res as ArgoWorkflowObject;
 }
 
+export function suspendWorkflowEffect(
+  namespace: string,
+  name: string
+): Effect.Effect<ArgoWorkflowObject, AutomationError> {
+  return Effect.gen(function* () {
+    const wf = yield* getWorkflowObjectEffect(namespace, name);
+    if (isTerminalWorkflowPhase(wf.status?.phase)) {
+      return yield* Effect.fail(
+        new AutomationError({
+          reason: `workflow ${name} is already completed (phase: ${wf.status?.phase})`,
+        })
+      );
+    }
+    if (wf.spec?.suspend === true) {
+      return wf;
+    }
+    const updated: ArgoWorkflowObject = {
+      ...wf,
+      spec: { ...wf.spec, suspend: true },
+    };
+    return yield* replaceWorkflowObjectEffect(namespace, name, updated);
+  });
+}
+
+/** Promise façade. */
 export async function suspendWorkflow(
   namespace: string,
   name: string
 ): Promise<ArgoWorkflowObject> {
-  const wf = await getWorkflowObject(namespace, name);
-  if (isTerminalWorkflowPhase(wf.status?.phase)) {
-    throw new Error(`workflow ${name} is already completed (phase: ${wf.status?.phase})`);
-  }
-  if (wf.spec?.suspend === true) {
-    return wf;
-  }
-  const updated: ArgoWorkflowObject = {
-    ...wf,
-    spec: { ...wf.spec, suspend: true },
-  };
-  return replaceWorkflowObject(namespace, name, updated);
+  return Effect.runPromise(suspendWorkflowEffect(namespace, name));
 }
 
 export type ResumeWorkflowResult = {
@@ -114,68 +144,91 @@ export type ResumeWorkflowResult = {
   workflow_level_resumed: boolean;
 };
 
+export function resumeWorkflowEffect(
+  namespace: string,
+  name: string,
+  nodeFieldSelector?: string
+): Effect.Effect<ResumeWorkflowResult, AutomationError> {
+  return Effect.gen(function* () {
+    const wf = yield* getWorkflowObjectEffect(namespace, name);
+    const selector = nodeFieldSelector?.trim() ?? "";
+    const resumedNodes: string[] = [];
+    let workflowLevelResumed = false;
+    let workflowUpdated = false;
+
+    const next: ArgoWorkflowObject = {
+      ...wf,
+      spec: wf.spec ? { ...wf.spec } : {},
+      status: wf.status
+        ? {
+            ...wf.status,
+            nodes: wf.status.nodes ? { ...wf.status.nodes } : undefined,
+          }
+        : undefined,
+    };
+
+    if (next.spec?.suspend === true) {
+      next.spec.suspend = false;
+      workflowLevelResumed = true;
+      workflowUpdated = true;
+    }
+
+    for (const [nodeId, node] of Object.entries(next.status?.nodes ?? {})) {
+      if (!isActiveSuspendNode(node)) continue;
+      if (selector && !nodeMatchesFieldSelector(selector, node, nodeId)) continue;
+
+      const finishedAt = new Date().toISOString();
+      const updatedNode: ArgoWorkflowNodeStatus = {
+        ...node,
+        phase: "Succeeded",
+        message: node.message
+          ? `${node.message}; Resumed by clawql workflow tool`
+          : "Resumed by clawql workflow tool",
+        finishedAt,
+      };
+      next.status!.nodes![nodeId] = updatedNode;
+      resumedNodes.push(node.displayName ?? node.name ?? nodeId);
+      workflowUpdated = true;
+    }
+
+    if (!workflowUpdated) {
+      if (!workflowHasActiveSuspend(wf)) {
+        return yield* Effect.fail(
+          new AutomationError({
+            reason: `workflow ${name} has no active suspend state to resume`,
+          })
+        );
+      }
+      if (selector) {
+        return yield* Effect.fail(
+          new AutomationError({
+            reason: `no active suspend node matched node_field_selector: ${selector}`,
+          })
+        );
+      }
+      return yield* Effect.fail(
+        new AutomationError({
+          reason: `workflow ${name} has no active suspend state to resume`,
+        })
+      );
+    }
+
+    const saved = yield* replaceWorkflowObjectEffect(namespace, name, next);
+    return {
+      workflow: saved,
+      resumed_nodes: resumedNodes,
+      workflow_level_resumed: workflowLevelResumed,
+    };
+  });
+}
+
+/** Promise façade. */
 export async function resumeWorkflow(
   namespace: string,
   name: string,
   nodeFieldSelector?: string
 ): Promise<ResumeWorkflowResult> {
-  const wf = await getWorkflowObject(namespace, name);
-  const selector = nodeFieldSelector?.trim() ?? "";
-  const resumedNodes: string[] = [];
-  let workflowLevelResumed = false;
-  let workflowUpdated = false;
-
-  const next: ArgoWorkflowObject = {
-    ...wf,
-    spec: wf.spec ? { ...wf.spec } : {},
-    status: wf.status
-      ? {
-          ...wf.status,
-          nodes: wf.status.nodes ? { ...wf.status.nodes } : undefined,
-        }
-      : undefined,
-  };
-
-  if (next.spec?.suspend === true) {
-    next.spec.suspend = false;
-    workflowLevelResumed = true;
-    workflowUpdated = true;
-  }
-
-  for (const [nodeId, node] of Object.entries(next.status?.nodes ?? {})) {
-    if (!isActiveSuspendNode(node)) continue;
-    if (selector && !nodeMatchesFieldSelector(selector, node, nodeId)) continue;
-
-    const finishedAt = new Date().toISOString();
-    const updatedNode: ArgoWorkflowNodeStatus = {
-      ...node,
-      phase: "Succeeded",
-      message: node.message
-        ? `${node.message}; Resumed by clawql workflow tool`
-        : "Resumed by clawql workflow tool",
-      finishedAt,
-    };
-    next.status!.nodes![nodeId] = updatedNode;
-    resumedNodes.push(node.displayName ?? node.name ?? nodeId);
-    workflowUpdated = true;
-  }
-
-  if (!workflowUpdated) {
-    if (!workflowHasActiveSuspend(wf)) {
-      throw new Error(`workflow ${name} has no active suspend state to resume`);
-    }
-    if (selector) {
-      throw new Error(`no active suspend node matched node_field_selector: ${selector}`);
-    }
-    throw new Error(`workflow ${name} has no active suspend state to resume`);
-  }
-
-  const saved = await replaceWorkflowObject(namespace, name, next);
-  return {
-    workflow: saved,
-    resumed_nodes: resumedNodes,
-    workflow_level_resumed: workflowLevelResumed,
-  };
+  return Effect.runPromise(resumeWorkflowEffect(namespace, name, nodeFieldSelector));
 }
 
 export type HitlWorkflowRef = {
@@ -244,35 +297,64 @@ export type HitlWebhookResumeResult =
   | { attempted: true; ok: false; error: string };
 
 /** Resume an Argo workflow when Label Studio webhook completes (opt-in). */
+export function maybeResumeWorkflowFromHitlEffect(
+  hitl: unknown
+): Effect.Effect<HitlWebhookResumeResult> {
+  return Effect.gen(function* () {
+    if (!hitlWebhookResumeWorkflowEnabled()) return { attempted: false as const };
+    return yield* resumeWorkflowFromHitlRefEffect(hitl);
+  });
+}
+
+/** Promise façade. */
 export async function maybeResumeWorkflowFromHitl(hitl: unknown): Promise<HitlWebhookResumeResult> {
-  if (!hitlWebhookResumeWorkflowEnabled()) return { attempted: false };
-  return resumeWorkflowFromHitlRef(hitl);
+  return Effect.runPromise(maybeResumeWorkflowFromHitlEffect(hitl));
 }
 
 /** Resume from HITL metadata (used by webhook sync path and NATS consumer). */
+export function resumeWorkflowFromHitlRefEffect(
+  hitl: unknown
+): Effect.Effect<HitlWebhookResumeResult> {
+  return Effect.gen(function* () {
+    if (!workflowToolEnabled()) {
+      return {
+        attempted: true as const,
+        ok: false as const,
+        error: "workflow tool is not enabled",
+      };
+    }
+    const ref = parseHitlWorkflowRef(hitl);
+    if (!ref) return { attempted: false as const };
+    if (!isNamespaceAllowed(ref.namespace)) {
+      return {
+        attempted: true as const,
+        ok: false as const,
+        error: `workflow namespace not in allowlist: ${ref.namespace}`,
+      };
+    }
+    const exit = yield* Effect.exit(
+      resumeWorkflowEffect(ref.namespace, ref.name, ref.node_field_selector)
+    );
+    if (Exit.isSuccess(exit)) {
+      return {
+        attempted: true as const,
+        ok: true as const,
+        resumed_nodes: exit.value.resumed_nodes,
+        workflow_level_resumed: exit.value.workflow_level_resumed,
+      };
+    }
+    const err = Cause.squash(exit.cause);
+    const reason =
+      err instanceof AutomationError
+        ? err.reason
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    return { attempted: true as const, ok: false as const, error: reason };
+  });
+}
+
+/** Promise façade. */
 export async function resumeWorkflowFromHitlRef(hitl: unknown): Promise<HitlWebhookResumeResult> {
-  if (!workflowToolEnabled()) {
-    return { attempted: true, ok: false, error: "workflow tool is not enabled" };
-  }
-  const ref = parseHitlWorkflowRef(hitl);
-  if (!ref) return { attempted: false };
-  if (!isNamespaceAllowed(ref.namespace)) {
-    return {
-      attempted: true,
-      ok: false,
-      error: `workflow namespace not in allowlist: ${ref.namespace}`,
-    };
-  }
-  try {
-    const result = await resumeWorkflow(ref.namespace, ref.name, ref.node_field_selector);
-    return {
-      attempted: true,
-      ok: true,
-      resumed_nodes: result.resumed_nodes,
-      workflow_level_resumed: result.workflow_level_resumed,
-    };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { attempted: true, ok: false, error: message };
-  }
+  return Effect.runPromise(resumeWorkflowFromHitlRefEffect(hitl));
 }

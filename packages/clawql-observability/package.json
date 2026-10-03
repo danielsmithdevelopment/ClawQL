@@ -1,7 +1,7 @@
 {
   "name": "clawql-observability",
   "version": "0.1.0",
-  "description": "ClawQL LGTM+ observability stack (Loki, Grafana, Tempo, Mimir, Pyroscope) with Alloy collection \u2014 distinct from clawql-audit and clawql-analytics",
+  "description": "ClawQL LGTM+ observability stack (Loki, Grafana, Tempo, Mimir, Pyroscope) with Alloy collection — distinct from clawql-audit and clawql-analytics",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -46,7 +46,7 @@
     "clawql-api": "0.1.0",
     "clawql-audit": "0.1.0",
     "clawql-core": "0.1.0",
-    "effect": "^3.21.4",
+    "effect": "4.0.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

@@ -14,8 +14,8 @@ import { Effect } from "effect";
 import type { InferenceGateway, InferenceRequest, InferenceResponse } from "../gateway.js";
 
 export type HookedInferenceGatewayOptions = {
-  readonly hookRegistry: Context.Tag.Service<typeof HookRegistry>;
-  readonly worm: Context.Tag.Service<typeof WormAuditSink>;
+  readonly hookRegistry: Context.Service.Shape<typeof HookRegistry>;
+  readonly worm: Context.Service.Shape<typeof WormAuditSink>;
   readonly atrScopeTokens?: readonly string[];
 };
 

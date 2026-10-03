@@ -574,7 +574,13 @@ jobs:
           npm run build -w clawql-analytics
 
       - name: Install website dependencies
-        run: npm ci --prefix apps/docs
+        run: |
+          npm ci --prefix apps/docs
+          # Analytics dist imports `effect`; hoist into the package tree for webpack/Node
+          # (Effect 4 is exports-only; Next resolve from outside apps/docs is brittle).
+          mkdir -p packages/clawql-analytics/node_modules
+          ln -sfn "$(pwd)/apps/docs/node_modules/effect" packages/clawql-analytics/node_modules/effect
+          ln -sfn "$(pwd)/apps/docs/node_modules/posthog-node" packages/clawql-analytics/node_modules/posthog-node
 
       - name: Install Playwright browser
         run: npx --prefix apps/docs playwright install --with-deps chromium

@@ -61,7 +61,7 @@ describe("MemoryDbService in recall infra", () => {
         const db = yield* MemoryDbService;
         return yield* db
           .loadWikilinkEdgesFromDatabase("/v", ["a.md"])
-          .pipe(Effect.catchAll(() => Effect.succeed([])));
+          .pipe(Effect.catch(() => Effect.succeed([])));
       }).pipe(Effect.provide(memoryDbLiveLayer()))
     );
     expect(Array.isArray(edges)).toBe(true);

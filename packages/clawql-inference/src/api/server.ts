@@ -17,6 +17,7 @@ import { createInferenceStore } from "../store/create.js";
 import type { InferenceStore } from "../store/types.js";
 import { registerInferencePoolShutdownHooks } from "../store/postgres-pool.js";
 import { resolveInferenceEffectiveEnv } from "../policy/manifest.js";
+import { Effect } from "effect";
 
 export type CreateInferenceHttpAppOptions = {
   gateway?: InferenceGateway;
@@ -83,7 +84,7 @@ export function resolveInferenceHost(env: NodeJS.ProcessEnv = process.env): stri
   return env.CLAWQL_INFERENCE_HOST?.trim() || "0.0.0.0";
 }
 
-export async function runInferenceHttpServer(
+async function runInferenceHttpServerImpl(
   options: {
     gateway?: InferenceGateway;
     env?: NodeJS.ProcessEnv;
@@ -107,4 +108,30 @@ export async function runInferenceHttpServer(
     app.listen(port, host, () => resolve());
   });
   return { app, port, host };
+}
+
+export function runInferenceHttpServerEffect(
+  options: {
+    gateway?: InferenceGateway;
+    env?: NodeJS.ProcessEnv;
+    port?: number;
+    host?: string;
+  } = {}
+): Effect.Effect<{ app: Express; port: number; host: string }, Error> {
+  return Effect.tryPromise({
+    try: () => runInferenceHttpServerImpl(options),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link runInferenceHttpServerEffect} for Effect callers. */
+export async function runInferenceHttpServer(
+  options: {
+    gateway?: InferenceGateway;
+    env?: NodeJS.ProcessEnv;
+    port?: number;
+    host?: string;
+  } = {}
+): Promise<{ app: Express; port: number; host: string }> {
+  return Effect.runPromise(runInferenceHttpServerEffect(options));
 }

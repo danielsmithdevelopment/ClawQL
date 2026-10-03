@@ -35,7 +35,7 @@ export function vaultArtifactHintsEffect(
     }
     if (envFlagEnabled("CLAWQL_MERKLE_ENABLED")) {
       const merkleSnapshot = yield* db.loadVaultMerkleSnapshotFromDb(vault).pipe(
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.sync(() => {
             console.error(`[clawql-mcp] memory.db merkle snapshot hint load failed: ${err.reason}`);
             return null;
@@ -57,7 +57,7 @@ export function vaultDbScanSyncEffect(vault: string): Effect.Effect<void, never,
     const db = yield* MemoryDbService;
     if (!db.memoryDbSyncEnabled()) return;
     yield* db.syncMemoryDbForVaultScanRoot(vault).pipe(
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.sync(() => {
           console.error(`[clawql-mcp] memory.db sync failed: ${err.reason}`);
         })
@@ -72,7 +72,7 @@ export function vaultProviderIndexEffect(vault: string): Effect.Effect<void, nev
     const { updateProviderIndexPage } = await import("../vault/provider-index.js");
     await updateProviderIndexPage(vault);
   }).pipe(
-    Effect.catchAll((err) =>
+    Effect.catch((err) =>
       Effect.sync(() => {
         console.error(`[clawql-mcp] provider index update failed: ${err.reason}`);
       })
@@ -102,7 +102,7 @@ export function memoryIngestPostSyncExtrasEffect(
     let merkleBefore: MerkleSnapshotPayload | null | undefined;
     if (merkleOn && db.memoryDbSyncEnabled()) {
       merkleBefore = yield* db.loadVaultMerkleSnapshotFromDb(vault).pipe(
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.sync(() => {
             console.error(
               `[clawql-mcp] memory.db merkle snapshot (before ingest sync) failed: ${err.reason}`
@@ -130,7 +130,7 @@ export function memoryIngestPostSyncExtrasEffect(
 
     if (merkleOn) {
       const merkleAfter = yield* db.loadVaultMerkleSnapshotFromDb(vault).pipe(
-        Effect.catchAll((err) =>
+        Effect.catch((err) =>
           Effect.sync(() => {
             console.error(
               `[clawql-mcp] memory.db merkle snapshot (after ingest sync) failed: ${err.reason}`

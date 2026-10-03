@@ -8,6 +8,7 @@ import { readFile } from "node:fs/promises";
 import { resolve as resolvePath } from "node:path";
 import { getClawqlOptionalToolFlags } from "../config/optional-flags.js";
 import { getPackageRoot } from "./package-root.js";
+import { Effect } from "effect";
 
 /** REST / Discovery bundled spec under `providers/`. */
 export interface BundledOpenApiProvider {
@@ -295,7 +296,7 @@ async function resolveAwsTop50Items(): Promise<ProviderGroupItem[]> {
  * Use **`CLAWQL_BUNDLED_PROVIDERS`** in `spec-loader`; there is no other default
  * custom merge — only this list, path list, or **`all-providers`**.
  */
-export async function resolveItemsFromBundledProviderEnvList(
+async function resolveItemsFromBundledProviderEnvListImpl(
   raw: string
 ): Promise<ProviderGroupItem[]> {
   const parts = raw
@@ -356,6 +357,22 @@ export async function resolveItemsFromBundledProviderEnvList(
   return out;
 }
 
+export function resolveItemsFromBundledProviderEnvListEffect(
+  raw: string
+): Effect.Effect<ProviderGroupItem[], Error> {
+  return Effect.tryPromise({
+    try: () => resolveItemsFromBundledProviderEnvListImpl(raw),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveItemsFromBundledProviderEnvListEffect} for Effect callers. */
+export async function resolveItemsFromBundledProviderEnvList(
+  raw: string
+): Promise<ProviderGroupItem[]> {
+  return Effect.runPromise(resolveItemsFromBundledProviderEnvListEffect(raw));
+}
+
 /**
  * In a merged load, `specLabel` is each Google Cloud API slug from the bundled manifest (e.g. `container-v1`) or
  * one of these non-Google bundled vendor ids (`BUNDLED_PROVIDERS` keys; Google Cloud uses the manifest, not a single file here).
@@ -411,8 +428,23 @@ export const DEFAULT_BUNDLED_PROVIDER_IDS: readonly string[] = [
  * Cloud add-ons (google/aws) are **not** appended via env flags — list them in `providers.enabled`
  * or use pack **`all-providers`** / **`CLAWQL_PROVIDER=google|aws`**.
  */
-export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+async function resolveDefaultBundledProvidersItemsImpl(): Promise<ProviderGroupItem[]> {
   return resolveItemsFromBundledProviderEnvList(DEFAULT_BUNDLED_PROVIDER_IDS.join(","));
+}
+
+export function resolveDefaultBundledProvidersItemsEffect(): Effect.Effect<
+  ProviderGroupItem[],
+  Error
+> {
+  return Effect.tryPromise({
+    try: () => resolveDefaultBundledProvidersItemsImpl(),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveDefaultBundledProvidersItemsEffect} for Effect callers. */
+export async function resolveDefaultBundledProvidersItems(): Promise<ProviderGroupItem[]> {
+  return Effect.runPromise(resolveDefaultBundledProvidersItemsEffect());
 }
 
 async function resolveAllBundledProvidersItems(): Promise<ProviderGroupItem[]> {
@@ -492,7 +524,7 @@ const REMOVED_BUNDLED_PROVIDER_GROUP_IDS: Readonly<Record<string, string>> = {
     "The google-top50 preset id was removed in 7.0.0. Use CLAWQL_PROVIDER=google or CLAWQL_BUNDLED_PROVIDERS=google.",
 };
 
-export async function resolveBundledProviderGroup(
+async function resolveBundledProviderGroupImpl(
   raw: string | undefined
 ): Promise<ProviderGroupItem[] | undefined> {
   if (!raw?.trim()) return undefined;
@@ -527,4 +559,20 @@ export async function resolveBundledProviderGroup(
       label: p.id,
     };
   });
+}
+
+export function resolveBundledProviderGroupEffect(
+  raw: string | undefined
+): Effect.Effect<ProviderGroupItem[] | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => resolveBundledProviderGroupImpl(raw),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link resolveBundledProviderGroupEffect} for Effect callers. */
+export async function resolveBundledProviderGroup(
+  raw: string | undefined
+): Promise<ProviderGroupItem[] | undefined> {
+  return Effect.runPromise(resolveBundledProviderGroupEffect(raw));
 }

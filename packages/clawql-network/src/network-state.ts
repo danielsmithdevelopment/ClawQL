@@ -43,7 +43,7 @@ export const loadNetworkState = (home?: string): Effect.Effect<NetworkState | nu
       return JSON.parse(raw) as NetworkState;
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.succeed(null)));
+  }).pipe(Effect.catch(() => Effect.succeed(null)));
 
 export const saveNetworkState = (state: NetworkState, home?: string): Effect.Effect<void, never> =>
   Effect.tryPromise({
@@ -56,4 +56,4 @@ export const saveNetworkState = (state: NetworkState, home?: string): Effect.Eff
       });
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  }).pipe(Effect.catchAll(() => Effect.void));
+  }).pipe(Effect.catch(() => Effect.void));

@@ -23,6 +23,7 @@ import { assertSafeSourceId, resolveSafePathUnder } from "./custom-sources-secur
 import type { GraphQLSourceConfig } from "./native-protocol-env.js";
 import type { GrpcSourceConfig } from "./native-protocol-env.js";
 import { applyOperationRiskToLoadedOps } from "../risk/operation-risk-service.js";
+import { Effect } from "effect";
 
 function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
   if (extra.length === 0) return base;
@@ -41,7 +42,7 @@ function mergeOps(base: Operation[], extra: Operation[]): Operation[] {
   return merged;
 }
 
-export async function loadOpenApiLikeSource(
+async function loadOpenApiLikeSourceImpl(
   entry: CustomSourceEntry,
   home: string
 ): Promise<Operation[]> {
@@ -64,6 +65,24 @@ export async function loadOpenApiLikeSource(
     );
     return [];
   }
+}
+
+export function loadOpenApiLikeSourceEffect(
+  entry: CustomSourceEntry,
+  home: string
+): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadOpenApiLikeSourceImpl(entry, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadOpenApiLikeSourceEffect} for Effect callers. */
+export async function loadOpenApiLikeSource(
+  entry: CustomSourceEntry,
+  home: string
+): Promise<Operation[]> {
+  return Effect.runPromise(loadOpenApiLikeSourceEffect(entry, home));
 }
 
 function toGraphqlConfig(entry: CustomSourceEntry, home: string): GraphQLSourceConfig | null {
@@ -98,7 +117,7 @@ function toGrpcConfig(entry: CustomSourceEntry, home: string): GrpcSourceConfig 
  * Load operations for a single custom source entry (preview / propose path).
  * Does not merge into the global index or write `sources.json`.
  */
-export async function loadOperationsForCustomSourceEntry(
+async function loadOperationsForCustomSourceEntryImpl(
   entry: CustomSourceEntry,
   home = resolveClawqlHome()
 ): Promise<Operation[]> {
@@ -127,7 +146,25 @@ export async function loadOperationsForCustomSourceEntry(
   return [];
 }
 
-export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
+export function loadOperationsForCustomSourceEntryEffect(
+  entry: CustomSourceEntry,
+  home = resolveClawqlHome()
+): Effect.Effect<Operation[], Error> {
+  return Effect.tryPromise({
+    try: () => loadOperationsForCustomSourceEntryImpl(entry, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link loadOperationsForCustomSourceEntryEffect} for Effect callers. */
+export async function loadOperationsForCustomSourceEntry(
+  entry: CustomSourceEntry,
+  home = resolveClawqlHome()
+): Promise<Operation[]> {
+  return Effect.runPromise(loadOperationsForCustomSourceEntryEffect(entry, home));
+}
+
+async function mergeCustomSourceOperationsImpl(loaded: LoadedSpec): Promise<LoadedSpec> {
   const home = resolveClawqlHome();
   const file = await readCustomSourcesFile(home);
   let operations = loaded.operations;
@@ -200,10 +237,24 @@ export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<L
   };
 }
 
+export function mergeCustomSourceOperationsEffect(
+  loaded: LoadedSpec
+): Effect.Effect<LoadedSpec, Error> {
+  return Effect.tryPromise({
+    try: () => mergeCustomSourceOperationsImpl(loaded),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link mergeCustomSourceOperationsEffect} for Effect callers. */
+export async function mergeCustomSourceOperations(loaded: LoadedSpec): Promise<LoadedSpec> {
+  return Effect.runPromise(mergeCustomSourceOperationsEffect(loaded));
+}
+
 /**
  * Persist fetched spec body for openapi/discovery/graphql/grpc URL sources.
  */
-export async function cacheCustomSourceBody(
+async function cacheCustomSourceBodyImpl(
   entry: CustomSourceEntry,
   bodyText: string,
   home = resolveClawqlHome()
@@ -241,4 +292,24 @@ export async function cacheCustomSourceBody(
   await writeFile(filePath, toWrite, "utf8");
   const cachePath = `sources/${safeEntry.id}/${filename}`;
   return { ...safeEntry, cachePath };
+}
+
+export function cacheCustomSourceBodyEffect(
+  entry: CustomSourceEntry,
+  bodyText: string,
+  home = resolveClawqlHome()
+): Effect.Effect<CustomSourceEntry, Error> {
+  return Effect.tryPromise({
+    try: () => cacheCustomSourceBodyImpl(entry, bodyText, home),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link cacheCustomSourceBodyEffect} for Effect callers. */
+export async function cacheCustomSourceBody(
+  entry: CustomSourceEntry,
+  bodyText: string,
+  home = resolveClawqlHome()
+): Promise<CustomSourceEntry> {
+  return Effect.runPromise(cacheCustomSourceBodyEffect(entry, bodyText, home));
 }

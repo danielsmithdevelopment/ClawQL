@@ -137,7 +137,7 @@ function loadEmaBootstrapConfigs(
         try: () => loadEmaOrgsFromJson(inline),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_JSON", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_JSON", cause).pipe(
@@ -152,7 +152,7 @@ function loadEmaBootstrapConfigs(
         try: () => loadEmaOrgsFromJsonFile(path),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_PATH", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_PATH", cause).pipe(
@@ -171,7 +171,7 @@ function loadEmaBootstrapConfigs(
         },
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(new McpOAuthBootstrapError({ source: "CLAWQL_EMA_ORGS_FILE", cause }))
             : warnIfMcpOAuthBootstrapInvalid("CLAWQL_EMA_ORGS_FILE", cause).pipe(
@@ -194,7 +194,7 @@ function loadMcpClientBootstrap(
         try: () => loadMcpClientsFromJson(inline),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(
                 new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_JSON", cause })
@@ -211,7 +211,7 @@ function loadMcpClientBootstrap(
         try: () => loadMcpClientsFromJsonFile(path),
         catch: (cause) => cause,
       }).pipe(
-        Effect.catchAll((cause) =>
+        Effect.catch((cause) =>
           isMcpOAuthBootstrapStrict(env)
             ? Effect.fail(
                 new McpOAuthBootstrapError({ source: "CLAWQL_MCP_OAUTH_CLIENTS_PATH", cause })

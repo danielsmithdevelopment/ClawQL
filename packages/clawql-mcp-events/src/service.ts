@@ -90,9 +90,7 @@ function resolveTtlMs(
   return Math.max(MIN_TTL_MS, Math.min(requested, defaultTtlMs * 7));
 }
 
-export class McpEventsService extends Context.Tag("clawql/McpEventsService")<
-  McpEventsService,
-  {
+export class McpEventsService extends Context.Service<McpEventsService, {
     readonly list: (params: ListEventsParams) => Effect.Effect<ListEventsResult, never>;
     readonly subscribe: (
       params: SubscribeParams
@@ -105,12 +103,11 @@ export class McpEventsService extends Context.Tag("clawql/McpEventsService")<
     /** Flush coalesced stream.changed deliveries that have waited out the min interval. */
     readonly flushCoalesced: () => Effect.Effect<readonly DeliveryOutcome[]>;
     readonly getSubscription: (id: string) => Effect.Effect<StoredSubscription | undefined>;
-  }
->() {}
+  }>()("clawql/McpEventsService") {}
 
 export function makeMcpEventsService(
   config: McpEventsConfig = {}
-): Context.Tag.Service<typeof McpEventsService> {
+): Context.Service.Shape<typeof McpEventsService> {
   const catalog = config.catalog ?? BUILTIN_MCP_EVENT_CATALOG;
   const store = config.store ?? createMemorySubscriptionStore();
   const webhookFetch = config.webhookFetch ?? makeWebhookFetch();
@@ -134,7 +131,7 @@ export function makeMcpEventsService(
         if (wormAppend) await wormAppend({ type, payload });
       },
       catch: () => undefined,
-    }).pipe(Effect.catchAll(() => Effect.void));
+    }).pipe(Effect.catch(() => Effect.void));
 
   const deliverOne = (
     sub: StoredSubscription,

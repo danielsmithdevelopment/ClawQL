@@ -9,7 +9,7 @@ import { recordNativeGrpcExecute } from "../spec/native-protocol-metrics.js";
 import { getGrpcClient } from "../spec/native-protocol-registry.js";
 import type { Operation } from "../spec/operation-types.js";
 
-export async function executeNativeGrpc(
+async function executeNativeGrpcImpl(
   op: Operation,
   args: Record<string, unknown>
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
@@ -55,4 +55,22 @@ export async function executeNativeGrpc(
       }
     });
   });
+}
+
+export function executeNativeGrpcEffect(
+  op: Operation,
+  args: Record<string, unknown>
+): Effect.Effect<{ ok: true; data: unknown } | { ok: false; error: string }, Error> {
+  return Effect.tryPromise({
+    try: () => executeNativeGrpcImpl(op, args),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link executeNativeGrpcEffect} for Effect callers. */
+export async function executeNativeGrpc(
+  op: Operation,
+  args: Record<string, unknown>
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  return Effect.runPromise(executeNativeGrpcEffect(op, args));
 }

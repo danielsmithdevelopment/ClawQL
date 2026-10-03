@@ -22,7 +22,7 @@ export type ApplyOperationRiskResult = {
   readonly overrideCount: number;
 };
 
-export class OperationRiskService extends Context.Tag("clawql/OperationRiskService")<
+export class OperationRiskService extends Context.Service<
   OperationRiskService,
   {
     readonly loadConfig: () => Effect.Effect<OperationRiskConfigFile, Error>;
@@ -36,7 +36,7 @@ export class OperationRiskService extends Context.Tag("clawql/OperationRiskServi
       }
     ) => Effect.Effect<ApplyOperationRiskResult, Error>;
   }
->() {}
+>()("clawql/OperationRiskService") {}
 
 function mergeTrustedIds(
   file: OperationRiskConfigFile,

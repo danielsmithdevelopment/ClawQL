@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 /**
  * Local Privacy Filter HTTP client (OpenAI Privacy Filter / compatible token-classifier sidecar).
  * Runs on-operator hardware only — no cloud PII API. Backup layer after Presidio when both enabled.
@@ -56,7 +57,7 @@ export type PrivacyFilterRedactResult = {
   mode?: string;
 };
 
-export async function privacyFilterRedactText(
+async function privacyFilterRedactTextImpl(
   text: string,
   config: PrivacyFilterConfig = loadPrivacyFilterConfig()!
 ): Promise<PrivacyFilterRedactResult> {
@@ -86,7 +87,25 @@ export async function privacyFilterRedactText(
   };
 }
 
-export async function maybePrivacyFilterRedactText(text: string): Promise<string> {
+export function privacyFilterRedactTextEffect(
+  text: string,
+  config: PrivacyFilterConfig = loadPrivacyFilterConfig()!
+): Effect.Effect<PrivacyFilterRedactResult, Error> {
+  return Effect.tryPromise({
+    try: () => privacyFilterRedactTextImpl(text, config),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link privacyFilterRedactTextEffect} for Effect callers. */
+export async function privacyFilterRedactText(
+  text: string,
+  config: PrivacyFilterConfig = loadPrivacyFilterConfig()!
+): Promise<PrivacyFilterRedactResult> {
+  return Effect.runPromise(privacyFilterRedactTextEffect(text, config));
+}
+
+async function maybePrivacyFilterRedactTextImpl(text: string): Promise<string> {
   const config = loadPrivacyFilterConfig();
   if (!config) return text;
   try {
@@ -100,4 +119,16 @@ export async function maybePrivacyFilterRedactText(text: string): Promise<string
     }
     throw e;
   }
+}
+
+export function maybePrivacyFilterRedactTextEffect(text: string): Effect.Effect<string, Error> {
+  return Effect.tryPromise({
+    try: () => maybePrivacyFilterRedactTextImpl(text),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+/** Promise façade — prefer {@link maybePrivacyFilterRedactTextEffect} for Effect callers. */
+export async function maybePrivacyFilterRedactText(text: string): Promise<string> {
+  return Effect.runPromise(maybePrivacyFilterRedactTextEffect(text));
 }

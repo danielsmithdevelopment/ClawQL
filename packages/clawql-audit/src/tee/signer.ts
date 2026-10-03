@@ -36,7 +36,7 @@ export const verifyTEESignature = (
     }
     const verified = yield* verifyEntryHashEcdsa(entry.hash, entry.teeSignature, publicKeyPem).pipe(
       Effect.map((ok) => ({ ok, error: undefined as string | undefined })),
-      Effect.catchAll((err) => Effect.succeed({ ok: false, error: err.reason }))
+      Effect.catch((err) => Effect.succeed({ ok: false, error: err.reason }))
     );
     if (verified.error) {
       return { valid: false, reason: verified.error };
