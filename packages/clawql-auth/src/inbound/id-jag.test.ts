@@ -1,4 +1,4 @@
-import { Effect } from "effect";
+import { Cause, Effect } from "effect";
 import { SignJWT } from "jose";
 import { describe, expect, it } from "vitest";
 
@@ -85,10 +85,9 @@ describe("verifyIdJagAssertionEffect", () => {
     );
     expect(exit._tag).toBe("Failure");
     if (exit._tag === "Failure") {
-      expect(exit.cause).toMatchObject({
-        _tag: "Fail",
-        error: expect.objectContaining({ reason: "id_jag_audience_mismatch" }),
-      });
+      // Effect v4 Cause is a failures[] bag — squash to the typed error.
+      const err = Cause.squash(exit.cause) as { reason?: string };
+      expect(err.reason).toBe("id_jag_audience_mismatch");
     }
   });
 });

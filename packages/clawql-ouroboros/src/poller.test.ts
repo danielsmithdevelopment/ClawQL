@@ -1,4 +1,5 @@
-import { Deferred, Duration, Effect, Fiber, Ref, TestClock, TestContext } from "effect";
+import { Deferred, Duration, Effect, Fiber, Ref } from "effect";
+import { TestClock } from "effect/testing";
 import { describe, expect, it } from "vitest";
 import { startSeedsPoller } from "./poller.js";
 import { startSeedsPollerFiberEffect, type SeedRunEffect } from "./glue/seeds-poller-core.js";
@@ -68,7 +69,7 @@ describe("startSeedsPollerFiberEffect (TestClock)", () => {
         expect(failed[0]?.id).toBe("bad-seed");
         expect(errors).toHaveLength(1);
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 
@@ -109,7 +110,7 @@ describe("startSeedsPollerFiberEffect (TestClock)", () => {
         expect(yield* Ref.get(runCount)).toBe(2);
 
         yield* Fiber.interrupt(handle.fiber);
-      }).pipe(Effect.provide(TestContext.TestContext))
+      }).pipe(Effect.provide(TestClock.layer()))
     );
   });
 });

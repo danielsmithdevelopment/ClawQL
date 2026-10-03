@@ -624,7 +624,7 @@ describe("IstioDenialWatch + KarpenterLifecycleWatch", () => {
     const bad = await Effect.runPromise(parseCelldLeaseSnapshotJson("[]").pipe(Effect.result));
     expect(bad._tag).toBe("Failure");
     if (bad._tag === "Failure") {
-      expect(bad.left._tag).toBe("CelldLeaseSnapshotInvalid");
+      expect(bad.failure._tag).toBe("CelldLeaseSnapshotInvalid");
     }
   });
 });
