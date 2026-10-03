@@ -69,7 +69,7 @@ _Full design: [Modularization v2.1](./clawql-modularization-v2.md) · [Token eff
 ## V. Layer 3: Memory 2.0 (Persistence-First)
 
 - **Documents**: Full pipeline with Presidio redaction before any persistence.
-- **Storage**: Vault (files) + Graph + optional semantic/vector layer. (ClawQL heading-tree PageIndex purged in 8.0; Vectify-style redesign is [post-8.0 backlog](../backlog/post-8.0-vectify-pageindex.md).)
+- **Storage (8.0):** Vault (files) + vector recall + optional Onyx. PageIndex and CodeGraph were purged after graded evals failed the ship bar — see [purge inventory](../releases/8.0.0-purge-inventory-spec-v0.1.md). Vectify-style redesign is [post-8.0 backlog](../backlog/post-8.0-vectify-pageindex.md).
 - Every node is Merkle-stamped. Recalls are filtered by ATRClaims.
 - Supports semantic + structural caching and history distillation for long sessions.
 
