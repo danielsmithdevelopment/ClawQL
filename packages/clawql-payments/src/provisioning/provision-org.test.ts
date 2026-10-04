@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { Effect, Layer } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuditLive, resetDefaultAuditRingBufferForTests } from "clawql-core";
+import { identityStoreLayerForPath } from "clawql-auth";
 import { listPaymentAuditEntries, resetPaymentAuditStoreForTests } from "../audit/worm.js";
 import { lokiPushLiveLayer } from "../audit/loki.js";
 import { getOrg, orgCreditsLiveLayer, resetOrgCreditsForTests } from "../credits/org.js";
@@ -76,6 +77,7 @@ describe("provisionOrgInputFromCheckoutSession", () => {
       expect(handoff.input.billingMode).toBe("hybrid");
       expect(handoff.input.stripeCustomerId).toBe("cus_1");
       expect(handoff.input.ownerEmail).toBe("owner@acme.com");
+      expect(handoff.input.stripeCheckoutSessionId).toBe("cs_test");
     }
   });
 });
@@ -208,6 +210,47 @@ describe("ProvisionOrgService", () => {
       expect(noFlag.reason).toMatch(/disabled/);
     }
   });
+
+  it("replays the same checkout session without a second org or API key", async () => {
+    const first = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const svc = yield* ProvisionOrgService;
+        return yield* svc.provisionOrg({
+          orgName: "Replay Co",
+          orgId: "replayco",
+          ownerEmail: "o@replay.co",
+          planId: "pro",
+          createdVia: "self_serve",
+          billingMode: "stripe_checkout",
+          stripeCheckoutSessionId: "cs_replay_1",
+          stripeCustomerId: "cus_replay",
+        });
+      })
+    );
+    expect(first.apiKey).toMatch(/^cqk_/);
+    expect(first.idempotentReplay).toBeFalsy();
+
+    const second = await runPaymentsEffect(
+      Effect.gen(function* () {
+        const svc = yield* ProvisionOrgService;
+        return yield* svc.provisionOrg({
+          orgName: "Replay Co",
+          orgId: "replayco",
+          ownerEmail: "o@replay.co",
+          planId: "pro",
+          createdVia: "self_serve",
+          billingMode: "stripe_checkout",
+          stripeCheckoutSessionId: "cs_replay_1",
+          stripeCustomerId: "cus_replay",
+        });
+      })
+    );
+    expect(second.orgId).toBe(first.orgId);
+    expect(second.apiKey).toBeUndefined();
+    expect(second.idempotentReplay).toBe(true);
+    const org = await getOrg("replayco", process.env);
+    expect(org?.stripeCheckoutSessionId).toBe("cs_replay_1");
+  });
 });
 
 describe("provisionOrgLiveLayer composition", () => {
@@ -224,8 +267,9 @@ describe("provisionOrgLiveLayer composition", () => {
       const ledger = creditsLedgerLiveLayer(env);
       const orgCredits = orgCreditsLiveLayer(env);
       const keys = issuedApiKeyStoreForHomeLayer(home);
+      const identities = identityStoreLayerForPath(join(home, "Auth", "identities.json"));
       const layer = provisionOrgLiveLayer(env).pipe(
-        Layer.provide(Layer.mergeAll(audit, keys, ledger, orgCredits))
+        Layer.provide(Layer.mergeAll(audit, keys, ledger, orgCredits, identities))
       );
 
       const result = await Effect.runPromise(

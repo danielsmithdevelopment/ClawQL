@@ -195,6 +195,8 @@ export {
   OrgCreditsError,
   OrgCreditsService,
   createOrg,
+  deleteOrg,
+  findOrgByCheckoutSessionId,
   getOrg,
   orgCreditsLiveLayer,
   resetOrgCreditsForTests,

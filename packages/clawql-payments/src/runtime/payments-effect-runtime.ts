@@ -1,3 +1,5 @@
+import { identityStoreLiveLayer } from "clawql-auth";
+import { SupabaseAuthServiceLive } from "clawql-supabase";
 import { AuditLive } from "clawql-core";
 import { Cause, Effect, Exit, Layer } from "effect";
 import { paymentsConfigLiveLayer } from "../config/payments-config-service.js";
@@ -60,6 +62,7 @@ import {
   provisionOrgLiveLayer,
   reportUsageLiveLayer,
 } from "../provisioning/index.js";
+import { accountDeletionLiveLayer } from "../provisioning/account-deletion-service.js";
 import { topologyLiveLayer } from "../dashboard/topology-service.js";
 
 export type PaymentsServices =
@@ -120,8 +123,11 @@ export type PaymentsServices =
   | import("../credits/deduction-event-bus.js").DeductionEventBus
   | import("../provisioning/provision-org-service.js").ProvisionOrgService
   | import("../provisioning/report-usage.js").ReportUsageService
+  | import("../provisioning/account-deletion-service.js").AccountDeletionService
   | import("../dashboard/topology-service.js").TopologyService
-  | import("clawql-auth").IssuedApiKeyStoreService;
+  | import("clawql-auth").IssuedApiKeyStoreService
+  | import("clawql-auth").IdentityStoreService
+  | import("clawql-supabase").SupabaseAuthService;
 
 const layerCache = new Map<string, Layer.Layer<PaymentsServices>>();
 
@@ -215,14 +221,21 @@ export function paymentsServicesLiveLayer(
   const cloudflareWalletStore = cloudflareWalletStoreLiveLayer(env);
   const x402Wallet = x402WalletLiveLayer().pipe(Layer.provide(config));
   const issuedApiKeys = issuedApiKeyStoreLiveLayer(env);
+  const identities = identityStoreLiveLayer(env);
+  const supabaseAuth = SupabaseAuthServiceLive;
   const provisioning = provisionOrgLiveLayer(env).pipe(
-    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger, orgCredits))
+    Layer.provide(Layer.mergeAll(audit, issuedApiKeys, ledger, orgCredits, identities))
   );
   const reportUsage = reportUsageLiveLayer(env).pipe(
     Layer.provide(Layer.mergeAll(stripeMeter, usage, audit))
   );
   const stripeWebhook = stripeWebhookLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(config, audit, ledger, provisioning))
+  );
+  const accountDeletion = accountDeletionLiveLayer().pipe(
+    Layer.provide(
+      Layer.mergeAll(identities, orgCredits, issuedApiKeys, audit, stripeBilling, supabaseAuth)
+    )
   );
   const topology = topologyLiveLayer(env);
 
@@ -244,8 +257,11 @@ export function paymentsServicesLiveLayer(
     stripeMeter,
     stripeBilling,
     issuedApiKeys,
+    identities,
+    supabaseAuth,
     provisioning,
     reportUsage,
+    accountDeletion,
     topology,
     ap2,
     acp,

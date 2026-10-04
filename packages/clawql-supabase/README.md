@@ -1,15 +1,18 @@
 # clawql-supabase
 
-Supabase Auth **provider plugin** for managed ClawQL account signup on clawql.com.
+Supabase Auth **middleware** for managed ClawQL account signup on clawql.com.
+
+This package has **no MCP surface**. Session verification and Checkout handoff are
+server-side account plumbing (CPC + clawql.com). Agents hold capabilities, never
+credentials — session JWTs must not enter an agent context.
 
 ClawQL remains an **OIDC consumer** for MCP runtime auth and still issues API keys via
-`IssuedApiKeyStore` after Stripe → `provisionOrg`. This package is the **human account**
-layer in front of that spine:
+`IssuedApiKeyStore` after Stripe → `provisionOrg`:
 
 ```
 Supabase Auth (signup/login)
-  → Stripe Checkout (CPC metadata + clawql_supabase_user_id)
-  → provisionOrg
+  → Stripe Checkout (CPC metadata + clawql_user_id)
+  → signed checkout.session.completed webhook (idempotent provisionOrg)
   → ClawQL API key (shown once)
 ```
 
@@ -18,21 +21,33 @@ Supabase Auth (signup/login)
 ```bash
 export CLAWQL_ENABLE_SUPABASE=1
 export CLAWQL_SUPABASE_URL=https://xxxx.supabase.co
-# Server JWT verify (prefer one):
-export CLAWQL_SUPABASE_JWT_SECRET=…          # legacy HS256 JWT secret
-# or
+# JWKS (default — asymmetric). Derived from URL when unset:
 export CLAWQL_SUPABASE_JWKS_URL=https://xxxx.supabase.co/auth/v1/.well-known/jwks.json
+# Optional HS256 fallback only (widens who can forge sessions if leaked):
+# export CLAWQL_SUPABASE_JWT_SECRET=…
+export CLAWQL_SUPABASE_JWT_AUDIENCE=authenticated
 ```
 
-Optional Auth REST (server-side signup helpers):
+Optional Auth REST (server-side signup helpers) and account deletion:
 
 ```bash
 export CLAWQL_SUPABASE_ANON_KEY=…
+export CLAWQL_SUPABASE_SERVICE_ROLE_KEY=…   # admin delete only
 ```
 
 ## MCP surface
 
 **None.** This plugin is CPC / clawql.com middleware. Session JWTs stay on the account host; agents never see them. Do not register `supabase_verify_session` or `supabase_checkout_handoff`.
+
+## CPC Checkout
+
+`POST /payments/checkout/session` (self-serve) requires `Authorization: Bearer <supabase JWT>`
+when this plugin is enabled. The server:
+
+1. Verifies the JWT (JWKS, issuer/audience/expiry/role; rejects `anon`)
+2. Resolves or creates an internal ClawQL user (`usr_…`) with linked identity `supabase:{sub}`
+3. Puts `clawql_user_id` on Stripe metadata — **never** accepts `supabaseUserId` from the client
+4. Provisions only from Stripe's signed `checkout.session.completed` webhook (idempotent)
 
 ## clawql.com
 
@@ -46,8 +61,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=…
 When set, `/signup` prefers the Supabase account form (then Checkout when self-serve is configured);
 otherwise it keeps the FormSubmit waitlist.
 
+## Customer-facing Supabase (separate product)
+
+Using Supabase as a **source** so agents can work with _users'_ Supabase projects is not
+this plugin. Describe the Management API and each project's REST endpoint as OpenAPI; spec-derived
+risk then applies (reads allowed, writes needing a mandate, deletes blocked).
+
 ## Non-goals
 
 - Not an MCP/WORM host
 - Does not mint ClawQL API keys
-- Does not replace enterprise SSO (WorkOS / customer IdP) for company orgs
+- Does not register MCP tools
+- Does not replace enterprise SSO (Okta / Entra / WorkOS) — those become additional linked identities on the same `usr_…`

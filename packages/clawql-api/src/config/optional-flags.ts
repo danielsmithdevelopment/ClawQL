@@ -133,7 +133,7 @@ const rawOptionalFlagsSchema = z.object({
   CLAWQL_ENABLE_AWS: z.string().optional(),
   /**
    * Supabase Auth provider plugin (`clawql-supabase`) for managed clawql.com signup.
-   * Default false — register with `CLAWQL_ENABLE_SUPABASE=1` (+ URL + JWT secret/JWKS).
+   * Default false — register with `CLAWQL_ENABLE_SUPABASE=1` (+ URL + JWKS, secret fallback).
    */
   CLAWQL_ENABLE_SUPABASE: z.string().optional(),
 });
@@ -266,7 +266,7 @@ export type ClawqlOptionalToolFlags = {
    */
   enableAws: boolean;
   /**
-   * Supabase Auth provider plugin (`clawql-supabase`) — managed signup / session verify / Checkout handoff.
+   * Supabase Auth provider plugin (`clawql-supabase`) — managed signup middleware (no MCP tools).
    * Default false — `CLAWQL_ENABLE_SUPABASE=1`.
    */
   enableSupabase: boolean;

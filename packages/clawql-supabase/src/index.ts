@@ -13,11 +13,11 @@ export {
   SupabaseAuthServiceLive,
   type SupabaseAuthRestResult,
   type SupabaseSessionClaims,
+  type VerifyAccessTokenOptions,
 } from "./auth/supabase-auth-service.js";
 export {
   buildSupabaseCheckoutMetadata,
   buildSupabaseCheckoutMetadataEffect,
-  supabaseOwnerMemberTenantIdEffect,
   type SupabaseCheckoutBillingMode,
   type SupabaseCheckoutHandoffInput,
   type SupabaseCheckoutMetadata,

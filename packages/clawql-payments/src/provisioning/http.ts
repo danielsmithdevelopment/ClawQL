@@ -12,14 +12,23 @@
 
 import type { Express, Request, Response, NextFunction } from "express";
 import { Effect } from "effect";
+import { name, UserId } from "clawql-gdp";
 import { runPaymentsEffect } from "../runtime/payments-effect-runtime.js";
 import { isClawqlPlanId } from "../plans/tiers.js";
 import { provisionOrgInputFromCheckoutSession } from "./checkout-handoff.js";
+import {
+  checkoutIdentityLayer,
+  resolveCheckoutSessionIdentityEffect,
+  supabaseSelfServeCheckoutEnabledEffect,
+} from "./checkout-identity.js";
+import { AccountDeletionService } from "./account-deletion-service.js";
 import { ProvisionOrgService } from "./provision-org-service.js";
 import { ReportUsageService } from "./report-usage.js";
 import type { ProvisionOrgInput, ReportUsageToStripeInput } from "./types.js";
 import type { OrgBillingMode, OrgCreatedVia } from "../credits/org.js";
+import { verifiedCheckoutSessionUserEffect } from "../proofs/verified-checkout-session-user.js";
 import {
+  createCheckoutSessionWithVerifiedUserEffect,
   createStripeCheckoutSession,
   type CheckoutBillingMode,
   type CheckoutSessionPlan,
@@ -175,7 +184,7 @@ export function attachProvisioningRoutes(
   const checkoutCors = (_req: Request, res: Response, next: NextFunction) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     next();
   };
   app.options(`${base}/checkout/session`, checkoutCors, (_req, res) => {
@@ -195,9 +204,52 @@ export function attachProvisioningRoutes(
         return;
       }
       try {
-        // Ignore client-supplied supabaseUserId — binding requires VerifiedCheckoutSessionUser.
+        // Never trust client-supplied supabaseUserId — bind only via verified JWT + gdp-ts proof.
         const { supabaseUserId: _ignored, ...checkout } = parsed;
-        const session = await createStripeCheckoutSession({ ...checkout, env });
+        const supabaseOn = Effect.runSync(supabaseSelfServeCheckoutEnabledEffect(env));
+        let session;
+        if (supabaseOn) {
+          const token = bearerToken(req);
+          if (!token) {
+            res.status(401).json({
+              error: "Authorization Bearer token required (Supabase access token)",
+            });
+            return;
+          }
+          const identity = await Effect.runPromise(
+            resolveCheckoutSessionIdentityEffect(token, env, parsed.ownerEmail).pipe(
+              Effect.provide(checkoutIdentityLayer(env))
+            )
+          );
+          session = await runPaymentsEffect(
+            Effect.gen(function* () {
+              return yield* name(UserId(identity.claims.sub), (namedUser) =>
+                Effect.gen(function* () {
+                  const proof = yield* verifiedCheckoutSessionUserEffect(namedUser, {
+                    sub: identity.claims.sub,
+                  });
+                  if (!proof) {
+                    return yield* Effect.fail(
+                      new Error("VerifiedCheckoutSessionUser proof failed")
+                    );
+                  }
+                  return yield* createCheckoutSessionWithVerifiedUserEffect(
+                    namedUser,
+                    proof,
+                    {
+                      ...checkout,
+                      clawqlUserId: identity.user.userId,
+                      env,
+                    }
+                  );
+                })
+              );
+            }),
+            env
+          );
+        } else {
+          session = await createStripeCheckoutSession({ ...checkout, env });
+        }
         res.status(201).json(session);
       } catch (err) {
         if (err instanceof StripeNotConfiguredError) {
@@ -309,4 +361,100 @@ export function attachProvisioningRoutes(
       }
     })();
   });
+  app.post(`${base}/account/delete`, checkoutCors, (req, res) => {
+    void (async () => {
+      const supabaseOn = Effect.runSync(supabaseSelfServeCheckoutEnabledEffect(env));
+      if (!supabaseOn) {
+        res.status(503).json({ error: "Account deletion requires Supabase Auth" });
+        return;
+      }
+      const token = bearerToken(req);
+      if (!token) {
+        res.status(401).json({
+          error: "Authorization Bearer token required (Supabase access token)",
+        });
+        return;
+      }
+      try {
+        const identity = await Effect.runPromise(
+          resolveExistingSessionIdentityEffect(token, env).pipe(
+            Effect.provide(checkoutIdentityLayer(env))
+          )
+        );
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* AccountDeletionService;
+            return yield* svc.deleteAccount({
+              clawqlUserId: identity.user.userId,
+              env,
+            });
+          }),
+          env
+        );
+        res.status(200).json({ ok: true, ...result });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (/reauthentication required/i.test(message)) {
+          res.status(403).json({ error: message, reauthenticationRequired: true });
+          return;
+        }
+        if (err instanceof AccountDeletionIncompleteError) {
+          res.status(500).json({
+            ok: false,
+            resumable: true,
+            error: err.reason,
+            jobId: err.job.jobId,
+            status: err.job.status,
+            steps: err.job.steps,
+          });
+          return;
+        }
+        if (/unknown ClawQL user|anonymous-role|JWT/i.test(message)) {
+          res.status(401).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+
+  app.post(`${base}/account/delete/resume`, checkoutCors, (req, res) => {
+    void (async () => {
+      const body = (req.body ?? {}) as { jobId?: unknown };
+      const jobId = typeof body.jobId === "string" ? body.jobId.trim() : "";
+      if (!jobId) {
+        res.status(400).json({ error: "jobId is required" });
+        return;
+      }
+      try {
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* AccountDeletionService;
+            return yield* svc.resumeDeletion(jobId);
+          }),
+          env
+        );
+        res.status(200).json({ ok: true, ...result });
+      } catch (err) {
+        if (err instanceof AccountDeletionIncompleteError) {
+          res.status(500).json({
+            ok: false,
+            resumable: true,
+            error: err.reason,
+            jobId: err.job.jobId,
+            status: err.job.status,
+            steps: err.job.steps,
+          });
+          return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        if (/unknown deletion job|invalid deletion job/i.test(message)) {
+          res.status(404).json({ error: message });
+          return;
+        }
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
+
 }

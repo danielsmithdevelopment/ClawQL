@@ -9,5 +9,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: [/^clawql-/, "effect", "jose", "zod"],
+  external: [/^clawql-/, "effect", "jose"],
 });

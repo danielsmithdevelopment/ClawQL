@@ -23,6 +23,7 @@ describe("supabase config", () => {
     expect(cfg.enabled).toBe(true);
     expect(cfg.issuer).toBe("https://proj.supabase.co/auth/v1");
     expect(cfg.jwksUrl).toContain("/auth/v1/.well-known/jwks.json");
+    expect(cfg.jwtSecret).toBe("secret");
     expect(
       supabasePluginEnabled({
         CLAWQL_ENABLE_SUPABASE: "1",

@@ -49,6 +49,7 @@ export {
   buildOrgProvisionedEntry,
   buildOrgMemberAddedEntry,
   buildOrgPlanChangedEntry,
+  buildAccountDeletedEntry,
   buildUsageReportedToBillingEntry,
   buildX402PaymentFailedEntry,
   buildX402PaymentReceivedEntry,

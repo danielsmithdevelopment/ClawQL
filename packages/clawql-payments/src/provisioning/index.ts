@@ -29,6 +29,13 @@ export {
   type CheckoutProvisionHandoff,
 } from "./checkout-handoff.js";
 export { attachProvisioningRoutes, type AttachProvisioningRoutesOptions } from "./http.js";
+export {
+  AccountDeletionError,
+  AccountDeletionService,
+  accountDeletionLiveLayer,
+  type DeleteAccountInput,
+  type DeleteAccountResult,
+} from "./account-deletion-service.js";
 export { attachCpcDashboardRoutes } from "./dashboard-http.js";
 export {
   renderCpcDashboardHtml,

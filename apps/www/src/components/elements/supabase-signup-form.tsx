@@ -47,16 +47,15 @@ export function SupabaseSignupForm({ className, ...props }: ComponentProps<'form
       const cancelUrl = `${origin}${basePath}${site.urls.signup}/`
       const res = await fetch(api, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          plan: 'pro',
-          orgName: orgName.trim(),
-          ownerEmail: (session.email ?? email).trim(),
-          successUrl,
-          cancelUrl,
-          billingMode: 'stripe_checkout',
-          supabaseUserId: session.userId,
-        }),
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${session.accessToken}` },
+          body: JSON.stringify({
+            plan: 'pro',
+            orgName: orgName.trim(),
+            ownerEmail: (session.email ?? email).trim(),
+            successUrl,
+            cancelUrl,
+            billingMode: 'stripe_checkout',
+          }),
       })
       const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
       if (!res.ok || !body.url) {
