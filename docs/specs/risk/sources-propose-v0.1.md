@@ -35,7 +35,14 @@ Single-party human add remains `clawql sources add` (no proposal). CLI `propose 
 {
   "version": 2,
   "proposalId": "psp_…",
-  "entry": { "id": "…", "name": "…", "kind": "openapi", "addedAt": "…", "url": "…", "cachePath": "…" },
+  "entry": {
+    "id": "…",
+    "name": "…",
+    "kind": "openapi",
+    "addedAt": "…",
+    "url": "…",
+    "cachePath": "…"
+  },
   "riskSummary": { "allow": 1, "mandate": 2, "block": 0, "total": 3 },
   "sampleOperations": [{ "id": "…", "method": "GET", "risk": { "policy": "allow" } }],
   "status": "pending",
@@ -53,12 +60,12 @@ Operator identity: `CLAWQL_OPERATOR_ID` (preferred; never issued to agent sessio
 
 ## Surfaces
 
-| Surface                                      | Action                                              |
-| -------------------------------------------- | --------------------------------------------------- |
-| MCP `sources_propose`                        | Preview (`dryRun`) or park proposal (`agent:` principal) |
+| Surface                                      | Action                                                                |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| MCP `sources_propose`                        | Preview (`dryRun`) or park proposal (`agent:` principal)              |
 | CLI `clawql sources propose <url>`           | Same as propose (`--commit` → `dryRun: false`, `operator:` principal) |
-| CLI `clawql sources approve \| decline <id>` | Human gate (`operator:` principal; ≠ proposer)     |
-| Console / phone push (future)                | Same `approveSourceEffect` under operator credentials |
+| CLI `clawql sources approve \| decline <id>` | Human gate (`operator:` principal; ≠ proposer)                        |
+| Console / phone push (future)                | Same `approveSourceEffect` under operator credentials                 |
 
 ## Out of scope
 
