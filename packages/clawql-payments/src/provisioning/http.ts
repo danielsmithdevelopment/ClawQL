@@ -82,6 +82,7 @@ function parseCheckoutSessionBody(body: unknown):
       successUrl: string;
       cancelUrl: string;
       billingMode?: CheckoutBillingMode;
+      supabaseUserId?: string;
     }
   | { error: string } {
   if (!body || typeof body !== "object") return { error: "JSON body required" };
@@ -103,7 +104,11 @@ function parseCheckoutSessionBody(body: unknown):
     }
     billingMode = b.billingMode;
   }
-  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode };
+  const supabaseUserId =
+    typeof b.supabaseUserId === "string" && b.supabaseUserId.trim()
+      ? b.supabaseUserId.trim()
+      : undefined;
+  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode, supabaseUserId };
 }
 
 function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string } {

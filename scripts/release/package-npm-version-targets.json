@@ -19,6 +19,7 @@
     "clawql-tee": "0.1.0",
     "clawql-agents": "0.1.0",
     "clawql-api": "0.1.0",
+    "clawql-supabase": "0.1.0",
     "clawql-network": "0.1.0",
     "clawql-memory": "0.1.0",
     "clawql-ontology": "0.1.0",

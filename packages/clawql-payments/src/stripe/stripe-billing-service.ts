@@ -80,6 +80,8 @@ export type CheckoutSessionInput = {
   successUrl: string;
   cancelUrl: string;
   billingMode?: CheckoutBillingMode;
+  /** Supabase Auth user id — correlated into CPC metadata as clawql_supabase_user_id. */
+  supabaseUserId?: string;
   env?: NodeJS.ProcessEnv;
 };
 
@@ -96,14 +98,20 @@ export function buildCheckoutSessionMetadata(input: {
   plan: CheckoutSessionPlan;
   ownerEmail: string;
   billingMode?: CheckoutBillingMode;
+  supabaseUserId?: string;
 }): Record<string, string> {
-  return {
+  const meta: Record<string, string> = {
     clawql_provision_org: "1",
     clawql_org_name: input.orgName.trim(),
     clawql_plan: input.plan,
     clawql_billing_mode: input.billingMode ?? "stripe_checkout",
     clawql_owner_email: input.ownerEmail.trim(),
   };
+  const supabaseUserId = input.supabaseUserId?.trim();
+  if (supabaseUserId) {
+    meta.clawql_supabase_user_id = supabaseUserId;
+  }
+  return meta;
 }
 
 function resolvePriceId(
@@ -324,6 +332,7 @@ export function stripeBillingLiveLayer(
             plan: input.plan,
             ownerEmail,
             billingMode,
+            supabaseUserId: input.supabaseUserId,
           });
           const session = yield* stripeTryPromise("stripe checkout session create failed", () =>
             client.checkout.sessions.create({

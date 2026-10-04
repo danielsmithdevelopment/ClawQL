@@ -18,7 +18,7 @@ If you want to run ClawQL locally before reading further, start with the [Deploy
 This document assumes working knowledge of:
 
 - **TypeScript** with strict mode enabled
-- **Effect-TS** — at minimum, `Effect.gen`, `Layer`, `Context.Tag`, and `Schema`. The Effect-TS documentation at [effect.website](https://effect.website) is the canonical reference.
+- **Effect-TS** — at minimum, `Effect.gen`, `Layer`, `Context.Service` (Effect v4; formerly `Context.Tag`), and `Schema`. The Effect-TS documentation at [effect.website](https://effect.website) is the canonical reference.
 - **Turborepo** for monorepo task orchestration
 - **TypeScript project references** for cross-package type checking
 
@@ -401,8 +401,8 @@ This section describes the patterns ClawQL uses. Deviations from these patterns 
 Every major capability in ClawQL is exposed as an Effect service — a typed tag that can be required as a dependency and provided via a Layer.
 
 ```typescript
-// Defining a service (in clawql-core or the package that owns it)
-export class MemoryService extends Context.Tag("MemoryService")<
+// Defining a service (in clawql-core or the package that owns it) — Effect v4 Context.Service
+export class MemoryService extends Context.Service<
   MemoryService,
   {
     readonly ingest: (node: EntityNode) => Effect.Effect<void, MemoryError, never>;
@@ -411,7 +411,7 @@ export class MemoryService extends Context.Tag("MemoryService")<
       claims: ATRClaims
     ) => Effect.Effect<EntityNode[], MemoryError, never>;
   }
->() {}
+>()("MemoryService") {}
 ```
 
 ```typescript
