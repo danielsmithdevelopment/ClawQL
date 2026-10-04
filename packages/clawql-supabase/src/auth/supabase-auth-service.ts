@@ -3,13 +3,7 @@
  * ClawQL does not issue these tokens — Supabase Auth does.
  */
 
-import {
-  createRemoteJWKSet,
-  jwtVerify,
-  type JWTPayload,
-  type JWTVerifyGetKey,
-  type JWTVerifyResult,
-} from "jose";
+import { jwtVerify, type JWTPayload, type JWTVerifyGetKey, type JWTVerifyResult } from "jose";
 import { Context, Data, Effect, Layer } from "effect";
 import {
   SupabaseConfigError,
@@ -17,6 +11,17 @@ import {
   SupabaseConfigServiceLive,
   type SupabaseConfig,
 } from "../config/supabase-config.js";
+import {
+  supabaseJwksCacheLayer,
+  SupabaseJwksCacheService,
+  type SupabaseJwksCacheOptions,
+} from "./supabase-jwks-cache.js";
+import {
+  assertRecentAuthenticationEffect,
+  SessionRecencyError,
+  sessionAuthenticatedAtSecondsEffect,
+  type AssertRecentAuthenticationOptions,
+} from "./session-recency.js";
 
 export class SupabaseAuthError extends Data.TaggedError("SupabaseAuthError")<{
   readonly reason: string;
@@ -124,10 +129,12 @@ const claimsFromPayload = (
 
 /**
  * JWKS (asymmetric) first when configured; shared HS256 secret only as fallback.
+ * JWKS getters are cached per URL (unknown-kid refetch + cooldown live on the getter).
  */
 const verifyWithConfig = (
   accessToken: string,
   config: SupabaseConfig,
+  jwksCache: Context.Service.Shape<typeof SupabaseJwksCacheService>,
   options: VerifyAccessTokenOptions = {}
 ): Effect.Effect<SupabaseSessionClaims, SupabaseAuthError> =>
   Effect.gen(function* () {
@@ -138,7 +145,7 @@ const verifyWithConfig = (
     const privileged = options.privileged !== false;
 
     if (config.jwksUrl) {
-      const jwks = createRemoteJWKSet(new URL(config.jwksUrl), { timeoutDuration: 2500 });
+      const jwks = yield* jwksCache.get(config.jwksUrl);
       const jwksResult = yield* verifyWithKey(token, jwks, config).pipe(Effect.result);
       if (jwksResult._tag === "Success") {
         return yield* claimsFromPayload(jwksResult.success.payload, privileged);
@@ -176,7 +183,8 @@ type AuthRestBody = {
 const authRestCall = (
   path: string,
   body: Record<string, unknown>,
-  config: SupabaseConfig
+  config: SupabaseConfig,
+  jwksCache: Context.Service.Shape<typeof SupabaseJwksCacheService>
 ): Effect.Effect<SupabaseAuthRestResult, SupabaseAuthError | SupabaseConfigError> =>
   Effect.gen(function* () {
     if (!config.url) {
@@ -228,7 +236,7 @@ const authRestCall = (
     }
     const userId = json.user?.id?.trim();
     if (!userId) {
-      const claims = yield* verifyWithConfig(accessToken, config);
+      const claims = yield* verifyWithConfig(accessToken, config, jwksCache);
       return {
         accessToken,
         refreshToken: json.refresh_token,
@@ -311,6 +319,13 @@ export class SupabaseAuthService extends Context.Service<
       supabaseUserId: string,
       env?: NodeJS.ProcessEnv
     ) => Effect.Effect<void, SupabaseAuthError | SupabaseConfigError>;
+    readonly sessionAuthenticatedAtSeconds: (
+      claims: SupabaseSessionClaims
+    ) => Effect.Effect<number | undefined>;
+    readonly assertRecentAuthentication: (
+      claims: SupabaseSessionClaims,
+      options?: AssertRecentAuthenticationOptions
+    ) => Effect.Effect<void, SessionRecencyError>;
   }
 >()("clawql/SupabaseAuthService") {}
 
@@ -318,11 +333,12 @@ const SupabaseAuthServiceLiveInner = Layer.effect(
   SupabaseAuthService,
   Effect.gen(function* () {
     const configSvc = yield* SupabaseConfigService;
+    const jwksCache = yield* SupabaseJwksCacheService;
     return SupabaseAuthService.of({
       verifyAccessToken: (accessToken, env, options) =>
         Effect.gen(function* () {
           const config = yield* configSvc.requireConfigured(env);
-          return yield* verifyWithConfig(accessToken, config, options);
+          return yield* verifyWithConfig(accessToken, config, jwksCache, options);
         }),
       signUpWithPassword: (input, env) =>
         Effect.gen(function* () {
@@ -330,7 +346,8 @@ const SupabaseAuthServiceLiveInner = Layer.effect(
           return yield* authRestCall(
             "/signup",
             { email: input.email.trim(), password: input.password },
-            config
+            config,
+            jwksCache
           );
         }),
       signInWithPassword: (input, env) =>
@@ -339,7 +356,8 @@ const SupabaseAuthServiceLiveInner = Layer.effect(
           return yield* authRestCall(
             "/token?grant_type=password",
             { email: input.email.trim(), password: input.password },
-            config
+            config,
+            jwksCache
           );
         }),
       deleteAuthUser: (supabaseUserId, env) =>
@@ -347,10 +365,19 @@ const SupabaseAuthServiceLiveInner = Layer.effect(
           const config = yield* configSvc.requireConfigured(env);
           return yield* deleteAuthUserWithConfig(supabaseUserId, config);
         }),
+      sessionAuthenticatedAtSeconds: (claims) => sessionAuthenticatedAtSecondsEffect(claims),
+      assertRecentAuthentication: (claims, options) =>
+        assertRecentAuthenticationEffect(claims, options),
     });
   })
 );
 
-export const SupabaseAuthServiceLive = SupabaseAuthServiceLiveInner.pipe(
-  Layer.provide(SupabaseConfigServiceLive)
-);
+export function supabaseAuthServiceLayer(
+  jwksOptions?: SupabaseJwksCacheOptions
+): Layer.Layer<SupabaseAuthService> {
+  return SupabaseAuthServiceLiveInner.pipe(
+    Layer.provide(Layer.merge(SupabaseConfigServiceLive, supabaseJwksCacheLayer(jwksOptions ?? {})))
+  );
+}
+
+export const SupabaseAuthServiceLive = supabaseAuthServiceLayer();

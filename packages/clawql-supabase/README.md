@@ -49,6 +49,10 @@ when this plugin is enabled. The server:
 3. Puts `clawql_user_id` on Stripe metadata — **never** accepts `supabaseUserId` from the client
 4. Provisions only from Stripe's signed `checkout.session.completed` webhook (idempotent)
 
+Account deletion (`POST /payments/account/delete`) is a resumable per-step job and requires a recent sign-in (default 5 minutes). Resume with `POST /payments/account/delete/resume` and the returned `jobId` if the IdP user is already gone. `ACCOUNT_DELETED` is written once, after keys, org, Stripe, vault, and Supabase all complete.
+
+The plugin skill is for operators (`audience: "operator"`) and is omitted from agents' default `skills_list`. Vault seed does not store project URLs or keys.
+
 ## clawql.com
 
 Set public env on the marketing site:

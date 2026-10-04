@@ -2,7 +2,12 @@ import { createServer } from "node:http";
 import { exportJWK, generateKeyPair, SignJWT } from "jose";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { SupabaseAuthService, SupabaseAuthServiceLive } from "./supabase-auth-service.js";
+import {
+  supabaseAuthServiceLayer,
+  SupabaseAuthService,
+  SupabaseAuthServiceLive,
+} from "./supabase-auth-service.js";
+import { assertRecentAuthenticationEffect } from "./session-recency.js";
 
 const secret = "test-supabase-jwt-secret-32chars!!";
 const issuer = "https://proj.supabase.co/auth/v1";
@@ -145,5 +150,214 @@ describe("SupabaseAuthService.verifyAccessToken", () => {
         server.close((err) => (err ? reject(err) : resolve()))
       );
     }
+  });
+
+  it("caches JWKS and rate-limits unknown-kid refetches while cooling down", async () => {
+    const { publicKey, privateKey } = await generateKeyPair("RS256");
+    const jwk = await exportJWK(publicKey);
+    jwk.kid = "kid-cached";
+    jwk.alg = "RS256";
+    jwk.use = "sig";
+
+    let fetches = 0;
+    const server = createServer((req, res) => {
+      if (req.url?.includes("jwks")) {
+        fetches += 1;
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ keys: [jwk] }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("no listen address");
+    const jwksUrl = `http://127.0.0.1:${addr.port}/auth/v1/.well-known/jwks.json`;
+    const env = {
+      CLAWQL_ENABLE_SUPABASE: "1",
+      CLAWQL_SUPABASE_URL: "https://proj.supabase.co",
+      CLAWQL_SUPABASE_JWKS_URL: jwksUrl,
+      CLAWQL_SUPABASE_JWT_ISSUER: issuer,
+      CLAWQL_SUPABASE_JWT_AUDIENCE: audience,
+    } as NodeJS.ProcessEnv;
+    const layer = supabaseAuthServiceLayer({
+      cooldownDuration: 60_000,
+      cacheMaxAge: 600_000,
+      timeoutDuration: 2500,
+    });
+
+    const mint = (kid: string) =>
+      new SignJWT({ email: "jwks@b.co", role: "authenticated" })
+        .setProtectedHeader({ alg: "RS256", kid })
+        .setSubject("jwks-user")
+        .setIssuer(issuer)
+        .setAudience(audience)
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(privateKey);
+
+    try {
+      const known = await mint("kid-cached");
+      const attacker = await mint("kid-attacker");
+
+      const outcomes = await Effect.runPromise(
+        Effect.gen(function* () {
+          const auth = yield* SupabaseAuthService;
+          const first = yield* auth.verifyAccessToken(known, env).pipe(Effect.result);
+          const afterFirst = fetches;
+          const second = yield* auth.verifyAccessToken(known, env).pipe(Effect.result);
+          const afterSecond = fetches;
+          const limited = yield* auth.verifyAccessToken(attacker, env).pipe(Effect.result);
+          return { first, second, limited, afterFirst, afterSecond, afterLimited: fetches };
+        }).pipe(Effect.provide(layer))
+      );
+
+      expect(outcomes.first._tag).toBe("Success");
+      expect(outcomes.afterFirst).toBe(1);
+      expect(outcomes.second._tag).toBe("Success");
+      expect(outcomes.afterSecond).toBe(1);
+      expect(outcomes.limited._tag).toBe("Failure");
+      expect(outcomes.afterLimited).toBe(1);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
+  });
+
+  it("refetches JWKS on an unknown kid once cooldown has elapsed", async () => {
+    const { publicKey, privateKey } = await generateKeyPair("RS256");
+    const jwk = await exportJWK(publicKey);
+    jwk.kid = "kid-cached";
+    jwk.alg = "RS256";
+    jwk.use = "sig";
+
+    let fetches = 0;
+    const server = createServer((req, res) => {
+      if (req.url?.includes("jwks")) {
+        fetches += 1;
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ keys: [jwk] }));
+        return;
+      }
+      res.statusCode = 404;
+      res.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("no listen address");
+    const jwksUrl = `http://127.0.0.1:${addr.port}/auth/v1/.well-known/jwks.json`;
+    const env = {
+      CLAWQL_ENABLE_SUPABASE: "1",
+      CLAWQL_SUPABASE_URL: "https://proj.supabase.co",
+      CLAWQL_SUPABASE_JWKS_URL: jwksUrl,
+      CLAWQL_SUPABASE_JWT_ISSUER: issuer,
+      CLAWQL_SUPABASE_JWT_AUDIENCE: audience,
+    } as NodeJS.ProcessEnv;
+    const layer = supabaseAuthServiceLayer({
+      cooldownDuration: 0,
+      cacheMaxAge: 600_000,
+      timeoutDuration: 2500,
+    });
+
+    try {
+      const known = await new SignJWT({ email: "jwks@b.co", role: "authenticated" })
+        .setProtectedHeader({ alg: "RS256", kid: "kid-cached" })
+        .setSubject("jwks-user")
+        .setIssuer(issuer)
+        .setAudience(audience)
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(privateKey);
+      const rotated = await new SignJWT({ email: "jwks@b.co", role: "authenticated" })
+        .setProtectedHeader({ alg: "RS256", kid: "kid-rotated-unknown" })
+        .setSubject("jwks-user")
+        .setIssuer(issuer)
+        .setAudience(audience)
+        .setIssuedAt()
+        .setExpirationTime("1h")
+        .sign(privateKey);
+
+      const outcomes = await Effect.runPromise(
+        Effect.gen(function* () {
+          const auth = yield* SupabaseAuthService;
+          const first = yield* auth.verifyAccessToken(known, env).pipe(Effect.result);
+          const afterFirst = fetches;
+          const miss = yield* auth.verifyAccessToken(rotated, env).pipe(Effect.result);
+          return { first, miss, afterFirst, afterMiss: fetches };
+        }).pipe(Effect.provide(layer))
+      );
+
+      expect(outcomes.first._tag).toBe("Success");
+      expect(outcomes.afterFirst).toBe(1);
+      expect(outcomes.miss._tag).toBe("Failure");
+      expect(outcomes.afterMiss).toBe(2);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve()))
+      );
+    }
+  });
+});
+
+describe("assertRecentAuthenticationEffect", () => {
+  it("accepts a freshly issued token and rejects a hours-old iat", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const fresh = await mintHs256({ sub: "user-42", email: "a@b.co", role: "authenticated" });
+    const freshClaims = await Effect.runPromise(
+      Effect.gen(function* () {
+        const auth = yield* SupabaseAuthService;
+        return yield* auth.verifyAccessToken(fresh, hs256Env());
+      }).pipe(Effect.provide(SupabaseAuthServiceLive))
+    );
+    await Effect.runPromise(assertRecentAuthenticationEffect(freshClaims, { nowSeconds: now }));
+
+    const staleToken = await new SignJWT({ email: "a@b.co", role: "authenticated" })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject("user-42")
+      .setIssuer(issuer)
+      .setAudience(audience)
+      .setIssuedAt(now - 3600)
+      .setExpirationTime(now + 3600)
+      .sign(new TextEncoder().encode(secret));
+    const staleClaims = await Effect.runPromise(
+      Effect.gen(function* () {
+        const auth = yield* SupabaseAuthService;
+        return yield* auth.verifyAccessToken(staleToken, hs256Env());
+      }).pipe(Effect.provide(SupabaseAuthServiceLive))
+    );
+    const stale = await Effect.runPromise(
+      assertRecentAuthenticationEffect(staleClaims, { nowSeconds: now }).pipe(Effect.result)
+    );
+    expect(stale._tag).toBe("Failure");
+    if (stale._tag === "Failure") {
+      expect(String((stale.failure as { reason: string }).reason)).toMatch(
+        /reauthentication required/i
+      );
+    }
+  });
+
+  it("prefers a recent amr timestamp over an old iat", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const token = await new SignJWT({
+      email: "a@b.co",
+      role: "authenticated",
+      amr: [{ method: "password", timestamp: now - 30 }],
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setSubject("user-42")
+      .setIssuer(issuer)
+      .setAudience(audience)
+      .setIssuedAt(now - 3600)
+      .setExpirationTime(now + 3600)
+      .sign(new TextEncoder().encode(secret));
+    const claims = await Effect.runPromise(
+      Effect.gen(function* () {
+        const auth = yield* SupabaseAuthService;
+        return yield* auth.verifyAccessToken(token, hs256Env());
+      }).pipe(Effect.provide(SupabaseAuthServiceLive))
+    );
+    await Effect.runPromise(assertRecentAuthenticationEffect(claims, { nowSeconds: now }));
   });
 });

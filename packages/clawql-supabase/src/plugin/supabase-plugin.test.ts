@@ -10,7 +10,9 @@ describe("createSupabasePlugin", () => {
     expect(plugin.id).toBe(SUPABASE_PLUGIN_ID);
     expect(plugin.version).toBe("0.1.0");
     expect(plugin.tools).toBeUndefined();
-    expect(plugin.skills?.some((s) => s.skillId === "supabase-managed-signup")).toBe(true);
+    const skill = plugin.skills?.find((s) => s.skillId === "supabase-managed-signup");
+    expect(skill).toBeTruthy();
+    expect(skill?.audience).toBe("operator");
     expect(plugin.tools ?? []).toEqual([]);
   });
 
@@ -28,5 +30,17 @@ describe("createSupabasePlugin", () => {
     const names = plugin.tools?.map((t) => t.name) ?? [];
     expect(names).not.toContain("supabase_verify_session");
     expect(names).not.toContain("supabase_checkout_handoff");
+  });
+
+  it("vault seed holds no project URLs, keys, or secret names", () => {
+    const plugin = createSupabasePlugin({
+      CLAWQL_ENABLE_SUPABASE: "1",
+      CLAWQL_SUPABASE_URL: "https://proj.supabase.co",
+    } as NodeJS.ProcessEnv);
+    const blob = JSON.stringify(plugin.vaultSeed ?? []);
+    expect(blob).not.toMatch(/https?:\/\//i);
+    expect(blob).not.toMatch(/supabase\.co/i);
+    expect(blob).not.toMatch(/JWT_SECRET|SERVICE_ROLE|ANON_KEY|jwks\.json/i);
+    expect(blob).not.toMatch(/CLAWQL_SUPABASE_/);
   });
 });

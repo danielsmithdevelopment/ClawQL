@@ -3,6 +3,7 @@
  */
 
 import { z } from "zod";
+import { isAgentFacingSkill } from "clawql-core";
 import { logMcpToolShape } from "../mcp/tool-shape-log.js";
 import { getProcessSkillContent, listProcessSkillIndex } from "./process-skills.js";
 import { Effect } from "effect";
@@ -21,7 +22,8 @@ export const skillsGetToolZodShape = {
 } as const;
 
 async function handleSkillsListToolInputImpl(_params: unknown): Promise<SkillsToolMcpResult> {
-  const skills = await listProcessSkillIndex();
+  const index = await listProcessSkillIndex();
+  const skills = index.filter(isAgentFacingSkill);
   logMcpToolShape("skills_list", { count: skills.length });
   return jsonResponse({ ok: true, skills });
 }
@@ -45,6 +47,11 @@ const skillsGetInputSchema = z.object(skillsGetToolZodShape);
 async function handleSkillsGetToolInputImpl(params: unknown): Promise<SkillsToolMcpResult> {
   const { skillId: parsed } = skillsGetInputSchema.parse(params);
   logMcpToolShape("skills_get", { skillIdLen: parsed.length });
+  const index = await listProcessSkillIndex();
+  const entry = index.find((s) => s.skillId === parsed);
+  if (!entry || !isAgentFacingSkill(entry)) {
+    return jsonResponse({ ok: false, error: `Skill not found: ${parsed}` });
+  }
   const content = await getProcessSkillContent(parsed);
   if (!content) {
     return jsonResponse({ ok: false, error: `Skill not found: ${parsed}` });

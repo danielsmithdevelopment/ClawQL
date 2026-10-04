@@ -1,6 +1,6 @@
 # Supabase managed signup (clawql.com)
 
-**Status:** Spec v0.2 — `clawql-supabase` CPC/clawql.com middleware (no MCP tools)  
+**Status:** Spec v0.3 — `clawql-supabase` CPC/clawql.com middleware (no MCP tools)  
 **Package:** [`packages/clawql-supabase`](../../../packages/clawql-supabase)  
 **Related:** [Customer Provisioning Core](../billing/customer-provisioning-core-v0.1.md) · [OIDC consumer](../../security/clawql-auth-oidc-stepup.md) · [Enterprise control plane](../../enterprise/control-plane.md)
 
@@ -30,6 +30,7 @@ Agents hold **capabilities**, never credentials. Session JWTs must not enter an 
 | `CLAWQL_SUPABASE_JWT_ISSUER` / `CLAWQL_SUPABASE_JWT_AUDIENCE` | Default `{url}/auth/v1` and `authenticated`               |
 | `CLAWQL_SUPABASE_ANON_KEY`                                    | Auth REST (browser/server signup helpers)                 |
 | `CLAWQL_SUPABASE_SERVICE_ROLE_KEY`                            | Admin delete of the Auth user (cascade)                   |
+| `CLAWQL_ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS`                  | Recent-auth window for deletion (default 300)             |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | clawql.com browser signup                                 |
 
 Instance CRD: `spec.supabase.enabled: true` (horizontal tier).
@@ -37,6 +38,10 @@ Instance CRD: `spec.supabase.enabled: true` (horizontal tier).
 JWT verify checks issuer, audience, expiry, and role. Privileged account operations (checkout, deletion) **reject** anonymous-role tokens.
 
 **None.** Session JWTs must never enter agent context. Checkout and session verify stay on clawql.com / CPC (HTTP), not MCP. Agents are never issued `supabase_verify_session` or `supabase_checkout_handoff` (also listed in `AGENT_NEVER_ISSUED_CAPABILITIES`).
+
+JWKS getters are **cached per URL**. jose refetches on an unknown `kid` (key rotation) and rate-limits those refetches with `cooldownDuration` (default 30s). Do not construct a new remote JWKS set on every verify.
+
+Account deletion also requires a **recent sign-in**: `amr[].timestamp`, else `auth_time`, else `iat`, must be within `CLAWQL_ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS` (default **300**). Older sessions get **403** `reauthentication required`.
 
 ## Identities
 
@@ -50,16 +55,21 @@ Do **not** key tenants as `supabase:{id}`. Each human gets an internal ClawQL us
 
 ## Account deletion
 
-`POST /payments/account/delete` (same privileged JWT) cascades:
+Deletion is a **resumable job** across five systems so a mid-cascade outage cannot leave an account half-deleted with no way to retry.
+
+`POST /payments/account/delete` (privileged JWT **and** recent sign-in) creates or continues a job. `POST /payments/account/delete/resume` with an unguessable `jobId` (`adj_…`) continues the same job after the IdP user is already gone.
+
+Steps, in this order (Supabase last so a still-valid JWT can retry until the IdP row is removed):
 
 1. Revoke issued API keys for the ClawQL user
 2. Delete provisioned orgs (credits store)
 3. Delete the Stripe customer
-4. Delete the Supabase Auth user (service role)
-5. Crypto-shred matching vault notes (existing memory erase — WORM `pathId` / content hash)
-6. Remove the identity record
+4. Crypto-shred matching vault notes (existing memory erase — WORM `pathId` / content hash)
+5. Delete the Supabase Auth user (service role; 404 is success)
 
-WORM `ACCOUNT_DELETED` stores **hashed** user / org / Supabase subject / Stripe customer references only.
+Each step is recorded (`pending` / `completed` / `skipped` / `failed`) and retried **idempotently**. The identity record is removed only after all five succeed. WORM `ACCOUNT_DELETED` stores **hashed** user / org / Supabase subject / Stripe customer references and is written **once**, only after every step has completed.
+
+The plugin skill is **operator-only** (`audience: "operator"`) and is omitted from agents' default `skills_list`. Vault seed must not contain project URLs or keys.
 
 ## Customer-facing Supabase (separate product)
 

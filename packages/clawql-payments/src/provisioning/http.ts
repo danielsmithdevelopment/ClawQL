@@ -19,9 +19,13 @@ import { provisionOrgInputFromCheckoutSession } from "./checkout-handoff.js";
 import {
   checkoutIdentityLayer,
   resolveCheckoutSessionIdentityEffect,
+  resolveExistingSessionIdentityEffect,
   supabaseSelfServeCheckoutEnabledEffect,
 } from "./checkout-identity.js";
-import { AccountDeletionService } from "./account-deletion-service.js";
+import {
+  AccountDeletionIncompleteError,
+  AccountDeletionService,
+} from "./account-deletion-service.js";
 import { ProvisionOrgService } from "./provision-org-service.js";
 import { ReportUsageService } from "./report-usage.js";
 import type { ProvisionOrgInput, ReportUsageToStripeInput } from "./types.js";
@@ -91,7 +95,6 @@ function parseCheckoutSessionBody(body: unknown):
       successUrl: string;
       cancelUrl: string;
       billingMode?: CheckoutBillingMode;
-      supabaseUserId?: string;
     }
   | { error: string } {
   if (!body || typeof body !== "object") return { error: "JSON body required" };
@@ -113,11 +116,8 @@ function parseCheckoutSessionBody(body: unknown):
     }
     billingMode = b.billingMode;
   }
-  const supabaseUserId =
-    typeof b.supabaseUserId === "string" && b.supabaseUserId.trim()
-      ? b.supabaseUserId.trim()
-      : undefined;
-  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode, supabaseUserId };
+  // Intentionally ignore any client-supplied supabaseUserId / clawqlUserId.
+  return { plan, orgName, ownerEmail, successUrl, cancelUrl, billingMode };
 }
 
 function parseProvisionBody(body: unknown): ProvisionOrgInput | { error: string } {
@@ -331,35 +331,11 @@ export function attachProvisioningRoutes(
     })();
   });
 
-  app.post(`${base}/report-usage`, auth, (req, res) => {
-    void (async () => {
-      const b = (req.body ?? {}) as Record<string, unknown>;
-      const orgId = typeof b.orgId === "string" ? b.orgId.trim() : "";
-      if (!orgId) {
-        res.status(400).json({ error: "orgId is required" });
-        return;
-      }
-      const input: ReportUsageToStripeInput = {
-        orgId,
-        month: typeof b.month === "string" ? b.month : undefined,
-        overageUnits: typeof b.overageUnits === "number" ? b.overageUnits : undefined,
-        correlationId: typeof b.correlationId === "string" ? b.correlationId : undefined,
-        env,
-      };
-      try {
-        const result = await runPaymentsEffect(
-          Effect.gen(function* () {
-            const svc = yield* ReportUsageService;
-            return yield* svc.reportUsageToStripe(input);
-          }),
-          env
-        );
-        res.status(200).json(result);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        res.status(500).json({ error: message });
-      }
-    })();
+  app.options(`${base}/account/delete`, checkoutCors, (_req, res) => {
+    res.status(204).end();
+  });
+  app.options(`${base}/account/delete/resume`, checkoutCors, (_req, res) => {
+    res.status(204).end();
   });
   app.post(`${base}/account/delete`, checkoutCors, (req, res) => {
     void (async () => {
@@ -417,7 +393,6 @@ export function attachProvisioningRoutes(
       }
     })();
   });
-
   app.post(`${base}/account/delete/resume`, checkoutCors, (req, res) => {
     void (async () => {
       const body = (req.body ?? {}) as { jobId?: unknown };
@@ -457,4 +432,34 @@ export function attachProvisioningRoutes(
     })();
   });
 
+  app.post(`${base}/report-usage`, auth, (req, res) => {
+    void (async () => {
+      const b = (req.body ?? {}) as Record<string, unknown>;
+      const orgId = typeof b.orgId === "string" ? b.orgId.trim() : "";
+      if (!orgId) {
+        res.status(400).json({ error: "orgId is required" });
+        return;
+      }
+      const input: ReportUsageToStripeInput = {
+        orgId,
+        month: typeof b.month === "string" ? b.month : undefined,
+        overageUnits: typeof b.overageUnits === "number" ? b.overageUnits : undefined,
+        correlationId: typeof b.correlationId === "string" ? b.correlationId : undefined,
+        env,
+      };
+      try {
+        const result = await runPaymentsEffect(
+          Effect.gen(function* () {
+            const svc = yield* ReportUsageService;
+            return yield* svc.reportUsageToStripe(input);
+          }),
+          env
+        );
+        res.status(200).json(result);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(500).json({ error: message });
+      }
+    })();
+  });
 }

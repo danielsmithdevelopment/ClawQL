@@ -63,6 +63,7 @@ import {
   reportUsageLiveLayer,
 } from "../provisioning/index.js";
 import { accountDeletionLiveLayer } from "../provisioning/account-deletion-service.js";
+import { accountDeletionJobStoreLiveLayer } from "../provisioning/account-deletion-job-store.js";
 import { topologyLiveLayer } from "../dashboard/topology-service.js";
 
 export type PaymentsServices =
@@ -124,6 +125,7 @@ export type PaymentsServices =
   | import("../provisioning/provision-org-service.js").ProvisionOrgService
   | import("../provisioning/report-usage.js").ReportUsageService
   | import("../provisioning/account-deletion-service.js").AccountDeletionService
+  | import("../provisioning/account-deletion-job-store.js").AccountDeletionJobStoreService
   | import("../dashboard/topology-service.js").TopologyService
   | import("clawql-auth").IssuedApiKeyStoreService
   | import("clawql-auth").IdentityStoreService
@@ -232,9 +234,18 @@ export function paymentsServicesLiveLayer(
   const stripeWebhook = stripeWebhookLiveLayer().pipe(
     Layer.provide(Layer.mergeAll(config, audit, ledger, provisioning))
   );
+  const deletionJobs = accountDeletionJobStoreLiveLayer(env);
   const accountDeletion = accountDeletionLiveLayer().pipe(
     Layer.provide(
-      Layer.mergeAll(identities, orgCredits, issuedApiKeys, audit, stripeBilling, supabaseAuth)
+      Layer.mergeAll(
+        identities,
+        orgCredits,
+        issuedApiKeys,
+        audit,
+        stripeBilling,
+        supabaseAuth,
+        deletionJobs
+      )
     )
   );
   const topology = topologyLiveLayer(env);
@@ -261,6 +272,7 @@ export function paymentsServicesLiveLayer(
     supabaseAuth,
     provisioning,
     reportUsage,
+    deletionJobs,
     accountDeletion,
     topology,
     ap2,

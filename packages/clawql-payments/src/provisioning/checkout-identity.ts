@@ -48,6 +48,32 @@ export const resolveCheckoutSessionIdentityEffect = (
     )
   );
 
+export const resolveExistingSessionIdentityEffect = (
+  accessToken: string,
+  env: NodeJS.ProcessEnv
+): Effect.Effect<CheckoutSessionIdentity, Error> =>
+  Effect.gen(function* () {
+    const auth = yield* SupabaseAuthService;
+    const identities = yield* IdentityStoreService;
+    const claims = yield* auth.verifyAccessToken(accessToken, env, { privileged: true });
+    const user = yield* identities.getByLinkedIdentity("supabase", claims.sub);
+    if (!user) {
+      return yield* Effect.fail(new Error("unknown ClawQL user"));
+    }
+    yield* auth.assertRecentAuthentication(claims, { env });
+    return { claims, user };
+  }).pipe(
+    Effect.mapError((cause) =>
+      cause instanceof Error
+        ? cause
+        : new Error(
+            cause && typeof cause === "object" && "reason" in cause
+              ? String((cause as { reason: string }).reason)
+              : "session verification failed"
+          )
+    )
+  );
+
 export const checkoutIdentityLayer = (
   env: NodeJS.ProcessEnv
 ): Layer.Layer<SupabaseAuthService | IdentityStoreService> =>
