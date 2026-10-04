@@ -21,16 +21,16 @@ Agents hold **capabilities**, never credentials. Session JWTs must not enter an 
 
 ## Env
 
-| Variable                                                     | Role                                                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------- |
-| `CLAWQL_ENABLE_SUPABASE=1`                                   | Load `clawql-supabase` ProviderPlugin (skills/vault only)     |
-| `CLAWQL_SUPABASE_URL`                                        | Project URL                                                   |
-| `CLAWQL_SUPABASE_JWKS_URL`                                   | JWKS verify (**default**; derived from URL when unset)        |
-| `CLAWQL_SUPABASE_JWT_SECRET`                                 | HS256 verify (**fallback** only)                              |
-| `CLAWQL_SUPABASE_JWT_ISSUER` / `CLAWQL_SUPABASE_JWT_AUDIENCE` | Default `{url}/auth/v1` and `authenticated`                 |
-| `CLAWQL_SUPABASE_ANON_KEY`                                   | Auth REST (browser/server signup helpers)                     |
-| `CLAWQL_SUPABASE_SERVICE_ROLE_KEY`                           | Admin delete of the Auth user (cascade)                       |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clawql.com browser signup                                     |
+| Variable                                                      | Role                                                      |
+| ------------------------------------------------------------- | --------------------------------------------------------- |
+| `CLAWQL_ENABLE_SUPABASE=1`                                    | Load `clawql-supabase` ProviderPlugin (skills/vault only) |
+| `CLAWQL_SUPABASE_URL`                                         | Project URL                                               |
+| `CLAWQL_SUPABASE_JWKS_URL`                                    | JWKS verify (**default**; derived from URL when unset)    |
+| `CLAWQL_SUPABASE_JWT_SECRET`                                  | HS256 verify (**fallback** only)                          |
+| `CLAWQL_SUPABASE_JWT_ISSUER` / `CLAWQL_SUPABASE_JWT_AUDIENCE` | Default `{url}/auth/v1` and `authenticated`               |
+| `CLAWQL_SUPABASE_ANON_KEY`                                    | Auth REST (browser/server signup helpers)                 |
+| `CLAWQL_SUPABASE_SERVICE_ROLE_KEY`                            | Admin delete of the Auth user (cascade)                   |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | clawql.com browser signup                                 |
 
 Instance CRD: `spec.supabase.enabled: true` (horizontal tier).
 
