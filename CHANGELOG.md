@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-_(Empty — 8.0.0 prep in flight; fold any post-tag fixes here after `v8.0.0`.)_
+- **Routing catalog honesty** — `search_provider_tool_routing` still lists as the productionTrusted _use site_, but `/decision` returns `calibrated: false` until the live default-on MCP catalog matches the frozen v0.4/v0.6 routing digest (PageIndex purge, `sources_propose`/`resume`, ouroboros/think opt-in). Gate: `routingCatalogAlignedForProductionTrust()`. Evidence: [`docs/design/effect-v4-cutover-evidence.md`](docs/design/effect-v4-cutover-evidence.md).
 
 ## [8.0.0] - 2026-10-03
 

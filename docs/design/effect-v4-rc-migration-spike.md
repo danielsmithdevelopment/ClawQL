@@ -30,6 +30,7 @@ Effect **v4.0.0** is stable GA (2026-10-01). This document recorded the producti
 | All `packages/*` build + DTS                            | Green                                                                                                             |
 | Root `tsc --noEmit`                                     | Green                                                                                                             |
 | Full CI (incl. Node 22/24/25 vitest)                    | Green on merge tip                                                                                                |
+| Post-merge evidence                                     | [`effect-v4-cutover-evidence.md`](effect-v4-cutover-evidence.md) — catalog digest fail-closed, named suites, OTEL |
 | CI guard                                                | Detects `Context.Service` (legacy Tag still accepted during partial trees)                                        |
 
 ### Codemods (scripts/)

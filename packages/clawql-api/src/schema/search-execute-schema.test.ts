@@ -2,6 +2,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
   decodeExecuteInput,
+  decodeResumeInput,
   decodeSearchInput,
   ExecuteInputSchema,
   SearchInputSchema,
@@ -44,5 +45,34 @@ describe("SearchInputSchema / ExecuteInputSchema", () => {
     const e: E = { operationId: "op", args: {} };
     expect(s.limit).toBe(5);
     expect(e.args).toEqual({});
+  });
+
+  it("rejects search without query", async () => {
+    await expect(Effect.runPromise(decodeSearchInput({ limit: 3 }))).rejects.toThrow(/query/i);
+  });
+
+  it("does not coerce search limit from a string (Schema v4)", async () => {
+    await expect(
+      Effect.runPromise(decodeSearchInput({ query: "list jobs", limit: "5" }))
+    ).rejects.toThrow();
+  });
+
+  it("strips unknown search keys (Schema v4 excess property handling)", async () => {
+    const decoded = await Effect.runPromise(
+      decodeSearchInput({ query: "list jobs", unexpected: true })
+    );
+    expect(decoded).toEqual({ query: "list jobs", limit: 5 });
+    expect(decoded).not.toHaveProperty("unexpected");
+  });
+
+  it("decodes resume with executionId only", async () => {
+    const decoded = await Effect.runPromise(decodeResumeInput({ executionId: "pex_1" }));
+    expect(decoded.executionId).toBe("pex_1");
+  });
+
+  it("rejects resume without executionId", async () => {
+    await expect(Effect.runPromise(decodeResumeInput({ decision: "approve" }))).rejects.toThrow(
+      /executionId/i
+    );
   });
 });

@@ -144,7 +144,7 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
       methods: ["POST"],
       alias: "/v1/systemone",
       description:
-        "System One choice|noul over Fast Decision. Only search_provider_tool_routing is productionTrusted at 8.0.0.",
+        "System One choice|noul over Fast Decision. search_provider_tool_routing stays calibrated:false until the live default MCP catalog matches a frozen routing digest.",
     });
   });
 
