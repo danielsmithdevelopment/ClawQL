@@ -45,6 +45,8 @@ export type ClawQLHorizontalTierSpec = {
   };
   readonly observability?: { readonly enabled?: boolean };
   readonly chatgptExtensions?: { readonly enabled?: boolean };
+  /** Supabase Auth provider (`clawql-supabase`) for managed signup. */
+  readonly supabase?: { readonly enabled?: boolean };
 };
 
 const toggle = z.object({ enabled: z.boolean().optional() }).strict().optional();
@@ -96,6 +98,7 @@ const instanceBodyForFlagsSchema = z
       .optional(),
     observability: toggle,
     chatgptExtensions: toggle,
+    supabase: toggle,
   })
   .passthrough();
 
@@ -201,6 +204,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
+    enableSupabase: false,
   };
   return {
     ...d,
@@ -227,6 +231,7 @@ export function optionalFlagsFromHorizontalTierSpec(
     enableOuroborosTools: tierEnabled(spec.ouroboros, d.enableOuroborosTools),
     enableObservability: tierEnabled(spec.observability, d.enableObservability),
     enableChatgptExtensions: tierEnabled(spec.chatgptExtensions, d.enableChatgptExtensions),
+    enableSupabase: tierEnabled(spec.supabase, d.enableSupabase),
   };
 }
 
@@ -282,6 +287,7 @@ function mergeHorizontal(
     },
     observability: mergeToggle(base.observability, override.observability),
     chatgptExtensions: mergeToggle(base.chatgptExtensions, override.chatgptExtensions),
+    supabase: mergeToggle(base.supabase, override.supabase),
   };
 }
 

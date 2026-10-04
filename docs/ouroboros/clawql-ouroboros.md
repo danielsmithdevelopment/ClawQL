@@ -8,8 +8,8 @@ TypeScript workspace package at [`packages/clawql-ouroboros`](../packages/clawql
 
 **This is not the full [Q00/ouroboros](https://github.com/Q00/ouroboros) Python product** (interview CLI, PAL routing, Double Diamond execution, LiteLLM, SQL event store, plugin, TUI, and so on). The ClawQL package is a **portable subset** aimed at embedding inside **ClawQL** and other Node runtimes. Conceptual overlap (seed, wonder/reflect, convergence) is intentional; API and feature parity are not.
 
-**Status:** The **`clawql-mcp`** server **always** registers Ouroboros MCP tools via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`):
-**`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557) — 3-component goal/constraint/ontology drift vs root Seed). **`CLAWQL_ENABLE_OUROBOROS`** is **deprecated** as a registration gate. For durable lineage, configure Postgres with
+**Status:** As of **8.0**, agent-facing Ouroboros MCP tools register via **`clawql-harness`** (`createOuroborosHarnessPlugin` / `makeHarnessLayer`) only when **`CLAWQL_ENABLE_OUROBOROS_TOOLS=1`** or instance/tier `ouroboros.enabled: true` (default **off** — demotion, not purge). Tools:
+**`clawql_think`**, **`ouroboros_create_seed_from_document`**, **`ouroboros_run_evolutionary_loop`**, **`ouroboros_get_lineage_status`**, and **`ouroboros_measure_drift`** ([#557](https://github.com/danielsmithdevelopment/ClawQL/issues/557)). **`CLAWQL_ENABLE_OUROBOROS`** (old name) is **deleted**. For durable lineage, configure Postgres with
 **`CLAWQL_OUROBOROS_DATABASE_URL`** or split **`CLAWQL_OUROBOROS_DB_*`** env vars. Published npm name:
 **`clawql-ouroboros`** (see `packages/clawql-ouroboros/package.json`).
 

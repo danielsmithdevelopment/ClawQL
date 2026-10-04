@@ -131,6 +131,11 @@ const rawOptionalFlagsSchema = z.object({
    * Does **not** gate **`all-providers`** (that preset always includes AWS).
    */
   CLAWQL_ENABLE_AWS: z.string().optional(),
+  /**
+   * Supabase Auth provider plugin (`clawql-supabase`) for managed clawql.com signup.
+   * Default false — register with `CLAWQL_ENABLE_SUPABASE=1` (+ URL + JWT secret/JWKS).
+   */
+  CLAWQL_ENABLE_SUPABASE: z.string().optional(),
 });
 
 export type ClawqlOptionalToolFlags = {
@@ -260,6 +265,11 @@ export type ClawqlOptionalToolFlags = {
    * Adds AWS to the **default install stack**. Default **false** (opt in).
    */
   enableAws: boolean;
+  /**
+   * Supabase Auth provider plugin (`clawql-supabase`) — managed signup / session verify / Checkout handoff.
+   * Default false — `CLAWQL_ENABLE_SUPABASE=1`.
+   */
+  enableSupabase: boolean;
 };
 
 function resolveEnableWeb(raw: z.infer<typeof rawOptionalFlagsSchema>): boolean {
@@ -312,6 +322,7 @@ function rawToFlags(raw: z.infer<typeof rawOptionalFlagsSchema>): ClawqlOptional
     enableGoogle: envTruthy(raw.CLAWQL_ENABLE_GOOGLE),
     enableCloudflare: envTruthyWithDefault(raw.CLAWQL_ENABLE_CLOUDFLARE, true),
     enableAws: envTruthy(raw.CLAWQL_ENABLE_AWS),
+    enableSupabase: envTruthy(raw.CLAWQL_ENABLE_SUPABASE),
   };
 }
 
@@ -371,5 +382,6 @@ export function basePluginCompositionFlags(): ClawqlOptionalToolFlags {
     enableGoogle: false,
     enableCloudflare: true,
     enableAws: false,
+    enableSupabase: false,
   };
 }
