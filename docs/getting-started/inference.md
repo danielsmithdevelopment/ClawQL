@@ -27,7 +27,7 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 | **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                             |
 | **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
 | **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                            |
-| **`/events`**              | HTTP door into MCP Events (catalog / subscriptions / SSE / inbound)              |
+| **`/events`**              | HTTP door into MCP Events (catalog / subscriptions / SSE / inbound)                              |
 | **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                                   |
 | **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama             |
 | **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend                           |

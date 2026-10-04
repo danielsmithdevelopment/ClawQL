@@ -20,8 +20,8 @@ Advertise `capabilities.events` and implement `events/list`, `events/subscribe`,
 | Webhook delivery + challenge (Standard Webhooks)                                          | `gap` / `terminated` control notifications            |
 | Durable subscription store (JSON file)                                                    | Postgres-backed multi-replica store                   |
 | Live event catalog (seven events)                                                         | Dynamic OpenAPI-derived event schemas                 |
-| Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS exposed to customers (JetStream stays internal) |
-| HTTP `/events` door (catalog, subscriptions, SSE, inbound) into the **same** system        | A second event catalog or subscription store         |
+| Schedule projection-hash → `stream.changed` (watch_fields, 304, capped diff, 429 backoff) | NATS exposed to customers (JetStream stays internal)  |
+| HTTP `/events` door (catalog, subscriptions, SSE, inbound) into the **same** system       | A second event catalog or subscription store          |
 | SSRF-hardened callbacks + enterprise allowlist / PII redact / caps                        | Custom connect-to-IP TLS agent (stretch)              |
 | Access recheck + instruction screening + feedback-loop detector                           | Full Panguard ATR integration (host wires)            |
 | WORM append hooks (optional host)                                                         | Mandatory dual-ack WORM                               |
@@ -120,14 +120,14 @@ At-rest AES-256-GCM for schedule projections requires a key from the environment
 
 Canonical gateway paths (locked for 8.0.0) live on `clawql-inference` and wrap this package. See [`docs/specs/inference/gateway-ladder-v0.1.md`](../inference/gateway-ladder-v0.1.md).
 
-| Method   | Path                        | Same as                                      |
-| -------- | --------------------------- | -------------------------------------------- |
-| `GET`    | `/events/catalog`           | `events/list`                                |
-| `POST`   | `/events/subscriptions`     | `events/subscribe`                           |
-| `GET`    | `/events/subscriptions`     | store list (no secrets)                      |
-| `DELETE` | `/events/subscriptions/:id` | `events/unsubscribe` by id                   |
-| `GET`    | `/events/stream`            | CloudEvents SSE; `Last-Event-ID` → seq       |
-| `POST`   | `/events/inbound/{source}`  | GitHub / Stripe / Figma → `stream.changed`   |
+| Method   | Path                        | Same as                                    |
+| -------- | --------------------------- | ------------------------------------------ |
+| `GET`    | `/events/catalog`           | `events/list`                              |
+| `POST`   | `/events/subscriptions`     | `events/subscribe`                         |
+| `GET`    | `/events/subscriptions`     | store list (no secrets)                    |
+| `DELETE` | `/events/subscriptions/:id` | `events/unsubscribe` by id                 |
+| `GET`    | `/events/stream`            | CloudEvents SSE; `Last-Event-ID` → seq     |
+| `POST`   | `/events/inbound/{source}`  | GitHub / Stripe / Figma → `stream.changed` |
 
 SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the ChatGPT MCP Events JSON body. Inbound webhooks are untrusted data (`source` + `topic` = `inbound:{provider}`, `untrusted: true`); they do not add an eighth catalog type.
 
@@ -146,4 +146,3 @@ SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the C
 7. Never expose NATS to customers. Per-tenant NATS accounts stay internal; edge gateways may connect as leaf nodes.
 8. Event streams belong on the erase path; set retention limits because JetStream persists at rest.
 9. **Managed multi-replica release requirement:** wire `EventStreamPublisher` to JetStream (`CLAWQL_EVENTS_REQUIRE_JETSTREAM=1` / `CLAWQL_CONSOLE_SURFACE=managed`). Webhook delivery workers use queue group `clawql-events-webhook` for exactly-once delivery across replicas. Without JetStream, SSE resume and webhook dedupe break across gateway replicas — fail-closed at service construction when required.
-

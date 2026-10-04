@@ -150,13 +150,13 @@ On the Managed Edge Gateway the same host exposes five rungs — `/v1` → `/mcp
 | `GET`    | `/memory`                   | List Memory notes (optionally scoped)                                   |
 | `GET`    | `/memory/:slug`             | Read note                                                               |
 | `DELETE` | `/memory/:slug`             | **Erasure** — vault + derived indexes + crypto-shred + export deny-list |
-| `GET`    | `/events`                      | Events discovery                                                        |
-| `GET`    | `/events/catalog`              | Live MCP Events catalog (alias `GET /events/list`)                      |
-| `GET`    | `/events/subscriptions`        | List webhook subscriptions (no secrets)                                 |
-| `POST`   | `/events/subscriptions`        | Webhook subscribe (Standard Webhooks; alias `POST /events/subscribe`)   |
-| `DELETE` | `/events/subscriptions/:id`    | Unsubscribe                                                             |
-| `GET`    | `/events/stream`               | SSE CloudEvents 1.0; resume with `Last-Event-ID`                        |
-| `POST`   | `/events/inbound/{source}`     | GitHub / Stripe / Figma inbound (untrusted `stream.changed`)            |
+| `GET`    | `/events`                   | Events discovery                                                        |
+| `GET`    | `/events/catalog`           | Live MCP Events catalog (alias `GET /events/list`)                      |
+| `GET`    | `/events/subscriptions`     | List webhook subscriptions (no secrets)                                 |
+| `POST`   | `/events/subscriptions`     | Webhook subscribe (Standard Webhooks; alias `POST /events/subscribe`)   |
+| `DELETE` | `/events/subscriptions/:id` | Unsubscribe                                                             |
+| `GET`    | `/events/stream`            | SSE CloudEvents 1.0; resume with `Last-Event-ID`                        |
+| `POST`   | `/events/inbound/{source}`  | GitHub / Stripe / Figma inbound (untrusted `stream.changed`)            |
 
 **Erasure** destroys the working-tree note, purges `memory.db` / pgvector / `ontology.db`, and **crypto-shreds** the per-note encryption key so git history and R2 mirrors retain ciphertext only. WORM logs opaque `pathId` + content hash (never readable path or body). Erased content hashes land on `.clawql/erasure-deny.json`; export jobs skip them. Details: [gateway ladder § Erasure](../specs/inference/gateway-ladder-v0.1.md#erasure) · [memory-obsidian § Erasure](../memory/memory-obsidian.md#erasure-crypto-shredding).
 

@@ -56,15 +56,15 @@ HTTP door into **`clawql-mcp-events`** — same live catalog (seven types), subs
 
 **Locked 8.0.0 names** (singular actions `/decision` `/memory`; plural collections `/events`):
 
-| Method   | Path                           | Behavior                                                                                          |
-| -------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `GET`    | `/events`                      | Discovery (`object: clawql.events`, enabled flag)                                                 |
-| `GET`    | `/events/catalog`              | Seven event types + schemas — same payload as MCP `events/list`                                   |
-| `GET`    | `/events/subscriptions`        | Principal-scoped webhook subscriptions (no secrets)                                               |
-| `POST`   | `/events/subscriptions`        | Webhook subscribe (`name`, `arguments`, `delivery`, optional `ttlMs`) + callback challenge        |
-| `DELETE` | `/events/subscriptions/:id`    | Unsubscribe by id                                                                                 |
-| `GET`    | `/events/stream`               | SSE CloudEvents 1.0; resume with `Last-Event-ID` (JetStream sequence in production)               |
-| `POST`   | `/events/inbound/{source}`     | Verify GitHub / Stripe / Figma signatures; emit untrusted `stream.changed` `topic: inbound:{src}` |
+| Method   | Path                        | Behavior                                                                                          |
+| -------- | --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `GET`    | `/events`                   | Discovery (`object: clawql.events`, enabled flag)                                                 |
+| `GET`    | `/events/catalog`           | Seven event types + schemas — same payload as MCP `events/list`                                   |
+| `GET`    | `/events/subscriptions`     | Principal-scoped webhook subscriptions (no secrets)                                               |
+| `POST`   | `/events/subscriptions`     | Webhook subscribe (`name`, `arguments`, `delivery`, optional `ttlMs`) + callback challenge        |
+| `DELETE` | `/events/subscriptions/:id` | Unsubscribe by id                                                                                 |
+| `GET`    | `/events/stream`            | SSE CloudEvents 1.0; resume with `Last-Event-ID` (JetStream sequence in production)               |
+| `POST`   | `/events/inbound/{source}`  | Verify GitHub / Stripe / Figma signatures; emit untrusted `stream.changed` `topic: inbound:{src}` |
 
 **Aliases** (keep working; do not advertise as canonical): `GET /events/list`, `POST /events/subscribe`, `POST /events/unsubscribe`, `GET /events/subscriptions/:id`.
 
