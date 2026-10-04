@@ -190,6 +190,8 @@ On complete sequence:
 | 5,000 (heavy)        | ~350 KB           | ~200           | ~100 s              |
 | 10,000 (full export) | ~650 KB           | ~375           | ~3 min              |
 
+These sizes are **compressed audit payloads**, not celld resident-set memory per cell. Do not cite ~350 KB as cell RSS (see [`aws-celld-burst.md`](./aws-celld-burst.md) §4.1).
+
 Plus ~10 frames overhead (Header, Attestation, SessionBinding, Footer). Attestation + cert chain ≈ 2 frames compressed.
 
 Normal sessions: &lt; 10 s — acceptable for regulated audit. Large exports: prefer thermal printer.
