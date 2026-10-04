@@ -202,6 +202,10 @@ export function createEventsRouter(options: CreateEventsRouterOptions = {}): exp
       aliases: ["GET /events/list", "POST /events/subscribe", "POST /events/unsubscribe"],
       mcp: "events/list|subscribe|unsubscribe on /mcp (JSON-RPC)",
       envelope: "CloudEvents 1.0 on /events/stream; ChatGPT MCP Events JSON on webhook deliveries",
+      inbound:
+        "Opt-in only: stream.changed subscribers need arguments.source=inbound:{provider}|inbound:*; payloads mark source inbound:{provider} + untrusted",
+      jetstream:
+        "Required for managed multi-replica (CLAWQL_EVENTS_REQUIRE_JETSTREAM); webhook queue group clawql-events-webhook",
       enabled: isMcpEventsEnabledSync(env),
       description:
         "HTTP door into clawql-mcp-events. Same catalog, subscription store, and delivery as MCP Events on /mcp. NATS JetStream is the internal backbone — never exposed to customers.",
@@ -378,6 +382,7 @@ export function createEventsRouter(options: CreateEventsRouterOptions = {}): exp
         eventId: event.eventId,
         name: event.name,
         topic: event.data.topic,
+        source: event.data.source,
         untrusted: true,
       });
     } catch (error) {

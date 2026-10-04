@@ -69,7 +69,8 @@ HTTP door into **`clawql-mcp-events`** — same live catalog (seven types), subs
 **Aliases** (keep working; do not advertise as canonical): `GET /events/list`, `POST /events/subscribe`, `POST /events/unsubscribe`, `GET /events/subscriptions/:id`.
 
 - **Principal:** virtual-key id when keys are enforced; else `x-clawql-principal` or `anonymous` (matches MCP host).
-- **Inbound auth:** provider signatures, not virtual keys. Screened, labeled `untrusted: true`, never read as instructions. Maps onto existing `stream.changed` — **no eighth catalog type**.
+- **Inbound auth:** provider signatures, not virtual keys. Screened, labeled `untrusted: true` and `source: "inbound:{provider}"` (e.g. `inbound:github`), never read as instructions. Maps onto existing `stream.changed` — **no eighth catalog type**.
+- **Inbound opt-in:** existing `stream.changed` subscribers (projection / `watch_fields`) **do not** receive inbound webhooks by default. Automations must set `arguments.source` to `inbound:github` / `inbound:stripe` / `inbound:figma` / `inbound:*` (and usually `topic` to the same inbound label). Topic-only subscriptions never get inbound traffic, even if the topic string collides.
 - **Envelope:** SSE and optional NATS publish use **CloudEvents 1.0** (`type: com.clawql.<name>`). ChatGPT / MCP webhook bodies stay `{eventId,name,timestamp,data,cursor}` with Standard Webhooks (`webhook-id` = event id).
 - **Disable:** `CLAWQL_ENABLE_MCP_EVENTS=0` → REST returns **503** (same flag as MCP Discover `capabilities.events`).
 - **Parity:** a subscription created on `/mcp` appears under `GET /events/subscriptions`; one created on `/events` is visible to MCP `events/list` (catalog) and the shared store; both receive identical signed webhook deliveries.
@@ -79,7 +80,16 @@ HTTP door into **`clawql-mcp-events`** — same live catalog (seven types), subs
 
 Producers publish **once** to JetStream (`clawql.events.<type>.<tenant>`). Webhook delivery, SSE fan-out, and MCP Events are consumers of that stream. `Last-Event-ID` maps to the JetStream sequence; `Nats-Msg-Id` = event id (dedup window + Standard Webhooks retries). CloudEvents travels unchanged (official NATS binding).
 
-**Do not expose NATS to customers.** `/events` is the governed edge (auth, scopes, caps, redaction, access rechecks). Redact **before publish** — JetStream persists messages. Include event streams in the erase path and set retention limits. In-process ring buffer (default 1024) is the single-process stand-in until a host wires `EventStreamPublisher`.
+**Do not expose NATS to customers.** `/events` is the governed edge (auth, scopes, caps, redaction, access rechecks). Redact **before publish** — JetStream persists messages. Include event streams in the erase path and set retention limits. In-process ring buffer (default 1024) is the **single-process** stand-in only.
+
+#### Managed / multi-replica release requirement (`cloud.clawql.com`)
+
+Wiring `EventStreamPublisher` to JetStream is **required** before managed launch (env `CLAWQL_EVENTS_REQUIRE_JETSTREAM=1` or `CLAWQL_CONSOLE_SURFACE=managed`). Without it:
+
+- An SSE client that reconnects to a **different replica** cannot resume from `Last-Event-ID` (each process has its own ring buffer).
+- Each replica may run webhook delivery and send **duplicate** signed webhooks for the same event.
+
+**Release bar:** host provides `eventStreamPublisher`; webhook delivery workers join JetStream queue group `clawql-events-webhook` so each event is delivered **exactly once** across replicas; SSE resume reads the shared JetStream sequence (not the local buffer). `makeMcpEventsService` fail-closes when JetStream is required and the publisher is missing.
 
 ## `/mcp`
 

@@ -116,6 +116,10 @@ export {
 } from "./event-stream.js";
 export {
   CLAWQL_EVENTS_NATS_ROOT,
+  CLAWQL_EVENTS_WEBHOOK_QUEUE_GROUP,
+  CLAWQL_EVENTS_SSE_CONSUMER_PREFIX,
+  assertEventStreamPublisherForManagedEffect,
+  eventsJetStreamRequiredEffect,
   natsEventSubjectEffect,
   natsMsgIdEffect,
   type EventStreamPublishInput,
@@ -129,3 +133,10 @@ export {
   type InboundSource,
   type InboundWebhookInput,
 } from "./inbound.js";
+export {
+  filterValueMatches,
+  inboundSourceLabel,
+  isInboundEventData,
+  matchesEventFiltersEffect,
+  subscriptionAllowsInboundEffect,
+} from "./subscription-match.js";

@@ -52,10 +52,12 @@ import {
   type EventStreamRecord,
 } from "./event-stream.js";
 import {
+  assertEventStreamPublisherForManagedEffect,
   natsEventSubjectEffect,
   natsMsgIdEffect,
   type EventStreamPublisher,
 } from "./nats-subjects.js";
+import { matchesEventFiltersEffect } from "./subscription-match.js";
 import { makeWebhookFetch, type WebhookFetch } from "./webhook-fetch.js";
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -94,14 +96,6 @@ const toPublic = (s: StoredSubscription): PublicSubscription => ({
 function topicFromSubscription(sub: StoredSubscription): string | null {
   const t = sub.arguments?.topic;
   return typeof t === "string" && t.trim() ? t.trim() : null;
-}
-
-function matchesFilters(filters: Record<string, unknown>, data: Record<string, unknown>): boolean {
-  for (const [k, v] of Object.entries(filters)) {
-    if (v == null || v === "") continue;
-    if (data[k] !== v) return false;
-  }
-  return true;
 }
 
 function resolveTtlMs(
@@ -164,6 +158,7 @@ export function makeMcpEventsService(
   const coalesce = createCoalesceState(enterprise.coalesceIntervalMs);
   const eventStream = config.eventStream ?? createEventStreamBuffer();
   const eventStreamPublisher = config.eventStreamPublisher;
+  Effect.runSync(assertEventStreamPublisherForManagedEffect(eventStreamPublisher));
 
   const audit = (type: string, payload: Record<string, unknown>) =>
     Effect.tryPromise({
@@ -449,10 +444,11 @@ export function makeMcpEventsService(
           );
         }
         const all = yield* store.list();
-        const matches = all.filter(
-          (s: StoredSubscription) =>
-            s.verified && s.name === screened.name && matchesFilters(s.arguments, redactedData)
-        );
+        const matches: StoredSubscription[] = [];
+        for (const s of all) {
+          if (!s.verified || s.name !== screened.name) continue;
+          if (yield* matchesEventFiltersEffect(s.arguments, redactedData)) matches.push(s);
+        }
 
         const outcomes: DeliveryOutcome[] = [];
         for (const sub of matches) {

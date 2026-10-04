@@ -4,10 +4,16 @@ import { describe, expect, it } from "vitest";
 import { toCloudEventEffect } from "./cloudevents.js";
 import { createEventStreamBuffer, parseLastEventIdEffect } from "./event-stream.js";
 import { verifyInboundWebhookEffect } from "./inbound.js";
-import { natsEventSubjectEffect, natsMsgIdEffect } from "./nats-subjects.js";
+import {
+  assertEventStreamPublisherForManagedEffect,
+  CLAWQL_EVENTS_WEBHOOK_QUEUE_GROUP,
+  eventsJetStreamRequiredEffect,
+  natsEventSubjectEffect,
+  natsMsgIdEffect,
+} from "./nats-subjects.js";
 import { handleMcpEventsJsonRpc } from "./jsonrpc.js";
 import { generateWhsecSecretSync } from "./secret.js";
-import { McpEventsService, McpEventsServiceLayer } from "./service.js";
+import { McpEventsService, McpEventsServiceLayer, makeMcpEventsService } from "./service.js";
 import { createMemorySubscriptionStore } from "./store.js";
 import type { DeliverableEvent } from "./types.js";
 
@@ -77,6 +83,8 @@ describe("inbound webhooks", () => {
     );
     expect(event.name).toBe("stream.changed");
     expect(event.data.topic).toBe("inbound:github");
+    expect(event.data.source).toBe("inbound:github");
+    expect(event.data.provider).toBe("github");
     expect(event.data.untrusted).toBe(true);
     expect(event.eventId).toBe("evt_inbound_github_deliv_1");
     expect(JSON.stringify(event.data.provider_event)).toContain("[user-authored data]");
@@ -111,6 +119,7 @@ describe("inbound webhooks", () => {
       })
     );
     expect(event.data.topic).toBe("inbound:stripe");
+    expect(event.data.source).toBe("inbound:stripe");
     expect(event.data.untrusted).toBe(true);
   });
 
@@ -127,6 +136,85 @@ describe("inbound webhooks", () => {
       })
     );
     expect(event.data.topic).toBe("inbound:figma");
+    expect(event.data.source).toBe("inbound:figma");
+  });
+
+  it("does not deliver inbound stream.changed to schedule subscribers without source opt-in", async () => {
+    process.env.CLAWQL_MCP_EVENTS_ALLOW_LOCALHOST = "1";
+    const store = createMemorySubscriptionStore();
+    const deliveries: unknown[] = [];
+    const webhookFetch = async (_url: string, init: RequestInit) => {
+      const parsed = JSON.parse(String(init.body ?? "")) as Record<string, unknown>;
+      if (parsed.type === "verification") {
+        return new Response(JSON.stringify({ challenge: parsed.challenge }), { status: 200 });
+      }
+      deliveries.push(parsed);
+      return new Response("ok", { status: 200 });
+    };
+    const layer = McpEventsServiceLayer({ store, webhookFetch });
+    const run = <A, E>(program: Effect.Effect<A, E, McpEventsService>) =>
+      Effect.runPromise(program.pipe(Effect.provide(layer)));
+    const secret = generateWhsecSecretSync();
+
+    await run(
+      Effect.gen(function* () {
+        const svc = yield* McpEventsService;
+        return yield* svc.subscribe({
+          principal: "sched",
+          name: "stream.changed",
+          arguments: { topic: "job-watch-fields" },
+          delivery: { mode: "webhook", url: "http://127.0.0.1:1/sched", secret },
+        });
+      })
+    );
+    await run(
+      Effect.gen(function* () {
+        const svc = yield* McpEventsService;
+        return yield* svc.subscribe({
+          principal: "inbound",
+          name: "stream.changed",
+          arguments: { topic: "inbound:github", source: "inbound:github" },
+          delivery: { mode: "webhook", url: "http://127.0.0.1:1/inbound", secret },
+        });
+      })
+    );
+
+    const inbound = await Effect.runPromise(
+      verifyInboundWebhookEffect({
+        source: "github",
+        headers: {
+          "x-hub-signature-256": `sha256=${createHmac("sha256", "github-secret")
+            .update(Buffer.from("{}"))
+            .digest("hex")}`,
+        },
+        rawBody: Buffer.from("{}"),
+        env: { GITHUB_WEBHOOK_SECRET: "github-secret" },
+      })
+    );
+    // Accidental topic collision still needs source opt-in
+    const collision = {
+      ...inbound,
+      data: { ...inbound.data, topic: "job-watch-fields" },
+    };
+
+    const outcomes = await run(
+      Effect.gen(function* () {
+        const svc = yield* McpEventsService;
+        return yield* svc.emit(collision);
+      })
+    );
+    expect(outcomes.filter((o) => o.accepted)).toHaveLength(0);
+    expect(deliveries).toHaveLength(0);
+
+    const optedIn = await run(
+      Effect.gen(function* () {
+        const svc = yield* McpEventsService;
+        return yield* svc.emit(inbound);
+      })
+    );
+    expect(optedIn.filter((o) => o.accepted)).toHaveLength(1);
+    expect(deliveries).toHaveLength(1);
+    expect((deliveries[0] as { data: { source: string } }).data.source).toBe("inbound:github");
   });
 });
 
@@ -255,5 +343,50 @@ describe("HTTP / MCP subscription store parity", () => {
     expect(published).toEqual([
       { subject: "clawql.events.budget.exhausted.default", msgId: "evt_nats_1", seq: 1 },
     ]);
+  });
+
+  it("requires EventStreamPublisher for managed / CLAWQL_EVENTS_REQUIRE_JETSTREAM", async () => {
+    expect(CLAWQL_EVENTS_WEBHOOK_QUEUE_GROUP).toBe("clawql-events-webhook");
+    expect(
+      await Effect.runPromise(
+        eventsJetStreamRequiredEffect({ CLAWQL_EVENTS_REQUIRE_JETSTREAM: "1" })
+      )
+    ).toBe(true);
+    expect(
+      await Effect.runPromise(eventsJetStreamRequiredEffect({ CLAWQL_CONSOLE_SURFACE: "managed" }))
+    ).toBe(true);
+    expect(await Effect.runPromise(eventsJetStreamRequiredEffect({}))).toBe(false);
+
+    const err = await Effect.runPromise(
+      assertEventStreamPublisherForManagedEffect(undefined, {
+        CLAWQL_EVENTS_REQUIRE_JETSTREAM: "1",
+      }).pipe(Effect.flip)
+    );
+    expect(err.message).toContain("EventStreamPublisher");
+    expect(err.message).toContain(CLAWQL_EVENTS_WEBHOOK_QUEUE_GROUP);
+
+    expect(() =>
+      makeMcpEventsService({
+        store: createMemorySubscriptionStore(),
+        // force managed gate via env for this process
+      })
+    ).not.toThrow();
+
+    const prev = process.env.CLAWQL_EVENTS_REQUIRE_JETSTREAM;
+    process.env.CLAWQL_EVENTS_REQUIRE_JETSTREAM = "1";
+    try {
+      expect(() => makeMcpEventsService({ store: createMemorySubscriptionStore() })).toThrow(
+        /EventStreamPublisher/
+      );
+      expect(() =>
+        makeMcpEventsService({
+          store: createMemorySubscriptionStore(),
+          eventStreamPublisher: () => Effect.void,
+        })
+      ).not.toThrow();
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_EVENTS_REQUIRE_JETSTREAM;
+      else process.env.CLAWQL_EVENTS_REQUIRE_JETSTREAM = prev;
+    }
   });
 });

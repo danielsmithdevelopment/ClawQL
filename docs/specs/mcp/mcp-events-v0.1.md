@@ -129,7 +129,9 @@ Canonical gateway paths (locked for 8.0.0) live on `clawql-inference` and wrap t
 | `GET`    | `/events/stream`            | CloudEvents SSE; `Last-Event-ID` → seq       |
 | `POST`   | `/events/inbound/{source}`  | GitHub / Stripe / Figma → `stream.changed`   |
 
-SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the ChatGPT MCP Events JSON body. Inbound webhooks are untrusted data (`topic: inbound:{source}`); they do not add an eighth catalog type.
+SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the ChatGPT MCP Events JSON body. Inbound webhooks are untrusted data (`source` + `topic` = `inbound:{provider}`, `untrusted: true`); they do not add an eighth catalog type.
+
+**Inbound opt-in (required):** `stream.changed` still means “a watched projection changed” for existing ChatGPT automations. Inbound webhooks **must not** fan out to those subscribers. Delivery matches only when `arguments.source` is set to `inbound:github` / `inbound:stripe` / `inbound:figma` / `inbound:*`. Omit `source` (default) → projection/schedule traffic only.
 
 ## 10. NATS JetStream
 
@@ -143,4 +145,5 @@ SSE uses CloudEvents 1.0 (`com.clawql.<name>`). Webhook deliveries stay on the C
 6. Inbound webhooks publish into the same stream after signature verify.
 7. Never expose NATS to customers. Per-tenant NATS accounts stay internal; edge gateways may connect as leaf nodes.
 8. Event streams belong on the erase path; set retention limits because JetStream persists at rest.
+9. **Managed multi-replica release requirement:** wire `EventStreamPublisher` to JetStream (`CLAWQL_EVENTS_REQUIRE_JETSTREAM=1` / `CLAWQL_CONSOLE_SURFACE=managed`). Webhook delivery workers use queue group `clawql-events-webhook` for exactly-once delivery across replicas. Without JetStream, SSE resume and webhook dedupe break across gateway replicas — fail-closed at service construction when required.
 

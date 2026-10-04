@@ -124,6 +124,8 @@ describe("createEventsRouter", () => {
       expect(body.methods).toContain("POST /events/inbound/{source}");
       expect(body.aliases).toContain("GET /events/list");
       expect(body.envelope).toMatch(/CloudEvents 1.0/);
+      expect(String(body.inbound)).toMatch(/Opt-in/);
+      expect(String(body.jetstream)).toMatch(/clawql-events-webhook/);
     } finally {
       await closeHttpServer(server);
     }

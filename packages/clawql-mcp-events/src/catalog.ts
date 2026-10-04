@@ -11,14 +11,20 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
   {
     name: "stream.changed",
     description:
-      "A polled API / schedule synthetic topic projection changed. Prefer action.change_detection.watch_fields so only meaningful fields are hashed. Filter by topic (schedule job id).",
+      "A polled API / schedule synthetic topic projection changed. Prefer action.change_detection.watch_fields so only meaningful fields are hashed. Filter by topic (schedule job id). Inbound provider webhooks (POST /events/inbound/{source}) also use this type with source inbound:{provider} and untrusted:true — they are excluded unless you opt in with arguments.source.",
     delivery: ["webhook"],
     inputSchema: {
       type: "object",
       properties: {
         topic: {
           type: "string",
-          description: "Stream / topic id (ClawQL schedule job id) to monitor for changes.",
+          description:
+            "Stream / topic id (schedule job id for projections, or inbound:github|stripe|figma when opting into inbound).",
+        },
+        source: {
+          type: "string",
+          description:
+            "Opt-in for inbound webhook traffic only. Set to inbound:github, inbound:stripe, inbound:figma, or inbound:*. Omit (default) to receive projection/schedule changes only — never inbound.",
         },
       },
       required: ["topic"],
@@ -73,7 +79,12 @@ export const BUILTIN_MCP_EVENT_CATALOG: readonly McpEventDefinition[] = [
         },
         source: {
           type: "string",
-          description: "Inbound provider id (github | stripe | figma) when untrusted.",
+          description:
+            "Origin label. Inbound webhooks use inbound:github | inbound:stripe | inbound:figma. Projection/schedule events omit this or use a non-inbound value.",
+        },
+        provider: {
+          type: "string",
+          description: "Raw inbound provider id (github | stripe | figma) when untrusted.",
         },
         provider_event: {
           type: "object",
