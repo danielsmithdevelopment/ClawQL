@@ -10,6 +10,7 @@ import {
   FastDecisionDefaultStackLive,
   FastDecisionScorer,
   FastDecisionTestStackLive,
+  routingCatalogAlignedForProductionTrust,
   runFastDecision,
   seedBuiltinUseSites,
   type FastDecisionCandidate,
@@ -17,7 +18,10 @@ import {
   type FastDecisionResult,
 } from "clawql-core/classifier";
 
-/** Use sites that may return calibrated=true at 8.0.0 launch. */
+/** Use sites that may return calibrated=true at 8.0.0 launch *once* the live
+ * default MCP catalog matches the frozen routing digest. Catalog drift
+ * (`routingCatalogAlignedForProductionTrust`) currently forces calibrated=false.
+ */
 export const PRODUCTION_TRUSTED_USE_SITES: ReadonlySet<string> = new Set([
   "search_provider_tool_routing",
 ]);
@@ -181,7 +185,9 @@ function mapResult(opts: {
   escalationMode: DecisionEscalationMode;
 }): DecisionAnswer {
   const calibrated =
-    PRODUCTION_TRUSTED_USE_SITES.has(opts.useSiteId) && opts.backendId === "gliner2";
+    PRODUCTION_TRUSTED_USE_SITES.has(opts.useSiteId) &&
+    opts.backendId === "gliner2" &&
+    routingCatalogAlignedForProductionTrust();
   const abstained = opts.result.outcome === "below_threshold_fallback";
   const escalated = abstained && opts.escalationMode === "escalate";
   const options = softmaxNormalize(opts.result.scores);
