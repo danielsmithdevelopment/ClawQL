@@ -8,9 +8,9 @@
 
 ClawQL already ships two front ends:
 
-| Surface | App | Kit today |
-| --- | --- | --- |
-| Marketing (`clawql.com`) | `apps/www` | Tailwind Plus Oatmeal + `@tailwindplus/elements` |
+| Surface                                    | App              | Kit today                                               |
+| ------------------------------------------ | ---------------- | ------------------------------------------------------- |
+| Marketing (`clawql.com`)                   | `apps/www`       | Tailwind Plus Oatmeal + `@tailwindplus/elements`        |
 | Product console (self-host, Desktop, Helm) | `apps/dashboard` | TypeScript + Tailwind v4 + **shadcn/ui** (Base UI, MIT) |
 
 Managed hosting will live at **`cloud.clawql.com`**: org, API keys, billing, usage, audit, events, approvals — the same screens operators already need on the self-hosted dashboard. Tailwind Plus also offers **Catalyst** (copy-in React app kit). Using Catalyst for managed and shadcn for self-host would split the console in two.
@@ -42,4 +42,4 @@ Managed hosting will live at **`cloud.clawql.com`**: org, API keys, billing, usa
 
 - **Catalyst for managed, shadcn for self-host** — rejected; two consoles.
 - **Catalyst everywhere, including the public dashboard** — rejected; Plus license in the OSS product tree, and the Plus terms call out admin-panel kits as a restricted pattern.
-- **New `apps/console` with Catalyst on clawql.com** — rejected; marketing and product stay split by *purpose*, not by a second copy of the same screens.
+- **New `apps/console` with Catalyst on clawql.com** — rejected; marketing and product stay split by _purpose_, not by a second copy of the same screens.
