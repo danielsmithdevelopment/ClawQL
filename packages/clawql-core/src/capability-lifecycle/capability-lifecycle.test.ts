@@ -366,4 +366,26 @@ describe("slow path WORM + hook enforcement", () => {
     expect(catalog.tools.has("knowledge_search_onyx")).toBe(true);
     clearProcessRegisteredCapabilityToolsForTests();
   });
+
+  it("strips operator-only capabilities from session seed even if env or process lists them", async () => {
+    const {
+      AGENT_NEVER_ISSUED_CAPABILITIES,
+      clearProcessRegisteredCapabilityToolsForTests,
+      noteProcessRegisteredCapabilityTools,
+      resolveCapabilitySessionSeed,
+    } = await import("./catalog-bootstrap.js");
+    clearProcessRegisteredCapabilityToolsForTests();
+    noteProcessRegisteredCapabilityTools(["search", "sources_approve", "supabase_verify_session"]);
+    const processSeed = await Effect.runPromise(resolveCapabilitySessionSeed(null));
+    expect(processSeed).toContain("search");
+    expect(processSeed).not.toContain("sources_approve");
+    expect(processSeed).not.toContain("supabase_verify_session");
+
+    const atrSeed = await Effect.runPromise(
+      resolveCapabilitySessionSeed(["search", "sources_approve", "supabase_checkout_handoff"])
+    );
+    expect(atrSeed).toEqual(["search"]);
+    expect(AGENT_NEVER_ISSUED_CAPABILITIES).toContain("sources_approve");
+    clearProcessRegisteredCapabilityToolsForTests();
+  });
 });

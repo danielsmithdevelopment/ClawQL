@@ -30,12 +30,9 @@ Optional Auth REST (server-side signup helpers):
 export CLAWQL_SUPABASE_ANON_KEY=…
 ```
 
-## MCP tools (when enabled)
+## MCP surface
 
-| Tool                        | Purpose                                                    |
-| --------------------------- | ---------------------------------------------------------- |
-| `supabase_verify_session`   | Verify a Supabase access token; return subject + email     |
-| `supabase_checkout_handoff` | Build Stripe Checkout CPC metadata from a verified session |
+**None.** This plugin is CPC / clawql.com middleware. Session JWTs stay on the account host; agents never see them. Do not register `supabase_verify_session` or `supabase_checkout_handoff`.
 
 ## clawql.com
 

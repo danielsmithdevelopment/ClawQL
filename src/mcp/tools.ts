@@ -33,7 +33,6 @@ import {
   SearchService,
   searchToolZodShape,
   sourcesProposeToolZodShape,
-  sourcesApproveToolZodShape,
   cacheToolZodShape,
   auditToolZodShape,
   skillsListToolZodShape,
@@ -50,11 +49,8 @@ import {
   defaultFields,
   executeOutputFields,
   projectRestByFields,
-  proposeSourceEffect,
-  approveSourceEffect,
   agentPrincipalFromSessionIdEffect,
-  resolveOperatorPrincipalEffect,
-  resetSpecCache,
+  proposeSourceEffect,
   type CustomSourceKind,
 } from "clawql-api";
 import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
@@ -144,7 +140,7 @@ export async function handleClawqlResumeToolInput(
   );
 }
 
-/** MCP `sources_propose` — preview or park a custom source (v0.1). */
+/** MCP `sources_propose` — preview or park a custom source. Approval is operator-only (CLI/console). */
 export async function handleSourcesProposeToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -171,45 +167,6 @@ export async function handleSourcesProposeToolInput(
         proposedBy,
       });
       return { content: [{ type: "text" as const, text: JSON.stringify(preview, null, 2) }] };
-    })
-  );
-}
-
-/**
- * MCP `sources_approve` — demands ApproverMayApproveSource (gdp-ts).
- * Prefer CLI/console operators; agent self-approve fails the two-party proof.
- * Catalog removal of this tool remains on the human-gate PR (#1202).
- */
-export async function handleSourcesApproveToolInput(
-  raw: unknown
-): Promise<{ content: { type: "text"; text: string }[] }> {
-  return getClawqlApi().run(
-    Effect.gen(function* () {
-      const o = (raw ?? {}) as Record<string, unknown>;
-      const proposalId = typeof o.proposalId === "string" ? o.proposalId : "";
-      const decision =
-        o.decision === "decline" ? "decline" : o.decision === "approve" ? "approve" : null;
-      if (!proposalId.trim() || !decision) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify({
-                ok: false,
-                error: 'proposalId and decision ("approve"|"decline") required',
-              }),
-            },
-          ],
-        };
-      }
-      const approvedBy = yield* resolveOperatorPrincipalEffect();
-      const result = yield* approveSourceEffect({
-        proposalId,
-        decision,
-        resetSpecCache,
-        approvedBy,
-      });
-      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     })
   );
 }
@@ -313,17 +270,11 @@ export function registerTools(server: McpServer) {
 
   server.tool(
     "sources_propose",
-    "Preview (default) or park a custom source proposal with operation-risk summary. Does not write sources.json until sources_approve.",
+    "Preview (default) or park a custom source proposal with operation-risk summary. Does not write sources.json until an operator approves via CLI (`clawql sources approve`) or console — never via MCP.",
     sourcesProposeToolZodShape,
     wrapRegisteredMcpToolHandler("sources_propose", handleSourcesProposeToolInput)
   );
-  server.tool(
-    "sources_approve",
-    "Approve or decline a parked sources_propose proposal (human gate).",
-    sourcesApproveToolZodShape,
-    wrapRegisteredMcpToolHandler("sources_approve", handleSourcesApproveToolInput)
-  );
-  registeredNames.push("sources_propose", "sources_approve");
+  registeredNames.push("sources_propose");
 
   registerPluginMcpTools(server);
   for (const tool of getClawqlApi().listMcpTools()) {

@@ -30,8 +30,7 @@ Instance CRD: `spec.supabase.enabled: true` (horizontal tier).
 
 ## MCP tools
 
-- `supabase_verify_session` — verify access token → `sub` / `email`
-- `supabase_checkout_handoff` — verify + build CPC metadata including `clawql_supabase_user_id`
+**None.** Session JWTs must never enter agent context. Checkout and session verify stay on clawql.com / CPC (HTTP), not MCP. Agents are never issued `supabase_verify_session` or `supabase_checkout_handoff` (also listed in `AGENT_NEVER_ISSUED_CAPABILITIES`).
 
 ## Checkout metadata
 

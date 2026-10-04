@@ -76,6 +76,27 @@ describe("sources propose / approve", () => {
     expect(file.sources).toEqual([]);
   });
 
+  it("refuses to park a proposal without proposedBy", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-propose-noprincipal-"));
+    process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_SOURCES_ALLOW_HTTP = "1";
+
+    const result = await Effect.runPromise(
+      Effect.result(
+        proposeSourceEffect({
+          url: "http://example.com/openapi.json",
+          dryRun: false,
+          home,
+          fetchFn: stubFetch(MINIMAL_OPENAPI),
+        })
+      )
+    );
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      expect(String(result.failure)).toMatch(/proposedBy is required/i);
+    }
+  });
+
   it("commit parks proposal; approve upserts sources.json", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-propose-commit-"));
     process.env.CLAWQL_HOME = home;
@@ -99,6 +120,7 @@ describe("sources propose / approve", () => {
 
     expect(parked.proposalId).toMatch(/^psp_/);
     expect(parked.approval?.cli).toContain(parked.proposalId!);
+    expect(parked.approval?.surface).toBe("operator");
 
     const before = await readCustomSourcesFile(home);
     expect(before.sources).toEqual([]);
@@ -156,5 +178,95 @@ describe("sources propose / approve", () => {
     expect(declined.status).toBe("declined");
     const file = await readCustomSourcesFile(home);
     expect(file.sources).toEqual([]);
+  });
+
+  it("refuses the proposing principal from approving their own source", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-propose-self-approve-"));
+    process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_SOURCES_ALLOW_HTTP = "1";
+
+    const parked = await Effect.runPromise(
+      proposeSourceEffect({
+        url: "http://example.com/openapi.json",
+        dryRun: false,
+        home,
+        fetchFn: stubFetch(MINIMAL_OPENAPI),
+        proposedBy: { kind: "agent", id: "mcp-session-1" },
+      })
+    );
+
+    const selfApprove = await Effect.runPromise(
+      Effect.result(
+        approveSourceEffect({
+          proposalId: parked.proposalId!,
+          decision: "approve",
+          home,
+          approvedBy: { kind: "agent", id: "mcp-session-1" },
+        })
+      )
+    );
+    expect(selfApprove._tag).toBe("Failure");
+    if (selfApprove._tag === "Failure") {
+      expect(String(selfApprove.failure)).toMatch(/operator-only|cannot approve/i);
+    }
+
+    const otherAgent = await Effect.runPromise(
+      Effect.result(
+        approveSourceEffect({
+          proposalId: parked.proposalId!,
+          decision: "approve",
+          home,
+          approvedBy: { kind: "agent", id: "mcp-session-2" },
+        })
+      )
+    );
+    expect(otherAgent._tag).toBe("Failure");
+    if (otherAgent._tag === "Failure") {
+      expect(String(otherAgent.failure)).toMatch(/operator-only/i);
+    }
+
+    const file = await readCustomSourcesFile(home);
+    expect(file.sources).toEqual([]);
+  });
+
+  it("refuses the same operator who parked a CLI proposal from approving it", async () => {
+    const home = await mkdtemp(join(tmpdir(), "clawql-propose-operator-self-"));
+    process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_SOURCES_ALLOW_HTTP = "1";
+
+    const parked = await Effect.runPromise(
+      proposeSourceEffect({
+        url: "http://example.com/openapi.json",
+        dryRun: false,
+        home,
+        fetchFn: stubFetch(MINIMAL_OPENAPI),
+        proposedBy: { kind: "operator", id: "alice" },
+      })
+    );
+
+    const selfApprove = await Effect.runPromise(
+      Effect.result(
+        approveSourceEffect({
+          proposalId: parked.proposalId!,
+          decision: "approve",
+          home,
+          approvedBy: { kind: "operator", id: "alice" },
+        })
+      )
+    );
+    expect(selfApprove._tag).toBe("Failure");
+    if (selfApprove._tag === "Failure") {
+      expect(String(selfApprove.failure)).toMatch(/proof failed|two-party|cannot approve/i);
+    }
+
+    const otherOperator = await Effect.runPromise(
+      approveSourceEffect({
+        proposalId: parked.proposalId!,
+        decision: "approve",
+        home,
+        approvedBy: { kind: "operator", id: "bob" },
+      })
+    );
+    expect(otherOperator.status).toBe("approved");
   });
 });
