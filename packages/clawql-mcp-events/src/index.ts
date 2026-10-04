@@ -89,6 +89,7 @@ export type {
   ListEventsResult,
   McpEventDefinition,
   McpEventDeliveryMode,
+  PublicSubscription,
   StoredSubscription,
   SubscribeParams,
   SubscribeResult,
@@ -97,3 +98,34 @@ export type {
   WormAppend,
 } from "./types.js";
 export { makeWebhookFetch } from "./webhook-fetch.js";
+export {
+  CLOUD_EVENTS_SPEC_VERSION,
+  CLAWQL_EVENT_SOURCE,
+  cloudEventSubjectEffect,
+  cloudEventTypeEffect,
+  toCloudEventEffect,
+  type ClawqlCloudEvent,
+} from "./cloudevents.js";
+export {
+  createEventStreamBuffer,
+  DEFAULT_EVENT_STREAM_CAPACITY,
+  formatSseFrameEffect,
+  parseLastEventIdEffect,
+  type EventStreamBuffer,
+  type EventStreamRecord,
+} from "./event-stream.js";
+export {
+  CLAWQL_EVENTS_NATS_ROOT,
+  natsEventSubjectEffect,
+  natsMsgIdEffect,
+  type EventStreamPublishInput,
+  type EventStreamPublisher,
+} from "./nats-subjects.js";
+export {
+  INBOUND_SOURCES,
+  InboundWebhookError,
+  parseInboundSourceEffect,
+  verifyInboundWebhookEffect,
+  type InboundSource,
+  type InboundWebhookInput,
+} from "./inbound.js";

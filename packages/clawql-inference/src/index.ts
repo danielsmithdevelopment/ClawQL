@@ -252,6 +252,11 @@ export {
   runEventsGatewaySubscribe,
   runEventsGatewayUnsubscribe,
   runEventsGatewayGetSubscription,
+  runEventsGatewayListSubscriptions,
+  runEventsGatewayUnsubscribeById,
+  runEventsGatewayReplayStream,
+  runEventsGatewaySubscribeStream,
+  runEventsGatewayInbound,
   type EventsGatewayListInput,
 } from "./events/index.js";
 

@@ -39,12 +39,23 @@ import type {
   ListEventsParams,
   ListEventsResult,
   McpEventDefinition,
+  PublicSubscription,
   StoredSubscription,
   SubscribeParams,
   SubscribeResult,
   UnsubscribeParams,
   WormAppend,
 } from "./types.js";
+import {
+  createEventStreamBuffer,
+  type EventStreamBuffer,
+  type EventStreamRecord,
+} from "./event-stream.js";
+import {
+  natsEventSubjectEffect,
+  natsMsgIdEffect,
+  type EventStreamPublisher,
+} from "./nats-subjects.js";
 import { makeWebhookFetch, type WebhookFetch } from "./webhook-fetch.js";
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -63,7 +74,22 @@ export type McpEventsConfig = {
   allowNonExpiring?: boolean;
   enterprise?: EnterpriseEventsPolicy;
   rateLimiter?: DeliveryRateLimiter;
+  eventStream?: EventStreamBuffer;
+  eventStreamPublisher?: EventStreamPublisher;
 };
+
+const toPublic = (s: StoredSubscription): PublicSubscription => ({
+  id: s.id,
+  principal: s.principal,
+  name: s.name,
+  arguments: s.arguments,
+  url: s.url,
+  refreshBefore: s.refreshBefore,
+  cursor: s.cursor,
+  verified: s.verified,
+  createdAt: s.createdAt,
+  updatedAt: s.updatedAt,
+});
 
 function topicFromSubscription(sub: StoredSubscription): string | null {
   const t = sub.arguments?.topic;
@@ -90,7 +116,9 @@ function resolveTtlMs(
   return Math.max(MIN_TTL_MS, Math.min(requested, defaultTtlMs * 7));
 }
 
-export class McpEventsService extends Context.Service<McpEventsService, {
+export class McpEventsService extends Context.Service<
+  McpEventsService,
+  {
     readonly list: (params: ListEventsParams) => Effect.Effect<ListEventsResult, never>;
     readonly subscribe: (
       params: SubscribeParams
@@ -103,7 +131,17 @@ export class McpEventsService extends Context.Service<McpEventsService, {
     /** Flush coalesced stream.changed deliveries that have waited out the min interval. */
     readonly flushCoalesced: () => Effect.Effect<readonly DeliveryOutcome[]>;
     readonly getSubscription: (id: string) => Effect.Effect<StoredSubscription | undefined>;
-  }>()("clawql/McpEventsService") {}
+    readonly listSubscriptions: (principal: string) => Effect.Effect<readonly PublicSubscription[]>;
+    readonly unsubscribeById: (id: string, principal: string) => Effect.Effect<{ ok: boolean }>;
+    readonly replayStream: (
+      lastSeq: number,
+      name?: string
+    ) => Effect.Effect<readonly EventStreamRecord[]>;
+    readonly subscribeStream: (
+      listener: (record: EventStreamRecord) => void
+    ) => Effect.Effect<() => void>;
+  }
+>()("clawql/McpEventsService") {}
 
 export function makeMcpEventsService(
   config: McpEventsConfig = {}
@@ -124,6 +162,8 @@ export function makeMcpEventsService(
   const rateLimiter =
     config.rateLimiter ?? new DeliveryRateLimiter(enterprise.maxDeliveriesPerMinutePerPrincipal);
   const coalesce = createCoalesceState(enterprise.coalesceIntervalMs);
+  const eventStream = config.eventStream ?? createEventStreamBuffer();
+  const eventStreamPublisher = config.eventStreamPublisher;
 
   const audit = (type: string, payload: Record<string, unknown>) =>
     Effect.tryPromise({
@@ -384,6 +424,30 @@ export function makeMcpEventsService(
             }).pipe(Effect.orElseSucceed(() => screenedData))) as Record<string, unknown>)
           : screenedData;
         const screened: DeliverableEvent = { ...event, data: redactedData };
+        const streamRecord = yield* eventStream.append(screened);
+        if (eventStreamPublisher) {
+          const tenantRaw = redactedData.tenant ?? redactedData.topic;
+          const tenant =
+            typeof tenantRaw === "string" && tenantRaw.trim() ? tenantRaw.trim() : "default";
+          const subject = yield* natsEventSubjectEffect(screened.name, tenant);
+          const msgId = yield* natsMsgIdEffect(screened.eventId);
+          yield* eventStreamPublisher({
+            event: screened,
+            cloudEvent: streamRecord.cloudEvent,
+            tenant,
+            seq: streamRecord.seq,
+          }).pipe(
+            Effect.catch(() => Effect.void),
+            Effect.tap(() =>
+              audit("mcp_events.stream_publish", {
+                eventId: screened.eventId,
+                subject,
+                msgId,
+                seq: streamRecord.seq,
+              })
+            )
+          );
+        }
         const all = yield* store.list();
         const matches = all.filter(
           (s: StoredSubscription) =>
@@ -490,6 +554,35 @@ export function makeMcpEventsService(
     flushCoalesced: () => flushCoalescedInternal(),
 
     getSubscription: (id) => store.get(id),
+
+    listSubscriptions: (principal) =>
+      Effect.gen(function* () {
+        const all = yield* store.list();
+        return all.filter((s) => s.principal === principal).map(toPublic);
+      }),
+
+    unsubscribeById: (id, principal) =>
+      Effect.gen(function* () {
+        const existing = yield* store.get(id);
+        if (!existing || existing.principal !== principal) {
+          return { ok: false };
+        }
+        dropPendingForSubscription(coalesce, id);
+        yield* store.remove(id);
+        yield* audit("mcp_events.unsubscribe", {
+          id,
+          principal,
+          name: existing.name,
+        });
+        if (existing.name === "stream.changed") {
+          const topic = topicFromSubscription(existing);
+          if (topic) notifyStreamTopicReleased(topic, "unsubscribe");
+        }
+        return { ok: true };
+      }),
+
+    replayStream: (lastSeq, name) => eventStream.replayFrom(lastSeq, name),
+    subscribeStream: (listener) => eventStream.subscribe(listener),
   });
 }
 

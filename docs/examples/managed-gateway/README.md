@@ -5,6 +5,7 @@ One hostname for **OpenAI-compatible `/v1`**, **MCP `/mcp`**, **vault `/memory`*
 go-live wedge for ClawQL’s Managed Edge Gateway (local / self-hosted).
 
 **Secure defaults:** virtual key required on `/v1` (and `/memory`, `/decision`, `/events`);
+inbound `POST /events/inbound/{source}` uses provider signatures instead of virtual keys.
 MCP uses `CLAWQL_AUTH_MODE=apiKey` and accepts the same inference virtual key
 (`tenantId` from `key.team`). Never `noAuth` on networked surfaces.
 

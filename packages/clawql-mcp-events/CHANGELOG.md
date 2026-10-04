@@ -10,6 +10,7 @@
 - Production projection keys: require `CLAWQL_SCHEDULE_PROJECTION_KEY` / `CLAWQL_SECRET_SCHEDULE_PROJECTION_KEY` (env/Vault); fail-closed — never file-beside-DB in production.
 - ChatGPT live pass is a **blocking** v8.0.0 release gate (`docs/release/v8.0.0-checklist.md`); checklist requires the **signed RC image digest**, real trigger + delivery for all seven events (`stream.changed` precision/negative, `schedule.paused` + Reconnect sources), and **eventId + WORM** evidence per delivery.
 - Drop vapor / wire live producers; enterprise allowlist, PII redact, caps.
+- HTTP `/events` door into this package (catalog, subscriptions, SSE CloudEvents, inbound GitHub/Stripe/Figma). Same store as MCP JSON-RPC; redact before stream/NATS publish; `Nats-Msg-Id` = event id.
 
 ## 0.1.0
 

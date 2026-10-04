@@ -12,7 +12,7 @@
 | 2    | `/mcp`                  | same host `/mcp` (proxy → MCP upstream) |
 | 3    | `/memory`               | REST + opt-in chat enrichment           |
 | 4    | `/decision`             | canonical; `/v1/systemone` alias        |
-| 5    | `/events`               | REST façade over MCP Events             |
+| 5    | `/events`               | HTTP door into MCP Events (not a twin)  |
 
 Shared virtual key, budgets, WORM/audit identity across rungs.
 
@@ -52,20 +52,34 @@ Shared virtual key, budgets, WORM/audit identity across rungs.
 
 ## `/events`
 
-REST façade over **`clawql-mcp-events`** — same live catalog, subscription store, Standard Webhooks delivery, and enterprise controls as MCP JSON-RPC `events/list|subscribe|unsubscribe` on `/mcp`. One store; no second event system.
+HTTP door into **`clawql-mcp-events`** — same live catalog (seven types), subscription store, Standard Webhooks delivery, callback allowlist, redaction, per-user caps, access rechecks, loop detection, and WORM as MCP JSON-RPC `events/list|subscribe|unsubscribe` on `/mcp`. **Not a second event system.**
 
-| Method | Path                        | Behavior                                                              |
-| ------ | --------------------------- | --------------------------------------------------------------------- |
-| `GET`  | `/events`                   | Discovery (`object: clawql.events`, enabled flag)                     |
-| `GET`  | `/events/list`              | Event catalog (`cursor` query); same payload as `events/list`         |
-| `POST` | `/events/subscribe`         | Webhook subscribe (`name`, `arguments`, `delivery`, optional `ttlMs`) |
-| `POST` | `/events/unsubscribe`       | Webhook unsubscribe (match `name` + `delivery.url`)                   |
-| `GET`  | `/events/subscriptions/:id` | Subscription metadata (no secret); principal-scoped                   |
+**Locked 8.0.0 names** (singular actions `/decision` `/memory`; plural collections `/events`):
+
+| Method   | Path                           | Behavior                                                                                          |
+| -------- | ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `GET`    | `/events`                      | Discovery (`object: clawql.events`, enabled flag)                                                 |
+| `GET`    | `/events/catalog`              | Seven event types + schemas — same payload as MCP `events/list`                                   |
+| `GET`    | `/events/subscriptions`        | Principal-scoped webhook subscriptions (no secrets)                                               |
+| `POST`   | `/events/subscriptions`        | Webhook subscribe (`name`, `arguments`, `delivery`, optional `ttlMs`) + callback challenge        |
+| `DELETE` | `/events/subscriptions/:id`    | Unsubscribe by id                                                                                 |
+| `GET`    | `/events/stream`               | SSE CloudEvents 1.0; resume with `Last-Event-ID` (JetStream sequence in production)               |
+| `POST`   | `/events/inbound/{source}`     | Verify GitHub / Stripe / Figma signatures; emit untrusted `stream.changed` `topic: inbound:{src}` |
+
+**Aliases** (keep working; do not advertise as canonical): `GET /events/list`, `POST /events/subscribe`, `POST /events/unsubscribe`, `GET /events/subscriptions/:id`.
 
 - **Principal:** virtual-key id when keys are enforced; else `x-clawql-principal` or `anonymous` (matches MCP host).
+- **Inbound auth:** provider signatures, not virtual keys. Screened, labeled `untrusted: true`, never read as instructions. Maps onto existing `stream.changed` — **no eighth catalog type**.
+- **Envelope:** SSE and optional NATS publish use **CloudEvents 1.0** (`type: com.clawql.<name>`). ChatGPT / MCP webhook bodies stay `{eventId,name,timestamp,data,cursor}` with Standard Webhooks (`webhook-id` = event id).
 - **Disable:** `CLAWQL_ENABLE_MCP_EVENTS=0` → REST returns **503** (same flag as MCP Discover `capabilities.events`).
-- **ChatGPT / MCP clients** keep using JSON-RPC on `/mcp`; HTTP clients and scripts use `/events`.
+- **Parity:** a subscription created on `/mcp` appears under `GET /events/subscriptions`; one created on `/events` is visible to MCP `events/list` (catalog) and the shared store; both receive identical signed webhook deliveries.
 - Spec detail: [`docs/specs/mcp/mcp-events-v0.1.md`](../mcp/mcp-events-v0.1.md).
+
+### NATS JetStream (internal backbone)
+
+Producers publish **once** to JetStream (`clawql.events.<type>.<tenant>`). Webhook delivery, SSE fan-out, and MCP Events are consumers of that stream. `Last-Event-ID` maps to the JetStream sequence; `Nats-Msg-Id` = event id (dedup window + Standard Webhooks retries). CloudEvents travels unchanged (official NATS binding).
+
+**Do not expose NATS to customers.** `/events` is the governed edge (auth, scopes, caps, redaction, access rechecks). Redact **before publish** — JetStream persists messages. Include event streams in the erase path and set retention limits. In-process ring buffer (default 1024) is the single-process stand-in until a host wires `EventStreamPublisher`.
 
 ## `/mcp`
 
@@ -79,3 +93,4 @@ Remains the MCP HTTP process. Managed-gateway proxy routes `/mcp` → MCP upstre
 - Promoting Nimble / Tev1 / Jev as trusted backends (candidates only via future eval)
 - In-process MCP inside the inference Express app
 - Full `clawql-streams` / `stream_subscribe` agent wake loop (change-detection → `stream.changed` already ships)
+- Exposing NATS / JetStream to customers (leaf nodes stay on the fabric, behind `/events`)

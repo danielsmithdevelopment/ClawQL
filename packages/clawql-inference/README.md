@@ -76,11 +76,13 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | `GET`    | `/memory`                   | List Memory notes                                     |
 | `GET`    | `/memory/:slug`             | Read note                                             |
 | `DELETE` | `/memory/:slug`             | Erasure (crypto-shred + deny-list; see ladder spec)   |
-| `GET`    | `/events`                   | Events discovery                                      |
-| `GET`    | `/events/list`              | MCP Events catalog                                    |
-| `POST`   | `/events/subscribe`         | Webhook subscribe                                     |
-| `POST`   | `/events/unsubscribe`       | Webhook unsubscribe                                   |
-| `GET`    | `/events/subscriptions/:id` | Subscription metadata                                 |
+| `GET`    | `/events`                      | Events discovery                                      |
+| `GET`    | `/events/catalog`              | MCP Events catalog (alias `GET /events/list`)         |
+| `GET`    | `/events/subscriptions`        | List webhook subscriptions                            |
+| `POST`   | `/events/subscriptions`        | Webhook subscribe (alias `POST /events/subscribe`)    |
+| `DELETE` | `/events/subscriptions/:id`    | Unsubscribe                                           |
+| `GET`    | `/events/stream`               | SSE CloudEvents; `Last-Event-ID` resume               |
+| `POST`   | `/events/inbound/{source}`     | GitHub / Stripe / Figma inbound (signature-verified)  |
 
 Opt-in chat enrichment: virtual-key `memoryEnrichment` **outranks** `x-clawql-memory-enrich` /
 `CLAWQL_INFERENCE_MEMORY_ENRICH` (default **off**; store-down forwards without memory;

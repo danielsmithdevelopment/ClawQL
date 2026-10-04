@@ -7,13 +7,20 @@ import { Context, Effect, Layer } from "effect";
 import {
   CallbackEndpointError,
   InvalidEventError,
+  InboundWebhookError,
   isMcpEventsEnabledSync,
   McpEventsService,
   McpEventsServiceLive,
   runMcpEventsEffect,
   UnauthorizedEventError,
+  verifyInboundWebhookEffect,
+  type DeliverableEvent,
+  type DeliveryOutcome,
+  type EventStreamRecord,
+  type InboundWebhookInput,
   type ListEventsParams,
   type ListEventsResult,
+  type PublicSubscription,
   type StoredSubscription,
   type SubscribeParams,
   type SubscribeResult,
@@ -36,6 +43,19 @@ export class EventsGatewayService extends Context.Service<
     >;
     readonly unsubscribe: (input: UnsubscribeParams) => Effect.Effect<Record<string, never>>;
     readonly getSubscription: (id: string) => Effect.Effect<StoredSubscription | undefined>;
+    readonly listSubscriptions: (principal: string) => Effect.Effect<readonly PublicSubscription[]>;
+    readonly unsubscribeById: (id: string, principal: string) => Effect.Effect<{ ok: boolean }>;
+    readonly replayStream: (
+      lastSeq: number,
+      name?: string
+    ) => Effect.Effect<readonly EventStreamRecord[]>;
+    readonly subscribeStream: (
+      listener: (record: EventStreamRecord) => void
+    ) => Effect.Effect<() => void>;
+    readonly emit: (event: DeliverableEvent) => Effect.Effect<readonly DeliveryOutcome[]>;
+    readonly ingestInbound: (
+      input: InboundWebhookInput
+    ) => Effect.Effect<DeliverableEvent, InboundWebhookError>;
   }
 >()("clawql/inference/EventsGatewayService") {}
 
@@ -48,6 +68,17 @@ export const EventsGatewayLive = Layer.effect(
       subscribe: (input) => mcp.subscribe(input),
       unsubscribe: (input) => mcp.unsubscribe(input),
       getSubscription: (id) => mcp.getSubscription(id),
+      listSubscriptions: (principal) => mcp.listSubscriptions(principal),
+      unsubscribeById: (id, principal) => mcp.unsubscribeById(id, principal),
+      replayStream: (lastSeq, name) => mcp.replayStream(lastSeq, name),
+      subscribeStream: (listener) => mcp.subscribeStream(listener),
+      emit: (event) => mcp.emit(event),
+      ingestInbound: (input) =>
+        Effect.gen(function* () {
+          const event = yield* verifyInboundWebhookEffect(input);
+          yield* mcp.emit(event);
+          return event;
+        }),
     };
   })
 ).pipe(Layer.provide(McpEventsServiceLive));
@@ -106,6 +137,75 @@ export async function runEventsGatewayGetSubscription(
     Effect.gen(function* () {
       const svc = yield* McpEventsService;
       return yield* svc.getSubscription(id);
+    })
+  );
+}
+
+export async function runEventsGatewayListSubscriptions(
+  principal: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<readonly PublicSubscription[]> {
+  assertEventsEnabled(env);
+  return runMcpEventsEffect(
+    Effect.gen(function* () {
+      const svc = yield* McpEventsService;
+      return yield* svc.listSubscriptions(principal);
+    })
+  );
+}
+
+export async function runEventsGatewayUnsubscribeById(
+  id: string,
+  principal: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<{ ok: boolean }> {
+  assertEventsEnabled(env);
+  return runMcpEventsEffect(
+    Effect.gen(function* () {
+      const svc = yield* McpEventsService;
+      return yield* svc.unsubscribeById(id, principal);
+    })
+  );
+}
+
+export async function runEventsGatewayReplayStream(
+  lastSeq: number,
+  name?: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<readonly EventStreamRecord[]> {
+  assertEventsEnabled(env);
+  return runMcpEventsEffect(
+    Effect.gen(function* () {
+      const svc = yield* McpEventsService;
+      return yield* svc.replayStream(lastSeq, name);
+    })
+  );
+}
+
+export async function runEventsGatewaySubscribeStream(
+  listener: (record: EventStreamRecord) => void,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<() => void> {
+  assertEventsEnabled(env);
+  return runMcpEventsEffect(
+    Effect.gen(function* () {
+      const svc = yield* McpEventsService;
+      return yield* svc.subscribeStream(listener);
+    })
+  );
+}
+
+export async function runEventsGatewayInbound(
+  input: InboundWebhookInput,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<DeliverableEvent> {
+  assertEventsEnabled(env);
+  return runMcpEventsEffect(
+    Effect.gen(function* () {
+      const svc = yield* McpEventsService;
+      const event = yield* verifyInboundWebhookEffect(input);
+      yield* svc.emit(event);
+      return event;
     })
   );
 }
