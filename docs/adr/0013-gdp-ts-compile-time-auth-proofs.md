@@ -36,6 +36,33 @@ ClawQL’s nine-layer stack polices agents at runtime (Panguard / ATR, OpenAPPA,
 ## Consequences
 
 - New sensitive APIs must demand proofs; call sites use `name(...)` (or `GdpService.name*`) and mint proofs in trusted modules that perform the check.
-- Agents writing platform code that skip a gate fail `tsc` / lint / `test:gdp-mistakes` before merge.
+- Agents writing *platform* code that skip a gate fail `tsc` / lint / `test:gdp-mistakes` before merge.
 - Forged-proof and stale-proof limits remain documented; lint catches forgeries; runtime gates catch revocation; proofs are never durable state.
 - Follow-on: keep #1202’s catalog removal of agent-held `sources_approve` — gdp-ts complements that human-gate work, it does not replace the catalog strip.
+
+## Agent skills and the self-learning loop
+
+gdp-ts changes the safety of agent-produced skills mostly **indirectly**. A proof must never be treated as runtime authority for code an agent wrote.
+
+### What improves
+
+1. **Platform gates are harder to bypass.** Skills and scripts from the self-learning loop eventually act through ClawQL runtime (`execute`, mandates, source proposals, event publish). Those paths refuse to *compile* if a check is skipped. A bug in ClawQL’s own code can no longer quietly open a hole that agent-made skills slip through. This applies regardless of the skill’s language.
+2. **Promotion gate for TypeScript skills (quality, not containment).** When agent scripts type-check against an SDK that demands proofs, a script that calls a mandated write without the mandate flow fails during “prove,” before promotion. Spec-derived risk maps cleanly: reads need no proof; writes require a mandate proof in the signature; blocked operations do not exist in the SDK. Record type-check and lint results as promotion evidence alongside held-out tests.
+
+### The trap
+
+Compile-time checks are **not** a security boundary against untrusted code. At runtime a proof is a frozen `{ kind }` object anyone can construct. Agent-written code is untrusted (prompt injection can shape it) and can evade types via `any`, casts, raw `fetch` past the SDK, or non-TypeScript scripts.
+
+- **The gateway must never accept a proof object from a script.** Runtime authority stays with layer-3 controls: server-side scoped credentials and single-use mandates bound to exact arguments.
+- **gdp-ts is a quality gate for agent code, not containment.** Containment remains the sandbox, layers 4–5 (Panguard / OpenAPPA), and runtime rechecks.
+
+### Promotion rules (honest “trusted”)
+
+Promotion means **reusable without re-approval each time**, not **runs unsandboxed**. A promoted skill still runs in the sandbox, still hits runtime gates, and can only do what it declared. Review then asks “is this scope acceptable?” rather than “is every line safe?”
+
+1. Every skill declares a **capability manifest** (operations + risk, hosts, data labels, triggers/schedule, spend cap); the runtime denies undeclared actions.
+2. **Automated evidence** before human review: gdp-ts type-check + **strict** lint for TypeScript (no `any`, no proof casts, no network except through the SDK, no `eval`); dependency and secret scans; Panguard scan of `SKILL.md`; sandboxed held-out runs with tracing and manifest conformance; adversarial tool-result injection; optional independent-model advisory summary.
+3. **Human review sized to risk** — auto-promote clean read-only/internal; person for writes or new hosts; two reviewers for external writes or money. Non-TypeScript skills cannot get the gdp-ts gate → lower trust, stricter sandbox, no write promotion without a mandate.
+4. **Verification continues after promotion** — behavioral drift demotes; any code change is a new proposal; OKF trust fields (`verified_by`, `stale_after`) force re-review.
+
+**Product message:** ClawQL does not claim agent-written code is safe. It limits what that code can do, and shows exactly what it did.

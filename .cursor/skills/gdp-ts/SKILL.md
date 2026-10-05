@@ -64,6 +64,11 @@ When adding or changing authorization in a codebase that uses this pattern:
 13. **ClawQL: keep `gdp-mistakes.ts` honest.** Add `@ts-expect-error` lines for
     no proof, wrong proof, proof about another value, and raw id. CI runs
     `npm run test:gdp-mistakes` (see ADR 0013).
+14. **ClawQL: never treat a proof as runtime authority from agent code.** The
+    gateway must not accept proof objects from skills/scripts. gdp-ts is a
+    quality / promotion gate for TypeScript; containment is sandbox + ATR +
+    OpenAPPA + server-side mandates. Promotion means reusable under declared
+    scope, not unsandboxed. Details: [ADR 0013](../../../docs/adr/0013-gdp-ts-compile-time-auth-proofs.md#agent-skills-and-the-self-learning-loop).
 
 The [recipe](references/recipe.md) shows each step in full.
 

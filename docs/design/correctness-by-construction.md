@@ -31,7 +31,7 @@ Clarification: “ColdFusion” in casual recall almost always meant **this aero
 | --------------- | ------------------------------------------------------------------- | ------------------------------ |
 | **Spec**        | Preconditions / postconditions / invariants written **before** code | Wrong requirements             |
 | **Types**       | Effect `E`/`R`/`Schema`; Rust ownership, enums, newtypes            | Invalid states at compile time |
-| **Runtime**     | `assert!`, promotion gates, required spend caps                     | Bad data that slipped types    |
+| **Runtime**     | `assert!`, promotion gates (manifest + sandbox; gdp-ts is quality only — [ADR 0013](../adr/0013-gdp-ts-compile-time-auth-proofs.md#agent-skills-and-the-self-learning-loop)), required spend caps | Bad data that slipped types    |
 | **Model check** | TLA+ / Alloy on critical global properties                          | Paths no test thought to run   |
 
 Promotion gates, three-arm OpenBench, hallucination→findings, ATR gates, and Constitutional Wonder/Reflect are the **same idea** at different altitudes: proceed only on verified data.
