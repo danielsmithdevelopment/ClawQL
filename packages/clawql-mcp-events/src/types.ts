@@ -104,3 +104,17 @@ export type WormAppend = (event: {
   type: string;
   payload: Record<string, unknown>;
 }) => void | Promise<void>;
+
+/** Subscription metadata safe to return over HTTP (no webhook secret). */
+export type PublicSubscription = {
+  readonly id: string;
+  readonly principal: string;
+  readonly name: string;
+  readonly arguments: Record<string, unknown>;
+  readonly url: string;
+  readonly refreshBefore: string | null;
+  readonly cursor: string | null;
+  readonly verified: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};

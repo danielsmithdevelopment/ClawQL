@@ -38,7 +38,13 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
   const gateway = options.gateway ?? createInferenceGateway({ env, providers: registry });
   const store = options.store === undefined ? createInferenceStore({ env }) : options.store;
   const app = express();
-  app.use(express.json({ limit: "2mb" }));
+  app.use((req, res, next) => {
+    if (req.method === "POST" && req.path.startsWith("/events/inbound")) {
+      express.raw({ type: "*/*", limit: "256kb" })(req, res, next);
+      return;
+    }
+    express.json({ limit: "2mb" })(req, res, next);
+  });
   app.get("/healthz", (_req, res) => {
     res.json({ status: "ok", service: "clawql-inference" });
   });

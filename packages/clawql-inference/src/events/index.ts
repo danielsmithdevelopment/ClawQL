@@ -5,6 +5,11 @@ export {
   runEventsGatewaySubscribe,
   runEventsGatewayUnsubscribe,
   runEventsGatewayGetSubscription,
+  runEventsGatewayListSubscriptions,
+  runEventsGatewayUnsubscribeById,
+  runEventsGatewayReplayStream,
+  runEventsGatewaySubscribeStream,
+  runEventsGatewayInbound,
   type EventsGatewayListInput,
 } from "./service.js";
 

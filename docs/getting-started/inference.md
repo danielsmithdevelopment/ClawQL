@@ -27,7 +27,7 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 | **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                             |
 | **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
 | **`/decision`**            | Fast Decision (`/v1/systemone` alias)                                                            |
-| **`/events`**              | REST MCP Events façade (list / subscribe / unsubscribe)                                          |
+| **`/events`**              | HTTP door into MCP Events (catalog / subscriptions / SSE / inbound)                              |
 | **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                                   |
 | **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama             |
 | **Control plane**          | Tier escalation, semantic cache, fallback, virtual keys, audit / spend                           |
@@ -62,7 +62,7 @@ Pair with MCP when you want agents to **search / execute / remember** against yo
        ├──► /mcp       (tools)       clawql-mcp-http  +  Memory/ vault
        ├──► /memory    (REST erase)  crypto-shred + export deny-list
        ├──► /decision  (Fast Decision / System One)
-       └──► /events    (REST MCP Events façade)
+       └──► /events    (MCP Events HTTP door — same system as /mcp)
 ```
 
 Today those are often two local processes; the **product** is one Agentic Gateway ladder. Managed offerings co-host them behind one hostname. Spec: [gateway-ladder-v0.1.md](../specs/inference/gateway-ladder-v0.1.md).
