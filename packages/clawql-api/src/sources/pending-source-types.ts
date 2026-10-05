@@ -23,7 +23,7 @@ export type ProposedOperationSample = {
 };
 
 export type PendingSourceRecord = {
-  readonly version: 1;
+  readonly version: 1 | 2;
   readonly proposalId: string;
   readonly entry: CustomSourceEntry;
   readonly riskSummary: SourceRiskSummary;
@@ -32,6 +32,10 @@ export type PendingSourceRecord = {
   readonly createdAt: string;
   readonly expiresAt: string;
   readonly decidedAt: string | null;
+  /** Canonical `agent:<id>` or `operator:<id>`. Null on legacy v1 files — approve fails closed. */
+  readonly proposedBy: string | null;
+  /** Canonical operator principal that decided; null while pending. */
+  readonly approvedBy: string | null;
 };
 
 export type SourcesProposePreview = {
@@ -45,6 +49,7 @@ export type SourcesProposePreview = {
   readonly approval: {
     readonly cli: string;
     readonly declineCli: string;
-    readonly tool: "sources_approve";
+    /** Human-only surfaces. Never an MCP tool — agents are not issued this capability. */
+    readonly surface: "operator";
   } | null;
 };

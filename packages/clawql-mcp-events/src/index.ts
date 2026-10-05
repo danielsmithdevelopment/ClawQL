@@ -122,9 +122,15 @@ export {
   eventsJetStreamRequiredEffect,
   natsEventSubjectEffect,
   natsMsgIdEffect,
+  publishEventStreamEffect,
   type EventStreamPublishInput,
   type EventStreamPublisher,
 } from "./nats-subjects.js";
+export {
+  payloadRedactedEffect,
+  type PayloadRedacted,
+  type RedactedPayloadBundle,
+} from "./proofs/payload-redacted.js";
 export {
   INBOUND_SOURCES,
   InboundWebhookError,

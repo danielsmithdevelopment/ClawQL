@@ -4,6 +4,7 @@
  */
 
 import { Context, Effect, Layer } from "effect";
+import { name, PrincipalId, VaultPath } from "clawql-gdp";
 import {
   runMemoryIngest,
   type MemoryIngestInput,
@@ -17,7 +18,11 @@ import {
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { listVaultMarkdownRelPaths, readVaultTextFile } from "clawql-memory/recall/recall";
 import { slugifyTitle } from "clawql-memory/ingest/slug";
-import { runMemoryErase } from "clawql-memory/erase/erase";
+import {
+  eraseAuthorizedEffect,
+  executeMemoryEraseAuthorizedEffect,
+} from "clawql-memory/erase/erase";
+import { keysEnforcementActive } from "../keys/store.js";
 import { pathInMemoryScope } from "./scope.js";
 
 export type MemoryListEntry = {
@@ -73,7 +78,11 @@ export class MemoryGatewayService extends Context.Service<
       slug: string,
       scope?: string
     ) => Effect.Effect<MemoryGetResult | MemoryEraseResult>;
-    readonly erase: (slug: string, scope?: string) => Effect.Effect<MemoryEraseResult>;
+    readonly erase: (
+      slug: string,
+      scope?: string,
+      principalId?: string
+    ) => Effect.Effect<MemoryEraseResult>;
   }
 >()("clawql/inference/MemoryGatewayService") {}
 
@@ -201,41 +210,62 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
       })
     ),
 
-  erase: (slug, scope) =>
-    Effect.tryPromise({
-      try: async () => {
+  erase: (slug, scope, principalId) =>
+    Effect.gen(function* () {
+      try {
         const rel = resolveMemoryRelPath(slug, scope);
-        const result = await runMemoryErase({ path: rel });
-        if (!result.ok) {
-          return {
-            ok: false as const,
-            error: result.error ?? "erase failed",
-            status: /ENOENT|no such file/i.test(result.error ?? "") ? 404 : 502,
-          };
-        }
-        return {
-          ok: true as const,
-          path: rel,
-          pathId: result.pathId,
-          erased: true as const,
-          contentHash: result.contentHash,
-          erasedStores: result.erased,
-          denyListUpdated: result.denyListUpdated,
-          exportNote: result.exportNote,
-        };
-      },
-      catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-    }).pipe(
-      Effect.catch((e) => {
-        const msg = e.message;
+        const principal = (principalId ?? "anonymous").trim() || "anonymous";
+        const keysOn = keysEnforcementActive();
+        return yield* name(PrincipalId(principal), VaultPath(rel), (namedPrincipal, namedPath) =>
+          Effect.gen(function* () {
+            const proof = yield* eraseAuthorizedEffect(namedPrincipal, namedPath, {
+              principalId: principal,
+              vaultPath: rel,
+              memoryScope: scope ? `Memory/${scope}` : null,
+              keysEnforcementActive: keysOn,
+            });
+            if (!proof) {
+              return {
+                ok: false as const,
+                error: "EraseAuthorized proof failed",
+                status: 403,
+              };
+            }
+            const result = yield* executeMemoryEraseAuthorizedEffect(
+              namedPrincipal,
+              namedPath,
+              proof,
+              { path: rel }
+            );
+            if (!result.ok) {
+              return {
+                ok: false as const,
+                error: result.error ?? "erase failed",
+                status: /ENOENT|no such file/i.test(result.error ?? "") ? 404 : 502,
+              };
+            }
+            return {
+              ok: true as const,
+              path: rel,
+              pathId: result.pathId,
+              erased: true as const,
+              contentHash: result.contentHash,
+              erasedStores: result.erased,
+              denyListUpdated: result.denyListUpdated,
+              exportNote: result.exportNote,
+            };
+          })
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
         const status = /ENOENT|no such file|outside key scope/i.test(msg) ? 404 : 502;
-        return Effect.succeed({
+        return {
           ok: false as const,
           error: msg,
           status,
-        });
-      })
-    ),
+        };
+      }
+    }),
 });
 
 export function runMemoryGatewayIngest(input: MemoryIngestInput): Promise<MemoryIngestResult> {
@@ -282,11 +312,15 @@ export function runMemoryGatewayGet(
   );
 }
 
-export function runMemoryGatewayErase(slug: string, scope?: string): Promise<MemoryEraseResult> {
+export function runMemoryGatewayErase(
+  slug: string,
+  scope?: string,
+  principalId?: string
+): Promise<MemoryEraseResult> {
   return Effect.runPromise(
     Effect.gen(function* () {
       const svc = yield* MemoryGatewayService;
-      return yield* svc.erase(slug, scope);
+      return yield* svc.erase(slug, scope, principalId);
     }).pipe(Effect.provide(MemoryGatewayLive))
   );
 }

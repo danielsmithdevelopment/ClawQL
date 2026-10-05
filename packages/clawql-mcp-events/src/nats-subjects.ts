@@ -5,6 +5,8 @@
  */
 
 import { Effect } from "effect";
+import type { EventPayloadId, Named } from "clawql-gdp";
+import type { PayloadRedacted } from "./proofs/payload-redacted.js";
 import type { ClawqlCloudEvent } from "./cloudevents.js";
 import type { DeliverableEvent } from "./types.js";
 
@@ -32,6 +34,26 @@ export type EventStreamPublishInput = {
 
 /** Publisher wired by the host when JetStream is enabled (required for managed). */
 export type EventStreamPublisher = (input: EventStreamPublishInput) => Effect.Effect<void>;
+
+/**
+ * Sensitive: publish to JetStream / event stream. Demands PayloadRedacted about
+ * the exact named event id (gdp-ts). Call only after screen (+ optional PII redact).
+ */
+export function publishEventStreamEffect<E>(
+  event: Named<E, EventPayloadId>,
+  _proof: PayloadRedacted<E>,
+  publisher: EventStreamPublisher,
+  input: EventStreamPublishInput
+): Effect.Effect<void, Error> {
+  return Effect.gen(function* () {
+    if (event.value !== input.event.eventId.trim()) {
+      return yield* Effect.fail(
+        new Error("Named event id does not match EventStreamPublishInput.event.eventId")
+      );
+    }
+    return yield* publisher(input);
+  });
+}
 
 export const natsEventSubjectEffect = (
   eventName: string,

@@ -61,7 +61,9 @@
     "pg": "^8.21.0",
     "js-tiktoken": "^1.0.21",
     "yaml": "^2.9.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "clawql-gdp": "0.1.0",
+    "@gdp-ts/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

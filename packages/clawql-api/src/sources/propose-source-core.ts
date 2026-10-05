@@ -1,5 +1,6 @@
 /**
- * Propose / approve custom sources with risk preview (v0.1).
+ * Propose / approve custom sources with risk preview (v0.2).
+ * Agents propose; a distinct operator approves. MCP never exposes approve.
  */
 
 import { writeFile } from "node:fs/promises";
@@ -23,6 +24,11 @@ import {
 } from "../spec/custom-sources-types.js";
 import { applyOperationRiskToLoadedOps } from "../risk/operation-risk-service.js";
 import type { Operation } from "../spec/operation-types.js";
+import { name, PrincipalId, ProposalId, type Named } from "clawql-gdp";
+import {
+  approverMayApproveSourceEffect,
+  type ApproverMayApproveSource,
+} from "../proofs/approver-may-approve-source.js";
 import {
   newProposalIdEffect,
   pendingSourceTtlHoursEffect,
@@ -36,6 +42,10 @@ import type {
   SourceRiskSummary,
   SourcesProposePreview,
 } from "./pending-source-types.js";
+import {
+  formatSourceProposalPrincipalEffect,
+  type SourceProposalPrincipal,
+} from "./source-proposal-principal.js";
 
 export type ProposeSourceParams = {
   readonly url: string;
@@ -47,6 +57,8 @@ export type ProposeSourceParams = {
   readonly home?: string;
   readonly fetchFn?: typeof fetch;
   readonly sampleLimit?: number;
+  /** Required when parking (`dryRun: false`). MCP uses `agent:`; CLI uses `operator:`. */
+  readonly proposedBy?: SourceProposalPrincipal;
 };
 
 export type ApproveSourceParams = {
@@ -54,6 +66,8 @@ export type ApproveSourceParams = {
   readonly decision: "approve" | "decline";
   readonly home?: string;
   readonly resetSpecCache?: () => void;
+  /** Operator principal. Agent principals are rejected. */
+  readonly approvedBy: SourceProposalPrincipal;
 };
 
 function summarizeRisk(ops: readonly Operation[]): SourceRiskSummary {
@@ -191,12 +205,19 @@ export function proposeSourceEffect(
       };
     }
 
+    if (!params.proposedBy) {
+      return yield* Effect.fail(
+        new Error("proposedBy is required to park a source proposal (two-party gate)")
+      );
+    }
+    const proposedBy = yield* formatSourceProposalPrincipalEffect(params.proposedBy);
+
     const proposalId = yield* newProposalIdEffect();
     const ttlHours = yield* pendingSourceTtlHoursEffect();
     const createdAt = new Date().toISOString();
     const expiresAt = new Date(Date.now() + ttlHours * 3600_000).toISOString();
     const record: PendingSourceRecord = {
-      version: 1,
+      version: 2,
       proposalId,
       entry,
       riskSummary,
@@ -205,6 +226,8 @@ export function proposeSourceEffect(
       createdAt,
       expiresAt,
       decidedAt: null,
+      proposedBy,
+      approvedBy: null,
     };
     yield* writePendingSourceEffect(record, home);
     yield* appendProcessWormEffect({
@@ -217,6 +240,7 @@ export function proposeSourceEffect(
         sourceId: entry.id,
         sourceKind: entry.kind,
         riskSummary,
+        proposedBy,
       },
     });
 
@@ -238,7 +262,7 @@ export function proposeSourceEffect(
       approval: {
         cli: `clawql sources approve ${proposalId}`,
         declineCli: `clawql sources decline ${proposalId}`,
-        tool: "sources_approve" as const,
+        surface: "operator" as const,
       },
     };
   });
@@ -252,11 +276,106 @@ export type ApproveSourceResult = {
   readonly status: "approved" | "declined";
 };
 
+type CommitApprovedSourceCtx = {
+  readonly record: PendingSourceRecord;
+  readonly home: string;
+  readonly decision: "approve" | "decline";
+  readonly approvedByFormatted: string;
+  readonly decidedAt: string;
+  readonly resetSpecCache?: () => void;
+};
+
+/**
+ * Sensitive: writes sources.json / declines. Demands ApproverMayApproveSource
+ * about the exact named approver + proposal (gdp-ts).
+ */
+export function commitApprovedSourceEffect<A, P>(
+  _approver: Named<A, ReturnType<typeof PrincipalId>>,
+  proposal: Named<P, ReturnType<typeof ProposalId>>,
+  _proof: ApproverMayApproveSource<A, P>,
+  ctx: CommitApprovedSourceCtx
+): Effect.Effect<ApproveSourceResult, Error> {
+  return Effect.gen(function* () {
+    const existing = ctx.record;
+    if (proposal.value !== existing.proposalId) {
+      return yield* Effect.fail(new Error("Named proposal does not match pending record"));
+    }
+
+    if (ctx.decision === "decline") {
+      yield* updatePendingSourceStatusEffect(
+        existing.proposalId,
+        { status: "declined", decidedAt: ctx.decidedAt, approvedBy: ctx.approvedByFormatted },
+        ctx.home
+      );
+      yield* appendProcessWormEffect({
+        type: "HUMAN_REJECTION",
+        timestamp: ctx.decidedAt,
+        sessionId: sessionId(),
+        metadata: {
+          kind: "sources_propose",
+          proposalId: existing.proposalId,
+          sourceId: existing.entry.id,
+          proposedBy: existing.proposedBy,
+          approvedBy: ctx.approvedByFormatted,
+        },
+      });
+      return {
+        ok: true as const,
+        decision: "decline" as const,
+        proposalId: existing.proposalId,
+        sourceId: existing.entry.id,
+        status: "declined" as const,
+      };
+    }
+
+    yield* Effect.tryPromise({
+      try: () => upsertCustomSource(existing.entry, ctx.home),
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
+    if (ctx.resetSpecCache) {
+      yield* Effect.sync(() => {
+        ctx.resetSpecCache!();
+      });
+    }
+    yield* updatePendingSourceStatusEffect(
+      existing.proposalId,
+      { status: "approved", decidedAt: ctx.decidedAt, approvedBy: ctx.approvedByFormatted },
+      ctx.home
+    );
+    yield* appendProcessWormEffect({
+      type: "HUMAN_APPROVAL",
+      timestamp: ctx.decidedAt,
+      sessionId: sessionId(),
+      metadata: {
+        kind: "sources_propose",
+        proposalId: existing.proposalId,
+        sourceId: existing.entry.id,
+        sourceKind: existing.entry.kind,
+        proposedBy: existing.proposedBy,
+        approvedBy: ctx.approvedByFormatted,
+      },
+    });
+
+    return {
+      ok: true as const,
+      decision: "approve" as const,
+      proposalId: existing.proposalId,
+      sourceId: existing.entry.id,
+      status: "approved" as const,
+    };
+  });
+}
+
 export function approveSourceEffect(
   params: ApproveSourceParams
 ): Effect.Effect<ApproveSourceResult, Error> {
   return Effect.gen(function* () {
     const home = params.home ?? resolveClawqlHome();
+    if (params.approvedBy.kind !== "operator") {
+      return yield* Effect.fail(
+        new Error("sources_approve is operator-only: agents are never issued this capability")
+      );
+    }
     const existing = yield* readPendingSourceEffect(params.proposalId, home);
     if (!existing) {
       return yield* Effect.fail(new Error(`Unknown proposalId: ${params.proposalId}`));
@@ -276,64 +395,31 @@ export function approveSourceEffect(
     }
 
     const decidedAt = new Date().toISOString();
+    const approvedByFormatted = yield* formatSourceProposalPrincipalEffect(params.approvedBy);
 
-    if (params.decision === "decline") {
-      yield* updatePendingSourceStatusEffect(
-        params.proposalId,
-        { status: "declined", decidedAt },
-        home
-      );
-      yield* appendProcessWormEffect({
-        type: "HUMAN_REJECTION",
-        timestamp: decidedAt,
-        sessionId: sessionId(),
-        metadata: {
-          kind: "sources_propose",
-          proposalId: params.proposalId,
-          sourceId: existing.entry.id,
-        },
-      });
-      return {
-        ok: true as const,
-        decision: "decline" as const,
-        proposalId: params.proposalId,
-        sourceId: existing.entry.id,
-        status: "declined" as const,
-      };
-    }
-
-    yield* Effect.tryPromise({
-      try: () => upsertCustomSource(existing.entry, home),
-      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-    });
-    if (params.resetSpecCache) {
-      yield* Effect.sync(() => {
-        params.resetSpecCache!();
-      });
-    }
-    yield* updatePendingSourceStatusEffect(
-      params.proposalId,
-      { status: "approved", decidedAt },
-      home
+    return yield* name(
+      PrincipalId(approvedByFormatted),
+      ProposalId(params.proposalId),
+      (approver, proposal) =>
+        Effect.gen(function* () {
+          const proof = yield* approverMayApproveSourceEffect(approver, proposal, {
+            proposedBy: existing.proposedBy,
+            approvedBy: params.approvedBy,
+          });
+          if (!proof) {
+            return yield* Effect.fail(
+              new Error("ApproverMayApproveSource proof failed (operator + two-party gate)")
+            );
+          }
+          return yield* commitApprovedSourceEffect(approver, proposal, proof, {
+            record: existing,
+            home,
+            decision: params.decision,
+            approvedByFormatted,
+            decidedAt,
+            resetSpecCache: params.resetSpecCache,
+          });
+        })
     );
-    yield* appendProcessWormEffect({
-      type: "HUMAN_APPROVAL",
-      timestamp: decidedAt,
-      sessionId: sessionId(),
-      metadata: {
-        kind: "sources_propose",
-        proposalId: params.proposalId,
-        sourceId: existing.entry.id,
-        sourceKind: existing.entry.kind,
-      },
-    });
-
-    return {
-      ok: true as const,
-      decision: "approve" as const,
-      proposalId: params.proposalId,
-      sourceId: existing.entry.id,
-      status: "approved" as const,
-    };
   });
 }

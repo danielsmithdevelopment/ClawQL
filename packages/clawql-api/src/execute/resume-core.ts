@@ -3,13 +3,15 @@
  */
 
 import { Effect } from "effect";
+import { ArgsHash, ExecutionId, name } from "clawql-gdp";
 import {
   decidePendingExecution,
   markPendingCompleted,
 } from "../pending/pending-execution-service.js";
+import { mandateArgsMatchEffect } from "../proofs/mandate-args-match.js";
 import type { LoadSpecFn } from "../search/search-core.js";
 import { loadSpec } from "../spec/spec-loader.js";
-import { executeClawqlOperationEffect } from "./execute-core.js";
+import { executeApprovedMandateEffect } from "./mandate-execute.js";
 import type { McpTextContent } from "./types.js";
 
 export type ResumeExecuteParams = {
@@ -48,14 +50,33 @@ export function resumeClawqlExecutionEffect(
     }
 
     const approved = yield* fromPromise(() => decidePendingExecution(executionId, "approve"));
-    const content = yield* executeClawqlOperationEffect(
-      {
-        operationId: approved.operationId,
-        args: approved.args,
-        fields: approved.fields ?? undefined,
-        approvedExecutionId: approved.executionId,
-      },
-      loadSpecFn
+    const livePayload = {
+      operationId: approved.operationId,
+      args: approved.args,
+      fields: approved.fields ?? undefined,
+    };
+    const content = yield* name(
+      ExecutionId(approved.executionId),
+      ArgsHash(approved.argsHash),
+      (execution, expectedHash) =>
+        Effect.gen(function* () {
+          const proof = yield* mandateArgsMatchEffect(execution, expectedHash, livePayload);
+          if (!proof) {
+            return yield* Effect.fail(new Error("MandateArgsMatch proof failed on resume"));
+          }
+          return yield* executeApprovedMandateEffect(
+            execution,
+            expectedHash,
+            proof,
+            {
+              operationId: approved.operationId,
+              args: approved.args,
+              fields: approved.fields ?? undefined,
+              approvedExecutionId: approved.executionId,
+            },
+            loadSpecFn
+          );
+        })
     );
 
     const text = content[0]?.text ?? "";

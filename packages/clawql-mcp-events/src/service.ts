@@ -1,5 +1,7 @@
 import { Context, Effect, Layer } from "effect";
+import { EventPayloadId, name } from "clawql-gdp";
 import { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
+import { payloadRedactedEffect } from "./proofs/payload-redacted.js";
 import { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
 import {
   createVerificationCache,
@@ -55,6 +57,7 @@ import {
   assertEventStreamPublisherForManagedEffect,
   natsEventSubjectEffect,
   natsMsgIdEffect,
+  publishEventStreamEffect,
   type EventStreamPublisher,
 } from "./nats-subjects.js";
 import { matchesEventFiltersEffect } from "./subscription-match.js";
@@ -426,21 +429,33 @@ export function makeMcpEventsService(
             typeof tenantRaw === "string" && tenantRaw.trim() ? tenantRaw.trim() : "default";
           const subject = yield* natsEventSubjectEffect(screened.name, tenant);
           const msgId = yield* natsMsgIdEffect(screened.eventId);
-          yield* eventStreamPublisher({
-            event: screened,
-            cloudEvent: streamRecord.cloudEvent,
-            tenant,
-            seq: streamRecord.seq,
-          }).pipe(
-            Effect.catch(() => Effect.void),
-            Effect.tap(() =>
-              audit("mcp_events.stream_publish", {
+          const publisher = eventStreamPublisher;
+          yield* name(EventPayloadId(screened.eventId), (namedEvent) =>
+            Effect.gen(function* () {
+              const proof = yield* payloadRedactedEffect(namedEvent, {
                 eventId: screened.eventId,
-                subject,
-                msgId,
+                data: redactedData,
+              });
+              if (!proof) {
+                return yield* Effect.fail(new Error("PayloadRedacted proof failed"));
+              }
+              return yield* publishEventStreamEffect(namedEvent, proof, publisher, {
+                event: screened,
+                cloudEvent: streamRecord.cloudEvent,
+                tenant,
                 seq: streamRecord.seq,
-              })
-            )
+              }).pipe(
+                Effect.catch(() => Effect.void),
+                Effect.tap(() =>
+                  audit("mcp_events.stream_publish", {
+                    eventId: screened.eventId,
+                    subject,
+                    msgId,
+                    seq: streamRecord.seq,
+                  })
+                )
+              );
+            })
           );
         }
         const all = yield* store.list();
