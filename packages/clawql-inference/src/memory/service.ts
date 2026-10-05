@@ -211,7 +211,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
     ),
 
   erase: (slug, scope, principalId) =>
-    Effect.suspend(() => {
+    Effect.suspend((): Effect.Effect<MemoryEraseResult> => {
       let rel: string;
       try {
         rel = resolveMemoryRelPath(slug, scope);
@@ -222,7 +222,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
           ok: false as const,
           error: msg,
           status,
-        } satisfies MemoryEraseResult);
+        });
       }
       const principal = (principalId ?? "anonymous").trim() || "anonymous";
       const keysOn = keysEnforcementActive();
@@ -239,7 +239,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
               ok: false as const,
               error: "EraseAuthorized proof failed",
               status: 403,
-            };
+            } satisfies MemoryEraseResult;
           }
           const result = yield* executeMemoryEraseAuthorizedEffect(
             namedPrincipal,
@@ -252,7 +252,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
               ok: false as const,
               error: result.error ?? "erase failed",
               status: /ENOENT|no such file/i.test(result.error ?? "") ? 404 : 502,
-            };
+            } satisfies MemoryEraseResult;
           }
           return {
             ok: true as const,
@@ -263,7 +263,7 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
             erasedStores: result.erased,
             denyListUpdated: result.denyListUpdated,
             exportNote: result.exportNote,
-          };
+          } satisfies MemoryEraseResult;
         })
       );
     }),
