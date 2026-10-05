@@ -12,10 +12,7 @@ import type { LoadSpecFn } from "../search/search-core.js";
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "../redaction/gateway-redact.js";
 import { hashPendingArgsEffect } from "../pending/args-hash.js";
 import { loadPendingExecution, parkMandateExecute } from "../pending/pending-execution-service.js";
-import {
-  mandateArgsMatchEffect,
-  type MandateArgsMatch,
-} from "../proofs/mandate-args-match.js";
+import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";

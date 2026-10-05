@@ -25,11 +25,7 @@ export class GdpService extends Context.Service<
       a: A,
       b: B,
       c: C,
-      k: <N, M, O>(
-        a: Named<N, A>,
-        b: Named<M, B>,
-        c: Named<O, C>
-      ) => Effect.Effect<R, E, R2>
+      k: <N, M, O>(a: Named<N, A>, b: Named<M, B>, c: Named<O, C>) => Effect.Effect<R, E, R2>
     ) => Effect.Effect<R, E, R2>;
   }
 >()("clawql/GdpService") {}

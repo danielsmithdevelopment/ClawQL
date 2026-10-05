@@ -4,7 +4,7 @@ Effect-first wrappers around [`@gdp-ts/core`](https://github.com/rauchg/gdp-ts) 
 
 ## Role in the security stack
 
-gdp-ts is a **layer-1 / build-time** control. It does not replace Panguard (layer 4) or OpenAPPA (layer 5). Those engines *decide*; gdp-ts ensures the decision *reaches* sensitive ClawQL functions about the exact named values. See [ADR 0013](../../docs/adr/0013-gdp-ts-compile-time-auth-proofs.md).
+gdp-ts is a **layer-1 / build-time** control. It does not replace Panguard (layer 4) or OpenAPPA (layer 5). Those engines _decide_; gdp-ts ensures the decision _reaches_ sensitive ClawQL functions about the exact named values. See [ADR 0013](../../docs/adr/0013-gdp-ts-compile-time-auth-proofs.md).
 
 ## Usage with Effect
 

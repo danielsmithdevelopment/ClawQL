@@ -24,9 +24,7 @@ export function executeApprovedMandateEffect<E, H>(
   return Effect.gen(function* () {
     const approvedId = params.approvedExecutionId?.trim();
     if (!approvedId || approvedId !== execution.value) {
-      return yield* Effect.fail(
-        new Error("Named execution does not match approvedExecutionId")
-      );
+      return yield* Effect.fail(new Error("Named execution does not match approvedExecutionId"));
     }
     // Proof already attested argsHash; execute-core re-validates pending record.
     void expectedHash;

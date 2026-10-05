@@ -400,9 +400,7 @@ export function issueApiKeyEffect(
 
 /** Minimal issue surface (store instance or IssuedApiKeyStoreService). */
 export type ApiKeyIssueSurface = {
-  readonly issue: (
-    input: IssueApiKeyInput
-  ) => Effect.Effect<IssueApiKeyResult, ApiKeyStoreError>;
+  readonly issue: (input: IssueApiKeyInput) => Effect.Effect<IssueApiKeyResult, ApiKeyStoreError>;
 };
 
 /**

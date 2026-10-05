@@ -6,14 +6,14 @@
 
 ## Context
 
-ClawQL’s nine-layer stack polices agents at runtime (Panguard / ATR, OpenAPPA, containment, redaction, Falco, WORM). Several catastrophic bugs are still *code-path* failures: a new route or coding-agent edit that calls a sensitive function without performing the check. Examples already hit or narrowly avoided:
+ClawQL’s nine-layer stack polices agents at runtime (Panguard / ATR, OpenAPPA, containment, redaction, Falco, WORM). Several catastrophic bugs are still _code-path_ failures: a new route or coding-agent edit that calls a sensitive function without performing the check. Examples already hit or narrowly avoided:
 
 - `sources_approve` self-approve by the proposing agent
 - Checkout accepting a client-supplied `supabaseUserId` without a verified session
 - Mandate resume that binds args-hash but not the approver
 - Event publish that could skip redact-before-JetStream
 
-[gdp-ts](https://github.com/rauchg/gdp-ts) (Ghosts of Departed Proofs for TypeScript) makes sensitive functions demand a compile-time *proof* about their exact named arguments. Mistakes do not compile; the ESLint preset stops forgeries (`as` proofs, minting outside `proofs/`).
+[gdp-ts](https://github.com/rauchg/gdp-ts) (Ghosts of Departed Proofs for TypeScript) makes sensitive functions demand a compile-time _proof_ about their exact named arguments. Mistakes do not compile; the ESLint preset stops forgeries (`as` proofs, minting outside `proofs/`).
 
 ## Decision
 

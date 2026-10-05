@@ -7,7 +7,4 @@ export * from "./native-grpc.js";
 export * from "./native-graphql.js";
 export * from "./rest-operation.js";
 export * from "./types.js";
-export {
-  mandateArgsMatchEffect,
-  type MandateArgsMatch,
-} from "../proofs/mandate-args-match.js";
+export { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";

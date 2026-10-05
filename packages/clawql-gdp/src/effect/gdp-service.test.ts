@@ -30,15 +30,12 @@ describe("gdp-ts + Effect", () => {
   it("name callback returns an Effect that can be yielded", async () => {
     const program = Effect.gen(function* () {
       const gdp = yield* GdpService;
-      return yield* gdp.name2(
-        UserId("operator:dan"),
-        ProposalId("prop_1"),
-        (user, proposal) =>
-          Effect.gen(function* () {
-            const proof = yield* mintDemo(user, proposal);
-            expect(proof).not.toBeNull();
-            return yield* sensitiveAction(proposal, proof!);
-          })
+      return yield* gdp.name2(UserId("operator:dan"), ProposalId("prop_1"), (user, proposal) =>
+        Effect.gen(function* () {
+          const proof = yield* mintDemo(user, proposal);
+          expect(proof).not.toBeNull();
+          return yield* sensitiveAction(proposal, proof!);
+        })
       );
     }).pipe(Effect.provide(GdpServiceLive));
 
