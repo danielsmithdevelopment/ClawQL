@@ -369,7 +369,7 @@ buildPasskeyAuthenticatorSelection({ requirement: "hardware-only" });
 buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
 ```
 
-ClawQL never touches biometric raw data; private keys remain in Secure Enclave / TPM / the hardware token. Prefer IdP passkeys for human SSO; inject `WebAuthnStepUpVerifier` when hosts need ClawQL-side step-up. **Product priority:** challenge-bound WebAuthn step-up for mandates / source approve / account delete / API key issue — not a YubiKey-branded feature. See [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md#passkeys--fido2-not-yubikey-support).
+ClawQL never touches biometric raw data; private keys remain in Secure Enclave / TPM / the hardware token. Prefer IdP passkeys for human SSO; inject `WebAuthnStepUpVerifier` when hosts need ClawQL-side step-up. **Product priority:** challenge-bound WebAuthn step-up for mandates / source approve / account delete / API key issue — not a YubiKey-branded feature. Binding build (server-side challenge↔canonical hash, UV required, AAGUID/counter policy, `StepUpVerified` mint-after-verify, WORM evidence): [`clawql-auth-oidc-stepup.md`](./clawql-auth-oidc-stepup.md#challenge-bound-step-up-binding-build).
 
 ---
 

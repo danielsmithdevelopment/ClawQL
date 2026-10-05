@@ -66,3 +66,7 @@ Promotion means **reusable without re-approval each time**, not **runs unsandbox
 4. **Verification continues after promotion** — behavioral drift demotes; any code change is a new proposal; OKF trust fields (`verified_by`, `stale_after`) force re-review.
 
 **Product message:** ClawQL does not claim agent-written code is safe. It limits what that code can do, and shows exactly what it did.
+
+## Follow-on: challenge-bound WebAuthn step-up
+
+High-risk human gates (mandate approve, source approve, account delete, API key issue) should demand a `StepUpVerified<Principal, ActionHash>` (name TBD) minted only after a FIDO2/WebAuthn ceremony whose challenge is bound server-side to the canonical action hash. Binding checklist, UV flag, counter/AAGUID policy, and WORM evidence fields: [`docs/security/clawql-auth-oidc-stepup.md`](../security/clawql-auth-oidc-stepup.md#challenge-bound-step-up-binding-build). Standards-first (not YubiKey-only); TOTP must not satisfy these gates.
