@@ -44,12 +44,11 @@ export function publishEventStreamEffect<E>(
   _proof: PayloadRedacted<E>,
   publisher: EventStreamPublisher,
   input: EventStreamPublishInput
-): Effect.Effect<void, Error> {
+): Effect.Effect<void> {
   return Effect.gen(function* () {
     if (event.value !== input.event.eventId.trim()) {
-      return yield* Effect.fail(
-        new Error("Named event id does not match EventStreamPublishInput.event.eventId")
-      );
+      // Proof was minted for a different id — refuse silently at the stream edge.
+      return;
     }
     return yield* publisher(input);
   });

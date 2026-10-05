@@ -1,6 +1,6 @@
 /**
  * Effect service surface for gdp-ts naming. Proof minting stays in trusted
- * `**/proofs/**` modules (defineProof must not be exported from here).
+ * proofs modules (defineProof must not be exported from here).
  */
 
 import { name, type Named } from "@gdp-ts/core";

@@ -1,6 +1,6 @@
 /**
  * Branded ids for gdp-ts naming. Constructors use a single type assertion —
- * allowlisted by the gdp-ts ESLint preset (`**/ids.ts`).
+ * allowlisted by the gdp-ts ESLint preset for ids modules.
  */
 
 export type UserId = string & { readonly __brand: "UserId" };

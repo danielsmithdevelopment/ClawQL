@@ -211,60 +211,61 @@ export const MemoryGatewayLive = Layer.succeed(MemoryGatewayService, {
     ),
 
   erase: (slug, scope, principalId) =>
-    Effect.gen(function* () {
+    Effect.suspend(() => {
+      let rel: string;
       try {
-        const rel = resolveMemoryRelPath(slug, scope);
-        const principal = (principalId ?? "anonymous").trim() || "anonymous";
-        const keysOn = keysEnforcementActive();
-        return yield* name(PrincipalId(principal), VaultPath(rel), (namedPrincipal, namedPath) =>
-          Effect.gen(function* () {
-            const proof = yield* eraseAuthorizedEffect(namedPrincipal, namedPath, {
-              principalId: principal,
-              vaultPath: rel,
-              memoryScope: scope ? `Memory/${scope}` : null,
-              keysEnforcementActive: keysOn,
-            });
-            if (!proof) {
-              return {
-                ok: false as const,
-                error: "EraseAuthorized proof failed",
-                status: 403,
-              };
-            }
-            const result = yield* executeMemoryEraseAuthorizedEffect(
-              namedPrincipal,
-              namedPath,
-              proof,
-              { path: rel }
-            );
-            if (!result.ok) {
-              return {
-                ok: false as const,
-                error: result.error ?? "erase failed",
-                status: /ENOENT|no such file/i.test(result.error ?? "") ? 404 : 502,
-              };
-            }
-            return {
-              ok: true as const,
-              path: rel,
-              pathId: result.pathId,
-              erased: true as const,
-              contentHash: result.contentHash,
-              erasedStores: result.erased,
-              denyListUpdated: result.denyListUpdated,
-              exportNote: result.exportNote,
-            };
-          })
-        );
+        rel = resolveMemoryRelPath(slug, scope);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         const status = /ENOENT|no such file|outside key scope/i.test(msg) ? 404 : 502;
-        return {
+        return Effect.succeed({
           ok: false as const,
           error: msg,
           status,
-        };
+        } satisfies MemoryEraseResult);
       }
+      const principal = (principalId ?? "anonymous").trim() || "anonymous";
+      const keysOn = keysEnforcementActive();
+      return name(PrincipalId(principal), VaultPath(rel), (namedPrincipal, namedPath) =>
+        Effect.gen(function* () {
+          const proof = yield* eraseAuthorizedEffect(namedPrincipal, namedPath, {
+            principalId: principal,
+            vaultPath: rel,
+            memoryScope: scope ? `Memory/${scope}` : null,
+            keysEnforcementActive: keysOn,
+          });
+          if (!proof) {
+            return {
+              ok: false as const,
+              error: "EraseAuthorized proof failed",
+              status: 403,
+            };
+          }
+          const result = yield* executeMemoryEraseAuthorizedEffect(
+            namedPrincipal,
+            namedPath,
+            proof,
+            { path: rel }
+          );
+          if (!result.ok) {
+            return {
+              ok: false as const,
+              error: result.error ?? "erase failed",
+              status: /ENOENT|no such file/i.test(result.error ?? "") ? 404 : 502,
+            };
+          }
+          return {
+            ok: true as const,
+            path: rel,
+            pathId: result.pathId,
+            erased: true as const,
+            contentHash: result.contentHash,
+            erasedStores: result.erased,
+            denyListUpdated: result.denyListUpdated,
+            exportNote: result.exportNote,
+          };
+        })
+      );
     }),
 });
 

@@ -437,9 +437,13 @@ export function makeMcpEventsService(
                 data: redactedData,
               });
               if (!proof) {
-                return yield* Effect.fail(new Error("PayloadRedacted proof failed"));
+                yield* audit("mcp_events.stream_publish_proof_failed", {
+                  eventId: screened.eventId,
+                  reason: "PayloadRedacted proof failed",
+                });
+                return;
               }
-              return yield* publishEventStreamEffect(namedEvent, proof, publisher, {
+              yield* publishEventStreamEffect(namedEvent, proof, publisher, {
                 event: screened,
                 cloudEvent: streamRecord.cloudEvent,
                 tenant,
