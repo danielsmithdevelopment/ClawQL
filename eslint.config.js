@@ -28,13 +28,8 @@ export default tseslint.config(
     ],
   },
   {
-    files: ["**/*.test.ts"],
-    rules: {
-      "gdp-ts/no-define-proof": "off",
-      "gdp-ts/no-proof-assertion": "off",
-    },
-  },
-  {
+    // Tests may still use defineProof only inside **/proofs/** (trusted modules).
+    // Never relax no-proof-assertion: forged `as Proof` must fail CI everywhere.
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "warn",

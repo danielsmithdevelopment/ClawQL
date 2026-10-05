@@ -54,6 +54,16 @@ When adding or changing authorization in a codebase that uses this pattern:
    cheapest regression test you will write ([details](references/errors.md)).
 10. Test the proof function you added. It is the only thing that can be wrong
     at runtime.
+11. **ClawQL: mint where the check happens.** The function that performs
+    redaction / hash verify / two-party gate / session verify returns the proof
+    (or `{ result, proof }`). Do not mint in a separate helper that assumes the
+    check already ran.
+12. **ClawQL: never store proofs.** Do not write proofs into pending records,
+    subscriptions, queues, or Redis. Keep them inside one `name()` callback /
+    request. Long-lived authority stays with runtime rechecks.
+13. **ClawQL: keep `gdp-mistakes.ts` honest.** Add `@ts-expect-error` lines for
+    no proof, wrong proof, proof about another value, and raw id. CI runs
+    `npm run test:gdp-mistakes` (see ADR 0013).
 
 The [recipe](references/recipe.md) shows each step in full.
 

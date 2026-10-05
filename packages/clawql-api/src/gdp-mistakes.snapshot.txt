@@ -1,0 +1,23 @@
+no proof at all
+  TS2554 Expected 4 arguments, but got 2.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'ProposalId' is not assignable to parameter of type 'Named<M, ProposalId>'.
+
+the proof is about proposal A, not proposal B
+  TS2345 Argument of type 'ApproverMayApproveSource<N, M>' is not assignable to parameter of type 'ApproverMayApproveSource<N, O>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N, M>' is not assignable to parameter of type 'ApproverMayApproveSource<N, M>'.
+
+no proof at all
+  TS2554 Expected 4-5 arguments, but got 2.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'ExecutionId' is not assignable to parameter of type 'Named<N, ExecutionId>'.
+
+the proof is about hash A, not hash B
+  TS2345 Argument of type 'MandateArgsMatch<N, M>' is not assignable to parameter of type 'MandateArgsMatch<N, O>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N, M>' is not assignable to parameter of type 'MandateArgsMatch<N, M>'.

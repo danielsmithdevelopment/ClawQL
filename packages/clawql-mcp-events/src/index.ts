@@ -127,9 +127,10 @@ export {
   type EventStreamPublisher,
 } from "./nats-subjects.js";
 export {
-  payloadRedactedEffect,
+  screenAndRedactForPublishEffect,
   type PayloadRedacted,
-  type RedactedPayloadBundle,
+  type ScreenAndRedactResult,
+  type ScreenAndRedactOptions,
 } from "./proofs/payload-redacted.js";
 export {
   INBOUND_SOURCES,

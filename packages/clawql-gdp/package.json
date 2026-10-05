@@ -13,6 +13,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./check-mistakes": {
+      "types": "./dist/check-mistakes.d.ts",
+      "import": "./dist/check-mistakes.js",
+      "require": "./dist/check-mistakes.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

@@ -60,6 +60,9 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      - name: gdp-ts compile-fail mistakes
+        run: npm run test:gdp-mistakes
+
       - name: Prettier
         run: npm run format:check
 

@@ -128,7 +128,9 @@
     "release:git-backfill-tags:push": "bash scripts/release/git-backfill-npm-release-tags.sh --push",
     "release:manifest": "node scripts/release/build-release-manifest.mjs",
     "release:audit-wedge:dry-run": "node scripts/release/npm-publish-audit-wedge.mjs --dry-run",
-    "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh"
+    "test:npm-pack-audit-wedge": "bash scripts/dev/test-npm-pack-audit-wedge.sh",
+    "test:gdp-mistakes": "npm run build -w clawql-gdp && vitest run packages/clawql-gdp/src/gdp-mistakes-all.test.ts",
+    "check:gdp": "npm run test:gdp-mistakes"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",

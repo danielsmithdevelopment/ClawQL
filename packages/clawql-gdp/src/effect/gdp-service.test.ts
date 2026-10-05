@@ -1,23 +1,9 @@
-import { defineProof, name, type Named, type Proof } from "@gdp-ts/core";
+import { name, type Named } from "@gdp-ts/core";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { UserId, ProposalId } from "../ids.js";
+import { mintDemoApproverEffect, type DemoApprover } from "../proofs/demo-approver.js";
 import { GdpService, GdpServiceLive } from "./gdp-service.js";
-
-const Demo = defineProof("DemoApprover");
-interface DemoApprover<U, P> extends Proof<"DemoApprover", [U, P]> {
-  readonly __proofBrand?: "DemoApprover";
-}
-
-function mintDemo<U, P>(
-  user: Named<U, UserId>,
-  proposal: Named<P, ProposalId>
-): Effect.Effect<DemoApprover<U, P> | null> {
-  return Effect.sync(() => {
-    if (user.value === "agent:mcp") return null;
-    return Demo.prove(user, proposal) as DemoApprover<U, P>;
-  });
-}
 
 function sensitiveAction<U, P>(
   proposal: Named<P, ProposalId>,
@@ -32,7 +18,7 @@ describe("gdp-ts + Effect", () => {
       const gdp = yield* GdpService;
       return yield* gdp.name2(UserId("operator:dan"), ProposalId("prop_1"), (user, proposal) =>
         Effect.gen(function* () {
-          const proof = yield* mintDemo(user, proposal);
+          const proof = yield* mintDemoApproverEffect(user, proposal);
           expect(proof).not.toBeNull();
           return yield* sensitiveAction(proposal, proof!);
         })
@@ -46,7 +32,7 @@ describe("gdp-ts + Effect", () => {
   it("direct name() also nests Effect.gen", async () => {
     const effect = name(UserId("operator:dan"), ProposalId("prop_2"), (user, proposal) =>
       Effect.gen(function* () {
-        const proof = yield* mintDemo(user, proposal);
+        const proof = yield* mintDemoApproverEffect(user, proposal);
         return yield* sensitiveAction(proposal, proof!);
       })
     );
@@ -57,7 +43,7 @@ describe("gdp-ts + Effect", () => {
   it("agent principal fails to mint proof", async () => {
     const effect = name(UserId("agent:mcp"), ProposalId("prop_3"), (user, proposal) =>
       Effect.gen(function* () {
-        const proof = yield* mintDemo(user, proposal);
+        const proof = yield* mintDemoApproverEffect(user, proposal);
         return proof;
       })
     );

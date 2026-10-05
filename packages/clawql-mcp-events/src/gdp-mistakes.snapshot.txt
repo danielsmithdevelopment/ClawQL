@@ -1,0 +1,11 @@
+no proof at all
+  TS2554 Expected 4 arguments, but got 1.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'EventPayloadId' is not assignable to parameter of type 'Named<N, EventPayloadId>'.
+
+the proof is about event A, not event B
+  TS2345 Argument of type 'PayloadRedacted<N>' is not assignable to parameter of type 'PayloadRedacted<M>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N>' is not assignable to parameter of type 'PayloadRedacted<N>'.

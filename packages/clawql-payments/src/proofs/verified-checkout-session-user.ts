@@ -18,8 +18,11 @@ export type VerifiedSessionClaims = {
 };
 
 /**
- * Mint a proof that `user` is exactly the subject of verified session claims.
- * Callers must verify the JWT/session before invoking this (e.g. SupabaseAuthService).
+ * Mint a proof that `user` is exactly the subject of **already-verified**
+ * session claims. Call this only inside the session-verify success path
+ * (e.g. immediately after `SupabaseAuthService.verifyAccessToken`) — never
+ * with client-supplied ids. The verify step is the real check; this prover
+ * binds that check to the named user.
  */
 export function verifiedCheckoutSessionUserEffect<U>(
   user: Named<U, UserId>,

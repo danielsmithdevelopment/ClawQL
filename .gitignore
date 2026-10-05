@@ -89,3 +89,4 @@ benchmarks/pageindex-ab/results/
 # Managed Edge Gateway local runtime
 docs/examples/managed-gateway/.env
 docs/examples/managed-gateway/data/
+*.unsuppressed.tmp.ts
