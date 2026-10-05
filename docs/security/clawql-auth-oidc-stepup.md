@@ -76,9 +76,9 @@ See [`credits-deeplinks.md`](../payments/credits-deeplinks.md).
 
 Payments path: `$CLAWQL_HOME/Payments/step-up-totp.json` via `clawql payments credits step-up enroll`. Secrets never go in payment WORM.
 
-### Passkeys: Face ID / Touch ID / YubiKey
+### Passkeys / FIDO2 (not “YubiKey support”)
 
-Face ID, Touch ID, Windows Hello, and hardware keys (YubiKey, Titan, …) are **not** separate ClawQL features. They are WebAuthn authenticators under one ceremony:
+Enterprise often asks for YubiKeys because they already use them for commit signing and MFA. **Build for the standards they speak** — FIDO2 / WebAuthn — and you also cover Touch ID, Windows Hello, phone passkeys, and Titan keys. Do not ship a YubiKey-only integration.
 
 | Category                     | Examples                                            | WebAuthn `authenticatorAttachment` |
 | ---------------------------- | --------------------------------------------------- | ---------------------------------- |
@@ -104,7 +104,24 @@ buildPasskeyAuthenticatorSelection({ requirement: "biometric-only" });
 // → authenticatorAttachment: "platform"
 ```
 
-Prefer IdP passkeys for human SSO. Use these helpers when a host wires `@simplewebauthn/server` (or equivalent) for ClawQL step-up / operator pairing.
+#### Where to invest
+
+1. **Sign-in — mostly configuration.** Prefer the customer IdP (Okta / Entra) for human SSO; those already enforce hardware keys when the org requires them. Managed Supabase Auth passkeys (beta) and supabase-js WebAuthn MFA (experimental) can cover self-hosted console login — **pin versions** while those APIs stabilize. Prefer IdP passkeys when available; use ClawQL helpers when a host wires `@simplewebauthn/server` for primary passkey / operator pairing.
+
+2. **Step-up for high-risk actions — the strongest product use.** Require a fresh authenticator ceremony to approve a mandate, approve a proposed source, delete an account, or issue an API key. Unlike phone push, a physical key touch resists phishing and approval fatigue. **Bind the WebAuthn challenge to the hash of the exact change** (same argument-binding idea as mandates). The authenticator signs _that_ approval; the WORM trail keeps a hardware-attested record of who approved what. TOTP must not satisfy these gates (phishable under real-time relay).
+
+3. **Signing (supply chain / git).** Cosign can use keys on hardware tokens for release manifests. Humans sign git commits/tags with FIDO2 SSH or GPG-on-token; agents sign with KMS service keys — so authorship stays distinguishable. Umbrella Helm / release policy remains “hardware-backed human signature required” where already documented.
+
+4. **Mobile.** Native apps use passkeys, or NFC read of a FIDO2 key (e.g. Yubico mobile SDK). Phone approval then becomes tap-to-approve, not push-to-fatigue.
+
+#### TOTP and Yubico Authenticator
+
+Yubico Authenticator is TOTP with secrets stored on the key. Any standard TOTP path works with it automatically — keep TOTP as a **fallback** for lower-risk step-up (e.g. confirm a payment stage). **Do not accept TOTP for high-risk approvals** listed above.
+
+#### Enrollment cautions
+
+- Require **at least two** registered authenticators **plus recovery codes** so losing a single key does not lock the operator out.
+- Supabase passkeys / WebAuthn MFA: treat as beta/experimental until stable; pin client and server versions.
 
 ## `createClawQLAuth`
 
