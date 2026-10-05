@@ -12,6 +12,7 @@
   "inTreeTargets": {
     "clawql-mcp": "8.0.0",
     "clawql-merkle": "0.1.0",
+    "clawql-gdp": "0.1.0",
     "clawql-audit": "0.1.0",
     "clawql-core": "0.1.0",
     "clawql-auth": "0.1.0",
