@@ -19,18 +19,14 @@ const PACKAGES = [
 
 describe("gdp-ts compile-fail mistakes", () => {
   for (const pkg of PACKAGES) {
-    it(
-      `${pkg}: every @ts-expect-error fails for the recorded reason`,
-      () => {
-        const project = path.join(repoRoot, "packages", pkg);
-        checkMistakes({
-          project,
-          file: path.join(project, "src/gdp-mistakes.ts"),
-          snapshot: path.join(project, "src/gdp-mistakes.snapshot.txt"),
-          tsconfig: "tsconfig.gdp-mistakes.json",
-        });
-      },
-      120_000
-    );
+    it(`${pkg}: every @ts-expect-error fails for the recorded reason`, () => {
+      const project = path.join(repoRoot, "packages", pkg);
+      checkMistakes({
+        project,
+        file: path.join(project, "src/gdp-mistakes.ts"),
+        snapshot: path.join(project, "src/gdp-mistakes.snapshot.txt"),
+        tsconfig: "tsconfig.gdp-mistakes.json",
+      });
+    }, 120_000);
   }
 });

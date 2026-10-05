@@ -2,14 +2,7 @@
  * Compile-fail mistakes for deleteAccount + issueApiKey (gdp-ts).
  */
 import { Effect } from "effect";
-import {
-  name,
-  OrgId,
-  PrincipalId,
-  UserId,
-  type Named,
-  type Proof,
-} from "clawql-gdp";
+import { name, OrgId, PrincipalId, UserId, type Named, type Proof } from "clawql-gdp";
 import type { RecentSignIn } from "./proofs/recent-sign-in.js";
 import type { IssuerAuthorized } from "./proofs/issuer-authorized.js";
 import { deleteAccountEffect } from "./team/delete-account.js";
@@ -41,7 +34,10 @@ export function accountDeleteMistakes(): Effect.Effect<void> {
     void deleteAccountEffect(userA);
 
     // @ts-expect-error a raw id is not a named value; name it first
-    void deleteAccountEffect(UserId("raw"), proofA, store as never, { orgId: "org", subjectId: "raw" });
+    void deleteAccountEffect(UserId("raw"), proofA, store as never, {
+      orgId: "org",
+      subjectId: "raw",
+    });
 
     // @ts-expect-error the proof is about user A, not user B
     void deleteAccountEffect(userB, proofA, store as never, inputB);

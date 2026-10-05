@@ -26,7 +26,6 @@ import {
 } from "./coalesce.js";
 import { notifyStreamTopicReleased } from "./lifecycle.js";
 import { gatewayRedactPayload } from "clawql-api";
-import { screenEventPayload } from "./screen.js";
 import { validateWhsecSecret } from "./secret.js";
 import {
   createFileSubscriptionStore,

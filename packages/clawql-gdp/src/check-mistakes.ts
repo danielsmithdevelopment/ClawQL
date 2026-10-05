@@ -46,7 +46,13 @@ export function checkMistakes(options: CheckMistakesOptions): void {
   });
   assert.ok(expected.size > 0, `${file} has no @ts-expect-error directives`);
 
-  const errors = typecheckUnsuppressed(project, file, source, options.tscBin, options.tsconfig ?? "tsconfig.json");
+  const errors = typecheckUnsuppressed(
+    project,
+    file,
+    source,
+    options.tscBin,
+    options.tsconfig ?? "tsconfig.json"
+  );
 
   const unexpected = errors.filter((e) => !expected.has(e.line));
   assert.deepEqual(unexpected, [], "errors on lines that are not marked as mistakes");
@@ -64,7 +70,11 @@ export function checkMistakes(options: CheckMistakesOptions): void {
       .join("\n\n") + "\n";
 
   if (process.env.UPDATE_SNAPSHOTS || !existsSync(snapshot)) writeFileSync(snapshot, actual);
-  assert.equal(actual, readFileSync(snapshot, "utf8"), `errors differ from ${path.basename(snapshot)}`);
+  assert.equal(
+    actual,
+    readFileSync(snapshot, "utf8"),
+    `errors differ from ${path.basename(snapshot)}`
+  );
 }
 
 function resolveTsc(project: string, tscBin?: string): string {
@@ -107,7 +117,10 @@ function typecheckUnsuppressed(
     const match = /^(.+?)\((\d+),\d+\): error (TS\d+): (.*)$/.exec(text);
     if (!match) continue;
     const filePath = match[1] ?? "";
-    if (path.resolve(project, filePath) !== copyResolved && path.resolve(filePath) !== copyResolved) {
+    if (
+      path.resolve(project, filePath) !== copyResolved &&
+      path.resolve(filePath) !== copyResolved
+    ) {
       continue;
     }
     diagnostics.push({
