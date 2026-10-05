@@ -83,7 +83,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -168,7 +168,7 @@ jobs:
               echo "run_agent=0"
             fi
           } >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.corpus.outputs.run_agent == '1' || steps.corpus.outputs.run_displacement == '1' }}
         with:
           node-version: "22"
@@ -448,7 +448,7 @@ jobs:
               is_free_tier: pick(data,["is_free_tier","isFreeTier"]),
             }));
           ' || true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           node-version: "22"
