@@ -164,8 +164,11 @@ function requireEventsEnabled(env: NodeJS.ProcessEnv, res: Response): boolean {
 }
 
 function rawBodyFromReq(req: Request): Buffer {
-  if (Buffer.isBuffer(req.body)) return req.body;
-  if (typeof req.body === "string") return Buffer.from(req.body, "utf8");
+  const body: unknown = req.body;
+  // Reject arrays (Express param-style bodies) before any length check downstream.
+  if (Array.isArray(body)) return Buffer.alloc(0);
+  if (Buffer.isBuffer(body)) return body;
+  if (typeof body === "string") return Buffer.from(body, "utf8");
   return Buffer.alloc(0);
 }
 

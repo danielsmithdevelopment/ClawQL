@@ -23,9 +23,31 @@ export class InboundWebhookError extends Data.TaggedError("InboundWebhookError")
 export type InboundWebhookInput = {
   readonly source: string;
   readonly headers: Record<string, string | string[] | undefined>;
+  /** Must be a Node Buffer; HTTP adapters coerce Express body before calling. */
   readonly rawBody: Buffer;
   readonly env?: NodeJS.ProcessEnv;
 };
+
+/**
+ * CodeQL barrier for `js/type-confusion-through-parameter-tampering`:
+ * Express `req.body` may be string|array; reject those before any `.length` use.
+ */
+const requireInboundRawBody = (
+  raw: unknown
+): Effect.Effect<Buffer, InboundWebhookError> =>
+  Effect.gen(function* () {
+    if (typeof raw === "string" || Array.isArray(raw)) {
+      return yield* Effect.fail(
+        new InboundWebhookError({ reason: "raw body must be a Buffer", status: 400 })
+      );
+    }
+    if (!Buffer.isBuffer(raw)) {
+      return yield* Effect.fail(
+        new InboundWebhookError({ reason: "raw body must be a Buffer", status: 400 })
+      );
+    }
+    return raw;
+  });
 
 const header = (headers: Record<string, string | string[] | undefined>, name: string): string => {
   const v = headers[name] ?? headers[name.toLowerCase()];
@@ -127,7 +149,8 @@ export const verifyInboundWebhookEffect = (
   input: InboundWebhookInput
 ): Effect.Effect<DeliverableEvent, InboundWebhookError> =>
   Effect.gen(function* () {
-    if (input.rawBody.length > 256 * 1024) {
+    const rawBody = yield* requireInboundRawBody(input.rawBody);
+    if (rawBody.length > 256 * 1024) {
       return yield* Effect.fail(
         new InboundWebhookError({ reason: "payload too large", status: 413 })
       );
@@ -143,15 +166,15 @@ export const verifyInboundWebhookEffect = (
         })
       );
     }
-    if (source === "github") yield* verifyGithub(input.rawBody, input.headers, secret);
-    else if (source === "stripe") yield* verifyStripe(input.rawBody, input.headers, secret);
-    else yield* verifyFigma(input.rawBody, input.headers, secret);
+    if (source === "github") yield* verifyGithub(rawBody, input.headers, secret);
+    else if (source === "stripe") yield* verifyStripe(rawBody, input.headers, secret);
+    else yield* verifyFigma(rawBody, input.headers, secret);
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(input.rawBody.toString("utf8"));
+      parsed = JSON.parse(rawBody.toString("utf8"));
     } catch {
-      parsed = { raw: input.rawBody.toString("utf8").slice(0, 2048) };
+      parsed = { raw: rawBody.toString("utf8").slice(0, 2048) };
     }
     const payload =
       parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -163,7 +186,7 @@ export const verifyInboundWebhookEffect = (
     const deliveryId =
       header(input.headers, "x-github-delivery") ||
       header(input.headers, "x-request-id") ||
-      createHmac("sha256", "clawql-inbound").update(input.rawBody).digest("hex").slice(0, 16);
+      createHmac("sha256", "clawql-inbound").update(rawBody).digest("hex").slice(0, 16);
     return {
       eventId: `evt_inbound_${source}_${deliveryId}`,
       name: "stream.changed",
