@@ -7,7 +7,10 @@ import { Effect } from "effect";
 
 const EraseAuthorizedProver = defineProof("EraseAuthorized");
 
-export interface EraseAuthorized<P, V> extends Proof<"EraseAuthorized", [P, V]> {}
+export interface EraseAuthorized<P, V> extends Proof<"EraseAuthorized", [P, V]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "EraseAuthorized";
+}
 
 export type EraseAuthorizedEvidence = {
   readonly principalId: string;

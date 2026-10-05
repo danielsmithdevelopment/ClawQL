@@ -8,7 +8,10 @@ import { Effect } from "effect";
 
 const VerifiedCheckoutSessionUserProver = defineProof("VerifiedCheckoutSessionUser");
 
-export interface VerifiedCheckoutSessionUser<U> extends Proof<"VerifiedCheckoutSessionUser", [U]> {}
+export interface VerifiedCheckoutSessionUser<U> extends Proof<"VerifiedCheckoutSessionUser", [U]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "VerifiedCheckoutSessionUser";
+}
 
 export type VerifiedSessionClaims = {
   readonly sub: string;

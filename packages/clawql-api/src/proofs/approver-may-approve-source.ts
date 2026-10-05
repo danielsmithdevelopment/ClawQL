@@ -17,7 +17,10 @@ const ApproverMayApproveSourceProver = defineProof("ApproverMayApproveSource");
 export interface ApproverMayApproveSource<A, P> extends Proof<
   "ApproverMayApproveSource",
   [A, P]
-> {}
+> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "ApproverMayApproveSource";
+}
 
 export type ApproverMayApproveSourceContext = {
   readonly proposedBy: string | null | undefined;

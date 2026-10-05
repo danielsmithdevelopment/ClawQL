@@ -5,7 +5,9 @@ import { UserId, ProposalId } from "../ids.js";
 import { GdpService, GdpServiceLive } from "./gdp-service.js";
 
 const Demo = defineProof("DemoApprover");
-interface DemoApprover<U, P> extends Proof<"DemoApprover", [U, P]> {}
+interface DemoApprover<U, P> extends Proof<"DemoApprover", [U, P]> {
+  readonly __proofBrand?: "DemoApprover";
+}
 
 function mintDemo<U, P>(
   user: Named<U, UserId>,

@@ -7,7 +7,10 @@ import { Effect } from "effect";
 
 const RecentSignInProver = defineProof("RecentSignIn");
 
-export interface RecentSignIn<U> extends Proof<"RecentSignIn", [U]> {}
+export interface RecentSignIn<U> extends Proof<"RecentSignIn", [U]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "RecentSignIn";
+}
 
 export type RecentSignInEvidence = {
   readonly subjectId: string;

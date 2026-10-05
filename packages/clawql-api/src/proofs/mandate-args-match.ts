@@ -8,7 +8,10 @@ import { hashPendingArgsEffect, type PendingArgsPayload } from "../pending/args-
 
 const MandateArgsMatchProver = defineProof("MandateArgsMatch");
 
-export interface MandateArgsMatch<E, H> extends Proof<"MandateArgsMatch", [E, H]> {}
+export interface MandateArgsMatch<E, H> extends Proof<"MandateArgsMatch", [E, H]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "MandateArgsMatch";
+}
 
 export function mandateArgsMatchEffect<E, H>(
   execution: Named<E, ExecutionId>,

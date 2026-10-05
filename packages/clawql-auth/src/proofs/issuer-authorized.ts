@@ -7,7 +7,10 @@ import { Effect } from "effect";
 
 const IssuerAuthorizedProver = defineProof("IssuerAuthorized");
 
-export interface IssuerAuthorized<I, O> extends Proof<"IssuerAuthorized", [I, O]> {}
+export interface IssuerAuthorized<I, O> extends Proof<"IssuerAuthorized", [I, O]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "IssuerAuthorized";
+}
 
 export type IssuerAuthorizedEvidence = {
   readonly issuerPrincipalId: string;

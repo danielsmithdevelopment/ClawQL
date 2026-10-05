@@ -52,6 +52,8 @@ import {
   projectRestByFields,
   proposeSourceEffect,
   approveSourceEffect,
+  agentPrincipalFromSessionIdEffect,
+  resolveOperatorPrincipalEffect,
   resetSpecCache,
   type CustomSourceKind,
 } from "clawql-api";
@@ -157,19 +159,27 @@ export async function handleSourcesProposeToolInput(
           ],
         };
       }
+      const proposedBy = yield* agentPrincipalFromSessionIdEffect(
+        typeof o.sessionId === "string" ? o.sessionId : undefined
+      );
       const preview = yield* proposeSourceEffect({
         url,
         name: typeof o.name === "string" ? o.name : undefined,
         kind: typeof o.kind === "string" ? (o.kind as CustomSourceKind) : undefined,
         id: typeof o.id === "string" ? o.id : undefined,
         dryRun: o.dryRun !== false,
+        proposedBy,
       });
       return { content: [{ type: "text" as const, text: JSON.stringify(preview, null, 2) }] };
     })
   );
 }
 
-/** MCP `sources_approve` — human approve/decline a parked proposal (v0.1). */
+/**
+ * MCP `sources_approve` — demands ApproverMayApproveSource (gdp-ts).
+ * Prefer CLI/console operators; agent self-approve fails the two-party proof.
+ * Catalog removal of this tool remains on the human-gate PR (#1202).
+ */
 export async function handleSourcesApproveToolInput(
   raw: unknown
 ): Promise<{ content: { type: "text"; text: string }[] }> {
@@ -192,10 +202,12 @@ export async function handleSourcesApproveToolInput(
           ],
         };
       }
+      const approvedBy = yield* resolveOperatorPrincipalEffect();
       const result = yield* approveSourceEffect({
         proposalId,
         decision,
         resetSpecCache,
+        approvedBy,
       });
       return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
     })

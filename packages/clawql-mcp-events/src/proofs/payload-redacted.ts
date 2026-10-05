@@ -7,7 +7,10 @@ import { Effect } from "effect";
 
 const PayloadRedactedProver = defineProof("PayloadRedacted");
 
-export interface PayloadRedacted<E> extends Proof<"PayloadRedacted", [E]> {}
+export interface PayloadRedacted<E> extends Proof<"PayloadRedacted", [E]> {
+  /** Nominal brand for distinct proof kinds; never set at runtime. */
+  readonly __proofBrand?: "PayloadRedacted";
+}
 
 export type RedactedPayloadBundle = {
   readonly eventId: string;

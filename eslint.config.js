@@ -1,12 +1,20 @@
 import eslint from "@eslint/js";
+import gdp from "@gdp-ts/core/lint/eslint";
 import tseslint from "typescript-eslint";
 
 /**
  * Type-aware rules are skipped for now (single tsconfig excludes tests). Recommended rules only.
+ * gdp-ts preset: ban defineProof / proof forgeries outside trusted proofs dirs (layer-1).
  */
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  ...gdp({
+    files: ["packages/**/*.ts", "src/**/*.ts"],
+    proofs: ["**/proofs/**"],
+    allowAssertions: ["**/ids.ts"],
+    strict: false,
+  }),
   {
     ignores: [
       "dist/**",
@@ -18,6 +26,13 @@ export default tseslint.config(
       "*.mjs",
       "eslint.config.js",
     ],
+  },
+  {
+    files: ["**/*.test.ts"],
+    rules: {
+      "gdp-ts/no-define-proof": "off",
+      "gdp-ts/no-proof-assertion": "off",
+    },
   },
   {
     rules: {
