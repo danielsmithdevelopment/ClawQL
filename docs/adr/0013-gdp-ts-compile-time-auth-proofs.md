@@ -36,7 +36,7 @@ ClawQL’s nine-layer stack polices agents at runtime (Panguard / ATR, OpenAPPA,
 ## Consequences
 
 - New sensitive APIs must demand proofs; call sites use `name(...)` (or `GdpService.name*`) and mint proofs in trusted modules that perform the check.
-- Agents writing *platform* code that skip a gate fail `tsc` / lint / `test:gdp-mistakes` before merge.
+- Agents writing _platform_ code that skip a gate fail `tsc` / lint / `test:gdp-mistakes` before merge.
 - Forged-proof and stale-proof limits remain documented; lint catches forgeries; runtime gates catch revocation; proofs are never durable state.
 - Follow-on: keep #1202’s catalog removal of agent-held `sources_approve` — gdp-ts complements that human-gate work, it does not replace the catalog strip.
 
@@ -46,7 +46,7 @@ gdp-ts changes the safety of agent-produced skills mostly **indirectly**. A proo
 
 ### What improves
 
-1. **Platform gates are harder to bypass.** Skills and scripts from the self-learning loop eventually act through ClawQL runtime (`execute`, mandates, source proposals, event publish). Those paths refuse to *compile* if a check is skipped. A bug in ClawQL’s own code can no longer quietly open a hole that agent-made skills slip through. This applies regardless of the skill’s language.
+1. **Platform gates are harder to bypass.** Skills and scripts from the self-learning loop eventually act through ClawQL runtime (`execute`, mandates, source proposals, event publish). Those paths refuse to _compile_ if a check is skipped. A bug in ClawQL’s own code can no longer quietly open a hole that agent-made skills slip through. This applies regardless of the skill’s language.
 2. **Promotion gate for TypeScript skills (quality, not containment).** When agent scripts type-check against an SDK that demands proofs, a script that calls a mandated write without the mandate flow fails during “prove,” before promotion. Spec-derived risk maps cleanly: reads need no proof; writes require a mandate proof in the signature; blocked operations do not exist in the SDK. Record type-check and lint results as promotion evidence alongside held-out tests.
 
 ### The trap
