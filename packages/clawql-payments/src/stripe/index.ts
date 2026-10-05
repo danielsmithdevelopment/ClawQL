@@ -34,11 +34,19 @@ export { createCustomerPortalSession, type PortalSessionInput } from "./portal.j
 export {
   createStripeCheckoutSession,
   buildCheckoutSessionMetadata,
+  buildCheckoutSessionMetadataWithVerifiedUser,
+  createCheckoutSessionWithVerifiedUserEffect,
   type CheckoutBillingMode,
   type CheckoutSessionInput,
   type CheckoutSessionPlan,
   type CheckoutSessionResult,
+  type CheckoutSessionVerifiedInput,
 } from "./checkout-session.js";
+export {
+  verifiedCheckoutSessionUserEffect,
+  type VerifiedCheckoutSessionUser,
+  type VerifiedSessionClaims,
+} from "../proofs/verified-checkout-session-user.js";
 export {
   assertStripeWebhookSignature,
   processStripeWebhookEvent,

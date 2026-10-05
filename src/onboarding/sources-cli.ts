@@ -14,6 +14,7 @@ import {
   readCustomSourcesFile,
   removeCustomSource,
   resetSpecCache,
+  resolveOperatorPrincipalEffect,
   slugifySourceId,
   upsertCustomSource,
   type CustomSourceEntry,
@@ -98,13 +99,17 @@ export async function runSourcesPropose(options: SourcesProposeOptions): Promise
   }
   try {
     const preview = await Effect.runPromise(
-      proposeSourceEffect({
-        url,
-        name: options.name,
-        kind: options.kind,
-        id: options.id,
-        dryRun: !options.commit,
-        home,
+      Effect.gen(function* () {
+        const proposedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* proposeSourceEffect({
+          url,
+          name: options.name,
+          kind: options.kind,
+          id: options.id,
+          dryRun: !options.commit,
+          home,
+          proposedBy,
+        });
       })
     );
     console.log(JSON.stringify(preview, null, 2));
@@ -123,11 +128,15 @@ export async function runSourcesApprove(proposalId: string, home?: string): Prom
   const h = home ?? getClawqlHome();
   try {
     const result = await Effect.runPromise(
-      approveSourceEffect({
-        proposalId,
-        decision: "approve",
-        home: h,
-        resetSpecCache,
+      Effect.gen(function* () {
+        const approvedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* approveSourceEffect({
+          proposalId,
+          decision: "approve",
+          home: h,
+          resetSpecCache,
+          approvedBy,
+        });
       })
     );
     console.log(JSON.stringify(result, null, 2));
@@ -143,10 +152,14 @@ export async function runSourcesDecline(proposalId: string, home?: string): Prom
   const h = home ?? getClawqlHome();
   try {
     const result = await Effect.runPromise(
-      approveSourceEffect({
-        proposalId,
-        decision: "decline",
-        home: h,
+      Effect.gen(function* () {
+        const approvedBy = yield* resolveOperatorPrincipalEffect();
+        return yield* approveSourceEffect({
+          proposalId,
+          decision: "decline",
+          home: h,
+          approvedBy,
+        });
       })
     );
     console.log(JSON.stringify(result, null, 2));

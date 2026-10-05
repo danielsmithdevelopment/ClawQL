@@ -195,7 +195,9 @@ export function attachProvisioningRoutes(
         return;
       }
       try {
-        const session = await createStripeCheckoutSession({ ...parsed, env });
+        // Ignore client-supplied supabaseUserId — binding requires VerifiedCheckoutSessionUser.
+        const { supabaseUserId: _ignored, ...checkout } = parsed;
+        const session = await createStripeCheckoutSession({ ...checkout, env });
         res.status(201).json(session);
       } catch (err) {
         if (err instanceof StripeNotConfiguredError) {

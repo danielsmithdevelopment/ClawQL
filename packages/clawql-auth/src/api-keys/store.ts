@@ -13,6 +13,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Context, Data, Effect, Layer, Semaphore } from "effect";
+import type { Named, OrgId, PrincipalId } from "clawql-gdp";
 
 import {
   emitAuthEventEffect,
@@ -21,6 +22,7 @@ import {
   type AuthEventSink,
 } from "../audit/auth-events.js";
 import type { AtrClaims, ApiKeyClaimsResolver } from "../gateway.js";
+import type { IssuerAuthorized } from "../proofs/issuer-authorized.js";
 import {
   formatApiKeySecretEffect,
   generateApiKeyIdEffect,
@@ -394,6 +396,42 @@ export function issueApiKeyEffect(
   input: IssueApiKeyInput
 ): Effect.Effect<IssueApiKeyResult, ApiKeyStoreError> {
   return store.issue(input);
+}
+
+/** Minimal issue surface (store instance or IssuedApiKeyStoreService). */
+export type ApiKeyIssueSurface = {
+  readonly issue: (input: IssueApiKeyInput) => Effect.Effect<IssueApiKeyResult, ApiKeyStoreError>;
+};
+
+/**
+ * Sensitive: issue an API key for an org. Demands IssuerAuthorized about the
+ * exact named issuer + org (gdp-ts). `org.value` must equal `input.orgId`.
+ */
+export function issueApiKeyWithProofEffect<I, O>(
+  store: ApiKeyIssueSurface,
+  issuer: Named<I, PrincipalId>,
+  org: Named<O, OrgId>,
+  _proof: IssuerAuthorized<I, O>,
+  input: IssueApiKeyInput
+): Effect.Effect<IssueApiKeyResult, ApiKeyStoreError> {
+  return Effect.gen(function* () {
+    const orgId = input.orgId?.trim() ?? "";
+    if (!orgId || org.value !== orgId) {
+      return yield* Effect.fail(
+        new ApiKeyStoreError({
+          reason: "Named org does not match issueApiKey orgId",
+        })
+      );
+    }
+    if (issuer.value !== input.subjectId.trim()) {
+      return yield* Effect.fail(
+        new ApiKeyStoreError({
+          reason: "Named issuer does not match issueApiKey subjectId",
+        })
+      );
+    }
+    return yield* store.issue(input);
+  });
 }
 
 /** Effect helper: validate and fail with {@link ApiKeyStoreError} when the key is not ok. */

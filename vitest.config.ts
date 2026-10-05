@@ -26,6 +26,7 @@ export default defineConfig({
       "src/**/*.test.ts",
       "packages/mcp-grpc-transport/src/**/*.test.ts",
       "packages/clawql-merkle/src/**/*.test.ts",
+      "packages/clawql-gdp/src/**/*.test.ts",
       "packages/clawql-audit/src/**/*.test.ts",
       "packages/clawql-observability/src/**/*.test.ts",
       "packages/clawql-analytics/src/**/*.test.ts",

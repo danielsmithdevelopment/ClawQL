@@ -7,6 +7,15 @@
 
 import { unlink } from "node:fs/promises";
 import { Cause, Effect, Exit } from "effect";
+import type { Named, PrincipalId, VaultPath } from "clawql-gdp";
+import {
+  eraseAuthorizedEffect,
+  type EraseAuthorized,
+  type EraseAuthorizedEvidence,
+} from "../proofs/erase-authorized.js";
+
+export { eraseAuthorizedEffect, type EraseAuthorized, type EraseAuthorizedEvidence };
+
 import { getObsidianVaultPath } from "../vault/config.js";
 import {
   readVaultFileRaw,
@@ -157,6 +166,9 @@ async function eraseUnderVaultLock(
  * Erase one vault note and every in-tree derived index copy (Effect primary).
  * Crypto-shred: destroy per-note key so git/R2 history ciphertext is unreadable.
  * WORM: pathId + contentHash only.
+ *
+ * Prefer {@link executeMemoryEraseAuthorizedEffect} at trust boundaries — this
+ * core remains for internal callers that already hold EraseAuthorized.
  */
 export function executeMemoryEraseCoreEffect(
   input: MemoryEraseInput
@@ -265,20 +277,52 @@ export function executeMemoryEraseCoreEffect(
   });
 }
 
-/** Promise façade for callers that still await erase. */
+/**
+ * Sensitive: erase / crypto-shred a vault path. Demands EraseAuthorized about
+ * the exact named principal + path (gdp-ts). `path.value` must equal `input.path`.
+ */
+export function executeMemoryEraseAuthorizedEffect<P, V>(
+  principal: Named<P, PrincipalId>,
+  path: Named<V, VaultPath>,
+  _proof: EraseAuthorized<P, V>,
+  input: MemoryEraseInput
+): Effect.Effect<MemoryEraseResult> {
+  return Effect.gen(function* () {
+    const rel = input.path.trim().replace(/\\/g, "/").replace(/^\/+/, "");
+    if (path.value !== rel) {
+      return {
+        ok: false,
+        error: "Named vault path does not match erase input.path",
+      };
+    }
+    if (!principal.value) {
+      return { ok: false, error: "Named principal is required for erase" };
+    }
+    return yield* executeMemoryEraseCoreEffect({ ...input, path: rel });
+  });
+}
+
+/** Promise façade for callers that still await erase (unproven — tests / legacy). */
 export async function executeMemoryEraseCore(input: MemoryEraseInput): Promise<MemoryEraseResult> {
   return Effect.runPromise(executeMemoryEraseCoreEffect(input));
 }
 
-/** Effect entry used by MCP / plugin host boundaries. */
-export function memoryEraseProgram(
+/**
+ * Effect entry used by MCP / plugin host boundaries that already minted
+ * EraseAuthorized.
+ */
+export function memoryEraseProgram<P, V>(
+  principal: Named<P, PrincipalId>,
+  path: Named<V, VaultPath>,
+  proof: EraseAuthorized<P, V>,
   input: MemoryEraseInput
 ): Effect.Effect<MemoryEraseResult, never, never> {
-  return executeMemoryEraseCoreEffect(input);
+  return executeMemoryEraseAuthorizedEffect(principal, path, proof, input);
 }
 
+/** @deprecated Prefer proven {@link memoryEraseProgram} / authorized Effect. */
 export async function runMemoryErase(input: MemoryEraseInput): Promise<MemoryEraseResult> {
-  return Effect.runPromise(memoryEraseProgram(input));
+  return Effect.runPromise(executeMemoryEraseCoreEffect(input));
 }
 
 export type MemoryRecoverableProbe = {

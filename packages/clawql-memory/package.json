@@ -148,7 +148,9 @@
     "fflate": "^0.8.2",
     "pg": "^8.21.0",
     "sql.js": "^1.14.1",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "clawql-gdp": "0.1.0",
+    "@gdp-ts/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

@@ -1,5 +1,7 @@
 import { Context, Effect, Layer } from "effect";
+import { EventPayloadId, name } from "clawql-gdp";
 import { BUILTIN_MCP_EVENT_CATALOG, findEventDefinition } from "./catalog.js";
+import { screenAndRedactForPublishEffect } from "./proofs/payload-redacted.js";
 import { assertSafeCallbackUrl, readCallbackUrlPolicy } from "./callback-url.js";
 import {
   createVerificationCache,
@@ -24,7 +26,6 @@ import {
 } from "./coalesce.js";
 import { notifyStreamTopicReleased } from "./lifecycle.js";
 import { gatewayRedactPayload } from "clawql-api";
-import { screenEventPayload } from "./screen.js";
 import { validateWhsecSecret } from "./secret.js";
 import {
   createFileSubscriptionStore,
@@ -55,6 +56,7 @@ import {
   assertEventStreamPublisherForManagedEffect,
   natsEventSubjectEffect,
   natsMsgIdEffect,
+  publishEventStreamEffect,
   type EventStreamPublisher,
 } from "./nats-subjects.js";
 import { matchesEventFiltersEffect } from "./subscription-match.js";
@@ -410,45 +412,56 @@ export function makeMcpEventsService(
       }),
 
     emit: (event) =>
-      Effect.gen(function* () {
-        const screenedData = yield* screenEventPayload(event.data);
-        const redactedData = enterprise.redactPii
-          ? ((yield* Effect.tryPromise({
-              try: () => gatewayRedactPayload(screenedData),
-              catch: (e) => (e instanceof Error ? e : new Error(String(e))),
-            }).pipe(Effect.orElseSucceed(() => screenedData))) as Record<string, unknown>)
-          : screenedData;
-        const screened: DeliverableEvent = { ...event, data: redactedData };
-        const streamRecord = yield* eventStream.append(screened);
-        if (eventStreamPublisher) {
-          const tenantRaw = redactedData.tenant ?? redactedData.topic;
-          const tenant =
-            typeof tenantRaw === "string" && tenantRaw.trim() ? tenantRaw.trim() : "default";
-          const subject = yield* natsEventSubjectEffect(screened.name, tenant);
-          const msgId = yield* natsMsgIdEffect(screened.eventId);
-          yield* eventStreamPublisher({
-            event: screened,
-            cloudEvent: streamRecord.cloudEvent,
-            tenant,
-            seq: streamRecord.seq,
-          }).pipe(
-            Effect.catch(() => Effect.void),
-            Effect.tap(() =>
-              audit("mcp_events.stream_publish", {
-                eventId: screened.eventId,
-                subject,
-                msgId,
-                seq: streamRecord.seq,
-              })
-            )
-          );
-        }
-        const all = yield* store.list();
-        const matches: StoredSubscription[] = [];
-        for (const s of all) {
-          if (!s.verified || s.name !== screened.name) continue;
-          if (yield* matchesEventFiltersEffect(s.arguments, redactedData)) matches.push(s);
-        }
+      name(EventPayloadId(event.eventId), (namedEvent) =>
+        Effect.gen(function* () {
+          // Mint PayloadRedacted only inside screen+redact (never store the proof).
+          const prepared = yield* screenAndRedactForPublishEffect(namedEvent, {
+            eventId: event.eventId,
+            data: event.data,
+            redactPii: enterprise.redactPii,
+            redactFn: async (d) =>
+              (await gatewayRedactPayload(d)) as Record<string, unknown>,
+          }).pipe(Effect.catch(() => Effect.succeed(null)));
+          if (!prepared) {
+            yield* audit("mcp_events.stream_publish_proof_failed", {
+              eventId: event.eventId,
+              reason: "PayloadRedacted proof failed (screen/redact)",
+            });
+            return [] as DeliveryOutcome[];
+          }
+          const redactedData = prepared.data;
+          const screened: DeliverableEvent = { ...event, data: redactedData };
+          const streamRecord = yield* eventStream.append(screened);
+          if (eventStreamPublisher) {
+            const tenantRaw = redactedData.tenant ?? redactedData.topic;
+            const tenant =
+              typeof tenantRaw === "string" && tenantRaw.trim() ? tenantRaw.trim() : "default";
+            const subject = yield* natsEventSubjectEffect(screened.name, tenant);
+            const msgId = yield* natsMsgIdEffect(screened.eventId);
+            const publisher = eventStreamPublisher;
+            yield* publishEventStreamEffect(namedEvent, prepared.proof, publisher, {
+              event: screened,
+              cloudEvent: streamRecord.cloudEvent,
+              tenant,
+              seq: streamRecord.seq,
+            }).pipe(
+              Effect.catch(() => Effect.void),
+              Effect.tap(() =>
+                audit("mcp_events.stream_publish", {
+                  eventId: screened.eventId,
+                  subject,
+                  msgId,
+                  seq: streamRecord.seq,
+                })
+              )
+            );
+          }
+          const all = yield* store.list();
+          const matches: StoredSubscription[] = [];
+          for (const s of all) {
+            if (!s.verified || s.name !== screened.name) continue;
+            if (yield* matchesEventFiltersEffect(s.arguments, redactedData)) matches.push(s);
+          }
 
         const outcomes: DeliveryOutcome[] = [];
         for (const sub of matches) {
@@ -542,10 +555,11 @@ export function makeMcpEventsService(
           outcomes.push(yield* deliverOne(sub, screened));
         }
 
-        const flushed = yield* flushCoalescedInternal();
-        outcomes.push(...flushed);
-        return outcomes;
-      }),
+          const flushed = yield* flushCoalescedInternal();
+          outcomes.push(...flushed);
+          return outcomes;
+        })
+      ),
 
     flushCoalesced: () => flushCoalescedInternal(),
 

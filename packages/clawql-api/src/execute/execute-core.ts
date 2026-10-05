@@ -4,6 +4,7 @@
  */
 
 import { Effect } from "effect";
+import { ArgsHash, ExecutionId, name, type Named } from "clawql-gdp";
 import { executeOperationGraphQL } from "../graphql/in-process-execute.js";
 import { loadSpec, resolveApiBaseUrlForOperation, type OpenAPIDoc } from "../spec/spec-loader.js";
 import type { Operation } from "../spec/operation-types.js";
@@ -11,6 +12,7 @@ import type { LoadSpecFn } from "../search/search-core.js";
 import { gatewayRedactionEnabled, maybeGatewayRedactText } from "../redaction/gateway-redact.js";
 import { hashPendingArgsEffect } from "../pending/args-hash.js";
 import { loadPendingExecution, parkMandateExecute } from "../pending/pending-execution-service.js";
+import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
@@ -35,6 +37,15 @@ function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error>
       : text;
     return [{ type: "text" as const, text: body }];
   });
+}
+
+/** Demand-only gate after local hash verification (gdp-ts). */
+function acknowledgeMandateArgsMatchEffect<E, H>(
+  _execution: Named<E, ReturnType<typeof ExecutionId>>,
+  _expectedHash: Named<H, ReturnType<typeof ArgsHash>>,
+  _proof: MandateArgsMatch<E, H>
+): Effect.Effect<void> {
+  return Effect.void;
 }
 
 /** Shared execute body as an Effect program — returns MCP text content blocks. */
@@ -95,17 +106,38 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        const argsHash = yield* hashPendingArgsEffect({
-          operationId,
-          args,
-          fields,
-        });
+        const livePayload = { operationId, args, fields };
+        const argsHash = yield* hashPendingArgsEffect(livePayload);
         if (argsHash !== pending.argsHash) {
           return yield* textContentEffect(
             JSON.stringify({
               ok: false,
               status: "blocked",
               reason: "argsHash mismatch — resume may only run the exact parked arguments",
+              operationId,
+              risk,
+              executionId: approvedId,
+            })
+          );
+        }
+        // Mint MandateArgsMatch and demand it before the side-effecting execute body.
+        const mandateOk = yield* name(
+          ExecutionId(approvedId),
+          ArgsHash(pending.argsHash),
+          (execution, expectedHash) =>
+            Effect.gen(function* () {
+              const proof = yield* mandateArgsMatchEffect(execution, expectedHash, livePayload);
+              if (!proof) return false;
+              yield* acknowledgeMandateArgsMatchEffect(execution, expectedHash, proof);
+              return true;
+            })
+        );
+        if (!mandateOk) {
+          return yield* textContentEffect(
+            JSON.stringify({
+              ok: false,
+              status: "blocked",
+              reason: "MandateArgsMatch proof failed",
               operationId,
               risk,
               executionId: approvedId,

@@ -11,8 +11,9 @@ COPY package.json package-lock.json ./
 COPY packages ./packages
 COPY infra/pulumi/package.json ./infra/pulumi/package.json
 RUN npm ci
-# Analytics DTS needs auth + audit types; audit needs merkle.
+# Analytics DTS needs auth + audit types; auth needs gdp; audit needs merkle.
 RUN npm run build -w clawql-merkle \
+  && npm run build -w clawql-gdp \
   && npm run build -w clawql-audit \
   && npm run build -w clawql-auth \
   && npm run build -w clawql-analytics

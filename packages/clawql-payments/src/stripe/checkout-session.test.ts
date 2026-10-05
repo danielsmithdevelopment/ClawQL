@@ -37,6 +37,16 @@ describe("buildCheckoutSessionMetadata", () => {
       }).clawql_billing_mode
     ).toBe("stripe_checkout");
   });
+
+  it("does not bind supabase user without proof", () => {
+    expect(
+      buildCheckoutSessionMetadata({
+        orgName: "Co",
+        plan: "team",
+        ownerEmail: "a@b.co",
+      })
+    ).not.toHaveProperty("clawql_supabase_user_id");
+  });
 });
 
 describe("StripeBillingService.createCheckoutSession", () => {

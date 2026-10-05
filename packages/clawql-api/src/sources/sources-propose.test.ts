@@ -93,6 +93,7 @@ describe("sources propose / approve", () => {
         dryRun: false,
         home,
         fetchFn: stubFetch(MINIMAL_OPENAPI),
+        proposedBy: { kind: "agent", id: "mcp" },
       })
     );
 
@@ -107,6 +108,7 @@ describe("sources propose / approve", () => {
         proposalId: parked.proposalId!,
         decision: "approve",
         home,
+        approvedBy: { kind: "operator", id: "dan" },
         resetSpecCache: () => {
           resetCalls += 1;
         },
@@ -139,6 +141,7 @@ describe("sources propose / approve", () => {
         dryRun: false,
         home,
         fetchFn: stubFetch(MINIMAL_OPENAPI),
+        proposedBy: { kind: "agent", id: "mcp" },
       })
     );
 
@@ -147,6 +150,7 @@ describe("sources propose / approve", () => {
         proposalId: parked.proposalId!,
         decision: "decline",
         home,
+        approvedBy: { kind: "operator", id: "dan" },
       })
     );
     expect(declined.status).toBe("declined");

@@ -1,0 +1,11 @@
+no proof at all
+  TS2554 Expected 2 arguments, but got 1.
+
+a raw id is not a named value; name it first
+  TS2345 Argument of type 'ProposalId' is not assignable to parameter of type 'Named<M, ProposalId>'.
+
+the proof is about proposal A, not proposal B
+  TS2345 Argument of type 'DemoApprover<N, M>' is not assignable to parameter of type 'DemoApprover<N, O>'.
+
+wrong proof kind
+  TS2345 Argument of type 'BogusProof<N, M>' is not assignable to parameter of type 'DemoApprover<N, M>'.

@@ -39,8 +39,8 @@ function recordPath(proposalId: string, home: string): string {
 function isRecord(v: unknown): v is PendingSourceRecord {
   if (!v || typeof v !== "object" || Array.isArray(v)) return false;
   const o = v as Record<string, unknown>;
+  if (o.version !== 1 && o.version !== 2) return false;
   return (
-    o.version === 1 &&
     typeof o.proposalId === "string" &&
     o.entry !== null &&
     typeof o.entry === "object" &&
@@ -53,6 +53,18 @@ function isRecord(v: unknown): v is PendingSourceRecord {
   );
 }
 
+function normalizeRecord(raw: Record<string, unknown>): PendingSourceRecord {
+  const proposedBy =
+    typeof raw.proposedBy === "string" && raw.proposedBy.trim() ? raw.proposedBy : null;
+  const approvedBy =
+    typeof raw.approvedBy === "string" && raw.approvedBy.trim() ? raw.approvedBy : null;
+  return {
+    ...(raw as unknown as PendingSourceRecord),
+    proposedBy,
+    approvedBy,
+  };
+}
+
 export const readPendingSourceEffect = (
   proposalId: string,
   home = resolveClawqlHome()
@@ -62,7 +74,7 @@ export const readPendingSourceEffect = (
       const path = recordPath(proposalId, home);
       try {
         const raw = JSON.parse(await readFile(path, "utf8")) as unknown;
-        return isRecord(raw) ? raw : null;
+        return isRecord(raw) ? normalizeRecord(raw as Record<string, unknown>) : null;
       } catch (e: unknown) {
         if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
         throw e;
@@ -95,6 +107,7 @@ export const updatePendingSourceStatusEffect = (
   patch: {
     readonly status: PendingSourceStatus;
     readonly decidedAt?: string | null;
+    readonly approvedBy?: string | null;
   },
   home = resolveClawqlHome()
 ): Effect.Effect<PendingSourceRecord, Error> =>
@@ -107,6 +120,7 @@ export const updatePendingSourceStatusEffect = (
       ...existing,
       status: patch.status,
       decidedAt: patch.decidedAt !== undefined ? patch.decidedAt : existing.decidedAt,
+      approvedBy: patch.approvedBy !== undefined ? patch.approvedBy : existing.approvedBy,
     };
     yield* writePendingSourceEffect(next, home);
     return next;
