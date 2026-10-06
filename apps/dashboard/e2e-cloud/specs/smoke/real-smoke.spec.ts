@@ -39,6 +39,7 @@ import {
   uploadDocument,
   waitForServer,
 } from '../../helpers/harness'
+import { registerSecurityKeyViaCdp } from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND_ARGS = { contract: 'northwind', annualValue: 52000 } as const
 const PII =
@@ -95,23 +96,31 @@ test('SI-01 Okta sign-in — Home, no password', async ({ page }) => {
 })
 
 test('KEY-01 Register device-bound key shows Can approve', async ({ page }) => {
-  const reg = await keysApi({
-    action: 'register',
+  // Arrange + ceremony via CDP virtual authenticator (not keyKind façade as Pass-when).
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
     person: 'Dana Reyes',
-    keyKind: 'device-bound',
-    name: 'Dana YubiKey 3',
+    kind: 'device-bound',
+    label: 'Dana YubiKey 3',
   })
   expect(reg.status).toBe(200)
-  expect(reg.body.status).toBe('Can approve')
 
-  const listed = await keysApi()
-  const dana = (listed.body.people as { name: string; keys: { status: string }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
-  expect(dana?.keys.some((k) => k.status === 'Can approve')).toBe(true)
+  // Pass-when: production-shaped audit + Profile UI badge
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) =>
+        e.action === 'security_key.register' &&
+        e.outcome === 'Can approve' &&
+        (e.meta as { label?: string } | undefined)?.label === 'Dana YubiKey 3',
+    ),
+  ).toBe(true)
 
-  await page.goto('/profile')
-  await expect(page.getByText('Can approve').first()).toBeVisible()
+  await page.reload()
+  await expect(
+    page.locator('[data-testid="profile-security-key"][data-key-label="Dana YubiKey 3"]'),
+  ).toHaveAttribute('data-key-badge', 'Can approve')
 })
 
 test('REV-01 adjust_contract_value requires mandate; badges agree', async ({ page }) => {

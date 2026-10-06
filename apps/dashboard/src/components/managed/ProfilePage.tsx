@@ -1,13 +1,80 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
 import { Button } from '@/components/ui/button'
 import { useManagedSession } from '@/components/managed/ManagedSessionProvider'
 
+type ProfileKey = {
+  name: string
+  badge: string
+  detail: string
+  ok: boolean
+}
+
+const FIXTURE_KEYS: ProfileKey[] = [
+  {
+    name: 'YubiKey 5 NFC',
+    badge: 'Can approve',
+    detail: 'Your everyday key. Added Mar 3, last used today at 09:12.',
+    ok: true,
+  },
+  {
+    name: 'YubiKey 5C, backup',
+    badge: 'Can approve',
+    detail: 'Kept somewhere safe. Added Mar 3, last used Aug 21.',
+    ok: true,
+  },
+  {
+    name: 'iCloud Keychain passkey',
+    badge: 'Sign-in only',
+    detail: "Syncs across your Apple devices, so it can't approve. Last used today at 08:40.",
+    ok: false,
+  },
+]
+
 export function ProfilePage() {
   const session = useManagedSession()
+  const [keys, setKeys] = useState<ProfileKey[]>(FIXTURE_KEYS)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch('/api/e2e/keys', { cache: 'no-store' })
+        if (!res.ok) return
+        const body = (await res.json()) as {
+          people?: {
+            name: string
+            keys: { label: string; status: string; kind: string; revoked?: boolean }[]
+          }[]
+        }
+        const person = body.people?.find((p) => p.name === session.displayName) ?? body.people?.[0]
+        if (!person || cancelled) return
+        const mapped = person.keys
+          .filter((k) => !k.revoked)
+          .map((k) => ({
+            name: k.label,
+            badge: k.status,
+            detail:
+              k.kind === 'synced'
+                ? "Syncs across devices, so it can't approve."
+                : k.kind === 'totp'
+                  ? 'Authenticator app — sign-in only.'
+                  : 'Device-bound security key.',
+            ok: k.status === 'Can approve',
+          }))
+        if (mapped.length > 0) setKeys(mapped)
+      } catch {
+        /* keep fixtures */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [session.displayName])
 
   return (
     <PageChrome crumbs={['Your profile']} title={session.displayName} description="">
@@ -33,33 +100,20 @@ export function ProfilePage() {
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-slate-900">Your security keys</h2>
-              <Button type="button" size="sm">
+              <Button type="button" size="sm" data-testid="profile-add-key">
                 Add a key
               </Button>
             </div>
             <p className="mt-1 text-sm text-slate-500">You meet the org rule: two keys that can approve.</p>
-            <ul className="mt-4 space-y-3">
-              {[
-                {
-                  name: 'YubiKey 5 NFC',
-                  badge: 'Can approve',
-                  detail: 'Your everyday key. Added Mar 3, last used today at 09:12.',
-                  ok: true,
-                },
-                {
-                  name: 'YubiKey 5C, backup',
-                  badge: 'Can approve',
-                  detail: 'Kept somewhere safe. Added Mar 3, last used Aug 21.',
-                  ok: true,
-                },
-                {
-                  name: 'iCloud Keychain passkey',
-                  badge: 'Sign-in only',
-                  detail: "Syncs across your Apple devices, so it can't approve. Last used today at 08:40.",
-                  ok: false,
-                },
-              ].map((key) => (
-                <li key={key.name} className="rounded-lg border border-slate-200 px-3 py-3">
+            <ul className="mt-4 space-y-3" data-testid="profile-security-keys">
+              {keys.map((key) => (
+                <li
+                  key={key.name}
+                  className="rounded-lg border border-slate-200 px-3 py-3"
+                  data-testid="profile-security-key"
+                  data-key-label={key.name}
+                  data-key-badge={key.badge}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium text-slate-900">{key.name}</p>

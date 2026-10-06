@@ -44,6 +44,7 @@ import {
   uploadDocument,
   waitForDeliveries,
 } from '../../helpers/harness'
+import { registerSecurityKeyViaCdp } from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
 const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
@@ -159,21 +160,26 @@ test('SU-07 Empty Sessions/Review copy; audit has 3 seed entries and verified ch
 })
 
 test('SI-02 Synced passkey register shows Sign-in only', async ({ page }) => {
-  const reg = await keysApi({
-    action: 'register',
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
     person: 'Dana Reyes',
-    keyKind: 'synced',
-    name: 'Dana passkey',
+    kind: 'synced',
+    label: 'Dana passkey',
   })
   expect(reg.status).toBe(200)
-  expect(reg.body.status).toBe('Sign-in only')
-  const listed = await keysApi()
-  const dana = (listed.body.people as { name: string; keys: { status: string; kind: string }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
-  expect(dana?.keys.some((k) => k.status === 'Sign-in only' || k.kind === 'synced')).toBe(true)
-  await page.goto('/profile')
-  await expect(page.getByText(/Sign-in only|Can approve/i).first()).toBeVisible()
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'security_key.register' && e.outcome === 'Sign-in only',
+    ),
+  ).toBe(true)
+
+  await page.reload()
+  await expect(
+    page.locator('[data-testid="profile-security-key"][data-key-label="Dana passkey"]'),
+  ).toHaveAttribute('data-key-badge', 'Sign-in only')
 })
 
 test('SI-03 TOTP register is never offered for approvals', async () => {
