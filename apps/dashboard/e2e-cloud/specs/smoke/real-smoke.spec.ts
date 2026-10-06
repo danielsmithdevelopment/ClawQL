@@ -144,8 +144,11 @@ test('REV-01 adjust_contract_value requires mandate; badges agree', async ({ pag
   expect(item?.args?.before).toBe(48500)
 
   await page.goto('/review')
-  await expect(page.getByText(/Change a contract/i).first()).toBeVisible()
-  await expect(page.getByText(/52,?000|48500|48,?500/i).first()).toBeVisible()
+  const changeTitle = page.getByText(/Change a contract/i).first()
+  await expect(changeTitle).toBeVisible()
+  // Default selection is often the skill row — open the change so before/after table mounts
+  await changeTitle.click()
+  await expect(page.getByText(/\$52,000\.00|\$48,500\.00|Annual value/i).first()).toBeVisible()
   await page.goto('/')
   await expect(page.getByText(/Needs action/i).first()).toBeVisible()
 })
