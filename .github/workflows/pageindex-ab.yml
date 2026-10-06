@@ -315,7 +315,7 @@ jobs:
             cat /tmp/or-key.json || true
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
@@ -588,7 +588,7 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for rerank-grid"
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
@@ -646,7 +646,7 @@ jobs:
             echo "OPENROUTER_API_KEY secret required for gap-diagnose"
             exit 1
           fi
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: ${{ steps.gate.outputs.run == '1' }}
         with:
           python-version: "3.12"
