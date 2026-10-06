@@ -130,3 +130,4 @@ export * from "./inbound/index.js";
 export * from "./stores/index.js";
 export * from "./team/index.js";
 export * from "./vault/index.js";
+export * from "./identity/index.js";

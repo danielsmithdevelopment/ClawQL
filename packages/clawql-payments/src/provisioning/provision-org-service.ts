@@ -6,6 +6,7 @@
 import { join } from "node:path";
 import {
   createIssuedApiKeyStoreLayer,
+  IdentityStoreService,
   IssuedApiKeyStoreService,
   type ApiKeyStoreError,
 } from "clawql-auth";
@@ -97,7 +98,11 @@ export function provisionOrgLiveLayer(
 ): Layer.Layer<
   ProvisionOrgService,
   never,
-  PaymentAuditService | IssuedApiKeyStoreService | CreditsLedgerService | OrgCreditsService
+  | PaymentAuditService
+  | IssuedApiKeyStoreService
+  | CreditsLedgerService
+  | OrgCreditsService
+  | IdentityStoreService
 > {
   return Layer.effect(
     ProvisionOrgService,
@@ -106,6 +111,7 @@ export function provisionOrgLiveLayer(
       const apiKeys = yield* IssuedApiKeyStoreService;
       const ledger = yield* CreditsLedgerService;
       const orgs = yield* OrgCreditsService;
+      const identities = yield* IdentityStoreService;
 
       const provisionOrg = (input: ProvisionOrgInput) =>
         Effect.gen(function* () {
@@ -119,6 +125,28 @@ export function provisionOrgLiveLayer(
           }
 
           const parsed = yield* parseProvisionInput(input);
+
+          if (input.stripeCheckoutSessionId?.trim()) {
+            const prior = yield* orgs
+              .findByCheckoutSessionId(input.stripeCheckoutSessionId.trim())
+              .pipe(
+                Effect.mapError((cause) =>
+                  mapOrgCreditsError(cause, "Failed to look up checkout session")
+                )
+              );
+            if (prior) {
+              return {
+                orgId: prior.orgId,
+                poolTenantId: prior.poolTenantId || poolTenantIdForOrg(prior.orgId),
+                ownerMemberTenantId: parsed.ownerMemberTenantId,
+                planId: input.planId,
+                billingMode: input.billingMode,
+                createdVia: input.createdVia,
+                idempotentReplay: true,
+              } satisfies ProvisionOrgResult;
+            }
+          }
+
           const existing = yield* orgs
             .get(parsed.orgId)
             .pipe(
@@ -135,6 +163,7 @@ export function provisionOrgLiveLayer(
                 createdVia: input.createdVia,
                 stripeCustomerId: input.stripeCustomerId,
                 stripeSubscriptionId: input.stripeSubscriptionId,
+                stripeCheckoutSessionId: input.stripeCheckoutSessionId,
                 seatLimit: input.seatLimit,
               })
               .pipe(
@@ -158,6 +187,7 @@ export function provisionOrgLiveLayer(
                 billingMode: input.billingMode,
                 stripeCustomerId: input.stripeCustomerId,
                 stripeSubscriptionId: input.stripeSubscriptionId,
+                stripeCheckoutSessionId: input.stripeCheckoutSessionId,
               })
               .pipe(Effect.mapError((cause) => mapOrgCreditsError(cause, "createOrg failed")));
           }
@@ -197,7 +227,17 @@ export function provisionOrgLiveLayer(
 
           let apiKey: string | undefined;
           let apiKeyId: string | undefined;
-          if (!input.skipApiKey) {
+          const activeKeys = yield* apiKeys.listActive({ orgId: org.orgId });
+          const ownerAlreadyHasKey = activeKeys.some(
+            (k) => k.subjectId === parsed.ownerMemberTenantId
+          );
+          const skipApiKey =
+            input.skipApiKey === true ||
+            (Boolean(existing) && ownerAlreadyHasKey) ||
+            (Boolean(existing) &&
+              Boolean(input.stripeCheckoutSessionId) &&
+              existing?.stripeCheckoutSessionId === input.stripeCheckoutSessionId);
+          if (!skipApiKey) {
             const issued = yield* apiKeys.issue({
               subjectId: parsed.ownerMemberTenantId,
               orgId: org.orgId,
@@ -230,6 +270,20 @@ export function provisionOrgLiveLayer(
             );
           }
 
+          if (input.clawqlUserId?.trim()) {
+            yield* identities
+              .recordOrgId({ userId: input.clawqlUserId.trim(), orgId: org.orgId })
+              .pipe(Effect.catch(() => Effect.void));
+            if (input.stripeCustomerId?.trim()) {
+              yield* identities
+                .recordStripeCustomerId({
+                  userId: input.clawqlUserId.trim(),
+                  stripeCustomerId: input.stripeCustomerId.trim(),
+                })
+                .pipe(Effect.catch(() => Effect.void));
+            }
+          }
+
           return {
             orgId: org.orgId,
             poolTenantId: org.poolTenantId || poolTenantIdForOrg(org.orgId),
@@ -239,6 +293,7 @@ export function provisionOrgLiveLayer(
             planId: input.planId,
             billingMode: input.billingMode,
             createdVia: input.createdVia,
+            idempotentReplay: Boolean(existing) && skipApiKey,
           } satisfies ProvisionOrgResult;
         });
 

@@ -1,14 +1,21 @@
 /**
  * ATR visibility for skill index rows (spec §6.4 / §7.3).
  * Standalone skills are not gated by tool ATR; provider-bundled skills inherit it.
+ * Operator-audience skills never appear in the agent catalog.
  */
 
 import type { AtrScope, SkillIndexEntry } from "./provider-types.js";
 
+/** Agent-facing catalog: omit operator runbooks even when ATR is unset. */
+export function isAgentFacingSkill(entry: SkillIndexEntry): boolean {
+  return entry.audience !== "operator";
+}
+
 /**
  * Whether a skill index entry may appear in `search` / `skills_list` under session ATR.
  *
- * - `atrScope === undefined` — host has no ATR context; do not filter (dev / ungated).
+ * - Operator-audience skills — never visible to agents.
+ * - `atrScope === undefined` — host has no ATR context; do not filter remaining skills (dev / ungated).
  * - Standalone skills — always visible (applicability still applies at ranking).
  * - Provider skills — visible iff ATR is non-empty and matches plugin id / tool tokens.
  */
@@ -16,6 +23,7 @@ export function isSkillVisibleUnderAtr(
   entry: SkillIndexEntry,
   atrScope: AtrScope | undefined
 ): boolean {
+  if (!isAgentFacingSkill(entry)) return false;
   if (atrScope === undefined) return true;
   if (entry.source !== "provider") return true;
   if (atrScope.size === 0) return false;
@@ -36,11 +44,10 @@ export function isSkillVisibleUnderAtr(
   return false;
 }
 
-/** Filter a skill index for search ranking. */
+/** Filter a skill index for search ranking (always drops operator skills). */
 export function filterSkillsByAtr(
   skills: readonly SkillIndexEntry[],
   atrScope: AtrScope | undefined
 ): readonly SkillIndexEntry[] {
-  if (atrScope === undefined) return skills;
   return skills.filter((s) => isSkillVisibleUnderAtr(s, atrScope));
 }

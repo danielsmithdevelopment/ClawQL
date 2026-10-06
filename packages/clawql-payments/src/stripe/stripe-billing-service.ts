@@ -82,6 +82,8 @@ export type CheckoutSessionInput = {
   successUrl: string;
   cancelUrl: string;
   billingMode?: CheckoutBillingMode;
+  /** Internal ClawQL user id (`usr_…`) — CPC tenant. Never a client-supplied supabase id. */
+  clawqlUserId?: string;
   /**
    * @deprecated Ignored. Binding `clawql_supabase_user_id` requires
    * {@link createCheckoutSessionWithVerifiedUserEffect} + VerifiedCheckoutSessionUser proof.
@@ -106,14 +108,20 @@ export function buildCheckoutSessionMetadata(input: {
   plan: CheckoutSessionPlan;
   ownerEmail: string;
   billingMode?: CheckoutBillingMode;
+  clawqlUserId?: string;
 }): Record<string, string> {
-  return {
+  const meta: Record<string, string> = {
     clawql_provision_org: "1",
     clawql_org_name: input.orgName.trim(),
     clawql_plan: input.plan,
     clawql_billing_mode: input.billingMode ?? "stripe_checkout",
     clawql_owner_email: input.ownerEmail.trim(),
   };
+  const clawqlUserId = input.clawqlUserId?.trim();
+  if (clawqlUserId) {
+    meta.clawql_user_id = clawqlUserId;
+  }
+  return meta;
 }
 
 /**
@@ -128,6 +136,7 @@ export function buildCheckoutSessionMetadataWithVerifiedUser<U>(
     plan: CheckoutSessionPlan;
     ownerEmail: string;
     billingMode?: CheckoutBillingMode;
+    clawqlUserId?: string;
   }
 ): Record<string, string> {
   return {
@@ -183,6 +192,9 @@ export class StripeBillingService extends Context.Service<
       proof: VerifiedCheckoutSessionUser<U>,
       input: CheckoutSessionVerifiedInput
     ) => Effect.Effect<CheckoutSessionResult, StripeApiError | StripeNotConfigured>;
+    readonly deleteCustomer: (
+      customerId: string
+    ) => Effect.Effect<void, StripeApiError | StripeNotConfigured>;
   }
 >()("clawql/StripeBillingService") {}
 
@@ -357,6 +369,7 @@ export function stripeBillingLiveLayer(
             cancelUrl,
             plan: input.plan,
             billingMode,
+            clawqlUserId: input.clawqlUserId?.trim() || undefined,
             runEnv: input.env ?? env,
           } as const;
         });
@@ -369,6 +382,7 @@ export function stripeBillingLiveLayer(
           cancelUrl: string;
           plan: CheckoutSessionPlan;
           billingMode: CheckoutBillingMode;
+          clawqlUserId?: string;
           runEnv: NodeJS.ProcessEnv;
         },
         metadata: Record<string, string>
@@ -411,6 +425,7 @@ export function stripeBillingLiveLayer(
             plan: validated.plan,
             ownerEmail: validated.ownerEmail,
             billingMode: validated.billingMode,
+            clawqlUserId: validated.clawqlUserId,
           });
           return yield* createCheckoutWithMetadata(validated, metadata);
         });
@@ -431,8 +446,19 @@ export function stripeBillingLiveLayer(
             plan: validated.plan,
             ownerEmail: validated.ownerEmail,
             billingMode: validated.billingMode,
+            clawqlUserId: validated.clawqlUserId,
           });
           return yield* createCheckoutWithMetadata(validated, metadata);
+        });
+
+      const deleteCustomer = (customerId: string) =>
+        Effect.gen(function* () {
+          const id = customerId.trim();
+          if (!id) {
+            return yield* Effect.fail(new StripeApiError({ reason: "customerId is required" }));
+          }
+          const client = yield* stripeClient.getClient();
+          yield* stripeTryPromise("stripe customer delete failed", () => client.customers.del(id));
         });
 
       return StripeBillingService.of({
@@ -443,6 +469,7 @@ export function stripeBillingLiveLayer(
         createPortalSession,
         createCheckoutSession,
         createCheckoutSessionWithVerifiedUser,
+        deleteCustomer,
       });
     })
   );

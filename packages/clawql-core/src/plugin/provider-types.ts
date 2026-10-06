@@ -17,6 +17,12 @@ export type ToolDefinition = McpToolDefinition;
 export type SkillApplicability = "always" | "query-matched";
 
 /**
+ * Who may see the skill in agent-facing discovery (`skills_list` / `search`).
+ * Default `agent`. `operator` skills stay out of the default agent catalog.
+ */
+export type SkillAudience = "agent" | "operator";
+
+/**
  * Skill registration. Routing hints compose via `ToolRoutingHint` intersection
  * (same fields as tools — do not re-list or the shapes will drift).
  */
@@ -30,6 +36,10 @@ export type SkillDefinition = {
    * Default for standalone: `query-matched`.
    */
   readonly applicability?: SkillApplicability;
+  /**
+   * Default `agent`. Operator runbooks must not appear in agents' `skills_list`.
+   */
+  readonly audience?: SkillAudience;
   readonly name?: string;
   readonly description?: string;
 } & ToolRoutingHint;
@@ -122,6 +132,8 @@ export type SkillIndexEntry = {
   readonly digest: string;
   readonly pluginId: string;
   readonly applicability: SkillApplicability;
+  /** Default `agent` when omitted. Operator skills are omitted from agent `skills_list` / search. */
+  readonly audience?: SkillAudience;
   /** Provider-bundled vs standalone — standalone ignores tool ATR. */
   readonly source: SkillSourceKind;
   /** Provider tool names used for ATR matching (provider skills only). */

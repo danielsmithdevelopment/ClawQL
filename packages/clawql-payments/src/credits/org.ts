@@ -80,6 +80,8 @@ export type OrgBillingFields = {
   billingMode?: OrgBillingMode;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  /** Stripe Checkout Session id that last provisioned this org (webhook idempotency). */
+  stripeCheckoutSessionId?: string;
 };
 
 export type OrgRecord = {
@@ -109,6 +111,8 @@ export type OrgRecord = {
   stripeCustomerId?: string;
   /** Stripe Subscription id when linked. */
   stripeSubscriptionId?: string;
+  /** Stripe Checkout Session that provisioned this org (idempotent webhook replay). */
+  stripeCheckoutSessionId?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -214,6 +218,7 @@ export type CreateOrgInput = {
   billingMode?: OrgBillingMode;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  stripeCheckoutSessionId?: string;
 };
 
 /** @deprecated Prefer OrgCreditsService.create — Promise façade retained for legacy callers. */
@@ -271,6 +276,9 @@ async function createOrgImpl(
     ...(input.stripeSubscriptionId?.trim()
       ? { stripeSubscriptionId: input.stripeSubscriptionId.trim() }
       : {}),
+    ...(input.stripeCheckoutSessionId?.trim()
+      ? { stripeCheckoutSessionId: input.stripeCheckoutSessionId.trim() }
+      : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -304,6 +312,7 @@ export type PatchOrgBillingInput = {
   createdVia?: OrgCreatedVia;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
+  stripeCheckoutSessionId?: string | null;
   seatLimit?: number;
 };
 
@@ -327,6 +336,10 @@ async function patchOrgBillingImpl(
   if (input.stripeSubscriptionId === null) delete org.stripeSubscriptionId;
   else if (input.stripeSubscriptionId !== undefined) {
     org.stripeSubscriptionId = input.stripeSubscriptionId.trim() || undefined;
+  }
+  if (input.stripeCheckoutSessionId === null) delete org.stripeCheckoutSessionId;
+  else if (input.stripeCheckoutSessionId !== undefined) {
+    org.stripeCheckoutSessionId = input.stripeCheckoutSessionId.trim() || undefined;
   }
   org.updatedAt = new Date().toISOString();
   file.orgs[key] = org;
@@ -410,6 +423,63 @@ export async function findOrgsForTenant(
   env: NodeJS.ProcessEnv = process.env
 ): Promise<OrgRecord[]> {
   return Effect.runPromise(findOrgsForTenantEffect(tenantId, env));
+}
+
+async function findOrgByCheckoutSessionIdImpl(
+  checkoutSessionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  const id = checkoutSessionId.trim();
+  if (!id) return undefined;
+  const file = await loadOrgCreditsFile(env);
+  return Object.values(file.orgs).find((org) => org.stripeCheckoutSessionId === id);
+}
+
+export function findOrgByCheckoutSessionIdEffect(
+  checkoutSessionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => findOrgByCheckoutSessionIdImpl(checkoutSessionId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+export async function findOrgByCheckoutSessionId(
+  checkoutSessionId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  return Effect.runPromise(findOrgByCheckoutSessionIdEffect(checkoutSessionId, env));
+}
+
+async function deleteOrgImpl(
+  orgId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  const file = await loadOrgCreditsFile(env);
+  const key = orgId.trim().toLowerCase();
+  const org = file.orgs[key];
+  if (!org) return undefined;
+  delete file.orgs[key];
+  await saveOrgCreditsFile(file, env);
+  return org;
+}
+
+export function deleteOrgEffect(
+  orgId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<OrgRecord | undefined, Error> {
+  return Effect.tryPromise({
+    try: () => deleteOrgImpl(orgId, env),
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+  });
+}
+
+export async function deleteOrg(
+  orgId: string,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<OrgRecord | undefined> {
+  return Effect.runPromise(deleteOrgEffect(orgId, env));
 }
 
 /** @deprecated Prefer OrgCreditsService.setRolePolicies — Promise façade retained for legacy callers. */
@@ -1450,6 +1520,10 @@ export class OrgCreditsService extends Context.Service<
     ) => Effect.Effect<OrgRecord, OrgCreditsError>;
     readonly get: (orgId: string) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
     readonly findForTenant: (tenantId: string) => Effect.Effect<OrgRecord[], OrgCreditsError>;
+    readonly findByCheckoutSessionId: (
+      checkoutSessionId: string
+    ) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
+    readonly deleteOrg: (orgId: string) => Effect.Effect<OrgRecord | undefined, OrgCreditsError>;
     readonly setRolePolicies: (
       orgId: string,
       policies: OrgRolePolicy[]
@@ -1520,6 +1594,11 @@ export function orgCreditsLiveLayer(
       get: (orgId) => run("Failed to load org", () => getOrg(orgId, env)),
       findForTenant: (tenantId) =>
         run("Failed to find orgs for tenant", () => findOrgsForTenant(tenantId, env)),
+      findByCheckoutSessionId: (checkoutSessionId) =>
+        run("Failed to find org by checkout session", () =>
+          findOrgByCheckoutSessionId(checkoutSessionId, env)
+        ),
+      deleteOrg: (orgId) => run("Failed to delete org", () => deleteOrg(orgId, env)),
       setRolePolicies: (orgId, policies) =>
         run("Failed to set role policies", () => setOrgRolePolicies(orgId, policies, env)),
       addMember: (input) => run("Failed to add org member", () => addOrgMember(input, env)),

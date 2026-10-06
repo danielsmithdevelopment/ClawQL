@@ -29,6 +29,23 @@ export {
   type CheckoutProvisionHandoff,
 } from "./checkout-handoff.js";
 export { attachProvisioningRoutes, type AttachProvisioningRoutesOptions } from "./http.js";
+export {
+  AccountDeletionError,
+  AccountDeletionIncompleteError,
+  AccountDeletionService,
+  accountDeletionLiveLayer,
+  type DeleteAccountInput,
+  type DeleteAccountResult,
+} from "./account-deletion-service.js";
+export {
+  ACCOUNT_DELETION_STEPS,
+  AccountDeletionJobStoreError,
+  AccountDeletionJobStoreService,
+  accountDeletionJobStoreLiveLayer,
+  createAccountDeletionJobStoreLayer,
+  type AccountDeletionJob,
+  type AccountDeletionStepId,
+} from "./account-deletion-job-store.js";
 export { attachCpcDashboardRoutes } from "./dashboard-http.js";
 export {
   renderCpcDashboardHtml,
