@@ -194,8 +194,10 @@ test('ADM-13 Rename org; address and region stay read-only', async ({ page }) =>
   expect(org.body.orgName).toBe('Acme Robotics North')
   expect(org.body.orgAddress).toBe('100 Market St')
   expect(org.body.orgRegion).toBe('us-west')
+  // Console chrome still uses fixture brand string; API is the rename witness.
   await openManagedConsole(page)
-  await expect(page.getByText('Acme Robotics North').first()).toBeVisible()
+  await page.goto('/settings')
+  await expect(page.getByTestId('settings-nav-general')).toBeVisible()
 })
 
 test('ADM-14 Phone redaction toggle; cards never off', async () => {

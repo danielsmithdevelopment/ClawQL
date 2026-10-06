@@ -977,6 +977,12 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
+  // Cards always on — before bank digit runs so PANs are not misclassified as bank.
+  {
+    const card = out.replace(/\b(?:\d[ -]*?){13,19}\b/g, "[REDACTED_CARD]");
+    if (card !== out) redacted = true;
+    out = card;
+  }
   if (world.redaction.bank) {
     const next = out.replace(/\b\d{8,17}\b/g, "[REDACTED_BANK]");
     if (next !== out) redacted = true;
@@ -990,9 +996,6 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
-  const card = out.replace(/\b(?:\d[ -]*?){13,19}\b/g, "[REDACTED_CARD]");
-  if (card !== out) redacted = true;
-  out = card;
   // Detect pasted API keys
   if (/cqk_[a-z0-9_]+/i.test(out)) {
     out = out.replace(/cqk_[a-z0-9_]+/gi, "[REDACTED_KEY]");

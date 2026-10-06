@@ -65,7 +65,7 @@ test('SK-01 Propose skill with session count', async ({ page }) => {
   await openManagedConsole(page)
   await page.goto('/skills')
   await page.getByTestId('skills-tab-proposed').click()
-  await expect(page.getByTestId('skills-proposed').or(page.locator('body'))).toBeVisible()
+  await expect(page.getByTestId('skills-proposed')).toBeVisible()
 })
 
 test('SK-02 Move to proving with five evidence kinds', async ({ page }) => {
