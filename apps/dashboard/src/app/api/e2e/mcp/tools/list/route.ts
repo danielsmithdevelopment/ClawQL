@@ -20,14 +20,23 @@ export async function POST(req: Request) {
       if (!key.canUse.includes("tools")) {
         return NextResponse.json({ error: "key cannot use tools" }, { status: 403 });
       }
+      const client = req.headers.get("x-clawql-client") ?? "cursor";
       const tools = MCP_TOOLS.map((name) => ({
         name,
         description: `ClawQL tool ${name}`,
       }));
-      // Approvals are never an agent tool (GW-08 / GW-10)
+      const extras =
+        client === "chatgpt"
+          ? [
+              { name: "approval_form", description: "Present an approval form (ChatGPT only)" },
+              { name: "evidence_view", description: "Evidence view (ChatGPT only)" },
+            ]
+          : [];
+      // Approvals are never an agent tool on Cursor (GW-08 / GW-10)
       return NextResponse.json({
-        tools,
-        clientExtras: { approvalForms: false },
+        tools: [...tools, ...extras],
+        client,
+        clientExtras: { approvalForms: client === "chatgpt", evidenceViews: client === "chatgpt" },
       });
     }),
   );

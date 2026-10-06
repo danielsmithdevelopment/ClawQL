@@ -21,11 +21,20 @@ export async function GET() {
         hardStop: world.hardStop,
         creditsCents: world.creditsCents,
         teamBudgets: world.teamBudgets,
+        invoiceCard: world.invoiceCard,
+        invoices: world.invoices,
+        alerts: world.alerts,
+        forecast: world.alerts.find((a) => a.kind === "budget-forecast")
+          ? { warn: true, likelyDate: "2026-10-20" }
+          : null,
         keys: world.keys.map((k) => ({
           name: k.name,
           group: k.group,
           spentTodayCents: k.spentTodayCents,
           dailyCapCents: k.dailyCapCents,
+          capReached: k.spentTodayCents >= k.dailyCapCents,
+          teamBudgetExhausted: k.teamBudgetExhausted ?? false,
+          expiresAt: k.expiresAt,
         })),
       });
     }),

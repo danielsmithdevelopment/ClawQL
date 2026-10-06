@@ -14,18 +14,27 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
       }
       const world = getWorld();
+      const asOrgHeader = req.headers.get("x-org");
       const url = new URL(req.url);
-      const asOrg = url.searchParams.get("org");
+      const asOrg = url.searchParams.get("org") ?? asOrgHeader;
       if (asOrg === "lumen" || asOrg === "org_lumen") {
-        // Cross-tenant: never reveal Acme existence (SEC-04)
+        // Cross-tenant: never reveal Acme existence (SEC-04 / SEC-05)
         return NextResponse.json({ error: "not found" }, { status: 404 });
       }
       const owner = world.people.find((p) => p.role === "owner");
       return NextResponse.json({
         orgId: world.orgId,
         orgName: world.orgName,
+        orgAddress: world.orgAddress,
+        orgRegion: world.orgRegion,
         owner: owner?.name,
         ownerCount: world.people.filter((p) => p.role === "owner").length,
+        people: world.people.map((p) => ({
+          name: p.name,
+          role: p.role,
+          active: p.active,
+          groups: p.groups,
+        })),
         firstRun: {
           step: world.firstRunStep,
           total: world.firstRunTotal,
@@ -35,9 +44,12 @@ export async function GET(req: Request) {
           step3DisabledReason: world.securityKeysRegistered
             ? null
             : "needs your security keys",
+          recoveryCodesShownOnce: world.recoveryCodesShownOnce,
         },
         stripeProvisioningDone: world.stripeProvisioningDone,
         deleted: world.orgDeleted ?? false,
+        deletionCertificate: world.deletionCertificate,
+        keyCount: world.keys.filter((k) => !k.revoked).length,
       });
     }),
   );

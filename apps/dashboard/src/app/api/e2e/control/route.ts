@@ -14,6 +14,122 @@ import {
 
 export const dynamic = "force-dynamic";
 
+/** Witness snapshot for Nightly Playwright — never used as a stub pass via runScenario. */
+export async function GET() {
+  return runE2eEffect(
+    Effect.gen(function* () {
+      const h = yield* E2eHarness;
+      if (!(yield* h.enabled())) {
+        return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+      }
+      const world = getWorld();
+      return NextResponse.json({
+        org: {
+          orgId: world.orgId,
+          orgName: world.orgName,
+          orgAddress: world.orgAddress,
+          orgRegion: world.orgRegion,
+          deleted: world.orgDeleted,
+          deletionCertificate: world.deletionCertificate,
+          firstRunStep: world.firstRunStep,
+          firstRunTotal: world.firstRunTotal,
+          securityKeysRegistered: world.securityKeysRegistered,
+          recoveryCodesRemaining: world.recoveryCodes.length,
+          recoveryCodesShownOnce: world.recoveryCodesShownOnce,
+          stripeProvisioningDone: world.stripeProvisioningDone,
+          signedInUserId: world.signedInUserId,
+        },
+        people: world.people.map((p) => ({
+          id: p.id,
+          name: p.name,
+          role: p.role,
+          groups: p.groups,
+          active: p.active,
+          canApproveContracts: p.canApproveContracts,
+          canAnswerTicketTriage: p.canAnswerTicketTriage,
+          keyCount: p.securityKeys.filter((k) => !k.revoked).length,
+          needsTwo: p.securityKeys.filter((k) => !k.revoked && k.canApprove).length < 2,
+          keys: p.securityKeys.map((k) => ({
+            id: k.id,
+            label: k.label,
+            kind: k.kind,
+            canApprove: k.canApprove,
+            status: k.canApprove ? "Can approve" : "Sign-in only",
+            aaguid: k.aaguid,
+            signatureCounter: k.signatureCounter,
+            revoked: k.revoked,
+          })),
+          sessions: p.sessions,
+          notifications: p.notifications,
+          timeZone: p.timeZone,
+          appearance: p.appearance,
+        })),
+        keys: world.keys.map((k) => ({
+          id: k.id,
+          name: k.name,
+          group: k.group,
+          canUse: k.canUse,
+          dailyCapCents: k.dailyCapCents,
+          spentTodayCents: k.spentTodayCents,
+          revoked: k.revoked,
+          expiresAt: k.expiresAt,
+          lastFour: k.lastFour,
+          confirmedSaved: k.confirmedSaved,
+          memoryEnrichment: k.memoryEnrichment ?? false,
+          canUseMemory: k.canUse.includes("memory"),
+          capReached: k.spentTodayCents >= k.dailyCapCents,
+          teamBudgetExhausted: k.teamBudgetExhausted ?? false,
+        })),
+        sessions: world.sessions,
+        review: world.review,
+        badges: {
+          home: world.homeNeedsAction,
+          review: world.reviewBadge,
+          sidebar: world.sidebarBadge,
+        },
+        connections: world.connections,
+        skills: world.skills,
+        subscriptions: world.subscriptions,
+        notificationsOutbox: world.notificationsOutbox,
+        alerts: world.alerts,
+        modelRoutes: world.modelRoutes,
+        decisionSites: world.decisionSites,
+        redaction: world.redaction,
+        requestExpiryMinutes: world.requestExpiryMinutes,
+        idleTimeoutMinutes: world.idleTimeoutMinutes,
+        maxSessionMinutes: world.maxSessionMinutes,
+        auditRetentionYears: world.auditRetentionYears,
+        requesterCannotApproveLocked: world.requesterCannotApproveLocked,
+        requiredApprovalsDefault: world.requiredApprovalsDefault,
+        hardStop: world.hardStop,
+        monthSpentCents: world.monthSpentCents,
+        monthBudgetCents: world.monthBudgetCents,
+        creditsCents: world.creditsCents,
+        teamBudgets: world.teamBudgets,
+        invoiceCard: world.invoiceCard,
+        invoices: world.invoices,
+        schemaFields: world.schemaFields,
+        trainingExports: world.trainingExports,
+        blockedCalls: world.blockedCalls,
+        inboundWebhookStats: world.inboundWebhookStats,
+        eventTypeCounts24h: world.eventTypeCounts24h,
+        streamCursor: world.streamCursor,
+        allowedWebhookHosts: world.allowedWebhookHosts,
+        allowedOutboundHosts: world.allowedOutboundHosts,
+        ipAllowlist: world.ipAllowlist,
+        gateUnreachable: world.gateUnreachable,
+        infoFlowUnreachable: world.infoFlowUnreachable,
+        auditBroken: world.auditBroken,
+        hourlyRoots: world.hourlyRoots,
+        orgArchive: world.orgArchive
+          ? { keys: Object.keys(world.orgArchive), hasAudit: Boolean(world.orgArchive.audit) }
+          : null,
+        authAttempts: world.authAttempts ?? { signin: 0, apikey: 0 },
+      });
+    }),
+  );
+}
+
 type ControlBody = {
   gateUnreachable?: boolean;
   infoFlowUnreachable?: boolean;
@@ -104,6 +220,16 @@ type ControlBody = {
   stripeProvisioningDone?: boolean;
   securityKeysRegistered?: boolean;
   asRole?: "owner" | "admin" | "member" | "billing" | "auditor";
+  authAttempt?: { kind: "signin" | "apikey" };
+  setMemoryEnrichment?: { key: string; enabled: boolean };
+  skillAction?: {
+    id: string;
+    action: "prove" | "autoPromote" | "retire" | "reprove" | "flagInjection";
+    reason?: string;
+  };
+  secondBrowserSession?: { person: string };
+  keySpentToday?: { name: string; cents: number };
+  personMutate?: { person: string; canApproveContracts?: boolean; groups?: string[]; notifications?: { slack?: boolean; push?: boolean }; timeZone?: string; appearance?: "light" | "dark"; endSessionDevice?: string };
 };
 
 export async function POST(req: Request) {
@@ -131,7 +257,12 @@ export async function POST(req: Request) {
       if (typeof body.monthBudgetCents === "number") world.monthBudgetCents = body.monthBudgetCents;
       if (typeof body.creditsCents === "number") world.creditsCents = body.creditsCents;
       if (typeof body.idleTimeoutMinutes === "number") {
+        const old = world.idleTimeoutMinutes;
         world.idleTimeoutMinutes = body.idleTimeoutMinutes;
+        appendAudit("Dana Reyes", "settings.idle", "Changed", {
+          old,
+          new: body.idleTimeoutMinutes,
+        });
       }
       if (typeof body.maxSessionMinutes === "number") {
         world.maxSessionMinutes = body.maxSessionMinutes;
@@ -598,6 +729,111 @@ export async function POST(req: Request) {
         });
       }
 
+      if (body.authAttempt) {
+        const kind = body.authAttempt.kind;
+        world.authAttempts[kind] += 1;
+        if (world.authAttempts[kind] > 5) {
+          appendAudit("system", `throttle.${kind}`, "Throttled");
+          return NextResponse.json(
+            { ok: false, error: "throttled", kind, attempts: world.authAttempts[kind] },
+            { status: 429 },
+          );
+        }
+        return NextResponse.json({
+          ok: true,
+          kind,
+          attempts: world.authAttempts[kind],
+        });
+      }
+
+      if (body.setMemoryEnrichment) {
+        const key = world.keys.find(
+          (k) => k.name === body.setMemoryEnrichment!.key || k.id === body.setMemoryEnrichment!.key,
+        );
+        if (key) {
+          key.memoryEnrichment = body.setMemoryEnrichment.enabled;
+          appendAudit("Dana Reyes", "key.memory_enrichment", body.setMemoryEnrichment.enabled ? "On" : "Off", {
+            key: key.name,
+          });
+        }
+      }
+
+      if (body.skillAction) {
+        let skill = world.skills.find((s) => s.id === body.skillAction!.id);
+        if (!skill) {
+          skill = {
+            id: body.skillAction.id,
+            name: body.skillAction.id,
+            stage: "proposed",
+          };
+          world.skills.push(skill);
+        }
+        switch (body.skillAction.action) {
+          case "prove":
+            skill.stage = "proving";
+            skill.evidence = ["unit", "integration", "adversarial", "trace", "review"];
+            break;
+          case "autoPromote":
+            skill.stage = "active";
+            skill.writing = false;
+            appendAudit("system", "skill.auto_promote", "Automatic promotion", { skillId: skill.id });
+            break;
+          case "retire":
+            skill.stage = "retired";
+            skill.retireReason = body.skillAction.reason ?? "owner request";
+            break;
+          case "reprove":
+            skill.stage = "proving";
+            skill.evidence = [];
+            break;
+          case "flagInjection":
+            skill.injectionFlagged = true;
+            skill.stage = "proposed";
+            break;
+          default:
+            break;
+        }
+      }
+
+      if (body.secondBrowserSession) {
+        const p = personByName(body.secondBrowserSession.person);
+        if (p) {
+          p.sessions.push({
+            id: newId("sess"),
+            device: "Firefox/Linux",
+            signedInAt: new Date().toISOString(),
+            lastActiveAt: new Date().toISOString(),
+            path: "/review",
+            ended: false,
+          });
+        }
+      }
+
+      if (body.keySpentToday) {
+        const key = world.keys.find((k) => k.name === body.keySpentToday!.name);
+        if (key) key.spentTodayCents = body.keySpentToday.cents;
+      }
+
+      if (body.personMutate) {
+        const p = personByName(body.personMutate.person);
+        if (p) {
+          if (typeof body.personMutate.canApproveContracts === "boolean") {
+            p.canApproveContracts = body.personMutate.canApproveContracts;
+          }
+          if (body.personMutate.groups) p.groups = body.personMutate.groups;
+          if (body.personMutate.notifications) {
+            p.notifications = { ...p.notifications, ...body.personMutate.notifications };
+          }
+          if (body.personMutate.timeZone) p.timeZone = body.personMutate.timeZone;
+          if (body.personMutate.appearance) p.appearance = body.personMutate.appearance;
+          if (body.personMutate.endSessionDevice) {
+            for (const s of p.sessions) {
+              if (s.device.includes(body.personMutate.endSessionDevice)) s.ended = true;
+            }
+          }
+        }
+      }
+
       recountReviewBadges();
       return NextResponse.json({
         ok: true,
@@ -609,6 +845,7 @@ export async function POST(req: Request) {
         webhookSigningSecret: world.webhookSigningSecret,
         firstRunStep: world.firstRunStep,
         orgDeleted: world.orgDeleted,
+        authAttempts: world.authAttempts,
       });
     }),
   );

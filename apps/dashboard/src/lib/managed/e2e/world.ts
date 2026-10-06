@@ -254,6 +254,8 @@ export type World = {
   orgArchive?: Record<string, unknown>;
   signedInUserId: string;
   lumenFreightDenied: boolean;
+  /** Sign-in / API key attempt counters for SEC-09 throttle witnesses. */
+  authAttempts: { signin: number; apikey: number };
 };
 
 function hashChain(prev: string, payload: string): string {
@@ -715,6 +717,7 @@ function seedWorld(): World {
     blockedCalls: [],
     signedInUserId: "user_dana",
     lumenFreightDenied: true,
+    authAttempts: { signin: 0, apikey: 0 },
   };
 }
 

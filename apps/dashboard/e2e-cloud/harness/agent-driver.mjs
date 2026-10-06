@@ -29,12 +29,17 @@ export async function openaiChat({
   return { status: res.status, body }
 }
 
-export async function mcpListTools({ key, baseUrl = `${localGateway}/api/e2e/mcp` }) {
+export async function mcpListTools({
+  key,
+  baseUrl = `${localGateway}/api/e2e/mcp`,
+  client,
+}) {
   const res = await fetch(`${baseUrl}/tools/list`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${key}`,
       'content-type': 'application/json',
+      ...(client ? { 'x-clawql-client': client } : {}),
     },
     body: JSON.stringify({}),
   })

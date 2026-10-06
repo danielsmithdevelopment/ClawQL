@@ -14,6 +14,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
       }
       const world = getWorld();
+      if (world.ipAllowlist && world.ipAllowlist.length > 0) {
+        const ip =
+          req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          req.headers.get("x-real-ip") ??
+          "127.0.0.1";
+        const okIp = world.ipAllowlist.some((rule) => {
+          if (rule === "10.0.0.0/8") return ip.startsWith("10.");
+          if (rule === "192.168.0.0/16") return ip.startsWith("192.168.");
+          return ip === rule;
+        });
+        if (!okIp) {
+          appendAudit("gateway", "ip.allowlist", "Refused — outside allowlist", { ip });
+          return NextResponse.json({ error: "access from outside refused", ip }, { status: 403 });
+        }
+      }
       if (world.gateUnreachable) {
         appendAudit("gateway", "tool_gate.unreachable", "Refused — fail closed");
         return NextResponse.json({ error: "tool-call gate unreachable" }, { status: 503 });

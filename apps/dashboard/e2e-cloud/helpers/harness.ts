@@ -49,12 +49,16 @@ export async function getCrm(contractId: string) {
 export async function approveReview(input: {
   requestId: string
   actor?: string
-  keyKind?: 'device-bound' | 'synced'
+  keyKind?: 'device-bound' | 'synced' | 'totp'
   pinVerified?: boolean
   approve?: boolean
   reason?: string
+  note?: string
   aaguid?: string
   signatureCounter?: number
+  cancel?: boolean
+  onlyWhatICanApprove?: boolean
+  signedPayload?: string
 }) {
   const res = await fetch(`${base()}/api/e2e/review/approve`, {
     method: 'POST',
@@ -159,7 +163,14 @@ export async function listEvents(after?: string) {
     ? `${base()}/api/e2e/events?after=${encodeURIComponent(after)}`
     : `${base()}/api/e2e/events`
   const res = await fetch(url)
-  return { status: res.status, body: await json<{ events: { id: string; type: string; data?: unknown }[] }>(res) }
+  return {
+    status: res.status,
+    body: await json<{
+      events: { id: string; type: string; data?: unknown; time?: string; test?: boolean; inbound?: boolean }[]
+      counts24h?: Record<string, number>
+      cursor?: string | null
+    }>(res),
+  }
 }
 
 export async function postInbound(input: {
@@ -252,6 +263,9 @@ export async function decisionCall(input: {
   answer?: string
   actor?: string
   questionType?: string
+  skip?: boolean
+  askTeammate?: string
+  question?: string
 }) {
   const res = await fetch(`${base()}/api/e2e/decision`, {
     method: 'POST',
@@ -294,6 +308,115 @@ export async function getWebhookDeliveries() {
       eventId: string | null
     }[]
   }>(res)
+}
+
+export async function waitForDeliveries(min = 1, attempts = 25) {
+  let deliveries: Awaited<ReturnType<typeof getWebhookDeliveries>>['deliveries'] = []
+  for (let i = 0; i < attempts; i++) {
+    const d = await getWebhookDeliveries()
+    deliveries = d.deliveries
+    if (deliveries.length >= min) break
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  return deliveries
+}
+
+/** Full harness witness snapshot (GET /api/e2e/control). */
+export async function getWitness() {
+  const res = await fetchRetry(`${base()}/api/e2e/control`)
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function listSubscriptions() {
+  const res = await fetch(`${base()}/api/e2e/subscriptions`)
+  return {
+    status: res.status,
+    body: await json<{ subscriptions: Record<string, unknown>[] }>(res),
+  }
+}
+
+export async function subscriptionAction(
+  action: 'pause' | 'resume' | 'create',
+  input: { id?: string; url?: string; events?: string[]; challengeOk?: boolean } = {},
+) {
+  const res = await fetch(`${base()}/api/e2e/subscriptions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action, ...input }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function redeliverEvent(redeliverId: string) {
+  return postEvents({ redeliverId })
+}
+
+export async function retryAllEvents() {
+  return postEvents({ retryAll: true })
+}
+
+export async function getSettings() {
+  const res = await fetch(`${base()}/api/e2e/settings`)
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function getDocuments() {
+  const res = await fetch(`${base()}/api/e2e/documents`)
+  return { status: res.status, body: await json<{ documents: unknown[] }>(res) }
+}
+
+export async function getInboundStats() {
+  const res = await fetch(`${base()}/api/e2e/inbound`)
+  return { status: res.status, body: await json<{ stats: Record<string, number> }>(res) }
+}
+
+export async function systemOne(input: { question?: string; text?: string }) {
+  const res = await fetch(`${base()}/api/e2e/v1/systemone`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function openaiChatWithIp(
+  input: {
+    key: string
+    messages: { role: string; content: string }[]
+    model?: string
+  },
+  ip: string,
+) {
+  const res = await fetch(`${base()}/api/e2e/v1/chat/completions`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${input.key}`,
+      'content-type': 'application/json',
+      'x-forwarded-for': ip,
+    },
+    body: JSON.stringify({
+      model: input.model ?? 'standard',
+      messages: input.messages,
+    }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function memoryGet(q: string, opts: Record<string, string> = {}) {
+  const params = new URLSearchParams({ q, ...opts })
+  const res = await fetch(`${base()}/api/e2e/memory?${params}`)
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function memoryPost(body: Record<string, unknown>, key?: string) {
+  const headers: Record<string, string> = { 'content-type': 'application/json' }
+  if (key) headers.authorization = `Bearer ${key}`
+  const res = await fetch(`${base()}/api/e2e/memory`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export { base as harnessBase, webhook as webhookBase }
