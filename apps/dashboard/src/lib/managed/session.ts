@@ -199,7 +199,7 @@ export function resolveManagedSessionSync(input: {
         if (envTruthy(env.CLAWQL_MANAGED_AUTH_MOCK) || env.NODE_ENV !== "production") {
           return Effect.succeed(MOCK_MANAGED_SESSION);
         }
-        return Effect.dieMessage(e.reason);
+        return Effect.die(new Error(e.reason));
       }),
     ),
   );
