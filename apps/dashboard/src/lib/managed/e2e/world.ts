@@ -759,15 +759,11 @@ export function appendAudit(
     outcome,
     prevHash: prev,
     hash,
-    meta,
+    meta: world.auditBroken ? { ...meta, segment: "verified-after-break" } : meta,
     hourlyRoot,
   };
   world.audit.push(entry);
   world.hourlyRoots[hour] = hourlyRoot;
-  if (world.auditBroken) {
-    // New entries after a break go to a verified segment marker
-    entry.meta = { ...meta, segment: "verified-after-break" };
-  }
   return entry;
 }
 

@@ -58,10 +58,7 @@ export const E2eHarnessLive = Layer.succeed(
     personByName: (name) => Effect.sync(() => personByName(name)),
     pushEvent: (type, payload, opts) => Effect.sync(() => pushEvent(type, payload, opts)),
     deliverEvent: (evt) =>
-      Effect.tryPromise({
-        try: () => deliverEventToSubscriptions(evt),
-        catch: () => undefined as void,
-      }),
+      Effect.promise(() => deliverEventToSubscriptions(evt).catch(() => undefined)),
     recountBadges: () => Effect.sync(() => recountReviewBadges()),
   }),
 );
