@@ -212,6 +212,343 @@ export const SKILLS: readonly SkillItem[] = [
   },
 ];
 
+export type ActiveSkillRow = {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly keyGroup: string;
+  readonly touches: "read" | "write";
+  readonly touchesLabel: string;
+  readonly runs7d: number;
+  readonly rereview: string;
+};
+
+export const SKILLS_ACTIVE: readonly ActiveSkillRow[] = [
+  {
+    id: "triage-ci-failure",
+    name: "triage-ci-failure",
+    description: "Finds the likely cause of a failed build",
+    keyGroup: "Engineering",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 63,
+    rereview: "Dec 4",
+  },
+  {
+    id: "dependency-bump-pr",
+    name: "dependency-bump-pr",
+    description: "Opens a pull request for safe version bumps",
+    keyGroup: "Engineering",
+    touches: "write",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 11,
+    rereview: "Nov 9",
+  },
+  {
+    id: "standup-digest",
+    name: "standup-digest",
+    description: "Posts a daily summary to Slack",
+    keyGroup: "Operations",
+    touches: "write",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 5,
+    rereview: "Nov 30",
+  },
+  {
+    id: "ticket-summary",
+    name: "ticket-summary",
+    description: "Summarizes a support thread for handoff",
+    keyGroup: "Support",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 412,
+    rereview: "Dec 11",
+  },
+  {
+    id: "nda-first-pass",
+    name: "nda-first-pass",
+    description: "Flags unusual terms in incoming NDAs",
+    keyGroup: "Legal",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 22,
+    rereview: "Jan 8",
+  },
+  {
+    id: "intake-msa",
+    name: "intake-msa",
+    description: "Normalizes MSA intake fields into the CRM",
+    keyGroup: "Legal",
+    touches: "write",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 18,
+    rereview: "Dec 20",
+  },
+  {
+    id: "clause-compare",
+    name: "clause-compare",
+    description: "Compares contract clauses against playbooks",
+    keyGroup: "Legal",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 41,
+    rereview: "Jan 2",
+  },
+  {
+    id: "refund-draft",
+    name: "refund-draft",
+    description: "Drafts a refund reply from dispute evidence",
+    keyGroup: "Support",
+    touches: "write",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 9,
+    rereview: "Nov 18",
+  },
+  {
+    id: "spend-alert",
+    name: "spend-alert",
+    description: "Flags unusual spend against team budgets",
+    keyGroup: "Operations",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 7,
+    rereview: "Dec 1",
+  },
+  {
+    id: "pr-test-gap",
+    name: "pr-test-gap",
+    description: "Lists files in a PR that lack test coverage",
+    keyGroup: "Engineering",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 28,
+    rereview: "Nov 22",
+  },
+  {
+    id: "vendor-status-check",
+    name: "vendor-status-check",
+    description: "Checks a vendor status page for incidents",
+    keyGroup: "Operations",
+    touches: "read",
+    touchesLabel: "Read only",
+    runs7d: 14,
+    rereview: "Dec 8",
+  },
+  {
+    id: "meeting-notes-crm",
+    name: "meeting-notes-crm",
+    description: "Files meeting notes against the matching CRM account",
+    keyGroup: "Support",
+    touches: "write",
+    touchesLabel: "Writes, with a mandate",
+    runs7d: 3,
+    rereview: "Jan 15",
+  },
+];
+
+export type ProposedSkill = {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly attribution: string;
+  readonly blocker?: string;
+  readonly blockerTone?: "neutral" | "warn" | "danger";
+  readonly canProve: boolean;
+  readonly altAction?: string;
+};
+
+export const SKILLS_PROPOSED: readonly ProposedSkill[] = [
+  {
+    id: "contract-redline-check",
+    name: "contract-redline-check",
+    description: "Compares a counterparty's redlines against your standard terms and lists what changed.",
+    attribution: "Proposed by legal-ops agent after 7 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "summarize-pr-risk",
+    name: "summarize-pr-risk",
+    description: "Rates a pull request's risk from the files it touches and its test coverage.",
+    attribution: "Proposed by release-agent after 9 similar sessions. Read only.",
+    canProve: true,
+  },
+  {
+    id: "stripe-dispute-summary",
+    name: "stripe-dispute-summary",
+    description: "Summarizes a payment dispute and the customer's history for the reply.",
+    attribution: "Proposed by support-bot after 3 similar sessions. Read only.",
+    blocker: "Needs 5 sessions of examples before proving can start",
+    blockerTone: "neutral",
+    canProve: false,
+  },
+  {
+    id: "linear-issue-sync",
+    name: "linear-issue-sync",
+    description: "Keeps support tickets and Linear issues in step.",
+    attribution: "Proposed by support-bot after 4 similar sessions. Writes, with a mandate.",
+    blocker: "Waiting on the Linear connection, now in Review",
+    blockerTone: "warn",
+    canProve: false,
+  },
+  {
+    id: "weekly-okr-rollup",
+    name: "weekly-okr-rollup",
+    description: "Rolls up team goals from a Notion workspace into a weekly note.",
+    attribution: "Proposed by research agent after 5 similar sessions. Read only.",
+    blocker: "Needs api.notion.com, which agents can't reach",
+    blockerTone: "danger",
+    canProve: false,
+    altAction: "Add Notion as a connection",
+  },
+];
+
+export type RetiredSkill = {
+  readonly id: string;
+  readonly name: string;
+  readonly keyGroup: string;
+  readonly reasonLabel: string;
+  readonly reasonTone: "warn" | "neutral" | "danger" | "ok";
+  readonly reasonDetail: string;
+  readonly when: string;
+  readonly nextStep: string;
+};
+
+export const SKILLS_RETIRED: readonly RetiredSkill[] = [
+  {
+    id: "invoice-auto-approve",
+    name: "invoice-auto-approve",
+    keyGroup: "Operations",
+    reasonLabel: "Drifted",
+    reasonTone: "warn",
+    reasonDetail:
+      "Tried to call payments.transfer, which it was never approved for. The call was blocked and the skill retired itself.",
+    when: "Sep 18, by ClawQL",
+    nextStep: "See the blocked call",
+  },
+  {
+    id: "ticket-auto-close",
+    name: "ticket-auto-close",
+    keyGroup: "Support",
+    reasonLabel: "Retired by a person",
+    reasonTone: "neutral",
+    reasonDetail: "“Customers kept reopening the tickets it closed.”",
+    when: "Aug 30, by Jordan Kim",
+    nextStep: "Prove again",
+  },
+  {
+    id: "slack-channel-cleanup",
+    name: "slack-channel-cleanup",
+    keyGroup: "Operations",
+    reasonLabel: "Re-review lapsed",
+    reasonTone: "warn",
+    reasonDetail: "Due for its 90-day re-review on Sep 1, and nobody re-approved it within 14 days.",
+    when: "Sep 15, by ClawQL",
+    nextStep: "Re-review",
+  },
+  {
+    id: "contract-summary",
+    name: "contract-summary",
+    keyGroup: "Legal",
+    reasonLabel: "Replaced",
+    reasonTone: "ok",
+    reasonDetail: "Superseded by clause-compare, which covers the same work more precisely.",
+    when: "Sep 2, by Dana Reyes",
+    nextStep: "Compare versions",
+  },
+];
+
+export type MemoryUpload = {
+  readonly id: string;
+  readonly file: string;
+  readonly meta: string;
+  readonly addedBy: string;
+  readonly pipeline: string;
+  readonly added: string;
+  readonly status: string;
+  readonly tone: "ok" | "warn" | "danger" | "neutral";
+  readonly source: "people" | "agents" | "connections";
+};
+
+export const MEMORY_UPLOADS: readonly MemoryUpload[] = [
+  {
+    id: "up_inv",
+    file: "Invoice 88213.pdf",
+    meta: "PDF, 3 pages, 180 KB",
+    addedBy: "Jordan Kim",
+    pipeline: "Invoices",
+    added: "10:04",
+    status: "Step 3 of 5",
+    tone: "neutral",
+    source: "people",
+  },
+  {
+    id: "up_globex",
+    file: "Globex renewal.pdf",
+    meta: "PDF, 14 pages, 1.1 MB",
+    addedBy: "Google Drive",
+    pipeline: "Contracts",
+    added: "10:02",
+    status: "1 field needs a person",
+    tone: "warn",
+    source: "connections",
+  },
+  {
+    id: "up_q3",
+    file: "Q3 vendor contract.pdf",
+    meta: "PDF, 22 pages, 2.4 MB",
+    addedBy: "docs-pipeline agent",
+    pipeline: "Contracts",
+    added: "09:41",
+    status: "Stored",
+    tone: "ok",
+    source: "agents",
+  },
+  {
+    id: "up_fwd",
+    file: "fwd-pricing.msg",
+    meta: "Outlook message, 420 KB",
+    addedBy: "Email",
+    pipeline: "Email attachments",
+    added: "08:50",
+    status: "Couldn't read",
+    tone: "danger",
+    source: "connections",
+  },
+  {
+    id: "up_board",
+    file: "Board deck Q3.pptx",
+    meta: "PowerPoint, 28 slides, 8.2 MB",
+    addedBy: "Dana Reyes",
+    pipeline: "General",
+    added: "Yesterday",
+    status: "Stored",
+    tone: "ok",
+    source: "people",
+  },
+  {
+    id: "up_nw",
+    file: "Northwind MSA Amendment 2.pdf",
+    meta: "PDF, 12 pages, 980 KB",
+    addedBy: "legal-ops agent",
+    pipeline: "Contracts",
+    added: "09:23",
+    status: "Stored",
+    tone: "ok",
+    source: "agents",
+  },
+  {
+    id: "up_sheet",
+    file: "Q3 spend workbook.xlsx",
+    meta: "Excel, 4 sheets, 640 KB",
+    addedBy: "Marcus Lee",
+    pipeline: "General",
+    added: "Oct 3",
+    status: "Stored",
+    tone: "ok",
+    source: "people",
+  },
+];
+
 export const MEMORY_RESULTS = [
   {
     id: "ct_4471",

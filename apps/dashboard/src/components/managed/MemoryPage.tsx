@@ -11,6 +11,7 @@ import {
   ERASURE_PREVIEW,
   MEMORY_FIELDS,
   MEMORY_RESULTS,
+  MEMORY_UPLOADS,
   ONTOLOGY_CONTRACT_FIELDS,
   ONTOLOGY_TYPES,
   PIPELINE_DETAIL,
@@ -20,6 +21,7 @@ import { cn } from '@/lib/utils'
 
 type Tab = 'explorer' | 'uploads' | 'pipelines' | 'ontology'
 type View = 'main' | 'erase-confirm' | 'erase-progress'
+type UploadFilter = 'all' | 'people' | 'agents' | 'connections'
 
 export function MemoryPage() {
   const [tab, setTab] = useState<Tab>('explorer')
@@ -28,6 +30,8 @@ export function MemoryPage() {
   const [selectedId, setSelectedId] = useState<string>(MEMORY_RESULTS[0]!.id)
   const [ontologyId, setOntologyId] = useState<string>(ONTOLOGY_TYPES[0]!.id)
   const [pipelineId, setPipelineId] = useState<string>(PIPELINE_DOCS[0]!.id)
+  const [uploadFilter, setUploadFilter] = useState<UploadFilter>('all')
+  const [uploadQuery, setUploadQuery] = useState('')
   const [eraseChecked, setEraseChecked] = useState(true)
   const [eraseReason, setEraseReason] = useState<string>(ERASURE_PREVIEW.reason)
 
@@ -129,7 +133,9 @@ export function MemoryPage() {
             ? ['Memory & documents', 'Ontology']
             : tab === 'pipelines'
               ? ['Memory & documents', 'Pipelines']
-              : ['Memory & documents']
+              : tab === 'uploads'
+                ? ['Memory & documents', 'Uploads']
+                : ['Memory & documents']
         }
         title="Memory & documents"
         description={
@@ -137,7 +143,9 @@ export function MemoryPage() {
             ? 'The ontology gives your data types and fields, so agents can filter and query it exactly instead of guessing from text.'
             : tab === 'pipelines'
               ? 'Every document goes through a pipeline: converted, read into typed fields, redacted, then stored.'
-              : "What your agents remember and the documents they've read, with where every fact came from."
+              : tab === 'uploads'
+                ? 'Every document your team or your agents have added, and where each one is in its pipeline.'
+                : "What your agents remember and the documents they've read, with where every fact came from."
         }
         actions={
           tab === 'ontology' ? (
@@ -174,9 +182,12 @@ export function MemoryPage() {
         />
 
         {tab === 'uploads' ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">
-            Document upload history fixture — wire the documents pipeline next.
-          </div>
+          <UploadsPanel
+            filter={uploadFilter}
+            onFilter={setUploadFilter}
+            query={uploadQuery}
+            onQuery={setUploadQuery}
+          />
         ) : null}
 
         {tab === 'ontology' ? (
@@ -609,5 +620,120 @@ export function MemoryPage() {
         </div>
       ) : null}
     </>
+  )
+}
+
+function UploadsPanel({
+  filter,
+  onFilter,
+  query,
+  onQuery,
+}: {
+  filter: UploadFilter
+  onFilter: (f: UploadFilter) => void
+  query: string
+  onQuery: (q: string) => void
+}) {
+  const rows = MEMORY_UPLOADS.filter((row) => {
+    if (filter !== 'all' && row.source !== filter) return false
+    if (!query.trim()) return true
+    return row.file.toLowerCase().includes(query.trim().toLowerCase())
+  })
+
+  return (
+    <div className="space-y-4" data-testid="memory-uploads">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-6 py-10 text-center">
+        <div className="mb-2 flex size-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200">
+          ↑
+        </div>
+        <p className="text-sm font-medium text-slate-800">Drop files here, or choose files</p>
+        <p className="mt-1 max-w-md text-xs text-slate-500">
+          PDF, Word, Excel, PowerPoint, images and .eml email. Personal data is redacted before anything is stored.
+        </p>
+        <Button type="button" variant="outline" size="sm" className="mt-4">
+          Choose files
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-slate-200 bg-white p-0.5 text-xs">
+          {(
+            [
+              ['all', 'All'],
+              ['people', 'From people'],
+              ['agents', 'From agents'],
+              ['connections', 'From connections'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onFilter(id)}
+              className={cn(
+                'rounded-md px-2.5 py-1',
+                filter === id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          placeholder="Search file names"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+          className="h-9 min-w-[14rem] rounded-lg border border-slate-200 bg-white px-3 text-sm"
+        />
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">File</th>
+              <th className="px-4 py-3 font-medium">Added by</th>
+              <th className="px-4 py-3 font-medium">Pipeline</th>
+              <th className="px-4 py-3 font-medium">Added</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((row) => (
+              <tr key={row.id} className="hover:bg-slate-50/80">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-slate-900">{row.file}</p>
+                  <p className="text-xs text-slate-500">{row.meta}</p>
+                </td>
+                <td className="px-4 py-3 text-slate-600">{row.addedBy}</td>
+                <td className="px-4 py-3 text-slate-600">{row.pipeline}</td>
+                <td className="px-4 py-3 text-slate-600">{row.added}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={cn(
+                      'inline-block rounded-md px-2 py-0.5 text-xs font-medium',
+                      row.tone === 'ok' && 'bg-emerald-100 text-emerald-800',
+                      row.tone === 'warn' && 'bg-amber-100 text-amber-900',
+                      row.tone === 'danger' && 'bg-rose-100 text-rose-800',
+                      row.tone === 'neutral' && 'bg-slate-200 text-slate-700',
+                    )}
+                  >
+                    {row.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <p>
+          Showing {rows.length} of 1,284
+        </p>
+        <button type="button" className="font-medium text-sky-700 hover:underline">
+          Show more
+        </button>
+      </div>
+    </div>
   )
 }
