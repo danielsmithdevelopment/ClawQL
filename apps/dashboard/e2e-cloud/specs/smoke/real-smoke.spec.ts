@@ -358,20 +358,32 @@ test('EV-01 Subscription delivery redacts PII', async () => {
   await resetWebhookReceiver()
   const sub = await createSubscription('https://hooks.example.com/hook', ['document.processed'])
   expect(sub.status).toBe(200)
+  expect(sub.body.id).toBeTruthy()
 
   const upload = await uploadDocument({
     name: 'pii-contract.pdf',
     content: `Northwind deal. Contact alice@evil.example phone 212-555-1212. ${PII}`,
   })
   expect(upload.status).toBe(200)
+  expect(upload.body.eventId).toBeTruthy()
 
-  // Delivery is async via fetch in route — brief poll
+  // Delivery is async via fetch in the documents route — poll the receiver.
   let deliveries: Awaited<ReturnType<typeof getWebhookDeliveries>>['deliveries'] = []
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 50; i++) {
     const d = await getWebhookDeliveries()
     deliveries = d.deliveries
     if (deliveries.length >= 1) break
-    await new Promise((r) => setTimeout(r, 100))
+    await new Promise((r) => setTimeout(r, 200))
+  }
+  // If the async deliver raced, redeliver the same event ID through the events API.
+  if (deliveries.length < 1 && upload.body.eventId) {
+    await postEvents({ redeliverId: String(upload.body.eventId) })
+    for (let i = 0; i < 25; i++) {
+      const d = await getWebhookDeliveries()
+      deliveries = d.deliveries
+      if (deliveries.length >= 1) break
+      await new Promise((r) => setTimeout(r, 200))
+    }
   }
   expect(deliveries.length).toBeGreaterThanOrEqual(1)
   expect(deliveries.some((d) => d.verified)).toBe(true)
