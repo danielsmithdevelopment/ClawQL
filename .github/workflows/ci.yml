@@ -528,7 +528,7 @@ jobs:
             -e CLAWQL_CONSOLE_SURFACE=managed \
             clawql-dashboard:ci-smoke
           # Wait for Next to listen
-          for i in $(seq 1 60); do
+          for _ in $(seq 1 60); do
             if curl -sf -o /dev/null "http://127.0.0.1:13040/" || curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040/" | grep -qE '^[2345]'; then
               break
             fi
