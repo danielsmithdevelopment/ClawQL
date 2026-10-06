@@ -65,7 +65,7 @@
     "js-tiktoken": "^1.0.21",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0",
-    "zod": "^3.24.0"
+    "zod": "^4.6.5"
   },
   "peerDependencies": {
     "clawql-inference": "0.1.0"

@@ -190,7 +190,7 @@
     "swagger2openapi": "^7.0.8",
     "undici": "6.28.1",
     "yaml": "^2.9.0",
-    "zod": "4.3.6"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@effect/language-service": "^0.87.3",

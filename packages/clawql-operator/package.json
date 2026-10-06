@@ -40,7 +40,7 @@
     "clawql-api": "0.1.0",
     "effect": "4.0.0",
     "yaml": "^2.9.0",
-    "zod": "4.3.6"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
