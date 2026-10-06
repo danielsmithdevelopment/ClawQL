@@ -233,15 +233,11 @@ export function attachProvisioningRoutes(
                       new Error("VerifiedCheckoutSessionUser proof failed")
                     );
                   }
-                  return yield* createCheckoutSessionWithVerifiedUserEffect(
-                    namedUser,
-                    proof,
-                    {
-                      ...checkout,
-                      clawqlUserId: identity.user.userId,
-                      env,
-                    }
-                  );
+                  return yield* createCheckoutSessionWithVerifiedUserEffect(namedUser, proof, {
+                    ...checkout,
+                    clawqlUserId: identity.user.userId,
+                    env,
+                  });
                 })
               );
             }),
