@@ -132,7 +132,7 @@ test('UX-07 Time zone change is stored for the person', async ({ page }) => {
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'profile.timezone')).toBe(true)
   await page.goto('/profile')
-  await expect(page.getByText(/Time zone/i)).toBeVisible()
+  await expect(page.getByText('Time zone', { exact: true })).toBeVisible()
 })
 
 test('UX-08 Appearance choice is kept', async ({ page }) => {
