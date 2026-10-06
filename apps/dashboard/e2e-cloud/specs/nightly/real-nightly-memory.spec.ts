@@ -4,49 +4,18 @@
  */
 import { test, expect } from '@playwright/test'
 
-import { KEYS, mcpCallTool, mcpListTools, openaiChat } from '../../harness/agent-driver.mjs'
-import { openManagedConsole } from '../../helpers/console'
+import { KEYS } from '../../harness/agent-driver.mjs'
 import {
-  approveReview,
   control,
-  createSubscription,
-  decisionCall,
   eraseSubject,
-  fetchAsOrg,
   getAudit,
-  getCrm,
   getDocuments,
-  getInboundStats,
-  getOrg,
-  getSettings,
-  getUsage,
-  getWebhookDeliveries,
-  keysApi,
-  listEvents,
-  listReview,
-  listSubscriptions,
   memoryGet,
   memoryPost,
   memorySearch,
-  openaiChatWithIp,
-  postEvents,
-  postInbound,
-  redeliverEvent,
-  resetWebhookReceiver,
   resetWorld,
-  retryAllEvents,
-  searchErased,
-  setWebhookMode,
-  settingsMutate,
-  stripeCheckout,
-  subscriptionAction,
-  systemOne,
   uploadDocument,
-  waitForDeliveries,
 } from '../../helpers/harness'
-
-const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
-const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
 
 test.beforeEach(async () => {
   await resetWorld()
@@ -90,40 +59,8 @@ test('MEM-04 Low-confidence field verified under Dana', async () => {
   void confirm
 })
 
-test('MEM-05 Upload PII redacts email/phone/bank in stored text, search, explorer, events', async ({
-  page,
-}) => {
-  const upload = await uploadDocument({
-    name: 'pii.pdf',
-    content: PII,
-  })
-  expect(upload.status).toBe(200)
-  const text = String((upload.body.fields as { text?: string })?.text ?? '')
-  expect(text).toContain('REDACTED_EMAIL')
-  expect(text).toContain('REDACTED_PHONE')
-  expect(text).toMatch(/REDACTED_(BANK|CARD)/)
-  expect(text).not.toContain('jane.okafor@example.com')
-  expect(text).not.toContain('415-555-0199')
-
-  const docs = await getDocuments()
-  const stored = JSON.stringify(docs.body.documents)
-  expect(stored).not.toContain('jane.okafor@example.com')
-  expect(stored).toContain('REDACTED_EMAIL')
-
-  const mem = await memoryGet('okafor')
-  const explorer = JSON.stringify(mem.body.explorer ?? mem.body.results ?? [])
-  expect(explorer).not.toContain('jane.okafor@example.com')
-  expect(explorer).not.toContain('415-555-0199')
-
-  const events = await listEvents()
-  const blob = JSON.stringify(events.body.events)
-  expect(blob).not.toContain('jane.okafor@example.com')
-  expect(blob).not.toContain('415-555-0199')
-
-  await openManagedConsole(page)
-  await page.goto('/memory')
-  await expect(page.getByTestId('memory-tab-explorer')).toBeVisible()
-})
+// MEM-05 / MEM-12 / MEM-13 are Smoke catalog IDs — covered only in real-smoke.spec.ts
+// (do not double-count them in Nightly).
 
 test('MEM-06 Ask cites sources user can see', async () => {
   const mem = await memoryGet('renew')
@@ -175,50 +112,6 @@ test('MEM-11 SQL read ok, write refused', async () => {
   expect(Array.isArray(read.body.rows)).toBe(true)
   const write = await memoryGet('', { sql: 'delete from notes' })
   expect(write.status).toBe(403)
-})
-
-test('MEM-12 Erase Jane: preview confirm key, job + certificate', async () => {
-  const erase = await eraseSubject({
-    subject: 'Jane Okafor',
-    actor: 'Dana Reyes',
-    pinVerified: true,
-  })
-  expect(erase.status).toBe(200)
-  const job = erase.body.job as { certificateReady?: boolean; steps?: string[]; done?: number; total?: number }
-  expect(job.certificateReady).toBe(true)
-  expect((job.steps ?? []).length).toBeGreaterThanOrEqual(7)
-  expect(job.done).toBe(job.total)
-  const listed = await searchErased('Jane')
-  expect(listed.body.results).toEqual([])
-  expect(((listed.body as { jobs?: unknown[] }).jobs ?? []).length).toBeGreaterThan(0)
-  const audit = await getAudit()
-  expect(audit.entries.some((e) => e.action === 'erasure.complete')).toBe(true)
-})
-
-test('MEM-13 After erase, Jane is gone from explorer, Ask, SQL, sessions, training export', async () => {
-  await eraseSubject({ subject: 'Jane Okafor', pinVerified: true })
-  const explorer = await memoryGet('Jane')
-  expect(explorer.body.results).toEqual([])
-  expect(explorer.body.explorer).toEqual([])
-  expect((explorer.body.ask as { answer?: string })?.answer).toBe('')
-
-  const sql = await memoryGet('Jane', { sql: 'select * from notes' })
-  const rows = JSON.stringify(sql.body.rows ?? sql.body.results ?? [])
-  expect(rows.toLowerCase()).not.toContain('jane')
-
-  const search = await memorySearch('Jane')
-  expect(search.body.results).toEqual([])
-
-  const erased = await searchErased('jane.okafor@example.com')
-  expect(erased.body.results).toEqual([])
-
-  const events = await listEvents()
-  expect(JSON.stringify(events.body.events)).not.toContain('jane.okafor@example.com')
-
-  const exp = ((explorer.body.trainingExports as { subjects: string[] }[]) ?? []).find(
-    (e) => e.subjects?.includes('Jane Okafor'),
-  )
-  expect(exp).toBeFalsy()
 })
 
 test('MEM-14 Erase export holds hashed ref only', async () => {

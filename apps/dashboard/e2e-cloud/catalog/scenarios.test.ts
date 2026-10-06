@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { assertCatalogSpecCoverage, catalogSpecCoverageReport } from './coverage'
 import {
   assertCatalogComplete,
   CLOUD_E2E_SCENARIOS,
+  manualScenarios,
+  nightlyScenarios,
   smokeScenarios,
 } from './scenarios'
 
@@ -12,7 +15,15 @@ describe('CLOUD_E2E_SCENARIOS catalog', () => {
     expect(CLOUD_E2E_SCENARIOS).toHaveLength(197)
   })
 
-  it('has exactly 37 Smoke scenarios', () => {
+  it('has exactly 37 Smoke, 158 Nightly, 2 Manual', () => {
     expect(smokeScenarios()).toHaveLength(37)
+    expect(nightlyScenarios()).toHaveLength(158)
+    expect(manualScenarios()).toHaveLength(2)
+  })
+
+  it('maps 1:1 onto Playwright specs (no missing, no double-count, correct tier)', () => {
+    const report = catalogSpecCoverageReport()
+    expect(report, JSON.stringify(report, null, 2)).toMatchObject({ ok: true })
+    expect(() => assertCatalogSpecCoverage()).not.toThrow()
   })
 })

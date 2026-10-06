@@ -76,6 +76,11 @@ COPY --from=deps /app/dashboard/node_modules ./node_modules
 COPY --from=clawql-builder /app/packages /app/packages
 COPY --from=clawql-builder /app/node_modules /app/node_modules
 COPY apps/dashboard/ .
+# Compile god-mode harness out of production images — never ship /api/e2e/*.
+# Arrange/fault routes stay in the git tree for local Playwright (CLAWQL_E2E_HARNESS=1).
+RUN rm -rf src/app/api/e2e \
+  && test ! -d src/app/api/e2e \
+  && echo "stripped /api/e2e from production build"
 # prebuild generators walk up to `/app` (`.env.example` copied there).
 COPY .env.example /app/.env.example
 COPY package.json /app/package.json
