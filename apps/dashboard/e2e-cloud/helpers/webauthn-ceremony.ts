@@ -10,7 +10,18 @@ import {
   type VirtualAuthenticatorOptions,
 } from './webauthn-cdp'
 
-const base = () => process.env.CLAWQL_CLOUD_E2E_BASE_URL ?? 'http://127.0.0.1:3040'
+/** WebAuthn requires a hostname (not 127.0.0.1); rewrite loopback for ceremonies. */
+const base = () => {
+  const raw = process.env.CLAWQL_CLOUD_E2E_BASE_URL ?? 'http://127.0.0.1:3040'
+  return raw.replace('://127.0.0.1', '://localhost').replace('://[::1]', '://localhost')
+}
+
+async function ensureLocalhostPage(page: Page): Promise<void> {
+  const target = base()
+  if (!page.url().startsWith(target)) {
+    await page.goto(`${target}/profile`)
+  }
+}
 
 export type RegisterViaCdpInput = {
   page: Page
@@ -54,6 +65,7 @@ export async function registerSecurityKeyViaCdp(input: RegisterViaCdpInput): Pro
   body: Record<string, unknown>
 }> {
   const userVerified = input.userVerified !== false
+  await ensureLocalhostPage(input.page)
   const { cdp, authenticatorId } = await attachVirtualAuthenticator(
     input.page,
     authenticatorOptsForKind(input.kind, userVerified),
@@ -140,6 +152,7 @@ export async function issueApiKeyViaCdpStepUp(input: {
   userVerified?: boolean
 }): Promise<{ status: number; body: Record<string, unknown> }> {
   const userVerified = input.userVerified !== false
+  await ensureLocalhostPage(input.page)
   const { cdp, authenticatorId } = await attachVirtualAuthenticator(input.page, {
     protocol: 'ctap2',
     transport: 'usb',

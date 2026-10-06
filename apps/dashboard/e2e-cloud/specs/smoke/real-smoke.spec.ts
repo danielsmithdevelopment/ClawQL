@@ -39,6 +39,7 @@ import {
   uploadDocument,
   waitForServer,
 } from '../../helpers/harness'
+import { registerSecurityKeyViaCdp } from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND_ARGS = { contract: 'northwind', annualValue: 52000 } as const
 const PII =
@@ -97,7 +98,6 @@ test('SI-01 Okta sign-in — Home, no password', async ({ page }) => {
 test('KEY-01 Register device-bound key shows Can approve', async ({ page }) => {
   // Arrange + ceremony via CDP virtual authenticator (not keyKind façade as Pass-when).
   await page.goto('/profile')
-  const { registerSecurityKeyViaCdp } = await import('../../helpers/webauthn-ceremony')
   const reg = await registerSecurityKeyViaCdp({
     page,
     person: 'Dana Reyes',

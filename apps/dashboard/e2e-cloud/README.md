@@ -32,7 +32,7 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 
 | Area | Approach |
 |---|---|
-| WebAuthn | Playwright + Chrome DevTools Protocol virtual authenticator (`helpers/webauthn-cdp.ts`) |
+| WebAuthn | Playwright + CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Ceremonies use `localhost` (not `127.0.0.1`) because browsers reject IP rpIds. KEY-01/02/07 + SI-02 migrated; more KEY/SI follow. |
 | Stripe | Test-mode keys + Stripe CLI webhook forward (drop checkout façade) |
 | Okta | Free Okta developer org or Keycloak in Compose |
 | Multi-instance | Two gateway replicas + NATS in Docker Compose; kill real processes |

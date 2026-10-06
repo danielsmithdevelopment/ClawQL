@@ -13,12 +13,19 @@ import { appendAudit, getWorld, newId, personByName } from "@/lib/managed/e2e/wo
 export type RegisterKind = "device-bound" | "synced";
 
 function rpIdFromRequest(req: Request): string {
-  // WebAuthn rpId must equal the page's effective domain (127.0.0.1 ≠ localhost).
-  return new URL(req.url).hostname;
+  // Browsers reject IP literals as WebAuthn rpId; map loopback → localhost.
+  const host = new URL(req.url).hostname;
+  return host === "127.0.0.1" || host === "::1" ? "localhost" : host;
 }
 
 function originFromRequest(req: Request): string {
   const url = new URL(req.url);
+  const host = url.hostname === "127.0.0.1" || url.hostname === "::1" ? "localhost" : url.host;
+  // Preserve non-default ports when rewriting loopback → localhost.
+  if (host === "localhost" && url.port && url.port !== "80" && url.port !== "443") {
+    return `${url.protocol}//localhost:${url.port}`;
+  }
+  if (host === "localhost") return `${url.protocol}//localhost${url.port ? `:${url.port}` : ""}`;
   return `${url.protocol}//${url.host}`;
 }
 
@@ -131,7 +138,7 @@ export function postRegisterVerify(req: Request): Effect.Effect<NextResponse, un
       },
     ).pipe(
       Effect.map((v) => ({ ok: true as const, v })),
-      Effect.catchAll((err) =>
+      Effect.catch((err) =>
         Effect.succeed({
           ok: false as const,
           err: err instanceof Error ? err : new Error(String(err)),
