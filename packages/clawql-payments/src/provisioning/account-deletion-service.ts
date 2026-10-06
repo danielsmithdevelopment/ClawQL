@@ -7,7 +7,8 @@
 import { createHash } from "node:crypto";
 import { IdentityStoreService, IssuedApiKeyStoreService } from "clawql-auth";
 import { Context, Data, Effect, Layer } from "effect";
-import { memoryEraseProgram } from "clawql-memory/erase/erase";
+import { name, PrincipalId, VaultPath } from "clawql-gdp";
+import { eraseAuthorizedEffect, memoryEraseProgram } from "clawql-memory/erase/erase";
 import { getObsidianVaultPath } from "clawql-memory/vault/config";
 import { listVaultMarkdownRelPathsEffect } from "clawql-memory/vault/slug-index";
 import { SupabaseAuthService } from "clawql-supabase";
@@ -309,10 +310,25 @@ export function accountDeletionLiveLayer(): Layer.Layer<
           for (const rel of paths) {
             const hit = needles.some((n) => rel.includes(n));
             if (!hit) continue;
-            const erased = yield* memoryEraseProgram({
-              path: rel,
-              correlationId: job.correlationId,
-            });
+            const principalId = `operator:account-deletion:${job.clawqlUserId}`;
+            const erased = yield* name(
+              PrincipalId(principalId),
+              VaultPath(rel),
+              (principal, path) =>
+                Effect.gen(function* () {
+                  const proof = yield* eraseAuthorizedEffect(principal, path, {
+                    principalId,
+                    vaultPath: rel,
+                  });
+                  if (!proof) {
+                    return { ok: false as const };
+                  }
+                  return yield* memoryEraseProgram(principal, path, proof, {
+                    path: rel,
+                    correlationId: job.correlationId,
+                  });
+                })
+            );
             if (erased.ok) vaultNotesErased += 1;
           }
           const completedAt = yield* nowIsoEffect();
@@ -436,7 +452,13 @@ export function accountDeletionLiveLayer(): Layer.Layer<
 
       const snapshotTargets = (userId: string) =>
         Effect.gen(function* () {
-          const user = yield* identities.getByUserId(userId);
+          const user = yield* identities
+            .getByUserId(userId)
+            .pipe(
+              Effect.mapError(
+                (cause) => new AccountDeletionError({ reason: "failed to load ClawQL user", cause })
+              )
+            );
           if (!user) {
             return yield* Effect.fail(new AccountDeletionError({ reason: "unknown ClawQL user" }));
           }

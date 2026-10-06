@@ -205,7 +205,8 @@ export function attachProvisioningRoutes(
       }
       try {
         // Never trust client-supplied supabaseUserId — bind only via verified JWT + gdp-ts proof.
-        const { supabaseUserId: _ignored, ...checkout } = parsed;
+        // parseCheckoutSessionBody already drops those client fields.
+        const checkout = parsed;
         const supabaseOn = Effect.runSync(supabaseSelfServeCheckoutEnabledEffect(env));
         let session;
         if (supabaseOn) {
