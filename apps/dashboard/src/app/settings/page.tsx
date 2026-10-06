@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { SettingsPage } from '@/components/managed/SettingsPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function SettingsRoute() {
+export default function SettingsPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Settings"
-      description="Org-wide rules. Every change here is recorded in the audit log."
-    />
-  )
+  return <SettingsPage />
 }

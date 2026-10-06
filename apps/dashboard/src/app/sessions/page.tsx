@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { SessionsPage } from '@/components/managed/SessionsPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function SessionsRoute() {
+export default function SessionsPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Sessions"
-      description="Live and recent agent sessions across your org — fixture shell for now."
-    />
-  )
+  return <SessionsPage />
 }

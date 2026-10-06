@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { MemoryPage } from '@/components/managed/MemoryPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function MemoryRoute() {
+export default function MemoryPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Memory & documents"
-      description="What your agents remember and the documents they've read, with where every fact came from."
-    />
-  )
+  return <MemoryPage />
 }

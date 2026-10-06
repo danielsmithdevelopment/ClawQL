@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { ReviewPage } from '@/components/managed/ReviewPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function ReviewRoute() {
+export default function ReviewPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Review"
-      description="Everything waiting on a person: changes, sources, decisions, and skills ready to promote."
-    />
-  )
+  return <ReviewPage />
 }

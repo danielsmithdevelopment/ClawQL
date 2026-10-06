@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { AuditPage } from '@/components/managed/AuditPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function AuditRoute() {
+export default function AuditPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Audit"
-      description="Every action through ClawQL, written once and chained, so anyone can check that nothing was changed or removed."
-    />
-  )
+  return <AuditPage />
 }

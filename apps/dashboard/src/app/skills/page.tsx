@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { SkillsPage } from '@/components/managed/SkillsPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function SkillsRoute() {
+export default function SkillsPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Skills"
-      description="Reusable procedures your agents have learned or your team has written."
-    />
-  )
+  return <SkillsPage />
 }

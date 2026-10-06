@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { GatewayPage } from '@/components/managed/GatewayPage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function GatewayRoute() {
+export default function GatewayPageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Gateway"
-      description="One endpoint for your agents: models, tools and decisions, with the same identity, policy and audit everywhere."
-    />
-  )
+  return <GatewayPage />
 }

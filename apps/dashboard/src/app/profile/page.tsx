@@ -1,12 +1,7 @@
-import { StubPage } from '@/components/managed/StubPage'
+import { ProfilePage } from '@/components/managed/ProfilePage'
 import { requireManagedConsole } from '@/lib/managed/require-managed'
 
-export default function ProfileRoute() {
+export default function ProfilePageRoute() {
   requireManagedConsole()
-  return (
-    <StubPage
-      title="Your profile"
-      description="Your security keys, notification preferences, and active console sessions."
-    />
-  )
+  return <ProfilePage />
 }

@@ -89,7 +89,7 @@ cd apps/dashboard
 CLAWQL_CONSOLE_SURFACE=managed CLAWQL_MANAGED_AUTH_MOCK=1 npm run dev
 ```
 
-Open [http://localhost:3040](http://localhost:3040). Implemented first slice: **Home**, **Connections & keys** (connections list + keys + create-key modal), **Usage & billing**. Other nav items are stubbed chrome. Fixture data is Acme Robotics — replace with live CPC / gateway APIs next.
+Open [http://localhost:3040](http://localhost:3040). Full mockup chrome is wired: **Home**, **Sessions**, **Review**, **Gateway**, **Automations**, **Skills**, **Memory & documents**, **Connections & keys**, **Audit**, **Team**, **Usage & billing**, **Settings**, **Profile**. Fixture data is Acme Robotics — replace with live CPC / gateway APIs next.
 | `OPENCLAW_CHAT_BRIDGE_PORT`          | Bridge listen port (default **8787**).                                                                                                                                                                     |
 | `CLAWQL_OPENCLAW_AGENT_ID`           | `openclaw agent --agent` id (default **main**).                                                                                                                                                            |
 | `OPENCLAW_AGENT_TIMEOUT_SEC`         | Per-message CLI timeout in seconds (default **120**).                                                                                                                                                      |

@@ -22,20 +22,20 @@ export type ManagedNavItem = {
 
 export const MANAGED_PRIMARY_NAV: readonly ManagedNavItem[] = [
   { href: "/", label: "Home", implemented: true },
-  { href: "/sessions", label: "Sessions", implemented: false },
-  { href: "/review", label: "Review", badge: 3, implemented: false },
-  { href: "/gateway", label: "Gateway", implemented: false },
-  { href: "/automations", label: "Automations", implemented: false },
-  { href: "/skills", label: "Skills", implemented: false },
-  { href: "/memory", label: "Memory & documents", implemented: false },
+  { href: "/sessions", label: "Sessions", implemented: true },
+  { href: "/review", label: "Review", badge: 4, implemented: true },
+  { href: "/gateway", label: "Gateway", implemented: true },
+  { href: "/automations", label: "Automations", implemented: true },
+  { href: "/skills", label: "Skills", implemented: true },
+  { href: "/memory", label: "Memory & documents", implemented: true },
 ];
 
 export const MANAGED_SECONDARY_NAV: readonly ManagedNavItem[] = [
   { href: "/connections", label: "Connections & keys", implemented: true },
-  { href: "/audit", label: "Audit", implemented: false },
-  { href: "/team", label: "Team", implemented: false },
+  { href: "/audit", label: "Audit", implemented: true },
+  { href: "/team", label: "Team", implemented: true },
   { href: "/usage", label: "Usage & billing", implemented: true },
-  { href: "/settings", label: "Settings", implemented: false },
+  { href: "/settings", label: "Settings", implemented: true },
 ];
 
 export function isManagedNavActive(pathname: string, href: ManagedNavHref): boolean {
