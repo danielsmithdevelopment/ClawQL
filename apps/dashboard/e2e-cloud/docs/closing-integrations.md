@@ -4,13 +4,14 @@ Only **phone NFC** (REV-13, UX-09) is truly impossible in CI. Everything else be
 
 ## WebAuthn (KEY-*, SI-*)
 
-Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts`:
+Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helpers/webauthn-ceremony.ts`:
 
-- UV on/off for PIN/fingerprint refusals
-- Synced vs device-bound (resident key / transport)
-- Preload credentials with a chosen `signCount` for cloned-key (KEY-11)
+- UV on/off for PIN/fingerprint refusals (`issueApiKeyViaCdpStepUp`)
+- Synced vs device-bound registration (`registerSecurityKeyViaCdp`)
+- Preload credentials with a chosen `signCount` for cloned-key (KEY-11 — still migrating)
 
-Migrate KEY/SI tests off `pinVerified` / `keyKind` flags as each Pass-when is rewritten.
+**Migrated Pass-when (CDP + `/audit` + Profile UI):** KEY-01, KEY-02, KEY-07, SI-02.  
+Remaining KEY/SI still use `pinVerified` / `keyKind` arrange flags — rewrite as each witness is ported.
 
 ## Stripe (SU-*, ADM-11/12)
 

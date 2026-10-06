@@ -44,6 +44,10 @@ import {
   uploadDocument,
   waitForDeliveries,
 } from '../../helpers/harness'
+import {
+  issueApiKeyViaCdpStepUp,
+  registerSecurityKeyViaCdp,
+} from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
 const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
@@ -53,11 +57,26 @@ test.beforeEach(async () => {
 })
 
 test('KEY-02 Register synced passkey shows Sign-in only', async ({ page }) => {
-  const reg = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'synced', name: 'iCloud passkey' })
-  expect(reg.status).toBe(200)
-  expect(reg.body.status).toBe('Sign-in only')
   await page.goto('/profile')
-  await expect(page.getByText(/Sign-in only/i).first()).toBeVisible()
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'synced',
+    label: 'iCloud passkey',
+  })
+  expect(reg.status).toBe(200)
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'security_key.register' && e.outcome === 'Sign-in only',
+    ),
+  ).toBe(true)
+
+  await page.reload()
+  await expect(
+    page.locator('[data-testid="profile-security-key"][data-key-label="iCloud passkey"]'),
+  ).toHaveAttribute('data-key-badge', 'Sign-in only')
 })
 
 test('KEY-03 Marcus needs 2; Remind notifies', async () => {
@@ -112,18 +131,23 @@ test('KEY-06 Regenerated recovery codes reject old code', async () => {
   expect(reuse.status).toBe(403)
 })
 
-test('KEY-07 Issue without user verification creates no key', async () => {
+test('KEY-07 Issue without user verification creates no key', async ({ page }) => {
   await control({ registerSecurityKeys: { person: 'Dana Reyes', count: 2 } })
-  const before = ((await keysApi()).body.keys as unknown[]).length
-  const issued = await keysApi({
-    action: 'issue',
+  await page.goto('/profile')
+  const issued = await issueApiKeyViaCdpStepUp({
+    page,
     name: 'no-uv-key',
-    pinVerified: false,
-    userVerification: false,
+    userVerified: false,
   })
   expect(issued.status).toBe(403)
-  const after = ((await keysApi()).body.keys as unknown[]).length
-  expect(after).toBe(before)
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'key.issue' && /needs PIN or fingerprint/i.test(e.outcome),
+    ),
+  ).toBe(true)
+  expect(audit.entries.some((e) => e.action === 'key.issue' && e.outcome === 'Issued')).toBe(false)
 })
 
 test('KEY-08 Cancel step-up at key prompt — nothing changes', async () => {

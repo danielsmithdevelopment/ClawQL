@@ -80,6 +80,19 @@ export type E2eSecurityKey = {
   aaguid: string;
   signatureCounter: number;
   revoked: boolean;
+  /** WebAuthn credential id (base64url) when registered via CDP ceremony. */
+  credentialId?: string;
+  /** COSE public key (base64url) for later assertion / clone-counter checks. */
+  publicKey?: string;
+};
+
+export type E2eWebAuthnPending = {
+  challenge: string;
+  person: string;
+  kind: "device-bound" | "synced";
+  label: string;
+  purpose: "register" | "issue";
+  createdAt: number;
 };
 
 export type E2eBrowserSession = {
@@ -258,6 +271,8 @@ export type World = {
   lumenFreightDenied: boolean;
   /** Sign-in / API key attempt counters for SEC-09 throttle witnesses. */
   authAttempts: { signin: number; apikey: number };
+  /** In-flight WebAuthn ceremony (CDP virtual authenticator Pass-when). */
+  webauthnPending: E2eWebAuthnPending | null;
 };
 
 function hashChain(prev: string, payload: string): string {
@@ -718,6 +733,7 @@ function seedWorld(): World {
     ],
     blockedCalls: [],
     signedInUserId: "user_dana",
+    webauthnPending: null,
     lumenFreightDenied: true,
     authAttempts: { signin: 0, apikey: 0 },
   };
