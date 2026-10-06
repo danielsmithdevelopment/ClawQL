@@ -5,10 +5,20 @@
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
-import { verifyPasskeyRegistrationEffect } from "clawql-auth";
+import {
+  createSimpleWebAuthnVerifier,
+  publicKeyFromPasskeyRecord,
+  verifyPasskeyRegistrationEffect,
+} from "clawql-auth";
 
 import { E2eHarness } from "@/lib/managed/e2e/service";
-import { appendAudit, getWorld, newId, personByName } from "@/lib/managed/e2e/world";
+import {
+  appendAudit,
+  getWorld,
+  newId,
+  personByName,
+  recountReviewBadges,
+} from "@/lib/managed/e2e/world";
 
 export type RegisterKind = "device-bound" | "synced";
 
@@ -310,6 +320,212 @@ export function postIssueVerify(req: Request): Effect.Effect<NextResponse, unkno
         lastFour: key.lastFour,
         secret,
       },
+    });
+  });
+}
+
+/** POST /api/e2e/webauthn/approve/options — assertion step-up for review approve (KEY-11). */
+export function postApproveOptions(req: Request): Effect.Effect<NextResponse, unknown, E2eHarness> {
+  return Effect.gen(function* () {
+    const h = yield* E2eHarness;
+    if (!(yield* h.enabled())) {
+      return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+    }
+    const body = (yield* Effect.tryPromise({
+      try: () =>
+        req.json() as Promise<{ person?: string; requestId?: string }>,
+      catch: () => ({}),
+    })) as { person?: string; requestId?: string };
+
+    if (!body.requestId) {
+      return NextResponse.json({ error: "requestId required" }, { status: 400 });
+    }
+    const personName = body.person ?? "Dana Reyes";
+    const person = personByName(personName);
+    if (!person) {
+      return NextResponse.json({ error: "person not found" }, { status: 404 });
+    }
+
+    const allowCredentials = person.securityKeys
+      .filter((k) => !k.revoked && k.canApprove && k.credentialId && k.publicKey)
+      .map((k) => ({
+        id: k.credentialId!,
+        transports: ["usb", "internal"] as ("usb" | "internal")[],
+      }));
+    if (allowCredentials.length === 0) {
+      return NextResponse.json(
+        { error: "no CDP-registered device-bound key — register via webauthn first" },
+        { status: 400 },
+      );
+    }
+
+    const sw = yield* Effect.tryPromise({
+      try: () => import("@simplewebauthn/server"),
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
+    const rpID = rpIdFromRequest(req);
+    const options = yield* Effect.tryPromise({
+      try: () =>
+        sw.generateAuthenticationOptions({
+          rpID,
+          userVerification: "required",
+          allowCredentials,
+        }),
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    });
+
+    const world = getWorld();
+    world.webauthnPending = {
+      challenge: options.challenge,
+      person: person.name,
+      kind: "device-bound",
+      label: "approve",
+      purpose: "approve",
+      createdAt: Date.now(),
+      requestId: body.requestId,
+    };
+    return NextResponse.json({ options, person: person.name, requestId: body.requestId });
+  });
+}
+
+/**
+ * POST /api/e2e/webauthn/approve/verify — verify assertion; counter regression → clone.
+ * Completes the review mandate on success (same outcomes as /api/e2e/review/approve).
+ */
+export function postApproveVerify(req: Request): Effect.Effect<NextResponse, unknown, E2eHarness> {
+  return Effect.gen(function* () {
+    const h = yield* E2eHarness;
+    if (!(yield* h.enabled())) {
+      return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+    }
+    const world = getWorld();
+    const pending = world.webauthnPending;
+    if (!pending || pending.purpose !== "approve" || !pending.requestId) {
+      return NextResponse.json({ error: "no pending approve step-up" }, { status: 400 });
+    }
+
+    const body = (yield* Effect.tryPromise({
+      try: () => req.json() as Promise<{ response?: unknown }>,
+      catch: () => ({}),
+    })) as { response?: unknown };
+
+    if (!body.response) {
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "response required" }, { status: 400 });
+    }
+
+    const person = personByName(pending.person);
+    const sk = person?.securityKeys.find(
+      (k) => !k.revoked && k.canApprove && k.credentialId && k.publicKey,
+    );
+    if (!person || !sk?.credentialId || !sk.publicKey) {
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "no matching security key" }, { status: 400 });
+    }
+
+    const verifier = createSimpleWebAuthnVerifier({
+      rpId: rpIdFromRequest(req),
+      origin: originFromRequest(req),
+    });
+
+    const verifiedResult = yield* Effect.tryPromise({
+      try: () =>
+        verifier.verifyAssertion({
+          assertion: body.response,
+          expectedChallenge: pending.challenge,
+          rpId: rpIdFromRequest(req),
+          credential: {
+            id: sk.credentialId!,
+            publicKey: publicKeyFromPasskeyRecord(sk.publicKey!),
+            counter: sk.signatureCounter,
+          },
+        }),
+      catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+    }).pipe(
+      Effect.map((v) => ({ ok: true as const, v })),
+      Effect.catch((err) =>
+        Effect.succeed({
+          ok: false as const,
+          err: err instanceof Error ? err : new Error(String(err)),
+        }),
+      ),
+    );
+
+    if (!verifiedResult.ok) {
+      const msg = verifiedResult.err.message;
+      const clone =
+        /counter|clone|unexpected/i.test(msg) ||
+        msg.includes("webauthn_assertion_not_verified");
+      if (clone) {
+        appendAudit(pending.person, "security_key.clone", "Possible cloned key", {
+          expected: sk.signatureCounter,
+          reason: msg,
+        });
+        world.webauthnPending = null;
+        return NextResponse.json({ error: "possible cloned key" }, { status: 403 });
+      }
+      appendAudit(pending.person, "review.approve", "Rejected — ceremony failed", { reason: msg });
+      world.webauthnPending = null;
+      return NextResponse.json({ error: msg }, { status: 403 });
+    }
+
+    const newCounter = verifiedResult.v.newCounter ?? sk.signatureCounter + 1;
+    if (newCounter < sk.signatureCounter) {
+      appendAudit(pending.person, "security_key.clone", "Possible cloned key", {
+        expected: sk.signatureCounter,
+        got: newCounter,
+      });
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "possible cloned key" }, { status: 403 });
+    }
+    sk.signatureCounter = newCounter;
+
+    const item = world.review.find((r) => r.id === pending.requestId);
+    if (!item || (item.status !== "waiting" && item.status !== "changed")) {
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "request not approvable" }, { status: 409 });
+    }
+
+    const required = item.requiredApprovals ?? world.requiredApprovalsDefault;
+    if (!item.approvers.includes(pending.person)) {
+      item.approvers = [...item.approvers, pending.person];
+    }
+    if (item.approvers.length < required) {
+      appendAudit(pending.person, "review.approve", "Partial approval", {
+        requestId: item.id,
+        have: item.approvers.length,
+        need: required,
+      });
+      world.webauthnPending = null;
+      return NextResponse.json({
+        ok: true,
+        status: "waiting",
+        partial: true,
+        signatureCounter: sk.signatureCounter,
+      });
+    }
+
+    const mandateId = newId("man");
+    item.status = "approved";
+    item.mandateId = mandateId;
+    if (item.kind === "change" && item.args.contract === "northwind") {
+      const crm = world.crm.northwind;
+      if (crm && typeof item.args.annualValue === "number") {
+        crm.annualValue = item.args.annualValue as number;
+      }
+    }
+    appendAudit(pending.person, "review.approve", "Mandate issued", {
+      requestId: item.id,
+      mandateId,
+      signatureCounter: sk.signatureCounter,
+    });
+    recountReviewBadges();
+    world.webauthnPending = null;
+    return NextResponse.json({
+      ok: true,
+      status: "approved",
+      mandateId,
+      signatureCounter: sk.signatureCounter,
     });
   });
 }

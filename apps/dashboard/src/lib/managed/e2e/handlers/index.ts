@@ -4,6 +4,8 @@ export { getEvents, postEvents } from "./events";
 export { postMcpToolsCall } from "./mcp-tools-call";
 export { postMcpToolsList } from "./mcp-tools-list";
 export {
+  postApproveOptions,
+  postApproveVerify,
   postIssueOptions,
   postIssueVerify,
   postRegisterOptions,

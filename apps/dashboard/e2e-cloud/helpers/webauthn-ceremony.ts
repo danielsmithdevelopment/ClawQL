@@ -1,14 +1,16 @@
 /**
- * Drive WebAuthn registration / issue step-up via CDP virtual authenticator.
+ * Drive WebAuthn registration / issue / approve step-up via CDP virtual authenticator.
  * Pass-when still belongs on /audit + Profile UI — not the arrange response alone.
  */
-import type { Page } from '@playwright/test'
+import type { CDPSession, Page } from '@playwright/test'
 
 import {
   attachVirtualAuthenticator,
   setUserVerified,
   type VirtualAuthenticatorOptions,
 } from './webauthn-cdp'
+
+export type CdpAuthenticator = { cdp: CDPSession; authenticatorId: string }
 
 /** WebAuthn requires a hostname (not 127.0.0.1); rewrite loopback for ceremonies. */
 const base = () => {
@@ -30,6 +32,8 @@ export type RegisterViaCdpInput = {
   label: string
   /** When false, verify path refuses (KEY-07-style UV off). Default true. */
   userVerified?: boolean
+  /** Reuse an existing virtual authenticator (required for later approve on same key). */
+  authenticator?: CdpAuthenticator
 }
 
 function authenticatorOptsForKind(
@@ -58,18 +62,19 @@ function authenticatorOptsForKind(
 
 /**
  * Attach CDP authenticator, run navigator.credentials.create, verify with harness.
- * Returns arrange status; callers must assert /audit + UI for Pass-when.
+ * Returns arrange status + authenticator handle for follow-on approve ceremonies.
  */
 export async function registerSecurityKeyViaCdp(input: RegisterViaCdpInput): Promise<{
   status: number
   body: Record<string, unknown>
+  authenticator: CdpAuthenticator
 }> {
   const userVerified = input.userVerified !== false
   await ensureLocalhostPage(input.page)
-  const { cdp, authenticatorId } = await attachVirtualAuthenticator(
-    input.page,
-    authenticatorOptsForKind(input.kind, userVerified),
-  )
+  const authenticator =
+    input.authenticator ??
+    (await attachVirtualAuthenticator(input.page, authenticatorOptsForKind(input.kind, userVerified)))
+  const { cdp, authenticatorId } = authenticator
   await setUserVerified(cdp, authenticatorId, userVerified)
 
   const optRes = await input.page.request.post(`${base()}/api/e2e/webauthn/register/options`, {
@@ -81,14 +86,22 @@ export async function registerSecurityKeyViaCdp(input: RegisterViaCdpInput): Pro
   })
   const optJson = (await optRes.json()) as { options: PublicKeyCredentialCreationOptionsJSON }
   if (!optRes.ok()) {
-    return { status: optRes.status(), body: optJson as unknown as Record<string, unknown> }
+    return {
+      status: optRes.status(),
+      body: optJson as unknown as Record<string, unknown>,
+      authenticator,
+    }
   }
 
   if (!userVerified) {
     const refuse = await input.page.request.post(`${base()}/api/e2e/webauthn/register/verify`, {
       data: { userVerified: false },
     })
-    return { status: refuse.status(), body: (await refuse.json()) as Record<string, unknown> }
+    return {
+      status: refuse.status(),
+      body: (await refuse.json()) as Record<string, unknown>,
+      authenticator,
+    }
   }
 
   const attestation = await input.page.evaluate(async (options) => {
@@ -137,6 +150,78 @@ export async function registerSecurityKeyViaCdp(input: RegisterViaCdpInput): Pro
 
   const verifyRes = await input.page.request.post(`${base()}/api/e2e/webauthn/register/verify`, {
     data: { response: attestation, userVerified: true },
+  })
+  return {
+    status: verifyRes.status(),
+    body: (await verifyRes.json()) as Record<string, unknown>,
+    authenticator,
+  }
+}
+
+/**
+ * Approve a review request via navigator.credentials.get on an existing CDP authenticator.
+ * Counter regression (server ahead of authenticator) audits security_key.clone.
+ */
+export async function approveReviewViaCdp(input: {
+  page: Page
+  requestId: string
+  person?: string
+  authenticator: CdpAuthenticator
+}): Promise<{ status: number; body: Record<string, unknown> }> {
+  await ensureLocalhostPage(input.page)
+  await setUserVerified(input.authenticator.cdp, input.authenticator.authenticatorId, true)
+
+  const optRes = await input.page.request.post(`${base()}/api/e2e/webauthn/approve/options`, {
+    data: { person: input.person ?? 'Dana Reyes', requestId: input.requestId },
+  })
+  const optJson = (await optRes.json()) as { options: PublicKeyCredentialRequestOptionsJSON }
+  if (!optRes.ok()) {
+    return { status: optRes.status(), body: optJson as unknown as Record<string, unknown> }
+  }
+
+  const assertion = await input.page.evaluate(async (options) => {
+    function b64urlToBuf(s: string): ArrayBuffer {
+      const pad = '='.repeat((4 - (s.length % 4)) % 4)
+      const b64 = (s + pad).replace(/-/g, '+').replace(/_/g, '/')
+      const bin = atob(b64)
+      const out = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+      return out.buffer
+    }
+    function bufToB64url(buf: ArrayBuffer): string {
+      const bytes = new Uint8Array(buf)
+      let s = ''
+      for (const b of bytes) s += String.fromCharCode(b)
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+    }
+
+    const publicKey: PublicKeyCredentialRequestOptions = {
+      ...options,
+      challenge: b64urlToBuf(options.challenge),
+      allowCredentials: options.allowCredentials?.map((c) => ({
+        ...c,
+        id: b64urlToBuf(c.id),
+      })),
+    }
+
+    const cred = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential
+    const att = cred.response as AuthenticatorAssertionResponse
+    return {
+      id: cred.id,
+      rawId: bufToB64url(cred.rawId),
+      type: cred.type,
+      clientExtensionResults: cred.getClientExtensionResults(),
+      response: {
+        clientDataJSON: bufToB64url(att.clientDataJSON),
+        authenticatorData: bufToB64url(att.authenticatorData),
+        signature: bufToB64url(att.signature),
+        userHandle: att.userHandle ? bufToB64url(att.userHandle) : undefined,
+      },
+    }
+  }, optJson.options)
+
+  const verifyRes = await input.page.request.post(`${base()}/api/e2e/webauthn/approve/verify`, {
+    data: { response: assertion },
   })
   return { status: verifyRes.status(), body: (await verifyRes.json()) as Record<string, unknown> }
 }
@@ -191,4 +276,12 @@ type PublicKeyCredentialCreationOptionsJSON = {
   timeout?: number
   attestation?: AttestationConveyancePreference
   authenticatorSelection?: AuthenticatorSelectionCriteria
+}
+
+type PublicKeyCredentialRequestOptionsJSON = {
+  challenge: string
+  allowCredentials?: { id: string; type: string; transports?: string[] }[]
+  timeout?: number
+  rpId?: string
+  userVerification?: UserVerificationRequirement
 }
