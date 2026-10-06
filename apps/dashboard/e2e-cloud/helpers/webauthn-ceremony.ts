@@ -167,7 +167,9 @@ export async function approveReviewViaCdp(input: {
   requestId: string
   person?: string
   authenticator: CdpAuthenticator
-}): Promise<{ status: number; body: Record<string, unknown> }> {
+  /** KEY-12: resubmit a prior assertion instead of performing credentials.get. */
+  replayAssertion?: unknown
+}): Promise<{ status: number; body: Record<string, unknown>; assertion?: unknown }> {
   await ensureLocalhostPage(input.page)
   await setUserVerified(input.authenticator.cdp, input.authenticator.authenticatorId, true)
 
@@ -177,6 +179,17 @@ export async function approveReviewViaCdp(input: {
   const optJson = (await optRes.json()) as { options: PublicKeyCredentialRequestOptionsJSON }
   if (!optRes.ok()) {
     return { status: optRes.status(), body: optJson as unknown as Record<string, unknown> }
+  }
+
+  if (input.replayAssertion) {
+    const verifyReplay = await input.page.request.post(`${base()}/api/e2e/webauthn/approve/verify`, {
+      data: { response: input.replayAssertion },
+    })
+    return {
+      status: verifyReplay.status(),
+      body: (await verifyReplay.json()) as Record<string, unknown>,
+      assertion: input.replayAssertion,
+    }
   }
 
   const assertion = await input.page.evaluate(async (options) => {
@@ -223,7 +236,11 @@ export async function approveReviewViaCdp(input: {
   const verifyRes = await input.page.request.post(`${base()}/api/e2e/webauthn/approve/verify`, {
     data: { response: assertion },
   })
-  return { status: verifyRes.status(), body: (await verifyRes.json()) as Record<string, unknown> }
+  return {
+    status: verifyRes.status(),
+    body: (await verifyRes.json()) as Record<string, unknown>,
+    assertion,
+  }
 }
 
 /**

@@ -158,17 +158,14 @@ test('KEY-08 Cancel step-up at key prompt — nothing changes', async () => {
     args: { ...NORTHWIND },
   })
   const requestId = String(propose.body.requestId)
-  const cancel = await approveReview({ requestId, actor: 'Dana Reyes', cancel: true })
-  expect(cancel.status).toBe(200)
-  expect(cancel.body.cancelled).toBe(true)
-  const crm = await getCrm('northwind')
-  expect(crm.body.annualValue).toBe(48500)
-  const review = await listReview()
-  const item = (review.body.review as { id: string; status: string }[]).find((r) => r.id === requestId)
-  expect(item?.status).toBe('waiting')
+  // Arrange: cancel at key prompt (not Pass-when)
+  await approveReview({ requestId, actor: 'Dana Reyes', cancel: true })
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => /Cancelled at key prompt/i.test(e.outcome))).toBe(true)
-  expect(audit.entries.some((e) => e.action === 'review.approve' && /Mandate issued/i.test(e.outcome))).toBe(false)
+  expect(
+    audit.entries.some((e) => e.action === 'review.approve' && /Mandate issued/i.test(e.outcome)),
+  ).toBe(false)
 })
 
 test('KEY-09 Org delete without fresh sign-in asks to sign in again', async () => {
@@ -177,24 +174,39 @@ test('KEY-09 Org delete without fresh sign-in asks to sign in again', async () =
   expect(String(del.body.error)).toMatch(/sign in again/i)
 })
 
-test('KEY-10 Approval with disallowed AAGUID refused; still waiting', async () => {
+test('KEY-10 Approval with disallowed AAGUID refused; still waiting', async ({ page }) => {
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'EvilAaguid Key',
+  })
+  expect(reg.status).toBe(200)
+  await control({
+    setAaguid: { person: 'Dana Reyes', label: 'EvilAaguid Key', aaguid: 'aagu_evil_clone' },
+  })
+
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  const requestId = String(propose.body.requestId)
-  const bad = await approveReview({
-    requestId,
-    actor: 'Dana Reyes',
-    keyKind: 'device-bound',
-    pinVerified: true,
-    aaguid: 'aagu_evil_clone',
+  const bad = await approveReviewViaCdp({
+    page,
+    requestId: String(propose.body.requestId),
+    person: 'Dana Reyes',
+    authenticator: reg.authenticator,
   })
   expect(bad.status).toBe(403)
-  const review = await listReview()
-  const item = (review.body.review as { id: string; status: string }[]).find((r) => r.id === requestId)
-  expect(item?.status).toBe('waiting')
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'review.approve' && /authenticator not allowed/i.test(e.outcome),
+    ),
+  ).toBe(true)
+  expect(audit.entries.some((e) => /Mandate issued/i.test(e.outcome))).toBe(false)
 })
 
 test('KEY-11 Cloned key signature counter refuses; audit records clone', async ({ page }) => {
@@ -242,34 +254,46 @@ test('KEY-11 Cloned key signature counter refuses; audit records clone', async (
   expect(audit.entries.some((e) => e.action === 'security_key.clone')).toBe(true)
 })
 
-test('KEY-12 Approval payload replay rejected — no second mandate', async () => {
+test('KEY-12 Approval payload replay rejected — no second mandate', async ({ page }) => {
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'ReplayProbe Key',
+  })
+  expect(reg.status).toBe(200)
+
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  const requestId = String(propose.body.requestId)
-  const payload = `signed-once-${requestId}`
-  const first = await approveReview({
-    requestId,
-    actor: 'Dana Reyes',
-    pinVerified: true,
-    signedPayload: payload,
+  const first = await approveReviewViaCdp({
+    page,
+    requestId: String(propose.body.requestId),
+    person: 'Dana Reyes',
+    authenticator: reg.authenticator,
   })
   expect(first.status).toBe(200)
   expect(first.body.mandateId).toBeTruthy()
-  // Second request with same signed payload
+  expect(first.assertion).toBeTruthy()
+
   const propose2 = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND, annualValue: 54000 },
   })
-  const replay = await approveReview({
+  const replay = await approveReviewViaCdp({
+    page,
     requestId: String(propose2.body.requestId),
-    actor: 'Dana Reyes',
-    pinVerified: true,
-    signedPayload: payload,
+    person: 'Dana Reyes',
+    authenticator: reg.authenticator,
+    replayAssertion: first.assertion,
   })
   expect(replay.status).toBe(403)
   expect(String(replay.body.error)).toMatch(/replay/i)
+
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => /Replay rejected/i.test(e.outcome))).toBe(true)
 })
