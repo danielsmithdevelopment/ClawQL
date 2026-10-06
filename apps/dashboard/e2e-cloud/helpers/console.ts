@@ -1,5 +1,7 @@
 import { expect, type Page } from '@playwright/test'
 
+import { waitForServer } from './harness'
+
 /** Escape a path for use in a URL regex (including backslashes). */
 export function hrefUrlPattern(href: string): RegExp {
   if (href === '/') return /\/(?:\?.*)?$/
@@ -61,6 +63,7 @@ export const PAGE_TABS: Record<string, readonly string[]> = {
 }
 
 export async function openManagedConsole(page: Page) {
+  await waitForServer()
   await page.goto('/')
   await expect(page.getByTestId('managed-nav-home')).toBeVisible()
   await expect(page.getByText('Acme Robotics').first()).toBeVisible()

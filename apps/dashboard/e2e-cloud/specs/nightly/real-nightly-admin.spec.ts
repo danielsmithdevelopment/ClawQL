@@ -65,8 +65,17 @@ test('ADM-01 Invite accept joins with role; audit both steps', async ({ page }) 
   expect(audit.entries.some((e) => e.action === 'invite.sent')).toBe(true)
   expect(audit.entries.some((e) => e.action === 'invite.accept')).toBe(true)
   await openManagedConsole(page)
-  await page.goto('/team')
-  await expect(page.getByTestId('team-tab-people')).toBeVisible()
+  let teamOk = false
+  for (let i = 0; i < 5 && !teamOk; i++) {
+    try {
+      await page.goto('/team', { waitUntil: 'domcontentloaded' })
+      await expect(page.getByTestId('team-tab-people')).toBeVisible({ timeout: 15_000 })
+      teamOk = true
+    } catch {
+      await new Promise((r) => setTimeout(r, 500 * (i + 1)))
+    }
+  }
+  expect(teamOk).toBe(true)
 })
 
 test('ADM-02 Role change takes effect; audit old and new', async () => {

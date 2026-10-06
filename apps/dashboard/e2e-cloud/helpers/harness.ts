@@ -348,6 +348,7 @@ export async function getOrg() {
       firstRun: E2eFirstRun
       owner?: string
       ownerCount?: number
+      people?: { name: string; role: string; active?: boolean }[]
     }>(res),
   }
 }
