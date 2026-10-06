@@ -76,27 +76,25 @@ test('AUD-02 Filters: blocked, approvals, erasures each match', async () => {
 })
 
 test('AUD-03 Entry included in hourly Merkle root', async () => {
+  await openaiChat({ key: KEYS.legalOps, messages: [{ role: 'user', content: 'hourly root' }] })
   const audit = await getAudit()
-  const e = audit.entries[0]!
-  expect(e.hourlyRoot || (e as { hourlyRoot?: string }).hourlyRoot || true).toBeTruthy()
-  const wit = await getWitness()
-  const roots = wit.body.hourlyRoots as Record<string, string>
-  expect(Object.keys(roots).length).toBeGreaterThan(0)
+  const e = audit.entries.find((x) => x.hourlyRoot) ?? audit.entries[0]!
+  expect(e.hourlyRoot).toBeTruthy()
+  const hour = e.at.slice(0, 13)
+  expect(audit.hourlyRoots?.[hour]).toBe(e.hourlyRoot)
 })
 
 test('AUD-04 JSON validates against OCSF-shaped fields', async () => {
-  const audit = await getAudit()
-  const e = audit.entries[0]!
-  const ocsf = {
-    class_uid: 3001,
-    activity_id: 1,
-    time: e.at,
-    actor: { user: { name: e.actor } },
-    metadata: { product: { name: 'ClawQL Cloud' } },
-  }
-  expect(typeof ocsf.class_uid).toBe('number')
-  expect(ocsf.time).toMatch(/T/)
-  expect(ocsf.actor.user.name).toBeTruthy()
+  const exported = await getAudit({ format: 'ocsf' })
+  expect(exported.ocsf?.length).toBeGreaterThan(0)
+  const row = exported.ocsf![0]!
+  expect(typeof row.class_uid).toBe('number')
+  expect(row.class_uid).toBeGreaterThan(0)
+  expect(row.time).toMatch(/T/)
+  expect(row.actor.user.name).toBeTruthy()
+  expect(row.metadata.product.name).toBe('ClawQL Cloud')
+  expect(row.metadata.uid).toBeTruthy()
+  expect(row.metadata.action).toBeTruthy()
 })
 
 test('AUD-05 Proofs verify independently from exported hashes', async () => {
@@ -124,15 +122,17 @@ test('AUD-05 Proofs verify independently from exported hashes', async () => {
 test('AUD-06 Hourly roots match for every hour', async () => {
   await openaiChat({ key: KEYS.legalOps, messages: [{ role: 'user', content: 'root check' }] })
   const audit = await getAudit()
-  const wit = await getWitness()
-  const roots = wit.body.hourlyRoots as Record<string, string>
-  for (const e of audit.entries) {
-    const hour = e.at.slice(0, 13)
-    if (e.hourlyRoot) {
-      expect(roots[hour]).toBeTruthy()
-    }
-  }
+  const roots = audit.hourlyRoots ?? {}
   expect(Object.keys(roots).length).toBeGreaterThan(0)
+  // hourlyRoots[hour] is the Merkle root after the latest entry in that hour
+  const latestByHour = new Map<string, string>()
+  for (const e of audit.entries) {
+    expect(e.hourlyRoot).toBeTruthy()
+    latestByHour.set(e.at.slice(0, 13), e.hourlyRoot!)
+  }
+  for (const [hour, root] of latestByHour) {
+    expect(roots[hour]).toBe(root)
+  }
 })
 
 test('AUD-07 Tamper fails scheduled check; alert; new segment verified; range unverified', async () => {

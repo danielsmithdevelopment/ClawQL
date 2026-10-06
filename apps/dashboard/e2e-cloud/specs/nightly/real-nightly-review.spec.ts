@@ -101,7 +101,7 @@ test('REV-05 Synced passkey cannot approve; request still waiting', async () => 
   expect(item?.status).toBe('waiting')
 })
 
-test('REV-06 Expired request refuses agent write; CRM unchanged', async () => {
+test('REV-06 Expired request refuses agent write; CRM unchanged', async ({ page }) => {
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
@@ -117,10 +117,12 @@ test('REV-06 Expired request refuses agent write; CRM unchanged', async () => {
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  // expired seeded path or new 402 — CRM must stay 48500
-  expect([402, 409].includes(write.status) || write.status === 200).toBeTruthy()
+  expect([402, 409]).toContain(write.status)
+  expect(String(write.body.error ?? '')).toMatch(/expired|mandate/i)
   const crm = await getCrm('northwind')
   expect(crm.body.annualValue).toBe(48500)
+  await page.goto('/review')
+  await expect(page.getByText(/expired|Change a contract/i).first()).toBeVisible()
 })
 
 test('REV-08 Jordan can see but not approve; filter hides', async () => {

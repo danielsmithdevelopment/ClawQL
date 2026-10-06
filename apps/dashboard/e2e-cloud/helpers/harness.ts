@@ -51,13 +51,45 @@ export async function resetWorld() {
   return json(res)
 }
 
-export async function getAudit() {
-  const res = await fetchRetry(`${base()}/api/e2e/audit`)
+export async function getAudit(opts?: { format?: 'ocsf' }) {
+  const qs = opts?.format === 'ocsf' ? '?format=ocsf' : ''
+  const res = await fetchRetry(`${base()}/api/e2e/audit${qs}`)
   if (!res.ok) throw new Error(`audit failed: ${res.status}`)
   return json<{
-    entries: { id: string; actor: string; action: string; outcome: string; meta?: Record<string, unknown> }[]
+    entries: {
+      id: string
+      at: string
+      actor: string
+      action: string
+      outcome: string
+      hash?: string
+      prevHash?: string
+      hourlyRoot?: string
+      meta?: Record<string, unknown>
+    }[]
     chain: { ok: boolean; entries: number; latestRoot?: string }
+    hourlyRoots?: Record<string, string>
+    ocsf?: {
+      class_uid: number
+      activity_id: number
+      time: string
+      actor: { user: { name: string } }
+      metadata: { product: { name: string }; uid: string; action: string; outcome: string }
+    }[]
   }>(res)
+}
+
+export async function skillsApi(body?: Record<string, unknown>) {
+  if (!body) {
+    const res = await fetchRetry(`${base()}/api/e2e/skills`)
+    return { status: res.status, body: await json<{ skills: Record<string, unknown>[] }>(res) }
+  }
+  const res = await fetchRetry(`${base()}/api/e2e/skills`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export async function getCrm(contractId: string) {

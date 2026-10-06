@@ -255,18 +255,23 @@ test('EV-20 24h type counts match listed events', async () => {
   await postEvents({ type: 'stream.changed', payload: { n: 1 }, test: true })
   await postEvents({ type: 'document.processed', payload: { n: 2 }, test: true })
   const listed = await listEvents()
-  const counts = listed.body.counts24h as Record<string, number> | undefined
-  if (counts) {
-    const manual: Record<string, number> = {}
-    for (const e of listed.body.events) {
-      const t = String(e.type).replace(/^com\.clawql\./, '')
-      manual[t] = (manual[t] ?? 0) + 1
-    }
-    for (const [k, v] of Object.entries(counts)) {
-      expect(v).toBe(manual[k] ?? v)
-    }
-  } else {
-    expect(listed.body.events.length).toBeGreaterThan(0)
+  const counts = listed.body.counts24h
+  expect(counts).toBeTruthy()
+  expect(Object.keys(counts!).length).toBeGreaterThan(0)
+
+  const fromList: Record<string, number> = {}
+  for (const e of listed.body.events) {
+    const t = String(e.type).replace(/^com\.clawql\./, '')
+    fromList[t] = (fromList[t] ?? 0) + 1
+  }
+
+  for (const [k, v] of Object.entries(counts!)) {
+    const nk = k.replace(/^com\.clawql\./, '')
+    expect(fromList[nk], `counts24h[${k}] must match listed events`).toBe(v)
+  }
+  for (const [k, v] of Object.entries(fromList)) {
+    const counted = counts![k] ?? counts![`com.clawql.${k}`]
+    expect(counted, `listed type ${k} must appear in counts24h`).toBe(v)
   }
 })
 

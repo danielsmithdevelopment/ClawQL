@@ -48,6 +48,22 @@ export async function POST(req: Request) {
       const name = body.name ?? "";
       const args = body.arguments ?? {};
 
+      // Retired / non-runnable skills cannot execute (SK-10)
+      const skillIdEarly = String(args.skillId ?? "");
+      if (skillIdEarly) {
+        const skillEarly = world.skills.find((s) => s.id === skillIdEarly);
+        if (skillEarly && (skillEarly.stage === "retired" || skillEarly.failed || skillEarly.injectionFlagged)) {
+          appendAudit(key.name, name, "Refused — skill not runnable", {
+            skillId: skillIdEarly,
+            stage: skillEarly.stage,
+          });
+          return NextResponse.json(
+            { error: "skill cannot run", stage: skillEarly.stage, reason: skillEarly.retireReason },
+            { status: 403 },
+          );
+        }
+      }
+
       if (name === "approve" || name === "review_approve") {
         appendAudit(key.name, "approve.attempt", "No agent tool can approve");
         return NextResponse.json({ error: "approvals are not an agent tool" }, { status: 403 });
@@ -225,13 +241,22 @@ export async function POST(req: Request) {
 
       // Contract value change → Review (REV-01)
       if (name === "adjust_contract_value" || name === "crm.contracts.adjust") {
+        const digest = createHash("sha256").update(JSON.stringify(args)).digest("hex");
+        // REV-06: expired request with same digest refuses write; CRM unchanged
+        const expiredMatch = world.review.find((r) => r.digest === digest && r.status === "expired");
+        if (expiredMatch) {
+          appendAudit(key.name, name, "Refused — request expired", { requestId: expiredMatch.id, digest });
+          return NextResponse.json(
+            { error: "mandate refused — request expired", requestId: expiredMatch.id },
+            { status: 402 },
+          );
+        }
         if (new Date(world.review.find((r) => r.id === "rev_change")?.expiresAt ?? 0).getTime() < Date.now()) {
           const expired = world.review.find((r) => r.id === "rev_change");
           if (expired?.status === "expired") {
             return NextResponse.json({ error: "mandate refused — request expired" }, { status: 402 });
           }
         }
-        const digest = createHash("sha256").update(JSON.stringify(args)).digest("hex");
         const existingMandate = world.review.find(
           (r) => r.digest === digest && r.status === "approved" && r.mandateId,
         );

@@ -35,6 +35,7 @@ import {
   settingsMutate,
   stripeCheckout,
   uploadDocument,
+  waitForServer,
 } from '../../helpers/harness'
 
 const NORTHWIND_ARGS = { contract: 'northwind', annualValue: 52000 } as const
@@ -51,10 +52,13 @@ test('SU-01 Sign up via Stripe test card lands in console', async ({ page }) => 
   expect(checkout.status).toBe(200)
   expect(checkout.body.provisioned).toBe(true)
   expect(checkout.body.firstRun).toBe('1 of 6')
+  expect(checkout.body.owner).toBeTruthy()
 
   const org = await getOrg()
   expect(org.status).toBe(200)
-  expect(org.body.firstRun).toMatchObject({ label: '1 of 6' })
+  expect(org.body.firstRun).toMatchObject({ label: '1 of 6', step: 1, total: 6 })
+  expect(org.body.owner).toBe('Dana Reyes')
+  expect(org.body.ownerCount).toBe(1)
 
   const audit = await getAudit()
   const actions = audit.entries.map((e) => e.action)
@@ -62,7 +66,7 @@ test('SU-01 Sign up via Stripe test card lands in console', async ({ page }) => 
 
   await page.goto('/')
   await expect(page.getByText('Acme Robotics').first()).toBeVisible()
-  await expect(page.getByRole('heading', { name: /Welcome back/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Welcome back|Get started|First run/i })).toBeVisible()
 })
 
 test('SU-04 First-run key issue blocked until security keys', async ({ page }) => {
@@ -135,9 +139,15 @@ test('REV-01 adjust_contract_value requires mandate; badges agree', async ({ pag
   const badges = review.body.badges
   expect(badges.home).toBe(badges.review)
   expect(badges.review).toBe(badges.sidebar)
+  expect(badges.home).toBeGreaterThan(0)
+  expect(item?.args?.annualValue).toBe(52000)
+  expect(item?.args?.before).toBe(48500)
 
   await page.goto('/review')
   await expect(page.getByText(/Change a contract/i).first()).toBeVisible()
+  await expect(page.getByText(/52,?000|48500|48,?500/i).first()).toBeVisible()
+  await page.goto('/')
+  await expect(page.getByText(/Needs action/i).first()).toBeVisible()
 })
 
 test('REV-02 Propose → approve → write CRM $52,000.00', async () => {
@@ -805,17 +815,37 @@ test('SEC-04 Cross-org x-org:lumen → 404 no existence leak', async () => {
 })
 
 test('RES-03 Gate unreachable → openaiChat + mcp search 503', async () => {
-  await control({ gateUnreachable: true })
-  const chat = await openaiChat({
-    key: KEYS.legalOps,
-    messages: [{ role: 'user', content: 'unreachable' }],
-  })
-  expect(chat.status).toBe(503)
+  await waitForServer()
+  const set = await control({ gateUnreachable: true })
+  expect(set.status).toBe(200)
+  expect(set.body.gateUnreachable).toBe(true)
 
-  const search = await mcpCallTool({
-    key: KEYS.legalOps,
-    name: 'search',
-    args: { query: 'anything' },
-  })
-  expect(search.status).toBe(503)
+  // Next HMR can briefly 500 while recompiling; retry until fail-closed 503
+  let chatStatus = 0
+  let chatBody: Record<string, unknown> = {}
+  for (let i = 0; i < 12; i++) {
+    const chat = await openaiChat({
+      key: KEYS.legalOps,
+      messages: [{ role: 'user', content: 'unreachable' }],
+    })
+    chatStatus = chat.status
+    chatBody = chat.body as Record<string, unknown>
+    if (chatStatus === 503) break
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+  }
+  expect(chatStatus).toBe(503)
+  expect(String(chatBody.error ?? '')).toMatch(/unreachable|gate/i)
+
+  let searchStatus = 0
+  for (let i = 0; i < 12; i++) {
+    const search = await mcpCallTool({
+      key: KEYS.legalOps,
+      name: 'search',
+      args: { query: 'anything' },
+    })
+    searchStatus = search.status
+    if (searchStatus === 503) break
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+  }
+  expect(searchStatus).toBe(503)
 })

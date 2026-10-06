@@ -2,8 +2,25 @@ import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
 import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
+import type { E2eAuditEntry } from "@/lib/managed/e2e/world";
 
 export const dynamic = "force-dynamic";
+
+function toOcsf(e: E2eAuditEntry) {
+  return {
+    class_uid: 3001,
+    activity_id: 1,
+    time: e.at,
+    actor: { user: { name: e.actor } },
+    metadata: {
+      product: { name: "ClawQL Cloud" },
+      uid: e.id,
+      action: e.action,
+      outcome: e.outcome,
+    },
+    unmapped: { prevHash: e.prevHash, hash: e.hash, hourlyRoot: e.hourlyRoot, meta: e.meta },
+  };
+}
 
 export async function GET(req: Request) {
   return runE2eEffect(
@@ -19,9 +36,18 @@ export async function GET(req: Request) {
       }
       const world = yield* h.world();
       const chain = yield* h.verifyChain();
+      const url = new URL(req.url);
+      const format = url.searchParams.get("format");
+      if (format === "ocsf") {
+        return NextResponse.json({
+          ocsf: world.audit.map(toOcsf),
+          chain,
+        });
+      }
       return NextResponse.json({
         entries: world.audit,
         chain,
+        hourlyRoots: world.hourlyRoots,
       });
     }),
   );
