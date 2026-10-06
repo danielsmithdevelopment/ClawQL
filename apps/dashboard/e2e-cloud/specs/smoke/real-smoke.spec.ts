@@ -412,6 +412,7 @@ test('EV-03 SSRF-ish subscription URLs refused', async () => {
     'http://169.254.169.254/latest/meta-data/',
     'http://2130706433/hook',
     'http://[::ffff:127.0.0.1]/hook',
+    'http://rebind.to.private.test/hook',
   ]) {
     const res = await createSubscription(url)
     expect(res.status, url).toBe(400)

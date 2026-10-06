@@ -1,43 +1,11 @@
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
-import { lookup } from "node:dns/promises";
-import { isIP } from "node:net";
 
 import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
+import { webhookHostRefused } from "@/lib/managed/e2e/webhook-host";
 import { appendAudit, getWorld, newId } from "@/lib/managed/e2e/world";
 
 export const dynamic = "force-dynamic";
-
-function isPrivateIp(ip: string): boolean {
-  if (ip === "127.0.0.1" || ip === "::1" || ip === "0.0.0.0") return true;
-  if (ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("169.254.")) return true;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)) return true;
-  if (ip.startsWith("::ffff:")) return isPrivateIp(ip.slice(7));
-  return false;
-}
-
-function looksLikeDecimalIp(host: string): boolean {
-  return /^\d+$/.test(host) || /^0x/i.test(host);
-}
-
-async function hostBlocked(host: string): Promise<string | null> {
-  const lower = host.toLowerCase();
-  if (looksLikeDecimalIp(lower)) return "decimal IP refused";
-  if (isIP(lower) && isPrivateIp(lower)) return "private address refused";
-  try {
-    const results = await lookup(lower, { all: true });
-    for (const r of results) {
-      if (isPrivateIp(r.address)) return "resolved to private address";
-    }
-  } catch {
-    /* DNS failure — still check allowlist */
-  }
-  const world = getWorld();
-  if (!world.allowedWebhookHosts.some((h) => h === lower || lower.endsWith(`.${h}`))) {
-    return "host not on allowed list";
-  }
-  return null;
-}
 
 export async function GET() {
   return runE2eEffect(
@@ -101,10 +69,7 @@ export async function POST(req: Request) {
       } catch {
         return NextResponse.json({ error: "invalid url" }, { status: 400 });
       }
-      const blocked = yield* Effect.tryPromise({
-        try: () => hostBlocked(url.hostname),
-        catch: () => "host check failed",
-      });
+      const blocked = yield* webhookHostRefused(url.hostname);
       if (blocked) {
         appendAudit("Dana Reyes", "subscription.create", `Refused — ${blocked}`, {
           url: body.url,
