@@ -39,7 +39,7 @@ import {
 
 const NORTHWIND_ARGS = { contract: 'northwind', annualValue: 52000 } as const
 const PII =
-  'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
+  'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012.'
 
 test.beforeEach(async () => {
   await resetWorld()
@@ -529,7 +529,7 @@ test('MEM-05 Upload PII redacts email/phone/bank', async () => {
   expect(text).toContain('REDACTED_BANK')
   expect(text).not.toContain('jane.okafor@example.com')
   expect(text).not.toContain('415-555-0199')
-  expect(text).not.toContain('123456789012345')
+  expect(text).not.toContain('123456789012')
 })
 
 test('MEM-12 Erase Jane with pin → certificateReady', async () => {

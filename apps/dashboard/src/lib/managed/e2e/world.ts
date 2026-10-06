@@ -984,12 +984,6 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
-  // Bank accounts: contiguous 8–17 digits (before card, so accounts are not mislabeled as cards).
-  if (world.redaction.bank) {
-    const next = out.replace(/\b\d{8,17}\b/g, "[REDACTED_BANK]");
-    if (next !== out) redacted = true;
-    out = next;
-  }
   if (world.redaction.phone) {
     const next = out.replace(
       /(?:\+?\d{1,3}[\s.-]*)?(?:\(?\d{3}\)?[\s.-]*)\d{3}[\s.-]*\d{4}/g,
@@ -998,11 +992,19 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
-  // Cards always on — spaced/dashed PANs (contiguous digits already handled as bank/account).
+  // Cards always on (ADM-14): 13–19 digit PANs and spaced card numbers — never disable.
   {
-    const card = out.replace(/\b(?:\d[ -]+){3,}\d{1,4}\b/g, "[REDACTED_CARD]");
+    const card = out
+      .replace(/\b\d{13,19}\b/g, "[REDACTED_CARD]")
+      .replace(/\b(?:\d[ -]+){3,}\d{1,4}\b/g, "[REDACTED_CARD]");
     if (card !== out) redacted = true;
     out = card;
+  }
+  // Bank accounts: remaining contiguous 8–12 digits (shorter than PAN lengths).
+  if (world.redaction.bank) {
+    const next = out.replace(/\b\d{8,12}\b/g, "[REDACTED_BANK]");
+    if (next !== out) redacted = true;
+    out = next;
   }
   // Detect pasted API keys
   if (/cqk_[a-z0-9_]+/i.test(out)) {
