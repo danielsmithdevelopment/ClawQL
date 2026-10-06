@@ -173,7 +173,7 @@
     "clawql-supabase": "0.1.0",
     "clawql-tee": "0.1.0",
     "clawql-web": "0.1.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.5",
     "effect": "4.0.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
