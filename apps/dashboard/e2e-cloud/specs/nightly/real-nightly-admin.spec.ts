@@ -54,15 +54,20 @@ test.beforeEach(async () => {
 })
 
 
-test('ADM-01 Invite accept joins with role; audit both steps', async () => {
+test('ADM-01 Invite accept joins with role; audit both steps', async ({ page }) => {
   await control({ inviteAccept: { name: 'New Hire', role: 'member' } })
   const org = await getOrg()
   expect((org.body.people as { name: string; role: string }[]).some((p) => p.name === 'New Hire' && p.role === 'member')).toBe(
     true,
   )
+  const settings = await getSettings()
+  expect(settings.body.people?.some((p) => p.name === 'New Hire' && p.role === 'member')).toBe(true)
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'invite.sent')).toBe(true)
   expect(audit.entries.some((e) => e.action === 'invite.accept')).toBe(true)
+  await openManagedConsole(page)
+  await page.goto('/team')
+  await expect(page.getByTestId('team-tab-people')).toBeVisible()
 })
 
 test('ADM-02 Role change takes effect; audit old and new', async () => {
@@ -138,8 +143,10 @@ test('ADM-07 Forecast warns with likely date', async ({ page }) => {
   const usage = await getUsage()
   expect(usage.body.forecast).toBeTruthy()
   expect(String((usage.body.forecast as { likelyDate?: string }).likelyDate)).toMatch(/2026/)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'budget.forecast')).toBe(true)
   await page.goto('/usage')
-  await expect(page.locator('body')).toBeVisible()
+  await expect(page.getByText(/Usage|billing|forecast/i).first()).toBeVisible()
 })
 
 test('ADM-08 Admins get 80% and 100% alerts on email and Slack', async () => {
@@ -150,6 +157,8 @@ test('ADM-08 Admins get 80% and 100% alerts on email and Slack', async () => {
   expect(alerts.some((a) => a.channel === 'slack' && a.kind === 'budget-80')).toBe(true)
   expect(alerts.some((a) => a.channel === 'email' && a.kind === 'budget-100')).toBe(true)
   expect(alerts.some((a) => a.channel === 'slack' && a.kind === 'budget-100')).toBe(true)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'budget.alert')).toBe(true)
 })
 
 test('ADM-10 Only exhausted team keys stop', async () => {
@@ -252,11 +261,19 @@ test('ADM-17 IP allowlist: inside works, outside refused', async () => {
 
 test('ADM-18 Transfer ownership; old owner stays admin', async () => {
   await control({ transferOwnership: { from: 'Dana Reyes', to: 'Marcus Lee' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; role: string }[]).find((p) => p.name === 'Dana Reyes')
-  const marcus = (wit.body.people as { name: string; role: string }[]).find((p) => p.name === 'Marcus Lee')
-  expect(marcus?.role).toBe('owner')
-  expect(dana?.role).toBe('admin')
+  const org = await getOrg()
+  const people = org.body.people as { name: string; role: string }[]
+  expect(people.find((p) => p.name === 'Marcus Lee')?.role).toBe('owner')
+  expect(people.find((p) => p.name === 'Dana Reyes')?.role).toBe('admin')
+  expect(org.body.owner).toBe('Marcus Lee')
+  expect(org.body.ownerCount).toBe(1)
+  const settings = await getSettings()
+  expect(settings.body.people?.find((p) => p.name === 'Marcus Lee')?.role).toBe('owner')
+  expect(settings.body.people?.find((p) => p.name === 'Dana Reyes')?.role).toBe('admin')
+  const mutate = await settingsMutate({ asRole: 'owner', actor: 'Marcus Lee', orgRename: 'Acme Under Marcus' })
+  expect(mutate.status).toBe(200)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'ownership.transfer')).toBe(true)
 })
 
 test('ADM-19 Delete org with fresh sign-in: archive + certificate + nobody signs in', async () => {
@@ -267,7 +284,26 @@ test('ADM-19 Delete org with fresh sign-in: archive + certificate + nobody signs
   const org = await getOrg()
   expect(org.body.deleted).toBe(true)
   expect(org.body.deletionCertificate).toBeTruthy()
-  const wit = await getWitness()
-  expect(wit.body.orgArchive).toBeTruthy()
-  expect((wit.body.people as { active: boolean }[]).every((p) => !p.active)).toBe(true)
+  expect(org.body.nobodySignedIn).toBe(true)
+  const archive = org.body.archive as {
+    hasMemory?: boolean
+    hasDocuments?: boolean
+    hasSkills?: boolean
+    hasSettings?: boolean
+    hasAudit?: boolean
+    sections?: string[]
+  }
+  expect(archive.hasMemory).toBe(true)
+  expect(archive.hasDocuments).toBe(true)
+  expect(archive.hasSkills).toBe(true)
+  expect(archive.hasSettings).toBe(true)
+  expect(archive.hasAudit).toBe(true)
+  expect(archive.sections).toEqual(expect.arrayContaining(['memory', 'documents', 'skills', 'settings', 'audit']))
+  expect((org.body.people as { active: boolean }[]).every((p) => !p.active)).toBe(true)
+  const settings = await getSettings()
+  expect(settings.body.signedIn).toBe(false)
+  expect(settings.body.people?.every((p) => !p.active)).toBe(true)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'org.delete')).toBe(true)
+  expect(audit.chain.ok).toBe(true)
 })

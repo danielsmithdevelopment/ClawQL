@@ -201,42 +201,54 @@ test('SI-03 TOTP register is never offered for approvals', async () => {
   expect(String(denied.body.error)).toMatch(/can't approve/i)
 })
 
-test('SI-04 Idle timeout signs out; return path preserved', async () => {
+test('SI-04 Idle timeout signs out; return path preserved', async ({ page }) => {
   await control({ idleSignOut: { person: 'Dana Reyes' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; sessions: { ended: boolean; path: string }[] }[]).find(
+  const settings = await getSettings()
+  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
+  expect(dana?.sessions.some((s) => s.ended)).toBe(true)
+  expect(dana?.sessions.find((s) => s.ended)?.path).toBe('/home')
+  expect(settings.body.signedIn).toBe(false)
+  const org = await getOrg()
+  const orgDana = (org.body.people as { name: string; sessions: { ended: boolean; path: string }[] }[]).find(
     (p) => p.name === 'Dana Reyes',
   )
-  expect(dana?.sessions.some((s) => s.ended)).toBe(true)
+  expect(orgDana?.sessions.some((s) => s.ended && s.path === '/home')).toBe(true)
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'session.idle')).toBe(true)
+  await page.goto('/profile')
+  await expect(page.getByText(/Sign out/i).first()).toBeVisible()
 })
 
-test('SI-05 Max session length forces re-auth even when active', async () => {
+test('SI-05 Max session length forces re-auth even when active', async ({ page }) => {
   await control({ forceSessionExpiry: { person: 'Dana Reyes' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; sessions: { ended: boolean }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
+  const settings = await getSettings()
+  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   expect(dana?.sessions.some((s) => s.ended)).toBe(true)
+  expect(settings.body.signedIn).toBe(false)
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'session.max')).toBe(true)
+  await page.goto('/profile')
+  await expect(page.getByRole('button', { name: /Sign out/i }).first()).toBeVisible()
 })
 
-test('SI-06 Sign out everywhere else ends second browser session', async () => {
+test('SI-06 Sign out everywhere else ends second browser session', async ({ page }) => {
   await control({ secondBrowserSession: { person: 'Dana Reyes' } })
-  let wit = await getWitness()
-  let dana = (wit.body.people as { name: string; sessions: { ended: boolean }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
+  let settings = await getSettings()
+  let dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   expect((dana?.sessions.length ?? 0)).toBeGreaterThanOrEqual(2)
-  await control({ endOtherSessions: { person: 'Dana Reyes' } })
-  wit = await getWitness()
-  dana = (wit.body.people as { name: string; sessions: { ended: boolean }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
+  expect(dana?.sessions.filter((s) => !s.ended).length).toBeGreaterThanOrEqual(2)
+  await page.goto('/profile')
+  await expect(page.getByRole('button', { name: /Sign out everywhere else/i })).toBeVisible()
+  const ended = await settingsMutate({ actor: 'Dana Reyes', endOtherSessions: true })
+  expect(ended.status).toBe(200)
+  settings = await getSettings()
+  dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   const others = dana?.sessions.slice(1) ?? []
   expect(others.every((s) => s.ended)).toBe(true)
+  expect(dana?.sessions[0]?.ended).toBe(false)
+  expect(settings.body.signedIn).toBe(true)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'session.end_others')).toBe(true)
 })
 
 test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', async () => {

@@ -86,45 +86,64 @@ test('UX-04 Usage tables do not cause page-level horizontal overflow', async ({ 
   expect(overflow).toBe(false)
 })
 
-test('UX-05 Slack off — no slack notification; push still delivered', async () => {
-  await control({
-    personMutate: { person: 'Dana Reyes', notifications: { slack: false, push: true } },
+test('UX-05 Slack off — no slack notification; push still delivered', async ({ page }) => {
+  await settingsMutate({
+    actor: 'Dana Reyes',
+    notifications: { slack: false, push: true },
   })
-  await keysApi({ action: 'remind', person: 'Dana Reyes' })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; notifications: { slack: boolean; push: boolean } }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
+  const profile = await getSettings()
+  const dana = profile.body.people?.find((p) => p.name === 'Dana Reyes')
   expect(dana?.notifications.slack).toBe(false)
   expect(dana?.notifications.push).toBe(true)
-  const outbox = wit.body.notificationsOutbox as { channel: string; to: string }[]
-  expect(outbox.some((n) => n.channel === 'push')).toBe(true)
+  await mcpCallTool({
+    key: KEYS.legalOps,
+    name: 'adjust_contract_value',
+    args: { ...NORTHWIND },
+  })
+  const after = await getSettings()
+  const outbox = after.body.notificationsOutbox ?? []
+  expect(outbox.some((n) => n.channel === 'push' && n.to === 'Dana Reyes')).toBe(true)
   expect(outbox.filter((n) => n.channel === 'slack' && n.to === 'Dana Reyes')).toEqual([])
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'profile.notifications')).toBe(true)
+  await page.goto('/profile')
+  await expect(page.getByText(/Slack/i).first()).toBeVisible()
 })
 
-test('UX-06 End a device session — next action requires sign-in', async () => {
-  await control({ personMutate: { person: 'Dana Reyes', endSessionDevice: 'Chrome' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; sessions: { ended: boolean; device: string }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
+test('UX-06 End a device session — next action requires sign-in', async ({ page }) => {
+  await settingsMutate({ actor: 'Dana Reyes', endSessionDevice: 'Chrome' })
+  const settings = await getSettings()
+  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   expect(dana?.sessions.some((s) => /Chrome/i.test(s.device) && s.ended)).toBe(true)
+  expect(settings.body.signedIn).toBe(false)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'session.end_device')).toBe(true)
+  await page.goto('/profile')
+  await expect(page.getByText(/Where you're signed in|Sign out/i).first()).toBeVisible()
 })
 
 test('UX-07 Time zone change is stored for the person', async ({ page }) => {
-  await control({ personMutate: { person: 'Dana Reyes', timeZone: 'America/New_York' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; timeZone: string }[]).find((p) => p.name === 'Dana Reyes')
+  const mutate = await settingsMutate({ actor: 'Dana Reyes', timeZone: 'America/New_York' })
+  expect(mutate.status).toBe(200)
+  const settings = await getSettings()
+  expect(settings.body.profile?.timeZone).toBe('America/New_York')
+  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   expect(dana?.timeZone).toBe('America/New_York')
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'profile.timezone')).toBe(true)
   await page.goto('/profile')
-  await expect(page.locator('body')).toBeVisible()
+  await expect(page.getByText(/Time zone/i)).toBeVisible()
 })
 
 test('UX-08 Appearance choice is kept', async ({ page }) => {
-  await control({ personMutate: { person: 'Dana Reyes', appearance: 'dark' } })
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; appearance: string }[]).find((p) => p.name === 'Dana Reyes')
+  const mutate = await settingsMutate({ actor: 'Dana Reyes', appearance: 'dark' })
+  expect(mutate.status).toBe(200)
+  const settings = await getSettings()
+  expect(settings.body.profile?.appearance).toBe('dark')
+  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
   expect(dana?.appearance).toBe('dark')
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'profile.appearance')).toBe(true)
   await page.goto('/profile')
-  await expect(page.locator('body')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Dark' })).toBeVisible()
 })

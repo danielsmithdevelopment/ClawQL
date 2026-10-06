@@ -54,7 +54,7 @@ test.beforeEach(async () => {
 })
 
 
-test('MEM-02 Unreadable .msg is not stored', async () => {
+test('MEM-04 Low-confidence field verified under Dana', async () => {
   const up = await uploadDocument({ name: 'outlook.msg', content: 'binary-msg' })
   expect(up.body.status).toBe("Couldn't read")
   expect(String(up.body.hint ?? '')).toMatch(/PDF|EML/i)
@@ -89,6 +89,41 @@ test('MEM-04 Low-confidence field verified under Dana', async () => {
   expect(body.document?.verifiedBy).toBe('Dana Reyes')
   expect(body.document?.status).toBe('Stored')
   void confirm
+})
+
+test('MEM-05 Upload PII redacts email/phone/bank in stored text, search, explorer, events', async ({
+  page,
+}) => {
+  const upload = await uploadDocument({
+    name: 'pii.pdf',
+    content: PII,
+  })
+  expect(upload.status).toBe(200)
+  const text = String((upload.body.fields as { text?: string })?.text ?? '')
+  expect(text).toContain('REDACTED_EMAIL')
+  expect(text).toContain('REDACTED_PHONE')
+  expect(text).toMatch(/REDACTED_(BANK|CARD)/)
+  expect(text).not.toContain('jane.okafor@example.com')
+  expect(text).not.toContain('415-555-0199')
+
+  const docs = await getDocuments()
+  const stored = JSON.stringify(docs.body.documents)
+  expect(stored).not.toContain('jane.okafor@example.com')
+  expect(stored).toContain('REDACTED_EMAIL')
+
+  const mem = await memoryGet('okafor')
+  const explorer = JSON.stringify(mem.body.explorer ?? mem.body.results ?? [])
+  expect(explorer).not.toContain('jane.okafor@example.com')
+  expect(explorer).not.toContain('415-555-0199')
+
+  const events = await listEvents()
+  const blob = JSON.stringify(events.body.events)
+  expect(blob).not.toContain('jane.okafor@example.com')
+  expect(blob).not.toContain('415-555-0199')
+
+  await openManagedConsole(page)
+  await page.goto('/memory')
+  await expect(page.getByTestId('memory-tab-explorer')).toBeVisible()
 })
 
 test('MEM-06 Ask cites sources user can see', async () => {
@@ -143,6 +178,50 @@ test('MEM-11 SQL read ok, write refused', async () => {
   expect(write.status).toBe(403)
 })
 
+test('MEM-12 Erase Jane: preview confirm key, job + certificate', async () => {
+  const erase = await eraseSubject({
+    subject: 'Jane Okafor',
+    actor: 'Dana Reyes',
+    pinVerified: true,
+  })
+  expect(erase.status).toBe(200)
+  const job = erase.body.job as { certificateReady?: boolean; steps?: string[]; done?: number; total?: number }
+  expect(job.certificateReady).toBe(true)
+  expect((job.steps ?? []).length).toBeGreaterThanOrEqual(7)
+  expect(job.done).toBe(job.total)
+  const listed = await searchErased('Jane')
+  expect(listed.body.results).toEqual([])
+  expect(((listed.body as { jobs?: unknown[] }).jobs ?? []).length).toBeGreaterThan(0)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'erasure.complete')).toBe(true)
+})
+
+test('MEM-13 After erase, Jane is gone from explorer, Ask, SQL, sessions, training export', async () => {
+  await eraseSubject({ subject: 'Jane Okafor', pinVerified: true })
+  const explorer = await memoryGet('Jane')
+  expect(explorer.body.results).toEqual([])
+  expect(explorer.body.explorer).toEqual([])
+  expect((explorer.body.ask as { answer?: string })?.answer).toBe('')
+
+  const sql = await memoryGet('Jane', { sql: 'select * from notes' })
+  const rows = JSON.stringify(sql.body.rows ?? sql.body.results ?? [])
+  expect(rows.toLowerCase()).not.toContain('jane')
+
+  const search = await memorySearch('Jane')
+  expect(search.body.results).toEqual([])
+
+  const erased = await searchErased('jane.okafor@example.com')
+  expect(erased.body.results).toEqual([])
+
+  const events = await listEvents()
+  expect(JSON.stringify(events.body.events)).not.toContain('jane.okafor@example.com')
+
+  const exp = ((explorer.body.trainingExports as { subjects: string[] }[]) ?? []).find(
+    (e) => e.subjects?.includes('Jane Okafor'),
+  )
+  expect(exp).toBeFalsy()
+})
+
 test('MEM-14 Erase export holds hashed ref only', async () => {
   await eraseSubject({ subject: 'Jane Okafor', pinVerified: true })
   const exp = await memoryPost({ action: 'export-audit' })
@@ -166,9 +245,23 @@ test('MEM-15 Erase resume does not repeat finished steps', async () => {
 
 test('MEM-16 Training export flagged to regenerate excluding Jane', async () => {
   await eraseSubject({ subject: 'Jane Okafor', pinVerified: true })
-  const wit = await getWitness()
-  const exp = (wit.body.trainingExports as { needsRegenerate: boolean; subjects: string[] }[])[0]
-  expect(exp.needsRegenerate).toBe(true)
+  const before = await memoryGet('')
+  const flagged = ((before.body.trainingExports as { id: string; needsRegenerate: boolean; subjects: string[] }[]) ??
+    [])[0]
+  expect(flagged?.needsRegenerate).toBe(true)
+  const regen = await memoryPost({ action: 'regenerate-export', exportId: 'exp_sep12', actor: 'Dana Reyes' })
+  expect(regen.status).toBe(200)
+  expect((regen.body.subjects as string[]) ?? []).not.toContain('Jane Okafor')
+  const after = await memoryGet('')
+  const exp = ((after.body.trainingExports as { needsRegenerate: boolean; subjects: string[] }[]) ?? [])[0]
+  expect(exp.needsRegenerate).toBe(false)
+  expect(exp.subjects).not.toContain('Jane Okafor')
+  const blob = JSON.stringify(after.body.trainingExports)
+  expect(blob).not.toContain('Jane Okafor')
+  const search = await memorySearch('Jane')
+  expect(search.body.results).toEqual([])
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'training.regenerate')).toBe(true)
 })
 
 test('MEM-17 Dana personal notes hidden from Priya', async () => {
@@ -178,15 +271,21 @@ test('MEM-17 Dana personal notes hidden from Priya', async () => {
   expect(blob).not.toContain('Dana personal')
 })
 
-test('MEM-18 Agent upload credited; Sessions shows upload', async () => {
+test('MEM-18 Agent upload credited; Sessions shows upload', async ({ page }) => {
   const up = await uploadDocument({
     name: 'agent-doc.pdf',
     content: 'Northwind from pipeline',
     key: KEYS.docsPipeline,
   })
   expect(up.status).toBe(200)
-  const wit = await getWitness()
-  expect((wit.body.sessions as { upload?: boolean; keyName: string }[]).some((s) => s.upload)).toBe(true)
+  const mem = await memoryGet('')
+  expect(
+    ((mem.body.sessions as { upload?: boolean; keyName: string }[]) ?? []).some(
+      (s) => s.upload && s.keyName === 'docs-pipeline',
+    ),
+  ).toBe(true)
+  await page.goto('/sessions')
+  await expect(page.getByText(/session/i).first()).toBeVisible()
 })
 
 test('MEM-19 Erase note history unreadable; search misses it', async () => {
