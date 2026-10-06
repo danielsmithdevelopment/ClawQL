@@ -66,12 +66,13 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-# Stock node:22-alpine ships npm 10.x with HIGH/CRITICAL node-tar / pacote / sigstore /
-# brace-expansion / ip-address (Trivy docker-publish gate). Match apps/docs: refresh npm
-# before copying the app tree so the final image only keeps patched toolchain packages.
+# Start Next via `node` so we can drop the global npm toolchain. Stock/global npm still
+# ships undici<=6.28.0 and brace-expansion<=5.0.9 (Trivy HIGH CVE-2026-19534 /
+# CVE-2026-102276/102278) even after `npm install -g npm@11` / npm@12.
 RUN apk upgrade --no-cache \
-  && npm install -g npm@11 \
-  && npm cache clean --force
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx \
+  && rm -rf /usr/lib/node_modules/npm /usr/bin/npm /usr/bin/npx \
+  && npm --version >/dev/null 2>&1 && exit 1 || true
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
@@ -83,4 +84,4 @@ COPY --from=builder /app/dashboard/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/packages /packages
 COPY --from=builder /app/node_modules /node_modules
 EXPOSE 3040
-CMD ["npm", "run", "start"]
+CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0", "-p", "3040"]

@@ -20,5 +20,11 @@ id = "GHSA-vfj7-8cjw-p6xm"
 reason = "braces@3.0.3 stack-exhaustion DoS via deeply nested patterns; OSV lists no fixed version beyond 3.0.3 (latest). Transitive via micromatch/chokidar in website/dashboard/www tooling; not a production request-path dependency. Remove when upstream ships a patched braces."
 
 [[IgnoredVulns]]
-id = "GHSA-ch52-4w7c-c8xp"
-reason = "http-cache-semantics@4.2.0 max-stale cross-user cache disclosure; OSV lists no fixed version beyond 4.2.0 (latest). Transitive via make-fetch-happen (npm/cacache tooling path), not ClawQL MCP request handling. Remove when upstream ships a patched release."
+id = "GHSA-qqmp-wf37-98f9"
+reason = "MODERATE (CVE-2026-104872): @opentelemetry/instrumentation-* db.user span attribute. Exact pins from lighthouse → @sentry/node; bumping those instrumentations independently is incompatible with Sentry's graph. Dev-only docs lighthouse path. Remove when lighthouse ships a Sentry that pulls patched instrumentations."
+
+[[IgnoredVulns]]
+id = "GHSA-238p-pmpm-9mq7"
+reason = "LOW (CVE-2026-103923): katex@0.16.47 prototype-pollution bypass; mermaid@11 pins katex ^0.16 (fixed only in 0.18.2). Docs diagram rendering, not MCP request path. Remove when mermaid accepts katex >=0.18.2."
+
+# GHSA-ch52-4w7c-c8xp (http-cache-semantics <=4.2.0) — fixed via root override to 4.3.0.

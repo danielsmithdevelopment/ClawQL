@@ -61,7 +61,7 @@ clawql sources approve psp_…
 clawql sources decline psp_…
 ```
 
-MCP tools **`sources_propose`** / **`sources_approve`** mirror the CLI (see [`docs/specs/risk/sources-propose-v0.1.md`](../specs/risk/sources-propose-v0.1.md)). Propose never sets `trusted: true`.
+MCP tool **`sources_propose`** parks a proposal for a **person** to approve (`clawql sources approve` / console). **`sources_approve` is not an MCP tool** — the proposing agent cannot approve its own source. Propose never sets `trusted: true`. Single-party human add remains `clawql sources add`.
 
 **Restart `clawql-mcp`** (or reconnect your MCP client) after adding or removing sources.
 

@@ -51,13 +51,18 @@ export const sourcesProposeToolZodShape = {
   dryRun: z
     .boolean()
     .optional()
-    .describe("Default true: preview only. false parks a proposal for human approve"),
+    .describe(
+      "Default true: preview only. false parks a proposal for operator approve (CLI/console)"
+    ),
 } as const;
 
-/** Zod raw shape for MCP `sources_approve` (v0.1). */
+/**
+ * Operator HTTP/console shape for source approval — **not** an MCP tool.
+ * Agents must never be issued `sources_approve`.
+ */
 export const sourcesApproveToolZodShape = {
   proposalId: z.string().describe("Proposal id from sources_propose (psp_…)"),
   decision: z
     .enum(["approve", "decline"])
-    .describe("Human decision — approve writes sources.json; decline rejects"),
+    .describe("Operator decision — approve writes sources.json; decline rejects"),
 } as const;

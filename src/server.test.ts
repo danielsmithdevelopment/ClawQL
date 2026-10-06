@@ -99,6 +99,10 @@ describe("server (stdio)", () => {
       expect(names.has("ingest_external_knowledge")).toBe(false);
       expect(names.has("cache")).toBe(true);
       expect(names.has("audit")).toBe(true);
+      expect(names.has("sources_propose")).toBe(true);
+      expect(names.has("sources_approve")).toBe(false);
+      expect(names.has("supabase_verify_session")).toBe(false);
+      expect(names.has("supabase_checkout_handoff")).toBe(false);
       expect(names.has("notify")).toBe(false);
       expect(names.has("hitl_enqueue_label_studio")).toBe(false);
       expect(names.has("knowledge_search_onyx")).toBe(false);
