@@ -259,29 +259,73 @@ export function ConnectionsPage() {
         ) : null}
 
         {tab === 'keys' ? (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Key</th>
-                  <th className="px-4 py-3 font-medium">Key group</th>
-                  <th className="px-4 py-3 font-medium">Can use</th>
-                  <th className="px-4 py-3 font-medium">Daily cap</th>
-                  <th className="px-4 py-3 font-medium">Expiry</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {keys.map((key) => (
-                  <tr key={key.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-medium text-slate-900">{key.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{key.keyGroup}</td>
-                    <td className="px-4 py-3 text-slate-600">{key.canUse}</td>
-                    <td className="px-4 py-3 text-slate-600">{key.dailyCap}</td>
-                    <td className="px-4 py-3 text-slate-600">{key.expiresLabel}</td>
+          <div className="space-y-3" data-testid="keys-table">
+            {keys.some((k) => k.expiresHighlight) ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950">
+                <p>
+                  <strong>experiments</strong> expires in 28 days. Rotate it before Nov 2 so whatever uses it
+                  doesn&apos;t stop mid-task.
+                </p>
+                <Button type="button" size="sm" variant="outline">
+                  Rotate now
+                </Button>
+              </div>
+            ) : null}
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+              <table className="w-full min-w-[48rem] text-left text-sm">
+                <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Key</th>
+                    <th className="px-4 py-3 font-medium">Group</th>
+                    <th className="px-4 py-3 font-medium">Can use</th>
+                    <th className="px-4 py-3 font-medium">Daily cap</th>
+                    <th className="px-4 py-3 font-medium">Last used</th>
+                    <th className="px-4 py-3 font-medium">Expires</th>
+                    <th className="px-4 py-3 font-medium" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {keys.map((key) => (
+                    <tr key={key.id} className="hover:bg-slate-50/80">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-slate-900">{key.name}</p>
+                        {key.endsIn ? (
+                          <p className="text-xs text-slate-500">ends in {key.endsIn}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{key.keyGroup}</td>
+                      <td className="px-4 py-3 text-slate-600">{key.canUse}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-slate-600">{key.dailyCap}</span>
+                        {key.capReached ? (
+                          <span className="ml-2 inline-block rounded-md bg-rose-100 px-1.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                            Cap reached · resets 00:00 UTC
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">{key.lastUsed ?? '—'}</td>
+                      <td
+                        className={cn(
+                          'px-4 py-3 text-slate-600',
+                          key.expiresHighlight && 'bg-amber-50 font-medium text-amber-950',
+                        )}
+                      >
+                        {key.expiresLabel}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button type="button" className="text-sky-700 hover:underline">
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-slate-500">
+              Only a hash of each key is stored, so a lost key can&apos;t be shown again; revoke it and create a
+              new one. Revoking takes effect within seconds.
+            </p>
           </div>
         ) : null}
 

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
@@ -7,7 +8,7 @@ import { StatusDot } from '@/components/managed/StatusDot'
 import { TabBar } from '@/components/managed/TabBar'
 import { Button } from '@/components/ui/button'
 import { GATEWAY_BASE } from '@/lib/managed/fixtures'
-import { DECISION_SITES, GATEWAY_ROUTES } from '@/lib/managed/fixtures-ops'
+import { DECISION_SITES, GATEWAY_ROUTES, MCP_CLIENTS, MCP_TOOLS } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
 type Tab = 'inference' | 'mcp' | 'sites'
@@ -21,6 +22,7 @@ function stageTone(stage: string): 'ok' | 'warn' | 'danger' | 'neutral' {
 
 export function GatewayPage() {
   const [tab, setTab] = useState<Tab>('sites')
+  const [mcpClient, setMcpClient] = useState<'claude' | 'cursor' | 'codex' | 'chatgpt'>('cursor')
   const [selectedId, setSelectedId] = useState(DECISION_SITES[0]!.id)
   const selected = useMemo(
     () => DECISION_SITES.find((s) => s.id === selectedId) ?? DECISION_SITES[0]!,
@@ -29,7 +31,13 @@ export function GatewayPage() {
 
   return (
     <PageChrome
-      crumbs={tab === 'sites' ? ['Gateway', 'Decision sites'] : ['Gateway']}
+      crumbs={
+        tab === 'sites'
+          ? ['Gateway', 'Decision sites']
+          : tab === 'mcp'
+            ? ['Gateway', 'MCP']
+            : ['Gateway']
+      }
       title="Gateway"
       description="One endpoint for your agents: models, tools and decisions, with the same identity, policy and audit everywhere."
       actions={
@@ -108,27 +116,91 @@ export function GatewayPage() {
       ) : null}
 
       {tab === 'mcp' ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">MCP endpoint</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Every connected tool for MCP clients. Capabilities come from Connections & keys — agents never see
-            credentials.
-          </p>
-          <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 font-mono text-[11px] text-slate-100">
-            {`${GATEWAY_BASE}/mcp`}
-          </pre>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {[
-              ['Tools exposed', '1,284'],
-              ['Clients connected', '6'],
-              ['Blocked by policy (24h)', '14'],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
-                <p className="text-xs text-slate-500">{k}</p>
-                <p className="text-lg font-semibold text-slate-900">{v}</p>
-              </div>
-            ))}
-          </div>
+        <div className="space-y-4" data-testid="gateway-mcp">
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900">Connect an MCP client</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              One command writes the config. The client then sees every connection its key group allows.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-1 rounded-lg border border-slate-200 p-0.5 text-sm">
+              {(
+                [
+                  ['claude', 'Claude'],
+                  ['cursor', 'Cursor'],
+                  ['codex', 'Codex'],
+                  ['chatgpt', 'ChatGPT'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setMcpClient(id)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5',
+                    mcpClient === id ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-3 font-mono text-[11px] text-slate-100">
+              {`clawql mcp-config --write ${mcpClient}`}
+            </pre>
+            <p className="mt-3 text-sm text-slate-600">
+              Or point any client at{' '}
+              <span className="font-mono text-xs">{GATEWAY_BASE}/mcp</span> with a key from{' '}
+              <Link href="/connections" className="text-sky-700 hover:underline">
+                Connections & keys
+              </Link>
+              .
+            </p>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900">What agents see</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              A small set of tools. The 2,140 operations across your connections sit behind search and execute, so
+              agents never load them all up front.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {MCP_TOOLS.map((tool) => (
+                <span
+                  key={tool}
+                  className="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-800"
+                >
+                  {tool}
+                </span>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                ['Risk in search results', 'On. Agents see whether a call needs a mandate before trying it.'],
+                ['Approvals', 'Never an agent tool. Approving happens only in Review, by a person.'],
+                ['ChatGPT extras', 'Shown to ChatGPT only. Approval forms, evidence and console views.'],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                  <p className="font-medium text-slate-800">{title}</p>
+                  <p className="mt-1 text-xs text-slate-500">{body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-900">Clients connected, last 24 hours</h2>
+            <ul className="mt-3 divide-y divide-slate-100">
+              {MCP_CLIENTS.map((row) => (
+                <li key={row.client} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                  <div>
+                    <p className="font-medium text-slate-900">{row.client}</p>
+                    <p className="font-mono text-xs text-slate-500">{row.keys}</p>
+                  </div>
+                  <p className="text-slate-600">{row.sessions} sessions</p>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
       ) : null}
 

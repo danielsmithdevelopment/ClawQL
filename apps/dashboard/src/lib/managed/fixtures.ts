@@ -70,6 +70,11 @@ export type ApiKeyItem = {
   readonly keyGroup: string;
   readonly canUse: string;
   readonly dailyCap: string;
+  /** Optional fixture polish for Keys mockup. */
+  readonly endsIn?: string;
+  readonly lastUsed?: string;
+  readonly capReached?: boolean;
+  readonly expiresHighlight?: boolean;
 };
 
 export type DailySpendPoint = {
@@ -258,34 +263,94 @@ export const API_KEYS: readonly ApiKeyItem[] = [
   {
     id: "key_billing",
     name: "billing-sync",
-    expiresLabel: "Expires Jan 3",
+    endsIn: "9f1c",
+    expiresLabel: "Jan 3, 2027",
     keyGroup: "Operations",
-    canUse: "Models and tools",
+    canUse: "Models, tools",
     dailyCap: "$50",
+    lastUsed: "10:14",
+  },
+  {
+    id: "key_experiments",
+    name: "experiments",
+    endsIn: "a2e4",
+    expiresLabel: "Nov 2",
+    keyGroup: "Engineering",
+    canUse: "Models",
+    dailyCap: "$20",
+    lastUsed: "07:30",
+    capReached: true,
+    expiresHighlight: true,
+  },
+  {
+    id: "key_release",
+    name: "release-agent",
+    endsIn: "c801",
+    expiresLabel: "Jan 22, 2027",
+    keyGroup: "Engineering",
+    canUse: "Models, tools",
+    dailyCap: "$60",
+    lastUsed: "Yesterday",
   },
   {
     id: "key_ci",
     name: "ci-pipeline",
-    expiresLabel: "Expires Dec 12",
+    endsIn: "3b91",
+    expiresLabel: "Dec 12",
     keyGroup: "Engineering",
-    canUse: "Models and tools",
+    canUse: "Models, tools",
     dailyCap: "$100",
+    lastUsed: "Yesterday",
   },
   {
     id: "key_legal",
     name: "legal-ops",
-    expiresLabel: "Expires Nov 30",
+    endsIn: "7d02",
+    expiresLabel: "Nov 30",
     keyGroup: "Legal",
     canUse: "Models, tools, memory",
     dailyCap: "$75",
+    lastUsed: "09:22",
   },
   {
     id: "key_support",
     name: "support-bot",
-    expiresLabel: "Expires Jan 15",
+    endsIn: "e44a",
+    expiresLabel: "Jan 15, 2027",
     keyGroup: "Support",
-    canUse: "Models and tools",
+    canUse: "Models, tools",
     dailyCap: "$40",
+    lastUsed: "09:31",
+  },
+  {
+    id: "key_docs",
+    name: "docs-pipeline",
+    endsIn: "11af",
+    expiresLabel: "Feb 1, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, tools, memory",
+    dailyCap: "$45",
+    lastUsed: "09:41",
+  },
+  {
+    id: "key_research",
+    name: "research",
+    endsIn: "88c0",
+    expiresLabel: "Mar 8, 2027",
+    keyGroup: "Engineering",
+    canUse: "Models, tools, memory",
+    dailyCap: "$80",
+    lastUsed: "08:12",
+  },
+  {
+    id: "key_finance",
+    name: "finance-digest",
+    endsIn: "b2d9",
+    expiresLabel: "Apr 1, 2027",
+    keyGroup: "Operations",
+    canUse: "Models, events",
+    dailyCap: "$30",
+    lastUsed: "08:55",
   },
 ];
 

@@ -1087,3 +1087,344 @@ export const ERASURE_JOB = {
     },
   ],
 } as const;
+
+/** Settings → General (org metadata). */
+export const SETTINGS_ORG = {
+  name: "Acme Robotics",
+  consoleAddress: "acme.cloud.clawql.com",
+  dataRegion: "United States",
+  timeZone: "Pacific Time (Los Angeles)",
+  securityContact: "security@acme.example",
+} as const;
+
+/** Settings → Network. */
+export const SETTINGS_NETWORK = {
+  webhookHosts: [
+    { host: "hooks.slack.com", subscriptions: 1 },
+    { host: "chatgpt.com", subscriptions: 2 },
+    { host: "finance.acme.example", subscriptions: 1 },
+  ],
+  egressDomains: [
+    "api.github.com",
+    "acme.atlassian.net",
+    "slack.com",
+    "www.googleapis.com",
+    "api.stripe.com",
+    "crm.acme.example",
+  ],
+  ipLimitOff: true,
+} as const;
+
+/** Settings → Data & privacy. */
+export const SETTINGS_PRIVACY = {
+  retention: [
+    { label: "Audit log", help: "Can be extended, never shortened below 1 year.", value: "7 years" },
+    { label: "Session transcripts", help: "The steps behind each session in Sessions.", value: "90 days" },
+    { label: "Event payloads", help: "Kept for redelivery and stream replay.", value: "30 days" },
+    { label: "Memory and documents", help: "Kept until someone deletes or erases them.", value: "Until erased", locked: true },
+  ],
+  redaction: [
+    { label: "Email addresses", checked: true },
+    { label: "Bank account numbers", checked: true },
+    { label: "Phone numbers", checked: true },
+    { label: "Government IDs", checked: true },
+    { label: "Home addresses", checked: true },
+    { label: "Card numbers", checked: true, locked: true, note: "always" },
+    { label: "Personal names", checked: false, note: "off; names matter in contracts" },
+  ],
+  auditRoots: {
+    path: "s3://acme-audit-roots",
+    status: "Connected, last sent 10:00",
+  },
+  trainingExportsOn: true,
+  erasureSummary: "1 in progress, 4 completed this year.",
+} as const;
+
+export const TEAM_GROUPS = [
+  {
+    id: "engineering",
+    name: "Engineering",
+    people: "Dana Reyes, Marcus Lee",
+    role: "Admin",
+    usedIn: "Approves new sources",
+  },
+  {
+    id: "legal",
+    name: "Legal",
+    people: "Dana Reyes, Priya Shah",
+    role: "Member",
+    usedIn: "Contract approvers come from this group",
+  },
+  {
+    id: "support",
+    name: "Support",
+    people: "Jordan Kim",
+    role: "Member",
+    usedIn: "Answers ticket-triage decisions",
+  },
+  {
+    id: "finance",
+    name: "Finance",
+    people: "Sam Ortiz (invited)",
+    role: "Auditor",
+    usedIn: "Read-only audit and exports",
+  },
+] as const;
+
+export const TEAM_ROLES = [
+  {
+    id: "owner",
+    name: "Owner",
+    people: "1 person",
+    console: "Yes",
+    connections: "Yes",
+    policies: "Yes",
+    peopleManage: "Yes",
+    exportAudit: "Yes",
+    billing: "Yes",
+  },
+  {
+    id: "admin",
+    name: "Admin",
+    people: "1 person",
+    console: "Yes",
+    connections: "Yes",
+    policies: "Yes",
+    peopleManage: "Yes",
+    exportAudit: "Yes",
+    billing: "No",
+  },
+  {
+    id: "member",
+    name: "Member",
+    people: "2 people",
+    console: "Yes",
+    connections: "No",
+    policies: "No",
+    peopleManage: "No",
+    exportAudit: "No",
+    billing: "No",
+  },
+  {
+    id: "auditor",
+    name: "Auditor",
+    people: "1 invited",
+    console: "Read only",
+    connections: "No",
+    policies: "No",
+    peopleManage: "No",
+    exportAudit: "Yes",
+    billing: "No",
+  },
+  {
+    id: "billing",
+    name: "Billing admin",
+    people: "Nobody yet",
+    console: "Usage and billing only",
+    connections: "No",
+    policies: "No",
+    peopleManage: "No",
+    exportAudit: "No",
+    billing: "Yes",
+  },
+] as const;
+
+export const PLAN_CREDITS = {
+  planName: "Team",
+  renews: "Billed monthly, renews Nov 1",
+  members: "5 seats · billed per member",
+  modelUsage: "Inference billed on usage after included credits",
+  included: "Gateway, Review, Audit, Memory, Skills, Automations",
+  auditRetention: "1 year included · extendable in Data & privacy",
+  creditBalance: "$250.00",
+  creditNote: "Used before your card is charged. At October's pace this covers about one day.",
+  autoTopUp: true,
+  invoices: [
+    {
+      period: "October 2026",
+      amount: "About $7,800, estimated",
+      status: "Due Nov 1",
+      statusTone: "neutral" as const,
+      extra: "Not issued",
+    },
+    {
+      period: "September 2026",
+      amount: "$2,912.40",
+      status: "Paid",
+      statusTone: "ok" as const,
+      extra: "PDF",
+    },
+    {
+      period: "August 2026",
+      amount: "$2,604.15",
+      status: "Paid",
+      statusTone: "ok" as const,
+      extra: "PDF",
+    },
+  ],
+} as const;
+
+export const PAYMENT_LIMITS = {
+  card: "Visa ending 4242, expires 08/28",
+  invoiceEmail: "billing@acme.example",
+  taxId: "Not added",
+  monthlyBudget: 3000,
+  forecast: 7800,
+  forecastNote:
+    "October is forecast at about $7,800. With alerts only, spending keeps going past the $3,000 budget. Turn on a hard stop if that shouldn't happen.",
+  alerts: "At 80% and 100%",
+  at100: "alert" as "alert" | "hard-stop",
+  teamBudgets: [
+    { team: "documents", amount: 1200 },
+    { team: "support", amount: 800 },
+    { team: "operations", amount: 500 },
+    { team: "experiments", amount: 150 },
+  ],
+} as const;
+
+export const INBOUND_WEBHOOKS = [
+  {
+    id: "github",
+    name: "GitHub",
+    status: "Signatures verified",
+    tone: "ok" as const,
+    stats: "41 received today, 0 rejected",
+    url: "https://acme.cloud.clawql.com/events/inbound/github",
+    description:
+      "Pushes and pull requests on acme/web. Arrives as stream.changed marked inbound:github. Only the Ops dashboard stream opts in.",
+    setup: true,
+  },
+  {
+    id: "stripe",
+    name: "Stripe",
+    status: "Signatures verified",
+    tone: "ok" as const,
+    stats: "12 received today, 2 rejected",
+    url: "https://acme.cloud.clawql.com/events/inbound/stripe",
+    description:
+      "Payment events. The 2 rejected calls had invalid signatures and were dropped; both are in the audit log. No subscriptions opt in yet.",
+    setup: true,
+  },
+  {
+    id: "figma",
+    name: "Figma",
+    status: "Not set up",
+    tone: "neutral" as const,
+    stats: "",
+    url: "",
+    description: "File updates, comments and library publishes.",
+    setup: false,
+  },
+] as const;
+
+export const SCHEDULES = [
+  {
+    id: "spend",
+    name: "Daily spend digest",
+    runs: "Every day, 08:50",
+    runsAs: "finance-digest key",
+    lastRun: "Done 08:55",
+    lastTone: "ok" as const,
+    nextRun: "Tomorrow 08:50",
+  },
+  {
+    id: "vendor",
+    name: "Vendor renewal check",
+    runs: "Mondays, 09:00",
+    runsAs: "legal-ops key",
+    lastRun: "Done 09:03",
+    lastTone: "ok" as const,
+    nextRun: "Oct 12, 09:00",
+  },
+  {
+    id: "expiry",
+    name: "Key expiry reminder",
+    runs: "Every day, 07:00",
+    runsAs: "ClawQL",
+    lastRun: "Done 07:00",
+    lastTone: "ok" as const,
+    nextRun: "Tomorrow 07:00",
+  },
+  {
+    id: "morning",
+    name: "Morning digests",
+    runs: "Every day, 08:00 in each person's time zone",
+    runsAs: "ClawQL",
+    lastRun: "Sent to 3 people",
+    lastTone: "ok" as const,
+    nextRun: "Tomorrow",
+  },
+] as const;
+
+export const EVENT_TYPES = [
+  {
+    event: "document.processed",
+    when: "A document finishes its pipeline",
+    subscriptions: 2,
+    last24h: "214",
+  },
+  {
+    event: "hook.blocked",
+    when: "A policy or gate stops an agent's call",
+    subscriptions: 2,
+    last24h: "9",
+  },
+  {
+    event: "budget.exhausted",
+    when: "A key or team reaches its cap",
+    subscriptions: 2,
+    last24h: "1",
+  },
+  {
+    event: "stream.changed",
+    when: "A watched source changes. Inbound webhooks also arrive as this type, but only for subscriptions that opt in.",
+    subscriptions: 2,
+    last24h: "1,512",
+  },
+  {
+    event: "schedule.completed",
+    when: "A scheduled run finishes",
+    subscriptions: 2,
+    last24h: "12",
+  },
+  {
+    event: "schedule.paused",
+    when: "A schedule or watch stops after repeated sign-in failures",
+    subscriptions: 1,
+    last24h: "1",
+  },
+  {
+    event: "notification.sent",
+    when: "ClawQL posts a message, such as a digest to Slack",
+    subscriptions: 1,
+    last24h: "157",
+  },
+] as const;
+
+export const MCP_TOOLS = [
+  "search",
+  "execute",
+  "resume",
+  "memory_recall",
+  "memory_ingest",
+  "read_around",
+  "skills_list",
+  "skills_get",
+  "sources_propose",
+] as const;
+
+export const MCP_CLIENTS = [
+  { client: "Claude Code", keys: "legal-ops, research", sessions: 41 },
+  { client: "Cursor", keys: "release-agent, ci-pipeline", sessions: 33 },
+  { client: "ChatGPT", keys: "support-bot", sessions: 38 },
+  { client: "Codex", keys: "docs-pipeline", sessions: 16 },
+] as const;
+
+export const AUDIT_CHAIN = {
+  verified: true,
+  checkedAgo: "2 minutes ago",
+  entries: "4,912",
+  latestRoot: "b41e…07c9",
+  latestRootAt: "09:00",
+  retention: "7 years",
+} as const;

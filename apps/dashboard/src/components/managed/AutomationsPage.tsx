@@ -8,12 +8,23 @@ import { TabBar } from '@/components/managed/TabBar'
 import { Button } from '@/components/ui/button'
 import {
   AUTOMATION_SUBS,
+  EVENT_TYPES,
+  INBOUND_WEBHOOKS,
+  SCHEDULES,
   WATCHED_SOURCE_DETAIL,
   WATCHED_SOURCES,
 } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
 type Tab = 'subscriptions' | 'watched' | 'webhooks' | 'schedules' | 'types'
+
+const CRUMB: Record<Tab, string | null> = {
+  subscriptions: null,
+  watched: 'Watched sources',
+  webhooks: 'Inbound webhooks',
+  schedules: 'Schedules',
+  types: 'Event types',
+}
 
 export function AutomationsPage() {
   const [tab, setTab] = useState<Tab>('subscriptions')
@@ -24,19 +35,15 @@ export function AutomationsPage() {
 
   return (
     <PageChrome
-      crumbs={
-        tab === 'watched'
-          ? ['Automations', 'Watched sources']
-          : tab === 'subscriptions'
-            ? ['Automations']
-            : ['Automations', tab]
-      }
+      crumbs={CRUMB[tab] ? ['Automations', CRUMB[tab]!] : ['Automations']}
       title="Automations"
       description="What runs on its own: events you send out, sources you watch, webhooks you receive, and schedules."
       actions={
         tab === 'watched' ? (
           <Button type="button">Watch a source</Button>
-        ) : (
+        ) : tab === 'schedules' ? (
+          <Button type="button">New schedule</Button>
+        ) : tab === 'webhooks' || tab === 'types' ? undefined : (
           <Button type="button">New subscription</Button>
         )
       }
@@ -48,21 +55,22 @@ export function AutomationsPage() {
         tabs={[
           { id: 'subscriptions', label: 'Subscriptions', count: AUTOMATION_SUBS.length },
           { id: 'watched', label: 'Watched sources', count: WATCHED_SOURCES.length },
-          { id: 'webhooks', label: 'Inbound webhooks' },
-          { id: 'schedules', label: 'Schedules' },
-          { id: 'types', label: 'Event types' },
+          {
+            id: 'webhooks',
+            label: 'Inbound webhooks',
+            count: INBOUND_WEBHOOKS.filter((w) => w.setup).length,
+          },
+          { id: 'schedules', label: 'Schedules', count: SCHEDULES.length },
+          { id: 'types', label: 'Event types', count: EVENT_TYPES.length },
         ]}
       />
 
       {tab === 'watched' ? (
         <WatchedSourcesPanel selectedId={selectedWatch.id} onSelect={setWatchId} />
       ) : null}
-
-      {tab !== 'subscriptions' && tab !== 'watched' ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          Fixture shell for {tab}. Subscriptions and Watched sources are wired from the mockups.
-        </div>
-      ) : null}
+      {tab === 'webhooks' ? <InboundWebhooksPanel /> : null}
+      {tab === 'schedules' ? <SchedulesPanel /> : null}
+      {tab === 'types' ? <EventTypesPanel /> : null}
 
       {tab === 'subscriptions' ? (
         <>
@@ -199,6 +207,163 @@ export function AutomationsPage() {
         </>
       ) : null}
     </PageChrome>
+  )
+}
+
+function InboundWebhooksPanel() {
+  return (
+    <div className="space-y-4" data-testid="automations-webhooks">
+      <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+        Services push events to these addresses. Each one is checked against the service&apos;s signature, marked
+        untrusted, and only reaches subscriptions that opt in. Agents treat what&apos;s inside as data, never as
+        instructions.
+      </div>
+      <ul className="space-y-3">
+        {INBOUND_WEBHOOKS.map((hook) => (
+          <li
+            key={hook.id}
+            className={cn(
+              'rounded-xl border bg-white p-5 shadow-sm',
+              hook.setup ? 'border-slate-200' : 'border-dashed border-slate-300 bg-slate-50/40',
+            )}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">{hook.name}</h3>
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium',
+                      hook.tone === 'ok' && 'bg-emerald-100 text-emerald-800',
+                      hook.tone === 'neutral' && 'bg-slate-200 text-slate-600',
+                    )}
+                  >
+                    {hook.tone === 'ok' ? <StatusDot tone="ok" /> : null}
+                    {hook.status}
+                  </span>
+                </div>
+                {hook.stats ? <p className="mt-1 text-xs text-slate-500">{hook.stats}</p> : null}
+              </div>
+              {hook.setup ? (
+                <Button type="button" variant="outline" size="sm">
+                  Rotate secret
+                </Button>
+              ) : (
+                <Button type="button" size="sm">
+                  Set up
+                </Button>
+              )}
+            </div>
+            {hook.url ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <code className="flex-1 rounded-lg bg-slate-100 px-3 py-2 font-mono text-xs text-slate-800">
+                  {hook.url}
+                </code>
+                <Button type="button" variant="outline" size="sm">
+                  Copy
+                </Button>
+              </div>
+            ) : null}
+            <p className="mt-3 text-sm text-slate-600">{hook.description}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function SchedulesPanel() {
+  return (
+    <div className="space-y-4" data-testid="automations-schedules">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">Schedule</th>
+              <th className="px-4 py-3 font-medium">Runs</th>
+              <th className="px-4 py-3 font-medium">Runs as</th>
+              <th className="px-4 py-3 font-medium">Last run</th>
+              <th className="px-4 py-3 font-medium">Next run</th>
+              <th className="px-4 py-3 font-medium" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {SCHEDULES.map((row) => (
+              <tr key={row.id}>
+                <td className="px-4 py-3 font-medium text-slate-900">{row.name}</td>
+                <td className="px-4 py-3 text-slate-600">{row.runs}</td>
+                <td className="px-4 py-3">
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                    {row.runsAs}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 text-slate-700">
+                    <StatusDot tone={row.lastTone} />
+                    {row.lastRun}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-slate-600">{row.nextRun}</td>
+                <td className="px-4 py-3">
+                  <button type="button" className="text-sky-700 hover:underline">
+                    Run now
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-sm text-slate-500">
+        A schedule runs with its key&apos;s permissions, so anything that writes still waits for a mandate. Each
+        run sends a <span className="font-mono text-xs">schedule.completed</span> event; if its source keeps
+        failing to sign in, it pauses and sends <span className="font-mono text-xs">schedule.paused</span>.
+      </p>
+    </div>
+  )
+}
+
+function EventTypesPanel() {
+  return (
+    <div className="space-y-4" data-testid="automations-types">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[40rem] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">Event</th>
+              <th className="px-4 py-3 font-medium">Sent when</th>
+              <th className="px-4 py-3 font-medium">Subscriptions</th>
+              <th className="px-4 py-3 font-medium">Last 24 hours</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {EVENT_TYPES.map((row) => (
+              <tr key={row.event}>
+                <td className="px-4 py-3 font-mono text-xs font-medium text-slate-900">{row.event}</td>
+                <td className="px-4 py-3 text-slate-600">{row.when}</td>
+                <td className="px-4 py-3 tabular-nums text-slate-700">{row.subscriptions}</td>
+                <td className="px-4 py-3 tabular-nums text-slate-700">{row.last24h}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">How events arrive</h2>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
+          <li>
+            Webhooks are signed to the Standard Webhooks format. Retries keep the same event ID, so receivers can
+            drop duplicates.
+          </li>
+          <li>The live stream uses CloudEvents and resumes from the last event a client saw.</li>
+          <li>Every payload has personal data redacted before it&apos;s sent.</li>
+          <li>
+            The same seven types are available to MCP clients and through{' '}
+            <span className="font-mono text-xs">/events</span>.
+          </li>
+        </ul>
+      </section>
+    </div>
   )
 }
 

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
+import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
 import { fetchManagedUsage, openManagedBillingPortal } from '@/lib/managed/client'
 import { DAILY_SPEND, TEAM_SPEND, USAGE_SUMMARY } from '@/lib/managed/fixtures'
+import { PAYMENT_LIMITS, PLAN_CREDITS } from '@/lib/managed/fixtures-ops'
 import type { ManagedUsageSnapshot } from '@/lib/managed/live/usage'
 import { cn } from '@/lib/utils'
 
@@ -72,19 +74,31 @@ export function UsageBillingPage() {
 
   const maxBar = useMemo(() => Math.max(...usage.daily.map((d) => d.amount), 1), [usage.daily])
   const pct = Math.round((usage.monthSpent / Math.max(usage.monthBudget, 1)) * 100)
+  const description =
+    tab === 'plan'
+      ? 'Your plan, prepaid credits, and every invoice.'
+      : tab === 'payment'
+        ? 'How you pay, and the limits that keep spend in check.'
+        : 'What your agents are spending, where it goes, and the limits that keep it in check.'
 
   return (
     <PageChrome
-      crumbs={['Usage & billing']}
+      crumbs={
+        tab === 'usage'
+          ? ['Usage & billing']
+          : ['Usage & billing', tab === 'plan' ? 'Plan & credits' : 'Payment & limits']
+      }
       title="Usage & billing"
-      description="What your agents are spending, where it goes, and the limits that keep it in check."
+      description={description}
       actions={
-        <>
-          <span className="text-sm text-slate-600">{usage.planRenews}</span>
-          <Button type="button" variant="outline" disabled={portalBusy} onClick={openPortal}>
-            {portalBusy ? 'Opening…' : 'Manage plan'}
-          </Button>
-        </>
+        tab === 'usage' ? (
+          <>
+            <span className="text-sm text-slate-600">{usage.planRenews}</span>
+            <Button type="button" variant="outline" disabled={portalBusy} onClick={openPortal}>
+              {portalBusy ? 'Opening…' : 'Manage plan'}
+            </Button>
+          </>
+        ) : undefined
       }
     >
       <p className="mb-3 text-xs text-slate-500" data-testid="usage-data-source">
@@ -125,30 +139,28 @@ export function UsageBillingPage() {
         </p>
       ) : null}
 
-      {tab !== 'usage' ? (
-        <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 shadow-sm">
-          <p className="text-sm font-medium text-slate-800">
-            {tab === 'plan' ? 'Plan & credits' : 'Payment & limits'}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
-            {source === 'live'
-              ? `Pool spendable: $${(usage.meta.poolSpendableCents / 100).toLocaleString()} · org ${usage.meta.orgId}`
-              : 'Fixture spend summary until CLAWQL_MANAGED_ORG_ID is set.'}
-          </p>
-          <p className="mt-2 text-sm text-slate-500">
-            Open the Stripe customer portal to update payment methods, invoices, and the subscription. Requires{' '}
-            <span className="font-mono text-xs">CLAWQL_STRIPE_CUSTOMER_ID</span> and Stripe API keys on the server.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button type="button" disabled={portalBusy} onClick={openPortal} data-testid="open-stripe-portal">
-              {portalBusy ? 'Opening…' : 'Open Stripe portal'}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => setTab('usage')}>
-              Back to usage
-            </Button>
-          </div>
-        </div>
-      ) : (
+      {tab === 'plan' ? (
+        <PlanCreditsPanel
+          portalBusy={portalBusy}
+          onOpenPortal={openPortal}
+          poolNote={
+            source === 'live'
+              ? `Live pool spendable: $${(usage.meta.poolSpendableCents / 100).toLocaleString()}`
+              : undefined
+          }
+        />
+      ) : null}
+
+      {tab === 'payment' ? (
+        <PaymentLimitsPanel
+          portalBusy={portalBusy}
+          onOpenPortal={openPortal}
+          monthBudget={usage.monthBudget}
+          forecast={usage.forecast}
+        />
+      ) : null}
+
+      {tab === 'usage' ? (
         <div className="space-y-6">
           <section className="grid gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
@@ -311,7 +323,237 @@ export function UsageBillingPage() {
             </ul>
           </section>
         </div>
-      )}
+      ) : null}
     </PageChrome>
+  )
+}
+
+function PlanCreditsPanel({
+  portalBusy,
+  onOpenPortal,
+  poolNote,
+}: {
+  portalBusy: boolean
+  onOpenPortal: () => void
+  poolNote?: string
+}) {
+  return (
+    <div className="space-y-4" data-testid="usage-plan">
+      {poolNote ? <p className="text-xs text-slate-500">{poolNote}</p> : null}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Current plan: <span className="text-slate-900">{PLAN_CREDITS.planName}</span>
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">{PLAN_CREDITS.renews}</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled={portalBusy} onClick={onOpenPortal}>
+              Compare plans
+            </Button>
+          </div>
+          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+            <li>
+              <strong className="text-slate-800">Members:</strong> {PLAN_CREDITS.members}
+            </li>
+            <li>
+              <strong className="text-slate-800">Model usage:</strong> {PLAN_CREDITS.modelUsage}
+            </li>
+            <li>
+              <strong className="text-slate-800">Included:</strong> {PLAN_CREDITS.included}
+            </li>
+            <li>
+              <strong className="text-slate-800">Audit retention:</strong> {PLAN_CREDITS.auditRetention}
+            </li>
+          </ul>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900">Prepaid credits</h2>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">{PLAN_CREDITS.creditBalance}</p>
+          <p className="mt-2 text-sm text-slate-500">{PLAN_CREDITS.creditNote}</p>
+          <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
+            <input type="checkbox" defaultChecked={PLAN_CREDITS.autoTopUp} className="mt-1" />
+            <span>Top up automatically below $100</span>
+          </label>
+          <div className="mt-4">
+            <Button type="button" disabled={portalBusy} onClick={onOpenPortal} data-testid="open-stripe-portal">
+              {portalBusy ? 'Opening…' : 'Add credits'}
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Invoices</h2>
+        <table className="mt-4 w-full text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="pb-2 font-medium">Period</th>
+              <th className="pb-2 font-medium">Amount</th>
+              <th className="pb-2 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {PLAN_CREDITS.invoices.map((inv) => (
+              <tr key={inv.period}>
+                <td className="py-3 text-slate-800">{inv.period}</td>
+                <td className="py-3 text-slate-600">{inv.amount}</td>
+                <td className="py-3">
+                  <span className="inline-flex items-center gap-1.5">
+                    <StatusDot tone={inv.statusTone} />
+                    {inv.status}
+                  </span>
+                  {inv.extra === 'PDF' ? (
+                    <button type="button" className="ml-2 text-sky-700 hover:underline">
+                      PDF
+                    </button>
+                  ) : (
+                    <span className="ml-2 text-xs text-slate-400">{inv.extra}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  )
+}
+
+function PaymentLimitsPanel({
+  portalBusy,
+  onOpenPortal,
+  monthBudget,
+  forecast,
+}: {
+  portalBusy: boolean
+  onOpenPortal: () => void
+  monthBudget: number
+  forecast: number
+}) {
+  return (
+    <div className="space-y-4" data-testid="usage-payment">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Payment</h2>
+        <ul className="mt-4 space-y-3 text-sm">
+          <li className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-slate-700">{PAYMENT_LIMITS.card}</span>
+            <button
+              type="button"
+              className="font-medium text-sky-700 hover:underline"
+              disabled={portalBusy}
+              onClick={onOpenPortal}
+            >
+              Change
+            </button>
+          </li>
+          <li className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-slate-700">
+              Invoices go to <strong>{PAYMENT_LIMITS.invoiceEmail}</strong>
+            </span>
+            <button
+              type="button"
+              className="font-medium text-sky-700 hover:underline"
+              disabled={portalBusy}
+              onClick={onOpenPortal}
+            >
+              Change
+            </button>
+          </li>
+          <li className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-slate-700">
+              Tax ID: <span className="text-slate-500">{PAYMENT_LIMITS.taxId}</span>
+            </span>
+            <button
+              type="button"
+              className="font-medium text-sky-700 hover:underline"
+              disabled={portalBusy}
+              onClick={onOpenPortal}
+            >
+              Add
+            </button>
+          </li>
+        </ul>
+        <p className="mt-4 text-xs text-slate-500">
+          Payments are handled by Stripe. ClawQL never sees your full card number.
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Org limit</h2>
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-sm text-amber-950">
+          <strong>October is forecast at about ${forecast.toLocaleString()}.</strong> With alerts only, spending
+          keeps going past the ${monthBudget.toLocaleString()} budget. Turn on a hard stop if that shouldn&apos;t
+          happen.
+        </div>
+        <label className="mt-4 block text-sm">
+          <span className="font-medium text-slate-800">Monthly budget</span>
+          <div className="mt-1.5 flex items-center gap-2">
+            <span className="text-slate-500">$</span>
+            <input
+              type="number"
+              defaultValue={monthBudget}
+              className="h-9 w-32 rounded-lg border border-slate-200 px-3"
+            />
+            <span className="text-xs text-slate-500">for the whole organization</span>
+          </div>
+        </label>
+        <p className="mt-3 text-sm text-slate-600">
+          <strong className="text-slate-800">Alerts:</strong> {PAYMENT_LIMITS.alerts} to admins via email and
+          Slack.
+        </p>
+        <div className="mt-4">
+          <p className="text-sm font-medium text-slate-800">At 100%</p>
+          <div className="mt-2 flex rounded-lg border border-slate-200 p-0.5 text-sm">
+            <button
+              type="button"
+              className="flex-1 rounded-md bg-slate-900 px-3 py-1.5 font-medium text-white"
+            >
+              Alert only
+            </button>
+            <button type="button" className="flex-1 rounded-md px-3 py-1.5 text-slate-600 hover:bg-slate-50">
+              Hard stop
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            A hard stop pauses model calls while keeping tools and approvals functional.
+          </p>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900">Team budgets</h2>
+          <p className="text-xs text-slate-500">
+            Daily caps per key are set on each key in{' '}
+            <a href="/connections" className="text-sky-700 hover:underline">
+              Connections & keys
+            </a>
+            .
+          </p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {PAYMENT_LIMITS.teamBudgets.map((row) => (
+            <label key={row.team} className="block text-sm">
+              <span className="font-medium text-slate-800">{row.team}</span>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="text-slate-500">$</span>
+                <input
+                  type="number"
+                  defaultValue={row.amount}
+                  className="h-9 w-full rounded-lg border border-slate-200 px-3"
+                />
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-slate-500">Changes to limits are recorded in the audit log.</p>
+          <Button type="button">Save limits</Button>
+        </div>
+      </section>
+    </div>
   )
 }

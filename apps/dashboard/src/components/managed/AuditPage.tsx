@@ -5,13 +5,13 @@ import { useState } from 'react'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
-import { AUDIT_ENTRIES, AUDIT_INCIDENT } from '@/lib/managed/fixtures-ops'
+import { AUDIT_CHAIN, AUDIT_ENTRIES, AUDIT_INCIDENT } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
 type View = 'log' | 'incident'
 
 export function AuditPage() {
-  const [view, setView] = useState<View>('incident')
+  const [view, setView] = useState<View>('log')
   const [selectedId, setSelectedId] = useState('wrm_4906')
   const selected = AUDIT_ENTRIES.find((e) => e.id === selectedId) ?? AUDIT_ENTRIES[2]!
 
@@ -171,19 +171,25 @@ export function AuditPage() {
         </>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm shadow-sm">
-        <span className="inline-flex items-center gap-2 font-medium text-amber-950">
-          <StatusDot tone="warn" /> Chain verification failed — {AUDIT_INCIDENT.entryId}
+      <div
+        className="mb-4 flex flex-wrap items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm shadow-sm"
+        data-testid="audit-verified"
+      >
+        <span className="inline-flex items-center gap-2 font-medium text-emerald-950">
+          <StatusDot tone="ok" /> Chain verified (Checked {AUDIT_CHAIN.checkedAgo})
         </span>
+        <span className="text-slate-600">Entries: {AUDIT_CHAIN.entries}</span>
+        <span className="font-mono text-xs text-slate-500">
+          Latest root ({AUDIT_CHAIN.latestRootAt}): {AUDIT_CHAIN.latestRoot}
+        </span>
+        <span className="text-slate-600">Retention: {AUDIT_CHAIN.retention}</span>
         <button
           type="button"
-          className="font-medium text-sky-700 hover:underline"
+          className="ml-auto font-medium text-sky-700 hover:underline"
           onClick={() => setView('incident')}
         >
-          Open incident view
+          Open sample incident
         </button>
-        <span className="text-slate-500">Entries: 4,912</span>
-        <span className="font-mono text-xs text-slate-500">Latest root, 09:00: b41e…07c9</span>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
