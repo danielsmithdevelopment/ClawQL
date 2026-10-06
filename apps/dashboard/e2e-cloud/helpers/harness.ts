@@ -11,7 +11,7 @@ async function fetchRetry(url: string, init?: RequestInit, attempts = 5): Promis
   let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetchRetry(url, init)
+      const res = await fetch(url, init)
       // Next HMR can briefly return 500 while recompiling routes
       if (res.status >= 500 && i < attempts - 1) {
         await new Promise((r) => setTimeout(r, 250 * (i + 1)))
