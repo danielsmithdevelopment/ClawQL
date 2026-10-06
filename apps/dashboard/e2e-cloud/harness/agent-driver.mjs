@@ -1,6 +1,6 @@
 /**
  * Scripted MCP + OpenAI-compatible client for GW-* / REV-* / SK-* scenarios.
- * Talks only to public gateway URLs with a chosen key.
+ * Talks to production-shaped gateway URLs (/v1, /mcp) with a chosen key.
  */
 import { createHash } from 'node:crypto'
 
@@ -15,7 +15,7 @@ export async function openaiChat({
   key,
   model = 'standard',
   messages,
-  baseUrl = `${localGateway}/api/e2e/v1`,
+  baseUrl = `${localGateway}/v1`,
 }) {
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -31,7 +31,7 @@ export async function openaiChat({
 
 export async function mcpListTools({
   key,
-  baseUrl = `${localGateway}/api/e2e/mcp`,
+  baseUrl = `${localGateway}/mcp`,
   client,
 }) {
   const res = await fetch(`${baseUrl}/tools/list`, {
@@ -51,7 +51,7 @@ export async function mcpCallTool({
   key,
   name,
   args,
-  baseUrl = `${localGateway}/api/e2e/mcp`,
+  baseUrl = `${localGateway}/mcp`,
 }) {
   const res = await fetch(`${baseUrl}/tools/call`, {
     method: 'POST',

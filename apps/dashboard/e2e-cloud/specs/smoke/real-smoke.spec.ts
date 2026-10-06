@@ -1,5 +1,6 @@
 /**
  * Real Smoke E2E — every Smoke catalog ID with honest witnesses.
+ * Pass-when via production-shaped /v1 /mcp /events /audit (/api/e2e arrange/fault only).
  * Never uses POST /api/e2e/scenario as pass criteria.
  */
 import { test, expect } from '@playwright/test'

@@ -1,5 +1,5 @@
 /**
- * Real Nightly E2E — honest witnesses via public /api/e2e/skills + MCP + UI.
+ * Real Nightly E2E — honest witnesses via production-shaped /mcp + /api/e2e/skills arrange + UI.
  * Never uses POST /api/e2e/scenario, runScenario, or getWitness as pass criteria.
  */
 import { test, expect } from '@playwright/test'

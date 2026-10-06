@@ -1,5 +1,5 @@
 /**
- * Real Nightly E2E — honest witnesses via public /api/e2e surfaces + webhook :4091 + UI.
+ * Real Nightly E2E — honest witnesses via production-shaped /v1 /mcp /events /audit ( /api/e2e arrange/fault only) + webhook :4091 + UI.
  * Never uses POST /api/e2e/scenario or runScenario as pass criteria.
  */
 import { test, expect } from '@playwright/test'
