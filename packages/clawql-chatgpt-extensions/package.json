@@ -32,7 +32,7 @@
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
     "effect": "4.0.0",
-    "zod": "4.3.6"
+    "zod": "4.6.5"
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0"
