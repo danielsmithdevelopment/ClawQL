@@ -6,7 +6,7 @@ import { CreateKeyModal } from '@/components/managed/CreateKeyModal'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
-import { API_KEYS, CONNECTIONS, type ConnectionItem } from '@/lib/managed/fixtures'
+import { API_KEYS, CONNECTIONS, type ApiKeyItem, type ConnectionItem } from '@/lib/managed/fixtures'
 import { cn } from '@/lib/utils'
 
 type Tab = 'connections' | 'keys' | 'groups'
@@ -21,6 +21,7 @@ export function ConnectionsPage() {
   const [tab, setTab] = useState<Tab>('connections')
   const [selectedId, setSelectedId] = useState(CONNECTIONS[0]!.id)
   const [createOpen, setCreateOpen] = useState(false)
+  const [keys, setKeys] = useState<ApiKeyItem[]>(() => [...API_KEYS])
   const selected = useMemo(
     () => CONNECTIONS.find((c) => c.id === selectedId) ?? CONNECTIONS[0]!,
     [selectedId],
@@ -43,10 +44,10 @@ export function ConnectionsPage() {
         }
       >
         <div className="mb-5 flex gap-4 border-b border-slate-200 text-sm">
-          {(
+          {            (
             [
               ['connections', `Connections ${CONNECTIONS.length}`],
-              ['keys', `Keys ${API_KEYS.length}`],
+              ['keys', `Keys ${keys.length}`],
               ['groups', 'Key groups 3'],
             ] as const
           ).map(([id, label]) => (
@@ -213,7 +214,7 @@ export function ConnectionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {API_KEYS.map((key) => (
+                {keys.map((key) => (
                   <tr key={key.id} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3 font-medium text-slate-900">{key.name}</td>
                     <td className="px-4 py-3 text-slate-600">{key.keyGroup}</td>
@@ -237,7 +238,11 @@ export function ConnectionsPage() {
         ) : null}
       </PageChrome>
 
-      <CreateKeyModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateKeyModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(key) => setKeys((prev) => [key, ...prev])}
+      />
     </>
   )
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { GATEWAY_BASE } from '@/lib/managed/fixtures'
+import { GATEWAY_BASE, type ApiKeyItem } from '@/lib/managed/fixtures'
 import { cn } from '@/lib/utils'
 
 const CAPABILITIES = [
@@ -19,9 +19,11 @@ type Phase = 'create' | 'created'
 export function CreateKeyModal({
   open,
   onClose,
+  onCreated,
 }: {
   open: boolean
   onClose: () => void
+  onCreated?: (key: ApiKeyItem) => void
 }) {
   const [phase, setPhase] = useState<Phase>('create')
   const [name, setName] = useState('billing-sync')
@@ -127,7 +129,21 @@ export function CreateKeyModal({
               <Button type="button" variant="outline" onClick={resetAndClose}>
                 Cancel
               </Button>
-              <Button type="button" onClick={() => setPhase('created')}>
+              <Button
+                type="button"
+                onClick={() => {
+                  const selected = CAPABILITIES.filter((c) => caps[c.id]).map((c) => c.label)
+                  onCreated?.({
+                    id: `key_${Date.now()}`,
+                    name: name.trim() || 'unnamed',
+                    expiresLabel: 'Expires Jan 3',
+                    keyGroup: 'Operations',
+                    canUse: selected.length > 0 ? selected.join(', ') : 'Nothing selected',
+                    dailyCap: `$${dailyCap || '0'}`,
+                  })
+                  setPhase('created')
+                }}
+              >
                 Create with security key
               </Button>
             </div>
