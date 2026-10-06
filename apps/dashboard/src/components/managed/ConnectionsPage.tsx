@@ -305,20 +305,22 @@ function permBadge(kind: 'none' | 'read' | 'read-write' | 'tag' | 'skills', labe
 function KeyGroupsMatrix() {
   return (
     <div className="space-y-3" data-testid="key-groups-matrix">
-      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">Read</span>
-          allowed
+      <div className="flex flex-col gap-2 text-xs text-slate-600 sm:flex-row sm:flex-wrap sm:items-center">
+        <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="shrink-0 rounded-md bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">
+            Read
+          </span>
+          <span>allowed</span>
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="rounded-md bg-amber-100 px-1.5 py-0.5 font-medium text-amber-900">
+        <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="shrink-0 rounded-md bg-amber-100 px-1.5 py-0.5 font-medium text-amber-900">
             Read and write
           </span>
-          writes need a mandate every time
+          <span>writes need a mandate every time</span>
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="text-slate-400">None</span>
-          can&apos;t reach it
+        <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <span className="shrink-0 text-slate-400">None</span>
+          <span>can&apos;t reach it</span>
         </span>
         <span className="text-slate-500">Deletes stay blocked for every group.</span>
       </div>
