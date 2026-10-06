@@ -66,6 +66,8 @@
     "undici": "7.29.1",
     "next": {
       "postcss": "8.5.23"
-    }
+    },
+    "proxy-addr": "2.0.8",
+    "source-map-js": "1.2.2"
   }
 }
