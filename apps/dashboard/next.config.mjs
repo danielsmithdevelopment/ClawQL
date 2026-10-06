@@ -6,6 +6,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  /** Allow local agents/browsers that hit 127.0.0.1 while Next advertises localhost. */
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   /** Electron desktop bundles `.next/standalone` (see `apps/desktop/`). */
   output: 'standalone',
   /** Monorepo: trace file inclusion from repo root when multiple lockfiles exist. */
