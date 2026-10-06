@@ -4,50 +4,23 @@
  */
 import { test, expect } from '@playwright/test'
 
-import { KEYS, mcpCallTool, mcpListTools, openaiChat } from '../../harness/agent-driver.mjs'
+import { KEYS, mcpCallTool } from '../../harness/agent-driver.mjs'
 import { openManagedConsole } from '../../helpers/console'
 import {
   approveReview,
   control,
-  createSubscription,
   decisionCall,
-  eraseSubject,
-  fetchAsOrg,
   getAudit,
+  getConnections,
   getCrm,
-  getDocuments,
-  getInboundStats,
-  getOrg,
   getSettings,
-  getUsage,
-  getWebhookDeliveries,
-  getWitness,
-  keysApi,
-  listEvents,
   listReview,
-  listSubscriptions,
-  memoryGet,
-  memoryPost,
-  memorySearch,
-  openaiChatWithIp,
-  postEvents,
-  postInbound,
-  redeliverEvent,
-  resetWebhookReceiver,
   resetWorld,
-  retryAllEvents,
-  searchErased,
-  setWebhookMode,
   settingsMutate,
-  stripeCheckout,
-  subscriptionAction,
-  systemOne,
-  uploadDocument,
-  waitForDeliveries,
+  skillsApi,
 } from '../../helpers/harness'
 
 const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
-const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
 
 test.beforeEach(async () => {
   await resetWorld()
@@ -264,8 +237,7 @@ test('REV-15 Dana approves Linear source — connected, no key group', async ({ 
   const requestId = String(propose.body.requestId)
   const ap = await approveReview({ requestId, actor: 'Dana Reyes', pinVerified: true })
   expect(ap.status).toBe(200)
-  const wit = await getWitness()
-  const linear = (wit.body.connections as { id: string; status: string; groups: string[] }[]).find(
+  const linear = (await getConnections()).body.connections.find(
     (c) => c.id === 'linear' || c.name === 'Linear',
   )
   expect(linear?.status).toBe('connected')
@@ -276,9 +248,7 @@ test('REV-15 Dana approves Linear source — connected, no key group', async ({ 
 })
 
 test('REV-16 Decline Linear — pending gone; skill needing it stays blocked', async () => {
-  const pending = ((await getWitness()).body.connections as { id: string; status: string }[]).find(
-    (c) => c.id === 'linear',
-  )
+  const pending = (await getConnections()).body.connections.find((c) => c.id === 'linear')
   expect(pending?.status).toBe('waiting-review')
   const seeded = ((await listReview()).body.review as { id: string; kind: string }[]).find(
     (r) => r.kind === 'source',
@@ -294,8 +264,7 @@ test('REV-16 Decline Linear — pending gone; skill needing it stays blocked', a
   await control({
     skillMutate: { id: 'needs-linear', name: 'needs-linear', stage: 'proposed', needsConnection: 'linear' },
   })
-  const wit = await getWitness()
-  const skill = (wit.body.skills as { id: string; needsConnection?: string; stage: string }[]).find(
+  const skill = ((await skillsApi()).body.skills as { id: string; needsConnection?: string; stage: string }[]).find(
     (s) => s.id === 'needs-linear',
   )
   expect(skill?.needsConnection).toBe('linear')
@@ -318,8 +287,8 @@ test('REV-18 Skip decision then ask teammate — still waiting + notified', asyn
       (r) => r.kind === 'decision' && r.status === 'waiting',
     ),
   ).toBe(true)
-  const wit = await getWitness()
-  const outbox = wit.body.notificationsOutbox as { to: string }[]
+  const settings = await getSettings()
+  const outbox = settings.body.notificationsOutbox ?? []
   expect(outbox.some((n) => n.to === 'Marcus Lee')).toBe(true)
 })
 
@@ -346,8 +315,8 @@ test('REV-19 Request expiry 30→15 minutes with audit old/new', async () => {
 })
 
 test('REV-20 Requester-cannot-approve control is locked', async () => {
-  const wit = await getWitness()
-  expect(wit.body.requesterCannotApproveLocked).toBe(true)
+  const settings = await getSettings()
+  expect(settings.body.requesterCannotApproveLocked).toBe(true)
 })
 
 test('REV-22 Home, Review, sidebar badges always agree', async ({ page }) => {

@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -66,12 +65,13 @@ test('KEY-03 Marcus needs 2; Remind notifies', async () => {
   expect(remind.status).toBe(200)
   expect(remind.body.row).toBe('needs 2')
   expect(remind.body.notified).toBe(true)
-  const wit = await getWitness()
-  const marcus = (wit.body.people as { name: string; needsTwo: boolean; keyCount: number }[]).find(
+  const listed = await keysApi()
+  const marcus = (listed.body.people as { name: string; needsTwo: boolean; keyCount: number }[]).find(
     (p) => p.name === 'Marcus Lee',
   )
   expect(marcus?.needsTwo).toBe(true)
-  const outbox = wit.body.notificationsOutbox as { to: string; body: string }[]
+  const settings = await getSettings()
+  const outbox = settings.body.notificationsOutbox ?? []
   expect(outbox.some((n) => n.to === 'Marcus Lee' && /needs 2/i.test(n.body))).toBe(true)
 })
 
@@ -84,20 +84,8 @@ test('KEY-04 Cannot remove key below two-key rule', async () => {
 })
 
 test('KEY-05 Recovery code once then reuse rejected', async () => {
-  const wit0 = await getWitness()
-  const remaining0 = Number((wit0.body.org as { recoveryCodesRemaining: number }).recoveryCodesRemaining)
-  // Get a code via register response or control use
-  const codesRes = await control({ registerSecurityKeys: { person: 'Dana Reyes', count: 2 } })
-  expect(codesRes.status).toBe(200)
-  // Fetch codes from keys register
-  const reg = await keysApi({ action: 'register', person: 'Marcus Lee', keyKind: 'device-bound', name: 'M2' })
-  const codes = (reg.body.recoveryCodes as string[] | undefined) ?? []
-  // Use org recovery via control — seed codes still on world
-  const w = await getWitness()
-  // Use first recovery via control
-  const use1 = await control({ useRecoveryCode: 'REC-PLACEHOLDER' })
-  // Get real code by regenerating then... better: useRecoveryCode with actual from seed — not exposed.
-  // Issue: recovery codes not on GET. Use register which returns them when shown once.
+  const remaining0 = Number((await keysApi()).body.recoveryCodesRemaining)
+  expect(remaining0).toBeGreaterThan(0)
   await resetWorld()
   await control({ securityKeysRegistered: false, markFirstRun: 1 })
   const r1 = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'device-bound', name: 'A' })
@@ -105,11 +93,10 @@ test('KEY-05 Recovery code once then reuse rejected', async () => {
   const recovery = (r2.body.recoveryCodes as string[]) ?? (r1.body.recoveryCodes as string[]) ?? []
   expect(recovery.length).toBeGreaterThan(0)
   const code = recovery[0]!
-  const before = recovery.length
+  const before = Number((await keysApi()).body.recoveryCodesRemaining)
   const ok = await control({ useRecoveryCode: code })
   expect(ok.status).toBe(200)
-  const afterWit = await getWitness()
-  expect(Number((afterWit.body.org as { recoveryCodesRemaining: number }).recoveryCodesRemaining)).toBe(before - 1)
+  expect(Number((await keysApi()).body.recoveryCodesRemaining)).toBe(before - 1)
   const reuse = await control({ useRecoveryCode: code })
   expect(reuse.status).toBe(403)
 })
@@ -187,11 +174,8 @@ test('KEY-10 Approval with disallowed AAGUID refused; still waiting', async () =
 
 test('KEY-11 Cloned key signature counter refuses; audit records clone', async () => {
   await control({ resetSignatureCounter: { person: 'Dana Reyes' } })
-  // After reset counter is 0; approving with counter < stored... reset sets to 0, then approve with 0 when expected was raised?
-  // Route: if signatureCounter < sk.signatureCounter → clone. Reset to 0, then approve with 0 when sk is 0 — equal ok.
-  // Set counter high then approve with lower:
-  const wit = await getWitness()
-  const dana = (wit.body.people as { name: string; keys: { signatureCounter: number }[] }[]).find(
+  const listed = await keysApi()
+  const dana = (listed.body.people as { name: string; keys: { signatureCounter: number }[] }[]).find(
     (p) => p.name === 'Dana Reyes',
   )
   const current = dana?.keys[0]?.signatureCounter ?? 1

@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -59,13 +58,25 @@ test('RES-01 Client retries continue the same session', async () => {
     key: KEYS.legalOps,
     messages: [{ role: 'user', content: 'retry-1' }],
   })
+  expect(a.status).toBe(200)
+  const sessionId = a.body.clawql?.sessionId
+  expect(sessionId).toBeTruthy()
+  const restart = await control({ simulateGatewayRestart: true })
+  expect(restart.status).toBe(200)
   const b = await openaiChat({
     key: KEYS.legalOps,
     messages: [{ role: 'user', content: 'retry-2' }],
   })
-  expect(a.status).toBe(200)
   expect(b.status).toBe(200)
-  expect(a.body.clawql?.sessionId).toBe(b.body.clawql?.sessionId)
+  expect(b.body.clawql?.sessionId).toBe(sessionId)
+  const mem = await memoryGet('')
+  const sess = (mem.body.sessions as { id: string; keyName: string; spendCents: number }[]).find(
+    (s) => s.keyName === 'legal-ops',
+  )
+  expect(sess?.id).toBe(sessionId)
+  expect(sess?.spendCents).toBeGreaterThan(2)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'gateway.restart')).toBe(true)
 })
 
 test('RES-02 Events keep original IDs after receiver outage', async () => {
@@ -100,11 +111,21 @@ test('RES-05 Live stream resumes from last event ID; none lost', async () => {
   await postEvents({ type: 'stream.changed', payload: { n: 1 }, test: true })
   const first = await listEvents()
   const last = first.body.events[first.body.events.length - 1]!.id
+  const known = new Set(first.body.events.map((e) => e.id))
   await postEvents({ type: 'stream.changed', payload: { n: 2 }, test: true })
   await postEvents({ type: 'stream.changed', payload: { n: 3 }, test: true })
   const after = await listEvents(last)
   expect(after.body.events.map((e) => e.id)).not.toContain(last)
   expect(after.body.events.length).toBeGreaterThanOrEqual(2)
+  const full = await listEvents()
+  const fullIds = full.body.events.map((e) => e.id)
+  for (const id of known) {
+    expect(fullIds).toContain(id)
+  }
+  for (const e of after.body.events) {
+    expect(fullIds).toContain(e.id)
+    expect(known.has(e.id)).toBe(false)
+  }
 })
 
 test('RES-06 Review request survives reset-equivalent pause; approve afterwards works', async () => {
@@ -114,8 +135,15 @@ test('RES-06 Review request survives reset-equivalent pause; approve afterwards 
     args: { ...NORTHWIND },
   })
   const requestId = String(propose.body.requestId)
-  // Pause (no world reset) then approve — request still waiting
-  await new Promise((r) => setTimeout(r, 50))
+  const waiting = ((await listReview()).body.review as { id: string; status: string }[]).find(
+    (r) => r.id === requestId,
+  )
+  expect(waiting?.status).toBe('waiting')
+  await control({ simulateGatewayRestart: true })
+  const still = ((await listReview()).body.review as { id: string; status: string }[]).find(
+    (r) => r.id === requestId,
+  )
+  expect(still?.status).toBe('waiting')
   const ap = await approveReview({ requestId, actor: 'Dana Reyes', pinVerified: true })
   expect(ap.status).toBe(200)
   const write = await mcpCallTool({
@@ -124,6 +152,8 @@ test('RES-06 Review request survives reset-equivalent pause; approve afterwards 
     args: { ...NORTHWIND },
   })
   expect(write.status).toBe(200)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'gateway.restart')).toBe(true)
 })
 
 test('RES-07 Deletion job retries remaining step and finishes without repeating', async () => {

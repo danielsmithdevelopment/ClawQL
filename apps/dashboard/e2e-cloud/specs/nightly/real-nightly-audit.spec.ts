@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -141,10 +140,8 @@ test('AUD-07 Tamper fails scheduled check; alert; new segment verified; range un
   await control({ tamperAuditEntry: target })
   const after = await getAudit()
   expect(after.chain.ok).toBe(false)
-  const wit = await getWitness()
-  expect(wit.body.auditBroken).toBe(true)
-  const alerts = wit.body.alerts as { channel: string; kind: string }[]
-  expect(alerts.some((a) => a.channel === 'security-contact')).toBe(true)
+  expect(after.auditBroken).toBe(true)
+  expect(after.alerts?.some((a) => a.channel === 'security-contact')).toBe(true)
   const later = after.entries.filter((e) => e.action !== after.entries[0]!.action)
   expect(
     after.entries.some((e) => String((e.meta as { segment?: string } | undefined)?.segment ?? '').includes('verified')),

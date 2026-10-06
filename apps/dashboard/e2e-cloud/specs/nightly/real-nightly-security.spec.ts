@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -185,6 +184,6 @@ test('SEC-14 Pasted API key redacted and admins warned', async () => {
   const text = String((up.body.fields as { text?: string })?.text ?? '')
   expect(text).toContain('REDACTED_KEY')
   expect(text).not.toContain('cqk_leaked_secret_value_do_not_keep')
-  const wit = await getWitness()
-  expect((wit.body.alerts as { kind: string }[]).some((a) => a.kind === 'key-in-document')).toBe(true)
+  const usage = await getUsage()
+  expect((usage.body.alerts as { kind: string }[]).some((a) => a.kind === 'key-in-document')).toBe(true)
 })

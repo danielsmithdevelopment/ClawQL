@@ -69,6 +69,8 @@ export async function getAudit(opts?: { format?: 'ocsf' }) {
     }[]
     chain: { ok: boolean; entries: number; latestRoot?: string }
     hourlyRoots?: Record<string, string>
+    auditBroken?: boolean
+    alerts?: { channel: string; kind: string }[]
     ocsf?: {
       class_uid: number
       activity_id: number
@@ -372,7 +374,35 @@ export async function waitForDeliveries(min = 1, attempts = 25) {
   return deliveries
 }
 
-/** Full harness witness snapshot (GET /api/e2e/control). */
+export async function getConnections() {
+  const res = await fetchRetry(`${base()}/api/e2e/connections`)
+  return {
+    status: res.status,
+    body: await json<{
+      connections: {
+        id: string
+        name: string
+        groups: string[]
+        status: string
+        personal?: boolean
+        kind?: string
+        readOverrides?: string[]
+      }[]
+    }>(res),
+  }
+}
+
+export async function getDecisionSites() {
+  const res = await fetchRetry(`${base()}/api/e2e/decision`)
+  return {
+    status: res.status,
+    body: await json<{
+      sites: Record<string, { count7d: number; mode?: string; labels?: Record<string, number> }>
+    }>(res),
+  }
+}
+
+/** Full harness witness snapshot (GET /api/e2e/control). Do not use as Pass-when. */
 export async function getWitness() {
   const res = await fetchRetry(`${base()}/api/e2e/control`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
@@ -429,6 +459,8 @@ export async function getSettings() {
         name: string
         role: string
         active: boolean
+        groups?: string[]
+        canApproveContracts?: boolean
         timeZone: string
         appearance: string
         notifications: { slack: boolean; push: boolean }
@@ -437,6 +469,7 @@ export async function getSettings() {
       notificationsOutbox?: { channel: string; to: string; body: string }[]
       requestExpiryMinutes?: number
       auditRetentionYears?: number
+      requesterCannotApproveLocked?: boolean
     }>(res),
   }
 }

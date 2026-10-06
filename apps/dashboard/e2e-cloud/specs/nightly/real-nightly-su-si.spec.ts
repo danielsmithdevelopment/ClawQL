@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -137,8 +136,8 @@ test('SU-06 Agent first-run steps: key issue waits for person; write waits for m
   expect(write.body.requestId).toBeTruthy()
   const review = await listReview()
   expect(review.body.review.some((r: { status: string }) => r.status === 'waiting')).toBe(true)
-  const wit = await getWitness()
-  expect(Number((wit.body.org as { firstRunStep: number }).firstRunStep)).toBeGreaterThanOrEqual(3)
+  const org = await getOrg()
+  expect(Number((org.body.firstRun as { step: number }).step)).toBeGreaterThanOrEqual(3)
 })
 
 test('SU-07 Empty Sessions/Review copy; audit has 3 seed entries and verified chain', async ({ page }) => {
@@ -266,9 +265,23 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
 
 test('SI-08 Okta deactivate Priya — cannot act; audit records change', async () => {
   await control({ syncOkta: { deactivatePriya: true } })
-  const wit = await getWitness()
-  const priya = (wit.body.people as { name: string; active: boolean }[]).find((p) => p.name === 'Priya Shah')
+  const org = await getOrg()
+  const priya = (org.body.people as { name: string; active: boolean }[]).find((p) => p.name === 'Priya Shah')
   expect(priya?.active).toBe(false)
+  const settings = await getSettings()
+  expect(settings.body.people?.find((p) => p.name === 'Priya Shah')?.active).toBe(false)
+  const propose = await mcpCallTool({
+    key: KEYS.legalOps,
+    name: 'adjust_contract_value',
+    args: { ...NORTHWIND },
+  })
+  const denied = await approveReview({
+    requestId: String(propose.body.requestId),
+    actor: 'Priya Shah',
+    pinVerified: true,
+  })
+  expect(denied.status).toBe(403)
+  expect(String(denied.body.error)).toMatch(/deactivated/i)
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'sync.deactivate')).toBe(true)
 })

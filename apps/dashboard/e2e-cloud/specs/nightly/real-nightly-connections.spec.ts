@@ -21,7 +21,7 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
+  getConnections,
   keysApi,
   listEvents,
   listReview,
@@ -83,7 +83,7 @@ test('CON-05 Import OpenAPI GraphQL Discovery CLI classified', async () => {
     const add = await control({ addConnection: { name: kind, kind, groups: ['Engineering'] } })
     expect(add.status).toBe(200)
   }
-  const cons = ((await getWitness()).body.connections as { kind?: string; name: string }[])
+  const cons = (await getConnections()).body.connections
   for (const kind of ['openapi', 'graphql', 'google-discovery', 'cli']) {
     expect(cons.some((c) => c.kind === kind || c.name === kind)).toBe(true)
   }
@@ -93,9 +93,7 @@ test('CON-06 Personal GitHub labeled private; Slack blocked', async () => {
   await control({
     addConnection: { name: 'GitHub Personal', groups: ['Engineering'], personal: true, kind: 'github' },
   })
-  const c = ((await getWitness()).body.connections as { name: string; personal?: boolean }[]).find(
-    (x) => x.name === 'GitHub Personal',
-  )
+  const c = (await getConnections()).body.connections.find((x) => x.name === 'GitHub Personal')
   expect(c?.personal).toBe(true)
   const slack = await mcpCallTool({
     key: KEYS.legalOps,
@@ -108,7 +106,7 @@ test('CON-06 Personal GitHub labeled private; Slack blocked', async () => {
 test('CON-07 Paused GitHub watch resumes; Home warning would clear', async ({ page }) => {
   await control({ connectionMutate: { id: 'github', status: 'paused' } })
   await control({ connectionMutate: { id: 'github', status: 'connected' } })
-  const gh = ((await getWitness()).body.connections as { id: string; status: string }[]).find((c) => c.id === 'github')
+  const gh = (await getConnections()).body.connections.find((c) => c.id === 'github')
   expect(gh?.status).toBe('connected')
   await openManagedConsole(page)
   await page.goto('/')

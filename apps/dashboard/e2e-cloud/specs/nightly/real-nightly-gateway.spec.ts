@@ -21,7 +21,7 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
+  getDecisionSites,
   keysApi,
   listEvents,
   listReview,
@@ -62,9 +62,12 @@ test('GW-02 standard alias answers with primary model in Sessions', async ({ pag
   })
   expect(chat.status).toBe(200)
   expect(String(chat.body.model)).toMatch(/Claude Sonnet/i)
-  const wit = await getWitness()
-  const sess = (wit.body.sessions as { model?: string; keyName: string }[]).find((s) => s.keyName === 'legal-ops')
+  const mem = await memoryGet('')
+  const sess = (mem.body.sessions as { model?: string; keyName: string }[]).find((s) => s.keyName === 'legal-ops')
   expect(sess?.model).toMatch(/Claude Sonnet/i)
+  const org = await getOrg()
+  const orgSess = (org.body.sessions as { model?: string; keyName: string }[]).find((s) => s.keyName === 'legal-ops')
+  expect(orgSess?.model).toMatch(/Claude Sonnet/i)
   await openManagedConsole(page)
   await page.goto('/sessions')
   await expect(page.locator('body')).toBeVisible()
@@ -81,8 +84,8 @@ test('GW-03 Frugal primary broken uses fallback; count rises', async () => {
   expect(chat.body.clawql?.usingFallback).toBe(true)
   expect(String(chat.body.clawql?.routeStatus)).toMatch(/fallback/i)
   expect(Number(chat.body.clawql?.fallbackCount)).toBeGreaterThanOrEqual(1)
-  const wit = await getWitness()
-  const route = (wit.body.modelRoutes as Record<string, { usingFallback: boolean; fallbackCount: number }>).frugal
+  const usage = await getUsage()
+  const route = (usage.body.modelRoutes as Record<string, { usingFallback: boolean; fallbackCount: number }>).frugal
   expect(route.usingFallback).toBe(true)
   expect(route.fallbackCount).toBeGreaterThanOrEqual(1)
 })
@@ -202,9 +205,7 @@ test('GW-13 score questions 400 on decision and systemone', async () => {
 })
 
 test('GW-14 20 pii-check calls raise 7-day count by 20', async () => {
-  const before = ((await getWitness()).body.decisionSites as Record<string, { count7d: number }>)[
-    'pii-check'
-  ]!.count7d
+  const before = (await getDecisionSites()).body.sites['pii-check']!.count7d
   for (let i = 0; i < 20; i++) {
     const res = await decisionCall({
       key: KEYS.legalOps,
@@ -213,9 +214,7 @@ test('GW-14 20 pii-check calls raise 7-day count by 20', async () => {
     })
     expect(res.status).toBe(200)
   }
-  const after = ((await getWitness()).body.decisionSites as Record<string, { count7d: number }>)[
-    'pii-check'
-  ]!.count7d
+  const after = (await getDecisionSites()).body.sites['pii-check']!.count7d
   expect(after - before).toBe(20)
 })
 

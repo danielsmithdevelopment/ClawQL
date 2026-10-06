@@ -21,7 +21,6 @@ import {
   getSettings,
   getUsage,
   getWebhookDeliveries,
-  getWitness,
   keysApi,
   listEvents,
   listReview,
@@ -72,9 +71,11 @@ test('ADM-01 Invite accept joins with role; audit both steps', async ({ page }) 
 
 test('ADM-02 Role change takes effect; audit old and new', async () => {
   await control({ changeRole: { person: 'Jordan Park', role: 'admin' } })
-  const wit = await getWitness()
-  const j = (wit.body.people as { name: string; role: string }[]).find((p) => p.name === 'Jordan Park')
+  const org = await getOrg()
+  const j = (org.body.people as { name: string; role: string }[]).find((p) => p.name === 'Jordan Park')
   expect(j?.role).toBe('admin')
+  const settings = await getSettings()
+  expect(settings.body.people?.find((p) => p.name === 'Jordan Park')?.role).toBe('admin')
   const mutate = await settingsMutate({ asRole: 'admin', actor: 'Jordan Park', orgRename: 'Acme Robotics' })
   expect(mutate.status).toBe(200)
   const audit = await getAudit()
@@ -93,11 +94,14 @@ test('ADM-04 Billing role only Usage & billing', async ({ page }) => {
 
 test('ADM-05 Add then remove Jordan as contract approver', async () => {
   await control({ syncOkta: { addJordanToLegal: true } })
-  let wit = await getWitness()
-  let j = (wit.body.people as { name: string; canApproveContracts: boolean; groups: string[] }[]).find(
+  const org = await getOrg()
+  const j = (org.body.people as { name: string; canApproveContracts: boolean; groups: string[] }[]).find(
     (p) => p.name === 'Jordan Park',
   )
   expect(j?.canApproveContracts).toBe(true)
+  expect(j?.groups).toContain('Legal')
+  const settings = await getSettings()
+  expect(settings.body.people?.find((p) => p.name === 'Jordan Park')?.canApproveContracts).toBe(true)
   await control({
     changeRole: { person: 'Jordan Park', role: 'member' },
   })
@@ -241,8 +245,10 @@ test('ADM-16 Undeclared outbound host blocked and recorded', async () => {
     args: { host: 'https://evil.not-allowed.example' },
   })
   expect(call.status).toBe(403)
-  const wit = await getWitness()
-  expect((wit.body.blockedCalls as { host: string }[]).some((c) => c.host.includes('not-allowed'))).toBe(true)
+  const org = await getOrg()
+  expect((org.body.blockedCalls as { host: string }[]).some((c) => c.host.includes('not-allowed'))).toBe(true)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => /undeclared|disallowed host/i.test(e.outcome))).toBe(true)
 })
 
 test('ADM-17 IP allowlist: inside works, outside refused', async () => {
