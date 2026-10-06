@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Decide spend before npm/OpenRouter so a missing/removed sentinel is a no-op green check.
       - name: Select corpus and scale
         id: corpus
@@ -285,7 +285,7 @@ jobs:
     # Frontier × 27 Q × 2 arms × 3 trials + indexing
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -393,7 +393,7 @@ jobs:
     # Frontier × 18 Q × 3 arms × tool loops
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -569,7 +569,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
@@ -627,7 +627,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Decide whether to spend
         id: gate
         run: |
