@@ -1,20 +1,60 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
 import { Button } from '@/components/ui/button'
+import { fetchManagedUsage } from '@/lib/managed/client'
 import { DAILY_SPEND, TEAM_SPEND, USAGE_SUMMARY } from '@/lib/managed/fixtures'
+import type { ManagedUsageSnapshot } from '@/lib/managed/live/usage'
 import { cn } from '@/lib/utils'
 
 type Tab = 'usage' | 'plan' | 'payment'
 type Breakdown = 'team' | 'key' | 'model' | 'connection'
 
+const FIXTURE_USAGE: ManagedUsageSnapshot = {
+  monthSpent: USAGE_SUMMARY.monthSpent,
+  monthBudget: USAGE_SUMMARY.monthBudget,
+  forecast: USAGE_SUMMARY.forecast,
+  forecastNote: USAGE_SUMMARY.forecastNote,
+  todaySpent: USAGE_SUMMARY.todaySpent,
+  todayNote: USAGE_SUMMARY.todayNote,
+  planRenews: USAGE_SUMMARY.planRenews,
+  teamRows: TEAM_SPEND,
+  daily: DAILY_SPEND,
+  meta: {
+    orgId: 'fixture',
+    totalCreditsCents: 0,
+    poolSpendableCents: 0,
+    memberCount: TEAM_SPEND.length,
+    generatedAt: new Date(0).toISOString(),
+  },
+}
+
 export function UsageBillingPage() {
   const [tab, setTab] = useState<Tab>('usage')
   const [breakdown, setBreakdown] = useState<Breakdown>('team')
-  const maxBar = Math.max(...DAILY_SPEND.map((d) => d.amount), 1)
-  const pct = Math.round((USAGE_SUMMARY.monthSpent / USAGE_SUMMARY.monthBudget) * 100)
+  const [usage, setUsage] = useState<ManagedUsageSnapshot>(FIXTURE_USAGE)
+  const [source, setSource] = useState<'live' | 'fixture'>('fixture')
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchManagedUsage()
+      .then((res) => {
+        if (cancelled) return
+        setUsage(res.usage)
+        setSource(res.source)
+      })
+      .catch(() => {
+        /* keep fixture seed */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const maxBar = useMemo(() => Math.max(...usage.daily.map((d) => d.amount), 1), [usage.daily])
+  const pct = Math.round((usage.monthSpent / Math.max(usage.monthBudget, 1)) * 100)
 
   return (
     <PageChrome
@@ -23,13 +63,20 @@ export function UsageBillingPage() {
       description="What your agents are spending, where it goes, and the limits that keep it in check."
       actions={
         <>
-          <span className="text-sm text-slate-600">{USAGE_SUMMARY.planRenews}</span>
+          <span className="text-sm text-slate-600">{usage.planRenews}</span>
           <Button type="button" variant="outline">
             Manage plan
           </Button>
         </>
       }
     >
+      <p className="mb-3 text-xs text-slate-500" data-testid="usage-data-source">
+        Usage source:{' '}
+        {source === 'live'
+          ? `Unified spend (${usage.meta.orgId})`
+          : 'Acme fixture — set CLAWQL_MANAGED_ORG_ID for live'}
+      </p>
+
       <div className="mb-5 flex gap-4 border-b border-slate-200 text-sm">
         {(
           [
@@ -60,46 +107,54 @@ export function UsageBillingPage() {
           <p className="text-sm font-medium text-slate-800">
             {tab === 'plan' ? 'Plan & credits' : 'Payment & limits'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">Fixture placeholder — Stripe / CPC wiring comes next.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {source === 'live'
+              ? `Pool spendable: $${(usage.meta.poolSpendableCents / 100).toLocaleString()} · Stripe portal next`
+              : 'Fixture placeholder — Stripe / CPC wiring comes next.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-6">
           <section className="grid gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
-              <p className="text-xs font-medium text-slate-500">Spent in October</p>
+              <p className="text-xs font-medium text-slate-500">Spent this period</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
-                ${USAGE_SUMMARY.monthSpent.toLocaleString()}
+                ${usage.monthSpent.toLocaleString()}
               </p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-amber-500" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(100, pct)}%` }} />
               </div>
               <p className="mt-2 text-xs text-slate-500">
-                {pct}% of the ${USAGE_SUMMARY.monthBudget.toLocaleString()} budget
+                {pct}% of the ${usage.monthBudget.toLocaleString()} budget
               </p>
             </div>
             <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm shadow-slate-900/5">
-              <p className="text-xs font-medium text-amber-800">Forecast for October</p>
+              <p className="text-xs font-medium text-amber-800">Forecast</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
-                About ${USAGE_SUMMARY.forecast.toLocaleString()}
+                About ${usage.forecast.toLocaleString()}
               </p>
-              <p className="mt-2 text-xs text-amber-900">{USAGE_SUMMARY.forecastNote}</p>
+              <p className="mt-2 text-xs text-amber-900">{usage.forecastNote}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
               <p className="text-xs font-medium text-slate-500">Spent today, so far</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
-                ${USAGE_SUMMARY.todaySpent.toFixed(2)}
+                ${usage.todaySpent.toFixed(2)}
               </p>
-              <p className="mt-2 text-xs text-slate-500">{USAGE_SUMMARY.todayNote}</p>
+              <p className="mt-2 text-xs text-slate-500">{usage.todayNote}</p>
             </div>
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <h2 className="text-sm font-semibold text-slate-900">Daily spend, last 14 days</h2>
-              <p className="text-xs text-slate-500">Weekends run lighter; Oct 1 and 2 were the busiest days</p>
+              <p className="text-xs text-slate-500">
+                {source === 'live'
+                  ? 'Daily series stays fixture-shaped until usage metering is connected'
+                  : 'Weekends run lighter; busiest days highlighted in the fixture'}
+              </p>
             </div>
             <div className="mt-4 flex h-44 items-end gap-1.5 sm:gap-2">
-              {DAILY_SPEND.map((d) => (
+              {usage.daily.map((d) => (
                 <div key={d.label} className="flex min-w-0 flex-1 flex-col items-center gap-1">
                   <span className="text-[10px] tabular-nums text-slate-500">{d.amount}</span>
                   <div
@@ -111,7 +166,9 @@ export function UsageBillingPage() {
                     style={{ height: `${Math.max(8, (d.amount / maxBar) * 100)}%` }}
                     title={`${d.label}: $${d.amount}`}
                   />
-                  <span className="truncate text-[9px] text-slate-400">{d.today ? 'Today' : d.label.replace(/^\w+ /, '')}</span>
+                  <span className="truncate text-[9px] text-slate-400">
+                    {d.today ? 'Today' : d.label.replace(/^\w+ /, '')}
+                  </span>
                 </div>
               ))}
             </div>
@@ -122,7 +179,7 @@ export function UsageBillingPage() {
 
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-slate-900">Breakdown for October</h2>
+              <h2 className="text-sm font-semibold text-slate-900">Breakdown</h2>
               <div className="flex rounded-lg border border-slate-200 p-0.5 text-xs">
                 {(['team', 'key', 'model', 'connection'] as const).map((id) => (
                   <button
@@ -142,8 +199,8 @@ export function UsageBillingPage() {
 
             {breakdown !== 'team' ? (
               <p className="mt-4 text-sm text-slate-500">
-                Showing team breakdown for the fixture. Key / model / connection views will use the same CPC usage
-                API.
+                Showing team / member breakdown for now. Key / model / connection views will use the same CPC
+                usage API.
               </p>
             ) : (
               <div className="mt-4 overflow-x-auto">
@@ -158,8 +215,8 @@ export function UsageBillingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {TEAM_SPEND.map((row) => {
-                      const share = Math.round((row.spent / row.budget) * 100)
+                    {usage.teamRows.map((row) => {
+                      const share = Math.round((row.spent / Math.max(row.budget, 1)) * 100)
                       return (
                         <tr key={row.team} className={cn(row.alert && 'bg-amber-50/60')}>
                           <td className="py-3 pr-3">
@@ -204,16 +261,17 @@ export function UsageBillingPage() {
             </div>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
               <li>
-                <strong className="text-slate-800">Org budget:</strong> $3,000 a month. Alerts at 80% and 100%;
-                requests keep running past it.
+                <strong className="text-slate-800">Org budget:</strong> $
+                {usage.monthBudget.toLocaleString()} a month. Alerts at 80% and 100%; requests keep running past
+                it.
               </li>
               <li>
-                <strong className="text-slate-800">Team budgets:</strong> Set for all four teams, shown in the
+                <strong className="text-slate-800">Team budgets:</strong> {usage.teamRows.length} rows in the
                 breakdown above.
               </li>
               <li>
-                <strong className="text-slate-800">Daily caps per key:</strong> On 3 keys. When a key hits its cap,
-                its requests stop until midnight UTC.
+                <strong className="text-slate-800">Daily caps per key:</strong> Soft UI caps on create; hard
+                enforcement follows metering.
               </li>
             </ul>
           </section>

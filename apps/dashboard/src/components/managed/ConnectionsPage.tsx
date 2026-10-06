@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { CreateKeyModal } from '@/components/managed/CreateKeyModal'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
+import { fetchManagedKeys } from '@/lib/managed/client'
 import { API_KEYS, CONNECTIONS, type ApiKeyItem, type ConnectionItem } from '@/lib/managed/fixtures'
 import { cn } from '@/lib/utils'
 
@@ -22,10 +23,27 @@ export function ConnectionsPage() {
   const [selectedId, setSelectedId] = useState(CONNECTIONS[0]!.id)
   const [createOpen, setCreateOpen] = useState(false)
   const [keys, setKeys] = useState<ApiKeyItem[]>(() => [...API_KEYS])
+  const [keysSource, setKeysSource] = useState<'live' | 'fixture'>('fixture')
   const selected = useMemo(
     () => CONNECTIONS.find((c) => c.id === selectedId) ?? CONNECTIONS[0]!,
     [selectedId],
   )
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchManagedKeys()
+      .then((res) => {
+        if (cancelled) return
+        setKeys(res.keys)
+        setKeysSource(res.source)
+      })
+      .catch(() => {
+        /* keep fixture seed */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <>
@@ -43,8 +61,14 @@ export function ConnectionsPage() {
           )
         }
       >
+        {tab === 'keys' ? (
+          <p className="mb-3 text-xs text-slate-500" data-testid="keys-data-source">
+            Keys source: {keysSource === 'live' ? 'IssuedApiKeyStore ($CLAWQL_HOME)' : 'Acme fixture'}
+          </p>
+        ) : null}
+
         <div className="mb-5 flex gap-4 border-b border-slate-200 text-sm">
-          {            (
+          {(
             [
               ['connections', `Connections ${CONNECTIONS.length}`],
               ['keys', `Keys ${keys.length}`],

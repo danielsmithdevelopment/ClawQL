@@ -12,7 +12,7 @@ const nextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../..'),
   // Externalize workspace packages so Next does not webpack their AWS/Effect graphs.
   // Do not list `effect` here — Next may auto-transpile it and rejects the conflict.
-  serverExternalPackages: ['clawql-api', 'clawql-auth', 'clawql-core'],
+  serverExternalPackages: ['clawql-api', 'clawql-auth', 'clawql-core', 'clawql-payments'],
 }
 
 export default nextConfig

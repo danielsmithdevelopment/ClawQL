@@ -1,20 +1,30 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { issueManagedKey } from '@/lib/managed/client'
 import { GATEWAY_BASE, type ApiKeyItem } from '@/lib/managed/fixtures'
 import { cn } from '@/lib/utils'
 
 const CAPABILITIES = [
-  { id: 'models', label: 'Models', path: '/v1' },
-  { id: 'tools', label: 'Tools', path: '/mcp' },
-  { id: 'memory', label: 'Memory', path: '/memory' },
-  { id: 'decisions', label: 'Decisions', path: '/decision' },
-  { id: 'events', label: 'Events', path: '/events' },
+  { id: 'models', label: 'Models', path: '/v1', scopes: ['inference', 'models'] },
+  { id: 'tools', label: 'Tools', path: '/mcp', scopes: ['execute', 'search'] },
+  { id: 'memory', label: 'Memory', path: '/memory', scopes: ['memory'] },
+  { id: 'decisions', label: 'Decisions', path: '/decision', scopes: ['decision'] },
+  { id: 'events', label: 'Events', path: '/events', scopes: ['events'] },
 ] as const
 
 type Phase = 'create' | 'created'
+
+function scopesFromCaps(caps: Record<string, boolean>): string[] {
+  const scopes = new Set<string>()
+  for (const cap of CAPABILITIES) {
+    if (!caps[cap.id]) continue
+    for (const s of cap.scopes) scopes.add(s)
+  }
+  return [...scopes]
+}
 
 export function CreateKeyModal({
   open,
@@ -36,19 +46,23 @@ export function CreateKeyModal({
   })
   const [dailyCap, setDailyCap] = useState('50')
   const [saved, setSaved] = useState(false)
-
-  const mockKey = useMemo(
-    () => 'cq_live_7f2a9Kq3mXv1Rz8LwT4pB6nY0cHs2JdE5gUa',
-    [],
-  )
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [issued, setIssued] = useState<{ key: ApiKeyItem; secret: string } | null>(null)
 
   if (!open) return null
 
   const resetAndClose = () => {
     setPhase('create')
     setSaved(false)
+    setError(null)
+    setIssued(null)
+    setSubmitting(false)
     onClose()
   }
+
+  const secret = issued?.secret ?? ''
+  const createdKey = issued?.key
 
   return (
     <div
@@ -119,32 +133,50 @@ export function CreateKeyModal({
                   className="h-9 w-28 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-300"
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">Requests stop until midnight UTC once it&apos;s reached.</p>
+              <p className="mt-1 text-xs text-slate-500">
+                Soft UI limit for now — enforcement lands with metering. Requests stop until midnight UTC once
+                it&apos;s reached.
+              </p>
             </label>
 
             <p className="mt-5 text-xs text-slate-500">
               Creating a key needs your security key. We store only a hash, so you&apos;ll see the key once.
             </p>
+            {error ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
+                {error}
+              </p>
+            ) : null}
             <div className="mt-4 flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={resetAndClose}>
+              <Button type="button" variant="outline" onClick={resetAndClose} disabled={submitting}>
                 Cancel
               </Button>
               <Button
                 type="button"
+                disabled={submitting || !name.trim()}
                 onClick={() => {
-                  const selected = CAPABILITIES.filter((c) => caps[c.id]).map((c) => c.label)
-                  onCreated?.({
-                    id: `key_${Date.now()}`,
+                  setSubmitting(true)
+                  setError(null)
+                  void issueManagedKey({
                     name: name.trim() || 'unnamed',
-                    expiresLabel: 'Expires Jan 3',
-                    keyGroup: 'Operations',
-                    canUse: selected.length > 0 ? selected.join(', ') : 'Nothing selected',
-                    dailyCap: `$${dailyCap || '0'}`,
+                    scope: scopesFromCaps(caps),
                   })
-                  setPhase('created')
+                    .then((res) => {
+                      const withCap: ApiKeyItem = {
+                        ...res.key,
+                        dailyCap: `$${dailyCap || '0'}`,
+                      }
+                      setIssued({ key: withCap, secret: res.secret })
+                      onCreated?.(withCap)
+                      setPhase('created')
+                    })
+                    .catch((e: unknown) => {
+                      setError(e instanceof Error ? e.message : String(e))
+                    })
+                    .finally(() => setSubmitting(false))
                 }}
               >
-                Create with security key
+                {submitting ? 'Creating…' : 'Create with security key'}
               </Button>
             </div>
           </div>
@@ -156,9 +188,11 @@ export function CreateKeyModal({
               </span>
               <div>
                 <h2 id="create-key-title" className="text-xl font-semibold text-slate-900">
-                  Key created: {name || 'unnamed'}
+                  Key created: {createdKey?.name || name || 'unnamed'}
                 </h2>
-                <p className="mt-1 text-sm text-slate-600">Confirmed with your security key at 10:14.</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  Issued via IssuedApiKeyStore. Copy the secret now — it won&apos;t be shown again.
+                </p>
               </div>
             </div>
 
@@ -172,10 +206,11 @@ export function CreateKeyModal({
               <div className="mt-1.5 flex gap-2">
                 <input
                   readOnly
-                  value={mockKey}
+                  value={secret}
+                  data-testid="created-key-secret"
                   className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-xs"
                 />
-                <Button type="button" onClick={() => void navigator.clipboard?.writeText(mockKey)}>
+                <Button type="button" onClick={() => void navigator.clipboard?.writeText(secret)}>
                   Copy
                 </Button>
               </div>
@@ -184,7 +219,7 @@ export function CreateKeyModal({
             <div className="mt-4">
               <p className="text-sm font-medium text-slate-800">Use it</p>
               <pre className="mt-1.5 overflow-x-auto rounded-lg bg-slate-900 p-3 font-mono text-[11px] leading-relaxed text-slate-100">
-                {`OPENAI_BASE_URL=${GATEWAY_BASE}/v1\nOPENAI_API_KEY=${mockKey.slice(0, 14)}...${mockKey.slice(-3)}`}
+                {`OPENAI_BASE_URL=${GATEWAY_BASE}/v1\nOPENAI_API_KEY=${secret.slice(0, 14)}...${secret.slice(-3)}`}
               </pre>
               <p className="mt-2 text-xs text-slate-500">
                 For an MCP client, use the same key with <code className="font-mono">clawql mcp-config</code>.
@@ -193,10 +228,10 @@ export function CreateKeyModal({
 
             <div className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
               {[
-                ['Can use', 'Models and tools'],
-                ['Key group', 'Operations'],
-                ['Daily cap', `$${dailyCap || '0'}`],
-                ['Expires', 'Jan 3, 2027'],
+                ['Can use', createdKey?.canUse ?? '—'],
+                ['Key group', createdKey?.keyGroup ?? 'Default'],
+                ['Daily cap', createdKey?.dailyCap ?? `$${dailyCap || '0'}`],
+                ['Expires', createdKey?.expiresLabel ?? 'No expiry'],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-lg bg-slate-50 px-3 py-2">
                   <p className="text-[11px] text-slate-500">{k}</p>
@@ -211,7 +246,7 @@ export function CreateKeyModal({
             </label>
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="text-xs text-slate-500">
-                Recorded in the audit log as <span className="font-mono text-sky-700">wrm_4913</span>.
+                Recorded against org keys under <span className="font-mono text-sky-700">$CLAWQL_HOME</span>.
               </p>
               <Button type="button" disabled={!saved} onClick={resetAndClose}>
                 Done

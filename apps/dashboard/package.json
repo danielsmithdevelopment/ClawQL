@@ -25,6 +25,8 @@
     "@tailwindcss/postcss": "^4.2.2",
     "class-variance-authority": "^0.7.1",
     "clawql-api": "file:../../packages/clawql-api",
+    "clawql-auth": "file:../../packages/clawql-auth",
+    "clawql-payments": "file:../../packages/clawql-payments",
     "clsx": "^2.1.1",
     "effect": "^4.0.0",
     "lucide-react": "^0.562.0",
