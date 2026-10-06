@@ -11,7 +11,7 @@ async function fetchRetry(url: string, init?: RequestInit, attempts = 5): Promis
   let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(url, init)
+      const res = await fetchRetry(url, init)
       // Next HMR can briefly return 500 while recompiling routes
       if (res.status >= 500 && i < attempts - 1) {
         await new Promise((r) => setTimeout(r, 250 * (i + 1)))
@@ -33,7 +33,7 @@ export async function resetWorld() {
 }
 
 export async function getAudit() {
-  const res = await fetch(`${base()}/api/e2e/audit`)
+  const res = await fetchRetry(`${base()}/api/e2e/audit`)
   if (!res.ok) throw new Error(`audit failed: ${res.status}`)
   return json<{
     entries: { id: string; actor: string; action: string; outcome: string; meta?: Record<string, unknown> }[]
@@ -42,7 +42,7 @@ export async function getAudit() {
 }
 
 export async function getCrm(contractId: string) {
-  const res = await fetch(`${base()}/api/e2e/crm/${contractId}`)
+  const res = await fetchRetry(`${base()}/api/e2e/crm/${contractId}`)
   return { status: res.status, body: await json<{ annualValue: number; display: string; error?: string }>(res) }
 }
 
@@ -60,7 +60,7 @@ export async function approveReview(input: {
   onlyWhatICanApprove?: boolean
   signedPayload?: string
 }) {
-  const res = await fetch(`${base()}/api/e2e/review/approve`, {
+  const res = await fetchRetry(`${base()}/api/e2e/review/approve`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -74,12 +74,12 @@ export async function approveReview(input: {
 }
 
 export async function listReview() {
-  const res = await fetch(`${base()}/api/e2e/review`)
+  const res = await fetchRetry(`${base()}/api/e2e/review`)
   return { status: res.status, body: await json<{ review: unknown[]; badges: Record<string, number> }>(res) }
 }
 
 export async function control(body: Record<string, unknown>) {
-  const res = await fetch(`${base()}/api/e2e/control`, {
+  const res = await fetchRetry(`${base()}/api/e2e/control`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -92,7 +92,7 @@ export async function createSubscription(
   events: string[] = ['document.processed'],
   extra: Record<string, unknown> = {},
 ) {
-  const res = await fetch(`${base()}/api/e2e/subscriptions`, {
+  const res = await fetchRetry(`${base()}/api/e2e/subscriptions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ url, events, ...extra }),
@@ -108,7 +108,7 @@ export async function uploadDocument(input: {
 }) {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (input.key) headers.authorization = `Bearer ${input.key}`
-  const res = await fetch(`${base()}/api/e2e/documents`, {
+  const res = await fetchRetry(`${base()}/api/e2e/documents`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ name: input.name, content: input.content, kind: input.kind }),
@@ -123,7 +123,7 @@ export async function eraseSubject(input: {
   stopHalfway?: boolean
   resumeJobId?: string
 }) {
-  const res = await fetch(`${base()}/api/e2e/erase`, {
+  const res = await fetchRetry(`${base()}/api/e2e/erase`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -132,12 +132,12 @@ export async function eraseSubject(input: {
 }
 
 export async function searchErased(q: string) {
-  const res = await fetch(`${base()}/api/e2e/erase?q=${encodeURIComponent(q)}`)
+  const res = await fetchRetry(`${base()}/api/e2e/erase?q=${encodeURIComponent(q)}`)
   return { status: res.status, body: await json<{ results: unknown[] }>(res) }
 }
 
 export async function memorySearch(q: string, opts: Record<string, unknown> = {}) {
-  const res = await fetch(`${base()}/api/e2e/memory`, {
+  const res = await fetchRetry(`${base()}/api/e2e/memory`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ q, ...opts }),
@@ -147,10 +147,10 @@ export async function memorySearch(q: string, opts: Record<string, unknown> = {}
 
 export async function keysApi(body?: Record<string, unknown>) {
   if (!body) {
-    const res = await fetch(`${base()}/api/e2e/keys`)
+    const res = await fetchRetry(`${base()}/api/e2e/keys`)
     return { status: res.status, body: await json<Record<string, unknown>>(res) }
   }
-  const res = await fetch(`${base()}/api/e2e/keys`, {
+  const res = await fetchRetry(`${base()}/api/e2e/keys`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -162,7 +162,7 @@ export async function listEvents(after?: string) {
   const url = after
     ? `${base()}/api/e2e/events?after=${encodeURIComponent(after)}`
     : `${base()}/api/e2e/events`
-  const res = await fetch(url)
+  const res = await fetchRetry(url)
   return {
     status: res.status,
     body: await json<{
@@ -196,7 +196,7 @@ export async function postInbound(input: {
   } else if (input.sign || (!signature && input.source === 'github')) {
     signature = `sha256=${createHmac('sha256', secret).update(rawBody).digest('hex')}`
   }
-  const res = await fetch(`${base()}/api/e2e/inbound`, {
+  const res = await fetchRetry(`${base()}/api/e2e/inbound`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -210,12 +210,12 @@ export async function postInbound(input: {
 }
 
 export async function getUsage() {
-  const res = await fetch(`${base()}/api/e2e/usage`)
+  const res = await fetchRetry(`${base()}/api/e2e/usage`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export async function settingsMutate(input: Record<string, unknown>) {
-  const res = await fetch(`${base()}/api/e2e/settings`, {
+  const res = await fetchRetry(`${base()}/api/e2e/settings`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -224,12 +224,12 @@ export async function settingsMutate(input: Record<string, unknown>) {
 }
 
 export async function fetchAsOrg(path: string, org: string) {
-  const res = await fetch(`${base()}${path}`, { headers: { 'x-org': org } })
+  const res = await fetchRetry(`${base()}${path}`, { headers: { 'x-org': org } })
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export async function postEvents(input: Record<string, unknown>) {
-  const res = await fetch(`${base()}/api/e2e/events`, {
+  const res = await fetchRetry(`${base()}/api/e2e/events`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -243,7 +243,7 @@ export async function stripeCheckout(input: {
   replay?: boolean
   testCard?: string
 }) {
-  const res = await fetch(`${base()}/api/e2e/stripe/checkout`, {
+  const res = await fetchRetry(`${base()}/api/e2e/stripe/checkout`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -252,7 +252,7 @@ export async function stripeCheckout(input: {
 }
 
 export async function getOrg() {
-  const res = await fetch(`${base()}/api/e2e/org`)
+  const res = await fetchRetry(`${base()}/api/e2e/org`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
@@ -267,7 +267,7 @@ export async function decisionCall(input: {
   askTeammate?: string
   question?: string
 }) {
-  const res = await fetch(`${base()}/api/e2e/decision`, {
+  const res = await fetchRetry(`${base()}/api/e2e/decision`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${input.key}`,
@@ -279,7 +279,7 @@ export async function decisionCall(input: {
 }
 
 export async function resetWebhookReceiver() {
-  const res = await fetch(`${webhook()}/control`, {
+  const res = await fetchRetry(`${webhook()}/control`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ reset: true, mode: '200' }),
@@ -288,7 +288,7 @@ export async function resetWebhookReceiver() {
 }
 
 export async function setWebhookMode(mode: '200' | '503' | '410') {
-  const res = await fetch(`${webhook()}/control`, {
+  const res = await fetchRetry(`${webhook()}/control`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ mode }),
@@ -297,7 +297,7 @@ export async function setWebhookMode(mode: '200' | '503' | '410') {
 }
 
 export async function getWebhookDeliveries() {
-  const res = await fetch(`${webhook()}/deliveries`)
+  const res = await fetchRetry(`${webhook()}/deliveries`)
   return json<{
     deliveries: {
       at: string
@@ -328,7 +328,7 @@ export async function getWitness() {
 }
 
 export async function listSubscriptions() {
-  const res = await fetch(`${base()}/api/e2e/subscriptions`)
+  const res = await fetchRetry(`${base()}/api/e2e/subscriptions`)
   return {
     status: res.status,
     body: await json<{ subscriptions: Record<string, unknown>[] }>(res),
@@ -339,7 +339,7 @@ export async function subscriptionAction(
   action: 'pause' | 'resume' | 'create',
   input: { id?: string; url?: string; events?: string[]; challengeOk?: boolean } = {},
 ) {
-  const res = await fetch(`${base()}/api/e2e/subscriptions`, {
+  const res = await fetchRetry(`${base()}/api/e2e/subscriptions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ action, ...input }),
@@ -356,22 +356,22 @@ export async function retryAllEvents() {
 }
 
 export async function getSettings() {
-  const res = await fetch(`${base()}/api/e2e/settings`)
+  const res = await fetchRetry(`${base()}/api/e2e/settings`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export async function getDocuments() {
-  const res = await fetch(`${base()}/api/e2e/documents`)
+  const res = await fetchRetry(`${base()}/api/e2e/documents`)
   return { status: res.status, body: await json<{ documents: unknown[] }>(res) }
 }
 
 export async function getInboundStats() {
-  const res = await fetch(`${base()}/api/e2e/inbound`)
+  const res = await fetchRetry(`${base()}/api/e2e/inbound`)
   return { status: res.status, body: await json<{ stats: Record<string, number> }>(res) }
 }
 
 export async function systemOne(input: { question?: string; text?: string }) {
-  const res = await fetch(`${base()}/api/e2e/v1/systemone`, {
+  const res = await fetchRetry(`${base()}/api/e2e/v1/systemone`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -387,7 +387,7 @@ export async function openaiChatWithIp(
   },
   ip: string,
 ) {
-  const res = await fetch(`${base()}/api/e2e/v1/chat/completions`, {
+  const res = await fetchRetry(`${base()}/api/e2e/v1/chat/completions`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${input.key}`,
@@ -404,14 +404,14 @@ export async function openaiChatWithIp(
 
 export async function memoryGet(q: string, opts: Record<string, string> = {}) {
   const params = new URLSearchParams({ q, ...opts })
-  const res = await fetch(`${base()}/api/e2e/memory?${params}`)
+  const res = await fetchRetry(`${base()}/api/e2e/memory?${params}`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
 export async function memoryPost(body: Record<string, unknown>, key?: string) {
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (key) headers.authorization = `Bearer ${key}`
-  const res = await fetch(`${base()}/api/e2e/memory`, {
+  const res = await fetchRetry(`${base()}/api/e2e/memory`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
