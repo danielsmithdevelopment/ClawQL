@@ -520,6 +520,31 @@ jobs:
             -t clawql-dashboard:ci-smoke \
             .
 
+      - name: Production image must 404 /api/e2e/* (harness compiled out)
+        run: |
+          set -euo pipefail
+          docker rm -f clawql-dashboard-e2e-gate 2>/dev/null || true
+          docker run -d --name clawql-dashboard-e2e-gate -p 13040:3040 \
+            -e CLAWQL_CONSOLE_SURFACE=managed \
+            clawql-dashboard:ci-smoke
+          # Wait for Next to listen
+          for _ in $(seq 1 60); do
+            if curl -sf -o /dev/null "http://127.0.0.1:13040/" || curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040/" | grep -qE '^[2345]'; then
+              break
+            fi
+            sleep 2
+          done
+          for path in /api/e2e/control /api/e2e/reset /api/e2e/scenario /api/e2e/audit; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:13040${path}")
+            echo "${path} → ${code}"
+            if [ "$code" != "404" ]; then
+              echo "expected 404 for ${path} on production image, got ${code}" >&2
+              docker logs clawql-dashboard-e2e-gate || true
+              exit 1
+            fi
+          done
+          docker rm -f clawql-dashboard-e2e-gate
+
   distribution-npm-pack-smoke:
     name: npm pack install smoke
     needs: [lint, workflow-scripts]

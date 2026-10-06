@@ -9,7 +9,9 @@ const repeatEach = Number(process.env.CLAWQL_CLOUD_E2E_REPEAT ?? '3')
 
 /**
  * Cloud console E2E catalog runner.
- * Expects managed console already up (or set CLAWQL_CLOUD_E2E_START=1 to spawn).
+ * Expects managed console already up with CLAWQL_E2E_HARNESS=1
+ * (or set CLAWQL_CLOUD_E2E_START=1 to spawn with that env).
+ * Pass-when asserts production-shaped /v1 /mcp /events /audit — not /api/e2e/*.
  */
 export default defineConfig({
   testDir: path.join(__dirname, 'specs'),

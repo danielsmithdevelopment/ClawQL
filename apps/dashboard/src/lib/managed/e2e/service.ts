@@ -47,7 +47,7 @@ export class E2eHarness extends Context.Service<
 export const E2eHarnessLive = Layer.succeed(
   E2eHarness,
   E2eHarness.of({
-    enabled: () => Effect.sync(() => e2eEnabled()),
+    enabled: () => Effect.sync(() => e2eEnabled(process.env)),
     reset: () => Effect.sync(() => resetWorld()),
     world: () => Effect.sync(() => getWorld()),
     verifyChain: () => Effect.sync(() => verifyChain()),

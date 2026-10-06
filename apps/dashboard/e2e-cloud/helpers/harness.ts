@@ -53,7 +53,7 @@ export async function resetWorld() {
 
 export async function getAudit(opts?: { format?: 'ocsf' }) {
   const qs = opts?.format === 'ocsf' ? '?format=ocsf' : ''
-  const res = await fetchRetry(`${base()}/api/e2e/audit${qs}`)
+  const res = await fetchRetry(`${base()}/audit${qs}`)
   if (!res.ok) throw new Error(`audit failed: ${res.status}`)
   return json<{
     entries: {
@@ -239,8 +239,8 @@ export async function keysApi(body?: Record<string, unknown>) {
 
 export async function listEvents(after?: string) {
   const url = after
-    ? `${base()}/api/e2e/events?after=${encodeURIComponent(after)}`
-    : `${base()}/api/e2e/events`
+    ? `${base()}/events?after=${encodeURIComponent(after)}`
+    : `${base()}/events`
   const res = await fetchRetry(url)
   return {
     status: res.status,
@@ -308,7 +308,7 @@ export async function fetchAsOrg(path: string, org: string) {
 }
 
 export async function postEvents(input: Record<string, unknown>) {
-  const res = await fetchRetry(`${base()}/api/e2e/events`, {
+  const res = await fetchRetry(`${base()}/events`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -446,7 +446,7 @@ export async function getDecisionSites() {
   }
 }
 
-/** Full harness witness snapshot (GET /api/e2e/control). Do not use as Pass-when. */
+/** Arrange/fault snapshot (GET /api/e2e/control). Do not use as Pass-when. */
 export async function getWitness() {
   const res = await fetchRetry(`${base()}/api/e2e/control`)
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
@@ -545,7 +545,7 @@ export async function openaiChatWithIp(
   },
   ip: string,
 ) {
-  const res = await fetchRetry(`${base()}/api/e2e/v1/chat/completions`, {
+  const res = await fetchRetry(`${base()}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${input.key}`,

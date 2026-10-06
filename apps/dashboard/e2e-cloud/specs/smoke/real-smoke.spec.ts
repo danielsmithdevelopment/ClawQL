@@ -1,5 +1,6 @@
 /**
  * Real Smoke E2E — every Smoke catalog ID with honest witnesses.
+ * Pass-when via production-shaped /v1 /mcp /events /audit (/api/e2e arrange/fault only).
  * Never uses POST /api/e2e/scenario as pass criteria.
  */
 import { test, expect } from '@playwright/test'
@@ -557,6 +558,11 @@ test('MEM-05 Upload PII redacts email/phone/bank', async () => {
   expect(text).not.toContain('jane.okafor@example.com')
   expect(text).not.toContain('415-555-0199')
   expect(text).not.toContain('123456789012')
+
+  const events = await listEvents()
+  const blob = JSON.stringify(events.body.events)
+  expect(blob).not.toContain('jane.okafor@example.com')
+  expect(blob).not.toContain('415-555-0199')
 })
 
 test('MEM-12 Erase Jane with pin → certificateReady', async () => {
@@ -566,7 +572,11 @@ test('MEM-12 Erase Jane with pin → certificateReady', async () => {
     pinVerified: true,
   })
   expect(erase.status).toBe(200)
-  expect((erase.body.job as { certificateReady?: boolean })?.certificateReady).toBe(true)
+  const job = erase.body.job as { certificateReady?: boolean; steps?: string[]; done?: number; total?: number }
+  expect(job.certificateReady).toBe(true)
+  expect((job.steps ?? []).length).toBeGreaterThanOrEqual(7)
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'erasure.complete')).toBe(true)
 })
 
 test('MEM-13 After erase, Jane search empty', async () => {
@@ -577,8 +587,10 @@ test('MEM-13 After erase, Jane search empty', async () => {
 
   const mem = await memorySearch('Jane')
   expect(mem.status).toBe(200)
-  const results = (mem.body.results as unknown[]) ?? []
-  expect(results).toEqual([])
+  expect((mem.body.results as unknown[]) ?? []).toEqual([])
+
+  const events = await listEvents()
+  expect(JSON.stringify(events.body.events)).not.toContain('jane.okafor@example.com')
 })
 
 test('CON-01 Jira for Engineering: read ok, write mandate, delete blocked', async ({ page }) => {
