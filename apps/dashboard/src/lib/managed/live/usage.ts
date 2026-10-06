@@ -69,7 +69,7 @@ export const loadManagedUsageEffect = (
   const orgId = managedOrgId(env);
   const actorTenantId = managedTenantId(env);
 
-  return resolveWithFallbackEffect({
+  return resolveWithFallbackEffect<ManagedUsageSnapshot>({
     source: readManagedDataSource(env),
     fixture: FIXTURE_USAGE,
     isLiveUseful: (u) => u.meta.orgId !== "fixture",
@@ -82,9 +82,7 @@ export const loadManagedUsageEffect = (
         actorTenantId,
         includeWormSpend: true,
       });
-      const spentFromWorm = summary.wormSpend?.totalCents
-        ? centsToDollars(summary.wormSpend.totalCents)
-        : 0;
+      const spentFromWorm = summary.wormSpend?.totalUsd ?? 0;
       const creditsDollars = centsToDollars(summary.totalCreditsCents);
       const teamRows = summary.members.map((m) => {
         const spent = centsToDollars(Math.max(0, -Math.min(0, m.balanceCents)));

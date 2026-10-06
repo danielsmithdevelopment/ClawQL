@@ -72,8 +72,13 @@ export const listManagedReviewEffect = (
           kind: "change",
           kindLabel: "CHANGE",
           title: record.operationId,
-          badge: `${record.risk.toUpperCase()} risk`,
-          badgeTone: record.risk === "block" ? "danger" : record.risk === "mandate" ? "warn" : "neutral",
+          badge: `${record.risk.policy.toUpperCase()} risk`,
+          badgeTone:
+            record.risk.policy === "block"
+              ? "danger"
+              : record.risk.policy === "mandate"
+                ? "warn"
+                : "neutral",
           listMeta: `Parked ${relativeTime(record.createdAt)}`,
           statusLine: expiresLine(record.expiresAt),
           statusTone: Date.parse(record.expiresAt) - Date.now() < 30 * 60_000 ? "danger" : "neutral",

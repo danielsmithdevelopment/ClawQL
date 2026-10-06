@@ -279,7 +279,7 @@ function PrivacySection() {
                 <p className="font-medium text-slate-800">{row.label}</p>
                 <p className="mt-0.5 text-xs text-slate-500">{row.help}</p>
               </div>
-              {row.locked ? (
+              {'locked' in row && row.locked ? (
                 <p className="text-sm font-medium text-slate-700">{row.value}</p>
               ) : (
                 <select className="h-9 rounded-lg border border-slate-200 px-2" defaultValue={row.value}>
@@ -302,18 +302,18 @@ function PrivacySection() {
               <label
                 className={cn(
                   'flex items-start gap-2 text-sm text-slate-700',
-                  item.locked && 'opacity-70',
+                  'locked' in item && item.locked && 'opacity-70',
                 )}
               >
                 <input
                   type="checkbox"
                   defaultChecked={item.checked}
-                  disabled={item.locked}
+                  disabled={'locked' in item && item.locked}
                   className="mt-1"
                 />
                 <span>
                   {item.label}
-                  {item.note ? (
+                  {'note' in item && item.note ? (
                     <span className="mt-0.5 block text-xs text-slate-500">{item.note}</span>
                   ) : null}
                 </span>

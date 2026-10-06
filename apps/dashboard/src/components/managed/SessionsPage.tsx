@@ -14,7 +14,7 @@ type Filter = 'all' | 'active' | 'waiting' | 'blocked'
 
 export function SessionsPage() {
   const [filter, setFilter] = useState<Filter>('all')
-  const [selectedId, setSelectedId] = useState(SESSIONS[0]!.id)
+  const [selectedId, setSelectedId] = useState<string>(SESSIONS[0]!.id)
 
   const filtered = useMemo(() => {
     return SESSIONS.filter((s) => {
