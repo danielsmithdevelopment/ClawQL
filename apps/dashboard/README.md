@@ -84,6 +84,7 @@ Existing browser **localStorage** chats are **imported once** into the vault on 
 | `CLAWQL_MANAGED_TENANT_ID` / `NEXT_PUBLIC_CLAWQL_MANAGED_TENANT_ID` | Optional actor tenant for unified spend. |
 | `CLAWQL_HOME`                        | Home dir for IssuedApiKeyStore + pending review files (default `./.clawql` under the dashboard cwd). |
 | `CLAWQL_API_KEYS_PATH`               | Optional override for the issued API keys JSON path. |
+| `CLAWQL_STRIPE_CUSTOMER_ID` / `STRIPE_CUSTOMER_ID` | Stripe customer for managed **Open Stripe portal** (`POST /api/managed/billing/portal`). |
 
 ## Managed console (`cloud.clawql.com`)
 
@@ -96,7 +97,7 @@ CLAWQL_CONSOLE_SURFACE=managed CLAWQL_MANAGED_AUTH_MOCK=1 npm run dev
 
 Open [http://localhost:3040](http://localhost:3040). Full mockup chrome is wired: **Home**, **Sessions**, **Review**, **Gateway**, **Automations**, **Skills**, **Memory & documents**, **Connections & keys**, **Audit**, **Team**, **Usage & billing**, **Settings**, **Profile**.
 
-**Live BFF (this slice):** `/api/managed/keys`, `/api/managed/usage`, `/api/managed/review` with Effect backends and fixture fallback. Keys issue against `IssuedApiKeyStore`; usage uses `getOrgUnifiedSpendSummary`; Review lists pending executions + source proposals and can approve/decline those two kinds.
+**Live BFF (this slice):** `/api/managed/keys`, `/api/managed/usage`, `/api/managed/review`, `/api/managed/connections`, `/api/managed/billing/portal` with Effect backends and fixture fallback. Keys issue against `IssuedApiKeyStore`; usage uses `getOrgUnifiedSpendSummary`; Review lists pending executions + source proposals; Connections maps `sources.json` + pending proposals; billing portal opens Stripe when `CLAWQL_STRIPE_CUSTOMER_ID` is set.
 | `OPENCLAW_CHAT_BRIDGE_PORT`          | Bridge listen port (default **8787**).                                                                                                                                                                     |
 | `CLAWQL_OPENCLAW_AGENT_ID`           | `openclaw agent --agent` id (default **main**).                                                                                                                                                            |
 | `OPENCLAW_AGENT_TIMEOUT_SEC`         | Per-message CLI timeout in seconds (default **120**).                                                                                                                                                      |

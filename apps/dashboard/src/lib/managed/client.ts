@@ -1,6 +1,6 @@
 'use client'
 
-import type { ApiKeyItem } from '@/lib/managed/fixtures'
+import type { ApiKeyItem, ConnectionItem } from '@/lib/managed/fixtures'
 import type { ManagedUsageSnapshot } from '@/lib/managed/live/usage'
 import type { ReviewItem } from '@/lib/managed/fixtures-ops'
 
@@ -17,6 +17,35 @@ export async function fetchManagedKeys(): Promise<{
   source: 'live' | 'fixture'
 }> {
   return getJson('/api/managed/keys')
+}
+
+export async function fetchManagedConnections(): Promise<{
+  connections: ConnectionItem[]
+  source: 'live' | 'fixture'
+}> {
+  return getJson('/api/managed/connections')
+}
+
+export async function openManagedBillingPortal(returnUrl?: string): Promise<{
+  url: string
+  customerId: string
+  source: 'live'
+}> {
+  const res = await fetch('/api/managed/billing/portal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ returnUrl }),
+  })
+  const body = (await res.json().catch(() => ({}))) as {
+    url?: string
+    customerId?: string
+    source?: 'live'
+    error?: string
+  }
+  if (!res.ok || !body.url || !body.customerId) {
+    throw new Error(body.error || `Portal failed (${res.status})`)
+  }
+  return { url: body.url, customerId: body.customerId, source: 'live' }
 }
 
 export async function issueManagedKey(input: {

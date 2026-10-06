@@ -6,7 +6,7 @@ import { CreateKeyModal } from '@/components/managed/CreateKeyModal'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
-import { fetchManagedKeys } from '@/lib/managed/client'
+import { fetchManagedConnections, fetchManagedKeys } from '@/lib/managed/client'
 import { API_KEYS, CONNECTIONS, type ApiKeyItem, type ConnectionItem } from '@/lib/managed/fixtures'
 import { KEY_GROUP_COLUMNS, KEY_GROUP_MATRIX } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
@@ -21,13 +21,15 @@ function statusTone(status: ConnectionItem['status']): 'ok' | 'warn' | 'danger' 
 
 export function ConnectionsPage() {
   const [tab, setTab] = useState<Tab>('connections')
+  const [connections, setConnections] = useState<ConnectionItem[]>(() => [...CONNECTIONS])
+  const [connectionsSource, setConnectionsSource] = useState<'live' | 'fixture'>('fixture')
   const [selectedId, setSelectedId] = useState(CONNECTIONS[0]!.id)
   const [createOpen, setCreateOpen] = useState(false)
   const [keys, setKeys] = useState<ApiKeyItem[]>(() => [...API_KEYS])
   const [keysSource, setKeysSource] = useState<'live' | 'fixture'>('fixture')
   const selected = useMemo(
-    () => CONNECTIONS.find((c) => c.id === selectedId) ?? CONNECTIONS[0]!,
-    [selectedId],
+    () => connections.find((c) => c.id === selectedId) ?? connections[0] ?? CONNECTIONS[0]!,
+    [connections, selectedId],
   )
 
   useEffect(() => {
@@ -37,6 +39,16 @@ export function ConnectionsPage() {
         if (cancelled) return
         setKeys(res.keys)
         setKeysSource(res.source)
+      })
+      .catch(() => {
+        /* keep fixture seed */
+      })
+    void fetchManagedConnections()
+      .then((res) => {
+        if (cancelled) return
+        setConnections(res.connections)
+        setConnectionsSource(res.source)
+        if (res.connections[0]) setSelectedId(res.connections[0].id)
       })
       .catch(() => {
         /* keep fixture seed */
@@ -79,11 +91,19 @@ export function ConnectionsPage() {
             Keys source: {keysSource === 'live' ? 'IssuedApiKeyStore ($CLAWQL_HOME)' : 'Acme fixture'}
           </p>
         ) : null}
+        {tab === 'connections' ? (
+          <p className="mb-3 text-xs text-slate-500" data-testid="connections-data-source">
+            Connections source:{' '}
+            {connectionsSource === 'live'
+              ? 'sources.json + pending proposals ($CLAWQL_HOME)'
+              : 'Acme fixture — empty sources.json falls back here'}
+          </p>
+        ) : null}
 
         <div className="mb-5 flex gap-4 border-b border-slate-200 text-sm">
           {(
             [
-              ['connections', `Connections ${CONNECTIONS.length}`],
+              ['connections', `Connections ${connections.length}`],
               ['keys', `Keys ${keys.length}`],
               ['groups', `Key groups ${KEY_GROUP_COLUMNS.length}`],
             ] as const
@@ -108,7 +128,7 @@ export function ConnectionsPage() {
         {tab === 'connections' ? (
           <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(16rem,20rem)_1fr]">
             <ul className="space-y-2">
-              {CONNECTIONS.map((c) => {
+              {connections.map((c) => {
                 const active = c.id === selected.id
                 return (
                   <li key={c.id}>

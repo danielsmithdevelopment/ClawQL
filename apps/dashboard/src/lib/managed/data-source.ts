@@ -24,6 +24,14 @@ export function managedTenantId(env: NodeJS.ProcessEnv = process.env): string | 
   );
 }
 
+export function managedStripeCustomerId(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  return (
+    env.CLAWQL_STRIPE_CUSTOMER_ID?.trim() ||
+    env.STRIPE_CUSTOMER_ID?.trim() ||
+    undefined
+  );
+}
+
 /** Prefer live when `auto` and the live Effect yields a non-empty payload. */
 export function resolveWithFallbackEffect<A>(input: {
   readonly source: ManagedDataSource;

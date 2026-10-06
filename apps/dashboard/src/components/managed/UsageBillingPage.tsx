@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { PageChrome } from '@/components/managed/PageChrome'
 import { Button } from '@/components/ui/button'
-import { fetchManagedUsage } from '@/lib/managed/client'
+import { fetchManagedUsage, openManagedBillingPortal } from '@/lib/managed/client'
 import { DAILY_SPEND, TEAM_SPEND, USAGE_SUMMARY } from '@/lib/managed/fixtures'
 import type { ManagedUsageSnapshot } from '@/lib/managed/live/usage'
 import { cn } from '@/lib/utils'
@@ -36,6 +36,8 @@ export function UsageBillingPage() {
   const [breakdown, setBreakdown] = useState<Breakdown>('team')
   const [usage, setUsage] = useState<ManagedUsageSnapshot>(FIXTURE_USAGE)
   const [source, setSource] = useState<'live' | 'fixture'>('fixture')
+  const [portalBusy, setPortalBusy] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -53,6 +55,21 @@ export function UsageBillingPage() {
     }
   }, [])
 
+  const openPortal = () => {
+    setPortalBusy(true)
+    setPortalError(null)
+    void openManagedBillingPortal(
+      typeof window !== 'undefined' ? `${window.location.origin}/usage` : undefined,
+    )
+      .then((res) => {
+        window.location.assign(res.url)
+      })
+      .catch((e: unknown) => {
+        setPortalError(e instanceof Error ? e.message : String(e))
+        setPortalBusy(false)
+      })
+  }
+
   const maxBar = useMemo(() => Math.max(...usage.daily.map((d) => d.amount), 1), [usage.daily])
   const pct = Math.round((usage.monthSpent / Math.max(usage.monthBudget, 1)) * 100)
 
@@ -64,8 +81,8 @@ export function UsageBillingPage() {
       actions={
         <>
           <span className="text-sm text-slate-600">{usage.planRenews}</span>
-          <Button type="button" variant="outline">
-            Manage plan
+          <Button type="button" variant="outline" disabled={portalBusy} onClick={openPortal}>
+            {portalBusy ? 'Opening…' : 'Manage plan'}
           </Button>
         </>
       }
@@ -102,16 +119,34 @@ export function UsageBillingPage() {
         ))}
       </div>
 
+      {portalError ? (
+        <p className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800" role="alert">
+          {portalError}
+        </p>
+      ) : null}
+
       {tab !== 'usage' ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 shadow-sm">
           <p className="text-sm font-medium text-slate-800">
             {tab === 'plan' ? 'Plan & credits' : 'Payment & limits'}
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-600">
             {source === 'live'
-              ? `Pool spendable: $${(usage.meta.poolSpendableCents / 100).toLocaleString()} · Stripe portal next`
-              : 'Fixture placeholder — Stripe / CPC wiring comes next.'}
+              ? `Pool spendable: $${(usage.meta.poolSpendableCents / 100).toLocaleString()} · org ${usage.meta.orgId}`
+              : 'Fixture spend summary until CLAWQL_MANAGED_ORG_ID is set.'}
           </p>
+          <p className="mt-2 text-sm text-slate-500">
+            Open the Stripe customer portal to update payment methods, invoices, and the subscription. Requires{' '}
+            <span className="font-mono text-xs">CLAWQL_STRIPE_CUSTOMER_ID</span> and Stripe API keys on the server.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button type="button" disabled={portalBusy} onClick={openPortal} data-testid="open-stripe-portal">
+              {portalBusy ? 'Opening…' : 'Open Stripe portal'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setTab('usage')}>
+              Back to usage
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
