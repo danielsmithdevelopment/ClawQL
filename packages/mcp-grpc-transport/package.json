@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-grpc-transport#readme",
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.0"
+    "@modelcontextprotocol/sdk": "^1.31.0"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.5",
@@ -49,7 +49,7 @@
     "protobufjs": "^8.7.1"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0",

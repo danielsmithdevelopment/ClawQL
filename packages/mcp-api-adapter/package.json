@@ -46,7 +46,7 @@
   "homepage": "https://github.com/danielsmithdevelopment/ClawQL/tree/main/packages/mcp-api-adapter#readme",
   "dependencies": {
     "@grpc/grpc-js": "^1.14.5",
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "busboy": "^1.6.0",
     "effect": "4.0.0",
     "express": "^5.2.1",

@@ -67,7 +67,7 @@
     "hono": "4.13.12",
     "ip-address": "10.7.1",
     "body-parser": "2.3.0",
-    "sharp": "0.35.4",
+    "sharp": "0.35.5",
     "postcss": "8.5.23",
     "postcss-selector-parser": "7.1.6",
     "nanoid": "3.3.18",
