@@ -7,26 +7,45 @@ async function json<T>(res: Response): Promise<T> {
   return (await res.json().catch(() => ({}))) as T
 }
 
-async function fetchRetry(url: string, init?: RequestInit, attempts = 5): Promise<Response> {
+async function fetchRetry(url: string, init?: RequestInit, attempts = 10): Promise<Response> {
   let lastErr: unknown
   for (let i = 0; i < attempts; i++) {
     try {
       const res = await fetch(url, init)
       // Next HMR can briefly return 500 while recompiling routes
       if (res.status >= 500 && i < attempts - 1) {
-        await new Promise((r) => setTimeout(r, 250 * (i + 1)))
+        await new Promise((r) => setTimeout(r, 400 * (i + 1)))
         continue
       }
       return res
     } catch (err) {
       lastErr = err
-      await new Promise((r) => setTimeout(r, 250 * (i + 1)))
+      await new Promise((r) => setTimeout(r, 400 * (i + 1)))
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
 }
 
+/** Block until the managed console answers — used when Next was killed/restarted mid-suite. */
+export async function waitForServer(timeoutMs = 120_000): Promise<void> {
+  const start = Date.now()
+  let lastErr: unknown
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(`${base()}/`)
+      if (res.ok || res.status === 304) return
+    } catch (err) {
+      lastErr = err
+    }
+    await new Promise((r) => setTimeout(r, 500))
+  }
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error(`server not reachable at ${base()} within ${timeoutMs}ms`)
+}
+
 export async function resetWorld() {
+  await waitForServer()
   const res = await fetchRetry(`${base()}/api/e2e/reset`, { method: 'POST' })
   if (!res.ok) throw new Error(`reset failed: ${res.status}`)
   return json(res)
