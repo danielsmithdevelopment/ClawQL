@@ -5,12 +5,154 @@ import { useState } from 'react'
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
-import { AUDIT_ENTRIES } from '@/lib/managed/fixtures-ops'
+import { AUDIT_ENTRIES, AUDIT_INCIDENT } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
+type View = 'log' | 'incident'
+
 export function AuditPage() {
+  const [view, setView] = useState<View>('incident')
   const [selectedId, setSelectedId] = useState('wrm_4906')
   const selected = AUDIT_ENTRIES.find((e) => e.id === selectedId) ?? AUDIT_ENTRIES[2]!
+
+  if (view === 'incident') {
+    return (
+      <PageChrome
+        crumbs={['Audit']}
+        title="Audit"
+        description="Every action through ClawQL, written once and chained, so anyone can check that nothing was changed or removed."
+        actions={
+          <Button type="button" variant="outline" onClick={() => setView('log')}>
+            View audit log
+          </Button>
+        }
+      >
+        <div
+          className="mb-5 rounded-xl border border-rose-200 bg-rose-50/80 px-4 py-4 shadow-sm"
+          data-testid="audit-incident"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex gap-3">
+              <span className="mt-0.5 text-rose-700" aria-hidden>
+                ⚠
+              </span>
+              <div>
+                <h2 className="text-base font-semibold text-rose-950">Chain verification failed</h2>
+                <p className="mt-1 text-sm text-rose-900">{AUDIT_INCIDENT.summary}</p>
+              </div>
+            </div>
+            <Button type="button" className="bg-rose-900 hover:bg-rose-800">
+              Download evidence bundle
+            </Button>
+          </div>
+          <p className="mt-3 text-sm text-rose-950/90">{AUDIT_INCIDENT.explanation}</p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-900">What changed</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Compared with your offsite copy of the hourly roots, which no one at ClawQL can write to.
+            </p>
+            <table className="mt-4 w-full text-left text-sm">
+              <thead className="text-xs text-slate-500">
+                <tr>
+                  <th className="py-1 font-medium">Field</th>
+                  <th className="py-1 font-medium">When written, per the proof</th>
+                  <th className="py-1 font-medium">Stored now</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {(
+                  [
+                    ['Time', AUDIT_INCIDENT.written.time, AUDIT_INCIDENT.stored.time],
+                    ['Actor', AUDIT_INCIDENT.written.actor, AUDIT_INCIDENT.stored.actor],
+                    ['Action', AUDIT_INCIDENT.written.action, AUDIT_INCIDENT.stored.action],
+                    ['Outcome', AUDIT_INCIDENT.written.outcome, AUDIT_INCIDENT.stored.outcome],
+                    ['Entry hash', AUDIT_INCIDENT.written.hash, AUDIT_INCIDENT.stored.hash],
+                  ] as const
+                ).map(([field, written, stored]) => (
+                  <tr
+                    key={field}
+                    className={cn(field === 'Outcome' && 'bg-rose-50/70')}
+                  >
+                    <td className="py-2 font-medium text-slate-800">{field}</td>
+                    <td
+                      className={cn(
+                        'py-2',
+                        field === 'Outcome' ? 'font-medium text-emerald-700' : 'text-slate-700',
+                        field === 'Entry hash' && 'font-mono text-xs',
+                      )}
+                    >
+                      {written}
+                    </td>
+                    <td
+                      className={cn(
+                        'py-2',
+                        field === 'Outcome' ? 'font-medium text-rose-700' : 'text-slate-700',
+                        field === 'Entry hash' && 'font-mono text-xs',
+                      )}
+                    >
+                      {stored}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-3 text-sm text-slate-600">{AUDIT_INCIDENT.paymentNote}</p>
+          </section>
+
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-900">What still holds</h3>
+            <ul className="mt-3 space-y-2 text-sm text-slate-700">
+              {AUDIT_INCIDENT.stillHolds.map((item) => (
+                <li key={item.text} className="flex gap-2">
+                  <StatusDot tone={item.ok ? 'ok' : 'warn'} className="mt-1.5" />
+                  {item.text}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        <section className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">What to do next</h3>
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-700">
+            <li>
+              Keep the evidence. Ask about the bundle.{' '}
+              <button type="button" className="font-medium text-sky-700 hover:underline">
+                Download
+              </button>
+            </li>
+            <li>
+              Find who had write access to log storage.{' '}
+              <button type="button" className="font-medium text-sky-700 hover:underline">
+                Storage access log
+              </button>
+            </li>
+            <li>
+              Rotate the storage credentials.{' '}
+              <button type="button" className="font-medium text-sky-700 hover:underline">
+                Rotate
+              </button>
+            </li>
+            <li className="flex flex-wrap items-center gap-2">
+              Restore the entry from offsite proof. Needs two admins with security keys.
+              <Button type="button" size="sm">
+                Start restore
+              </Button>
+            </li>
+            <li>
+              Tell your auditors. Mention the incident report.{' '}
+              <button type="button" className="font-medium text-sky-700 hover:underline">
+                Incident report
+              </button>
+            </li>
+          </ol>
+        </section>
+      </PageChrome>
+    )
+  }
 
   return (
     <PageChrome
@@ -19,6 +161,9 @@ export function AuditPage() {
       description="Every action through ClawQL, written once and chained, so anyone can check that nothing was changed or removed."
       actions={
         <>
+          <Button type="button" variant="outline" onClick={() => setView('incident')}>
+            Open incident
+          </Button>
           <Button type="button" variant="outline">
             Export
           </Button>
@@ -26,13 +171,19 @@ export function AuditPage() {
         </>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
-        <span className="inline-flex items-center gap-2 font-medium text-emerald-800">
-          <StatusDot tone="ok" /> Chain verified — Checked 2 minutes ago
+      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm shadow-sm">
+        <span className="inline-flex items-center gap-2 font-medium text-amber-950">
+          <StatusDot tone="warn" /> Chain verification failed — {AUDIT_INCIDENT.entryId}
         </span>
+        <button
+          type="button"
+          className="font-medium text-sky-700 hover:underline"
+          onClick={() => setView('incident')}
+        >
+          Open incident view
+        </button>
         <span className="text-slate-500">Entries: 4,912</span>
         <span className="font-mono text-xs text-slate-500">Latest root, 09:00: b41e…07c9</span>
-        <span className="text-slate-500">Retention: 7 years</span>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -149,9 +300,6 @@ export function AuditPage() {
                 <StatusDot tone="ok" /> Proven in the 09:00 root
               </div>
             </dl>
-            <p className="mt-3 text-xs text-slate-500">
-              Editing or deleting any earlier entry would change these hashes, and verification would fail.
-            </p>
           </div>
         </div>
       </div>

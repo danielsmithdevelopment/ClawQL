@@ -8,16 +8,25 @@ import { StatusDot } from '@/components/managed/StatusDot'
 import { TabBar } from '@/components/managed/TabBar'
 import { Button } from '@/components/ui/button'
 import { decideManagedReview, fetchManagedReview } from '@/lib/managed/client'
-import { REVIEW_ITEMS, type ReviewItem, type ReviewKind } from '@/lib/managed/fixtures-ops'
+import {
+  APPROVAL_POLICIES,
+  APPROVAL_POLICY_DETAIL,
+  REVIEW_ITEMS,
+  type ReviewItem,
+  type ReviewKind,
+} from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
+type Section = 'queue' | 'policies'
 type Filter = 'all' | ReviewKind
 
 export function ReviewPage() {
+  const [section, setSection] = useState<Section>('queue')
   const [filter, setFilter] = useState<Filter>('all')
   const [items, setItems] = useState<ReviewItem[]>(() => [...REVIEW_ITEMS])
   const [source, setSource] = useState<'live' | 'fixture'>('fixture')
   const [selectedId, setSelectedId] = useState(REVIEW_ITEMS[0]!.id)
+  const [policyId, setPolicyId] = useState(APPROVAL_POLICIES[0]!.id)
   const [onlyMine, setOnlyMine] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -75,12 +84,40 @@ export function ReviewPage() {
     }
   }
 
+  const selectedPolicy =
+    APPROVAL_POLICIES.find((p) => p.id === policyId) ?? APPROVAL_POLICIES[0]!
+
   return (
     <PageChrome
-      crumbs={['Review']}
+      crumbs={section === 'policies' ? ['Review', 'Approval policies'] : ['Review']}
       title="Review"
-      description="Everything waiting on a person: changes agents want to make, sources they propose, decisions they weren't sure about, and skills ready to promote."
+      description={
+        section === 'policies'
+          ? "The rules for what waits on a person. Agents can't edit or skip them, and every change is recorded."
+          : "Everything waiting on a person: changes agents want to make, sources they propose, decisions they weren't sure about, and skills ready to promote."
+      }
+      actions={
+        section === 'policies' ? (
+          <Button type="button">New rule</Button>
+        ) : undefined
+      }
     >
+      <TabBar
+        testIdPrefix="review-section"
+        value={section}
+        onChange={setSection}
+        tabs={[
+          { id: 'queue', label: 'Queue', count: items.length },
+          { id: 'policies', label: 'Approval policies' },
+        ]}
+      />
+
+      {section === 'policies' ? (
+        <ApprovalPoliciesPanel selectedId={selectedPolicy.id} onSelect={setPolicyId} />
+      ) : null}
+
+      {section === 'queue' ? (
+        <>
       <p className="mb-3 text-xs text-slate-500" data-testid="review-data-source">
         Review source:{' '}
         {source === 'live'
@@ -185,7 +222,142 @@ export function ReviewPage() {
           </div>
         </div>
       )}
+        </>
+      ) : null}
     </PageChrome>
+  )
+}
+
+function ApprovalPoliciesPanel({
+  selectedId,
+  onSelect,
+}: {
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  const selected = APPROVAL_POLICIES.find((p) => p.id === selectedId) ?? APPROVAL_POLICIES[0]!
+  const detail = selected.id === APPROVAL_POLICY_DETAIL.id ? APPROVAL_POLICY_DETAIL : null
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">When</th>
+              <th className="px-4 py-3 font-medium">Who approves</th>
+              <th className="px-4 py-3 font-medium">Approvals</th>
+              <th className="px-4 py-3 font-medium">Security key</th>
+              <th className="px-4 py-3 font-medium">Waits up to</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {APPROVAL_POLICIES.map((row) => (
+              <tr
+                key={row.id}
+                className={cn(
+                  'cursor-pointer hover:bg-slate-50/80',
+                  row.id === selected.id && 'bg-amber-50/50',
+                )}
+                onClick={() => onSelect(row.id)}
+                data-testid={`policy-${row.id}`}
+              >
+                <td className="px-4 py-3">
+                  {row.blocked ? (
+                    <div>
+                      <p className="font-medium text-slate-900">{row.when}</p>
+                      <span className="mt-1 inline-block rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-800">
+                        Always blocked
+                      </span>
+                      {row.blockedNote ? (
+                        <p className="mt-1 max-w-md text-xs text-slate-500">{row.blockedNote}</p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-medium text-slate-900">{row.when}</p>
+                      {row.whenDetail ? <p className="text-xs text-slate-500">{row.whenDetail}</p> : null}
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-slate-700">{row.who}</td>
+                <td className="px-4 py-3 text-slate-700">{row.approvals}</td>
+                <td className="px-4 py-3 text-slate-700">{row.securityKey}</td>
+                <td className="px-4 py-3 text-slate-700">{row.waits}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {!selected.blocked && detail ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">{detail.title}</h2>
+              <p className="mt-1 text-sm text-slate-500">{detail.lastChanged}</p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {(
+              [
+                ['Applies to', detail.appliesTo, detail.appliesHelp],
+                ['Who approves', detail.whoApproves, detail.whoHelp],
+                ['Approvals needed', detail.approvalsNeeded, ''],
+                ['Expires after', detail.expiresAfter, detail.expiresHelp],
+              ] as const
+            ).map(([label, value, help]) => (
+              <label key={label} className="block text-sm font-medium text-slate-800">
+                {label}
+                <select
+                  className="mt-1.5 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-sm font-normal"
+                  defaultValue={value}
+                >
+                  <option>{value}</option>
+                </select>
+                {help ? <p className="mt-1 text-xs font-normal text-slate-500">{help}</p> : null}
+              </label>
+            ))}
+          </div>
+          <ul className="mt-5 space-y-3 text-sm">
+            <li className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <div>
+                <p className="font-medium text-slate-900">Require a security key</p>
+                <p className="text-xs text-slate-500">A device-bound key, signing the exact change.</p>
+              </div>
+              <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">
+                On
+              </span>
+            </li>
+            <li className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+              <div>
+                <p className="font-medium text-slate-900">The requester can&apos;t approve</p>
+                <p className="text-xs text-slate-500">Always on. It can&apos;t be turned off for any rule.</p>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                Locked on
+              </span>
+            </li>
+            <li className="rounded-lg bg-slate-50 px-3 py-2">
+              <p className="font-medium text-slate-900">Notify approvers</p>
+              <p className="text-sm text-slate-700">{detail.notify}</p>
+              <p className="text-xs text-slate-500">Each person also chooses how in their profile.</p>
+            </li>
+          </ul>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              Saving a policy change needs your security key, and it&apos;s recorded in the audit log.
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline">
+                Discard
+              </Button>
+              <Button type="button">Save with security key</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   )
 }
 

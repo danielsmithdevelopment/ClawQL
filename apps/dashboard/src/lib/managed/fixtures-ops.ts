@@ -523,3 +523,567 @@ export const AUTOMATION_SUBS = [
     tone: "ok" as const,
   },
 ] as const;
+
+export type ApprovalPolicyRow = {
+  readonly id: string;
+  readonly when: string;
+  readonly whenDetail: string;
+  readonly who: string;
+  readonly approvals: string;
+  readonly securityKey: string;
+  readonly waits: string;
+  readonly blocked?: boolean;
+  readonly blockedNote?: string;
+};
+
+export const APPROVAL_POLICIES: readonly ApprovalPolicyRow[] = [
+  {
+    id: "pol_contracts",
+    when: "Writes to contracts",
+    whenDetail: "MEDIUM risk, CRM",
+    who: "Contract approvers",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "30 minutes",
+  },
+  {
+    id: "pol_writes",
+    when: "Any other write",
+    whenDetail: "Every connection",
+    who: "Admins",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "30 minutes",
+  },
+  {
+    id: "pol_sources",
+    when: "New sources from agents",
+    whenDetail: "",
+    who: "Source approvers",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "No limit",
+  },
+  {
+    id: "pol_skill_write",
+    when: "Skill promotions that write",
+    whenDetail: "",
+    who: "Approvers for what it writes",
+    approvals: "1",
+    securityKey: "Required",
+    waits: "No limit",
+  },
+  {
+    id: "pol_skill_read",
+    when: "Skill promotions that only read",
+    whenDetail: "Internal data, no outside network",
+    who: "Automatic when evidence passes",
+    approvals: "None",
+    securityKey: "Not needed",
+    waits: "—",
+  },
+  {
+    id: "pol_triage",
+    when: "ticket-triage decisions",
+    whenDetail: "",
+    who: "Support group",
+    approvals: "1",
+    securityKey: "Not needed",
+    waits: "Until answered",
+  },
+  {
+    id: "pol_block",
+    when: "Deletes and payments",
+    whenDetail: "",
+    who: "Always blocked",
+    approvals: "—",
+    securityKey: "—",
+    waits: "—",
+    blocked: true,
+    blockedNote:
+      "No one can approve these for an agent. Allowlist a single operation in Connections & keys if you must.",
+  },
+];
+
+export const APPROVAL_POLICY_DETAIL = {
+  id: "pol_contracts",
+  title: "Writes to contracts",
+  lastChanged: "Last changed by Dana Reyes, Sep 14.",
+  appliesTo: "MEDIUM-risk writes on CRM contracts",
+  appliesHelp: "Covers 6 operations, including adjust_contract_value.",
+  whoApproves: "Contract approvers (2 people)",
+  whoHelp: "Dana Reyes, Marcus Lee. Managed in Team.",
+  approvalsNeeded: "1",
+  expiresAfter: "30 minutes",
+  expiresHelp: "Expired requests close without changing anything.",
+  requireSecurityKey: true,
+  notify: "Phone push, Slack",
+} as const;
+
+export type WatchedSource = {
+  readonly id: string;
+  readonly watch: string;
+  readonly watchDetail: string;
+  readonly checks: string;
+  readonly lastChange: string;
+  readonly status: string;
+  readonly tone: "ok" | "warn" | "danger" | "neutral";
+};
+
+export const WATCHED_SOURCES: readonly WatchedSource[] = [
+  {
+    id: "watch_stripe",
+    watch: "Failed payments",
+    watchDetail: "Stripe, read-only",
+    checks: "Every 5 minutes",
+    lastChange: "08:31, 2 new",
+    status: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "watch_prs",
+    watch: "Open pull requests",
+    watchDetail: "GitHub acme/web, work account",
+    checks: "Every 2 minutes",
+    lastChange: "09:20, 2 new",
+    status: "Paused: needs sign-in",
+    tone: "warn",
+  },
+  {
+    id: "watch_jira",
+    watch: "Current sprint",
+    watchDetail: "Jira, Engineering board",
+    checks: "Every 10 minutes",
+    lastChange: "Yesterday",
+    status: "Healthy",
+    tone: "ok",
+  },
+  {
+    id: "watch_vendor",
+    watch: "Vendor status page",
+    watchDetail: "Public API, no sign-in",
+    checks: "Every minute",
+    lastChange: "Sep 30",
+    status: "Healthy",
+    tone: "ok",
+  },
+];
+
+export const WATCHED_SOURCE_DETAIL = {
+  id: "watch_stripe",
+  title: "Failed payments",
+  endpoint: "Stripe GET /v1/charges?status=failed",
+  fields: [
+    { name: "id", note: undefined },
+    { name: "amount", note: undefined },
+    { name: "failure_code", note: undefined },
+    { name: "customer", note: "redacted" },
+  ],
+  howFound: "Comparing the watched fields",
+  howFoundNote: "Stripe doesn't send ETags for this endpoint.",
+  bursts: "Merged within 60 seconds",
+  burstsNote: "Two new charges arrived 12 seconds apart.",
+  rateLimits: "None hit in 7 days",
+  rateLimitsNote: "We back off automatically if a limit is hit.",
+  lastChangeAt: "08:31",
+  rows: [
+    {
+      action: "Added",
+      id: "ch_3Q8f…a1",
+      amount: "$129.00",
+      failure: "card_declined",
+      customer: "cus_…91",
+    },
+    {
+      action: "Added",
+      id: "ch_3Q8g…7c",
+      amount: "$49.00",
+      failure: "expired_card",
+      customer: "cus_…44",
+    },
+  ],
+  footer:
+    "Sent as one stream.changed event to 1 subscription: Ops dashboard, the live stream.",
+} as const;
+
+export type OntologyType = {
+  readonly id: string;
+  readonly name: string;
+  readonly count: number;
+};
+
+export const ONTOLOGY_TYPES: readonly OntologyType[] = [
+  { id: "contract", name: "Contract", count: 412 },
+  { id: "invoice", name: "Invoice", count: 1904 },
+  { id: "customer", name: "Customer", count: 630 },
+  { id: "matter", name: "Matter", count: 88 },
+  { id: "vendor", name: "Vendor", count: 77 },
+];
+
+export const ONTOLOGY_CONTRACT_FIELDS = [
+  {
+    name: "counterparty",
+    required: true,
+    type: "Text",
+    filled: "100%",
+    source: "CRM",
+    personal: false,
+  },
+  {
+    name: "annual_value",
+    required: false,
+    type: "Money",
+    filled: "99%",
+    source: "CRM",
+    personal: false,
+  },
+  {
+    name: "renewal_date",
+    required: false,
+    type: "Date",
+    filled: "97%",
+    source: "Extracted from documents",
+    personal: false,
+  },
+  {
+    name: "governing_law",
+    required: false,
+    type: "Text",
+    filled: "81%, since Mar 2025",
+    source: "Extracted from documents",
+    personal: false,
+  },
+  {
+    name: "escrow_pct",
+    required: false,
+    type: "Percent",
+    filled: "64%",
+    source: "Often inferred, so confidence is shown per record",
+    personal: false,
+  },
+  {
+    name: "signatory_email",
+    required: false,
+    type: "Email",
+    filled: "92%",
+    source: "Redacted before storage",
+    personal: true,
+  },
+] as const;
+
+export type PipelineDoc = {
+  readonly id: string;
+  readonly document: string;
+  readonly received: string;
+  readonly from: string;
+  readonly pipeline: string;
+  readonly result: string;
+  readonly status: string;
+  readonly tone: "ok" | "warn" | "danger" | "neutral";
+};
+
+export const PIPELINE_DOCS: readonly PipelineDoc[] = [
+  {
+    id: "pipe_globex",
+    document: "Globex renewal.pdf",
+    received: "10:02",
+    from: "from Google Drive",
+    pipeline: "Contracts",
+    result: "11 fields, 1 redacted",
+    status: "1 field needs a person",
+    tone: "warn",
+  },
+  {
+    id: "pipe_inv",
+    document: "Invoice 88213.pdf",
+    received: "10:04",
+    from: "uploaded by Jordan Kim",
+    pipeline: "Invoices",
+    result: "Reading fields…",
+    status: "Step 3 of 5",
+    tone: "neutral",
+  },
+  {
+    id: "pipe_q3",
+    document: "Q3 vendor contract.pdf",
+    received: "09:41",
+    from: "from an agent",
+    pipeline: "Contracts",
+    result: "12 fields, 2 redacted",
+    status: "Stored",
+    tone: "ok",
+  },
+  {
+    id: "pipe_nw",
+    document: "Northwind MSA Amendment 2.pdf",
+    received: "09:23",
+    from: "from an agent",
+    pipeline: "Contracts",
+    result: "12 fields, 2 redacted",
+    status: "Stored",
+    tone: "ok",
+  },
+  {
+    id: "pipe_msg",
+    document: "fwd-pricing.msg",
+    received: "08:50",
+    from: "from email",
+    pipeline: "Email attachments",
+    result: "Outlook .msg files aren't supported yet. Convert to PDF or EML.",
+    status: "Couldn't read",
+    tone: "danger",
+  },
+];
+
+export const PIPELINE_DETAIL = {
+  id: "pipe_globex",
+  title: "Globex renewal.pdf",
+  subtitle: "Contracts pipeline, 14 pages. One field wasn't clear enough to store without a person.",
+  steps: [
+    { label: "Received", detail: "10:02:04", state: "done" as const },
+    { label: "Converted", detail: "8 seconds · 14 pages to text", state: "done" as const },
+    { label: "Fields read", detail: "21 seconds · 11 into Contract", state: "done" as const },
+    { label: "Redacted", detail: "2 seconds · 1 personal email", state: "done" as const },
+    { label: "Stored", detail: "Waiting · After you confirm 1 field", state: "waiting" as const },
+  ],
+  fieldNeed: {
+    name: "escrow_pct",
+    badge: "Inferred, confidence 0.61",
+    quote:
+      "Page 9, clause 7.2: '…Customer shall retain a holdback of ten (10) percent of each milestone payment until final acceptance…'",
+    highlight: "holdback of ten (10) percent",
+    question: "The pipeline read this holdback as an escrow of 10%. Is that right?",
+  },
+} as const;
+
+export type KeyGroupPerm = "none" | "read" | "read-write" | "tag" | "skills";
+
+export const KEY_GROUP_COLUMNS = [
+  { id: "engineering", name: "Engineering", keys: 3 },
+  { id: "operations", name: "Operations", keys: 2 },
+  { id: "support", name: "Support", keys: 2 },
+  { id: "legal", name: "Legal", keys: 2 },
+] as const;
+
+export const KEY_GROUP_MATRIX: readonly {
+  readonly reaches: string;
+  readonly cells: readonly { readonly kind: KeyGroupPerm; readonly label: string }[];
+}[] = [
+  {
+    reaches: "GitHub",
+    cells: [
+      { kind: "read-write", label: "Read and write" },
+      { kind: "none", label: "None" },
+      { kind: "none", label: "None" },
+      { kind: "none", label: "None" },
+    ],
+  },
+  {
+    reaches: "Jira",
+    cells: [
+      { kind: "read-write", label: "Read and write" },
+      { kind: "none", label: "None" },
+      { kind: "read", label: "Read" },
+      { kind: "none", label: "None" },
+    ],
+  },
+  {
+    reaches: "Slack",
+    cells: [
+      { kind: "read-write", label: "Read and write" },
+      { kind: "read-write", label: "Read and write" },
+      { kind: "read-write", label: "Read and write" },
+      { kind: "read", label: "Read" },
+    ],
+  },
+  {
+    reaches: "Google Drive",
+    cells: [
+      { kind: "read", label: "Read" },
+      { kind: "none", label: "None" },
+      { kind: "none", label: "None" },
+      { kind: "read-write", label: "Read and write" },
+    ],
+  },
+  {
+    reaches: "CRM",
+    cells: [
+      { kind: "none", label: "None" },
+      { kind: "read-write", label: "Read and write" },
+      { kind: "read", label: "Read" },
+      { kind: "read-write", label: "Read and write" },
+    ],
+  },
+  {
+    reaches: "Stripe",
+    cells: [
+      { kind: "none", label: "None" },
+      { kind: "none", label: "None" },
+      { kind: "read", label: "Read" },
+      { kind: "none", label: "None" },
+    ],
+  },
+  {
+    reaches: "Memory",
+    cells: [
+      { kind: "read-write", label: "Read and write" },
+      { kind: "none", label: "None" },
+      { kind: "read", label: "Read" },
+      { kind: "read-write", label: "Read and write" },
+    ],
+  },
+  {
+    reaches: "Decision sites",
+    cells: [
+      { kind: "tag", label: "tool-routing" },
+      { kind: "none", label: "None" },
+      { kind: "tag", label: "ticket-triage" },
+      { kind: "tag", label: "contract-risk" },
+    ],
+  },
+  {
+    reaches: "Skills",
+    cells: [
+      { kind: "skills", label: "4 active" },
+      { kind: "skills", label: "2 active" },
+      { kind: "skills", label: "3 active" },
+      { kind: "skills", label: "3 active" },
+    ],
+  },
+];
+
+export const AUDIT_INCIDENT = {
+  entryId: "wrm_4877",
+  incidentId: "inc_1005_01",
+  foundAt: "03:15 today",
+  summary:
+    "One stored entry, wrm_4877, was changed after it was written. Found by the scheduled check at 03:15 today.",
+  explanation:
+    "ClawQL doesn't edit entries. Someone with write access to the log storage, or a storage corruption, changed this one. Security contacts were alerted at 03:15. Incident inc_1005_01 is open.",
+  written: {
+    time: "Oct 4, 22:41:09",
+    actor: "support-bot",
+    action: "payments.transfer, $4,800.00",
+    outcome: "Blocked by policy",
+    hash: "8d21…f04a",
+  },
+  stored: {
+    time: "Oct 4, 22:41:09",
+    actor: "support-bot",
+    action: "payments.transfer, $4,800.00",
+    outcome: "Allowed",
+    hash: "3c9a…1b77",
+  },
+  stillHolds: [
+    { ok: true, text: "Entries 1 to 4,876 match the offsite roots up to 22:00 yesterday." },
+    { ok: true, text: "Everything since 03:15 is written to a new, verified segment." },
+    { ok: true, text: "Approvals and mandates keep working." },
+    {
+      ok: false,
+      text: "Entries 4,877 to 4,890 can't be proven yet. Exports label them unverified.",
+    },
+  ],
+  paymentNote:
+    "The record was altered to show a blocked payment as allowed. The payment itself never ran: the gateway blocked it at the time, and Stripe shows no transfer.",
+} as const;
+
+export const ERASURE_PREVIEW = {
+  subject: "Jane Okafor",
+  ticket: "#48190",
+  received: "Oct 3",
+  matched: "Matched on her name and two email addresses.",
+  rows: [
+    {
+      where: "Memory notes",
+      found: "3 notes and history",
+      how: "Encryption keys destroyed, so copies can't be read",
+    },
+    {
+      where: "Contract fields",
+      found: "Signatory email on 2 contracts",
+      how: "Fields cleared; the contracts stay",
+    },
+    {
+      where: "Documents",
+      found: "Signature page of Globex renewal.pdf",
+      how: "Redacted in place",
+    },
+    {
+      where: "Search indexes",
+      found: "41 passages",
+      how: "Removed and reindexed",
+    },
+    {
+      where: "Session transcripts",
+      found: "Mentions in 2 sessions",
+      how: "Redacted",
+    },
+    {
+      where: "Events",
+      found: "Nothing",
+      how: "Already redacted before sending",
+    },
+  ],
+  reason: "Data subject deletion request, ticket #48190.",
+} as const;
+
+export const ERASURE_JOB = {
+  subject: "Jane Okafor",
+  started: "10:21",
+  by: "Dana Reyes",
+  jobId: "era_5d81",
+  done: 5,
+  total: 7,
+  steps: [
+    {
+      id: "notes",
+      title: "Memory notes made unreadable",
+      detail: "Keys for 3 notes destroyed, so their history and backups can't be read.",
+      at: "10:21:06",
+      state: "done" as const,
+    },
+    {
+      id: "indexes",
+      title: "Search indexes cleaned",
+      detail: "41 passages removed and reindexed.",
+      at: "10:21:40",
+      state: "done" as const,
+    },
+    {
+      id: "fields",
+      title: "Contract fields cleared",
+      detail: "Signatory email on 2 contracts.",
+      at: "10:21:41",
+      state: "done" as const,
+    },
+    {
+      id: "doc",
+      title: "Signature page redacted",
+      detail: "Globex renewal.pdf, page 14.",
+      at: "10:22:03",
+      state: "done" as const,
+    },
+    {
+      id: "exports",
+      title: "Blocked from training exports",
+      detail: "Added to the export block list; the Sep 12 export is flagged to regenerate.",
+      at: "10:22:04",
+      state: "done" as const,
+    },
+    {
+      id: "sessions",
+      title: "Redacting session transcripts",
+      detail: "1 of 2 done. The second retried once after a timeout; finished steps aren't repeated.",
+      at: undefined,
+      state: "running" as const,
+    },
+    {
+      id: "final",
+      title: "Final check across every store",
+      detail:
+        "Searches memory, indexes, the ontology, documents, transcripts and exports for her name and emails, to prove nothing readable remains.",
+      at: undefined,
+      state: "waiting" as const,
+    },
+  ],
+} as const;

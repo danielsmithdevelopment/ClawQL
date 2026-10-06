@@ -8,6 +8,7 @@ import { StatusDot } from '@/components/managed/StatusDot'
 import { Button } from '@/components/ui/button'
 import { fetchManagedKeys } from '@/lib/managed/client'
 import { API_KEYS, CONNECTIONS, type ApiKeyItem, type ConnectionItem } from '@/lib/managed/fixtures'
+import { KEY_GROUP_COLUMNS, KEY_GROUP_MATRIX } from '@/lib/managed/fixtures-ops'
 import { cn } from '@/lib/utils'
 
 type Tab = 'connections' | 'keys' | 'groups'
@@ -48,14 +49,26 @@ export function ConnectionsPage() {
   return (
     <>
       <PageChrome
-        crumbs={tab === 'keys' ? ['Connections & keys', 'Keys'] : ['Connections & keys']}
+        crumbs={
+          tab === 'keys'
+            ? ['Connections & keys', 'Keys']
+            : tab === 'groups'
+              ? ['Connections & keys', 'Key groups']
+              : ['Connections & keys']
+        }
         title="Connections & keys"
-        description="The services your agents can reach, and the keys that let clients reach ClawQL. Agents get capabilities, never the credentials."
+        description={
+          tab === 'groups'
+            ? 'A key group decides what its keys can reach. Give each team only what its agents need.'
+            : 'The services your agents can reach, and the keys that let clients reach ClawQL. Agents get capabilities, never the credentials.'
+        }
         actions={
           tab === 'keys' ? (
             <Button type="button" onClick={() => setCreateOpen(true)}>
               Create a key
             </Button>
+          ) : tab === 'groups' ? (
+            <Button type="button">New key group</Button>
           ) : (
             <Button type="button">Add connection</Button>
           )
@@ -72,7 +85,7 @@ export function ConnectionsPage() {
             [
               ['connections', `Connections ${CONNECTIONS.length}`],
               ['keys', `Keys ${keys.length}`],
-              ['groups', 'Key groups 3'],
+              ['groups', `Key groups ${KEY_GROUP_COLUMNS.length}`],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -252,14 +265,7 @@ export function ConnectionsPage() {
           </div>
         ) : null}
 
-        {tab === 'groups' ? (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-            <p className="text-sm font-medium text-slate-800">Key groups</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Engineering, Operations, and Support — wire real group policy next.
-            </p>
-          </div>
-        ) : null}
+        {tab === 'groups' ? <KeyGroupsMatrix /> : null}
       </PageChrome>
 
       <CreateKeyModal
@@ -268,5 +274,88 @@ export function ConnectionsPage() {
         onCreated={(key) => setKeys((prev) => [key, ...prev])}
       />
     </>
+  )
+}
+
+function permBadge(kind: 'none' | 'read' | 'read-write' | 'tag' | 'skills', label: string) {
+  if (kind === 'none') {
+    return <span className="text-xs text-slate-400">None</span>
+  }
+  if (kind === 'read') {
+    return (
+      <span className="inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+        {label}
+      </span>
+    )
+  }
+  if (kind === 'read-write') {
+    return (
+      <span className="inline-block rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+        {label}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-block rounded-md bg-emerald-100 px-2 py-0.5 font-mono text-xs font-medium text-emerald-800">
+      {label}
+    </span>
+  )
+}
+
+function KeyGroupsMatrix() {
+  return (
+    <div className="space-y-3" data-testid="key-groups-matrix">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-800">Read</span>
+          allowed
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="rounded-md bg-amber-100 px-1.5 py-0.5 font-medium text-amber-900">
+            Read and write
+          </span>
+          writes need a mandate every time
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-slate-400">None</span>
+          can&apos;t reach it
+        </span>
+        <span className="text-slate-500">Deletes stay blocked for every group.</span>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full min-w-[48rem] text-left text-sm">
+          <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3 font-medium">Reaches</th>
+              {KEY_GROUP_COLUMNS.map((col) => (
+                <th key={col.id} className="px-4 py-3 font-medium">
+                  <button type="button" className="text-left text-sky-700 underline-offset-2 hover:underline">
+                    {col.name}
+                  </button>
+                  <span className="mt-0.5 block font-normal normal-case text-slate-400">
+                    {col.keys} keys
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {KEY_GROUP_MATRIX.map((row) => (
+              <tr key={row.reaches}>
+                <td className="px-4 py-3 font-medium text-slate-900">{row.reaches}</td>
+                {row.cells.map((cell, i) => (
+                  <td key={`${row.reaches}-${KEY_GROUP_COLUMNS[i]!.id}`} className="px-4 py-3">
+                    {permBadge(cell.kind, cell.label)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-slate-500">
+        A personal account is never part of a key group. Its results stay with the person who connected it.
+      </p>
+    </div>
   )
 }
