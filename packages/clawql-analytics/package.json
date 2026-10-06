@@ -33,7 +33,7 @@
     "effect": "4.0.0"
   },
   "optionalDependencies": {
-    "posthog-node": "^5.51.6"
+    "posthog-node": "^5.55.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
