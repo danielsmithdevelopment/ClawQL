@@ -168,6 +168,8 @@ type ControlBody = {
   transferOwnership?: { from: string; to: string };
   deleteOrg?: { name: string; pinVerified?: boolean; freshSignIn?: boolean };
   resetSignatureCounter?: { person: string; keyId?: string };
+  /** Arrange: advance server-side counter ahead of CDP authenticator (KEY-11 clone). */
+  inflateSignatureCounter?: { person: string; to: number; label?: string };
   setAaguid?: { person: string; aaguid: string };
   markFirstRun?: number;
   stripeWebhookReplay?: boolean;
@@ -593,6 +595,16 @@ export async function POST(req: Request) {
           p?.securityKeys.find((k) => k.id === body.resetSignatureCounter?.keyId) ??
           p?.securityKeys[0];
         if (key) key.signatureCounter = 0;
+      }
+      if (body.inflateSignatureCounter) {
+        const p = personByName(body.inflateSignatureCounter.person);
+        const key =
+          (body.inflateSignatureCounter.label
+            ? p?.securityKeys.find((k) => k.label === body.inflateSignatureCounter?.label)
+            : undefined) ??
+          p?.securityKeys.find((k) => k.canApprove && !k.revoked && k.credentialId) ??
+          p?.securityKeys[0];
+        if (key) key.signatureCounter = body.inflateSignatureCounter.to;
       }
       if (body.setAaguid) {
         const p = personByName(body.setAaguid.person);

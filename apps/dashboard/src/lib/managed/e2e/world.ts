@@ -91,8 +91,10 @@ export type E2eWebAuthnPending = {
   person: string;
   kind: "device-bound" | "synced";
   label: string;
-  purpose: "register" | "issue";
+  purpose: "register" | "issue" | "approve";
   createdAt: number;
+  /** Review request id when purpose is approve. */
+  requestId?: string;
 };
 
 export type E2eBrowserSession = {

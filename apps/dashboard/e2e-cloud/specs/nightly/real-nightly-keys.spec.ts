@@ -45,6 +45,7 @@ import {
   waitForDeliveries,
 } from '../../helpers/harness'
 import {
+  approveReviewViaCdp,
   issueApiKeyViaCdpStepUp,
   registerSecurityKeyViaCdp,
 } from '../../helpers/webauthn-ceremony'
@@ -196,38 +197,47 @@ test('KEY-10 Approval with disallowed AAGUID refused; still waiting', async () =
   expect(item?.status).toBe('waiting')
 })
 
-test('KEY-11 Cloned key signature counter refuses; audit records clone', async () => {
-  await control({ resetSignatureCounter: { person: 'Dana Reyes' } })
-  const listed = await keysApi()
-  const dana = (listed.body.people as { name: string; keys: { signatureCounter: number }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
-  const current = dana?.keys[0]?.signatureCounter ?? 1
+test('KEY-11 Cloned key signature counter refuses; audit records clone', async ({ page }) => {
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'CloneProbe YubiKey',
+  })
+  expect(reg.status).toBe(200)
+
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  // Bump counter via successful approve first with high, then try lower — use control reset after bump
-  await approveReview({
+  const first = await approveReviewViaCdp({
+    page,
     requestId: String(propose.body.requestId),
-    actor: 'Dana Reyes',
-    pinVerified: true,
-    signatureCounter: current + 5,
+    person: 'Dana Reyes',
+    authenticator: reg.authenticator,
   })
-  // New request for clone attempt
+  expect(first.status).toBe(200)
+
+  // Arrange: server counter advances ahead of this authenticator (stale/clone).
+  await control({
+    inflateSignatureCounter: { person: 'Dana Reyes', label: 'CloneProbe YubiKey', to: 50 },
+  })
+
   const propose2 = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND, annualValue: 53000 },
   })
-  const clone = await approveReview({
+  const clone = await approveReviewViaCdp({
+    page,
     requestId: String(propose2.body.requestId),
-    actor: 'Dana Reyes',
-    pinVerified: true,
-    signatureCounter: current + 1, // lower than stored current+5
+    person: 'Dana Reyes',
+    authenticator: reg.authenticator,
   })
   expect(clone.status).toBe(403)
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'security_key.clone')).toBe(true)
 })
