@@ -9,6 +9,7 @@ import {
   SIDEBAR_ROUTES,
   clickAllTabs,
   expectNoPageError,
+  hrefUrlPattern,
   openManagedConsole,
 } from '../../helpers/console'
 import {
@@ -780,10 +781,7 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
         await new Promise((r) => setTimeout(r, 500 * (attempt + 1)))
       }
     }
-    const urlRe =
-      route.href === '/'
-        ? /\/(?:\?.*)?$/
-        : new RegExp(`${route.href.replace(/\//g, '\\/')}(?:\\?.*)?$`)
+    const urlRe = hrefUrlPattern(route.href)
     await expect(page).toHaveURL(urlRe)
     await expectNoPageError(page)
     if (route.href === '/') {

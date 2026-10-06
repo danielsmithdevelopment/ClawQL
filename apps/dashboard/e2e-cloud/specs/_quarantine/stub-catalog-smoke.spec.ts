@@ -6,6 +6,7 @@ import {
   SIDEBAR_ROUTES,
   clickAllTabs,
   expectNoPageError,
+  hrefUrlPattern,
   openManagedConsole,
 } from '../../helpers/console'
 
@@ -41,7 +42,7 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
     await expect(nav).toHaveAttribute('href', route.href)
     // Prefer sidebar click; fall back to goto if client nav flakes under HMR.
     await nav.click()
-    const urlRe = route.href === '/' ? /\/(?:\?.*)?$/ : new RegExp(`${route.href.replace(/\//g, '\\/')}(?:\\?.*)?$`)
+    const urlRe = hrefUrlPattern(route.href)
     try {
       await expect(page).toHaveURL(urlRe, { timeout: 8_000 })
     } catch {

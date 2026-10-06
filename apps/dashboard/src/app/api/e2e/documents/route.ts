@@ -1,6 +1,7 @@
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
+import { stripHtmlToPlain } from "@/lib/managed/e2e/html-plain";
 import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
 import {
   appendAudit,
@@ -94,9 +95,8 @@ export async function POST(req: Request) {
         });
       }
 
-      let content = body.content ?? "";
-      // Strip script/html for SEC-10 — store as plain text
-      content = content.replace(/<[^>]+>/g, "");
+      // Strip script/html for SEC-10 — store as plain text (loop until stable)
+      const content = yield* stripHtmlToPlain(body.content ?? "");
       const { text, redacted } = redactPii(content);
       if (/\[REDACTED_KEY\]/.test(text)) {
         world.alerts.push({

@@ -121,7 +121,7 @@ test('AUD-05 Proofs verify independently from exported hashes', async () => {
     })
     const expected = createHash('sha256').update(`${prev}\n${payload}`).digest('hex')
     expect(e.hash).toBe(expected)
-    prev = e.hash
+    prev = e.hash ?? prev
   }
 })
 

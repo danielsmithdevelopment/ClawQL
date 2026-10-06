@@ -81,6 +81,13 @@ export async function getAudit(opts?: { format?: 'ocsf' }) {
   }>(res)
 }
 
+export async function skillsApi(): Promise<{
+  status: number
+  body: { skills: Record<string, unknown>[] }
+}>
+export async function skillsApi(
+  body: Record<string, unknown>,
+): Promise<{ status: number; body: Record<string, unknown> & { skill?: { id: string } } }>
 export async function skillsApi(body?: Record<string, unknown>) {
   if (!body) {
     const res = await fetchRetry(`${base()}/api/e2e/skills`)
@@ -91,7 +98,7 @@ export async function skillsApi(body?: Record<string, unknown>) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
-  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+  return { status: res.status, body: await json<Record<string, unknown> & { skill?: { id: string } }>(res) }
 }
 
 export async function getCrm(contractId: string) {
@@ -126,9 +133,18 @@ export async function approveReview(input: {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
+export type E2eReviewItem = {
+  id: string
+  status: string
+  args?: { annualValue?: number; before?: number }
+}
+
 export async function listReview() {
   const res = await fetchRetry(`${base()}/api/e2e/review`)
-  return { status: res.status, body: await json<{ review: unknown[]; badges: Record<string, number> }>(res) }
+  return {
+    status: res.status,
+    body: await json<{ review: E2eReviewItem[]; badges: Record<string, number> }>(res),
+  }
 }
 
 export async function control(body: Record<string, unknown>) {
@@ -169,13 +185,23 @@ export async function uploadDocument(input: {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
-export async function eraseSubject(input: {
-  subject: string
-  actor?: string
-  pinVerified?: boolean
-  stopHalfway?: boolean
-  resumeJobId?: string
-}) {
+export async function eraseSubject(
+  input:
+    | {
+        subject: string
+        actor?: string
+        pinVerified?: boolean
+        stopHalfway?: boolean
+        resumeJobId?: string
+      }
+    | {
+        resumeJobId: string
+        subject?: string
+        actor?: string
+        pinVerified?: boolean
+        stopHalfway?: boolean
+      },
+) {
   const res = await fetchRetry(`${base()}/api/e2e/erase`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -304,9 +330,26 @@ export async function stripeCheckout(input: {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
+export type E2eFirstRun = {
+  step: number
+  total: number
+  label: string
+  securityKeysRegistered?: boolean
+  step3Unlocked?: boolean
+  step3DisabledReason?: string | null
+  recoveryCodesShownOnce?: boolean
+}
+
 export async function getOrg() {
   const res = await fetchRetry(`${base()}/api/e2e/org`)
-  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+  return {
+    status: res.status,
+    body: await json<{
+      firstRun: E2eFirstRun
+      owner?: string
+      ownerCount?: number
+    }>(res),
+  }
 }
 
 export async function decisionCall(input: {

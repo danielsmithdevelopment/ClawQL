@@ -1,6 +1,12 @@
 import { expect, type Page } from '@playwright/test'
 
-/** Sidebar routes for UX-01. */
+/** Escape a path for use in a URL regex (including backslashes). */
+export function hrefUrlPattern(href: string): RegExp {
+  if (href === '/') return /\/(?:\?.*)?$/
+  const escaped = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`${escaped}(?:\\?.*)?$`)
+}
+
 export const SIDEBAR_ROUTES = [
   { href: '/', testId: 'managed-nav-home', crumb: 'Home' },
   { href: '/sessions', testId: 'managed-nav-sessions', crumb: 'Sessions' },

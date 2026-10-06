@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 import { NextResponse } from "next/server";
 
+import { hostnameEquals } from "@/lib/managed/e2e/host-allow";
 import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
 import {
   appendAudit,
@@ -151,20 +152,18 @@ export async function POST(req: Request) {
         }
       }
 
+      const requestedHost = String(args.host ?? "");
+      const githubHost = yield* hostnameEquals(requestedHost, "api.github.com");
+      const stripeHost = yield* hostnameEquals(requestedHost, "api.stripe.com");
+
       // Support key cannot call GitHub (GW-15)
-      if (
-        key.group === "Support" &&
-        (name.startsWith("github.") || String(args.host ?? "").includes("api.github.com"))
-      ) {
+      if (key.group === "Support" && (name.startsWith("github.") || githubHost)) {
         appendAudit(key.name, name, "Refused — not in Support key group");
         return NextResponse.json({ error: "GitHub not in Support key group" }, { status: 403 });
       }
 
       // Stripe removed from Support (CON-14)
-      if (
-        key.group === "Support" &&
-        (name.startsWith("stripe.") || String(args.host ?? "").includes("api.stripe.com"))
-      ) {
+      if (key.group === "Support" && (name.startsWith("stripe.") || stripeHost)) {
         const stripe = world.connections.find((c) => c.id === "stripe");
         if (stripe && !stripe.groups.includes("Support")) {
           appendAudit(key.name, name, "Refused — Stripe removed from Support");
