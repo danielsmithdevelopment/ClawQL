@@ -1,6 +1,8 @@
 /**
  * In-process E2E world for ClawQL Cloud catalog harness.
- * Public surfaces under `/api/e2e/*` read/write this store when CLAWQL_E2E_HARNESS=1.
+ * Production-shaped surfaces (`/v1`, `/mcp`, `/events`, `/audit`) and arrange/fault
+ * façades under `/api/e2e/*` read/write this store when CLAWQL_E2E_HARNESS=1.
+ * `/api/e2e/*` is arrange/fault only for Pass-when — assert via production-shaped paths.
  */
 import { createHash, createHmac, randomUUID } from "node:crypto";
 
@@ -724,8 +726,12 @@ function seedWorld(): World {
 const g = globalThis as unknown as { __clawqlE2eWorld?: World };
 if (!g.__clawqlE2eWorld) g.__clawqlE2eWorld = seedWorld();
 
+/**
+ * God-mode harness gate. Production managed console must NOT enable this —
+ * only an explicit CLAWQL_E2E_HARNESS=1 (local Playwright / CI) may.
+ */
 export function e2eEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
-  return env.CLAWQL_E2E_HARNESS === "1" || env.CLAWQL_CONSOLE_SURFACE === "managed";
+  return env.CLAWQL_E2E_HARNESS === "1";
 }
 
 export function getWorld(): World {

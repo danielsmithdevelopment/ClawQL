@@ -1,56 +1,11 @@
-import { Effect } from "effect";
-import { NextResponse } from "next/server";
-
-import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
-import type { E2eAuditEntry } from "@/lib/managed/e2e/world";
+import { getAudit, runWitnessHandler } from "@/lib/managed/e2e/handlers";
 
 export const dynamic = "force-dynamic";
 
-function toOcsf(e: E2eAuditEntry) {
-  return {
-    class_uid: 3001,
-    activity_id: 1,
-    time: e.at,
-    actor: { user: { name: e.actor } },
-    metadata: {
-      product: { name: "ClawQL Cloud" },
-      uid: e.id,
-      action: e.action,
-      outcome: e.outcome,
-    },
-    unmapped: { prevHash: e.prevHash, hash: e.hash, hourlyRoot: e.hourlyRoot, meta: e.meta },
-  };
-}
-
+/**
+ * Arrange/fault façade — prefer production-shaped GET /audit for Pass-when.
+ * Kept for harness arrange paths until /api/e2e is removed.
+ */
 export async function GET(req: Request) {
-  return runE2eEffect(
-    Effect.gen(function* () {
-      const h = yield* E2eHarness;
-      if (!(yield* h.enabled())) {
-        return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
-      }
-      const org = req.headers.get("x-org");
-      if (org && org !== "acme" && org !== "org_acme") {
-        // Cross-tenant: never reveal Acme existence (SEC-04)
-        return NextResponse.json({ error: "not found" }, { status: 404 });
-      }
-      const world = yield* h.world();
-      const chain = yield* h.verifyChain();
-      const url = new URL(req.url);
-      const format = url.searchParams.get("format");
-      if (format === "ocsf") {
-        return NextResponse.json({
-          ocsf: world.audit.map(toOcsf),
-          chain,
-        });
-      }
-      return NextResponse.json({
-        entries: world.audit,
-        chain,
-        hourlyRoots: world.hourlyRoots,
-        auditBroken: world.auditBroken,
-        alerts: world.alerts,
-      });
-    }),
-  );
+  return runWitnessHandler(getAudit, req);
 }

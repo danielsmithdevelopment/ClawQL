@@ -1,5 +1,6 @@
 /**
- * Self-contained catalog scenario runners for `/api/e2e/scenario`.
+ * Self-contained catalog scenario runners for arrange-only `/api/e2e/scenario`.
+ * Not for Pass-when — prefer production-shaped witnesses.
  * Each Nightly/Smoke ID mutates or asserts against the in-process world.
  * Manual IDs return { ok: true, manual: true, skipped: true }.
  */
