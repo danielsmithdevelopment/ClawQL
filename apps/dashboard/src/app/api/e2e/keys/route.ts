@@ -143,16 +143,25 @@ export async function POST(req: Request) {
       if (action === "remind") {
         const person = personByName(body.person ?? "Marcus Lee");
         if (person) {
-          world.notificationsOutbox.push({
-            to: person.name,
-            channel: "push",
-            body: "needs 2 security keys",
-          });
+          if (person.notifications.push) {
+            world.notificationsOutbox.push({
+              to: person.name,
+              channel: "push",
+              body: "needs 2 security keys",
+            });
+          }
+          if (person.notifications.slack) {
+            world.notificationsOutbox.push({
+              to: person.name,
+              channel: "slack",
+              body: "needs 2 security keys",
+            });
+          }
           appendAudit("Dana Reyes", "security_key.remind", "Reminded", { person: person.name });
           return NextResponse.json({
             ok: true,
             row: "needs 2",
-            notified: true,
+            notified: person.notifications.push || person.notifications.slack,
             keyCount: person.securityKeys.filter((k) => !k.revoked).length,
           });
         }

@@ -22,6 +22,16 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: "not found" }, { status: 404 });
       }
       const owner = world.people.find((p) => p.role === "owner");
+      const archive = world.orgArchive
+        ? {
+            sections: Object.keys(world.orgArchive),
+            hasMemory: Boolean(world.orgArchive.memory),
+            hasDocuments: Boolean(world.orgArchive.documents),
+            hasSkills: Boolean(world.orgArchive.skills),
+            hasSettings: Boolean(world.orgArchive.settings),
+            hasAudit: Boolean(world.orgArchive.audit),
+          }
+        : null;
       return NextResponse.json({
         orgId: world.orgId,
         orgName: world.orgName,
@@ -34,6 +44,7 @@ export async function GET(req: Request) {
           role: p.role,
           active: p.active,
           groups: p.groups,
+          sessions: p.sessions,
         })),
         firstRun: {
           step: world.firstRunStep,
@@ -49,6 +60,8 @@ export async function GET(req: Request) {
         stripeProvisioningDone: world.stripeProvisioningDone,
         deleted: world.orgDeleted ?? false,
         deletionCertificate: world.deletionCertificate,
+        archive,
+        nobodySignedIn: world.people.every((p) => !p.active || p.sessions.every((s) => s.ended)),
         keyCount: world.keys.filter((k) => !k.revoked).length,
       });
     }),

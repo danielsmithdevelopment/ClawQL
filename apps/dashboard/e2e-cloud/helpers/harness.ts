@@ -408,7 +408,37 @@ export async function retryAllEvents() {
 
 export async function getSettings() {
   const res = await fetchRetry(`${base()}/api/e2e/settings`)
-  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+  return {
+    status: res.status,
+    body: await json<{
+      orgName?: string
+      signedIn?: boolean
+      signedInUserId?: string
+      idleTimeoutMinutes?: number
+      maxSessionMinutes?: number
+      profile?: {
+        name: string
+        role: string
+        active: boolean
+        timeZone: string
+        appearance: string
+        notifications: { slack: boolean; push: boolean }
+        sessions: { ended: boolean; device: string; path: string }[]
+      } | null
+      people?: {
+        name: string
+        role: string
+        active: boolean
+        timeZone: string
+        appearance: string
+        notifications: { slack: boolean; push: boolean }
+        sessions: { ended: boolean; device: string; path: string }[]
+      }[]
+      notificationsOutbox?: { channel: string; to: string; body: string }[]
+      requestExpiryMinutes?: number
+      auditRetentionYears?: number
+    }>(res),
+  }
 }
 
 export async function getDocuments() {

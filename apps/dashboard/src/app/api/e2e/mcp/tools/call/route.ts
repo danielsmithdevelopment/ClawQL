@@ -299,6 +299,23 @@ export async function POST(req: Request) {
           requiredApprovals: world.requiredApprovalsDefault,
         });
         recountReviewBadges();
+        for (const p of world.people) {
+          if (!p.active || !p.canApproveContracts) continue;
+          if (p.notifications.push) {
+            world.notificationsOutbox.push({
+              to: p.name,
+              channel: "push",
+              body: "approval",
+            });
+          }
+          if (p.notifications.slack) {
+            world.notificationsOutbox.push({
+              to: p.name,
+              channel: "slack",
+              body: "approval",
+            });
+          }
+        }
         appendAudit(key.name, name, "Mandate requested", { requestId: reqId, digest });
         return NextResponse.json(
           { error: "mandate required", requestId: reqId, digest },

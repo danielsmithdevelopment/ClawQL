@@ -106,14 +106,29 @@ export async function GET(req: Request) {
       const erased = getWorld().erasedSubjects.some((s) =>
         s.toLowerCase().includes(q.toLowerCase()),
       );
+      const world = getWorld();
       if (erased) {
-        return NextResponse.json({ results: [], found: false });
+        return NextResponse.json({
+          results: [],
+          found: false,
+          jobs: world.eraseJobs,
+          trainingExports: world.trainingExports.map((e) => ({
+            id: e.id,
+            date: e.date,
+            needsRegenerate: e.needsRegenerate,
+            subjects: e.subjects.filter(
+              (s) => !world.erasedSubjects.some((er) => s.toLowerCase().includes(er.toLowerCase())),
+            ),
+          })),
+        });
       }
       return NextResponse.json({
-        results: getWorld().documents.filter((d) =>
+        results: world.documents.filter((d) =>
           JSON.stringify(d).toLowerCase().includes(q.toLowerCase()),
         ),
         found: true,
+        jobs: world.eraseJobs,
+        trainingExports: world.trainingExports,
       });
     }),
   );

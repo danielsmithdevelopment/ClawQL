@@ -28,9 +28,25 @@ export async function GET(req: Request) {
       const person = personByName(actor);
       const sql = url.searchParams.get("sql");
 
-      // Erased subjects never appear
+      // Erased subjects never appear in explorer, Ask, or SQL
       if (world.erasedSubjects.some((s) => q && s.toLowerCase().includes(q))) {
-        return NextResponse.json({ results: [], found: false });
+        return NextResponse.json({
+          results: [],
+          explorer: [],
+          found: false,
+          ask: { answer: "", sources: [] },
+          rows: [],
+          trainingExports: world.trainingExports.map((e) => ({
+            id: e.id,
+            date: e.date,
+            needsRegenerate: e.needsRegenerate,
+            subjects: e.subjects.filter(
+              (s) =>
+                !world.erasedSubjects.some((er) => s.toLowerCase().includes(er.toLowerCase())),
+            ),
+          })),
+          sessions: world.sessions,
+        });
       }
 
       if (sql) {
@@ -40,7 +56,11 @@ export async function GET(req: Request) {
         }
         const rows = world.memoryNotes
           .filter((n) => !n.erased && !n.personal)
-          .map((n) => ({ id: n.id, title: n.title, ...n.fields }));
+          .map((n) => ({ id: n.id, title: n.title, ...n.fields }))
+          .filter((row) => {
+            if (!q) return true;
+            return JSON.stringify(row).toLowerCase().includes(q);
+          });
         return NextResponse.json({ rows, readOnly: true });
       }
 
@@ -90,6 +110,9 @@ export async function GET(req: Request) {
       // Never return erased subject plaintext
       const results = notes.map((n) => {
         const { text } = redactPii(n.body);
+        const fields = Object.fromEntries(
+          Object.entries(n.fields).map(([k, v]) => [k, redactPii(String(v)).text]),
+        );
         return {
           id: n.id,
           title: n.title,
@@ -97,20 +120,55 @@ export async function GET(req: Request) {
           owner: n.owner,
           personal: n.personal,
           stale: n.stale,
-          fields: n.fields,
+          fields,
         };
       });
 
+      const ask =
+        q.includes("renew") || q.includes("q4") || q.includes("jane")
+          ? {
+              answer: q.includes("jane")
+                ? world.erasedSubjects.some((s) => /jane/i.test(s))
+                  ? ""
+                  : "Jane Okafor"
+                : "Northwind Partners renews before end of Q4",
+              sources: results.filter((r) => r.body.includes("Northwind")).map((r) => r.id),
+            }
+          : undefined;
+      if (ask && q.includes("jane") && world.erasedSubjects.some((s) => /jane/i.test(s))) {
+        return NextResponse.json({
+          results: [],
+          found: false,
+          ask: { answer: "", sources: [] },
+          explorer: [],
+          schema: world.schemaFields,
+          trainingExports: world.trainingExports.map((e) => ({
+            id: e.id,
+            date: e.date,
+            needsRegenerate: e.needsRegenerate,
+            subjects: e.subjects.filter(
+              (s) => !world.erasedSubjects.some((er) => s.toLowerCase().includes(er.toLowerCase())),
+            ),
+          })),
+          sessions: world.sessions,
+        });
+      }
       return NextResponse.json({
         results,
+        explorer: results,
         schema: world.schemaFields,
-        ask:
-          q.includes("renew") || q.includes("q4")
-            ? {
-                answer: "Northwind Partners renews before end of Q4",
-                sources: results.filter((r) => r.body.includes("Northwind")).map((r) => r.id),
-              }
-            : undefined,
+        trainingExports: world.trainingExports.map((e) => ({
+          id: e.id,
+          date: e.date,
+          needsRegenerate: e.needsRegenerate,
+          subjects: world.erasedSubjects.length
+            ? e.subjects.filter(
+                (s) => !world.erasedSubjects.some((er) => s.toLowerCase().includes(er.toLowerCase())),
+              )
+            : e.subjects,
+        })),
+        sessions: world.sessions,
+        ask,
       });
     }),
   );
@@ -128,13 +186,40 @@ export async function POST(req: Request) {
       const body = (yield* Effect.tryPromise({
         try: () =>
           req.json() as Promise<{
-            action?: "search" | "erase-note" | "export-audit";
+            action?: "search" | "erase-note" | "export-audit" | "regenerate-export";
             q?: string;
             noteId?: string;
             actor?: string;
+            exportId?: string;
           }>,
         catch: () => ({}),
-      })) as { action?: string; q?: string; noteId?: string; actor?: string };
+      })) as {
+        action?: string;
+        q?: string;
+        noteId?: string;
+        actor?: string;
+        exportId?: string;
+      };
+
+      if (body.action === "regenerate-export") {
+        const exp =
+          world.trainingExports.find((e) => e.id === (body.exportId ?? "exp_sep12")) ??
+          world.trainingExports[0];
+        if (exp) {
+          exp.subjects = exp.subjects.filter(
+            (s) => !world.erasedSubjects.some((er) => s.toLowerCase().includes(er.toLowerCase())),
+          );
+          exp.needsRegenerate = false;
+          appendAudit(body.actor ?? "Dana Reyes", "training.regenerate", "Regenerated excluding erased subjects", {
+            exportId: exp.id,
+          });
+        }
+        return NextResponse.json({
+          ok: true,
+          export: exp,
+          subjects: exp?.subjects ?? [],
+        });
+      }
 
       if (body.action === "export-audit") {
         const entries = world.audit.map((e) => {

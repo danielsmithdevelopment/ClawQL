@@ -634,6 +634,7 @@ export async function POST(req: Request) {
         const p = personByName(body.endOtherSessions.person);
         if (p) {
           for (const s of p.sessions.slice(1)) s.ended = true;
+          appendAudit(p.name, "session.end_others", "Signed out everywhere else");
         }
       }
       if (body.idleSignOut) {
@@ -665,6 +666,7 @@ export async function POST(req: Request) {
           kind: "budget-forecast",
           at: new Date().toISOString(),
         });
+        appendAudit("system", "budget.forecast", "Warns — likely 2026-10-20");
       }
       if (body.budgetAlerts) {
         world.alerts.push(
@@ -673,6 +675,7 @@ export async function POST(req: Request) {
           { channel: "email", kind: "budget-100", at: new Date().toISOString() },
           { channel: "slack", kind: "budget-100", at: new Date().toISOString() },
         );
+        appendAudit("system", "budget.alert", "Admins notified 80% and 100% by email and Slack");
       }
       if (typeof body.addCredits === "number") {
         world.creditsCents += body.addCredits;
@@ -824,12 +827,21 @@ export async function POST(req: Request) {
           if (body.personMutate.notifications) {
             p.notifications = { ...p.notifications, ...body.personMutate.notifications };
           }
-          if (body.personMutate.timeZone) p.timeZone = body.personMutate.timeZone;
-          if (body.personMutate.appearance) p.appearance = body.personMutate.appearance;
+          if (body.personMutate.timeZone) {
+            p.timeZone = body.personMutate.timeZone;
+            appendAudit(p.name, "profile.timezone", "Changed", { timeZone: p.timeZone });
+          }
+          if (body.personMutate.appearance) {
+            p.appearance = body.personMutate.appearance;
+            appendAudit(p.name, "profile.appearance", "Changed", { appearance: p.appearance });
+          }
           if (body.personMutate.endSessionDevice) {
             for (const s of p.sessions) {
               if (s.device.includes(body.personMutate.endSessionDevice)) s.ended = true;
             }
+            appendAudit(p.name, "session.end_device", "Signed out device", {
+              device: body.personMutate.endSessionDevice,
+            });
           }
         }
       }
