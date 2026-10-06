@@ -26,6 +26,7 @@
     "class-variance-authority": "^0.7.1",
     "clawql-api": "file:../../packages/clawql-api",
     "clsx": "^2.1.1",
+    "effect": "^4.0.0",
     "lucide-react": "^0.562.0",
     "next": "16.3.6",
     "postcss": "8.5.23",

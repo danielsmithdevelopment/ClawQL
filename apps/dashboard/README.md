@@ -76,6 +76,20 @@ Existing browser **localStorage** chats are **imported once** into the vault on 
 | `CLAWQL_DASHBOARD_CHAT_STREAM`       | Set to `0` to disable SSE streaming (default **on**). Bridge stream endpoint: `/v1/chat/stream`.                                                                                                           |
 | `CLAWQL_OBSIDIAN_VAULT_PATH`         | Obsidian vault root for dashboard chat persistence (default **`~/.ClawQL`**). Chats live under **`Dashboard/chats/`**; API logs under **`Dashboard/logs/`**. Same path as ClawQL MCP **`memory_*`** tools. |
 | `CLAWQL_CONSOLE_SURFACE`             | `self-hosted` (default) or **`managed`** / `cloud` for **cloud.clawql.com**. Same shadcn app; managed mode is for Supabase session (not a second UI kit). |
+| `NEXT_PUBLIC_CLAWQL_CONSOLE_SURFACE` | Browser-visible twin of `CLAWQL_CONSOLE_SURFACE` (set to `managed` / `cloud` for Cloud). |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Managed Auth (Supabase). When unset, the console uses the Acme Robotics fixture session. |
+| `CLAWQL_MANAGED_AUTH_MOCK`           | Force the fixture session even when Supabase is configured (`1` / `true`). |
+
+## Managed console (`cloud.clawql.com`)
+
+Same Next app, light shell + navy sidebar matching the Cloud mockups ([ADR 0012](../../docs/adr/0012-console-typescript-shadcn.md)).
+
+```bash
+cd apps/dashboard
+CLAWQL_CONSOLE_SURFACE=managed CLAWQL_MANAGED_AUTH_MOCK=1 npm run dev
+```
+
+Open [http://localhost:3040](http://localhost:3040). Implemented first slice: **Home**, **Connections & keys** (connections list + keys + create-key modal), **Usage & billing**. Other nav items are stubbed chrome. Fixture data is Acme Robotics — replace with live CPC / gateway APIs next.
 | `OPENCLAW_CHAT_BRIDGE_PORT`          | Bridge listen port (default **8787**).                                                                                                                                                                     |
 | `CLAWQL_OPENCLAW_AGENT_ID`           | `openclaw agent --agent` id (default **main**).                                                                                                                                                            |
 | `OPENCLAW_AGENT_TIMEOUT_SEC`         | Per-message CLI timeout in seconds (default **120**).                                                                                                                                                      |
