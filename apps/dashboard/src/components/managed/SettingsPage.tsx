@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import { PageChrome } from '@/components/managed/PageChrome'
 import { StatusDot } from '@/components/managed/StatusDot'
@@ -32,6 +33,9 @@ const CRUMB: Record<Section, string> = {
 
 export function SettingsPage() {
   const [section, setSection] = useState<Section>('general')
+  const searchParams = useSearchParams()
+  const e2eRole = searchParams.get('e2eRole')
+  const memberReadOnly = e2eRole === 'member'
 
   return (
     <PageChrome
@@ -39,6 +43,14 @@ export function SettingsPage() {
       title="Settings"
       description="Org-wide rules for Acme Robotics. Every change here is recorded in the audit log."
     >
+      {memberReadOnly ? (
+        <div
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+          data-testid="settings-member-readonly"
+        >
+          Members cannot edit settings — this view is read-only.
+        </div>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[14rem_1fr]">
         <nav className="space-y-1" data-testid="settings-nav">
           {SECTIONS.map(({ id, label }) => (
@@ -59,7 +71,7 @@ export function SettingsPage() {
           ))}
         </nav>
 
-        {section === 'general' ? <GeneralSection /> : null}
+        {section === 'general' ? <GeneralSection readOnly={memberReadOnly} /> : null}
         {section === 'signin' ? <SignInSection /> : null}
         {section === 'privacy' ? <PrivacySection /> : null}
         {section === 'network' ? <NetworkSection /> : null}
@@ -76,7 +88,7 @@ export function SettingsPage() {
   )
 }
 
-function GeneralSection() {
+function GeneralSection({ readOnly = false }: { readOnly?: boolean }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" data-testid="settings-general">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Organization</p>
@@ -87,7 +99,9 @@ function GeneralSection() {
           <input
             type="text"
             defaultValue={SETTINGS_ORG.name}
-            className="mt-1.5 h-9 w-full max-w-md rounded-lg border border-slate-200 px-3"
+            disabled={readOnly}
+            readOnly={readOnly}
+            className="mt-1.5 h-9 w-full max-w-md rounded-lg border border-slate-200 px-3 disabled:bg-slate-50"
           />
         </label>
         <div className="flex flex-wrap items-start justify-between gap-3 text-sm">

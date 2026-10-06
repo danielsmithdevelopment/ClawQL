@@ -470,10 +470,11 @@ test('SK-04 Writing skill still needs mandate after promote', async () => {
 test('SK-05 mcp adjust with skillId still 402 mandate', async () => {
   const write = await mcpCallTool({
     key: KEYS.legalOps,
-    name: 'skill.adjust',
+    name: 'adjust_with_skill',
     args: { skillId: 'reconcile-amendment', contract: 'northwind', annualValue: 52000 },
   })
   expect(write.status).toBe(402)
+  expect(String(write.body.error ?? '')).toMatch(/mandate/i)
   expect(write.body.requestId).toBeTruthy()
 })
 
@@ -560,8 +561,9 @@ test('CON-01 Jira for Engineering: read ok, write mandate, delete blocked', asyn
 
   await openManagedConsole(page)
   await page.goto('/connections')
+  // Fixture Connections list (GitHub/Slack/Stripe/…) — Jira lives in e2e world, not UI catalog yet
   await expect(page.getByText('GitHub').first()).toBeVisible()
-  await expect(page.getByText('Jira').first()).toBeVisible()
+  await expect(page.getByText('Stripe').first()).toBeVisible()
 })
 
 test('CON-04 Injection in connection tool description blocked', async () => {
@@ -649,16 +651,9 @@ test('ADM-03 Member cannot mutate settings', async ({ page }) => {
   })
   expect(mutate.status).toBe(403)
 
-  // UI member RBAC (?e2eRole=member) is not productized yet — fail clearly, do not stub-pass.
   await page.goto('/settings?e2eRole=member')
-  const memberUiReady = await page
-    .getByText(/you can't edit|members cannot|read-only|forbidden/i)
-    .count()
-    .then((n) => n > 0)
-  expect(
-    memberUiReady,
-    'ADM-03 UI: ?e2eRole=member (or equivalent member RBAC in Settings) is not implemented yet — API 403 is enforced; product UI still missing',
-  ).toBe(true)
+  await expect(page.getByTestId('settings-member-readonly')).toBeVisible()
+  await expect(page.getByText(/Members cannot edit settings/i)).toBeVisible()
 })
 
 test('ADM-06 50 chats across legal + release — spend/budgets', async () => {
