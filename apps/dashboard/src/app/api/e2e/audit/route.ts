@@ -5,12 +5,17 @@ import { E2eHarness, runE2eEffect } from "@/lib/managed/e2e/service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   return runE2eEffect(
     Effect.gen(function* () {
       const h = yield* E2eHarness;
       if (!(yield* h.enabled())) {
         return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+      }
+      const org = req.headers.get("x-org");
+      if (org && org !== "acme" && org !== "org_acme") {
+        // Cross-tenant: never reveal Acme existence (SEC-04)
+        return NextResponse.json({ error: "not found" }, { status: 404 });
       }
       const world = yield* h.world();
       const chain = yield* h.verifyChain();

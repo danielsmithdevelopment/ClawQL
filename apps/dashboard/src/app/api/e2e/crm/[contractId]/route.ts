@@ -7,7 +7,7 @@ import { getWorld } from "@/lib/managed/e2e/world";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ contractId: string }> },
 ) {
   return runE2eEffect(
@@ -15,6 +15,11 @@ export async function GET(
       const h = yield* E2eHarness;
       if (!(yield* h.enabled())) {
         return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+      }
+      // Cross-org: never reveal whether Acme resources exist (SEC-04)
+      const org = req.headers.get("x-org");
+      if (org && org !== "acme" && org !== "org_acme" && org !== getWorld().orgId) {
+        return NextResponse.json({ error: "not found" }, { status: 404 });
       }
       const { contractId } = yield* Effect.tryPromise({
         try: () => ctx.params,

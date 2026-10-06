@@ -101,6 +101,9 @@ type ControlBody = {
   };
   lumenAccess?: boolean;
   signedInUserId?: string;
+  stripeProvisioningDone?: boolean;
+  securityKeysRegistered?: boolean;
+  asRole?: "owner" | "admin" | "member" | "billing" | "auditor";
 };
 
 export async function POST(req: Request) {
@@ -175,6 +178,16 @@ export async function POST(req: Request) {
       if (typeof body.markFirstRun === "number") world.firstRunStep = body.markFirstRun;
       if (typeof body.signedInUserId === "string") world.signedInUserId = body.signedInUserId;
       if (typeof body.lumenAccess === "boolean") world.lumenFreightDenied = !body.lumenAccess;
+      if (typeof body.stripeProvisioningDone === "boolean") {
+        world.stripeProvisioningDone = body.stripeProvisioningDone;
+      }
+      if (typeof body.securityKeysRegistered === "boolean") {
+        world.securityKeysRegistered = body.securityKeysRegistered;
+      }
+      if (body.asRole) {
+        const person = world.people.find((p) => p.role === body.asRole);
+        if (person) world.signedInUserId = person.id;
+      }
 
       if (body.revokeKey) {
         const key = world.keys.find((k) => k.name === body.revokeKey || k.id === body.revokeKey);

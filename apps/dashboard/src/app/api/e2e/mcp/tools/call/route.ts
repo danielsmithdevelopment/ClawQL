@@ -173,7 +173,25 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: "deletes blocked" }, { status: 403 });
         }
         if (name.includes("write") || name.includes("create") || name.includes("update")) {
-          // needs mandate — fall through to review pattern below if adjust-like
+          const reqId = newId("rev");
+          const digest = createHash("sha256").update(JSON.stringify(args)).digest("hex");
+          world.review.push({
+            id: reqId,
+            kind: "change",
+            title: "Jira write",
+            requester: key.name,
+            digest,
+            args: { ...args, connection: "jira" },
+            status: "waiting",
+            approvers: [],
+            expiresAt: new Date(Date.now() + world.requestExpiryMinutes * 60_000).toISOString(),
+          });
+          recountReviewBadges();
+          appendAudit(key.name, name, "Mandate requested", { requestId: reqId });
+          return NextResponse.json(
+            { error: "mandate required", requestId: reqId, digest },
+            { status: 402 },
+          );
         }
       }
 

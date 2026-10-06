@@ -16,12 +16,20 @@ export async function GET() {
       const world = getWorld();
       return NextResponse.json({
         keys: world.keys.map((k) => ({
-          ...k,
-          secretOnce: undefined,
+          id: k.id,
+          name: k.name,
+          group: k.group,
+          canUse: k.canUse,
+          dailyCapCents: k.dailyCapCents,
+          spentTodayCents: k.spentTodayCents,
+          revoked: k.revoked,
+          expiresAt: k.expiresAt,
           secretShown: k.secretShown,
           lastFour: k.lastFour,
+          confirmedSaved: k.confirmedSaved,
           canUseMemory: k.canUse.includes("memory"),
           capReached: k.spentTodayCents >= k.dailyCapCents,
+          // Never expose secretOnce / secretToken on GET
         })),
         people: world.people.map((p) => ({
           name: p.name,
@@ -195,13 +203,24 @@ export async function POST(req: Request) {
         expiresAt: new Date(Date.now() + 90 * 864e5).toISOString(),
         lastFour,
         secretOnce: secret,
+        secretToken: secret,
         confirmedSaved: false,
       };
       world.keys.push(key);
       appendAudit(body.actor ?? "Dana Reyes", "key.issue", "Issued", { key: key.name });
       return NextResponse.json({
         ok: true,
-        key: { ...key, secret },
+        key: {
+          id: key.id,
+          name: key.name,
+          group: key.group,
+          canUse: key.canUse,
+          lastFour: key.lastFour,
+          secret,
+          secretOnce: secret,
+          secretShown: true,
+          confirmedSaved: false,
+        },
         doneDisabled: true,
         message: "Secret shown once — confirm you saved it",
       });

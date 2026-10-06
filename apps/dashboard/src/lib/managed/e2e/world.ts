@@ -47,6 +47,8 @@ export type E2eKey = {
   expiresAt: string;
   lastFour: string;
   secretOnce?: string;
+  /** Persisted bearer token for harness auth after confirmSaved clears secretOnce. Never returned by GET. */
+  secretToken?: string;
   confirmedSaved?: boolean;
   memoryEnrichment?: boolean;
   teamBudgetExhausted?: boolean;
@@ -822,8 +824,14 @@ export function keyByBearer(authHeader: string | null): E2eKey | null {
   };
   const name = map[token] ?? token;
   const key =
-    world.keys.find((k) => k.name === name || k.id === name || `cqk_${k.lastFour}` === token) ??
-    null;
+    world.keys.find(
+      (k) =>
+        k.name === name ||
+        k.id === name ||
+        `cqk_${k.lastFour}` === token ||
+        k.secretOnce === token ||
+        k.secretToken === token,
+    ) ?? null;
   if (!key) return null;
   if (key.revoked) return key;
   if (new Date(key.expiresAt).getTime() < Date.now()) {

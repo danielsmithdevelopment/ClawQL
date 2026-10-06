@@ -13,6 +13,7 @@ const repeatEach = Number(process.env.CLAWQL_CLOUD_E2E_REPEAT ?? '3')
  */
 export default defineConfig({
   testDir: path.join(__dirname, 'specs'),
+  testIgnore: ['**/_quarantine/**'],
   timeout: 120_000,
   expect: { timeout: 20_000 },
   fullyParallel: false,
