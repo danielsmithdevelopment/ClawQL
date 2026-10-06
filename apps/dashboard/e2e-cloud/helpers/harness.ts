@@ -7,8 +7,27 @@ async function json<T>(res: Response): Promise<T> {
   return (await res.json().catch(() => ({}))) as T
 }
 
+async function fetchRetry(url: string, init?: RequestInit, attempts = 5): Promise<Response> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init)
+      // Next HMR can briefly return 500 while recompiling routes
+      if (res.status >= 500 && i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 250 * (i + 1)))
+        continue
+      }
+      return res
+    } catch (err) {
+      lastErr = err
+      await new Promise((r) => setTimeout(r, 250 * (i + 1)))
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+}
+
 export async function resetWorld() {
-  const res = await fetch(`${base()}/api/e2e/reset`, { method: 'POST' })
+  const res = await fetchRetry(`${base()}/api/e2e/reset`, { method: 'POST' })
   if (!res.ok) throw new Error(`reset failed: ${res.status}`)
   return json(res)
 }

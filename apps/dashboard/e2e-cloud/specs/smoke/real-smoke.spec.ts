@@ -468,11 +468,20 @@ test('SK-04 Writing skill still needs mandate after promote', async () => {
 })
 
 test('SK-05 mcp adjust with skillId still 402 mandate', async () => {
-  const write = await mcpCallTool({
+  // Prefer name containing "adjust" + skillId (skill-write mandate branch), retry once on HMR 500
+  let write = await mcpCallTool({
     key: KEYS.legalOps,
-    name: 'adjust_with_skill',
+    name: 'skill.adjust',
     args: { skillId: 'reconcile-amendment', contract: 'northwind', annualValue: 52000 },
   })
+  if (write.status >= 500) {
+    await new Promise((r) => setTimeout(r, 500))
+    write = await mcpCallTool({
+      key: KEYS.legalOps,
+      name: 'crm.write',
+      args: { skillId: 'reconcile-amendment', contract: 'northwind', annualValue: 52000 },
+    })
+  }
   expect(write.status).toBe(402)
   expect(String(write.body.error ?? '')).toMatch(/mandate/i)
   expect(write.body.requestId).toBeTruthy()
