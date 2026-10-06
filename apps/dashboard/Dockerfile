@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # ClawQL dashboard — Next.js UI (Provider secrets, Agent Chat, custom sources).
 #
-# Build from repo root (needs clawql-api workspace package):
+# Build from repo root (needs clawql-api / clawql-auth / clawql-payments workspace packages):
 #   docker build -f apps/dashboard/Dockerfile -t clawql-dashboard .
 #
 # Webpack resolves clawql-api from packages/clawql-api/dist and walks Node resolution
@@ -19,8 +19,12 @@ COPY packages/clawql-agents/package.json packages/clawql-agents/
 COPY packages/clawql-core/package.json packages/clawql-core/
 COPY packages/clawql-auth/package.json packages/clawql-auth/
 COPY packages/clawql-api/package.json packages/clawql-api/
-# clawql-api/auth resolve clawql-gdp + clawql-audit for DTS + runtime
-RUN npm ci --ignore-scripts -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
+COPY packages/clawql-network/package.json packages/clawql-network/
+COPY packages/clawql-supabase/package.json packages/clawql-supabase/
+COPY packages/clawql-memory/package.json packages/clawql-memory/
+COPY packages/clawql-payments/package.json packages/clawql-payments/
+# clawql-payments DTS imports supabase + memory; those need api/auth/agents/network
+RUN npm ci --ignore-scripts -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api -w clawql-agents -w clawql-network -w clawql-supabase -w clawql-memory -w clawql-payments
 COPY tsconfig.json ./
 COPY packages/clawql-merkle packages/clawql-merkle
 COPY packages/clawql-gdp packages/clawql-gdp
@@ -28,7 +32,12 @@ COPY packages/clawql-core packages/clawql-core
 COPY packages/clawql-audit packages/clawql-audit
 COPY packages/clawql-auth packages/clawql-auth
 COPY packages/clawql-api packages/clawql-api
-RUN npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api
+COPY packages/clawql-agents packages/clawql-agents
+COPY packages/clawql-network packages/clawql-network
+COPY packages/clawql-supabase packages/clawql-supabase
+COPY packages/clawql-memory packages/clawql-memory
+COPY packages/clawql-payments packages/clawql-payments
+RUN npm run build -w clawql-merkle -w clawql-gdp -w clawql-core -w clawql-audit -w clawql-auth -w clawql-api -w clawql-agents -w clawql-network -w clawql-supabase -w clawql-memory -w clawql-payments
 
 FROM node:22-alpine AS deps
 WORKDIR /app/dashboard
@@ -47,6 +56,16 @@ COPY --from=clawql-builder /app/packages/clawql-auth/package.json /app/packages/
 COPY --from=clawql-builder /app/packages/clawql-auth/dist /app/packages/clawql-auth/dist
 COPY --from=clawql-builder /app/packages/clawql-api/package.json /app/packages/clawql-api/package.json
 COPY --from=clawql-builder /app/packages/clawql-api/dist /app/packages/clawql-api/dist
+COPY --from=clawql-builder /app/packages/clawql-agents/package.json /app/packages/clawql-agents/package.json
+COPY --from=clawql-builder /app/packages/clawql-agents/dist /app/packages/clawql-agents/dist
+COPY --from=clawql-builder /app/packages/clawql-network/package.json /app/packages/clawql-network/package.json
+COPY --from=clawql-builder /app/packages/clawql-network/dist /app/packages/clawql-network/dist
+COPY --from=clawql-builder /app/packages/clawql-supabase/package.json /app/packages/clawql-supabase/package.json
+COPY --from=clawql-builder /app/packages/clawql-supabase/dist /app/packages/clawql-supabase/dist
+COPY --from=clawql-builder /app/packages/clawql-memory/package.json /app/packages/clawql-memory/package.json
+COPY --from=clawql-builder /app/packages/clawql-memory/dist /app/packages/clawql-memory/dist
+COPY --from=clawql-builder /app/packages/clawql-payments/package.json /app/packages/clawql-payments/package.json
+COPY --from=clawql-builder /app/packages/clawql-payments/dist /app/packages/clawql-payments/dist
 RUN npm ci
 
 FROM node:22-alpine AS builder
