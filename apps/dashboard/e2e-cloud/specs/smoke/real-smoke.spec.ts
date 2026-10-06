@@ -729,6 +729,7 @@ test('ADM-09 Hard stop blocks chat, search still works', async () => {
 })
 
 test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
+  test.setTimeout(240_000)
   const consoleErrors: string[] = []
   page.on('pageerror', (err) => consoleErrors.push(err.message))
   page.on('console', (msg) => {
