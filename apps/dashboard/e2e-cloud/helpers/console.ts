@@ -70,14 +70,9 @@ export async function clickAllTabs(page: Page, path: string) {
   if (!tabs) return
   for (const testId of tabs) {
     const tab = page.getByTestId(testId)
-    if (await tab.count()) {
-      try {
-        await tab.click({ timeout: 8_000 })
-      } catch {
-        // Client nav / layout thrash under HMR — force still exercises the tab control.
-        await tab.click({ force: true })
-      }
-      await expectNoPageError(page)
-    }
+    if ((await tab.count()) === 0) continue
+    await expect(tab).toBeVisible({ timeout: 5_000 })
+    await tab.click({ force: true, timeout: 5_000 })
+    await expectNoPageError(page)
   }
 }
