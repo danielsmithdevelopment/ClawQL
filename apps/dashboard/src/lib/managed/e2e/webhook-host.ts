@@ -30,6 +30,7 @@ export function isRebindHostname(host: string): boolean {
 /**
  * SSRF / rebind refusal for webhook subscribe hosts (EV-02 / EV-03).
  * Rebind names are refused even if they later appear on the allowlist.
+ * Allowlisted hosts skip DNS (hooks.example.com is a harness stand-in).
  */
 export function webhookHostRefused(host: string): Effect.Effect<string | null> {
   return Effect.gen(function* () {
@@ -37,17 +38,20 @@ export function webhookHostRefused(host: string): Effect.Effect<string | null> {
     if (looksLikeDecimalIp(lower)) return "decimal IP refused";
     if (isIP(lower) && isPrivateIp(lower)) return "private address refused";
     if (isRebindHostname(lower)) return "rebind to private address refused";
-    const results = yield* Effect.tryPromise({
-      try: () => lookup(lower, { all: true }),
-      catch: () => [] as { address: string }[],
-    });
+
+    const world = getWorld();
+    const onAllowlist = world.allowedWebhookHosts.some(
+      (h) => h === lower || lower.endsWith(`.${h}`),
+    );
+    if (onAllowlist) return null;
+
+    // Non-allowlisted hosts: resolve and refuse private answers (best-effort).
+    const results = yield* Effect.promise(() =>
+      lookup(lower, { all: true }).catch(() => [] as { address: string }[]),
+    );
     for (const r of results) {
       if (isPrivateIp(r.address)) return "resolved to private address";
     }
-    const world = getWorld();
-    if (!world.allowedWebhookHosts.some((h) => h === lower || lower.endsWith(`.${h}`))) {
-      return "host not on allowed list";
-    }
-    return null;
+    return "host not on allowed list";
   });
 }
