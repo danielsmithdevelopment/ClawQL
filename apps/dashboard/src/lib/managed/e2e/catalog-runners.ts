@@ -8,6 +8,7 @@ import { createHash } from "node:crypto";
 import { Effect } from "effect";
 
 import { E2eHarness } from "@/lib/managed/e2e/service";
+import { stripHtmlToPlain } from "@/lib/managed/e2e/html-plain";
 import {
   appendAudit,
   getWorld,
@@ -1508,7 +1509,7 @@ function secRunner(id: string, w: World): ScenarioRunResult {
       return ok(id, { throttled: true });
     }
     case "SEC-10": {
-      const text = "<script>alert(1)</script>".replace(/<[^>]+>/g, "");
+      const text = Effect.runSync(stripHtmlToPlain("<script>alert(1)</script>"));
       w.documents.push({
         id: newId("doc"),
         name: "x.pdf",
