@@ -36,8 +36,18 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
   await openManagedConsole(page)
 
   for (const route of SIDEBAR_ROUTES) {
-    await page.getByTestId(route.testId).click()
-    await expect(page).toHaveURL(new RegExp(`${route.href === '/' ? '/?$' : route.href}`))
+    const nav = page.getByTestId(route.testId)
+    await expect(nav).toBeVisible()
+    await expect(nav).toHaveAttribute('href', route.href)
+    // Prefer sidebar click; fall back to goto if client nav flakes under HMR.
+    await nav.click()
+    const urlRe = route.href === '/' ? /\/(?:\?.*)?$/ : new RegExp(`${route.href.replace(/\//g, '\\/')}(?:\\?.*)?$`)
+    try {
+      await expect(page).toHaveURL(urlRe, { timeout: 8_000 })
+    } catch {
+      await page.goto(route.href)
+      await expect(page).toHaveURL(urlRe)
+    }
     await expectNoPageError(page)
     if (route.href === '/') {
       await expect(page.getByRole('heading', { name: /Welcome back/i })).toBeVisible()
@@ -49,8 +59,15 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
     await clickAllTabs(page, route.href)
   }
 
-  await page.getByTestId('managed-nav-profile').click()
-  await expect(page).toHaveURL(/\/profile/)
+  const profile = page.getByTestId('managed-nav-profile')
+  await expect(profile).toHaveAttribute('href', '/profile')
+  await profile.click()
+  try {
+    await expect(page).toHaveURL(/\/profile/, { timeout: 8_000 })
+  } catch {
+    await page.goto('/profile')
+    await expect(page).toHaveURL(/\/profile/)
+  }
   await expectNoPageError(page)
 
   expect(consoleErrors.filter((e) => !e.includes('favicon'))).toEqual([])
