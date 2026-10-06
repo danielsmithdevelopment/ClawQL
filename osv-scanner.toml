@@ -19,6 +19,4 @@ reason = "Same extract-zip@2.0.1 symlink path traversal as GHSA-jmr9-qjv8-65gv (
 id = "GHSA-vfj7-8cjw-p6xm"
 reason = "braces@3.0.3 stack-exhaustion DoS via deeply nested patterns; OSV lists no fixed version beyond 3.0.3 (latest). Transitive via micromatch/chokidar in website/dashboard/www tooling; not a production request-path dependency. Remove when upstream ships a patched braces."
 
-[[IgnoredVulns]]
-id = "GHSA-ch52-4w7c-c8xp"
-reason = "http-cache-semantics@4.2.0 max-stale cross-user cache disclosure; OSV lists no fixed version beyond 4.2.0 (latest). Transitive via make-fetch-happen (npm/cacache tooling path), not ClawQL MCP request handling. Remove when upstream ships a patched release."
+# GHSA-ch52-4w7c-c8xp (http-cache-semantics <=4.2.0) — fixed via root override to 4.3.0.
