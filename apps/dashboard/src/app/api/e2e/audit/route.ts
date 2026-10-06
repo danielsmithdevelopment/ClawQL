@@ -48,6 +48,8 @@ export async function GET(req: Request) {
         entries: world.audit,
         chain,
         hourlyRoots: world.hourlyRoots,
+        auditBroken: world.auditBroken,
+        alerts: world.alerts,
       });
     }),
   );

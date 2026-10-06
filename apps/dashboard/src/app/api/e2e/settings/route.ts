@@ -54,12 +54,15 @@ function settingsSnapshot() {
       name: p.name,
       role: p.role,
       active: p.active,
+      groups: p.groups,
+      canApproveContracts: p.canApproveContracts,
       timeZone: p.timeZone,
       appearance: p.appearance,
       notifications: p.notifications,
       sessions: p.sessions,
     })),
     notificationsOutbox: world.notificationsOutbox,
+    requesterCannotApproveLocked: world.requesterCannotApproveLocked,
   };
 }
 

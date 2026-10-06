@@ -102,6 +102,10 @@ export async function POST(req: Request) {
       if (site === "ticket-triage" && body.answer) {
         const actor = body.actor ?? "Jordan Park";
         const person = world.people.find((p) => p.name === actor);
+        if (person && !person.active) {
+          appendAudit(actor, "decision.answer", "Refused — person deactivated");
+          return NextResponse.json({ error: "person deactivated" }, { status: 403 });
+        }
         if (person && !person.canAnswerTicketTriage) {
           return NextResponse.json({ error: "not allowed to answer ticket-triage" }, { status: 403 });
         }
@@ -128,14 +132,26 @@ export async function POST(req: Request) {
   );
 }
 
-/** Also expose /v1/systemone score rejection via same handler pattern for GW-13. */
+/** Decision-site counts for GW-14 Pass-when (not control/getWitness). */
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  if (url.searchParams.get("question")?.toLowerCase().includes("score")) {
-    return NextResponse.json(
-      { error: "use choice or noul", message: "use choice or noul" },
-      { status: 400 },
-    );
-  }
-  return NextResponse.json({ ok: true, sites: Object.keys(getWorld().decisionSites) });
+  return runE2eEffect(
+    Effect.gen(function* () {
+      const h = yield* E2eHarness;
+      if (!(yield* h.enabled())) {
+        return NextResponse.json({ error: "E2E harness disabled" }, { status: 404 });
+      }
+      const url = new URL(req.url);
+      if (url.searchParams.get("question")?.toLowerCase().includes("score")) {
+        return NextResponse.json(
+          { error: "use choice or noul", message: "use choice or noul" },
+          { status: 400 },
+        );
+      }
+      const world = getWorld();
+      return NextResponse.json({
+        ok: true,
+        sites: world.decisionSites,
+      });
+    }),
+  );
 }

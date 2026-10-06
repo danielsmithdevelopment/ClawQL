@@ -230,6 +230,8 @@ type ControlBody = {
   secondBrowserSession?: { person: string };
   keySpentToday?: { name: string; cents: number };
   personMutate?: { person: string; canApproveContracts?: boolean; groups?: string[]; notifications?: { slack?: boolean; push?: boolean }; timeZone?: string; appearance?: "light" | "dark"; endSessionDevice?: string };
+  /** Persist Review/sessions while recording a gateway restart (RES-01 / RES-06). */
+  simulateGatewayRestart?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -245,6 +247,14 @@ export async function POST(req: Request) {
       })) as ControlBody;
 
       const world = getWorld();
+
+      if (body.simulateGatewayRestart) {
+        world.gateUnreachable = false;
+        appendAudit("gateway", "gateway.restart", "Restarted — sessions and review preserved", {
+          sessionCount: world.sessions.length,
+          reviewWaiting: world.review.filter((r) => r.status === "waiting").length,
+        });
+      }
 
       if (typeof body.gateUnreachable === "boolean") world.gateUnreachable = body.gateUnreachable;
       if (body.setGate === "unreachable") world.gateUnreachable = true;

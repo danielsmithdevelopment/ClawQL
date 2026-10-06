@@ -44,6 +44,8 @@ export async function GET(req: Request) {
           role: p.role,
           active: p.active,
           groups: p.groups,
+          canApproveContracts: p.canApproveContracts,
+          canAnswerTicketTriage: p.canAnswerTicketTriage,
           sessions: p.sessions,
         })),
         firstRun: {
@@ -63,6 +65,8 @@ export async function GET(req: Request) {
         archive,
         nobodySignedIn: world.people.every((p) => !p.active || p.sessions.every((s) => s.ended)),
         keyCount: world.keys.filter((k) => !k.revoked).length,
+        blockedCalls: world.blockedCalls,
+        sessions: world.sessions,
       });
     }),
   );

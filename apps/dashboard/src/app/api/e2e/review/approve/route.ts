@@ -74,6 +74,10 @@ export async function POST(req: Request) {
       }
 
       const person = personByName(actor);
+      if (person && !person.active) {
+        appendAudit(actor, "review.approve", "Refused — person deactivated");
+        return NextResponse.json({ error: "person deactivated" }, { status: 403 });
+      }
       if (person?.role === "auditor") {
         return NextResponse.json({ error: "auditor cannot approve" }, { status: 403 });
       }

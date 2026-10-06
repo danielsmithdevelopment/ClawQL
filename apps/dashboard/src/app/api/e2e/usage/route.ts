@@ -36,6 +36,17 @@ export async function GET() {
           teamBudgetExhausted: k.teamBudgetExhausted ?? false,
           expiresAt: k.expiresAt,
         })),
+        modelRoutes: Object.fromEntries(
+          Object.entries(world.modelRoutes).map(([alias, r]) => [
+            alias,
+            {
+              usingFallback: r.usingFallback,
+              fallbackCount: r.fallbackCount,
+              private: r.private,
+              routeStatus: r.usingFallback ? "Using fallback" : "Primary",
+            },
+          ]),
+        ),
       });
     }),
   );

@@ -42,6 +42,9 @@ export async function GET() {
             kind: k.kind,
             canApprove: k.canApprove,
             status: k.canApprove ? "Can approve" : "Sign-in only",
+            signatureCounter: k.signatureCounter,
+            aaguid: k.aaguid,
+            revoked: k.revoked,
           })),
         })),
         firstRun: {
