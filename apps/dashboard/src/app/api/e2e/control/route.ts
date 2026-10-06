@@ -301,15 +301,17 @@ export async function POST(req: Request) {
       if (body.removeWebhookHost) {
         const host = body.removeWebhookHost;
         const live = world.subscriptions.some((s) => s.url.includes(host) && s.active);
-        if (live) {
-          appendAudit("Dana Reyes", "settings.webhook_host", "Warned — live subscription", {
-            host,
-          });
-        }
+        appendAudit(
+          "Dana Reyes",
+          "settings.webhook_host",
+          live ? "Warned — live subscription then removed" : "Removed host from allowlist",
+          { host, hadLiveSubscription: live },
+        );
         world.allowedWebhookHosts = world.allowedWebhookHosts.filter((h) => h !== host);
         for (const s of world.subscriptions) {
           if (s.url.includes(host)) {
             s.active = false;
+            s.paused = true;
             s.health = "Stopped";
             s.stopReason = "Host removed from allowlist";
           }

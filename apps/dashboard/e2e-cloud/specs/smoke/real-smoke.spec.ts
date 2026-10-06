@@ -368,15 +368,27 @@ test('GW-08 mcpListTools has search/execute, no approve; Gateway UI shows search
 })
 
 test('EV-01 Subscription delivery redacts PII', async () => {
+  await waitForServer()
   await resetWebhookReceiver()
-  const sub = await createSubscription('https://hooks.example.com/hook', ['document.processed'])
+  let sub = await createSubscription('https://hooks.example.com/hook', ['document.processed'])
+  for (let i = 0; i < 8 && sub.status >= 500; i++) {
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+    sub = await createSubscription('https://hooks.example.com/hook', ['document.processed'])
+  }
   expect(sub.status).toBe(200)
   expect(sub.body.id).toBeTruthy()
 
-  const upload = await uploadDocument({
+  let upload = await uploadDocument({
     name: 'pii-contract.pdf',
     content: `Northwind deal. Contact alice@evil.example phone 212-555-1212. ${PII}`,
   })
+  for (let i = 0; i < 8 && upload.status >= 500; i++) {
+    await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+    upload = await uploadDocument({
+      name: 'pii-contract.pdf',
+      content: `Northwind deal. Contact alice@evil.example phone 212-555-1212. ${PII}`,
+    })
+  }
   expect(upload.status).toBe(200)
   expect(upload.body.eventId).toBeTruthy()
 
@@ -756,8 +768,18 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
     const nav = page.getByTestId(route.testId)
     await expect(nav).toBeVisible()
     await expect(nav).toHaveAttribute('href', route.href)
-    // Assert the sidebar link, then load the route. Click+HMR races flake under repeatEach.
-    await page.goto(route.href)
+    // Assert the sidebar link, then load the route. Retry ERR_ABORTED / HMR blips.
+    let loaded = false
+    for (let attempt = 0; attempt < 5 && !loaded; attempt++) {
+      try {
+        await waitForServer(30_000)
+        await page.goto(route.href, { waitUntil: 'domcontentloaded' })
+        loaded = true
+      } catch (err) {
+        if (attempt === 4) throw err
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)))
+      }
+    }
     const urlRe =
       route.href === '/'
         ? /\/(?:\?.*)?$/

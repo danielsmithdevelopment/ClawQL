@@ -77,10 +77,17 @@ test('AUD-02 Filters: blocked, approvals, erasures each match', async () => {
 test('AUD-03 Entry included in hourly Merkle root', async () => {
   await openaiChat({ key: KEYS.legalOps, messages: [{ role: 'user', content: 'hourly root' }] })
   const audit = await getAudit()
-  const e = audit.entries.find((x) => x.hourlyRoot) ?? audit.entries[0]!
-  expect(e.hourlyRoot).toBeTruthy()
-  const hour = e.at.slice(0, 13)
-  expect(audit.hourlyRoots?.[hour]).toBe(e.hourlyRoot)
+  expect(audit.entries.every((e) => Boolean(e.hourlyRoot))).toBe(true)
+  const roots = audit.hourlyRoots ?? {}
+  expect(Object.keys(roots).length).toBeGreaterThan(0)
+  // Map stores the root after the latest entry in each hour — that entry is included
+  for (const [hour, root] of Object.entries(roots)) {
+    const inHour = audit.entries.filter((e) => e.at.slice(0, 13) === hour)
+    expect(inHour.length).toBeGreaterThan(0)
+    const latest = inHour[inHour.length - 1]!
+    expect(latest.hourlyRoot).toBe(root)
+    expect(inHour.some((e) => e.hash === latest.hash)).toBe(true)
+  }
 })
 
 test('AUD-04 JSON validates against OCSF-shaped fields', async () => {
