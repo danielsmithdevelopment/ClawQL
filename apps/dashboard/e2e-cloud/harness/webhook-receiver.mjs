@@ -13,15 +13,23 @@ const state = {
   challengeOk: true,
 }
 
+function webhookSigningKey(secret) {
+  if (!secret.startsWith('whsec_')) return Buffer.from(secret)
+  const suffix = secret.slice('whsec_'.length)
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(suffix) && suffix.length % 4 === 0) {
+    const decoded = Buffer.from(suffix, 'base64')
+    if (decoded.length > 0) return decoded
+  }
+  return Buffer.from(secret)
+}
+
 function verifyStandardWebhooks(req, rawBody, secret) {
   const id = req.headers['webhook-id']
   const ts = req.headers['webhook-timestamp']
   const sig = req.headers['webhook-signature']
   if (!id || !ts || !sig) return false
   const signed = `${id}.${ts}.${rawBody}`
-  const expected = createHmac('sha256', Buffer.from(secret.replace(/^whsec_/, ''), 'base64').length
-    ? Buffer.from(secret.replace(/^whsec_/, ''), 'base64')
-    : Buffer.from(secret)).update(signed).digest('base64')
+  const expected = createHmac('sha256', webhookSigningKey(secret)).update(signed).digest('base64')
   const parts = String(sig).split(' ')
   for (const part of parts) {
     const [, value] = part.split(',')
@@ -55,9 +63,14 @@ const server = http.createServer(async (req, res) => {
     if (body.mode) state.mode = body.mode
     if (body.secret) state.secret = body.secret
     if (typeof body.challengeOk === 'boolean') state.challengeOk = body.challengeOk
-    if (body.reset) state.deliveries = []
+    if (body.reset) {
+      state.deliveries = []
+      state.mode = body.mode ?? '200'
+      state.secret = body.secret ?? process.env.CLAWQL_E2E_WEBHOOK_SECRET ?? 'whsec_test_acme'
+      state.challengeOk = true
+    }
     res.writeHead(200, { 'content-type': 'application/json' })
-    res.end(JSON.stringify({ ok: true, mode: state.mode, count: state.deliveries.length }))
+    res.end(JSON.stringify({ ok: true, mode: state.mode, count: state.deliveries.length, secretReset: Boolean(body.reset) }))
     return
   }
 

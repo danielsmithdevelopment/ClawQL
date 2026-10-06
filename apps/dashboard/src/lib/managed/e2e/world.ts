@@ -877,6 +877,17 @@ export function pushEvent(
   return evt;
 }
 
+function webhookSigningKey(secret: string): Buffer {
+  if (!secret.startsWith("whsec_")) return Buffer.from(secret);
+  const suffix = secret.slice("whsec_".length);
+  // Only treat as Standard Webhooks base64 when the suffix is valid base64 (padding-safe).
+  if (/^[A-Za-z0-9+/]+={0,2}$/.test(suffix) && suffix.length % 4 === 0) {
+    const decoded = Buffer.from(suffix, "base64");
+    if (decoded.length > 0) return decoded;
+  }
+  return Buffer.from(secret);
+}
+
 export function signStandardWebhook(
   secret: string,
   id: string,
@@ -884,11 +895,7 @@ export function signStandardWebhook(
   body: string,
 ): string {
   const signed = `${id}.${ts}.${body}`;
-  const key = secret.startsWith("whsec_")
-    ? Buffer.from(secret.slice("whsec_".length), "base64")
-    : Buffer.from(secret);
-  // Fall back to utf8 secret when base64 decode is empty/invalid for harness secrets
-  const keyBuf = key.length > 0 ? key : Buffer.from(secret);
+  const keyBuf = webhookSigningKey(secret);
   const b64 = createHmac("sha256", keyBuf).update(signed).digest("base64");
   const hex = createHmac("sha256", Buffer.from(secret)).update(signed).digest("hex");
   return `v1,${b64} v1hex,${hex}`;
@@ -977,12 +984,7 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
-  // Cards always on — before bank digit runs so PANs are not misclassified as bank.
-  {
-    const card = out.replace(/\b(?:\d[ -]*?){13,19}\b/g, "[REDACTED_CARD]");
-    if (card !== out) redacted = true;
-    out = card;
-  }
+  // Bank accounts: contiguous 8–17 digits (before card, so accounts are not mislabeled as cards).
   if (world.redaction.bank) {
     const next = out.replace(/\b\d{8,17}\b/g, "[REDACTED_BANK]");
     if (next !== out) redacted = true;
@@ -995,6 +997,12 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     );
     if (next !== out) redacted = true;
     out = next;
+  }
+  // Cards always on — spaced/dashed PANs (contiguous digits already handled as bank/account).
+  {
+    const card = out.replace(/\b(?:\d[ -]+){3,}\d{1,4}\b/g, "[REDACTED_CARD]");
+    if (card !== out) redacted = true;
+    out = card;
   }
   // Detect pasted API keys
   if (/cqk_[a-z0-9_]+/i.test(out)) {

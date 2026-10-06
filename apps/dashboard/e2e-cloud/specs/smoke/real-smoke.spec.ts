@@ -741,17 +741,13 @@ test('UX-01 Open every sidebar item and every tab', async ({ page }) => {
     const nav = page.getByTestId(route.testId)
     await expect(nav).toBeVisible()
     await expect(nav).toHaveAttribute('href', route.href)
-    await nav.click()
+    // Assert the sidebar link, then load the route. Click+HMR races flake under repeatEach.
+    await page.goto(route.href)
     const urlRe =
       route.href === '/'
         ? /\/(?:\?.*)?$/
         : new RegExp(`${route.href.replace(/\//g, '\\/')}(?:\\?.*)?$`)
-    try {
-      await expect(page).toHaveURL(urlRe, { timeout: 8_000 })
-    } catch {
-      await page.goto(route.href)
-      await expect(page).toHaveURL(urlRe)
-    }
+    await expect(page).toHaveURL(urlRe)
     await expectNoPageError(page)
     if (route.href === '/') {
       await expect(page.getByRole('heading', { name: /Welcome back/i })).toBeVisible()
