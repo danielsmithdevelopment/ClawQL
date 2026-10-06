@@ -54,7 +54,7 @@ test.beforeEach(async () => {
 })
 
 
-test('MEM-04 Low-confidence field verified under Dana', async () => {
+test('MEM-02 Unreadable .msg is not stored', async () => {
   const up = await uploadDocument({ name: 'outlook.msg', content: 'binary-msg' })
   expect(up.body.status).toBe("Couldn't read")
   expect(String(up.body.hint ?? '')).toMatch(/PDF|EML/i)
