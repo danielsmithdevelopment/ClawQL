@@ -984,14 +984,6 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (next !== out) redacted = true;
     out = next;
   }
-  if (world.redaction.phone) {
-    const next = out.replace(
-      /(?:\+?\d{1,3}[\s.-]*)?(?:\(?\d{3}\)?[\s.-]*)\d{3}[\s.-]*\d{4}/g,
-      "[REDACTED_PHONE]",
-    );
-    if (next !== out) redacted = true;
-    out = next;
-  }
   // Cards always on (ADM-14): 13–19 digit PANs and spaced card numbers — never disable.
   {
     const card = out
@@ -1000,9 +992,18 @@ export function redactPii(text: string): { text: string; redacted: boolean } {
     if (card !== out) redacted = true;
     out = card;
   }
-  // Bank accounts: remaining contiguous 8–12 digits (shorter than PAN lengths).
+  // Bank accounts: contiguous 8–12 digits (before phone, so accounts aren't eaten as phone).
   if (world.redaction.bank) {
     const next = out.replace(/\b\d{8,12}\b/g, "[REDACTED_BANK]");
+    if (next !== out) redacted = true;
+    out = next;
+  }
+  // Phones require separators or +prefix — never bare digit runs (those are bank/card).
+  if (world.redaction.phone) {
+    const next = out.replace(
+      /(?:\+?\d{1,3}[\s.-]+)?(?:\(\d{3}\)[\s.-]*|\d{3}[\s.-]+)\d{3}[\s.-]+\d{4}\b/g,
+      "[REDACTED_PHONE]",
+    );
     if (next !== out) redacted = true;
     out = next;
   }
