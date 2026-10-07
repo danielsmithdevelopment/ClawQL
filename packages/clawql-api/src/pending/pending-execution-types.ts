@@ -4,11 +4,14 @@ import type { OperationRisk } from "../risk/operation-risk-types.js";
  * Mandate lifecycle statuses.
  *
  * `outcome_unknown` = atomically consumed for execute; side-effect result not yet
- * recorded (crash between consume and finalize). Surfaced in Review / WORM —
- * never silently retried without an idempotency key derived from `executionId`.
+ * recorded (crash between consume and finalize). Review surfaces it only after a
+ * grace threshold. Automatic retry is allowed only when `idempotencyCapable`.
  */
 export type PendingExecutionStatus =
   "pending" | "approved" | "declined" | "completed" | "failed" | "expired" | "outcome_unknown";
+
+/** Grace before Review treats outcome_unknown as needing attention (ms). */
+export const OUTCOME_UNKNOWN_ATTENTION_MS = 60_000;
 
 export type PendingExecutionRecord = {
   readonly version: 1;
@@ -28,7 +31,18 @@ export type PendingExecutionRecord = {
   readonly consumedAt: string | null;
   /** Replica / process id that won the consume CAS. */
   readonly consumedBy: string | null;
+  /**
+   * When true, automatic retry after outcome_unknown may attach
+   * `mandateIdempotencyKey` (connector honors Idempotency-Key). When false,
+   * only a person may mark applied / not applied / retry-with-key-touch in Review.
+   */
+  readonly idempotencyCapable: boolean;
 };
+
+export type OutcomeUnknownResolve =
+  | "mark_applied"
+  | "mark_not_applied"
+  | "retry_with_key";
 
 export type ParkExecuteResult = {
   readonly ok: false;

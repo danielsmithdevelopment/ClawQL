@@ -9,6 +9,7 @@ import { resumeClawqlExecutionEffect } from "../execute/resume-core.js";
 import type { Operation } from "../spec/operation-types.js";
 import { hashPendingArgs } from "./args-hash.js";
 import { decidePendingExecution, parkMandateExecute } from "./pending-execution-service.js";
+import { resetPendingSqliteCacheForTests } from "./pending-execution-store.js";
 
 function op(partial: Partial<Operation> & Pick<Operation, "id" | "method">): Operation {
   return {
@@ -25,7 +26,9 @@ function op(partial: Partial<Operation> & Pick<Operation, "id" | "method">): Ope
 describe("pending execute park + resume", () => {
   afterEach(async () => {
     await Effect.runPromise(resetProcessWormForTests());
+    resetPendingSqliteCacheForTests();
     delete process.env.CLAWQL_HOME;
+    delete process.env.CLAWQL_PENDING_STORE;
     delete process.env.CLAWQL_WORM_ENABLED;
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
@@ -49,6 +52,8 @@ describe("pending execute park + resume", () => {
   it("parks mandate execute and resumes the exact parked args", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-pending-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_PENDING_STORE = "sqlite";
+    resetPendingSqliteCacheForTests();
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     process.env.CLAWQL_WORM_ENABLED = "1";
     process.env.CLAWQL_WORM_LOCAL = "memory";
@@ -153,6 +158,8 @@ describe("pending execute park + resume", () => {
   it("execute parks when risk is mandate (integration with execute-core)", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-pending-exec-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_PENDING_STORE = "sqlite";
+    resetPendingSqliteCacheForTests();
     process.env.CLAWQL_OPERATION_RISK_ENFORCE = "1";
     const writeOp = op({
       id: "patchItem",

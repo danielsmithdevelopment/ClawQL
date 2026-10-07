@@ -12,6 +12,12 @@ export type ReviewItem = {
   readonly listMeta: string;
   readonly statusLine: string;
   readonly statusTone: "ok" | "warn" | "danger" | "neutral";
+  /** Pending change lifecycle for live items. */
+  readonly changeStatus?: "pending" | "outcome_unknown";
+  readonly idempotencyCapable?: boolean;
+  readonly idempotencyKey?: string;
+  /** True when outcome_unknown is older than the attention threshold. */
+  readonly needsOutcomeAttention?: boolean;
 };
 
 export const REVIEW_ITEMS: readonly ReviewItem[] = [

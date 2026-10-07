@@ -1,9 +1,8 @@
 /**
- * Persist parked execute calls under $CLAWQL_HOME/pending-executions/.
+ * Persist parked execute calls under $CLAWQL_HOME.
  *
- * Consume is a single conditional write under an exclusive lock (file-store CAS):
- * approved + digest match + not expired → outcome_unknown. Zero rows (null) = refuse.
- * Postgres / NATS KV backends must preserve the same predicate in one operation.
+ * Default backend is SQLite (shared-store SQL CAS across processes).
+ * Set CLAWQL_PENDING_STORE=file for legacy JSON+lockfile (single-process).
  */
 
 import { randomBytes } from "node:crypto";
@@ -11,12 +10,24 @@ import { chmod, mkdir, open, readFile, readdir, unlink, writeFile } from "node:f
 import { join } from "node:path";
 import { Effect } from "effect";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
+import { pendingStoreBackend } from "./pending-store-backend.js";
+import {
+  deletePendingSqliteEffect,
+  listPendingSqliteIdsEffect,
+  readPendingSqliteEffect,
+  tryConsumeApprovedSqliteEffect,
+  updatePendingSqliteStatusEffect,
+  writePendingSqliteEffect,
+  type TryConsumeApprovedInput as SqliteConsumeInput,
+} from "./pending-execution-sqlite.js";
 import type { PendingExecutionRecord, PendingExecutionStatus } from "./pending-execution-types.js";
 
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;
 const ID_PREFIX = "pex_";
 const LOCK_TIMEOUT_MS = 5_000;
+
+export type TryConsumeApprovedInput = SqliteConsumeInput;
 
 export function getPendingExecutionsDir(home = resolveClawqlHome()): string {
   return join(home, "pending-executions");
@@ -63,6 +74,7 @@ function normalizeRecord(raw: PendingExecutionRecord): PendingExecutionRecord {
     ...raw,
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
+    idempotencyCapable: raw.idempotencyCapable ?? false,
   };
 }
 
@@ -93,9 +105,9 @@ async function withPendingFileLock<A>(path: string, fn: () => Promise<A>): Promi
   }
 }
 
-export const readPendingExecutionEffect = (
+const readFilePending = (
   executionId: string,
-  home = resolveClawqlHome()
+  home: string
 ): Effect.Effect<PendingExecutionRecord | null, Error> =>
   Effect.tryPromise({
     try: async () => {
@@ -111,9 +123,9 @@ export const readPendingExecutionEffect = (
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 
-export const writePendingExecutionEffect = (
+const writeFilePending = (
   record: PendingExecutionRecord,
-  home = resolveClawqlHome()
+  home: string
 ): Effect.Effect<string, Error> =>
   Effect.tryPromise({
     try: async () => {
@@ -131,6 +143,22 @@ export const writePendingExecutionEffect = (
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 
+export const readPendingExecutionEffect = (
+  executionId: string,
+  home = resolveClawqlHome()
+): Effect.Effect<PendingExecutionRecord | null, Error> =>
+  pendingStoreBackend() === "sqlite"
+    ? readPendingSqliteEffect(executionId, home)
+    : readFilePending(executionId, home);
+
+export const writePendingExecutionEffect = (
+  record: PendingExecutionRecord,
+  home = resolveClawqlHome()
+): Effect.Effect<string, Error> =>
+  pendingStoreBackend() === "sqlite"
+    ? writePendingSqliteEffect(normalizeRecord(record), home)
+    : writeFilePending(record, home);
+
 export const updatePendingStatusEffect = (
   executionId: string,
   patch: {
@@ -143,120 +171,117 @@ export const updatePendingStatusEffect = (
   },
   home = resolveClawqlHome()
 ): Effect.Effect<PendingExecutionRecord, Error> =>
-  Effect.gen(function* () {
-    const existing = yield* readPendingExecutionEffect(executionId, home);
-    if (!existing) {
-      return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
-    }
-    const next: PendingExecutionRecord = {
-      ...existing,
-      status: patch.status,
-      approvedAt: patch.approvedAt !== undefined ? patch.approvedAt : existing.approvedAt,
-      completedAt: patch.completedAt !== undefined ? patch.completedAt : existing.completedAt,
-      lastError: patch.lastError !== undefined ? patch.lastError : existing.lastError,
-      consumedAt: patch.consumedAt !== undefined ? patch.consumedAt : existing.consumedAt,
-      consumedBy: patch.consumedBy !== undefined ? patch.consumedBy : existing.consumedBy,
-    };
-    yield* writePendingExecutionEffect(next, home);
-    return next;
-  });
-
-export type TryConsumeApprovedInput = {
-  readonly argsHash: string;
-  /** Replica / worker identity recorded on the winning consume. */
-  readonly consumedBy?: string;
-  /**
-   * Store clock for expiry (ms since epoch). Callers should pass one value per
-   * attempt; Postgres backends must use `now()` inside the UPDATE, never replica wall clocks.
-   */
-  readonly nowMs?: number;
-};
+  pendingStoreBackend() === "sqlite"
+    ? updatePendingSqliteStatusEffect(executionId, patch, home)
+    : Effect.gen(function* () {
+        const existing = yield* readFilePending(executionId, home);
+        if (!existing) {
+          return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
+        }
+        const next: PendingExecutionRecord = {
+          ...existing,
+          status: patch.status,
+          approvedAt: patch.approvedAt !== undefined ? patch.approvedAt : existing.approvedAt,
+          completedAt: patch.completedAt !== undefined ? patch.completedAt : existing.completedAt,
+          lastError: patch.lastError !== undefined ? patch.lastError : existing.lastError,
+          consumedAt: patch.consumedAt !== undefined ? patch.consumedAt : existing.consumedAt,
+          consumedBy: patch.consumedBy !== undefined ? patch.consumedBy : existing.consumedBy,
+        };
+        yield* writeFilePending(next, home);
+        return next;
+      });
 
 /**
- * Atomic consume: `UPDATE … WHERE status='approved' AND argsHash=$digest AND expiresAt > now()`.
- * Returns the updated record, or `null` when the predicate matches zero rows (refuse).
+ * Atomic consume in the shared store.
+ * SQLite: one UPDATE…WHERE (cross-process). File: lockfile CAS (single-process).
  */
 export const tryConsumeApprovedEffect = (
   executionId: string,
   input: TryConsumeApprovedInput,
   home = resolveClawqlHome()
 ): Effect.Effect<PendingExecutionRecord | null, Error> =>
-  Effect.tryPromise({
-    try: async () => {
-      const path = recordPath(executionId, home);
-      return withPendingFileLock(path, async () => {
-        let raw: unknown;
-        try {
-          raw = JSON.parse(await readFile(path, "utf8")) as unknown;
-        } catch (e: unknown) {
-          if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
-          throw e;
-        }
-        if (!isRecord(raw)) return null;
-        const existing = normalizeRecord(raw);
-        const nowMs = input.nowMs ?? Date.now();
-        const expiresMs = Date.parse(existing.expiresAt);
-        if (
-          existing.status !== "approved" ||
-          existing.argsHash !== input.argsHash ||
-          !Number.isFinite(expiresMs) ||
-          expiresMs <= nowMs
-        ) {
-          return null;
-        }
-        const consumedAt = new Date(nowMs).toISOString();
-        const next: PendingExecutionRecord = {
-          ...existing,
-          status: "outcome_unknown",
-          consumedAt,
-          consumedBy: input.consumedBy?.trim() || `pid:${process.pid}`,
-          lastError: null,
-        };
-        await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, {
-          encoding: "utf8",
-          mode: FILE_MODE,
-        });
-        await chmod(path, FILE_MODE);
-        return next;
+  pendingStoreBackend() === "sqlite"
+    ? tryConsumeApprovedSqliteEffect(executionId, input, home)
+    : Effect.tryPromise({
+        try: async () => {
+          const path = recordPath(executionId, home);
+          return withPendingFileLock(path, async () => {
+            let raw: unknown;
+            try {
+              raw = JSON.parse(await readFile(path, "utf8")) as unknown;
+            } catch (e: unknown) {
+              if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+              throw e;
+            }
+            if (!isRecord(raw)) return null;
+            const existing = normalizeRecord(raw);
+            const nowMs = input.nowMs ?? Date.now();
+            const expiresMs = Date.parse(existing.expiresAt);
+            if (
+              existing.status !== "approved" ||
+              existing.argsHash !== input.argsHash ||
+              !Number.isFinite(expiresMs) ||
+              expiresMs <= nowMs
+            ) {
+              return null;
+            }
+            const consumedAt = new Date(nowMs).toISOString();
+            const next: PendingExecutionRecord = {
+              ...existing,
+              status: "outcome_unknown",
+              consumedAt,
+              consumedBy: input.consumedBy?.trim() || `pid:${process.pid}`,
+              lastError: null,
+            };
+            await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, {
+              encoding: "utf8",
+              mode: FILE_MODE,
+            });
+            await chmod(path, FILE_MODE);
+            return next;
+          });
+        },
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
       });
-    },
-    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  });
 
 export const listPendingExecutionIdsEffect = (
   home = resolveClawqlHome()
 ): Effect.Effect<readonly string[], Error> =>
-  Effect.tryPromise({
-    try: async () => {
-      const dir = getPendingExecutionsDir(home);
-      try {
-        const names = await readdir(dir);
-        return names
-          .filter((n) => n.startsWith(ID_PREFIX) && n.endsWith(".json"))
-          .map((n) => n.slice(0, -".json".length));
-      } catch (e: unknown) {
-        if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return [];
-        throw e;
-      }
-    },
-    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  });
+  pendingStoreBackend() === "sqlite"
+    ? listPendingSqliteIdsEffect(home)
+    : Effect.tryPromise({
+        try: async () => {
+          const dir = getPendingExecutionsDir(home);
+          try {
+            const names = await readdir(dir);
+            return names
+              .filter((n) => n.startsWith(ID_PREFIX) && n.endsWith(".json"))
+              .map((n) => n.slice(0, -".json".length));
+          } catch (e: unknown) {
+            if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return [];
+            throw e;
+          }
+        },
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
 
 export const deletePendingExecutionEffect = (
   executionId: string,
   home = resolveClawqlHome()
 ): Effect.Effect<void, Error> =>
-  Effect.tryPromise({
-    try: async () => {
-      try {
-        await unlink(recordPath(executionId, home));
-      } catch (e: unknown) {
-        if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return;
-        throw e;
-      }
-    },
-    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-  });
+  pendingStoreBackend() === "sqlite"
+    ? deletePendingSqliteEffect(executionId, home)
+    : Effect.tryPromise({
+        try: async () => {
+          try {
+            await unlink(recordPath(executionId, home));
+          } catch (e: unknown) {
+            if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return;
+            throw e;
+          }
+        },
+        catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
+      });
 
 export function pendingTtlHours(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.CLAWQL_PENDING_EXECUTION_TTL_HOURS?.trim();
@@ -264,3 +289,6 @@ export function pendingTtlHours(env: NodeJS.ProcessEnv = process.env): number {
   if (!Number.isFinite(n) || n <= 0) return 24;
   return Math.min(n, 24 * 30);
 }
+
+export { CONSUME_SQL, pendingSqlitePath, resetPendingSqliteCacheForTests } from "./pending-execution-sqlite.js";
+export { pendingStoreBackend } from "./pending-store-backend.js";

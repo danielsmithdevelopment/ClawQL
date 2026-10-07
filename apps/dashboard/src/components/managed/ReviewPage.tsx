@@ -61,7 +61,9 @@ export function ReviewPage() {
   )
   const selected = filtered.find((i) => i.id === selectedId) ?? filtered[0] ?? items[0]
 
-  const decide = async (decision: 'approve' | 'decline') => {
+  const decide = async (
+    decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key',
+  ) => {
     if (!selected || (selected.kind !== 'change' && selected.kind !== 'source')) {
       setActionError('This review kind is fixture-only until its backend lands.')
       return
@@ -75,8 +77,18 @@ export function ReviewPage() {
         kind: selected.kind,
         decision,
       })
-      setItems((prev) => prev.filter((i) => i.id !== selected.id))
-      setActionNote(`${decision === 'approve' ? 'Approved' : 'Declined'} · ${res.status}`)
+      const leaveInQueue = decision === 'retry_with_key'
+      if (!leaveInQueue) {
+        setItems((prev) => prev.filter((i) => i.id !== selected.id))
+      }
+      const labels: Record<typeof decision, string> = {
+        approve: 'Approved',
+        decline: 'Declined',
+        mark_applied: 'Marked applied',
+        mark_not_applied: 'Marked not applied',
+        retry_with_key: 'Keyed retry authorized',
+      }
+      setActionNote(`${labels[decision]} · ${res.status}`)
     } catch (e: unknown) {
       setActionError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -370,7 +382,9 @@ function ReviewDetail({
   item: ReviewItem
   source: 'live' | 'fixture'
   busy: boolean
-  onDecide: (decision: 'approve' | 'decline') => void
+  onDecide: (
+    decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key',
+  ) => void
 }) {
   if (item.kind === 'skill') {
     return (
@@ -533,20 +547,67 @@ function ReviewDetail({
             </li>
           </ul>
         </section>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button type="button" disabled={busy} onClick={() => onDecide('approve')} data-testid="review-approve">
-            {busy ? 'Working…' : 'Approve with security key'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={() => onDecide('decline')}
-            data-testid="review-decline"
-          >
-            Decline
-          </Button>
-        </div>
+        {item.changeStatus === 'outcome_unknown' ? (
+          <div className="mt-5 space-y-3">
+            <p className="text-sm text-slate-600">
+              Consumed more than 60s ago with no finalize. Do not silent-retry.
+              {item.idempotencyKey ? (
+                <>
+                  {' '}
+                  Key: <span className="font-mono text-xs text-sky-800">{item.idempotencyKey}</span>
+                </>
+              ) : null}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                disabled={busy}
+                onClick={() => onDecide('mark_applied')}
+                data-testid="review-mark-applied"
+              >
+                {busy ? 'Working…' : 'Mark applied'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => onDecide('mark_not_applied')}
+                data-testid="review-mark-not-applied"
+              >
+                Mark not applied
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy || !item.idempotencyCapable}
+                onClick={() => onDecide('retry_with_key')}
+                data-testid="review-retry-with-key"
+                title={
+                  item.idempotencyCapable
+                    ? 'Authorize re-drive with Idempotency-Key'
+                    : 'Connector is not idempotency-capable'
+                }
+              >
+                Retry with key
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button type="button" disabled={busy} onClick={() => onDecide('approve')} data-testid="review-approve">
+              {busy ? 'Working…' : 'Approve with security key'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => onDecide('decline')}
+              data-testid="review-decline"
+            >
+              Decline
+            </Button>
+          </div>
+        )}
       </>
     )
   }

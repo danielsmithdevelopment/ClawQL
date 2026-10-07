@@ -26,6 +26,11 @@ export type OperationRiskHints = {
   readonly mcpDestructiveHint?: boolean;
   readonly mcpSourceId?: string;
   readonly grpcNoSideEffects?: boolean;
+  /**
+   * Downstream honors Idempotency-Key (e.g. Stripe). Mandates for these ops may
+   * auto-retry after outcome_unknown using `clawql-mandate:<executionId>`.
+   */
+  readonly idempotencyCapable?: boolean;
 };
 
 export type OperationRiskOverride = {

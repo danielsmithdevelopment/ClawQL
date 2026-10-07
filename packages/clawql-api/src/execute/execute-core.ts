@@ -189,6 +189,7 @@ export function executeClawqlOperationEffect(
             args,
             fields,
             risk,
+            idempotencyCapable: op.riskHints?.idempotencyCapable === true,
           })
         );
         return yield* textContentEffect(JSON.stringify(parked));

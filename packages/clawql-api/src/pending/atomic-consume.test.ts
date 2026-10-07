@@ -10,11 +10,14 @@ import {
   parkMandateExecute,
   tryConsumeApprovedMandate,
 } from "./pending-execution-service.js";
+import { resetPendingSqliteCacheForTests } from "./pending-execution-store.js";
 
 describe("atomic mandate consume", () => {
   afterEach(async () => {
     await Effect.runPromise(resetProcessWormForTests());
+    resetPendingSqliteCacheForTests();
     delete process.env.CLAWQL_HOME;
+    delete process.env.CLAWQL_PENDING_STORE;
     delete process.env.CLAWQL_WORM_ENABLED;
     delete process.env.CLAWQL_WORM_LOCAL;
     delete process.env.CLAWQL_WORM_REMOTE;
@@ -24,6 +27,8 @@ describe("atomic mandate consume", () => {
   it("exactly one of 50 concurrent consumes wins; others refuse", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-consume-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_PENDING_STORE = "sqlite";
+    resetPendingSqliteCacheForTests();
     process.env.CLAWQL_WORM_ENABLED = "1";
     process.env.CLAWQL_WORM_LOCAL = "memory";
     process.env.CLAWQL_WORM_REMOTE = "memory";
@@ -80,6 +85,8 @@ describe("atomic mandate consume", () => {
   it("refuses consume on digest mismatch and after expiry", async () => {
     const home = await mkdtemp(join(tmpdir(), "clawql-consume-guard-"));
     process.env.CLAWQL_HOME = home;
+    process.env.CLAWQL_PENDING_STORE = "sqlite";
+    resetPendingSqliteCacheForTests();
 
     const parked = await parkMandateExecute({
       operationId: "createItem",
