@@ -3,16 +3,45 @@
  *
  * Consume is one SQL statement — safe across gateway processes that share the DB file.
  * Multi-node managed still needs Postgres with the same predicate (documented in ADR 0014).
+ *
+ * `node:sqlite` is loaded lazily via createRequire so tsup/esbuild does not rewrite a
+ * static `import … from "node:sqlite"` into a bare `sqlite` specifier that breaks
+ * Docker/webpack consumers (same pattern as clawql-auth / clawql-audit).
  */
 
 import { mkdirSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { Effect } from "effect";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
 import type { PendingExecutionRecord, PendingExecutionStatus } from "./pending-execution-types.js";
 
 const DIR_MODE = 0o700;
+
+type DatabaseSyncInstance = {
+  exec(sql: string): void;
+  prepare(sql: string): {
+    get(...params: unknown[]): unknown;
+    run(...params: unknown[]): unknown;
+    all(...params: unknown[]): unknown[];
+  };
+  close(): void;
+};
+
+type DatabaseSyncCtor = new (path: string) => DatabaseSyncInstance;
+
+function loadDatabaseSync(): DatabaseSyncCtor {
+  // Prefer node: protocol; fall back for runtimes that strip the prefix.
+  try {
+    const req = createRequire(import.meta.url);
+    const mod = req("node:sqlite") as { DatabaseSync: DatabaseSyncCtor };
+    return mod.DatabaseSync;
+  } catch {
+    const req = createRequire(import.meta.url);
+    const mod = req("sqlite") as { DatabaseSync: DatabaseSyncCtor };
+    return mod.DatabaseSync;
+  }
+}
 
 /** Single conditional consume — zero rows ⇒ refuse. Uses DB `unixepoch('now')*1000` when nowMs omitted. */
 export const CONSUME_SQL = `
@@ -29,15 +58,16 @@ WHERE execution_id = ?
 RETURNING execution_id
 `.trim();
 
-let cached: { home: string; db: DatabaseSync } | null = null;
+let cached: { home: string; db: DatabaseSyncInstance } | null = null;
 
 export function pendingSqlitePath(home = resolveClawqlHome()): string {
   return join(home, "pending-executions.sqlite");
 }
 
-function openDb(home: string): DatabaseSync {
+function openDb(home: string): DatabaseSyncInstance {
   if (cached?.home === home) return cached.db;
   mkdirSync(home, { recursive: true, mode: DIR_MODE });
+  const DatabaseSync = loadDatabaseSync();
   const db = new DatabaseSync(pendingSqlitePath(home));
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -81,7 +111,7 @@ function rowToRecord(payloadJson: string): PendingExecutionRecord {
   };
 }
 
-function upsertRecord(db: DatabaseSync, record: PendingExecutionRecord): void {
+function upsertRecord(db: DatabaseSyncInstance, record: PendingExecutionRecord): void {
   const expiresAtMs = Date.parse(record.expiresAt);
   const updatedAt = new Date().toISOString();
   const payload = JSON.stringify(record);
