@@ -26,11 +26,11 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend aims at a s
 
 Atomic consume is only multi-replica-safe when the conditional write runs in a **shared store**:
 
-| Backend | Cross-process? | Cross-node? |
-| --- | --- | --- |
+| Backend                                         | Cross-process?                           | Cross-node?                                                       |
+| ----------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------- |
 | SQLite (`CLAWQL_PENDING_STORE=sqlite`, default) | Yes — `UPDATE…WHERE` + `BEGIN IMMEDIATE` | Only if every replica shares the DB file (not managed multi-node) |
-| JSON + lockfile (`CLAWQL_PENDING_STORE=file`) | Only on a shared volume | No |
-| Postgres `UPDATE…RETURNING` (planned) | Yes | Yes — required for managed multi-node |
+| JSON + lockfile (`CLAWQL_PENDING_STORE=file`)   | Only on a shared volume                  | No                                                                |
+| Postgres `UPDATE…RETURNING` (planned)           | Yes                                      | Yes — required for managed multi-node                             |
 
 The 50-way race test includes a **two-process** fork sharing one SQLite file (not 50 calls in one process alone).
 
@@ -47,10 +47,10 @@ Automatic retry after `outcome_unknown` is allowed **only** when the parked oper
 
 Script: `node scripts/formal/audit-mandate-double-execute.mjs`.
 
-| Store probed (2026-10-07, agent VM) | Result |
-| --- | --- |
+| Store probed (2026-10-07, agent VM)         | Result                                                                                                               |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Local `~/.ClawQL` / process `CLAWQL_WORM_*` | **No managed WORM credentials or Postgres URL in this environment** — hunt not runnable against production from here |
-| Local NDJSON / memory trails in unit tests | N/A for launch |
+| Local NDJSON / memory trails in unit tests  | N/A for launch                                                                                                       |
 
 **Operator action before announcement:** run the hunt against the **managed** WORM store (`CLAWQL_WORM_LOCAL=postgres` + `CLAWQL_WORM_POSTGRES_URL`, and/or S3 remote export) and append the count here (including **zero**). Until that row is filled with a production result, do not claim “never happened in the wild.”
 

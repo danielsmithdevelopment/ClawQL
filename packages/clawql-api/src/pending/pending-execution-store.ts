@@ -290,5 +290,9 @@ export function pendingTtlHours(env: NodeJS.ProcessEnv = process.env): number {
   return Math.min(n, 24 * 30);
 }
 
-export { CONSUME_SQL, pendingSqlitePath, resetPendingSqliteCacheForTests } from "./pending-execution-sqlite.js";
+export {
+  CONSUME_SQL,
+  pendingSqlitePath,
+  resetPendingSqliteCacheForTests,
+} from "./pending-execution-sqlite.js";
 export { pendingStoreBackend } from "./pending-store-backend.js";

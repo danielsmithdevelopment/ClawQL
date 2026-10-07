@@ -4,14 +4,8 @@ import { join } from "node:path";
 import { fork } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  decidePendingExecution,
-  parkMandateExecute,
-} from "./pending-execution-service.js";
-import {
-  pendingSqlitePath,
-  resetPendingSqliteCacheForTests,
-} from "./pending-execution-store.js";
+import { decidePendingExecution, parkMandateExecute } from "./pending-execution-service.js";
+import { pendingSqlitePath, resetPendingSqliteCacheForTests } from "./pending-execution-store.js";
 
 const workerPath = fileURLToPath(new URL("./multiprocess-consume-worker.mjs", import.meta.url));
 

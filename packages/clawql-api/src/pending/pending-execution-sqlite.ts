@@ -191,14 +191,10 @@ export const tryConsumeApprovedSqliteEffect = (
       const consumedBy = input.consumedBy?.trim() || `pid:${process.pid}`;
       db.exec("BEGIN IMMEDIATE");
       try {
-        const hit = db.prepare(CONSUME_SQL).get(
-          consumedAt,
-          consumedBy,
-          consumedAt,
-          executionId,
-          input.argsHash,
-          nowMs
-        ) as { execution_id: string } | undefined;
+        const hit = db
+          .prepare(CONSUME_SQL)
+          .get(consumedAt, consumedBy, consumedAt, executionId, input.argsHash, nowMs) as
+          { execution_id: string } | undefined;
         if (!hit) {
           db.exec("ROLLBACK");
           return null;
@@ -251,7 +247,9 @@ export const deletePendingSqliteEffect = (
 ): Effect.Effect<void, Error> =>
   Effect.try({
     try: () => {
-      openDb(home).prepare(`DELETE FROM pending_executions WHERE execution_id = ?`).run(executionId);
+      openDb(home)
+        .prepare(`DELETE FROM pending_executions WHERE execution_id = ?`)
+        .run(executionId);
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });

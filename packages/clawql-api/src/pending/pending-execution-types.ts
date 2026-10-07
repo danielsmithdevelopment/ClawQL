@@ -39,10 +39,7 @@ export type PendingExecutionRecord = {
   readonly idempotencyCapable: boolean;
 };
 
-export type OutcomeUnknownResolve =
-  | "mark_applied"
-  | "mark_not_applied"
-  | "retry_with_key";
+export type OutcomeUnknownResolve = "mark_applied" | "mark_not_applied" | "retry_with_key";
 
 export type ParkExecuteResult = {
   readonly ok: false;
