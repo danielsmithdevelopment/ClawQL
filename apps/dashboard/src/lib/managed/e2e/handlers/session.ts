@@ -81,15 +81,16 @@ export function postSessionEnforce(req: Request): Effect.Effect<NextResponse, un
       }
     }
 
-    if (reason === "idle") {
+    const enforced: "idle" | "max" | null = reason;
+    if (enforced === "idle") {
       appendAudit(person.name, "session.idle", "Signed out — idle timeout", { path: returnPath });
-    } else if (reason === "max") {
+    } else if (enforced === "max") {
       appendAudit(person.name, "session.max", "Signed out — max session length", { path: returnPath });
     }
 
     return NextResponse.json({
       ok: true,
-      enforced: reason,
+      enforced,
       ...sessionSnapshot(personName),
       returnPath,
     });
