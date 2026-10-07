@@ -106,7 +106,7 @@ async function withPendingFileLock<A>(path: string, fn: () => Promise<A>): Promi
     } catch (e: unknown) {
       if ((e as NodeJS.ErrnoException)?.code !== "EEXIST") throw e;
       if (Date.now() - started > LOCK_TIMEOUT_MS) {
-        throw new Error(`pending execution lock timeout: ${path}`);
+        throw new Error(`pending execution lock timeout: ${path}`, { cause: e });
       }
       await new Promise((r) => setTimeout(r, 2 + Math.floor(Math.random() * 18)));
     }
