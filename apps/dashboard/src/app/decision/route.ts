@@ -2,7 +2,7 @@ import { getDecision, postDecision, runWitnessHandler } from "@/lib/managed/e2e/
 
 export const dynamic = "force-dynamic";
 
-/** Arrange/fault façade — prefer production-shaped POST /decision for Pass-when. */
+/** Production-shaped decision sites. Pass-when via /audit (SI-07, GW-*). */
 export async function POST(req: Request) {
   return runWitnessHandler(postDecision, req);
 }

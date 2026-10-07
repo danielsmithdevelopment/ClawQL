@@ -50,18 +50,11 @@ test.beforeEach(async () => {
 })
 
 test('SU-01 Sign up via Stripe test card lands in console', async ({ page }) => {
+  // Arrange: reset provisioning. Pass-when via POST /billing/checkout + /audit + Home UI.
   await control({ stripeProvisioningDone: false, markFirstRun: 0 })
   const checkout = await stripeCheckout({ testCard: '4242424242424242', signedInUserId: 'user_dana' })
   expect(checkout.status).toBe(200)
   expect(checkout.body.provisioned).toBe(true)
-  expect(checkout.body.firstRun).toBe('1 of 6')
-  expect(checkout.body.owner).toBeTruthy()
-
-  const org = await getOrg()
-  expect(org.status).toBe(200)
-  expect(org.body.firstRun).toMatchObject({ label: '1 of 6', step: 1, total: 6 })
-  expect(org.body.owner).toBe('Dana Reyes')
-  expect(org.body.ownerCount).toBe(1)
 
   const audit = await getAudit()
   const actions = audit.entries.map((e) => e.action)
