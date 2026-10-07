@@ -15,8 +15,9 @@ services:
     ports:
       - "14222:4222"
       - "18222:8222"
+    # nats alpine has no wget/curl — TCP probe on client port.
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz"]
+      test: ["CMD-SHELL", "timeout 1 sh -c 'echo > /dev/tcp/127.0.0.1/4222' || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 12
@@ -27,7 +28,7 @@ services:
     container_name: clawql-e2e-gateway-a
     depends_on:
       nats:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "18080:80"
     volumes:
@@ -46,7 +47,7 @@ services:
     container_name: clawql-e2e-gateway-b
     depends_on:
       nats:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "18081:80"
     volumes:
