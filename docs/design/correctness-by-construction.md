@@ -112,9 +112,19 @@ Already in ClawQL’s direction ([Effect rearchitecture](./effect-ts-modularizat
 - Checked arithmetic on budgets
 - Explicit collection upper bounds on security-critical paths
 
-### Layer 3 — Formal models (design time, before Rust)
+### Layer 3 — Formal models (design time)
 
-Write small TLA+ (or Alloy) models for:
+Per [ADR 0014](../adr/0014-formal-methods-tla-lean.md):
+
+| Tool | Role |
+| --- | --- |
+| **TLA+ / Quint** | Protocol interleavings — mandates, events, jobs, promotion |
+| **Lean** | Policy kernel oracle + differential tests (follow-on) |
+| **gdp-ts** | Compile-time capability flow ([ADR 0013](../adr/0013-gdp-ts-compile-time-auth-proofs.md)) |
+
+**P0 protocol model (started):** [`formal/tla/mandate/`](../../formal/tla/mandate/) — pending-execution mandate lifecycle (at-most-once side effect, digest bind, approver ≠ requester).
+
+Still planned for tee/cellrt:
 
 1. **Key uniqueness** — no two Running cells share an active virtual key
 2. **WORM append-only** — written entries never mutate
@@ -171,6 +181,7 @@ Same loop as [security↔ontology](../security/security-ontology-knowledge-loop.
 | -------- | ----------------------------------------------------------------------------------------------- |
 | **P0**   | Document required caps on streams/Ouroboros APIs; WORM-fail → halt policy in tee/cellrt specs   |
 | **P0**   | Effect Schema at remaining untrusted boundaries; STM/Ref for budget paths in inference/payments |
+| **P0**   | TLA+ mandate lifecycle ([`formal/tla/mandate/`](../../formal/tla/mandate/), ADR 0014) — then Lean policy oracle |
 | **P1**   | TLA+ sketches for key uniqueness + WORM append-only + cell liveness (before heavy tee Rust)     |
 | **P1**   | Rust newtypes + exhaustive cell FSM + `#[must_use]` WORM APIs in cellrt                         |
 | **P2**   | Preallocated cell pools; Wasmtime memory ceilings after init                                    |
