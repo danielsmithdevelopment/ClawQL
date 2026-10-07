@@ -809,6 +809,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # postgres-consume loads pending-execution-service → clawql-audit (exports ./dist only).
+      - name: Build workspace deps
+        run: npm run build -w clawql-merkle -w clawql-audit
+
       - name: Run pending Postgres consume tests
         run: |
           npx vitest run \
