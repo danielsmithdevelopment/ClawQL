@@ -65,6 +65,6 @@ Where the client supports MCP standard elicitation / ChatGPT MRTR, approve **ins
 
 - Resume never accepts alternate `args` — only the parked payload.
 - Bypass is scoped to one `executionId` after **atomic consume**; it does not widen ATR or clear `block`.
-- Concurrent resume / `approvedExecutionId` execute: at most one consume wins (file-lock CAS today; SQL/`UPDATE … RETURNING` or NATS KV revision check when those stores land). Formal model: [`formal/tla/mandate/`](../../../formal/tla/mandate/).
+- Concurrent resume / `approvedExecutionId` execute: at most one consume wins. **Managed multi-node:** Postgres `UPDATE … WHERE … AND expires_at > NOW() RETURNING` (`CLAWQL_PENDING_DATABASE_URL`). Single-node self-host may use SQLite. Formal model: [`formal/tla/mandate/`](../../../formal/tla/mandate/).
 - Pending files are `0600`; args may contain secrets — **not** included in default home sync.
 - Pre-launch audit hunt for historical double-execute: `node scripts/formal/audit-mandate-double-execute.mjs`.

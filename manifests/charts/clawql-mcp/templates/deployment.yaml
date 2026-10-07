@@ -252,6 +252,20 @@ spec:
             - name: CLAWQL_OUROBOROS_DATABASE_URL
               value: {{ .Values.ouroborosDatabaseUrl | quote }}
             {{- end }}
+            {{- if .Values.pendingDatabaseUrl }}
+            - name: CLAWQL_PENDING_DATABASE_URL
+              value: {{ .Values.pendingDatabaseUrl | quote }}
+            - name: CLAWQL_PENDING_STORE
+              value: "postgres"
+            {{- end }}
+            {{- if or .Values.pendingRequirePostgres (gt (int .Values.replicaCount) 1) .Values.managedGateway.enabled }}
+            - name: CLAWQL_PENDING_REQUIRE_POSTGRES
+              value: "1"
+            {{- if gt (int .Values.replicaCount) 1 }}
+            - name: CLAWQL_GATEWAY_REPLICAS
+              value: {{ .Values.replicaCount | quote }}
+            {{- end }}
+            {{- end }}
             {{- if and .Values.ouroborosPostgres.enabled (not .Values.ouroborosDatabaseUrl) }}
             - name: CLAWQL_OUROBOROS_DB_HOST
               value: {{ include "clawql-mcp.ouroborosPostgresName" . | quote }}
