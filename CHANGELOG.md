@@ -2,7 +2,7 @@
 
 ### Added
 
-- **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes today’s double-execute race). gdp-ts remains layer 1.
+- **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes the historical double-execute race). gdp-ts remains layer 1. TLC dual CI (atomic pass + weak counterexample): `.github/workflows/formal-mandate-tlc.yml` / `scripts/formal/run-mandate-tlc.sh`. Audit hunt: `scripts/formal/audit-mandate-double-execute.mjs`. Lean approval-policy oracle + differential tests under `formal/lean/` / `packages/clawql-api/src/policy/`. Concurrent consume regression (50 parallel → exactly one win).
 
 - **Security: atomic mandate consume** — `tryConsumeApprovedEffect` CAS (`approved` → `outcome_unknown` under file lock with digest + store-clock expiry). Execute/resume consume before side effect; finalize to `completed`/`failed`. Crash leaves `outcome_unknown` in Review + WORM (`MANDATE_CONSUMED`).
 

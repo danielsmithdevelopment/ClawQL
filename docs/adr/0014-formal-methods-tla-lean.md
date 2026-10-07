@@ -38,14 +38,15 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend aims at a s
 
 ### Where to start
 
-1. **TLA+ mandate lifecycle** — most security-critical state machine; center of “approved once, for this exact change.” Spec invariants: never consumed twice; never consumed with mismatched digest; never consumed after expiry; approver ≠ requester (target). TLC with two replicas and two requests should finish in minutes. If TLC finds one bad interleaving against a model of today’s store, that justifies the rest.
-2. **Lean approval-policy model** with differential tests — second. Gives the security page a line few competitors can write: approval protocol model-checked, policy engine proved.
+1. **TLA+ mandate lifecycle** — shipped under [`formal/tla/mandate/`](../../formal/tla/mandate/). TLC found the double-execute race under `WeakConsume`; production now uses **atomic consume** (`approved` → `outcome_unknown`). CI runs both configs: atomic must pass, weak must still counterexample (`.github/workflows/formal-mandate-tlc.yml`).
+2. **Lean approval-policy model** — tight first slice in [`formal/lean/`](../../formal/lean/) + differential tests vs `packages/clawql-api/src/policy/`. Risk classification / information-flow follow once that loop is solid.
 
 Quint is an acceptable front end if TLA+ syntax is a barrier; semantics stay the same.
 
 ## Consequences
 
 - Protocol changes to mandates / events / erase / promotion must update the corresponding TLA+/Quint spec and keep TLC green (or document deliberate model changes).
-- Policy-kernel changes should eventually update the Lean model and differential suite (follow-on; not blocking the first TLA+ merge).
-- Specs may intentionally be **stricter than today’s implementation** — then TLC or differential tests drive hardening (e.g. atomic one-shot consume before side effect). Document “model of today” vs “target” in each `formal/*/README.md`.
-- Security / marketing claim only after TLC (and later Lean) actually run in CI — do not claim “proved” from unchecked specs alone.
+- The weak-config counterexample is a **regression oracle** — do not “fix” it by weakening Safety.
+- Policy-kernel changes update the Lean model and differential suite.
+- Crash after consume leaves `outcome_unknown` in Review + WORM; retry only with `clawql-mandate:<executionId>` idempotency keys.
+- Security / marketing claim (“model-checked approval protocol”) is allowed once TLC CI is green **and** the atomic consume fix is shipped — back with this ADR and the weak-config counterexample that was fixed.
