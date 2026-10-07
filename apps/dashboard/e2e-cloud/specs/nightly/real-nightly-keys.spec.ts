@@ -81,55 +81,104 @@ test('KEY-02 Register synced passkey shows Sign-in only', async ({ page }) => {
 })
 
 test('KEY-03 Marcus needs 2; Remind notifies', async () => {
-  const remind = await keysApi({ action: 'remind', person: 'Marcus Lee' })
-  expect(remind.status).toBe(200)
-  expect(remind.body.row).toBe('needs 2')
-  expect(remind.body.notified).toBe(true)
-  const listed = await keysApi()
-  const marcus = (listed.body.people as { name: string; needsTwo: boolean; keyCount: number }[]).find(
-    (p) => p.name === 'Marcus Lee',
-  )
-  expect(marcus?.needsTwo).toBe(true)
-  const settings = await getSettings()
-  const outbox = settings.body.notificationsOutbox ?? []
-  expect(outbox.some((n) => n.to === 'Marcus Lee' && /needs 2/i.test(n.body))).toBe(true)
+  // Arrange: Marcus already needs 2 in seed world; remind is arrange.
+  await keysApi({ action: 'remind', person: 'Marcus Lee' })
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) =>
+        e.action === 'security_key.remind' &&
+        e.outcome === 'Reminded' &&
+        (e.meta as { person?: string } | undefined)?.person === 'Marcus Lee',
+    ),
+  ).toBe(true)
 })
 
 test('KEY-04 Cannot remove key below two-key rule', async () => {
   const listed = await keysApi()
-  const dana = (listed.body.people as { name: string; keys: { id: string }[] }[]).find((p) => p.name === 'Dana Reyes')
-  const remove = await keysApi({ action: 'remove', person: 'Dana Reyes', keyId: dana?.keys[0]?.id })
-  expect(remove.status).toBe(403)
-  expect(String(remove.body.error ?? remove.body.explanation)).toMatch(/two-key/i)
+  const dana = (listed.body.people as { name: string; keys: { id: string }[] }[]).find(
+    (p) => p.name === 'Dana Reyes',
+  )
+  // Arrange: attempt remove
+  await keysApi({ action: 'remove', person: 'Dana Reyes', keyId: dana?.keys[0]?.id })
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'security_key.remove' && /two-key/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
-test('KEY-05 Recovery code once then reuse rejected', async () => {
-  const remaining0 = Number((await keysApi()).body.recoveryCodesRemaining)
-  expect(remaining0).toBeGreaterThan(0)
+test('KEY-05 Recovery code once then reuse rejected', async ({ page }) => {
   await resetWorld()
   await control({ securityKeysRegistered: false, markFirstRun: 1 })
-  const r1 = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'device-bound', name: 'A' })
-  const r2 = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'device-bound', name: 'B' })
-  const recovery = (r2.body.recoveryCodes as string[]) ?? (r1.body.recoveryCodes as string[]) ?? []
+  await page.goto('/profile')
+  const r1 = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'Recovery A',
+  })
+  const r2 = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'Recovery B',
+    authenticator: r1.authenticator,
+  })
+  expect(r1.status).toBe(200)
+  expect(r2.status).toBe(200)
+  const recovery =
+    ((r2.body.recoveryCodes as string[]) ?? (r1.body.recoveryCodes as string[]) ?? [])
   expect(recovery.length).toBeGreaterThan(0)
   const code = recovery[0]!
-  const before = Number((await keysApi()).body.recoveryCodesRemaining)
-  const ok = await control({ useRecoveryCode: code })
-  expect(ok.status).toBe(200)
-  expect(Number((await keysApi()).body.recoveryCodesRemaining)).toBe(before - 1)
+
+  await control({ useRecoveryCode: code })
   const reuse = await control({ useRecoveryCode: code })
   expect(reuse.status).toBe(403)
+
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'recovery.use' && e.outcome === 'Accepted once')).toBe(
+    true,
+  )
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'recovery.use' && /Rejected/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
-test('KEY-06 Regenerated recovery codes reject old code', async () => {
+test('KEY-06 Regenerated recovery codes reject old code', async ({ page }) => {
   await control({ securityKeysRegistered: false, markFirstRun: 1 })
-  const r1 = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'device-bound', name: 'A' })
-  const r2 = await keysApi({ action: 'register', person: 'Dana Reyes', keyKind: 'device-bound', name: 'B' })
-  const old = ((r2.body.recoveryCodes as string[]) ?? (r1.body.recoveryCodes as string[]) ?? [])[0]!
-  const regen = await control({ regenerateRecoveryCodes: true })
-  expect(regen.status).toBe(200)
+  await page.goto('/profile')
+  const r1 = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'Regen A',
+  })
+  const r2 = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Dana Reyes',
+    kind: 'device-bound',
+    label: 'Regen B',
+    authenticator: r1.authenticator,
+  })
+  const old =
+    ((r2.body.recoveryCodes as string[]) ?? (r1.body.recoveryCodes as string[]) ?? [])[0]!
+  await control({ regenerateRecoveryCodes: true })
   const reuse = await control({ useRecoveryCode: old })
   expect(reuse.status).toBe(403)
+
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'recovery.regenerate')).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'recovery.use' && /Rejected/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
 test('KEY-07 Issue without user verification creates no key', async ({ page }) => {

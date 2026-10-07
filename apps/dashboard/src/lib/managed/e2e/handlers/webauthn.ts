@@ -200,6 +200,8 @@ export function postRegisterVerify(req: Request): Effect.Effect<NextResponse, un
       ok: true,
       key,
       status,
+      // Mirror /api/e2e/keys register — codes shown once when the two-key rule is met.
+      recoveryCodes: world.recoveryCodesShownOnce ? world.recoveryCodes : undefined,
     });
   });
 }
