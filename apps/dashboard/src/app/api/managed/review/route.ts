@@ -7,6 +7,16 @@ import { resolveManagedSessionSync } from "@/lib/managed/session";
 
 export const runtime = "nodejs";
 
+const DECISIONS = [
+  "approve",
+  "decline",
+  "mark_applied",
+  "mark_not_applied",
+  "retry_with_key",
+] as const;
+
+type Decision = (typeof DECISIONS)[number];
+
 export async function GET() {
   if (!isManagedConsole()) {
     return NextResponse.json({ error: "Managed console only" }, { status: 404 });
@@ -23,7 +33,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as {
     id?: string;
     kind?: "change" | "source";
-    decision?: "approve" | "decline";
+    decision?: Decision;
   };
 
   if (!body.id?.trim() || !body.kind || !body.decision) {
@@ -32,8 +42,11 @@ export async function POST(req: Request) {
   if (body.kind !== "change" && body.kind !== "source") {
     return NextResponse.json({ error: "kind must be change or source" }, { status: 400 });
   }
-  if (body.decision !== "approve" && body.decision !== "decline") {
-    return NextResponse.json({ error: "decision must be approve or decline" }, { status: 400 });
+  if (!DECISIONS.includes(body.decision)) {
+    return NextResponse.json(
+      { error: `decision must be one of: ${DECISIONS.join(", ")}` },
+      { status: 400 },
+    );
   }
 
   const session = resolveManagedSessionSync({});
@@ -47,7 +60,7 @@ export async function POST(req: Request) {
   );
   if (exit._tag === "Failure") {
     return NextResponse.json(
-      { error: "Decision failed — check pending id and operator two-party rules" },
+      { error: "Decision failed — check pending id, outcome_unknown resolve rules, or operator two-party rules" },
       { status: 400 },
     );
   }

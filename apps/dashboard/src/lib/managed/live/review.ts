@@ -4,7 +4,11 @@ import {
   getPendingSourcesDir,
   listPendingExecutionIdsEffect,
   loadPendingExecution,
+  mandateIdempotencyKey,
+  OUTCOME_UNKNOWN_ATTENTION_MS,
   readPendingSourceEffect,
+  resolvePendingOutcomeUnknown,
+  type OutcomeUnknownResolve,
 } from "clawql-api";
 import { Effect } from "effect";
 import { readdir } from "node:fs/promises";
@@ -66,23 +70,52 @@ export const listManagedReviewEffect = (
           try: () => loadPendingExecution(id, home),
           catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
         });
-        if (!record || record.status !== "pending") continue;
-        items.push({
-          id: record.executionId,
-          kind: "change",
-          kindLabel: "CHANGE",
-          title: record.operationId,
-          badge: `${record.risk.policy.toUpperCase()} risk`,
-          badgeTone:
-            record.risk.policy === "block"
-              ? "danger"
-              : record.risk.policy === "mandate"
-                ? "warn"
-                : "neutral",
-          listMeta: `Parked ${relativeTime(record.createdAt)}`,
-          statusLine: expiresLine(record.expiresAt),
-          statusTone: Date.parse(record.expiresAt) - Date.now() < 30 * 60_000 ? "danger" : "neutral",
-        });
+        if (!record) continue;
+        if (record.status === "pending") {
+          items.push({
+            id: record.executionId,
+            kind: "change",
+            kindLabel: "CHANGE",
+            title: record.operationId,
+            badge: `${record.risk.policy.toUpperCase()} risk`,
+            badgeTone:
+              record.risk.policy === "block"
+                ? "danger"
+                : record.risk.policy === "mandate"
+                  ? "warn"
+                  : "neutral",
+            listMeta: `Parked ${relativeTime(record.createdAt)}`,
+            statusLine: expiresLine(record.expiresAt),
+            statusTone:
+              Date.parse(record.expiresAt) - Date.now() < 30 * 60_000 ? "danger" : "neutral",
+            changeStatus: "pending",
+          });
+          continue;
+        }
+        // Consumed but outcome not finalized — only alarm after grace (healthy runs finalize quickly).
+        if (record.status === "outcome_unknown") {
+          const consumedMs = record.consumedAt ? Date.parse(record.consumedAt) : NaN;
+          const ageMs = Number.isFinite(consumedMs) ? Date.now() - consumedMs : 0;
+          const needsAttention = ageMs >= OUTCOME_UNKNOWN_ATTENTION_MS;
+          if (!needsAttention) continue;
+          items.push({
+            id: record.executionId,
+            kind: "change",
+            kindLabel: "CHANGE",
+            title: record.operationId,
+            badge: "OUTCOME UNKNOWN",
+            badgeTone: "danger",
+            listMeta: `Consumed ${record.consumedAt ? relativeTime(record.consumedAt) : "recently"}`,
+            statusLine: record.idempotencyCapable
+              ? "Outcome unknown — mark applied/not applied, or retry with idempotency key"
+              : "Outcome unknown — mark applied or not applied (connector is not idempotency-capable)",
+            statusTone: "danger",
+            changeStatus: "outcome_unknown",
+            idempotencyCapable: record.idempotencyCapable,
+            idempotencyKey: mandateIdempotencyKey(record.executionId),
+            needsOutcomeAttention: true,
+          });
+        }
       }
 
       for (const id of sourceIds) {
@@ -120,7 +153,7 @@ function asReviewError(cause: unknown): ManagedReviewError {
 export const decideManagedReviewEffect = (input: {
   readonly id: string;
   readonly kind: "change" | "source";
-  readonly decision: "approve" | "decline";
+  readonly decision: "approve" | "decline" | OutcomeUnknownResolve;
   readonly operatorId: string;
   readonly env?: NodeJS.ProcessEnv;
 }): Effect.Effect<{ readonly ok: true; readonly id: string; readonly status: string }, ManagedReviewError> =>
@@ -129,13 +162,39 @@ export const decideManagedReviewEffect = (input: {
     const home = env.CLAWQL_HOME?.trim() || undefined;
 
     if (input.kind === "change") {
+      if (
+        input.decision === "mark_applied" ||
+        input.decision === "mark_not_applied" ||
+        input.decision === "retry_with_key"
+      ) {
+        // Narrow before the Promise closure — TS does not carry the union guard into tryPromise.
+        const resolution: OutcomeUnknownResolve = input.decision;
+        const record = yield* Effect.tryPromise({
+          try: () => resolvePendingOutcomeUnknown(input.id, resolution, home),
+          catch: asReviewError,
+        });
+        return { ok: true as const, id: record.executionId, status: record.status };
+      }
+      if (input.decision !== "approve" && input.decision !== "decline") {
+        return yield* Effect.fail({
+          _tag: "ManagedReviewError" as const,
+          reason: `Unsupported decision: ${String(input.decision)}`,
+        });
+      }
+      const decision = input.decision;
       const record = yield* Effect.tryPromise({
-        try: () => decidePendingExecution(input.id, input.decision, home),
+        try: () => decidePendingExecution(input.id, decision, home),
         catch: asReviewError,
       });
       return { ok: true as const, id: record.executionId, status: record.status };
     }
 
+    if (input.decision !== "approve" && input.decision !== "decline") {
+      return yield* Effect.fail({
+        _tag: "ManagedReviewError" as const,
+        reason: "Source proposals only support approve or decline",
+      });
+    }
     const result = yield* approveSourceEffect({
       proposalId: input.id,
       decision: input.decision,

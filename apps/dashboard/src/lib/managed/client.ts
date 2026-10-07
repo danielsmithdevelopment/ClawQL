@@ -88,7 +88,7 @@ export async function fetchManagedReview(): Promise<{
 export async function decideManagedReview(input: {
   id: string
   kind: 'change' | 'source'
-  decision: 'approve' | 'decline'
+  decision: 'approve' | 'decline' | 'mark_applied' | 'mark_not_applied' | 'retry_with_key'
 }): Promise<{ ok: true; id: string; status: string }> {
   const res = await fetch('/api/managed/review', {
     method: 'POST',

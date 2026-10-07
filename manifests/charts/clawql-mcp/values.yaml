@@ -594,6 +594,10 @@ enableOuroboros: false
 enableLangfuseEval: false
 # When set, injects CLAWQL_OUROBOROS_DATABASE_URL. Prefer envFromSecret / extraEnv if the URL contains credentials.
 ouroborosDatabaseUrl: ""
+# Mandate pending-execution store (multi-replica consume). Injects CLAWQL_PENDING_DATABASE_URL + CLAWQL_PENDING_STORE=postgres.
+# Required when replicaCount > 1 or managedGateway is enabled — SQLite is not cross-node safe.
+pendingDatabaseUrl: ""
+pendingRequirePostgres: false
 # Optional in-cluster Postgres for Ouroboros event lineage (#142), deployed alongside clawql-mcp.
 # When enabled, the chart injects CLAWQL_OUROBOROS_DB_* env vars into clawql-mcp.
 ouroborosPostgres:

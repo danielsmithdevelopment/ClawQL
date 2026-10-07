@@ -1,7 +1,9 @@
 /**
  * Effect Tag + Layer: park mandate executes and resume after human approval.
+ * Consume is atomic (approved → outcome_unknown) before any side effect.
  */
 
+import { hostname } from "node:os";
 import { Context, Effect, Layer } from "effect";
 import { appendProcessWormEffect } from "clawql-audit";
 import type { OperationRisk } from "../risk/operation-risk-types.js";
@@ -11,10 +13,16 @@ import {
   newExecutionIdEffect,
   pendingTtlHours,
   readPendingExecutionEffect,
+  tryConsumeApprovedEffect,
   updatePendingStatusEffect,
   writePendingExecutionEffect,
 } from "./pending-execution-store.js";
-import type { ParkExecuteResult, PendingExecutionRecord } from "./pending-execution-types.js";
+import {
+  mandateIdempotencyKey,
+  type OutcomeUnknownResolve,
+  type ParkExecuteResult,
+  type PendingExecutionRecord,
+} from "./pending-execution-types.js";
 
 export type ParkInput = {
   readonly operationId: string;
@@ -22,9 +30,19 @@ export type ParkInput = {
   readonly fields?: readonly string[];
   readonly risk: OperationRisk;
   readonly home?: string;
+  /** Override: connector honors Idempotency-Key (Stripe, etc.). */
+  readonly idempotencyCapable?: boolean;
 };
 
 export type ResumeDecision = "approve" | "decline";
+
+export type ConsumeApprovedInput = {
+  readonly executionId: string;
+  readonly argsHash: string;
+  readonly home?: string;
+  readonly consumedBy?: string;
+  readonly nowMs?: number;
+};
 
 export class PendingExecutionService extends Context.Service<
   PendingExecutionService,
@@ -39,16 +57,35 @@ export class PendingExecutionService extends Context.Service<
       decision: ResumeDecision,
       home?: string
     ) => Effect.Effect<PendingExecutionRecord, Error>;
+    /** Atomic one-shot consume. Null = refuse (already consumed, mismatch, expired). */
+    readonly tryConsume: (
+      input: ConsumeApprovedInput
+    ) => Effect.Effect<PendingExecutionRecord | null, Error>;
     readonly markCompleted: (
       executionId: string,
       outcome: { readonly ok: boolean; readonly error?: string },
       home?: string
     ) => Effect.Effect<PendingExecutionRecord, Error>;
+    /** Human resolve for stuck outcome_unknown (Review). */
+    readonly resolveOutcomeUnknown: (
+      executionId: string,
+      resolution: OutcomeUnknownResolve,
+      home?: string
+    ) => Effect.Effect<PendingExecutionRecord, Error>;
   }
 >()("clawql/PendingExecutionService") {}
 
+/** Automatic retry only when the parked op's connector is idempotency-capable. */
+export function mayAutoRetryOutcomeUnknown(record: PendingExecutionRecord): boolean {
+  return record.status === "outcome_unknown" && record.idempotencyCapable === true;
+}
+
 function isExpired(record: PendingExecutionRecord, now = Date.now()): boolean {
   return Date.parse(record.expiresAt) <= now;
+}
+
+function defaultConsumedBy(): string {
+  return `host:${hostname()}:pid:${process.pid}`;
 }
 
 export const PendingExecutionLive = Layer.succeed(
@@ -79,6 +116,9 @@ export const PendingExecutionLive = Layer.succeed(
           approvedAt: null,
           completedAt: null,
           lastError: null,
+          consumedAt: null,
+          consumedBy: null,
+          idempotencyCapable: input.idempotencyCapable === true,
         };
         yield* writePendingExecutionEffect(record, home);
         yield* appendProcessWormEffect({
@@ -92,6 +132,7 @@ export const PendingExecutionLive = Layer.succeed(
             riskPolicy: input.risk.policy,
             riskLevel: input.risk.level,
             expiresAt,
+            idempotencyKey: mandateIdempotencyKey(executionId),
           },
         });
         return {
@@ -178,16 +219,143 @@ export const PendingExecutionLive = Layer.succeed(
         return approved;
       }),
 
+    tryConsume: (input) =>
+      Effect.gen(function* () {
+        const home = input.home ?? resolveClawqlHome();
+        const consumed = yield* tryConsumeApprovedEffect(
+          input.executionId,
+          {
+            argsHash: input.argsHash,
+            consumedBy: input.consumedBy ?? defaultConsumedBy(),
+            nowMs: input.nowMs,
+          },
+          home
+        );
+        if (!consumed) return null;
+        const ts = consumed.consumedAt ?? new Date().toISOString();
+        yield* appendProcessWormEffect({
+          type: "MANDATE_CONSUMED",
+          timestamp: ts,
+          sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+          metadata: {
+            executionId: consumed.executionId,
+            operationId: consumed.operationId,
+            argsHash: consumed.argsHash,
+            consumedBy: consumed.consumedBy,
+            status: consumed.status,
+            idempotencyKey: mandateIdempotencyKey(consumed.executionId),
+            outcome: "unknown",
+          },
+        });
+        return consumed;
+      }),
+
     markCompleted: (executionId, outcome, homeOpt) =>
-      updatePendingStatusEffect(
-        executionId,
-        {
-          status: outcome.ok ? "completed" : "failed",
-          completedAt: new Date().toISOString(),
-          lastError: outcome.ok ? null : (outcome.error ?? "execute failed"),
-        },
-        homeOpt ?? resolveClawqlHome()
-      ),
+      Effect.gen(function* () {
+        const home = homeOpt ?? resolveClawqlHome();
+        const existing = yield* readPendingExecutionEffect(executionId, home);
+        if (!existing) {
+          return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
+        }
+        if (existing.status === "completed" || existing.status === "failed") {
+          return existing;
+        }
+        if (existing.status !== "outcome_unknown") {
+          return yield* Effect.fail(
+            new Error(
+              `Execution ${executionId} cannot finalize from status=${existing.status} (expected outcome_unknown)`
+            )
+          );
+        }
+        const completedAt = new Date().toISOString();
+        const next = yield* updatePendingStatusEffect(
+          executionId,
+          {
+            status: outcome.ok ? "completed" : "failed",
+            completedAt,
+            lastError: outcome.ok ? null : (outcome.error ?? "execute failed"),
+          },
+          home
+        );
+        yield* appendProcessWormEffect({
+          type: outcome.ok ? "MANDATE_FINALIZED" : "MANDATE_FINALIZED",
+          timestamp: completedAt,
+          sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+          metadata: {
+            executionId,
+            operationId: existing.operationId,
+            argsHash: existing.argsHash,
+            ok: outcome.ok,
+            error: outcome.error ?? null,
+            idempotencyKey: mandateIdempotencyKey(executionId),
+          },
+        });
+        return next;
+      }),
+
+    resolveOutcomeUnknown: (executionId, resolution, homeOpt) =>
+      Effect.gen(function* () {
+        const home = homeOpt ?? resolveClawqlHome();
+        const existing = yield* readPendingExecutionEffect(executionId, home);
+        if (!existing) {
+          return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
+        }
+        if (existing.status !== "outcome_unknown") {
+          return yield* Effect.fail(
+            new Error(`Execution ${executionId} is not outcome_unknown (status=${existing.status})`)
+          );
+        }
+        if (resolution === "mark_applied" || resolution === "mark_not_applied") {
+          const completedAt = new Date().toISOString();
+          const ok = resolution === "mark_applied";
+          const next = yield* updatePendingStatusEffect(
+            executionId,
+            {
+              status: ok ? "completed" : "failed",
+              completedAt,
+              lastError: ok ? null : "operator marked not applied",
+            },
+            home
+          );
+          yield* appendProcessWormEffect({
+            type: "MANDATE_FINALIZED",
+            timestamp: completedAt,
+            sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+            metadata: {
+              executionId,
+              operationId: existing.operationId,
+              argsHash: existing.argsHash,
+              ok,
+              error: ok ? null : "operator marked not applied",
+              idempotencyKey: mandateIdempotencyKey(executionId),
+              resolvedBy: "operator",
+            },
+          });
+          return next;
+        }
+        // retry_with_key — authorize re-drive with Idempotency-Key; never a second consume.
+        if (!existing.idempotencyCapable) {
+          return yield* Effect.fail(
+            new Error(
+              `Retry with key refused: operation ${existing.operationId} is not idempotency-capable. Mark applied or not applied instead.`
+            )
+          );
+        }
+        const now = new Date().toISOString();
+        yield* appendProcessWormEffect({
+          type: "MANDATE_RETRY_AUTHORIZED",
+          timestamp: now,
+          sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+          metadata: {
+            executionId,
+            operationId: existing.operationId,
+            argsHash: existing.argsHash,
+            idempotencyKey: mandateIdempotencyKey(executionId),
+            authorizedBy: "operator",
+          },
+        });
+        return existing;
+      }),
   })
 );
 
@@ -226,6 +394,17 @@ export async function loadPendingExecution(
   );
 }
 
+export async function tryConsumeApprovedMandate(
+  input: ConsumeApprovedInput
+): Promise<PendingExecutionRecord | null> {
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const svc = yield* PendingExecutionService;
+      return yield* svc.tryConsume(input);
+    }).pipe(Effect.provide(PendingExecutionLive))
+  );
+}
+
 export async function markPendingCompleted(
   executionId: string,
   outcome: { readonly ok: boolean; readonly error?: string },
@@ -235,6 +414,19 @@ export async function markPendingCompleted(
     Effect.gen(function* () {
       const svc = yield* PendingExecutionService;
       return yield* svc.markCompleted(executionId, outcome, home);
+    }).pipe(Effect.provide(PendingExecutionLive))
+  );
+}
+
+export async function resolvePendingOutcomeUnknown(
+  executionId: string,
+  resolution: OutcomeUnknownResolve,
+  home?: string
+): Promise<PendingExecutionRecord> {
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const svc = yield* PendingExecutionService;
+      return yield* svc.resolveOutcomeUnknown(executionId, resolution, home);
     }).pipe(Effect.provide(PendingExecutionLive))
   );
 }

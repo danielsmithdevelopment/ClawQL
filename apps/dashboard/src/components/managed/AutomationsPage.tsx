@@ -200,7 +200,8 @@ export function AutomationsPage() {
                 ))}
               </ul>
               <p className="mt-3 text-xs text-slate-500">
-                Retries keep the same event ID. Every delivery attempt is in the audit log.
+                Retries keep the same event ID so receivers process once. Every delivery attempt is in the
+                audit log.
               </p>
             </div>
           </div>
@@ -352,8 +353,8 @@ function EventTypesPanel() {
         <h2 className="text-sm font-semibold text-slate-900">How events arrive</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
           <li>
-            Webhooks are signed to the Standard Webhooks format. Retries keep the same event ID, so receivers can
-            drop duplicates.
+            Webhooks are signed to the Standard Webhooks format. Retries keep the same event ID, so receivers that
+            drop duplicates process each event once (at-least-once delivery).
           </li>
           <li>The live stream uses CloudEvents and resumes from the last event a client saw.</li>
           <li>Every payload has personal data redacted before it&apos;s sent.</li>

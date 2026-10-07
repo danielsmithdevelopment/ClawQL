@@ -767,7 +767,7 @@ export const CLOUD_E2E_SCENARIOS: readonly Scenario[] = [
     run: 'Nightly',
     area: 'events',
     title: 'Send 500 events while the gateway runs several instances',
-    passWhen: 'Each event ID reaches the receiver once, apart from retries',
+    passWhen: 'Each event ID is processed once at the receiver (retries reuse the ID; duplicates dropped)',
   },
   {
     id: 'EV-14',

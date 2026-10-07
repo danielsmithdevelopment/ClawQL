@@ -40,18 +40,20 @@
     "clawql-audit": "0.1.0",
     "clawql-auth": "0.1.0",
     "clawql-core": "0.1.0",
+    "clawql-gdp": "0.1.0",
     "effect": "4.0.0",
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.0",
     "node-fetch": "^3.3.2",
+    "pg": "^8.23.1",
     "prom-client": "^15.1.3",
     "swagger2openapi": "^7.0.8",
     "yaml": "^2.9.0",
-    "zod": "4.6.5",
-    "clawql-gdp": "0.1.0"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@types/pg": "^8.23.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
