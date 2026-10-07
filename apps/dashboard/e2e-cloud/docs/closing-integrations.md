@@ -10,12 +10,14 @@ Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helper
 - Synced vs device-bound registration (`registerSecurityKeyViaCdp`)
 - Preload credentials with a chosen `signCount` for cloned-key (KEY-11)
 
-**Migrated Pass-when (CDP + `/audit` + Profile/Settings UI):** KEY-01..12, SI-02..06.  
+**Migrated Pass-when (CDP + `/audit` + Profile/Settings UI):** KEY-01..12, SI-02..06, SI-08 (approve path).  
 KEY-09: `ageSession` arrange → POST `/org/delete` + Settings UI + `/audit` (fresh sign-in gate).  
 SI-04/05: `ageLastActive` / `ageSession` arrange → POST `/session/enforce` on Profile load + `/audit`.  
 SI-06: `secondBrowserSession` arrange → Profile **Sign out everywhere else** → POST `/session/end-others` + `/audit`.  
+SI-08: `syncOkta` arrange → CDP approve refused + `/audit` (full Okta/OIDC protocol still Compose).  
+SI-07: `syncOkta` arrange + decision 403 + `/audit` (same Okta gap).  
 KEY-11: `inflateSignatureCounter` arrange. KEY-10: `setAaguid` arrange. KEY-12: replay prior assertion signature.  
-Remaining: SI-07/08 (real Okta/OIDC sync), Stripe, Compose.
+Remaining: real Okta/OIDC (SI-07/08 sync), Stripe, Compose.
 
 ## Stripe (SU-*, ADM-11/12)
 

@@ -7,7 +7,6 @@ import { test, expect } from '@playwright/test'
 import { KEYS, mcpCallTool, mcpListTools, openaiChat } from '../../harness/agent-driver.mjs'
 import { openManagedConsole } from '../../helpers/console'
 import {
-  approveReview,
   control,
   createSubscription,
   decisionCall,
@@ -43,7 +42,10 @@ import {
   uploadDocument,
   waitForDeliveries,
 } from '../../helpers/harness'
-import { registerSecurityKeyViaCdp } from '../../helpers/webauthn-ceremony'
+import {
+  approveReviewViaCdp,
+  registerSecurityKeyViaCdp,
+} from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
 const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
@@ -285,25 +287,37 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
   expect(audit.entries.some((e) => e.action === 'sync.group')).toBe(true)
 })
 
-test('SI-08 Okta deactivate Priya — cannot act; audit records change', async () => {
+test('SI-08 Okta deactivate Priya — cannot act; audit records change', async ({ page }) => {
+  // Arrange: CDP key for Priya, then Okta deactivate (sync still harness until Compose Keycloak).
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Priya Shah',
+    kind: 'device-bound',
+    label: 'Priya CDP',
+  })
+  expect(reg.status).toBe(200)
   await control({ syncOkta: { deactivatePriya: true } })
-  const org = await getOrg()
-  const priya = (org.body.people as { name: string; active: boolean }[]).find((p) => p.name === 'Priya Shah')
-  expect(priya?.active).toBe(false)
-  const settings = await getSettings()
-  expect(settings.body.people?.find((p) => p.name === 'Priya Shah')?.active).toBe(false)
+
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  const denied = await approveReview({
+  const denied = await approveReviewViaCdp({
+    page,
     requestId: String(propose.body.requestId),
-    actor: 'Priya Shah',
-    pinVerified: true,
+    person: 'Priya Shah',
+    authenticator: reg.authenticator,
   })
   expect(denied.status).toBe(403)
   expect(String(denied.body.error)).toMatch(/deactivated/i)
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'sync.deactivate')).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'review.approve' && /deactivated/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
