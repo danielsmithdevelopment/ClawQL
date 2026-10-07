@@ -11,6 +11,7 @@ import {
   control,
   createSubscription,
   decisionCall,
+  directorySync,
   eraseSubject,
   fetchAsOrg,
   getAudit,
@@ -278,8 +279,8 @@ test('SI-06 Sign out everywhere else ends second browser session', async ({ page
 })
 
 test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', async () => {
-  // Arrange: group sync still harness until Compose Keycloak/OIDC.
-  await control({ syncOkta: { removeJordanFromSupport: true } })
+  // Arrange: Okta-shaped directory sync (Keycloak Compose realm next).
+  await directorySync({ removeJordanFromSupport: true })
 
   // Pass-when: production POST /decision refuses + /audit (not /api/e2e/decision).
   const res = await decisionCall({
@@ -312,7 +313,7 @@ test('SI-08 Okta deactivate Priya — cannot act; audit records change', async (
     label: 'Priya CDP',
   })
   expect(reg.status).toBe(200)
-  await control({ syncOkta: { deactivatePriya: true } })
+  await directorySync({ deactivatePriya: true })
 
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
