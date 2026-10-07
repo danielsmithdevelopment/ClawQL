@@ -1,0 +1,61 @@
+# Multi-gateway + NATS for Cloud E2E RES-* honesty (kill one replica; sessions continue).
+# Playwright still Pass-when via POST /gateway/restart until CI wires compose kill.
+# Bring up:
+#   docker compose -f apps/dashboard/e2e-cloud/compose/multi-gateway/docker-compose.yml up -d
+# Kill a replica:
+#   ./apps/dashboard/e2e-cloud/compose/multi-gateway/kill-replica.sh gateway-a
+
+name: clawql-e2e-multi-gw
+
+services:
+  nats:
+    image: nats:2.10-alpine
+    container_name: clawql-e2e-nats
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "14222:4222"
+      - "18222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  gateway-a:
+    image: nginx:1.27-alpine
+    container_name: clawql-e2e-gateway-a
+    depends_on:
+      nats:
+        condition: service_healthy
+    ports:
+      - "18080:80"
+    volumes:
+      - ./nginx-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      CLAWQL_GATEWAY_REPLICA: gateway-a
+      NATS_URL: nats://nats:4222
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  gateway-b:
+    image: nginx:1.27-alpine
+    container_name: clawql-e2e-gateway-b
+    depends_on:
+      nats:
+        condition: service_healthy
+    ports:
+      - "18081:80"
+    volumes:
+      - ./nginx-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      CLAWQL_GATEWAY_REPLICA: gateway-b
+      NATS_URL: nats://nats:4222
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

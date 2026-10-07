@@ -49,11 +49,12 @@ test.beforeEach(async () => {
 })
 
 test('SU-01 Sign up via Stripe test card lands in console', async ({ page }) => {
-  // Arrange: reset provisioning. Pass-when via POST /billing/checkout + /audit + Home UI.
+  // Arrange: reset provisioning. Pass-when: Checkout Session → /events/inbound/stripe + /audit + Home UI.
   await control({ stripeProvisioningDone: false, markFirstRun: 0 })
   const checkout = await stripeCheckout({ testCard: '4242424242424242', signedInUserId: 'user_dana' })
   expect(checkout.status).toBe(200)
   expect(checkout.body.provisioned).toBe(true)
+  expect(checkout.body.sessionId).toBeTruthy()
 
   const audit = await getAudit()
   const actions = audit.entries.map((e) => e.action)

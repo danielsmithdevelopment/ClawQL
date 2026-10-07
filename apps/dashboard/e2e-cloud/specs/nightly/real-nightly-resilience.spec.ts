@@ -62,8 +62,10 @@ test('RES-01 Client retries continue the same session', async () => {
   expect(a.status).toBe(200)
   const sessionId = a.body.clawql?.sessionId
   expect(sessionId).toBeTruthy()
-  const restart = await gatewayRestart()
+  // Compose multi-gateway: kill-replica.sh gateway-a; here we witness via /gateway/restart.
+  const restart = await gatewayRestart({ replica: 'gateway-a', compose: true })
   expect(restart.status).toBe(200)
+  expect(restart.body.replica).toBe('gateway-a')
   const b = await openaiChat({
     key: KEYS.legalOps,
     messages: [{ role: 'user', content: 'retry-2' }],
@@ -140,7 +142,7 @@ test('RES-06 Review request survives reset-equivalent pause; approve afterwards 
     (r) => r.id === requestId,
   )
   expect(waiting?.status).toBe('waiting')
-  await gatewayRestart()
+  await gatewayRestart({ replica: 'gateway-b', compose: true })
   const still = ((await listReview()).body.review as { id: string; status: string }[]).find(
     (r) => r.id === requestId,
   )

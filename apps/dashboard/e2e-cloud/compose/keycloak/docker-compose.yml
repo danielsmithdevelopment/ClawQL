@@ -1,8 +1,8 @@
-# Keycloak (dev) for Cloud E2E Okta/OIDC honesty — SI-07/08 sync + SI-01 protocol.
-# Not wired into Playwright yet; directory sync uses POST /sync/directory (Okta-shaped).
-# Bring up: docker compose -f apps/dashboard/e2e-cloud/compose/keycloak/docker-compose.yml up -d
-#
-# Next: realm import with Support/Legal groups, map to /sync/directory or SCIM, drop harness sync.
+# Keycloak (dev) for Cloud E2E OIDC/SCIM honesty — SI-07/08 directory sync + SI-01 protocol.
+# Realm import: Support / Legal groups + Jordan / Priya / Dana.
+# Bring up:
+#   docker compose -f apps/dashboard/e2e-cloud/compose/keycloak/docker-compose.yml up -d
+# Dashboard maps SCIM-shaped PATCH → POST /sync/scim (or /sync/directory with provider=scim).
 
 name: clawql-e2e-keycloak
 
@@ -10,16 +10,18 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     container_name: clawql-e2e-keycloak
-    command: ["start-dev", "--http-port=8080"]
+    command: ["start-dev", "--http-port=8080", "--import-realm"]
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
     ports:
       - "18089:8080"
+    volumes:
+      - ./realm-clawql-e2e.json:/opt/keycloak/data/import/realm-clawql-e2e.json:ro
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080"]
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 60s
+      start_period: 90s

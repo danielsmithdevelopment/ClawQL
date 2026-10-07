@@ -13,8 +13,13 @@ export { postMcpToolsCall } from "./mcp-tools-call";
 export { postMcpToolsList } from "./mcp-tools-list";
 export { ORG_DELETE_FRESH_SIGN_IN_MS, postOrgDelete } from "./org";
 export { getSession, postSessionEndOthers, postSessionEnforce } from "./session";
-export { postBillingCheckout } from "./stripe";
-export { postDirectorySync } from "./sync";
+export {
+  postBillingCheckout,
+  postStripeInbound,
+  signStripeWebhook,
+  verifyStripeWebhookSignature,
+} from "./stripe";
+export { postDirectorySync, postScimDirectorySync } from "./sync";
 export {
   postApproveOptions,
   postApproveVerify,
