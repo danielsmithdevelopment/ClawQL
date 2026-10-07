@@ -181,4 +181,7 @@ Safety ==
   /\ ApproverNotRequester
   /\ NoExecuteUnlessApproved
 
+\* Named for .cfg CONSTRAINT (TLC requires an operator name, not an inline expr)
+StateConstraint == clock <= 5
+
 =============================================================================
