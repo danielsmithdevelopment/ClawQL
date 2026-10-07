@@ -13,10 +13,10 @@ Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helper
 **Migrated Pass-when (CDP + production routes + `/audit` + UI):** KEY-01..12, SI-02..08, SU-01..03, ADM-11/12 (billing path), RES-01/06 restart path.  
 KEY-09: `ageSession` → POST `/org/delete` + Settings UI + `/audit`.  
 SI-04/05/06: `/session/*` + Profile.  
-SI-07/08: SCIM PatchOp `POST /sync/scim` (Keycloak realm groups/users) → `/decision` or CDP + `/audit`.  
+SI-07/08: live Keycloak Admin API (Compose) → SCIM `POST /sync/scim` → `/decision` or CDP + `/audit` (SCIM-local fallback).  
 SU-01..03: `POST /billing/checkout` Session → `POST /events/inbound/stripe` (`checkout.session.completed`) + `/audit`.  
 ADM-11/12: `POST /billing/credits|card` + `GET /billing/usage` + `/audit`.  
-RES-01/06: Compose kill (`multi-gateway/kill-replica.sh`) + `POST /gateway/restart` + `/audit`.  
+RES-01/06: Compose `kill-replica.sh` when Docker is up → `POST /gateway/restart` + `/audit`.  
 
 ## Stripe
 
@@ -28,15 +28,17 @@ CI can use Stripe **test mode** keys when secrets are present; harness signs wit
 
 ## Okta / OIDC
 
-- Keycloak Compose + realm import: `e2e-cloud/compose/keycloak/` (`clawql-e2e`, Support/Legal, Jordan/Priya/Dana)  
-- SCIM-shaped sync: `POST /sync/scim` (also `POST /sync/directory` with `provider: "scim"`)  
+- Keycloak Compose + realm import: `e2e-cloud/compose/keycloak/`  
+- Live arrange: `helpers/keycloak.ts` (Admin API) → `/sync/scim`  
+- CI smoke: `compose/smoke-compose.sh` + workflow `cloud-e2e-compose.yml`  
 - Catalog titles still say “Okta”; Keycloak is the local IdP stand-in  
 
 ## Multi-instance / outages (RES-*)
 
-- Compose: `e2e-cloud/compose/multi-gateway/` — NATS JetStream + `gateway-a` / `gateway-b` stubs  
-- Kill: `./kill-replica.sh gateway-a`  
-- Pass-when: `POST /gateway/restart` `{ replica, compose: true }` + session continuity / review survive + `/audit`  
+- Compose: `e2e-cloud/compose/multi-gateway/` — NATS JetStream + `gateway-a` / `gateway-b`  
+- Arrange: `helpers/compose.ts` → `kill-replica.sh` when Docker available  
+- Pass-when: `POST /gateway/restart` + session continuity / review survive + `/audit`  
+- CI validates kill leaves the other replica + NATS healthy  
 
 ## NFC
 

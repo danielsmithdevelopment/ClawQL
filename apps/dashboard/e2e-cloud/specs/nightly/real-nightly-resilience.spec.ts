@@ -5,6 +5,7 @@
 import { test, expect } from '@playwright/test'
 
 import { KEYS, mcpCallTool, mcpListTools, openaiChat } from '../../harness/agent-driver.mjs'
+import { arrangeComposeKillReplica } from '../../helpers/compose'
 import { openManagedConsole } from '../../helpers/console'
 import {
   approveReview,
@@ -12,7 +13,6 @@ import {
   createSubscription,
   decisionCall,
   eraseSubject,
-  gatewayRestart,
   fetchAsOrg,
   getAudit,
   getCrm,
@@ -62,10 +62,11 @@ test('RES-01 Client retries continue the same session', async () => {
   expect(a.status).toBe(200)
   const sessionId = a.body.clawql?.sessionId
   expect(sessionId).toBeTruthy()
-  // Compose multi-gateway: kill-replica.sh gateway-a; here we witness via /gateway/restart.
-  const restart = await gatewayRestart({ replica: 'gateway-a', compose: true })
-  expect(restart.status).toBe(200)
-  expect(restart.body.replica).toBe('gateway-a')
+  // Arrange: Compose kill when Docker is up; always witness via /gateway/restart.
+  const arrange = await arrangeComposeKillReplica('gateway-a')
+  expect(arrange.restart.status).toBe(200)
+  expect(arrange.restart.body.replica).toBe('gateway-a')
+  expect(['compose-kill', 'restart-only']).toContain(arrange.source)
   const b = await openaiChat({
     key: KEYS.legalOps,
     messages: [{ role: 'user', content: 'retry-2' }],
@@ -142,7 +143,9 @@ test('RES-06 Review request survives reset-equivalent pause; approve afterwards 
     (r) => r.id === requestId,
   )
   expect(waiting?.status).toBe('waiting')
-  await gatewayRestart({ replica: 'gateway-b', compose: true })
+  const arrange = await arrangeComposeKillReplica('gateway-b')
+  expect(arrange.restart.status).toBe(200)
+  expect(['compose-kill', 'restart-only']).toContain(arrange.source)
   const still = ((await listReview()).body.review as { id: string; status: string }[]).find(
     (r) => r.id === requestId,
   )
