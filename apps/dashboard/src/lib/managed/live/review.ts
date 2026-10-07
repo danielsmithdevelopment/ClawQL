@@ -167,8 +167,10 @@ export const decideManagedReviewEffect = (input: {
         input.decision === "mark_not_applied" ||
         input.decision === "retry_with_key"
       ) {
+        // Narrow before the Promise closure — TS does not carry the union guard into tryPromise.
+        const resolution: OutcomeUnknownResolve = input.decision;
         const record = yield* Effect.tryPromise({
-          try: () => resolvePendingOutcomeUnknown(input.id, input.decision, home),
+          try: () => resolvePendingOutcomeUnknown(input.id, resolution, home),
           catch: asReviewError,
         });
         return { ok: true as const, id: record.executionId, status: record.status };
@@ -179,8 +181,9 @@ export const decideManagedReviewEffect = (input: {
           reason: `Unsupported decision: ${String(input.decision)}`,
         });
       }
+      const decision = input.decision;
       const record = yield* Effect.tryPromise({
-        try: () => decidePendingExecution(input.id, input.decision, home),
+        try: () => decidePendingExecution(input.id, decision, home),
         catch: asReviewError,
       });
       return { ok: true as const, id: record.executionId, status: record.status };
