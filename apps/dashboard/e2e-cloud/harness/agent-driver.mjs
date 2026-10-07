@@ -11,13 +11,32 @@ export function digestArgs(args) {
   return createHash('sha256').update(JSON.stringify(args ?? {})).digest('hex')
 }
 
+/** Retry transient Next HMR / ECONNRESET mid-suite (same policy as helpers/harness). */
+async function fetchRetry(url, init, attempts = 10) {
+  let lastErr
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init)
+      if (res.status >= 500 && i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+        continue
+      }
+      return res
+    } catch (err) {
+      lastErr = err
+      await new Promise((r) => setTimeout(r, 400 * (i + 1)))
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+}
+
 export async function openaiChat({
   key,
   model = 'standard',
   messages,
   baseUrl = `${localGateway}/v1`,
 }) {
-  const res = await fetch(`${baseUrl}/chat/completions`, {
+  const res = await fetchRetry(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${key}`,
@@ -34,7 +53,7 @@ export async function mcpListTools({
   baseUrl = `${localGateway}/mcp`,
   client,
 }) {
-  const res = await fetch(`${baseUrl}/tools/list`, {
+  const res = await fetchRetry(`${baseUrl}/tools/list`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${key}`,
@@ -53,7 +72,7 @@ export async function mcpCallTool({
   args,
   baseUrl = `${localGateway}/mcp`,
 }) {
-  const res = await fetch(`${baseUrl}/tools/call`, {
+  const res = await fetchRetry(`${baseUrl}/tools/call`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${key}`,
@@ -71,7 +90,7 @@ export async function decisionCall({
   text,
   baseUrl = `${localGateway}/decision`,
 }) {
-  const res = await fetch(baseUrl, {
+  const res = await fetchRetry(baseUrl, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${key}`,

@@ -3,9 +3,10 @@
  * When Docker is available, kills a replica via kill-replica.sh, then witnesses
  * continuity via POST /gateway/restart. Without Docker, restart-only (compose metadata).
  */
+import { accessSync, constants } from 'node:fs'
 import path from 'node:path'
 
-import { gatewayRestart } from './harness'
+import { gatewayRestart, waitForServer } from './harness'
 
 const COMPOSE_DIR = path.join(process.cwd(), 'e2e-cloud/compose/multi-gateway')
 const KILL_SCRIPT = path.join(COMPOSE_DIR, 'kill-replica.sh')
@@ -17,6 +18,18 @@ export type ComposeKillResult = {
   replica: 'gateway-a' | 'gateway-b'
   restart: { status: number; body: Record<string, unknown> }
   detail?: string
+}
+
+function dockerBin(): string | null {
+  for (const candidate of ['/usr/bin/docker', '/usr/local/bin/docker']) {
+    try {
+      accessSync(candidate, constants.X_OK)
+      return candidate
+    } catch {
+      /* try next */
+    }
+  }
+  return null
 }
 
 async function runCmd(
@@ -41,7 +54,9 @@ async function runCmd(
 }
 
 async function dockerAvailable(): Promise<boolean> {
-  const r = await runCmd('docker', ['compose', 'version'])
+  const bin = dockerBin()
+  if (!bin) return false
+  const r = await runCmd(bin, ['compose', 'version'])
   return r.ok
 }
 
@@ -62,6 +77,8 @@ export async function arrangeComposeKillReplica(
   }
 
   const restart = await gatewayRestart({ replica, compose: true })
+  // Next can briefly drop connections around HMR / long suites — wait before Pass-when chat.
+  await waitForServer(30_000)
   return {
     source: killed ? 'compose-kill' : 'restart-only',
     killed,
