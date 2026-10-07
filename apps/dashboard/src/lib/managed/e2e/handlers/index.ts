@@ -3,6 +3,7 @@ export { postChatCompletions } from "./chat-completions";
 export { getEvents, postEvents } from "./events";
 export { postMcpToolsCall } from "./mcp-tools-call";
 export { postMcpToolsList } from "./mcp-tools-list";
+export { ORG_DELETE_FRESH_SIGN_IN_MS, postOrgDelete } from "./org";
 export {
   postApproveOptions,
   postApproveVerify,
