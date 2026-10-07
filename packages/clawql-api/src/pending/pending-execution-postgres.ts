@@ -12,13 +12,19 @@ import { Effect } from "effect";
 import type { PendingExecutionRecord, PendingExecutionStatus } from "./pending-execution-types.js";
 
 type PgPoolClient = {
-  query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number | null }>;
+  query: (
+    text: string,
+    params?: unknown[]
+  ) => Promise<{ rows: unknown[]; rowCount: number | null }>;
   release: () => void;
 };
 
 type PgPool = {
   connect: () => Promise<PgPoolClient>;
-  query: (text: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number | null }>;
+  query: (
+    text: string,
+    params?: unknown[]
+  ) => Promise<{ rows: unknown[]; rowCount: number | null }>;
   end: () => Promise<void>;
 };
 
@@ -133,9 +139,10 @@ export const readPendingPostgresEffect = (
   Effect.tryPromise({
     try: async () => {
       const p = await ensureSchema(env);
-      const r = await p.query(`SELECT payload_json FROM pending_executions WHERE execution_id = $1`, [
-        executionId,
-      ]);
+      const r = await p.query(
+        `SELECT payload_json FROM pending_executions WHERE execution_id = $1`,
+        [executionId]
+      );
       if (!r.rows[0]) return null;
       return rowToRecord((r.rows[0] as { payload_json: unknown }).payload_json);
     },
@@ -229,8 +236,7 @@ export const tryConsumeApprovedPostgresEffect = (
       const p = await ensureSchema(env);
       const client = await p.connect();
       const consumedBy = input.consumedBy?.trim() || `pid:${process.pid}`;
-      const nowParam =
-        input.nowMs !== undefined ? new Date(input.nowMs).toISOString() : null;
+      const nowParam = input.nowMs !== undefined ? new Date(input.nowMs).toISOString() : null;
       try {
         await client.query("BEGIN");
         const r = await client.query(POSTGRES_CONSUME_SQL, [
@@ -282,9 +288,7 @@ export const listPendingPostgresIdsEffect = (
   Effect.tryPromise({
     try: async () => {
       const p = await ensureSchema(env);
-      const r = await p.query(
-        `SELECT execution_id FROM pending_executions ORDER BY execution_id`
-      );
+      const r = await p.query(`SELECT execution_id FROM pending_executions ORDER BY execution_id`);
       return r.rows.map((row) => (row as { execution_id: string }).execution_id);
     },
     catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),

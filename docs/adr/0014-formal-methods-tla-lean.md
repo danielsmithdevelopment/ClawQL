@@ -23,11 +23,11 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-on
 
 ### Shared-store atomicity (mandates)
 
-| Backend | When | Cross-process | Cross-node |
-| --- | --- | --- | --- |
-| **Postgres** | `CLAWQL_PENDING_DATABASE_URL`, or managed multi-node signals (`CLAWQL_MANAGED_GATEWAY=1`, `CLAWQL_GATEWAY_REPLICAS>1`, cloud console surface) | Yes | **Yes — required for managed** |
-| SQLite | Default single-node self-host | Yes (shared file) | No |
-| File + lockfile | `CLAWQL_PENDING_STORE=file` | Shared volume only | No |
+| Backend         | When                                                                                                                                          | Cross-process      | Cross-node                     |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------ |
+| **Postgres**    | `CLAWQL_PENDING_DATABASE_URL`, or managed multi-node signals (`CLAWQL_MANAGED_GATEWAY=1`, `CLAWQL_GATEWAY_REPLICAS>1`, cloud console surface) | Yes                | **Yes — required for managed** |
+| SQLite          | Default single-node self-host                                                                                                                 | Yes (shared file)  | No                             |
+| File + lockfile | `CLAWQL_PENDING_STORE=file`                                                                                                                   | Shared volume only | No                             |
 
 Managed cloud **must** set `CLAWQL_PENDING_DATABASE_URL` (Helm: `pendingDatabaseUrl`). Without it, consume fails closed rather than silently using per-node SQLite. Two-process race tests cover both SQLite and Postgres.
 
@@ -45,13 +45,13 @@ CI fails on `sorry` / `admit`. Differential: 5000 random + exhaustive small doma
 
 ### Managed WORM audit hunt (pre-launch) — owner & date
 
-| Field | Value |
-| --- | --- |
-| **Owner** | Daniel Smith (`daniel@clawql.com`) |
-| **Due** | **2026-10-09** (hard gate before launch announcement) |
-| **Script** | `node scripts/formal/audit-mandate-double-execute.mjs --dir <export>` or against Postgres WORM (`CLAWQL_WORM_POSTGRES_URL`) |
-| **Agent VM (2026-10-07)** | No managed WORM credentials — hunt not runnable from CI agents |
-| **Production result** | _TBD — owner fills count (including **zero**) before announcement_ |
+| Field                     | Value                                                                                                                       |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Owner**                 | Daniel Smith (`daniel@clawql.com`)                                                                                          |
+| **Due**                   | **2026-10-09** (hard gate before launch announcement)                                                                       |
+| **Script**                | `node scripts/formal/audit-mandate-double-execute.mjs --dir <export>` or against Postgres WORM (`CLAWQL_WORM_POSTGRES_URL`) |
+| **Agent VM (2026-10-07)** | No managed WORM credentials — hunt not runnable from CI agents                                                              |
+| **Production result**     | _TBD — owner fills count (including **zero**) before announcement_                                                          |
 
 Do not claim “never happened in the wild” until the production result row is filled.
 
