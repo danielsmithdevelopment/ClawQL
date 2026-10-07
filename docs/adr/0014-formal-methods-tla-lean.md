@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-07
-- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/)
+- Related: [ADR 0013 gdp-ts](./0013-gdp-ts-compile-time-auth-proofs.md), [correctness by construction](../design/correctness-by-construction.md), [execute pause/resume](../specs/risk/execute-pause-resume-v0.1.md), [`formal/tla/mandate/`](../../formal/tla/mandate/), [`formal/tla/events/`](../../formal/tla/events/), [`formal/lean/`](../../formal/lean/)
 
 ## Context
 
@@ -15,38 +15,56 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend aims at a s
 
 ## Decision
 
-1. **Adopt TLA+ (or Quint) for distributed protocol state machines.** Model-check with TLC (or Quint’s checker). First target: **mandate / pending-execution lifecycle**. Follow-ons: event delivery (exactly-once per replica group, resume), resumable jobs (erase / account delete ordering), skill-promotion races.
-2. **Adopt Lean for the policy kernel oracle** — not as production runtime. Pattern (AWS Cedar):
-   - Small Lean model of risk classification, approval rules, information-flow, mandate binding.
-   - Prove invariants in Lean (e.g. deletes never allowed under rule X; approver ≠ requester).
-   - Differential tests: same random inputs to Lean and production TypeScript/Rust; any disagreement fails CI.
-3. **Keep gdp-ts as layer-1 compile-time capability flow** ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)). Formal methods do not replace it.
-4. **Keep pstack / E2E catalog as runtime evidence.** Formal specs are design-time oracles; E2E proves the running product.
-5. **Watch Bend; do not block on it.** Same role as Lean for agent-speed checks when mature.
-6. **Ship specs under `formal/`** next to the products they constrain. Mandate starter: [`formal/tla/mandate/`](../../formal/tla/mandate/).
+1. **Adopt TLA+ (or Quint) for distributed protocol state machines.** First target: **mandate lifecycle** (shipped). Next: **event delivery** ([`formal/tla/events/`](../../formal/tla/events/)). Follow-ons: resumable jobs, skill-promotion races.
+2. **Adopt Lean for the policy kernel oracle** — not as production runtime. Tight first slice: approval-policy evaluation only ([`formal/lean/`](../../formal/lean/)).
+3. **Keep gdp-ts as layer-1** ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)).
+4. **Keep pstack / E2E as runtime evidence.**
+5. **Watch Bend; do not block on it.**
+6. **Ship specs under `formal/`.**
 
-### How the stack fits
+### Shared-store atomicity (mandates)
 
-| Tool                 | Proves                                 | Use it for                                       |
-| -------------------- | -------------------------------------- | ------------------------------------------------ |
-| TLA+ or Quint        | No bad interleaving exists             | Mandates, events, jobs, promotion races          |
-| Lean                 | Decision logic correct for every input | Policy kernel + differential tests vs production |
-| gdp-ts               | Capabilities flow at compile time      | Layer 1 (already)                                |
-| Verus or Kani        | Specific Rust functions                | Later — celld sandbox core                       |
-| pstack + E2E catalog | Running product behaves                | Runtime evidence                                 |
-| Bend                 | Agent-speed checks (aspirational)      | Watch only                                       |
+Atomic consume is only multi-replica-safe when the conditional write runs in a **shared store**:
 
-### Where to start
+| Backend | Cross-process? | Cross-node? |
+| --- | --- | --- |
+| SQLite (`CLAWQL_PENDING_STORE=sqlite`, default) | Yes — `UPDATE…WHERE` + `BEGIN IMMEDIATE` | Only if every replica shares the DB file (not managed multi-node) |
+| JSON + lockfile (`CLAWQL_PENDING_STORE=file`) | Only on a shared volume | No |
+| Postgres `UPDATE…RETURNING` (planned) | Yes | Yes — required for managed multi-node |
 
-1. **TLA+ mandate lifecycle** — shipped under [`formal/tla/mandate/`](../../formal/tla/mandate/). TLC found the double-execute race under `WeakConsume`; production now uses **atomic consume** (`approved` → `outcome_unknown`). CI runs both configs: atomic must pass, weak must still counterexample (`.github/workflows/formal-mandate-tlc.yml`).
-2. **Lean approval-policy model** — tight first slice in [`formal/lean/`](../../formal/lean/) + differential tests vs `packages/clawql-api/src/policy/`. Risk classification / information-flow follow once that loop is solid.
+The 50-way race test includes a **two-process** fork sharing one SQLite file (not 50 calls in one process alone).
 
-Quint is an acceptable front end if TLA+ syntax is a barrier; semantics stay the same.
+### Outcome-unknown retries
+
+Automatic retry after `outcome_unknown` is allowed **only** when the parked operation is `idempotencyCapable` (connector honors `Idempotency-Key` / `clawql-mandate:<executionId>`). Otherwise Review offers: **mark applied**, **mark not applied**, or (if capable) **retry with key**. Review lists `outcome_unknown` only after **60s** without finalize so healthy runs do not flash alarms.
+
+### Lean non-vacuity
+
+- CI greps `formal/lean/**/*.lean` for `sorry` / `admit` (`scripts/formal/check-lean-no-sorry.sh`).
+- Differential suite: 5000 random cases **and** exhaustive small domain (≤3 people × policies × actions).
+
+### Managed WORM audit hunt (pre-launch)
+
+Script: `node scripts/formal/audit-mandate-double-execute.mjs`.
+
+| Store probed (2026-10-07, agent VM) | Result |
+| --- | --- |
+| Local `~/.ClawQL` / process `CLAWQL_WORM_*` | **No managed WORM credentials or Postgres URL in this environment** — hunt not runnable against production from here |
+| Local NDJSON / memory trails in unit tests | N/A for launch |
+
+**Operator action before announcement:** run the hunt against the **managed** WORM store (`CLAWQL_WORM_LOCAL=postgres` + `CLAWQL_WORM_POSTGRES_URL`, and/or S3 remote export) and append the count here (including **zero**). Until that row is filled with a production result, do not claim “never happened in the wild.”
+
+### Security-page claim (earned wording)
+
+Once TLC CI is green, atomic SQLite/Postgres consume is deployed, Lean sorry-gate + differential/exhaustive tests pass, and the managed audit hunt result is recorded above:
+
+> The mandate protocol is model-checked with TLA+, including crash and expiry boundaries, and the approval policy rules are proved in Lean and differential-tested against production.
+
+Link this ADR. Exact words live on [`/security`](https://docs.clawql.com/security).
 
 ## Consequences
 
-- Protocol changes to mandates / events / erase / promotion must update the corresponding TLA+/Quint spec and keep TLC green (or document deliberate model changes).
-- The weak-config counterexample is a **regression oracle** — do not “fix” it by weakening Safety.
-- Policy-kernel changes update the Lean model and differential suite.
-- Crash after consume leaves `outcome_unknown` in Review + WORM; retry only with `clawql-mandate:<executionId>` idempotency keys.
-- Security / marketing claim (“model-checked approval protocol”) is allowed once TLC CI is green **and** the atomic consume fix is shipped — back with this ADR and the weak-config counterexample that was fixed.
+- Protocol changes update TLA+/Quint specs; weak configs remain regression oracles.
+- Multi-node managed gateways must not rely on file-lock CAS — ship Postgres consume before scaling replicas across nodes.
+- Policy changes update Lean + differential/exhaustive suites; unfinished proofs fail CI.
+- Event-delivery TLC dual configs follow the same atomic/weak pattern as mandates.

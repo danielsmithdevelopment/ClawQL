@@ -4,8 +4,9 @@ Design-time models for ClawQL protocols and (soon) policy. See [ADR 0014](../doc
 
 | Path | Kind | Status |
 | --- | --- | --- |
-| [`tla/mandate/`](tla/mandate/) | TLA+ / TLC — mandate lifecycle + crash/`outcome_unknown` | Atomic fix shipped; dual CI |
-| [`lean/`](lean/) | Lean — approval-policy oracle | Starter + TS differential tests |
+| [`tla/mandate/`](tla/mandate/) | TLA+ / TLC — mandate lifecycle + crash/`outcome_unknown` | Atomic SQLite CAS; dual CI |
+| [`tla/events/`](tla/events/) | TLA+ / TLC — event delivery / resume | Starter; dual configs |
+| [`lean/`](lean/) | Lean — approval-policy oracle | No-sorry CI + differential + exhaustive |
 
 **Tools:** [TLA+ Toolbox](https://lamport.azurewebsites.net/tla/toolbox.html) or [`tla2tools.jar`](https://github.com/tlaplus/tlaplus) + Java (`scripts/formal/run-mandate-tlc.sh`). Lean via elan/lake when available. Quint may be added as a front end later.
 

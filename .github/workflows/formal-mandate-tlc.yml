@@ -1,19 +1,20 @@
-# Model-check mandate lifecycle: atomic must pass; weak must counterexample.
+# Model-check mandate (+ event) TLC dual configs; Lean no-sorry gate.
 name: Formal mandate TLC
 
 on:
   push:
     paths:
-      - "formal/tla/mandate/**"
-      - "scripts/formal/run-mandate-tlc.sh"
+      - "formal/**"
+      - "scripts/formal/**"
       - ".github/workflows/formal-mandate-tlc.yml"
   pull_request:
     branches: [main]
     paths:
-      - "formal/tla/mandate/**"
-      - "scripts/formal/run-mandate-tlc.sh"
+      - "formal/**"
+      - "scripts/formal/**"
       - ".github/workflows/formal-mandate-tlc.yml"
       - "packages/clawql-api/src/pending/**"
+      - "packages/clawql-api/src/policy/**"
   workflow_dispatch:
 
 concurrency:
@@ -37,5 +38,28 @@ jobs:
           sudo apt-get install -y openjdk-21-jre-headless
           java -version
 
+      - name: Lean no-sorry / no-admit
+        run: bash scripts/formal/check-lean-no-sorry.sh
+
       - name: Run mandate TLC dual configs
         run: bash scripts/formal/run-mandate-tlc.sh
+
+      - name: Run event-delivery TLC dual configs
+        run: |
+          set -euo pipefail
+          JAR=/tmp/tla2tools.jar
+          curl -fsSL -o "$JAR" \
+            "https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar"
+          WORK=$(mktemp -d)
+          cp formal/tla/events/* "$WORK/"
+          cd "$WORK"
+          java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config EventDelivery.cfg EventDelivery
+          set +e
+          java -XX:+UseParallelGC -cp "$JAR" tlc2.TLC -config EventDeliveryWeak.cfg EventDelivery
+          WEAK=$?
+          set -e
+          if [[ "$WEAK" -eq 0 ]]; then
+            echo "FAIL: weak event config must counterexample" >&2
+            exit 1
+          fi
+          echo "OK: event atomic green; weak counterexample (exit=$WEAK)"

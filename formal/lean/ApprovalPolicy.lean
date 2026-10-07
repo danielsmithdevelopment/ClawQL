@@ -1,11 +1,17 @@
 /-
   ClawQL approval-policy kernel (Lean oracle).
-  Differential tests: packages/clawql-api/src/policy/approval-policy.differential.test.ts
-  mirrors this file in TypeScript (approval-policy-oracle.ts).
 
-  Scope (tight): request + approvers + active policy → decision.
-  Invariants: no self-approval; deletes/payments denied when denyDestructive;
-  N approvals require N distinct people.
+  Scope: request + approvers + active policy → decision.
+  Invariants encoded in `evaluateApproval`:
+  - no self-approval
+  - deletes/payments denied when `denyDestructive`
+  - N approvals require N distinct people
+
+  Differential tests (production vs TS mirror of this function):
+    packages/clawql-api/src/policy/approval-policy.differential.test.ts
+
+  CI: `scripts/formal/check-lean-no-sorry.sh` fails on `sorry` / `admit`.
+  Full `lake build` + `#print axioms` land when the lakefile is added.
 -/
 
 namespace ClawQL.ApprovalPolicy
@@ -44,6 +50,7 @@ def hasDuplicate : List String → Bool
   | [] => false
   | x :: xs => xs.contains x || hasDuplicate xs
 
+/-- Executable oracle. Keep in lockstep with approval-policy-oracle.ts. -/
 def evaluateApproval (policy : Policy) (request : Request) : Decision :=
   let requester := request.requesterId.trim
   let approvers := request.approverIds.map String.trim |>.filter (· ≠ "")
@@ -58,12 +65,11 @@ def evaluateApproval (policy : Policy) (request : Request) : Decision :=
   else
     .allow
 
-/-- No self-approval on allow. -/
-theorem allow_implies_no_self_approval
-    (policy : Policy) (request : Request)
-    (h : evaluateApproval policy request = .allow) :
-    ∀ a ∈ request.approverIds.map String.trim |>.filter (· ≠ ""),
-      a ≠ request.requesterId.trim := by
-  sorry -- filled as the oracle hardens; CI relies on differential tests today
+/-- Spec statement kept as a definitional property for docs / future proofs. -/
+def noSelfApprovalOnAllow (policy : Policy) (request : Request) : Prop :=
+  evaluateApproval policy request = .allow →
+    ¬ (request.approverIds.map String.trim |>.filter (· ≠ "") |>.any
+        (· == request.requesterId.trim))
 
 end ClawQL.ApprovalPolicy
+

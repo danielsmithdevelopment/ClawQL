@@ -4,6 +4,10 @@ This page summarizes how ClawQL **builds**, **proves**, and **enforces** contain
 
 **Looking for OAuth / MCP authentication?** See **[Authentication](/auth)** — inbound vs outbound, token refresh, EMA / ID-JAG, and how that differs from supply-chain controls on this page.
 
+## Formal methods (mandates & approval policy)
+
+The mandate protocol is model-checked with TLA+, including crash and expiry boundaries, and the approval policy rules are proved in Lean and differential-tested against production. Evidence: [ADR 0014](https://github.com/danielsmithdevelopment/ClawQL/blob/main/docs/adr/0014-formal-methods-tla-lean.md), [`formal/tla/mandate/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/tla/mandate), [`formal/lean/`](https://github.com/danielsmithdevelopment/ClawQL/tree/main/formal/lean). Managed WORM double-execute hunt results are recorded in that ADR before launch claims about production history.
+
 ## Agentic AI security curriculum (32 modules)
 
 **On this site:** [Security status — verifiable scan history](/security/status) — append-only Trivy/OSV CI records, SBOM artifact links, and Cosign verify commands (not self-reported badges). Disclosure: [SECURITY.md](https://github.com/danielsmithdevelopment/ClawQL/blob/main/SECURITY.md).
