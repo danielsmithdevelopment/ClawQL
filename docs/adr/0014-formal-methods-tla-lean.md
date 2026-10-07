@@ -27,14 +27,14 @@ Lean and TLA+ (or Quint) are the mature tools for those halves. Bend aims at a s
 
 ### How the stack fits
 
-| Tool | Proves | Use it for |
-| --- | --- | --- |
-| TLA+ or Quint | No bad interleaving exists | Mandates, events, jobs, promotion races |
-| Lean | Decision logic correct for every input | Policy kernel + differential tests vs production |
-| gdp-ts | Capabilities flow at compile time | Layer 1 (already) |
-| Verus or Kani | Specific Rust functions | Later — celld sandbox core |
-| pstack + E2E catalog | Running product behaves | Runtime evidence |
-| Bend | Agent-speed checks (aspirational) | Watch only |
+| Tool                 | Proves                                 | Use it for                                       |
+| -------------------- | -------------------------------------- | ------------------------------------------------ |
+| TLA+ or Quint        | No bad interleaving exists             | Mandates, events, jobs, promotion races          |
+| Lean                 | Decision logic correct for every input | Policy kernel + differential tests vs production |
+| gdp-ts               | Capabilities flow at compile time      | Layer 1 (already)                                |
+| Verus or Kani        | Specific Rust functions                | Later — celld sandbox core                       |
+| pstack + E2E catalog | Running product behaves                | Runtime evidence                                 |
+| Bend                 | Agent-speed checks (aspirational)      | Watch only                                       |
 
 ### Where to start
 
