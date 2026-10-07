@@ -160,6 +160,7 @@ type ControlBody = {
   registerSecurityKeys?: { person: string; count: number };
   useRecoveryCode?: string;
   regenerateRecoveryCodes?: boolean;
+  /** Prefer POST /sync/directory for arrange. */
   syncOkta?: { removeJordanFromSupport?: boolean; deactivatePriya?: boolean; addJordanToLegal?: boolean };
   changeRole?: { person: string; role: string };
   inviteAccept?: { name: string; role: string };
@@ -187,7 +188,9 @@ type ControlBody = {
   teamBudgetExhaust?: string;
   forecastSpend?: boolean;
   budgetAlerts?: boolean;
+  /** Prefer POST /billing/credits. */
   addCredits?: number;
+  /** Prefer POST /billing/card. */
   changeCard?: string;
   schemaAccept?: string;
   skillMutate?: Partial<{
@@ -236,7 +239,7 @@ type ControlBody = {
   secondBrowserSession?: { person: string };
   keySpentToday?: { name: string; cents: number };
   personMutate?: { person: string; canApproveContracts?: boolean; groups?: string[]; notifications?: { slack?: boolean; push?: boolean }; timeZone?: string; appearance?: "light" | "dark"; endSessionDevice?: string };
-  /** Persist Review/sessions while recording a gateway restart (RES-01 / RES-06). */
+  /** Prefer POST /gateway/restart (RES-01 / RES-06). */
   simulateGatewayRestart?: boolean;
 };
 

@@ -289,7 +289,49 @@ export async function postInbound(input: {
 }
 
 export async function getUsage() {
-  const res = await fetchRetry(`${base()}/api/e2e/usage`)
+  // Production-shaped usage snapshot (Pass-when); /api/e2e/usage remains façade.
+  const res = await fetchRetry(`${base()}/billing/usage`)
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+/** IdP directory sync (Okta-shaped) — prefer over control({ syncOkta }). */
+export async function directorySync(input: {
+  removeJordanFromSupport?: boolean
+  deactivatePriya?: boolean
+  addJordanToLegal?: boolean
+}) {
+  const res = await fetchRetry(`${base()}/sync/directory`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function billingAddCredits(cents: number) {
+  const res = await fetchRetry(`${base()}/billing/credits`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ cents }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function billingChangeCard(lastFour: string) {
+  const res = await fetchRetry(`${base()}/billing/card`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ lastFour }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+export async function gatewayRestart() {
+  const res = await fetchRetry(`${base()}/gateway/restart`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({}),
+  })
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 

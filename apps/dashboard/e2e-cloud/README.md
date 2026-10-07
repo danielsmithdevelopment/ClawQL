@@ -7,7 +7,7 @@
 | Surface | Allowed for |
 |---|---|
 | `/api/e2e/reset`, `/api/e2e/control`, other `/api/e2e/*` arrange helpers | **Arrange state and inject faults only** |
-| Production-shaped paths: `/v1`, `/mcp`, `/events`, `/audit` | **Assert results** |
+| Production-shaped paths: `/v1`, `/mcp`, `/events`, `/audit`, `/decision`, `/billing/*`, `/session/*`, `/org/*`, `/sync/*`, `/gateway/*` | **Assert results** (and prefer for arrange when a product path exists) |
 | Managed console UI (Playwright) | Assert person-visible Pass-when |
 | Webhook receiver `:4091` | Assert delivery / signatures |
 
@@ -32,10 +32,10 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 
 | Area | Approach |
 |---|---|
-| WebAuthn | Playwright + CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Ceremonies use `localhost` (not `127.0.0.1`) because browsers reject IP rpIds. KEY-01/02/07 + SI-02 migrated; more KEY/SI follow. |
-| Stripe | Test-mode keys + Stripe CLI webhook forward (drop checkout façade) |
-| Okta | Free Okta developer org or Keycloak in Compose |
-| Multi-instance | Two gateway replicas + NATS in Docker Compose; kill real processes |
+| WebAuthn | CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Use `localhost` rpId. KEY/SI ceremonies migrated. |
+| Stripe | `/billing/*` production paths landed; next: test-mode keys + `stripe listen` |
+| Okta | `/sync/directory` Okta-shaped; Keycloak Compose skeleton under `compose/keycloak/` |
+| Multi-instance | `/gateway/restart` stand-in; next: 2× gateway + NATS Compose |
 | NFC (REV-13, UX-09) | Physical phone — stay Manual `test.skip` |
 
 ## Run

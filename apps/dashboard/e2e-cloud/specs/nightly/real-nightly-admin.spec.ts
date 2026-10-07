@@ -9,8 +9,11 @@ import { openManagedConsole } from '../../helpers/console'
 import {
   approveReview,
   control,
+  billingAddCredits,
+  billingChangeCard,
   createSubscription,
   decisionCall,
+  directorySync,
   eraseSubject,
   fetchAsOrg,
   getAudit,
@@ -102,7 +105,7 @@ test('ADM-04 Billing role only Usage & billing', async ({ page }) => {
 })
 
 test('ADM-05 Add then remove Jordan as contract approver', async () => {
-  await control({ syncOkta: { addJordanToLegal: true } })
+  await directorySync({ addJordanToLegal: true })
   const org = await getOrg()
   const j = (org.body.people as { name: string; canApproveContracts: boolean; groups: string[] }[]).find(
     (p) => p.name === 'Jordan Park',
@@ -190,7 +193,7 @@ test('ADM-10 Only exhausted team keys stop', async () => {
 
 test('ADM-11 Credits rise and usage draws credits first', async () => {
   const before = await getUsage()
-  await control({ addCredits: 50 })
+  await billingAddCredits(50)
   const mid = await getUsage()
   expect(Number(mid.body.creditsCents) - Number(before.body.creditsCents)).toBe(50)
   const spentBefore = Number(mid.body.monthSpentCents)
@@ -199,15 +202,27 @@ test('ADM-11 Credits rise and usage draws credits first', async () => {
   // monthSpent still increments in chat route by 2 even with credits — creditsCents decreases
   expect(Number(after.body.creditsCents)).toBeLessThan(Number(mid.body.creditsCents))
   expect(Number(after.body.monthSpentCents)).toBeGreaterThanOrEqual(spentBefore)
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'billing.credits' && (e.meta as { cents?: number } | undefined)?.cents === 50,
+    ),
+  ).toBe(true)
 })
 
 test('ADM-12 Change card last four; invoice row exists', async () => {
-  await control({ changeCard: '4444' })
+  await billingChangeCard('4444')
   const usage = await getUsage()
   expect(usage.body.invoiceCard).toBe('4444')
   const invoices = usage.body.invoices as { id: string; pdf: string }[]
   expect(invoices[0]?.pdf).toMatch(/INV/)
-  // Real Stripe invoice PDF is an external dependency — harness invoice row is the witness
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'billing.card' && (e.meta as { lastFour?: string } | undefined)?.lastFour === '4444',
+    ),
+  ).toBe(true)
+  // Real Stripe invoice PDF still needs Stripe listen — invoice row + /audit are the witness.
 })
 
 test('ADM-13 Rename org; address and region stay read-only', async ({ page }) => {

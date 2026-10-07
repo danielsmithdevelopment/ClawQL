@@ -12,6 +12,7 @@ import {
   createSubscription,
   decisionCall,
   eraseSubject,
+  gatewayRestart,
   fetchAsOrg,
   getAudit,
   getCrm,
@@ -61,7 +62,7 @@ test('RES-01 Client retries continue the same session', async () => {
   expect(a.status).toBe(200)
   const sessionId = a.body.clawql?.sessionId
   expect(sessionId).toBeTruthy()
-  const restart = await control({ simulateGatewayRestart: true })
+  const restart = await gatewayRestart()
   expect(restart.status).toBe(200)
   const b = await openaiChat({
     key: KEYS.legalOps,
@@ -139,7 +140,7 @@ test('RES-06 Review request survives reset-equivalent pause; approve afterwards 
     (r) => r.id === requestId,
   )
   expect(waiting?.status).toBe('waiting')
-  await control({ simulateGatewayRestart: true })
+  await gatewayRestart()
   const still = ((await listReview()).body.review as { id: string; status: string }[]).find(
     (r) => r.id === requestId,
   )
