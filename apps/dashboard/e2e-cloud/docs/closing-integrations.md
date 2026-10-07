@@ -42,4 +42,9 @@ CI can use Stripe **test mode** keys when secrets are present; harness signs wit
 
 ## NFC
 
-Keep Manual `test.skip`. No browser path.
+Keep Manual `test.skip`. No browser path. **Only remaining true CI impossibility** (REV-13, UX-09).
+
+## Optional remaining depth (not required for catalog green)
+
+- Stripe **test-mode** secrets + live `stripe listen` in CI (harness-signed webhook already Pass-when)
+- Migrate leftover arrange façades (`/api/e2e/keys|review|connections|org`) when product-shaped peers exist — Pass-when for KEY/REV already prefer CDP + `/audit` + UI
