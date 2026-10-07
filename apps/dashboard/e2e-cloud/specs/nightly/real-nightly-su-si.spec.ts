@@ -18,7 +18,6 @@ import {
   getDocuments,
   getInboundStats,
   getOrg,
-  getSettings,
   getUsage,
   getWebhookDeliveries,
   keysApi,
