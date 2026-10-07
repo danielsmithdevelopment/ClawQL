@@ -23,10 +23,7 @@ export type ApprovalRequest = {
 export type ApprovalDecision = "allow" | "deny";
 
 export type ApprovalDenyReason =
-  | "self_approval"
-  | "destructive_denied"
-  | "insufficient_approvals"
-  | "duplicate_approver";
+  "self_approval" | "destructive_denied" | "insufficient_approvals" | "duplicate_approver";
 
 export type ApprovalEvalResult = {
   readonly decision: ApprovalDecision;

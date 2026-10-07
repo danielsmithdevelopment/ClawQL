@@ -202,7 +202,9 @@ export function executeClawqlOperationEffect(
       const outputFields = executeOutputFields(operationId, fields);
 
       if (op.protocolKind === "graphql" && op.nativeGraphQL) {
-        const selectedFields = outputFields?.length ? outputFields.join("\n        ") : "__typename";
+        const selectedFields = outputFields?.length
+          ? outputFields.join("\n        ")
+          : "__typename";
         const exec = yield* fromPromise(() =>
           executeNativeGraphQL(op as Operation, args, selectedFields)
         );
@@ -307,7 +309,10 @@ export function executeClawqlOperationEffect(
         );
       }
 
-      if (op.requestBody && op.requestBodyContentType?.toLowerCase() === "application/octet-stream") {
+      if (
+        op.requestBody &&
+        op.requestBodyContentType?.toLowerCase() === "application/octet-stream"
+      ) {
         const rest = yield* fromPromise(() =>
           executeRestOperation(op as Operation, args, openapiForOp)
         );

@@ -8,13 +8,7 @@ import type { OperationRisk } from "../risk/operation-risk-types.js";
  * never silently retried without an idempotency key derived from `executionId`.
  */
 export type PendingExecutionStatus =
-  | "pending"
-  | "approved"
-  | "declined"
-  | "completed"
-  | "failed"
-  | "expired"
-  | "outcome_unknown";
+  "pending" | "approved" | "declined" | "completed" | "failed" | "expired" | "outcome_unknown";
 
 export type PendingExecutionRecord = {
   readonly version: 1;

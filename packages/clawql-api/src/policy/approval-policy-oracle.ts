@@ -3,11 +3,7 @@
  * Keep semantics in lockstep with the Lean model; proofs live in Lean, not here.
  */
 
-import type {
-  ApprovalEvalResult,
-  ApprovalPolicy,
-  ApprovalRequest,
-} from "./approval-policy.js";
+import type { ApprovalEvalResult, ApprovalPolicy, ApprovalRequest } from "./approval-policy.js";
 
 /** Pure oracle — same rules as `evaluateApproval` in ApprovalPolicy.lean. */
 export function leanOracleEvaluateApproval(
