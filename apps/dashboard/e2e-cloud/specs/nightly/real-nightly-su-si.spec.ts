@@ -11,7 +11,6 @@ import {
   control,
   createSubscription,
   decisionCall,
-  scimDirectorySync,
   eraseSubject,
   fetchAsOrg,
   getAudit,
@@ -43,6 +42,10 @@ import {
   uploadDocument,
   waitForDeliveries,
 } from '../../helpers/harness'
+import {
+  arrangeKeycloakDeactivatePriya,
+  arrangeKeycloakRemoveJordanFromSupport,
+} from '../../helpers/keycloak'
 import {
   approveReviewViaCdp,
   registerSecurityKeyViaCdp,
@@ -280,10 +283,11 @@ test('SI-06 Sign out everywhere else ends second browser session', async ({ page
 })
 
 test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', async () => {
-  // Arrange: SCIM PatchOp (Keycloak realm Support group) via POST /sync/scim.
-  const sync = await scimDirectorySync({ removeJordanFromSupport: true })
+  // Arrange: live Keycloak Admin API when Compose is up; else SCIM-local → /sync/scim.
+  const sync = await arrangeKeycloakRemoveJordanFromSupport()
+  expect(sync.ok).toBe(true)
   expect(sync.status).toBe(200)
-  expect(sync.body.provider).toBe('scim')
+  expect(['keycloak', 'scim-local']).toContain(sync.source)
 
   // Pass-when: production POST /decision refuses + /audit (not /api/e2e/decision).
   const res = await decisionCall({
@@ -307,7 +311,7 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
 })
 
 test('SI-08 Okta deactivate Priya — cannot act; audit records change', async ({ page }) => {
-  // Arrange: CDP key for Priya, then SCIM deactivate (Keycloak user.enabled=false shape).
+  // Arrange: CDP key for Priya, then live Keycloak deactivate (or SCIM-local fallback).
   await page.goto('/profile')
   const reg = await registerSecurityKeyViaCdp({
     page,
@@ -316,9 +320,10 @@ test('SI-08 Okta deactivate Priya — cannot act; audit records change', async (
     label: 'Priya CDP',
   })
   expect(reg.status).toBe(200)
-  const sync = await scimDirectorySync({ deactivatePriya: true })
+  const sync = await arrangeKeycloakDeactivatePriya()
+  expect(sync.ok).toBe(true)
   expect(sync.status).toBe(200)
-  expect(sync.body.provider).toBe('scim')
+  expect(['keycloak', 'scim-local']).toContain(sync.source)
 
   const propose = await mcpCallTool({
     key: KEYS.legalOps,

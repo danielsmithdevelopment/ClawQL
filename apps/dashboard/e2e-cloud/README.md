@@ -34,8 +34,8 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 |---|---|
 | WebAuthn | CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Use `localhost` rpId. KEY/SI ceremonies migrated. |
 | Stripe | `/billing/checkout` Session + `/events/inbound/stripe` (`stripe listen` / signed helper) |
-| Okta | Keycloak realm + `POST /sync/scim` (SCIM PatchOp); Compose under `compose/keycloak/` |
-| Multi-instance | `compose/multi-gateway/` (2× gateway + NATS) + `/gateway/restart` Pass-when |
+| Okta | Live Keycloak Admin API → `/sync/scim` (`helpers/keycloak.ts`); Compose CI smoke |
+| Multi-instance | Compose kill (`helpers/compose.ts`) → `/gateway/restart`; CI `smoke-compose.sh` |
 | NFC (REV-13, UX-09) | Physical phone — stay Manual `test.skip` |
 
 ## Run
