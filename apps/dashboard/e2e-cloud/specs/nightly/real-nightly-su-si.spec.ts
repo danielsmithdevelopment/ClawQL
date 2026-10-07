@@ -18,7 +18,6 @@ import {
   getDocuments,
   getInboundStats,
   getOrg,
-  getSettings,
   getUsage,
   getWebhookDeliveries,
   keysApi,
@@ -37,14 +36,16 @@ import {
   retryAllEvents,
   searchErased,
   setWebhookMode,
-  settingsMutate,
   stripeCheckout,
   subscriptionAction,
   systemOne,
   uploadDocument,
   waitForDeliveries,
 } from '../../helpers/harness'
-import { registerSecurityKeyViaCdp } from '../../helpers/webauthn-ceremony'
+import {
+  approveReviewViaCdp,
+  registerSecurityKeyViaCdp,
+} from '../../helpers/webauthn-ceremony'
 
 const NORTHWIND = { contract: 'northwind', annualValue: 52000 } as const
 const PII = 'Contact jane.okafor@example.com or call 415-555-0199. Bank 123456789012345.'
@@ -222,51 +223,53 @@ test('SI-03 TOTP register is never offered for approvals', async ({ page }) => {
 })
 
 test('SI-04 Idle timeout signs out; return path preserved', async ({ page }) => {
-  await control({ idleSignOut: { person: 'Dana Reyes' } })
-  const settings = await getSettings()
-  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
-  expect(dana?.sessions.some((s) => s.ended)).toBe(true)
-  expect(dana?.sessions.find((s) => s.ended)?.path).toBe('/home')
-  expect(settings.body.signedIn).toBe(false)
-  const org = await getOrg()
-  const orgDana = (org.body.people as { name: string; sessions: { ended: boolean; path: string }[] }[]).find(
-    (p) => p.name === 'Dana Reyes',
-  )
-  expect(orgDana?.sessions.some((s) => s.ended && s.path === '/home')).toBe(true)
-  const audit = await getAudit()
-  expect(audit.entries.some((e) => e.action === 'session.idle')).toBe(true)
+  // Arrange: idle window is 30m — age lastActiveAt past it. Enforce is Pass-when.
+  await control({ ageLastActive: { person: 'Dana Reyes', minutesAgo: 31 } })
+
   await page.goto('/profile')
-  await expect(page.getByText(/Sign out/i).first()).toBeVisible()
+  await expect(page.getByTestId('profile-signed-out')).toBeVisible()
+  await expect(page.getByTestId('profile-return-path')).toHaveText('/home')
+  await expect(page.getByTestId('profile-signed-out')).toHaveAttribute('data-return-path', '/home')
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) =>
+        e.action === 'session.idle' &&
+        /idle timeout/i.test(e.outcome) &&
+        (e.meta as { path?: string } | undefined)?.path === '/home',
+    ),
+  ).toBe(true)
 })
 
 test('SI-05 Max session length forces re-auth even when active', async ({ page }) => {
-  await control({ forceSessionExpiry: { person: 'Dana Reyes' } })
-  const settings = await getSettings()
-  const dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
-  expect(dana?.sessions.some((s) => s.ended)).toBe(true)
-  expect(settings.body.signedIn).toBe(false)
-  const audit = await getAudit()
-  expect(audit.entries.some((e) => e.action === 'session.max')).toBe(true)
+  // Arrange: max session is 12h — age signedInAt past it (lastActive stays fresh).
+  await control({ ageSession: { person: 'Dana Reyes', minutesAgo: 12 * 60 + 1 } })
+
   await page.goto('/profile')
-  await expect(page.getByRole('button', { name: /Sign out/i }).first()).toBeVisible()
+  await expect(page.getByTestId('profile-signed-out')).toBeVisible()
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'session.max' && /max session length/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
 test('SI-06 Sign out everywhere else ends second browser session', async ({ page }) => {
+  // Arrange: second browser session only.
   await control({ secondBrowserSession: { person: 'Dana Reyes' } })
-  let settings = await getSettings()
-  let dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
-  expect((dana?.sessions.length ?? 0)).toBeGreaterThanOrEqual(2)
-  expect(dana?.sessions.filter((s) => !s.ended).length).toBeGreaterThanOrEqual(2)
+
   await page.goto('/profile')
-  await expect(page.getByRole('button', { name: /Sign out everywhere else/i })).toBeVisible()
-  const ended = await settingsMutate({ actor: 'Dana Reyes', endOtherSessions: true })
-  expect(ended.status).toBe(200)
-  settings = await getSettings()
-  dana = settings.body.people?.find((p) => p.name === 'Dana Reyes')
-  const others = dana?.sessions.slice(1) ?? []
-  expect(others.every((s) => s.ended)).toBe(true)
-  expect(dana?.sessions[0]?.ended).toBe(false)
-  expect(settings.body.signedIn).toBe(true)
+  await expect(page.getByTestId('profile-sign-out-everywhere-else')).toBeVisible()
+  await page.getByTestId('profile-sign-out-everywhere-else').click()
+
+  await expect(page.locator('[data-testid="profile-session"][data-session-ended="true"]')).toHaveCount(1, {
+    timeout: 10_000,
+  })
+  await expect(page.locator('[data-testid="profile-session"][data-session-ended="false"]')).toHaveCount(1)
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'session.end_others')).toBe(true)
 })
@@ -284,25 +287,37 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
   expect(audit.entries.some((e) => e.action === 'sync.group')).toBe(true)
 })
 
-test('SI-08 Okta deactivate Priya — cannot act; audit records change', async () => {
+test('SI-08 Okta deactivate Priya — cannot act; audit records change', async ({ page }) => {
+  // Arrange: CDP key for Priya, then Okta deactivate (sync still harness until Compose Keycloak).
+  await page.goto('/profile')
+  const reg = await registerSecurityKeyViaCdp({
+    page,
+    person: 'Priya Shah',
+    kind: 'device-bound',
+    label: 'Priya CDP',
+  })
+  expect(reg.status).toBe(200)
   await control({ syncOkta: { deactivatePriya: true } })
-  const org = await getOrg()
-  const priya = (org.body.people as { name: string; active: boolean }[]).find((p) => p.name === 'Priya Shah')
-  expect(priya?.active).toBe(false)
-  const settings = await getSettings()
-  expect(settings.body.people?.find((p) => p.name === 'Priya Shah')?.active).toBe(false)
+
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  const denied = await approveReview({
+  const denied = await approveReviewViaCdp({
+    page,
     requestId: String(propose.body.requestId),
-    actor: 'Priya Shah',
-    pinVerified: true,
+    person: 'Priya Shah',
+    authenticator: reg.authenticator,
   })
   expect(denied.status).toBe(403)
   expect(String(denied.body.error)).toMatch(/deactivated/i)
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'sync.deactivate')).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'review.approve' && /deactivated/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })

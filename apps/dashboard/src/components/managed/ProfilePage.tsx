@@ -14,6 +14,13 @@ type ProfileKey = {
   ok: boolean
 }
 
+type ProfileSession = {
+  id: string
+  device: string
+  path: string
+  ended: boolean
+}
+
 const FIXTURE_KEYS: ProfileKey[] = [
   {
     name: 'YubiKey 5 NFC',
@@ -38,6 +45,10 @@ const FIXTURE_KEYS: ProfileKey[] = [
 export function ProfilePage() {
   const session = useManagedSession()
   const [keys, setKeys] = useState<ProfileKey[]>(FIXTURE_KEYS)
+  const [signedIn, setSignedIn] = useState(true)
+  const [returnPath, setReturnPath] = useState('/home')
+  const [sessions, setSessions] = useState<ProfileSession[]>([])
+  const [endOthersBusy, setEndOthersBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -76,8 +87,49 @@ export function ProfilePage() {
     }
   }, [session.displayName])
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch('/session/enforce', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ person: session.displayName || 'Dana Reyes' }),
+        })
+        if (!res.ok || cancelled) return
+        const body = (await res.json()) as {
+          signedIn?: boolean
+          returnPath?: string
+          sessions?: ProfileSession[]
+        }
+        if (cancelled) return
+        setSignedIn(body.signedIn !== false)
+        setReturnPath(body.returnPath ?? '/home')
+        if (body.sessions) setSessions(body.sessions)
+      } catch {
+        /* leave defaults */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [session.displayName])
+
   return (
     <PageChrome crumbs={['Your profile']} title={session.displayName} description="">
+      {!signedIn ? (
+        <div
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+          data-testid="profile-signed-out"
+          data-return-path={returnPath}
+        >
+          Signed out. After you sign in again you&apos;ll return to{' '}
+          <span className="font-mono" data-testid="profile-return-path">
+            {returnPath}
+          </span>
+          .
+        </div>
+      ) : null}
       <div className="-mt-2 mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="flex size-14 items-center justify-center rounded-full bg-slate-900 text-lg font-semibold text-white">
@@ -90,7 +142,7 @@ export function ProfilePage() {
             <p className="text-xs text-slate-500">Name and email come from Okta and update there.</p>
           </div>
         </div>
-        <Button type="button" variant="outline">
+        <Button type="button" variant="outline" data-testid="profile-sign-out">
           Sign out
         </Button>
       </div>
@@ -176,25 +228,63 @@ export function ProfilePage() {
         <div className="space-y-4">
           <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-slate-900">Where you&apos;re signed in</h2>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li className="flex justify-between gap-2">
-                <span>MacBook Pro, Chrome</span>
-                <span className="text-xs text-slate-500">This device</span>
-              </li>
-              <li className="flex justify-between gap-2">
-                <span>iPhone, ClawQL app</span>
-                <button type="button" className="text-xs text-sky-700 hover:underline">
-                  Sign out
-                </button>
-              </li>
-              <li className="flex justify-between gap-2">
-                <span>Windows PC, Edge</span>
-                <button type="button" className="text-xs text-sky-700 hover:underline">
-                  Sign out
-                </button>
-              </li>
+            <ul className="mt-3 space-y-2 text-sm" data-testid="profile-sessions">
+              {(sessions.length > 0
+                ? sessions
+                : [
+                    { id: 'fixture-1', device: 'MacBook Pro, Chrome', path: '/home', ended: false },
+                    { id: 'fixture-2', device: 'iPhone, ClawQL app', path: '/review', ended: false },
+                  ]
+              ).map((s, i) => (
+                <li
+                  key={s.id}
+                  className="flex justify-between gap-2"
+                  data-testid="profile-session"
+                  data-session-ended={s.ended ? 'true' : 'false'}
+                  data-session-device={s.device}
+                >
+                  <span className={s.ended ? 'text-slate-400 line-through' : undefined}>{s.device}</span>
+                  {i === 0 && !s.ended ? (
+                    <span className="text-xs text-slate-500">This device</span>
+                  ) : s.ended ? (
+                    <span className="text-xs text-slate-500">Signed out</span>
+                  ) : (
+                    <button type="button" className="text-xs text-sky-700 hover:underline">
+                      Sign out
+                    </button>
+                  )}
+                </li>
+              ))}
             </ul>
-            <Button type="button" variant="outline" className="mt-3 w-full" size="sm">
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 w-full"
+              size="sm"
+              data-testid="profile-sign-out-everywhere-else"
+              disabled={endOthersBusy || !signedIn}
+              onClick={() => {
+                setEndOthersBusy(true)
+                void (async () => {
+                  try {
+                    const res = await fetch('/session/end-others', {
+                      method: 'POST',
+                      headers: { 'content-type': 'application/json' },
+                      body: JSON.stringify({ person: session.displayName || 'Dana Reyes' }),
+                    })
+                    if (!res.ok) return
+                    const body = (await res.json()) as {
+                      signedIn?: boolean
+                      sessions?: ProfileSession[]
+                    }
+                    setSignedIn(body.signedIn !== false)
+                    if (body.sessions) setSessions(body.sessions)
+                  } finally {
+                    setEndOthersBusy(false)
+                  }
+                })()
+              }}
+            >
               Sign out everywhere else
             </Button>
           </section>

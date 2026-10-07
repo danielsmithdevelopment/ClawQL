@@ -347,6 +347,10 @@ export function postApproveOptions(req: Request): Effect.Effect<NextResponse, un
     if (!person) {
       return NextResponse.json({ error: "person not found" }, { status: 404 });
     }
+    if (!person.active) {
+      appendAudit(person.name, "review.approve", "Refused — person deactivated");
+      return NextResponse.json({ error: "person deactivated" }, { status: 403 });
+    }
 
     const allowCredentials = person.securityKeys
       .filter((k) => !k.revoked && k.canApprove && k.credentialId && k.publicKey)
