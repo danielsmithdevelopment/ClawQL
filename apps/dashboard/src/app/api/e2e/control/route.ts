@@ -474,6 +474,7 @@ export async function POST(req: Request) {
       if (body.useRecoveryCode) {
         const code = body.useRecoveryCode;
         if (world.usedRecoveryCodes.includes(code) || !world.recoveryCodes.includes(code)) {
+          appendAudit("system", "recovery.use", "Rejected — code invalid or already used");
           return NextResponse.json({ ok: false, error: "recovery code rejected" }, { status: 403 });
         }
         world.usedRecoveryCodes.push(code);

@@ -182,28 +182,43 @@ test('SI-02 Synced passkey register shows Sign-in only', async ({ page }) => {
   ).toHaveAttribute('data-key-badge', 'Sign-in only')
 })
 
-test('SI-03 TOTP register is never offered for approvals', async () => {
-  const reg = await keysApi({
+test('SI-03 TOTP register is never offered for approvals', async ({ page }) => {
+  // Arrange: TOTP is not a WebAuthn ceremony — register via harness, then refuse approve.
+  await keysApi({
     action: 'register',
     person: 'Dana Reyes',
     keyKind: 'totp',
     name: 'Authenticator app',
   })
-  expect(reg.status).toBe(200)
-  expect(reg.body.status).toBe('Sign-in only')
   const propose = await mcpCallTool({
     key: KEYS.legalOps,
     name: 'adjust_contract_value',
     args: { ...NORTHWIND },
   })
-  const denied = await approveReview({
+  await approveReview({
     requestId: String(propose.body.requestId),
     actor: 'Dana Reyes',
     keyKind: 'totp',
     pinVerified: true,
   })
-  expect(denied.status).toBe(403)
-  expect(String(denied.body.error)).toMatch(/can't approve/i)
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'security_key.register' && e.outcome === 'Sign-in only',
+    ),
+  ).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'review.approve' && /can't approve/i.test(e.outcome),
+    ),
+  ).toBe(true)
+  expect(audit.entries.some((e) => /Mandate issued/i.test(e.outcome))).toBe(false)
+
+  await page.goto('/profile')
+  await expect(
+    page.locator('[data-testid="profile-security-key"][data-key-label="Authenticator app"]'),
+  ).toHaveAttribute('data-key-badge', 'Sign-in only')
 })
 
 test('SI-04 Idle timeout signs out; return path preserved', async ({ page }) => {

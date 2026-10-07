@@ -8,11 +8,12 @@ Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helper
 
 - UV on/off for PIN/fingerprint refusals (`issueApiKeyViaCdpStepUp`)
 - Synced vs device-bound registration (`registerSecurityKeyViaCdp`)
-- Preload credentials with a chosen `signCount` for cloned-key (KEY-11 — still migrating)
+- Preload credentials with a chosen `signCount` for cloned-key (KEY-11)
 
-**Migrated Pass-when (CDP + `/audit` + Profile UI):** KEY-01, KEY-02, KEY-07, KEY-08, KEY-10, KEY-11, KEY-12, SI-02.  
+**Migrated Pass-when (CDP + `/audit` + Profile UI):** KEY-01..08, KEY-10..12, SI-02, SI-03.  
 KEY-11: `inflateSignatureCounter` arrange (server ahead of authenticator). KEY-10: `setAaguid` arrange. KEY-12: replay prior assertion signature.  
-Remaining KEY/SI still use `pinVerified` / `keyKind` arrange flags — rewrite as each witness is ported.
+KEY-03/04/SI-03: arrange via keysApi, Pass-when `/audit` (+ Profile for SI-03).  
+Remaining: KEY-09, SI-04+ (idle/OIDC), Stripe, Compose.
 
 ## Stripe (SU-*, ADM-11/12)
 
