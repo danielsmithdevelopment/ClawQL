@@ -604,7 +604,8 @@ export async function getConnections() {
 }
 
 export async function getDecisionSites() {
-  const res = await fetchRetry(`${base()}/api/e2e/decision`)
+  // Production-shaped GET /decision (Pass-when for GW-14 counts).
+  const res = await fetchRetry(`${base()}/decision`)
   return {
     status: res.status,
     body: await json<{

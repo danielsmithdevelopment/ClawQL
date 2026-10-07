@@ -36,7 +36,7 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 | Stripe | `/billing/checkout` Session + `/events/inbound/stripe` (`stripe listen` / signed helper) |
 | Okta | Live Keycloak Admin API → `/sync/scim` (`helpers/keycloak.ts`); Compose CI smoke |
 | Multi-instance | Compose kill (`helpers/compose.ts`) → `/gateway/restart`; CI `smoke-compose.sh` |
-| NFC (REV-13, UX-09) | Physical phone — stay Manual `test.skip` |
+| NFC (REV-13, UX-09) | Physical phone — Manual `test.skip` (only true CI impossibility) |
 
 ## Run
 
