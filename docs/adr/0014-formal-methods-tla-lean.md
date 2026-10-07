@@ -8,63 +8,64 @@
 
 ClawQL’s risk splits into two classes E2E and gdp-ts do not close:
 
-1. **Concurrency and protocol bugs** — races across gateway replicas, retries, expiry, resume. E2E almost never enumerates interleavings.
-2. **Decision logic bugs** — risk classification, approval policy, information-flow, mandate binding. Types catch missing proofs; they do not prove the policy function itself.
+1. **Concurrency and protocol bugs** — races across gateway replicas, retries, expiry, resume.
+2. **Decision logic bugs** — risk classification, approval policy, information-flow, mandate binding.
 
-Lean and TLA+ (or Quint) are the mature tools for those halves. Bend aims at a similar niche with agent-speed checks but is not yet mature enough to adopt. Verus/Kani remain a later option for celld’s Rust sandbox core.
+Lean and TLA+ (or Quint) are the mature tools for those halves. Bend is watch-only. Verus/Kani remain later for celld’s Rust sandbox core.
 
 ## Decision
 
-1. **Adopt TLA+ (or Quint) for distributed protocol state machines.** First target: **mandate lifecycle** (shipped). Next: **event delivery** ([`formal/tla/events/`](../../formal/tla/events/)). Follow-ons: resumable jobs, skill-promotion races.
-2. **Adopt Lean for the policy kernel oracle** — not as production runtime. Tight first slice: approval-policy evaluation only ([`formal/lean/`](../../formal/lean/)).
-3. **Keep gdp-ts as layer-1** ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)).
-4. **Keep pstack / E2E as runtime evidence.**
-5. **Watch Bend; do not block on it.**
-6. **Ship specs under `formal/`.**
+1. **TLA+/Quint for protocol state machines** — mandates (shipped), event delivery (at-least-once + stable ID + receiver dedup).
+2. **Lean for the policy-kernel oracle** — approval-policy evaluation first; differential + exhaustive tests vs production TypeScript.
+3. **gdp-ts** stays layer-1 compile-time capability flow ([ADR 0013](./0013-gdp-ts-compile-time-auth-proofs.md)).
+4. **pstack / E2E** stay runtime evidence.
+5. **Managed multi-node mandates use Postgres** — same conditional `UPDATE…WHERE` / `NOW()` shape as the TLA+ Consume action (`CLAWQL_PENDING_DATABASE_URL`). SQLite is for single-node self-host only.
 
 ### Shared-store atomicity (mandates)
 
-Atomic consume is only multi-replica-safe when the conditional write runs in a **shared store**:
+| Backend | When | Cross-process | Cross-node |
+| --- | --- | --- | --- |
+| **Postgres** | `CLAWQL_PENDING_DATABASE_URL`, or managed multi-node signals (`CLAWQL_MANAGED_GATEWAY=1`, `CLAWQL_GATEWAY_REPLICAS>1`, cloud console surface) | Yes | **Yes — required for managed** |
+| SQLite | Default single-node self-host | Yes (shared file) | No |
+| File + lockfile | `CLAWQL_PENDING_STORE=file` | Shared volume only | No |
 
-| Backend                                         | Cross-process?                           | Cross-node?                                                       |
-| ----------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------- |
-| SQLite (`CLAWQL_PENDING_STORE=sqlite`, default) | Yes — `UPDATE…WHERE` + `BEGIN IMMEDIATE` | Only if every replica shares the DB file (not managed multi-node) |
-| JSON + lockfile (`CLAWQL_PENDING_STORE=file`)   | Only on a shared volume                  | No                                                                |
-| Postgres `UPDATE…RETURNING` (planned)           | Yes                                      | Yes — required for managed multi-node                             |
-
-The 50-way race test includes a **two-process** fork sharing one SQLite file (not 50 calls in one process alone).
+Managed cloud **must** set `CLAWQL_PENDING_DATABASE_URL` (Helm: `pendingDatabaseUrl`). Without it, consume fails closed rather than silently using per-node SQLite. Two-process race tests cover both SQLite and Postgres.
 
 ### Outcome-unknown retries
 
-Automatic retry after `outcome_unknown` is allowed **only** when the parked operation is `idempotencyCapable` (connector honors `Idempotency-Key` / `clawql-mandate:<executionId>`). Otherwise Review offers: **mark applied**, **mark not applied**, or (if capable) **retry with key**. Review lists `outcome_unknown` only after **60s** without finalize so healthy runs do not flash alarms.
+Automatic retry only when `idempotencyCapable`. Otherwise Review: mark applied / mark not applied / retry with key. Attention threshold: **60s**.
+
+### Event delivery guarantee
+
+**At-least-once with stable event ID; receivers that dedupe process once.** Not true exactly-once over HTTP. Launch video caption must say **“processed once”**, not “delivered once” ([`formal/tla/events/README.md`](../../formal/tla/events/README.md)).
 
 ### Lean non-vacuity
 
-- CI greps `formal/lean/**/*.lean` for `sorry` / `admit` (`scripts/formal/check-lean-no-sorry.sh`).
-- Differential suite: 5000 random cases **and** exhaustive small domain (≤3 people × policies × actions).
+CI fails on `sorry` / `admit`. Differential: 5000 random + exhaustive small domain.
 
-### Managed WORM audit hunt (pre-launch)
+### Managed WORM audit hunt (pre-launch) — owner & date
 
-Script: `node scripts/formal/audit-mandate-double-execute.mjs`.
+| Field | Value |
+| --- | --- |
+| **Owner** | Daniel Smith (`daniel@clawql.com`) |
+| **Due** | **2026-10-09** (hard gate before launch announcement) |
+| **Script** | `node scripts/formal/audit-mandate-double-execute.mjs --dir <export>` or against Postgres WORM (`CLAWQL_WORM_POSTGRES_URL`) |
+| **Agent VM (2026-10-07)** | No managed WORM credentials — hunt not runnable from CI agents |
+| **Production result** | _TBD — owner fills count (including **zero**) before announcement_ |
 
-| Store probed (2026-10-07, agent VM)         | Result                                                                                                               |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Local `~/.ClawQL` / process `CLAWQL_WORM_*` | **No managed WORM credentials or Postgres URL in this environment** — hunt not runnable against production from here |
-| Local NDJSON / memory trails in unit tests  | N/A for launch                                                                                                       |
-
-**Operator action before announcement:** run the hunt against the **managed** WORM store (`CLAWQL_WORM_LOCAL=postgres` + `CLAWQL_WORM_POSTGRES_URL`, and/or S3 remote export) and append the count here (including **zero**). Until that row is filled with a production result, do not claim “never happened in the wild.”
+Do not claim “never happened in the wild” until the production result row is filled.
 
 ### Security-page claim (earned wording)
 
-Once TLC CI is green, atomic SQLite/Postgres consume is deployed, Lean sorry-gate + differential/exhaustive tests pass, and the managed audit hunt result is recorded above:
+After Postgres is live on managed, TLC CI green, Lean gates green, and the WORM hunt result is recorded:
 
 > The mandate protocol is model-checked with TLA+, including crash and expiry boundaries, and the approval policy rules are proved in Lean and differential-tested against production.
 
-Link this ADR. Exact words live on [`/security`](https://docs.clawql.com/security).
+Events copy must stay consistent: **same event ID, processed once** (not “delivered once”).
 
 ## Consequences
 
-- Protocol changes update TLA+/Quint specs; weak configs remain regression oracles.
-- Multi-node managed gateways must not rely on file-lock CAS — ship Postgres consume before scaling replicas across nodes.
-- Policy changes update Lean + differential/exhaustive suites; unfinished proofs fail CI.
-- Event-delivery TLC dual configs follow the same atomic/weak pattern as mandates.
+- Protocol changes update TLA+ specs; weak configs remain regression oracles.
+- Scaling managed gateways without `CLAWQL_PENDING_DATABASE_URL` is a launch blocker.
+- Unfinished Lean proofs fail CI.
+- Video / Automations / security copy uses “processed once” for events.

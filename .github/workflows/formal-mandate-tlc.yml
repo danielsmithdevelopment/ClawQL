@@ -59,7 +59,7 @@ jobs:
           WEAK=$?
           set -e
           if [[ "$WEAK" -eq 0 ]]; then
-            echo "FAIL: weak event config must counterexample" >&2
+            echo "FAIL: weak event config (WeakNoDedup) must counterexample" >&2
             exit 1
           fi
-          echo "OK: event atomic green; weak counterexample (exit=$WEAK)"
+          echo "OK: event at-least-once+dedup green; weak counterexample (exit=$WEAK)"
