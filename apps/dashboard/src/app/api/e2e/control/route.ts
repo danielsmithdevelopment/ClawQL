@@ -167,8 +167,10 @@ type ControlBody = {
   redaction?: Partial<{ phone: boolean; email: boolean; bank: boolean }>;
   transferOwnership?: { from: string; to: string };
   deleteOrg?: { name: string; pinVerified?: boolean; freshSignIn?: boolean };
-  /** Arrange: backdate active session signedInAt (KEY-09 fresh sign-in gate). */
+  /** Arrange: backdate active session signedInAt (KEY-09 / SI-05). */
   ageSession?: { person: string; minutesAgo: number };
+  /** Arrange: backdate lastActiveAt for idle timeout (SI-04). Pass-when via POST /session/enforce. */
+  ageLastActive?: { person: string; minutesAgo: number };
   resetSignatureCounter?: { person: string; keyId?: string };
   /** Arrange: advance server-side counter ahead of CDP authenticator (KEY-11 clone). */
   inflateSignatureCounter?: { person: string; to: number; label?: string };
@@ -575,6 +577,16 @@ export async function POST(req: Request) {
         if (p) {
           for (const s of p.sessions) {
             if (!s.ended) s.signedInAt = aged;
+          }
+        }
+      }
+      if (body.ageLastActive) {
+        const p = personByName(body.ageLastActive.person);
+        const minutes = Math.max(0, body.ageLastActive.minutesAgo);
+        const aged = new Date(Date.now() - minutes * 60_000).toISOString();
+        if (p) {
+          for (const s of p.sessions) {
+            if (!s.ended) s.lastActiveAt = aged;
           }
         }
       }
