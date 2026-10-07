@@ -10,20 +10,22 @@ Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helper
 - Synced vs device-bound registration (`registerSecurityKeyViaCdp`)
 - Preload credentials with a chosen `signCount` for cloned-key (KEY-11)
 
-**Migrated Pass-when (CDP + `/audit` + Profile/Settings UI):** KEY-01..12, SI-02..06, SI-08 (approve path).  
+**Migrated Pass-when (CDP + `/audit` + Profile/Settings UI):** KEY-01..12, SI-02..08, SU-01..03 (checkout path).  
 KEY-09: `ageSession` arrange → POST `/org/delete` + Settings UI + `/audit` (fresh sign-in gate).  
 SI-04/05: `ageLastActive` / `ageSession` arrange → POST `/session/enforce` on Profile load + `/audit`.  
 SI-06: `secondBrowserSession` arrange → Profile **Sign out everywhere else** → POST `/session/end-others` + `/audit`.  
-SI-08: `syncOkta` arrange → CDP approve refused + `/audit` (full Okta/OIDC protocol still Compose).  
-SI-07: `syncOkta` arrange + decision 403 + `/audit` (same Okta gap).  
+SI-07/08: `syncOkta` arrange → POST `/decision` or CDP approve + `/audit` (full Okta/OIDC protocol still Compose).  
+SU-01..03: POST `/billing/checkout` + `/audit` (+ Home UI); real Stripe test-mode webhooks still Compose/CI secrets.  
 KEY-11: `inflateSignatureCounter` arrange. KEY-10: `setAaguid` arrange. KEY-12: replay prior assertion signature.  
-Remaining: real Okta/OIDC (SI-07/08 sync), Stripe, Compose.
+Remaining: real Okta/OIDC sync, real Stripe listen, multi-instance Compose.
 
 ## Stripe (SU-*, ADM-11/12)
 
+Pass-when already hits production-shaped `POST /billing/checkout` + `/audit`. Still needed for full honesty:
+
 1. Stripe **test mode** keys in CI secrets  
 2. `stripe listen --forward-to localhost:…/events/inbound/stripe` (or Cloud webhook URL)  
-3. Real Checkout Session + customer portal; drop `/api/e2e/stripe/checkout` as Pass-when  
+3. Real Checkout Session + customer portal (replace harness provisioner inside `/billing/checkout`)  
 
 ## Okta / OIDC (SI-*, ADM-01/05)
 

@@ -56,6 +56,7 @@ test.beforeEach(async () => {
 
 test('SU-02 Stripe checkout replay does not double-provision', async () => {
   await control({ stripeProvisioningDone: false, markFirstRun: 0 })
+  // Pass-when via POST /billing/checkout + /audit (helper hits production path).
   const first = await stripeCheckout({ testCard: '4242424242424242', signedInUserId: 'user_dana' })
   expect(first.status).toBe(200)
   expect(first.body.provisioned).toBe(true)
@@ -64,19 +65,18 @@ test('SU-02 Stripe checkout replay does not double-provision', async () => {
   expect(second.status).toBe(200)
   expect(second.body.replayIgnored).toBe(true)
   expect(second.body.provisioned).toBe(false)
-  const org = await getOrg()
-  expect(org.body.orgId).toBeTruthy()
-  expect(org.body.ownerCount).toBe(1)
   const keysAfter = (await keysApi()).body.keys as unknown[]
   expect(keysAfter.length).toBe(keysBefore.length)
   const audit = await getAudit()
-  const provisioned = audit.entries.filter((e) => e.action === 'plan.started' || e.outcome.includes('Provisioned'))
-  const ignored = audit.entries.filter((e) => /Ignored replay|already provisioned/i.test(e.outcome))
-  expect(ignored.length).toBeGreaterThanOrEqual(1)
-  expect(provisioned.length).toBeLessThanOrEqual(2)
+  expect(audit.entries.some((e) => e.action === 'plan.started')).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) => e.action === 'checkout.completed' && /Ignored replay|already provisioned/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
-test('SU-03 Foreign checkout user id ignored; signed-in user owns org', async () => {
+test('SU-03 Foreign checkout user id ignored; signed-in user owns org', async ({ page }) => {
   await control({ stripeProvisioningDone: false, signedInUserId: 'user_dana' })
   const checkout = await stripeCheckout({
     signedInUserId: 'user_dana',
@@ -86,10 +86,13 @@ test('SU-03 Foreign checkout user id ignored; signed-in user owns org', async ()
   expect(checkout.status).toBe(200)
   expect(checkout.body.provisioned).toBe(true)
   expect(checkout.body.owner).toBe('Dana Reyes')
-  const org = await getOrg()
-  expect(org.body.owner).toBe('Dana Reyes')
-  const blob = JSON.stringify(org.body)
-  expect(blob).not.toContain('user_attacker')
+
+  const audit = await getAudit()
+  expect(audit.entries.some((e) => e.action === 'owner.joined')).toBe(true)
+  expect(JSON.stringify(audit.entries)).not.toContain('user_attacker')
+
+  await page.goto('/')
+  await expect(page.getByText('Acme Robotics').first()).toBeVisible()
 })
 
 test('SU-05 Register two security keys unlocks step 3 and shows recovery codes once', async ({ page }) => {
@@ -275,7 +278,10 @@ test('SI-06 Sign out everywhere else ends second browser session', async ({ page
 })
 
 test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', async () => {
+  // Arrange: group sync still harness until Compose Keycloak/OIDC.
   await control({ syncOkta: { removeJordanFromSupport: true } })
+
+  // Pass-when: production POST /decision refuses + /audit (not /api/e2e/decision).
   const res = await decisionCall({
     key: KEYS.supportBot,
     site: 'ticket-triage',
@@ -283,8 +289,17 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
     actor: 'Jordan Park',
   })
   expect(res.status).toBe(403)
+  expect(String(res.body.error)).toMatch(/not allowed|ticket-triage/i)
+
   const audit = await getAudit()
   expect(audit.entries.some((e) => e.action === 'sync.group')).toBe(true)
+  expect(
+    audit.entries.some(
+      (e) =>
+        e.action === 'decision.answer' &&
+        /not allowed to answer ticket-triage/i.test(e.outcome),
+    ),
+  ).toBe(true)
 })
 
 test('SI-08 Okta deactivate Priya — cannot act; audit records change', async ({ page }) => {

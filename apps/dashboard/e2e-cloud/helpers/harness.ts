@@ -322,7 +322,8 @@ export async function stripeCheckout(input: {
   replay?: boolean
   testCard?: string
 }) {
-  const res = await fetchRetry(`${base()}/api/e2e/stripe/checkout`, {
+  // Production-shaped checkout (Pass-when); /api/e2e/stripe/checkout remains arrange façade.
+  const res = await fetchRetry(`${base()}/billing/checkout`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(input),
@@ -364,7 +365,8 @@ export async function decisionCall(input: {
   askTeammate?: string
   question?: string
 }) {
-  const res = await fetchRetry(`${base()}/api/e2e/decision`, {
+  // Production-shaped decision sites (Pass-when); /api/e2e/decision remains arrange façade.
+  const res = await fetchRetry(`${base()}/decision`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${input.key}`,

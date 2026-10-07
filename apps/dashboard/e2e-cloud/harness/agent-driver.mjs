@@ -69,7 +69,7 @@ export async function decisionCall({
   key,
   site,
   text,
-  baseUrl = `${localGateway}/api/e2e/decision`,
+  baseUrl = `${localGateway}/decision`,
 }) {
   const res = await fetch(baseUrl, {
     method: 'POST',
