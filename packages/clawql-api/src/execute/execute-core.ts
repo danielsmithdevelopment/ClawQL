@@ -376,7 +376,7 @@ export function executeClawqlOperationEffect(
         const message = err instanceof Error ? err.message : String(err);
         return fromPromise(() =>
           markPendingCompleted(consumedMandateId!, { ok: false, error: message })
-        ).pipe(Effect.zipRight(Effect.fail(err)));
+        ).pipe(Effect.andThen(Effect.fail(err)));
       })
     );
 
