@@ -7,6 +7,7 @@ import { test, expect } from '@playwright/test'
 import { KEYS, mcpCallTool, mcpListTools, openaiChat } from '../../harness/agent-driver.mjs'
 import { openManagedConsole } from '../../helpers/console'
 import {
+  approveReview,
   control,
   createSubscription,
   decisionCall,
