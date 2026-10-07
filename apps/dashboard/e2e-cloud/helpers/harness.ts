@@ -294,16 +294,72 @@ export async function getUsage() {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
-/** IdP directory sync (Okta-shaped) — prefer over control({ syncOkta }). */
+/** IdP directory sync — prefer SCIM (`scimDirectorySync`) for SI-07/08. */
 export async function directorySync(input: {
   removeJordanFromSupport?: boolean
   deactivatePriya?: boolean
   addJordanToLegal?: boolean
+  provider?: 'scim' | 'keycloak' | 'okta-shaped'
 }) {
   const res = await fetchRetry(`${base()}/sync/directory`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ provider: 'scim', ...input }),
+  })
+  return { status: res.status, body: await json<Record<string, unknown>>(res) }
+}
+
+/** SCIM PatchOp directory sync (Keycloak realm groups → Acme people). */
+export async function scimDirectorySync(input: {
+  removeJordanFromSupport?: boolean
+  deactivatePriya?: boolean
+  addJordanToLegal?: boolean
+  Operations?: Array<{
+    op: string
+    path?: string
+    value?: unknown
+    userName?: string
+  }>
+}) {
+  const Operations =
+    input.Operations ??
+    [
+      ...(input.removeJordanFromSupport
+        ? [
+            {
+              op: 'Remove',
+              path: 'groups[display eq "Support"]',
+              value: { userName: 'jordan.park@acme.test', group: 'Support' },
+            },
+          ]
+        : []),
+      ...(input.deactivatePriya
+        ? [
+            {
+              op: 'Replace',
+              path: 'active',
+              value: false,
+              userName: 'priya.shah@acme.test',
+            },
+          ]
+        : []),
+      ...(input.addJordanToLegal
+        ? [
+            {
+              op: 'Add',
+              path: 'groups[display eq "Legal"]',
+              value: { userName: 'jordan.park@acme.test', group: 'Legal' },
+            },
+          ]
+        : []),
+    ]
+  const res = await fetchRetry(`${base()}/sync/scim`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/scim+json' },
+    body: JSON.stringify({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+      Operations,
+    }),
   })
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
@@ -326,11 +382,11 @@ export async function billingChangeCard(lastFour: string) {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
-export async function gatewayRestart() {
+export async function gatewayRestart(input?: { replica?: string; compose?: boolean }) {
   const res = await fetchRetry(`${base()}/gateway/restart`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({}),
+    body: JSON.stringify(input ?? {}),
   })
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
@@ -358,17 +414,84 @@ export async function postEvents(input: Record<string, unknown>) {
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }
 
+/** Create Checkout Session then deliver checkout.session.completed (stripe listen path). */
 export async function stripeCheckout(input: {
   signedInUserId?: string
   foreignUserId?: string
   replay?: boolean
   testCard?: string
+  /** Skip inbound webhook (session-only arrange). */
+  sessionOnly?: boolean
 }) {
-  // Production-shaped checkout (Pass-when); /api/e2e/stripe/checkout remains arrange façade.
-  const res = await fetchRetry(`${base()}/billing/checkout`, {
+  const session = await fetchRetry(`${base()}/billing/checkout`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      signedInUserId: input.signedInUserId,
+      foreignUserId: input.foreignUserId,
+      testCard: input.testCard,
+    }),
+  })
+  const sessionBody = await json<Record<string, unknown>>(session)
+  if (input.sessionOnly) {
+    return { status: session.status, body: sessionBody }
+  }
+  const sessionId = String(sessionBody.sessionId ?? '')
+  const inbound = await stripeInboundCheckoutCompleted({
+    sessionId,
+    signedInUserId: input.signedInUserId ?? 'user_dana',
+    // Distinct event ids on replay so signature path accepts; provision stays idempotent.
+    eventId: input.replay ? `evt_replay_${sessionId}` : `evt_${sessionId}`,
+  })
+  return {
+    status: inbound.status,
+    body: {
+      ...inbound.body,
+      sessionId,
+      checkoutUrl: sessionBody.checkoutUrl,
+    },
+  }
+}
+
+/** Sign and POST Stripe checkout.session.completed to /events/inbound/stripe. */
+export async function stripeInboundCheckoutCompleted(input: {
+  sessionId: string
+  signedInUserId?: string
+  eventId?: string
+  /** Override secret (default matches harness whsec_test_acme). */
+  secret?: string
+  badSignature?: boolean
+}) {
+  const { createHmac } = await import('node:crypto')
+  const eventId = input.eventId ?? `evt_${input.sessionId}`
+  const payload = JSON.stringify({
+    id: eventId,
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: input.sessionId,
+        object: 'checkout.session',
+        metadata: {
+          signedInUserId: input.signedInUserId ?? 'user_dana',
+          clawql_provision_org: '1',
+          clawql_org_name: 'Acme Robotics',
+        },
+        mode: 'subscription',
+      },
+    },
+  })
+  const secret = input.secret ?? 'whsec_test_acme'
+  const t = Math.floor(Date.now() / 1000)
+  const v1 = input.badSignature
+    ? 'deadbeef'
+    : createHmac('sha256', secret).update(`${t}.${payload}`).digest('hex')
+  const res = await fetchRetry(`${base()}/events/inbound/stripe`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'stripe-signature': `t=${t},v1=${v1}`,
+    },
+    body: payload,
   })
   return { status: res.status, body: await json<Record<string, unknown>>(res) }
 }

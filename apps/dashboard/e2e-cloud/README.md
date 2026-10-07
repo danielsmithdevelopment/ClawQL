@@ -7,7 +7,7 @@
 | Surface | Allowed for |
 |---|---|
 | `/api/e2e/reset`, `/api/e2e/control`, other `/api/e2e/*` arrange helpers | **Arrange state and inject faults only** |
-| Production-shaped paths: `/v1`, `/mcp`, `/events`, `/audit`, `/decision`, `/billing/*`, `/session/*`, `/org/*`, `/sync/*`, `/gateway/*` | **Assert results** (and prefer for arrange when a product path exists) |
+| Production-shaped paths: `/v1`, `/mcp`, `/events`, `/events/inbound/stripe`, `/audit`, `/decision`, `/billing/*`, `/session/*`, `/org/*`, `/sync/*`, `/gateway/*` | **Assert results** (and prefer for arrange when a product path exists) |
 | Managed console UI (Playwright) | Assert person-visible Pass-when |
 | Webhook receiver `:4091` | Assert delivery / signatures |
 
@@ -33,9 +33,9 @@ The dashboard Dockerfile **deletes** `src/app/api/e2e` before `next build`. CI r
 | Area | Approach |
 |---|---|
 | WebAuthn | CDP virtual authenticator (`helpers/webauthn-cdp.ts` + `webauthn-ceremony.ts`). Use `localhost` rpId. KEY/SI ceremonies migrated. |
-| Stripe | `/billing/*` production paths landed; next: test-mode keys + `stripe listen` |
-| Okta | `/sync/directory` Okta-shaped; Keycloak Compose skeleton under `compose/keycloak/` |
-| Multi-instance | `/gateway/restart` stand-in; next: 2× gateway + NATS Compose |
+| Stripe | `/billing/checkout` Session + `/events/inbound/stripe` (`stripe listen` / signed helper) |
+| Okta | Keycloak realm + `POST /sync/scim` (SCIM PatchOp); Compose under `compose/keycloak/` |
+| Multi-instance | `compose/multi-gateway/` (2× gateway + NATS) + `/gateway/restart` Pass-when |
 | NFC (REV-13, UX-09) | Physical phone — stay Manual `test.skip` |
 
 ## Run

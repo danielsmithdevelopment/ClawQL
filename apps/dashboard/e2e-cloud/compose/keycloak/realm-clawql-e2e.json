@@ -1,0 +1,85 @@
+{
+  "realm": "clawql-e2e",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "groups": [
+    {
+      "name": "Support",
+      "path": "/Support"
+    },
+    {
+      "name": "Legal",
+      "path": "/Legal"
+    }
+  ],
+  "users": [
+    {
+      "username": "dana.reyes",
+      "email": "dana.reyes@acme.test",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Dana",
+      "lastName": "Reyes",
+      "groups": ["/Legal"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "jordan.park",
+      "email": "jordan.park@acme.test",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Jordan",
+      "lastName": "Park",
+      "groups": ["/Support"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "priya.shah",
+      "email": "priya.shah@acme.test",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Priya",
+      "lastName": "Shah",
+      "groups": ["/Legal"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "changeme",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "clawql-dashboard",
+      "name": "ClawQL Cloud Dashboard",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
+      ],
+      "webOrigins": ["*"]
+    }
+  ]
+}

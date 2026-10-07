@@ -13,31 +13,30 @@ Use Chrome’s CDP virtual authenticator via `helpers/webauthn-cdp.ts` + `helper
 **Migrated Pass-when (CDP + production routes + `/audit` + UI):** KEY-01..12, SI-02..08, SU-01..03, ADM-11/12 (billing path), RES-01/06 restart path.  
 KEY-09: `ageSession` → POST `/org/delete` + Settings UI + `/audit`.  
 SI-04/05/06: `/session/*` + Profile.  
-SI-07/08: `POST /sync/directory` arrange → `/decision` or CDP + `/audit`.  
-SU-01..03: `POST /billing/checkout` + `/audit`.  
+SI-07/08: SCIM PatchOp `POST /sync/scim` (Keycloak realm groups/users) → `/decision` or CDP + `/audit`.  
+SU-01..03: `POST /billing/checkout` Session → `POST /events/inbound/stripe` (`checkout.session.completed`) + `/audit`.  
 ADM-11/12: `POST /billing/credits|card` + `GET /billing/usage` + `/audit`.  
-RES-01/06: `POST /gateway/restart` + `/audit` (Compose replica kill next).  
+RES-01/06: Compose kill (`multi-gateway/kill-replica.sh`) + `POST /gateway/restart` + `/audit`.  
 
-## Stripe (remaining)
+## Stripe
 
-Pass-when already hits `/billing/checkout` + `/billing/*`. Still needed:
+1. `POST /billing/checkout` creates a Checkout Session (arrange)  
+2. `stripe listen --forward-to …/events/inbound/stripe` (or harness helper signed POST)  
+3. `checkout.session.completed` provisions idempotently (SU-02 replay)  
 
-1. Stripe **test mode** keys in CI secrets  
-2. `stripe listen --forward-to …/events/inbound/stripe`  
-3. Real Checkout Session + customer portal inside `/billing/checkout`  
+CI can use Stripe **test mode** keys when secrets are present; harness signs with `whsec_test_acme` by default (`STRIPE_WEBHOOK_SECRET` override).
 
-## Okta / OIDC (remaining)
+## Okta / OIDC
 
-- Keycloak Compose skeleton: `e2e-cloud/compose/keycloak/`  
-- Next: realm import + map groups to `/sync/directory` (or SCIM); drop Okta-shaped payload  
+- Keycloak Compose + realm import: `e2e-cloud/compose/keycloak/` (`clawql-e2e`, Support/Legal, Jordan/Priya/Dana)  
+- SCIM-shaped sync: `POST /sync/scim` (also `POST /sync/directory` with `provider: "scim"`)  
+- Catalog titles still say “Okta”; Keycloak is the local IdP stand-in  
 
 ## Multi-instance / outages (RES-*)
 
-`POST /gateway/restart` is the in-process stand-in. Compose next:
-
-- 2× gateway replicas  
-- NATS (or existing event bus)  
-- Kill one replica / partition network; assert fail-closed and resume from `/events` cursor  
+- Compose: `e2e-cloud/compose/multi-gateway/` — NATS JetStream + `gateway-a` / `gateway-b` stubs  
+- Kill: `./kill-replica.sh gateway-a`  
+- Pass-when: `POST /gateway/restart` `{ replica, compose: true }` + session continuity / review survive + `/audit`  
 
 ## NFC
 

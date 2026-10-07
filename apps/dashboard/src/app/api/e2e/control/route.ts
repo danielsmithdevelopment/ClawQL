@@ -332,6 +332,10 @@ export async function POST(req: Request) {
       if (typeof body.lumenAccess === "boolean") world.lumenFreightDenied = !body.lumenAccess;
       if (typeof body.stripeProvisioningDone === "boolean") {
         world.stripeProvisioningDone = body.stripeProvisioningDone;
+        if (!body.stripeProvisioningDone) {
+          world.stripeCheckoutSessionId = undefined;
+          world.pendingStripeCheckout = undefined;
+        }
       }
       if (typeof body.securityKeysRegistered === "boolean") {
         world.securityKeysRegistered = body.securityKeysRegistered;

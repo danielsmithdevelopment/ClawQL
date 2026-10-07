@@ -3,8 +3,8 @@ import { postBillingCheckout, runWitnessHandler } from "@/lib/managed/e2e/handle
 export const dynamic = "force-dynamic";
 
 /**
- * Production-shaped Stripe Checkout completion.
- * Pass-when via /audit + console UI — not /api/e2e/stripe/checkout.
+ * Production-shaped Stripe Checkout Session create.
+ * Provision Pass-when via POST /events/inbound/stripe (checkout.session.completed).
  */
 export async function POST(req: Request) {
   return runWitnessHandler(postBillingCheckout, req);

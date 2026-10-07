@@ -11,7 +11,7 @@ import {
   control,
   createSubscription,
   decisionCall,
-  directorySync,
+  scimDirectorySync,
   eraseSubject,
   fetchAsOrg,
   getAudit,
@@ -57,10 +57,11 @@ test.beforeEach(async () => {
 
 test('SU-02 Stripe checkout replay does not double-provision', async () => {
   await control({ stripeProvisioningDone: false, markFirstRun: 0 })
-  // Pass-when via POST /billing/checkout + /audit (helper hits production path).
+  // Pass-when: Checkout Session + /events/inbound/stripe (stripe listen path) twice.
   const first = await stripeCheckout({ testCard: '4242424242424242', signedInUserId: 'user_dana' })
   expect(first.status).toBe(200)
   expect(first.body.provisioned).toBe(true)
+  expect(first.body.sessionId).toBeTruthy()
   const keysBefore = (await keysApi()).body.keys as unknown[]
   const second = await stripeCheckout({ testCard: '4242424242424242', signedInUserId: 'user_dana', replay: true })
   expect(second.status).toBe(200)
@@ -279,8 +280,10 @@ test('SI-06 Sign out everywhere else ends second browser session', async ({ page
 })
 
 test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', async () => {
-  // Arrange: Okta-shaped directory sync (Keycloak Compose realm next).
-  await directorySync({ removeJordanFromSupport: true })
+  // Arrange: SCIM PatchOp (Keycloak realm Support group) via POST /sync/scim.
+  const sync = await scimDirectorySync({ removeJordanFromSupport: true })
+  expect(sync.status).toBe(200)
+  expect(sync.body.provider).toBe('scim')
 
   // Pass-when: production POST /decision refuses + /audit (not /api/e2e/decision).
   const res = await decisionCall({
@@ -304,7 +307,7 @@ test('SI-07 Okta sync removes Jordan from Support — ticket-triage denied', asy
 })
 
 test('SI-08 Okta deactivate Priya — cannot act; audit records change', async ({ page }) => {
-  // Arrange: CDP key for Priya, then Okta deactivate (sync still harness until Compose Keycloak).
+  // Arrange: CDP key for Priya, then SCIM deactivate (Keycloak user.enabled=false shape).
   await page.goto('/profile')
   const reg = await registerSecurityKeyViaCdp({
     page,
@@ -313,7 +316,9 @@ test('SI-08 Okta deactivate Priya — cannot act; audit records change', async (
     label: 'Priya CDP',
   })
   expect(reg.status).toBe(200)
-  await directorySync({ deactivatePriya: true })
+  const sync = await scimDirectorySync({ deactivatePriya: true })
+  expect(sync.status).toBe(200)
+  expect(sync.body.provider).toBe('scim')
 
   const propose = await mcpCallTool({
     key: KEYS.legalOps,

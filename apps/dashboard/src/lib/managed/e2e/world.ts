@@ -261,6 +261,13 @@ export type World = {
     }
   >;
   stripeProvisioningDone: boolean;
+  /** Last Stripe Checkout Session id (E2E / stripe listen handoff). */
+  stripeCheckoutSessionId?: string;
+  pendingStripeCheckout?: {
+    sessionId: string;
+    signedInUserId: string;
+    testCard: string;
+  };
   homeNeedsAction: number;
   reviewBadge: number;
   sidebarBadge: number;
@@ -721,6 +728,8 @@ function seedWorld(): World {
       },
     },
     stripeProvisioningDone: true,
+    stripeCheckoutSessionId: undefined,
+    pendingStripeCheckout: undefined,
     homeNeedsAction: 3,
     reviewBadge: 3,
     sidebarBadge: 3,
