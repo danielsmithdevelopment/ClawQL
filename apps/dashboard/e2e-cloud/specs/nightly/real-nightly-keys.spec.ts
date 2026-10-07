@@ -217,10 +217,25 @@ test('KEY-08 Cancel step-up at key prompt — nothing changes', async () => {
   ).toBe(false)
 })
 
-test('KEY-09 Org delete without fresh sign-in asks to sign in again', async () => {
-  const del = await control({ deleteOrg: { name: 'Acme Robotics', pinVerified: true, freshSignIn: false } })
-  expect(del.status).toBe(401)
-  expect(String(del.body.error)).toMatch(/sign in again/i)
+test('KEY-09 Org delete without fresh sign-in asks to sign in again', async ({ page }) => {
+  // Arrange: age Dana's session past the 5-minute fresh-sign-in window.
+  await control({ ageSession: { person: 'Dana Reyes', minutesAgo: 6 } })
+
+  await page.goto('/settings')
+  await page.getByTestId('settings-nav-advanced').click()
+  await page.getByTestId('settings-delete-org').click()
+  await expect(page.getByTestId('settings-delete-org-message')).toContainText(/sign in again/i)
+
+  const audit = await getAudit()
+  expect(
+    audit.entries.some(
+      (e) =>
+        e.action === 'org.delete' && /sign in again before the key prompt/i.test(e.outcome),
+    ),
+  ).toBe(true)
+  expect(
+    audit.entries.some((e) => e.action === 'org.delete' && /Deletion complete/i.test(e.outcome)),
+  ).toBe(false)
 })
 
 test('KEY-10 Approval with disallowed AAGUID refused; still waiting', async ({ page }) => {

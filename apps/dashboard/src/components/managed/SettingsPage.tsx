@@ -75,14 +75,7 @@ export function SettingsPage() {
         {section === 'signin' ? <SignInSection /> : null}
         {section === 'privacy' ? <PrivacySection /> : null}
         {section === 'network' ? <NetworkSection /> : null}
-        {section === 'advanced' ? (
-          <div
-            className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500"
-            data-testid="settings-advanced"
-          >
-            Advanced fixture — feature flags and experimental org options land here.
-          </div>
-        ) : null}
+        {section === 'advanced' ? <AdvancedSection readOnly={memberReadOnly} /> : null}
       </div>
     </PageChrome>
   )
@@ -369,6 +362,61 @@ function PrivacySection() {
           <button type="button" className="font-medium text-sky-700 hover:underline">
             See requests
           </button>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function AdvancedSection({ readOnly = false }: { readOnly?: boolean }) {
+  const [message, setMessage] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  return (
+    <div className="space-y-4" data-testid="settings-advanced">
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">Delete the organization</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Archives memory, documents, skills, settings, and audit. Requires a device-bound key and a
+          sign-in within the last 5 minutes — before the key prompt.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={readOnly || busy}
+            data-testid="settings-delete-org"
+            onClick={() => {
+              setBusy(true)
+              setMessage(null)
+              void (async () => {
+                try {
+                  const res = await fetch('/org/delete', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ person: 'Dana Reyes' }),
+                  })
+                  const body = (await res.json().catch(() => ({}))) as { error?: string }
+                  if (!res.ok) {
+                    setMessage(body.error ?? `Delete refused (${res.status})`)
+                    return
+                  }
+                  setMessage('Deletion complete')
+                } catch (err) {
+                  setMessage(err instanceof Error ? err.message : 'Delete failed')
+                } finally {
+                  setBusy(false)
+                }
+              })()
+            }}
+          >
+            Delete organization
+          </Button>
+          {message ? (
+            <p className="text-sm text-slate-700" data-testid="settings-delete-org-message">
+              {message}
+            </p>
+          ) : null}
         </div>
       </section>
     </div>

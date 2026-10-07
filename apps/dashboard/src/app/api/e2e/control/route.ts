@@ -167,6 +167,8 @@ type ControlBody = {
   redaction?: Partial<{ phone: boolean; email: boolean; bank: boolean }>;
   transferOwnership?: { from: string; to: string };
   deleteOrg?: { name: string; pinVerified?: boolean; freshSignIn?: boolean };
+  /** Arrange: backdate active session signedInAt (KEY-09 fresh sign-in gate). */
+  ageSession?: { person: string; minutesAgo: number };
   resetSignatureCounter?: { person: string; keyId?: string };
   /** Arrange: advance server-side counter ahead of CDP authenticator (KEY-11 clone). */
   inflateSignatureCounter?: { person: string; to: number; label?: string };
@@ -566,8 +568,20 @@ export async function POST(req: Request) {
           });
         }
       }
+      if (body.ageSession) {
+        const p = personByName(body.ageSession.person);
+        const minutes = Math.max(0, body.ageSession.minutesAgo);
+        const aged = new Date(Date.now() - minutes * 60_000).toISOString();
+        if (p) {
+          for (const s of p.sessions) {
+            if (!s.ended) s.signedInAt = aged;
+          }
+        }
+      }
       if (body.deleteOrg) {
+        // Prefer POST /org/delete for Pass-when; this flag remains arrange/fault for ADM-19.
         if (!body.deleteOrg.freshSignIn) {
+          appendAudit("Dana Reyes", "org.delete", "Asked to sign in again before the key prompt");
           return NextResponse.json(
             { error: "sign in again before deleting the org" },
             { status: 401 },
