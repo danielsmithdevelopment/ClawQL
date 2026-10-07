@@ -62,7 +62,6 @@ function provisionFromCheckout(opts: {
   signedInUserId: string;
   sessionId: string;
   testCard?: boolean;
-  replayEvent?: boolean;
 }): {
   provisioned: boolean;
   replayIgnored: boolean;
