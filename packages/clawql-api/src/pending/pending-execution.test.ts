@@ -124,8 +124,13 @@ describe("pending execute park + resume", () => {
         loadSpecFn
       )
     );
-    const tamperedJson = JSON.parse(tampered[0]!.text) as { status: string };
-    expect(tamperedJson.status).toBe("blocked");
+    const tamperedJson = JSON.parse(tampered[0]!.text) as {
+      status: string;
+      reason?: string;
+    };
+    // Digest mismatch fails CAS consume (no side effect) — not a separate blocked path.
+    expect(tamperedJson.status).toBe("mandate_required");
+    expect(tamperedJson.reason).toMatch(/digest mismatch|already used|expired/i);
 
     // Decline path
     const parked2 = await parkMandateExecute({

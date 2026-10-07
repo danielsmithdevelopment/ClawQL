@@ -1,9 +1,13 @@
 /**
  * Persist parked execute calls under $CLAWQL_HOME/pending-executions/.
+ *
+ * Consume is a single conditional write under an exclusive lock (file-store CAS):
+ * approved + digest match + not expired → outcome_unknown. Zero rows (null) = refuse.
+ * Postgres / NATS KV backends must preserve the same predicate in one operation.
  */
 
 import { randomBytes } from "node:crypto";
-import { chmod, mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, open, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { Effect } from "effect";
 import { resolveClawqlHome } from "../spec/custom-sources-store.js";
@@ -12,6 +16,7 @@ import type { PendingExecutionRecord, PendingExecutionStatus } from "./pending-e
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;
 const ID_PREFIX = "pex_";
+const LOCK_TIMEOUT_MS = 5_000;
 
 export function getPendingExecutionsDir(home = resolveClawqlHome()): string {
   return join(home, "pending-executions");
@@ -53,6 +58,41 @@ function isRecord(v: unknown): v is PendingExecutionRecord {
   );
 }
 
+function normalizeRecord(raw: PendingExecutionRecord): PendingExecutionRecord {
+  return {
+    ...raw,
+    consumedAt: raw.consumedAt ?? null,
+    consumedBy: raw.consumedBy ?? null,
+  };
+}
+
+async function withPendingFileLock<A>(path: string, fn: () => Promise<A>): Promise<A> {
+  const lockPath = `${path}.lock`;
+  const started = Date.now();
+  for (;;) {
+    try {
+      const fh = await open(lockPath, "wx");
+      try {
+        await fh.writeFile(`${process.pid}\n`);
+        return await fn();
+      } finally {
+        await fh.close();
+        try {
+          await unlink(lockPath);
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException)?.code !== "EEXIST") throw e;
+      if (Date.now() - started > LOCK_TIMEOUT_MS) {
+        throw new Error(`pending execution lock timeout: ${path}`);
+      }
+      await new Promise((r) => setTimeout(r, 2 + Math.floor(Math.random() * 18)));
+    }
+  }
+}
+
 export const readPendingExecutionEffect = (
   executionId: string,
   home = resolveClawqlHome()
@@ -62,7 +102,7 @@ export const readPendingExecutionEffect = (
       const path = recordPath(executionId, home);
       try {
         const raw = JSON.parse(await readFile(path, "utf8")) as unknown;
-        return isRecord(raw) ? raw : null;
+        return isRecord(raw) ? normalizeRecord(raw) : null;
       } catch (e: unknown) {
         if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
         throw e;
@@ -80,7 +120,8 @@ export const writePendingExecutionEffect = (
       const dir = getPendingExecutionsDir(home);
       await mkdir(dir, { recursive: true, mode: DIR_MODE });
       const path = recordPath(record.executionId, home);
-      await writeFile(path, `${JSON.stringify(record, null, 2)}\n`, {
+      const normalized = normalizeRecord(record);
+      await writeFile(path, `${JSON.stringify(normalized, null, 2)}\n`, {
         encoding: "utf8",
         mode: FILE_MODE,
       });
@@ -97,6 +138,8 @@ export const updatePendingStatusEffect = (
     readonly approvedAt?: string | null;
     readonly completedAt?: string | null;
     readonly lastError?: string | null;
+    readonly consumedAt?: string | null;
+    readonly consumedBy?: string | null;
   },
   home = resolveClawqlHome()
 ): Effect.Effect<PendingExecutionRecord, Error> =>
@@ -111,9 +154,73 @@ export const updatePendingStatusEffect = (
       approvedAt: patch.approvedAt !== undefined ? patch.approvedAt : existing.approvedAt,
       completedAt: patch.completedAt !== undefined ? patch.completedAt : existing.completedAt,
       lastError: patch.lastError !== undefined ? patch.lastError : existing.lastError,
+      consumedAt: patch.consumedAt !== undefined ? patch.consumedAt : existing.consumedAt,
+      consumedBy: patch.consumedBy !== undefined ? patch.consumedBy : existing.consumedBy,
     };
     yield* writePendingExecutionEffect(next, home);
     return next;
+  });
+
+export type TryConsumeApprovedInput = {
+  readonly argsHash: string;
+  /** Replica / worker identity recorded on the winning consume. */
+  readonly consumedBy?: string;
+  /**
+   * Store clock for expiry (ms since epoch). Callers should pass one value per
+   * attempt; Postgres backends must use `now()` inside the UPDATE, never replica wall clocks.
+   */
+  readonly nowMs?: number;
+};
+
+/**
+ * Atomic consume: `UPDATE … WHERE status='approved' AND argsHash=$digest AND expiresAt > now()`.
+ * Returns the updated record, or `null` when the predicate matches zero rows (refuse).
+ */
+export const tryConsumeApprovedEffect = (
+  executionId: string,
+  input: TryConsumeApprovedInput,
+  home = resolveClawqlHome()
+): Effect.Effect<PendingExecutionRecord | null, Error> =>
+  Effect.tryPromise({
+    try: async () => {
+      const path = recordPath(executionId, home);
+      return withPendingFileLock(path, async () => {
+        let raw: unknown;
+        try {
+          raw = JSON.parse(await readFile(path, "utf8")) as unknown;
+        } catch (e: unknown) {
+          if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+          throw e;
+        }
+        if (!isRecord(raw)) return null;
+        const existing = normalizeRecord(raw);
+        const nowMs = input.nowMs ?? Date.now();
+        const expiresMs = Date.parse(existing.expiresAt);
+        if (
+          existing.status !== "approved" ||
+          existing.argsHash !== input.argsHash ||
+          !Number.isFinite(expiresMs) ||
+          expiresMs <= nowMs
+        ) {
+          return null;
+        }
+        const consumedAt = new Date(nowMs).toISOString();
+        const next: PendingExecutionRecord = {
+          ...existing,
+          status: "outcome_unknown",
+          consumedAt,
+          consumedBy: input.consumedBy?.trim() || `pid:${process.pid}`,
+          lastError: null,
+        };
+        await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, {
+          encoding: "utf8",
+          mode: FILE_MODE,
+        });
+        await chmod(path, FILE_MODE);
+        return next;
+      });
+    },
+    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
   });
 
 export const listPendingExecutionIdsEffect = (

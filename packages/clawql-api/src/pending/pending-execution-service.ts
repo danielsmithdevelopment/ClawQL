@@ -1,7 +1,9 @@
 /**
  * Effect Tag + Layer: park mandate executes and resume after human approval.
+ * Consume is atomic (approved → outcome_unknown) before any side effect.
  */
 
+import { hostname } from "node:os";
 import { Context, Effect, Layer } from "effect";
 import { appendProcessWormEffect } from "clawql-audit";
 import type { OperationRisk } from "../risk/operation-risk-types.js";
@@ -11,10 +13,15 @@ import {
   newExecutionIdEffect,
   pendingTtlHours,
   readPendingExecutionEffect,
+  tryConsumeApprovedEffect,
   updatePendingStatusEffect,
   writePendingExecutionEffect,
 } from "./pending-execution-store.js";
-import type { ParkExecuteResult, PendingExecutionRecord } from "./pending-execution-types.js";
+import {
+  mandateIdempotencyKey,
+  type ParkExecuteResult,
+  type PendingExecutionRecord,
+} from "./pending-execution-types.js";
 
 export type ParkInput = {
   readonly operationId: string;
@@ -25,6 +32,14 @@ export type ParkInput = {
 };
 
 export type ResumeDecision = "approve" | "decline";
+
+export type ConsumeApprovedInput = {
+  readonly executionId: string;
+  readonly argsHash: string;
+  readonly home?: string;
+  readonly consumedBy?: string;
+  readonly nowMs?: number;
+};
 
 export class PendingExecutionService extends Context.Service<
   PendingExecutionService,
@@ -39,6 +54,10 @@ export class PendingExecutionService extends Context.Service<
       decision: ResumeDecision,
       home?: string
     ) => Effect.Effect<PendingExecutionRecord, Error>;
+    /** Atomic one-shot consume. Null = refuse (already consumed, mismatch, expired). */
+    readonly tryConsume: (
+      input: ConsumeApprovedInput
+    ) => Effect.Effect<PendingExecutionRecord | null, Error>;
     readonly markCompleted: (
       executionId: string,
       outcome: { readonly ok: boolean; readonly error?: string },
@@ -49,6 +68,10 @@ export class PendingExecutionService extends Context.Service<
 
 function isExpired(record: PendingExecutionRecord, now = Date.now()): boolean {
   return Date.parse(record.expiresAt) <= now;
+}
+
+function defaultConsumedBy(): string {
+  return `host:${hostname()}:pid:${process.pid}`;
 }
 
 export const PendingExecutionLive = Layer.succeed(
@@ -79,6 +102,8 @@ export const PendingExecutionLive = Layer.succeed(
           approvedAt: null,
           completedAt: null,
           lastError: null,
+          consumedAt: null,
+          consumedBy: null,
         };
         yield* writePendingExecutionEffect(record, home);
         yield* appendProcessWormEffect({
@@ -92,6 +117,7 @@ export const PendingExecutionLive = Layer.succeed(
             riskPolicy: input.risk.policy,
             riskLevel: input.risk.level,
             expiresAt,
+            idempotencyKey: mandateIdempotencyKey(executionId),
           },
         });
         return {
@@ -178,16 +204,79 @@ export const PendingExecutionLive = Layer.succeed(
         return approved;
       }),
 
+    tryConsume: (input) =>
+      Effect.gen(function* () {
+        const home = input.home ?? resolveClawqlHome();
+        const consumed = yield* tryConsumeApprovedEffect(
+          input.executionId,
+          {
+            argsHash: input.argsHash,
+            consumedBy: input.consumedBy ?? defaultConsumedBy(),
+            nowMs: input.nowMs,
+          },
+          home
+        );
+        if (!consumed) return null;
+        const ts = consumed.consumedAt ?? new Date().toISOString();
+        yield* appendProcessWormEffect({
+          type: "MANDATE_CONSUMED",
+          timestamp: ts,
+          sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+          metadata: {
+            executionId: consumed.executionId,
+            operationId: consumed.operationId,
+            argsHash: consumed.argsHash,
+            consumedBy: consumed.consumedBy,
+            status: consumed.status,
+            idempotencyKey: mandateIdempotencyKey(consumed.executionId),
+            outcome: "unknown",
+          },
+        });
+        return consumed;
+      }),
+
     markCompleted: (executionId, outcome, homeOpt) =>
-      updatePendingStatusEffect(
-        executionId,
-        {
-          status: outcome.ok ? "completed" : "failed",
-          completedAt: new Date().toISOString(),
-          lastError: outcome.ok ? null : (outcome.error ?? "execute failed"),
-        },
-        homeOpt ?? resolveClawqlHome()
-      ),
+      Effect.gen(function* () {
+        const home = homeOpt ?? resolveClawqlHome();
+        const existing = yield* readPendingExecutionEffect(executionId, home);
+        if (!existing) {
+          return yield* Effect.fail(new Error(`Unknown executionId: ${executionId}`));
+        }
+        if (existing.status === "completed" || existing.status === "failed") {
+          return existing;
+        }
+        if (existing.status !== "outcome_unknown") {
+          return yield* Effect.fail(
+            new Error(
+              `Execution ${executionId} cannot finalize from status=${existing.status} (expected outcome_unknown)`
+            )
+          );
+        }
+        const completedAt = new Date().toISOString();
+        const next = yield* updatePendingStatusEffect(
+          executionId,
+          {
+            status: outcome.ok ? "completed" : "failed",
+            completedAt,
+            lastError: outcome.ok ? null : (outcome.error ?? "execute failed"),
+          },
+          home
+        );
+        yield* appendProcessWormEffect({
+          type: outcome.ok ? "MANDATE_FINALIZED" : "MANDATE_FINALIZED",
+          timestamp: completedAt,
+          sessionId: process.env.CLAWQL_SESSION_ID?.trim() || "pending-execute",
+          metadata: {
+            executionId,
+            operationId: existing.operationId,
+            argsHash: existing.argsHash,
+            ok: outcome.ok,
+            error: outcome.error ?? null,
+            idempotencyKey: mandateIdempotencyKey(executionId),
+          },
+        });
+        return next;
+      }),
   })
 );
 
@@ -222,6 +311,17 @@ export async function loadPendingExecution(
     Effect.gen(function* () {
       const svc = yield* PendingExecutionService;
       return yield* svc.load(executionId, home);
+    }).pipe(Effect.provide(PendingExecutionLive))
+  );
+}
+
+export async function tryConsumeApprovedMandate(
+  input: ConsumeApprovedInput
+): Promise<PendingExecutionRecord | null> {
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const svc = yield* PendingExecutionService;
+      return yield* svc.tryConsume(input);
     }).pipe(Effect.provide(PendingExecutionLive))
   );
 }

@@ -4,6 +4,8 @@
 
 - **Formal methods (ADR 0014)** — adopt TLA+/Quint for protocol races and Lean for the policy-kernel oracle (differential tests; not production runtime). Starter TLA+ mandate lifecycle under [`formal/tla/mandate/`](formal/tla/mandate/) (target atomic consume; `WeakConsume` mode exposes today’s double-execute race). gdp-ts remains layer 1.
 
+- **Security: atomic mandate consume** — `tryConsumeApprovedEffect` CAS (`approved` → `outcome_unknown` under file lock with digest + store-clock expiry). Execute/resume consume before side effect; finalize to `completed`/`failed`. Crash leaves `outcome_unknown` in Review + WORM (`MANDATE_CONSUMED`).
+
 - **Routing catalog honesty** — `search_provider_tool_routing` still lists as the productionTrusted _use site_, but `/decision` returns `calibrated: false` until the live default-on MCP catalog matches the frozen v0.4/v0.6 routing digest (PageIndex purge, `sources_propose`/`resume`, ouroboros/think opt-in). Gate: `routingCatalogAlignedForProductionTrust()`. Evidence: [`docs/design/effect-v4-cutover-evidence.md`](docs/design/effect-v4-cutover-evidence.md).
 
 ## [8.0.0] - 2026-10-03

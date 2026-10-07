@@ -15,8 +15,15 @@ Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). W
 5. Human (or ChatGPT form, later) approves → `clawql resume <id>` / MCP `resume`:
    - Load pending; require `status === "pending"` and recompute `argsHash` match (tamper → reject).
    - WORM: `HUMAN_APPROVAL`.
-   - Run **exactly** the parked `operationId`/`args`/`fields` with a one-shot mandate bypass bound to that `executionId`.
-   - Mark completed (or failed) in the store.
+   - **Atomic consume** before the side effect: conditional update
+     `approved` → `outcome_unknown` where `argsHash` matches and `expiresAt` is still in the future
+     (store clock — Postgres `now()`, never each replica’s wall clock). Zero rows → refuse.
+   - WORM: `MANDATE_CONSUMED` (outcome unknown). Downstream calls should use
+     idempotency key `clawql-mandate:<executionId>` where the API supports it (e.g. Stripe).
+   - Run **exactly** the parked `operationId`/`args`/`fields`.
+   - Finalize `outcome_unknown` → `completed` | `failed` (`MANDATE_FINALIZED`).
+   - If the replica dies after consume, status stays **`outcome_unknown`** — surfaced in Review /
+     audit; do **not** silently retry without the idempotency key.
 
 ## Pending record
 
@@ -33,7 +40,9 @@ Depends on [operation risk from the spec](./operation-risk-from-spec-v0.1.md). W
   "createdAt": "ISO-8601",
   "expiresAt": "ISO-8601",
   "approvedAt": null,
-  "completedAt": null
+  "completedAt": null,
+  "consumedAt": null,
+  "consumedBy": null
 }
 ```
 
@@ -55,5 +64,7 @@ Where the client supports MCP standard elicitation / ChatGPT MRTR, approve **ins
 ## Security
 
 - Resume never accepts alternate `args` — only the parked payload.
-- Bypass is scoped to one `executionId` after approval; it does not widen ATR or clear `block`.
+- Bypass is scoped to one `executionId` after **atomic consume**; it does not widen ATR or clear `block`.
+- Concurrent resume / `approvedExecutionId` execute: at most one consume wins (file-lock CAS today; SQL/`UPDATE … RETURNING` or NATS KV revision check when those stores land). Formal model: [`formal/tla/mandate/`](../../../formal/tla/mandate/).
 - Pending files are `0600`; args may contain secrets — **not** included in default home sync.
+- Pre-launch audit hunt for historical double-execute: `node scripts/formal/audit-mandate-double-execute.mjs`.

@@ -66,23 +66,41 @@ export const listManagedReviewEffect = (
           try: () => loadPendingExecution(id, home),
           catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
         });
-        if (!record || record.status !== "pending") continue;
-        items.push({
-          id: record.executionId,
-          kind: "change",
-          kindLabel: "CHANGE",
-          title: record.operationId,
-          badge: `${record.risk.policy.toUpperCase()} risk`,
-          badgeTone:
-            record.risk.policy === "block"
-              ? "danger"
-              : record.risk.policy === "mandate"
-                ? "warn"
-                : "neutral",
-          listMeta: `Parked ${relativeTime(record.createdAt)}`,
-          statusLine: expiresLine(record.expiresAt),
-          statusTone: Date.parse(record.expiresAt) - Date.now() < 30 * 60_000 ? "danger" : "neutral",
-        });
+        if (!record) continue;
+        if (record.status === "pending") {
+          items.push({
+            id: record.executionId,
+            kind: "change",
+            kindLabel: "CHANGE",
+            title: record.operationId,
+            badge: `${record.risk.policy.toUpperCase()} risk`,
+            badgeTone:
+              record.risk.policy === "block"
+                ? "danger"
+                : record.risk.policy === "mandate"
+                  ? "warn"
+                  : "neutral",
+            listMeta: `Parked ${relativeTime(record.createdAt)}`,
+            statusLine: expiresLine(record.expiresAt),
+            statusTone:
+              Date.parse(record.expiresAt) - Date.now() < 30 * 60_000 ? "danger" : "neutral",
+          });
+          continue;
+        }
+        // Consumed but outcome not finalized (crash between consume and side effect).
+        if (record.status === "outcome_unknown") {
+          items.push({
+            id: record.executionId,
+            kind: "change",
+            kindLabel: "CHANGE",
+            title: record.operationId,
+            badge: "OUTCOME UNKNOWN",
+            badgeTone: "danger",
+            listMeta: `Consumed ${record.consumedAt ? relativeTime(record.consumedAt) : "recently"}`,
+            statusLine: "Consumed — outcome unknown (do not silent-retry; use mandate idempotency key)",
+            statusTone: "danger",
+          });
+        }
       }
 
       for (const id of sourceIds) {
