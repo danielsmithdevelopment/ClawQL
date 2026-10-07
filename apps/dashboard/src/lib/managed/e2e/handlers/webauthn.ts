@@ -414,6 +414,16 @@ export function postApproveVerify(req: Request): Effect.Effect<NextResponse, unk
       return NextResponse.json({ error: "response required" }, { status: 400 });
     }
 
+    const assertionJson = body.response as {
+      response?: { signature?: string };
+    };
+    const signedPayload = assertionJson.response?.signature;
+    if (signedPayload && world.usedApprovalPayloads.has(signedPayload)) {
+      appendAudit(pending.person, "review.approve", "Replay rejected — no second mandate");
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "replay rejected" }, { status: 403 });
+    }
+
     const person = personByName(pending.person);
     const sk = person?.securityKeys.find(
       (k) => !k.revoked && k.canApprove && k.credentialId && k.publicKey,
@@ -421,6 +431,14 @@ export function postApproveVerify(req: Request): Effect.Effect<NextResponse, unk
     if (!person || !sk?.credentialId || !sk.publicKey) {
       world.webauthnPending = null;
       return NextResponse.json({ error: "no matching security key" }, { status: 400 });
+    }
+
+    if (sk.aaguid && !world.allowedAuthenticatorAaguids.includes(sk.aaguid)) {
+      appendAudit(pending.person, "review.approve", "Approval refused — authenticator not allowed", {
+        aaguid: sk.aaguid,
+      });
+      world.webauthnPending = null;
+      return NextResponse.json({ error: "authenticator model not allowed" }, { status: 403 });
     }
 
     const verifier = createSimpleWebAuthnVerifier({
@@ -479,6 +497,7 @@ export function postApproveVerify(req: Request): Effect.Effect<NextResponse, unk
       return NextResponse.json({ error: "possible cloned key" }, { status: 403 });
     }
     sk.signatureCounter = newCounter;
+    if (signedPayload) world.usedApprovalPayloads.add(signedPayload);
 
     const item = world.review.find((r) => r.id === pending.requestId);
     if (!item || (item.status !== "waiting" && item.status !== "changed")) {
