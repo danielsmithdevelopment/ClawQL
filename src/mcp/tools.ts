@@ -51,8 +51,11 @@ import {
   projectRestByFields,
   agentPrincipalFromSessionIdEffect,
   proposeSourceEffect,
+  buildConsoleLinkEffect,
+  consoleLinkEnabled,
   type CustomSourceKind,
 } from "clawql-api";
+import { z } from "zod";
 import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
 import { getClawqlApi } from "../composition/clawql-api-adapters.js";
 import { resolvePluginCompositionFlags } from "../composition/resolve-plugin-flags.js";
@@ -173,6 +176,31 @@ export async function handleSourcesProposeToolInput(
 
 export { SLACK_NOTIFY_OPERATION_ID, handleNotifyToolInput };
 
+/** Zod shape for Core `console_link` (gated by CLAWQL_ENABLE_CONSOLE_LINK). */
+export const consoleLinkToolZodShape = {
+  path: z
+    .string()
+    .optional()
+    .describe("Deep-link path under the console, e.g. activity/<id> or overview"),
+  sessionId: z.string().optional().describe("MCP / API session id (defaults to CLAWQL_SESSION_ID)"),
+  orgId: z.string().optional().describe("Optional org / tenant id (defaults to CLAWQL_ORG_ID)"),
+} as const;
+
+/** MCP `console_link` — returns an HTTPS deep link into the ClawQL console. */
+export async function handleConsoleLinkToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const result = await Effect.runPromise(
+    buildConsoleLinkEffect({
+      path: typeof o.path === "string" ? o.path : undefined,
+      sessionId: typeof o.sessionId === "string" ? o.sessionId : undefined,
+      orgId: typeof o.orgId === "string" ? o.orgId : undefined,
+    })
+  );
+  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
+}
+
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({
   execute: (params) => handleClawqlExecuteToolInput(params),
@@ -275,6 +303,18 @@ export function registerTools(server: McpServer) {
     wrapRegisteredMcpToolHandler("sources_propose", handleSourcesProposeToolInput)
   );
   registeredNames.push("sources_propose");
+
+  // ADR 0015 catalog win: Core deep link for non-ChatGPT clients (opt-in).
+  // ChatGPT Apps still use clawql_console → ui://clawql/console when extensions attach.
+  if (consoleLinkEnabled()) {
+    server.tool(
+      "console_link",
+      "Return an HTTPS deep-link URL into the ClawQL console for the current session/org (Core alias of clawql_console).",
+      consoleLinkToolZodShape,
+      wrapRegisteredMcpToolHandler("console_link", handleConsoleLinkToolInput)
+    );
+    registeredNames.push("console_link");
+  }
 
   registerPluginMcpTools(server);
   for (const tool of getClawqlApi().listMcpTools()) {

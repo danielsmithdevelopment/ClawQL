@@ -15,6 +15,7 @@ export * from "./plugins/compose-default-plugins.js";
 export * from "./execute/index.js";
 export * from "./execute-service.js";
 export * from "./ifc/index.js";
+export * from "./console/index.js";
 export * from "./graphql/index.js";
 export * from "./mcp-tool-registry.js";
 export * from "./plugin-registry.js";
