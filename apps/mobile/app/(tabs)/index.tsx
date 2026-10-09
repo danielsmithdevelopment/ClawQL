@@ -1,7 +1,7 @@
 import { Effect } from "effect";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { Pressable, View } from "react-native";
 
 import type { HomeSpend, ReviewItem } from "@/src/domain/schemas";
 import { getHomeSpendEffect, listReviewEffect } from "@/src/services/api";
@@ -14,6 +14,7 @@ import {
   LoadingBlock,
   Meta,
   Screen,
+  ScreenScroll,
   Subtitle,
   Title,
 } from "@/src/ui/primitives";
@@ -24,8 +25,8 @@ export default function HomeScreen() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [spend, setSpend] = useState<HomeSpend | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -41,15 +42,17 @@ export default function HomeScreen() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      setHydrated(true);
     }
   }, [session]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
-  if (!session || loading) {
+  if (!session || (loading && !hydrated)) {
     return (
       <Screen>
         <LoadingBlock />
@@ -58,39 +61,27 @@ export default function HomeScreen() {
   }
 
   return (
-    <Screen testID="home-screen">
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              void load();
-            }}
-          />
-        }
-        ListHeaderComponent={
-          <View>
-            <Title accessibilityRole="header">What needs you</Title>
-            <Meta style={{ marginTop: 4, marginBottom: space.md }}>
-              Signed in as {session.displayName}
-              {session.reviewerDemo ? " · reviewer demo" : ""}
-            </Meta>
-            {spend ? (
-              <Card testID="home-spend">
-                <Subtitle>{spend.label}</Subtitle>
-                <Title style={{ marginTop: 4 }}>{spend.amount}</Title>
-                <Meta style={{ marginTop: 4 }}>{spend.note}</Meta>
-              </Card>
-            ) : null}
-            <Subtitle style={{ marginBottom: space.sm }}>Needs action</Subtitle>
-            {error ? <Meta style={{ color: "#BE123C" }}>{error}</Meta> : null}
-          </View>
-        }
-        renderItem={({ item }) => (
+    <ScreenScroll testID="home-screen">
+      <Title accessibilityRole="header">What needs you</Title>
+      <Meta style={{ marginTop: 4, marginBottom: space.md }}>
+        Signed in as {session.displayName}
+        {session.reviewerDemo ? " · reviewer demo" : ""}
+      </Meta>
+      {spend ? (
+        <Card testID="home-spend">
+          <Subtitle>{spend.label}</Subtitle>
+          <Title style={{ marginTop: 4 }}>{spend.amount}</Title>
+          <Meta style={{ marginTop: 4 }}>{spend.note}</Meta>
+        </Card>
+      ) : null}
+      <Subtitle style={{ marginBottom: space.sm }}>Needs action</Subtitle>
+      {error ? <Meta style={{ color: "#BE123C" }}>{error}</Meta> : null}
+      {items.length === 0 ? (
+        <Meta testID="home-empty">Nothing waiting. You're clear.</Meta>
+      ) : (
+        items.map((item) => (
           <Pressable
+            key={item.id}
             accessibilityRole="button"
             testID={`home-item-${item.id}`}
             onPress={() => router.push(`/review/${item.id}`)}
@@ -105,9 +96,8 @@ export default function HomeScreen() {
               <Meta style={{ marginTop: 6 }}>{item.statusLine}</Meta>
             </Card>
           </Pressable>
-        )}
-        ListEmptyComponent={<Meta testID="home-empty">Nothing waiting. You're clear.</Meta>}
-      />
-    </Screen>
+        ))
+      )}
+    </ScreenScroll>
   );
 }

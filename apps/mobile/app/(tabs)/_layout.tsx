@@ -31,6 +31,7 @@ export default function TabLayout() {
         headerTintColor: colors.ink,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.inkFaint,
+        tabBarShowLabel: false,
         tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
       }}
     >

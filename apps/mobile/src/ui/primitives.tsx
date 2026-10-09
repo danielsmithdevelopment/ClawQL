@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -16,6 +18,27 @@ export function Screen({ children, style, ...rest }: ViewProps) {
     <View style={[styles.screen, style]} {...rest}>
       {children}
     </View>
+  );
+}
+
+/** Scrollable screen body — flex:1 avoids RN-web blank layouts inside tab screens. */
+export function ScreenScroll({
+  children,
+  testID,
+}: {
+  children: ReactNode;
+  testID?: string;
+}) {
+  return (
+    <Screen testID={testID}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: space.xl, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {children}
+      </ScrollView>
+    </Screen>
   );
 }
 

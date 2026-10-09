@@ -84,7 +84,7 @@ export default function ReviewDetailScreen() {
         })
       );
       setNote((prev) => prev ?? `${decision === "approve" ? "Approved" : "Declined"} · ${res.status}`);
-      setTimeout(() => router.replace("/review"), 600);
+      setTimeout(() => router.replace("/(tabs)/review"), 600);
     } catch (e: unknown) {
       const reason =
         e && typeof e === "object" && "reason" in e
@@ -112,7 +112,7 @@ export default function ReviewDetailScreen() {
         <Title>Request not found</Title>
         <Meta style={{ marginTop: space.sm }}>It may have expired or already been decided.</Meta>
         <View style={{ height: space.md }} />
-        <SecondaryButton label="Back to queue" onPress={() => router.replace("/review")} />
+        <SecondaryButton label="Back to queue" onPress={() => router.replace("/(tabs)/review")} />
       </Screen>
     );
   }

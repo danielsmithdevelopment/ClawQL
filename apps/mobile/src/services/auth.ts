@@ -11,6 +11,7 @@ import {
   REVIEWER_DEMO_SESSION,
 } from "../domain/fixtures";
 import type { MobileSession } from "../domain/schemas";
+import { resetFixtureStateEffect } from "./api";
 import { loadMobileConfigEffect } from "./config";
 import { clearSessionEffect, saveSessionEffect } from "./session-store";
 
@@ -101,6 +102,7 @@ export function signInAsReviewerDemoEffect(): Effect.Effect<
   MobileAuthError
 > {
   return Effect.gen(function* () {
+    yield* resetFixtureStateEffect();
     const session = { ...REVIEWER_DEMO_SESSION, expiresAtMs: Date.now() + 86_400_000 };
     yield* saveSessionEffect(session).pipe(
       Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))
@@ -114,6 +116,7 @@ export function signInAsFixtureEffect(): Effect.Effect<
   MobileAuthError
 > {
   return Effect.gen(function* () {
+    yield* resetFixtureStateEffect();
     const session = { ...FIXTURE_SESSION, expiresAtMs: Date.now() + 86_400_000 };
     yield* saveSessionEffect(session).pipe(
       Effect.mapError((e) => new MobileAuthError({ reason: e.reason }))

@@ -1,7 +1,7 @@
 import { Effect } from "effect";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, RefreshControl, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { Pressable, View } from "react-native";
 
 import type { ReviewItem } from "@/src/domain/schemas";
 import { listReviewEffect } from "@/src/services/api";
@@ -14,6 +14,7 @@ import {
   LoadingBlock,
   Meta,
   Screen,
+  ScreenScroll,
   Title,
 } from "@/src/ui/primitives";
 
@@ -23,7 +24,7 @@ export default function ReviewQueueScreen() {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [source, setSource] = useState<"live" | "fixture">("fixture");
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -33,15 +34,17 @@ export default function ReviewQueueScreen() {
       setSource(res.source);
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      setHydrated(true);
     }
   }, [session]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
-  if (!session || loading) {
+  if (!session || (loading && !hydrated)) {
     return (
       <Screen>
         <LoadingBlock />
@@ -50,29 +53,19 @@ export default function ReviewQueueScreen() {
   }
 
   return (
-    <Screen testID="review-queue-screen">
-      <FlatList
-        data={items}
-        keyExtractor={(i) => i.id}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              void load();
-            }}
-          />
-        }
-        ListHeaderComponent={
-          <View style={{ marginBottom: space.md }}>
-            <Title accessibilityRole="header">Review</Title>
-            <Meta style={{ marginTop: 4 }}>
-              {items.length} waiting · source {source}
-            </Meta>
-          </View>
-        }
-        renderItem={({ item }) => (
+    <ScreenScroll testID="review-queue-screen">
+      <View style={{ marginBottom: space.md }}>
+        <Title accessibilityRole="header">Review</Title>
+        <Meta style={{ marginTop: 4 }}>
+          {items.length} waiting · source {source}
+        </Meta>
+      </View>
+      {items.length === 0 ? (
+        <Meta testID="review-empty">Queue clear. Decided requests move to the audit log.</Meta>
+      ) : (
+        items.map((item) => (
           <Pressable
+            key={item.id}
             accessibilityRole="button"
             testID={`review-item-${item.id}`}
             onPress={() => router.push(`/review/${item.id}`)}
@@ -87,11 +80,8 @@ export default function ReviewQueueScreen() {
               <Meta style={{ marginTop: 6 }}>{item.statusLine}</Meta>
             </Card>
           </Pressable>
-        )}
-        ListEmptyComponent={
-          <Meta testID="review-empty">Queue clear. Decided requests move to the audit log.</Meta>
-        }
-      />
-    </Screen>
+        ))
+      )}
+    </ScreenScroll>
   );
 }
