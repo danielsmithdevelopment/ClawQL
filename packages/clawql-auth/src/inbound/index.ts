@@ -122,6 +122,7 @@ export {
   ID_JAG_ISSUER_JWKS_PATH,
   MCP_OAUTH_AUTHORIZE_PATH,
   MCP_OAUTH_CLIENTS_ADMIN_PATH,
+  MCP_OAUTH_PROTECTED_RESOURCE_PATH,
   MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
   parseHttpBasicClientAuth,
@@ -129,6 +130,21 @@ export {
   type AttachMcpOAuthRoutesOptions,
   type McpOAuthAdminAuth,
 } from "./http.js";
+export {
+  CLAWQL_MCP_PROTECTED_RESOURCE_TAG,
+  McpProtectedResourceLive,
+  McpProtectedResourceService,
+  buildMcpProtectedResourceMetadataEffect,
+  buildMcpWwwAuthenticateHeaderEffect,
+  normalizeResourceIdEffect,
+  resolveMcpResourceIdentifierEffect,
+  resolvePublicOriginEffect,
+  resolveTokenAudienceEffect,
+  resourcesMatch,
+  type McpProtectedResourceMetadata,
+  type McpProtectedResourceMetadataInput,
+  type McpWwwAuthenticateInput,
+} from "./protected-resource.js";
 export {
   attachPasskeyRoutes,
   PASSKEY_CHALLENGE_PATH,

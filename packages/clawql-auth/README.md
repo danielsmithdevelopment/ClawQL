@@ -119,6 +119,9 @@ When `CLAWQL_MCP_OAUTH_ENABLED=1`, `server-http` exposes:
 - `POST /oauth/revoke` — RFC 7009-style refresh **or** access-token revocation (`MCP_TOKEN_REVOKED`; access JWTs use hash denylist)
 - `GET /oauth/authorize` — interactive auth-code start (requires already-authenticated gateway identity: API key / OIDC / MCP JWT). ClawQL is **not** a login IdP.
 - `GET /.well-known/oauth-authorization-server` — discovery with `token_endpoint` / `revocation_endpoint` (+ `authorization_endpoint` / `code_challenge_methods_supported` when auth-code is live)
+- `GET /.well-known/oauth-protected-resource` — RFC 9728 protected-resource metadata (`resource`, `authorization_servers`) on the MCP origin
+- Unauthenticated `/mcp` returns `401` with `WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource"` so clients can discover the AS without a prior localhost round-trip
+- Token / authorize accept RFC 8707 `resource`; access JWTs mint/validate normalized `aud` against `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE` (`invalid_target` on mismatch)
 - `PUT/GET/DELETE /oauth/ema/orgs/:orgId` — EMA org admin (**`CLAWQL_API_KEY`** or ATR claims with `role=admin` / scope `ema:admin`, including issued `cqk_` keys via `CLAWQL_API_KEYS_PATH`)
 - `PUT/GET/DELETE /oauth/ema/clients/:clientId` — MCP client registry admin (same auth as EMA orgs)
 
@@ -219,7 +222,7 @@ See [`docs/security/clawql-auth-package-spec.md`](../../docs/security/clawql-aut
 | `CLAWQL_MCP_OAUTH_SIGNING_PUBLIC_KEY_PEM_PATH`   | Optional verify-only public key path (defaults to private)                               |
 | `CLAWQL_MCP_OAUTH_SIGNING_KEY_ID`                | Optional `kid` for RS256 tokens and JWKS                                                 |
 | `CLAWQL_MCP_OAUTH_ISSUER`                        | Token `iss` (default `CLAWQL_PUBLIC_ORIGIN`)                                             |
-| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`             | ID-JAG `aud` when org config omits audience                                              |
+| `CLAWQL_MCP_OAUTH_RESOURCE_AUDIENCE`             | Canonical MCP resource id (RFC 8707 `resource` / access-token `aud`; ID-JAG default `aud`) |
 | `CLAWQL_MCP_OAUTH_AUDIENCE`                      | Alias for resource audience                                                              |
 | `CLAWQL_MCP_OAUTH_TOKEN_TTL_SECONDS`             | Access token TTL (default 300)                                                           |
 | `CLAWQL_MCP_OAUTH_REFRESH_TTL_SECONDS`           | Refresh token TTL (default 3600)                                                         |

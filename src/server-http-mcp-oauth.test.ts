@@ -38,6 +38,56 @@ describe("server-http MCP OAuth", () => {
     if (!(key in saved)) saved[key] = process.env[key];
   }
 
+  it("returns WWW-Authenticate resource_metadata on unauthenticated /mcp when OAuth is on", async () => {
+    stash("CLAWQL_AUTH_MODE");
+    stash("CLAWQL_API_KEY");
+    process.env.CLAWQL_AUTH_MODE = "apiKey";
+    process.env.CLAWQL_API_KEY = "static-bootstrap-key";
+
+    const signingSecret = "test-mcp-oauth-signing-secret-32b!!";
+    const audience = "https://mcp.clawql.test/mcp";
+    const mcpOAuthRuntime = await Effect.runPromise(
+      createMcpOAuthForTests({
+        issuer: "https://auth.clawql.test",
+        signingSecret,
+        resourceAudience: audience,
+      })
+    );
+
+    const app = await createMcpHttpApp({
+      skipSpecPreload: true,
+      skipGraphqlAttach: true,
+      mcpOAuthRuntime,
+    });
+
+    const server = createServer(app);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const port = (server.address() as { port: number }).port;
+    const base = `http://127.0.0.1:${port}`;
+
+    try {
+      const meta = await fetch(`${base}/.well-known/oauth-protected-resource`);
+      expect(meta.status).toBe(200);
+      const metaBody = (await meta.json()) as { resource: string };
+      expect(metaBody.resource).toBe(audience);
+
+      const mcpRes = await fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/event-stream",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }),
+      });
+      expect(mcpRes.status).toBe(401);
+      const www = mcpRes.headers.get("www-authenticate") ?? "";
+      expect(www).toContain("resource_metadata=");
+      expect(www).toContain("/.well-known/oauth-protected-resource");
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
   it("accepts ClawQL-issued MCP OAuth bearer tokens on /mcp when hybrid validator is wired", async () => {
     stash("CLAWQL_AUTH_MODE");
     stash("CLAWQL_API_KEY");
