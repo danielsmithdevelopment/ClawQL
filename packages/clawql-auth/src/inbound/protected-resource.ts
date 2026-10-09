@@ -36,10 +36,10 @@ export function buildMcpProtectedResourceMetadataEffect(
     const authorization_servers = input.authorizationServers
       .map((s) => s.trim().replace(/\/$/, ""))
       .filter(Boolean);
-    const scopes_supported = [...(input.scopesSupported ?? ["execute", "search", "memory", "mcp:tools"])];
-    const bearer_methods_supported = [
-      ...(input.bearerMethodsSupported ?? ["header"]),
+    const scopes_supported = [
+      ...(input.scopesSupported ?? ["execute", "search", "memory", "mcp:tools"]),
     ];
+    const bearer_methods_supported = [...(input.bearerMethodsSupported ?? ["header"])];
     return {
       resource,
       authorization_servers,
@@ -156,9 +156,7 @@ export class McpProtectedResourceService extends Context.Service<
     readonly buildMetadata: (
       input: McpProtectedResourceMetadataInput
     ) => Effect.Effect<McpProtectedResourceMetadata>;
-    readonly buildWwwAuthenticate: (
-      input: McpWwwAuthenticateInput
-    ) => Effect.Effect<string>;
+    readonly buildWwwAuthenticate: (input: McpWwwAuthenticateInput) => Effect.Effect<string>;
     readonly resolvePublicOrigin: (input: {
       readonly proto?: string;
       readonly host?: string;

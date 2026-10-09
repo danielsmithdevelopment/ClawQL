@@ -30,8 +30,7 @@ describe("protected-resource discovery helpers", () => {
   it("builds WWW-Authenticate with resource_metadata", async () => {
     const header = await Effect.runPromise(
       buildMcpWwwAuthenticateHeaderEffect({
-        resourceMetadataUrl:
-          "https://acme.cloud.clawql.com/.well-known/oauth-protected-resource",
+        resourceMetadataUrl: "https://acme.cloud.clawql.com/.well-known/oauth-protected-resource",
         error: "invalid_token",
         errorDescription: "missing_bearer",
       })
@@ -72,10 +71,7 @@ describe("protected-resource discovery helpers", () => {
 
     const mismatch = await Effect.runPromise(
       Effect.result(
-        resolveTokenAudienceEffect(
-          "https://other.example/mcp",
-          "https://acme.cloud.clawql.com/mcp"
-        )
+        resolveTokenAudienceEffect("https://other.example/mcp", "https://acme.cloud.clawql.com/mcp")
       )
     );
     expect(mismatch._tag).toBe("Failure");

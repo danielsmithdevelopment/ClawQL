@@ -30,10 +30,7 @@ import {
   verifyIdJagAssertionEffect,
   type EmaConfigStore,
 } from "./id-jag.js";
-import {
-  normalizeResourceIdEffect,
-  resolveTokenAudienceEffect,
-} from "./protected-resource.js";
+import { normalizeResourceIdEffect, resolveTokenAudienceEffect } from "./protected-resource.js";
 
 export type McpGrantType = "authorization_code" | "client_credentials" | "refresh_token" | "id_jag";
 
@@ -660,9 +657,7 @@ export class MCPOAuthServer {
       const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
       const jti = randomBytes(12).toString("hex");
       const rawAudience = options.resource?.trim() || this.config.resourceAudience?.trim();
-      const audience = rawAudience
-        ? yield* normalizeResourceIdEffect(rawAudience)
-        : undefined;
+      const audience = rawAudience ? yield* normalizeResourceIdEffect(rawAudience) : undefined;
       const accessToken = yield* Effect.tryPromise({
         try: () => {
           let jwt = new SignJWT({
@@ -740,9 +735,7 @@ export class MCPOAuthServer {
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
     return Effect.gen({ self: this }, function* () {
       const rawAud = this.config.resourceAudience?.trim();
-      const expectedAud = rawAud
-        ? yield* normalizeResourceIdEffect(rawAud)
-        : undefined;
+      const expectedAud = rawAud ? yield* normalizeResourceIdEffect(rawAud) : undefined;
       const atr = yield* Effect.tryPromise({
         try: async () => {
           const { payload } = await jwtVerify(bearerToken, this.signing.verifyKey, {
