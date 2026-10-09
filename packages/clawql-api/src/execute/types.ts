@@ -14,6 +14,12 @@ export type ExecuteClawqlOperationParams = {
    * pending `executionId` so execute may run that exact payload once.
    */
   approvedExecutionId?: string;
+  /**
+   * Optional MCP / API session id for session IFC (`CLAWQL_ENABLE_SESSION_IFC`).
+   * When omitted, {@link ../ifc/session-label-store.js} resolves
+   * `CLAWQL_SESSION_ID` / API key id.
+   */
+  sessionId?: string;
 };
 
 export type ExecuteOperationResult = { ok: true; data: unknown } | { ok: false; error: string };

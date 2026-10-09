@@ -27,6 +27,10 @@ import { executeNativeMcp } from "./native-mcp.js";
 import { executeNativeCli } from "./native-cli.js";
 import { executeNativeWebmcp } from "./native-webmcp.js";
 import { operationRiskEnforceEnabledEffect } from "../risk/operation-risk-enforce.js";
+import {
+  accumulateSessionIfcReadSync,
+  checkSessionIfcWriteSync,
+} from "../ifc/session-ifc-enforce.js";
 import { executeRestOperation } from "./rest-operation.js";
 import type { ExecuteClawqlOperationParams, McpTextContent } from "./types.js";
 
@@ -142,6 +146,16 @@ export function executeClawqlOperationEffect(
           risk,
         })
       );
+    }
+
+    // Session IFC (ADR 0015): within-session-only — labels do not cross session keys.
+    // Gated by CLAWQL_ENABLE_SESSION_IFC=1 (default off).
+    const ifcBlock = checkSessionIfcWriteSync({
+      operation: op as Operation,
+      sessionId: params.sessionId,
+    });
+    if (ifcBlock) {
+      return yield* textContentEffect(JSON.stringify(ifcBlock));
     }
     let consumedMandateId: string | undefined;
 
@@ -400,6 +414,16 @@ export function executeClawqlOperationEffect(
     if (consumedMandateId) {
       const outcome = interpretExecuteOutcome(content);
       yield* fromPromise(() => markPendingCompleted(consumedMandateId!, outcome));
+    }
+
+    // Accumulate read labels only after a successful execute (ADR 0015 session IFC).
+    {
+      const outcome = interpretExecuteOutcome(content);
+      accumulateSessionIfcReadSync({
+        operation: op as Operation,
+        sessionId: params.sessionId,
+        success: outcome.ok,
+      });
     }
 
     return content;
