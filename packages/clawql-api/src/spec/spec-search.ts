@@ -171,12 +171,9 @@ export const buildSearchCatalogMetaEffect = (
   Effect.sync(() => {
     const safeMatched = Math.max(0, matchedCount);
     const safeTotal = Math.max(safeMatched, totalCount);
-    const catalogStatus: SearchCatalogStatus =
-      safeMatched < safeTotal ? "partial" : "complete";
+    const catalogStatus: SearchCatalogStatus = safeMatched < safeTotal ? "partial" : "complete";
     const message =
-      catalogStatus === "partial"
-        ? `PARTIAL, ${safeMatched} of ${safeTotal}`
-        : "COMPLETE";
+      catalogStatus === "partial" ? `PARTIAL, ${safeMatched} of ${safeTotal}` : "COMPLETE";
     return {
       catalogStatus,
       matchedCount: safeMatched,
@@ -338,11 +335,7 @@ export const formatSearchResultsEffect = (
     };
     const meta =
       catalog ??
-      (yield* buildSearchCatalogMetaEffect(
-        results.length,
-        results.length,
-        countsBySource
-      ));
+      (yield* buildSearchCatalogMetaEffect(results.length, results.length, countsBySource));
 
     if (results.length === 0) {
       return JSON.stringify({

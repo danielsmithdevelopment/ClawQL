@@ -88,8 +88,7 @@ export const unknownOperationIdErrorEffect = (
 ): Effect.Effect<Record<string, unknown>> =>
   Effect.gen(function* () {
     const suggestions = yield* suggestClosestOperationIdsEffect(operationId, operationIds);
-    const base =
-      `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`;
+    const base = `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`;
     if (suggestions.length === 0) {
       return { error: base, fix: "Call search with a short keyword from the API you need." };
     }

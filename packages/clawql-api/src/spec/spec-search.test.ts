@@ -73,9 +73,7 @@ describe("spec-search", () => {
     })) as Operation[];
     const all = searchOperations(operations, "widget", Number.POSITIVE_INFINITY);
     expect(all.length).toBe(20);
-    const { hits, catalog } = await Effect.runPromise(
-      mergeRankedHitsWithCatalogEffect(all, [], 5)
-    );
+    const { hits, catalog } = await Effect.runPromise(mergeRankedHitsWithCatalogEffect(all, [], 5));
     expect(hits).toHaveLength(5);
     expect(catalog.catalogStatus).toBe("partial");
     expect(catalog.matchedCount).toBe(5);
