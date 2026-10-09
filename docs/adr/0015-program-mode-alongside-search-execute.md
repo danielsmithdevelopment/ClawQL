@@ -10,6 +10,23 @@ OpenCode’s `@opencode-ai/codemode` (Effect 4 AST interpreter) lets a model wri
 
 We want OpenCode’s round-trip benefits **without** giving up ClawQL’s advantages. Their README leaves durable pause/resume, replay, and exactly-once to the host; those remain ClawQL’s responsibility. Programs that write in-process would break today’s resume model (re-running a program after `mandate_required` can double-execute earlier writes).
 
+### Honest reading of the Executor token comparison
+
+The live compare at [`/mcp-ui/trace/compare/executor`](https://clawql.com/mcp-ui/trace/compare/executor/) shows ~**110×** combined input (ClawQL 1,301 vs Executor 143,581). Almost all of that is **Layer 2**: ~**158×** on the tool result (907 vs 143,466). ClawQL wins because `fields` projection returns only what is needed; Executor’s run puts the full REST list into the model’s context. Layer 1 already favors Executor’s live install (115 vs ClawQL 394) — the page says so.
+
+**That Layer 2 gap is exactly what OpenCode-style code mode closes:** the model filters before returning, and generated instructions tell it to return only needed fields. Once Executor v2 runs on it, the same task should land near a thousand tokens on their side too; the remaining difference is tool-definition size, where their live number is lower. Expect that rebuttal — get ahead of it.
+
+| What the result proves | What it does not prove |
+| --- | --- |
+| Result shaping matters far more than tool-definition size. | That ClawQL permanently “beats” code-mode executors by 110×. |
+| ClawQL gets that saving on a **single structured call**, with no model-written code, no interpreter, and full per-call policy. | That programs are unnecessary — they still win on fan-out and cross-source joins. |
+
+**Benchmark plan** (see also [`docs/benchmarks/executor-comparison/README.md`](../benchmarks/executor-comparison/README.md)):
+
+1. Publish a run where Executor’s program filters to the same fields (fair comparison next to today’s dump).
+2. Expand beyond one task: ten or more, including multi-step work; measure **outputs**, not just inputs. Single-call listing is ClawQL’s best case.
+3. Rerun against Executor v2 once its code mode ships.
+
 ## Decision
 
 Adopt **confined programs as an additional tool**, alongside unchanged `search` and `execute`, under one governing rule:
@@ -117,23 +134,25 @@ These improve every client with zero new interpreter risk:
 2. Results as typed signatures with field descriptions.
 3. Error messages that name the fix.
 4. Truncation marker and flag on oversized execute results.
+5. **Declarative filtering on `execute`** — optional `where` (small predicate or a JSON query language such as JMESPath), evaluated **server-side** after the provider response and composed with existing `fields` projection. Example: open PRs labeled `bug`, return `number` and `title` only. Caps on expression size/complexity; fail closed. Covers most of the **filtering** benefit of programs with no interpreter. Programs then only need to win on what neither projection nor filters can do: **fan-out** and **cross-source joins**.
 
 ### Formal gates
 
-| Gate             | What it covers                                                                                                                                                                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Benchmark**    | Promotes read-only programs when fan-out / filter / join tasks show clear win.                                                                                                                                                                                              |
-| **TLA+**         | Batch Merkle approve: root signature, inclusion proofs, per-digest at-most-once, decline-one, partial outcomes. Extends [ADR 0014](./0014-formal-methods-tla-lean.md) mandate model.                                                                                        |
-| **Lean**         | Information-flow rule (small, pure). Two theorems: (1) labels only grow within a session; (2) a write is allowed only if the combined label may flow to its destination. Differential-test the production evaluator against the Lean model (same setup as approval policy). |
-| **Differential** | Gates the “never more” claim (`program ⊆ execute`).                                                                                                                                                                                                                         |
+| Gate             | What it covers                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Benchmark**    | Promotes read-only programs when **fan-out** and **cross-source join** tasks show a clear win over `search`+`execute`+`fields`+`where`. Filtering-only tasks are not a promotion signal once declarative `where` ships. Fair Executor arms (program-filtered + v2) published alongside today’s dump. |
+| **TLA+**         | Batch Merkle approve: root signature, inclusion proofs, per-digest at-most-once, decline-one, partial outcomes. Extends [ADR 0014](./0014-formal-methods-tla-lean.md) mandate model.                                                                                                                                                                                |
+| **Lean**         | Information-flow rule (small, pure). Two theorems: (1) labels only grow within a session; (2) a write is allowed only if the combined label may flow to its destination. Differential-test the production evaluator against the Lean model (same setup as approval policy).                                                                                         |
+| **Differential** | Gates the “never more” claim (`program ⊆ execute`).                                                                                                                                                                                                                                                                                                                 |
 
 ### Rollout
 
-1. Bring the four search/execute catalog improvements.
-2. Add **read-only** programs in celld behind a flag; benchmark multi-step tasks.
+1. Bring the five search/execute catalog improvements (**including declarative `where`**). Publish the fair Executor program-filter arm and expand the task set.
+2. Add **read-only** programs in celld behind a flag; benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
 3. Add **proposed writes** with proposal refs, combined-label IFC, then batch Merkle approve (TLA+ green first).
 4. Ship session-level labeling for execute; Lean IFC theorems + differential vs production; tighten “never more” toward equality where honest.
 5. Journaled replay for writes that depend on earlier **in-program** writes remains deferred until a benchmark shows proposal refs are insufficient.
+6. Rerun the Executor comparison against Executor v2 once its code mode ships; update the public compare page.
 
 ## Non-goals
 
