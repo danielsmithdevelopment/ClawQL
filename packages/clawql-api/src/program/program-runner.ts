@@ -16,6 +16,7 @@ import {
   resolveProgramTimeoutMsEffect,
   type ProgramCaps,
 } from "./program-caps.js";
+import { programIfcHostEffect, type ProgramOperationInfo } from "./program-ifc.js";
 import type { ProgramJournalBackend, ProgramJournalStatus } from "./program-journal.js";
 import {
   parseProgramPlanEffect,
@@ -62,6 +63,11 @@ export type ProgramHost = {
       readonly found: boolean;
       readonly policy?: OperationRiskPolicy;
       readonly risk?: OperationRisk;
+      /**
+       * Lets session IFC tell reads from writes and label them. Without it a call
+       * counts as both an unknown-source read and a write (fail closed).
+       */
+      readonly operation?: ProgramOperationInfo;
     },
     Error
   >;
@@ -162,6 +168,8 @@ export type ProgramPlanRunInput<E> = {
   /** Extra metadata on the program-level WORM events. */
   readonly auditMetadata?: Readonly<Record<string, unknown>>;
   readonly hooks?: ProgramCallHooks<E>;
+  /** Session IFC flags (`CLAWQL_ENABLE_SESSION_IFC`, allow-list); defaults to `process.env`. */
+  readonly env?: NodeJS.ProcessEnv;
 };
 
 export type PreparedProgramPlan =
@@ -360,6 +368,7 @@ export function runProgramEffect(
         maxOutputBytes: caps.maxOutputBytes,
         sessionId: input.sessionId,
         startedAtMs: started,
+        env,
       },
       host
     );
@@ -394,6 +403,8 @@ export function runProgramPlanEffect<E = never>(
       },
     }).pipe(Effect.catch(() => Effect.void));
 
+    const gatedHost = yield* programIfcHostEffect(plan, host, input.env ?? process.env);
+
     const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
       Effect.gen(function* () {
         if (call.tool === "search") {
@@ -410,7 +421,7 @@ export function runProgramPlanEffect<E = never>(
             },
           }).pipe(Effect.catch(() => Effect.void));
 
-          const out = yield* host
+          const out = yield* gatedHost
             .search({ query: call.query, limit: call.limit ?? 5 }, { programId })
             .pipe(
               Effect.catch((e) =>
@@ -456,7 +467,7 @@ export function runProgramPlanEffect<E = never>(
         }
 
         // execute — read-only gate before host path
-        const riskInfo = yield* host
+        const riskInfo = yield* gatedHost
           .resolveRisk(call.operationId)
           .pipe(Effect.catch(() => Effect.succeed({ found: false as const })));
         if (!riskInfo.found) {
@@ -532,7 +543,7 @@ export function runProgramPlanEffect<E = never>(
           },
         }).pipe(Effect.catch(() => Effect.void));
 
-        const out = yield* host
+        const out = yield* gatedHost
           .execute(
             {
               operationId: call.operationId,

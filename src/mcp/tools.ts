@@ -269,6 +269,7 @@ function makeMcpProgramHost(): ProgramHost {
             found: true as const,
             policy: op.risk?.policy,
             risk: op.risk,
+            operation: op,
           };
         },
         catch: (e) => (e instanceof Error ? e : new Error(String(e))),
