@@ -153,14 +153,27 @@ These improve every client with zero new interpreter risk:
 | **Lean**         | Information-flow rule (small, pure). Two theorems: (1) labels only grow within a session; (2) a write is allowed only if the combined label may flow to its destination. Differential-test the production evaluator against the Lean model (same setup as approval policy).                          |
 | **Differential** | Gates the “never more” claim (`program ⊆ execute`).                                                                                                                                                                                                                                                  |
 
-### Rollout
+### Execution order (proveable claims first)
 
-1. Bring the five search/execute catalog improvements (**including declarative `where`**). Publish the fair Executor program-filter arm and expand the task set.
-2. Add **read-only** programs in celld behind a flag; benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
-3. Add **proposed writes** with proposal refs, combined-label IFC, then batch Merkle approve (TLA+ green first).
-4. Ship session-level labeling for execute; Lean IFC theorems + differential vs production; tighten “never more” toward equality where honest.
-5. Journaled replay for writes that depend on earlier **in-program** writes remains deferred until a benchmark shows proposal refs are insufficient.
-6. Rerun the Executor comparison against Executor v2 once its code mode ships; update the public compare page.
+Security and honesty first, then cheap wins every client gets, then public claims. Every public claim should point at a test, a model, or a benchmark (same discipline as the security page → ADR 0014).
+
+1. **Fair benchmark before Executor v2** — program-filter arm (simulated until live), ≥10 tasks incl. multi-step, measure outputs. Artifact: `docs/benchmarks/executor-comparison/executor-cmp-fair-suite.json`.
+2. **Wins that need no programs** — `where` on execute; search COMPLETE/PARTIAL; typed signatures; fix-named errors; truncation marker; `console_link` (or Core `clawql_console`); search over ClawQL’s own docs.
+3. **Session-level information flow on execute** — closes existing laundering; programs depend on it, so it ships before them.
+4. **MCP OAuth** — strip misleading Google device endpoint from AS metadata (now); then §1 discovery/audience; §2 per-person grants as keys; §3 CIMD + trusted-client list; §4 device flow. Post the `curl` follow-up in the discovery thread when §1 lands.
+5. **Plain proxy mode** — scoped by key group, for harnesses that bring their own code mode.
+6. **Program mode** — each step behind its gate: ADR 0015 → read-only programs in celld (benchmark must justify promotion) → proposed writes with refs → batch approval (TLA+) → IFC rule (Lean) → “never more” differential.
+7. **Then mobile** — governed company-inbox demo as the answer to Executor apps when ready.
+
+### Rollout (implementation detail under step 6)
+
+1. Catalog improvements + fair suite (steps 1–2 above).
+2. Session IFC on execute (step 3); Lean theorems + differential.
+3. Read-only programs in celld behind a flag; benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
+4. Proposed writes with proposal refs, combined-label IFC, then batch Merkle approve (TLA+ green first).
+5. Tighten “never more” toward equality where honest once session labeling lands.
+6. Journaled replay deferred until a benchmark shows proposal refs are insufficient.
+7. Rerun Executor comparison against Executor v2 once its code mode ships; replace simulated program-filter with live.
 
 ## Non-goals
 

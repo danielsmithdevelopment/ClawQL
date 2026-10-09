@@ -29,13 +29,25 @@ Almost the entire combined ratio is Layer 2 (~158×). ClawQL’s win is **result
 | Result shaping dominates tool-definition size                                        | Permanent 110× vs code-mode executors                   |
 | ClawQL gets the saving on one structured call (no interpreter, full per-call policy) | That single-call listing is a fair multi-step benchmark |
 
-### Next measurements (fair comparison)
+### Fair comparison (shipped)
 
-1. **Executor program-filter arm** — same task, same fields (`title`+`number`); Executor filters in a program / code mode before return. Publish beside today’s full-REST dump.
-2. **Task expansion** — ≥10 tasks, including multi-step fan-out and cross-source joins; measure **outputs** as well as inputs. Single-call `pulls.list` is ClawQL’s best case.
-3. **Executor v2 rerun** — once their native code mode ships, regenerate the static compare page (`npm run generate:executor-cmp-static`).
+| Arm | Meaning | Script / artifact |
+| --- | --- | --- |
+| Executor raw | Full REST / CLI dump (unfair vs `fields`) | `executor-cmp-001` |
+| **Executor program-filter (simulated)** | Same fields as ClawQL, projected from the raw payload — stand-in for code-mode filter until Executor v2 | `executor-cmp-001` field `executorProgramFilterSimulated` + **fair suite** |
+| ClawQL | `execute` + `fields` (+ `where`) | both |
 
-Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../adr/0015-program-mode-alongside-search-execute.md)) so filtering does not require programs on our side either.
+```bash
+# 12-task suite: single-call, large-list filter, fan-out, cross-source join; input + output tokens
+npm run benchmark:executor-comparison:fair
+# → docs/benchmarks/executor-comparison/executor-cmp-fair-suite.json
+```
+
+On single-source projected tasks, **program-filter ≈ ClawQL (~1×)** — that is the honest post-code-mode picture. The old ~110× / ~158× headline is raw dump vs projection only; keep it labeled as such.
+
+Still TODO when Executor v2 ships: replace the simulated program-filter arm with a **live** Executor program call; regenerate the static compare page (`npm run generate:executor-cmp-static`).
+
+Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../adr/0015-program-mode-alongside-search-execute.md)).
 
 ## Methodology
 
