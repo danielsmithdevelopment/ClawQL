@@ -70,9 +70,10 @@ describe("where filter (JMESPath)", () => {
   });
 
   it("rejects over-complex pipe chains", async () => {
-    const pipes = Array.from({ length: WHERE_MAX_PIPES + 1 }, () => "@").join(" | ");
+    // n segments joined by " | " → n-1 pipes; need max+1 pipes.
+    const expression = Array.from({ length: WHERE_MAX_PIPES + 2 }, () => "@").join(" | ");
     const failed = await Effect.runPromise(
-      validateWhereCapsEffect(pipes).pipe(
+      validateWhereCapsEffect(expression).pipe(
         Effect.match({
           onFailure: (e) => e,
           onSuccess: () => null,
