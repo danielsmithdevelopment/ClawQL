@@ -49,7 +49,7 @@ describe("spec-search", () => {
       totalCount: number;
     };
     expect(json.results).toEqual([]);
-    expect(json.message).toContain("No matching operations or skills found");
+    expect(json.message).toContain("No matching operations, skills, or docs found");
     expect(json.catalogStatus).toBe("complete");
     expect(json.matchedCount).toBe(0);
     expect(json.totalCount).toBe(0);
@@ -79,7 +79,7 @@ describe("spec-search", () => {
     expect(catalog.matchedCount).toBe(5);
     expect(catalog.totalCount).toBe(20);
     expect(catalog.message).toBe("PARTIAL, 5 of 20");
-    expect(catalog.countsBySource).toEqual({ operation: 20, skill: 0 });
+    expect(catalog.countsBySource).toEqual({ operation: 20, skill: 0, doc: 0 });
 
     const formatted = await Effect.runPromise(formatSearchResultsEffect(hits, catalog));
     const json = JSON.parse(formatted) as {

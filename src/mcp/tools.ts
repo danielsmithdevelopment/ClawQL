@@ -53,6 +53,7 @@ import {
   proposeSourceEffect,
   buildConsoleLinkEffect,
   consoleLinkEnabled,
+  searchClawqlDocsEffect,
   type CustomSourceKind,
 } from "clawql-api";
 import { z } from "zod";
@@ -201,6 +202,48 @@ export async function handleConsoleLinkToolInput(
   return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
 }
 
+function docsSearchToolEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = env.CLAWQL_ENABLE_DOCS_SEARCH?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Zod shape for optional Core `docs_search` (CLAWQL_ENABLE_DOCS_SEARCH). */
+export const docsSearchToolZodShape = {
+  query: z.string().describe("Search query over ClawQL documentation"),
+  limit: z.number().int().min(1).max(20).optional().describe("Max hits (default 8)"),
+} as const;
+
+/** MCP `docs_search` — dedicated docs index search (also merged into Core `search` when index present). */
+export async function handleDocsSearchToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const query = typeof o.query === "string" ? o.query : "";
+  const limit = typeof o.limit === "number" && Number.isFinite(o.limit) ? o.limit : 8;
+  const hits = await Effect.runPromise(searchClawqlDocsEffect(query, limit));
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify({
+          ok: true,
+          query,
+          count: hits.length,
+          results: hits.map((h) => ({
+            kind: "doc" as const,
+            url: h.url,
+            href: `${h.baseUrl.replace(/\/$/, "")}${h.url.startsWith("/") ? h.url : `/${h.url}`}`,
+            title: h.title,
+            pageTitle: h.pageTitle ?? null,
+            score: h.score,
+            matchedOn: h.matchedOn,
+          })),
+        }),
+      },
+    ],
+  };
+}
+
 configureAutomationPluginDeps({ execute: (params) => handleClawqlExecuteToolInput(params) });
 configureDocumentsPluginDeps({
   execute: (params) => handleClawqlExecuteToolInput(params),
@@ -314,6 +357,17 @@ export function registerTools(server: McpServer) {
       wrapRegisteredMcpToolHandler("console_link", handleConsoleLinkToolInput)
     );
     registeredNames.push("console_link");
+  }
+
+  // ADR 0015: dedicated docs search (Core `search` also merges kind:doc when an index exists).
+  if (docsSearchToolEnabled()) {
+    server.tool(
+      "docs_search",
+      "Search ClawQL documentation (kind:doc). Prefer Core search when you also need operations/skills; use this for docs-only.",
+      docsSearchToolZodShape,
+      wrapRegisteredMcpToolHandler("docs_search", handleDocsSearchToolInput)
+    );
+    registeredNames.push("docs_search");
   }
 
   registerPluginMcpTools(server);

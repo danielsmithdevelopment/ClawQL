@@ -62,6 +62,7 @@
   },
   "files": [
     "dist",
+    "fixtures",
     "README.md"
   ],
   "engines": {

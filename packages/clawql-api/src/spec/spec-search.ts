@@ -7,6 +7,7 @@
 
 import { Effect } from "effect";
 import type { SkillIndexEntry } from "clawql-core";
+import type { DocSearchResult } from "../search/docs-index.js";
 import type { Operation } from "./operation-types.js";
 
 export interface OperationSearchResult {
@@ -26,7 +27,7 @@ export interface SkillSearchResult {
 /** @deprecated Prefer {@link OperationSearchResult} — kept for call sites during migration. */
 export type SearchResult = OperationSearchResult;
 
-export type RankedSearchHit = OperationSearchResult | SkillSearchResult;
+export type RankedSearchHit = OperationSearchResult | SkillSearchResult | DocSearchResult;
 
 /** Whether the returned `results[]` includes every ranked match. */
 export type SearchCatalogStatus = "complete" | "partial";
@@ -35,6 +36,7 @@ export type SearchCatalogStatus = "complete" | "partial";
 export type SearchSourceCounts = {
   readonly operation: number;
   readonly skill: number;
+  readonly doc: number;
 };
 
 /** Catalog completeness envelope for MCP `search` responses. */
@@ -150,13 +152,14 @@ export function searchSkills(
   return results.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
-/** Merge operation + skill hits, sort by score, apply shared limit. */
+/** Merge operation + skill + doc hits, sort by score, apply shared limit. */
 export function mergeRankedHits(
   operations: readonly OperationSearchResult[],
   skills: readonly SkillSearchResult[],
-  limit: number
+  limit: number,
+  docs: readonly DocSearchResult[] = []
 ): RankedSearchHit[] {
-  return [...operations, ...skills].sort((a, b) => b.score - a.score).slice(0, limit);
+  return [...operations, ...skills, ...docs].sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 /**
@@ -193,21 +196,24 @@ export function buildSearchCatalogMeta(
 }
 
 /**
- * Merge unlimited op/skill hits, apply limit, and attach catalog completeness.
+ * Merge unlimited op/skill/doc hits, apply limit, and attach catalog completeness.
  */
 export const mergeRankedHitsWithCatalogEffect = (
   operations: readonly OperationSearchResult[],
   skills: readonly SkillSearchResult[],
-  limit: number
+  limit: number,
+  docs: readonly DocSearchResult[] = []
 ): Effect.Effect<{ readonly hits: RankedSearchHit[]; readonly catalog: SearchCatalogMeta }> =>
   Effect.gen(function* () {
     const totalOp = operations.length;
     const totalSkill = skills.length;
-    const totalCount = totalOp + totalSkill;
-    const hits = mergeRankedHits(operations, skills, limit);
+    const totalDoc = docs.length;
+    const totalCount = totalOp + totalSkill + totalDoc;
+    const hits = mergeRankedHits(operations, skills, limit, docs);
     const catalog = yield* buildSearchCatalogMetaEffect(hits.length, totalCount, {
       operation: totalOp,
       skill: totalSkill,
+      doc: totalDoc,
     });
     return { hits, catalog };
   });
@@ -296,6 +302,18 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
       fetch: { tool: "skills_get", skillId: r.skill.skillId },
     };
   }
+  if (r.kind === "doc") {
+    const href = `${r.baseUrl.replace(/\/$/, "")}${r.url.startsWith("/") ? r.url : `/${r.url}`}`;
+    return {
+      kind: "doc" as const,
+      url: r.url,
+      href,
+      title: r.title,
+      pageTitle: r.pageTitle ?? null,
+      score: r.score,
+      matchedOn: r.matchedOn,
+    };
+  }
   return {
     kind: "operation" as const,
     id: r.operation.id,
@@ -332,6 +350,7 @@ export const formatSearchResultsEffect = (
     const countsBySource = catalog?.countsBySource ?? {
       operation: results.filter((r) => r.kind === "operation").length,
       skill: results.filter((r) => r.kind === "skill").length,
+      doc: results.filter((r) => r.kind === "doc").length,
     };
     const meta =
       catalog ??
@@ -343,7 +362,7 @@ export const formatSearchResultsEffect = (
         matchedCount: 0,
         totalCount: meta.totalCount,
         countsBySource: meta.countsBySource,
-        message: "No matching operations or skills found.",
+        message: "No matching operations, skills, or docs found.",
         results: [],
       });
     }

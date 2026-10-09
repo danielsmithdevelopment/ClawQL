@@ -73,14 +73,36 @@ describe("searchClawqlOperationsEffect", () => {
       totalCount: number;
       message: string;
       results: unknown[];
-      countsBySource: { operation: number; skill: number };
+      countsBySource: { operation: number; skill: number; doc: number };
     };
     expect(parsed.catalogStatus).toBe("partial");
     expect(parsed.matchedCount).toBe(3);
-    expect(parsed.totalCount).toBe(12);
-    expect(parsed.message).toBe("PARTIAL, 3 of 12");
+    expect(parsed.totalCount).toBeGreaterThanOrEqual(12);
+    expect(parsed.message).toMatch(/^PARTIAL, 3 of /);
     expect(parsed.results).toHaveLength(3);
     expect(parsed.countsBySource.operation).toBe(12);
+  });
+
+  it("includes kind:doc hits when docs index is available", async () => {
+    const { join, dirname } = await import("node:path");
+    const { fileURLToPath } = await import("node:url");
+    const fixture = join(dirname(fileURLToPath(import.meta.url)), "../../fixtures/docs-index.json");
+    const prev = process.env.CLAWQL_DOCS_INDEX_PATH;
+    process.env.CLAWQL_DOCS_INDEX_PATH = fixture;
+    try {
+      const output = await Effect.runPromise(
+        searchClawqlOperationsEffect({ query: "program mode information-flow", limit: 10 }, stubSpec)
+      );
+      const parsed = JSON.parse(output.formattedText) as {
+        results: { kind: string; title?: string }[];
+        countsBySource: { doc: number };
+      };
+      expect(parsed.countsBySource.doc).toBeGreaterThan(0);
+      expect(parsed.results.some((r) => r.kind === "doc")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.CLAWQL_DOCS_INDEX_PATH;
+      else process.env.CLAWQL_DOCS_INDEX_PATH = prev;
+    }
   });
 
   it("promise boundary matches Effect program output", async () => {

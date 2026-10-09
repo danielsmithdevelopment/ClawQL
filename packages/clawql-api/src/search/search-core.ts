@@ -20,6 +20,7 @@ import {
 import type { SearchInput, SearchOutput } from "../search-service.js";
 import { listProcessSkillIndexEffect } from "../skills/process-skills.js";
 import { resolveSearchAtrTokens } from "./process-search-atr.js";
+import { searchClawqlDocsEffect } from "./docs-index.js";
 
 export type LoadSpecFn = typeof loadSpec;
 
@@ -67,7 +68,16 @@ export function searchClawqlOperationsEffect(
     const atrScope = atrTokens === undefined ? undefined : atrScopeFromTokens(atrTokens);
     const visibleSkills = filterSkillsByAtr(skillIndex, atrScope);
     const skillHits = searchSkills(visibleSkills, params.query, Number.POSITIVE_INFINITY);
-    const { hits, catalog } = yield* mergeRankedHitsWithCatalogEffect(opHits, skillHits, limit);
+    // Docs index: CLAWQL_DOCS_INDEX_PATH or bundled fixtures/docs-index.json (ADR 0015).
+    const docHits = yield* searchClawqlDocsEffect(params.query, Number.POSITIVE_INFINITY).pipe(
+      Effect.catch(() => Effect.succeed([]))
+    );
+    const { hits, catalog } = yield* mergeRankedHitsWithCatalogEffect(
+      opHits,
+      skillHits,
+      limit,
+      docHits
+    );
     const formattedText = yield* formatSearchResultsEffect(hits, catalog);
     return { formattedText };
   }).pipe(Effect.withSpan("clawql.search", { attributes: { "clawql.query": params.query } }));
