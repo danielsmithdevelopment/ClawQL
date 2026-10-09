@@ -22,30 +22,30 @@ OpenAI’s Decisions API (gpt-6-luna) and Microsoft-Decision-1 made “decision 
 
 ## Model field
 
-| `model` value                         | Behavior                                                                 |
-| ------------------------------------- | ------------------------------------------------------------------------ |
-| `clawql-auto`                         | Local Fast Decision first; escalate to Luna on abstain when keyed        |
-| `clawql` \| `gliner2` \| `gliner` \| `heuristic` | Local Fast Decision only                                        |
-| `gpt-6-luna`                          | Remote OpenAI Decisions when `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY` set |
-| Anything else                         | HTTP 400 OpenAI error shape (`invalid_request_error`) so SDKs raise      |
+| `model` value                                    | Behavior                                                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `clawql-auto`                                    | Local Fast Decision first; escalate to Luna on abstain when keyed                     |
+| `clawql` \| `gliner2` \| `gliner` \| `heuristic` | Local Fast Decision only                                                              |
+| `gpt-6-luna`                                     | Remote OpenAI Decisions when `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY` set |
+| Anything else                                    | HTTP 400 OpenAI error shape (`invalid_request_error`) so SDKs raise                   |
 
 ## OpenAI request mapping
 
-| OpenAI                                        | ClawQL                                                                      |
-| --------------------------------------------- | --------------------------------------------------------------------------- |
-| `input` (string \| messages)                  | `state` (concatenated `input_text`)                                         |
-| `questions[].type=predicate`                  | `noul` (`instructions` → `statement`)                                       |
-| `questions[].type=choice` + `choices[].value` | `choice` + `options[].id`                                                   |
-| `questions[].type=score` + `levels[]`         | `score` (weighted average of level indices 0..n-1)                          |
-| Images (`input_image`)                        | Forward to Luna **only** with explicit image egress consent (see below)     |
+| OpenAI                                        | ClawQL                                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------- |
+| `input` (string \| messages)                  | `state` (concatenated `input_text`)                                     |
+| `questions[].type=predicate`                  | `noul` (`instructions` → `statement`)                                   |
+| `questions[].type=choice` + `choices[].value` | `choice` + `options[].id`                                               |
+| `questions[].type=score` + `levels[]`         | `score` (weighted average of level indices 0..n-1)                      |
+| Images (`input_image`)                        | Forward to Luna **only** with explicit image egress consent (see below) |
 
 ## Fail-closed calibration (SDK-visible)
 
-| Condition                                         | Default response                         | Opt-in for probabilities                                      |
-| ------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------- |
-| Site/backend not calibrated (`calibrated: false`) | `answers[].type = "refusal"`             | Header `x-clawql-allow-uncalibrated: 1`, body `allow_uncalibrated: true`, env `CLAWQL_DECISIONS_ALLOW_UNCALIBRATED=1`, or site in `CLAWQL_DECISIONS_UNCALIBRATED_SITES` |
-| `score` questions (ordinal calib not shipped)     | Always refusal unless opt-in above       | Same opt-in; response still reports `calibrated: false`       |
-| Luna / remote                                     | Refusal (vendor probs ≠ site trust)      | Same opt-in                                                   |
+| Condition                                         | Default response                    | Opt-in for probabilities                                                                                                                                                |
+| ------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Site/backend not calibrated (`calibrated: false`) | `answers[].type = "refusal"`        | Header `x-clawql-allow-uncalibrated: 1`, body `allow_uncalibrated: true`, env `CLAWQL_DECISIONS_ALLOW_UNCALIBRATED=1`, or site in `CLAWQL_DECISIONS_UNCALIBRATED_SITES` |
+| `score` questions (ordinal calib not shipped)     | Always refusal unless opt-in above  | Same opt-in; response still reports `calibrated: false`                                                                                                                 |
+| Luna / remote                                     | Refusal (vendor probs ≠ site trust) | Same opt-in                                                                                                                                                             |
 
 ## Image egress policy
 
@@ -65,14 +65,14 @@ OpenAI fields: `id`, `object: "decision"`, `model`, `created`, `answers` (`predi
 
 Always included:
 
-| Field         | Meaning                                                                             |
-| ------------- | ----------------------------------------------------------------------------------- |
-| `calibrated`  | Site + backend earned trust on **your** held-out data (false for Luna / score)      |
-| `escalated`   | Local abstain → Luna / Review path engaged                                          |
-| `use_site_id` | Decision site                                                                       |
-| `backend_id`  | e.g. `gliner2`, `heuristic`, `openai/gpt-6-luna`                                    |
-| `trace_id`    | WORM / audit correlation                                                            |
-| `clawql`      | Nested ClawQL metadata                                                              |
+| Field         | Meaning                                                                        |
+| ------------- | ------------------------------------------------------------------------------ |
+| `calibrated`  | Site + backend earned trust on **your** held-out data (false for Luna / score) |
+| `escalated`   | Local abstain → Luna / Review path engaged                                     |
+| `use_site_id` | Decision site                                                                  |
+| `backend_id`  | e.g. `gliner2`, `heuristic`, `openai/gpt-6-luna`                               |
+| `trace_id`    | WORM / audit correlation                                                       |
+| `clawql`      | Nested ClawQL metadata                                                         |
 
 Score `probabilities` use the OpenAI SDK shape: `{ label, value: levelIndex, probability }`.
 
@@ -110,11 +110,11 @@ Python: `packages/clawql-inference/scripts/openai_decisions_sdk_conformance.py`
 
 ## Env
 
-| Variable                                               | Role                                                    |
-| ------------------------------------------------------ | ------------------------------------------------------- |
-| `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY`   | Luna remote                                             |
-| `CLAWQL_DECISIONS_OPENAI_BASE_URL` / `OPENAI_BASE_URL` | Override upstream (default `https://api.openai.com/v1`) |
-| `CLAWQL_DECISIONS_ALLOW_UNCALIBRATED`                  | Global opt-in to uncalibrated answers (`1`)             |
-| `CLAWQL_DECISIONS_UNCALIBRATED_SITES`                  | Comma-separated site ids allowed uncalibrated           |
-| `CLAWQL_DECISIONS_ALLOW_EXTERNAL_IMAGES`               | Global image egress consent (`1`)                       |
+| Variable                                               | Role                                                      |
+| ------------------------------------------------------ | --------------------------------------------------------- |
+| `OPENAI_API_KEY` / `CLAWQL_DECISIONS_OPENAI_API_KEY`   | Luna remote                                               |
+| `CLAWQL_DECISIONS_OPENAI_BASE_URL` / `OPENAI_BASE_URL` | Override upstream (default `https://api.openai.com/v1`)   |
+| `CLAWQL_DECISIONS_ALLOW_UNCALIBRATED`                  | Global opt-in to uncalibrated answers (`1`)               |
+| `CLAWQL_DECISIONS_UNCALIBRATED_SITES`                  | Comma-separated site ids allowed uncalibrated             |
+| `CLAWQL_DECISIONS_ALLOW_EXTERNAL_IMAGES`               | Global image egress consent (`1`)                         |
 | `CLAWQL_DECISIONS_EXTERNAL_IMAGE_SITES`                | When set with global flag, restrict egress to these sites |

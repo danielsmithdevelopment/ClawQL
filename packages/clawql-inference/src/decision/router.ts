@@ -15,11 +15,7 @@ import {
   toOpenAiDecisionResponse,
 } from "./openai-adapt.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
-import {
-  DecisionsPolicyLive,
-  DecisionsPolicyService,
-  type RefusalAnswer,
-} from "./policy.js";
+import { DecisionsPolicyLive, DecisionsPolicyService, type RefusalAnswer } from "./policy.js";
 import {
   callRemoteOpenAiDecisions,
   enrichRemoteWithClawql,

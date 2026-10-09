@@ -22,10 +22,7 @@ export type DecisionsModelKind = "local" | "luna" | "microsoft" | "unknown";
 
 export type RefusalAnswer = { readonly name: string; readonly refusal: string };
 
-function headerTruthy(
-  headers: VirtualKeyRequest["headers"],
-  name: string
-): Effect.Effect<boolean> {
+function headerTruthy(headers: VirtualKeyRequest["headers"], name: string): Effect.Effect<boolean> {
   return Effect.sync(() => {
     const raw = headers[name];
     const headerVal = Array.isArray(raw) ? raw[0] : raw;
@@ -199,7 +196,10 @@ export function supportedModelsMessage(): Effect.Effect<string> {
   );
 }
 
-export function modelRejectionMessage(model: string, kind: DecisionsModelKind): Effect.Effect<string> {
+export function modelRejectionMessage(
+  model: string,
+  kind: DecisionsModelKind
+): Effect.Effect<string> {
   return Effect.gen(function* () {
     const supported = yield* supportedModelsMessage();
     if (kind === "microsoft") {

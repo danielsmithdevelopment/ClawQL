@@ -303,8 +303,7 @@ export function toOpenAiDecisionResponse(opts: {
     answers.push(mapClawqlAnswerToOpenAi(a, q));
   }
 
-  const allRefused =
-    answers.length > 0 && answers.every((a) => a.type === "refusal");
+  const allRefused = answers.length > 0 && answers.every((a) => a.type === "refusal");
   // Top-level calibrated is false when any answer was fail-closed to refusal,
   // or when the underlying ClawQL result was uncalibrated.
   const calibrated = allRefused ? false : opts.clawql.calibrated;
