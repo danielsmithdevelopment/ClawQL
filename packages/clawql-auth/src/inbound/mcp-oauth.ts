@@ -30,6 +30,7 @@ import {
   verifyIdJagAssertionEffect,
   type EmaConfigStore,
 } from "./id-jag.js";
+import { normalizeResourceIdEffect, resolveTokenAudienceEffect } from "./protected-resource.js";
 
 export type McpGrantType = "authorization_code" | "client_credentials" | "refresh_token" | "id_jag";
 
@@ -50,8 +51,9 @@ export type MCPOAuthConfig = {
   eventSink?: AuthEventSink;
   now?: () => number;
   /**
-   * Default ClawQL MCP resource audience for ID-JAG assertions when org config
-   * does not override `audience`.
+   * Canonical MCP protected-resource identifier / access-token `aud`
+   * (RFC 8707 + RFC 9728). Also the default ID-JAG assertion audience when org
+   * config does not override `audience`.
    */
   resourceAudience?: string;
   /** Org-level EMA config (IdP JWKS, group→scope mappings). Required for `id_jag`. */
@@ -97,6 +99,8 @@ export type McpTokenRequest = {
   codeVerifier?: string;
   /** Must match the redirect_uri used at authorize time. */
   redirectUri?: string;
+  /** RFC 8707 resource indicator — must match {@link MCPOAuthConfig.resourceAudience} when set. */
+  resource?: string;
 };
 
 export type McpAuthorizeRequest = {
@@ -106,6 +110,8 @@ export type McpAuthorizeRequest = {
   codeChallengeMethod?: "S256";
   scope?: string[];
   state?: string;
+  /** RFC 8707 resource indicator bound into the auth code + access-token `aud`. */
+  resource?: string;
   /** ATR claims already resolved from the human/session (API key / OIDC / MCP JWT). */
   claims: AtrClaims;
 };
@@ -140,6 +146,8 @@ export type McpRefreshRecord = {
    * does not collapse the human subject back to the client id).
    */
   claims?: AtrClaims;
+  /** RFC 8707 resource / access-token audience preserved across refresh. */
+  resource?: string;
 };
 
 export type McpRefreshStore = {
@@ -309,6 +317,8 @@ export class MCPOAuthServer {
         return yield* fail("invalid_request", "redirect_uri_not_registered");
       }
 
+      const resource = yield* this.resolveAudience(request.resource);
+
       const scope =
         request.scope?.length && request.scope.length > 0
           ? intersectScopes(
@@ -330,6 +340,7 @@ export class MCPOAuthServer {
         codeChallengeMethod: "S256",
         scope,
         claims: { ...request.claims, scope },
+        ...(resource ? { resource } : {}),
         expiresAtMs: nowMs + this.authCodeTtlSeconds * 1000,
         createdAtMs: nowMs,
       });
@@ -390,9 +401,11 @@ export class MCPOAuthServer {
       if (scope.length === 0) return yield* fail("invalid_scope");
 
       const claims: AtrClaims = { ...stored.claims, scope };
+      const resource = yield* this.resolveAudience(request.resource ?? stored.resource);
       return yield* this.mintTokens(request.clientId.trim(), claims, scope, {
         grantType: "authorization_code",
         includeRefresh: true,
+        resource,
         audit: {
           subjectId: claims.sub,
           orgId: claims.orgId,
@@ -468,10 +481,14 @@ export class MCPOAuthServer {
 
       const finalClaims: AtrClaims = { ...claims, scope };
       const clientId = request.clientId?.trim() || verified.sub;
+      // ID-JAG assertion `aud` may be multi-valued; access-token `aud` is a single resource id.
+      const fallbackResource = Array.isArray(audience) ? audience[0] : audience;
+      const resource = yield* this.resolveAudience(request.resource ?? fallbackResource);
 
       return yield* this.mintTokens(clientId, finalClaims, scope, {
         grantType: "id_jag",
         includeRefresh: false,
+        resource,
         audit: {
           subjectId: verified.sub,
           orgId: verified.orgId,
@@ -511,9 +528,11 @@ export class MCPOAuthServer {
 
       const scope = request.scope?.length ? request.scope : client.defaultScope;
       const claims = this.buildAtrClaims(client, scope);
+      const resource = yield* this.resolveAudience(request.resource);
       return yield* this.mintTokens(client.clientId, claims, scope, {
         grantType: "client_credentials",
         includeRefresh: true,
+        resource,
       });
     });
   }
@@ -551,9 +570,12 @@ export class MCPOAuthServer {
         ? { ...stored.claims, scope }
         : this.buildAtrClaims(client, scope);
 
+      const resource = yield* this.resolveAudience(request.resource ?? stored.resource);
+
       const response = yield* this.mintTokens(client.clientId, claims, scope, {
         grantType: "refresh_token",
         includeRefresh: true,
+        resource,
         audit: {
           subjectId: claims.sub,
           orgId: claims.orgId,
@@ -583,6 +605,24 @@ export class MCPOAuthServer {
     return Effect.void;
   }
 
+  /**
+   * RFC 8707: bind access-token `aud` to the canonical MCP resource.
+   * Rejects a mismatched `resource` parameter when a canonical audience is configured.
+   */
+  private resolveAudience(
+    requestedResource: string | undefined
+  ): Effect.Effect<string | undefined, McpOAuthError> {
+    return resolveTokenAudienceEffect(requestedResource, this.config.resourceAudience).pipe(
+      Effect.mapError(
+        () =>
+          new McpOAuthError({
+            error: "invalid_target",
+            description: "resource_mismatch",
+          })
+      )
+    );
+  }
+
   private buildAtrClaims(client: McpRegisteredClient, scope: string[]): AtrClaims {
     return {
       sub: client.clientId,
@@ -601,6 +641,8 @@ export class MCPOAuthServer {
     options: {
       grantType: string;
       includeRefresh: boolean;
+      /** RFC 8707 / access-token `aud`. */
+      resource?: string;
       audit?: {
         subjectId?: string;
         orgId?: string;
@@ -614,9 +656,11 @@ export class MCPOAuthServer {
     return Effect.gen({ self: this }, function* () {
       const expiresAt = this.now() + this.tokenTtlSeconds * 1000;
       const jti = randomBytes(12).toString("hex");
+      const rawAudience = options.resource?.trim() || this.config.resourceAudience?.trim();
+      const audience = rawAudience ? yield* normalizeResourceIdEffect(rawAudience) : undefined;
       const accessToken = yield* Effect.tryPromise({
-        try: () =>
-          new SignJWT({
+        try: () => {
+          let jwt = new SignJWT({
             atr: claims,
             scope: scope.join(" "),
             jti,
@@ -628,8 +672,10 @@ export class MCPOAuthServer {
             .setSubject(claims.sub)
             .setIssuer(this.config.issuer)
             .setIssuedAt(Math.floor(this.now() / 1000))
-            .setExpirationTime(Math.floor(expiresAt / 1000))
-            .sign(this.signing.signKey),
+            .setExpirationTime(Math.floor(expiresAt / 1000));
+          if (audience) jwt = jwt.setAudience(audience);
+          return jwt.sign(this.signing.signKey);
+        },
         catch: (cause) =>
           new McpOAuthError({
             error: "server_error",
@@ -652,6 +698,7 @@ export class MCPOAuthServer {
           scope,
           expiresAtMs: this.now() + this.refreshTokenTtlSeconds * 1000,
           claims: { ...claims, scope },
+          ...(audience ? { resource: audience } : {}),
         });
       }
 
@@ -687,11 +734,14 @@ export class MCPOAuthServer {
    */
   validateToken(bearerToken: string): Effect.Effect<AtrClaims, McpOAuthError> {
     return Effect.gen({ self: this }, function* () {
+      const rawAud = this.config.resourceAudience?.trim();
+      const expectedAud = rawAud ? yield* normalizeResourceIdEffect(rawAud) : undefined;
       const atr = yield* Effect.tryPromise({
         try: async () => {
           const { payload } = await jwtVerify(bearerToken, this.signing.verifyKey, {
             issuer: this.config.issuer,
             algorithms: [this.signing.algorithm],
+            ...(expectedAud ? { audience: expectedAud } : {}),
           });
           const claims = payload.atr as AtrClaims | undefined;
           if (!claims || typeof claims !== "object" || !claims.sub) {

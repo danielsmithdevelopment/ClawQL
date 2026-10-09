@@ -10,6 +10,7 @@ import {
   parseHttpBasicClientAuth,
   parseMcpOAuthTokenBody,
   MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_PROTECTED_RESOURCE_PATH,
   MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
 } from "./http.js";
@@ -133,6 +134,43 @@ describe("attachMcpOAuthRoutes", () => {
     expect(parseHttpBasicClientAuth(`Basic ${encoded}`)).toEqual({
       clientId: "cline-agent",
       clientSecret: "client-secret-value",
+    });
+  });
+
+  it("GET /.well-known/oauth-protected-resource serves RFC 9728 metadata", async () => {
+    await withTestApp(async (baseUrl) => {
+      const res = await fetch(`${baseUrl}${MCP_OAUTH_PROTECTED_RESOURCE_PATH}`);
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as {
+        resource: string;
+        authorization_servers: string[];
+        scopes_supported: string[];
+        bearer_methods_supported: string[];
+      };
+      expect(body.resource).toBe("https://mcp.clawql.test");
+      expect(body.authorization_servers).toEqual(["https://auth.clawql.test"]);
+      expect(body.scopes_supported).toContain("execute");
+      expect(body.bearer_methods_supported).toEqual(["header"]);
+    });
+  });
+
+  it("POST /oauth/token rejects mismatched RFC 8707 resource", async () => {
+    await withTestApp(async (baseUrl) => {
+      const basic = Buffer.from("cline-agent:client-secret-value", "utf8").toString("base64");
+      const res = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${basic}`,
+        },
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
+          resource: "https://other.example/mcp",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { error: string; error_description?: string };
+      expect(body.error).toBe("invalid_target");
     });
   });
 
