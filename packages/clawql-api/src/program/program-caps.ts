@@ -27,9 +27,7 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
 }
 
 /** Caps resolved from env (Effect for domain boundary). */
-export function resolveProgramCapsEffect(
-  env: NodeJS.ProcessEnv = process.env
-): Effect.Effect<{
+export function resolveProgramCapsEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<{
   readonly maxSourceLength: number;
   readonly maxToolCalls: number;
   readonly defaultTimeoutMs: number;
@@ -47,9 +45,6 @@ export function resolveProgramCapsEffect(
       PROGRAM_DEFAULT_TIMEOUT_MS
     ),
     maxTimeoutMs: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_TIMEOUT_MS, PROGRAM_MAX_TIMEOUT_MS),
-    maxOutputBytes: parsePositiveInt(
-      env.CLAWQL_PROGRAM_MAX_OUTPUT_BYTES,
-      PROGRAM_MAX_OUTPUT_BYTES
-    ),
+    maxOutputBytes: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_OUTPUT_BYTES, PROGRAM_MAX_OUTPUT_BYTES),
   }));
 }

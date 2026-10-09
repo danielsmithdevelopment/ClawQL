@@ -51,7 +51,8 @@ function parseCall(raw: unknown, index: number): ProgramPlanCall | ProgramPlanPa
     return {
       ok: false,
       error: `calls[${index}] must be an object`,
-      fixHint: 'Use { "tool": "execute", "operationId": "...", "args": {} } or { "tool": "search", "query": "..." }',
+      fixHint:
+        'Use { "tool": "execute", "operationId": "...", "args": {} } or { "tool": "search", "query": "..." }',
     };
   }
   const tool = raw.tool;
@@ -65,7 +66,9 @@ function parseCall(raw: unknown, index: number): ProgramPlanCall | ProgramPlanPa
       };
     }
     const args =
-      raw.args && isRecord(raw.args) ? (raw.args as Record<string, unknown>) : ({} as Record<string, unknown>);
+      raw.args && isRecord(raw.args)
+        ? (raw.args as Record<string, unknown>)
+        : ({} as Record<string, unknown>);
     const fields = Array.isArray(raw.fields)
       ? raw.fields.filter((f): f is string => typeof f === "string")
       : undefined;
@@ -83,7 +86,9 @@ function parseCall(raw: unknown, index: number): ProgramPlanCall | ProgramPlanPa
       };
     }
     const limit =
-      typeof raw.limit === "number" && Number.isFinite(raw.limit) ? Math.trunc(raw.limit) : undefined;
+      typeof raw.limit === "number" && Number.isFinite(raw.limit)
+        ? Math.trunc(raw.limit)
+        : undefined;
     const id = typeof raw.id === "string" ? raw.id : undefined;
     return { tool: "search", query, limit, id };
   }
@@ -151,9 +156,11 @@ export function parseProgramPlanEffect(
 
     const modeRaw = parsed.mode;
     const mode: ProgramPlanMode =
-      modeRaw === "sequential" ? "sequential" : modeRaw === "parallel" || modeRaw === undefined
-        ? "parallel"
-        : ("invalid" as ProgramPlanMode);
+      modeRaw === "sequential"
+        ? "sequential"
+        : modeRaw === "parallel" || modeRaw === undefined
+          ? "parallel"
+          : ("invalid" as ProgramPlanMode);
     if (mode === ("invalid" as ProgramPlanMode)) {
       return {
         ok: false as const,

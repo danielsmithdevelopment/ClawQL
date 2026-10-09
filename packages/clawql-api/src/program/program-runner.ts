@@ -39,11 +39,14 @@ export type ProgramHost = {
    * Resolve operation risk before calling execute. Return `null` when the
    * operationId is unknown (runner fails closed).
    */
-  readonly resolveRisk: (operationId: string) => Effect.Effect<{
-    readonly found: boolean;
-    readonly policy?: OperationRiskPolicy;
-    readonly risk?: OperationRisk;
-  }, Error>;
+  readonly resolveRisk: (operationId: string) => Effect.Effect<
+    {
+      readonly found: boolean;
+      readonly policy?: OperationRiskPolicy;
+      readonly risk?: OperationRisk;
+    },
+    Error
+  >;
 };
 
 export type ExecuteProgramInput = {
@@ -110,7 +113,12 @@ function looksOkJson(text: string): { ok: boolean; status?: string; error?: stri
         return {
           ok: false,
           status: typeof o.status === "string" ? o.status : undefined,
-          error: typeof o.error === "string" ? o.error : typeof o.reason === "string" ? o.reason : undefined,
+          error:
+            typeof o.error === "string"
+              ? o.error
+              : typeof o.reason === "string"
+                ? o.reason
+                : undefined,
         };
       }
       if (
@@ -272,10 +280,7 @@ export function runProgramEffect(
           }).pipe(Effect.catch(() => Effect.void));
 
           const out = yield* host
-            .search(
-              { query: call.query, limit: call.limit ?? 5 },
-              { programId }
-            )
+            .search({ query: call.query, limit: call.limit ?? 5 }, { programId })
             .pipe(
               Effect.catch((e) =>
                 Effect.succeed({
@@ -320,9 +325,9 @@ export function runProgramEffect(
         }
 
         // execute — read-only gate before host path
-        const riskInfo = yield* host.resolveRisk(call.operationId).pipe(
-          Effect.catch(() => Effect.succeed({ found: false as const }))
-        );
+        const riskInfo = yield* host
+          .resolveRisk(call.operationId)
+          .pipe(Effect.catch(() => Effect.succeed({ found: false as const })));
         if (!riskInfo.found) {
           const record: ProgramCallRecord = {
             index,
@@ -493,10 +498,7 @@ export function runProgramEffect(
       ok: r.record.ok,
       value: r.value,
     }));
-    const { result, truncated } = truncateResult(
-      { mode: plan.mode, results },
-      caps.maxOutputBytes
-    );
+    const { result, truncated } = truncateResult({ mode: plan.mode, results }, caps.maxOutputBytes);
 
     yield* appendProcessWormEffect({
       type: "TOOL_CALL_RESULT",

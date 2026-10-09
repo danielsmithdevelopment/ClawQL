@@ -53,7 +53,12 @@ function mockHost(options?: {
               policy,
               risk: {
                 policy,
-                level: policy === "allow" ? ("LOW" as const) : policy === "block" ? ("HIGH" as const) : ("MEDIUM" as const),
+                level:
+                  policy === "allow"
+                    ? ("LOW" as const)
+                    : policy === "block"
+                      ? ("HIGH" as const)
+                      : ("MEDIUM" as const),
                 source: "spec-default" as const,
                 reason: `mock ${policy}`,
               },
@@ -186,11 +191,9 @@ describe("runProgramEffect", () => {
       args: {},
     }));
     const out = await Effect.runPromise(
-      runProgramEffect(
-        { source: JSON.stringify({ calls }) },
-        host,
-        { CLAWQL_PROGRAM_MAX_TOOL_CALLS: "2" }
-      )
+      runProgramEffect({ source: JSON.stringify({ calls }) }, host, {
+        CLAWQL_PROGRAM_MAX_TOOL_CALLS: "2",
+      })
     );
     expect(out.ok).toBe(false);
     expect(out.diagnostics.error).toMatch(/max tool calls/i);
