@@ -20,17 +20,63 @@ function canUseSecureStore(): boolean {
   return Platform.OS === "ios" || Platform.OS === "android";
 }
 
+function canUseLocalStorage(): boolean {
+  return (
+    Platform.OS === "web" &&
+    typeof globalThis !== "undefined" &&
+    typeof (globalThis as { localStorage?: Storage }).localStorage !== "undefined"
+  );
+}
+
+async function writeSessionJson(json: string): Promise<void> {
+  if (canUseSecureStore()) {
+    await SecureStore.setItemAsync(SESSION_KEY, json);
+    return;
+  }
+  if (canUseLocalStorage()) {
+    (globalThis as unknown as { localStorage: Storage }).localStorage.setItem(
+      SESSION_KEY,
+      json
+    );
+    return;
+  }
+  memoryFallback.set(SESSION_KEY, json);
+}
+
+async function readSessionJson(): Promise<string | null> {
+  if (canUseSecureStore()) {
+    return await SecureStore.getItemAsync(SESSION_KEY);
+  }
+  if (canUseLocalStorage()) {
+    return (
+      (globalThis as unknown as { localStorage: Storage }).localStorage.getItem(
+        SESSION_KEY
+      ) ?? null
+    );
+  }
+  return memoryFallback.get(SESSION_KEY) ?? null;
+}
+
+async function clearSessionJson(): Promise<void> {
+  if (canUseSecureStore()) {
+    await SecureStore.deleteItemAsync(SESSION_KEY);
+    return;
+  }
+  if (canUseLocalStorage()) {
+    (globalThis as unknown as { localStorage: Storage }).localStorage.removeItem(
+      SESSION_KEY
+    );
+    return;
+  }
+  memoryFallback.delete(SESSION_KEY);
+}
+
 export function saveSessionEffect(
   session: MobileSession
 ): Effect.Effect<void, SessionStoreError> {
   return Effect.tryPromise({
     try: async () => {
-      const json = JSON.stringify(session);
-      if (canUseSecureStore()) {
-        await SecureStore.setItemAsync(SESSION_KEY, json);
-      } else {
-        memoryFallback.set(SESSION_KEY, json);
-      }
+      await writeSessionJson(JSON.stringify(session));
     },
     catch: (cause) =>
       new SessionStoreError({
@@ -45,12 +91,7 @@ export function loadSessionEffect(): Effect.Effect<
 > {
   return Effect.gen(function* () {
     const raw = yield* Effect.tryPromise({
-      try: async () => {
-        if (canUseSecureStore()) {
-          return await SecureStore.getItemAsync(SESSION_KEY);
-        }
-        return memoryFallback.get(SESSION_KEY) ?? null;
-      },
+      try: () => readSessionJson(),
       catch: (cause) =>
         new SessionStoreError({
           reason: cause instanceof Error ? cause.message : String(cause),
@@ -64,13 +105,7 @@ export function loadSessionEffect(): Effect.Effect<
 
 export function clearSessionEffect(): Effect.Effect<void, SessionStoreError> {
   return Effect.tryPromise({
-    try: async () => {
-      if (canUseSecureStore()) {
-        await SecureStore.deleteItemAsync(SESSION_KEY);
-      } else {
-        memoryFallback.delete(SESSION_KEY);
-      }
-    },
+    try: () => clearSessionJson(),
     catch: (cause) =>
       new SessionStoreError({
         reason: cause instanceof Error ? cause.message : String(cause),
