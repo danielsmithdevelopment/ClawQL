@@ -80,6 +80,7 @@ function isRecord(v: unknown): v is PendingExecutionRecord {
 function normalizeRecord(raw: PendingExecutionRecord): PendingExecutionRecord {
   return {
     ...raw,
+    where: raw.where ?? null,
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
     idempotencyCapable: raw.idempotencyCapable ?? false,

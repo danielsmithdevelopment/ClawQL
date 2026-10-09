@@ -120,6 +120,7 @@ function rowToRecord(payload: unknown): PendingExecutionRecord {
       : (payload as PendingExecutionRecord);
   return {
     ...raw,
+    where: raw.where ?? null,
     consumedAt: raw.consumedAt ?? null,
     consumedBy: raw.consumedBy ?? null,
     idempotencyCapable: raw.idempotencyCapable ?? false,

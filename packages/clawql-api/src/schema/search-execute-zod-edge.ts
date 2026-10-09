@@ -12,6 +12,8 @@ import {
   EXECUTE_ARGS_DESCRIPTION,
   EXECUTE_FIELDS_DESCRIPTION,
   EXECUTE_OPERATION_ID_DESCRIPTION,
+  EXECUTE_WHERE_DESCRIPTION,
+  EXECUTE_WHERE_MAX_LENGTH,
   RESUME_DECISION_DESCRIPTION,
   RESUME_EXECUTION_ID_DESCRIPTION,
   SEARCH_LIMIT_DESCRIPTION,
@@ -29,6 +31,11 @@ export const executeToolZodShape = {
   operationId: z.string().describe(EXECUTE_OPERATION_ID_DESCRIPTION),
   args: z.record(z.string(), z.unknown()).describe(EXECUTE_ARGS_DESCRIPTION),
   fields: z.array(z.string()).optional().describe(EXECUTE_FIELDS_DESCRIPTION),
+  where: z
+    .string()
+    .max(EXECUTE_WHERE_MAX_LENGTH)
+    .optional()
+    .describe(EXECUTE_WHERE_DESCRIPTION),
 } as const;
 
 /** Zod raw shape for MCP `resume` — mirrors {@link ResumeInputSchema}. */

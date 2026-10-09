@@ -44,6 +44,7 @@
     "effect": "4.0.0",
     "express-rate-limit": "^8.7.0",
     "graphql": "^16.14.0",
+    "jmespath": "^0.16.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.23.1",
     "prom-client": "^15.1.3",
@@ -52,6 +53,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@types/jmespath": "^0.15.2",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.23.1",
     "tsup": "^8.3.0",

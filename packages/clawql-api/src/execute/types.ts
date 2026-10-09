@@ -5,6 +5,11 @@ export type ExecuteClawqlOperationParams = {
   args: Record<string, unknown>;
   fields?: readonly string[];
   /**
+   * Optional JMESPath applied server-side after the provider response and before
+   * `fields` projection. See {@link ./where-filter.js}.
+   */
+  where?: string;
+  /**
    * After `clawql resume` / MCP `resume` approves a parked mandate call, pass the
    * pending `executionId` so execute may run that exact payload once.
    */

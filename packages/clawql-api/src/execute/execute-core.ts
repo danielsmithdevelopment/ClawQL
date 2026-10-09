@@ -17,7 +17,8 @@ import {
   tryConsumeApprovedMandate,
 } from "../pending/pending-execution-service.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
-import { defaultFields, executeOutputFields, projectRestByFields } from "./field-projection.js";
+import { defaultFields, executeOutputFields } from "./field-projection.js";
+import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
 import { executeNativeMcp } from "./native-mcp.js";
@@ -41,6 +42,34 @@ function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error>
       : text;
     return [{ type: "text" as const, text: body }];
   });
+}
+
+/**
+ * Apply `where` then `fields` projection. Fail-closed where errors become
+ * MCP error JSON (never return unfiltered provider data).
+ */
+function shapedSuccessContent(
+  data: unknown,
+  outputFields: string[] | undefined,
+  where: string | undefined
+): Effect.Effect<McpTextContent[], Error> {
+  return shapeExecuteDataEffect(data, { where, fields: outputFields }).pipe(
+    Effect.flatMap((shaped) => textContentEffect(JSON.stringify(shaped, null, 2))),
+    Effect.catch((err: unknown) => {
+      if (err instanceof WhereFilterError) {
+        return textContentEffect(
+          JSON.stringify({
+            ok: false,
+            status: "where_invalid",
+            error: err.message,
+            issue: err.issue,
+            fix: err.fixHint,
+          })
+        );
+      }
+      return Effect.fail(err instanceof Error ? err : new Error(String(err)));
+    })
+  );
 }
 
 function interpretExecuteOutcome(content: McpTextContent[]): {
@@ -83,7 +112,7 @@ export function executeClawqlOperationEffect(
   loadSpecFn: LoadSpecFn = loadSpec
 ): Effect.Effect<McpTextContent[], Error> {
   return Effect.gen(function* () {
-    const { operationId, args, fields } = params;
+    const { operationId, args, fields, where } = params;
     const loaded = yield* fromPromise(() => loadSpecFn());
     const { operations, openapi, openapis, multi } = loaded;
     const op = operations.find((o) => o.id === operationId);
@@ -114,7 +143,7 @@ export function executeClawqlOperationEffect(
     if (enforceRisk && risk?.policy === "mandate") {
       const approvedId = params.approvedExecutionId?.trim();
       if (approvedId) {
-        const livePayload = { operationId, args, fields };
+        const livePayload = { operationId, args, fields, where };
         const argsHash = yield* hashPendingArgsEffect(livePayload);
         // Atomic consume before any side effect (CAS: approved + digest + not expired).
         const consumed = yield* fromPromise(() =>
@@ -188,6 +217,7 @@ export function executeClawqlOperationEffect(
             operationId,
             args,
             fields,
+            where,
             risk,
             idempotencyCapable: op.riskHints?.idempotencyCapable === true,
           })
@@ -223,9 +253,7 @@ export function executeClawqlOperationEffect(
           root && typeof root === "object" && op.nativeGraphQL.fieldName in root
             ? root[op.nativeGraphQL.fieldName]
             : exec.data;
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(inner, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(inner, outputFields, where);
       }
 
       if (op.protocolKind === "grpc" && op.nativeGrpc) {
@@ -239,9 +267,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "mcp" && op.nativeMcp) {
@@ -255,9 +281,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "cli" && op.nativeCli) {
@@ -271,9 +295,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (op.protocolKind === "webmcp" && op.nativeWebmcp) {
@@ -287,9 +309,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(exec.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(exec.data, outputFields, where);
       }
 
       if (multi) {
@@ -305,9 +325,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(fallback.data, outputFields, where);
       }
 
       if (
@@ -326,9 +344,7 @@ export function executeClawqlOperationEffect(
             })
           );
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(rest.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(rest.data, outputFields, where);
       }
 
       const selectedFields = outputFields?.length
@@ -343,9 +359,7 @@ export function executeClawqlOperationEffect(
         if (!inProc.ok) {
           return yield* Effect.fail(new Error(inProc.error));
         }
-        return yield* textContentEffect(
-          JSON.stringify(projectRestByFields(inProc.data, outputFields), null, 2)
-        );
+        return yield* shapedSuccessContent(inProc.data, outputFields, where);
       }).pipe(
         Effect.catch((err) =>
           Effect.gen(function* () {
@@ -362,9 +376,7 @@ export function executeClawqlOperationEffect(
                 })
               );
             }
-            return yield* textContentEffect(
-              JSON.stringify(projectRestByFields(fallback.data, outputFields), null, 2)
-            );
+            return yield* shapedSuccessContent(fallback.data, outputFields, where);
           })
         )
       );
