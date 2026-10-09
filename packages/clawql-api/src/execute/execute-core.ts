@@ -18,6 +18,8 @@ import {
 } from "../pending/pending-execution-service.js";
 import { mandateArgsMatchEffect, type MandateArgsMatch } from "../proofs/mandate-args-match.js";
 import { defaultFields, executeOutputFields } from "./field-projection.js";
+import { serializeExecuteResultEffect } from "./result-truncation.js";
+import { unknownOperationIdErrorEffect } from "./suggest-operation-ids.js";
 import { shapeExecuteDataEffect, WhereFilterError } from "./where-filter.js";
 import { executeNativeGraphQL } from "./native-graphql.js";
 import { executeNativeGrpc } from "./native-grpc.js";
@@ -45,8 +47,9 @@ function textContentEffect(text: string): Effect.Effect<McpTextContent[], Error>
 }
 
 /**
- * Apply `where` then `fields` projection. Fail-closed where errors become
- * MCP error JSON (never return unfiltered provider data).
+ * Apply `where` then `fields` projection, then bound the serialized payload.
+ * Fail-closed where errors become MCP error JSON (never return unfiltered provider data).
+ * Oversized success bodies get an explicit `truncated: true` envelope (never a silent cut).
  */
 function shapedSuccessContent(
   data: unknown,
@@ -54,7 +57,9 @@ function shapedSuccessContent(
   where: string | undefined
 ): Effect.Effect<McpTextContent[], Error> {
   return shapeExecuteDataEffect(data, { where, fields: outputFields }).pipe(
-    Effect.flatMap((shaped) => textContentEffect(JSON.stringify(shaped, null, 2))),
+    Effect.flatMap((shaped) =>
+      serializeExecuteResultEffect(shaped).pipe(Effect.flatMap((text) => textContentEffect(text)))
+    ),
     Effect.catch((err: unknown) => {
       if (err instanceof WhereFilterError) {
         return textContentEffect(
@@ -118,11 +123,11 @@ export function executeClawqlOperationEffect(
     const op = operations.find((o) => o.id === operationId);
 
     if (!op) {
-      return yield* textContentEffect(
-        JSON.stringify({
-          error: `Unknown operationId: "${operationId}". Use search() to find valid operation IDs.`,
-        })
+      const body = yield* unknownOperationIdErrorEffect(
+        operationId,
+        operations.map((o) => o.id)
       );
+      return yield* textContentEffect(JSON.stringify(body));
     }
 
     const risk = op.risk;
