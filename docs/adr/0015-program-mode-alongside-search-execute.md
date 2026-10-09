@@ -169,15 +169,15 @@ Security and honesty first, then cheap wins every client gets, then public claim
 
 1. Catalog improvements + fair suite (steps 1–2 above).
 2. Session IFC on execute (step 3); Lean theorems + differential.
-3. Read-only programs in celld behind a flag; benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
+3. **v0** read-only plan runner (shipped); then **v1 durable code mode on celld** — benchmark multi-step **fan-out** and **cross-source joins** (not filter-only).
 4. Proposed writes with proposal refs, combined-label IFC, then batch Merkle approve (TLA+ green first).
 5. Tighten “never more” toward equality where honest once session labeling lands.
-6. Journaled replay deferred until a benchmark shows proposal refs are insufficient.
+6. Journaled replay **inside celld cells** (see durable code mode); proposal refs remain the gateway-side path for approvable writes until the crash demo holds.
 7. Rerun Executor comparison against Executor v2 once its code mode ships; replace simulated program-filter with live.
 
 ### Program mode v0 (shipped MVP — honesty)
 
-**v0 plan runner; OpenCode vendor is next.** Full `@opencode-ai/codemode` AST hosting in celld is deferred. What ships now:
+**v0 plan runner.** Not a JS interpreter. What ships now:
 
 | Item      | Detail                                                                                                                                                                                |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -191,27 +191,70 @@ Security and honesty first, then cheap wins every client gets, then public claim
 
 See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`). Implementation: `packages/clawql-api/src/program/`.
 
+### Durable code mode on celld (program mode step 2 — not a me-too)
+
+OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interpreter; their README leaves durable pause/resume, replay, and exactly-once to the host. ClawQL’s advantage is not a second hand-written subset interpreter — it is **ordinary JavaScript in a celld V8 isolate**, with the program journal in the cell’s **SQLite** (LTX → operator bucket, **RPO=0**: celld does not ack a durable write until it reaches the bucket). That solves OpenCode non-goals by construction.
+
+**Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode.”
+
+| Advantage vs in-process interpreter | How celld supplies it |
+| --- | --- |
+| Programs survive crashes / parks | Journal every completed tool call + non-deterministic value in cell SQLite; new cell replays and continues; approvals park without double-executing prior writes |
+| Full language + hard isolation | Workers/DO V8 isolate, not a hand-rolled subset; per-cell memory limit; tools are the only door (no `fetch`, no ambient globals) |
+| Governance built in | Proposed writes, IFC labels, mandates, WORM audit — ClawQL gateway path on every call; not “host owns policy later” |
+
+**Tenant isolation (hard caveat — from [`docs/streams/clawql-celld.md`](../streams/clawql-celld.md) alpha posture):** celld is **not safe for hostile multi-tenant** use. Model-written code is hostile input. Therefore:
+
+1. **One tenant per celld node or fleet** — never mix tenants on a node (same posture as Streams: one app per fleet / separate buckets).
+2. **Outer containment** — gVisor or Kata + locked-down egress around nodes ([ADR 0011](./0011-isolation-agent-substrate-sandbox-celld.md) / Streams AWS burst).
+3. **Inside a cell:** no `fetch`, no ambient network — **tools only**.
+4. **CPU watchdog** — terminate runaway isolates if the pinned celld build does not enforce CPU time; verify against the pinned version before claiming.
+
+**Open-source vs keep (Ontologiql-shaped split):**
+
+| Publish (runtime) | Keep (ClawQL) |
+| --- | --- |
+| Cells, tool bindings, journal, discovery, diagnostics, limits | Mandates, information flow, risk, audit / WORM |
+
+OpenCode’s package is MIT but unpublished (private workspace). A maintained, published durable runtime would be first of its kind; ClawQL remains the flagship governed workload on celld (strengthens the Ryan / celld conversation).
+
+**Attribution:** Borrowing designs is fine. If any OpenCode **code** lands in ClawQL, even temporarily, ship its MIT copyright notice with it — visibly, especially after public posts crediting Dax.
+
+**Earned-claim sequence (do not publish the runtime until these hold):**
+
+1. Build as program mode step 2 inside ClawQL on the **pinned** celld version.
+2. Benchmark vs OpenCode’s interpreter: latency per tool call (isolate boundary cost), cold start, memory, first-attempt success on multi-step tasks.
+3. **Crash demo:** kill a node mid-program in the three-arm load-test setup; show resume **without repeating a call**, plus audit entries. Prefer a short clip or Sessions/trace link as the public reply that turns “with the hopes of” into a result.
+4. Extract and publish the runtime once those numbers hold.
+
+### Public positioning (honest until proven)
+
+Quote-tweet posture toward OpenCode is correct when it credits generously, names celld / Ryan, and hedges with “with the hopes of.” Close the loop in the same thread with the crash demo when it works. Outreach to Ryan should stay concrete (what ClawQL already runs on celld: sessions, event subscriptions, operator, burst-load design; what governance needs from the runtime: memory/CPU limits, tools-only door, audit hooks).
+
 ## Non-goals
 
 - Replacing `search` / `execute` with programs.
-- In-program durable writes or ambient authority outside the gateway path.
+- In-program durable writes or ambient authority outside the gateway path (until journal + proposed-write / mandate path is proven).
 - Cross-system transactions or atomic multi-leaf batches.
 - A single mandate digest covering an entire batch.
 - Claiming information-flow protection across client-side session boundaries.
-- Depending on unpublished OpenCode workspace packages (vendor instead).
-- Journaled multi-write replay in v1 (proposal refs first).
+- Treating celld isolates as sufficient for **hostile multi-tenant** isolation (they are not, while alpha).
+- Claiming “survives a crash” before the kill-node demo and audit trail exist.
+- Publishing the runtime before benchmark + crash demo hold.
+- Shipping OpenCode source without its MIT copyright notice.
 
 ## Consequences
 
-- New optional MCP tool (name TBD, e.g. `execute_program`) gated by flag / key group; Core tools unchanged.
+- Optional MCP tools (`execute_program`, later celld-backed durable runner) gated by flag / key group; Core `search` / `execute` unchanged.
 - Mandate lifecycle and Review UX grow batch-root and partial-batch surfaces; mobile and console Review cards must show leaf states.
 - `MandateArgsMatch` and pending store must support post-resolution digests and inclusion under a signed root.
-- celld resource caps and fuzz targets expand to the vendored interpreter.
+- Program journal lives in cell SQLite / LTX; compliance WORM remains host `clawql-audit` (platform durability ≠ compliance WORM — same split as Streams).
+- celld fleets for programs: one tenant per fleet; outer gVisor/Kata; CPU watchdog verified on pin.
 - Lean package gains an IFC module; CI fails on `sorry` / `admit` as in ADR 0014.
-- Security and product copy: programs are a round-trip optimization under the same policy; session labeling is within-session only.
+- Security and product copy: lead with crash survival when proven; until then programs are a round-trip optimization under the same policy; session labeling is within-session only.
 
 ## Security-page claim (earned wording)
 
-Only after TLA+ batch model green, Lean IFC theorems + differential green, and the “never more” suite green:
+Only after TLA+ batch model green, Lean IFC theorems + differential green, the “never more” suite green, **and** the celld kill-node resume demo green:
 
-> Agents may run confined programs that cut round trips; every call still goes through the same gate, and batch approvals still bind each write to its exact arguments. Information-flow labels accumulate within a session and are checked in Lean against production.
+> Agents may run confined programs that cut round trips and survive restarts; every call still goes through the same gate, and batch approvals still bind each write to its exact arguments. Information-flow labels accumulate within a session and are checked in Lean against production.
