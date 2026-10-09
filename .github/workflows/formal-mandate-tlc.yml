@@ -15,6 +15,7 @@ on:
       - ".github/workflows/formal-mandate-tlc.yml"
       - "packages/clawql-api/src/pending/**"
       - "packages/clawql-api/src/policy/**"
+      - "packages/clawql-api/src/ifc/**"
   workflow_dispatch:
 
 concurrency:
