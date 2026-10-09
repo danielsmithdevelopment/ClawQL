@@ -11,8 +11,18 @@ import { appendProcessWormEffect } from "clawql-audit";
 import { Context, Duration, Effect, Layer, Option } from "effect";
 import type { ExecuteInputDecoded, SearchInputDecoded } from "../schema/search-execute-schema.js";
 import type { OperationRisk, OperationRiskPolicy } from "../risk/operation-risk-types.js";
-import { resolveProgramCapsEffect } from "./program-caps.js";
-import { parseProgramPlanEffect, type ProgramPlanCall } from "./program-plan.js";
+import {
+  resolveProgramCapsEffect,
+  resolveProgramTimeoutMsEffect,
+  type ProgramCaps,
+} from "./program-caps.js";
+import type { ProgramJournalBackend, ProgramJournalStatus } from "./program-journal.js";
+import {
+  parseProgramPlanEffect,
+  type ProgramPlan,
+  type ProgramPlanCall,
+  type ProgramPlanMode,
+} from "./program-plan.js";
 
 export type ProgramHostExecuteResult = {
   readonly content: readonly { readonly type: "text"; readonly text: string }[];
@@ -20,6 +30,14 @@ export type ProgramHostExecuteResult = {
 
 export type ProgramHostSearchResult = {
   readonly formattedText: string;
+};
+
+/** A plan call served from the durable journal instead of the host. */
+export type ProgramReplayedCall = {
+  readonly index: number;
+  readonly tool: "execute" | "search";
+  readonly operationId?: string;
+  readonly ok: boolean;
 };
 
 /**
@@ -47,6 +65,15 @@ export type ProgramHost = {
     },
     Error
   >;
+  /**
+   * Bookkeeping for a replayed call, e.g. re-accumulating session IFC read labels
+   * that died with a crashed process. A failure fails the attempt rather than
+   * handing back data the session has not been labeled for.
+   */
+  readonly replayed?: (
+    call: ProgramReplayedCall,
+    ctx: { readonly programId: string }
+  ) => Effect.Effect<void, Error>;
 };
 
 export type ExecuteProgramInput = {
@@ -66,6 +93,19 @@ export type ProgramCallRecord = {
   readonly error?: string;
   readonly status?: string;
   readonly resultPreview?: string;
+  /** Served from the durable journal; the host was not called again. */
+  readonly replayed?: boolean;
+};
+
+export type DurableProgramDiagnostics = {
+  readonly backend: ProgramJournalBackend;
+  readonly status: ProgramJournalStatus;
+  readonly resumed: boolean;
+  readonly replayedCalls: number;
+  readonly executedCalls: number;
+  readonly journaledCalls: number;
+  /** Wall clock of the first attempt (a journaled nondeterministic value). */
+  readonly startedAt?: string;
 };
 
 export type ExecuteProgramDiagnostics = {
@@ -79,6 +119,9 @@ export type ExecuteProgramDiagnostics = {
   readonly truncated?: boolean;
   readonly fixHint?: string;
   readonly error?: string;
+  /** Machine-readable refusal code (durable runner), e.g. `program_not_found`. */
+  readonly code?: string;
+  readonly durable?: DurableProgramDiagnostics;
 };
 
 export type ExecuteProgramResult = {
@@ -89,13 +132,54 @@ export type ExecuteProgramResult = {
   readonly diagnostics: ExecuteProgramDiagnostics;
 };
 
+/**
+ * Durability hooks for {@link runProgramPlanEffect}: `replay` may serve a call
+ * from a journal (the host is not called); `completed` persists a host-served
+ * call before the program moves on.
+ */
+export type ProgramCallHooks<E> = {
+  readonly replay: (
+    index: number,
+    call: ProgramPlanCall
+  ) => Effect.Effect<Option.Option<ProgramCallOutcome>, E>;
+  readonly completed: (
+    index: number,
+    call: ProgramPlanCall,
+    outcome: ProgramCallOutcome
+  ) => Effect.Effect<void, E>;
+};
+
+export type ProgramPlanRunInput<E> = {
+  readonly programId: string;
+  readonly plan: ProgramPlan;
+  readonly timeoutMs: number;
+  readonly maxOutputBytes: number;
+  readonly sessionId?: string;
+  /** Start of the attempt for `elapsedMs` (defaults to when the plan starts running). */
+  readonly startedAtMs?: number;
+  /** Replaces the v0 honesty line in diagnostics. */
+  readonly honesty?: string;
+  /** Extra metadata on the program-level WORM events. */
+  readonly auditMetadata?: Readonly<Record<string, unknown>>;
+  readonly hooks?: ProgramCallHooks<E>;
+};
+
+export type PreparedProgramPlan =
+  | { readonly ok: true; readonly plan: ProgramPlan }
+  | {
+      readonly ok: false;
+      readonly error: string;
+      readonly fixHint?: string;
+      readonly mode?: ProgramPlanMode;
+    };
+
 const HONESTY =
   "v0 plan runner; OpenCode vendor is next. source must be a JSON plan of parallel/sequential read executes — not free-form JS.";
 
 const WRITE_REJECT_HINT =
   "Programs may not perform writes in v0. Use plain execute (with mandate/resume) for mutating operations, or wait for proposed writes (ADR 0015).";
 
-function newProgramIdEffect(): Effect.Effect<string> {
+export function newProgramIdEffect(): Effect.Effect<string> {
   return Effect.sync(() => `prog_${randomBytes(12).toString("hex")}`);
 }
 
@@ -168,7 +252,8 @@ function truncateResult(
   };
 }
 
-type RunCallOk = {
+/** One plan call as the program observed it. */
+export type ProgramCallOutcome = {
   readonly record: ProgramCallRecord;
   readonly value: unknown;
 };
@@ -179,6 +264,7 @@ function failResult(
   diagnostics: Omit<ExecuteProgramDiagnostics, "interpreter" | "honesty" | "programId"> & {
     readonly fixHint?: string;
     readonly error?: string;
+    readonly honesty?: string;
   }
 ): ExecuteProgramResult {
   return {
@@ -195,6 +281,55 @@ function failResult(
   };
 }
 
+/** Reject plans that exceed the tool-call cap (checked again when a journal resumes). */
+export function checkProgramPlanCapsEffect(
+  plan: ProgramPlan,
+  caps: ProgramCaps
+): Effect.Effect<PreparedProgramPlan> {
+  return Effect.sync(() =>
+    plan.calls.length > caps.maxToolCalls
+      ? {
+          ok: false as const,
+          mode: plan.mode,
+          error: `plan exceeds max tool calls (${plan.calls.length} > ${caps.maxToolCalls})`,
+          fixHint: "Split into multiple programs or raise CLAWQL_PROGRAM_MAX_TOOL_CALLS.",
+        }
+      : { ok: true as const, plan }
+  );
+}
+
+/** Validate `source` against caps and decode the v0 JSON plan. */
+export function prepareProgramPlanEffect(
+  source: string,
+  caps: ProgramCaps
+): Effect.Effect<PreparedProgramPlan> {
+  return Effect.gen(function* () {
+    if (source.length > caps.maxSourceLength) {
+      return {
+        ok: false as const,
+        error: `source exceeds max length (${source.length} > ${caps.maxSourceLength})`,
+        fixHint: `Shrink the JSON plan or raise CLAWQL_PROGRAM_MAX_SOURCE_LENGTH (hard cap still applies).`,
+      };
+    }
+
+    const planOrErr = yield* parseProgramPlanEffect(source);
+    if ("ok" in planOrErr && planOrErr.ok === false) {
+      return { ok: false as const, error: planOrErr.error, fixHint: planOrErr.fixHint };
+    }
+    const plan = planOrErr as Exclude<typeof planOrErr, { ok: false }>;
+
+    if (plan.calls.length === 0) {
+      return {
+        ok: false as const,
+        mode: plan.mode,
+        error: "plan.calls is empty",
+        fixHint: "Add at least one read execute or search call.",
+      };
+    }
+    return yield* checkProgramPlanCapsEffect(plan, caps);
+  });
+}
+
 export function runProgramEffect(
   input: ExecuteProgramInput,
   host: ProgramHost,
@@ -206,49 +341,44 @@ export function runProgramEffect(
     const caps = yield* resolveProgramCapsEffect(env);
     const source = typeof input.source === "string" ? input.source : "";
 
-    if (source.length > caps.maxSourceLength) {
+    const prepared = yield* prepareProgramPlanEffect(source, caps);
+    if (!prepared.ok) {
       return failResult(programId, [], {
         callCount: 0,
         elapsedMs: Date.now() - started,
-        error: `source exceeds max length (${source.length} > ${caps.maxSourceLength})`,
-        fixHint: `Shrink the JSON plan or raise CLAWQL_PROGRAM_MAX_SOURCE_LENGTH (hard cap still applies).`,
+        mode: prepared.mode,
+        error: prepared.error,
+        fixHint: prepared.fixHint,
       });
     }
 
-    const planOrErr = yield* parseProgramPlanEffect(source);
-    if ("ok" in planOrErr && planOrErr.ok === false) {
-      return failResult(programId, [], {
-        callCount: 0,
-        elapsedMs: Date.now() - started,
-        error: planOrErr.error,
-        fixHint: planOrErr.fixHint,
-      });
-    }
-    const plan = planOrErr as Exclude<typeof planOrErr, { ok: false }>;
+    return yield* runProgramPlanEffect(
+      {
+        programId,
+        plan: prepared.plan,
+        timeoutMs: yield* resolveProgramTimeoutMsEffect(input.timeoutMs, caps),
+        maxOutputBytes: caps.maxOutputBytes,
+        sessionId: input.sessionId,
+        startedAtMs: started,
+      },
+      host
+    );
+  });
+}
 
-    if (plan.calls.length === 0) {
-      return failResult(programId, [], {
-        callCount: 0,
-        elapsedMs: Date.now() - started,
-        mode: plan.mode,
-        error: "plan.calls is empty",
-        fixHint: "Add at least one read execute or search call.",
-      });
-    }
-    if (plan.calls.length > caps.maxToolCalls) {
-      return failResult(programId, [], {
-        callCount: 0,
-        elapsedMs: Date.now() - started,
-        mode: plan.mode,
-        error: `plan exceeds max tool calls (${plan.calls.length} > ${caps.maxToolCalls})`,
-        fixHint: "Split into multiple programs or raise CLAWQL_PROGRAM_MAX_TOOL_CALLS.",
-      });
-    }
-
-    let timeoutMs = caps.defaultTimeoutMs;
-    if (typeof input.timeoutMs === "number" && Number.isFinite(input.timeoutMs)) {
-      timeoutMs = Math.max(1, Math.min(Math.trunc(input.timeoutMs), caps.maxTimeoutMs));
-    }
+/**
+ * Run a validated plan under `programId`: per-call gate + host path, timeout,
+ * output cap. With `hooks`, calls may be replayed from and journaled to a
+ * durable store (see durable-runner.ts).
+ */
+export function runProgramPlanEffect<E = never>(
+  input: ProgramPlanRunInput<E>,
+  host: ProgramHost
+): Effect.Effect<ExecuteProgramResult, E> {
+  return Effect.gen(function* () {
+    const started = input.startedAtMs ?? Date.now();
+    const { programId, plan, timeoutMs, maxOutputBytes, hooks } = input;
+    const honesty = input.honesty ?? HONESTY;
 
     yield* appendProcessWormEffect({
       type: "TOOL_CALL_ATTEMPT",
@@ -260,10 +390,11 @@ export function runProgramEffect(
         mode: plan.mode,
         callCount: plan.calls.length,
         interpreter: "plan-runner-v0",
+        ...input.auditMetadata,
       },
     }).pipe(Effect.catch(() => Effect.void));
 
-    const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<RunCallOk> =>
+    const runOne = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome> =>
       Effect.gen(function* () {
         if (call.tool === "search") {
           yield* appendProcessWormEffect({
@@ -461,16 +592,27 @@ export function runProgramEffect(
         return { record, value };
       });
 
+    const step = (call: ProgramPlanCall, index: number): Effect.Effect<ProgramCallOutcome, E> =>
+      hooks === undefined
+        ? runOne(call, index)
+        : Effect.gen(function* () {
+            const replayed = yield* hooks.replay(index, call);
+            if (Option.isSome(replayed)) return replayed.value;
+            const outcome = yield* runOne(call, index);
+            yield* hooks.completed(index, call, outcome);
+            return outcome;
+          });
+
     const body =
       plan.mode === "parallel"
         ? Effect.all(
-            plan.calls.map((c, i) => runOne(c, i)),
+            plan.calls.map((c, i) => step(c, i)),
             { concurrency: "unbounded" }
           )
         : Effect.gen(function* () {
-            const acc: RunCallOk[] = [];
+            const acc: ProgramCallOutcome[] = [];
             for (let i = 0; i < plan.calls.length; i++) {
-              acc.push(yield* runOne(plan.calls[i]!, i));
+              acc.push(yield* step(plan.calls[i]!, i));
             }
             return acc;
           });
@@ -485,6 +627,7 @@ export function runProgramEffect(
         timedOut: true,
         error: `program timed out after ${timeoutMs}ms`,
         fixHint: "Raise timeoutMs (capped) or reduce fan-out / sequential depth.",
+        honesty,
       });
     }
     const runOut = timed.value;
@@ -498,7 +641,7 @@ export function runProgramEffect(
       ok: r.record.ok,
       value: r.value,
     }));
-    const { result, truncated } = truncateResult({ mode: plan.mode, results }, caps.maxOutputBytes);
+    const { result, truncated } = truncateResult({ mode: plan.mode, results }, maxOutputBytes);
 
     yield* appendProcessWormEffect({
       type: "TOOL_CALL_RESULT",
@@ -511,6 +654,7 @@ export function runProgramEffect(
         callCount: calls.length,
         truncated,
         interpreter: "plan-runner-v0",
+        ...input.auditMetadata,
       },
     }).pipe(Effect.catch(() => Effect.void));
 
@@ -521,7 +665,7 @@ export function runProgramEffect(
       calls,
       diagnostics: {
         interpreter: "plan-runner-v0",
-        honesty: HONESTY,
+        honesty,
         programId,
         mode: plan.mode,
         callCount: calls.length,

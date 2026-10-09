@@ -19,6 +19,14 @@ export const PROGRAM_MAX_TIMEOUT_MS = 120_000;
 /** Max JSON-serialized result bytes returned to the client. */
 export const PROGRAM_MAX_OUTPUT_BYTES = 256 * 1024;
 
+export type ProgramCaps = {
+  readonly maxSourceLength: number;
+  readonly maxToolCalls: number;
+  readonly defaultTimeoutMs: number;
+  readonly maxTimeoutMs: number;
+  readonly maxOutputBytes: number;
+};
+
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (!raw?.trim()) return fallback;
   const n = Number.parseInt(raw.trim(), 10);
@@ -27,13 +35,9 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
 }
 
 /** Caps resolved from env (Effect for domain boundary). */
-export function resolveProgramCapsEffect(env: NodeJS.ProcessEnv = process.env): Effect.Effect<{
-  readonly maxSourceLength: number;
-  readonly maxToolCalls: number;
-  readonly defaultTimeoutMs: number;
-  readonly maxTimeoutMs: number;
-  readonly maxOutputBytes: number;
-}> {
+export function resolveProgramCapsEffect(
+  env: NodeJS.ProcessEnv = process.env
+): Effect.Effect<ProgramCaps> {
   return Effect.sync(() => ({
     maxSourceLength: parsePositiveInt(
       env.CLAWQL_PROGRAM_MAX_SOURCE_LENGTH,
@@ -47,4 +51,16 @@ export function resolveProgramCapsEffect(env: NodeJS.ProcessEnv = process.env): 
     maxTimeoutMs: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_TIMEOUT_MS, PROGRAM_MAX_TIMEOUT_MS),
     maxOutputBytes: parsePositiveInt(env.CLAWQL_PROGRAM_MAX_OUTPUT_BYTES, PROGRAM_MAX_OUTPUT_BYTES),
   }));
+}
+
+/** Requested wall-clock budget clamped to `[1, maxTimeoutMs]`; default when omitted. */
+export function resolveProgramTimeoutMsEffect(
+  requested: number | undefined,
+  caps: ProgramCaps
+): Effect.Effect<number> {
+  return Effect.sync(() =>
+    typeof requested === "number" && Number.isFinite(requested)
+      ? Math.max(1, Math.min(Math.trunc(requested), caps.maxTimeoutMs))
+      : caps.defaultTimeoutMs
+  );
 }
