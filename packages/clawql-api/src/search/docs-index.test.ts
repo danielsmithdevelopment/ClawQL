@@ -10,10 +10,7 @@ import {
   searchDocsIndex,
 } from "./docs-index.js";
 
-const fixturePath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../fixtures/docs-index.json"
-);
+const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "../../fixtures/docs-index.json");
 
 describe("docs index", () => {
   it("parses flat entries fixture", () => {

@@ -13,9 +13,9 @@ describe("console_link", () => {
   });
 
   it("prefers CLAWQL_CONSOLE_BASE_URL then PUBLIC_ORIGIN", () => {
-    expect(
-      resolveConsoleBaseUrl({ CLAWQL_CONSOLE_BASE_URL: "https://example.com/ui/" })
-    ).toBe("https://example.com/ui");
+    expect(resolveConsoleBaseUrl({ CLAWQL_CONSOLE_BASE_URL: "https://example.com/ui/" })).toBe(
+      "https://example.com/ui"
+    );
     expect(resolveConsoleBaseUrl({ CLAWQL_PUBLIC_ORIGIN: "https://app.example.com" })).toBe(
       "https://app.example.com/console"
     );
@@ -23,10 +23,7 @@ describe("console_link", () => {
 
   it("builds deep link with session and org query params", async () => {
     const result = await Effect.runPromise(
-      buildConsoleLinkEffect(
-        { path: "activity/pex_1", sessionId: "mcp-sess", orgId: "org-9" },
-        {}
-      )
+      buildConsoleLinkEffect({ path: "activity/pex_1", sessionId: "mcp-sess", orgId: "org-9" }, {})
     );
     expect(result.ok).toBe(true);
     expect(result.path).toBe("activity/pex_1");

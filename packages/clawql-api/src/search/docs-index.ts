@@ -171,11 +171,7 @@ export function scoreDocsEntry(
 }
 
 /** Search a loaded index; returns hits sorted by score. */
-export function searchDocsIndex(
-  index: DocsIndex,
-  query: string,
-  limit = 5
-): DocSearchResult[] {
+export function searchDocsIndex(index: DocsIndex, query: string, limit = 5): DocSearchResult[] {
   const results: DocSearchResult[] = [];
   for (const entry of index.entries) {
     const { score, matchedOn } = scoreDocsEntry(entry, query);
@@ -198,8 +194,7 @@ export const searchDocsIndexEffect = (
   index: DocsIndex,
   query: string,
   limit = 5
-): Effect.Effect<DocSearchResult[]> =>
-  Effect.sync(() => searchDocsIndex(index, query, limit));
+): Effect.Effect<DocSearchResult[]> => Effect.sync(() => searchDocsIndex(index, query, limit));
 
 /**
  * Load index (if any) and search. Returns empty when no index is configured.

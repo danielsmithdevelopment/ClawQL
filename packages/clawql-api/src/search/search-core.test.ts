@@ -91,7 +91,10 @@ describe("searchClawqlOperationsEffect", () => {
     process.env.CLAWQL_DOCS_INDEX_PATH = fixture;
     try {
       const output = await Effect.runPromise(
-        searchClawqlOperationsEffect({ query: "program mode information-flow", limit: 10 }, stubSpec)
+        searchClawqlOperationsEffect(
+          { query: "program mode information-flow", limit: 10 },
+          stubSpec
+        )
       );
       const parsed = JSON.parse(output.formattedText) as {
         results: { kind: string; title?: string }[];

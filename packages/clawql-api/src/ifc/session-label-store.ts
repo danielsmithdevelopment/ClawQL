@@ -78,10 +78,9 @@ function makeStore(map: Map<string, Set<Label>>): SessionLabelStoreApi {
   };
 }
 
-export class SessionLabelStore extends Context.Service<
-  SessionLabelStore,
-  SessionLabelStoreApi
->()("clawql/SessionLabelStore") {}
+export class SessionLabelStore extends Context.Service<SessionLabelStore, SessionLabelStoreApi>()(
+  "clawql/SessionLabelStore"
+) {}
 
 /** Live store backed by the process-global Map (MCP process lifetime). */
 export const SessionLabelStoreLive = Layer.succeed(
@@ -92,7 +91,8 @@ export const SessionLabelStoreLive = Layer.succeed(
 /** Fresh in-memory store for unit tests (isolated Map). */
 export const makeSessionLabelStoreLayer = (
   map: Map<string, Set<Label>> = new Map()
-): Layer.Layer<SessionLabelStore> => Layer.succeed(SessionLabelStore, SessionLabelStore.of(makeStore(map)));
+): Layer.Layer<SessionLabelStore> =>
+  Layer.succeed(SessionLabelStore, SessionLabelStore.of(makeStore(map)));
 
 /** Sync façades for execute-core host boundary. */
 export function getSessionLabelsSync(sessionKey: string): ReadonlySet<Label> {

@@ -67,10 +67,7 @@ export const buildConsoleLinkEffect = (
     const path = normalizePath(input.path);
     const sessionId = resolveSessionLabelKey(input.sessionId, env);
     const orgId =
-      input.orgId?.trim() ||
-      env.CLAWQL_ORG_ID?.trim() ||
-      env.CLAWQL_TENANT_ID?.trim() ||
-      undefined;
+      input.orgId?.trim() || env.CLAWQL_ORG_ID?.trim() || env.CLAWQL_TENANT_ID?.trim() || undefined;
 
     const url = new URL(`${baseUrl}/${path}`);
     url.searchParams.set("sessionId", sessionId);

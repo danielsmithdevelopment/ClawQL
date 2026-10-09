@@ -36,7 +36,9 @@ export function sessionIfcEnabledEffect(
  * Read = non-mutating. Mirrors operation-risk defaults: GET/HEAD/QUERY and
  * explicit read-only hints accumulate; everything else is a write sink check.
  */
-export function isReadOperation(op: Pick<Operation, "method" | "riskHints" | "nativeGraphQL">): boolean {
+export function isReadOperation(
+  op: Pick<Operation, "method" | "riskHints" | "nativeGraphQL">
+): boolean {
   if (op.riskHints?.mcpReadOnlyHint === true) return true;
   if (op.riskHints?.grpcNoSideEffects === true) return true;
   if (op.nativeGraphQL?.operationType === "query") return true;
