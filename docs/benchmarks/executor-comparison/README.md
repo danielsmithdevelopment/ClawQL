@@ -31,11 +31,11 @@ Almost the entire combined ratio is Layer 2 (~158×). ClawQL’s win is **result
 
 ### Fair comparison (shipped)
 
-| Arm | Meaning | Script / artifact |
-| --- | --- | --- |
-| Executor raw | Full REST / CLI dump (unfair vs `fields`) | `executor-cmp-001` |
+| Arm                                     | Meaning                                                                                                 | Script / artifact                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Executor raw                            | Full REST / CLI dump (unfair vs `fields`)                                                               | `executor-cmp-001`                                                         |
 | **Executor program-filter (simulated)** | Same fields as ClawQL, projected from the raw payload — stand-in for code-mode filter until Executor v2 | `executor-cmp-001` field `executorProgramFilterSimulated` + **fair suite** |
-| ClawQL | `execute` + `fields` (+ `where`) | both |
+| ClawQL                                  | `execute` + `fields` (+ `where`)                                                                        | both                                                                       |
 
 ```bash
 # 12-task suite: single-call, large-list filter, fan-out, cross-source join; input + output tokens

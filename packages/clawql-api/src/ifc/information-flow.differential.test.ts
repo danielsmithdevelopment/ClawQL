@@ -58,13 +58,7 @@ describe("information-flow ↔ Lean oracle differential (ADR 0015)", () => {
 
   it("agrees with production mayFlow on 2000 random single-dest cases (empty config)", () => {
     const rnd = mulberry32(0x1fc0);
-    const labels = [
-      PUBLIC_LABEL,
-      "source:github",
-      "source:slack",
-      "source:jira",
-      "source:unknown",
-    ];
+    const labels = [PUBLIC_LABEL, "source:github", "source:slack", "source:jira", "source:unknown"];
     let disagreements = 0;
 
     for (let i = 0; i < 2000; i++) {

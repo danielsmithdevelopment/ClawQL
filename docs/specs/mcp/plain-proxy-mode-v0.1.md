@@ -11,11 +11,11 @@ Plain proxy mode does **not** weaken the gateway. Calls still run the same gate 
 
 ## 2. Enablement
 
-| Knob | Meaning |
-| --- | --- |
-| `CLAWQL_ENABLE_PLAIN_PROXY=1` | Process-wide: register `proxy_call` for every connection. |
+| Knob                            | Meaning                                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `CLAWQL_ENABLE_PLAIN_PROXY=1`   | Process-wide: register `proxy_call` for every connection.                                                             |
 | `CLAWQL_PLAIN_PROXY_KEY_GROUPS` | Comma-separated key-group allowlist. When set, register `proxy_call` only if the authenticated key’s group is listed. |
-| `CLAWQL_API_KEY_GROUP` | Host-injected group for the current connection (same pattern as `CLAWQL_API_KEY_ID` for session keys). |
+| `CLAWQL_API_KEY_GROUP`          | Host-injected group for the current connection (same pattern as `CLAWQL_API_KEY_ID` for session keys).                |
 
 Precedence:
 
@@ -29,12 +29,12 @@ Catalog COMPLETE / PARTIAL UX is unchanged for `search`. Plain proxy means clien
 
 Thin alias of Core `execute` — same Zod/Effect input shape and same handler path.
 
-| Arg | Type | Notes |
-| --- | --- | --- |
-| `operationId` | string | Required |
-| `args` | object | Required |
-| `fields` | string[] | Optional projection |
-| `where` | string | Optional JMESPath filter (same caps as execute) |
+| Arg           | Type     | Notes                                           |
+| ------------- | -------- | ----------------------------------------------- |
+| `operationId` | string   | Required                                        |
+| `args`        | object   | Required                                        |
+| `fields`      | string[] | Optional projection                             |
+| `where`       | string   | Optional JMESPath filter (same caps as execute) |
 
 Sessions / WORM should record the tool name as `proxy_call` so operators can distinguish harness traffic from native `execute` while policy remains identical.
 

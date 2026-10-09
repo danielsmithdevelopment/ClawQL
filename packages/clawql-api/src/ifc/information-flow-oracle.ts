@@ -15,10 +15,7 @@ export function leanOracleMem(x: Label, xs: readonly Label[]): boolean {
 }
 
 /** Lean `accumulateLabels`. */
-export function leanOracleAccumulateLabels(
-  acc: readonly Label[],
-  news: readonly Label[]
-): Label[] {
+export function leanOracleAccumulateLabels(acc: readonly Label[], news: readonly Label[]): Label[] {
   let out = [...acc];
   for (const n of news) {
     if (!leanOracleMem(n, out)) out = [...out, n];

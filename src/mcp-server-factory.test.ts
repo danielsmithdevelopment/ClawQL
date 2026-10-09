@@ -27,16 +27,14 @@ describe("createRegisteredMcpServer", () => {
       delete process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
       delete process.env.CLAWQL_API_KEY_GROUP;
       const off = createRegisteredMcpServer({ name: "clawql-proxy-off", version: "0.0.0" });
-      const offReg = (
-        off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
-      )._registeredTools;
+      const offReg = (off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
+        ._registeredTools;
       expect(offReg.proxy_call).toBeUndefined();
 
       process.env.CLAWQL_ENABLE_PLAIN_PROXY = "1";
       const on = createRegisteredMcpServer({ name: "clawql-proxy-on", version: "0.0.0" });
-      const onReg = (
-        on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
-      )._registeredTools;
+      const onReg = (on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> })
+        ._registeredTools;
       expect(onReg.proxy_call).toBeDefined();
       expect(onReg.proxy_call?.enabled).not.toBe(false);
     } finally {
