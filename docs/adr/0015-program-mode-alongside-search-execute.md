@@ -197,11 +197,11 @@ OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interprete
 
 **Lead claim (only when earned):** “code mode that survives a crash” — not “a competitor to OpenCode.”
 
-| Advantage vs in-process interpreter | How celld supplies it |
-| --- | --- |
-| Programs survive crashes / parks | Journal every completed tool call + non-deterministic value in cell SQLite; new cell replays and continues; approvals park without double-executing prior writes |
-| Full language + hard isolation | Workers/DO V8 isolate, not a hand-rolled subset; per-cell memory limit; tools are the only door (no `fetch`, no ambient globals) |
-| Governance built in | Proposed writes, IFC labels, mandates, WORM audit — ClawQL gateway path on every call; not “host owns policy later” |
+| Advantage vs in-process interpreter | How celld supplies it                                                                                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Programs survive crashes / parks    | Journal every completed tool call + non-deterministic value in cell SQLite; new cell replays and continues; approvals park without double-executing prior writes |
+| Full language + hard isolation      | Workers/DO V8 isolate, not a hand-rolled subset; per-cell memory limit; tools are the only door (no `fetch`, no ambient globals)                                 |
+| Governance built in                 | Proposed writes, IFC labels, mandates, WORM audit — ClawQL gateway path on every call; not “host owns policy later”                                              |
 
 **Tenant isolation (hard caveat — from [`docs/streams/clawql-celld.md`](../streams/clawql-celld.md) alpha posture):** celld is **not safe for hostile multi-tenant** use. Model-written code is hostile input. Therefore:
 
@@ -212,8 +212,8 @@ OpenCode’s `@opencode-ai/codemode` is an elegant **in-process** AST interprete
 
 **Open-source vs keep (Ontologiql-shaped split):**
 
-| Publish (runtime) | Keep (ClawQL) |
-| --- | --- |
+| Publish (runtime)                                             | Keep (ClawQL)                                  |
+| ------------------------------------------------------------- | ---------------------------------------------- |
 | Cells, tool bindings, journal, discovery, diagnostics, limits | Mandates, information flow, risk, audit / WORM |
 
 OpenCode’s package is MIT but unpublished (private workspace). A maintained, published durable runtime would be first of its kind; ClawQL remains the flagship governed workload on celld (strengthens the Ryan / celld conversation).
