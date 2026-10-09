@@ -26,11 +26,7 @@ OpenBench CI defaults to this OpenRouter-first model so live benchmarks work wit
 | **`/v1/models`**           | Credentialed catalog + `clawql/*` aliases                                                        |
 | **`/mcp`**                 | Same-host MCP (Managed Edge Gateway)                                                             |
 | **`/memory`**              | Vault REST + erasure (crypto-shred; [ladder](../specs/inference/gateway-ladder-v0.1.md#erasure)) |
-<<<<<<< HEAD
-| **`/decision`**            | Fast Decision (`/v1/systemone` alias; OpenAI-compatible **`/v1/decisions`**)                     |
-=======
 | **`/decision`**            | Fast Decision (`/v1/systemone` alias; OpenAI **`/v1/decisions`** with fail-closed refusals)       |
->>>>>>> 5801a0b0 (fix(inference): fail-closed /v1/decisions for SDK drop-in honesty)
 | **`/events`**              | HTTP door into MCP Events (catalog / subscriptions / SSE / inbound)                              |
 | **OpenRouter (day-one)**   | Use your existing `OPENROUTER_API_KEY` + `openrouter/*` models                                   |
 | **Direct BYOK**            | DeepSeek, Groq, Fireworks, Together, Mistral, xAI, Google, OpenAI, Anthropic, Ollama             |
