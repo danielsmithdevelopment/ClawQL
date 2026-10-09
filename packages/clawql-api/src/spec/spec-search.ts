@@ -314,20 +314,27 @@ function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
       matchedOn: r.matchedOn,
     };
   }
+  const parameters = Object.entries(r.operation.parameters).map(([name, p]) => ({
+    name,
+    location: p.location,
+    required: p.required,
+    type: p.type,
+    description: p.description,
+  }));
+  const paramSig = parameters
+    .map((p) => `${p.name}${p.required ? "" : "?"}: ${p.type ?? "unknown"}`)
+    .join(", ");
+  const signature = `${r.operation.method.toUpperCase()} ${r.operation.flatPath}(${paramSig})`;
   return {
     kind: "operation" as const,
     id: r.operation.id,
     method: r.operation.method,
     path: r.operation.flatPath,
+    /** Typed call signature with parameter names/types for model-facing catalog UX. */
+    signature,
     description: r.operation.description,
     resource: r.operation.resource,
-    parameters: Object.entries(r.operation.parameters).map(([name, p]) => ({
-      name,
-      location: p.location,
-      required: p.required,
-      type: p.type,
-      description: p.description,
-    })),
+    parameters,
     requestBody: r.operation.requestBody ?? null,
     responseSchema: r.operation.responseBody ?? null,
     score: r.score,
