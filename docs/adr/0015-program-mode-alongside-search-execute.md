@@ -18,13 +18,13 @@ Adopt **confined programs as an additional tool**, alongside unchanged `search` 
 
 ### Keep each advantage
 
-| Advantage | How programs keep it |
-| --- | --- |
-| Every action visible, policy per call | Every tool call inside a program runs the same gateway path as `execute` (gate, risk, redaction, budgets, audit), linked to a program id. Sessions show program source plus each call. |
-| Trivial resume, at most once | Programs do not write directly. They read and compute, then return **proposed operations**. ClawQL runs each proposal afterward as a normal `execute`, so mandates, Review, and `resume` work as today. |
-| No interpreter as ambient authority | Interpreter runs inside a **celld** cell ([ADR 0011](./0011-isolation-agent-substrate-sandbox-celld.md)) with memory/CPU caps; ClawQL sets default timeouts, call limits, and output limits (the upstream package leaves these unset). Vendor and pin the MIT package; add it to the fuzzing plan. |
-| Works with any model and client | Programs are optional (flag / key group). Small models keep `search` + `execute` only. |
-| Cheap failures | Diagnostics carry error types, source locations, and fix hints; results list each call’s outcome so an agent can fall back to single executes. |
+| Advantage                             | How programs keep it                                                                                                                                                                                                                                                                               |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every action visible, policy per call | Every tool call inside a program runs the same gateway path as `execute` (gate, risk, redaction, budgets, audit), linked to a program id. Sessions show program source plus each call.                                                                                                             |
+| Trivial resume, at most once          | Programs do not write directly. They read and compute, then return **proposed operations**. ClawQL runs each proposal afterward as a normal `execute`, so mandates, Review, and `resume` work as today.                                                                                            |
+| No interpreter as ambient authority   | Interpreter runs inside a **celld** cell ([ADR 0011](./0011-isolation-agent-substrate-sandbox-celld.md)) with memory/CPU caps; ClawQL sets default timeouts, call limits, and output limits (the upstream package leaves these unset). Vendor and pin the MIT package; add it to the fuzzing plan. |
+| Works with any model and client       | Programs are optional (flag / key group). Small models keep `search` + `execute` only.                                                                                                                                                                                                             |
+| Cheap failures                        | Diagnostics carry error types, source locations, and fix hints; results list each call’s outcome so an agent can fall back to single executes.                                                                                                                                                     |
 
 ### Wire their package into the catalog
 
@@ -47,13 +47,13 @@ Programs may read freely (subject to the same redacted view the model would get)
 
 #### Reference constraints (review-critical)
 
-| Constraint | Rule |
-| --- | --- |
-| Scope | A placeholder may only point to an **earlier proposal in the same set**. |
-| Shape | Resolve to a **single value** (e.g. an id string), not a whole object. |
-| Path limits | Cap reference path **depth** and **size** (exact caps in implementation; fail closed when exceeded). |
+| Constraint           | Rule                                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scope                | A placeholder may only point to an **earlier proposal in the same set**.                                                                                                                          |
+| Shape                | Resolve to a **single value** (e.g. an id string), not a whole object.                                                                                                                            |
+| Path limits          | Cap reference path **depth** and **size** (exact caps in implementation; fail closed when exceeded).                                                                                              |
 | Untrusted resolution | Resolved values often come from untrusted content (inbound email id, webhook payload). After resolution, arguments go through the **full** gate, risk, and redaction checks like any other write. |
-| Digest binding | `MandateArgsMatch` binds the digest of **post-resolution** args, never the template with placeholders. |
+| Digest binding       | `MandateArgsMatch` binds the digest of **post-resolution** args, never the template with placeholders.                                                                                            |
 
 ### Batch approval without weakening per-call digests
 
@@ -71,12 +71,12 @@ There are **no transactions across outside systems**. If leaf 3 runs and leaf 4 
 
 The Review card for a partial batch must show, for every leaf:
 
-| State | Meaning |
-| --- | --- |
-| Ran | Side effect completed (success terminal). |
-| Failed | Attempted; terminal failure / outcome_unknown handling as today. |
+| State   | Meaning                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------ |
+| Ran     | Side effect completed (success terminal).                                                              |
+| Failed  | Attempted; terminal failure / outcome_unknown handling as today.                                       |
 | Dropped | Declined by the human, or skipped because a dependency was declined/failed and refs could not resolve. |
-| Pending | Still awaiting approve/consume. |
+| Pending | Still awaiting approve/consume.                                                                        |
 
 WORM / Sessions list the program id, the signed root, and each leaf’s digest and terminal state.
 
@@ -120,12 +120,12 @@ These improve every client with zero new interpreter risk:
 
 ### Formal gates
 
-| Gate | What it covers |
-| --- | --- |
-| **Benchmark** | Promotes read-only programs when fan-out / filter / join tasks show clear win. |
-| **TLA+** | Batch Merkle approve: root signature, inclusion proofs, per-digest at-most-once, decline-one, partial outcomes. Extends [ADR 0014](./0014-formal-methods-tla-lean.md) mandate model. |
-| **Lean** | Information-flow rule (small, pure). Two theorems: (1) labels only grow within a session; (2) a write is allowed only if the combined label may flow to its destination. Differential-test the production evaluator against the Lean model (same setup as approval policy). |
-| **Differential** | Gates the “never more” claim (`program ⊆ execute`). |
+| Gate             | What it covers                                                                                                                                                                                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Benchmark**    | Promotes read-only programs when fan-out / filter / join tasks show clear win.                                                                                                                                                                                              |
+| **TLA+**         | Batch Merkle approve: root signature, inclusion proofs, per-digest at-most-once, decline-one, partial outcomes. Extends [ADR 0014](./0014-formal-methods-tla-lean.md) mandate model.                                                                                        |
+| **Lean**         | Information-flow rule (small, pure). Two theorems: (1) labels only grow within a session; (2) a write is allowed only if the combined label may flow to its destination. Differential-test the production evaluator against the Lean model (same setup as approval policy). |
+| **Differential** | Gates the “never more” claim (`program ⊆ execute`).                                                                                                                                                                                                                         |
 
 ### Rollout
 
