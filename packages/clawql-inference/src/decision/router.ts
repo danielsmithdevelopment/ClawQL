@@ -1,43 +1,53 @@
 /**
- * Express router for POST /decision and POST /v1/systemone (alias).
- * Thin host façade over DecisionGatewayService.
+ * Express router for:
+ * - POST /decision and POST /v1/systemone (System One / ClawQL wire)
+ * - POST /v1/decisions (OpenAI Decisions API compatible)
  */
 
+import { randomUUID } from "node:crypto";
 import express, { type Request, type Response } from "express";
 import type { VirtualKeyRequest } from "../api/auth.js";
 import { sendOpenAiError } from "../api/openai-errors.js";
+import {
+  isLunaModelId,
+  parseOpenAiDecisionBody,
+  toOpenAiDecisionResponse,
+} from "./openai-adapt.js";
+import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
+import {
+  callRemoteOpenAiDecisions,
+  enrichRemoteWithClawql,
+  remoteLunaAvailable,
+} from "./remote-decisions.js";
 import {
   runDecision,
   type DecisionQuestion,
   type DecisionRequest,
   type DecisionResponse,
+  type DecisionScoreLevel,
 } from "./service.js";
 
 export type CreateDecisionRouterOptions = {
   env?: NodeJS.ProcessEnv;
   /** Override decide (tests). */
   decide?: (req: DecisionRequest) => Promise<DecisionResponse>;
+  /** Override remote Luna call (tests). */
+  callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
 };
 
 function parseQuestions(raw: unknown): DecisionQuestion[] | { error: string } {
   if (!Array.isArray(raw) || raw.length === 0) {
-    return { error: "questions must be a non-empty array of choice|noul items" };
+    return { error: "questions must be a non-empty array of choice|noul|score items" };
   }
   const out: DecisionQuestion[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") {
-      return { error: "questions must be a non-empty array of choice|noul items" };
+      return { error: "questions must be a non-empty array of choice|noul|score items" };
     }
     const q = item as Record<string, unknown>;
     const name = typeof q.name === "string" ? q.name.trim() : "";
     if (!name) {
       return { error: "each question requires a name" };
-    }
-    if (q.type === "score") {
-      return {
-        error:
-          "System One question type 'score' is not supported yet on /decision or /v1/systemone; use choice or noul",
-      };
     }
     if (q.type === "choice") {
       if (!Array.isArray(q.options) || q.options.length === 0) {
@@ -59,20 +69,49 @@ function parseQuestions(raw: unknown): DecisionQuestion[] | { error: string } {
       out.push({
         type: "choice",
         name,
+        instructions: typeof q.instructions === "string" ? q.instructions : undefined,
         options: options as Array<{ id: string; description?: string }>,
       });
       continue;
     }
-    if (q.type === "noul") {
-      const statement = typeof q.statement === "string" ? q.statement.trim() : "";
+    if (q.type === "noul" || q.type === "predicate") {
+      const statement =
+        (typeof q.statement === "string" && q.statement.trim()) ||
+        (typeof q.instructions === "string" && q.instructions.trim()) ||
+        "";
       if (!statement) {
-        return { error: "noul questions require a statement" };
+        return { error: "noul/predicate questions require a statement or instructions" };
       }
       out.push({ type: "noul", name, statement });
       continue;
     }
+    if (q.type === "score") {
+      if (!Array.isArray(q.levels) || q.levels.length === 0) {
+        return { error: "score questions require a non-empty levels array" };
+      }
+      const levels: DecisionScoreLevel[] = [];
+      for (const level of q.levels) {
+        if (!level || typeof level !== "object") {
+          return { error: "score levels require a label" };
+        }
+        const lv = level as Record<string, unknown>;
+        const label = typeof lv.label === "string" ? lv.label.trim() : "";
+        if (!label) return { error: "score levels require a label" };
+        levels.push({
+          label,
+          description: typeof lv.description === "string" ? lv.description : undefined,
+        });
+      }
+      out.push({
+        type: "score",
+        name,
+        levels,
+        instructions: typeof q.instructions === "string" ? q.instructions : undefined,
+      });
+      continue;
+    }
     return {
-      error: `unsupported question type '${String(q.type)}'; only choice and noul are supported`,
+      error: `unsupported question type '${String(q.type)}'; only choice, noul/predicate, and score are supported`,
     };
   }
   return out;
@@ -128,23 +167,175 @@ async function handleDecide(
   }
 }
 
+async function handleOpenAiDecisions(
+  req: VirtualKeyRequest,
+  res: Response,
+  options: {
+    decide: (r: DecisionRequest) => Promise<DecisionResponse>;
+    callRemote?: (body: OpenAiDecisionCreateRequest) => Promise<OpenAiDecisionCreateResponse>;
+    env: NodeJS.ProcessEnv;
+  }
+): Promise<void> {
+  const parsed = parseOpenAiDecisionBody(req.body, req.virtualKey);
+  if ("error" in parsed) {
+    sendOpenAiError(res, 400, parsed.error, "invalid_request_error");
+    return;
+  }
+
+  const body = req.body as OpenAiDecisionCreateRequest;
+  const preferRemote = isLunaModelId(parsed.model);
+  const lunaOk = remoteLunaAvailable(options.env);
+
+  // Images: local Fast Decision is text-only. Prefer Luna when available; else refuse.
+  if (parsed.hasImages && !lunaOk && !preferRemote) {
+    const refusals = parsed.request.questions.map((q) => ({
+      name: q.name,
+      refusal:
+        "Image inputs require a vision-capable decisions backend (set OPENAI_API_KEY and model=gpt-6-luna)",
+    }));
+    res.json(
+      toOpenAiDecisionResponse({
+        clawql: {
+          object: "clawql.decision",
+          answers: [],
+          traceId: randomUUID(),
+          escalated: false,
+          calibrated: false,
+          backendId: "none",
+        },
+        questions: parsed.request.questions,
+        model: parsed.model,
+        refusals,
+      })
+    );
+    return;
+  }
+
+  if (parsed.hasImages && !lunaOk && preferRemote) {
+    sendOpenAiError(
+      res,
+      503,
+      "model gpt-6-luna requires OPENAI_API_KEY (or CLAWQL_DECISIONS_OPENAI_API_KEY)",
+      "server_error"
+    );
+    return;
+  }
+
+  try {
+    // Direct Luna path when model pin requests it, or images force a vision backend.
+    if ((preferRemote || parsed.hasImages) && lunaOk) {
+      const callRemote =
+        options.callRemote ?? ((b) => callRemoteOpenAiDecisions(b, { env: options.env }));
+      const remote = await callRemote({
+        ...body,
+        model: "gpt-6-luna",
+      });
+      const traceId = randomUUID();
+      res.json(
+        enrichRemoteWithClawql(remote, {
+          useSiteId: parsed.request.useSiteId ?? "search_provider_tool_routing",
+          backendId: "openai/gpt-6-luna",
+          calibrated: false, // Luna probs are vendor-calibrated; site trust not yet proven
+          escalated: false,
+          traceId,
+        })
+      );
+      return;
+    }
+
+    if (preferRemote && !lunaOk) {
+      sendOpenAiError(
+        res,
+        503,
+        "model gpt-6-luna requires OPENAI_API_KEY (or CLAWQL_DECISIONS_OPENAI_API_KEY)",
+        "server_error"
+      );
+      return;
+    }
+
+    // Local Fast Decision (GLiNER / heuristic)
+    const result = await options.decide(parsed.request);
+
+    // Escalation to Luna when local abstains
+    if (
+      result.escalated &&
+      lunaOk &&
+      (parsed.request.escalation?.mode === "escalate" ||
+        parsed.request.escalation?.model ||
+        isLunaModelId(parsed.request.escalation?.model ?? ""))
+    ) {
+      const callRemote =
+        options.callRemote ?? ((b) => callRemoteOpenAiDecisions(b, { env: options.env }));
+      const remote = await callRemote({
+        ...body,
+        model: "gpt-6-luna",
+      });
+      res.json(
+        enrichRemoteWithClawql(remote, {
+          useSiteId: parsed.request.useSiteId ?? "search_provider_tool_routing",
+          backendId: "openai/gpt-6-luna",
+          calibrated: false,
+          escalated: true,
+          traceId: result.traceId,
+        })
+      );
+      return;
+    }
+
+    res.json(
+      toOpenAiDecisionResponse({
+        clawql: result,
+        questions: parsed.request.questions,
+        model: parsed.model,
+      })
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    sendOpenAiError(res, 502, message, "server_error");
+  }
+}
+
 export function createDecisionRouter(options: CreateDecisionRouterOptions = {}): express.Router {
   const router = express.Router();
+  const env = options.env ?? process.env;
   const decide = options.decide ?? runDecision;
 
-  const handler = (req: Request, res: Response) =>
+  const systemOneHandler = (req: Request, res: Response) =>
     void handleDecide(req as VirtualKeyRequest, res, decide);
 
-  router.post("/decision", handler);
-  router.post("/v1/systemone", handler);
+  router.post("/decision", systemOneHandler);
+  router.post("/v1/systemone", systemOneHandler);
+
+  router.post(
+    "/v1/decisions",
+    (req: Request, res: Response) =>
+      void handleOpenAiDecisions(req as VirtualKeyRequest, res, {
+        decide,
+        callRemote: options.callRemote,
+        env,
+      })
+  );
 
   router.get("/decision", (_req, res) => {
     res.json({
       object: "clawql.decision",
       methods: ["POST"],
       alias: "/v1/systemone",
+      openai_compatible: "/v1/decisions",
+      question_types: ["choice", "noul", "predicate", "score"],
       description:
-        "System One choice|noul over Fast Decision. search_provider_tool_routing stays calibrated:false until the live default MCP catalog matches a frozen routing digest.",
+        "System One choice|noul|score over Fast Decision. OpenAI Decisions clients should use POST /v1/decisions.",
+    });
+  });
+
+  router.get("/v1/decisions", (_req, res) => {
+    res.json({
+      object: "decision",
+      methods: ["POST"],
+      models: ["clawql", "gliner2", "gpt-6-luna"],
+      question_types: ["predicate", "choice", "score"],
+      description:
+        "OpenAI Decisions API-compatible endpoint. Local Fast Decision by default; gpt-6-luna when OPENAI_API_KEY is set. ClawQL adds calibrated, escalated, use_site_id, backend_id, trace_id.",
     });
   });
 

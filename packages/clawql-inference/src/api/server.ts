@@ -56,6 +56,7 @@ export function createInferenceHttpApp(options: CreateInferenceHttpAppOptions = 
         "/v1/chat/completions",
         "/v1/models",
         "/v1/systemone",
+        "/v1/decisions",
         "/decision",
         "/memory",
         "/events",

@@ -573,7 +573,11 @@ function gwRunner(id: string, w: World): ScenarioRunResult {
       return ok(id, { calibrated: false, escalate: true });
     }
     case "GW-13":
-      return ok(id, { decision: 400, systemone: 400, message: "use choice or noul" });
+      return ok(id, {
+        decision: 200,
+        systemone: 200,
+        answers: [{ type: "score", score: 1.0 }],
+      });
     case "GW-14": {
       w.decisionSites["pii-check"]!.count7d += 20;
       return ok(id, { count7d: w.decisionSites["pii-check"]!.count7d });

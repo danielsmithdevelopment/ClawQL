@@ -122,7 +122,7 @@ describe("decision gateway", () => {
     }
   });
 
-  it("rejects score questions with an explicit 400", async () => {
+  it("supports score questions with probability-weighted level indices", async () => {
     const app = express();
     app.use(express.json());
     app.use(createDecisionRouter());
@@ -133,24 +133,256 @@ describe("decision gateway", () => {
     if (!address || typeof address === "string") throw new Error("expected port");
 
     try {
-      for (const path of ["/decision", "/v1/systemone"] as const) {
-        const bad = await httpJson(`http://127.0.0.1:${address.port}${path}`, {
-          method: "POST",
-          body: JSON.stringify({
-            state: "x",
-            questions: [{ type: "score", name: "s", levels: ["a", "b"] }],
-          }),
-        });
-        expect(bad.status).toBe(400);
-        const err = bad.body as { error?: { message?: string } };
-        expect(err.error?.message ?? JSON.stringify(bad.body)).toMatch(/score.*not supported/i);
-      }
+      const res = await httpJson(`http://127.0.0.1:${address.port}/decision`, {
+        method: "POST",
+        body: JSON.stringify({
+          state: "Export fails in Safari but works in Chrome with another browser.",
+          questions: [
+            {
+              type: "score",
+              name: "severity",
+              instructions: "How severe is this issue?",
+              levels: [
+                { label: "Cosmetic", description: "Appearance only; no lost functionality." },
+                {
+                  label: "Workaround available",
+                  description: "A task fails, but another way works.",
+                },
+                { label: "Fully blocked", description: "A task fails with no workaround." },
+              ],
+            },
+          ],
+        }),
+      });
+      expect(res.status).toBe(200);
+      const body = res.body as {
+        answers: Array<{ type: string; score?: number; options?: unknown[] }>;
+      };
+      expect(body.answers[0]?.type).toBe("score");
+      expect(typeof body.answers[0]?.score).toBe("number");
+      expect(body.answers[0]?.options?.length).toBe(3);
 
       const empty = await httpJson(`http://127.0.0.1:${address.port}/decision`, {
         method: "POST",
         body: JSON.stringify({}),
       });
       expect(empty.status).toBe(400);
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
+  it("POST /v1/decisions accepts OpenAI choice shape (ticket triage demo)", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(createDecisionRouter({ env: {} }));
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("expected port");
+
+    try {
+      const res = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "clawql",
+          input: "I was charged twice for my order.",
+          questions: [
+            {
+              type: "choice",
+              name: "department",
+              instructions: "Which department should handle this complaint?",
+              choices: [
+                { value: "billing", description: "Payments, invoices, and refunds." },
+                { value: "technical", description: "Problems using the product." },
+                { value: "shipping", description: "Delivery and tracking." },
+                { value: "other", description: "Requests outside these categories." },
+              ],
+            },
+          ],
+        }),
+      });
+      expect(res.status).toBe(200);
+      const body = res.body as {
+        object: string;
+        model: string;
+        answers: Array<{
+          type: string;
+          name: string;
+          choice?: string;
+          confidence?: number;
+          probabilities?: unknown[];
+        }>;
+        calibrated: boolean;
+        backend_id: string;
+        trace_id: string;
+      };
+      expect(body.object).toBe("decision");
+      expect(body.answers[0]?.type).toBe("choice");
+      expect(body.answers[0]?.name).toBe("department");
+      expect(body.answers[0]?.choice).toBe("billing");
+      expect(typeof body.answers[0]?.confidence).toBe("number");
+      expect(body.calibrated).toBe(false);
+      expect(body.backend_id).toBe("heuristic");
+      expect(body.trace_id).toBeTruthy();
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
+  it("POST /v1/decisions maps predicate and score; refuses images without Luna key", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(createDecisionRouter({ env: {} }));
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("expected port");
+
+    try {
+      const pred = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "gliner2",
+          input: "The package arrived with a deep crack across the plastic housing.",
+          questions: [
+            {
+              type: "predicate",
+              name: "visible_damage",
+              instructions: "Does the product have visible damage such as a crack or dent?",
+            },
+          ],
+        }),
+      });
+      expect(pred.status).toBe(200);
+      const predBody = pred.body as {
+        answers: Array<{ type: string; probability?: number }>;
+      };
+      expect(predBody.answers[0]?.type).toBe("predicate");
+      expect(typeof predBody.answers[0]?.probability).toBe("number");
+
+      const score = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "clawql",
+          input: "Export fails in Safari but works in Chrome.",
+          questions: [
+            {
+              type: "score",
+              name: "severity",
+              instructions: "How severe is this issue?",
+              levels: [
+                { label: "Cosmetic", description: "Appearance only." },
+                { label: "Workaround available", description: "Another way works." },
+                { label: "Fully blocked", description: "No workaround." },
+              ],
+            },
+          ],
+        }),
+      });
+      expect(score.status).toBe(200);
+      const scoreBody = score.body as {
+        answers: Array<{ type: string; score?: number }>;
+      };
+      expect(scoreBody.answers[0]?.type).toBe("score");
+      expect(typeof scoreBody.answers[0]?.score).toBe("number");
+
+      const img = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "clawql",
+          input: [
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: "Inspect the product." },
+                { type: "input_image", image_url: "data:image/png;base64,AAAA" },
+              ],
+            },
+          ],
+          questions: [
+            {
+              type: "predicate",
+              name: "visible_damage",
+              instructions: "Is there visible damage?",
+            },
+          ],
+        }),
+      });
+      expect(img.status).toBe(200);
+      const imgBody = img.body as {
+        answers: Array<{ type: string; refusal?: string }>;
+      };
+      expect(imgBody.answers[0]?.type).toBe("refusal");
+      expect(imgBody.answers[0]?.refusal).toMatch(/vision|luna|OPENAI_API_KEY/i);
+    } finally {
+      await closeHttpServer(server);
+    }
+  });
+
+  it("POST /v1/decisions forwards to Luna when model=gpt-6-luna", async () => {
+    const app = express();
+    app.use(express.json());
+    app.use(
+      createDecisionRouter({
+        env: { OPENAI_API_KEY: "sk-test" },
+        callRemote: async () => ({
+          id: "decision_remote",
+          object: "decision",
+          model: "gpt-6-luna",
+          created: 1,
+          answers: [
+            {
+              type: "choice",
+              name: "department",
+              choice: "billing",
+              confidence: 0.9,
+              probabilities: [{ value: "billing", probability: 0.9 }],
+            },
+          ],
+          calibrated: false,
+          escalated: false,
+          use_site_id: "search_provider_tool_routing",
+          backend_id: "openai/gpt-6-luna",
+          trace_id: "remote",
+        }),
+      })
+    );
+    const server = createServer(app);
+    server.listen(0, "127.0.0.1");
+    await once(server, "listening");
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("expected port");
+
+    try {
+      const res = await httpJson(`http://127.0.0.1:${address.port}/v1/decisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: "gpt-6-luna",
+          input: "I was charged twice for my order.",
+          questions: [
+            {
+              type: "choice",
+              name: "department",
+              choices: [
+                { value: "billing", description: "Payments" },
+                { value: "other", description: "Other" },
+              ],
+            },
+          ],
+        }),
+      });
+      expect(res.status).toBe(200);
+      const body = res.body as {
+        backend_id: string;
+        calibrated: boolean;
+        answers: Array<{ choice?: string }>;
+      };
+      expect(body.backend_id).toBe("openai/gpt-6-luna");
+      expect(body.calibrated).toBe(false);
+      expect(body.answers[0]?.choice).toBe("billing");
     } finally {
       await closeHttpServer(server);
     }
@@ -190,7 +422,6 @@ describe("decision gateway", () => {
         answers: Array<{ abstained: boolean; escalated: boolean; calibrated: boolean }>;
       };
       expect(body.calibrated).toBe(false);
-      // Low overlap → below threshold → escalate for non-trusted site
       if (body.answers[0]?.abstained) {
         expect(body.answers[0]?.escalated).toBe(true);
       }
