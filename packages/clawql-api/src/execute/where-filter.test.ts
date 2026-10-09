@@ -97,7 +97,9 @@ describe("where filter (JMESPath)", () => {
         return yield* svc.apply(sample, "[?number==`2`]");
       }).pipe(Effect.provide(WhereFilterLive))
     );
-    expect(out).toEqual([{ number: 2, title: "Feat B", state: "closed", labels: [{ name: "enhancement" }] }]);
+    expect(out).toEqual([
+      { number: 2, title: "Feat B", state: "closed", labels: [{ name: "enhancement" }] },
+    ]);
   });
 
   it("binds where into pending args hash when set", () => {

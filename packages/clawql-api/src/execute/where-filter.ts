@@ -21,11 +21,7 @@ export const WHERE_MAX_NEST_DEPTH = 8;
 /** Max function-call sites (`name(`) in a `where` expression. */
 export const WHERE_MAX_FUNCTION_CALLS = 8;
 
-export type WhereFilterIssue =
-  | "empty"
-  | "too_long"
-  | "too_complex"
-  | "invalid_expression";
+export type WhereFilterIssue = "empty" | "too_long" | "too_complex" | "invalid_expression";
 
 /** Tagged fail-closed error for invalid or over-budget `where` expressions. */
 export class WhereFilterError extends Error {
@@ -84,9 +80,7 @@ function countFunctionCalls(expression: string): number {
 /**
  * Validate size/complexity caps (fail closed). Does not parse JMESPath yet.
  */
-export const validateWhereCapsEffect = (
-  where: string
-): Effect.Effect<string, WhereFilterError> =>
+export const validateWhereCapsEffect = (where: string): Effect.Effect<string, WhereFilterError> =>
   Effect.gen(function* () {
     const trimmed = where.trim();
     if (!trimmed) {
