@@ -57,7 +57,7 @@ export const serializeExecuteResultEffect = (
     }
 
     let previewBudget = Math.max(0, limit - 256);
-    let out = "";
+    let out: string;
     for (let i = 0; i < 8; i++) {
       const preview =
         previewBudget <= 0

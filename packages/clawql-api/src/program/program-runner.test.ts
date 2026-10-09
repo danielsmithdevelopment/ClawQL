@@ -45,7 +45,7 @@ function mockHost(options?: {
           }),
         };
       }),
-    resolveRisk: (operationId) =>
+    resolveRisk: (_operationId) =>
       Effect.succeed(
         found
           ? {
