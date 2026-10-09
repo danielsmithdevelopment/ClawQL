@@ -126,6 +126,14 @@ Until session labeling lands on execute, program combined-label checks are **str
 
 Not equality. After session labeling, the test may tighten toward equality. Random tasks must show the same reads, the same proposed writes (modulo refs resolution), and program decisions that are never more permissive.
 
+### Plain proxy mode (key-group scoped)
+
+Harnesses that bring their own code mode need a thin policy-gated entry without ClawQL catalog UX. Spec: [`docs/specs/mcp/plain-proxy-mode-v0.1.md`](../specs/mcp/plain-proxy-mode-v0.1.md).
+
+- Enable with `CLAWQL_ENABLE_PLAIN_PROXY=1` **or** put the key’s group in `CLAWQL_PLAIN_PROXY_KEY_GROUPS` (host sets `CLAWQL_API_KEY_GROUP`).
+- Registers MCP tool `proxy_call` — same args and gateway path as `execute` (gate / risk / redaction / audit). Clients call known `operationId`s; skipping catalog COMPLETE UX is intentional (N/A for proxy).
+- Core `search` / `execute` remain registered; proxy does not weaken policy.
+
 ### Catalog improvements with no programs (ship first)
 
 These improve every client with zero new interpreter risk:

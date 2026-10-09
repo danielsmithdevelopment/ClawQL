@@ -53,6 +53,7 @@ import {
   proposeSourceEffect,
   buildConsoleLinkEffect,
   consoleLinkEnabled,
+  plainProxyEnabled,
   searchClawqlDocsEffect,
   type CustomSourceKind,
 } from "clawql-api";
@@ -357,6 +358,18 @@ export function registerTools(server: McpServer) {
       wrapRegisteredMcpToolHandler("console_link", handleConsoleLinkToolInput)
     );
     registeredNames.push("console_link");
+  }
+
+  // ADR 0015 plain proxy: thin execute alias for harnesses with their own catalog UX.
+  // Spec: docs/specs/mcp/plain-proxy-mode-v0.1.md
+  if (plainProxyEnabled()) {
+    server.tool(
+      "proxy_call",
+      "Plain-proxy alias of execute for harnesses that already know operationId (same gate/risk/redaction/audit path). Enable with CLAWQL_ENABLE_PLAIN_PROXY=1 or CLAWQL_PLAIN_PROXY_KEY_GROUPS + CLAWQL_API_KEY_GROUP.",
+      executeToolZodShape,
+      wrapRegisteredMcpToolHandler("proxy_call", handleClawqlExecuteToolInput)
+    );
+    registeredNames.push("proxy_call");
   }
 
   // ADR 0015: dedicated docs search (Core `search` also merges kind:doc when an index exists).

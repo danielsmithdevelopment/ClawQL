@@ -17,6 +17,37 @@ describe("createRegisteredMcpServer", () => {
       expect(registry[name]?.enabled, `${name} must not be disabled`).not.toBe(false);
     }
   });
+
+  it("registers proxy_call only when plain proxy is enabled (ADR 0015)", () => {
+    const savedEnable = process.env.CLAWQL_ENABLE_PLAIN_PROXY;
+    const savedGroups = process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
+    const savedGroup = process.env.CLAWQL_API_KEY_GROUP;
+    try {
+      delete process.env.CLAWQL_ENABLE_PLAIN_PROXY;
+      delete process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
+      delete process.env.CLAWQL_API_KEY_GROUP;
+      const off = createRegisteredMcpServer({ name: "clawql-proxy-off", version: "0.0.0" });
+      const offReg = (
+        off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
+      )._registeredTools;
+      expect(offReg.proxy_call).toBeUndefined();
+
+      process.env.CLAWQL_ENABLE_PLAIN_PROXY = "1";
+      const on = createRegisteredMcpServer({ name: "clawql-proxy-on", version: "0.0.0" });
+      const onReg = (
+        on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
+      )._registeredTools;
+      expect(onReg.proxy_call).toBeDefined();
+      expect(onReg.proxy_call?.enabled).not.toBe(false);
+    } finally {
+      if (savedEnable === undefined) delete process.env.CLAWQL_ENABLE_PLAIN_PROXY;
+      else process.env.CLAWQL_ENABLE_PLAIN_PROXY = savedEnable;
+      if (savedGroups === undefined) delete process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS;
+      else process.env.CLAWQL_PLAIN_PROXY_KEY_GROUPS = savedGroups;
+      if (savedGroup === undefined) delete process.env.CLAWQL_API_KEY_GROUP;
+      else process.env.CLAWQL_API_KEY_GROUP = savedGroup;
+    }
+  });
 });
 
 describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {
