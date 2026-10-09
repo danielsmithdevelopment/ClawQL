@@ -5,6 +5,7 @@
  * SkillIndexEntry rows (8.0 Skills-over-MCP — same ranking surface as tools).
  */
 
+import { Effect } from "effect";
 import type { SkillIndexEntry } from "clawql-core";
 import type { Operation } from "./operation-types.js";
 
@@ -26,6 +27,24 @@ export interface SkillSearchResult {
 export type SearchResult = OperationSearchResult;
 
 export type RankedSearchHit = OperationSearchResult | SkillSearchResult;
+
+/** Whether the returned `results[]` includes every ranked match. */
+export type SearchCatalogStatus = "complete" | "partial";
+
+/** Per-source match totals (before shared limit truncation). */
+export type SearchSourceCounts = {
+  readonly operation: number;
+  readonly skill: number;
+};
+
+/** Catalog completeness envelope for MCP `search` responses. */
+export type SearchCatalogMeta = {
+  readonly catalogStatus: SearchCatalogStatus;
+  readonly matchedCount: number;
+  readonly totalCount: number;
+  readonly message: string;
+  readonly countsBySource: SearchSourceCounts;
+};
 
 /**
  * Search operations by natural-language query.
@@ -140,6 +159,62 @@ export function mergeRankedHits(
   return [...operations, ...skills].sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
+/**
+ * Build COMPLETE / PARTIAL catalog meta from returned vs total match counts.
+ * `matchedCount` is what appears in `results[]`; `totalCount` is all ranked hits.
+ */
+export const buildSearchCatalogMetaEffect = (
+  matchedCount: number,
+  totalCount: number,
+  countsBySource: SearchSourceCounts
+): Effect.Effect<SearchCatalogMeta> =>
+  Effect.sync(() => {
+    const safeMatched = Math.max(0, matchedCount);
+    const safeTotal = Math.max(safeMatched, totalCount);
+    const catalogStatus: SearchCatalogStatus =
+      safeMatched < safeTotal ? "partial" : "complete";
+    const message =
+      catalogStatus === "partial"
+        ? `PARTIAL, ${safeMatched} of ${safeTotal}`
+        : "COMPLETE";
+    return {
+      catalogStatus,
+      matchedCount: safeMatched,
+      totalCount: safeTotal,
+      message,
+      countsBySource,
+    };
+  });
+
+/** Sync façade for tests / callers that already hold Effect at the boundary. */
+export function buildSearchCatalogMeta(
+  matchedCount: number,
+  totalCount: number,
+  countsBySource: SearchSourceCounts
+): SearchCatalogMeta {
+  return Effect.runSync(buildSearchCatalogMetaEffect(matchedCount, totalCount, countsBySource));
+}
+
+/**
+ * Merge unlimited op/skill hits, apply limit, and attach catalog completeness.
+ */
+export const mergeRankedHitsWithCatalogEffect = (
+  operations: readonly OperationSearchResult[],
+  skills: readonly SkillSearchResult[],
+  limit: number
+): Effect.Effect<{ readonly hits: RankedSearchHit[]; readonly catalog: SearchCatalogMeta }> =>
+  Effect.gen(function* () {
+    const totalOp = operations.length;
+    const totalSkill = skills.length;
+    const totalCount = totalOp + totalSkill;
+    const hits = mergeRankedHits(operations, skills, limit);
+    const catalog = yield* buildSearchCatalogMetaEffect(hits.length, totalCount, {
+      operation: totalOp,
+      skill: totalSkill,
+    });
+    return { hits, catalog };
+  });
+
 const WEIGHTS = {
   operationIdSegment: 6,
   resourceName: 5,
@@ -207,59 +282,97 @@ export function tokenize(text: string): string[] {
     .filter((t) => t.length > 1);
 }
 
+function mapHitForResponse(r: RankedSearchHit): Record<string, unknown> {
+  if (r.kind === "skill") {
+    return {
+      kind: "skill" as const,
+      skillId: r.skill.skillId,
+      name: r.skill.name,
+      description: r.skill.description,
+      digest: r.skill.digest,
+      pluginId: r.skill.pluginId,
+      applicability: r.skill.applicability,
+      source: r.skill.source,
+      score: r.score,
+      matchedOn: r.matchedOn,
+      /** Fetch full body via MCP `skills_get`. */
+      fetch: { tool: "skills_get", skillId: r.skill.skillId },
+    };
+  }
+  return {
+    kind: "operation" as const,
+    id: r.operation.id,
+    method: r.operation.method,
+    path: r.operation.flatPath,
+    description: r.operation.description,
+    resource: r.operation.resource,
+    parameters: Object.entries(r.operation.parameters).map(([name, p]) => ({
+      name,
+      location: p.location,
+      required: p.required,
+      type: p.type,
+      description: p.description,
+    })),
+    requestBody: r.operation.requestBody ?? null,
+    responseSchema: r.operation.responseBody ?? null,
+    score: r.score,
+    specLabel: r.operation.specLabel ?? null,
+    matchedOn: r.matchedOn,
+    risk: r.operation.risk ?? null,
+  };
+}
+
 /**
  * Format unified search hits for MCP tool response.
- * Operation rows keep prior fields + `kind: "operation"`.
- * Skill rows: `kind: "skill"` + Skills-over-MCP index fields.
+ * Includes catalog completeness (`COMPLETE` / `PARTIAL, N of M`) while keeping
+ * a backward-compatible `results[]` array.
  */
-export function formatSearchResults(results: readonly RankedSearchHit[]): string {
-  if (results.length === 0) {
-    return JSON.stringify({ results: [], message: "No matching operations or skills found." });
-  }
+export const formatSearchResultsEffect = (
+  results: readonly RankedSearchHit[],
+  catalog?: SearchCatalogMeta
+): Effect.Effect<string> =>
+  Effect.gen(function* () {
+    const countsBySource = catalog?.countsBySource ?? {
+      operation: results.filter((r) => r.kind === "operation").length,
+      skill: results.filter((r) => r.kind === "skill").length,
+    };
+    const meta =
+      catalog ??
+      (yield* buildSearchCatalogMetaEffect(
+        results.length,
+        results.length,
+        countsBySource
+      ));
 
-  return JSON.stringify(
-    {
-      results: results.map((r) => {
-        if (r.kind === "skill") {
-          return {
-            kind: "skill" as const,
-            skillId: r.skill.skillId,
-            name: r.skill.name,
-            description: r.skill.description,
-            digest: r.skill.digest,
-            pluginId: r.skill.pluginId,
-            applicability: r.skill.applicability,
-            source: r.skill.source,
-            score: r.score,
-            matchedOn: r.matchedOn,
-            /** Fetch full body via MCP `skills_get`. */
-            fetch: { tool: "skills_get", skillId: r.skill.skillId },
-          };
-        }
-        return {
-          kind: "operation" as const,
-          id: r.operation.id,
-          method: r.operation.method,
-          path: r.operation.flatPath,
-          description: r.operation.description,
-          resource: r.operation.resource,
-          parameters: Object.entries(r.operation.parameters).map(([name, p]) => ({
-            name,
-            location: p.location,
-            required: p.required,
-            type: p.type,
-            description: p.description,
-          })),
-          requestBody: r.operation.requestBody ?? null,
-          responseSchema: r.operation.responseBody ?? null,
-          score: r.score,
-          specLabel: r.operation.specLabel ?? null,
-          matchedOn: r.matchedOn,
-          risk: r.operation.risk ?? null,
-        };
-      }),
-    },
-    null,
-    2
-  );
+    if (results.length === 0) {
+      return JSON.stringify({
+        catalogStatus: "complete" satisfies SearchCatalogStatus,
+        matchedCount: 0,
+        totalCount: meta.totalCount,
+        countsBySource: meta.countsBySource,
+        message: "No matching operations or skills found.",
+        results: [],
+      });
+    }
+
+    return JSON.stringify(
+      {
+        catalogStatus: meta.catalogStatus,
+        matchedCount: meta.matchedCount,
+        totalCount: meta.totalCount,
+        countsBySource: meta.countsBySource,
+        message: meta.message,
+        results: results.map(mapHitForResponse),
+      },
+      null,
+      2
+    );
+  });
+
+/** Sync façade — prefer {@link formatSearchResultsEffect} inside Effect programs. */
+export function formatSearchResults(
+  results: readonly RankedSearchHit[],
+  catalog?: SearchCatalogMeta
+): string {
+  return Effect.runSync(formatSearchResultsEffect(results, catalog));
 }
