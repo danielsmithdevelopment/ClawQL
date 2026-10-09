@@ -4,12 +4,12 @@ Expo approval client. Scope is intentionally narrow so the App Store does not tr
 
 ## Surfaces
 
-| Screen | Job |
-| ------ | --- |
+| Screen  | Job                                                                                     |
+| ------- | --------------------------------------------------------------------------------------- |
 | Sign in | System browser OAuth + app/universal link return; fixture + reviewer-demo for CI/review |
-| Home | Needs-you queue snapshot + today's spend |
-| Review | Queue + exact-change detail; Decline; Approve with security key |
-| Profile | Keys, connected apps (Revoke), notification prefs, sign out, **delete account** |
+| Home    | Needs-you queue snapshot + today's spend                                                |
+| Review  | Queue + exact-change detail; Decline; Approve with security key                         |
+| Profile | Keys, connected apps (Revoke), notification prefs, sign out, **delete account**         |
 
 All other product surfaces deep-link or open the web console.
 
