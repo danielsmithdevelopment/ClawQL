@@ -1,0 +1,10 @@
+# MOB-04 — Deep link opens the exact request (push payload equivalent)
+appId: com.clawql.app
+---
+- launchApp
+- tapOn:
+    id: "sign-in-fixture"
+- openLink: clawql://review/rev_change
+- assertVisible:
+    id: "review-detail-screen"
+- assertVisible: "Change a contract's value"

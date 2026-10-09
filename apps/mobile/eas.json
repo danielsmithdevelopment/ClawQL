@@ -1,0 +1,65 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLAWQL_FIXTURE": "1"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLAWQL_API_BASE": "https://cloud.clawql.com",
+        "EXPO_PUBLIC_CLAWQL_FIXTURE": "0"
+      }
+    },
+    "reviewer-demo": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_CLAWQL_FIXTURE": "1",
+        "EXPO_PUBLIC_CLAWQL_REVIEWER_BIOMETRIC": "1"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLAWQL_API_BASE": "https://cloud.clawql.com",
+        "EXPO_PUBLIC_CLAWQL_FIXTURE": "0"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID"
+      },
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}
