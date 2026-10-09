@@ -241,14 +241,14 @@ export function mapClawqlAnswerToOpenAi(
 
   if (question.type === "score" || answer.type === "score") {
     const levels = question.type === "score" ? question.levels : [];
-    const probs = toOpenAiProbabilities(answer.options);
-    // Remap option ids (labels) to keep OpenAI value = label
-    const byLabel = probs.length
-      ? probs
-      : levels.map((l, i) => ({
-          value: l.label,
-          probability: answer.options?.[i]?.probability ?? 0,
-        }));
+    const probabilities = levels.map((l, i) => {
+      const hit = answer.options?.find((o) => o.id === l.label);
+      return {
+        label: l.label,
+        value: i,
+        probability: hit?.probability ?? answer.options?.[i]?.probability ?? 0,
+      };
+    });
     let score = answer.score;
     if (score === undefined && answer.options?.length) {
       score = answer.options.reduce((acc, o, i) => {
@@ -262,7 +262,7 @@ export function mapClawqlAnswerToOpenAi(
       name: answer.name,
       score: score ?? 0,
       confidence: answer.selectedConfidence ?? confidenceFromOptions(answer.options, answer.answer),
-      probabilities: byLabel,
+      probabilities,
     };
   }
 
@@ -303,13 +303,26 @@ export function toOpenAiDecisionResponse(opts: {
     answers.push(mapClawqlAnswerToOpenAi(a, q));
   }
 
+  const allRefused =
+    answers.length > 0 && answers.every((a) => a.type === "refusal");
+  // Top-level calibrated is false when any answer was fail-closed to refusal,
+  // or when the underlying ClawQL result was uncalibrated.
+  const calibrated = allRefused ? false : opts.clawql.calibrated;
+
   return {
     id: `decision_${opts.clawql.traceId}`,
     object: "decision",
     model: opts.model,
     created: Math.floor(Date.now() / 1000),
     answers,
-    calibrated: opts.clawql.calibrated,
+    usage: {
+      input_tokens: 0,
+      output_tokens: 0,
+      total_tokens: 0,
+      input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+      output_tokens_details: { reasoning_tokens: 0 },
+    },
+    calibrated,
     escalated: opts.clawql.escalated,
     use_site_id: opts.clawql.answers[0]?.useSiteId ?? "search_provider_tool_routing",
     backend_id: opts.clawql.backendId,

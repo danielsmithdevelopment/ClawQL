@@ -81,6 +81,13 @@ export function enrichRemoteWithClawql(
 ): OpenAiDecisionCreateResponse {
   return {
     ...remote,
+    usage: remote.usage ?? {
+      input_tokens: 0,
+      output_tokens: 0,
+      total_tokens: 0,
+      input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+      output_tokens_details: { reasoning_tokens: 0 },
+    },
     calibrated: extras.calibrated,
     escalated: extras.escalated,
     use_site_id: extras.useSiteId,

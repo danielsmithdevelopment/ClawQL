@@ -267,6 +267,7 @@ function mapResult(opts: {
   }
 
   if (opts.question.type === "score") {
+    // Ordinal score calibration does not exist yet — never inherit choice-site trust.
     return {
       name: opts.question.name,
       type: "score",
@@ -275,7 +276,7 @@ function mapResult(opts: {
       options,
       abstained,
       escalated,
-      calibrated,
+      calibrated: false,
       backendId: opts.backendId,
       useSiteId: opts.useSiteId,
       selectedConfidence: opts.result.selectedConfidence,

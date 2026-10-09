@@ -64,6 +64,14 @@ export type OpenAiDecisionCreateRequest = {
     readonly mode?: "abstain" | "escalate";
     readonly model?: string;
   };
+  /** ClawQL extension — receive uncalibrated answers instead of fail-closed refusal. */
+  readonly allow_uncalibrated?: boolean;
+  /** ClawQL extension — permit sending images to external vision backends (Luna). */
+  readonly allow_external_images?: boolean;
+  readonly clawql?: {
+    readonly allow_uncalibrated?: boolean;
+    readonly allow_external_images?: boolean;
+  };
   readonly session_id?: string;
   readonly agent_id?: string;
 };
@@ -87,13 +95,15 @@ export type OpenAiDecisionAnswerScore = {
   readonly name: string;
   readonly score: number;
   readonly confidence: number;
-  readonly probabilities: Array<{ value: string; probability: number }>;
+  /** OpenAI SDK shape: label + ordinal value + probability. */
+  readonly probabilities: Array<{ label: string; value: number; probability: number }>;
 };
 
 export type OpenAiDecisionAnswerRefusal = {
   readonly type: "refusal";
   readonly name: string;
-  readonly refusal: string;
+  /** ClawQL extension — official SDK only requires type+name; message is for operators. */
+  readonly refusal?: string;
 };
 
 export type OpenAiDecisionAnswer =
@@ -102,12 +112,27 @@ export type OpenAiDecisionAnswer =
   | OpenAiDecisionAnswerScore
   | OpenAiDecisionAnswerRefusal;
 
+export type OpenAiDecisionUsage = {
+  readonly input_tokens: number;
+  readonly output_tokens: number;
+  readonly total_tokens: number;
+  readonly input_tokens_details: {
+    readonly cached_tokens: number;
+    readonly cache_write_tokens: number;
+  };
+  readonly output_tokens_details: {
+    readonly reasoning_tokens: number;
+  };
+};
+
 export type OpenAiDecisionCreateResponse = {
   readonly id: string;
   readonly object: "decision";
   readonly model: string;
   readonly created: number;
   readonly answers: readonly OpenAiDecisionAnswer[];
+  /** OpenAI SDK expects usage; local Fast Decision reports zeros. */
+  readonly usage: OpenAiDecisionUsage;
   /** ClawQL extensions */
   readonly calibrated: boolean;
   readonly escalated: boolean;

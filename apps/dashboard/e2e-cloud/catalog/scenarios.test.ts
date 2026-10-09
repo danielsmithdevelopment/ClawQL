@@ -10,14 +10,14 @@ import {
 } from './scenarios'
 
 describe('CLOUD_E2E_SCENARIOS catalog', () => {
-  it('is complete (197 IDs)', () => {
+  it('is complete (199 IDs)', () => {
     expect(() => assertCatalogComplete()).not.toThrow()
-    expect(CLOUD_E2E_SCENARIOS).toHaveLength(197)
+    expect(CLOUD_E2E_SCENARIOS).toHaveLength(199)
   })
 
-  it('has exactly 37 Smoke, 158 Nightly, 2 Manual', () => {
+  it('has exactly 37 Smoke, 160 Nightly, 2 Manual', () => {
     expect(smokeScenarios()).toHaveLength(37)
-    expect(nightlyScenarios()).toHaveLength(158)
+    expect(nightlyScenarios()).toHaveLength(160)
     expect(manualScenarios()).toHaveLength(2)
   })
 

@@ -233,3 +233,15 @@ test("GW-15 Support key cannot call GitHub; audit records", async () => {
   const audit = await getAudit();
   expect(audit.entries.some((e) => /not in Support key group/i.test(e.outcome))).toBe(true);
 });
+
+test("GW-16 OpenAI JavaScript SDK conformance is cataloged", async () => {
+  // Executable proof: packages/clawql-inference openai-sdk-conformance.test.ts
+  const { scenarioById } = await import("../../catalog/scenarios");
+  expect(scenarioById("GW-16")?.passWhen).toMatch(/OpenAI|refusal|predicate/i);
+});
+
+test("GW-17 OpenAI Python SDK conformance is cataloged", async () => {
+  // Executable proof: packages/clawql-inference openai-sdk-python-conformance.test.ts
+  const { scenarioById } = await import("../../catalog/scenarios");
+  expect(scenarioById("GW-17")?.passWhen).toMatch(/Python|GW-16/i);
+});

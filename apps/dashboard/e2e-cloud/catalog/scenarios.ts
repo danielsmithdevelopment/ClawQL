@@ -1,5 +1,5 @@
 /**
- * ClawQL Cloud E2E Test Catalog — full registry (197 scenarios).
+ * ClawQL Cloud E2E Test Catalog — full registry (199 scenarios).
  * Source: Oct 5, 2026 catalog (@Daniel). Titles and passWhen are verbatim.
  */
 
@@ -94,6 +94,8 @@ const EXPECTED_IDS: readonly string[] = [
   "GW-13",
   "GW-14",
   "GW-15",
+  "GW-16",
+  "GW-17",
   "EV-01",
   "EV-02",
   "EV-03",
@@ -692,6 +694,20 @@ export const CLOUD_E2E_SCENARIOS: readonly Scenario[] = [
     area: "gateway",
     title: "Use a Support key to call GitHub",
     passWhen: "Refused, because GitHub isn't in the Support key group; the audit records it",
+  },
+  {
+    id: "GW-16",
+    run: "Nightly",
+    area: "gateway",
+    title: "Call /v1/decisions with the official OpenAI JavaScript SDK",
+    passWhen: "Predicate, choice, score, refusal, and invalid-model error all match OpenAI shapes",
+  },
+  {
+    id: "GW-17",
+    run: "Nightly",
+    area: "gateway",
+    title: "Call /v1/decisions with the official OpenAI Python SDK",
+    passWhen: "Same matrix as GW-16 via the Python client",
   },
   {
     id: "EV-01",
@@ -1669,8 +1685,8 @@ export function scenarioById(id: string): Scenario | undefined {
 }
 
 export function assertCatalogComplete(): void {
-  if (CLOUD_E2E_SCENARIOS.length !== 197) {
-    throw new Error(`Expected 197 scenarios, got ${CLOUD_E2E_SCENARIOS.length}`);
+  if (CLOUD_E2E_SCENARIOS.length !== 199) {
+    throw new Error(`Expected 199 scenarios, got ${CLOUD_E2E_SCENARIOS.length}`);
   }
   const have = new Set(CLOUD_E2E_SCENARIOS.map((s) => s.id));
   const missing = EXPECTED_IDS.filter((id) => !have.has(id));

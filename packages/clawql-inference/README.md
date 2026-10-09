@@ -71,7 +71,7 @@ curl -s http://127.0.0.1:8080/v1/chat/completions \
 | `POST`   | `/v1/chat/completions`      | Bare `gpt-4o` or `provider/model`; `stream: true` SSE          |
 | `POST`   | `/decision`                 | Fast Decision (System One `choice`/`noul`/`score`); canonical  |
 | `POST`   | `/v1/systemone`             | Alias of `/decision`                                           |
-| `POST`   | `/v1/decisions`             | OpenAI Decisions API-compatible (`predicate`/`choice`/`score`) |
+| `POST`   | `/v1/decisions`             | OpenAI Decisions API-compatible; fail-closed refusals unless calibrated or opted in |
 | `POST`   | `/memory/ingest`            | Vault ingest façade                                            |
 | `POST`   | `/memory/search`            | Vault recall façade                                            |
 | `GET`    | `/memory`                   | List Memory notes                                              |

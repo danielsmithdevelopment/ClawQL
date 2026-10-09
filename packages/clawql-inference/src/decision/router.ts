@@ -6,6 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import express, { type Request, type Response } from "express";
+import { Effect } from "effect";
 import type { VirtualKeyRequest } from "../api/auth.js";
 import { sendOpenAiError } from "../api/openai-errors.js";
 import {
@@ -14,6 +15,11 @@ import {
   toOpenAiDecisionResponse,
 } from "./openai-adapt.js";
 import type { OpenAiDecisionCreateRequest, OpenAiDecisionCreateResponse } from "./openai-types.js";
+import {
+  DecisionsPolicyLive,
+  DecisionsPolicyService,
+  type RefusalAnswer,
+} from "./policy.js";
 import {
   callRemoteOpenAiDecisions,
   enrichRemoteWithClawql,
@@ -167,6 +173,82 @@ async function handleDecide(
   }
 }
 
+function withPolicy<A>(effect: Effect.Effect<A, never, DecisionsPolicyService>): A {
+  return Effect.runSync(effect.pipe(Effect.provide(DecisionsPolicyLive)));
+}
+
+function refusalResponse(opts: {
+  questions: readonly DecisionQuestion[];
+  model: string;
+  refusals: readonly RefusalAnswer[];
+  backendId?: string;
+  useSiteId?: string;
+}): OpenAiDecisionCreateResponse {
+  return toOpenAiDecisionResponse({
+    clawql: {
+      object: "clawql.decision",
+      answers: [],
+      traceId: randomUUID(),
+      escalated: false,
+      calibrated: false,
+      backendId: opts.backendId ?? "none",
+    },
+    questions: opts.questions,
+    model: opts.model,
+    refusals: opts.refusals,
+  });
+}
+
+function applyRemoteFailClosed(
+  remote: OpenAiDecisionCreateResponse,
+  opts: {
+    questions: readonly DecisionQuestion[];
+    allowUncalibrated: boolean;
+    model: string;
+    useSiteId: string;
+    backendId: string;
+    escalated: boolean;
+    traceId: string;
+  }
+): OpenAiDecisionCreateResponse {
+  const enriched = enrichRemoteWithClawql(remote, {
+    useSiteId: opts.useSiteId,
+    backendId: opts.backendId,
+    calibrated: false,
+    escalated: opts.escalated,
+    traceId: opts.traceId,
+  });
+
+  const refusals = withPolicy(
+    Effect.gen(function* () {
+      const policy = yield* DecisionsPolicyService;
+      return yield* policy.refusalsForUncalibratedRemote({
+        questionNames: opts.questions.map((q) => q.name),
+        allowUncalibrated: opts.allowUncalibrated,
+        backendLabel: "gpt-6-luna",
+      });
+    })
+  );
+
+  if (refusals.length === 0) {
+    return { ...enriched, model: opts.model };
+  }
+
+  return toOpenAiDecisionResponse({
+    clawql: {
+      object: "clawql.decision",
+      answers: [],
+      traceId: opts.traceId,
+      escalated: opts.escalated,
+      calibrated: false,
+      backendId: opts.backendId,
+    },
+    questions: opts.questions,
+    model: opts.model,
+    refusals,
+  });
+}
+
 async function handleOpenAiDecisions(
   req: VirtualKeyRequest,
   res: Response,
@@ -182,36 +264,73 @@ async function handleOpenAiDecisions(
     return;
   }
 
-  const body = req.body as OpenAiDecisionCreateRequest;
-  const preferRemote = isLunaModelId(parsed.model);
-  const lunaOk = remoteLunaAvailable(options.env);
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const openAiBody = req.body as OpenAiDecisionCreateRequest;
 
-  // Images: local Fast Decision is text-only. Prefer Luna when available; else refuse.
-  if (parsed.hasImages && !lunaOk && !preferRemote) {
-    const refusals = parsed.request.questions.map((q) => ({
-      name: q.name,
-      refusal:
-        "Image inputs require a vision-capable decisions backend (set OPENAI_API_KEY and model=gpt-6-luna)",
-    }));
+  const { modelKind, allowUncalibrated, allowImages, modelError } = withPolicy(
+    Effect.gen(function* () {
+      const policy = yield* DecisionsPolicyService;
+      const modelKind = yield* policy.classifyModel(parsed.model);
+      const allowUncalibrated = yield* policy.allowUncalibrated({
+        req,
+        body,
+        env: options.env,
+      });
+      const allowImages = yield* policy.allowExternalImages({
+        req,
+        body,
+        env: options.env,
+        useSiteId: parsed.request.useSiteId,
+      });
+      const modelError =
+        modelKind === "local" || modelKind === "luna"
+          ? undefined
+          : yield* policy.modelRejectionMessage(parsed.model, modelKind);
+      return { modelKind, allowUncalibrated, allowImages, modelError };
+    })
+  );
+
+  if (modelError) {
+    sendOpenAiError(res, 400, modelError, "invalid_request_error");
+    return;
+  }
+
+  const preferRemote = modelKind === "luna" || isLunaModelId(parsed.model);
+  const lunaOk = remoteLunaAvailable(options.env);
+  const isAuto = parsed.model.trim().toLowerCase() === "clawql-auto";
+
+  // Images: never treat API key presence as consent.
+  if (parsed.hasImages && !allowImages) {
     res.json(
-      toOpenAiDecisionResponse({
-        clawql: {
-          object: "clawql.decision",
-          answers: [],
-          traceId: randomUUID(),
-          escalated: false,
-          calibrated: false,
-          backendId: "none",
-        },
+      refusalResponse({
         questions: parsed.request.questions,
         model: parsed.model,
-        refusals,
+        refusals: parsed.request.questions.map((q) => ({
+          name: q.name,
+          refusal:
+            "Image inputs require explicit egress consent (x-clawql-allow-external-images: 1, allow_external_images: true, or CLAWQL_DECISIONS_ALLOW_EXTERNAL_IMAGES=1). Having OPENAI_API_KEY configured is not consent.",
+        })),
       })
     );
     return;
   }
 
-  if (parsed.hasImages && !lunaOk && preferRemote) {
+  if (parsed.hasImages && allowImages && !lunaOk && !preferRemote) {
+    res.json(
+      refusalResponse({
+        questions: parsed.request.questions,
+        model: parsed.model,
+        refusals: parsed.request.questions.map((q) => ({
+          name: q.name,
+          refusal:
+            "Image inputs require a vision-capable decisions backend (set OPENAI_API_KEY and model=gpt-6-luna)",
+        })),
+      })
+    );
+    return;
+  }
+
+  if (parsed.hasImages && allowImages && !lunaOk && preferRemote) {
     sendOpenAiError(
       res,
       503,
@@ -221,23 +340,34 @@ async function handleOpenAiDecisions(
     return;
   }
 
+  // clawql-auto: local-first with escalate when abstaining
+  const decisionRequest: DecisionRequest = isAuto
+    ? {
+        ...parsed.request,
+        escalation: {
+          mode: parsed.request.escalation?.mode ?? "escalate",
+          model: parsed.request.escalation?.model ?? "gpt-6-luna",
+        },
+      }
+    : parsed.request;
+
   try {
-    // Direct Luna path when model pin requests it, or images force a vision backend.
-    if ((preferRemote || parsed.hasImages) && lunaOk) {
+    if ((preferRemote || (parsed.hasImages && allowImages)) && lunaOk) {
       const callRemote =
         options.callRemote ?? ((b) => callRemoteOpenAiDecisions(b, { env: options.env }));
       const remote = await callRemote({
-        ...body,
+        ...openAiBody,
         model: "gpt-6-luna",
       });
-      const traceId = randomUUID();
       res.json(
-        enrichRemoteWithClawql(remote, {
+        applyRemoteFailClosed(remote, {
+          questions: parsed.request.questions,
+          allowUncalibrated,
+          model: parsed.model,
           useSiteId: parsed.request.useSiteId ?? "search_provider_tool_routing",
           backendId: "openai/gpt-6-luna",
-          calibrated: false, // Luna probs are vendor-calibrated; site trust not yet proven
           escalated: false,
-          traceId,
+          traceId: randomUUID(),
         })
       );
       return;
@@ -253,28 +383,28 @@ async function handleOpenAiDecisions(
       return;
     }
 
-    // Local Fast Decision (GLiNER / heuristic)
-    const result = await options.decide(parsed.request);
+    const result = await options.decide(decisionRequest);
 
-    // Escalation to Luna when local abstains
     if (
       result.escalated &&
       lunaOk &&
-      (parsed.request.escalation?.mode === "escalate" ||
-        parsed.request.escalation?.model ||
-        isLunaModelId(parsed.request.escalation?.model ?? ""))
+      (decisionRequest.escalation?.mode === "escalate" ||
+        decisionRequest.escalation?.model ||
+        isAuto)
     ) {
       const callRemote =
         options.callRemote ?? ((b) => callRemoteOpenAiDecisions(b, { env: options.env }));
       const remote = await callRemote({
-        ...body,
+        ...openAiBody,
         model: "gpt-6-luna",
       });
       res.json(
-        enrichRemoteWithClawql(remote, {
+        applyRemoteFailClosed(remote, {
+          questions: parsed.request.questions,
+          allowUncalibrated,
+          model: parsed.model,
           useSiteId: parsed.request.useSiteId ?? "search_provider_tool_routing",
           backendId: "openai/gpt-6-luna",
-          calibrated: false,
           escalated: true,
           traceId: result.traceId,
         })
@@ -282,11 +412,23 @@ async function handleOpenAiDecisions(
       return;
     }
 
+    const refusals = withPolicy(
+      Effect.gen(function* () {
+        const policy = yield* DecisionsPolicyService;
+        return yield* policy.refusalsForFailClosed({
+          questions: parsed.request.questions,
+          answers: result.answers,
+          allowUncalibrated,
+        });
+      })
+    );
+
     res.json(
       toOpenAiDecisionResponse({
         clawql: result,
         questions: parsed.request.questions,
         model: parsed.model,
+        refusals,
       })
     );
   } catch (error) {
@@ -332,10 +474,14 @@ export function createDecisionRouter(options: CreateDecisionRouterOptions = {}):
     res.json({
       object: "decision",
       methods: ["POST"],
-      models: ["clawql", "gliner2", "gpt-6-luna"],
+      models: ["clawql-auto", "clawql", "gliner2", "gpt-6-luna"],
       question_types: ["predicate", "choice", "score"],
+      fail_closed:
+        "Uncalibrated answers (including all score answers) return type=refusal unless x-clawql-allow-uncalibrated: 1",
+      image_egress:
+        "Images require x-clawql-allow-external-images (OPENAI_API_KEY alone is not consent)",
       description:
-        "OpenAI Decisions API-compatible endpoint. Local Fast Decision by default; gpt-6-luna when OPENAI_API_KEY is set. ClawQL adds calibrated, escalated, use_site_id, backend_id, trace_id.",
+        "OpenAI Decisions API-compatible endpoint. clawql-auto = local-first + escalate; gpt-6-luna when keyed + allowed. ClawQL adds calibrated, escalated, use_site_id, backend_id, trace_id.",
     });
   });
 

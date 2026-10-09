@@ -46,6 +46,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@gdp-ts/core": "^0.1.0",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.222.0",
     "@opentelemetry/resources": "^2.11.0",
@@ -53,22 +54,22 @@
     "@opentelemetry/sdk-trace-node": "^2.11.0",
     "clawql-api": "0.1.0",
     "clawql-core": "0.1.0",
+    "clawql-gdp": "0.1.0",
     "clawql-mcp-events": "0.1.0",
     "clawql-memory": "0.1.0",
     "clawql-payments": "0.1.0",
     "effect": "4.0.0",
     "express": "^5.2.1",
-    "pg": "^8.21.0",
     "js-tiktoken": "^1.0.21",
+    "pg": "^8.21.0",
     "yaml": "^2.9.0",
-    "zod": "^4.3.6",
-    "clawql-gdp": "0.1.0",
-    "@gdp-ts/core": "^0.1.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "openai": "^7.32.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"

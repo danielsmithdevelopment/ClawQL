@@ -39,3 +39,15 @@ export {
   enrichRemoteWithClawql,
   remoteLunaAvailable,
 } from "./remote-decisions.js";
+
+export {
+  DecisionsPolicyService,
+  DecisionsPolicyLive,
+  LOCAL_DECISION_MODELS,
+  classifyDecisionsModel,
+  allowUncalibratedAnswers,
+  allowExternalImageEgress,
+  refusalsForFailClosed,
+  type DecisionsModelKind,
+  type RefusalAnswer,
+} from "./policy.js";
