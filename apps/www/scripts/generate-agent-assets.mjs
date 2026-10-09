@@ -292,10 +292,12 @@ writeJson(path.join(publicDir, '.well-known/oauth-authorization-server'), {
   token_endpoint: googleOidc.token_endpoint,
   jwks_uri: googleOidc.jwks_uri,
   revocation_endpoint: googleOidc.revocation_endpoint,
-  device_authorization_endpoint: googleOidc.device_authorization_endpoint,
+  // Omit Google device_authorization_endpoint until ClawQL MCP AS ships RFC 8628.
   scopes_supported: googleOidc.scopes_supported,
   response_types_supported: googleOidc.response_types_supported,
-  grant_types_supported: googleOidc.grant_types_supported,
+  grant_types_supported: (googleOidc.grant_types_supported ?? []).filter(
+    (g) => g !== 'urn:ietf:params:oauth:grant-type:device_code',
+  ),
   token_endpoint_auth_methods_supported: googleOidc.token_endpoint_auth_methods_supported,
   code_challenge_methods_supported: googleOidc.code_challenge_methods_supported,
 })
