@@ -39,15 +39,15 @@ Adopt **confined programs as an additional tool**, alongside unchanged `search` 
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Every action visible, policy per call | Every tool call inside a program runs the same gateway path as `execute` (gate, risk, redaction, budgets, audit), linked to a program id. Sessions show program source plus each call.                                                                                                             |
 | Trivial resume, at most once          | Programs do not write directly. They read and compute, then return **proposed operations**. ClawQL runs each proposal afterward as a normal `execute`, so mandates, Review, and `resume` work as today.                                                                                            |
-| No interpreter as ambient authority   | Interpreter runs inside a **celld** cell ([ADR 0011](./0011-isolation-agent-substrate-sandbox-celld.md)) with memory/CPU caps; ClawQL sets default timeouts, call limits, and output limits (the upstream package leaves these unset). Vendor and pin the MIT package; add it to the fuzzing plan. |
+| No interpreter as ambient authority   | Programs run as ordinary JS in a **celld** V8 isolate ([ADR 0011](./0011-isolation-agent-substrate-sandbox-celld.md), [`clawql-celld`](../streams/clawql-celld.md)) with memory caps, tools-only egress, timeouts/call/output limits, and (when earned) a durable SQLite journal. Not an in-process host interpreter. |
 | Works with any model and client       | Programs are optional (flag / key group). Small models keep `search` + `execute` only.                                                                                                                                                                                                             |
 | Cheap failures                        | Diagnostics carry error types, source locations, and fix hints; results list each call’s outcome so an agent can fall back to single executes.                                                                                                                                                     |
 
-### Wire their package into the catalog
+### Tool bindings (catalog → cell)
 
-1. Each ClawQL operation becomes one of their tools, described by existing JSON Schema; `run` calls the gateway execute path.
-2. Replace their built-in search with ClawQL’s (risk-aware).
-3. **Vendor** the package (MIT, private to their workspace today; Effect 4 like us) rather than depending on an unpublished workspace path.
+1. Each ClawQL operation becomes a host tool binding, described by existing JSON Schema; `run` calls the gateway execute path.
+2. Search inside a program is ClawQL’s (risk-aware), not a second catalog loop.
+3. **v1 path is celld-native durable code mode** (below), not an in-process OpenCode interpreter. If any OpenCode **code** is borrowed temporarily, keep its MIT copyright notice with it; prefer design borrowing over vendoring an unpublished workspace package.
 
 ### Proposed writes (no in-program side effects)
 
