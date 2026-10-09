@@ -54,8 +54,11 @@ import {
   buildConsoleLinkEffect,
   consoleLinkEnabled,
   plainProxyEnabled,
+  programsEnabled,
+  runProgramEffect,
   searchClawqlDocsEffect,
   type CustomSourceKind,
+  type ProgramHost,
 } from "clawql-api";
 import { z } from "zod";
 import { attachChatgptExtensions } from "clawql-chatgpt-extensions";
@@ -206,6 +209,93 @@ export async function handleConsoleLinkToolInput(
 function docsSearchToolEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   const v = env.CLAWQL_ENABLE_DOCS_SEARCH?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
+}
+
+/** Zod shape for optional Core `execute_program` (CLAWQL_ENABLE_PROGRAMS). */
+export const executeProgramToolZodShape = {
+  source: z
+    .string()
+    .describe(
+      "v0 JSON plan text (not free-form JS): " +
+        '{ "v": 1, "mode": "parallel"|"sequential", "calls": [ ' +
+        '{ "tool": "execute", "operationId": "...", "args": {} } | ' +
+        '{ "tool": "search", "query": "..." } ] }. ' +
+        "Honesty: v0 plan runner; OpenCode vendor is next."
+    ),
+  timeoutMs: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe("Wall-clock timeout in ms (capped by CLAWQL_PROGRAM_MAX_TIMEOUT_MS)."),
+} as const;
+
+/**
+ * MCP host wiring: each program tool call goes through the same ExecuteService /
+ * SearchService path as the Core MCP tools (gate, session IFC, audit), with
+ * programId correlation recorded by the plan runner.
+ */
+function makeMcpProgramHost(): ProgramHost {
+  return {
+    execute: (input, _ctx) =>
+      Effect.tryPromise({
+        try: () =>
+          getClawqlApi().run(
+            Effect.gen(function* () {
+              const execute = yield* ExecuteService;
+              return yield* execute.execute(input);
+            })
+          ),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      }),
+    search: (input, _ctx) =>
+      Effect.tryPromise({
+        try: () =>
+          getClawqlApi().run(
+            Effect.gen(function* () {
+              const search = yield* SearchService;
+              return yield* search.search(input);
+            })
+          ),
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      }),
+    resolveRisk: (operationId) =>
+      Effect.tryPromise({
+        try: async () => {
+          const { operations } = await loadSpec();
+          const op = operations.find((o) => o.id === operationId);
+          if (!op) return { found: false as const };
+          return {
+            found: true as const,
+            policy: op.risk?.policy,
+            risk: op.risk,
+          };
+        },
+        catch: (e) => (e instanceof Error ? e : new Error(String(e))),
+      }),
+  };
+}
+
+/** MCP `execute_program` — read-only JSON plan runner (ADR 0015 v0). */
+export async function handleExecuteProgramToolInput(
+  raw: unknown
+): Promise<{ content: { type: "text"; text: string }[] }> {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const source = typeof o.source === "string" ? o.source : "";
+  const timeoutMs =
+    typeof o.timeoutMs === "number" && Number.isFinite(o.timeoutMs) ? o.timeoutMs : undefined;
+  const result = await Effect.runPromise(
+    runProgramEffect(
+      {
+        source,
+        timeoutMs,
+        sessionId:
+          typeof o.sessionId === "string" ? o.sessionId : process.env.CLAWQL_SESSION_ID?.trim(),
+      },
+      makeMcpProgramHost()
+    )
+  );
+  return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
 }
 
 /** Zod shape for optional Core `docs_search` (CLAWQL_ENABLE_DOCS_SEARCH). */
@@ -370,6 +460,17 @@ export function registerTools(server: McpServer) {
       wrapRegisteredMcpToolHandler("proxy_call", handleClawqlExecuteToolInput)
     );
     registeredNames.push("proxy_call");
+  }
+
+  // ADR 0015 program mode v0: read-only JSON plan runner (not full OpenCode interpreter).
+  if (programsEnabled()) {
+    server.tool(
+      "execute_program",
+      "Run a read-only JSON plan of parallel/sequential search+execute calls in one round trip (ADR 0015 v0 plan runner; OpenCode vendor is next). Writes rejected — use plain execute or future proposed writes. Enable with CLAWQL_ENABLE_PROGRAMS=1.",
+      executeProgramToolZodShape,
+      wrapRegisteredMcpToolHandler("execute_program", handleExecuteProgramToolInput)
+    );
+    registeredNames.push("execute_program");
   }
 
   // ADR 0015: dedicated docs search (Core `search` also merges kind:doc when an index exists).

@@ -46,6 +46,29 @@ describe("createRegisteredMcpServer", () => {
       else process.env.CLAWQL_API_KEY_GROUP = savedGroup;
     }
   });
+
+  it("registers execute_program only when programs are enabled (ADR 0015)", () => {
+    const saved = process.env.CLAWQL_ENABLE_PROGRAMS;
+    try {
+      delete process.env.CLAWQL_ENABLE_PROGRAMS;
+      const off = createRegisteredMcpServer({ name: "clawql-prog-off", version: "0.0.0" });
+      const offReg = (
+        off as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
+      )._registeredTools;
+      expect(offReg.execute_program).toBeUndefined();
+
+      process.env.CLAWQL_ENABLE_PROGRAMS = "1";
+      const on = createRegisteredMcpServer({ name: "clawql-prog-on", version: "0.0.0" });
+      const onReg = (
+        on as unknown as { _registeredTools: Record<string, { enabled?: boolean }> }
+      )._registeredTools;
+      expect(onReg.execute_program).toBeDefined();
+      expect(onReg.execute_program?.enabled).not.toBe(false);
+    } finally {
+      if (saved === undefined) delete process.env.CLAWQL_ENABLE_PROGRAMS;
+      else process.env.CLAWQL_ENABLE_PROGRAMS = saved;
+    }
+  });
 });
 
 describe("ensureClawqlApi / createRegisteredMcpServerAsync", () => {

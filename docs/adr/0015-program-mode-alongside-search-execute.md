@@ -175,6 +175,22 @@ Security and honesty first, then cheap wins every client gets, then public claim
 6. Journaled replay deferred until a benchmark shows proposal refs are insufficient.
 7. Rerun Executor comparison against Executor v2 once its code mode ships; replace simulated program-filter with live.
 
+### Program mode v0 (shipped MVP — honesty)
+
+**v0 plan runner; OpenCode vendor is next.** Full `@opencode-ai/codemode` AST hosting in celld is deferred. What ships now:
+
+| Item | Detail |
+| ---- | ------ |
+| Flag | `CLAWQL_ENABLE_PROGRAMS=1` (default off) |
+| MCP tool | `execute_program` — args `{ source, timeoutMs? }` |
+| `source` | JSON **plan** only: `{ "v": 1, "mode": "parallel"\|"sequential", "calls": [ { "tool": "execute"\|"search", … } ] }` (or a bare call array). Free-form JS is rejected with a fix hint. |
+| Host path | Each call uses the same `search` / `execute` gateway path (gate, session IFC, audit) with a `programId` correlation on WORM metadata. |
+| Writes | Rejected when operation risk is not `allow` — agent must use plain `execute` (mandate/resume) or wait for proposed writes. |
+| Caps | Max source length, max tool calls, timeout, max output bytes (`CLAWQL_PROGRAM_MAX_*` overrides). |
+| Return | `{ ok, programId, result, calls: [{ operationId, ok, … }], diagnostics }` |
+
+See [`docs/mcp/mcp-tools.md`](../mcp/mcp-tools.md) (`execute_program`). Implementation: `packages/clawql-api/src/program/`.
+
 ## Non-goals
 
 - Replacing `search` / `execute` with programs.
