@@ -23,8 +23,8 @@ const PLAN: ProgramPlan = {
   mode: "sequential",
   calls: [
     { tool: "execute", operationId: "pets.get", args: { id: 1 }, id: "first" },
-    { tool: "execute", operationId: "pets.list" },
-    { tool: "search", query: "owners" },
+    { tool: "execute", operationId: "pets.list", id: "call_1" },
+    { tool: "search", query: "owners", id: "call_2" },
   ],
 };
 
@@ -51,7 +51,7 @@ function entry(index: number, value: unknown, ok = true): ProgramJournalEntry {
   const call = PLAN.calls[index]!;
   return {
     index,
-    callId: call.id ?? `call_${index}`,
+    callId: call.id,
     tool: call.tool,
     ...(call.tool === "execute" ? { operationId: call.operationId, args: call.args ?? {} } : {}),
     result: { ok, value },
