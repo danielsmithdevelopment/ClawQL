@@ -49,12 +49,49 @@ Still TODO when Executor v2 ships: replace the simulated program-filter arm with
 
 Related product work: declarative `where` on ClawQL `execute` ([ADR 0015](../../adr/0015-program-mode-alongside-search-execute.md)).
 
+## Wall-clock latency (side-by-side)
+
+Token benches above do **not** measure milliseconds. The OTEL span flamegraph **demo** fixture (`demo-mcp-execute`, 120ms) is also synthetic — do not cite it as ClawQL p50.
+
+```bash
+# ClawQL audit (gateway-only) + execute against local mock; Executor if EXECUTOR_BIN/URL set
+npm run benchmark:executor-comparison:latency
+# → docs/benchmarks/executor-comparison/executor-cmp-latency.json
+
+LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
+  EXECUTOR_BIN=/path/to/executor \
+  npm run benchmark:executor-comparison:latency
+```
+
+| Arm | What it isolates |
+| --- | --- |
+| `clawql_audit_append` | Local MCP tool (no upstream HTTP) |
+| `clawql_execute_listPets` | MCP + gateway + HTTP client + mock |
+| `direct_http_mock` | Bare `fetch` of the same mock |
+| `derived.clawql_vs_direct` | Rough gateway overhead = execute − direct |
+| `executor_execute_noop` | Executor runtime no-op (when wired) |
+
+### Latest local run (this VM, 2026-10-10)
+
+Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
+
+| Arm | p50 | p95 |
+| --- | ---: | ---: |
+| ClawQL `audit` (gateway-only) | **1.7 ms** | 34.9 ms |
+| ClawQL `execute` → local mock | **8.4 ms** | 17.5 ms |
+| Direct `fetch` same mock | 0.5 ms | 1.1 ms |
+| **Derived gateway overhead** (execute − direct) | **~8.0 ms** | ~16.4 ms |
+| Executor no-op | *not wired* (`EXECUTOR_BIN` / `EXECUTOR_MCP_URL` unset) | |
+
+**Verdict on this host:** ClawQL tool-call overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. Community/self-host notes put warm Executor execute roughly in a **50–100ms** band; wire a live install here for a true side-by-side on the same machine. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
+
 ## Methodology
 
 | Dimension   | Executor                                      | ClawQL                              |
 | ----------- | --------------------------------------------- | ----------------------------------- |
 | **Layer 1** | Homepage ~1,044 **and** live MCP `tools/list` | Measured gateway `search`+`execute` |
 | **Layer 2** | Live CLI tool call (no projection)            | Live MCP `execute` + `fields`       |
+| **Latency** | Optional no-op `execute` via `EXECUTOR_*`     | audit + execute vs local mock       |
 | **862×**    | Not comparable                                | Do not blend                        |
 
 Tokenizer: `cl100k_base`. `focus=input`.
