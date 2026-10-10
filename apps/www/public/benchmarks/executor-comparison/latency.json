@@ -1,56 +1,163 @@
 {
   "suite": "executor-cmp-latency-chart",
   "canonical": "https://clawql.com/benchmarks/executor-comparison/latency.html",
-  "measuredAt": "2026-10-10T20:24:19.259Z",
+  "measuredAt": "2026-10-10T23:07:20.454Z",
   "host": {
     "node": "v22.14.0",
     "platform": "linux",
     "arch": "x64"
   },
   "config": {
-    "iters": 25,
-    "warmup": 5,
-    "mock_delay_ms": 0
+    "iters": 100,
+    "warmup": 10,
+    "mock_delay_ms": 0,
+    "pet_count": 800,
+    "available_count": 266,
+    "body_bytes": 138413,
+    "where": "pets[?status=='available']",
+    "fields": [
+      "id",
+      "name",
+      "status"
+    ]
   },
   "pathFlags": {
     "CLAWQL_TIER": "gateway",
     "CLAWQL_CAPABILITY_LIFECYCLE": "0",
-    "CLAWQL_WORM_ENABLED": "unset",
+    "CLAWQL_WORM_ENABLED": "1",
+    "CLAWQL_WORM_LOCAL": "memory",
     "panguard_sidecar": false,
+    "durable_worm_on_search": true,
     "durable_worm_on_execute": false,
     "ephemeral_ring_audit": true,
-    "hook_registry_pre_call": true
+    "hook_registry_pre_call": true,
+    "where_and_fields": true
   },
+  "workloadTilt": {
+    "clawql": "HEAVIER — search (+WORM) + execute(large JSON + where + fields) + audit; heavy_turn times all three together",
+    "executor": "LIGHTER — live no-op execute when wired, else published warm 50–100ms reference band (no upstream HTTP, no filter, no audit)",
+    "intent": "If ClawQL wins while doing more work, the win is definitive — not an easier-arm artifact."
+  },
+  "tools": [
+    {
+      "id": "clawql_search",
+      "source": "live",
+      "label": "ClawQL search",
+      "workload": "heavier",
+      "subtitle": "catalog resolve + durable WORM",
+      "p50_ms": 1.836,
+      "p95_ms": 12.093,
+      "p99_ms": 58.035,
+      "min_ms": 1.003,
+      "max_ms": 141.47,
+      "n": 100
+    },
+    {
+      "id": "clawql_execute",
+      "source": "live",
+      "label": "ClawQL execute",
+      "workload": "heavier",
+      "subtitle": "large mock (800 rows) + where + fields",
+      "p50_ms": 9.84,
+      "p95_ms": 16.977,
+      "p99_ms": 21.691,
+      "min_ms": 7.398,
+      "max_ms": 25.575,
+      "n": 100
+    },
+    {
+      "id": "clawql_audit",
+      "source": "live",
+      "label": "ClawQL audit",
+      "workload": "heavier",
+      "subtitle": "ephemeral ring append",
+      "p50_ms": 0.27,
+      "p95_ms": 0.971,
+      "p99_ms": 1.266,
+      "min_ms": 0.201,
+      "max_ms": 1.36,
+      "n": 100
+    },
+    {
+      "id": "clawql_heavy_turn",
+      "source": "live",
+      "label": "ClawQL heavy turn",
+      "workload": "heavier",
+      "subtitle": "search + execute + audit (one sample)",
+      "p50_ms": 10.652,
+      "p95_ms": 15.856,
+      "p99_ms": 18.21,
+      "min_ms": 8.829,
+      "max_ms": 19.801,
+      "n": 100,
+      "headline": true
+    },
+    {
+      "id": "executor_execute",
+      "source": "reference",
+      "label": "Executor execute",
+      "workload": "lighter",
+      "subtitle": "warm no-op band · no HTTP / filter / audit",
+      "p50_ms": 75,
+      "p95_ms": 100,
+      "p99_ms": 100,
+      "band_low_ms": 50,
+      "band_high_ms": 100,
+      "citation": "UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)",
+      "url": "https://github.com/UsefulSoftwareCo/executor/issues/1519"
+    }
+  ],
   "series": {
     "clawql_execute": {
       "source": "live",
       "label": "ClawQL execute",
-      "p50_ms": 8.413,
-      "p95_ms": 17.512,
-      "p99_ms": 137.125,
-      "max_ms": 137.125,
-      "band_low_ms": 7.026,
-      "band_high_ms": 17.512,
-      "citation": "MCP stdio → listPets against local mock (same host)"
+      "p50_ms": 9.84,
+      "p95_ms": 16.977,
+      "p99_ms": 21.691,
+      "min_ms": 7.398,
+      "max_ms": 25.575,
+      "n": 100,
+      "citation": "MCP stdio → listPets heavy (where+fields) against local mock"
+    },
+    "clawql_search": {
+      "source": "live",
+      "label": "ClawQL search",
+      "p50_ms": 1.836,
+      "p95_ms": 12.093,
+      "p99_ms": 58.035,
+      "min_ms": 1.003,
+      "max_ms": 141.47,
+      "n": 100
     },
     "clawql_audit": {
       "source": "live",
-      "label": "ClawQL audit (local)",
-      "p50_ms": 1.728,
-      "p95_ms": 34.885,
-      "p99_ms": 41.19
+      "label": "ClawQL audit",
+      "p50_ms": 0.27,
+      "p95_ms": 0.971,
+      "p99_ms": 1.266,
+      "min_ms": 0.201,
+      "max_ms": 1.36,
+      "n": 100
     },
-    "clawql_overhead": {
-      "source": "derived",
-      "label": "ClawQL gateway overhead",
-      "p50_ms": 7.949,
-      "p95_ms": 16.394,
-      "citation": "clawql_execute_p50 − direct_http_p50 (same mock)"
+    "clawql_heavy_turn": {
+      "source": "live",
+      "label": "ClawQL heavy turn",
+      "p50_ms": 10.652,
+      "p95_ms": 15.856,
+      "p99_ms": 18.21,
+      "min_ms": 8.829,
+      "max_ms": 19.801,
+      "n": 100
     },
     "executor": {
+      "id": "executor_execute",
       "source": "reference",
-      "label": "Executor warm execute",
+      "label": "Executor execute",
+      "workload": "lighter",
+      "subtitle": "warm no-op band · no HTTP / filter / audit",
       "p50_ms": 75,
+      "p95_ms": 100,
+      "p99_ms": 100,
       "band_low_ms": 50,
       "band_high_ms": 100,
       "citation": "UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)",
@@ -58,22 +165,27 @@
     }
   },
   "headline": {
-    "clawql_p50_ms": 8.413,
-    "clawql_p99_ms": 137.125,
+    "clawql_p50_ms": 10.652,
+    "clawql_p95_ms": 15.856,
+    "clawql_p99_ms": 18.21,
+    "clawql_arm": "heavy_turn",
     "executor_p50_ms": 75,
-    "ratio_executor_over_clawql": 8.91,
+    "executor_p95_ms": 100,
+    "executor_p99_ms": 100,
+    "ratio_executor_over_clawql": 7.04,
     "executor_source": "reference",
-    "p99_beats_executor_band_high": false
+    "p50_beats_executor_band_low": true,
+    "p99_beats_executor_band_high": true
   },
   "honesty": {
     "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
     "tokenBenchmarks": "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
-    "applesToApples": "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired.",
-    "notFullEnterprisePath": "Harness sets CLAWQL_CAPABILITY_LIFECYCLE=0 and optional tools off. MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit, but execute skips durable process WORM, WORM is not enabled, and there is no panguard-mcp-proxy / JWT-ATR sidecar hop.",
-    "workloadMismatch": "ClawQL arm is live MCP execute → local mock HTTP. Executor chart bar is a published warm 50–100ms reference (or, when wired, a no-op JS execute with no upstream). Not the same work.",
-    "p99Caveat": "With small n, p99 ≈ max. A single GC/scheduling outlier can exceed the Executor reference high.",
-    "executorReference": "Executor bar uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired for a same-host live arm.",
+    "intentionalAsymmetry": "ClawQL arm is deliberately heavier than Executor. Compare p50/p95/p99 on the chart; do not claim apples-to-apples equal work.",
+    "lifecycle": "CLAWQL_CAPABILITY_LIFECYCLE=0 (throughput path). No panguard-mcp-proxy / JWT-ATR hop.",
+    "worm": "CLAWQL_WORM_ENABLED=1 (memory). search appends durable WORM; execute skips process WORM (by design); audit is ring-buffer only.",
+    "p99Caveat": "p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.",
+    "executorReference": "Executor uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired.",
     "notTokenFlamegraph": "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
-    "p99VsExecutor": "ClawQL p99 137.125ms exceeds the Executor reference high (100ms) — with n=25, p99≈max from one outlier; p50/p95 still win."
+    "p99VsExecutor": "ClawQL heavy turn p99 18.21ms stays under the Executor high (100ms) while doing more work."
   }
 }

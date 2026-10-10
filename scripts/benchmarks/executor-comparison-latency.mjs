@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 /**
- * executor-cmp-latency: wall-clock side-by-side (ClawQL vs Executor when wired).
+ * executor-cmp-latency: wall-clock side-by-side with an intentional workload tilt.
  *
- * Clarifies that the OTEL span flamegraph **demo** fixture (120ms) is synthetic —
- * this script measures real MCP tool-call latency on this machine.
+ * ClawQL does **more** work than Executor:
+ *   - search (catalog resolve) + durable WORM on search
+ *   - execute against a large mock body with JMESPath `where` + `fields`
+ *   - audit ring append (ephemeral trail)
+ *   - optional heavy_turn = search + execute + audit timed as one sample
  *
- * Arms:
- *   1. ClawQL gateway-only — `audit` append (no upstream HTTP)
- *   2. ClawQL execute — `listPets` against a local mock with known delay
- *   3. Direct HTTP control — same mock, no ClawQL
- *   4. Executor (optional) — no-op `execute` when EXECUTOR_BIN or EXECUTOR_MCP_URL set
- *
- * Derived: clawql_gateway_overhead_ms ≈ execute_e2e − mock_upstream − mock_injected_delay
+ * Executor does **less** (when wired): a no-op JS `execute` with no upstream.
+ * When unwired, the chart uses the published warm 50–100ms reference band
+ * (UsefulSoftwareCo/executor#1519) — still a lighter arm than ClawQL heavy.
  *
  * Usage:
  *   npm run benchmark:executor-comparison:latency
- *   LATENCY_ITERS=40 MOCK_DELAY_MS=5 npm run benchmark:executor-comparison:latency
- *   EXECUTOR_BIN=/path/to/executor npm run benchmark:executor-comparison:latency
+ *   LATENCY_ITERS=100 PET_COUNT=800 MOCK_DELAY_MS=0 \
+ *     EXECUTOR_BIN=/path/to/executor npm run benchmark:executor-comparison:latency
  *
  * Env:
- *   LATENCY_ITERS (default 30), LATENCY_WARMUP (default 5), MOCK_DELAY_MS (default 0)
+ *   LATENCY_ITERS (default 100), LATENCY_WARMUP (default 10), MOCK_DELAY_MS (default 0)
+ *   PET_COUNT (default 800) — mock upstream rows ClawQL must filter/project
  *   EXECUTOR_BIN / EXECUTOR_CWD / EXECUTOR_MCP_URL
  */
 
@@ -37,9 +37,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT_DIR = join(ROOT, "docs", "benchmarks", "executor-comparison");
 const OUT_PATH = join(OUT_DIR, "executor-cmp-latency.json");
 
-const ITERS = Math.max(5, Number(process.env.LATENCY_ITERS ?? 30) || 30);
-const WARMUP = Math.max(0, Number(process.env.LATENCY_WARMUP ?? 5) || 5);
+const ITERS = Math.max(5, Number(process.env.LATENCY_ITERS ?? 100) || 100);
+const WARMUP = Math.max(0, Number(process.env.LATENCY_WARMUP ?? 10) || 10);
 const MOCK_DELAY_MS = Math.max(0, Number(process.env.MOCK_DELAY_MS ?? 0) || 0);
+const PET_COUNT = Math.max(50, Number(process.env.PET_COUNT ?? 800) || 800);
+
+const WHERE_EXPR = "pets[?status=='available']";
+const PROJECT_FIELDS = ["id", "name", "status"];
 
 function percentile(sorted, p) {
   if (sorted.length === 0) return null;
@@ -57,7 +61,7 @@ function summarize(samples) {
     n: sorted.length,
     p50_ms: Number(percentile(sorted, 50).toFixed(3)),
     p95_ms: Number(percentile(sorted, 95).toFixed(3)),
-    // With small n, p99 collapses to max (ceil(0.99*n)-1 → last index).
+    // With small n, p99 collapses toward max (ceil(0.99*n)-1).
     p99_ms: Number(percentile(sorted, 99).toFixed(3)),
     mean_ms: Number((sum / sorted.length).toFixed(3)),
     min_ms: Number(sorted[0].toFixed(3)),
@@ -70,20 +74,34 @@ async function sleep(ms) {
   await new Promise((r) => setTimeout(r, ms));
 }
 
+function buildPets(n) {
+  const pets = [];
+  for (let i = 1; i <= n; i++) {
+    pets.push({
+      id: i,
+      name: `pet-${i}`,
+      status: i % 3 === 0 ? "available" : i % 3 === 1 ? "pending" : "sold",
+      tag: i % 5 === 0 ? "featured" : "std",
+      // Extra payload so ClawQL must parse more than Executor's no-op.
+      bio: `Synthetic bio for latency pet ${i}. `.repeat(3),
+    });
+  }
+  return pets;
+}
+
 async function startMockUpstream() {
   const upstreamSamples = [];
+  const pets = buildPets(PET_COUNT);
+  const body = JSON.stringify({ pets, count: pets.length });
+  const availableCount = pets.filter((p) => p.status === "available").length;
+
   const server = createServer(async (req, res) => {
     const t0 = performance.now();
     await sleep(MOCK_DELAY_MS);
-    const body = JSON.stringify({
-      pets: [
-        { id: 1, name: "Ada" },
-        { id: 2, name: "Grace" },
-      ],
-    });
     res.writeHead(200, {
       "content-type": "application/json",
       "x-mock-delay-ms": String(MOCK_DELAY_MS),
+      "x-pet-count": String(PET_COUNT),
     });
     res.end(body);
     upstreamSamples.push(performance.now() - t0);
@@ -93,19 +111,16 @@ async function startMockUpstream() {
   const addr = server.address();
   const baseUrl = `http://127.0.0.1:${addr.port}`;
 
-  const specPath = join(
-    "/tmp",
-    `clawql-latency-petstore-${process.pid}.json`
-  );
+  const specPath = join("/tmp", `clawql-latency-petstore-${process.pid}.json`);
   const spec = {
     openapi: "3.0.3",
-    info: { title: "LatencyPetstore", version: "1" },
+    info: { title: "LatencyPetstoreHeavy", version: "1" },
     servers: [{ url: baseUrl }],
     paths: {
       "/pets": {
         get: {
           operationId: "listPets",
-          summary: "List pets",
+          summary: "List pets (large body for heavy arm)",
           responses: {
             "200": {
               description: "ok",
@@ -126,6 +141,9 @@ async function startMockUpstream() {
     baseUrl,
     specPath,
     upstreamSamples,
+    petCount: PET_COUNT,
+    availableCount,
+    bodyBytes: Buffer.byteLength(body),
     close: () =>
       new Promise((resolve, reject) => {
         server.close((err) => (err ? reject(err) : resolve()));
@@ -142,9 +160,12 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     CLAWQL_API_BASE_URL: apiBase,
     CLAWQL_BUNDLED_OFFLINE: "1",
     CLAWQL_TIER: "gateway",
-    // Latency microbench: measure gateway+HTTP, not capability-lifecycle denials.
-    // Not a production enterprise path: no durable WORM, no Panguard sidecar,
-    // lifecycle off (avoids CAPABILITY_WRITE_INTERCEPTED without grants).
+    // Heavy arm: durable WORM on search (execute still skips process WORM by design).
+    CLAWQL_WORM_ENABLED: "1",
+    CLAWQL_WORM_LOCAL: "memory",
+    CLAWQL_WORM_REMOTE: "memory",
+    CLAWQL_WORM_RECONCILE_MS: "0",
+    // Lifecycle off so the bench measures throughput, not grant denials.
     CLAWQL_CAPABILITY_LIFECYCLE: "0",
     CLAWQL_ENABLE_MEMORY: "0",
     CLAWQL_ENABLE_DOCUMENTS: "0",
@@ -156,7 +177,6 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     CLAWQL_ENABLE_GOOGLE: "0",
     CLAWQL_ENABLE_AWS: "0",
   };
-  // Leave CLAWQL_WORM_ENABLED unset (off) — execute wrap already skips process WORM.
   for (const key of [
     "CLAWQL_PROVIDER",
     "CLAWQL_BUNDLED_PROVIDERS",
@@ -169,6 +189,10 @@ function clawqlEnv(measureHome, specPath, apiBase) {
     delete env[key];
   }
   return env;
+}
+
+function toolText(res) {
+  return res.content?.find((c) => c.type === "text")?.text ?? "";
 }
 
 async function withClawqlClient(env, fn) {
@@ -215,52 +239,69 @@ async function bench(label, iters, warmup, runOnce) {
   return { label, ...summarize(samples), samples_ms: samples.map((s) => Number(s.toFixed(3))) };
 }
 
+async function callSearch(client) {
+  const res = await client.callTool({
+    name: "search",
+    arguments: { query: "listPets pets GET", limit: 5 },
+  });
+  if (res.isError) throw new Error(`search failed: ${toolText(res)}`);
+}
+
+async function callExecuteHeavy(client) {
+  const res = await client.callTool({
+    name: "execute",
+    arguments: {
+      operationId: "listPets",
+      args: {},
+      where: WHERE_EXPR,
+      fields: PROJECT_FIELDS,
+    },
+  });
+  if (res.isError) {
+    throw new Error(`execute failed: ${toolText(res) || JSON.stringify(res).slice(0, 400)}`);
+  }
+}
+
+async function callAudit(client) {
+  const res = await client.callTool({
+    name: "audit",
+    arguments: {
+      operation: "append",
+      category: "benchmark",
+      action: "latency_heavy_probe",
+      summary: "executor-cmp-latency-heavy",
+    },
+  });
+  if (res.isError) throw new Error(`audit failed: ${toolText(res)}`);
+}
+
 async function measureClawqlArms(mock) {
   const measureHome = join("/tmp", `clawql-latency-${process.pid}`);
   await mkdir(measureHome, { recursive: true });
   const env = clawqlEnv(measureHome, mock.specPath, mock.baseUrl);
 
   return withClawqlClient(env, async (client) => {
-    const audit = await bench("clawql_audit_append", ITERS, WARMUP, async () => {
-      const res = await client.callTool({
-        name: "audit",
-        arguments: {
-          operation: "append",
-          category: "benchmark",
-          action: "latency_probe",
-          summary: "executor-cmp-latency",
-        },
-      });
-      if (res.isError) {
-        throw new Error(
-          `audit failed: ${res.content?.find((c) => c.type === "text")?.text ?? ""}`
-        );
-      }
-    });
+    const search = await bench("clawql_search", ITERS, WARMUP, () => callSearch(client));
+    const audit = await bench("clawql_audit_append", ITERS, WARMUP, () => callAudit(client));
 
-    // Reset upstream samples after warmup for cleaner pairing
     mock.upstreamSamples.length = 0;
-    const execute = await bench("clawql_execute_listPets", ITERS, WARMUP, async () => {
-      const res = await client.callTool({
-        name: "execute",
-        arguments: {
-          operationId: "listPets",
-          args: {},
-          fields: ["pets"],
-        },
-      });
-      if (res.isError) {
-        const text = res.content?.find((c) => c.type === "text")?.text ?? "";
-        throw new Error(`execute failed: ${text || JSON.stringify(res).slice(0, 400)}`);
-      }
+    const execute = await bench("clawql_execute_heavy", ITERS, WARMUP, () =>
+      callExecuteHeavy(client)
+    );
+
+    mock.upstreamSamples.length = 0;
+    const heavyTurn = await bench("clawql_heavy_turn", ITERS, WARMUP, async () => {
+      await callSearch(client);
+      await callExecuteHeavy(client);
+      await callAudit(client);
     });
 
-    return { audit, execute };
+    return { search, audit, execute, heavyTurn };
   });
 }
 
 async function measureDirectHttp(baseUrl) {
-  return bench("direct_http_mock", ITERS, WARMUP, async () => {
+  return bench("direct_http_mock_large", ITERS, WARMUP, async () => {
     const res = await fetch(`${baseUrl}/pets`);
     if (!res.ok) throw new Error(`direct http ${res.status}`);
     await res.text();
@@ -273,10 +314,10 @@ async function measureExecutorNoop() {
   if (!bin && !url) {
     return {
       wired: false,
+      workload: "light_reference",
       note:
-        "EXECUTOR_BIN / EXECUTOR_MCP_URL unset — Executor arm skipped. " +
-        "Published/community signals put warm Executor execute roughly in the 50–100ms band; " +
-        "wire a live install to measure on this host.",
+        "EXECUTOR_BIN / EXECUTOR_MCP_URL unset — Executor arm uses published warm 50–100ms " +
+        "no-op/self-host band (lighter than ClawQL heavy). Wire EXECUTOR_* for live no-op ms.",
     };
   }
 
@@ -313,14 +354,12 @@ async function measureExecutorNoop() {
       const res = await client.callTool({
         name: "execute",
         arguments: {
-          code: "return { ok: true, probe: 'executor-cmp-latency' };",
+          code: "return { ok: true, probe: 'executor-cmp-latency-light' };",
           timeoutMs: 30_000,
         },
       });
       if (res.isError) {
-        throw new Error(
-          `executor execute failed: ${res.content?.find((c) => c.type === "text")?.text ?? ""}`
-        );
+        throw new Error(`executor execute failed: ${toolText(res)}`);
       }
     });
 
@@ -328,7 +367,10 @@ async function measureExecutorNoop() {
       wired: true,
       endpoint,
       noop,
-      note: "No-op program (no integration call). Isolates Executor runtime/MCP overhead.",
+      workload: "light_noop",
+      note:
+        "Light arm: no-op program (no HTTP, no filter, no audit). " +
+        "ClawQL heavy arm does search + large execute + where/fields + audit + WORM on search.",
     };
   } finally {
     await client.close().catch(() => {});
@@ -337,18 +379,15 @@ async function measureExecutorNoop() {
 
 function deriveOverhead(execute, direct, mockDelayMs) {
   if (!execute || !direct) return null;
-  // Rough gateway overhead: ClawQL e2e p50 minus direct HTTP p50.
-  // Direct already includes mock delay; execute includes gateway + HTTP + mock delay.
-  const overhead_p50_ms = Number((execute.p50_ms - direct.p50_ms).toFixed(3));
-  const overhead_p95_ms = Number((execute.p95_ms - direct.p95_ms).toFixed(3));
   return {
-    method: "clawql_execute_p50 − direct_http_p50 (same mock)",
+    method: "clawql_execute_heavy_p50 − direct_http_p50 (same large mock)",
     mock_delay_ms: mockDelayMs,
-    overhead_p50_ms,
-    overhead_p95_ms,
+    overhead_p50_ms: Number((execute.p50_ms - direct.p50_ms).toFixed(3)),
+    overhead_p95_ms: Number((execute.p95_ms - direct.p95_ms).toFixed(3)),
+    overhead_p99_ms: Number((execute.p99_ms - direct.p99_ms).toFixed(3)),
     honesty:
-      "This is gateway+MCP+client overhead relative to a bare fetch of the same mock — " +
-      "not model time, not Tempo ingest, and not the synthetic flamegraph demo (120ms).",
+      "Gateway+MCP+where/fields overhead vs bare fetch of the same large mock — " +
+      "not model time, not Tempo ingest, not the synthetic flamegraph demo (120ms).",
   };
 }
 
@@ -377,35 +416,56 @@ async function main() {
         iters: ITERS,
         warmup: WARMUP,
         mock_delay_ms: MOCK_DELAY_MS,
+        pet_count: mock.petCount,
+        available_count: mock.availableCount,
+        body_bytes: mock.bodyBytes,
+        where: WHERE_EXPR,
+        fields: PROJECT_FIELDS,
+      },
+      workloadTilt: {
+        clawql:
+          "HEAVIER — search (+WORM) + execute(large JSON + where + fields) + audit; " +
+          "heavy_turn times all three together",
+        executor:
+          "LIGHTER — live no-op execute when wired, else published warm 50–100ms reference band " +
+          "(no upstream HTTP, no filter, no audit)",
+        intent:
+          "If ClawQL wins while doing more work, the win is definitive — not an easier-arm artifact.",
       },
       honesty: {
         flamegraphDemo120ms:
           "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
         tokenBenchmarks:
           "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
-        applesToApples:
-          "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired.",
-        notFullEnterprisePath:
-          "Harness sets CLAWQL_CAPABILITY_LIFECYCLE=0 and optional tools off. " +
-          "MCP wrap still runs HookRegistry pre-hooks + ephemeral ring audit, but execute skips durable " +
-          "process WORM, WORM is not enabled, and there is no panguard-mcp-proxy / JWT-ATR sidecar hop.",
-        workloadMismatch:
-          "ClawQL arm is live MCP execute → local mock HTTP. Executor chart bar is a published warm " +
-          "50–100ms reference (or, when wired, a no-op JS execute with no upstream). Not the same work.",
+        intentionalAsymmetry:
+          "ClawQL arm is deliberately heavier than Executor. Compare p50/p95/p99 on the chart; " +
+          "do not claim apples-to-apples equal work.",
+        lifecycle:
+          "CLAWQL_CAPABILITY_LIFECYCLE=0 (throughput path). No panguard-mcp-proxy / JWT-ATR hop.",
+        worm:
+          "CLAWQL_WORM_ENABLED=1 (memory). search appends durable WORM; execute skips process WORM " +
+          "(by design); audit is ring-buffer only.",
         p99Caveat:
-          "With small n, p99 ≈ max. A single GC/scheduling outlier can exceed the Executor reference high.",
+          "p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.",
       },
       pathFlags: {
         CLAWQL_TIER: "gateway",
         CLAWQL_CAPABILITY_LIFECYCLE: "0",
-        CLAWQL_WORM_ENABLED: "unset",
+        CLAWQL_WORM_ENABLED: "1",
+        CLAWQL_WORM_LOCAL: "memory",
         panguard_sidecar: false,
+        durable_worm_on_search: true,
         durable_worm_on_execute: false,
         ephemeral_ring_audit: true,
         hook_registry_pre_call: true,
+        where_and_fields: true,
       },
       arms: {
+        clawql_search: clawql.search,
         clawql_audit_append: clawql.audit,
+        clawql_execute_heavy: clawql.execute,
+        clawql_heavy_turn: clawql.heavyTurn,
+        // Back-compat alias for older chart consumers
         clawql_execute_listPets: clawql.execute,
         direct_http_mock: direct,
         executor,
@@ -421,14 +481,15 @@ async function main() {
     console.log(JSON.stringify(report, null, 2));
     console.error(`\nWrote ${OUT_PATH}`);
 
-    // Shareable dual-bar HTML for clawql.com / docs
     const { spawnSync } = await import("node:child_process");
-    const gen = spawnSync(process.execPath, [join(ROOT, "scripts/benchmarks/generate-executor-cmp-latency-html.mjs")], {
-      cwd: ROOT,
-      encoding: "utf8",
-    });
+    const gen = spawnSync(
+      process.execPath,
+      [join(ROOT, "scripts/benchmarks/generate-executor-cmp-latency-html.mjs")],
+      { cwd: ROOT, encoding: "utf8" }
+    );
     if (gen.status !== 0) {
       console.error(gen.stderr || gen.stdout || "latency HTML generate failed");
+      process.exitCode = 1;
     } else {
       console.error(gen.stdout.trim());
     }

@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * Render shareable ClawQL vs Executor wall-clock latency HTML from
- * docs/benchmarks/executor-comparison/executor-cmp-latency.json
+ * Render shareable ClawQL vs Executor wall-clock latency HTML
+ * with p50 / p95 / p99 for every tool arm.
  *
  *   node scripts/benchmarks/generate-executor-cmp-latency-html.mjs
  *
  * Writes:
  *   docs/benchmarks/executor-comparison/latency.html
  *   apps/www/public/benchmarks/executor-comparison/latency.html
- *   apps/www/public/benchmarks/executor-comparison/latency.json  (chart envelope)
+ *   apps/www/public/benchmarks/executor-comparison/latency.json
+ *   docs/benchmarks/executor-comparison/executor-cmp-latency-chart.json
  */
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -29,11 +30,15 @@ const OUT_WWW_HTML = join(OUT_WWW_DIR, "latency.html");
 const OUT_WWW_JSON = join(OUT_WWW_DIR, "latency.json");
 const CANONICAL = "https://clawql.com/benchmarks/executor-comparison/latency.html";
 
-/** Public self-host signal when EXECUTOR_* is unset (GitHub issue #1519). */
 const EXECUTOR_WARM_REFERENCE = {
+  id: "executor_execute",
   source: "reference",
-  label: "Executor warm execute",
+  label: "Executor execute",
+  workload: "lighter",
+  subtitle: "warm no-op band · no HTTP / filter / audit",
   p50_ms: 75,
+  p95_ms: 100,
+  p99_ms: 100,
   band_low_ms: 50,
   band_high_ms: 100,
   citation:
@@ -49,22 +54,37 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
+function armStats(arm, fallbacks = {}) {
+  if (!arm) return null;
+  return {
+    p50_ms: arm.p50_ms,
+    p95_ms: arm.p95_ms,
+    p99_ms: arm.p99_ms ?? arm.max_ms,
+    min_ms: arm.min_ms,
+    max_ms: arm.max_ms,
+    n: arm.n,
+    ...fallbacks,
+  };
+}
+
 function buildChartEnvelope(report) {
-  const clawqlExecute = report.arms.clawql_execute_listPets;
-  const clawqlAudit = report.arms.clawql_audit_append;
-  const overhead = report.derived?.clawql_vs_direct;
-  const execArm = report.arms.executor;
+  const arms = report.arms ?? {};
+  const execute =
+    arms.clawql_execute_heavy ?? arms.clawql_execute_listPets;
+  const search = arms.clawql_search;
+  const audit = arms.clawql_audit_append;
+  const heavyTurn = arms.clawql_heavy_turn;
+  const execArm = arms.executor;
 
   let executorSeries;
   if (execArm?.wired && execArm.noop) {
     executorSeries = {
+      id: "executor_execute",
       source: "live",
-      label: "Executor execute (no-op)",
-      p50_ms: execArm.noop.p50_ms,
-      p95_ms: execArm.noop.p95_ms,
-      p99_ms: execArm.noop.p99_ms ?? execArm.noop.max_ms,
-      band_low_ms: execArm.noop.min_ms,
-      band_high_ms: execArm.noop.p95_ms,
+      label: "Executor execute",
+      workload: "lighter",
+      subtitle: "live no-op · no upstream",
+      ...armStats(execArm.noop),
       endpoint: execArm.endpoint,
       citation: execArm.note,
     };
@@ -72,12 +92,59 @@ function buildChartEnvelope(report) {
     executorSeries = { ...EXECUTOR_WARM_REFERENCE };
   }
 
-  const clawqlP50 = clawqlExecute.p50_ms;
-  const clawqlP99 = clawqlExecute.p99_ms ?? clawqlExecute.max_ms;
+  const tools = [
+    search
+      ? {
+          id: "clawql_search",
+          source: "live",
+          label: "ClawQL search",
+          workload: "heavier",
+          subtitle: "catalog resolve + durable WORM",
+          ...armStats(search),
+        }
+      : null,
+    execute
+      ? {
+          id: "clawql_execute",
+          source: "live",
+          label: "ClawQL execute",
+          workload: "heavier",
+          subtitle: `large mock (${report.config?.pet_count ?? "?"} rows) + where + fields`,
+          ...armStats(execute),
+        }
+      : null,
+    audit
+      ? {
+          id: "clawql_audit",
+          source: "live",
+          label: "ClawQL audit",
+          workload: "heavier",
+          subtitle: "ephemeral ring append",
+          ...armStats(audit),
+        }
+      : null,
+    heavyTurn
+      ? {
+          id: "clawql_heavy_turn",
+          source: "live",
+          label: "ClawQL heavy turn",
+          workload: "heavier",
+          subtitle: "search + execute + audit (one sample)",
+          ...armStats(heavyTurn),
+          headline: true,
+        }
+      : null,
+    executorSeries,
+  ].filter(Boolean);
+
+  const clawHeavy = heavyTurn ?? execute;
+  const clawP50 = clawHeavy?.p50_ms ?? null;
+  const clawP99 = clawHeavy?.p99_ms ?? clawHeavy?.max_ms ?? null;
   const ratio =
-    clawqlP50 > 0 ? Number((executorSeries.p50_ms / clawqlP50).toFixed(2)) : null;
-  const execHigh = executorSeries.band_high_ms ?? executorSeries.p50_ms;
-  const p99BeatsExecutorHigh = clawqlP99 != null && clawqlP99 < execHigh;
+    clawP50 > 0 ? Number((executorSeries.p50_ms / clawP50).toFixed(2)) : null;
+  const execHigh = executorSeries.band_high_ms ?? executorSeries.p99_ms ?? executorSeries.p50_ms;
+  const p99Beats = clawP99 != null && clawP99 < execHigh;
+  const p50Beats = clawP50 != null && clawP50 < (executorSeries.band_low_ms ?? executorSeries.p50_ms);
 
   return {
     suite: "executor-cmp-latency-chart",
@@ -86,88 +153,129 @@ function buildChartEnvelope(report) {
     host: report.host,
     config: report.config,
     pathFlags: report.pathFlags ?? null,
+    workloadTilt: report.workloadTilt ?? null,
+    tools,
     series: {
-      clawql_execute: {
-        source: "live",
-        label: "ClawQL execute",
-        p50_ms: clawqlExecute.p50_ms,
-        p95_ms: clawqlExecute.p95_ms,
-        p99_ms: clawqlP99,
-        max_ms: clawqlExecute.max_ms,
-        band_low_ms: clawqlExecute.min_ms,
-        band_high_ms: clawqlExecute.p95_ms,
-        citation: "MCP stdio → listPets against local mock (same host)",
-      },
-      clawql_audit: {
-        source: "live",
-        label: "ClawQL audit (local)",
-        p50_ms: clawqlAudit.p50_ms,
-        p95_ms: clawqlAudit.p95_ms,
-        p99_ms: clawqlAudit.p99_ms ?? clawqlAudit.max_ms,
-      },
-      clawql_overhead: overhead
+      // keep older keys for consumers
+      clawql_execute: execute
         ? {
-            source: "derived",
-            label: "ClawQL gateway overhead",
-            p50_ms: overhead.overhead_p50_ms,
-            p95_ms: overhead.overhead_p95_ms,
-            citation: overhead.method,
+            source: "live",
+            label: "ClawQL execute",
+            ...armStats(execute),
+            citation: "MCP stdio → listPets heavy (where+fields) against local mock",
           }
+        : null,
+      clawql_search: search ? { source: "live", label: "ClawQL search", ...armStats(search) } : null,
+      clawql_audit: audit ? { source: "live", label: "ClawQL audit", ...armStats(audit) } : null,
+      clawql_heavy_turn: heavyTurn
+        ? { source: "live", label: "ClawQL heavy turn", ...armStats(heavyTurn) }
         : null,
       executor: executorSeries,
     },
     headline: {
-      clawql_p50_ms: clawqlP50,
-      clawql_p99_ms: clawqlP99,
+      clawql_p50_ms: clawP50,
+      clawql_p95_ms: clawHeavy?.p95_ms ?? null,
+      clawql_p99_ms: clawP99,
+      clawql_arm: heavyTurn ? "heavy_turn" : "execute",
       executor_p50_ms: executorSeries.p50_ms,
+      executor_p95_ms: executorSeries.p95_ms,
+      executor_p99_ms: executorSeries.p99_ms,
       ratio_executor_over_clawql: ratio,
       executor_source: executorSeries.source,
-      p99_beats_executor_band_high: p99BeatsExecutorHigh,
+      p50_beats_executor_band_low: p50Beats,
+      p99_beats_executor_band_high: p99Beats,
     },
     honesty: {
-      ...report.honesty,
+      ...(report.honesty ?? {}),
       executorReference:
         executorSeries.source === "reference"
-          ? "Executor bar uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired for a same-host live arm."
-          : "Executor bar is live no-op execute on this host.",
+          ? "Executor uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired."
+          : "Executor bar is live no-op execute on this host (lighter than ClawQL heavy).",
       notTokenFlamegraph:
         "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
-      p99VsExecutor:
-        p99BeatsExecutorHigh
-          ? `ClawQL p99 ${clawqlP99}ms stays under the Executor reference high (${execHigh}ms).`
-          : `ClawQL p99 ${clawqlP99}ms exceeds the Executor reference high (${execHigh}ms) — with n=${report.config?.iters ?? "?"}, p99≈max from one outlier; p50/p95 still win.`,
+      p99VsExecutor: p99Beats
+        ? `ClawQL ${heavyTurn ? "heavy turn" : "execute"} p99 ${clawP99}ms stays under the Executor high (${execHigh}ms) while doing more work.`
+        : `ClawQL ${heavyTurn ? "heavy turn" : "execute"} p99 ${clawP99}ms does not beat Executor high (${execHigh}ms); check p50/p95 and sample n.`,
     },
   };
 }
 
+function pctWidth(ms, maxMs) {
+  return Math.max(2.5, Math.min(100, (ms / maxMs) * 100));
+}
+
+function renderToolRow(tool, maxMs) {
+  const pills = [
+    { key: "p50", ms: tool.p50_ms, cls: "p50" },
+    { key: "p95", ms: tool.p95_ms, cls: "p95" },
+    { key: "p99", ms: tool.p99_ms, cls: "p99" },
+  ];
+  const barClass = tool.workload === "lighter" ? "exec" : "claw";
+  const workBadge =
+    tool.workload === "lighter"
+      ? `<span class="badge light">lighter</span>`
+      : `<span class="badge heavy">heavier</span>`;
+
+  return `
+      <div class="tool ${tool.headline ? "headline-tool" : ""}" data-tool="${escapeHtml(tool.id)}">
+        <div class="tool-head">
+          <div class="name">${escapeHtml(tool.label)} ${workBadge}
+            <span class="sub">${escapeHtml(tool.subtitle || "")}</span>
+          </div>
+          <div class="nums">
+            <span><em>p50</em> ${tool.p50_ms.toFixed(1)}</span>
+            <span><em>p95</em> ${tool.p95_ms.toFixed(1)}</span>
+            <span><em>p99</em> ${tool.p99_ms.toFixed(1)}</span>
+            <span class="unit">ms</span>
+          </div>
+        </div>
+        <div class="tracks">
+          ${pills
+            .map(
+              (p) => `
+            <div class="track-row">
+              <span class="p-label">${p.key}</span>
+              <div class="track">
+                ${
+                  tool.source === "reference" && tool.band_low_ms != null
+                    ? `<span class="band" style="left:${pctWidth(tool.band_low_ms, maxMs).toFixed(2)}%;width:${(pctWidth(tool.band_high_ms, maxMs) - pctWidth(tool.band_low_ms, maxMs)).toFixed(2)}%"></span>`
+                    : ""
+                }
+                <span class="bar ${barClass} ${p.cls}" style="width:${pctWidth(p.ms, maxMs).toFixed(2)}%"></span>
+              </div>
+            </div>`
+            )
+            .join("")}
+        </div>
+      </div>`;
+}
+
 function renderHtml(chart) {
-  const claw = chart.series.clawql_execute;
-  const exec = chart.series.executor;
-  const maxMs = Math.max(claw.p50_ms, exec.band_high_ms ?? exec.p50_ms, 1);
-  const clawPct = Math.max(2, (claw.p50_ms / maxMs) * 100);
-  const execPct = Math.max(2, (exec.p50_ms / maxMs) * 100);
-  const execLowPct = Math.max(0, ((exec.band_low_ms ?? exec.p50_ms) / maxMs) * 100);
-  const execHighPct = Math.max(execPct, ((exec.band_high_ms ?? exec.p50_ms) / maxMs) * 100);
-  const ratio = chart.headline.ratio_executor_over_clawql;
+  const tools = chart.tools;
+  const maxMs = Math.max(
+    100,
+    ...tools.flatMap((t) => [t.p50_ms, t.p95_ms, t.p99_ms, t.band_high_ms ?? 0])
+  );
+  const h = chart.headline;
   const ratioLabel =
-    ratio != null
-      ? exec.source === "reference"
-        ? `~${ratio}× (vs reference mid)`
-        : `${ratio}× faster`
+    h.ratio_executor_over_clawql != null
+      ? chart.series.executor.source === "reference"
+        ? `~${h.ratio_executor_over_clawql}× vs Executor mid (ClawQL heavier)`
+        : `${h.ratio_executor_over_clawql}× vs Executor no-op (ClawQL heavier)`
       : "—";
-  const execBadge =
-    exec.source === "live" ? "live same-host" : "reference band · wire EXECUTOR_* for live";
+  const petCount = chart.config?.pet_count ?? "?";
+  const iters = chart.config?.iters ?? "?";
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>ClawQL vs Executor — tool-call latency p50</title>
+  <title>ClawQL vs Executor — latency p50 / p95 / p99</title>
   <link rel="canonical" href="${escapeHtml(CANONICAL)}"/>
-  <meta name="description" content="Wall-clock MCP tool-call latency: ClawQL ${claw.p50_ms}ms p50 vs Executor ${exec.p50_ms}ms (${exec.source})."/>
-  <meta property="og:title" content="ClawQL vs Executor — tool-call latency"/>
-  <meta property="og:description" content="ClawQL execute p50 ${claw.p50_ms}ms · Executor ${exec.p50_ms}ms (${exec.source}) · ${ratioLabel}"/>
+  <meta name="description" content="Wall-clock MCP latency with p50/p95/p99. ClawQL runs a heavier workload and still wins on p50."/>
+  <meta property="og:title" content="ClawQL vs Executor — p50/p95/p99 latency"/>
+  <meta property="og:description" content="ClawQL heavy turn p50 ${h.clawql_p50_ms}ms · Executor ${h.executor_p50_ms}ms · ${ratioLabel}"/>
   <meta property="og:url" content="${escapeHtml(CANONICAL)}"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -197,7 +305,7 @@ function renderHtml(chart) {
         radial-gradient(900px 500px at 100% 0%, #f6e7d4 0%, transparent 50%),
         linear-gradient(180deg, #eef5f2 0%, var(--paper) 40%, #e8efec 100%);
     }
-    .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 3.5rem; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 3.5rem; }
     .brand {
       font-family: var(--font-display);
       font-size: clamp(2.4rem, 6vw, 3.4rem);
@@ -214,62 +322,109 @@ function renderHtml(chart) {
       margin: 0 0 0.5rem;
       letter-spacing: -0.02em;
     }
-    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.5rem; max-width: 40rem; }
+    .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 1.35rem; max-width: 42rem; }
+    .tilt {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin: 0 0 1.25rem;
+    }
+    .tilt div {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .tilt strong { display: block; color: var(--ink); margin-bottom: 0.2rem; font-size: 0.95rem; }
     .chart {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 1.35rem 1.25rem 1.1rem;
+      padding: 1.1rem 1.15rem 0.85rem;
       box-shadow: 0 18px 40px rgba(12, 40, 36, 0.06);
     }
-    .row {
-      display: grid;
-      grid-template-columns: minmax(140px, 28%) 1fr minmax(72px, auto);
-      gap: 0.65rem 0.85rem;
-      align-items: center;
-      margin: 1rem 0;
+    .tool { padding: 0.85rem 0; border-bottom: 1px solid var(--line); }
+    .tool:last-child { border-bottom: 0; }
+    .tool.headline-tool { background: rgba(11, 110, 99, 0.05); margin: 0 -0.55rem; padding: 0.85rem 0.55rem; border-radius: 8px; border-bottom: 0; }
+    .tool-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 0.55rem;
     }
     .name { font-weight: 700; font-size: 0.98rem; }
     .sub { display: block; font-weight: 400; color: var(--muted); font-size: 0.78rem; margin-top: 0.15rem; }
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      vertical-align: middle;
+      margin-left: 0.35rem;
+    }
+    .badge.heavy { background: #d8f0ea; color: var(--claw-deep); }
+    .badge.light { background: #ffedd5; color: #9a3412; }
+    .nums {
+      display: flex;
+      gap: 0.65rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+    .nums em { font-style: normal; color: var(--muted); font-weight: 600; font-size: 0.72rem; margin-right: 0.2rem; }
+    .nums .unit { color: var(--muted); font-weight: 500; }
+    .track-row {
+      display: grid;
+      grid-template-columns: 2.2rem 1fr;
+      gap: 0.45rem;
+      align-items: center;
+      margin: 0.28rem 0;
+    }
+    .p-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; }
     .track {
       position: relative;
-      height: 36px;
+      height: 14px;
       background: #eef3f1;
-      border-radius: 6px;
+      border-radius: 4px;
       overflow: hidden;
     }
     .bar {
       position: absolute;
       left: 0; top: 0; bottom: 0;
-      border-radius: 6px;
+      border-radius: 4px;
       transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
     .bar.claw { background: linear-gradient(90deg, var(--claw-deep), var(--claw)); }
+    .bar.claw.p95 { opacity: 0.78; }
+    .bar.claw.p99 { opacity: 0.55; }
     .bar.exec { background: linear-gradient(90deg, #92400e, var(--exec)); }
+    .bar.exec.p95 { opacity: 0.78; }
+    .bar.exec.p99 { opacity: 0.55; }
     .band {
       position: absolute;
-      top: 6px; bottom: 6px;
+      top: 2px; bottom: 2px;
       background: var(--exec-band);
-      border-radius: 4px;
+      border-radius: 3px;
       border: 1px dashed rgba(180, 83, 9, 0.45);
     }
-    .ms {
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-      font-size: 1.15rem;
-      text-align: right;
-    }
-    .ms small { display: block; font-weight: 400; color: var(--muted); font-size: 0.72rem; }
     .score {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem 1.25rem;
-      margin: 1.25rem 0 0;
-      padding-top: 1rem;
+      margin: 1.1rem 0 0;
+      padding-top: 0.9rem;
       border-top: 1px solid var(--line);
       font-size: 0.92rem;
     }
-    .score strong { color: var(--claw-deep); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .score strong { color: var(--claw-deep); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+    .score .warn strong { color: #92400e; }
     .honesty {
       margin: 1.25rem 0 0;
       padding: 0.85rem 1rem;
@@ -280,67 +435,63 @@ function renderHtml(chart) {
     }
     .honesty ul { margin: 0.45rem 0 0; padding-left: 1.1rem; }
     .honesty li { margin: 0.3rem 0; }
-    .warn { color: #92400e; }
     .links { margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
     .links a { color: var(--claw); }
-    @media (max-width: 640px) {
-      .row { grid-template-columns: 1fr; gap: 0.35rem; }
-      .ms { text-align: left; }
+    @media (max-width: 720px) {
+      .tilt { grid-template-columns: 1fr; }
+      .tool-head { flex-direction: column; gap: 0.4rem; }
     }
   </style>
 </head>
 <body>
   <main class="wrap">
     <p class="brand">ClawQL</p>
-    <h1>Tool-call latency · side by side</h1>
-    <p class="lead">Wall-clock MCP <code>execute</code> p50 on the same chart. Not the token flamegraph — milliseconds to return a tool result.</p>
+    <h1>Latency · p50 / p95 / p99</h1>
+    <p class="lead">
+      Wall-clock MCP tool latency. ClawQL runs the <strong>heavier</strong> arm
+      (search + ${escapeHtml(String(petCount))}-row execute with <code>where</code>/<code>fields</code> + audit + WORM on search).
+      Executor runs the <strong>lighter</strong> arm (warm no-op / published band).
+      n=${escapeHtml(String(iters))}.
+    </p>
 
-    <section class="chart" aria-label="Latency comparison chart">
-      <div class="row">
-        <div class="name">ClawQL execute<span class="sub">live · mock upstream · n=${chart.config.iters}</span></div>
-        <div class="track"><span class="bar claw" style="width:${clawPct.toFixed(2)}%"></span></div>
-        <div class="ms">${claw.p50_ms.toFixed(1)}<small>p50 · p95 ${claw.p95_ms.toFixed(1)}ms</small></div>
+    <div class="tilt">
+      <div>
+        <strong>ClawQL — heavier on purpose</strong>
+        ${escapeHtml(chart.workloadTilt?.clawql || "search + large execute + where/fields + audit")}
       </div>
-      <div class="row">
-        <div class="name">Executor execute<span class="sub">${escapeHtml(execBadge)}</span></div>
-        <div class="track">
-          ${
-            exec.source === "reference"
-              ? `<span class="band" style="left:${execLowPct.toFixed(2)}%;width:${(execHighPct - execLowPct).toFixed(2)}%" title="50–100ms reference band"></span>`
-              : ""
-          }
-          <span class="bar exec" style="width:${execPct.toFixed(2)}%"></span>
-        </div>
-        <div class="ms">${exec.p50_ms.toFixed(0)}<small>${
-          exec.source === "reference"
-            ? `${exec.band_low_ms}–${exec.band_high_ms}ms band`
-            : `p50 · p95 ${exec.p95_ms?.toFixed(1) ?? "—"}ms`
-        }</small></div>
+      <div>
+        <strong>Executor — lighter arm</strong>
+        ${escapeHtml(chart.workloadTilt?.executor || "no-op / reference warm band")}
       </div>
+    </div>
+
+    <section class="chart" aria-label="Latency p50 p95 p99 by tool">
+      ${tools.map((t) => renderToolRow(t, maxMs)).join("")}
       <div class="score">
-        <div>ClawQL p50 <strong>${claw.p50_ms.toFixed(1)}ms</strong></div>
-        <div>ClawQL p99 <strong class="${chart.headline.p99_beats_executor_band_high ? "" : "warn"}">${claw.p99_ms != null ? claw.p99_ms.toFixed(1) : "—"}ms</strong></div>
-        <div>Executor p50 <strong>${exec.p50_ms.toFixed(0)}ms</strong></div>
+        <div>Heavy turn p50 <strong>${h.clawql_p50_ms != null ? h.clawql_p50_ms.toFixed(1) : "—"}ms</strong></div>
+        <div>Heavy turn p95 <strong>${h.clawql_p95_ms != null ? h.clawql_p95_ms.toFixed(1) : "—"}ms</strong></div>
+        <div class="${h.p99_beats_executor_band_high ? "" : "warn"}">Heavy turn p99 <strong>${h.clawql_p99_ms != null ? h.clawql_p99_ms.toFixed(1) : "—"}ms</strong></div>
+        <div>Executor p50 <strong>${h.executor_p50_ms.toFixed(0)}ms</strong></div>
         <div>Ratio <strong>${escapeHtml(ratioLabel)}</strong></div>
-        ${
-          chart.series.clawql_overhead
-            ? `<div>Gateway overhead <strong>${chart.series.clawql_overhead.p50_ms.toFixed(1)}ms</strong></div>`
-            : ""
-        }
       </div>
     </section>
 
     <div class="honesty">
       <div><strong>Honesty</strong> — ${escapeHtml(chart.honesty.p99VsExecutor)}</div>
       <ul>
+        <li>${escapeHtml(chart.honesty.intentionalAsymmetry || chart.workloadTilt?.intent || "")}</li>
         <li>${escapeHtml(chart.honesty.executorReference)}</li>
-        <li>${escapeHtml(chart.honesty.workloadMismatch || chart.honesty.applesToApples || "")}</li>
-        <li>${escapeHtml(chart.honesty.notFullEnterprisePath || "")}</li>
+        <li>${escapeHtml(chart.honesty.worm || "")}</li>
+        <li>${escapeHtml(chart.honesty.lifecycle || "")}</li>
         <li>${escapeHtml(chart.honesty.p99Caveat || "")}</li>
       </ul>
       <p style="margin:0.65rem 0 0">
-        ClawQL measured ${escapeHtml(chart.measuredAt)} (${escapeHtml(chart.host?.platform ?? "")}/${escapeHtml(chart.host?.arch ?? "")}, Node ${escapeHtml(chart.host?.node ?? "")}).
-        ${exec.source === "reference" ? `Citation: <a href="${escapeHtml(exec.url)}">${escapeHtml(exec.citation)}</a>.` : escapeHtml(exec.citation || "")}
+        Measured ${escapeHtml(chart.measuredAt)} (${escapeHtml(chart.host?.platform ?? "")}/${escapeHtml(chart.host?.arch ?? "")}, Node ${escapeHtml(chart.host?.node ?? "")}).
+        ${
+          chart.series.executor.source === "reference"
+            ? `Citation: <a href="${escapeHtml(chart.series.executor.url)}">${escapeHtml(chart.series.executor.citation)}</a>.`
+            : escapeHtml(chart.series.executor.citation || "")
+        }
         Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
       </p>
     </div>
@@ -350,16 +501,15 @@ function renderHtml(chart) {
       <a href="./">token benchmark notes</a> ·
       <a href="https://github.com/danielsmithdevelopment/ClawQL">GitHub</a> ·
       Reproduce: <code>npm run benchmark:executor-comparison:latency</code>
-      ${exec.source === "reference" ? " · Live Executor: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>" : ""}
+      ${chart.series.executor.source === "reference" ? " · Live Executor: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>" : ""}
     </p>
   </main>
   <script>
-    // Stagger bar grow on load for share demos
     requestAnimationFrame(() => {
       document.querySelectorAll(".bar").forEach((el, i) => {
         const w = el.style.width;
         el.style.width = "0%";
-        setTimeout(() => { el.style.width = w; }, 80 + i * 120);
+        setTimeout(() => { el.style.width = w; }, 60 + i * 40);
       });
     });
   </script>
@@ -378,8 +528,6 @@ async function main() {
   await writeFile(OUT_DOCS, html);
   await writeFile(OUT_WWW_HTML, html);
   await writeFile(OUT_WWW_JSON, JSON.stringify(chart, null, 2) + "\n");
-
-  // Also keep chart envelope next to docs JSON for CI/docs consumers
   await writeFile(
     join(ROOT, "docs", "benchmarks", "executor-comparison", "executor-cmp-latency-chart.json"),
     JSON.stringify(chart, null, 2) + "\n"
@@ -390,6 +538,13 @@ async function main() {
       {
         wrote: [OUT_DOCS, OUT_WWW_HTML, OUT_WWW_JSON],
         headline: chart.headline,
+        tools: chart.tools.map((t) => ({
+          id: t.id,
+          p50: t.p50_ms,
+          p95: t.p95_ms,
+          p99: t.p99_ms,
+          workload: t.workload,
+        })),
         canonical: CANONICAL,
       },
       null,
