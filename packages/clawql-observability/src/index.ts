@@ -213,8 +213,28 @@ export type {
   ProviderQueryHit,
   QueryTimeRange,
   TelemetryQueryTransportApi,
+  TraceByIdRequest,
   TraceQueryRequest,
 } from "./query/types.js";
+
+export type {
+  FlatSpan,
+  SpanFlameNode,
+  SpanFlamegraph,
+  SpanSelfTimeRow,
+} from "./flame/span-flame.js";
+export {
+  buildSpanFlamegraphEffect,
+  demoSpanFlameFixtureEffect,
+  parseTempoTracePayloadEffect,
+} from "./flame/span-flame.js";
+export { renderSpanFlamegraphHtmlEffect } from "./flame/span-flame-html.js";
+export {
+  loadSpanFlamegraphEffect,
+  spanFlamegraphUiPathEffect,
+  spanFlamegraphUiUrlEffect,
+} from "./flame/load-span-flame.js";
+export type { LoadSpanFlamegraphInput } from "./flame/load-span-flame.js";
 export { TelemetryQueryTransport, TelemetryQueryTransportLive } from "./query/transport.js";
 export {
   ObservabilityQueryService,

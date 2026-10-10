@@ -132,6 +132,10 @@ describe("observability query federation", () => {
           { sub: "reader-1", scope: ["observability:query_traces"] },
           { traceql: '{ resource.service.name = "api" }', timeRange }
         );
+        const byId = yield* query.getTrace(
+          { sub: "reader-1", scope: ["observability:query_traces"] },
+          { traceId: "0bb8d6a0a04ba62ac300a12f094822e3" }
+        );
         const profiles = yield* query.queryProfiles(
           { sub: "reader-1", scope: ["observability:query_profiles"] },
           {
@@ -139,7 +143,7 @@ describe("observability query federation", () => {
             timeRange,
           }
         );
-        return { metrics, traces, profiles };
+        return { metrics, traces, byId, profiles };
       }).pipe(Effect.provide(makeQueryTestLayer(events)))
     );
 
@@ -149,6 +153,13 @@ describe("observability query federation", () => {
     expect(result.metrics.results[0]?.providerId).toBe("lgtm-mimir");
     expect(result.traces.results[0]?.providerId).toBe("lgtm-tempo");
     expect(result.profiles.results[0]?.providerId).toBe("lgtm-pyroscope");
+    expect(result.byId.results[0]?.providerId).toBe("lgtm-tempo");
+    const byIdPayload = result.byId.results[0]?.payload as {
+      data: { result: Array<{ url: string }> };
+    };
+    expect(byIdPayload.data.result[0]?.url).toContain(
+      "/api/traces/0bb8d6a0a04ba62ac300a12f094822e3"
+    );
   });
 
   it("selects one metric provider by id", async () => {
