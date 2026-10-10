@@ -16,6 +16,7 @@ import {
   type McpRegisteredClient,
   type McpTokenRequest,
 } from "./mcp-oauth.js";
+import { DEVICE_CODE_GRANT } from "./mcp-device-flow.js";
 import type { SecretStoreEmaConfigStore } from "./ema-config-store.js";
 import type { EmaConnectorRegistry } from "./ema-connector-registry.js";
 import type { IdJagIssuerService } from "./id-jag-issuer.js";
@@ -32,6 +33,8 @@ import { Context, Effect } from "effect";
 export const MCP_OAUTH_TOKEN_PATH = "/oauth/token";
 export const MCP_OAUTH_AUTHORIZE_PATH = "/oauth/authorize";
 export const MCP_OAUTH_REVOKE_PATH = "/oauth/revoke";
+export const MCP_OAUTH_DEVICE_AUTHORIZATION_PATH = "/oauth/device_authorization";
+export const MCP_OAUTH_DEVICE_VERIFY_PATH = "/oauth/device";
 export { MCP_OAUTH_PROTECTED_RESOURCE_PATH };
 export const ID_JAG_ISSUER_JWKS_PATH = "/.well-known/id-jag-jwks.json";
 export const ID_JAG_ISSUE_PATH = "/oauth/id-jag/issue";
@@ -53,12 +56,18 @@ export type AttachMcpOAuthRoutesOptions = {
   tokenPath?: string;
   authorizePath?: string;
   /**
-   * Resolve ATR claims for `GET /oauth/authorize`.
+   * Resolve ATR claims for `GET /oauth/authorize` and device verify/approve.
    * ClawQL is not a login IdP — the caller must already be authenticated
    * (API key / OIDC / MCP JWT). When set and the AS supports `authorization_code`,
    * the authorize endpoint and discovery metadata are enabled.
    */
   resolveAuthorizeClaims?: (req: Request) => Promise<AtrClaims>;
+  /**
+   * Override paths for RFC 8628 device flow. Defaults:
+   * `/oauth/device_authorization`, `/oauth/device`.
+   */
+  deviceAuthorizationPath?: string;
+  deviceVerifyPath?: string;
   /** When set, enables GET/PUT admin routes for EMA org config. */
   emaAdmin?: McpOAuthAdminAuth & {
     store: SecretStoreEmaConfigStore;
@@ -121,7 +130,11 @@ function queryParam(req: Request, name: string): string | undefined {
 }
 
 function grantTypesForDiscovery(supported: McpGrantType[]): string[] {
-  return supported.map((g) => (g === "id_jag" ? ID_JAG_JWT_BEARER_GRANT : g));
+  return supported.map((g) => {
+    if (g === "id_jag") return ID_JAG_JWT_BEARER_GRANT;
+    if (g === "device_code") return DEVICE_CODE_GRANT;
+    return g;
+  });
 }
 
 /** Parse RFC 6749 `Authorization: Basic` client credentials. */
@@ -171,6 +184,7 @@ export function parseMcpOAuthTokenBody(body: TokenBody): McpTokenRequest {
     codeVerifier: body.code_verifier?.trim() || body.codeVerifier?.trim(),
     redirectUri: body.redirect_uri?.trim() || body.redirectUri?.trim(),
     resource: body.resource?.trim(),
+    deviceCode: body.device_code?.trim() || body.deviceCode?.trim(),
   };
 }
 
@@ -185,6 +199,11 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
     if (code === "invalid_request") return { status: 400, error: code, description };
     if (code === "invalid_target") return { status: 400, error: code, description };
     if (code === "invalid_token") return { status: 401, error: code, description };
+    // RFC 8628 device-flow poll responses (still HTTP 400).
+    if (code === "authorization_pending") return { status: 400, error: code, description };
+    if (code === "slow_down") return { status: 400, error: code, description };
+    if (code === "expired_token") return { status: 400, error: code, description };
+    if (code === "access_denied") return { status: 400, error: code, description };
     return { status: 500, error: "server_error", description };
   }
 
@@ -197,6 +216,10 @@ function mapIssueTokenError(err: unknown): { status: number; error: string; desc
   if (code === "invalid_grant") return { status: 400, error: code, description };
   if (code === "invalid_scope") return { status: 400, error: code, description };
   if (code === "invalid_request") return { status: 400, error: code, description };
+  if (code === "authorization_pending") return { status: 400, error: code, description };
+  if (code === "slow_down") return { status: 400, error: code, description };
+  if (code === "expired_token") return { status: 400, error: code, description };
+  if (code === "access_denied") return { status: 400, error: code, description };
   if (code === "invalid_target") return { status: 400, error: code, description };
   return { status: 500, error: "server_error", description: message };
 }
@@ -309,6 +332,69 @@ export async function handleMcpOAuthAuthorizeRequest(
       })
     );
     res.redirect(302, result.redirectUrl);
+  } catch (err) {
+    const mapped = mapIssueTokenError(err);
+    oauthError(res, mapped.status, mapped.error, mapped.description);
+  }
+}
+
+/** RFC 8628 device authorization request (client polls token endpoint after user approves). */
+export async function handleMcpOAuthDeviceAuthorizationRequest(
+  server: MCPOAuthServer,
+  body: TokenBody,
+  res: Response,
+  req?: Request
+): Promise<void> {
+  if (req && !enforceMcpOAuthRateLimit(req, res)) return;
+  const merged = mergeClientAuthFromBasic(body, req);
+  const clientId = merged.client_id?.trim() || merged.clientId?.trim() || "";
+  try {
+    const issued = await Effect.runPromise(server.createDeviceAuthorization(clientId));
+    res.status(200).json(issued);
+  } catch (err) {
+    const mapped = mapIssueTokenError(err);
+    oauthError(res, mapped.status, mapped.error, mapped.description);
+  }
+}
+
+/**
+ * User approval of a device `user_code`. Requires an authenticated session
+ * (`resolveAuthorizeClaims`) — ClawQL is not a login IdP.
+ */
+export async function handleMcpOAuthDeviceVerifyRequest(
+  server: MCPOAuthServer,
+  req: Request,
+  res: Response,
+  resolveClaims: (req: Request) => Promise<AtrClaims>
+): Promise<void> {
+  if (!enforceMcpOAuthRateLimit(req, res)) return;
+
+  let claims: AtrClaims;
+  try {
+    claims = await resolveClaims(req);
+  } catch (err) {
+    oauthError(res, 401, "invalid_client", err instanceof Error ? err.message : "unauthorized");
+    return;
+  }
+
+  const userCode =
+    (req.method === "POST"
+      ? (req.body as TokenBody | undefined)?.user_code?.trim() ||
+        (req.body as TokenBody | undefined)?.userCode?.trim()
+      : undefined) || queryParam(req, "user_code");
+
+  if (!userCode) {
+    oauthError(res, 400, "invalid_request", "missing_user_code");
+    return;
+  }
+  if (!claims.sub?.trim()) {
+    oauthError(res, 401, "invalid_client", "missing_subject");
+    return;
+  }
+
+  try {
+    await Effect.runPromise(server.approveDeviceAuthorization(userCode, claims.sub));
+    res.status(200).json({ status: "approved", user_code: userCode });
   } catch (err) {
     const mapped = mapIssueTokenError(err);
     oauthError(res, mapped.status, mapped.error, mapped.description);
@@ -439,12 +525,16 @@ export function attachMcpOAuthRoutes(
 ): void {
   const tokenPath = options.tokenPath?.trim() || MCP_OAUTH_TOKEN_PATH;
   const authorizePath = options.authorizePath?.trim() || MCP_OAUTH_AUTHORIZE_PATH;
+  const deviceAuthorizationPath =
+    options.deviceAuthorizationPath?.trim() || MCP_OAUTH_DEVICE_AUTHORIZATION_PATH;
+  const deviceVerifyPath = options.deviceVerifyPath?.trim() || MCP_OAUTH_DEVICE_VERIFY_PATH;
   const revokePath = MCP_OAUTH_REVOKE_PATH;
   const mcpOAuthRouteRateLimit = createMcpOAuthRateLimiter();
   const supportsAuthCode =
     !!server &&
     !!options.resolveAuthorizeClaims &&
     server.getSupportedGrantTypes().includes("authorization_code");
+  const supportsDeviceFlow = !!server && server.isDeviceFlowEnabled();
 
   if (server) {
     app.post(tokenPath, (req, res) => {
@@ -487,6 +577,43 @@ export function attachMcpOAuthRoutes(
         );
       });
     }
+
+    if (supportsDeviceFlow) {
+      app.post(deviceAuthorizationPath, (req, res) => {
+        void handleMcpOAuthDeviceAuthorizationRequest(
+          server,
+          (req.body ?? {}) as TokenBody,
+          res,
+          req
+        ).catch((err: unknown) => {
+          console.error("[clawql-auth] POST oauth/device_authorization error:", err);
+          if (!res.headersSent) {
+            oauthError(res, 500, "server_error", err instanceof Error ? err.message : String(err));
+          }
+        });
+      });
+
+      if (options.resolveAuthorizeClaims) {
+        const resolveClaims = options.resolveAuthorizeClaims;
+        const verifyHandler = (req: Request, res: Response) => {
+          void handleMcpOAuthDeviceVerifyRequest(server, req, res, resolveClaims).catch(
+            (err: unknown) => {
+              console.error("[clawql-auth] oauth/device verify error:", err);
+              if (!res.headersSent) {
+                oauthError(
+                  res,
+                  500,
+                  "server_error",
+                  err instanceof Error ? err.message : String(err)
+                );
+              }
+            }
+          );
+        };
+        app.get(deviceVerifyPath, verifyHandler);
+        app.post(deviceVerifyPath, verifyHandler);
+      }
+    }
   }
 
   if (options.wellKnown && server) {
@@ -504,6 +631,7 @@ export function attachMcpOAuthRoutes(
         const tokenEndpoint = `${origin}${tokenPath}`;
         const supported = server.getSupportedGrantTypes();
         const authCodeEnabled = supportsAuthCode && supported.includes("authorization_code");
+        const deviceEnabled = supportsDeviceFlow && supported.includes("device_code");
 
         res.setHeader("Content-Type", "application/json; charset=utf-8");
         res.setHeader("Cache-Control", "public, max-age=300");
@@ -515,6 +643,11 @@ export function attachMcpOAuthRoutes(
             ? {
                 authorization_endpoint: `${origin}${authorizePath}`,
                 code_challenge_methods_supported: ["S256"],
+              }
+            : {}),
+          ...(deviceEnabled
+            ? {
+                device_authorization_endpoint: `${origin}${deviceAuthorizationPath}`,
               }
             : {}),
           grant_types_supported: grantTypesForDiscovery(supported),

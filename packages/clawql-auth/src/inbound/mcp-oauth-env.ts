@@ -38,6 +38,7 @@ import {
   type McpOAuthError,
   type McpRegisteredClient,
 } from "./mcp-oauth.js";
+import { createMemoryDeviceCodeStore } from "./mcp-device-flow.js";
 import {
   loadMcpOAuthSigningFromEnvEffect,
   mcpOAuthSigningConfigured,
@@ -266,6 +267,11 @@ export function createMcpOAuthFromEnv(
 
     const authCodeStore = createSecretStoreMcpAuthorizationCodeStore(secretStore);
 
+    const deviceFlowEnabled = envFlag("CLAWQL_MCP_OAUTH_DEVICE_FLOW", env);
+    const verificationUri =
+      env.CLAWQL_MCP_OAUTH_DEVICE_VERIFICATION_URI?.trim() ||
+      `${issuer.replace(/\/$/, "")}/oauth/device`;
+
     const config: MCPOAuthConfig = {
       issuer,
       signing,
@@ -276,6 +282,13 @@ export function createMcpOAuthFromEnv(
       authCodeStore,
       accessTokenStore,
       eventSink,
+      ...(deviceFlowEnabled
+        ? {
+            // In-process store until a SecretStore-backed device-code store lands.
+            deviceCodeStore: createMemoryDeviceCodeStore(),
+            deviceFlow: { verificationUri },
+          }
+        : {}),
     };
 
     const server = createMCPOAuthServer(config, clients, refreshStore);
@@ -308,6 +321,8 @@ export function createMcpOAuthForTests(input: {
   clients?: McpRegisteredClient[];
   emaOrgs?: EmaOrgConfig[];
   eventSink?: AuthEventSink;
+  /** When true, wires RFC 8628 device flow (store + verification URI). */
+  deviceFlow?: boolean | { verificationUri: string };
 }): Effect.Effect<McpOAuthRuntime> {
   return Effect.gen(function* () {
     const secretStore = createMemorySecretStore();
@@ -320,6 +335,13 @@ export function createMcpOAuthForTests(input: {
       overwrite: true,
     });
 
+    const deviceFlowOpt = input.deviceFlow;
+    const deviceFlowEnabled = Boolean(deviceFlowOpt);
+    const verificationUri =
+      typeof deviceFlowOpt === "object" && deviceFlowOpt.verificationUri
+        ? deviceFlowOpt.verificationUri
+        : "https://auth.clawql.test/oauth/device";
+
     const config: MCPOAuthConfig = {
       issuer: input.issuer,
       signingSecret: input.signingSecret,
@@ -329,6 +351,12 @@ export function createMcpOAuthForTests(input: {
       authCodeStore: createMemoryMcpAuthorizationCodeStore(),
       accessTokenStore: createSecretStoreMcpAccessTokenStore(secretStore),
       eventSink: input.eventSink,
+      ...(deviceFlowEnabled
+        ? {
+            deviceCodeStore: createMemoryDeviceCodeStore(),
+            deviceFlow: { verificationUri },
+          }
+        : {}),
     };
     const server = createMCPOAuthServer(
       config,

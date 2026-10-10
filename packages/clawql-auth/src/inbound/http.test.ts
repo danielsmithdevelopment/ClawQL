@@ -10,11 +10,14 @@ import {
   parseHttpBasicClientAuth,
   parseMcpOAuthTokenBody,
   MCP_OAUTH_AUTHORIZE_PATH,
+  MCP_OAUTH_DEVICE_AUTHORIZATION_PATH,
+  MCP_OAUTH_DEVICE_VERIFY_PATH,
   MCP_OAUTH_PROTECTED_RESOURCE_PATH,
   MCP_OAUTH_REVOKE_PATH,
   MCP_OAUTH_TOKEN_PATH,
 } from "./http.js";
 import { createMcpOAuthForTests } from "./mcp-oauth-env.js";
+import { DEVICE_CODE_GRANT } from "./mcp-device-flow.js";
 import { loadMcpOAuthSigningMaterialEffect } from "./mcp-oauth-signing.js";
 import { hashMcpClientSecret } from "./mcp-oauth.js";
 
@@ -24,6 +27,7 @@ async function withTestApp(
     adminApiKey?: string;
     resolveAuthorizeClaims?: true;
     redirectUri?: string;
+    deviceFlow?: boolean;
   }
 ): Promise<void> {
   const idpSecret = "test-idp-hs256-secret-at-least-32-chars!!";
@@ -38,6 +42,9 @@ async function withTestApp(
       issuer: "https://auth.clawql.test",
       signingSecret,
       resourceAudience: audience,
+      deviceFlow: options?.deviceFlow
+        ? { verificationUri: "https://auth.clawql.test/oauth/device" }
+        : undefined,
       clients: [
         {
           clientId: "cursor-desktop",
@@ -72,6 +79,8 @@ async function withTestApp(
   const app = express();
   app.use(MCP_OAUTH_TOKEN_PATH, express.urlencoded({ extended: false }));
   app.use(MCP_OAUTH_REVOKE_PATH, express.urlencoded({ extended: false }));
+  app.use(MCP_OAUTH_DEVICE_AUTHORIZATION_PATH, express.urlencoded({ extended: false }));
+  app.use(MCP_OAUTH_DEVICE_VERIFY_PATH, express.urlencoded({ extended: false }));
   app.use("/oauth/ema", express.json());
   attachMcpOAuthRoutes(app, runtime.server, {
     wellKnown: { issuer: runtime.config.issuer, resourceAudience: audience },
@@ -279,6 +288,7 @@ describe("attachMcpOAuthRoutes", () => {
         revocation_endpoint: string;
         grant_types_supported: string[];
         authorization_endpoint?: string;
+        device_authorization_endpoint?: string;
         token_endpoint_auth_methods_supported: string[];
       };
       expect(body.token_endpoint).toContain("/oauth/token");
@@ -287,7 +297,70 @@ describe("attachMcpOAuthRoutes", () => {
       expect(body.grant_types_supported).toContain("urn:ietf:params:oauth:grant-type:jwt-bearer");
       expect(body.grant_types_supported).toContain("authorization_code");
       expect(body.authorization_endpoint).toBeUndefined();
+      expect(body.device_authorization_endpoint).toBeUndefined();
+      expect(body.grant_types_supported).not.toContain(DEVICE_CODE_GRANT);
     });
+  });
+
+  it("device authorization → verify → token mints ATR JWT with human subject", async () => {
+    await withTestApp(
+      async (baseUrl) => {
+        const discovery = await fetch(`${baseUrl}/.well-known/oauth-authorization-server`);
+        const meta = (await discovery.json()) as {
+          device_authorization_endpoint: string;
+          grant_types_supported: string[];
+        };
+        expect(meta.device_authorization_endpoint).toContain(MCP_OAUTH_DEVICE_AUTHORIZATION_PATH);
+        expect(meta.grant_types_supported).toContain(DEVICE_CODE_GRANT);
+
+        const authRes = await fetch(`${baseUrl}${MCP_OAUTH_DEVICE_AUTHORIZATION_PATH}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ client_id: "cursor-desktop" }),
+        });
+        expect(authRes.status).toBe(200);
+        const issued = (await authRes.json()) as {
+          device_code: string;
+          user_code: string;
+          verification_uri: string;
+        };
+        expect(issued.device_code).toMatch(/^dvc_/);
+
+        const pending = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: DEVICE_CODE_GRANT,
+            device_code: issued.device_code,
+            client_id: "cursor-desktop",
+          }),
+        });
+        expect(pending.status).toBe(400);
+        expect(((await pending.json()) as { error: string }).error).toBe("authorization_pending");
+
+        const verify = await fetch(
+          `${baseUrl}${MCP_OAUTH_DEVICE_VERIFY_PATH}?user_code=${encodeURIComponent(issued.user_code)}`
+        );
+        expect(verify.status).toBe(200);
+
+        const tokenRes = await fetch(`${baseUrl}${MCP_OAUTH_TOKEN_PATH}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: DEVICE_CODE_GRANT,
+            device_code: issued.device_code,
+            client_id: "cursor-desktop",
+          }),
+        });
+        expect(tokenRes.status).toBe(200);
+        const token = (await tokenRes.json()) as { access_token: string };
+        const payload = JSON.parse(
+          Buffer.from(token.access_token.split(".")[1]!, "base64url").toString("utf8")
+        ) as { atr?: { sub?: string } };
+        expect(payload.atr?.sub).toBe("alice@acme.test");
+      },
+      { deviceFlow: true, resolveAuthorizeClaims: true }
+    );
   });
 
   it("authorize → token PKCE round-trip redirects and mints ATR JWT", async () => {
