@@ -82,7 +82,7 @@ Vendors return probabilities calibrated on **their** distributions. ClawQL owns:
 
 1. **Per-site held-out evaluation** — answers-on-its-own @ zero wrong answers
 2. **Site-fit calibration** — fit on one split, score on another
-3. **Flip-rate / perturbation robustness** (Microsoft-style) before `productionTrusted`
+3. **Flip-rate / perturbation robustness** (Microsoft-style) — operator gate + held-out `productionTrusted` conjunct
 4. **Escalation** — local → Luna / Decision-1 → human Review
 5. **Backend version pins** — version change → re-prove
 

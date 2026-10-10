@@ -65,7 +65,7 @@ Suite-level `passed` requires every case passed (fail-closed).
 
 ## Trust coupling
 
-v0.1 **reports** pass/fail for operators and CI. Wiring into `productionTrusted` in `clawql-core` held-out is a follow-on (gate must run on frontier-adjudicated suites with live GLiNER).
+v0.1 operator endpoint **reports** pass/fail for CI. Held-out `productionTrusted` in `clawql-core` also requires the flip-rate gate: each case query is perturbed, re-scored via `FastDecisionScorer`, and suite pass needs every case at or under `maxFlipRate` (default `0.1`). Opt out for wiring-only runs: `CLAWQL_FLIP_RATE_GATE=0`.
 
 Fan-out eval may later attach flip-rate as a secondary column before recommending a backend.
 
