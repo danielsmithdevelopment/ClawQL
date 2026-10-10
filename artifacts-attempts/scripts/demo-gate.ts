@@ -6,7 +6,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { runLocalDemo } from "@artifacts-attempts/pipeline";
 
@@ -41,7 +41,24 @@ async function oneRun(i: number): Promise<void> {
     ["cli/verify/dist/cli.js", "--local-manifest", result.manifestPath, "--bundle-dir", bundle],
     { cwd: process.cwd(), stdio: "inherit" }
   );
-  console.log(`OK run ${i}: main=${result.mainCommit.slice(0, 12)} arweave=${result.arweaveId}`);
+  const canary = JSON.parse(readFileSync(result.canaryStatusPath, "utf8")) as {
+    mode: string;
+    versions: Array<{ label: string; percentage: number }>;
+    rollbackTrigger: string;
+  };
+  if (canary.mode !== "dry-run") {
+    throw new Error(`expected canary mode dry-run, got ${canary.mode}`);
+  }
+  const canaryPct = canary.versions.find((v) => v.label === "canary")?.percentage;
+  if (canaryPct !== 10) {
+    throw new Error(`expected canary 10%, got ${canaryPct}`);
+  }
+  if (!canary.rollbackTrigger.includes("error_rate")) {
+    throw new Error(`expected rollback trigger mentioning error_rate`);
+  }
+  console.log(
+    `OK run ${i}: main=${result.mainCommit.slice(0, 12)} arweave=${result.arweaveId} canary=${canaryPct}%`
+  );
 }
 
 async function main(): Promise<void> {

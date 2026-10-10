@@ -21,7 +21,8 @@ Apache-2.0. No private Ontologiql code. Nothing personal goes into a release.
 - Day 1 checks + packages: [`DAY1.md`](./DAY1.md)  
 - Day 2 local pipeline (no Cloudflare creds): [`DAY2.md`](./DAY2.md)  
 - Day 3–6: board, gate, decider, approval path — see `DAY3.md`…`DAY6.md`  
-- Day 7 decider-in-pipeline + dry-run canary: [`DAY7.md`](./DAY7.md)
+- Day 7 decider-in-pipeline + dry-run canary: [`DAY7.md`](./DAY7.md)  
+- Day 8 board canary + gate asserts: [`DAY8.md`](./DAY8.md)
 
 ### Run the local demo (real git notes + vitest + dry-run release)
 

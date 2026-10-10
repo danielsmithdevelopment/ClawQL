@@ -67,7 +67,7 @@
       .warn { color: var(--warn); }
       .bad { color: var(--danger); }
       #meta { color: var(--muted); font-size: 0.78rem; margin-top: 1rem; }
-      .decision {
+      .decision, .canary {
         margin: 1.25rem 0 0;
         padding: 0.85rem 1rem;
         border-left: 3px solid var(--accent);
@@ -76,6 +76,20 @@
         opacity: 0;
         animation: rise 0.7s ease 0.24s forwards;
       }
+      .canary {
+        border-left-color: var(--warn);
+        background: rgba(201, 133, 43, 0.08);
+        animation-delay: 0.32s;
+      }
+      .canary .bar {
+        display: flex;
+        height: 0.55rem;
+        margin: 0.55rem 0 0.35rem;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .canary .bar span.prev { background: #4a5d70; flex: var(--prev, 90); }
+      .canary .bar span.next { background: var(--warn); flex: var(--canary, 10); }
       @keyframes rise {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -104,6 +118,7 @@
         </tbody>
       </table>
       <div id="decision" class="decision" hidden></div>
+      <div id="canary" class="canary" hidden></div>
       <p id="meta"></p>
       <p id="approveLink" style="margin-top:0.75rem;font-size:0.8rem;"></p>
     </main>
@@ -113,6 +128,7 @@
       const rows = document.getElementById("rows");
       const meta = document.getElementById("meta");
       const decisionEl = document.getElementById("decision");
+      const canaryEl = document.getElementById("canary");
       const approveLink = document.getElementById("approveLink");
 
       function tone(status) {
@@ -179,7 +195,38 @@
           decisionEl.textContent =
             `Decision: ${view.decision.winner}` +
             (view.pendingApproval ? " (awaiting approval)" : "") +
-            (view.task?.status ? ` · task ${view.task.status}` : "");
+            (view.task?.status ? ` · task ${view.task.status}` : "") +
+            (view.arweaveId ? ` · release ${view.arweaveId}` : "");
+        } else {
+          decisionEl.hidden = true;
+        }
+        if (view.canary) {
+          canaryEl.hidden = false;
+          canaryEl.replaceChildren();
+          const title = document.createElement("div");
+          title.textContent =
+            `Canary ${view.canary.canaryPercent}%` +
+            ` (${view.canary.mode}) · previous ${view.canary.previousPercent}%` +
+            (view.canary.versionId ? ` · ${view.canary.versionId}` : "");
+          canaryEl.appendChild(title);
+          const bar = document.createElement("div");
+          bar.className = "bar";
+          bar.style.setProperty("--prev", String(view.canary.previousPercent));
+          bar.style.setProperty("--canary", String(view.canary.canaryPercent));
+          const prev = document.createElement("span");
+          prev.className = "prev";
+          const next = document.createElement("span");
+          next.className = "next";
+          bar.appendChild(prev);
+          bar.appendChild(next);
+          canaryEl.appendChild(bar);
+          const trigger = document.createElement("div");
+          trigger.style.color = "var(--muted)";
+          trigger.style.fontSize = "0.78rem";
+          trigger.textContent = `Rollback trigger: ${view.canary.rollbackTrigger}`;
+          canaryEl.appendChild(trigger);
+        } else {
+          canaryEl.hidden = true;
         }
         meta.textContent = `task ${view.task?.id ?? ""} · ${new Date().toISOString()}`;
         if (taskId) {

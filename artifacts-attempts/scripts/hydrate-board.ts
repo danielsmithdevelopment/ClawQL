@@ -18,12 +18,22 @@ const result = await runLocalDemo({
   approveIfNeeded: true,
 });
 
+const canarySlice = result.canary.versions.find((v) => v.label === "canary");
+const previousSlice = result.canary.versions.find((v) => v.label === "previous");
 const view = {
   task: result.task,
   attempts: result.attempts,
   notes: result.notes,
   decision: result.decision,
   pendingApproval: result.approvalUsed && result.task.status !== "released",
+  arweaveId: result.arweaveId,
+  canary: {
+    mode: result.canary.mode,
+    canaryPercent: canarySlice?.percentage ?? result.canaryPercent,
+    previousPercent: previousSlice?.percentage ?? 100 - result.canaryPercent,
+    rollbackTrigger: result.canary.rollbackTrigger,
+    versionId: canarySlice?.versionId ?? "",
+  },
 };
 
 const res = await fetch(`${API}/tasks`, {

@@ -2,12 +2,23 @@ import type { Attempt, Task } from "@artifacts-attempts/shared";
 import type { EvidenceNote } from "@artifacts-attempts/notes";
 import type { DecisionResponse } from "@artifacts-attempts/shared";
 
+/** Board-facing canary summary (dry-run or live gradual deploy). */
+export type CanaryView = {
+  mode: "dry-run" | "live";
+  canaryPercent: number;
+  rollbackTrigger: string;
+  versionId: string;
+  previousPercent: number;
+};
+
 export type TaskView = {
   task: Task;
   attempts: Attempt[];
   notes: EvidenceNote[];
   decision?: DecisionResponse;
   pendingApproval?: boolean;
+  canary?: CanaryView;
+  arweaveId?: string;
 };
 
 const store = new Map<string, TaskView>();

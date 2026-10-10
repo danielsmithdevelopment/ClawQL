@@ -43,6 +43,13 @@ node cli/verify/dist/cli.js \
 
 After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `artifacts/main-wt/src/delivery.js` and `artifacts/main-wt/package.json` (paths relative to the demo root).
 
+Canary dry-run (same numbers the board shows after `board:hydrate`):
+
+```bash
+cat .local/demo-run/.local/canary/status.json
+# expect mode dry-run, canary 10%, rollbackTrigger mentions error_rate
+```
+
 ### What “real” means here
 
 | Step | Witness |

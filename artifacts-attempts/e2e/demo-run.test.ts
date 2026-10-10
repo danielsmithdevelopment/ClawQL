@@ -46,6 +46,11 @@ describe.skipIf(!local)("demo-run (local-git witnesses)", () => {
       ).toEqual({ ok: true });
       expect(manifest.policy.canaryPercent).toBe(10);
       expect(manifest.policy.rollback.trigger).toContain("error_rate");
+      const canary = JSON.parse(readFileSync(result.canaryStatusPath, "utf8"));
+      expect(canary.mode).toBe("dry-run");
+      expect(canary.versions.find((v: { label: string }) => v.label === "canary")?.percentage).toBe(
+        10
+      );
     },
     180_000
   );
