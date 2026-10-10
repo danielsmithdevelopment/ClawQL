@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@artifacts-attempts/decider": "0.1.0",
     "@artifacts-attempts/local-git": "0.1.0",
     "@artifacts-attempts/manifest": "0.1.0",
     "@artifacts-attempts/notes": "0.1.0",

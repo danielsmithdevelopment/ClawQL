@@ -28,7 +28,8 @@ Only start recording after `demo:record-prep` / `demo:gate` prints `GATE PASS`.
 4. Decision (calibrated auto-merge and/or approval page)  
 5. Merge of winner  
 6. **Release verify** (dry-run Arweave path is honest; say live Turbo is the swap)  
-7. Board live update  
+7. **Canary** dry-run status (10% + rollback trigger; say Workers gradual deploy is the swap)  
+8. Board live update  
 
 ## Optional if credentials arrive before Oct 14
 

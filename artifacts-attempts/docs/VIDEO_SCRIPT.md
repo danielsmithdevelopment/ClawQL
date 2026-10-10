@@ -12,8 +12,9 @@ Record only after `npm run demo:local` succeeds **three times in a row**. Every 
 6. **Decision (60s)** — Calibrated path auto-merges **or** run `demo:approval-path` and click Approve on `/approve.html`. Show trust rule briefly.
 7. **Merge (45s)** — Winner rebased onto main; re-test green; losers stood down (notes remain).
 8. **Release — never cut (90s)** — Dry-run Arweave dir + `artifacts-verify --local-manifest …`; call out Merkle root + `buildEnvironment.fork/commit`. State that live Turbo is the production swap.
-9. **Board (45s)** — `board:serve` + `board:hydrate`; live table updates.
-10. **Close (30s)** — Point judges at `docs/JUDGE_RUNBOOK.md`; mention Workers Paid / Artifacts billing Oct 15.
+9. **Canary (30s)** — Open `.local/canary/status.json`: 10% canary + rollback trigger from the manifest (dry-run; live = Workers gradual deploy API).
+10. **Board (45s)** — `board:serve` + `board:hydrate`; live table updates.
+11. **Close (30s)** — Point judges at `docs/JUDGE_RUNBOOK.md`; mention Workers Paid / Artifacts billing Oct 15.
 
 ## Caption note
 
