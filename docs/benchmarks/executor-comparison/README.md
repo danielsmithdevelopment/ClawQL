@@ -75,6 +75,7 @@ LATENCY_ITERS=40 MOCK_DELAY_MS=5 \
 
 Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LIFECYCLE=0`).
 
+<<<<<<< HEAD
 | Arm                                             |                                                     p50 |      p95 |
 | ----------------------------------------------- | ------------------------------------------------------: | -------: |
 | ClawQL `audit` (gateway-only)                   |                                              **1.7 ms** |  34.9 ms |
@@ -82,8 +83,19 @@ Artifact: `executor-cmp-latency.json` (n=25, mock delay 0, `CLAWQL_CAPABILITY_LI
 | Direct `fetch` same mock                        |                                                  0.5 ms |   1.1 ms |
 | **Derived gateway overhead** (execute − direct) |                                             **~8.0 ms** | ~16.4 ms |
 | Executor no-op                                  | _not wired_ (`EXECUTOR_BIN` / `EXECUTOR_MCP_URL` unset) |          |
+=======
+| Arm | p50 | p95 |
+| --- | ---: | ---: |
+| ClawQL `audit` (gateway-only) | **1.7 ms** | 34.9 ms |
+| ClawQL `execute` → local mock | **8.4 ms** | 17.5 ms |
+| Direct `fetch` same mock | 0.5 ms | 1.1 ms |
+| **Derived gateway overhead** (execute − direct) | **~8.0 ms** | ~16.4 ms |
+| Executor (chart) | **75 ms** mid of **50–100 ms** reference band | — |
+>>>>>>> de5c8344 (feat(bench): shareable ClawQL vs Executor latency bar chart)
 
-**Verdict on this host:** ClawQL tool-call overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. Community/self-host notes put warm Executor execute roughly in a **50–100ms** band; wire a live install here for a true side-by-side on the same machine. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
+**Shareable same-graph page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · regenerate with `npm run generate:executor-cmp-latency-html`.
+
+**Verdict on this host:** ClawQL tool-call overhead is **single-digit milliseconds**, not 100ms+. The flamegraph demo’s 120ms total was a **synthetic fixture**. The Executor bar uses the public warm self-host band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)) until `EXECUTOR_BIN` / `EXECUTOR_MCP_URL` is wired for a same-host live arm. Schema-decode microbench (`scripts/release/measure-gateway-hotpath.mts`) is sub-millisecond and is **not** product latency.
 
 ## Methodology
 

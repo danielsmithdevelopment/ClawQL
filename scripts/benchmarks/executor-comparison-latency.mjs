@@ -397,6 +397,18 @@ async function main() {
     await writeFile(OUT_PATH, JSON.stringify(report, null, 2) + "\n");
     console.log(JSON.stringify(report, null, 2));
     console.error(`\nWrote ${OUT_PATH}`);
+
+    // Shareable dual-bar HTML for clawql.com / docs
+    const { spawnSync } = await import("node:child_process");
+    const gen = spawnSync(process.execPath, [join(ROOT, "scripts/benchmarks/generate-executor-cmp-latency-html.mjs")], {
+      cwd: ROOT,
+      encoding: "utf8",
+    });
+    if (gen.status !== 0) {
+      console.error(gen.stderr || gen.stdout || "latency HTML generate failed");
+    } else {
+      console.error(gen.stdout.trim());
+    }
   } finally {
     await mock.close();
   }

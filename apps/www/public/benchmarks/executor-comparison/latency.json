@@ -1,0 +1,61 @@
+{
+  "suite": "executor-cmp-latency-chart",
+  "canonical": "https://clawql.com/benchmarks/executor-comparison/latency.html",
+  "measuredAt": "2026-10-10T20:24:19.259Z",
+  "host": {
+    "node": "v22.14.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "config": {
+    "iters": 25,
+    "warmup": 5,
+    "mock_delay_ms": 0
+  },
+  "series": {
+    "clawql_execute": {
+      "source": "live",
+      "label": "ClawQL execute",
+      "p50_ms": 8.413,
+      "p95_ms": 17.512,
+      "band_low_ms": 7.026,
+      "band_high_ms": 17.512,
+      "citation": "MCP stdio → listPets against local mock (same host)"
+    },
+    "clawql_audit": {
+      "source": "live",
+      "label": "ClawQL audit (local)",
+      "p50_ms": 1.728,
+      "p95_ms": 34.885
+    },
+    "clawql_overhead": {
+      "source": "derived",
+      "label": "ClawQL gateway overhead",
+      "p50_ms": 7.949,
+      "p95_ms": 16.394,
+      "citation": "clawql_execute_p50 − direct_http_p50 (same mock)"
+    },
+    "executor": {
+      "source": "reference",
+      "label": "Executor warm execute",
+      "p50_ms": 75,
+      "band_low_ms": 50,
+      "band_high_ms": 100,
+      "citation": "UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)",
+      "url": "https://github.com/UsefulSoftwareCo/executor/issues/1519"
+    }
+  },
+  "headline": {
+    "clawql_p50_ms": 8.413,
+    "executor_p50_ms": 75,
+    "ratio_executor_over_clawql": 8.91,
+    "executor_source": "reference"
+  },
+  "honesty": {
+    "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
+    "tokenBenchmarks": "docs/benchmarks/executor-comparison/executor-cmp-*.json measure tokens, not wall clock.",
+    "applesToApples": "Compare clawql_audit_append (local) and clawql_execute overhead vs executor_execute_noop when wired.",
+    "executorReference": "Executor bar uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired for a same-host live arm.",
+    "notTokenFlamegraph": "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms."
+  }
+}
