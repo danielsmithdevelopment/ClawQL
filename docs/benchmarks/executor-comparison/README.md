@@ -66,15 +66,15 @@ LATENCY_ITERS=100 PET_COUNT=800 MOCK_DELAY_MS=0 \
   npm run benchmark:executor-comparison:latency
 ```
 
-| Arm | Workload | What it isolates |
-| --- | --- | --- |
-| `clawql_search` | heavier | Catalog resolve + durable WORM |
-| `clawql_execute_heavy` | heavier | Large mock + JMESPath `where` + `fields` |
-| `clawql_audit_append` | heavier | Ephemeral ring audit |
-| `clawql_heavy_turn` | heavier | search + execute + audit (one timed sample) |
-| `direct_http_mock` | control | Bare `fetch` of the same large mock |
-| `executor_execute_noop` | lighter | No-op JS (when `EXECUTOR_*` wired) |
-| Executor chart (unwired) | lighter | Published warm 50–100ms reference band |
+| Arm                      | Workload | What it isolates                            |
+| ------------------------ | -------- | ------------------------------------------- |
+| `clawql_search`          | heavier  | Catalog resolve + durable WORM              |
+| `clawql_execute_heavy`   | heavier  | Large mock + JMESPath `where` + `fields`    |
+| `clawql_audit_append`    | heavier  | Ephemeral ring audit                        |
+| `clawql_heavy_turn`      | heavier  | search + execute + audit (one timed sample) |
+| `direct_http_mock`       | control  | Bare `fetch` of the same large mock         |
+| `executor_execute_noop`  | lighter  | No-op JS (when `EXECUTOR_*` wired)          |
+| Executor chart (unwired) | lighter  | Published warm 50–100ms reference band      |
 
 ### Latest local run
 
@@ -82,13 +82,13 @@ Artifact: `executor-cmp-latency.json` — regenerate with the command above. Sha
 
 Latest measured (n=100, PET_COUNT=800, ~138KB body):
 
-| Arm | p50 | p95 | p99 |
-| --- | ---: | ---: | ---: |
-| ClawQL search (+WORM) | 1.8 ms | 12.1 ms | 58.0 ms |
-| ClawQL execute heavy | 9.8 ms | 17.0 ms | 21.7 ms |
-| ClawQL audit | 0.3 ms | 1.0 ms | 1.3 ms |
+| Arm                                          |         p50 |         p95 |         p99 |
+| -------------------------------------------- | ----------: | ----------: | ----------: |
+| ClawQL search (+WORM)                        |      1.8 ms |     12.1 ms |     58.0 ms |
+| ClawQL execute heavy                         |      9.8 ms |     17.0 ms |     21.7 ms |
+| ClawQL audit                                 |      0.3 ms |      1.0 ms |      1.3 ms |
 | **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** |
-| Executor (lighter / reference) | 75 ms | 100 ms | 100 ms |
+| Executor (lighter / reference)               |       75 ms |      100 ms |      100 ms |
 
 **Intentional asymmetry:** ClawQL = live MCP → large mock + filter/project + audit + WORM on search. Executor = no-op / published warm band (no upstream, no filter, no audit). `CLAWQL_CAPABILITY_LIFECYCLE=0`, no `panguard-mcp-proxy` / JWT-ATR hop. `execute` still skips process WORM by design.
 
