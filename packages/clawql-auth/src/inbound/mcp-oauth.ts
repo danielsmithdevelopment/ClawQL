@@ -170,6 +170,41 @@ export type McpAccessTokenStore = {
   revoke: (accessTokenHash: string) => Effect.Effect<void>;
 };
 
+/**
+ * MCP OAuth §2 grant-as-key — planned, not wired yet.
+ *
+ * `buildAtrClaims` stamps the OAuth `clientId` as `virtualKeyId`, so everyone who
+ * connects through one registered client (a single "Claude Desktop" registration)
+ * shares one key for budgets, entitlements, revocation and audit attribution, while
+ * `authorization_code` inherits the session credential's key (if any) and `id_jag`
+ * sets none. §2 records one grant per (subject, client, resource) at consent or
+ * first ID-JAG exchange and stamps its id as `virtualKeyId` on every access token
+ * and refresh record minted under it; `client_credentials` keeps one grant per client.
+ */
+export type McpGrantKeyRecord = {
+  /** Stamped as ATR `virtualKeyId`; never the `clientId`. */
+  readonly virtualKeyId: string;
+  /** Subject the grant was consented for (ATR `sub`). */
+  readonly subject: string;
+  readonly clientId: string;
+  /** Normalized RFC 8707 resource the grant is bound to (§1 access-token `aud`). */
+  readonly resource?: string;
+  readonly orgId?: string;
+  readonly scope: readonly string[];
+  readonly grantType: Exclude<McpGrantType, "refresh_token">;
+  readonly createdAtMs: number;
+  readonly revokedAtMs?: number;
+};
+
+/** §2 store contract: one live grant per (subject, client, resource); revoking it ends its tokens. */
+export type McpGrantKeyStore = {
+  readonly getOrCreate: (
+    grant: Omit<McpGrantKeyRecord, "virtualKeyId" | "createdAtMs" | "revokedAtMs">
+  ) => Effect.Effect<McpGrantKeyRecord>;
+  readonly get: (virtualKeyId: string) => Effect.Effect<McpGrantKeyRecord | null>;
+  readonly revoke: (virtualKeyId: string) => Effect.Effect<void>;
+};
+
 /** OAuth AS domain failure — maps to RFC 6749 error codes at the HTTP boundary. */
 export class McpOAuthError extends Data.TaggedError("McpOAuthError")<{
   readonly error: string;
@@ -630,6 +665,7 @@ export class MCPOAuthServer {
       scope,
       orgId: client.orgId,
       tenantId: client.orgId,
+      // TODO(MCP OAuth §2): stamp McpGrantKeyRecord.virtualKeyId instead of the client id.
       virtualKeyId: client.clientId,
     };
   }
