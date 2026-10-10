@@ -1,0 +1,69 @@
+# Judge runbook — artifacts-attempts
+
+Apache-2.0. No mocked pipeline steps in the demo path: local mode uses **real git**, **real vitest**, and a **dry-run Arweave directory**. Live Cloudflare Artifacts / Turbo require a Workers Paid account (billing for Artifacts starts **Oct 15, 2026**).
+
+## Prerequisites
+
+| Need | Local demo | Live Artifacts |
+| --- | --- | --- |
+| Node.js ≥ 22 | yes | yes |
+| `git` | yes | yes |
+| Model API keys | no (`--replay` patches) | yes for live agents |
+| Cloudflare Workers Paid + Artifacts | no | yes |
+| Arweave / Turbo credits | no (dry-run) | yes for permanent publish |
+| `DECISIONS_URL` | optional | ClawQL or OpenAI-compatible |
+
+## Local demo (default for judges without CF)
+
+```bash
+cd artifacts-attempts
+npm ci
+npm test                 # packages + local pipeline
+npm run demo:local       # full run → .local/demo-run
+npm run board:serve      # terminal A — http://127.0.0.1:8787/
+npm run board:hydrate    # terminal B — POSTs TaskView, prints board URL
+```
+
+Open the printed `/?task=tsk_demo` URL. You should see three attempts, `att_3` blocked, winner `att_1`, task `released`.
+
+Verify witnesses yourself:
+
+```bash
+# evidence chain
+node cli/verify/dist/cli.js --notes .local/demo-run/notes.jsonl
+
+# dry-run release Merkle root
+node cli/verify/dist/cli.js \
+  --local-manifest .local/demo-run/.local/arweave/*/manifest.json \
+  --bundle-dir <see manifest artifacts paths / main-wt files>
+```
+
+After `demo:local`, the dry-run manifest path is printed / under `.local/demo-run/.local/arweave/<id>/manifest.json`. Bundle files used in the demo are `artifacts/main-wt/src/delivery.js` and `package.json` (paths relative to the demo root).
+
+### What “real” means here
+
+| Step | Witness |
+| --- | --- |
+| Forks | bare repos under `.local/demo-run/artifacts/repos/` |
+| Tokens | wrong-repo push refused |
+| Notes | `git notes` pushed and re-fetched into a clean clone |
+| Tests | `npm test` in each worktree |
+| Policy | `att_3` calls `https://evil.example` → blocked |
+| Decision | calibrated → auto-merge; OpenAI-shaped → approval then continue |
+| Release | Merkle verify of dry-run manifest |
+
+## Decisions endpoint
+
+| `DECISIONS_URL` | Behavior |
+| --- | --- |
+| ClawQL gateway returning `calibrated: true` | Auto-merge when confidence ≥ 0.9 and winner clean |
+| OpenAI-compatible (no `calibrated`) | Always approval page / `approveIfNeeded` |
+| unset in local demo | Pipeline uses in-process calibrated or `DECISIONS_MODE=openai` |
+
+## Live Cloudflare (when available)
+
+Set `ATTEMPTS_E2E=1` plus Cloudflare + Artifacts + Turbo secrets (see `.env.example`). The live e2e suite is skipped until those exist.
+
+## License
+
+Apache-2.0 — see `LICENSE`. Do not put personal data into releases (they are permanent when published to Arweave).

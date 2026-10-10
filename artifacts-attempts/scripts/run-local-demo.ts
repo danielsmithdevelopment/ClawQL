@@ -20,6 +20,9 @@ console.log(
       manifestPath: result.manifestPath,
       notesPath: result.notesPath,
       canaryPercent: result.canaryPercent,
+      verifyNotes: `node cli/verify/dist/cli.js --notes ${result.notesPath}`,
+      verifyRelease: `node cli/verify/dist/cli.js --local-manifest ${result.manifestPath} --bundle-dir <main-wt files>`,
+      board: "npm run board:serve && npm run board:hydrate",
     },
     null,
     2
