@@ -142,9 +142,14 @@ function buildChartEnvelope(report) {
   const clawP99 = clawHeavy?.p99_ms ?? clawHeavy?.max_ms ?? null;
   const ratio =
     clawP50 > 0 ? Number((executorSeries.p50_ms / clawP50).toFixed(2)) : null;
+  const clawOverExec =
+    clawP50 > 0 && executorSeries.p50_ms > 0
+      ? Number((clawP50 / executorSeries.p50_ms).toFixed(2))
+      : null;
   const execHigh = executorSeries.band_high_ms ?? executorSeries.p99_ms ?? executorSeries.p50_ms;
   const p99Beats = clawP99 != null && clawP99 < execHigh;
   const p50Beats = clawP50 != null && clawP50 < (executorSeries.band_low_ms ?? executorSeries.p50_ms);
+  const clawqlFasterP50 = clawP50 != null && clawP50 < executorSeries.p50_ms;
 
   return {
     suite: "executor-cmp-latency-chart",
@@ -181,7 +186,9 @@ function buildChartEnvelope(report) {
       executor_p95_ms: executorSeries.p95_ms,
       executor_p99_ms: executorSeries.p99_ms,
       ratio_executor_over_clawql: ratio,
+      ratio_clawql_over_executor: clawOverExec,
       executor_source: executorSeries.source,
+      clawql_faster_p50: clawqlFasterP50,
       p50_beats_executor_band_low: p50Beats,
       p99_beats_executor_band_high: p99Beats,
     },
@@ -190,12 +197,12 @@ function buildChartEnvelope(report) {
       executorReference:
         executorSeries.source === "reference"
           ? "Executor uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired."
-          : "Executor bar is live no-op execute on this host (lighter than ClawQL heavy).",
+          : "Executor bar is LIVE same-host MCP no-op execute (not the #1519 50–100ms estimate).",
       notTokenFlamegraph:
         "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
-      p99VsExecutor: p99Beats
-        ? `ClawQL ${heavyTurn ? "heavy turn" : "execute"} p99 ${clawP99}ms stays under the Executor high (${execHigh}ms) while doing more work.`
-        : `ClawQL ${heavyTurn ? "heavy turn" : "execute"} p99 ${clawP99}ms does not beat Executor high (${execHigh}ms); check p50/p95 and sample n.`,
+      p99VsExecutor: clawqlFasterP50
+        ? `ClawQL ${heavyTurn ? "heavy turn" : "execute"} p50 ${clawP50}ms beats live Executor p50 ${executorSeries.p50_ms}ms while doing more work.`
+        : `Live Executor no-op p50 ${executorSeries.p50_ms}ms is faster than ClawQL ${heavyTurn ? "heavy turn" : "execute"} p50 ${clawP50}ms — expected: ClawQL is doing more (search+large HTTP+where/fields+audit+WORM). Do not cite the old 50–100ms reference as measured.`,
     },
   };
 }
@@ -252,19 +259,30 @@ function renderToolRow(tool, maxMs) {
 
 function renderHtml(chart) {
   const tools = chart.tools;
-  const maxMs = Math.max(
-    100,
-    ...tools.flatMap((t) => [t.p50_ms, t.p95_ms, t.p99_ms, t.band_high_ms ?? 0])
+  const observedMax = Math.max(
+    ...tools.flatMap((t) => [t.p50_ms, t.p95_ms, t.p99_ms, t.band_high_ms ?? 0]),
+    1
   );
+  // Reference-band charts keep a 100ms floor; live charts scale to observed max.
+  const maxMs =
+    chart.series.executor.source === "reference"
+      ? Math.max(100, observedMax)
+      : observedMax * 1.08;
   const h = chart.headline;
-  const ratioLabel =
-    h.ratio_executor_over_clawql != null
-      ? chart.series.executor.source === "reference"
-        ? `~${h.ratio_executor_over_clawql}× vs Executor mid (ClawQL heavier)`
-        : `${h.ratio_executor_over_clawql}× vs Executor no-op (ClawQL heavier)`
-      : "—";
+  const ratioLabel = (() => {
+    if (h.ratio_executor_over_clawql == null) return "—";
+    if (chart.series.executor.source === "reference") {
+      return `~${h.ratio_executor_over_clawql}× vs Executor mid (ClawQL heavier)`;
+    }
+    if (h.clawql_faster_p50) {
+      return `${h.ratio_executor_over_clawql}× — ClawQL faster (heavier arm)`;
+    }
+    return `ClawQL heavy ~${h.ratio_clawql_over_executor}× Executor live no-op (more work)`;
+  })();
   const petCount = chart.config?.pet_count ?? "?";
   const iters = chart.config?.iters ?? "?";
+  const execSourceLabel =
+    chart.series.executor.source === "live" ? "live same-host" : "reference band";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -273,9 +291,9 @@ function renderHtml(chart) {
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ClawQL vs Executor — latency p50 / p95 / p99</title>
   <link rel="canonical" href="${escapeHtml(CANONICAL)}"/>
-  <meta name="description" content="Wall-clock MCP latency with p50/p95/p99. ClawQL runs a heavier workload and still wins on p50."/>
+  <meta name="description" content="Wall-clock MCP latency p50/p95/p99. ClawQL heavier arm vs live Executor no-op."/>
   <meta property="og:title" content="ClawQL vs Executor — p50/p95/p99 latency"/>
-  <meta property="og:description" content="ClawQL heavy turn p50 ${h.clawql_p50_ms}ms · Executor ${h.executor_p50_ms}ms · ${ratioLabel}"/>
+  <meta property="og:description" content="ClawQL heavy turn p50 ${h.clawql_p50_ms}ms · Executor ${execSourceLabel} ${h.executor_p50_ms}ms · ${ratioLabel}"/>
   <meta property="og:url" content="${escapeHtml(CANONICAL)}"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -448,9 +466,10 @@ function renderHtml(chart) {
     <p class="brand">ClawQL</p>
     <h1>Latency · p50 / p95 / p99</h1>
     <p class="lead">
-      Wall-clock MCP tool latency. ClawQL runs the <strong>heavier</strong> arm
+      Wall-clock MCP tool latency with <strong>live</strong> numbers where wired.
+      ClawQL runs the <strong>heavier</strong> arm
       (search + ${escapeHtml(String(petCount))}-row execute with <code>where</code>/<code>fields</code> + audit + WORM on search).
-      Executor runs the <strong>lighter</strong> arm (warm no-op / published band).
+      Executor runs the <strong>lighter</strong> arm (${escapeHtml(execSourceLabel)} no-op).
       n=${escapeHtml(String(iters))}.
     </p>
 
@@ -470,9 +489,10 @@ function renderHtml(chart) {
       <div class="score">
         <div>Heavy turn p50 <strong>${h.clawql_p50_ms != null ? h.clawql_p50_ms.toFixed(1) : "—"}ms</strong></div>
         <div>Heavy turn p95 <strong>${h.clawql_p95_ms != null ? h.clawql_p95_ms.toFixed(1) : "—"}ms</strong></div>
-        <div class="${h.p99_beats_executor_band_high ? "" : "warn"}">Heavy turn p99 <strong>${h.clawql_p99_ms != null ? h.clawql_p99_ms.toFixed(1) : "—"}ms</strong></div>
-        <div>Executor p50 <strong>${h.executor_p50_ms.toFixed(0)}ms</strong></div>
-        <div>Ratio <strong>${escapeHtml(ratioLabel)}</strong></div>
+        <div class="${h.clawql_faster_p50 || h.p99_beats_executor_band_high ? "" : "warn"}">Heavy turn p99 <strong>${h.clawql_p99_ms != null ? h.clawql_p99_ms.toFixed(1) : "—"}ms</strong></div>
+        <div>Executor p50 <strong>${Number(h.executor_p50_ms).toFixed(chart.series.executor.source === "live" ? 1 : 0)}ms</strong><small style="display:block;color:var(--muted);font-weight:400">${escapeHtml(execSourceLabel)}</small></div>
+        <div>Executor p99 <strong>${h.executor_p99_ms != null ? Number(h.executor_p99_ms).toFixed(chart.series.executor.source === "live" ? 1 : 0) : "—"}ms</strong></div>
+        <div>Compare <strong>${escapeHtml(ratioLabel)}</strong></div>
       </div>
     </section>
 

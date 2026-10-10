@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ClawQL vs Executor — latency p50 / p95 / p99</title>
   <link rel="canonical" href="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
-  <meta name="description" content="Wall-clock MCP latency with p50/p95/p99. ClawQL runs a heavier workload and still wins on p50."/>
+  <meta name="description" content="Wall-clock MCP latency p50/p95/p99. ClawQL heavier arm vs live Executor no-op."/>
   <meta property="og:title" content="ClawQL vs Executor — p50/p95/p99 latency"/>
-  <meta property="og:description" content="ClawQL heavy turn p50 10.652ms · Executor 75ms · ~7.04× vs Executor mid (ClawQL heavier)"/>
+  <meta property="og:description" content="ClawQL heavy turn p50 10.652ms · Executor live same-host 2.959ms · ClawQL heavy ~3.6× Executor live no-op (more work)"/>
   <meta property="og:url" content="https://clawql.com/benchmarks/executor-comparison/latency.html"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -180,9 +180,10 @@
     <p class="brand">ClawQL</p>
     <h1>Latency · p50 / p95 / p99</h1>
     <p class="lead">
-      Wall-clock MCP tool latency. ClawQL runs the <strong>heavier</strong> arm
+      Wall-clock MCP tool latency with <strong>live</strong> numbers where wired.
+      ClawQL runs the <strong>heavier</strong> arm
       (search + 800-row execute with <code>where</code>/<code>fields</code> + audit + WORM on search).
-      Executor runs the <strong>lighter</strong> arm (warm no-op / published band).
+      Executor runs the <strong>lighter</strong> arm (live same-host no-op).
       n=100.
     </p>
 
@@ -193,7 +194,7 @@
       </div>
       <div>
         <strong>Executor — lighter arm</strong>
-        LIGHTER — live no-op execute when wired, else published warm 50–100ms reference band (no upstream HTTP, no filter, no audit)
+        LIGHTER — LIVE no-op JS execute via MCP stdio (executor v1.6.10). No upstream HTTP, no filter, no audit.
       </div>
     </div>
 
@@ -217,21 +218,21 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:2.50%"></span>
+                <span class="bar claw p50" style="width:2.93%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:12.09%"></span>
+                <span class="bar claw p95" style="width:19.29%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:58.03%"></span>
+                <span class="bar claw p99" style="width:92.59%"></span>
               </div>
             </div>
         </div>
@@ -254,21 +255,21 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:9.84%"></span>
+                <span class="bar claw p50" style="width:15.70%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:16.98%"></span>
+                <span class="bar claw p95" style="width:27.09%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:21.69%"></span>
+                <span class="bar claw p99" style="width:34.61%"></span>
               </div>
             </div>
         </div>
@@ -328,21 +329,21 @@
               <span class="p-label">p50</span>
               <div class="track">
                 
-                <span class="bar claw p50" style="width:10.65%"></span>
+                <span class="bar claw p50" style="width:16.99%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
                 
-                <span class="bar claw p95" style="width:15.86%"></span>
+                <span class="bar claw p95" style="width:25.30%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
                 
-                <span class="bar claw p99" style="width:18.21%"></span>
+                <span class="bar claw p99" style="width:29.05%"></span>
               </div>
             </div>
         </div>
@@ -350,12 +351,12 @@
       <div class="tool " data-tool="executor_execute">
         <div class="tool-head">
           <div class="name">Executor execute <span class="badge light">lighter</span>
-            <span class="sub">warm no-op band · no HTTP / filter / audit</span>
+            <span class="sub">live no-op · no upstream</span>
           </div>
           <div class="nums">
-            <span><em>p50</em> 75.0</span>
-            <span><em>p95</em> 100.0</span>
-            <span><em>p99</em> 100.0</span>
+            <span><em>p50</em> 3.0</span>
+            <span><em>p95</em> 6.2</span>
+            <span><em>p99</em> 6.9</span>
             <span class="unit">ms</span>
           </div>
         </div>
@@ -364,22 +365,22 @@
             <div class="track-row">
               <span class="p-label">p50</span>
               <div class="track">
-                <span class="band" style="left:50.00%;width:50.00%"></span>
-                <span class="bar exec p50" style="width:75.00%"></span>
+                
+                <span class="bar exec p50" style="width:4.72%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p95</span>
               <div class="track">
-                <span class="band" style="left:50.00%;width:50.00%"></span>
-                <span class="bar exec p95" style="width:100.00%"></span>
+                
+                <span class="bar exec p95" style="width:9.84%"></span>
               </div>
             </div>
             <div class="track-row">
               <span class="p-label">p99</span>
               <div class="track">
-                <span class="band" style="left:50.00%;width:50.00%"></span>
-                <span class="bar exec p99" style="width:100.00%"></span>
+                
+                <span class="bar exec p99" style="width:11.06%"></span>
               </div>
             </div>
         </div>
@@ -387,24 +388,25 @@
       <div class="score">
         <div>Heavy turn p50 <strong>10.7ms</strong></div>
         <div>Heavy turn p95 <strong>15.9ms</strong></div>
-        <div class="">Heavy turn p99 <strong>18.2ms</strong></div>
-        <div>Executor p50 <strong>75ms</strong></div>
-        <div>Ratio <strong>~7.04× vs Executor mid (ClawQL heavier)</strong></div>
+        <div class="warn">Heavy turn p99 <strong>18.2ms</strong></div>
+        <div>Executor p50 <strong>3.0ms</strong><small style="display:block;color:var(--muted);font-weight:400">live same-host</small></div>
+        <div>Executor p99 <strong>6.9ms</strong></div>
+        <div>Compare <strong>ClawQL heavy ~3.6× Executor live no-op (more work)</strong></div>
       </div>
     </section>
 
     <div class="honesty">
-      <div><strong>Honesty</strong> — ClawQL heavy turn p99 18.21ms stays under the Executor high (100ms) while doing more work.</div>
+      <div><strong>Honesty</strong> — Live Executor no-op p50 2.959ms is faster than ClawQL heavy turn p50 10.652ms — expected: ClawQL is doing more (search+large HTTP+where/fields+audit+WORM). Do not cite the old 50–100ms reference as measured.</div>
       <ul>
         <li>ClawQL arm is deliberately heavier than Executor. Compare p50/p95/p99 on the chart; do not claim apples-to-apples equal work.</li>
-        <li>Executor uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired.</li>
+        <li>Executor bar is LIVE same-host MCP no-op execute (not the #1519 50–100ms estimate).</li>
         <li>CLAWQL_WORM_ENABLED=1 (memory). search appends durable WORM; execute skips process WORM (by design); audit is ring-buffer only.</li>
         <li>CLAWQL_CAPABILITY_LIFECYCLE=0 (throughput path). No panguard-mcp-proxy / JWT-ATR hop.</li>
         <li>p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.</li>
       </ul>
       <p style="margin:0.65rem 0 0">
         Measured 2026-10-10T23:07:20.454Z (linux/x64, Node v22.14.0).
-        Citation: <a href="https://github.com/UsefulSoftwareCo/executor/issues/1519">UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)</a>.
+        LIVE same-host no-op execute (n=100). Lighter than ClawQL heavy: no HTTP, no where/fields, no audit/WORM. ClawQL arms preserved from prior heavy run.
         Distinct from <a href="https://clawql.com/mcp-ui/trace/compare/executor">token compare</a>.
       </p>
     </div>
@@ -414,7 +416,7 @@
       <a href="./">token benchmark notes</a> ·
       <a href="https://github.com/danielsmithdevelopment/ClawQL">GitHub</a> ·
       Reproduce: <code>npm run benchmark:executor-comparison:latency</code>
-       · Live Executor: <code>EXECUTOR_BIN=… npm run benchmark:executor-comparison:latency</code>
+      
     </p>
   </main>
   <script>

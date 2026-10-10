@@ -35,7 +35,7 @@
   },
   "workloadTilt": {
     "clawql": "HEAVIER — search (+WORM) + execute(large JSON + where + fields) + audit; heavy_turn times all three together",
-    "executor": "LIGHTER — live no-op execute when wired, else published warm 50–100ms reference band (no upstream HTTP, no filter, no audit)",
+    "executor": "LIGHTER — LIVE no-op JS execute via MCP stdio (executor v1.6.10). No upstream HTTP, no filter, no audit.",
     "intent": "If ClawQL wins while doing more work, the win is definitive — not an easier-arm artifact."
   },
   "tools": [
@@ -94,17 +94,18 @@
     },
     {
       "id": "executor_execute",
-      "source": "reference",
+      "source": "live",
       "label": "Executor execute",
       "workload": "lighter",
-      "subtitle": "warm no-op band · no HTTP / filter / audit",
-      "p50_ms": 75,
-      "p95_ms": 100,
-      "p99_ms": 100,
-      "band_low_ms": 50,
-      "band_high_ms": 100,
-      "citation": "UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)",
-      "url": "https://github.com/UsefulSoftwareCo/executor/issues/1519"
+      "subtitle": "live no-op · no upstream",
+      "p50_ms": 2.959,
+      "p95_ms": 6.167,
+      "p99_ms": 6.934,
+      "min_ms": 2.222,
+      "max_ms": 7.014,
+      "n": 100,
+      "endpoint": "stdio:/tmp/executor-try/node_modules/.bin/executor mcp",
+      "citation": "LIVE same-host no-op execute (n=100). Lighter than ClawQL heavy: no HTTP, no where/fields, no audit/WORM. ClawQL arms preserved from prior heavy run."
     }
   ],
   "series": {
@@ -151,17 +152,18 @@
     },
     "executor": {
       "id": "executor_execute",
-      "source": "reference",
+      "source": "live",
       "label": "Executor execute",
       "workload": "lighter",
-      "subtitle": "warm no-op band · no HTTP / filter / audit",
-      "p50_ms": 75,
-      "p95_ms": 100,
-      "p99_ms": 100,
-      "band_low_ms": 50,
-      "band_high_ms": 100,
-      "citation": "UsefulSoftwareCo/executor#1519 — self-hosted warm execution ~50–100ms (not same-host live)",
-      "url": "https://github.com/UsefulSoftwareCo/executor/issues/1519"
+      "subtitle": "live no-op · no upstream",
+      "p50_ms": 2.959,
+      "p95_ms": 6.167,
+      "p99_ms": 6.934,
+      "min_ms": 2.222,
+      "max_ms": 7.014,
+      "n": 100,
+      "endpoint": "stdio:/tmp/executor-try/node_modules/.bin/executor mcp",
+      "citation": "LIVE same-host no-op execute (n=100). Lighter than ClawQL heavy: no HTTP, no where/fields, no audit/WORM. ClawQL arms preserved from prior heavy run."
     }
   },
   "headline": {
@@ -169,13 +171,15 @@
     "clawql_p95_ms": 15.856,
     "clawql_p99_ms": 18.21,
     "clawql_arm": "heavy_turn",
-    "executor_p50_ms": 75,
-    "executor_p95_ms": 100,
-    "executor_p99_ms": 100,
-    "ratio_executor_over_clawql": 7.04,
-    "executor_source": "reference",
-    "p50_beats_executor_band_low": true,
-    "p99_beats_executor_band_high": true
+    "executor_p50_ms": 2.959,
+    "executor_p95_ms": 6.167,
+    "executor_p99_ms": 6.934,
+    "ratio_executor_over_clawql": 0.28,
+    "ratio_clawql_over_executor": 3.6,
+    "executor_source": "live",
+    "clawql_faster_p50": false,
+    "p50_beats_executor_band_low": false,
+    "p99_beats_executor_band_high": false
   },
   "honesty": {
     "flamegraphDemo120ms": "Synthetic fixture in clawql-observability demo-mcp-execute — NOT a measured ClawQL p50.",
@@ -184,8 +188,10 @@
     "lifecycle": "CLAWQL_CAPABILITY_LIFECYCLE=0 (throughput path). No panguard-mcp-proxy / JWT-ATR hop.",
     "worm": "CLAWQL_WORM_ENABLED=1 (memory). search appends durable WORM; execute skips process WORM (by design); audit is ring-buffer only.",
     "p99Caveat": "p99 needs adequate n; default iters=100. Still sensitive to rare GC/scheduling spikes.",
-    "executorReference": "Executor uses the published warm 50–100ms self-host band until EXECUTOR_BIN/URL is wired.",
+    "executorLive": "Executor arm is live MCP stdio execute no-op on this host (executor v1.6.10). Not the #1519 reference band.",
+    "clawqlPreserved": "ClawQL search/execute/audit/heavy_turn samples kept from the heavy PET_COUNT=800 run; only Executor was remeasured.",
+    "executorReference": "Executor bar is LIVE same-host MCP no-op execute (not the #1519 50–100ms estimate).",
     "notTokenFlamegraph": "Distinct from /mcp-ui/trace/compare/executor (token context). This page is wall-clock ms.",
-    "p99VsExecutor": "ClawQL heavy turn p99 18.21ms stays under the Executor high (100ms) while doing more work."
+    "p99VsExecutor": "Live Executor no-op p50 2.959ms is faster than ClawQL heavy turn p50 10.652ms — expected: ClawQL is doing more (search+large HTTP+where/fields+audit+WORM). Do not cite the old 50–100ms reference as measured."
   }
 }

@@ -80,8 +80,9 @@ LATENCY_ITERS=100 PET_COUNT=800 MOCK_DELAY_MS=0 \
 
 Artifact: `executor-cmp-latency.json` — regenerate with the command above. Shareable page shows **p50 / p95 / p99 for every tool**.
 
-Latest measured (n=100, PET_COUNT=800, ~138KB body):
+Latest measured (n=100, PET_COUNT=800, ~138KB body). **ClawQL arms live; Executor arm LIVE** (`executor` npm v1.6.10, MCP stdio no-op on this host):
 
+<<<<<<< HEAD
 | Arm                                          |         p50 |         p95 |         p99 |
 | -------------------------------------------- | ----------: | ----------: | ----------: |
 | ClawQL search (+WORM)                        |      1.8 ms |     12.1 ms |     58.0 ms |
@@ -89,8 +90,27 @@ Latest measured (n=100, PET_COUNT=800, ~138KB body):
 | ClawQL audit                                 |      0.3 ms |      1.0 ms |      1.3 ms |
 | **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** |
 | Executor (lighter / reference)               |       75 ms |      100 ms |      100 ms |
+=======
+| Arm | p50 | p95 | p99 | Source |
+| --- | ---: | ---: | ---: | --- |
+| ClawQL search (+WORM) | 1.8 ms | 12.1 ms | 58.0 ms | live |
+| ClawQL execute heavy | 9.8 ms | 17.0 ms | 21.7 ms | live |
+| ClawQL audit | 0.3 ms | 1.0 ms | 1.3 ms | live |
+| **ClawQL heavy turn** (search+execute+audit) | **10.7 ms** | **15.9 ms** | **18.2 ms** | live |
+| **Executor execute** (no-op) | **3.0 ms** | **6.2 ms** | **6.9 ms** | **live** |
+>>>>>>> 7c78cdb6 (bench(latency): replace Executor reference band with live MCP no-op)
 
-**Intentional asymmetry:** ClawQL = live MCP → large mock + filter/project + audit + WORM on search. Executor = no-op / published warm band (no upstream, no filter, no audit). `CLAWQL_CAPABILITY_LIFECYCLE=0`, no `panguard-mcp-proxy` / JWT-ATR hop. `execute` still skips process WORM by design.
+**Not an estimate:** earlier charts used the published warm 50–100ms band ([executor#1519](https://github.com/UsefulSoftwareCo/executor/issues/1519)); that overstated Executor on this host (~25× vs live no-op p50). Always wire `EXECUTOR_BIN` for wall-clock claims.
+
+```bash
+# Install Executor locally, then remeasure only the Executor arm into the chart:
+mkdir -p /tmp/executor-try && cd /tmp/executor-try && npm i executor@latest
+EXECUTOR_BIN=/tmp/executor-try/node_modules/.bin/executor \
+  EXECUTOR_CWD=/tmp/executor-try \
+  npm run benchmark:executor-comparison:latency
+```
+
+**Intentional asymmetry:** ClawQL = live MCP → large mock + filter/project + audit + WORM on search. Executor = live no-op (no upstream, no filter, no audit) — so Executor is expected to be faster in ms; ClawQL is paying for more work and still stays ~10ms p50 for the full heavy turn. `CLAWQL_CAPABILITY_LIFECYCLE=0`, no `panguard-mcp-proxy` / JWT-ATR hop.
 
 **Shareable page:** [clawql.com/benchmarks/executor-comparison/latency.html](https://clawql.com/benchmarks/executor-comparison/latency.html) · `npm run generate:executor-cmp-latency-html`.
 
